@@ -13,7 +13,7 @@ namespace data {
 class GameContext
 {
 public:
-    GameContext() = default;
+    GSL_SUPPRESS_F6 GameContext() = default;
     virtual ~GameContext() noexcept = default;
     GameContext(const GameContext&) noexcept = delete;
     GameContext& operator=(const GameContext&) noexcept = delete;
@@ -210,7 +210,7 @@ public:
     /// <param name="nAddress">The address to look up.</param>
     /// <param name="sAuthor">The author associated to the address.</param>
     /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
-    const std::wstring* FindCodeNote(ra::ByteAddress nAddress, _Out_ std::string& sAuthor) const
+    const std::wstring* FindCodeNote(ra::ByteAddress nAddress, _Inout_ std::string& sAuthor) const
     {
         const auto pIter = m_mCodeNotes.find(nAddress);
         if (pIter == m_mCodeNotes.end())
@@ -219,6 +219,7 @@ public:
         sAuthor = pIter->second.Author;
         return &pIter->second.Note;
     }
+
     /// <summary>
     /// Enumerates the code notes
     /// </summary>

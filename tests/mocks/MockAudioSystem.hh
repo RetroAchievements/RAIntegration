@@ -21,7 +21,7 @@ public:
         m_vAudioFilesPlayed.emplace_back(sPath);
     }
 
-    const std::wstring BEEP = L"BEEP";
+    static const std::wstring BEEP;
 
     void Beep() const override
     {

@@ -51,7 +51,7 @@ public:
 
         static const unsigned int FirstLocalId = GameContext::FirstLocalId;
 
-        void SetGameId(unsigned int nGameId) { m_nGameId = nGameId; }
+        void SetGameId(unsigned int nGameId) noexcept { m_nGameId = nGameId; }
 
         Achievement& MockAchievement()
         {

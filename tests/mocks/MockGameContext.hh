@@ -13,7 +13,7 @@ namespace mocks {
 class MockGameContext : public GameContext
 {
 public:
-    MockGameContext()
+    MockGameContext() noexcept
         : m_Override(this)
     {
     }

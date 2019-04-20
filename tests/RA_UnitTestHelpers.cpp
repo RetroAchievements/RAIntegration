@@ -1,8 +1,20 @@
 #include "RA_UnitTestHelpers.h"
 
+#include "mocks\MockAudioSystem.hh"
+
 #include "RA_MemManager.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+
+namespace ra {
+namespace services {
+namespace mocks {
+
+const std::wstring MockAudioSystem::BEEP = L"BEEP";
+
+} // namespace mocks
+} // namespace services
+} // namespace ra
 
 static gsl::span<std::byte> g_pMemoryBuffer; // non-owning (stack)
 static std::unique_ptr<unsigned char[]> g_pDynMemoryBuffer;

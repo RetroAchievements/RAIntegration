@@ -21,7 +21,7 @@ public:
         PlaySoundW(sFullPath.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
     }
 
-    void Beep() const override
+    void Beep() const noexcept override
     {
         MessageBeep(0xFFFFFFFF);
     }

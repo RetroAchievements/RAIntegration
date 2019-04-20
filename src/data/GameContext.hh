@@ -4,7 +4,6 @@
 
 #include "RA_AchievementSet.h"
 #include "RA_Leaderboard.h"
-#include "RA_RichPresence.h"
 
 #include <string>
 
@@ -200,6 +199,7 @@ protected:
     bool ReloadAchievement(Achievement& pAchievement);
     void RefreshUnlocks(bool bUnpause, int nPopup);
     void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup);
+    void LoadRichPresenceScript(const std::string& sRichPresenceScript);
 
     unsigned int m_nGameId = 0;
     std::wstring m_sGameTitle;
@@ -209,7 +209,8 @@ protected:
     unsigned int m_nNextLocalId = 0;
     static const unsigned int FirstLocalId = 111000001;
 
-    std::unique_ptr<RA_RichPresenceInterpreter> m_pRichPresenceInterpreter;
+    void* m_pRichPresence = nullptr;                                   // rc_richpresence_t
+    std::shared_ptr<std::vector<unsigned char>> m_pRichPresenceBuffer; // buffer for rc_richpresence_t
 
     std::vector<std::unique_ptr<Achievement>> m_vAchievements;
     std::vector<std::unique_ptr<RA_Leaderboard>> m_vLeaderboards;

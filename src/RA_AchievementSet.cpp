@@ -5,7 +5,6 @@
 #include "RA_Dlg_AchEditor.h" // RA_httpthread.h
 #include "RA_User.h"
 #include "RA_httpthread.h"
-#include "RA_RichPresence.h"
 #include "RA_md5factory.h"
 
 #include "data\GameContext.hh"

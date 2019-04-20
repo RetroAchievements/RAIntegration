@@ -18,6 +18,19 @@ public:
     {
     }
 
+    void ClearPopups() override
+    {
+        while (!m_vPopupMessages.empty())
+            m_vPopupMessages.pop_front();
+
+        while (!m_vScoreboards.empty())
+            m_vScoreboards.pop_front();
+
+        m_vScoreTrackers.clear();
+
+        m_vmOverlay.Deactivate();
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::ui::viewmodels::OverlayManager> m_Override;
 };

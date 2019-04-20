@@ -7,9 +7,9 @@ namespace ui {
 namespace viewmodels {
 
 static _CONSTANT_VAR FONT_TO_USE = "Tahoma";
-static _CONSTANT_VAR FONT_SIZE_TITLE = 24;
-static _CONSTANT_VAR FONT_SIZE_SUBTITLE = 20;
-static _CONSTANT_VAR FONT_SIZE_DETAIL = 18;
+static _CONSTANT_VAR FONT_SIZE_TITLE = 26;
+static _CONSTANT_VAR FONT_SIZE_SUBTITLE = 18;
+static _CONSTANT_VAR FONT_SIZE_DETAIL = 16;
 
 const StringModelProperty PopupMessageViewModel::TitleProperty("PopupMessageViewModel", "Title", L"");
 const StringModelProperty PopupMessageViewModel::DescriptionProperty("PopupMessageViewModel", "Description", L"");
@@ -23,9 +23,9 @@ void PopupMessageViewModel::BeginAnimation()
     // left margin 10px
     SetRenderLocationX(10);
 
-    // animate to bottom margin 10px. assume height = 64+2
+    // animate to bottom margin 10px. assume height = 64+6
     m_nInitialY = 0;
-    m_nTargetY = 10 + 64 + 2;
+    m_nTargetY = 10 + 64 + 6;
     SetRenderLocationY(m_nInitialY);
     SetRenderLocationYRelativePosition(RelativePosition::Far);
 }
@@ -96,7 +96,7 @@ void PopupMessageViewModel::CreateRenderImage()
         std::max(szTitle.Width, std::max(szSubTitle.Width, szDetail.Width) + nSubTitleIndent) + 6 + 4 + nShadowOffset;
     const int nHeight = 4 + nImageSize + 4 + nShadowOffset;
 
-    pSurface = pSurfaceFactory.CreateTransparentSurface(nWidth, nHeight);
+    pSurface = pSurfaceFactory.CreateSurface(nWidth, nHeight);
     m_pSurface = std::move(pSurface);
 
     int nX = 4;
@@ -121,7 +121,7 @@ void PopupMessageViewModel::CreateRenderImage()
 
     // title
     nY -= 1;
-    m_pSurface->WriteText(nX + 1, nY + 1, nFontTitle, pOverlayTheme.ColorTextShadow(), sTitle);
+    m_pSurface->WriteText(nX + 2, nY + 2, nFontTitle, pOverlayTheme.ColorTextShadow(), sTitle);
     m_pSurface->WriteText(nX, nY, nFontTitle, pOverlayTheme.ColorTitle(), sTitle);
     nX += nSubTitleIndent;
 
@@ -129,7 +129,7 @@ void PopupMessageViewModel::CreateRenderImage()
     nY += FONT_SIZE_TITLE - 1;
     if (!sSubTitle.empty())
     {
-        m_pSurface->WriteText(nX + 1, nY + 1, nFontSubtitle, pOverlayTheme.ColorTextShadow(), sSubTitle);
+        m_pSurface->WriteText(nX + 2, nY + 2, nFontSubtitle, pOverlayTheme.ColorTextShadow(), sSubTitle);
         m_pSurface->WriteText(nX, nY, nFontSubtitle, pOverlayTheme.ColorDescription(), sSubTitle);
     }
 
@@ -137,11 +137,9 @@ void PopupMessageViewModel::CreateRenderImage()
     nY += FONT_SIZE_SUBTITLE;
     if (!sDetail.empty())
     {
-        m_pSurface->WriteText(nX + 1, nY + 1, nFontDetail, pOverlayTheme.ColorTextShadow(), sDetail);
+        m_pSurface->WriteText(nX + 2, nY + 2, nFontDetail, pOverlayTheme.ColorTextShadow(), sDetail);
         m_pSurface->WriteText(nX, nY, nFontDetail, IsDetailError() ? pOverlayTheme.ColorError() : pOverlayTheme.ColorDetail(), sDetail);
     }
-
-    m_pSurface->SetOpacity(0.85);
 }
 
 } // namespace viewmodels

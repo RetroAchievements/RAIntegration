@@ -10,6 +10,7 @@
 
 #include "ui\IDesktop.hh"
 #include "ui\OverlayTheme.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\OverlayAchievementsPageViewModel.hh"
 #include "ui\viewmodels\OverlayLeaderboardsPageViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
@@ -27,11 +28,16 @@ void OverlayViewModel::BeginAnimation()
     const auto& vmEmulator = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().Emulator;
     const auto szEmulator = ra::services::ServiceLocator::Get<ra::ui::IDesktop>().GetClientSize(vmEmulator);
 
-    m_pSurface = ra::services::ServiceLocator::GetMutable<ra::ui::drawing::ISurfaceFactory>().CreateSurface(szEmulator.Width, szEmulator.Height);
-    m_bSurfaceStale = true;
+    Resize(szEmulator.Width, szEmulator.Height);
 
     SetRenderLocationX(-szEmulator.Width);
     SetRenderLocationY(0);
+}
+
+void OverlayViewModel::Resize(int nWidth, int nHeight)
+{
+    m_pSurface = ra::services::ServiceLocator::GetMutable<ra::ui::drawing::ISurfaceFactory>().CreateSurface(nWidth, nHeight);
+    m_bSurfaceStale = true;
 }
 
 bool OverlayViewModel::UpdateRenderImage(double fElapsed)
@@ -66,10 +72,7 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
                 bUpdated = true;
 
                 if (nNewX == 0)
-                {
                     m_nState = State::Visible;
-                    m_fAnimationProgress = -1.0;
-                }
             }
         }
         else if (m_nState == State::FadeOut)
@@ -91,8 +94,7 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
                 {
                     m_nState = State::Hidden;
                     m_fAnimationProgress = -1.0;
-                    m_bSurfaceStale = false;
-                    m_pSurface.reset();
+                    ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Unpause();
                     return true;
                 }
             }
@@ -193,6 +195,11 @@ void OverlayViewModel::CreateRenderImage()
     m_pSurface->WriteText(nWidth - nControlsX2, nControlsY2, nNavFont, pTheme.ColorOverlayText(), sBack);
 }
 
+void OverlayViewModel::RefreshOverlay()
+{
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().RequestRender();
+}
+
 void OverlayViewModel::ProcessInput(const ControllerInput& pInput)
 {
     if (m_nState == State::Hidden)
@@ -247,6 +254,7 @@ void OverlayViewModel::ProcessInput(const ControllerInput& pInput)
         {
             m_bSurfaceStale = true;
             m_bInputLock = true;
+            RefreshOverlay();
         }
     }
 }
@@ -263,6 +271,7 @@ void OverlayViewModel::Activate()
                 PopulatePages();
 
             CurrentPage().Refresh();
+            RefreshOverlay();
             break;
 
         case State::FadeOut:
@@ -279,13 +288,13 @@ void OverlayViewModel::Deactivate()
         case State::Visible:
             m_nState = State::FadeOut;
             m_fAnimationProgress = 0.0;
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Unpause();
+            RefreshOverlay();
             break;
             
         case State::FadeIn:
             m_nState = State::FadeOut;
             m_fAnimationProgress = INOUT_TIME - m_fAnimationProgress;
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Unpause();
+            SetRenderLocationX(GetRenderImage().GetWidth() - GetRenderLocationX());
             break;
     }
 }

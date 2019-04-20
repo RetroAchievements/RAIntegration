@@ -11,6 +11,16 @@ namespace viewmodels {
 
 class OverlayViewModel : public PopupViewModelBase {
 public:
+    enum class State
+    {
+        Hidden,
+        FadeIn,
+        Visible,
+        FadeOut,
+    };
+
+    State CurrentState() const noexcept { return m_nState; }
+
     /// <summary>
     /// Begins the animation cycle.
     /// </summary>
@@ -27,6 +37,15 @@ public:
     void RebuildRenderImage() noexcept { m_bSurfaceStale = true; }
 
     /// <summary>
+    /// Releases the memory used to cache the render image.
+    /// </summary>
+    void DestroyRenderImage() noexcept
+    {
+        m_bSurfaceStale = false;
+        m_pSurface.reset();
+    }
+
+    /// <summary>
     /// Determines whether the animation cycle has started.
     /// </summary>
     bool IsAnimationStarted() const noexcept override
@@ -39,20 +58,12 @@ public:
     /// </summary>
     bool IsAnimationComplete() const noexcept override
     {
-        return (m_fAnimationProgress >= INOUT_TIME);
+        return (m_nState == State::Hidden);
     }
 
-    enum class State
-    {
-        Hidden,
-        FadeIn,
-        Visible,
-        FadeOut,
-    };
-
-    State CurrentState() const noexcept { return m_nState; }
-
     void ProcessInput(const ControllerInput& pInput);
+
+    void Resize(int nWidth, int nHeight);
 
     void Activate();
     void Deactivate();
@@ -97,6 +108,8 @@ public:
 private:
     void PopulatePages();
     void CreateRenderImage();
+
+    void RefreshOverlay();
 
     State m_nState = State::Hidden;
     bool m_bSurfaceStale = false;

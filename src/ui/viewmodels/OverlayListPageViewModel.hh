@@ -101,7 +101,7 @@ public:
 
 protected:
     bool SetDetail(bool bDetail);
-    void ForceRedraw() noexcept { m_bRedraw = true; }
+    void ForceRedraw();
     virtual void FetchItemDetail(_UNUSED ItemViewModel& vmItem) noexcept(false) {};
 
     gsl::index m_nScrollOffset = 0;

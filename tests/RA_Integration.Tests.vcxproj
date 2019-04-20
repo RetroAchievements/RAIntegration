@@ -261,6 +261,7 @@
     <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayListPageViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayManager_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel_Tests.cpp" />
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
@@ -278,10 +279,13 @@
     <ClInclude Include="mocks\MockImageRepository.hh" />
     <ClInclude Include="mocks\MockLocalStorage.hh" />
     <ClInclude Include="mocks\MockOverlayManager.hh" />
+    <ClInclude Include="mocks\MockOverlayTheme.hh" />
     <ClInclude Include="mocks\MockServer.hh" />
     <ClInclude Include="mocks\MockSessionTracker.hh" />
+    <ClInclude Include="mocks\MockSurface.hh" />
     <ClInclude Include="mocks\MockThreadPool.hh" />
     <ClInclude Include="mocks\MockUserContext.hh" />
+    <ClInclude Include="mocks\MockWindowManager.hh" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="RA_Condition_Tests.cpp" />
     <ClCompile Include="RA_Leaderboard_Tests.cpp" />

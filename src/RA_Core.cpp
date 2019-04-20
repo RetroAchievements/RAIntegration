@@ -34,6 +34,7 @@
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
+#include "ui\win32\OverlayWindow.hh"
 
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
@@ -68,6 +69,9 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
     auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
     pDesktop.SetMainHWnd(hMainHWND);
     g_RAMainWnd = hMainHWND;
+
+    auto& pOverlayWindow = ra::services::ServiceLocator::GetMutable<ra::ui::win32::OverlayWindow>();
+    pOverlayWindow.CreateOverlayWindow(hMainHWND);
 
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     g_sHomeDir = pFileSystem.BaseDirectory();
@@ -225,6 +229,11 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
 
 API void CCONV _RA_OnReset()
 {
+    // if there's no game loaded, there shouldn't be any active achievements or popups to clear - except maybe the
+    // logging in messages, which we don't want to clear.
+    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
+        return;
+
     // Temporarily disable achievements while the system is resetting. They will automatically re-enable when
     // DoAchievementsFrame is called if the trigger is not active. Prevents most unexpected triggering caused
     // by resetting the emulator.

@@ -14,13 +14,13 @@ const StringModelProperty ScoreboardViewModel::EntryViewModel::UserNameProperty(
 const StringModelProperty ScoreboardViewModel::EntryViewModel::ScoreProperty("ScoreboardViewModel::EntryViewModel", "Score", L"0");
 const BoolModelProperty ScoreboardViewModel::EntryViewModel::IsHighlightedProperty("ScoreboardViewModel::EntryViewModel", "IsHighlighted", false);
 
-static int CalculateScoreboardHeight(const ra::ui::OverlayTheme& pTheme)
+static int CalculateScoreboardHeight(const ra::ui::OverlayTheme& pTheme) noexcept
 {
     return 4 + pTheme.FontSizePopupLeaderboardTitle() + 2 +
         (pTheme.FontSizePopupLeaderboardEntry() + 2) * 7 + 4;
 }
 
-static int CalculateScoreboardWidth(const ra::ui::OverlayTheme& pTheme)
+static int CalculateScoreboardWidth(const ra::ui::OverlayTheme& pTheme) noexcept
 {
     return 4 + std::max(pTheme.FontSizePopupLeaderboardEntry() * 15, pTheme.FontSizePopupLeaderboardTitle() * 10) + 4;
 }
@@ -68,8 +68,8 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
 
         const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
         m_pSurface = pSurfaceFactory.CreateSurface(nWidth, nHeight);
-        auto nFontTitle = m_pSurface->LoadFont(pTheme.FontPopup(), pTheme.FontSizePopupLeaderboardTitle(), ra::ui::FontStyles::Normal);
-        auto nFontText = m_pSurface->LoadFont(pTheme.FontPopup(), pTheme.FontSizePopupLeaderboardEntry(), ra::ui::FontStyles::Normal);
+        const auto nFontTitle = m_pSurface->LoadFont(pTheme.FontPopup(), pTheme.FontSizePopupLeaderboardTitle(), ra::ui::FontStyles::Normal);
+        const auto nFontText = m_pSurface->LoadFont(pTheme.FontPopup(), pTheme.FontSizePopupLeaderboardEntry(), ra::ui::FontStyles::Normal);
 
         // background
         m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), Color::Transparent);

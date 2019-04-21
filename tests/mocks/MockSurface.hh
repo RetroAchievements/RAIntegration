@@ -14,27 +14,27 @@ namespace mocks {
 class MockSurface : public ISurface
 {
 public:
-    MockSurface(size_t nWidth, size_t nHeight)
+    MockSurface(size_t nWidth, size_t nHeight) noexcept
         : m_nWidth(nWidth), m_nHeight(nHeight)
     {
     }
 
-    size_t GetWidth() const override { return m_nWidth; }
-    size_t GetHeight() const override { return m_nHeight; }
+    size_t GetWidth() const noexcept override { return m_nWidth; }
+    size_t GetHeight() const noexcept override { return m_nHeight; }
 
-    void FillRectangle(int, int, int, int, Color) override {}
-    int LoadFont(const std::string&, int, FontStyles) override { return 1; }
+    void FillRectangle(int, int, int, int, Color) noexcept override {}
+    int LoadFont(const std::string&, int, FontStyles) noexcept override { return 1; }
 
-    ra::ui::Size MeasureText(int, const std::wstring& sText) const override
+    ra::ui::Size MeasureText(int, const std::wstring& sText) const noexcept override
     {
         return { ra::to_signed(sText.length()), 1 };
     }
 
-    void WriteText(int, int, int, Color, const std::wstring&) override {}
-    void DrawImage(int, int, int, int, const ImageReference&) override {}
-    void DrawImageStretched(int, int, int, int, const ImageReference&) override {}
-    void DrawSurface(int, int, const ISurface&) override {}
-    void SetOpacity(double) override {}
+    void WriteText(int, int, int, Color, const std::wstring&) noexcept override {}
+    void DrawImage(int, int, int, int, const ImageReference&) noexcept override {}
+    void DrawImageStretched(int, int, int, int, const ImageReference&) noexcept override {}
+    void DrawSurface(int, int, const ISurface&) noexcept override {}
+    void SetOpacity(double) noexcept override {}
 
 private:
     size_t m_nWidth;

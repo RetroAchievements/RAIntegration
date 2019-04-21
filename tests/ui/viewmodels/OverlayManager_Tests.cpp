@@ -46,7 +46,7 @@ private:
         OverlayManagerHarness() noexcept
             : m_Override(this)
         {
-            SetRenderRequestHandler([this]()
+            GSL_SUPPRESS_F6 SetRenderRequestHandler([this]()
             {
                 m_bRenderRequested = true;
             });
@@ -60,7 +60,7 @@ private:
             m_bRenderRequested = false;
         }
 
-        int GetOverlayRenderX() const noexcept { return m_vmOverlay.GetRenderLocationX(); }
+        int GetOverlayRenderX() const { return m_vmOverlay.GetRenderLocationX(); }
 
     private:
         bool m_bRenderRequested = false;

@@ -71,15 +71,15 @@ void PopupMessageViewModel::CreateRenderImage()
     const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
     auto pSurface = pSurfaceFactory.CreateSurface(1, 1);
 
-    auto nFontTitle = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupTitle(), ra::ui::FontStyles::Normal);
+    const auto nFontTitle = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupTitle(), ra::ui::FontStyles::Normal);
     const auto sTitle = GetTitle();
     const auto szTitle = pSurface->MeasureText(nFontTitle, sTitle);
 
-    auto nFontSubtitle = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupSubtitle(), ra::ui::FontStyles::Normal);
+    const auto nFontSubtitle = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupSubtitle(), ra::ui::FontStyles::Normal);
     const auto sSubTitle = GetDescription();
     const auto szSubTitle = pSurface->MeasureText(nFontSubtitle, sSubTitle);
 
-    auto nFontDetail = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupDetail(), ra::ui::FontStyles::Normal);
+    const auto nFontDetail = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupDetail(), ra::ui::FontStyles::Normal);
     const auto sDetail = GetDetail();
     const auto szDetail = pSurface->MeasureText(nFontDetail, sDetail);
 

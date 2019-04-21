@@ -270,6 +270,12 @@
     <ClCompile Include="ui\win32\OverlayWindow.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\BrokenAchievementsDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -673,6 +679,15 @@
     </ClInclude>
     <ClInclude Include="ui\win32\OverlayWindow.hh">
       <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\BrokenAchievementsViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\BrokenAchievementsDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

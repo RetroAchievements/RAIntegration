@@ -28,6 +28,7 @@
 #include "services\ServiceLocator.hh"
 
 #include "ui\ImageReference.hh"
+#include "ui\viewmodels\BrokenAchievementsViewModel.hh"
 #include "ui\viewmodels\GameChecksumViewModel.hh"
 #include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -35,6 +36,8 @@
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 #include "ui\win32\OverlayWindow.hh"
+
+//#define NEW_REPORTER 1
 
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
@@ -563,7 +566,15 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         break;
 
         case IDM_RA_REPORTBROKENACHIEVEMENTS:
+#ifdef NEW_REPORTER
+        {
+            ra::ui::viewmodels::BrokenAchievementsViewModel vmBrokenAchievements;
+            if (vmBrokenAchievements.InitializeAchievements())
+                vmBrokenAchievements.ShowModal();
+        }
+#else
             Dlg_AchievementsReporter::DoModalDialog(g_hThisDLLInst, g_RAMainWnd);
+#endif
             break;
 
         case IDM_RA_GETROMCHECKSUM:

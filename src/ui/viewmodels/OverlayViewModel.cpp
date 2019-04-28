@@ -234,6 +234,9 @@ void OverlayViewModel::ProcessInput(const ControllerInput& pInput)
 
     if (m_nCurrentButton == nPrioritizedButton)
     {
+        if (nPrioritizedButton == NavButton::None) // nothing pressed, nothing to do
+            return;
+
         // if the user holds the button down for 600ms, start pulsing the button every 200ms
         const auto tNow = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
         if (tNow - m_tCurrentButtonPressed < std::chrono::milliseconds(600))

@@ -56,7 +56,6 @@
     <ClCompile Include="Exports.cpp" />
     <ClCompile Include="RA_Achievement.cpp" />
     <ClCompile Include="RA_AchievementSet.cpp" />
-    <ClCompile Include="RA_CodeNotes.cpp" />
     <ClCompile Include="RA_Condition.cpp" />
     <ClCompile Include="RA_Core.cpp" />
     <ClCompile Include="RA_Defs.cpp" />
@@ -122,7 +121,9 @@
   <ItemGroup>
     <ClInclude Include="api\ApiCall.hh" />
     <ClInclude Include="api\AwardAchievement.hh" />
+    <ClInclude Include="api\DeleteCodeNote.hh" />
     <ClInclude Include="api\FetchAchievementInfo.hh" />
+    <ClInclude Include="api\FetchCodeNotes.hh" />
     <ClInclude Include="api\FetchGameData.hh" />
     <ClInclude Include="api\FetchGamesList.hh" />
     <ClInclude Include="api\FetchLeaderboardInfo.hh" />
@@ -141,6 +142,7 @@
     <ClInclude Include="api\SubmitLeaderboardEntry.hh" />
     <ClInclude Include="api\SubmitNewTitle.hh" />
     <ClInclude Include="api\SubmitTicket.hh" />
+    <ClInclude Include="api\UpdateCodeNote.hh" />
     <ClInclude Include="data\AsyncObject.hh" />
     <ClInclude Include="data\ConsoleContext.hh" />
     <ClInclude Include="data\EmulatorContext.hh" />
@@ -154,7 +156,6 @@
     <ClInclude Include="RA_Achievement.h" />
     <ClInclude Include="RA_AchievementSet.h" />
     <ClInclude Include="RA_BuildVer.h" />
-    <ClInclude Include="RA_CodeNotes.h" />
     <ClInclude Include="RA_Condition.h" />
     <ClInclude Include="RA_Core.h" />
     <ClInclude Include="RA_Defs.h" />

@@ -3,7 +3,9 @@
 #pragma once
 
 #include "api/AwardAchievement.hh"
+#include "api/DeleteCodeNote.hh"
 #include "api/FetchAchievementInfo.hh"
+#include "api/FetchCodeNotes.hh"
 #include "api/FetchGameData.hh"
 #include "api/FetchGamesList.hh"
 #include "api/FetchLeaderboardInfo.hh"
@@ -17,6 +19,7 @@
 #include "api/SubmitLeaderboardEntry.hh"
 #include "api/SubmitNewTitle.hh"
 #include "api/SubmitTicket.hh"
+#include "api/UpdateCodeNote.hh"
 
 namespace ra {
 namespace api {
@@ -38,6 +41,9 @@ public:
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) = 0;
     virtual FetchGameData::Response FetchGameData(const FetchGameData::Request& request) = 0;
+    virtual FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) = 0;
+    virtual UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) = 0;
+    virtual DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) = 0;
     virtual FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) = 0;
     virtual FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) = 0;
 

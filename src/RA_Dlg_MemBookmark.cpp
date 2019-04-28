@@ -597,9 +597,9 @@ void Dlg_MemBookmark::AddAddress()
     NewBookmark.SetPrevious(NewBookmark.Value());
 
     // Get Code Note and add as description
-    const CodeNotes::CodeNoteObj* pSavedNote = g_MemoryDialog.Notes().FindCodeNote(nAddr);
-    if ((pSavedNote != nullptr) && (pSavedNote->Note().length() > 0))
-        NewBookmark.SetDescription(ra::Widen(pSavedNote->Note()));
+    const auto* pNote = pGameContext.FindCodeNote(nAddr);
+    if (pNote && !pNote->empty())
+        NewBookmark.SetDescription(ra::Widen(*pNote));
 
     // Add Bookmark to vector
     AddBookmark(std::move(NewBookmark));

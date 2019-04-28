@@ -286,7 +286,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource* pToRenderBitmapS
     // Size of a scan line represented in bytes: 4 bytes each pixel
     UINT cbStride = 0U;
     if (SUCCEEDED(hr))
-        hr = UIntMult(nWidth, sizeof(ra::ARGB), &cbStride);
+        hr = UIntMult(nWidth, sizeof(UINT), &cbStride);
 
     // Size of the image, represented in bytes
     UINT cbImage = 0U;

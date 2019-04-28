@@ -103,6 +103,21 @@ public:
         return HandleRequest<ra::api::FetchGameData>(request);
     }
 
+    FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override
+    {
+        return HandleRequest<ra::api::FetchCodeNotes>(request);
+    }
+
+    UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) override
+    {
+        return HandleRequest<ra::api::UpdateCodeNote>(request);
+    }
+
+    DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) override
+    {
+        return HandleRequest<ra::api::DeleteCodeNote>(request);
+    }
+
     FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) override
     {
         return HandleRequest<ra::api::FetchAchievementInfo>(request);

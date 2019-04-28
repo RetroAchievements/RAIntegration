@@ -208,6 +208,7 @@
     <ClCompile Include="..\src\services\SearchResults.cpp" />
     <ClCompile Include="..\src\ui\OverlayTheme.cpp" />
     <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
@@ -254,6 +255,7 @@
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
     <ClCompile Include="..\src\RA_MemManager.cpp" />
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel_Tests.cpp" />

@@ -4,6 +4,7 @@
 
 #include "ui/viewmodels/WindowManager.hh"
 
+#include "ui/win32/BrokenAchievementsDialog.hh"
 #include "ui/win32/GameChecksumDialog.hh"
 #include "ui/win32/LoginDialog.hh"
 #include "ui/win32/MessageBoxDialog.hh"
@@ -23,6 +24,7 @@ Desktop::Desktop() noexcept
     m_vDialogPresenters.emplace_back(new (std::nothrow) RichPresenceDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) GameChecksumDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) LoginDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) BrokenAchievementsDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) UnknownGameDialog::Presenter);
 }
 

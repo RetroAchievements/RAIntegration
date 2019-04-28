@@ -67,7 +67,6 @@
     <ClCompile Include="RA_Dlg_Memory.cpp" />
     <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
-    <ClCompile Include="RA_Interface.cpp" />
     <ClCompile Include="RA_Json.cpp" />
     <ClCompile Include="RA_Leaderboard.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />

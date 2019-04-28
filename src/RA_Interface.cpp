@@ -1,7 +1,5 @@
 #include "RA_Interface.h"
 
-#ifndef RA_EXPORTS
-
 #include <winhttp.h>
 #include <cassert>
 #include <stdexcept>
@@ -346,6 +344,7 @@ static BOOL DoBlockingHttpGetWithRetry(const char* sHostName, const char* sReque
     return FALSE;
 }
 
+#ifndef RA_UTEST
 static std::wstring GetIntegrationPath()
 {
     wchar_t sBuffer[2048];
@@ -356,6 +355,7 @@ static std::wstring GetIntegrationPath()
 
     return std::wstring(sBuffer);
 }
+#endif
 
 static void WriteBufferToFile(const std::wstring& sFile, const char* sBuffer, int nBytes)
 {
@@ -502,11 +502,11 @@ void RA_Init(HWND hMainHWND, int nConsoleID, const char* sClientVersion)
 
     char sHostName[256] = "";
     if (_RA_HostName != nullptr)
-        strcpy(sHostName, _RA_HostName());
+        strcpy_s(sHostName, sizeof(sHostName), _RA_HostName());
 
     if (!sHostName[0])
     {
-        strcpy(sHostName, "www.retroachievements.org");
+        strcpy_s(sHostName, sizeof(sHostName), "www.retroachievements.org");
     }
     else if (_RA_InitOffline != nullptr && strcmp(sHostName, "OFFLINE") == 0)
     {
@@ -612,11 +612,15 @@ void RA_Shutdown()
 
     //	Clear func ptrs
     _RA_IntegrationVersion = nullptr;
+    _RA_HostName = nullptr;
     _RA_InitI = nullptr;
+    _RA_InitOffline = nullptr;
     _RA_Shutdown = nullptr;
+    _RA_AttemptLogin = nullptr;
     _RA_NavigateOverlay = nullptr;
     _RA_UpdateOverlay = nullptr;
     _RA_RenderOverlay = nullptr;
+    _RA_IsOverlayFullyVisible = nullptr;
     _RA_OnLoadNewRom = nullptr;
     _RA_IdentifyRom = nullptr;
     _RA_ActivateGame = nullptr;
@@ -632,12 +636,10 @@ void RA_Shutdown()
     _RA_OnSaveState = nullptr;
     _RA_OnReset = nullptr;
     _RA_DoAchievementsFrame = nullptr;
-    _RA_InstallSharedFunctions = nullptr;
-
     _RA_SetConsoleID = nullptr;
     _RA_HardcoreModeIsActive = nullptr;
     _RA_WarnDisableHardcore = nullptr;
-    _RA_AttemptLogin = nullptr;
+    _RA_InstallSharedFunctions = nullptr;
 
     //	Uninstall DLL
     if (g_hRADLL)
@@ -646,5 +648,3 @@ void RA_Shutdown()
         g_hRADLL = nullptr;
     }
 }
-
-#endif //RA_EXPORTS

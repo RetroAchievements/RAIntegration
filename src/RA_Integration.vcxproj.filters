@@ -87,9 +87,6 @@
     <ClCompile Include="RA_md5factory.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Interface.cpp">
-      <Filter>Interface</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Core.cpp">
       <Filter>Interface</Filter>
     </ClCompile>

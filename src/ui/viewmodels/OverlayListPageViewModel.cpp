@@ -71,15 +71,15 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
     const auto& sGameTitle = GetListTitle();
     if (!sGameTitle.empty())
     {
-        const auto nTitleFont = pSurface.LoadFont(OverlayViewModel::FONT_TO_USE, OverlayViewModel::FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
+        const auto nTitleFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayTitle(), ra::ui::FontStyles::Normal);
         pSurface.WriteText(nX, nY, nTitleFont, pTheme.ColorOverlayText(), sGameTitle);
         nY += 34;
         nHeight -= 34;
     }
 
     // subtitle
-    const auto nFont = pSurface.LoadFont(OverlayViewModel::FONT_TO_USE, OverlayViewModel::FONT_SIZE_HEADER, ra::ui::FontStyles::Normal);
-    const auto nSubFont = pSurface.LoadFont(OverlayViewModel::FONT_TO_USE, OverlayViewModel::FONT_SIZE_SUMMARY, ra::ui::FontStyles::Normal);
+    const auto nFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayHeader(), ra::ui::FontStyles::Normal);
+    const auto nSubFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
     const auto& sSummary = GetSummary();
     pSurface.WriteText(nX, nY, nSubFont, pTheme.ColorOverlaySubText(), sSummary);
     nY += 30;
@@ -105,7 +105,7 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
     }
 
     // achievements list
-    while (nHeight > nItemSize + nItemSpacing)
+    while (nHeight >= nItemSize)
     {
         const auto* pItem = m_vItems.GetItemAt(nIndex);
         if (!pItem)

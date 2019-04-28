@@ -124,7 +124,7 @@ void OverlayViewModel::CreateRenderImage()
     m_pSurface->DrawImageStretched(0, 0, nWidth, nHeight, pOverlayBackground);
 
     // user frame
-    const auto nFont = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_HEADER, ra::ui::FontStyles::Normal);
+    const auto nFont = m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayHeader(), ra::ui::FontStyles::Normal);
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
     const auto sUserName = ra::Widen(pUserContext.GetUsername());
@@ -156,7 +156,7 @@ void OverlayViewModel::CreateRenderImage()
     // hardcore indicator
     if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
-        const auto nHardcoreFont = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_SUMMARY, ra::ui::FontStyles::Normal);
+        const auto nHardcoreFont = m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
         const std::wstring sHardcore = L"HARDCORE";
         const auto szHardcore = m_pSurface->MeasureText(nHardcoreFont, sHardcore);
         m_pSurface->WriteText(nWidth - nMargin - szHardcore.Width - nPadding, nMargin + nUserFrameHeight,
@@ -165,7 +165,7 @@ void OverlayViewModel::CreateRenderImage()
 
     // page header
     const auto& pCurrentPage = CurrentPage();
-    const auto nPageHeaderFont = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
+    const auto nPageHeaderFont = m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayTitle(), ra::ui::FontStyles::Normal);
     m_pSurface->WriteText(nMargin, nMargin, nPageHeaderFont, pTheme.ColorOverlayText(), pCurrentPage.GetTitle());
 
     // page content
@@ -178,7 +178,7 @@ void OverlayViewModel::CreateRenderImage()
     const auto sNext = std::wstring(L"\u2BC8: Next");
     const auto sPrev = std::wstring(L"\u2BC7: Prev");
 
-    const auto nNavFont = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_SUMMARY, ra::ui::FontStyles::Normal);
+    const auto nNavFont = m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
     const auto szBack = m_pSurface->MeasureText(nNavFont, sBack);
     const auto szSelect = m_pSurface->MeasureText(nNavFont, sSelect);
 

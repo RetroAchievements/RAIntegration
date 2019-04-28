@@ -60,8 +60,8 @@ void OverlayLeaderboardsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& p
         return;
 
     const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
-    const auto nFont = pSurface.LoadFont(OverlayViewModel::FONT_TO_USE, OverlayViewModel::FONT_SIZE_HEADER, ra::ui::FontStyles::Normal);
-    const auto nSubFont = pSurface.LoadFont(OverlayViewModel::FONT_TO_USE, OverlayViewModel::FONT_SIZE_SUMMARY, ra::ui::FontStyles::Normal);
+    const auto nFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayHeader(), ra::ui::FontStyles::Normal);
+    const auto nSubFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
 
     pSurface.WriteText(nX, nY + 4, nFont, pTheme.ColorOverlayText(), pLeaderboard->GetLabel());
     pSurface.WriteText(nX, nY + 4 + 26, nSubFont, pTheme.ColorOverlaySubText(), pLeaderboard->GetDetail());

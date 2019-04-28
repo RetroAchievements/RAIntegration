@@ -51,6 +51,8 @@ public:
 
         static const unsigned int FirstLocalId = GameContext::FirstLocalId;
 
+        void SetGameId(unsigned int nGameId) noexcept { m_nGameId = nGameId; }
+
         Achievement& MockAchievement()
         {
             auto& pAch = NewAchievement(AchievementSet::Type::Core);
@@ -511,8 +513,14 @@ public:
             return true;
         });
 
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
+        {
+            return true;
+        });
+
         game.LoadGame(1U);
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks is async
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
 
         const auto* pAch1 = game.FindAchievement(5U);
         Assert::IsNotNull(pAch1);
@@ -542,8 +550,14 @@ public:
 
         game.mockServer.ExpectUncalled<ra::api::FetchUserUnlocks>();
 
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
+        {
+            return true;
+        });
+
         game.LoadGame(1U, ra::data::GameContext::Mode::CompatibilityTest);
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks is async
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
 
         const auto* pAch1 = game.FindAchievement(5U);
         Assert::IsNotNull(pAch1);
@@ -569,10 +583,16 @@ public:
             return true;
         });
 
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
+        {
+            return true;
+        });
+
         game.LoadGame(1U);
         Assert::IsTrue(game.runtime.IsPaused());
 
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks is async
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
         Assert::IsFalse(game.runtime.IsPaused());
     }
 
@@ -589,12 +609,18 @@ public:
             return true;
         });
 
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
+        {
+            return true;
+        });
+
         game.runtime.SetPaused(true);
 
         game.LoadGame(1U);
         Assert::IsTrue(game.runtime.IsPaused());
 
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks is async
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
         Assert::IsTrue(game.runtime.IsPaused());
     }
 
@@ -1106,6 +1132,161 @@ public:
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Leaderboards are not submitted in test mode."), pPopup->GetDetail());
         Assert::IsFalse(pPopup->IsDetailError());
+    }
+
+    TEST_METHOD(TestLoadCodeNotes)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1234, L"Note1", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 2345, L"Note2", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 3456, L"Note3", "Author" });
+            return true;
+        });
+
+        game.LoadGame(1U);
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
+
+        const auto* pNote1 = game.FindCodeNote(1234U);
+        Assert::IsNotNull(pNote1);
+        Ensures(pNote1 != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+
+        const auto* pNote2 = game.FindCodeNote(2345U);
+        Assert::IsNotNull(pNote2);
+        Ensures(pNote2 != nullptr);
+        Assert::AreEqual(std::wstring(L"Note2"), *pNote2);
+
+        const auto* pNote3 = game.FindCodeNote(3456U);
+        Assert::IsNotNull(pNote3);
+        Ensures(pNote3 != nullptr);
+        Assert::AreEqual(std::wstring(L"Note3"), *pNote3);
+
+        const auto* pNote4 = game.FindCodeNote(4567U);
+        Assert::IsNull(pNote4);
+
+        game.LoadGame(0U);
+        const auto* pNote5 = game.FindCodeNote(1234U);
+        Assert::IsNull(pNote5);
+    }
+
+    TEST_METHOD(TestSetCodeNote)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::UpdateCodeNote>([](const ra::api::UpdateCodeNote::Request& request, ra::api::UpdateCodeNote::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+            Assert::AreEqual(1234U, request.Address);
+            Assert::AreEqual(std::wstring(L"Note1"), request.Note);
+
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.SetGameId(1U);
+        Assert::IsTrue(game.SetCodeNote(1234, L"Note1"));
+
+        const auto* pNote1 = game.FindCodeNote(1234U);
+        Assert::IsNotNull(pNote1);
+        Ensures(pNote1 != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+    }
+
+    TEST_METHOD(TestSetCodeNoteGameNotLoaded)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::UpdateCodeNote>();
+
+        game.SetGameId(0U);
+        Assert::IsFalse(game.SetCodeNote(1234, L"Note1"));
+
+        const auto* pNote1 = game.FindCodeNote(1234U);
+        Assert::IsNull(pNote1);
+    }
+
+    TEST_METHOD(TestUpdateCodeNote)
+    {
+        int nCalls = 0;
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::UpdateCodeNote>([&nCalls](const ra::api::UpdateCodeNote::Request&, ra::api::UpdateCodeNote::Response& response)
+        {
+            ++nCalls;
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.SetGameId(1U);
+        Assert::IsTrue(game.SetCodeNote(1234, L"Note1"));
+
+        const auto* pNote1 = game.FindCodeNote(1234U);
+        Assert::IsNotNull(pNote1);
+        Ensures(pNote1 != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+
+        Assert::IsTrue(game.SetCodeNote(1234, L"Note1b"));
+        const auto* pNote1b = game.FindCodeNote(1234U);
+        Assert::IsNotNull(pNote1b);
+        Ensures(pNote1b != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1b"), *pNote1b);
+
+        Assert::AreEqual(2, nCalls);
+    }
+
+    TEST_METHOD(TestDeleteCodeNote)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::UpdateCodeNote>([](const ra::api::UpdateCodeNote::Request&, ra::api::UpdateCodeNote::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::DeleteCodeNote>([](const ra::api::DeleteCodeNote::Request& request, ra::api::DeleteCodeNote::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+            Assert::AreEqual(1234U, request.Address);
+
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.SetGameId(1U);
+        Assert::IsTrue(game.SetCodeNote(1234, L"Note1"));
+
+        const auto* pNote1 = game.FindCodeNote(1234U);
+        Assert::IsNotNull(pNote1);
+        Ensures(pNote1 != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+
+        Assert::IsTrue(game.DeleteCodeNote(1234));
+        const auto* pNote1b = game.FindCodeNote(1234U);
+        Assert::IsNull(pNote1b);
+    }
+
+    TEST_METHOD(TestDeleteCodeNoteNonExistant)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::DeleteCodeNote>();
+
+        game.SetGameId(1U);
+
+        Assert::IsTrue(game.DeleteCodeNote(1234));
+        const auto* pNote1 = game.FindCodeNote(1234U);
+        Assert::IsNull(pNote1);
     }
 };
 

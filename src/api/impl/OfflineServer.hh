@@ -15,6 +15,7 @@ public:
     Logout::Response Logout(const Logout::Request&) override;
 
     FetchGameData::Response FetchGameData(const FetchGameData::Request& request) override;
+    FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override;
 };
 
 } // namespace impl

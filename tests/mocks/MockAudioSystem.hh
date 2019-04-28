@@ -21,6 +21,13 @@ public:
         m_vAudioFilesPlayed.emplace_back(sPath);
     }
 
+    static const std::wstring BEEP;
+
+    void Beep() const override
+    {
+        m_vAudioFilesPlayed.emplace_back(BEEP);
+    }
+
     bool WasAudioFilePlayed(const std::wstring& sPath) const noexcept
     {
         for (const auto& sFile : m_vAudioFilesPlayed)

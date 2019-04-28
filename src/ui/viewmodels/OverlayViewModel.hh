@@ -100,11 +100,6 @@ public:
 
     PageViewModel& CurrentPage() const { return *m_vPages.at(m_nSelectedPage); }
     
-    static _CONSTANT_VAR FONT_TO_USE = "Tahoma";
-    static _CONSTANT_VAR FONT_SIZE_TITLE = 32;
-    static _CONSTANT_VAR FONT_SIZE_HEADER = 26;
-    static _CONSTANT_VAR FONT_SIZE_SUMMARY = 22;
-
 private:
     void PopulatePages();
     void CreateRenderImage();

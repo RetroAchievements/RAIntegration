@@ -13,7 +13,7 @@ namespace data {
 class GameContext
 {
 public:
-    GameContext() noexcept = default;
+    GSL_SUPPRESS_F6 GameContext() = default;
     virtual ~GameContext() noexcept = default;
     GameContext(const GameContext&) noexcept = delete;
     GameContext& operator=(const GameContext&) noexcept = delete;
@@ -97,7 +97,7 @@ public:
     /// Finds the achievement associated to the specified unique identifier.
     /// </summary>
     /// <returns>Pointer to achievement, <c>nullptr</c> if not found.</returns>
-    Achievement* FindAchievement(unsigned int nAchievementId) const noexcept
+    Achievement* FindAchievement(ra::AchievementID nAchievementId) const noexcept
     {
         for (auto& pAchievement : m_vAchievements)
         {
@@ -110,12 +110,12 @@ public:
 
     Achievement& NewAchievement(AchievementSet::Type nType);
 
-    bool RemoveAchievement(unsigned int nAchievementId);
+    bool RemoveAchievement(ra::AchievementID nAchievementId);
 
     /// <summary>
     /// Shows the popup for earning an achievement and notifies the server if legitimate.
     /// </summary>
-    void AwardAchievement(unsigned int nAchievementId) const;
+    void AwardAchievement(ra::AchievementID nAchievementId) const;
 
     /// <summary>
     /// Finds the leaderboard associated to the specified unique identifier.
@@ -187,12 +187,68 @@ public:
     /// </summary>    
     /// <returns><c>true</c> if the achievement was reloaded, <c>false</c> if it was not found or destroyed.</returns>
     /// <remarks>Destroys the achievement if it does not exist in local storage</remarks>
-    bool ReloadAchievement(unsigned int nAchievementId);
+    bool ReloadAchievement(ra::AchievementID nAchievementId);
 
     /// <summary>
     /// Saves local achievement data to local storage.
     /// </summary>
     bool SaveLocal() const;
+
+    /// <summary>
+    /// Returns the note associated with the specified address.
+    /// </summary>    
+    /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
+    const std::wstring* FindCodeNote(ra::ByteAddress nAddress) const
+    {
+        const auto pIter = m_mCodeNotes.find(nAddress);
+        return (pIter != m_mCodeNotes.end()) ? &pIter->second.Note : nullptr;
+    }
+
+    /// <summary>
+    /// Returns the note associated with the specified address.
+    /// </summary>
+    /// <param name="nAddress">The address to look up.</param>
+    /// <param name="sAuthor">The author associated to the address.</param>
+    /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
+    const std::wstring* FindCodeNote(ra::ByteAddress nAddress, _Inout_ std::string& sAuthor) const
+    {
+        const auto pIter = m_mCodeNotes.find(nAddress);
+        if (pIter == m_mCodeNotes.end())
+            return nullptr;
+
+        sAuthor = pIter->second.Author;
+        return &pIter->second.Note;
+    }
+
+    /// <summary>
+    /// Enumerates the code notes
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="callback" /> is called for each known code note. If it returns <c>false</c> enumeration stops.
+    /// </remarks>
+    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress)> callback) const
+    {
+        for (auto& pCodeNote : m_mCodeNotes)
+        {
+            if (!callback(pCodeNote.first))
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Sets the note to associate with the specified address.
+    /// </summary>
+    /// <param name="nAddress">The address to set the note for.</param>
+    /// <param name="sNote">The new note for the address.</param>
+    /// <returns><c>true</c> if the note was updated, </c>false</c> if an error occurred.</returns>
+    bool SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote);
+
+    /// <summary>
+    /// Deletes the note associated with the specified address.
+    /// </summary>
+    /// <param name="nAddress">The address to delete the note for.</param>
+    /// <returns><c>true</c> if the note was deleted, </c>false</c> if an error occurred.</returns>
+    bool DeleteCodeNote(ra::ByteAddress nAddress);
 
 protected:
     void MergeLocalAchievements();
@@ -200,20 +256,28 @@ protected:
     void RefreshUnlocks(bool bUnpause, int nPopup);
     void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup);
     void LoadRichPresenceScript(const std::string& sRichPresenceScript);
+    void RefreshCodeNotes();
 
     unsigned int m_nGameId = 0;
     std::wstring m_sGameTitle;
     std::string m_sGameHash;
     Mode m_nMode{};
 
-    unsigned int m_nNextLocalId = 0;
-    static const unsigned int FirstLocalId = 111000001;
+    ra::AchievementID m_nNextLocalId = 0;
+    static const ra::AchievementID FirstLocalId = 111000001;
 
     void* m_pRichPresence = nullptr;                                   // rc_richpresence_t
     std::shared_ptr<std::vector<unsigned char>> m_pRichPresenceBuffer; // buffer for rc_richpresence_t
 
     std::vector<std::unique_ptr<Achievement>> m_vAchievements;
     std::vector<std::unique_ptr<RA_Leaderboard>> m_vLeaderboards;
+
+    struct CodeNote
+    {
+        std::string Author;
+        std::wstring Note;
+    };
+    std::map<ra::ByteAddress, CodeNote> m_mCodeNotes;
 };
 
 } // namespace data

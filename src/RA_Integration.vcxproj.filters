@@ -54,9 +54,6 @@
     <ClCompile Include="RA_AchievementSet.cpp">
       <Filter>Data</Filter>
     </ClCompile>
-    <ClCompile Include="RA_CodeNotes.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Condition.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -282,9 +279,6 @@
       <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="RA_AchievementSet.h">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_CodeNotes.h">
       <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="RA_Condition.h">
@@ -688,6 +682,15 @@
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="api\FetchCodeNotes.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\UpdateCodeNote.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\DeleteCodeNote.hh">
+      <Filter>API</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

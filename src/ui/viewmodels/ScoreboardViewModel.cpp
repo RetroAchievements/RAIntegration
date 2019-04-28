@@ -8,30 +8,38 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-static _CONSTANT_VAR FONT_TO_USE = "Tahoma";
-static _CONSTANT_VAR FONT_SIZE_TITLE = 22;
-static _CONSTANT_VAR FONT_SIZE_TEXT = 22;
-
-static _CONSTANT_VAR SCOREBOARD_WIDTH = 300;
-static _CONSTANT_VAR SCOREBOARD_HEIGHT = 200;
-
 const StringModelProperty ScoreboardViewModel::HeaderTextProperty("ScoreboardViewModel", "HeaderText", L"");
 const IntModelProperty ScoreboardViewModel::EntryViewModel::RankProperty("ScoreboardViewModel::EntryViewModel", "Rank", 1);
 const StringModelProperty ScoreboardViewModel::EntryViewModel::UserNameProperty("ScoreboardViewModel::EntryViewModel", "UserName", L"");
 const StringModelProperty ScoreboardViewModel::EntryViewModel::ScoreProperty("ScoreboardViewModel::EntryViewModel", "Score", L"0");
 const BoolModelProperty ScoreboardViewModel::EntryViewModel::IsHighlightedProperty("ScoreboardViewModel::EntryViewModel", "IsHighlighted", false);
 
+static int CalculateScoreboardHeight(const ra::ui::OverlayTheme& pTheme) noexcept
+{
+    return 4 + pTheme.FontSizePopupLeaderboardTitle() + 2 +
+        (pTheme.FontSizePopupLeaderboardEntry() + 2) * 7 + 4;
+}
+
+static int CalculateScoreboardWidth(const ra::ui::OverlayTheme& pTheme) noexcept
+{
+    return 4 + std::max(pTheme.FontSizePopupLeaderboardEntry() * 15, pTheme.FontSizePopupLeaderboardTitle() * 10) + 4;
+}
+
 void ScoreboardViewModel::BeginAnimation()
 {
     m_fAnimationProgress = 0.0;
 
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+    const auto nHeight = CalculateScoreboardHeight(pTheme);
+    const auto nWidth = CalculateScoreboardWidth(pTheme);
+
     // bottom margin 10px
-    SetRenderLocationY(10 + SCOREBOARD_HEIGHT);
+    SetRenderLocationY(10 + nHeight);
     SetRenderLocationYRelativePosition(RelativePosition::Far);
 
     // animate to right margin 10px.
     m_nInitialX = 0;
-    m_nTargetX = 10 + SCOREBOARD_WIDTH;
+    m_nTargetX = 10 + nWidth;
     SetRenderLocationX(m_nInitialX);
     SetRenderLocationXRelativePosition(RelativePosition::Far);
 }
@@ -55,10 +63,13 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
         const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
         const auto nShadowOffset = pTheme.ShadowOffset();
 
+        const auto nHeight = CalculateScoreboardHeight(pTheme) + nShadowOffset;
+        const auto nWidth = CalculateScoreboardWidth(pTheme) + nShadowOffset;
+
         const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
-        m_pSurface = pSurfaceFactory.CreateSurface(SCOREBOARD_WIDTH, SCOREBOARD_HEIGHT);
-        auto nFontTitle = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
-        auto nFontText = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TEXT, ra::ui::FontStyles::Normal);
+        m_pSurface = pSurfaceFactory.CreateSurface(nWidth, nHeight);
+        const auto nFontTitle = m_pSurface->LoadFont(pTheme.FontPopup(), pTheme.FontSizePopupLeaderboardTitle(), ra::ui::FontStyles::Normal);
+        const auto nFontText = m_pSurface->LoadFont(pTheme.FontPopup(), pTheme.FontSizePopupLeaderboardEntry(), ra::ui::FontStyles::Normal);
 
         // background
         m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), Color::Transparent);
@@ -79,9 +90,9 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
         m_pSurface->WriteText(8, 1, nFontTitle, pTheme.ColorTitle(), sResultsTitle);
 
         // scoreboard
-        size_t nY = 4 + FONT_SIZE_TITLE + 2;
+        size_t nY = 4 + pTheme.FontSizePopupLeaderboardTitle() + 2;
         size_t i = 0;
-        while (i < m_vEntries.Count() && nY + FONT_SIZE_TEXT < m_pSurface->GetHeight())
+        while (i < m_vEntries.Count() && nY + pTheme.FontSizePopupLeaderboardEntry() < m_pSurface->GetHeight())
         {
             const auto* pEntry = m_vEntries.GetItemAt(i++);
             if (!pEntry)
@@ -95,7 +106,7 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
             const auto szScore = m_pSurface->MeasureText(nFontText, sScore);
             m_pSurface->WriteText(m_pSurface->GetWidth() - 4 - szScore.Width - 8, nY, nFontText, nTextColor, sScore);
 
-            nY += FONT_SIZE_TEXT + 2;
+            nY += pTheme.FontSizePopupLeaderboardEntry() + 2;
         }
 
         bUpdated = true;

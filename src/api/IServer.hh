@@ -5,6 +5,7 @@
 #include "api/AwardAchievement.hh"
 #include "api/DeleteCodeNote.hh"
 #include "api/FetchAchievementInfo.hh"
+#include "api/FetchBadgeIds.hh"
 #include "api/FetchCodeNotes.hh"
 #include "api/FetchGameData.hh"
 #include "api/FetchGamesList.hh"
@@ -52,6 +53,7 @@ public:
     virtual FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) = 0;
     virtual SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) = 0;
     virtual SubmitTicket::Response SubmitTicket(const SubmitTicket::Request& request) = 0;
+    virtual FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) = 0;
 
 protected:
     IServer() noexcept = default;

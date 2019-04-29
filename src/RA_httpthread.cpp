@@ -26,7 +26,6 @@ const char* RequestTypeToString[] =
     "RequestNews",
     "RequestRichPresence",
     "RequestFriendList",
-    "RequestBadgeIter",
     "RequestHashLibrary",
     "RequestAllProgress",
 
@@ -40,7 +39,6 @@ const char* RequestTypeToPost[] =
     "news",
     "richpresencepatch",
     "getfriendlist",
-    "badgeiter",
     "hashlibrary",
     "allprogress",
 

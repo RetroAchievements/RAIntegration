@@ -7,20 +7,8 @@
 
 #include "ui\ImageReference.hh"
 
-class BadgeNames
-{
-public:
-    void InstallAchEditorCombo(HWND hCombo) noexcept { m_hDestComboBox = hCombo; }
-
-    void FetchNewBadgeNamesThreaded();
-    void AddNewBadgeName(const char* pStr, bool bAndSelect);
-    void OnNewBadgeNames(const rapidjson::Document& data);
-
-private:
-    HWND m_hDestComboBox = nullptr;
-};
-
 enum class CondSubItems : std::size_t;
+
 class Dlg_AchievementEditor
 {
 public:
@@ -47,8 +35,6 @@ public:
     void UpdateBadge(const std::string& sNewName); // Call to set/update data
     void UpdateSelectedBadgeImage(
         const std::string& sBackupBadgeToUse = std::string()); // Call to just update the badge image/bitmap
-
-    BadgeNames& GetBadgeNames() noexcept { return m_BadgeNames; }
 
     size_t GetSelectedConditionGroup() const noexcept;
     void SetSelectedConditionGroup(size_t nGrp) const noexcept;
@@ -91,8 +77,8 @@ private:
     Achievement* m_pSelectedAchievement = nullptr;
     BOOL m_bPopulatingAchievementEditorData = FALSE;
     ra::ui::ImageReference m_hAchievementBadge;
-
-    BadgeNames m_BadgeNames;
+    unsigned int m_nFirstBadge = 0U;
+    unsigned int m_nNextBadge = 0U;
 };
 
 void GenerateResizes(HWND hDlg);

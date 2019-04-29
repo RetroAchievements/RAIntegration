@@ -290,10 +290,6 @@ API int CCONV _RA_HandleHTTPResults()
         {
             switch (pObj->GetRequestType())
             {
-                case RequestBadgeIter:
-                    g_AchievementEditorDialog.GetBadgeNames().OnNewBadgeNames(doc);
-                    break;
-
                 case RequestFriendList:
                     RAUsers::LocalUser().OnFriendListResponse(doc);
                     break;

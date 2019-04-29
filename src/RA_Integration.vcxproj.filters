@@ -692,6 +692,9 @@
     <ClInclude Include="api\DeleteCodeNote.hh">
       <Filter>API</Filter>
     </ClInclude>
+    <ClInclude Include="api\FetchBadgeIds.hh">
+      <Filter>API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

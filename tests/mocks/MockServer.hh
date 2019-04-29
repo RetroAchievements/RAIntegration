@@ -150,6 +150,11 @@ public:
         return HandleRequest<ra::api::SubmitTicket>(request);
     }
 
+    FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) override
+    {
+        return HandleRequest<ra::api::FetchBadgeIds>(request);
+    }
+
 protected:
     template<typename TApi>
     inline auto HandleRequest(const ApiRequestBase& pRequest) const

@@ -918,6 +918,21 @@ SubmitTicket::Response ConnectedServer::SubmitTicket(const SubmitTicket::Request
     return response;
 }
 
+FetchBadgeIds::Response ConnectedServer::FetchBadgeIds(const FetchBadgeIds::Request&)
+{
+    FetchBadgeIds::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    if (DoRequest(m_sHost, FetchBadgeIds::Name(), "badgeiter", sPostData, response, document))
+    {
+        GetRequiredJsonField(response.FirstID, document, "FirstBadge", response);
+        GetRequiredJsonField(response.NextID, document, "NextBadge", response);
+    }
+
+    return response;
+}
+
 } // namespace impl
 } // namespace api
 } // namespace ra

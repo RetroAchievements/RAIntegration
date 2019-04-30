@@ -9,7 +9,7 @@ namespace bindings {
 
 void GridBinding::BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBinding> pColumnBinding)
 {
-    if (m_vColumns.size() <= nColumn)
+    if (m_vColumns.size() <= ra::to_unsigned(nColumn))
     {
         if (m_vColumns.capacity() == 0)
             m_vColumns.reserve(4U);
@@ -24,7 +24,7 @@ void GridBinding::BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBindi
         UpdateLayout();
 
         if (!m_vmItems)
-            UpdateItems();
+            UpdateItems(nColumn);
     }
 }
 
@@ -39,23 +39,23 @@ void GridBinding::BindItems(ViewModelCollectionBase& vmItems)
     m_vmItems->AddNotifyTarget(*this);
 
     if (m_hWnd && !m_vColumns.empty())
-        UpdateItems();
+        UpdateAllItems();
 }
 
 void GridBinding::UpdateLayout()
 {
     // calculate the column widths
     RECT rcList;
-    GetWindowRect(m_hWnd, &rcList);
+    GetClientRect(m_hWnd, &rcList);
 
-    // TODO: account for scroll bar
-    const int nWidth = rcList.right - rcList.left;
+    const auto nScrollbarWidth = GetSystemMetrics(SM_CXVSCROLL);
+    const int nWidth = rcList.right - rcList.left - nScrollbarWidth;
     int nRemaining = nWidth;
     int nFillParts = 0;
     std::vector<int> vWidths;
     vWidths.resize(m_vColumns.size());
 
-    for (gsl::index i = 0; i < m_vColumns.size(); ++i)
+    for (gsl::index i = 0; ra::to_unsigned(i) < m_vColumns.size(); ++i)
     {
         const auto& pColumn = *m_vColumns.at(i);
         switch (pColumn.GetWidthType())
@@ -79,7 +79,7 @@ void GridBinding::UpdateLayout()
 
     if (nFillParts > 0)
     {
-        for (gsl::index i = 0; i < m_vColumns.size(); ++i)
+        for (gsl::index i = 0; ra::to_unsigned(i) < m_vColumns.size(); ++i)
         {
             const auto& pColumn = *m_vColumns.at(i);
             if (pColumn.GetWidthType() == GridColumnBinding::WidthType::Fill)
@@ -89,7 +89,7 @@ void GridBinding::UpdateLayout()
 
     // update or insert the columns
     const auto nColumns = ListView_GetItemCount(ListView_GetHeader(m_hWnd));
-    for (gsl::index i = 0; i < m_vColumns.size(); ++i)
+    for (gsl::index i = 0; ra::to_unsigned(i) < m_vColumns.size(); ++i)
     {
         const auto& pColumn = *m_vColumns.at(i);
         const auto sHeader = NativeStr(pColumn.GetHeader());
@@ -108,16 +108,47 @@ void GridBinding::UpdateLayout()
     }
 
     // remove any extra columns
-    if (nColumns > m_vColumns.size())
+    if (ra::to_unsigned(nColumns) > m_vColumns.size())
     {
-        for (gsl::index i = nColumns - 1; i >= m_vColumns.size(); --i)
+        for (gsl::index i = nColumns - 1; ra::to_unsigned(i) >= m_vColumns.size(); --i)
             ListView_DeleteColumn(m_hWnd, i);
     }
 }
 
-void GridBinding::UpdateItems()
+void GridBinding::UpdateAllItems()
 {
+    for (gsl::index nColumn = 0; ra::to_unsigned(nColumn) < m_vColumns.size(); ++nColumn)
+        UpdateItems(nColumn);
+}
 
+void GridBinding::UpdateItems(gsl::index nColumn)
+{
+    const auto& pColumn = *m_vColumns.at(nColumn);
+
+    const auto nItems = ListView_GetItemCount(m_hWnd);
+    std::string sText;
+
+    LV_ITEM item{};
+    item.mask = LVIF_TEXT;
+    item.iSubItem = nColumn;
+    
+    for (gsl::index i = 0; ra::to_unsigned(i) < m_vmItems->Count(); ++i)
+    {
+        sText = NativeStr(pColumn.GetText(*m_vmItems, i));
+        item.pszText = const_cast<LPTSTR>(sText.c_str());
+        item.iItem = i;
+
+        if (i < nItems)
+            ListView_SetItem(m_hWnd, &item);
+        else
+            ListView_InsertItem(m_hWnd, &item);
+    }
+
+    if (ra::to_unsigned(nItems) > m_vmItems->Count())
+    {
+        for (gsl::index i = nItems - 1; ra::to_unsigned(i) >= m_vmItems->Count(); --i)
+            ListView_DeleteItem(m_hWnd, i);
+    }
 }
 
 } // namespace bindings

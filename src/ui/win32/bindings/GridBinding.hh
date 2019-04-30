@@ -25,8 +25,8 @@ public:
         {
             UpdateLayout();
 
-            if (!m_vmItems)
-                UpdateItems();
+            if (m_vmItems)
+                UpdateAllItems();
         }
     }
 
@@ -36,7 +36,8 @@ public:
 
 protected:
     void UpdateLayout();
-    void UpdateItems();
+    void UpdateAllItems();
+    void UpdateItems(gsl::index nColumn);
 
 private:
     std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;

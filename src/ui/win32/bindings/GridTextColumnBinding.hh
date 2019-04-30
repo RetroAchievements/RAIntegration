@@ -18,6 +18,12 @@ public:
     {
     }
 
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        return vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+    }
+
+
 protected:
     const StringModelProperty* m_pBoundProperty = nullptr;
 };

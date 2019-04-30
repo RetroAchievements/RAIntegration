@@ -29,6 +29,8 @@ public:
     WidthType GetWidthType() const noexcept { return m_nWidthType; }
     int GetWidth() const noexcept { return m_nWidth; }
 
+    virtual std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const = 0;
+
 protected:
     std::wstring m_sHeader;
     WidthType m_nWidthType = WidthType::Fill;

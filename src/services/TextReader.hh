@@ -29,6 +29,14 @@ public:
     virtual bool GetLine(_Out_ std::wstring& sLine) = 0;
     
     /// <summary>
+    /// Reads the specified number of bytes from the input.
+    /// </summary>
+    /// <param name="pBuffer">The buffer to read into.</param>
+    /// <param name="nBytes">The number of bytes to read.</param>
+    /// <returns>The number of bytes copied to the buffer.</returns>
+    virtual size_t GetBytes(_Inout_ char pBuffer[], _In_ size_t nBytes) = 0;
+
+    /// <summary>
     /// Gets the current read offset within the input.
     /// </summary>
     virtual std::streampos GetPosition() const = 0;

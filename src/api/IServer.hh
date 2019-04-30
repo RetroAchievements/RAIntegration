@@ -21,6 +21,7 @@
 #include "api/SubmitNewTitle.hh"
 #include "api/SubmitTicket.hh"
 #include "api/UpdateCodeNote.hh"
+#include "api/UploadBadge.hh"
 
 namespace ra {
 namespace api {
@@ -54,6 +55,7 @@ public:
     virtual SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) = 0;
     virtual SubmitTicket::Response SubmitTicket(const SubmitTicket::Request& request) = 0;
     virtual FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) = 0;
+    virtual UploadBadge::Response UploadBadge(const UploadBadge::Request& request) = 0;
 
 protected:
     IServer() noexcept = default;

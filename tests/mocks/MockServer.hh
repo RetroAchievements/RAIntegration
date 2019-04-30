@@ -155,6 +155,11 @@ public:
         return HandleRequest<ra::api::FetchBadgeIds>(request);
     }
 
+    UploadBadge::Response UploadBadge(const UploadBadge::Request& request) override
+    {
+        return HandleRequest<ra::api::UploadBadge>(request);
+    }
+
 protected:
     template<typename TApi>
     inline auto HandleRequest(const ApiRequestBase& pRequest) const

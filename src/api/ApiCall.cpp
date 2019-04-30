@@ -33,6 +33,7 @@ FetchGamesList::Response FetchGamesList::Request::Call() const { return Server()
 SubmitNewTitle::Response SubmitNewTitle::Request::Call() const { return Server().SubmitNewTitle(*this); }
 SubmitTicket::Response SubmitTicket::Request::Call() const { return Server().SubmitTicket(*this); }
 FetchBadgeIds::Response FetchBadgeIds::Request::Call() const { return Server().FetchBadgeIds(*this); }
+UploadBadge::Response UploadBadge::Request::Call() const { return Server().UploadBadge(*this); }
 
 } // namespace api
 } // namespace ra

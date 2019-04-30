@@ -7,6 +7,7 @@
 #include "RA_User.h"
 
 #include "services\Http.hh"
+#include "services\IFileSystem.hh"
 #include "services\IHttpRequester.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
@@ -219,6 +220,103 @@ static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const 
     ra::services::Http::UrlEncodeAppend(sParams, sValue);
 }
 
+static bool DoRequest(const std::string& sHost, const char* restrict sApiName, const char* restrict sRequestName,
+    const std::string& sInputParams, ApiResponseBase& pResponse, rapidjson::Document& document)
+{
+    std::string sPostData;
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    AppendUrlParam(sPostData, "u", pUserContext.GetUsername());
+    AppendUrlParam(sPostData, "t", pUserContext.GetApiToken());
+    AppendUrlParam(sPostData, "r", sRequestName);
+    if (!sInputParams.empty())
+    {
+        sPostData.push_back('&');
+        sPostData.append(sInputParams);
+    }
+    RA_LOG_INFO("%s Request: %s", sApiName, sPostData.c_str());
+
+    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/dorequest.php", sHost));
+    httpRequest.SetPostData(sPostData);
+
+    const auto httpResponse = httpRequest.Call();
+    return GetJson(sApiName, httpResponse, pResponse, document);
+}
+
+static bool DoUpload(const std::string& sHost, const char* restrict sApiName, const char* restrict sRequestName,
+    const std::wstring& sFilePath, ApiResponseBase& pResponse, rapidjson::Document& document)
+{
+    const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    auto nFileSize = pFileSystem.GetFileSize(sFilePath);
+    if (nFileSize < 0)
+    {
+        pResponse.Result = ra::api::ApiResult::Error;
+        pResponse.ErrorMessage = ra::StringPrintf("Could not open %s", sFilePath);
+        return false;
+    }
+
+    std::string sExt = "png";
+    const auto nIndex = sFilePath.find_last_of('.');
+    if (nIndex != std::string::npos)
+    {
+        sExt = ra::Narrow(&sFilePath.at(nIndex + 1));
+        std::transform(sExt.begin(), sExt.end(), sExt.begin(), [](char c) {
+            return static_cast<char>(::tolower(c));
+        });
+    }
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    RA_LOG_INFO("%s Request: file=%s (%zu bytes)", sApiName, sFilePath, nFileSize);
+
+    const char* sBoundary = "---------------------------41184676334";
+    std::string sPostData;
+    sPostData.reserve(static_cast<size_t>(nFileSize + 512));
+
+    sPostData.append("--");
+    sPostData.append(sBoundary);
+    sPostData.append("\r\n");
+    sPostData.append("Content-Disposition: form-data; name=\"u\"\r\n\r\n");
+    sPostData.append(pUserContext.GetUsername());
+    sPostData.append("\r\n");
+
+    sPostData.append("--");
+    sPostData.append(sBoundary);
+    sPostData.append("\r\n");
+    sPostData.append("Content-Disposition: form-data; name=\"t\"\r\n\r\n");
+    sPostData.append(pUserContext.GetApiToken());
+    sPostData.append("\r\n");
+
+    // hackish trick - uploadbadgeimage API expects the filename to be uploadbadgeimage.png
+    sPostData.append("--");
+    sPostData.append(sBoundary);
+    sPostData.append("\r\n");
+    sPostData.append("Content-Disposition: form-data; name=\"file\"; filename=\"");
+    sPostData.append(sRequestName);
+    sPostData.append(ra::StringPrintf(".%s\"\r\n", sExt));
+    sPostData.append(ra::StringPrintf("Content-Type: image/%s\r\n\r\n", sExt));
+
+    auto pFile = pFileSystem.OpenTextFile(sFilePath);
+    if (pFile != nullptr)
+    {
+        const int nLength = sPostData.length();
+        sPostData.resize(static_cast<size_t>(nFileSize + nLength));
+        pFile->GetBytes(&sPostData.at(nLength), static_cast<size_t>(nFileSize));
+    }
+
+    sPostData.append("\r\n");
+    sPostData.append("--");
+    sPostData.append(sBoundary);
+    sPostData.append("--\r\n");
+
+    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/doupload.php", sHost));
+    httpRequest.SetContentType(ra::StringPrintf("multipart/form-data; boundary=%s", sBoundary));
+
+    httpRequest.SetPostData(sPostData);
+
+    const auto httpResponse = httpRequest.Call();
+    return GetJson(sApiName, httpResponse, pResponse, document);
+}
+
 // === APIs ===
 
 Login::Response ConnectedServer::Login(const Login::Request& request)
@@ -264,29 +362,6 @@ Logout::Response ConnectedServer::Logout(const Logout::Request&)
     Logout::Response response;
     response.Result = ApiResult::Success;
     return response;
-}
-
-static bool DoRequest(const std::string& sHost, const char* restrict sApiName, const char* restrict sRequestName,
-                      const std::string& sInputParams, ApiResponseBase& pResponse, rapidjson::Document& document)
-{
-    std::string sPostData;
-
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
-    AppendUrlParam(sPostData, "u", pUserContext.GetUsername());
-    AppendUrlParam(sPostData, "t", pUserContext.GetApiToken());
-    AppendUrlParam(sPostData, "r", sRequestName);
-    if (!sInputParams.empty())
-    {
-        sPostData.push_back('&');
-        sPostData.append(sInputParams);
-    }
-    RA_LOG_INFO("%s Request: %s", sApiName, sPostData.c_str());
-
-    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/dorequest.php", sHost));
-    httpRequest.SetPostData(sPostData);
-
-    const auto httpResponse = httpRequest.Call();
-    return GetJson(sApiName, httpResponse, pResponse, document);
 }
 
 StartSession::Response ConnectedServer::StartSession(const StartSession::Request& request)
@@ -928,6 +1003,30 @@ FetchBadgeIds::Response ConnectedServer::FetchBadgeIds(const FetchBadgeIds::Requ
     {
         GetRequiredJsonField(response.FirstID, document, "FirstBadge", response);
         GetRequiredJsonField(response.NextID, document, "NextBadge", response);
+    }
+
+    return response;
+}
+
+UploadBadge::Response ConnectedServer::UploadBadge(const UploadBadge::Request& request)
+{
+    UploadBadge::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    if (DoUpload(m_sHost, UploadBadge::Name(), "uploadbadgeimage", request.ImageFilePath, response, document))
+    {
+        if (!document.HasMember("Response"))
+        {
+            response.Result = ApiResult::Error;
+            if (response.ErrorMessage.empty())
+                response.ErrorMessage = ra::BuildString("Response", " not found in response");
+        }
+        else
+        {
+            response.Result = ApiResult::Success;
+            GetRequiredJsonField(response.BadgeId, document["Response"], "BadgeIter", response);
+        }
     }
 
     return response;

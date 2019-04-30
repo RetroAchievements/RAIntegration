@@ -30,14 +30,6 @@ enum RequestType
     NumRequestTypes
 };
 
-enum UploadType
-{
-    //	Upload:
-    RequestUploadBadgeImage,
-
-    NumUploadTypes
-};
-
 extern const char* RequestTypeToString[];
 
 typedef std::map<char, std::string> PostArgs;
@@ -94,8 +86,6 @@ public:
 
     static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapidjson::Document& JSONResponseOut);
     static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::string& ResponseOut);
-
-    static BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, rapidjson::Document& ResponseOut);
 
     static HANDLE Mutex() noexcept { return ms_hHTTPMutex; }
     static RequestObject* PopNextHttpResult() { return ms_LastHttpResults.PopNextItem(); }

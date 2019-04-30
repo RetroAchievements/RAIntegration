@@ -11,6 +11,7 @@
 #include "RA_httpthread.h"
 
 #include "api\FetchBadgeIds.hh"
+#include "api\UploadBadge.hh"
 
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
@@ -1386,43 +1387,19 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     if (ofn.lpstrFile != nullptr)
                     {
-                        rapidjson::Document Response;
-                        if (RAWeb::DoBlockingImageUpload(RequestUploadBadgeImage, ra::Narrow(ofn.lpstrFile), Response))
+                        ra::api::UploadBadge::Request request;
+                        request.ImageFilePath = ra::Widen(ofn.lpstrFile);
+                        const auto response = request.Call();
+                        if (!response.Succeeded())
                         {
-                            // TBD: ensure that:
-                            // The image is copied to the cache/badge dir
-                            // The image doesn't already exist in teh cache/badge dir (ask overwrite)
-                            // The image is the correct dimensions or can be scaled
-                            // The image can be uploaded OK
-                            // The image is not copyright
-
-                            const rapidjson::Value& ResponseData = Response["Response"];
-                            if (ResponseData.HasMember("BadgeIter"))
-                            {
-                                const char* sNewBadgeIter = ResponseData["BadgeIter"].GetString();
-
-                                // pBuffer will contain "OK:" and the number of the uploaded file.
-                                // Add the value to the available values in the cbo, and it *should* self-populate.
-                                MessageBox(nullptr, TEXT("Successful!"), TEXT("Upload OK"), MB_OK);
-
-                                m_nNextBadge = std::atoi(sNewBadgeIter) + 1;
-                                UpdateBadge(sNewBadgeIter);
-                            }
-                            else if (ResponseData.HasMember("Error"))
-                            {
-                                MessageBox(nullptr, NativeStr(ResponseData["Error"].GetString()).c_str(), TEXT("Error"),
-                                           MB_OK);
-                            }
-                            else
-                            {
-                                MessageBox(nullptr,
-                                           TEXT("Error in upload! Try another image format, or maybe smaller image?"),
-                                           TEXT("Error"), MB_OK);
-                            }
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to upload badge image", ra::Widen(response.ErrorMessage));
                         }
                         else
                         {
-                            MessageBox(nullptr, TEXT("Could not contact server!"), TEXT("Error"), MB_OK);
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Upload successful");
+
+                            m_nNextBadge = std::atoi(response.BadgeId.c_str()) + 1;
+                            UpdateBadge(response.BadgeId);
                         }
                     }
                 }

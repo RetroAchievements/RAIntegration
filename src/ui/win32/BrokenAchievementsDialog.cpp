@@ -4,7 +4,10 @@
 
 #include "api\SubmitTicket.hh"
 
+#include "ui\win32\bindings\GridTextColumnBinding.hh"
+
 using ra::ui::viewmodels::BrokenAchievementsViewModel;
+using ra::ui::win32::bindings::GridColumnBinding;
 
 namespace ra {
 namespace ui {
@@ -34,7 +37,8 @@ BrokenAchievementsDialog::BrokenAchievementsDialog(BrokenAchievementsViewModel& 
     : DialogBase(vmBrokenAchievements),
       m_bindWrongTime(vmBrokenAchievements),
       m_bindDidNotTrigger(vmBrokenAchievements),
-      m_bindComment(vmBrokenAchievements)
+      m_bindComment(vmBrokenAchievements),
+      m_bindAchievements(vmBrokenAchievements)
 {
     m_bindWrongTime.BindCheck(BrokenAchievementsViewModel::SelectedProblemIdProperty,
         ra::etoi(ra::api::SubmitTicket::ProblemType::WrongTime));
@@ -42,6 +46,31 @@ BrokenAchievementsDialog::BrokenAchievementsDialog(BrokenAchievementsViewModel& 
         ra::etoi(ra::api::SubmitTicket::ProblemType::DidNotTrigger));
 
     m_bindComment.BindText(BrokenAchievementsViewModel::CommentProperty);
+
+    auto pSelectedColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        BrokenAchievementsViewModel::BrokenAchievementViewModel::LabelProperty);
+    pSelectedColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 20);
+    m_bindAchievements.BindColumn(0, std::move(pSelectedColumn));
+
+    auto pTitleColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        BrokenAchievementsViewModel::BrokenAchievementViewModel::LabelProperty);
+    pTitleColumn->SetHeader(L"Title");
+    pTitleColumn->SetWidth(GridColumnBinding::WidthType::Fill, 20);
+    m_bindAchievements.BindColumn(1, std::move(pTitleColumn));
+
+    auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        BrokenAchievementsViewModel::BrokenAchievementViewModel::LabelProperty);
+    pDescriptionColumn->SetHeader(L"Description");
+    pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 40);
+    m_bindAchievements.BindColumn(2, std::move(pDescriptionColumn));
+
+    auto pAchievedColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        BrokenAchievementsViewModel::BrokenAchievementViewModel::LabelProperty);
+    pAchievedColumn->SetHeader(L"Achieved");
+    pAchievedColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
+    m_bindAchievements.BindColumn(3, std::move(pAchievedColumn));
+
+    m_bindAchievements.BindItems(vmBrokenAchievements.Achievements());
 }
 
 BOOL BrokenAchievementsDialog::OnInitDialog()
@@ -50,6 +79,8 @@ BOOL BrokenAchievementsDialog::OnInitDialog()
     m_bindDidNotTrigger.SetControl(*this, IDC_RA_PROBLEMTYPE2);
 
     m_bindComment.SetControl(*this, IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT);
+
+    m_bindAchievements.SetControl(*this, IDC_RA_REPORTBROKENACHIEVEMENTSLIST);
 
     return DialogBase::OnInitDialog();
 }

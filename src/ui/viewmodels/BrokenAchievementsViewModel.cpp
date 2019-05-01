@@ -18,6 +18,7 @@ const IntModelProperty BrokenAchievementsViewModel::SelectedProblemIdProperty("B
 const StringModelProperty BrokenAchievementsViewModel::CommentProperty("BrokenAchievementsViewModel", "Comment", L"");
 
 const BoolModelProperty BrokenAchievementsViewModel::BrokenAchievementViewModel::IsSelectedProperty("BrokenAchievementViewModel", "IsSelected", false);
+const StringModelProperty BrokenAchievementsViewModel::BrokenAchievementViewModel::DescriptionProperty("BrokenAchievementViewModel", "Description", L"");
 const BoolModelProperty BrokenAchievementsViewModel::BrokenAchievementViewModel::IsAchievedProperty("BrokenAchievementViewModel", "IsAchieved", false);
 
 bool BrokenAchievementsViewModel::InitializeAchievements()
@@ -49,6 +50,7 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
             auto& vmAchievement = m_vAchievements.Add();
             vmAchievement.SetId(pAchievement.ID());
             vmAchievement.SetLabel(ra::Widen(pAchievement.Title()));
+            vmAchievement.SetDescription(ra::Widen(pAchievement.Description()));
             vmAchievement.SetAchieved(!pAchievement.Active());
         }
 
@@ -60,6 +62,8 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"There are no active achievements to report.");
         return false;
     }
+
+    SetWindowTitle(L"Report Broken Achievements");
 
     return true;
 }

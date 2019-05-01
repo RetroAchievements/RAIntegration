@@ -4,6 +4,7 @@
 
 #include "api\SubmitTicket.hh"
 
+#include "ui\win32\bindings\GridBooleanColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
 using ra::ui::viewmodels::BrokenAchievementsViewModel;
@@ -47,8 +48,8 @@ BrokenAchievementsDialog::BrokenAchievementsDialog(BrokenAchievementsViewModel& 
 
     m_bindComment.BindText(BrokenAchievementsViewModel::CommentProperty);
 
-    auto pSelectedColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        BrokenAchievementsViewModel::BrokenAchievementViewModel::LabelProperty);
+    auto pSelectedColumn = std::make_unique<ra::ui::win32::bindings::GridBooleanColumnBinding>(
+        BrokenAchievementsViewModel::BrokenAchievementViewModel::IsSelectedProperty, L"Y", L"N");
     pSelectedColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 20);
     m_bindAchievements.BindColumn(0, std::move(pSelectedColumn));
 
@@ -59,13 +60,13 @@ BrokenAchievementsDialog::BrokenAchievementsDialog(BrokenAchievementsViewModel& 
     m_bindAchievements.BindColumn(1, std::move(pTitleColumn));
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        BrokenAchievementsViewModel::BrokenAchievementViewModel::LabelProperty);
+        BrokenAchievementsViewModel::BrokenAchievementViewModel::DescriptionProperty);
     pDescriptionColumn->SetHeader(L"Description");
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 40);
     m_bindAchievements.BindColumn(2, std::move(pDescriptionColumn));
 
-    auto pAchievedColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        BrokenAchievementsViewModel::BrokenAchievementViewModel::LabelProperty);
+    auto pAchievedColumn = std::make_unique<ra::ui::win32::bindings::GridBooleanColumnBinding>(
+        BrokenAchievementsViewModel::BrokenAchievementViewModel::IsAchievedProperty, L"Yes", L"No");
     pAchievedColumn->SetHeader(L"Achieved");
     pAchievedColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
     m_bindAchievements.BindColumn(3, std::move(pAchievedColumn));

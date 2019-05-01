@@ -707,6 +707,9 @@
     <ClInclude Include="ui\win32\bindings\GridTextColumnBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridBooleanColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

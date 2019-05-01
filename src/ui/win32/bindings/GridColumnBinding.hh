@@ -2,6 +2,8 @@
 #define RA_UI_WIN32_GRIDCOLUMNBINDING_H
 #pragma once
 
+#include "ui\ViewModelCollection.hh"
+
 namespace ra {
 namespace ui {
 namespace win32 {

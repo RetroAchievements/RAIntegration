@@ -248,6 +248,7 @@
     <ClInclude Include="ui\win32\bindings\ComboBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\ControlBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridBooleanColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridTextColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh" />

@@ -2,6 +2,8 @@
 
 #include "RA_StringUtils.h"
 
+#include "GridCheckBoxColumnBinding.hh"
+
 namespace ra {
 namespace ui {
 namespace win32 {
@@ -9,6 +11,12 @@ namespace bindings {
 
 void GridBinding::BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBinding> pColumnBinding)
 {
+    if (dynamic_cast<GridCheckBoxColumnBinding*>(pColumnBinding.get()) != nullptr)
+    {
+        if (nColumn != 0)
+            return;
+    }
+
     if (m_vColumns.size() <= ra::to_unsigned(nColumn))
     {
         if (m_vColumns.capacity() == 0)
@@ -23,8 +31,12 @@ void GridBinding::BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBindi
     {
         UpdateLayout();
 
-        if (!m_vmItems)
+        if (m_vmItems)
+        {
+            DisableBinding();
             UpdateItems(nColumn);
+            EnableBinding();
+        }
     }
 }
 
@@ -44,6 +56,12 @@ void GridBinding::BindItems(ViewModelCollectionBase& vmItems)
 
 void GridBinding::UpdateLayout()
 {
+    if (m_vColumns.empty())
+        return;
+
+    if (dynamic_cast<GridCheckBoxColumnBinding*>(m_vColumns.at(0).get()) != nullptr)
+        ListView_SetExtendedListViewStyle(m_hWnd, LVS_EX_CHECKBOXES);
+
     // calculate the column widths
     RECT rcList;
     GetClientRect(m_hWnd, &rcList);
@@ -117,8 +135,12 @@ void GridBinding::UpdateLayout()
 
 void GridBinding::UpdateAllItems()
 {
+    DisableBinding();
+
     for (gsl::index nColumn = 0; ra::to_unsigned(nColumn) < m_vColumns.size(); ++nColumn)
         UpdateItems(nColumn);
+
+    EnableBinding();
 }
 
 void GridBinding::UpdateItems(gsl::index nColumn)
@@ -126,28 +148,83 @@ void GridBinding::UpdateItems(gsl::index nColumn)
     const auto& pColumn = *m_vColumns.at(nColumn);
 
     const auto nItems = ListView_GetItemCount(m_hWnd);
-    std::string sText;
 
-    LV_ITEM item{};
-    item.mask = LVIF_TEXT;
-    item.iSubItem = nColumn;
-    
-    for (gsl::index i = 0; ra::to_unsigned(i) < m_vmItems->Count(); ++i)
+    const auto* pCheckBoxColumn = dynamic_cast<const GridCheckBoxColumnBinding*>(&pColumn);
+    if (pCheckBoxColumn != nullptr)
     {
-        sText = NativeStr(pColumn.GetText(*m_vmItems, i));
-        item.pszText = const_cast<LPTSTR>(sText.c_str());
-        item.iItem = i;
+        LV_ITEM item{};
+        item.mask = LVIF_TEXT;
+        item.iSubItem = nColumn;
+        item.pszText = const_cast<LPTSTR>(_T(""));
 
-        if (i < nItems)
-            ListView_SetItem(m_hWnd, &item);
-        else
-            ListView_InsertItem(m_hWnd, &item);
+        const auto& pBoundProperty = pCheckBoxColumn->GetBoundProperty();
+
+        for (gsl::index i = 0; ra::to_unsigned(i) < m_vmItems->Count(); ++i)
+        {
+            if (i >= nItems)
+            {
+                item.iItem = i;
+                ListView_InsertItem(m_hWnd, &item);
+            }
+
+            ListView_SetCheckState(m_hWnd, i, m_vmItems->GetItemValue(i, pBoundProperty));
+        }
+    }
+    else
+    {
+        std::string sText;
+
+        LV_ITEM item{};
+        item.mask = LVIF_TEXT;
+        item.iSubItem = nColumn;
+
+        for (gsl::index i = 0; ra::to_unsigned(i) < m_vmItems->Count(); ++i)
+        {
+            sText = NativeStr(pColumn.GetText(*m_vmItems, i));
+            item.pszText = const_cast<LPTSTR>(sText.c_str());
+            item.iItem = i;
+
+            if (i < nItems)
+                ListView_SetItem(m_hWnd, &item);
+            else
+                ListView_InsertItem(m_hWnd, &item);
+        }
     }
 
     if (ra::to_unsigned(nItems) > m_vmItems->Count())
     {
         for (gsl::index i = nItems - 1; ra::to_unsigned(i) >= m_vmItems->Count(); --i)
             ListView_DeleteItem(m_hWnd, i);
+    }
+}
+
+void GridBinding::OnLvnItemChanged(LPNMLISTVIEW pnmListView)
+{
+    switch (pnmListView->uNewState)
+    {
+        case 0x2000: // LVIS_CHECKED
+        {
+            const auto* pCheckBoxBinding = reinterpret_cast<GridCheckBoxColumnBinding*>(m_vColumns.at(0).get());
+            if (pCheckBoxBinding != nullptr)
+            {
+                m_vmItems->RemoveNotifyTarget(*this);
+                m_vmItems->SetItemValue(pnmListView->iItem, pCheckBoxBinding->GetBoundProperty(), true);
+                m_vmItems->AddNotifyTarget(*this);
+            }
+        }
+        break;
+
+        case 0x1000: // LVIS_UNCHECKED
+        {
+            const auto* pCheckBoxBinding = reinterpret_cast<GridCheckBoxColumnBinding*>(m_vColumns.at(0).get());
+            if (pCheckBoxBinding != nullptr)
+            {
+                m_vmItems->RemoveNotifyTarget(*this);
+                m_vmItems->SetItemValue(pnmListView->iItem, pCheckBoxBinding->GetBoundProperty(), false);
+                m_vmItems->AddNotifyTarget(*this);
+            }
+        }
+        break;
     }
 }
 

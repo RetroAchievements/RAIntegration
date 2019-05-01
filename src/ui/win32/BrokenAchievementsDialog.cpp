@@ -5,6 +5,7 @@
 #include "api\SubmitTicket.hh"
 
 #include "ui\win32\bindings\GridBooleanColumnBinding.hh"
+#include "ui\win32\bindings\GridCheckBoxColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
 using ra::ui::viewmodels::BrokenAchievementsViewModel;
@@ -48,8 +49,8 @@ BrokenAchievementsDialog::BrokenAchievementsDialog(BrokenAchievementsViewModel& 
 
     m_bindComment.BindText(BrokenAchievementsViewModel::CommentProperty);
 
-    auto pSelectedColumn = std::make_unique<ra::ui::win32::bindings::GridBooleanColumnBinding>(
-        BrokenAchievementsViewModel::BrokenAchievementViewModel::IsSelectedProperty, L"Y", L"N");
+    auto pSelectedColumn = std::make_unique<ra::ui::win32::bindings::GridCheckBoxColumnBinding>(
+        BrokenAchievementsViewModel::BrokenAchievementViewModel::IsSelectedProperty);
     pSelectedColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 20);
     m_bindAchievements.BindColumn(0, std::move(pSelectedColumn));
 

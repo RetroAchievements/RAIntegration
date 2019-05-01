@@ -17,8 +17,7 @@ public:
 
     ~ControlBinding() noexcept
     {
-        if (m_hWnd && m_pDialog)
-            m_pDialog->RemoveControlBinding(m_hWnd);
+        DisableBinding();
     }
 
     ControlBinding(const ControlBinding&) noexcept = delete;
@@ -64,6 +63,18 @@ public:
     GSL_SUPPRESS_F6 virtual void OnValueChanged() {}
 
 protected:
+    void DisableBinding()
+    {
+        if (m_hWnd && m_pDialog)
+            m_pDialog->RemoveControlBinding(m_hWnd);
+    }
+
+    void EnableBinding()
+    {
+        if (m_hWnd && m_pDialog)
+            m_pDialog->AddControlBinding(m_hWnd, *this);
+    }
+
     HWND m_hWnd{};
 
 private:

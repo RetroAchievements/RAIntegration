@@ -34,6 +34,8 @@ public:
 
     void BindItems(ViewModelCollectionBase& vmItems);
 
+    void OnLvnItemChanged(LPNMLISTVIEW pnmListView);
+
 protected:
     void UpdateLayout();
     void UpdateAllItems();

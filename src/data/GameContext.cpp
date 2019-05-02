@@ -917,7 +917,7 @@ void GameContext::LoadRichPresenceScript(const std::string& sRichPresenceScript)
         RA_LOG("rc_richpresence_size returned %d", nSize);
         m_pRichPresence = nullptr;
 
-        const std::string sErrorRP = ra::StringPrintf("Display:\nParse Error %d\n", nSize);
+        const std::string sErrorRP = ra::StringPrintf("Display:\nParse error %d\n", nSize);
         const int nSize2 = rc_richpresence_size(sErrorRP.c_str());
         if (nSize2 > 0)
         {

@@ -883,6 +883,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
                 vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->Title()));
 
                 const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+                const int nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
 
                 for (const auto& pEntry : response.TopEntries)
                 {
@@ -893,6 +894,32 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
 
                     if (pEntry.User == pUserName)
                         pEntryViewModel.SetHighlighted(true);
+
+                    if (vmScoreboard.Entries().Count() == nEntriesDisplayed)
+                        break;
+                }
+
+                if (response.NewRank >= nEntriesDisplayed)
+                {
+                    auto* pEntryViewModel = vmScoreboard.Entries().GetItemAt(6);
+                    if (pEntryViewModel != nullptr)
+                    {
+                        pEntryViewModel->SetRank(response.NewRank);
+
+                        if (response.BestScore != response.Score)
+                            pEntryViewModel->SetScore(ra::StringPrintf(L"(%s) %s", pLeaderboard->FormatScore(response.Score), pLeaderboard->FormatScore(response.BestScore)));
+                        else
+                            pEntryViewModel->SetScore(ra::Widen(pLeaderboard->FormatScore(response.BestScore)));
+
+                        pEntryViewModel->SetUserName(ra::Widen(pUserName));
+                        pEntryViewModel->SetHighlighted(true);
+                    }
+                }
+                else if (response.BestScore != response.Score)
+                {
+                    auto* pEntryViewModel = vmScoreboard.Entries().GetItemAt(response.NewRank - 1);
+                    if (pEntryViewModel != nullptr)
+                        pEntryViewModel->SetScore(ra::StringPrintf(L"(%s) %s", pLeaderboard->FormatScore(response.Score), pLeaderboard->FormatScore(response.BestScore)));
                 }
 
                 ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(

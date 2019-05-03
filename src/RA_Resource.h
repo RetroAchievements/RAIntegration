@@ -150,6 +150,7 @@
 #define IDM_RA_TOGGLE_LB_NOTIFICATIONS  1718
 #define IDM_RA_TOGGLE_LB_COUNTER        1719
 #define IDM_RA_TOGGLE_LB_SCOREBOARD     1720
+#define IDM_RA_NON_HARDCORE_WARNING     1721
 #define IDM_RA_MENUEND                  1739
 #define IDC_RA_OPENPAGE                 1740
 

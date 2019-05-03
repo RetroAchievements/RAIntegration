@@ -29,6 +29,19 @@ public:
         SetGetGameTitleFunction([sTitle](char* sBuffer) noexcept { strcpy_s(sBuffer, 64, sTitle); });
     }
 
+    void DisableHardcoreMode() override
+    {
+        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+        pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+    }
+
+    bool EnableHardcoreMode(bool) override
+    {
+        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+        pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        return true;
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::EmulatorContext> m_Override;
 };

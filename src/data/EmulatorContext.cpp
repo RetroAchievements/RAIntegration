@@ -263,7 +263,7 @@ void EmulatorContext::DisableHardcoreMode()
     }
 }
 
-bool EmulatorContext::EnableHardcoreMode()
+bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
 {
     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
@@ -291,7 +291,7 @@ bool EmulatorContext::EnableHardcoreMode()
 
     // The user is on the latest verion
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
-    if (pGameContext.GameId() != 0)
+    if (pGameContext.GameId() != 0 && bShowWarning)
     {
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetHeader(L"Enable hardcore mode?");

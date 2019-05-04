@@ -1147,7 +1147,7 @@ public:
         game.SetGameHash("hash");
 
         game.mockServer.HandleRequest<ra::api::SubmitLeaderboardEntry>([]
-            (const ra::api::SubmitLeaderboardEntry::Request& request, ra::api::SubmitLeaderboardEntry::Response& response)
+            (const ra::api::SubmitLeaderboardEntry::Request&, ra::api::SubmitLeaderboardEntry::Response& response)
         {
             response.Result = ra::api::ApiResult::Success;
             response.TopEntries.push_back({ 1, "George", 1000U });

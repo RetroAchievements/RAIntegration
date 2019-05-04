@@ -16,6 +16,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RA_Integration.Tests", "tes
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "rcheevos", "src\rcheevos.vcxproj", "{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RA_Interface.Tests", "tests\RA_Interface.Tests.vcxproj", "{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Analysis|Win32 = Analysis|Win32
@@ -55,6 +57,15 @@ Global
 		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Release|Win32.Build.0 = Release|Win32
 		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.ReleaseWithDebug|Win32.ActiveCfg = Release|Win32
 		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.ReleaseWithDebug|Win32.Build.0 = Release|Win32
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Analysis|Win32.ActiveCfg = Release|Win32
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.AnalysisUnicode|Win32.ActiveCfg = Release|Win32
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.AnalysisUnicode|Win32.Build.0 = Release|Win32
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Debug|Win32.Build.0 = Debug|Win32
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Release|Win32.ActiveCfg = Release|Win32
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Release|Win32.Build.0 = Release|Win32
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.ReleaseWithDebug|Win32.ActiveCfg = Release|Win32
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.ReleaseWithDebug|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -40,7 +40,7 @@
       </Command>
     </PostBuildEvent>
     <Link>
-      <ProgramDatabaseFile>$(LocalDebuggerWorkingDirectory)\$(TargetName).pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

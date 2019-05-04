@@ -111,6 +111,16 @@ public:
         return UnsupportedApi<SubmitTicket::Response>(SubmitTicket::Name());
     }
 
+    FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request&) override
+    {
+        return UnsupportedApi<FetchBadgeIds::Response>(FetchBadgeIds::Name());
+    }
+
+    UploadBadge::Response UploadBadge(const UploadBadge::Request&) override
+    {
+        return UnsupportedApi<UploadBadge::Response>(UploadBadge::Name());
+    }
+
 protected:
     template<typename TResponse>
     inline typename TResponse UnsupportedApi(const char* const restrict apiName) const

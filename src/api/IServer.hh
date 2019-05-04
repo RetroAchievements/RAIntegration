@@ -5,6 +5,7 @@
 #include "api/AwardAchievement.hh"
 #include "api/DeleteCodeNote.hh"
 #include "api/FetchAchievementInfo.hh"
+#include "api/FetchBadgeIds.hh"
 #include "api/FetchCodeNotes.hh"
 #include "api/FetchGameData.hh"
 #include "api/FetchGamesList.hh"
@@ -20,6 +21,7 @@
 #include "api/SubmitNewTitle.hh"
 #include "api/SubmitTicket.hh"
 #include "api/UpdateCodeNote.hh"
+#include "api/UploadBadge.hh"
 
 namespace ra {
 namespace api {
@@ -52,6 +54,8 @@ public:
     virtual FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) = 0;
     virtual SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) = 0;
     virtual SubmitTicket::Response SubmitTicket(const SubmitTicket::Request& request) = 0;
+    virtual FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) = 0;
+    virtual UploadBadge::Response UploadBadge(const UploadBadge::Request& request) = 0;
 
 protected:
     IServer() noexcept = default;

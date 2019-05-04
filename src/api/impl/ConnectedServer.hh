@@ -31,6 +31,8 @@ public:
     FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) override;
     SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) override;
     SubmitTicket::Response SubmitTicket(const SubmitTicket::Request& request) override;
+    FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) override;
+    UploadBadge::Response UploadBadge(const UploadBadge::Request& request) override;
 
     static void ProcessGamePatchData(FetchGameData::Response &response, const rapidjson::Value& PatchData);
     static void ProcessCodeNotes(FetchCodeNotes::Response &response, const rapidjson::Value& CodeNotes);

@@ -10,6 +10,9 @@
 #include "RA_User.h"
 #include "RA_httpthread.h"
 
+#include "api\FetchBadgeIds.hh"
+#include "api\UploadBadge.hh"
+
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 
@@ -124,6 +127,13 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
     // ListBox_AddString(
     // bSuccess = ListView_SetExtendedListViewStyle( hGroupList, LVS_EX_FULLROWSELECT );
     // bSuccess = ListView_EnableGroupView( hGroupList, FALSE );
+
+    ra::api::FetchBadgeIds::Request request;
+    request.CallAsync([this](const ra::api::FetchBadgeIds::Response & response)
+        {
+            m_nFirstBadge = response.FirstID;
+            m_nNextBadge = response.NextID;
+        });
 }
 
 BOOL Dlg_AchievementEditor::IsActive() const noexcept
@@ -772,9 +782,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             // For scanning changes to achievement conditions (hit counts)
             SetTimer(m_hAchievementEditorDlg, 1, 200, (TIMERPROC)s_AchievementEditorProc);
 
-            m_BadgeNames.InstallAchEditorCombo(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME));
-            m_BadgeNames.FetchNewBadgeNamesThreaded();
-
             // achievement loaded before UI was created won't have populated the UI. reload it.
             if (m_pSelectedAchievement != nullptr)
             {
@@ -894,23 +901,59 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case IDC_RA_BADGENAME:
                 {
-                    HWND hBadgeNameCtrl = GetDlgItem(hDlg, IDC_RA_BADGENAME);
                     switch (HIWORD(wParam))
                     {
-                        case CBN_SELENDOK:
-                        case CBN_SELCHANGE:
+                        case EN_KILLFOCUS:
                         {
-                            TCHAR buffer[16];
-                            GetWindowText(hBadgeNameCtrl, buffer, 16);
-                            UpdateBadge(ra::Narrow(buffer));
+                            if (IsPopulatingAchievementEditorData())
+                                return TRUE;
+
+                            Achievement* pActiveAch = ActiveAchievement();
+                            if (pActiveAch == nullptr)
+                                return FALSE;
+
+                            std::string buffer(16, '\0');
+                            const auto nLength = GetDlgItemTextA(hDlg, IDC_RA_BADGENAME, buffer.data(), 16);
+                            if (nLength == 0)
+                                return FALSE;
+
+                            buffer.resize(nLength);
+                            if (buffer.length() < 5)
+                                buffer.insert(0, 5 - buffer.length(), '0');
+
+                            unsigned int nVal = 0;
+                            try
+                            {
+                                nVal = ra::to_unsigned(std::stoi(NativeStr(buffer)));
+                            }
+                            catch (const std::invalid_argument& e)
+                            {
+                                RA_LOG_ERR("Invalid Argument: %s", e.what());
+                                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                                    L"The badge field may only contain digits."); // for users
+
+                                // Set it back to 0 immediately, it won't change back by itself
+                                SetDlgItemTextA(hDlg, IDC_RA_ACH_POINTS, "00000");
+                                return FALSE;
+                            }
+
+                            if (nVal < m_nFirstBadge || nVal >= m_nNextBadge)
+                            {
+                                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                                    ra::StringPrintf(L"Valid badge numbers are between %u and %u.", m_nFirstBadge, m_nNextBadge - 1));
+
+                                return FALSE;
+                            }
+
+                            pActiveAch->SetBadgeImage(buffer);
+                            pActiveAch->SetModified(TRUE);
+                            g_AchievementsDialog.OnEditAchievement(*pActiveAch);
+
+                            UpdateBadge(buffer);
+                            return TRUE;
                         }
                         break;
-                        case CBN_SELENDCANCEL:
-                            // Restore?
-                            break;
                     }
-
-                    bHandled = TRUE;
                 }
                 break;
 
@@ -1344,43 +1387,19 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     if (ofn.lpstrFile != nullptr)
                     {
-                        rapidjson::Document Response;
-                        if (RAWeb::DoBlockingImageUpload(RequestUploadBadgeImage, ra::Narrow(ofn.lpstrFile), Response))
+                        ra::api::UploadBadge::Request request;
+                        request.ImageFilePath = ra::Widen(ofn.lpstrFile);
+                        const auto response = request.Call();
+                        if (!response.Succeeded())
                         {
-                            // TBD: ensure that:
-                            // The image is copied to the cache/badge dir
-                            // The image doesn't already exist in teh cache/badge dir (ask overwrite)
-                            // The image is the correct dimensions or can be scaled
-                            // The image can be uploaded OK
-                            // The image is not copyright
-
-                            const rapidjson::Value& ResponseData = Response["Response"];
-                            if (ResponseData.HasMember("BadgeIter"))
-                            {
-                                const char* sNewBadgeIter = ResponseData["BadgeIter"].GetString();
-
-                                // pBuffer will contain "OK:" and the number of the uploaded file.
-                                // Add the value to the available values in the cbo, and it *should* self-populate.
-                                MessageBox(nullptr, TEXT("Successful!"), TEXT("Upload OK"), MB_OK);
-
-                                m_BadgeNames.AddNewBadgeName(sNewBadgeIter, true);
-                                UpdateBadge(sNewBadgeIter);
-                            }
-                            else if (ResponseData.HasMember("Error"))
-                            {
-                                MessageBox(nullptr, NativeStr(ResponseData["Error"].GetString()).c_str(), TEXT("Error"),
-                                           MB_OK);
-                            }
-                            else
-                            {
-                                MessageBox(nullptr,
-                                           TEXT("Error in upload! Try another image format, or maybe smaller image?"),
-                                           TEXT("Error"), MB_OK);
-                            }
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to upload badge image", ra::Widen(response.ErrorMessage));
                         }
                         else
                         {
-                            MessageBox(nullptr, TEXT("Could not contact server!"), TEXT("Error"), MB_OK);
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Upload successful");
+
+                            m_nNextBadge = std::atoi(response.BadgeId.c_str()) + 1;
+                            UpdateBadge(response.BadgeId);
                         }
                     }
                 }
@@ -1925,6 +1944,14 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
     else if (sBackupBadgeToUse.length() > 2)
         sAchievementBadgeURI = sBackupBadgeToUse;
 
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+    if (!pImageRepository.IsImageAvailable(ra::ui::ImageType::Badge, sAchievementBadgeURI))
+    {
+        pImageRepository.FetchImage(ra::ui::ImageType::Badge, sAchievementBadgeURI);
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::seconds(1),
+            [this, sBackupBadgeToUse]() { UpdateSelectedBadgeImage(sBackupBadgeToUse); });
+    }
+
     m_hAchievementBadge.ChangeReference(ra::ui::ImageType::Badge, sAchievementBadgeURI);
     GSL_SUPPRESS_CON4 // inline suppression for this currently not working
     const auto hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_hAchievementBadge);
@@ -1937,11 +1964,8 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
         InvalidateRect(hCheevoPic, nullptr, TRUE);
     }
 
-    // Find buffer in the dropdown list
-    const int nSel = ComboBox_FindStringExact(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), 0,
-                                              sAchievementBadgeURI.c_str());
-    if (nSel != -1)
-        ComboBox_SetCurSel(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), nSel); // Force select
+    // Update the text field
+    SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, sAchievementBadgeURI.c_str());
 }
 
 void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
@@ -2040,7 +2064,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, TEXT("<Inactive!>"));
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_DESC, TEXT("<Select or Create an Achievement first!>"));
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, TEXT("<Inactive!>"));
-        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, TEXT(""));
+        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, TEXT("00000"));
 
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR), FALSE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_ID), FALSE);
@@ -2243,58 +2267,6 @@ void Dlg_AchievementEditor::SetSelectedConditionGroup(size_t nGrp) const noexcep
 {
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_GROUP);
     ListBox_SetCurSel(hList, ra::to_signed(nGrp));
-}
-
-void BadgeNames::FetchNewBadgeNamesThreaded() { RAWeb::CreateThreadedHTTPRequest(RequestBadgeIter); }
-
-void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
-{
-    const unsigned int nLowerLimit = data["FirstBadge"].GetUint();
-    const unsigned int nUpperLimit = data["NextBadge"].GetUint();
-
-    SetWindowRedraw(m_hDestComboBox, FALSE);
-
-    // Clean out cbo
-    while (ComboBox_DeleteString(m_hDestComboBox, 0) > 0)
-    {
-    }
-
-    for (unsigned int i = nLowerLimit; i < nUpperLimit; ++i)
-    {
-        TCHAR buffer[256];
-        _stprintf_s(buffer, _T("%05d"), i);
-        ComboBox_AddString(m_hDestComboBox, buffer);
-    }
-
-    SendMessage(m_hDestComboBox, WM_SETREDRAW, TRUE, LPARAM{});
-    RedrawWindow(m_hDestComboBox, nullptr, nullptr, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
-
-    // Find buffer in the dropdown list
-    if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
-    {
-        const int nSel = ComboBox_FindStringExact(
-            m_hDestComboBox, 0, g_AchievementEditorDialog.ActiveAchievement()->BadgeImageURI().c_str());
-        if (nSel != -1)
-            ComboBox_SetCurSel(m_hDestComboBox, nSel); // Force select
-    }
-}
-
-void BadgeNames::AddNewBadgeName(const char* pStr, bool bAndSelect)
-{
-    {
-        const auto nSel{ComboBox_AddString(m_hDestComboBox, NativeStr(pStr).c_str())};
-        if ((nSel == CB_ERR) || (nSel == CB_ERRSPACE))
-        {
-            ::MessageBox(::GetActiveWindow(),
-                         _T("An error has occurred or there is insufficient space "
-                            "to store the new string"),
-                         _T("Error!"), MB_OK | MB_ICONERROR);
-            return;
-        }
-    }
-
-    if (bAndSelect)
-        ComboBox_SelectString(m_hDestComboBox, 0, pStr);
 }
 
 void GenerateResizes(HWND hDlg)

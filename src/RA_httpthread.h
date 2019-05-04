@@ -21,7 +21,6 @@ enum RequestType
     RequestNews,
     RequestRichPresence,
     RequestFriendList,
-    RequestBadgeIter,
     RequestHashLibrary,
     RequestAllProgress,
 
@@ -29,14 +28,6 @@ enum RequestType
     RequestSubmitAchievementData,
 
     NumRequestTypes
-};
-
-enum UploadType
-{
-    //	Upload:
-    RequestUploadBadgeImage,
-
-    NumUploadTypes
 };
 
 extern const char* RequestTypeToString[];
@@ -95,8 +86,6 @@ public:
 
     static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, rapidjson::Document& JSONResponseOut);
     static BOOL DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::string& ResponseOut);
-
-    static BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, rapidjson::Document& ResponseOut);
 
     static HANDLE Mutex() noexcept { return ms_hHTTPMutex; }
     static RequestObject* PopNextHttpResult() { return ms_LastHttpResults.PopNextItem(); }

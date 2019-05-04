@@ -124,6 +124,7 @@
     <ClInclude Include="api\AwardAchievement.hh" />
     <ClInclude Include="api\DeleteCodeNote.hh" />
     <ClInclude Include="api\FetchAchievementInfo.hh" />
+    <ClInclude Include="api\FetchBadgeIds.hh" />
     <ClInclude Include="api\FetchCodeNotes.hh" />
     <ClInclude Include="api\FetchGameData.hh" />
     <ClInclude Include="api\FetchGamesList.hh" />
@@ -144,6 +145,7 @@
     <ClInclude Include="api\SubmitNewTitle.hh" />
     <ClInclude Include="api\SubmitTicket.hh" />
     <ClInclude Include="api\UpdateCodeNote.hh" />
+    <ClInclude Include="api\UploadBadge.hh" />
     <ClInclude Include="data\AsyncObject.hh" />
     <ClInclude Include="data\ConsoleContext.hh" />
     <ClInclude Include="data\EmulatorContext.hh" />

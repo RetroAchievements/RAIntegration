@@ -26,7 +26,6 @@ const char* RequestTypeToString[] =
     "RequestNews",
     "RequestRichPresence",
     "RequestFriendList",
-    "RequestBadgeIter",
     "RequestHashLibrary",
     "RequestAllProgress",
 
@@ -40,25 +39,12 @@ const char* RequestTypeToPost[] =
     "news",
     "richpresencepatch",
     "getfriendlist",
-    "badgeiter",
     "hashlibrary",
     "allprogress",
 
     "uploadachievement",
 };
 static_assert(SIZEOF_ARRAY(RequestTypeToPost) == NumRequestTypes, "Must match up!");
-
-const char* UploadTypeToString[] =
-{
-    "RequestUploadBadgeImage",
-};
-static_assert(SIZEOF_ARRAY(UploadTypeToString) == NumUploadTypes, "Must match up!");
-
-const char* UploadTypeToPost[] =
-{
-    "uploadbadgeimage",
-};
-static_assert(SIZEOF_ARRAY(UploadTypeToPost) == NumUploadTypes, "Must match up!");
 
 //  No game-specific code here please!
 
@@ -210,155 +196,6 @@ BOOL RAWeb::DoBlockingRequest(RequestType nType, const PostArgs& PostData, std::
     RA_LOG("Received %zu bytes from %s: %s", response.Content().length(), sLogPage.c_str(), response.Content().c_str());
 
     return TRUE;
-}
-
-BOOL DoBlockingImageUpload(UploadType nType, const std::string& sFilename, std::string& ResponseOut)
-{
-    ASSERT(nType == UploadType::RequestUploadBadgeImage); // Others not yet supported, see "r=" below
-
-    const std::string sRequestedPage{"doupload.php"};
-    const std::string sRTarget{gsl::at(UploadTypeToPost, nType)}; //"uploadbadgeimage";
-
-    RA_LOG(__FUNCTION__ ": (%04x) uploading \"%s\" to %s...\n", GetCurrentThreadId(), sFilename.c_str(),
-           sRequestedPage.c_str());
-
-    BOOL bSuccess = FALSE;
-    HINTERNET hConnect = nullptr, hRequest = nullptr;
-
-    size_t nTemp{};
-
-    // Use WinHttpOpen to obtain a session handle.
-#pragma warning(push)
-#pragma warning(disable: 26477)
-    GSL_SUPPRESS_ES47 HINTERNET hSession = WinHttpOpen(RAWeb::GetUserAgent().c_str(), WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
-                                                       WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
-#pragma warning(pop)
-
-    // Specify an HTTP server.
-    if (hSession != nullptr)
-    {
-        hConnect = WinHttpConnect(hSession, ra::Widen(_RA_HostName()).c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
-    }
-
-    if (hConnect != nullptr)
-    {
-        WCHAR wBuffer[1024];
-        mbstowcs_s(&nTemp, wBuffer, 1024, sRequestedPage.c_str(), strlen(sRequestedPage.c_str()) + 1);
-
-        hRequest = WinHttpOpenRequest(hConnect,
-            L"POST",
-            wBuffer,
-            nullptr,
-            WINHTTP_NO_REFERER,
-            WINHTTP_DEFAULT_ACCEPT_TYPES,
-            0);
-    }
-
-    if (hRequest != nullptr)
-    {
-        //---------------------------41184676334
-        const char* mimeBoundary = "---------------------------41184676334";
-        const wchar_t* contentType = L"Content-Type: multipart/form-data; boundary=---------------------------41184676334\r\n";
-
-        const int nResult =
-            WinHttpAddRequestHeaders(hRequest, contentType, ra::to_unsigned(-1), WINHTTP_ADDREQ_FLAG_ADD_IF_NEW);
-        if (nResult != 0)
-        {
-            // Add the photo to the stream
-            std::ifstream f(sFilename, std::ios::binary);
-
-            std::string sRTargetAndExtension = sRTarget + sFilename.substr(sFilename.length() - 4);
-
-            std::ostringstream sb_ascii;
-            //sb_ascii << str;                                  
-            sb_ascii << "--" << mimeBoundary << "\r\n";                                                         //  --Boundary
-            sb_ascii << "Content-Disposition: form-data; name=\"file\"; filename=\"" << sRTargetAndExtension << "\"\r\n";   //  Item header    'file' - Hijacking to determine request type!
-            sb_ascii << "\r\n";                                                                                 //  Spacing
-            sb_ascii << f.rdbuf();                                                                              //  Binary content
-            sb_ascii << "\r\n";                                                                                 //  Spacing
-            sb_ascii << "--" << mimeBoundary << "--\r\n";                                                       //  --Boundary--
-
-                                                                                                                //  ## EXPERIMENTAL ##
-                                                                                                                //sb_ascii << "Content-Disposition: form-data; name=\"r\"\r\n";                                     //  Item header    'r'
-                                                                                                                //sb_ascii << "\r\n";                                                                                   //  Spacing
-                                                                                                                //sb_ascii << sRTarget << "\r\n";                                                                       //  Binary content
-                                                                                                                //sb_ascii << "\r\n";                                                                                   //  Spacing
-                                                                                                                //sb_ascii << "--" << mimeBoundary << "--\r\n";                                                     //  --Boundary--
-
-            const std::string str = sb_ascii.str();
-
-            //  Inject type of request
-
-            bSuccess = WinHttpSendRequest(
-                hRequest,
-                WINHTTP_NO_ADDITIONAL_HEADERS,
-                0,
-                (void*)str.c_str(),
-                static_cast<unsigned long>(str.length()),
-                static_cast<unsigned long>(str.length()),
-                0);
-        }
-
-        if (WinHttpReceiveResponse(hRequest, nullptr))
-        {
-            //BYTE* sDataDestOffset = &pBufferOut[0];
-
-            DWORD nBytesToRead = 0;
-            WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
-
-            //  Note: success is much earlier, as 0 bytes read is VALID
-            //  i.e. fetch achievements for new game will return 0 bytes.
-            bSuccess = nBytesToRead > 0;
-
-            while (nBytesToRead > 0)
-            {
-                ASSERT(nBytesToRead <= 8192);
-                if (nBytesToRead <= 8192)
-                {
-                    DWORD nBytesFetched = 0;
-
-                    auto pData{ std::make_unique<char[]>(nBytesToRead) };
-                    if (WinHttpReadData(hRequest, pData.get(), nBytesToRead, &nBytesFetched))
-                    {
-                        ASSERT(nBytesToRead == nBytesFetched);
-                        ResponseOut.insert(ResponseOut.end(), pData.get(), pData.get() + nBytesFetched);
-                    }
-                }
-
-                WinHttpQueryDataAvailable(hRequest, &nBytesToRead);
-            }
-
-            if (ResponseOut.size() > 0)
-                ResponseOut.push_back('\0');    //  EOS for parsing
-
-            RA_LOG(__FUNCTION__ ": success! Returned %u bytes.", ResponseOut.size());
-        }
-    }
-
-    return bSuccess;
-}
-
-BOOL RAWeb::DoBlockingImageUpload(UploadType nType, const std::string& sFilename, rapidjson::Document& ResponseOut)
-{
-    std::string response;
-    if (::DoBlockingImageUpload(nType, sFilename, response))
-    {
-        ResponseOut.Parse(response.c_str());
-        if (!ResponseOut.HasParseError())
-        {
-            return TRUE;
-        }
-        else
-        {
-            RA_LOG(__FUNCTION__ " (%d, %s) has parse error: %s\n", nType, sFilename.c_str(), GetParseError_En(ResponseOut.GetParseError()));
-            return FALSE;
-        }
-    }
-    else
-    {
-        RA_LOG(__FUNCTION__ " (%d, %s) could not connect?\n", nType, sFilename.c_str());
-        return FALSE;
-    }
 }
 
 //  Adds items to the httprequest queue

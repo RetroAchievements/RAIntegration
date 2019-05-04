@@ -9,7 +9,8 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class OverlayViewModel : public PopupViewModelBase {
+class OverlayViewModel : public PopupViewModelBase
+{
 public:
     enum class State
     {
@@ -48,18 +49,12 @@ public:
     /// <summary>
     /// Determines whether the animation cycle has started.
     /// </summary>
-    bool IsAnimationStarted() const noexcept override
-    {
-        return (m_fAnimationProgress >= 0.0);
-    }
+    bool IsAnimationStarted() const noexcept override { return (m_fAnimationProgress >= 0.0); }
 
     /// <summary>
     /// Determines whether the animation cycle has completed.
     /// </summary>
-    bool IsAnimationComplete() const noexcept override
-    {
-        return (m_nState == State::Hidden);
-    }
+    bool IsAnimationComplete() const noexcept override { return (m_nState == State::Hidden); }
 
     void ProcessInput(const ControllerInput& pInput);
 
@@ -88,10 +83,7 @@ public:
 
         virtual void Refresh() = 0;
 
-        virtual bool Update(_UNUSED double fElapsed) noexcept(false)
-        {
-            return false;
-        }
+        virtual bool Update(_UNUSED double fElapsed) noexcept(false) { return false; }
 
         virtual bool ProcessInput(const ControllerInput& pInput) = 0;
 
@@ -99,7 +91,7 @@ public:
     };
 
     PageViewModel& CurrentPage() const { return *m_vPages.at(m_nSelectedPage); }
-    
+
 private:
     void PopulatePages();
     void CreateRenderImage();
@@ -109,7 +101,20 @@ private:
     State m_nState = State::Hidden;
     bool m_bSurfaceStale = false;
 
-    bool m_bInputLock = false;
+    enum class NavButton
+    {
+        None,
+        Up,
+        Down,
+        Left,
+        Right,
+        Confirm,
+        Cancel,
+        Quit,
+    };
+
+    NavButton m_nCurrentButton = NavButton::None;
+    std::chrono::steady_clock::time_point m_tCurrentButtonPressed;
 
     std::vector<std::unique_ptr<PageViewModel>> m_vPages;
     gsl::index m_nSelectedPage = 0;

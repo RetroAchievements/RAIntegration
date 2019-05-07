@@ -24,9 +24,6 @@ enum RequestType
     RequestHashLibrary,
     RequestAllProgress,
 
-    //	Submit
-    RequestSubmitAchievementData,
-
     NumRequestTypes
 };
 

@@ -25,6 +25,7 @@ public:
     FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override;
     UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) override;
     DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) override;
+    UpdateAchievement::Response UpdateAchievement(const UpdateAchievement::Request& request) override;
     FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) override;
     FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) override;
     LatestClient::Response LatestClient(const LatestClient::Request& request) override;

@@ -97,10 +97,13 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
 
     if (pDocument.HasMember("Error"))
     {
-        pResponse.Result = ApiResult::Error;
         pResponse.ErrorMessage = pDocument["Error"].GetString();
-        RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage);
-        return false;
+        if (!pResponse.ErrorMessage.empty())
+        {
+            pResponse.Result = ApiResult::Error;
+            RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage);
+            return false;
+        }
     }
 
     if (pDocument.HasMember("Success") && !pDocument["Success"].GetBool())
@@ -711,6 +714,36 @@ DeleteCodeNote::Response ConnectedServer::DeleteCodeNote(const DeleteCodeNote::R
     if (DoRequest(m_sHost, DeleteCodeNote::Name(), "submitcodenote", sPostData, response, document))
     {
         response.Result = ApiResult::Success;
+    }
+
+    return std::move(response);
+}
+
+UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchievement::Request& request)
+{
+    UpdateAchievement::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "a", std::to_string(request.AchievementId));
+    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+    AppendUrlParam(sPostData, "n", ra::Narrow(request.Title));
+    AppendUrlParam(sPostData, "d", ra::Narrow(request.Description));
+    AppendUrlParam(sPostData, "m", request.Trigger);
+    AppendUrlParam(sPostData, "z", std::to_string(request.Points));
+    AppendUrlParam(sPostData, "f", std::to_string(request.Category));
+    AppendUrlParam(sPostData, "b", request.Badge);
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const std::string sPostCode = ra::StringPrintf("%sSECRET%uSEC%s%uRE2%u",
+        pUserContext.GetUsername(), request.AchievementId, request.Trigger, request.Points, request.Points * 3);
+    const std::string sPostCodeHash = RAGenerateMD5(sPostCode);
+    AppendUrlParam(sPostData, "h", sPostCodeHash);
+
+    if (DoRequest(m_sHost, UpdateAchievement::Name(), "uploadachievement", sPostData, response, document))
+    {
+        response.Result = ApiResult::Success;
+        GetRequiredJsonField(response.AchievementId, document, "AchievementID", response);
     }
 
     return std::move(response);

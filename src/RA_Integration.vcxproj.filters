@@ -695,6 +695,9 @@
     <ClInclude Include="api\UploadBadge.hh">
       <Filter>API</Filter>
     </ClInclude>
+    <ClInclude Include="api\UpdateAchievement.hh">
+      <Filter>API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

@@ -63,17 +63,25 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
     return TRUE;
 }
 
+API void CCONV _RA_UpdateHWnd(HWND hMainHWND)
+{
+    if (hMainHWND != g_RAMainWnd)
+    {
+        auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
+        pDesktop.SetMainHWnd(hMainHWND);
+        g_RAMainWnd = hMainHWND;
+
+        auto& pOverlayWindow = ra::services::ServiceLocator::GetMutable<ra::ui::win32::OverlayWindow>();
+        pOverlayWindow.CreateOverlayWindow(hMainHWND);
+    }
+}
+
 static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
 {
     ra::services::Initialization::RegisterServices(ra::itoe<EmulatorID>(nEmulatorID));
 
     // initialize global state
-    auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
-    pDesktop.SetMainHWnd(hMainHWND);
-    g_RAMainWnd = hMainHWND;
-
-    auto& pOverlayWindow = ra::services::ServiceLocator::GetMutable<ra::ui::win32::OverlayWindow>();
-    pOverlayWindow.CreateOverlayWindow(hMainHWND);
+    _RA_UpdateHWnd(hMainHWND);
 
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     g_sHomeDir = pFileSystem.BaseDirectory();

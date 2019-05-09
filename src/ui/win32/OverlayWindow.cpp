@@ -26,6 +26,10 @@ static LRESULT CALLBACK OverlayWndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARA
         case WM_NCHITTEST:
             return HTNOWHERE;
 
+        case WM_DESTROY:
+            ra::services::ServiceLocator::GetMutable<OverlayWindow>().DestroyOverlayWindow();
+            return 0;
+
         default:
             return DefWindowProc(hWnd, Msg, wParam, lParam);
     }
@@ -44,15 +48,25 @@ static DWORD WINAPI OverlayWindowThreadStart(LPVOID)
 
 void OverlayWindow::CreateOverlayWindow(HWND hWnd)
 {
-    if (m_hOverlayWnd)
-        return;
-
     switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
     {
         case EmulatorID::RA_Gens:
             return;
     }
 
+    if (m_hOverlayWnd && IsWindow(m_hOverlayWnd))
+    {
+        // overlay window exists, just update the parent (if necessary)
+        if (m_hWnd != hWnd)
+        {
+            m_hWnd = hWnd;
+            SetParent(m_hOverlayWnd, hWnd);
+            UpdateOverlayPosition();
+        }
+        return;
+    }
+
+    // overlay window does not exist, create it
     m_hWnd = hWnd;
 
     const auto hParentThread = GetWindowThreadProcessId(m_hWnd, nullptr);
@@ -64,6 +78,9 @@ void OverlayWindow::CreateOverlayWindow(HWND hWnd)
     }
     else
     {
+        // if the window was destroyed, it should have taken the thread with it
+        assert(m_hOverlayWndThread == nullptr);
+
         // we're not on the thread that owns the parent window, so there may not even be a message pump.
         // create our own message pump thread and create/manage the overlay window there.
         m_hOverlayWndThread = CreateThread(nullptr, 0, OverlayWindowThreadStart, nullptr, 0, nullptr);
@@ -81,9 +98,13 @@ DWORD OverlayWindow::OverlayWindowThread()
         DispatchMessageA(&msg);
 
         if (msg.message == WM_DESTROY)
+        {
+            m_hOverlayWnd = nullptr;
             break;
+        }
     }
 
+    m_hOverlayWndThread = nullptr;
     return msg.wParam;
 }
 
@@ -100,13 +121,20 @@ void OverlayWindow::CreateOverlayWindow()
     memset(&wndEx, 0, sizeof(wndEx));
     wndEx.cbSize = sizeof(wndEx);
     wndEx.lpszClassName = TEXT("RA_OVERLAY_WND_CLASS");
-    wndEx.lpfnWndProc = OverlayWndProc;
-    wndEx.hbrBackground = CreateSolidBrush(nTransparentColor);
-    wndEx.hInstance = GetModuleHandle(nullptr);
-    if (!RegisterClassEx(&wndEx))
+
+    static bool bClassRegistered = false;
+    if (!bClassRegistered)
     {
-        MessageBox(m_hWnd, TEXT("Failed to register overlay window class"), TEXT("Error"), MB_OK);
-        return;
+        wndEx.lpfnWndProc = OverlayWndProc;
+        wndEx.hbrBackground = CreateSolidBrush(nTransparentColor);
+        wndEx.hInstance = GetModuleHandle(nullptr);
+        if (!RegisterClassEx(&wndEx))
+        {
+            MessageBox(m_hWnd, TEXT("Failed to register overlay window class"), TEXT("Error"), MB_OK);
+            return;
+        }
+
+        bClassRegistered = true;
     }
 
     m_hOverlayWnd = CreateWindowEx(
@@ -135,6 +163,9 @@ void OverlayWindow::CreateOverlayWindow()
     pOverlayManager.SetRenderRequestHandler([this]() noexcept {
         InvalidateRect(m_hOverlayWnd, nullptr, FALSE);
     });
+
+    m_bErase = true;
+    Render();
 }
 
 void OverlayWindow::DestroyOverlayWindow() noexcept
@@ -147,11 +178,15 @@ void OverlayWindow::DestroyOverlayWindow() noexcept
 
     if (m_hOverlayWnd)
     {
+        // clear out m_hOverlayWnd so we don't end up infinitely recursing
+        HWND hOverlayWnd = m_hOverlayWnd;
+        m_hOverlayWnd = nullptr;
+
         if (m_hOverlayWndThread)
         {
             // use PostMessage instead of calling DestroyWindow directly to ensure we kick out of the loop -
             // GetMessage does not get involved when using DestroyWindow directly.
-            PostMessage(m_hOverlayWnd, WM_DESTROY, 0, 0);
+            PostMessage(hOverlayWnd, WM_DESTROY, 0, 0);
 
             // Wait for the thread to finish
             WaitForSingleObject(m_hOverlayWndThread, 1000);
@@ -160,10 +195,8 @@ void OverlayWindow::DestroyOverlayWindow() noexcept
         else
         {
             // we didn't create a message pump, so we don't have to clean it up. just destroy the window.
-            DestroyWindow(m_hOverlayWnd);
+            DestroyWindow(hOverlayWnd);
         }
-
-        m_hOverlayWnd = nullptr;
     }
 
     m_hWnd = nullptr;

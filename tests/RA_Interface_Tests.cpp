@@ -70,6 +70,7 @@ public:
         Assert::IsNotNull((const void*)_RA_HostName);
         Assert::IsNotNull((const void*)_RA_InitI);
         Assert::IsNotNull((const void*)_RA_InitOffline);
+        Assert::IsNotNull((const void*)_RA_UpdateHWnd);
         Assert::IsNotNull((const void*)_RA_Shutdown);
         Assert::IsNotNull((const void*)_RA_AttemptLogin);
         Assert::IsNotNull((const void*)_RA_NavigateOverlay);
@@ -103,6 +104,7 @@ public:
         Assert::IsNull((const void*)_RA_HostName);
         Assert::IsNull((const void*)_RA_InitI);
         Assert::IsNull((const void*)_RA_InitOffline);
+        Assert::IsNull((const void*)_RA_UpdateHWnd);
         Assert::IsNull((const void*)_RA_Shutdown);
         Assert::IsNull((const void*)_RA_AttemptLogin);
         Assert::IsNull((const void*)_RA_NavigateOverlay);

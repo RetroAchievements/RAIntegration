@@ -379,14 +379,14 @@ public:
             lb1.Id = 7U;
             lb1.Title = "LB1";
             lb1.Description = "Desc1";
-            lb1.Definition = "STA:1=1:CAN:1=1:SUB:1=1:VAL:1";
+            lb1.Definition = "STA:1=1::CAN:1=1::SUB:1=1::VAL:1";
             lb1.Format = "SECS";
 
             auto& lb2 = response.Leaderboards.emplace_back();
             lb2.Id = 8U;
             lb2.Title = "LB2";
             lb2.Description = "Desc2";
-            lb2.Definition = "STA:1=1:CAN:1=1:SUB:1=1:VAL:1";
+            lb2.Definition = "STA:1=1::CAN:1=1::SUB:1=1::VAL:1";
             lb2.Format = "FRAMES";
 
             return true;

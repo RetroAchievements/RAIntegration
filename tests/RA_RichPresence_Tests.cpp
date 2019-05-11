@@ -268,7 +268,7 @@ public:
         RichPresenceInterpreterHarness rp;
         rp.LoadTest("Display:\n?0xH0000=0?Zero");
 
-        Assert::AreEqual("Parse Error -18", rp.GetRichPresenceString().c_str()); // RC_MISSING_DISPLAY_STRING
+        Assert::AreEqual("Parse error -18", rp.GetRichPresenceString().c_str()); // RC_MISSING_DISPLAY_STRING
     }
 
     TEST_METHOD(TestConditionalDisplaySharedLookup)
@@ -347,7 +347,7 @@ public:
         RichPresenceInterpreterHarness rp;
         rp.LoadTest("Lookup:Location\n0x00=Zero\n0x01=One\n\nDisplay:\n?BANANA?At @Location(0xH0000)\nNear @Location(0xH0000)");
 
-        Assert::AreEqual("Parse Error -2", rp.GetRichPresenceString().c_str()); // RC_INVALID_MEMORY_OPERAND
+        Assert::AreEqual("Parse error -2", rp.GetRichPresenceString().c_str()); // RC_INVALID_MEMORY_OPERAND
     }
 
     TEST_METHOD(TestUndefinedTag)
@@ -371,7 +371,7 @@ public:
         RichPresenceInterpreterHarness rp;
         rp.LoadTest("Format:Points\nFormatType=VALUE\n\nDisplay:\n@Points Points");
 
-        Assert::AreEqual("Parse Error -16", rp.GetRichPresenceString().c_str()); // RC_MISSING_VALUE
+        Assert::AreEqual("Parse error -16", rp.GetRichPresenceString().c_str()); // RC_MISSING_VALUE
     }
 
     TEST_METHOD(TestEscapedComment)

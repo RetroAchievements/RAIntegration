@@ -8,6 +8,8 @@
 #include "services\AchievementRuntime.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 #ifndef RA_UTEST
 #include "RA_ImageFactory.h"
 #endif
@@ -281,6 +283,10 @@ void Achievement::ParseTrigger(const char* sTrigger)
         // parse error occurred
         RA_LOG("rc_parse_trigger returned %d", nSize);
         m_pTrigger = nullptr;
+
+        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+            ra::StringPrintf(L"Unable to activate achievement: %s", Title()),
+            ra::StringPrintf(L"Parse error %d", nSize));
     }
     else
     {

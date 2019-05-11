@@ -8,11 +8,13 @@
 #include "ScoreboardViewModel.hh"
 #include "ScoreTrackerViewModel.hh"
 
+#include "ui\ImageReference.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class OverlayManager {
+class OverlayManager : protected ra::ui::IImageRepository::NotifyTarget {
 public:    
     GSL_SUPPRESS_F6 OverlayManager() = default;
     virtual ~OverlayManager() noexcept = default;
@@ -190,6 +192,9 @@ public:
     /// </summary>
     void SetRenderRequestHandler(std::function<void()>&& fHandleRenderRequest)
     {
+        auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+        pImageRepository.RemoveNotifyTarget(*this);
+        pImageRepository.AddNotifyTarget(*this);
         m_fHandleRenderRequest = std::move(fHandleRenderRequest);
     }
 
@@ -200,6 +205,11 @@ protected:
     std::deque<ScoreboardViewModel> m_vScoreboards;
 
     bool m_bRenderRequestPending = false;
+
+    void OnImageChanged(ImageType, const std::string&) override
+    {
+        RequestRender();
+    }
 
 private:
     void UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, double fElapsed);

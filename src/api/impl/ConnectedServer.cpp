@@ -541,8 +541,16 @@ FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFrie
             {
                 FetchUserFriends::Response::Friend oFriend;
                 GetRequiredJsonField(oFriend.User, pFriend, "Friend", response);
-                GetRequiredJsonField(oFriend.Score, pFriend, "RAPoints", response);
                 GetRequiredJsonField(oFriend.LastActivity, pFriend, "LastSeen", response);
+
+                // if server's LastSeen is empty or "Unknown", it returns "_"
+                if (oFriend.LastActivity == L"_")
+                    oFriend.LastActivity.clear();
+
+                std::string sPoints;
+                GetRequiredJsonField(sPoints, pFriend, "RAPoints", response);
+                oFriend.Score = std::stoi(sPoints);
+
                 response.Friends.emplace_back(oFriend);
             }
         }

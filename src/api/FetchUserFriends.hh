@@ -18,7 +18,7 @@ public:
         {
             std::string User;
             unsigned int Score{ 0U };
-            std::string LastActivity;
+            std::wstring LastActivity;
         };
 
         std::vector<Friend> Friends;

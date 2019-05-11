@@ -96,6 +96,7 @@
     <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayFriendsPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayListPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayManager.cpp" />
@@ -233,6 +234,7 @@
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayAchievementsPageViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayFriendsPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayListPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayManager.hh" />

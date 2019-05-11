@@ -2,6 +2,8 @@
 
 #include "ra_math.h"
 
+#include "services\IThreadPool.hh"
+
 #include "ui\OverlayTheme.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 
@@ -48,7 +50,25 @@ bool OverlayListPageViewModel::Update(double fElapsed)
         if (m_nImagesPending != nImagesPending)
         {
             m_nImagesPending = nImagesPending;
+            m_nImagesPendingRetryCount = 10;
             bUpdated = true;
+        }
+
+        if (m_nImagesPending && !m_nImagesPendingRetryQueued && m_nImagesPendingRetryCount > 0)
+        {
+            m_nImagesPendingRetryQueued = true;
+
+            ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(
+                std::chrono::milliseconds(100), [this]()
+            {
+                m_nImagesPendingRetryQueued = false;
+
+                if (Update(0.0))
+                    ForceRedraw();
+
+                if (m_nImagesPendingRetryCount > 0)
+                    m_nImagesPendingRetryCount--;
+            });
         }
     }
 

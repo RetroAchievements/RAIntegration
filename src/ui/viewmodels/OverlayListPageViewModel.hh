@@ -119,6 +119,8 @@ private:
         _UNUSED int nX, _UNUSED int nY, _UNUSED int nWidth, _UNUSED int nHeight) const noexcept(false) {};
 
     unsigned int m_nImagesPending = 0;
+    unsigned int m_nImagesPendingRetryCount = 0;
+    bool m_nImagesPendingRetryQueued = false;
     bool m_bRedraw = false;
 };
 

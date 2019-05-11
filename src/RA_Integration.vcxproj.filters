@@ -270,6 +270,9 @@
     <ClCompile Include="ui\win32\bindings\GridBinding.cpp">
       <Filter>UI\Win32\Bindings</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayFriendsPageViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -712,6 +715,9 @@
     </ClInclude>
     <ClInclude Include="api\FetchUserFriends.hh">
       <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\OverlayFriendsPageViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

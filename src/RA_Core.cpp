@@ -111,15 +111,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
             ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().Logout();
     });
 
-    //	TBD:
-    //if( ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername().length() > 0 )
-    //{
-    //	args.clear();
-    //	args[ 'u' ] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
-    //	args[ 't' ] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetApiToken();
-    //	RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
-    //}
-
     return TRUE;
 }
 

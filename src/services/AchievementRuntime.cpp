@@ -163,10 +163,33 @@ _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& cha
     }
 }
 
+static bool IsMemoryOperand(int nOperandType) noexcept
+{
+    switch (nOperandType)
+    {
+        case RC_OPERAND_ADDRESS:
+        case RC_OPERAND_DELTA:
+        case RC_OPERAND_PRIOR:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigger_t* pTrigger,
                                const std::string& sSalt, const std::string& sMemString)
 {
-    std::vector<rc_condition_t> vConditions;
+    struct ConditionState
+    {
+        unsigned int nHits;
+        unsigned int nSourceVal;
+        unsigned int nSourcePrev;
+        unsigned int nTargetVal;
+        unsigned int nTargetPrev;
+    };
+
+    std::vector<ConditionState> vConditions;
     const size_t nStart = pTokenizer.CurrentPosition();
 
     // each group appears as an entry for the current nId
@@ -188,16 +211,16 @@ static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigg
         for (size_t i = 0; i < nNumCond; ++i)
         {
             // Parse next condition state
-            rc_condition_t& cond = vConditions.emplace_back();
-            cond.current_hits = pTokenizer.ReadNumber();
+            auto& cond = vConditions.emplace_back();
+            cond.nHits = pTokenizer.ReadNumber();
             pTokenizer.Advance();
-            cond.operand1.value = pTokenizer.ReadNumber();
+            cond.nSourceVal = pTokenizer.ReadNumber();
             pTokenizer.Advance();
-            cond.operand1.previous = pTokenizer.ReadNumber();
+            cond.nSourcePrev = pTokenizer.ReadNumber();
             pTokenizer.Advance();
-            cond.operand2.value = pTokenizer.ReadNumber();
+            cond.nTargetVal = pTokenizer.ReadNumber();
             pTokenizer.Advance();
-            cond.operand2.previous = pTokenizer.ReadNumber();
+            cond.nTargetPrev = pTokenizer.ReadNumber();
             pTokenizer.Advance();
         }
     }
@@ -246,12 +269,18 @@ static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigg
                     rc_condition_t* pCondition = pGroup->conditions;
                     while (pCondition != nullptr)
                     {
-                        const rc_condition_t& condSource = vConditions.at(nCondition++);
-                        pCondition->current_hits = condSource.current_hits;
-                        pCondition->operand1.value = condSource.operand1.value;
-                        pCondition->operand1.previous = condSource.operand1.previous;
-                        pCondition->operand2.value = condSource.operand2.value;
-                        pCondition->operand2.previous = condSource.operand2.previous;
+                        const auto& condSource = vConditions.at(nCondition++);
+                        pCondition->current_hits = condSource.nHits;
+                        if (IsMemoryOperand(pCondition->operand1.type))
+                        {
+                            pCondition->operand1.value.memref->value = condSource.nSourceVal;
+                            pCondition->operand1.value.memref->previous = condSource.nSourcePrev;
+                        }
+                        if (IsMemoryOperand(pCondition->operand2.type))
+                        {
+                            pCondition->operand2.value.memref->value = condSource.nTargetVal;
+                            pCondition->operand2.value.memref->previous = condSource.nTargetPrev;
+                        }
 
                         pCondition = pCondition->next;
                     }
@@ -371,8 +400,16 @@ static std::string CreateStateString(unsigned int nId, rc_trigger_t* pTrigger, c
         pCondition = pGroup->conditions;
         while (pCondition != nullptr)
         {
-            oss << pCondition->current_hits << ':' << pCondition->operand1.value << ':' << pCondition->operand1.previous
-                << ':' << pCondition->operand2.value << ':' << pCondition->operand2.previous << ':';
+            oss << pCondition->current_hits << ':';
+            if (IsMemoryOperand(pCondition->operand1.type))
+                oss << pCondition->operand1.value.memref->value << ':' << pCondition->operand1.value.memref->previous << ':';
+            else
+                oss << "0:0:";
+
+            if (IsMemoryOperand(pCondition->operand2.type))
+                oss << pCondition->operand2.value.memref->value << ':' << pCondition->operand2.value.memref->previous << ':';
+            else
+                oss << "0:0:";
 
             pCondition = pCondition->next;
         }

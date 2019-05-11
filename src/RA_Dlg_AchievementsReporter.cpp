@@ -3,12 +3,12 @@
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
 #include "RA_Resource.h"
-#include "RA_User.h"
 #include "RA_httpthread.h"
 
 #include "api\SubmitTicket.hh"
 
 #include "data\GameContext.hh"
+#include "data\UserContext.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
@@ -116,7 +116,7 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
             }
 
             ListView_SetExtendedListViewStyle(hList, LVS_EX_CHECKBOXES | LVS_EX_HEADERDRAGDROP);
-            SetDlgItemText(hDlg, IDC_RA_BROKENACH_BUGREPORTER, NativeStr(RAUsers::LocalUser().Username()).c_str());
+            SetDlgItemText(hDlg, IDC_RA_BROKENACH_BUGREPORTER, NativeStr(ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername()).c_str());
         }
             return FALSE;
 

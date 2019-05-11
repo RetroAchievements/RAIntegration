@@ -4,7 +4,6 @@
 #include "RA_Core.h"
 #include "RA_Dlg_MemBookmark.h"
 #include "RA_Resource.h"
-#include "RA_User.h"
 #include "RA_httpthread.h"
 
 #include "data\ConsoleContext.hh"

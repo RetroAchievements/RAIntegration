@@ -1,7 +1,6 @@
 #include "RA_httpthread.h"
 
 #include "RA_Core.h"
-#include "RA_User.h"
 
 #include "RA_BuildVer.h"
 #include "RA_AchievementSet.h"

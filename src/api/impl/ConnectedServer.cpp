@@ -4,7 +4,8 @@
 #include "RA_Defs.h"
 
 #include "RA_md5factory.h"
-#include "RA_User.h"
+
+#include "data\UserContext.hh"
 
 #include "services\Http.hh"
 #include "services\IFileSystem.hh"
@@ -518,7 +519,7 @@ SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const S
     return std::move(response);
 }
 
-FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFriends::Request& request)
+FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFriends::Request&)
 {
     FetchUserFriends::Response response;
     rapidjson::Document document;

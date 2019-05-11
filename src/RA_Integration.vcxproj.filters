@@ -78,9 +78,6 @@
     <ClCompile Include="RA_Leaderboard.cpp">
       <Filter>Data</Filter>
     </ClCompile>
-    <ClCompile Include="RA_User.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="RA_httpthread.cpp">
       <Filter>Services</Filter>
     </ClCompile>
@@ -303,9 +300,6 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Leaderboard.h">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_User.h">
       <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="RA_httpthread.h">

@@ -364,7 +364,8 @@ API HMENU CCONV _RA_CreatePopupMenu()
         GSL_SUPPRESS_TYPE1 AppendMenu(hRA, MF_POPUP, reinterpret_cast<UINT_PTR>(hRA_LB), TEXT("Leaderboards"));
         AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
         AppendMenu(hRA_LB, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge &Notification"));
+        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Start &Notification"));
+        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_CANCEL_NOTIFS, TEXT("Display Cancel N&otification"));
         AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score &Counter"));
         AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank &Scoreboard"));
 
@@ -686,6 +687,16 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
             pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications,
                 !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications));
+
+            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
+        }
+        break;
+
+        case IDM_RA_TOGGLE_LB_CANCEL_NOTIFS:
+        {
+            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications,
+                !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications));
 
             ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
         }

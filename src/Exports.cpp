@@ -305,7 +305,7 @@ static void ProcessAchievements()
                     {
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
                         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                            L"Challenge Available", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
+                            L"Leaderboard Attempt Started", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
                     }
 
                     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -340,11 +340,11 @@ static void ProcessAchievements()
                 if (pLeaderboard)
                 {
                     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
+                    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications))
                     {
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lbcancel.wav");
                         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                            L"Leaderboard attempt canceled!", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
+                            L"Leaderboard Attempt Canceled", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
                     }
 
                     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();

@@ -1,5 +1,8 @@
 #include "DialogBase.hh"
 
+#include "ui\win32\bindings\ControlBinding.hh"
+#include "ui\win32\bindings\GridBinding.hh"
+
 #include "RA_Core.h" // g_RAMainWnd, g_hThisDLLInst
 
 namespace ra {
@@ -17,6 +20,10 @@ DialogBase::~DialogBase() noexcept
 {
     if (m_hWnd)
     {
+        // remove the pointer to the instance from the HWND so the StaticDialogProc doesn't try to redirect
+        // the WM_DESTROY message through the instance we're trying to destroy.
+        ::SetWindowLongPtr(m_hWnd, DWLP_USER, 0L);
+
         DestroyWindow(m_hWnd);
         m_hWnd = nullptr;
     }
@@ -25,7 +32,8 @@ DialogBase::~DialogBase() noexcept
 _Use_decl_annotations_
 _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
-    DialogBase* const pDialog = reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER));
+    DialogBase* pDialog{};
+    GSL_SUPPRESS_TYPE1 pDialog = reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER));
 
     if (pDialog == nullptr)
         return ::DefWindowProc(hDlg, uMsg, wParam, lParam);
@@ -38,13 +46,13 @@ _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM
     return result;
 }
 
-_Use_decl_annotations_
-HWND DialogBase::CreateDialogWindow(const LPCTSTR sResourceId, IDialogPresenter* const pDialogPresenter)
+_Use_decl_annotations_ HWND DialogBase::CreateDialogWindow(const TCHAR* restrict sResourceId,
+                                                           IDialogPresenter* const restrict pDialogPresenter)
 {
     m_hWnd = ::CreateDialog(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc);
     if (m_hWnd)
     {
-        ::SetWindowLongPtr(m_hWnd, DWLP_USER, reinterpret_cast<LONG_PTR>(this));
+        GSL_SUPPRESS_TYPE1 ::SetWindowLongPtr(m_hWnd, DWLP_USER, reinterpret_cast<LONG_PTR>(this));
         m_pDialogPresenter = pDialogPresenter;
         m_bindWindow.SetHWND(m_hWnd);
     }
@@ -69,23 +77,24 @@ static INT_PTR CALLBACK StaticModalDialogProc(HWND hDlg, UINT uMsg, WPARAM wPara
     {
         // Once we've seen the WM_INITDIALOG message, we've associated the HWND to the DialogBase and
         // can use the normal StaticDialogProc handler.
-        SetWindowLongPtr(hDlg, DWLP_DLGPROC, reinterpret_cast<LONG_PTR>(&StaticDialogProc));
+        SubclassDialog(hDlg, StaticDialogProc);
 
-        SetWindowLongPtr(hDlg, DWLP_USER, reinterpret_cast<LONG_PTR>(s_pModalDialog));
+        GSL_SUPPRESS_TYPE1 SetWindowLongPtr(hDlg, DWLP_USER, reinterpret_cast<LONG_PTR>(s_pModalDialog));
         s_pModalDialog = nullptr;
     }
 
     return result;
 }
 
-_Use_decl_annotations_
-void DialogBase::CreateModalWindow(LPCTSTR sResourceId, IDialogPresenter* const pDialogPresenter)
+_Use_decl_annotations_ void DialogBase::CreateModalWindow(const TCHAR* restrict sResourceId,
+                                                          IDialogPresenter* const restrict pDialogPresenter,
+                                                          HWND hParentWnd) noexcept
 {
     m_pDialogPresenter = pDialogPresenter;
     m_bModal = true;
 
     s_pModalDialog = this;
-    DialogBox(g_hThisDLLInst, sResourceId, g_RAMainWnd, &StaticModalDialogProc);
+    DialogBox(g_hThisDLLInst, sResourceId, hParentWnd, &StaticModalDialogProc);
 }
 
 _Use_decl_annotations_
@@ -107,12 +116,71 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             return 0;
 
         case WM_SHOWWINDOW:
-            if (static_cast<BOOL>(wParam))
+            if (wParam)
                 OnShown();
             return 0;
 
         case WM_COMMAND:
+            switch (HIWORD(wParam))
+            {
+                case EN_KILLFOCUS:
+                {
+                    ra::ui::win32::bindings::ControlBinding* pControlBinding;
+                    GSL_SUPPRESS_TYPE1 pControlBinding = FindControlBinding(reinterpret_cast<HWND>(lParam));
+
+                    if (pControlBinding)
+                        pControlBinding->OnLostFocus();
+                    return TRUE;
+                }
+
+                case CBN_SELCHANGE:
+                case EN_CHANGE:
+                {
+                    ra::ui::win32::bindings::ControlBinding* pControlBinding;
+                    GSL_SUPPRESS_TYPE1 pControlBinding = FindControlBinding(reinterpret_cast<HWND>(lParam));
+
+                    if (pControlBinding)
+                        pControlBinding->OnValueChanged();
+                    return TRUE;
+                }
+
+                case 0:
+                {
+                    // a command triggered by the keyboard will not move focus to the associated button. ensure any
+                    // lostfocus logic is applied for the currently focused control before executing the command.
+                    auto* pControlBinding = FindControlBinding(GetFocus());
+                    if (pControlBinding)
+                        pControlBinding->OnLostFocus();
+
+                    GSL_SUPPRESS_TYPE1 pControlBinding = FindControlBinding(reinterpret_cast<HWND>(lParam));
+                    if (pControlBinding)
+                        pControlBinding->OnCommand();
+                    break;
+                }
+            }
             return OnCommand(LOWORD(wParam));
+
+        case WM_NOTIFY:
+        {
+            LPNMHDR pnmHdr = reinterpret_cast<LPNMHDR>(lParam);
+            switch (pnmHdr->code)
+            {
+                case LVN_ITEMCHANGED:
+                {
+                    ra::ui::win32::bindings::GridBinding* pGridBinding;
+                    GSL_SUPPRESS_TYPE1 pGridBinding = reinterpret_cast<ra::ui::win32::bindings::GridBinding*>(
+                        FindControlBinding(pnmHdr->hwndFrom));
+
+                    if (pGridBinding)
+                    {
+                        LPNMLISTVIEW pnmListView = reinterpret_cast<LPNMLISTVIEW>(pnmHdr);
+                        pGridBinding->OnLvnItemChanged(pnmListView);
+                    }
+
+                    return 0;
+                }
+            }
+        }
 
         case WM_MOVE:
         {
@@ -140,10 +208,12 @@ void DialogBase::OnDestroy()
     m_hWnd = nullptr;
 
     auto* pClosableDialog = dynamic_cast<IClosableDialogPresenter*>(m_pDialogPresenter);
+    m_pDialogPresenter = nullptr;
+
+    // WARNING: the main reason a presenter wants to be notified of a dialog closing is to destroy the dialog
+    // "this" may no longer be valid after this call, so don't use it!
     if (pClosableDialog)
         pClosableDialog->OnClosed();
-
-    m_pDialogPresenter = nullptr;
 }
 
 _Use_decl_annotations_
@@ -152,29 +222,27 @@ BOOL DialogBase::OnCommand(WORD nCommand)
     switch (nCommand)
     {
         case IDOK:
-            m_vmWindow.SetDialogResult(DialogResult::OK);
-
-            if (m_bModal)
-                EndDialog(m_hWnd, IDOK);
-            else
-                DestroyWindow(m_hWnd);
-
+            SetDialogResult(DialogResult::OK);
             return TRUE;
 
         case IDCLOSE:
         case IDCANCEL:
-            m_vmWindow.SetDialogResult(DialogResult::Cancel);
-
-            if (m_bModal)
-                EndDialog(m_hWnd, nCommand);
-            else
-                DestroyWindow(m_hWnd);
-
+            SetDialogResult(DialogResult::Cancel);
             return TRUE;
 
         default:
             return FALSE;
     }
+}
+
+void DialogBase::SetDialogResult(DialogResult nResult)
+{
+    m_vmWindow.SetDialogResult(nResult);
+
+    if (m_bModal)
+        EndDialog(m_hWnd, 0); // DialogBox call in CreateModalWindow() ignores return value
+    else
+        DestroyWindow(m_hWnd);
 }
 
 _Use_decl_annotations_

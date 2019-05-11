@@ -19,12 +19,12 @@ public:
     {
     }
 
-    void RunAsync(std::function<void()>&& f) noexcept override
+    void RunAsync(std::function<void()>&& f) override
     {
         m_vTasks.emplace(f);
     }
 
-    void ScheduleAsync(std::chrono::milliseconds nDelay, std::function<void()>&& f) noexcept override
+    void ScheduleAsync(std::chrono::milliseconds nDelay, std::function<void()>&& f) override
     {
         m_vDelayedTasks.emplace_back(nDelay, f);
     }
@@ -50,6 +50,20 @@ public:
 
         for (auto fTask : vTasks)
             fTask();
+    }
+
+    /// <summary>
+    /// Gets the delay until the next task would be executed.
+    /// </summary>
+    std::chrono::milliseconds NextTaskDelay() const
+    {
+        if (!m_vTasks.empty())
+            return std::chrono::milliseconds(0);
+
+        if (!m_vDelayedTasks.empty())
+            return m_vDelayedTasks.front().nDelay;
+
+        return std::chrono::hours(10000);
     }
 
     /// <summary>

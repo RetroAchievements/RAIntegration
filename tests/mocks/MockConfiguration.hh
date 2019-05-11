@@ -17,10 +17,10 @@ public:
     {
     }
 
-    const std::string& GetUsername() const override { return m_sUsername; }
+    const std::string& GetUsername() const noexcept override { return m_sUsername; }
     void SetUsername(const std::string& sValue) override { m_sUsername = sValue; }
 
-    const std::string& GetApiToken() const override { return m_sApiToken; }
+    const std::string& GetApiToken() const noexcept override { return m_sApiToken; }
     void SetApiToken(const std::string& sValue) override { m_sApiToken = sValue; }
 
     bool IsFeatureEnabled(Feature nFeature) const override
@@ -36,9 +36,9 @@ public:
             m_vEnabledFeatures.erase(nFeature);
     }
 
-    unsigned int GetNumBackgroundThreads() const override { return m_nBackgroundThreads; }
+    unsigned int GetNumBackgroundThreads() const noexcept override { return m_nBackgroundThreads; }
 
-    const std::string& GetRomDirectory() const override { return m_sRomDirectory; }
+    const std::string& GetRomDirectory() const noexcept override { return m_sRomDirectory; }
     void SetRomDirectory(const std::string& sValue) override { m_sRomDirectory = sValue; }
 
     ra::ui::Position GetWindowPosition([[maybe_unused]] const std::string& /*sPositionKey*/) const override
@@ -47,28 +47,29 @@ public:
         return ra::ui::Position();
     }
 
-    void SetWindowPosition([[maybe_unused]] const std::string& /*sPositionKey*/, [[maybe_unused]] const ra::ui::Position& /*oPosition*/) override
+    void SetWindowPosition([[maybe_unused]] const std::string& /*sPositionKey*/,
+                           [[maybe_unused]] const ra::ui::Position& /*oPosition*/) noexcept override
     {
         assert(!"Not implemented");
     }
 
-    ra::ui::Size GetWindowSize([[maybe_unused]] const std::string& /*sPositionKey*/) const override
+    ra::ui::Size GetWindowSize([[maybe_unused]] const std::string& /*sPositionKey*/) const noexcept override
     {
         assert(!"Not implemented");
         return ra::ui::Size();
     }
 
-    void SetWindowSize([[maybe_unused]] const std::string& /*sPositionKey*/, [[maybe_unused]] const ra::ui::Size& /*oSize*/) override
+    void SetWindowSize([[maybe_unused]] const std::string& /*sPositionKey*/,
+                       [[maybe_unused]] const ra::ui::Size& /*oSize*/) noexcept override
     {
         assert(!"Not implemented");
     }
 
-    const std::string& GetHostName() const override { return m_sHostName; }
+    const std::string& GetHostName() const noexcept override { return m_sHostName; }
     void SetHostName(const std::string& sHostName) { m_sHostName = sHostName; }
 
-    void Save() const override
+    void Save() const noexcept override
     {
-        assert(!"Not implemented");
     }
 
 private:

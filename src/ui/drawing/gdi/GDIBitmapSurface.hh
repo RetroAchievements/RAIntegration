@@ -15,10 +15,12 @@ namespace gdi {
 class GDIBitmapSurface : public GDISurface
 {
 public:
+    GSL_SUPPRESS_TYPE6 // m_hBitmap not initialized, adhered to note below
     explicit GDIBitmapSurface(const int nWidth, const int nHeight, ResourceRepository& pResourceRepository) noexcept :
         GDISurface(CreateBitmapHDC(nWidth, nHeight), RECT{0, 0, nWidth, nHeight}, pResourceRepository)
     {}
 
+    GSL_SUPPRESS_TYPE6 // m_hBitmap not initialized, adhered to note below
     explicit GDIBitmapSurface(const int nWidth, const int nHeight) noexcept :
         GDISurface(CreateBitmapHDC(nWidth, nHeight), RECT{0, 0, nWidth, nHeight})
     {}
@@ -30,15 +32,17 @@ public:
 
     ~GDIBitmapSurface() noexcept
     {
-        if (m_hBitmap) DeleteBitmap(m_hBitmap);
-        if (m_hMemDC) DeleteDC(m_hMemDC);
+        if (m_hBitmap)
+            DeleteBitmap(m_hBitmap);
+        if (m_hMemDC)
+            DeleteDC(m_hMemDC);
     }
 
 protected:
-    UINT32* m_pBits;
+    std::uint32_t* m_pBits; // see note below about initializing this
 
 private:
-    HDC CreateBitmapHDC(const int nWidth, const int nHeight)
+    HDC CreateBitmapHDC(const int nWidth, const int nHeight) noexcept
     {
         BITMAPINFO bmi{};
         bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
@@ -55,14 +59,21 @@ private:
 
         LPVOID pBits{};
         m_hBitmap = CreateDIBSection(m_hMemDC, &bmi, DIB_RGB_COLORS, &pBits, nullptr, 0);
-        m_pBits = reinterpret_cast<UINT32*>(pBits);
+        assert(m_hBitmap != nullptr);
+        assert(pBits != nullptr);
+        m_pBits = static_cast<std::uint32_t*>(pBits);
 
         SelectObject(m_hMemDC, m_hBitmap);
         return m_hMemDC;
     }
 
-    HBITMAP m_hBitmap{};
-    HDC m_hMemDC{};
+    // IMPORTANT: m_hBitmap, m_hMemDC, and m_pBits are set by CreateBitmapHDC, which is called from the constructor.
+    // explicitly setting an initial value causes the constructor calculated values to be overridden.
+    HBITMAP m_hBitmap;
+    HDC m_hMemDC;
+
+    // allow GDIAlphaBitmapSurface direct access to m_hMemDC for Blending
+    friend class GDIAlphaBitmapSurface;
 };
 
 class GDIAlphaBitmapSurface : public GDIBitmapSurface
@@ -70,22 +81,27 @@ class GDIAlphaBitmapSurface : public GDIBitmapSurface
 public:
     explicit GDIAlphaBitmapSurface(const int nWidth, const int nHeight,
                                    ResourceRepository& pResourceRepository) noexcept :
-        GDIBitmapSurface(nWidth, nHeight, pResourceRepository)
+        GDIBitmapSurface(nWidth, nHeight, pResourceRepository), m_pBlendBuffer(nWidth, nHeight, pResourceRepository)
     {}
 
-    explicit GDIAlphaBitmapSurface(const int nWidth, const int nHeight) noexcept : GDIBitmapSurface(nWidth, nHeight) {}
+    explicit GDIAlphaBitmapSurface(const int nWidth, const int nHeight) noexcept
+        : GDIBitmapSurface(nWidth, nHeight), m_pBlendBuffer(nWidth, nHeight)
+    {}
 
     GDIAlphaBitmapSurface(const GDIAlphaBitmapSurface&) noexcept = delete;
     GDIAlphaBitmapSurface& operator=(const GDIAlphaBitmapSurface&) noexcept = delete;
     GDIAlphaBitmapSurface(GDIAlphaBitmapSurface&&) noexcept = delete;
     GDIAlphaBitmapSurface& operator=(GDIAlphaBitmapSurface&&) noexcept = delete;
 
-    void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) override;
+    void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
     void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
 
-    void Blend(HDC hTargetDC, int nX, int nY) const;
+    void Blend(HDC hTargetDC, int nX, int nY) const noexcept;
 
     void SetOpacity(double fAlpha) override;
+
+private:
+    GDIBitmapSurface m_pBlendBuffer;
 };
 
 class GDISurfaceFactory : public ISurfaceFactory
@@ -93,14 +109,14 @@ class GDISurfaceFactory : public ISurfaceFactory
 public:
     std::unique_ptr<ISurface> CreateSurface(int nWidth, int nHeight) const override
     {
-        auto pSurface = new GDIBitmapSurface(nWidth, nHeight, m_oResourceRepository);
-        return std::unique_ptr<ISurface>(pSurface);
+        auto pSurface = std::make_unique<GDIBitmapSurface>(nWidth, nHeight, m_oResourceRepository);
+        return std::unique_ptr<ISurface>(pSurface.release());
     }
 
     std::unique_ptr<ISurface> CreateTransparentSurface(int nWidth, int nHeight) const override
     {
-        auto pSurface = new GDIAlphaBitmapSurface(nWidth, nHeight, m_oResourceRepository);
-        return std::unique_ptr<ISurface>(pSurface);
+        auto pSurface = std::make_unique<GDIAlphaBitmapSurface>(nWidth, nHeight, m_oResourceRepository);
+        return std::unique_ptr<ISurface>(pSurface.release());
     }
 
 private:

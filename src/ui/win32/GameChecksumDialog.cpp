@@ -2,36 +2,35 @@
 
 #include "RA_Core.h"
 #include "RA_Resource.h"
-#include "RA_RichPresence.h"
 
 namespace ra {
 namespace ui {
 namespace win32 {
 
-bool GameChecksumDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel)
+bool GameChecksumDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel) noexcept
 {
     return (dynamic_cast<const ra::ui::viewmodels::GameChecksumViewModel*>(&vmViewModel) != nullptr);
 }
 
-void GameChecksumDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel)
+void GameChecksumDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
     auto& vmGameChecksum = reinterpret_cast<ra::ui::viewmodels::GameChecksumViewModel&>(vmViewModel);
 
     GameChecksumDialog oDialog(vmGameChecksum);
-    oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_ROMCHECKSUM), this);
+    oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_ROMCHECKSUM), this, hParentWnd);
 }
 
 void GameChecksumDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewModel)
 {
-    ShowModal(oViewModel);
+    ShowModal(oViewModel, nullptr);
 }
 
 // ------------------------------------
 
-GameChecksumDialog::GameChecksumDialog(ra::ui::viewmodels::GameChecksumViewModel& vmRichPresenceDisplay) noexcept
-    : DialogBase(vmRichPresenceDisplay)
+GameChecksumDialog::GameChecksumDialog(ra::ui::viewmodels::GameChecksumViewModel& vmGameChecksum)
+    : DialogBase(vmGameChecksum)
 {
-    m_bindWindow.SetInitialPosition(ra::ui::win32::bindings::RelativePosition::Center, ra::ui::win32::bindings::RelativePosition::Center);
+    m_bindWindow.SetInitialPosition(RelativePosition::Center, RelativePosition::Center);
     m_bindWindow.BindLabel(IDC_RA_ROMCHECKSUMTEXT, ra::ui::viewmodels::GameChecksumViewModel::ChecksumProperty);
 }
 

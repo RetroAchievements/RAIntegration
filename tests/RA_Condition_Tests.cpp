@@ -174,6 +174,11 @@ public:
             ComparisonType::Equals,
             CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "C:0xH1234=8");
 
+        AssertSerialize(Condition::Type::AndNext,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "N:0xH1234=8");
+
         // hit count
         AssertSerialize(Condition::Type::Standard,
             CompVariable::Type::Address, MemSize::EightBit, 0x1234U,

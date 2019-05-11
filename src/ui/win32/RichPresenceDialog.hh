@@ -12,7 +12,7 @@ namespace win32 {
 class RichPresenceDialog : public DialogBase
 {
 public:
-    explicit RichPresenceDialog(_Inout_ ra::ui::viewmodels::RichPresenceMonitorViewModel& vmRichPresenceDisplay) noexcept;
+    explicit RichPresenceDialog(_Inout_ ra::ui::viewmodels::RichPresenceMonitorViewModel& vmRichPresenceDisplay);
     virtual ~RichPresenceDialog() noexcept;
     RichPresenceDialog(const RichPresenceDialog&) noexcept = delete;
     RichPresenceDialog& operator=(const RichPresenceDialog&) noexcept = delete;
@@ -22,10 +22,10 @@ public:
     class Presenter : public IClosableDialogPresenter
     {
     public:
-        bool IsSupported(const ra::ui::WindowViewModelBase& viewModel) override;
+        bool IsSupported(const ra::ui::WindowViewModelBase& viewModel) noexcept override;
         void ShowWindow(ra::ui::WindowViewModelBase& viewModel) override;
-        void ShowModal(ra::ui::WindowViewModelBase& viewModel) override;
-        void OnClosed() override;
+        void ShowModal(ra::ui::WindowViewModelBase& viewModel, HWND hParentWnd) override;
+        void OnClosed() noexcept override;
 
     private:
         std::unique_ptr<RichPresenceDialog> m_pDialog;

@@ -14,14 +14,11 @@ namespace mocks {
 class MockLocalStorage : public ILocalStorage
 {
 public:
-    MockLocalStorage() noexcept
-        : m_Override(this)
-    {
-    }
+    MockLocalStorage() noexcept : m_Override(this) {}
 
     void MockStoredData(ra::services::StorageItemType nType, const std::wstring& sKey, const std::string& sContents)
     {
-        auto *pText = GetText(nType, sKey, true);
+        const gsl::not_null<std::string*> pText{gsl::make_not_null(GetText(nType, sKey, true))};
         *pText = sContents;
     }
 
@@ -32,7 +29,7 @@ public:
 
     const std::string& GetStoredData(ra::services::StorageItemType nType, const std::wstring& sKey) const
     {
-        const std::string* pText = GetText(nType, sKey, false);
+        const std::string* const pText = GetText(nType, sKey, false);
         if (pText != nullptr)
             return *pText;
 
@@ -40,14 +37,15 @@ public:
         return sEmpty;
     }
 
-    std::chrono::system_clock::time_point GetLastModified(_UNUSED StorageItemType nType, _UNUSED const std::wstring& sKey) override
+    std::chrono::system_clock::time_point GetLastModified(_UNUSED StorageItemType nType,
+                                                          _UNUSED const std::wstring& sKey) noexcept override
     {
         return std::chrono::system_clock::time_point();
     }
 
     std::unique_ptr<TextReader> ReadText(StorageItemType nType, const std::wstring& sKey) override
     {
-        std::string* pText = GetText(nType, sKey, false);
+        const auto pText = GetText(nType, sKey, false);
         if (pText == nullptr)
             return std::unique_ptr<TextReader>();
 
@@ -57,7 +55,7 @@ public:
 
     std::unique_ptr<TextWriter> WriteText(StorageItemType nType, const std::wstring& sKey) override
     {
-        std::string* pText = GetText(nType, sKey, true);
+        const gsl::not_null<std::string*> pText{gsl::make_not_null(GetText(nType, sKey, true))};
         pText->clear();
 
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(*pText);
@@ -66,7 +64,7 @@ public:
 
     std::unique_ptr<TextWriter> AppendText(StorageItemType nType, const std::wstring& sKey) override
     {
-        std::string* pText = GetText(nType, sKey, true);
+        const gsl::not_null<std::string*> pText{gsl::make_not_null(GetText(nType, sKey, true))};
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(*pText);
         return std::unique_ptr<TextWriter>(pWriter.release());
     }
@@ -80,7 +78,7 @@ private:
             if (!bCreateIfMissing)
                 return nullptr;
 
-            m_mStoredData.insert({ nType, {} });
+            m_mStoredData.insert({nType, {}});
             pMap = m_mStoredData.find(nType);
         }
 
@@ -90,7 +88,7 @@ private:
             if (!bCreateIfMissing)
                 return nullptr;
 
-            pMap->second.insert({ sKey, "" });
+            pMap->second.insert({sKey, ""});
             pIter = pMap->second.find(sKey);
         }
 

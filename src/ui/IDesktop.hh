@@ -21,16 +21,32 @@ public:
     virtual void ShowWindow(WindowViewModelBase& vmViewModel) const = 0;
 
     /// <summary>
-    /// Shows a model window for the provided view model. Method will not return until the window is closed.
+    /// Shows a modal window for the provided view model. Method will not return until the window is closed.
     /// </summary>
     virtual ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel) const = 0;
-    
+
+    /// <summary>
+    /// Shows a modal window for the provided view model. Method will not return until the window is closed.
+    /// </summary>
+    virtual ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel, const WindowViewModelBase& vmParentWindow) const = 0;
+
     /// <summary>
     /// Gets the bounds of the available work area of the desktop.
     /// </summary>
     /// <param name="oUpperLeftCorner">The upper left corner of the work area.</param>
     /// <param name="oSize">The size of the work area.</param>
     virtual void GetWorkArea(_Out_ ra::ui::Position& oUpperLeftCorner, _Out_ ra::ui::Size& oSize) const = 0;
+
+    /// <summary>
+    /// Gets the size of the client area of a window.
+    /// </summary>
+    virtual ra::ui::Size GetClientSize(const WindowViewModelBase& vmViewModel) const = 0;
+
+    /// <summary>
+    /// Opens the specified URL using the default browser.
+    /// </summary>
+    /// <param name="sUrl">The URL to open.</param>
+    virtual void OpenUrl(const std::string& sUrl) const = 0;
 
     virtual void Shutdown() = 0;
 

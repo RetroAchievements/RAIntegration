@@ -16,14 +16,17 @@
     <Filter Include="Tests\Services">
       <UniqueIdentifier>{d2101e8f-5483-4eec-89f5-8f8fc586b0b9}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Tests\Mocks">
-      <UniqueIdentifier>{4623f02c-7135-4cd4-ada2-36fa4b29520c}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Tests\API">
       <UniqueIdentifier>{1e60322d-0fb7-4ef7-ab07-0aafd85db9d2}</UniqueIdentifier>
     </Filter>
     <Filter Include="Tests\Data">
       <UniqueIdentifier>{17ed66bb-227e-47fb-a220-1813059ee45f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Tests\Interface">
+      <UniqueIdentifier>{bc1c21f7-8d58-4502-a50d-1ca638253868}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mocks">
+      <UniqueIdentifier>{59d95c41-4fb8-4dd8-815a-edcb53e962b6}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -42,16 +45,7 @@
     <ClCompile Include="..\src\RA_Leaderboard.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Leaderboard_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\services\SearchResults.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_RichPresence_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\RA_RichPresence.cpp">
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\RA_Achievement.cpp">
@@ -71,9 +65,6 @@
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\MessageBoxViewModel.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_StringUtils_Tests.cpp">
-      <Filter>Tests</Filter>
     </ClCompile>
     <ClCompile Include="..\src\RA_StringUtils.cpp">
       <Filter>Code</Filter>
@@ -129,9 +120,6 @@
     <ClCompile Include="..\src\Exports.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="Exports_Tests.cpp">
-      <Filter>Tests</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
@@ -165,10 +153,35 @@
     <ClCompile Include="..\src\data\SessionTracker.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="RA_Condition_Tests.cpp">
-      <Filter>Tests</Filter>
+    <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="services\AchievementRuntime_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\services\AchievementRuntime.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\LoginViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\EmulatorContext_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\EmulatorContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\UserContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\GameContext_Tests.cpp">
+      <Filter>Tests\Data</Filter>
     </ClCompile>
     <ClCompile Include="..\src\RA_Achievement.cpp">
       <Filter>Code</Filter>
@@ -176,33 +189,17 @@
     <ClCompile Include="RA_Condition_Tests.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="RA_UnitTestHelpers.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
     <ClInclude Include="RA_UnitTestHelpers.h">
       <Filter>Tests</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="..\src\RA_Leaderboard.h">
       <Filter>Code</Filter>
     </ClInclude>
     <ClInclude Include="..\src\RA_Achievement.h">
       <Filter>Code</Filter>
-    </ClInclude>
-    <ClInclude Include="mocks\MockFileSystem.hh">
-      <Filter>Tests\Mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="mocks\MockClock.hh">
-      <Filter>Tests\Mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="mocks\MockDesktop.hh">
-      <Filter>Tests\Mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="mocks\MockLocalStorage.hh">
-      <Filter>Tests\Mocks</Filter>
     </ClInclude>
     <ClCompile Include="services\Http_Tests.cpp">
       <Filter>Tests\Services</Filter>
@@ -210,32 +207,160 @@
     <ClCompile Include="..\src\services\Http.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClInclude Include="mocks\MockHttpRequester.hh">
-      <Filter>Tests\Mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\pch.h" />
-    <ClInclude Include="mocks\MockServer.hh">
-      <Filter>Tests\Mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="mocks\MockUserContext.hh">
-      <Filter>Tests\Mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="mocks\MockSessionTracker.hh">
-      <Filter>Tests\Mocks</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="mocks\MockThreadPool.hh">
-      <Filter>Tests\Mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="mocks\MockGameContext.hh">
-      <Filter>Tests\Mocks</Filter>
-    </ClInclude>
-    <ClInclude Include="mocks\MockConfiguration.hh">
-      <Filter>Tests\Mocks</Filter>
-    </ClInclude>
+    <ClCompile Include="ui\ViewModelCollection_Tests.cpp">
+      <Filter>Tests\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\ViewModelCollection.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\ConsoleContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\ScoreTrackerViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\UnknownGameViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\UnknownGameViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_RichPresence_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\PopupViewModelBase.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\ScoreboardViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_Condition_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_Leaderboard_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_RichPresence_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="RA_StringUtils_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="Exports_Tests.cpp">
+      <Filter>Tests\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\OverlayTheme_Tests.cpp">
+      <Filter>Tests\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\OverlayTheme.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="services\GameIdentifier_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\services\GameIdentifier.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\OverlayViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\OverlayAchievementsPageViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\OverlayListPageViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayListPageViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayManager_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="mocks\MockAudioSystem.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockClipboard.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockClock.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockConfiguration.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockConsoleContext.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockDesktop.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockEmulatorContext.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockFileSystem.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockGameContext.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockHttpRequester.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockLocalStorage.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockOverlayManager.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockServer.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockSessionTracker.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockThreadPool.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockUserContext.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\pch.h">
+      <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockImageRepository.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockSurface.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockOverlayTheme.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockWindowManager.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

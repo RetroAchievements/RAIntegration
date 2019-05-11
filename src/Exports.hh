@@ -33,7 +33,13 @@ extern "C" {
     // Check all achievement sets for changes, and displays a dlg box to warn lost changes.
     API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp);
 
-    // On or immediately after a new ROM is loaded, including if the ROM is reset.
+    //  Gets the unique identifier of the game associated to the provided ROM data
+    API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROMData, unsigned int nROMSize);
+
+    //  Downloads and activates the achievements for the specified game.
+    API void CCONV _RA_ActivateGame(unsigned int nGameId);
+
+    //	Downloads and activates the achievements for the game associated to the provided ROM data
     API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize);
 
     // On or immediately after a new ROM is loaded, for each memory bank found
@@ -83,8 +89,15 @@ extern "C" {
     API bool CCONV _RA_WarnDisableHardcore(const char* sActivity);
 
     // Install user-side functions that can be called from the DLL
-    API void CCONV _RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
-    API void CCONV _RA_InstallSharedFunctionsExt(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
+    API void CCONV _RA_InstallSharedFunctions(bool(*)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
+    API void CCONV _RA_InstallSharedFunctionsExt(bool(*)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
+
+    struct ControllerInput;
+    API void CCONV _RA_NavigateOverlay(_In_ const ControllerInput* pInput);
+    API int CCONV _RA_UpdateOverlay(_In_ const ControllerInput* pInput, _In_ float /*fDTime*/,
+        _In_ bool /*Full_Screen*/, _In_ bool /*Paused*/);
+    API void CCONV _RA_RenderOverlay(_In_ HDC hDC, _In_ const RECT* rcSize);
+    API bool CCONV _RA_IsOverlayFullyVisible();
 
 #ifdef __cplusplus
 }

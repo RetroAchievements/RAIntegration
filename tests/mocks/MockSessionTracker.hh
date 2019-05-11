@@ -18,11 +18,18 @@ public:
     {
     }
 
-    void LoadSessions() override
+    void LoadSessions() noexcept override
     {
     }
 
-    const std::wstring& GetUsername() const { return m_sUsername; }
+    const std::wstring& GetUsername() const noexcept { return m_sUsername; }
+
+    void MockSession(unsigned int nGameId, time_t tSessionStart, std::chrono::seconds tSessionDuration)
+    {
+        SessionTracker::AddSession(nGameId, tSessionStart, tSessionDuration);
+    }
+
+    unsigned int CurrentSessionGameId() const noexcept { return m_nCurrentGameId; }
 
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::SessionTracker> m_Override;

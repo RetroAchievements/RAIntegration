@@ -4,21 +4,21 @@
 
 #include "ui\drawing\gdi\GDISurface.hh"
 
-namespace {
-const float POPUP_DIST_Y_TO_PCT = 0.856f;		//	Where on screen to end up
-const float POPUP_DIST_Y_FROM_PCT = 0.4f;		//	Amount of screens to travel
-const char* FONT_TO_USE = "Tahoma";
+#include "ra_math.h"
 
-const int FONT_SIZE_TITLE = 32;
-const int FONT_SIZE_SUBTITLE = 28;
+_CONSTANT_VAR POPUP_DIST_Y_TO_PCT   = 0.856F; // Where on screen to end up
+_CONSTANT_VAR POPUP_DIST_Y_FROM_PCT = 0.4F;   // Amount of screens to travel
+_CONSTANT_VAR FONT_TO_USE           = "Tahoma";
 
-const float START_AT = 0.0f;
-const float APPEAR_AT = 0.8f;
-const float FADEOUT_AT = 4.2f;
-const float FINISH_AT = 5.0f;
+_CONSTANT_VAR FONT_SIZE_TITLE    = 32;
+_CONSTANT_VAR FONT_SIZE_SUBTITLE = 28;
 
-const wchar_t* MSG_SOUND[] =
-{
+_CONSTANT_VAR START_AT   = 0.0F;
+_CONSTANT_VAR APPEAR_AT  = 0.8F;
+_CONSTANT_VAR FADEOUT_AT = 4.2F;
+_CONSTANT_VAR FINISH_AT  = 5.0F;
+
+inline constexpr std::array<const wchar_t*, 7> MSG_SOUND{
     L"login.wav",
     L"info.wav",
     L"unlock.wav",
@@ -27,18 +27,12 @@ const wchar_t* MSG_SOUND[] =
     L"lbcancel.wav",
     L"message.wav",
 };
-static_assert(SIZEOF_ARRAY(MSG_SOUND) == NumMessageTypes, "Must match!");
-}
-
-AchievementPopup::AchievementPopup() :
-    m_fTimer(0.0f)
-{
-}
 
 void AchievementPopup::PlayAudio()
 {
     ASSERT(MessagesPresent()); // ActiveMessage() dereferences!
-    const std::wstring sSoundPath = g_sHomeDir + RA_DIR_OVERLAY + MSG_SOUND[m_vMessages.front().Type()];
+    const auto sSoundPath =
+        ra::StringPrintf(L"%s%s%s", g_sHomeDir, RA_DIR_OVERLAY, MSG_SOUND.at(ra::etoi(m_vMessages.front().Type())));
     PlaySoundW(sSoundPath.c_str(), nullptr, SND_FILENAME | SND_ASYNC);
 }
 
@@ -46,17 +40,16 @@ void AchievementPopup::AddMessage(MessagePopup&& msg)
 {
     // request the image now, so it's ready when the popup gets displayed
     if (msg.Image().Type() != ra::ui::ImageType::None)
-        ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>().FetchImage(msg.Image().Type(), msg.Image().Name());
+        ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>().FetchImage(msg.Image().Type(),
+                                                                                        msg.Image().Name());
 
     m_vMessages.emplace(std::move(msg));
     PlayAudio();
 }
 
-void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused)
+void AchievementPopup::Update(float fDelta)
 {
-    if (bPaused)
-        fDelta = 0.0F;
-    fDelta = std::clamp(fDelta, 0.0F, 0.3F);	//	Limit this!
+    fDelta = std::clamp(fDelta, 0.0F, 0.3F); // Limit this!
     if (m_vMessages.size() > 0)
     {
         m_fTimer += fDelta;
@@ -68,33 +61,29 @@ void AchievementPopup::Update(_UNUSED ControllerInput, float fDelta, _UNUSED boo
     }
 }
 
-float AchievementPopup::GetYOffsetPct() const
+float AchievementPopup::GetYOffsetPct() const noexcept
 {
-    float fVal = 0.0f;
+    float fVal = 0.0F;
 
     if (m_fTimer < APPEAR_AT)
     {
-        //	Fading in.
-        float fDelta = (APPEAR_AT - m_fTimer);
-        fDelta *= fDelta;	//	Quadratic
-        fVal = fDelta;
+        // Fading in.
+        fVal = ra::sqr(APPEAR_AT - m_fTimer); // Quadratic
     }
     else if (m_fTimer < FADEOUT_AT)
     {
-        //	Faded in - held
-        fVal = 0.0f;
+        // Faded in - held
+        fVal = 0.0F;
     }
     else if (m_fTimer < FINISH_AT)
     {
-        //	Fading out
-        float fDelta = (FADEOUT_AT - m_fTimer);
-        fDelta *= fDelta;	//	Quadratic
-        fVal = (fDelta);
+        // Fading out
+        fVal = ra::sqr(FADEOUT_AT - m_fTimer); // Quadratic
     }
     else
     {
-        //	Finished!
-        fVal = 1.0f;
+        // Finished!
+        fVal = 1.0F;
     }
 
     return fVal;
@@ -115,11 +104,11 @@ const ra::ui::drawing::ISurface& MessagePopup::GetRendered()
 
     auto nFontTitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
     const auto sTitle = ra::Widen(Title());
-    auto szTitle = pSurface->MeasureText(nFontTitle, sTitle);
+    const auto szTitle = pSurface->MeasureText(nFontTitle, sTitle);
 
     auto nFontSubtitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_SUBTITLE, ra::ui::FontStyles::Normal);
     const auto sSubTitle = ra::Widen(Subtitle());
-    auto szSubTitle = pSurface->MeasureText(nFontSubtitle, sSubTitle);
+    const auto szSubTitle = pSurface->MeasureText(nFontSubtitle, sSubTitle);
 
     // create the actual surface
     const int nWidth = 64 + 6 + std::max(szTitle.Width, szSubTitle.Width) + 8 + 2;
@@ -133,7 +122,7 @@ const ra::ui::drawing::ISurface& MessagePopup::GetRendered()
     const ra::ui::Color nColorBlack(0, 0, 0);
     const ra::ui::Color nColorPopup(251, 102, 0);
     const ra::ui::Color nColorBackground(0, 255, 0, 255);
-    const int nShadowOffset = 2;
+    constexpr int nShadowOffset = 2;
 
     // background
     m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), nColorBackground);
@@ -166,20 +155,18 @@ const ra::ui::drawing::ISurface& MessagePopup::GetRendered()
     return *m_pSurface;
 }
 
-void AchievementPopup::Render(HDC hDC, const RECT& rcDest)
+void AchievementPopup::Render(ra::ui::drawing::ISurface& pSurface)
 {
     if (!MessagesPresent())
         return;
-
-    ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcDest);
 
     float fFadeInY = GetYOffsetPct() * (POPUP_DIST_Y_FROM_PCT * static_cast<float>(pSurface.GetHeight()));
     fFadeInY += (POPUP_DIST_Y_TO_PCT * static_cast<float>(pSurface.GetHeight()));
     pSurface.DrawSurface(10, static_cast<int>(fFadeInY), m_vMessages.front().GetRendered());
 }
 
-void AchievementPopup::Clear()
+void AchievementPopup::Clear() noexcept
 {
-    while (!m_vMessages.empty())
-        m_vMessages.pop();
+    while (MessagesPresent())
+        GSL_SUPPRESS_F6 m_vMessages.pop(); // shouldn't throw if not empty
 }

@@ -3,7 +3,7 @@
 #pragma once
 
 //	NB. Shared between RA_Integration and emulator
-using BOOL = int;
+typedef int BOOL;
 
 #ifndef CCONV
 #define CCONV __cdecl
@@ -15,9 +15,9 @@ struct ControllerInput
     BOOL m_bDownPressed;
     BOOL m_bLeftPressed;
     BOOL m_bRightPressed;
-    BOOL m_bConfirmPressed;	//	Usually C or A
-    BOOL m_bCancelPressed;	//	Usually B
-    BOOL m_bQuitPressed;	//	Usually Start
+    BOOL m_bConfirmPressed; // Usually C or A
+    BOOL m_bCancelPressed;  // Usually B
+    BOOL m_bQuitPressed;    // Usually Start
 };
 
 enum EmulatorID
@@ -31,6 +31,8 @@ enum EmulatorID
     RA_PCE = 6,
     RA_Libretro = 7,
     RA_Meka = 8,
+    RA_QUASI88 = 9,
+    RA_AppleWin = 10,
 
     NumEmulatorIDs,
     UnknownEmulator = NumEmulatorIDs
@@ -40,7 +42,7 @@ enum EmulatorID
 enum ConsoleID
 {
     UnknownConsoleID = 0,
-    MegaDrive = 1,	//	DB
+    MegaDrive = 1, //	DB
     N64 = 2,
     SNES = 3,
     GB = 4,
@@ -71,7 +73,7 @@ enum ConsoleID
     MSX = 29,
     C64 = 30,
     ZX81 = 31,
-    //unused32 = 32,
+    // unused32 = 32,
     SG1000 = 33,
     VIC20 = 34,
     Amiga = 35,
@@ -97,24 +99,6 @@ enum ConsoleID
     NumConsoleIDs
 };
 
-
-extern bool(*_RA_GameIsActive)();
-extern void(*_RA_CauseUnpause)();
-extern void(*_RA_CausePause)();
-extern void(*_RA_RebuildMenu)();
-extern void(*_RA_GetEstimatedGameTitle)(char* sNameOut);
-extern void(*_RA_ResetEmulation)();
-extern void(*_RA_LoadROM)(const char* sFullPath);
-
-//	Shared funcs, should be implemented by emulator.
-extern bool RA_GameIsActive();
-extern void RA_CauseUnpause();
-extern void RA_CausePause();
-extern void RA_RebuildMenu();
-extern void RA_GetEstimatedGameTitle(char* sNameOut);
-extern void RA_ResetEmulation();
-extern void RA_LoadROM(const char* sFullPath);
-
 #ifndef RA_EXPORTS
 
 #include <wtypes.h>
@@ -126,26 +110,29 @@ extern void RA_LoadROM(const char* sFullPath);
 
 // resource values for menu items - needed by MFC ON_COMMAND_RANGE macros
 // they're not all currently used, allowing additional items without forcing recompilation of the emulators
-#define IDM_RA_MENUSTART                1700
-#define IDM_RA_MENUEND                  1739
+#define IDM_RA_MENUSTART 1700
+#define IDM_RA_MENUEND 1739
 
 //	Captures the RA_DLL and installs/allocs all required information.
 //	Populates all function pointers so they can be used by the app.
-extern void RA_Init(HWND hMainHWND, /*enum ConsoleType*/int console, const char* sClientVersion);
+extern void RA_Init(HWND hMainHWND, /*enum ConsoleType*/ int console, const char* sClientVersion);
 
 //	Call with shared function pointers from app.
-extern void RA_InstallSharedFunctions(bool(*fpIsActive)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulator)(void), void(*fpLoadROM)(const char*));
+extern void RA_InstallSharedFunctions(bool (*fpUnusedIsActive)(void), void (*fpCauseUnpause)(void),
+                                      void (*fpCausePause)(void), void (*fpRebuildMenu)(void),
+                                      void (*fpEstimateTitle)(char*), void (*fpResetEmulator)(void),
+                                      void (*fpLoadROM)(const char*));
 
 //	Shuts down, tidies up and deallocs the RA DLL from the app's perspective.
 extern void RA_Shutdown();
 
-
 //	Perform one test for all achievements in the current set. Call this once per frame/cycle.
 extern void RA_DoAchievementsFrame();
 
-
 //	Updates and renders all on-screen overlays.
-extern void RA_UpdateRenderOverlay(HDC hDC, ControllerInput* pInput, float fDeltaTime, RECT* prcSize, bool Full_Screen, bool Paused);
+extern void RA_UpdateRenderOverlay(HDC hDC, struct ControllerInput* pInput, float fDeltaTime, RECT* prcSize, bool Full_Screen,
+                                   bool Paused);
+extern void RA_NavigateOverlay(struct ControllerInput* pInput);
 
 //  Determines if the overlay is completely covering the screen.
 extern bool RA_IsOverlayFullyVisible();
@@ -153,15 +140,21 @@ extern bool RA_IsOverlayFullyVisible();
 //	Attempts to login, or show login dialog.
 extern void RA_AttemptLogin(bool bBlocking);
 
-//	Should be called immediately after a new ROM is loaded.
+//  Gets the unique identifier of the game associated to the provided ROM data
+extern unsigned int RA_IdentifyRom(BYTE* pROMData, unsigned int nROMSize);
+
+//  Downloads and activates the achievements for the specified game.
+extern void RA_ActivateGame(unsigned int nGameId);
+
+//	Downloads and activates the achievements for the game associated to the provided ROM data
 extern void RA_OnLoadNewRom(BYTE* pROMData, unsigned int nROMSize);
 
 //	Clear all memory banks before installing any new ones!
 extern void RA_ClearMemoryBanks();
 
 //	Call once for each memory bank found, immediately after a new rom or load
-//pReader is typedef unsigned char (_RAMByteReadFn)( size_t nOffset );
-//pWriter is typedef void (_RAMByteWriteFn)( unsigned int nOffs, unsigned int nVal );
+// pReader is typedef unsigned char (_RAMByteReadFn)( size_t nOffset );
+// pWriter is typedef void (_RAMByteWriteFn)( unsigned int nOffs, unsigned int nVal );
 extern void RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize);
 
 //	Call this before loading a new ROM or quitting, to ensure no developer changes are lost.
@@ -200,7 +193,6 @@ extern void RA_InvokeDialog(LPARAM nID);
 //	Returns TRUE if HC mode is ongoing
 extern int RA_HardcoreModeIsActive();
 
-#endif //RA_EXPORTS
-
+#endif // RA_EXPORTS
 
 #endif // !RA_INTERFACE_H

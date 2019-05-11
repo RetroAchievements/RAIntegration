@@ -17,13 +17,18 @@ public:
     {
     }
 
-    void SetUserAgent([[maybe_unused]] const std::string& /*sUserAgent*/) override {}
+    void SetUserAgent([[maybe_unused]] const std::string& /*sUserAgent*/) noexcept override {}
 
     unsigned int Request(const Http::Request& pRequest, TextWriter& pContentWriter) const override
     {
         auto response = m_fHandler(pRequest);
         pContentWriter.Write(response.Content());
         return ra::etoi(response.StatusCode());
+    }
+
+    bool IsRetryable(unsigned int) const noexcept override
+    {
+        return false;
     }
 
 private:

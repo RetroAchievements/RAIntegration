@@ -45,7 +45,7 @@ public:
     /// </summary>
     /// <returns><c>true</c> if an implementation exists, <c>false</c> if not.</returns>
     template <class TClass>
-    static bool Exists()
+    static bool Exists() noexcept
     {
         return Service<TClass>::Exists();
     }
@@ -58,9 +58,9 @@ public:
     /// pointer and delete it at the end of execution or when a different implementation is provided.
     /// </param>
     template <class TClass>
-    static void Provide(TClass* pInstance)
+    static void Provide(std::unique_ptr<TClass> pInstance) noexcept
     {
-        Service<TClass>::s_pInstance.reset(pInstance);
+        Service<TClass>::s_pInstance = std::move(pInstance);
     }
 
     /// <summary>
@@ -123,7 +123,7 @@ private:
             return *s_pInstance.get();
         }
 
-        static bool Exists()
+        static bool Exists() noexcept
         {
             return (s_pInstance != nullptr);
         }
@@ -158,7 +158,7 @@ private:
 
 #ifndef NDEBUG
             // expanded definition of assert macro so we can use the constructed error message
-            _wassert(ra::Widen(sMessage).c_str(), _CRT_WIDE(__FILE__), static_cast<unsigned int>(__LINE__));
+            _wassert(ra::Widen(sMessage).c_str(), _CRT_WIDE(__FILE__), to_unsigned(__LINE__));
 #endif
 
             throw std::runtime_error(sMessage);

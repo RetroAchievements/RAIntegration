@@ -10,9 +10,6 @@
     <ClCompile Include="..\lua\lauxlib.c">
       <Filter>lua</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c">
-      <Filter>lua</Filter>
-    </ClCompile>
     <ClCompile Include="..\lua\lcode.c">
       <Filter>lua</Filter>
     </ClCompile>
@@ -95,6 +92,15 @@
       <Filter>rcheevos</Filter>
     </ClCompile>
     <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\richpresence.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\memref.c">
       <Filter>rcheevos</Filter>
     </ClCompile>
   </ItemGroup>

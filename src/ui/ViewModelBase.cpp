@@ -28,12 +28,15 @@ void ViewModelBase::SetValue(const BoolModelProperty& pProperty, bool bValue)
 
     if (!m_vNotifyTargets.empty())
     {
-        BoolModelProperty::ChangeArgs args{ pProperty, !bValue, bValue };
+        BoolModelProperty::ChangeArgs args{pProperty, !bValue, bValue};
 
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
         for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
             target->OnViewModelBoolValueChanged(args);
+        }
     }
 }
 
@@ -81,19 +84,22 @@ void ViewModelBase::SetValue(const StringModelProperty& pProperty, const std::ws
 
     if (!m_vNotifyTargets.empty())
     {
-        StringModelProperty::ChangeArgs args{ pProperty, *pOldValue, sValue };
+        StringModelProperty::ChangeArgs args{pProperty, *pOldValue, sValue};
 
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
         for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
             target->OnViewModelStringValueChanged(args);
+        }
     }
 }
 
 void ViewModelBase::SetValue(const IntModelProperty& pProperty, int nValue)
 {
     IntModelProperty::ValueMap::iterator iter = m_mIntValues.find(pProperty.GetKey());
-    int nOldValue;
+    int nOldValue{};
 
     if (nValue == pProperty.GetDefaultValue())
     {
@@ -129,12 +135,15 @@ void ViewModelBase::SetValue(const IntModelProperty& pProperty, int nValue)
 
     if (!m_vNotifyTargets.empty())
     {
-        IntModelProperty::ChangeArgs args{ pProperty, nOldValue, nValue };
+        IntModelProperty::ChangeArgs args{pProperty, nOldValue, nValue};
 
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
         for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
             target->OnViewModelIntValueChanged(args);
+        }
     }
 }
 

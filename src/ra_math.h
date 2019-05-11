@@ -28,6 +28,12 @@ _NODISCARD inline auto ftol(_In_ FloatingPoint fp) noexcept
 }
 
 template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
+_NODISCARD inline int ftoi(_In_ FloatingPoint fp) noexcept
+{
+    return std::lround(fp);
+}
+
+template<typename FloatingPoint, class = std::enable_if_t<std::is_floating_point_v<FloatingPoint>>>
 _NODISCARD inline auto ftoll(_In_ FloatingPoint fp) noexcept
 {
     return std::llround(fp);
@@ -46,9 +52,9 @@ _NODISCARD inline auto ftoull(_In_ FloatingPoint fp) noexcept
 }
 
 template<typename Arithmetic, class = std::enable_if_t<std::is_arithmetic_v<Arithmetic>>>
-_NODISCARD inline auto sqr(_In_ Arithmetic a) noexcept
+_NODISCARD _CONSTANT_FN sqr(_In_ Arithmetic a) noexcept
 {
-    return std::pow(a, 2);
+    return (a*a);
 }
 } /* namespace ra */
 

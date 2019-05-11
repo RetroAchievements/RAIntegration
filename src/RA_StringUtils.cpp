@@ -8,7 +8,6 @@ std::string Narrow(const std::wstring& wstr)
     return Narrow(wstr.c_str());
 }
 
-_Use_decl_annotations_
 std::string Narrow(std::wstring&& wstr) noexcept
 {
     const auto wwstr{ std::move_if_noexcept(wstr) };
@@ -37,7 +36,6 @@ std::wstring Widen(const std::string& str)
     return Widen(str.c_str());
 }
 
-_Use_decl_annotations_
 std::wstring Widen(std::string&& str) noexcept
 {
     const auto sstr{ std::move_if_noexcept(str) };
@@ -81,7 +79,7 @@ std::string Narrow(const std::string& str)
 }
 
 _Use_decl_annotations_
-std::string& TrimLineEnding(std::string& str) noexcept
+std::string& TrimLineEnding(std::string& str)
 {
     if (!str.empty())
     {
@@ -95,21 +93,70 @@ std::string& TrimLineEnding(std::string& str) noexcept
 }
 
 _Use_decl_annotations_
-bool StringStartsWith(const std::wstring& sString, const std::wstring& sMatch) noexcept
+std::wstring& Trim(std::wstring& str)
 {
-    if (sMatch.length() > sString.length())
-        return false;
+    while (!str.empty() && iswspace(str.back()))
+        str.pop_back();
 
-    return (sString.compare(0, sMatch.length(), sMatch) == 0);
+    size_t nIndex = 0;
+    while (nIndex < str.length() && iswspace(str.at(nIndex)))
+        ++nIndex;
+
+    if (nIndex > 0)
+        str.erase(0, nIndex);
+
+    return str;
 }
 
 _Use_decl_annotations_
-bool StringEndsWith(const std::wstring& sString, const std::wstring& sMatch) noexcept
+const std::string FormatDate(time_t when)
 {
-    if (sMatch.length() > sString.length())
-        return false;
+    struct tm tm;
+    if (localtime_s(&tm, &when) == 0)
+    {
+        char buffer[64];
+        if (std::strftime(buffer, sizeof(buffer), "%a %e %b %Y %H:%M:%S", &tm) > 0)
+            return std::string(buffer);
+    }
 
-    return (sString.compare(sString.length() - sMatch.length(), sMatch.length(), sMatch) == 0);
+    return std::to_string(when);
+}
+
+_Use_decl_annotations_
+const std::string FormatDateRecent(time_t when)
+{
+    auto now = std::time(nullptr);
+
+    struct tm tm;
+    if (localtime_s(&tm, &now) == 0)
+        now = now - (static_cast<time_t>(tm.tm_hour) * 60 * 60) - (static_cast<time_t>(tm.tm_min) * 60) - tm.tm_sec; // round to midnight
+
+    const auto days = (now + (60 * 60 * 24) - when) / (60 * 60 * 24);
+
+    if (days < 1)
+        return "Today";
+    if (days < 2)
+        return "Yesterday";
+    if (days <= 30)
+        return ra::StringPrintf("%u days ago", days);
+
+    struct tm tm_when;
+    if (localtime_s(&tm_when, &when) != 0)
+        return ra::StringPrintf("%u days ago", days);
+
+    const auto months = (tm.tm_mon + 1200 - tm_when.tm_mon) % 12;
+    if (months < 1)
+        return "This month";
+    if (months < 2)
+        return "Last month";
+    if (months < 12)
+        return ra::StringPrintf("%u months ago", months);
+
+    const auto years = tm.tm_year - tm_when.tm_year;
+    if (years < 2)
+        return "Last year";
+
+    return ra::StringPrintf("%u years ago", years);
 }
 
 void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
@@ -129,22 +176,12 @@ void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
                 nNeeded += pPending.String.length();
                 break;
 
-            case PendingString::Type::StringRef:
-                nNeeded += pPending.Ref.String->length();
-                break;
-
-            case PendingString::Type::WStringRef:
-                pPending.String = ra::Narrow(*pPending.Ref.WString);
-                pPending.DataType = PendingString::Type::String;
-                nNeeded += pPending.String.length();
-                break;
-
             case PendingString::Type::CharRef:
-                nNeeded += pPending.Ref.Char.Length;
+                nNeeded += std::get<std::string_view>(pPending.Ref).length();
                 break;
 
             case PendingString::Type::WCharRef:
-                pPending.String = ra::Narrow(std::wstring(pPending.Ref.WChar.Pointer, pPending.Ref.WChar.Length));
+                pPending.String = ra::Narrow(std::wstring{std::get<std::wstring_view>(pPending.Ref)});
                 pPending.DataType = PendingString::Type::String;
                 nNeeded += pPending.String.length();
                 break;
@@ -161,12 +198,8 @@ void StringBuilder::AppendToString(_Inout_ std::string& sResult) const
                 sResult.append(pPending.String);
                 break;
 
-            case PendingString::Type::StringRef:
-                sResult.append(*pPending.Ref.String);
-                break;
-
             case PendingString::Type::CharRef:
-                sResult.append(pPending.Ref.Char.Pointer, pPending.Ref.Char.Length);
+                sResult.append(std::get<std::string_view>(pPending.Ref));
                 break;
         }
     }
@@ -189,22 +222,12 @@ void StringBuilder::AppendToWString(_Inout_ std::wstring& sResult) const
                 nNeeded += pPending.WString.length();
                 break;
 
-            case PendingString::Type::WStringRef:
-                nNeeded += pPending.Ref.WString->length();
-                break;
-
-            case PendingString::Type::StringRef:
-                pPending.WString = ra::Widen(*pPending.Ref.String);
-                pPending.DataType = PendingString::Type::WString;
-                nNeeded += pPending.WString.length();
-                break;
-
             case PendingString::Type::WCharRef:
-                nNeeded += pPending.Ref.WChar.Length;
+                nNeeded += std::get<std::wstring_view>(pPending.Ref).length();
                 break;
 
             case PendingString::Type::CharRef:
-                pPending.WString = ra::Widen(std::string(pPending.Ref.Char.Pointer, pPending.Ref.Char.Length));
+                pPending.WString = ra::Widen(std::string{std::get<std::string_view>(pPending.Ref)});
                 pPending.DataType = PendingString::Type::WString;
                 nNeeded += pPending.WString.length();
                 break;
@@ -221,15 +244,49 @@ void StringBuilder::AppendToWString(_Inout_ std::wstring& sResult) const
                 sResult.append(pPending.WString);
                 break;
 
-            case PendingString::Type::WStringRef:
-                sResult.append(*pPending.Ref.WString);
-                break;
-
             case PendingString::Type::WCharRef:
-                sResult.append(pPending.Ref.WChar.Pointer, pPending.Ref.WChar.Length);
+                sResult.append(std::wstring{std::get<std::wstring_view>(pPending.Ref)});
                 break;
         }
     }
+}
+
+std::string Tokenizer::ReadQuotedString()
+{
+    std::string sString;
+    if (PeekChar() != '"')
+        return sString;
+
+    ++m_nPosition;
+    while (m_nPosition < m_sString.length())
+    {
+        const auto c = m_sString.at(m_nPosition++);
+        if (c == '"')
+            break;
+
+        if (c != '\\')
+        {
+            sString.push_back(c);
+        }
+        else
+        {
+            if (m_nPosition == m_sString.length())
+                break;
+
+            const auto c2 = m_sString.at(m_nPosition++);
+            switch (c2)
+            {
+                case 'n':
+                    sString.push_back('\n');
+                    break;
+                default:
+                    sString.push_back(c2);
+                    break;
+            }
+        }
+    }
+
+    return sString;
 }
 
 } /* namespace ra */

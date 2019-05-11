@@ -270,6 +270,9 @@
     <ClCompile Include="ui\win32\BrokenAchievementsDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\bindings\GridBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -697,6 +700,21 @@
     </ClInclude>
     <ClInclude Include="api\UpdateAchievement.hh">
       <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridTextColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridBooleanColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridCheckBoxColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -3,6 +3,8 @@
 
 #include "RA_MemManager.h"
 
+#include "mocks\MockDesktop.hh"
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
@@ -14,11 +16,12 @@ class LeaderboardHarness : public RA_Leaderboard
 public:
     LeaderboardHarness() noexcept : RA_Leaderboard(1) {}
 
+    ra::ui::mocks::MockDesktop mockDesktop;
+
     bool IsScoreSubmitted() const noexcept { return m_bScoreSubmitted; }
     unsigned int SubmittedScore() const noexcept { return m_nSubmittedScore; }
     unsigned int GetCurrentValue() const noexcept { return m_nCurrentValue; }
 
-public:
     void Reset() noexcept
     {
         rc_reset_lboard(static_cast<rc_lboard_t*>(m_pLeaderboard));
@@ -360,10 +363,23 @@ public:
         InitializeMemory(memory);
 
         LeaderboardHarness lb;
+        lb.SetTitle("Title");
+        bool bMessageShown = false;
+        lb.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageShown](const ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bMessageShown = true;
+            Assert::AreEqual(std::wstring(L"Unable to activate leaderboard: Title"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Parse error -6"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
+            return ra::ui::DialogResult::OK;
+        });
+
         lb.ParseFromString("STA:0xH00=0::CAN:0x0H00=1::SUB:0xH01=18::GARBAGE", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
+
+        Assert::IsTrue(bMessageShown);
     }
 
     TEST_METHOD(TestSubmitRankInfo)

@@ -8,6 +8,8 @@
 #include "services\AchievementRuntime.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 #ifndef RA_UTEST
 #include "RA_ImageFactory.h"
 #endif
@@ -58,38 +60,57 @@ static void MergeHits(rc_condset_t& pGroup, rc_condset_t& pOldGroup) noexcept
     {
         for (auto* pOldCondition = pFirstOldCondition; pOldCondition; pOldCondition = pOldCondition->next)
         {
-            if (pOldCondition->operand1.value == pCondition->operand1.value &&
-                pOldCondition->operand1.size == pCondition->operand1.size &&
-                pOldCondition->operand1.type == pCondition->operand1.type &&
-                pOldCondition->operand2.value == pCondition->operand2.value &&
-                pOldCondition->operand2.size == pCondition->operand2.size &&
-                pOldCondition->operand2.type == pCondition->operand2.type &&
-                pOldCondition->oper == pCondition->oper &&
-                pOldCondition->type == pCondition->type &&
-                pOldCondition->required_hits == pCondition->required_hits)
+            if (pOldCondition->operand1.type != pCondition->operand1.type ||
+                pOldCondition->operand2.type != pCondition->operand2.type ||
+                pOldCondition->oper != pCondition->oper ||
+                pOldCondition->type != pCondition->type ||
+                pOldCondition->required_hits != pCondition->required_hits)
             {
-                pCondition->current_hits = pOldCondition->current_hits;
-
-                if (pCondition->operand1.type == RC_OPERAND_DELTA ||
-                    pCondition->operand1.type == RC_OPERAND_PRIOR)
-                {
-                    pCondition->operand1.previous = pOldCondition->operand1.previous;
-                    pCondition->operand1.prior = pOldCondition->operand1.prior;
-                }
-
-                if (pCondition->operand2.type == RC_OPERAND_DELTA ||
-                    pCondition->operand2.type == RC_OPERAND_PRIOR)
-                {
-                    pCondition->operand2.previous = pOldCondition->operand2.previous;
-                    pCondition->operand2.prior = pOldCondition->operand2.prior;
-                }
-
-                // if we matched the first condition, ignore it on future scans
-                if (pOldCondition == pFirstOldCondition)
-                    pFirstOldCondition = pOldCondition->next;
-
-                break;
+                continue;
             }
+
+            switch (pOldCondition->operand1.type)
+            {
+                case RC_OPERAND_ADDRESS:
+                case RC_OPERAND_DELTA:
+                case RC_OPERAND_PRIOR:
+                    if (pOldCondition->operand1.value.memref->memref.address != pCondition->operand1.value.memref->memref.address ||
+                        pOldCondition->operand1.value.memref->memref.size != pCondition->operand1.value.memref->memref.size)
+                    {
+                        continue;
+                    }
+
+                    pCondition->operand1.value.memref->previous = pOldCondition->operand1.value.memref->previous;
+                    pCondition->operand1.value.memref->prior = pOldCondition->operand1.value.memref->prior;
+                    break;
+
+                default:
+                case RC_OPERAND_CONST:
+                    if (pOldCondition->operand1.value.num != pCondition->operand1.value.num)
+                        continue;
+
+                    break;
+
+                case RC_OPERAND_FP:
+                    if (pOldCondition->operand1.value.dbl != pCondition->operand1.value.dbl)
+                        continue;
+
+                    break;
+
+                case RC_OPERAND_LUA:
+                    if (pOldCondition->operand1.value.luafunc != pCondition->operand1.value.luafunc)
+                        continue;
+
+                    break;
+            }
+
+            pCondition->current_hits = pOldCondition->current_hits;
+
+            // if we matched the first condition, ignore it on future scans
+            if (pOldCondition == pFirstOldCondition)
+                pFirstOldCondition = pOldCondition->next;
+
+            break;
         }
     }
 }
@@ -139,31 +160,31 @@ static constexpr MemSize GetCompVariableSize(char nOperandSize) noexcept
 {
     switch (nOperandSize)
     {
-        case RC_OPERAND_BIT_0:
+        case RC_MEMSIZE_BIT_0:
             return MemSize::Bit_0;
-        case RC_OPERAND_BIT_1:
+        case RC_MEMSIZE_BIT_1:
             return MemSize::Bit_1;
-        case RC_OPERAND_BIT_2:
+        case RC_MEMSIZE_BIT_2:
             return MemSize::Bit_2;
-        case RC_OPERAND_BIT_3:
+        case RC_MEMSIZE_BIT_3:
             return MemSize::Bit_3;
-        case RC_OPERAND_BIT_4:
+        case RC_MEMSIZE_BIT_4:
             return MemSize::Bit_4;
-        case RC_OPERAND_BIT_5:
+        case RC_MEMSIZE_BIT_5:
             return MemSize::Bit_5;
-        case RC_OPERAND_BIT_6:
+        case RC_MEMSIZE_BIT_6:
             return MemSize::Bit_6;
-        case RC_OPERAND_BIT_7:
+        case RC_MEMSIZE_BIT_7:
             return MemSize::Bit_7;
-        case RC_OPERAND_LOW:
+        case RC_MEMSIZE_LOW:
             return MemSize::Nibble_Lower;
-        case RC_OPERAND_HIGH:
+        case RC_MEMSIZE_HIGH:
             return MemSize::Nibble_Upper;
-        case RC_OPERAND_8_BITS:
+        case RC_MEMSIZE_8_BITS:
             return MemSize::EightBit;
-        case RC_OPERAND_16_BITS:
+        case RC_MEMSIZE_16_BITS:
             return MemSize::SixteenBit;
-        case RC_OPERAND_32_BITS:
+        case RC_MEMSIZE_32_BITS:
             return MemSize::ThirtyTwoBit;
         default:
             ASSERT(!"Unsupported operand size");
@@ -176,15 +197,15 @@ inline static constexpr void SetOperand(CompVariable& var, const rc_operand_t& o
     switch (operand.type)
     {
         case RC_OPERAND_ADDRESS:
-            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::Address, operand.value);
+            var.Set(GetCompVariableSize(operand.value.memref->memref.size), CompVariable::Type::Address, operand.value.memref->memref.address);
             break;
 
         case RC_OPERAND_DELTA:
-            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::DeltaMem, operand.value);
+            var.Set(GetCompVariableSize(operand.value.memref->memref.size), CompVariable::Type::DeltaMem, operand.value.memref->memref.address);
             break;
 
         case RC_OPERAND_CONST:
-            var.Set(MemSize::ThirtyTwoBit, CompVariable::Type::ValueComparison, operand.value);
+            var.Set(MemSize::ThirtyTwoBit, CompVariable::Type::ValueComparison, operand.value.num);
             break;
 
         case RC_OPERAND_FP:
@@ -281,6 +302,10 @@ void Achievement::ParseTrigger(const char* sTrigger)
         // parse error occurred
         RA_LOG("rc_parse_trigger returned %d", nSize);
         m_pTrigger = nullptr;
+
+        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+            ra::StringPrintf(L"Unable to activate achievement: %s", Title()),
+            ra::StringPrintf(L"Parse error %d", nSize));
     }
     else
     {
@@ -375,7 +400,7 @@ unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) con
     return pCondition ? pCondition->current_hits : 0U;
 }
 
-void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned int nHitCount) const noexcept
+void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned int nCurrentHits) const noexcept
 {
     if (m_pTrigger == nullptr)
         return;
@@ -383,7 +408,7 @@ void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned in
     rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
     rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
     if (pCondition)
-        pCondition->current_hits = nHitCount;
+        pCondition->current_hits = nCurrentHits;
 }
 
 void Achievement::AddAltGroup() noexcept { m_vConditions.AddGroup(); }

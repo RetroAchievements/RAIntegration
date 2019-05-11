@@ -1,6 +1,7 @@
 #include "DialogBase.hh"
 
 #include "ui\win32\bindings\ControlBinding.hh"
+#include "ui\win32\bindings\GridBinding.hh"
 
 #include "RA_Core.h" // g_RAMainWnd, g_hThisDLLInst
 
@@ -158,6 +159,28 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                 }
             }
             return OnCommand(LOWORD(wParam));
+
+        case WM_NOTIFY:
+        {
+            LPNMHDR pnmHdr = reinterpret_cast<LPNMHDR>(lParam);
+            switch (pnmHdr->code)
+            {
+                case LVN_ITEMCHANGED:
+                {
+                    ra::ui::win32::bindings::GridBinding* pGridBinding;
+                    GSL_SUPPRESS_TYPE1 pGridBinding = reinterpret_cast<ra::ui::win32::bindings::GridBinding*>(
+                        FindControlBinding(pnmHdr->hwndFrom));
+
+                    if (pGridBinding)
+                    {
+                        LPNMLISTVIEW pnmListView = reinterpret_cast<LPNMLISTVIEW>(pnmHdr);
+                        pGridBinding->OnLvnItemChanged(pnmListView);
+                    }
+
+                    return 0;
+                }
+            }
+        }
 
         case WM_MOVE:
         {

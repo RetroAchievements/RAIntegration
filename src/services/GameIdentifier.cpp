@@ -138,12 +138,41 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
         auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
         if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
         {
-            const bool bLeaderboardsEnabled = pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
+            bool bShowHardcorePrompt = false;
+            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning))
+            {
+                pGameContext.EnumerateAchievements([&bShowHardcorePrompt](const Achievement & pAchievment)
+                {
+                    if (pAchievment.Category() == ra::etoi(AchievementSet::Type::Core))
+                    {
+                        bShowHardcorePrompt = true;
+                        return false;
+                    }
 
-            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                L"Playing in Softcore Mode",
-                bLeaderboardsEnabled ? L"Leaderboard submissions will be canceled." : L"");
+                    return true;
+                });
+            }
+
+            if (bShowHardcorePrompt)
+            {
+                ra::ui::viewmodels::MessageBoxViewModel vmWarning;
+                vmWarning.SetHeader(L"Enable Hardcore mode?");
+                vmWarning.SetMessage(L"You are loading a game with achievements and do not currently have hardcore mode enabled.");
+                vmWarning.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+                vmWarning.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
+                if (vmWarning.ShowModal() == ra::ui::DialogResult::Yes)
+                    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().EnableHardcoreMode(false);
+            }
+            else
+            {
+                const bool bLeaderboardsEnabled = pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
+
+                ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                    L"Playing in Softcore Mode",
+                    bLeaderboardsEnabled ? L"Leaderboard submissions will be canceled." : L"");
+            }
         }
     }
     else

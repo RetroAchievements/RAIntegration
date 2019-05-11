@@ -74,15 +74,15 @@ private:
     int m_nFontSizePopupLeaderboardEntry = 18;
     int m_nFontSizePopupLeaderboardTracker = 18;
 
-    Color m_colorBackground{ 255, 251, 102, 0 };
-    Color m_colorBorder{ 255, 96, 48, 0 };
-    Color m_colorTextShadow{ 255, 180, 80, 0 };
-    Color m_colorTitle{ 255, 0, 0, 0 };
-    Color m_colorDescription{ 255, 0, 0, 0 };
-    Color m_colorDetail{ 255, 0, 0, 0 };
-    Color m_colorError{ 255, 128, 0, 0 };
-    Color m_colorLeaderboardEntry{ 255, 0, 0, 0 };
-    Color m_colorLeaderboardPlayer{ 255, 96, 40, 0 };
+    Color m_colorBackground{ 255, 64, 64, 64 };
+    Color m_colorBorder{ 255, 32, 32, 32 };
+    Color m_colorTextShadow{ 255, 32, 32, 32 };
+    Color m_colorTitle{ 255, 255, 255, 255 };
+    Color m_colorDescription{ 255, 240, 224, 64 };
+    Color m_colorDetail{ 255, 64, 192, 224 };
+    Color m_colorError{ 255, 224, 32, 32 };
+    Color m_colorLeaderboardEntry{ 255, 180, 180, 180 };
+    Color m_colorLeaderboardPlayer{ 255, 240, 224, 128 };
 
     std::string m_sFontOverlay = "Tahoma";
     int m_nFontSizeOverlayTitle = 32;

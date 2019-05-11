@@ -109,6 +109,7 @@ public:
     /// <summary>
     /// Gets the value associated to the requested boolean property for the item at the specified index.
     /// </summary>
+    /// <param name="nIndex">The index of the item to query.</param>
     /// <param name="pProperty">The property to query.</param>
     /// <returns>The current value of the property for this object.</returns>
     bool GetItemValue(gsl::index nIndex, const BoolModelProperty& pProperty) const
@@ -120,6 +121,7 @@ public:
     /// <summary>
     /// Gets the value associated to the requested string property for the item at the specified index.
     /// </summary>
+    /// <param name="nIndex">The index of the item to query.</param>
     /// <param name="pProperty">The property to query.</param>
     /// <returns>The current value of the property for this object.</returns>
     const std::wstring& GetItemValue(gsl::index nIndex, const StringModelProperty& pProperty) const
@@ -131,6 +133,7 @@ public:
     /// <summary>
     /// Gets the value associated to the requested integer property for the item at the specified index.
     /// </summary>
+    /// <param name="nIndex">The index of the item to query.</param>
     /// <param name="pProperty">The property to query.</param>
     /// <returns>The current value of the property for this object.</returns>
     int GetItemValue(gsl::index nIndex, const IntModelProperty& pProperty) const
@@ -138,7 +141,46 @@ public:
         const auto* pViewModel = GetViewModelAt(nIndex);
         return (pViewModel != nullptr) ? pViewModel->GetValue(pProperty) : pProperty.GetDefaultValue();
     }
-    
+
+    /// <summary>
+    /// Sets the value associated to the requested boolean property for the item at the specified index.
+    /// </summary>
+    /// <param name="nIndex">The index of the item to update.</param>
+    /// <param name="pProperty">The property to update.</param>
+    /// <param name="bValue">The new value for the property.</param>
+    void SetItemValue(gsl::index nIndex, const BoolModelProperty& pProperty, bool bValue)
+    {
+        auto* pViewModel = GetViewModelAt(nIndex);
+        if (pViewModel != nullptr)
+            pViewModel->SetValue(pProperty, bValue);
+    }
+
+    /// <summary>
+    /// Sets the value associated to the requested boolean property for the item at the specified index.
+    /// </summary>
+    /// <param name="nIndex">The index of the item to update.</param>
+    /// <param name="pProperty">The property to update.</param>
+    /// <param name="bValue">The new value for the property.</param>
+    void SetItemValue(gsl::index nIndex, const StringModelProperty & pProperty, const std::wstring& sValue)
+    {
+        auto* pViewModel = GetViewModelAt(nIndex);
+        if (pViewModel != nullptr)
+            pViewModel->SetValue(pProperty, sValue);
+    }
+
+    /// <summary>
+    /// Sets the value associated to the requested boolean property for the item at the specified index.
+    /// </summary>
+    /// <param name="nIndex">The index of the item to update.</param>
+    /// <param name="pProperty">The property to update.</param>
+    /// <param name="bValue">The new value for the property.</param>
+    void SetItemValue(gsl::index nIndex, const IntModelProperty & pProperty, int nValue)
+    {
+        auto* pViewModel = GetViewModelAt(nIndex);
+        if (pViewModel != nullptr)
+            pViewModel->SetValue(pProperty, nValue);
+    }
+
     /// <summary>
     /// Finds the index of the first item where the specified property has the specified value.
     /// </summary>

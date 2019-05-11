@@ -84,6 +84,21 @@ public:
         void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
         
         /// <summary>
+        /// The <see cref="ModelProperty" /> for the achievement description.
+        /// </summary>
+        static const StringModelProperty DescriptionProperty;
+
+        /// <summary>
+        /// Gets the achievement description.
+        /// </summary>
+        const std::wstring& GetDescription() const { return GetValue(DescriptionProperty); }
+
+        /// <summary>
+        /// Sets the achievement description.
+        /// </summary>
+        void SetDescription(const std::wstring& sValue) { SetValue(DescriptionProperty, sValue); }
+
+        /// <summary>
         /// The <see cref="ModelProperty" /> for the whether the achievement was unlocked.
         /// </summary>
         static const BoolModelProperty IsAchievedProperty;

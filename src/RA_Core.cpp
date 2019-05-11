@@ -358,14 +358,15 @@ API HMENU CCONV _RA_CreatePopupMenu()
         AppendMenu(hRA, nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
         AppendMenu(hRA, pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
+        AppendMenu(hRA, pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_NON_HARDCORE_WARNING, TEXT("Non-Hardcore &Warning"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
 
         GSL_SUPPRESS_TYPE1 AppendMenu(hRA, MF_POPUP, reinterpret_cast<UINT_PTR>(hRA_LB), TEXT("Leaderboards"));
         AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
         AppendMenu(hRA_LB, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score Counter"));
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank Scoreboard"));
+        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge &Notification"));
+        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score &Counter"));
+        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank &Scoreboard"));
 
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
@@ -553,6 +554,16 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 if (!pEmulatorContext.EnableHardcoreMode())
                     break;
             }
+        }
+        break;
+
+        case IDM_RA_NON_HARDCORE_WARNING:
+        {
+            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            pConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning,
+                !pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning));
+
+            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
         }
         break;
 

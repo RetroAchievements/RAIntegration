@@ -16,6 +16,7 @@ enum class Feature
     LeaderboardCounters,
     LeaderboardScoreboards,
     PreferDecimal,
+    NonHardcoreWarning,
 };
 
 class IConfiguration

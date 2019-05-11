@@ -60,14 +60,16 @@ public:
     /// <summary>
     /// Disables hardcore mode and notifies other services of that fact.
     /// </summary>
-    void DisableHardcoreMode();
+    virtual void DisableHardcoreMode();
 
     /// <summary>
     /// Enables hardcore mode and notifies other services of that fact.
     /// </summary>
-    /// <returns><c>true</c> if hardcore mode was enabled, <c>false</c> if the user chose not to based on prompts they
-    /// were given.</returns>
-    bool EnableHardcoreMode();
+    /// <param name="bShowWarning">If <c>true</c>, the user will be prompted to confirm the switch to hardcore mode</param>
+    /// <returns>
+    /// <c>true</c> if hardcore mode was enabled, <c>false</c> if the user chose not to based on prompts they were given.
+    /// </returns>
+    virtual bool EnableHardcoreMode(bool bShowWarning = true);
 
     /// <summary>
     /// Builds a string for displaying in the title bar of the emulator.

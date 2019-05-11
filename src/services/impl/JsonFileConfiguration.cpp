@@ -45,6 +45,8 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
         m_sApiToken = doc["Token"].GetString();
     if (doc.HasMember("Hardcore Active"))
         SetFeatureEnabled(Feature::Hardcore, doc["Hardcore Active"].GetBool());
+    if (doc.HasMember("Non Hardcore Warning"))
+        SetFeatureEnabled(Feature::NonHardcoreWarning, doc["Non Hardcore Warning"].GetBool());
 
     if (doc.HasMember("Leaderboards Active"))
         SetFeatureEnabled(Feature::Leaderboards, doc["Leaderboards Active"].GetBool());
@@ -105,6 +107,7 @@ void JsonFileConfiguration::Save() const
     doc.AddMember("Username", rapidjson::StringRef(m_sUsername), a);
     doc.AddMember("Token", rapidjson::StringRef(m_sApiToken), a);
     doc.AddMember("Hardcore Active", IsFeatureEnabled(Feature::Hardcore), a);
+    doc.AddMember("Non Hardcore Warning", IsFeatureEnabled(Feature::NonHardcoreWarning), a);
     doc.AddMember("Leaderboards Active", IsFeatureEnabled(Feature::Leaderboards), a);
     doc.AddMember("Leaderboard Notification Display", IsFeatureEnabled(Feature::LeaderboardNotifications), a);
     doc.AddMember("Leaderboard Counter Display", IsFeatureEnabled(Feature::LeaderboardCounters), a);

@@ -575,6 +575,77 @@ public:
         Assert::IsFalse(bWasReset);
     }
 
+    TEST_METHOD(TestEnableHardcoreModeVersionCurrentGameLoadedNoPrompt)
+    {
+        EmulatorContextHarness emulator;
+        emulator.MockVersions("0.57", "0.57");
+        emulator.mockGameContext.SetGameId(1U);
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
+
+        bool bUnlocksRequested = false;
+        emulator.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([&bUnlocksRequested](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
+        {
+            bUnlocksRequested = true;
+            Assert::AreEqual(1U, request.GameId);
+            Assert::IsTrue(request.Hardcore);
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        const auto& pLeaderboard = emulator.mockGameContext.NewLeaderboard(32U);
+        Assert::IsFalse(pLeaderboard.IsActive());
+
+        bool bWasReset = false;
+        emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
+
+        Assert::IsTrue(emulator.EnableHardcoreMode(false));
+
+        // ensure hardcore mode was enabled
+        Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+
+        // ensure prompt was not shown
+        Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
+
+        // enabling hardcore mode should enable leaderboards
+        Assert::IsTrue(pLeaderboard.IsActive());
+
+        // enabling hardcore mode should request hardcore unlocks
+        emulator.mockThreadPool.ExecuteNextTask();
+        Assert::IsTrue(bUnlocksRequested);
+
+        // enabling hardcore mode should reset the emulator
+        Assert::IsTrue(bWasReset);
+    }
+
+    TEST_METHOD(TestEnableHardcoreModeVersionOlderGameLoadedNoPrompt)
+    {
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.mockConfiguration.SetHostName("host");
+        emulator.mockUserContext.Initialize("User", "Token");
+        emulator.mockGameContext.SetGameId(1U);
+        emulator.MockVersions("0.57.0.0", "0.58.0.0");
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+        Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
+        bool bWasReset = false;
+        emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
+
+        Assert::IsTrue(emulator.EnableHardcoreMode(false));
+
+        Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+        Assert::AreEqual(std::string("http://host/download.php"), emulator.mockDesktop.LastOpenedUrl());
+
+        // user should be logged out if hardcore was enabled on an older version
+        Assert::IsFalse(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(bWasReset);
+    }
+
     TEST_METHOD(TestGetAppTitleDefault)
     {
         EmulatorContextHarness emulator;

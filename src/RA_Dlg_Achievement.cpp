@@ -7,6 +7,8 @@
 #include "RA_User.h"
 #include "RA_md5factory.h"
 
+#include "api\UpdateAchievement.hh"
+
 #include "data\GameContext.hh"
 
 #include "services\AchievementRuntime.hh"
@@ -245,33 +247,28 @@ INT_PTR CALLBACK Dlg_Achievements::s_AchievementsProc(HWND hDlg, UINT nMsg, WPAR
     return g_AchievementsDialog.AchievementsProc(hDlg, nMsg, wParam, lParam);
 }
 
-BOOL AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlags, rapidjson::Document& doc)
+static ra::AchievementID AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlags)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    const std::string sMem = Ach.CreateMemString();
-
     const unsigned int nId = Ach.Category() == ra::etoi(AchievementSet::Type::Local) ? 0 : Ach.ID();
 
-    //  Deal with secret:
-    std::string sPostCode = ra::StringPrintf("%sSECRET%uSEC%s%uRE2%u", RAUsers::LocalUser().Username(), nId, sMem,
-              Ach.Points(), Ach.Points() * 3);
+    ra::api::UpdateAchievement::Request request;
+    request.GameId = pGameContext.GameId();
+    request.AchievementId = nId;
+    request.Title = ra::Widen(Ach.Title());
+    request.Description = ra::Widen(Ach.Description());
+    request.Trigger = Ach.CreateMemString();
+    request.Points = Ach.Points();
+    request.Category = nFlags;
+    request.Badge = Ach.BadgeImageURI();
 
-    std::string sPostCodeHash = RAGenerateMD5(std::string(sPostCode));
+    const auto& response = request.Call();
+    if (response.Succeeded())
+        return response.AchievementId;
 
-    PostArgs args;
-    args['u'] = RAUsers::LocalUser().Username();
-    args['t'] = RAUsers::LocalUser().Token();
-    args['a'] = std::to_string(nId);
-    args['g'] = std::to_string(pGameContext.GameId());
-    args['n'] = Ach.Title();
-    args['d'] = Ach.Description();
-    args['m'] = sMem;
-    args['z'] = std::to_string(Ach.Points());
-    args['f'] = std::to_string(nFlags);
-    args['b'] = Ach.BadgeImageURI();
-    args['h'] = sPostCodeHash;
-
-    return (RAWeb::DoBlockingRequest(RequestSubmitAchievementData, args, doc));
+    ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+        ra::StringPrintf(L"Failed to upload '%s'", Ach.Title()), ra::Widen(response.ErrorMessage));
+    return 0U;
 }
 
 _Use_decl_annotations_ void Dlg_Achievements::OnClickAchievementSet(AchievementSet::Type nAchievementSet)
@@ -418,58 +415,38 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                 return FALSE;
 
                             //  Promote to Core
+                            Achievement& selectedAch = g_pActiveAchievements->GetAchievement(nSel);
 
                             //  Note: specify that this is a one-way operation
-                            if (MessageBox(
-                                    hDlg,
-                                    TEXT("Promote this achievement to the Core Achievement set.\n\n")
-                                        TEXT("Please note this is a one-way operation, and will allow players\n")
-                                            TEXT("to officially obtain this achievement and the points for it.\n"),
-                                    // TEXT("Note: all players who have achieved it while it has been unofficial\n")
-                                    // TEXT("will have to earn this again now it is in the core group.\n"),
-                                    TEXT("Are you sure?"), MB_YESNO | MB_ICONWARNING) == IDYES)
-                            {
-                                Achievement& selectedAch = g_pActiveAchievements->GetAchievement(nSel);
+                            ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
+                            vmPrompt.SetHeader(ra::StringPrintf(L"Promote '%s' to core?", selectedAch.Title()));
+                            vmPrompt.SetMessage(L"Please note that this is a one-way operaton, and will allow players to officially obtain the achievement and the points for it.");
+                            vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+                            vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
 
+                            if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
+                            {
                                 unsigned int nFlags = 1 << 0; //  Active achievements! : 1
                                 if (g_nActiveAchievementSet == AchievementSet::Type::Unofficial)
                                     nFlags |= 1 << 1; //  Official achievements: 3
 
-                                rapidjson::Document response;
-                                if (AttemptUploadAchievementBlocking(selectedAch, nFlags, response))
+                                const auto nID = AttemptUploadAchievementBlocking(selectedAch, nFlags);
+                                if (nID > 0)
                                 {
-                                    if (response["Success"].GetBool())
-                                    {
-                                        const unsigned int nID = response["AchievementID"].GetUint();
+                                    //  Remove the achievement from the local/user achievement set,
+                                    //   add it to the unofficial set.
+                                    g_pUnofficialAchievements->RemoveAchievement(&selectedAch);
+                                    g_pCoreAchievements->AddAchievement(&selectedAch);
+                                    selectedAch.SetCategory(ra::etoi(AchievementSet::Type::Core));
+                                    RemoveAchievement(hList, nSel);
 
-                                        //  Remove the achievement from the local/user achievement set,
-                                        //   add it to the unofficial set.
-                                        g_pUnofficialAchievements->RemoveAchievement(&selectedAch);
-                                        g_pCoreAchievements->AddAchievement(&selectedAch);
-                                        selectedAch.SetCategory(ra::etoi(AchievementSet::Type::Core));
-                                        RemoveAchievement(hList, nSel);
+                                    selectedAch.SetActive(TRUE); //  Disable it: all promoted ach must be reachieved
 
-                                        selectedAch.SetActive(TRUE); //  Disable it: all promoted ach must be reachieved
+                                    // CoreAchievements->Save();
+                                    // UnofficialAchievements->Save();
 
-                                        // CoreAchievements->Save();
-                                        // UnofficialAchievements->Save();
-
-                                        MessageBox(hDlg, TEXT("Successfully uploaded achievement!"), TEXT("Success!"),
-                                                   MB_OK);
-                                    }
-                                    else
-                                    {
-                                        MessageBox(hDlg,
-                                                   NativeStr(std::string("Error in upload: response from server:") +
-                                                             std::string(response["Error"].GetString()))
-                                                       .c_str(),
-                                                   TEXT("Error in upload!"), MB_OK);
-                                    }
-                                }
-                                else
-                                {
-                                    MessageBox(hDlg, TEXT("Error connecting to server... are you online?"),
-                                               TEXT("Error in upload!"), MB_OK);
+                                    ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(
+                                        ra::StringPrintf(L"Successfully uploaded '%s'", selectedAch.Title()));
                                 }
                             }
                         }
@@ -930,25 +907,27 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
     std::string title;
 
+    ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
+    vmPrompt.SetMessage(L"You are about to update data on the server. Doing so will immediately make that data available for other players.");
+    vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+    vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
     if (nNumChecked == 1)
     {
-        title = "Upload Achievement";
+        const Achievement& pAch = g_pActiveAchievements->GetAchievement(nLbxItemsChecked.front());
+        if (pAch.Category() == ra::etoi(AchievementSet::Type::Local))
+            vmPrompt.SetHeader(ra::StringPrintf(L"Are you sure you want to upload '%s'?", pAch.Title()));
+        else
+            vmPrompt.SetHeader(ra::StringPrintf(L"Are you sure you want to update '%s'?", pAch.Title()));
     }
     // else
     //{
     //  title = std::string("Upload ") + std::to_string( nNumChecked ) + std::string(" Achievements");
     //}
 
-    char message[1024];
-    sprintf_s(message, 1024,
-              "Uploading the selected %u achievement(s).\n"
-              "Are you sure? This will update the server with your new achievements\n"
-              "and players will be able to download them into their games immediately.",
-              nNumChecked);
-
     BOOL bErrorsEncountered = FALSE;
 
-    if (MessageBox(hDlg, NativeStr(message).c_str(), NativeStr(title).c_str(), MB_YESNO | MB_ICONWARNING) == IDYES)
+    if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
     {
         for (const auto check : nLbxItemsChecked)
         {
@@ -964,58 +943,47 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
             else if (g_nActiveAchievementSet == AchievementSet::Type::Local)
                 nFlags |= 1 << 2; //  Promote to Unofficial: 5
 
-            rapidjson::Document response;
-            if (AttemptUploadAchievementBlocking(NextAch, nFlags, response))
+            const auto nAchID = AttemptUploadAchievementBlocking(NextAch, nFlags);
+            if (nAchID > 0)
             {
-                if (response["Success"].GetBool())
+                NextAch.SetID(nAchID);
+
+                // Update listbox on achievements dlg
+
+                LbxDataAt(check, Column::Id) = std::to_string(nAchID);
+
+                if (bMovedFromUserToUnofficial)
                 {
-                    const ra::AchievementID nAchID = response["AchievementID"].GetUint();
-                    NextAch.SetID(nAchID);
+                    //  Remove the achievement from the local/user achievement set,
+                    //  add it to the unofficial set.
+                    g_pLocalAchievements->RemoveAchievement(&NextAch);
+                    g_pUnofficialAchievements->AddAchievement(&NextAch);
+                    NextAch.SetCategory(ra::etoi(AchievementSet::Type::Unofficial));
+                    NextAch.SetModified(FALSE);
+                    RemoveAchievement(hList, nLbxItemsChecked.front());
 
-                    // Update listbox on achievements dlg
-
-                    LbxDataAt(check, Column::Id) = std::to_string(nAchID);
-
-                    if (bMovedFromUserToUnofficial)
-                    {
-                        //  Remove the achievement from the local/user achievement set,
-                        //  add it to the unofficial set.
-                        g_pLocalAchievements->RemoveAchievement(&NextAch);
-                        g_pUnofficialAchievements->AddAchievement(&NextAch);
-                        NextAch.SetCategory(ra::etoi(AchievementSet::Type::Unofficial));
-                        NextAch.SetModified(FALSE);
-                        RemoveAchievement(hList, nLbxItemsChecked.front());
-
-                        // LocalAchievements->Save();
-                        // UnofficialAchievements->Save();
-                    }
-                    else
-                    {
-                        //  Updated an already existing achievement, still the same position/Id.
-                        NextAch.SetModified(FALSE);
-
-                        //  Reverse find where I am in the list:
-                        const size_t nIndex =
-                            g_pActiveAchievements->GetAchievementIndex(*g_AchievementEditorDialog.ActiveAchievement());
-                        ASSERT(nIndex < g_pActiveAchievements->NumAchievements());
-                        if (nIndex < g_pActiveAchievements->NumAchievements())
-                        {
-                            if (g_nActiveAchievementSet == AchievementSet::Type::Core)
-                                OnEditData(nIndex, Column::Modified, "No");
-                        }
-
-                        //  Save em all - we may have changed any of them :S
-                        // CoreAchievements->Save();
-                        // UnofficialAchievements->Save();
-                        // LocalAchievements->Save();    // Will this one have changed? Maybe
-                    }
+                    // LocalAchievements->Save();
+                    // UnofficialAchievements->Save();
                 }
                 else
                 {
-                    char buffer[1024];
-                    sprintf_s(buffer, 1024, "Error!!\n%s", std::string(response["Error"].GetString()).c_str());
-                    MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
-                    bErrorsEncountered = TRUE;
+                    //  Updated an already existing achievement, still the same position/Id.
+                    NextAch.SetModified(FALSE);
+
+                    //  Reverse find where I am in the list:
+                    const size_t nIndex =
+                        g_pActiveAchievements->GetAchievementIndex(*g_AchievementEditorDialog.ActiveAchievement());
+                    ASSERT(nIndex < g_pActiveAchievements->NumAchievements());
+                    if (nIndex < g_pActiveAchievements->NumAchievements())
+                    {
+                        if (g_nActiveAchievementSet == AchievementSet::Type::Core)
+                            OnEditData(nIndex, Column::Modified, "No");
+                    }
+
+                    //  Save em all - we may have changed any of them :S
+                    // CoreAchievements->Save();
+                    // UnofficialAchievements->Save();
+                    // LocalAchievements->Save();    // Will this one have changed? Maybe
                 }
             }
         }

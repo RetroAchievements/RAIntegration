@@ -290,10 +290,6 @@ API int CCONV _RA_HandleHTTPResults()
         {
             switch (pObj->GetRequestType())
             {
-                case RequestFriendList:
-                    RAUsers::LocalUser().OnFriendListResponse(doc);
-                    break;
-
                 case RequestScore:
                 {
                     ASSERT(doc["Success"].GetBool());

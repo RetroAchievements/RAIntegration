@@ -10,6 +10,7 @@
 #include "api/FetchGameData.hh"
 #include "api/FetchGamesList.hh"
 #include "api/FetchLeaderboardInfo.hh"
+#include "api/FetchUserFriends.hh"
 #include "api/FetchUserUnlocks.hh"
 #include "api/LatestClient.hh"
 #include "api/Login.hh"
@@ -40,6 +41,7 @@ public:
     virtual FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) = 0;
     virtual AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) = 0;
     virtual SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) = 0;
+    virtual FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) = 0;
 
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) = 0;

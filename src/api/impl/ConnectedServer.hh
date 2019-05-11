@@ -20,6 +20,7 @@ public:
     FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) override;
     AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) override;
     SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) override;
+    FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) override;
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) override;
     FetchGameData::Response FetchGameData(const FetchGameData::Request& request) override;
     FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override;

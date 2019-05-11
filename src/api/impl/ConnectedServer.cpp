@@ -518,6 +518,38 @@ SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const S
     return std::move(response);
 }
 
+FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFriends::Request& request)
+{
+    FetchUserFriends::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    if (DoRequest(m_sHost, FetchUserFriends::Name(), "getfriendlist", sPostData, response, document))
+    {
+        response.Result = ApiResult::Success;
+
+        if (!document.HasMember("Friends"))
+        {
+            response.Result = ApiResult::Error;
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", "Friends");
+        }
+        else
+        {
+            const auto& pFriends = document["Friends"].GetArray();
+            for (const auto& pFriend : pFriends)
+            {
+                FetchUserFriends::Response::Friend oFriend;
+                GetRequiredJsonField(oFriend.User, pFriend, "Friend", response);
+                GetRequiredJsonField(oFriend.Score, pFriend, "RAPoints", response);
+                GetRequiredJsonField(oFriend.LastActivity, pFriend, "LastSeen", response);
+                response.Friends.emplace_back(oFriend);
+            }
+        }
+    }
+
+    return std::move(response);
+}
+
 ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& request)
 {
     ResolveHash::Response response;

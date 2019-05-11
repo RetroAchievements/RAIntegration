@@ -52,6 +52,11 @@ public:
         return UnsupportedApi<SubmitLeaderboardEntry::Response>(SubmitLeaderboardEntry::Name());
     }
 
+    FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request&) override
+    {
+        return UnsupportedApi<FetchUserFriends::Response>(FetchUserFriends::Name());
+    }
+
     // === game functions ===
 
     ResolveHash::Response ResolveHash(const ResolveHash::Request&) override

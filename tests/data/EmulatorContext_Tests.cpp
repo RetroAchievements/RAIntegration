@@ -7,6 +7,7 @@
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -29,6 +30,7 @@ private:
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
+        ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
 
         void MockVersions(const std::string& sClientVersion, const std::string& sServerVersion)
         {

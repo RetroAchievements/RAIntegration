@@ -129,6 +129,9 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
 
         RA_LOG("Loading game %u", nGameId);
 
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        pOverlayManager.ClearPopups();
+
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
         pGameContext.LoadGame(nGameId, m_nPendingMode);
         pGameContext.SetGameHash((nGameId == m_nPendingGameId) ? m_sPendingMD5 : "");

@@ -20,6 +20,8 @@ public:
 
     void ClearPopups() override
     {
+        // base implementation only queues the popups to be destroyed
+
         while (!m_vPopupMessages.empty())
             m_vPopupMessages.pop_front();
 
@@ -27,8 +29,6 @@ public:
             m_vScoreboards.pop_front();
 
         m_vScoreTrackers.clear();
-
-        m_vmOverlay.Deactivate();
     }
 
 private:

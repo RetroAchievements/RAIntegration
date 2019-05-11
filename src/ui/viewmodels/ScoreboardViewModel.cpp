@@ -14,10 +14,12 @@ const StringModelProperty ScoreboardViewModel::EntryViewModel::UserNameProperty(
 const StringModelProperty ScoreboardViewModel::EntryViewModel::ScoreProperty("ScoreboardViewModel::EntryViewModel", "Score", L"0");
 const BoolModelProperty ScoreboardViewModel::EntryViewModel::IsHighlightedProperty("ScoreboardViewModel::EntryViewModel", "IsHighlighted", false);
 
+constexpr int NUM_ENTRIES = 7;
+
 static int CalculateScoreboardHeight(const ra::ui::OverlayTheme& pTheme) noexcept
 {
     return 4 + pTheme.FontSizePopupLeaderboardTitle() + 2 +
-        (pTheme.FontSizePopupLeaderboardEntry() + 2) * 7 + 4;
+        (pTheme.FontSizePopupLeaderboardEntry() + 2) * NUM_ENTRIES + 4;
 }
 
 static int CalculateScoreboardWidth(const ra::ui::OverlayTheme& pTheme) noexcept
@@ -90,23 +92,36 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
         m_pSurface->WriteText(8, 1, nFontTitle, pTheme.ColorTitle(), sResultsTitle);
 
         // scoreboard
-        size_t nY = 4 + pTheme.FontSizePopupLeaderboardTitle() + 2;
-        size_t i = 0;
-        while (i < m_vEntries.Count() && nY + pTheme.FontSizePopupLeaderboardEntry() < m_pSurface->GetHeight())
+        if (m_vEntries.Count() > 0)
         {
-            const auto* pEntry = m_vEntries.GetItemAt(i++);
-            if (!pEntry)
-                continue;
+            // get width of largest displayed rank so other ranks can be right-aligned with it
+            const auto nRankSize = m_pSurface->MeasureText(nFontText, ra::ToWString(m_vEntries.GetItemAt(m_vEntries.Count() - 1)->GetRank()));
 
-            const ra::ui::Color nTextColor = pEntry->IsHighlighted() ? pTheme.ColorLeaderboardPlayer() : pTheme.ColorLeaderboardEntry();
-            m_pSurface->WriteText(8, nY, nFontText, nTextColor, ra::ToWString(i));
-            m_pSurface->WriteText(24, nY, nFontText, nTextColor, pEntry->GetUserName());
+            size_t nY = 4 + pTheme.FontSizePopupLeaderboardTitle() + 2;
+            size_t i = 0;
+            while (i < NUM_ENTRIES && i < m_vEntries.Count())
+            {
+                const auto* pEntry = m_vEntries.GetItemAt(i++);
+                if (!pEntry)
+                    continue;
 
-            const auto& sScore = pEntry->GetScore();
-            const auto szScore = m_pSurface->MeasureText(nFontText, sScore);
-            m_pSurface->WriteText(m_pSurface->GetWidth() - 4 - szScore.Width - 8, nY, nFontText, nTextColor, sScore);
+                const ra::ui::Color nTextColor = pEntry->IsHighlighted() ? pTheme.ColorLeaderboardPlayer() : pTheme.ColorLeaderboardEntry();
 
-            nY += pTheme.FontSizePopupLeaderboardEntry() + 2;
+                // rank (right aligned)
+                const auto sRank = ra::ToWString(pEntry->GetRank());
+                const auto nEntryRankSize = m_pSurface->MeasureText(nFontText, sRank);
+                m_pSurface->WriteText(8 + nRankSize.Width - nEntryRankSize.Width, nY, nFontText, nTextColor, sRank);
+
+                // player name
+                m_pSurface->WriteText(8 + nRankSize.Width + 8, nY, nFontText, nTextColor, pEntry->GetUserName());
+
+                // score (right aligned)
+                const auto& sScore = pEntry->GetScore();
+                const auto szScore = m_pSurface->MeasureText(nFontText, sScore);
+                m_pSurface->WriteText(m_pSurface->GetWidth() - 4 - szScore.Width - 8, nY, nFontText, nTextColor, sScore);
+
+                nY += pTheme.FontSizePopupLeaderboardEntry() + 2;
+            }
         }
 
         bUpdated = true;

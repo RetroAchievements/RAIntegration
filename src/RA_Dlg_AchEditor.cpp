@@ -545,7 +545,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 nSel = 0;
             else if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == "Delta")
                 nSel = 1;
-            else if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem), "Prior")
+            else if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == "Prior")
                 nSel = 2;
             else
                 nSel = 3;

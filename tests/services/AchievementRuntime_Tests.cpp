@@ -48,6 +48,17 @@ public:
     ra::data::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockFileSystem mockFileSystem;
 
+    rc_memref_value_t* GetMemRef(ra::AchievementID nId)
+    {
+        for (const auto& pIter : m_vActiveAchievements)
+        {
+            if (pIter.nId == nId)
+                return pIter.pTrigger->memrefs;
+        }
+
+        return nullptr;
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_Override;
 };
@@ -348,6 +359,82 @@ public:
         Assert::IsTrue(pAchievement3->Active());
         runtime.LoadProgress("test.sav");
         Assert::AreEqual(0U, pAchievement3->GetConditionHitCount(0, 0));
+    }
+
+    TEST_METHOD(TestPersistProgressMemory)
+    {
+        AchievementRuntimeHarness runtime;
+        auto& ach = runtime.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        ach.SetID(9U);
+        ach.ParseTrigger("0xH1234=1_0xX1234>d0xX1234");
+        ach.SetActive(true);
+
+        ach.SetConditionHitCount(0, 0, 2);
+        ach.SetConditionHitCount(0, 1, 0);
+        auto pMemRef = runtime.GetMemRef(9U); // 0xH1234
+        pMemRef->value = 0x02;
+        pMemRef->previous = 0x03;
+        pMemRef->prior = 0x04;
+        pMemRef = pMemRef->next; // 0xX1234
+        pMemRef->value = 0x020000;
+        pMemRef->previous = 0x030000;
+        pMemRef->prior = 0x040000;
+
+        runtime.SaveProgress("test.sav");
+
+        // modify data so we can see if the persisted data is restored
+        pMemRef = runtime.GetMemRef(9U);
+        pMemRef->value = 0;
+        pMemRef->previous = 0;
+        pMemRef->prior = 0;
+        pMemRef = pMemRef->next;
+        pMemRef->value = 0;
+        pMemRef->previous = 0;
+        pMemRef->prior = 0;
+        ach.SetConditionHitCount(0, 0, 1);
+        ach.SetConditionHitCount(0, 1, 1);
+
+        // restore persisted data
+        runtime.LoadProgress("test.sav");
+
+        Assert::AreEqual(2U, ach.GetConditionHitCount(0, 0));
+        Assert::AreEqual(0U, ach.GetConditionHitCount(0, 1));
+
+        pMemRef = runtime.GetMemRef(9U);
+        Assert::AreEqual(0x02U, pMemRef->value);
+        Assert::AreEqual(0x03U, pMemRef->previous);
+        Assert::AreEqual(0x04U, pMemRef->prior);
+        pMemRef = pMemRef->next;
+        Assert::AreEqual(0x020000U, pMemRef->value);
+        Assert::AreEqual(0x030000U, pMemRef->previous);
+        Assert::AreEqual(0x040000U, pMemRef->prior);
+    }
+
+    TEST_METHOD(TestLoadProgressV1)
+    {
+        AchievementRuntimeHarness runtime;
+        auto& ach1 = runtime.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        ach1.SetID(3U);
+        ach1.ParseTrigger("1=1.10.");
+        auto& ach2 = runtime.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        ach2.SetID(5U);
+        ach2.ParseTrigger("1=1.2.");
+
+        const gsl::not_null<Achievement*> pAchievement3{
+            gsl::make_not_null(runtime.mockGameContext.FindAchievement(3U)) };
+        const gsl::not_null<Achievement*> pAchievement5{
+            gsl::make_not_null(runtime.mockGameContext.FindAchievement(5U)) };
+
+        pAchievement3->SetConditionHitCount(0, 0, 2);
+        pAchievement5->SetConditionHitCount(0, 0, 2);
+        pAchievement3->SetActive(true);
+        pAchievement5->SetActive(true);
+
+        runtime.mockFileSystem.MockFile(L"test.sav.rap", "3:1:1:0:0:0:0:6e2301982f40d1a3f311cdb063f57e2f:4f52856e145d7cb05822e8a9675b086b:5:1:1:0:0:0:0:0e9aec1797ad6ba861a4b1e0c7f6d2ab:dd9e5fc6020e728b8c9231d5a5c904d5:");
+
+        runtime.LoadProgress("test.sav");
+        Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
+        Assert::AreEqual(1U, pAchievement5->GetConditionHitCount(0, 0));
     }
 
     TEST_METHOD(TestActivateClonedAchievement)

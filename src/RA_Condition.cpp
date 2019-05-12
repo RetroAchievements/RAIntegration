@@ -2,7 +2,7 @@
 
 #include "RA_Defs.h"
 
-_NODISCARD inline static constexpr auto ComparisonSizeToPrefix(_In_ MemSize nSize) noexcept
+_NODISCARD static _CONSTANT_FN ComparisonSizeToPrefix(_In_ MemSize nSize) noexcept
 {
     switch (nSize)
     {

@@ -13,16 +13,16 @@ class JsonFileConfiguration : public IConfiguration
 public:
     bool Load(const std::wstring& sFilename);
 
-    const std::string& GetUsername() const override { return m_sUsername; }
+    const std::string& GetUsername() const noexcept override { return m_sUsername; }
     void SetUsername(const std::string& sValue) override { m_sUsername = sValue; }
-    const std::string& GetApiToken() const override { return m_sApiToken; }
+    const std::string& GetApiToken() const noexcept override { return m_sApiToken; }
     void SetApiToken(const std::string& sValue) override { m_sApiToken = sValue; }
 
-    bool IsFeatureEnabled(Feature nFeature) const override;
-    void SetFeatureEnabled(Feature nFeature, bool bEnabled) override;
+    bool IsFeatureEnabled(Feature nFeature) const noexcept override;
+    void SetFeatureEnabled(Feature nFeature, bool bEnabled) noexcept override;
 
-    unsigned int GetNumBackgroundThreads() const override { return m_nBackgroundThreads; }
-    const std::string& GetRomDirectory() const override { return m_sRomDirectory; }
+    unsigned int GetNumBackgroundThreads() const noexcept override { return m_nBackgroundThreads; }
+    const std::string& GetRomDirectory() const noexcept override { return m_sRomDirectory; }
     void SetRomDirectory(const std::string& sValue) override { m_sRomDirectory = sValue; }
 
     ra::ui::Position GetWindowPosition(const std::string& sPositionKey) const override;

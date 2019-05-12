@@ -13,8 +13,8 @@ namespace impl {
 class FileTextReader : public ra::services::TextReader
 {
 public:
-    explicit FileTextReader(const std::wstring& sFilename) noexcept
-        : m_iStream(sFilename)
+    explicit FileTextReader(const std::wstring& sFilename)
+        : m_iStream(sFilename, std::ios::binary)
     {
     }
 
@@ -26,6 +26,7 @@ public:
         ra::TrimLineEnding(sLine);
         return true;
     }
+
 	_Success_(return)
     _NODISCARD bool GetLine(_Out_ std::wstring& sLine) override
     {
@@ -37,27 +38,32 @@ public:
         return true;
     }
 
-    long GetPosition() const override
+    size_t GetBytes(_Inout_ char pBuffer[], _In_ size_t nBytes) override
     {
-        auto& iStream = const_cast<std::ifstream&>(m_iStream);
+        auto nPos = GetPosition();
+        m_iStream.read(pBuffer, nBytes);
+        return static_cast<size_t>(GetPosition() - nPos);
+    }
 
+    std::streampos GetPosition() const override
+    {
         if (!m_iStream.good())
         {
             // if we've set the eof flag, tellg() will return -1 unless we reset it
             if (m_iStream.eof())
             {
-                iStream.clear();
-                iStream.seekg(0, m_iStream.end);
+                m_iStream.clear();
+                m_iStream.seekg(0, m_iStream.end);
             }
         }
 
-        return static_cast<size_t>(const_cast<std::ifstream&>(m_iStream).tellg());
+        return m_iStream.tellg();
     }
 
-    std::ifstream& GetFStream() { return m_iStream; }
+    std::ifstream& GetFStream() noexcept { return m_iStream; }
 
 private:
-    std::ifstream m_iStream;
+    mutable std::ifstream m_iStream;
 };
 
 } // namespace impl

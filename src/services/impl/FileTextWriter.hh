@@ -14,7 +14,7 @@ namespace impl {
 class FileTextWriter : public ra::services::TextWriter
 {
 public:
-    explicit FileTextWriter(const std::wstring& sFilename, std::ios_base::openmode nMode = std::ios::out) noexcept
+    explicit FileTextWriter(const std::wstring& sFilename, std::ios_base::openmode nMode = std::ios::out)
         : m_oStream(sFilename, std::ios::binary | nMode)
     {
     }
@@ -40,21 +40,18 @@ public:
             m_oStream.write("\r\n", 2);
     }
 
-    long GetPosition() const override
+    std::streampos GetPosition() const override { return m_oStream.tellp(); }
+
+    void SetPosition(std::streampos nNewPosition) override
     {
-        return static_cast<long>(const_cast<std::ofstream&>(m_oStream).tellp());
+        Expects(nNewPosition >= 0);
+        m_oStream.seekp(nNewPosition);
     }
 
-    void SetPosition(long nNewPosition) override
-    {
-        assert(nNewPosition >= 0);
-        m_oStream.seekp(static_cast<std::streampos>(nNewPosition));
-    }
-
-    std::ofstream& GetFStream() { return m_oStream; }
+    std::ofstream& GetFStream() noexcept { return m_oStream; }
 
 private:
-    std::ofstream m_oStream;
+    mutable std::ofstream m_oStream;
 };
 
 } // namespace impl

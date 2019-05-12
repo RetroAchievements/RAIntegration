@@ -9,15 +9,18 @@
 #define IDC_RA_ADD_BOOKMARK             1024
 #define IDC_RA_DEL_BOOKMARK             1025
 #define IDC_RA_CLEAR_CHANGE             1026
-#define IDC_RA_RESULTS_BACK             1026
 #define IDC_RA_FREEZE                   1027
-#define IDC_RA_RESULTS_FORWARD          1027
 #define IDC_RA_BREAKPOINT               1028
-#define IDC_RA_RESULTS_REMOVE           1028
-#define IDC_RA_RESULTS_HIGHLIGHT        1029
 #define IDC_RA_DECIMALBOOKMARK          1029
 #define IDC_RA_SAVEBOOKMARK             1030
 #define IDC_RA_LOADBOOKMARK             1031
+#define IDC_RA_RESULTS_BACK             1032
+#define IDC_RA_RESULTS_FORWARD          1033
+#define IDC_RA_RESULTS_REMOVE           1034
+#define IDC_RA_RESULTS_HIGHLIGHT        1035
+#define IDC_RA_SYSTEMNAME               1036
+#define IDC_RA_LINK                     1037
+#define IDC_RA_GAMENAME                 1038
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -129,7 +132,7 @@
 #define IDM_RA_RETROACHIEVEMENTS        1700
 #define IDM_RA_FILES_TEST1              1701
 #define IDM_RA_FILES_TEST2              1702
-#define IDM_RA_FILES_CHECKFORUPDATE     1703
+#define IDM_RA_FILES_CHECKFORUPDATE     1703    // available
 #define IDM_RA_FILES_ACHIEVEMENTS       1704
 #define IDM_RA_FILES_MEMORYFINDER       1705
 #define IDM_RA_FILES_LOGIN              1706
@@ -147,6 +150,7 @@
 #define IDM_RA_TOGGLE_LB_NOTIFICATIONS  1718
 #define IDM_RA_TOGGLE_LB_COUNTER        1719
 #define IDM_RA_TOGGLE_LB_SCOREBOARD     1720
+#define IDM_RA_NON_HARDCORE_WARNING     1721
 #define IDM_RA_MENUEND                  1739
 #define IDC_RA_OPENPAGE                 1740
 
@@ -154,9 +158,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        119
+#define _APS_NEXT_RESOURCE_VALUE        120
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1030
+#define _APS_NEXT_CONTROL_VALUE         1039
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

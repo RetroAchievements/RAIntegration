@@ -2,20 +2,19 @@
 #define RA_DLG_MEMORY_H
 #pragma once
 
-#include "RA_CodeNotes.h" // RA_Defs.h
 #include "RA_MemManager.h"
 #include "services/SearchResults.h"
 
 class MemoryViewerControl
 {
 public:
-    static INT_PTR CALLBACK s_MemoryDrawProc(HWND, UINT, WPARAM, LPARAM);
+    static LRESULT CALLBACK s_MemoryDrawProc(HWND, UINT, WPARAM, LPARAM);
 
 public:
     static void RenderMemViewer(HWND hTarget);
 
-    static void createEditCaret(int w, int h);
-    static void destroyEditCaret();
+    static void createEditCaret(int w, int h) noexcept;
+    static void destroyEditCaret() noexcept;
     static void SetCaretPos();
     static void OnClick(POINT point);
 
@@ -24,13 +23,17 @@ public:
 
     static void setAddress(unsigned int nAddr);
     static void setWatchedAddress(unsigned int nAddr);
-    static unsigned int getWatchedAddress() { return m_nWatchedAddress; }
+    static unsigned int getWatchedAddress() noexcept { return m_nWatchedAddress; }
     static void moveAddress(int offset, int nibbleOff);
     static void editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int value);
     static void Invalidate();
 
-    static void SetDataSize(MemSize value) { m_nDataSize = value; Invalidate(); }
-    static MemSize GetDataSize() { return m_nDataSize; }
+    static void SetDataSize(MemSize value)
+    {
+        m_nDataSize = value;
+        Invalidate();
+    }
+    static MemSize GetDataSize() noexcept { return m_nDataSize; }
 
 public:
     static unsigned short m_nActiveMemBank;
@@ -69,51 +72,48 @@ struct SearchResult
 class Dlg_Memory
 {
 public:
-    Dlg_Memory() {}
+    void Init() noexcept;
+    void Shutdown() noexcept;
 
-public:
-    void Init();
-
-    void ClearLogOutput();
+    void ClearLogOutput() noexcept;
 
     static INT_PTR CALLBACK s_MemoryProc(HWND, UINT, WPARAM, LPARAM);
     INT_PTR MemoryProc(HWND, UINT, WPARAM, LPARAM);
 
-    void InstallHWND(HWND hWnd) { m_hWnd = hWnd; }
-    HWND GetHWND() const { return m_hWnd; }
+    void InstallHWND(HWND hWnd) noexcept { m_hWnd = hWnd; }
+    HWND GetHWND() const noexcept { return m_hWnd; }
 
     void OnLoad_NewRom();
 
     void OnWatchingMemChange();
 
-    void RepopulateMemNotesFromFile();
+    void RepopulateCodeNotes();
     void Invalidate();
+
+    void UpdateMemoryRegions();
 
     void SetWatchingAddress(unsigned int nAddr);
     void UpdateBits() const;
-    BOOL IsActive() const;
-
-    const CodeNotes& Notes() const { return m_CodeNotes; }
+    BOOL IsActive() const noexcept;
 
     void ClearBanks();
     void AddBank(size_t nBankID);
     void GenerateResizes(HWND hDlg);
 
 private:
-    bool GetSystemMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
-    bool GetGameMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
-
     bool GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
+    ra::ByteAddress m_nSystemRamStart{}, m_nSystemRamEnd{}, m_nGameRamStart{}, m_nGameRamEnd{};
 
-    void UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal, TCHAR(&buffer)[1024]);
+    static void UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal, std::wstring& sBuffer);
     bool CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal);
 
-    static CodeNotes m_CodeNotes;
     static HWND m_hWnd;
+
+    unsigned int m_nCodeNotesGameId = 0;
 
     unsigned int m_nStart = 0;
     unsigned int m_nEnd = 0;
-    MemSize m_nCompareSize;
+    MemSize m_nCompareSize = MemSize{};
 
     std::vector<SearchResult> m_SearchResults;
 };

@@ -26,7 +26,6 @@ const int SERVER_PING_FREQUENCY = 2 * 60; // seconds between server pings
 void SessionTracker::Initialize(const std::string& sUsername)
 {
     m_sUsername = ra::Widen(sUsername);
-    m_vGameStats.clear();
 
     LoadSessions();
     SortSessions();
@@ -34,6 +33,8 @@ void SessionTracker::Initialize(const std::string& sUsername)
 
 void SessionTracker::LoadSessions()
 {
+    m_vGameStats.clear();
+
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pStatsFile = pLocalStorage.ReadText(ra::services::StorageItemType::SessionStats, m_sUsername);
 
@@ -47,22 +48,22 @@ void SessionTracker::LoadSessions()
             if (nIndex == std::string::npos)
                 continue;
 
-            auto nGameId = strtoul(sLine.c_str(), nullptr, 10);
+            const auto nGameId = std::strtoul(sLine.c_str(), nullptr, 10);
 
             auto nIndex2 = sLine.find(':', ++nIndex);
             if (nIndex2 == std::string::npos)
                 continue;
 
-            auto nSessionStart = strtoul(&sLine[nIndex], nullptr, 10);
+            const auto nSessionStart = std::strtoul(&sLine.at(nIndex), nullptr, 10);
 
             nIndex = sLine.find(':', ++nIndex2);
             if (nIndex == std::string::npos)
                 continue;
+            const auto nSessionLength = std::strtoul(&sLine.at(nIndex2), nullptr, 10);
 
-            auto nSessionLength = strtoul(&sLine[nIndex2], nullptr, 10);
-
-            auto md5 = RAGenerateMD5(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex + 1);
-            if (sLine[nIndex + 1] == md5.front() && sLine[nIndex + 2] == md5.back())
+            std::string md5;
+            GSL_SUPPRESS_TYPE1 md5 = RAGenerateMD5(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex + 1);
+            if (sLine.at(nIndex + 1) == md5.front() && sLine.at(nIndex + 2) == md5.back())
                 AddSession(nGameId, nSessionStart, std::chrono::seconds(nSessionLength));
         }
 
@@ -109,17 +110,20 @@ void SessionTracker::BeginSession(unsigned int nGameId)
     m_tpSessionStart = pClock.UpTime();
     m_tSessionStart = std::chrono::system_clock::to_time_t(pClock.Now());
 
-    ra::api::StartSession::Request request;
-    request.GameId = nGameId;
-    request.CallAsync([](const ra::api::StartSession::Response&) {});
-
     auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
     pThreadPool.ScheduleAsync(std::chrono::seconds(30), [this, tSessionStart = m_tSessionStart]() { UpdateSession(tSessionStart); });
 
-    // make sure a persisted play entry exists for the game and is first in the list
-    AddSession(nGameId, m_tSessionStart, std::chrono::seconds(0));
-    if (m_vGameStats.begin()->GameId != nGameId)
-        SortSessions();
+    if (nGameId != 0)
+    {
+        ra::api::StartSession::Request request;
+        request.GameId = nGameId;
+        request.CallAsync([](const ra::api::StartSession::Response&) {});
+
+        // make sure a persisted play entry exists for the game and is first in the list
+        AddSession(nGameId, m_tSessionStart, std::chrono::seconds(0));
+        if (m_vGameStats.begin()->GameId != nGameId)
+            SortSessions();
+    }
 }
 
 void SessionTracker::EndSession()
@@ -159,7 +163,7 @@ void SessionTracker::UpdateSession(time_t tSessionStart)
     const auto tSessionDuration = std::chrono::duration_cast<std::chrono::seconds>(pClock.UpTime() - m_tpSessionStart);
 
     // ignore sessions less than one minute
-    if (tSessionDuration > std::chrono::seconds(60))
+    if (m_nCurrentGameId != 0 && tSessionDuration > std::chrono::seconds(60))
         WriteSessionStats(tSessionDuration);
 
     // schedule next ping
@@ -167,13 +171,13 @@ void SessionTracker::UpdateSession(time_t tSessionStart)
     pThreadPool.ScheduleAsync(std::chrono::seconds(SERVER_PING_FREQUENCY), [this, tSessionStart]() { UpdateSession(tSessionStart); });
 }
 
-long SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDuration) const
+std::streampos SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDuration) const
 {
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pStatsFile = pLocalStorage.AppendText(ra::services::StorageItemType::SessionStats, m_sUsername);
 
-    auto nSessionDuration = static_cast<unsigned int>(tSessionDuration.count());
-    auto sLine = ra::StringPrintf("%u:%ld:%u:", m_nCurrentGameId, static_cast<long>(m_tSessionStart), nSessionDuration);
+    auto nSessionDuration = tSessionDuration.count();
+    auto sLine = ra::StringPrintf("%u:%ll:%ll:", m_nCurrentGameId, m_tSessionStart, nSessionDuration);
     const auto sMD5 = RAGenerateMD5(sLine);
     sLine.push_back(sMD5.front());
     sLine.push_back(sMD5.back());
@@ -210,7 +214,7 @@ std::chrono::seconds SessionTracker::GetTotalPlaytime(unsigned int nGameId) cons
     return tPlaytime;
 }
 
-bool SessionTracker::IsInspectingMemory() const
+bool SessionTracker::IsInspectingMemory() const noexcept
 {
 #ifdef RA_UTEST
     return false;
@@ -219,14 +223,34 @@ bool SessionTracker::IsInspectingMemory() const
 #endif
 }
 
+static bool HasCoreAchievements(const ra::data::GameContext& pGameContext)
+{
+    bool bResult = false;
+    pGameContext.EnumerateAchievements([&bResult](const Achievement& pAchievement) noexcept
+    {
+        if (pAchievement.Category() == ra::etoi(AchievementSet::Type::Core))
+        {
+            bResult = true;
+            return false;
+        }
+
+        return true;
+    });
+
+    return bResult;
+}
+
 std::wstring SessionTracker::GetCurrentActivity() const
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
     if (IsInspectingMemory())
     {
-        if (!pGameContext.HasActiveAchievements())
+        if (!HasCoreAchievements(pGameContext))
             return L"Developing Achievements";
+
+        if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
+            return L"Testing Compatibility";
 
         if (_RA_HardcoreModeIsActive())
             return L"Inspecting Memory in Hardcore mode";
@@ -244,7 +268,7 @@ std::wstring SessionTracker::GetCurrentActivity() const
             return sRPResponse;
     }
 
-    if (pGameContext.HasActiveAchievements())
+    if (HasCoreAchievements(pGameContext))
         return L"Earning Achievements";
 
     return L"Playing " + pGameContext.GameTitle();

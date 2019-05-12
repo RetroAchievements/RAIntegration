@@ -25,10 +25,11 @@ public:
     class SessionTrackerHarness : public SessionTracker
     {
     public:
-        SessionTrackerHarness(const char* sUsername = "User") noexcept
+        GSL_SUPPRESS_F6 SessionTrackerHarness(const char* sUsername = "User") noexcept
             : m_sUsername(sUsername), m_sUsernameWide(ra::Widen(sUsername))
         {
         }
+
 
         ra::api::mocks::MockServer mockServer;
         ra::data::mocks::MockGameContext mockGameContext;
@@ -52,7 +53,7 @@ public:
             mockStorage.MockStoredData(StorageItemType::SessionStats, m_sUsernameWide, sContents);
         }
 
-        void MockInspectingMemory(bool bInspectingMemory)
+        void MockInspectingMemory(bool bInspectingMemory) noexcept 
         {
             m_bInspectingMemory = bInspectingMemory;
         }
@@ -63,7 +64,7 @@ public:
         }
 
     protected:
-        bool IsInspectingMemory() const override { return m_bInspectingMemory; }
+        bool IsInspectingMemory() const noexcept override { return m_bInspectingMemory; }
 
     private:
         bool m_bInspectingMemory{ false };
@@ -291,6 +292,47 @@ public:
         Assert::AreEqual(3, nPings);
     }
 
+    TEST_METHOD(TestPingUnknownGame)
+    {
+        SessionTrackerHarness tracker;
+
+        tracker.Initialize("User");
+        tracker.mockGameContext.SetGameId(0U);
+        tracker.mockGameContext.SetGameTitle(L"FileUnknown");
+
+        int nPings = 0;
+        tracker.mockServer.HandleRequest<ra::api::Ping>([&nPings](const ra::api::Ping::Request& request, _UNUSED ra::api::Ping::Response& /*response*/)
+        {
+            Assert::AreEqual(0U, request.GameId);
+            Assert::AreEqual(std::wstring(L"Playing FileUnknown"), request.CurrentActivity);
+            ++nPings;
+            return false;
+        });
+        tracker.mockServer.ExpectUncalled<ra::api::StartSession>();
+
+        // BeginSession should begin the session, but not send a start session
+        tracker.BeginSession(0U);
+        tracker.mockThreadPool.ExecuteNextTask(); // StartSession should not be queued
+        Assert::AreEqual(0, nPings);
+
+        // after 30 seconds, the callback will be called, and the first ping should occur
+        tracker.mockClock.AdvanceTime(std::chrono::seconds(30));
+        tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(30));
+        tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
+        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual(1, nPings);
+
+        // after two minutes, the callback will be called again, and the second ping should occur
+        tracker.mockClock.AdvanceTime(std::chrono::seconds(120));
+        tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(120));
+        tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
+        Assert::AreEqual(2, nPings);
+
+        // total playtime should still be tallied, but not written to the file
+        Assert::AreEqual(150, gsl::narrow<int>(tracker.GetTotalPlaytime(0U).count()));
+        Assert::AreEqual(std::string(""), tracker.GetStoredData());
+    }
+
     TEST_METHOD(TestCurrentActivityNoAchievements)
     {
         SessionTrackerHarness tracker;
@@ -301,13 +343,21 @@ public:
     TEST_METHOD(TestCurrentActivityNoRichPresence)
     {
         SessionTrackerHarness tracker;
-        tracker.mockGameContext.SetHasActiveAchievements(true);
+        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
         Assert::AreEqual(std::wstring(L"Earning Achievements"), tracker.GetActivity());
     }
 
     TEST_METHOD(TestCurrentActivityRichPresence)
     {
         SessionTrackerHarness tracker;
+        tracker.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
+        Assert::AreEqual(std::wstring(L"Level 10"), tracker.GetActivity());
+    }
+
+    TEST_METHOD(TestCurrentActivityRichPresenceCompatibilityMode)
+    {
+        SessionTrackerHarness tracker;
+        tracker.mockGameContext.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
         tracker.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
         Assert::AreEqual(std::wstring(L"Level 10"), tracker.GetActivity());
     }
@@ -331,16 +381,25 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.SetHasActiveAchievements(true);
+        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         Assert::AreEqual(std::wstring(L"Inspecting Memory in Hardcore mode"), tracker.GetActivity());
+    }
+
+    TEST_METHOD(TestCurrentActivityInspectingMemoryCompatibilityMode)
+    {
+        SessionTrackerHarness tracker;
+        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        tracker.mockGameContext.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
+        tracker.MockInspectingMemory(true);
+        Assert::AreEqual(std::wstring(L"Testing Compatibility"), tracker.GetActivity());
     }
 
     TEST_METHOD(TestCurrentActivityInspectingMemoryCoreAchievements)
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.SetHasActiveAchievements(true);
+        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         tracker.mockGameContext.SetActiveAchievementType(AchievementSet::Type::Core);
         Assert::AreEqual(std::wstring(L"Fixing Achievements"), tracker.GetActivity());
@@ -350,7 +409,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.SetHasActiveAchievements(true);
+        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         tracker.mockGameContext.SetActiveAchievementType(AchievementSet::Type::Unofficial);
         Assert::AreEqual(std::wstring(L"Developing Achievements"), tracker.GetActivity());
@@ -360,7 +419,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.SetHasActiveAchievements(true);
+        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         tracker.mockGameContext.SetActiveAchievementType(AchievementSet::Type::Local);
         Assert::AreEqual(std::wstring(L"Developing Achievements"), tracker.GetActivity());

@@ -39,10 +39,10 @@ public:
         }
 
         using namespace ra::bitwise_ops;
-        auto nWeight = ((nStyle & FontStyles::Bold) == FontStyles::Bold) ? FW_BOLD : FW_NORMAL;
-        auto nItalic = ((nStyle & FontStyles::Italic) == FontStyles::Italic) ? TRUE : FALSE;
-        auto nUnderline = ((nStyle & FontStyles::Underline) == FontStyles::Underline) ? TRUE : FALSE;
-        auto nStrikeOut = ((nStyle & FontStyles::Strikethrough) == FontStyles::Strikethrough) ? TRUE : FALSE;
+        const auto nWeight = ((nStyle & FontStyles::Bold) == FontStyles::Bold) ? FW_BOLD : FW_NORMAL;
+        const auto nItalic = ((nStyle & FontStyles::Italic) == FontStyles::Italic) ? TRUE : FALSE;
+        const auto nUnderline = ((nStyle & FontStyles::Underline) == FontStyles::Underline) ? TRUE : FALSE;
+        const auto nStrikeOut = ((nStyle & FontStyles::Strikethrough) == FontStyles::Strikethrough) ? TRUE : FALSE;
 
         HFONT hFont = CreateFontA(nFontSize, 0, 0, 0, nWeight, nItalic, nUnderline, nStrikeOut,
             DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH, sFont.c_str());

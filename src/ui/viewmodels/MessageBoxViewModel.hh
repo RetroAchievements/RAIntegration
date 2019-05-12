@@ -23,9 +23,9 @@ public:
     MessageBoxViewModel& operator=(const MessageBoxViewModel&) = delete;
 
     MessageBoxViewModel(MessageBoxViewModel&&) 
-		noexcept(std::is_nothrow_move_constructible_v<WindowViewModelBase>) = default;
+        noexcept(std::is_nothrow_move_constructible_v<WindowViewModelBase>) = default;
 
-	MessageBoxViewModel& operator=(MessageBoxViewModel&&) noexcept = default;
+    MessageBoxViewModel& operator=(MessageBoxViewModel&&) noexcept = default;
 
     enum class Buttons
     {
@@ -139,10 +139,33 @@ public:
     /// <summary>
     /// Shows a warning message.
     /// </summary>
+    static void ShowWarningMessage(std::wstring&& sMessage)
+    {
+        MessageBoxViewModel viewModel(std::move(sMessage));
+        viewModel.SetIcon(Icon::Warning);
+        viewModel.ShowModal();
+    }
+
+    /// <summary>
+    /// Shows a warning message.
+    /// </summary>
     static void ShowWarningMessage(const std::wstring& sHeader, const std::wstring& sMessage)
     {
         MessageBoxViewModel viewModel(sMessage);
         viewModel.SetHeader(sHeader);
+        viewModel.SetIcon(Icon::Warning);
+        viewModel.ShowModal();
+    }
+
+    /// <summary>
+    /// Shows a warning message.
+    /// </summary>
+    static void ShowWarningMessage(std::wstring&& sHeader, std::wstring&& sMessage)
+    {
+        const auto _sMessage = std::move(sMessage);
+        MessageBoxViewModel viewModel(_sMessage);
+        const auto _sHeader = std::move(sHeader);
+        viewModel.SetHeader(_sHeader);
         viewModel.SetIcon(Icon::Warning);
         viewModel.ShowModal();
     }
@@ -167,10 +190,36 @@ public:
         viewModel.SetIcon(Icon::Error);
         viewModel.ShowModal();
     }
+
+    /// <summary>
+    /// Shows an error message.
+    /// </summary>
+    static void ShowErrorMessage(const ra::ui::WindowViewModelBase& vmParentWindow, const std::wstring& sMessage)
+    {
+        MessageBoxViewModel viewModel(sMessage);
+        viewModel.SetIcon(Icon::Error);
+        viewModel.ShowModal(vmParentWindow);
+    }
+
+    /// <summary>
+    /// Shows an error message with a header message.
+    /// </summary>
+    static void ShowErrorMessage(const ra::ui::WindowViewModelBase& vmParentWindow, const std::wstring& sHeader, const std::wstring& sMessage)
+    {
+        MessageBoxViewModel viewModel(sMessage);
+        viewModel.SetHeader(sHeader);
+        viewModel.SetIcon(Icon::Error);
+        viewModel.ShowModal(vmParentWindow);
+    }
 };
 
 } // namespace viewmodels
 } // namespace ui
 } // namespace ra
+
+#ifndef RA_UTEST
+// temporary helper function for showing MessageBox parented to a non-viewmodel window
+ra::ui::DialogResult ShowMessageBox(ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox, HWND hParentWnd);
+#endif
 
 #endif !RA_UI_MESSAGEBOX_VIEW_MODEL_H

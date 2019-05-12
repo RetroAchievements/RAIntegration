@@ -7,47 +7,35 @@
 
 #include "Exports.hh"
 
-//	Non-exposed:
+// Non-exposed:
 extern std::wstring g_sHomeDir;
 
 extern HINSTANCE g_hRAKeysDLL;
 extern HMODULE g_hThisDLLInst;
 extern HWND g_RAMainWnd;
-extern EmulatorID g_EmulatorID;
-extern ConsoleID g_ConsoleID;
-extern const char* g_sClientVersion;
-extern const char* g_sClientName;
 extern bool g_bRAMTamperedWith;
 
-//	Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
-extern char* _MallocAndBulkReadFileToBuffer(_In_z_ const wchar_t* sFilename, _Out_ long& nFileSizeOut);
+// Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
+extern char* _MallocAndBulkReadFileToBuffer(_In_z_ const wchar_t* sFilename, _Out_ long& nFileSizeOut) noexcept;
 
-//  Read a file to a std::string. Returns false on error.
-_Success_(return)
-_NODISCARD bool _ReadBufferFromFile(_Out_ std::string& buffer, _In_ const wchar_t* const __restrict sFile);
+// Read a file to a std::string. Returns false on error.
+_Success_(return ) _NODISCARD bool _ReadBufferFromFile(_Out_ std::string& buffer, _In_ const wchar_t* restrict sFile);
 
-//	Read file until reaching the end of the file, or the specified char.
-extern BOOL _ReadTil(const char nChar, char buffer[], unsigned int nSize, DWORD* pCharsRead, FILE* pFile);
+// Read file until reaching the end of the file, or the specified char.
+extern BOOL _ReadTil(const char nChar, char* restrict buffer, unsigned int nSize,
+                     gsl::not_null<DWORD* restrict> pCharsReadOut, gsl::not_null<FILE* restrict> pFile);
 
-//	Read a string til the end of the string, or nChar. bTerminate==TRUE replaces that char with \0.
-extern char* _ReadStringTil(char nChar, char*& pOffsetInOut, BOOL bTerminate);
-extern void  _ReadStringTil(std::string& sValue, char nChar, const char*& pOffsetInOut);
+GSL_SUPPRESS_F23 char* _ReadStringTil(char nChar, char* restrict& pOffsetInOut, BOOL bTerminate);
+GSL_SUPPRESS_F23 void _ReadStringTil(std::string& sValue, char nChar, const char* restrict& pOffsetInOut);
 
-//	Write out the buffer to a file
+// Write out the buffer to a file
 extern void _WriteBufferToFile(const std::wstring& sFileName, const std::string& sString);
 
-//	Fetch various interim txt/data files
+// Fetch various interim txt/data files
 extern void _FetchGameHashLibraryFromWeb();
-extern void _FetchGameTitlesFromWeb();
 extern void _FetchMyProgressFromWeb();
 
-
-extern std::string _TimeStampToString(time_t nTime);
-
-_NODISCARD std::string GetFolderFromDialog() noexcept;
-
-void DownloadAndActivateAchievementData(unsigned int nGameID);
-BOOL CanCausePause();
+_NODISCARD std::string GetFolderFromDialog();
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);
 void RememberWindowPosition(HWND hDlg, const char* sDlgKey);

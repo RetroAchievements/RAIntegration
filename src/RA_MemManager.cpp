@@ -4,10 +4,7 @@
 
 MemManager g_MemManager;
 
-MemManager::~MemManager() noexcept
-{
-    ClearMemoryBanks();
-}
+MemManager::~MemManager() noexcept { ClearMemoryBanks(); }
 
 void MemManager::ClearMemoryBanks() noexcept
 {
@@ -25,29 +22,27 @@ void MemManager::AddMemoryBank(size_t nBankID, _RAMByteReadFn* pReader, _RAMByte
 
     m_nTotalBankSize += nBankSize;
 
-    m_Banks[nBankID].BankSize = nBankSize;
-    m_Banks[nBankID].Reader = pReader;
-    m_Banks[nBankID].Writer = pWriter;
+    m_Banks.try_emplace(nBankID, pReader, pWriter, nBankSize);
 }
 
-void MemManager::ChangeActiveMemBank(_UNUSED unsigned short)
+void MemManager::ChangeActiveMemBank(_UNUSED unsigned short) noexcept
 {
     ASSERT(!"Not Implemented!");
     return;
 
-    //if( m_Banks.find( nMemBank ) == m_Banks.end() )
+    // if( m_Banks.find( nMemBank ) == m_Banks.end() )
     //{
     //	ASSERT( !"Cannot find memory bank!" );
     //	return;
     //}
     //
-    //if( m_Candidates != nullptr )
+    // if( m_Candidates != nullptr )
     //{
     //	delete[] m_Candidates;
     //	m_Candidates = nullptr;
     //}
     //
-    //Reset( nMemBank, m_nComparisonSizeMode );
+    // Reset( nMemBank, m_nComparisonSizeMode );
 }
 
 std::vector<size_t> MemManager::GetBankIDs() const
@@ -64,7 +59,7 @@ std::vector<size_t> MemManager::GetBankIDs() const
 
 unsigned int MemManager::ActiveBankRAMRead(ra::ByteAddress nOffs, MemSize size) const
 {
-    unsigned char buffer[4];
+    unsigned char buffer[4]{};
     switch (size)
     {
         case MemSize::Bit_0:
@@ -101,34 +96,33 @@ unsigned int MemManager::ActiveBankRAMRead(ra::ByteAddress nOffs, MemSize size) 
 
 unsigned char MemManager::ActiveBankRAMByteRead(ra::ByteAddress nOffs) const
 {
-    const BankData* bank = nullptr;
-
-    int bankID = 0;
-    const int numBanks = m_Banks.size();
+    auto bankID = 0U;
+    const auto numBanks = m_Banks.size();
     while (bankID < numBanks)
     {
-        bank = &m_Banks.at(bankID);
-        if (nOffs < bank->BankSize)
-            return bank->Reader(nOffs);
+        const auto& bank = m_Banks.at(bankID);
 
-        nOffs -= bank->BankSize;
+        if (nOffs < bank.BankSize)
+            return bank.Reader(nOffs);
+        nOffs -= bank.BankSize;
         bankID++;
     }
 
-    return 0;
+    return unsigned char();
 }
 
-void MemManager::ActiveBankRAMRead(unsigned char buffer[], ra::ByteAddress nOffs, size_t count) const
+void MemManager::ActiveBankRAMRead(unsigned char* restrict buffer, ra::ByteAddress nOffs, size_t count) const
 {
-    const BankData* bank = nullptr;
+    Expects(buffer != nullptr);
+    GSL_SUPPRESS_F23 const BankData* bank = nullptr;
 
-    int bankID = 0;
-    const int numBanks = m_Banks.size();
+    auto bankID = 0U;
+    const auto numBanks = m_Banks.size();
     do
     {
         if (bankID == numBanks)
         {
-            memset(buffer, 0, count);
+            buffer = {};
             return;
         }
 
@@ -140,7 +134,7 @@ void MemManager::ActiveBankRAMRead(unsigned char buffer[], ra::ByteAddress nOffs
         bankID++;
     } while (true);
 
-    _RAMByteReadFn* reader = bank->Reader;
+    gsl::not_null<_RAMByteReadFn*> reader{gsl::make_not_null(bank->Reader)};
 
     while (nOffs + count >= bank->BankSize)
     {
@@ -160,7 +154,7 @@ void MemManager::ActiveBankRAMRead(unsigned char buffer[], ra::ByteAddress nOffs
         }
 
         bank = &m_Banks.at(bankID);
-        reader = bank->Reader;
+        reader = gsl::make_not_null(bank->Reader);
     }
 
     while (count-- > 0)
@@ -194,6 +188,6 @@ extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBy
         case 4:
             return g_MemManager.ActiveBankRAMRead(nAddress, MemSize::ThirtyTwoBit);
         default:
-            return 0;
+            return 0U;
     }
 }

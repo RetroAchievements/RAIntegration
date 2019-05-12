@@ -15,9 +15,9 @@ GDISurface::GDISurface(HDC hDC, const RECT& rcDEST, ResourceRepository& pResourc
     SelectObject(hDC, GetStockObject(DC_BRUSH));
 }
 
-void GDISurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor)
+void GDISurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept
 {
-    assert(nColor.Channel.A == 0xFF);
+    assert(nColor.Channel.A == 0xFF || nColor.Channel.A == 0x00);
     SetDCBrushColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
     SetDCPenColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
     Rectangle(m_hDC, nX, nY, nX + nWidth, nY + nHeight);
@@ -45,7 +45,7 @@ void GDISurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::w
     if (nColor != m_nCurrentTextColor)
     {
         m_nCurrentTextColor = nColor;
-        SetTextColor(m_hDC, nColor.ARGB);
+        SetTextColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
     }
 
     SetBkMode(m_hDC, TRANSPARENT);
@@ -70,7 +70,6 @@ void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageR
     auto hBitmap = ImageRepository::GetHBitmap(pImage);
     if (!hBitmap)
         return;
-
     HDC hdcMem = CreateCompatibleDC(m_hDC);
     if (!hdcMem)
         return;
@@ -80,6 +79,26 @@ void GDISurface::DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageR
     BITMAP bm;
     if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
         BitBlt(m_hDC, nX, nY, nWidth, nHeight, hdcMem, 0, 0, SRCCOPY);
+
+    SelectBitmap(hdcMem, hOldBitmap);
+
+    DeleteDC(hdcMem);
+}
+
+void GDISurface::DrawImageStretched(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage)
+{
+    auto hBitmap = ImageRepository::GetHBitmap(pImage);
+    if (!hBitmap)
+        return;
+    HDC hdcMem = CreateCompatibleDC(m_hDC);
+    if (!hdcMem)
+        return;
+
+    auto hOldBitmap = SelectBitmap(hdcMem, hBitmap);
+
+    BITMAP bm;
+    if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
+        StretchBlt(m_hDC, nX, nY, nWidth, nHeight, hdcMem, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
 
     SelectBitmap(hdcMem, hOldBitmap);
 
@@ -98,9 +117,12 @@ void GDISurface::DrawSurface(int nX, int nY, const ISurface& pSurface)
     auto* pGDISurface = dynamic_cast<const GDISurface*>(&pSurface);
     assert(pGDISurface != nullptr);
 
-    ::BitBlt(m_hDC, nX, nY,
-        static_cast<int>(pSurface.GetWidth()), static_cast<int>(pSurface.GetHeight()),
-        pGDISurface->m_hDC, 0, 0, SRCCOPY);        
+    if (pGDISurface != nullptr)
+    {
+        ::BitBlt(m_hDC, nX, nY,
+            static_cast<int>(pSurface.GetWidth()), static_cast<int>(pSurface.GetHeight()),
+            pGDISurface->m_hDC, 0, 0, SRCCOPY);
+    }
 }
 
 } // namespace gdi

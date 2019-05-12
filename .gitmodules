@@ -7,3 +7,6 @@
 [submodule "lua"]
 	path = lua
 	url = https://github.com/lua/lua.git
+[submodule "GSL"]
+	path = GSL
+	url = https://github.com/Microsoft/GSL.git

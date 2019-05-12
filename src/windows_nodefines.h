@@ -18,6 +18,7 @@
     #define NOOPENFILE
     #define NORASTEROPS
     #define NOSHOWWINDOW
+    #define NOSYSMETRICS
     #define NOTEXTMETRIC
     #define NOUSER
     #define NOVIRTUALKEYCODES
@@ -29,7 +30,6 @@
 /* Windows stuff we don't need */
 #define WIN32_LEAN_AND_MEAN 1
 #define NOGDICAPMASKS       1
-#define NOSYSMETRICS        1
 #define NOICONS             1
 #define NOKEYSTATES         1
 #define NOSYSCOMMANDS       1

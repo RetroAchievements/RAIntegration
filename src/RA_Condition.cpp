@@ -96,13 +96,8 @@ void CompVariable::SerializeAppend(std::string& buffer) const
     }
 
     buffer.append("0x");
-
     buffer.append(ComparisonSizeToPrefix(m_nVarSize));
-
-    if (m_nVal >= 0x10000)
-        buffer.append(ra::ByteAddressToString(m_nVal));
-    else
-        buffer.append(ra::ByteAddressToString(m_nVal, 4));
+    buffer.append(ra::ByteAddressToString(m_nVal));
 }
 
 void ConditionGroup::RemoveAt(size_t nID)
@@ -127,11 +122,11 @@ void ConditionGroup::SerializeAppend(std::string& buffer) const
     if (m_Conditions.empty())
         return;
 
-    m_Conditions[0].SerializeAppend(buffer);
-    for (size_t i = 1; i < m_Conditions.size(); ++i)
+    m_Conditions.front().SerializeAppend(buffer);
+    for (auto it = std::next(m_Conditions.begin()); it != m_Conditions.end(); ++it)
     {
         buffer.append(1, '_');
-        m_Conditions[i].SerializeAppend(buffer);
+        it->SerializeAppend(buffer);
     }
 }
 
@@ -148,14 +143,10 @@ void ConditionSet::Serialize(std::string& buffer) const
     // estimate 16 bytes per condition: "R:0xH0001=12" is only 12, so we give ourselves a little leeway
     buffer.reserve(conditions * 16);
 
-    m_vConditionGroups[0].SerializeAppend(buffer);
-    for (size_t i = 1; i < m_vConditionGroups.size(); ++i)
+    m_vConditionGroups.front().SerializeAppend(buffer);
+    for (auto it = std::next(m_vConditionGroups.begin()); it != m_vConditionGroups.end(); ++it)
     {
-        // ignore empty groups when serializing
-        if (m_vConditionGroups[i].Count() == 0)
-            continue;
-
         buffer.append(1, 'S');
-        m_vConditionGroups[i].SerializeAppend(buffer);
+        it->SerializeAppend(buffer);
     }
 }

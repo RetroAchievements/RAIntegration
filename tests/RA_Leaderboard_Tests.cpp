@@ -1,6 +1,10 @@
 #include "RA_Leaderboard.h"
 #include "RA_UnitTestHelpers.h"
 
+#include "RA_MemManager.h"
+
+#include "mocks\MockDesktop.hh"
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
@@ -10,65 +14,74 @@ namespace tests {
 class LeaderboardHarness : public RA_Leaderboard
 {
 public:
-    LeaderboardHarness() : RA_Leaderboard(1) {}
+    LeaderboardHarness() noexcept : RA_Leaderboard(1) {}
 
-    bool IsActive() const { return m_bActive; }
-    bool IsScoreSubmitted() const { return m_bScoreSubmitted; }
-    unsigned int SubmittedScore() const { return m_nSubmittedScore; }
+    ra::ui::mocks::MockDesktop mockDesktop;
 
-public:
-    void Reset() override
+    bool IsScoreSubmitted() const noexcept { return m_bScoreSubmitted; }
+    unsigned int SubmittedScore() const noexcept { return m_nSubmittedScore; }
+    unsigned int GetCurrentValue() const noexcept { return m_nCurrentValue; }
+
+    void Reset() noexcept
     {
-        RA_Leaderboard::Reset();
+        rc_reset_lboard(static_cast<rc_lboard_t*>(m_pLeaderboard));
 
         m_bActive = false;
         m_bScoreSubmitted = false;
         m_nSubmittedScore = 0;
     }
 
-    void Start() override
+    void Test() noexcept
     {
-        m_bActive = true;
-    }
+        if (!m_pLeaderboard)
+            return;
 
-    void Cancel() override
-    {
-        m_bActive = false;
-    }
+        unsigned int nValue;
+        const int nResult = rc_evaluate_lboard(static_cast<rc_lboard_t*>(m_pLeaderboard), &nValue, rc_peek_callback, nullptr, nullptr);
+        switch (nResult)
+        {
+            case RC_LBOARD_STARTED:
+                m_bActive = true;
+                m_nCurrentValue = nValue;
+                break;
 
-    void Submit(unsigned int nScore) override
-    {
-        m_bActive = false;
-        m_bScoreSubmitted = true;
-        m_nSubmittedScore = nScore;
+            case RC_LBOARD_CANCELED:
+                m_bActive = false;
+                break;
+
+            case RC_LBOARD_TRIGGERED:
+                m_bActive = false;
+                m_bScoreSubmitted = true;
+                m_nSubmittedScore = nValue;
+                break;
+        }
     }
 
 private:
     unsigned int m_nSubmittedScore = 0;
+    unsigned int m_nCurrentValue = 0;
     bool m_bScoreSubmitted = false;
-    bool m_bActive = false;
 };
 
 TEST_CLASS(RA_Leaderboard_Tests)
 {
-	void AssertValue(const char* sSerialized, unsigned int nExpected)
-	{
-		// NOTE: requires value "1" in $00
-		std::string sString = "STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:";
-		sString += sSerialized;
+    void AssertValue(const char* sSerialized, unsigned int nExpected)
+    {
+        // NOTE: requires value "1" in $00
+        auto sString = StringPrintf("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:%s", sSerialized);
 
-		LeaderboardHarness lb;
-		lb.ParseFromString(sString.c_str(), "VALUE");
-		lb.Test();
+        LeaderboardHarness lb;
+        lb.ParseFromString(sString.c_str(), "VALUE");
+        lb.Test();
 
-		Assert::AreEqual(nExpected, lb.GetCurrentValue(), ra::Widen(sSerialized).c_str());
-	}
+        Assert::AreEqual(nExpected, lb.GetCurrentValue(), ra::Widen(sSerialized).c_str());
+    }
 
 public:
     TEST_METHOD(TestSimpleLeaderboard)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         LeaderboardHarness lb;
         lb.ParseFromString("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", "VALUE");
@@ -79,37 +92,37 @@ public:
         Assert::IsFalse(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
-        memory[0] = 3; // submit value, but not active
+        memory.at(0) = 3; // submit value, but not active
         lb.Test();
         Assert::IsFalse(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
-        memory[0] = 2; // cancel value, but not active
+        memory.at(0) = 2; // cancel value, but not active
         lb.Test();
         Assert::IsFalse(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
-        memory[0] = 1; // start value
+        memory.at(0) = 1; // start value
         lb.Test();
         Assert::IsTrue(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
-        memory[0] = 2; // cancel value
+        memory.at(0) = 2; // cancel value
         lb.Test();
         Assert::IsFalse(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
-        memory[0] = 3; // submit value, but not active
+        memory.at(0) = 3; // submit value, but not active
         lb.Test();
         Assert::IsFalse(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
-        memory[0] = 1; // start value
+        memory.at(0) = 1; // start value
         lb.Test();
         Assert::IsTrue(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
-        memory[0] = 3; // submit value
+        memory.at(0) = 3; // submit value
         lb.Test();
         Assert::IsFalse(lb.IsActive());
         Assert::IsTrue(lb.IsScoreSubmitted());
@@ -118,14 +131,14 @@ public:
 
     TEST_METHOD(TestSimpleLeaderboardFormatted)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         LeaderboardHarness lb;
         lb.ParseFromString("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", "SCORE");
         lb.Test();
 
-        memory[0] = 1; // start value
+        memory.at(0) = 1; // start value
         lb.Test();
         Assert::IsTrue(lb.IsActive());
 
@@ -134,8 +147,8 @@ public:
 
     TEST_METHOD(TestStartAndCancelSameFrame)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         LeaderboardHarness lb;
         lb.ParseFromString("STA:0xH00=0::CAN:0xH01=18::SUB:0xH00=3::VAL:0xH02", "VALUE");
@@ -144,27 +157,27 @@ public:
         Assert::IsFalse(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
-        memory[1] = 0x13; // disables cancel
+        memory.at(1) = 0x13; // disables cancel
         lb.Test();
         Assert::IsTrue(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
-        memory[1] = 0x12; // enables cancel
+        memory.at(1) = 0x12; // enables cancel
         lb.Test();
         Assert::IsFalse(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
-        memory[1] = 0x13; // disables cancel, but start condition still true, so it shouldn't restart
+        memory.at(1) = 0x13; // disables cancel, but start condition still true, so it shouldn't restart
         lb.Test();
         Assert::IsFalse(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
-        memory[0] = 0x01; // disables start; no effect this frame, but next frame can restart
+        memory.at(0) = 0x01; // disables start; no effect this frame, but next frame can restart
         lb.Test();
         Assert::IsFalse(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
 
-        memory[0] = 0x00; // enables start
+        memory.at(0) = 0x00; // enables start
         lb.Test();
         Assert::IsTrue(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
@@ -172,8 +185,8 @@ public:
 
     TEST_METHOD(TestStartAndSubmitSameFrame)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         LeaderboardHarness lb;
         lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", "VALUE");
@@ -183,23 +196,23 @@ public:
         Assert::IsTrue(lb.IsScoreSubmitted());
         Assert::AreEqual(0x34U, lb.SubmittedScore());
 
-        memory[1] = 0; // disable submit, value should not be resubmitted, 
+        memory.at(1) = 0; // disable submit, value should not be resubmitted, 
         lb.Test();     // start is still true, but leaderboard should not reactivate
         Assert::IsFalse(lb.IsActive());
 
-        memory[0] = 1; // disable start
+        memory.at(0) = 1; // disable start
         lb.Test();
         Assert::IsFalse(lb.IsActive());
 
-        memory[0] = 0; // reenable start, leaderboard should reactivate
+        memory.at(0) = 0; // reenable start, leaderboard should reactivate
         lb.Test();
         Assert::IsTrue(lb.IsActive());
     }
 
     TEST_METHOD(TestProgress)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         // if PRO: mapping is available, use that for GetCurrentValueProgress
         LeaderboardHarness lb;
@@ -218,8 +231,8 @@ public:
 
     TEST_METHOD(TestStartAndCondition)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         LeaderboardHarness lb;
         lb.ParseFromString("STA:0xH00=0_0xH01=0::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", "VALUE");
@@ -227,15 +240,15 @@ public:
         lb.Test();
         Assert::IsFalse(lb.IsActive());
 
-        memory[1] = 0; // second part of start condition is true
+        memory.at(1) = 0; // second part of start condition is true
         lb.Test();
         Assert::IsTrue(lb.IsActive());
     }
 
     TEST_METHOD(TestStartOrCondition)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         LeaderboardHarness lb;
         lb.ParseFromString("STA:S0xH00=1S0xH01=1::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", "VALUE");
@@ -243,16 +256,16 @@ public:
         lb.Test();
         Assert::IsFalse(lb.IsActive());
 
-        memory[1] = 1; // second part of start condition is true
+        memory.at(1) = 1; // second part of start condition is true
         lb.Test();
         Assert::IsTrue(lb.IsActive());
 
-        memory[1] = 0;
+        memory.at(1) = 0;
         lb.Reset();
         lb.Test();
         Assert::IsFalse(lb.IsActive());
 
-        memory[0] = 1; // first part of start condition is true
+        memory.at(0) = 1; // first part of start condition is true
         lb.Test();
         Assert::IsTrue(lb.IsActive());
     }
@@ -260,8 +273,8 @@ public:
     // NOTE: This test is invalid as long as the backwards compatibility code that treats underscores as ORs is present
     //TEST_METHOD(TestCancelAndCondition)
     //{
-    //    unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-    //    InitializeMemory(memory, 5);
+    //    std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+    //    InitializeMemory(memory);
 
     //    LeaderboardHarness lb;
     //    lb.ParseFromString("STA:0xH00=0::CAN:0xH01=18_0xH02=18::SUB:0xH00=3::VAL:0xH02", MemValueFormat::Value);
@@ -269,7 +282,7 @@ public:
     //    lb.Test();
     //    Assert::IsTrue(lb.IsActive());
 
-    //    memory[2] = 0x12; // second part of cancel condition is true
+    //    memory.at(2) = 0x12; // second part of cancel condition is true
     //    lb.Test();
     //    Assert::IsFalse(lb.IsActive());
     //    Assert::IsFalse(lb.IsScoreSubmitted());
@@ -277,8 +290,8 @@ public:
 
     TEST_METHOD(TestCancelOrCondition)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         LeaderboardHarness lb;
         lb.ParseFromString("STA:0xH00=0::CAN:S0xH01=12S0xH02=12::SUB:0xH00=3::VAL:0xH02", "VALUE");
@@ -286,24 +299,24 @@ public:
         lb.Test();
         Assert::IsTrue(lb.IsActive());
 
-        memory[2] = 12; // second part of cancel condition is true
+        memory.at(2) = 12; // second part of cancel condition is true
         lb.Test();
         Assert::IsFalse(lb.IsActive());
 
-        memory[2] = 0; // second part of cancel condition is false
+        memory.at(2) = 0; // second part of cancel condition is false
         lb.Reset();
         lb.Test();
         Assert::IsTrue(lb.IsActive());
 
-        memory[1] = 12; // first part of cancel condition is true
+        memory.at(1) = 12; // first part of cancel condition is true
         lb.Test();
         Assert::IsFalse(lb.IsActive());
     }
 
     TEST_METHOD(TestSubmitAndCondition)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         LeaderboardHarness lb;
         lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:0xH01=18_0xH03=18::VAL:0xH02", "VALUE");
@@ -311,7 +324,7 @@ public:
         lb.Test();
         Assert::IsTrue(lb.IsActive());
 
-        memory[3] = 18; 
+        memory.at(3) = 18; 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
         Assert::IsTrue(lb.IsScoreSubmitted());
@@ -319,8 +332,8 @@ public:
 
     TEST_METHOD(TestSubmitOrCondition)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         LeaderboardHarness lb;
         lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:S0xH01=12S0xH03=12::VAL:0xH02", "VALUE");
@@ -328,17 +341,17 @@ public:
         lb.Test();
         Assert::IsTrue(lb.IsActive());
 
-        memory[3] = 12; // second part of submit condition is true
+        memory.at(3) = 12; // second part of submit condition is true
         lb.Test();
         Assert::IsFalse(lb.IsActive());
         Assert::IsTrue(lb.IsScoreSubmitted());
 
-        memory[3] = 0;
+        memory.at(3) = 0;
         lb.Reset();
         lb.Test();
         Assert::IsTrue(lb.IsActive());
 
-        memory[1] = 12; // first part of submit condition is true
+        memory.at(1) = 12; // first part of submit condition is true
         lb.Test();
         Assert::IsFalse(lb.IsActive());
         Assert::IsTrue(lb.IsScoreSubmitted());
@@ -346,14 +359,27 @@ public:
 
     TEST_METHOD(TestUnparsableStringWillNotStart)
     {
-        unsigned char memory[] = { 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory, 5);
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
         LeaderboardHarness lb;
+        lb.SetTitle("Title");
+        bool bMessageShown = false;
+        lb.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageShown](const ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bMessageShown = true;
+            Assert::AreEqual(std::wstring(L"Unable to activate leaderboard: Title"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Parse error -6"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
+            return ra::ui::DialogResult::OK;
+        });
+
         lb.ParseFromString("STA:0xH00=0::CAN:0x0H00=1::SUB:0xH01=18::GARBAGE", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
+
+        Assert::IsTrue(bMessageShown);
     }
 
     TEST_METHOD(TestSubmitRankInfo)
@@ -401,46 +427,46 @@ public:
         Assert::AreEqual(50, lb.GetRankInfo(4).m_nScore);
     }
 
-	TEST_METHOD(TestValue)
-	{
-		unsigned char memory[] = { 0x01, 0x12, 0x34, 0xAB, 0x56 };
-		InitializeMemory(memory, 5);
+    TEST_METHOD(TestValue)
+    {
+        std::array<unsigned char, 5> memory{0x01, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
 
-		// simple accessors
-		AssertValue("0xH0002", 0x34U);
-		AssertValue("0x000002", 0xAB34U);
-		AssertValue("0xL02", 4U);
-		AssertValue("0xU2", 3U);
+        // simple accessors
+        AssertValue("0xH0002", 0x34U);
+        AssertValue("0x000002", 0xAB34U);
+        AssertValue("0xL02", 4U);
+        AssertValue("0xU2", 3U);
 
-		// BCD
-		AssertValue("B0xH02", 34U);
+        // BCD
+        AssertValue("B0xH02", 34U);
 
-		// static values
-		AssertValue("V1234", 1234U);
-		AssertValue("V+1", 1U);
-		AssertValue("V-1", 0xFFFFFFFFU);
+        // static values
+        AssertValue("V1234", 1234U);
+        AssertValue("V+1", 1U);
+        AssertValue("V-1", 0xFFFFFFFFU);
 
-		// multiplication
-		AssertValue("0xH02*1", 0x34U);
-		AssertValue("0xH02*3", 156U);
-		AssertValue("0xH02*0.5", 26U);
-		AssertValue("0xH02*-1", 0xFFFFFFCCU);
-		AssertValue("0xH02*0xH01", 936U);
-		AssertValue("0xH02*~0xT02", 0x34U);                // multiply by inverse bit - T02 = 0, inverse = 1
-		AssertValue("0xH02*~0xQ02", 0U);                   // multiply by inverse bit - Q02 = 1, inverse = 0
-		AssertValue("0xH02*~0xH03", 0x34U * 0x54U);        // multiply by inverse byte - H03 = 0xAB, inverse = 0x54
+        // multiplication
+        AssertValue("0xH02*1", 0x34U);
+        AssertValue("0xH02*3", 156U);
+        AssertValue("0xH02*0.5", 26U);
+        AssertValue("0xH02*-1", 0xFFFFFFCCU);
+        AssertValue("0xH02*0xH01", 936U);
+        AssertValue("0xH02*~0xT02", 0x34U);                // multiply by inverse bit - T02 = 0, inverse = 1
+        AssertValue("0xH02*~0xQ02", 0U);                   // multiply by inverse bit - Q02 = 1, inverse = 0
+        AssertValue("0xH02*~0xH03", 0x34U * 0x54U);        // multiply by inverse byte - H03 = 0xAB, inverse = 0x54
 
-		// addition
-		AssertValue("0xH02_0xH03", 0x34U + 0xABU);
-		AssertValue("0xH02_V10", 0x34U + 10U);
-		AssertValue("0xH02_V-10", 0x34U - 10U);
-		AssertValue("0xH02*100_0xH03*0.5", 0x34U * 100U + 0xABU / 2U);
+                                                           // addition
+        AssertValue("0xH02_0xH03", 0x34U + 0xABU);
+        AssertValue("0xH02_V10", 0x34U + 10U);
+        AssertValue("0xH02_V-10", 0x34U - 10U);
+        AssertValue("0xH02*100_0xH03*0.5", 0x34U * 100U + 0xABU / 2U);
 
-		// maximum
-		AssertValue("0xH02$0xH03", 0xABU);
-		AssertValue("0xH02*4$0xH03", 0x34U * 4);
-		AssertValue("0xH0001_0xH0004*3$0xH0002*0xL0003", 0x34U * 0xBU); // 0x12 + 0x56 * 3 <> 0x34 * 0xB (0x114 <> 0x23C)
-	}
+        // maximum
+        AssertValue("0xH02$0xH03", 0xABU);
+        AssertValue("0xH02*4$0xH03", 0x34U * 4);
+        AssertValue("0xH0001_0xH0004*3$0xH0002*0xL0003", 0x34U * 0xBU); // 0x12 + 0x56 * 3 <> 0x34 * 0xB (0x114 <> 0x23C)
+    }
 };
 
 } // namespace tests

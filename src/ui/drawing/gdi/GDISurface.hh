@@ -24,19 +24,22 @@ public:
 
     ~GDISurface() noexcept = default;
 
-    size_t GetWidth() const override { return m_nWidth; }
-    size_t GetHeight() const override { return m_nHeight; }
+    size_t GetWidth() const noexcept override { return m_nWidth; }
+    size_t GetHeight() const noexcept override { return m_nHeight; }
 
-    void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) override;
+    void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
 
     int LoadFont(const std::string& sFont, int nFontSize, FontStyles nStyle) override;
     ra::ui::Size MeasureText(int nFont, const std::wstring& sText) const override;
     void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
 
     void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
+    void DrawImageStretched(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
     void DrawSurface(int nX, int nY, const ISurface& pSurface) override;
 
-    void SetOpacity(_UNUSED double) override { assert("This surface does not support opacity"); }
+    GSL_SUPPRESS_F6 void SetOpacity(_UNUSED double) override { assert("This surface does not support opacity"); }
+
+    HDC GetHDC() const noexcept { return m_hDC; }
 
 protected:
     void SwitchFont(int nFont) const;

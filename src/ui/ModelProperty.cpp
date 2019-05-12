@@ -1,5 +1,7 @@
 #include "ModelProperty.hh"
 
+#include "ra_fwd.h"
+
 namespace ra {
 namespace ui {
 
@@ -10,14 +12,15 @@ namespace ui {
 int ModelPropertyBase::s_nNextKey = 1;
 std::vector<ModelPropertyBase*> ModelPropertyBase::s_vProperties;
 
-_Use_decl_annotations_
-ModelPropertyBase::ModelPropertyBase(const char* const sTypeName, const char* const sPropertyName) noexcept :
-    m_sTypeName{ sTypeName },
-    m_sPropertyName{ sPropertyName }
+_Use_decl_annotations_ ModelPropertyBase::ModelPropertyBase(const char* const sTypeName,
+                                                            const char* const sPropertyName) :
+    m_sTypeName{sTypeName},
+    m_sPropertyName{sPropertyName}
 {
     // ASSERT: ModelProperties are static variables and constructed when the DLL is loaded.
     // We cannot reasonably use a mutex because it cannot be locked during static initialization in WinXP.
-    // ASSERT: The vector is implicitly sorted as new items are allocated higher keys and added to the end of the vector.
+    // ASSERT: The vector is implicitly sorted as new items are allocated higher keys and added to the end of the
+    // vector.
     m_nKey = s_nNextKey++;
     s_vProperties.push_back(this);
 }
@@ -32,8 +35,11 @@ ModelPropertyBase::~ModelPropertyBase() noexcept
 const ModelPropertyBase* ModelPropertyBase::GetPropertyForKey(int nKey)
 {
     ModelPropertyBase search(nKey);
-    auto iter = std::lower_bound(s_vProperties.begin(), s_vProperties.end(), &search, [](const ModelPropertyBase* left, const ModelPropertyBase* right)
+    auto iter = std::lower_bound(s_vProperties.begin(), s_vProperties.end(), &search,
+                                 [](const ModelPropertyBase* restrict left,
+                                    const ModelPropertyBase* restrict right)
     {
+        Expects((left != nullptr) && (right != nullptr));
         return left->GetKey() < right->GetKey();
     });
 

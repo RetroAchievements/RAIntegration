@@ -17,17 +17,23 @@ namespace impl {
 class FileLogger : public ra::services::ILogger
 {
 public:
-    explicit FileLogger(const ra::services::IFileSystem& pFileSystem) noexcept
+    explicit FileLogger(const ra::services::IFileSystem& pFileSystem)
     {
-        std::wstring sLogFilePath = pFileSystem.BaseDirectory() + L"RACache\\RALog.txt";
+        const std::wstring sLogFilePath = ra::BuildWString(pFileSystem.BaseDirectory().c_str(), L"RACache\\RALog.txt");
 
         // if the file is over 1MB, rename it and start a new one
         const int64_t nLogSize = pFileSystem.GetFileSize(sLogFilePath);
         if (nLogSize > 1024 * 1024)
         {
-            std::wstring sOldLogFilePath = pFileSystem.BaseDirectory() + L"RACache\\RALog-old.txt";
+            const std::wstring sOldLogFilePath = ra::BuildWString(pFileSystem.BaseDirectory().c_str(), L"RACache\\RALog-old.txt");
             pFileSystem.DeleteFile(sOldLogFilePath);
             pFileSystem.MoveFile(sLogFilePath, sOldLogFilePath);
+        }
+        else if (nLogSize < 0)
+        {
+            const std::wstring sCacheDirectory = ra::BuildWString(pFileSystem.BaseDirectory().c_str(), L"RACache");
+            if (!pFileSystem.DirectoryExists(sCacheDirectory))
+                pFileSystem.CreateDirectory(sCacheDirectory);
         }
 
         m_pWriter = pFileSystem.AppendTextFile(sLogFilePath);
@@ -35,7 +41,7 @@ public:
             m_pWriter->WriteLine();
     }
 
-    bool IsEnabled([[maybe_unused]] LogLevel level) const override { return true; }
+    bool IsEnabled([[maybe_unused]] LogLevel level) const noexcept override { return true; }
 
     void LogMessage(LogLevel level, const std::string& sMessage) const override
     {
@@ -43,12 +49,12 @@ public:
             return;
 
         // write a timestamp
-        time_t tTime;
-        unsigned int tMilliseconds;
+        time_t tTime{};
+        unsigned int tMilliseconds{};
         if (ServiceLocator::Exists<IClock>())
         {
             const auto tNow = ServiceLocator::Get<IClock>().Now();
-            tMilliseconds = static_cast<unsigned int>(
+            tMilliseconds = gsl::narrow_cast<unsigned int>(
                 std::chrono::time_point_cast<std::chrono::milliseconds>(tNow).time_since_epoch().count() % 1000);
             tTime = std::chrono::system_clock::to_time_t(tNow);
         }
@@ -87,7 +93,7 @@ public:
     }
 
 private:
-    static void LogMessage(ra::services::TextWriter& pWriter, char* sTimestamp, LogLevel level,
+    static void LogMessage(ra::services::TextWriter& pWriter, const char* const sTimestamp, LogLevel level,
                            const std::string& sMessage)
     {
         pWriter.Write(sTimestamp);

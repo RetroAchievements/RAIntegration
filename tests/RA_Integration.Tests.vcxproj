@@ -112,6 +112,7 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>libc.lib, libcmt.lib, libcd.lib, libcmtd.lib, msvcrtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -152,7 +153,6 @@
       <UseFullPaths>true</UseFullPaths>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DisableSpecificWarnings>4201</DisableSpecificWarnings>
-      <AdditionalOptions>/w45045 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -184,8 +184,11 @@
     <ClCompile Include="..\src\api\impl\ConnectedServer.cpp" />
     <ClCompile Include="..\src\api\impl\DisconnectedServer.cpp" />
     <ClCompile Include="..\src\api\impl\OfflineServer.cpp" />
+    <ClCompile Include="..\src\data\ConsoleContext.cpp" />
+    <ClCompile Include="..\src\data\EmulatorContext.cpp" />
     <ClCompile Include="..\src\data\SessionTracker.cpp" />
     <ClCompile Include="..\src\data\GameContext.cpp" />
+    <ClCompile Include="..\src\data\UserContext.cpp" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">Create</PrecompiledHeader>
@@ -195,14 +198,32 @@
     <ClCompile Include="..\src\RA_Achievement.cpp" />
     <ClCompile Include="..\src\RA_Json.cpp" />
     <ClCompile Include="..\src\RA_md5factory.cpp" />
-    <ClCompile Include="..\src\RA_RichPresence.cpp" />
     <ClCompile Include="..\src\RA_StringUtils.cpp" />
+    <ClCompile Include="..\src\services\AchievementRuntime.cpp" />
+    <ClCompile Include="..\src\services\GameIdentifier.cpp" />
     <ClCompile Include="..\src\services\Http.cpp" />
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
+    <ClCompile Include="..\src\ui\OverlayTheme.cpp" />
+    <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayListPageViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\PopupViewModelBase.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\ScoreboardViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\ScoreTrackerViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="api\ConnectedServer_Tests.cpp" />
     <ClCompile Include="api\DisconnectedServer_Tests.cpp" />
+    <ClCompile Include="data\EmulatorContext_Tests.cpp" />
+    <ClCompile Include="data\GameContext_Tests.cpp" />
     <ClCompile Include="data\SessionTracker_Tests.cpp" />
     <ClCompile Include="RA_RichPresence_Tests.cpp" />
     <ClInclude Include="..\src\RA_Achievement.h" />
@@ -215,9 +236,12 @@
     <ClCompile Include="..\src\ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
     <ClCompile Include="..\src\ui\WindowViewModelBase.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />
+    <ClCompile Include="services\AchievementRuntime_Tests.cpp" />
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />
+    <ClCompile Include="services\GameIdentifier_Tests.cpp" />
     <ClCompile Include="services\Http_Tests.cpp" />
     <ClCompile Include="ui\ModelProperty_Tests.cpp" />
+    <ClCompile Include="ui\OverlayTheme_Tests.cpp" />
     <ClCompile Include="ui\ViewModelBase_Tests.cpp" />
     <ClCompile Include="RA_StringUtils_Tests.cpp" />
     <ClCompile Include="services\FileLogger_Tests.cpp" />
@@ -229,22 +253,39 @@
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
     <ClCompile Include="..\src\RA_MemManager.cpp" />
+    <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\LoginViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayListPageViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayManager_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\UnknownGameViewModel_Tests.cpp" />
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
     <ClInclude Include="..\src\pch.h" />
+    <ClInclude Include="mocks\MockAudioSystem.hh" />
+    <ClInclude Include="mocks\MockClipboard.hh" />
     <ClInclude Include="mocks\MockClock.hh" />
     <ClInclude Include="mocks\MockConfiguration.hh" />
+    <ClInclude Include="mocks\MockConsoleContext.hh" />
     <ClInclude Include="mocks\MockDesktop.hh" />
+    <ClInclude Include="mocks\MockEmulatorContext.hh" />
     <ClInclude Include="mocks\MockFileSystem.hh" />
     <ClInclude Include="mocks\MockGameContext.hh" />
     <ClInclude Include="mocks\MockHttpRequester.hh" />
+    <ClInclude Include="mocks\MockImageRepository.hh" />
     <ClInclude Include="mocks\MockLocalStorage.hh" />
+    <ClInclude Include="mocks\MockOverlayManager.hh" />
+    <ClInclude Include="mocks\MockOverlayTheme.hh" />
     <ClInclude Include="mocks\MockServer.hh" />
     <ClInclude Include="mocks\MockSessionTracker.hh" />
+    <ClInclude Include="mocks\MockSurface.hh" />
     <ClInclude Include="mocks\MockThreadPool.hh" />
     <ClInclude Include="mocks\MockUserContext.hh" />
+    <ClInclude Include="mocks\MockWindowManager.hh" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="RA_Condition_Tests.cpp" />
     <ClCompile Include="RA_Leaderboard_Tests.cpp" />

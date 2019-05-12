@@ -2,6 +2,8 @@
 #define RA_SERVICES_THREADPOOL_HH
 #pragma once
 
+#include "ra_fwd.h"
+
 #include "services\IClock.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
@@ -14,10 +16,10 @@ class ThreadPool : public IThreadPool
 {
 public:
     // TODO: std::condition_variable can throw std::system_error (a.k.a fatal error).
-    //       We could just delete the compiler defaulted constructor and handle the exception in an invariant (param constructor)
+    //       We could just delete the compiler defaulted constructor and handle the exception in an invariant (param
+    //       constructor)
     // Info: https://en.cppreference.com/w/cpp/thread/condition_variable/condition_variable
-    ThreadPool() 
-        noexcept(std::is_nothrow_default_constructible_v<std::condition_variable>) = default;
+    ThreadPool() noexcept(std::is_nothrow_default_constructible_v<std::condition_variable>) = default;
 
     ~ThreadPool() noexcept;
     ThreadPool(const ThreadPool&) noexcept = delete;
@@ -25,9 +27,9 @@ public:
     ThreadPool(ThreadPool&&) noexcept = delete;
     ThreadPool& operator=(ThreadPool&&) noexcept = delete;
 
-    void Initialize(size_t nThreads) noexcept;
+    GSL_SUPPRESS_F6 void Initialize(size_t nThreads) noexcept;
 
-    void RunAsync(std::function<void()>&& f) noexcept override
+    void RunAsync(std::function<void()>&& f) override
     {
         if (m_bShutdownInitiated)
             return;
@@ -41,8 +43,8 @@ public:
 
         m_cvWork.notify_one();
     }
-    
-    void ScheduleAsync(std::chrono::milliseconds nDelay, std::function<void()>&& f) noexcept override
+
+    void ScheduleAsync(std::chrono::milliseconds nDelay, std::function<void()>&& f) override
     {
         if (m_bShutdownInitiated)
             return;
@@ -52,7 +54,7 @@ public:
         const auto tWhen = ServiceLocator::Get<IClock>().UpTime() + nDelay;
 
         bool bStartScheduler = false;
-        bool bNewPriority = false;
+        bool bNewPriority    = false;
         {
             std::unique_lock<std::mutex> lock(m_oMutex);
 
@@ -66,13 +68,15 @@ public:
             }
             else if (tWhen < iter->tWhen)
             {
-                // sooner than the next scheduled task, we'll need to wake the timed events thread to reset the wait time
+                // sooner than the next scheduled task, we'll need to wake the timed events thread to reset the wait
+                // time
                 bNewPriority = true;
             }
             else
             {
                 // after the next scheduled task, find where to insert it
-                do {
+                do
+                {
                     ++iter;
                 } while (iter != m_vDelayedTasks.end() && iter->tWhen < tWhen);
             }
@@ -93,24 +97,23 @@ public:
         }
     }
 
-    void Shutdown(bool bWait) noexcept override;
+    GSL_SUPPRESS_F6 void Shutdown(bool bWait) noexcept override;
 
-    bool IsShutdownRequested() const noexcept override
-    {
-        return m_bShutdownInitiated;
-    }
+    bool IsShutdownRequested() const noexcept override { return m_bShutdownInitiated; }
 
 private:
-    void RunThread() noexcept;
-    void ProcessDelayedTasks() noexcept;
+    void RunThread();
+    void ProcessDelayedTasks();
 
     std::vector<std::thread> m_vThreads;
-    size_t m_nThreads{ 0U };
-    bool m_bShutdownInitiated{ false };
+    size_t m_nThreads{0U};
+    bool m_bShutdownInitiated{false};
 
     struct DelayedTask
     {
-        DelayedTask(std::chrono::steady_clock::time_point tWhen, std::function<void()> fTask) : tWhen(tWhen), fTask(fTask) {};
+        DelayedTask(std::chrono::steady_clock::time_point tWhen, std::function<void()> fTask) :
+            tWhen(tWhen),
+            fTask(fTask){};
 
         std::chrono::steady_clock::time_point tWhen;
         std::function<void()> fTask;

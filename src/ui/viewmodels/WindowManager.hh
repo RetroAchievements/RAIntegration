@@ -1,6 +1,7 @@
 #ifndef RA_UI_WINDOW_MANAGER
 #define RA_UI_WINDOW_MANAGER
 
+#include "EmulatorViewModel.hh"
 #include "RichPresenceMonitorViewModel.hh"
 
 namespace ra {
@@ -9,6 +10,7 @@ namespace viewmodels {
 
 class WindowManager {
 public:
+    EmulatorViewModel Emulator;
     RichPresenceMonitorViewModel RichPresenceMonitor;
 };
 

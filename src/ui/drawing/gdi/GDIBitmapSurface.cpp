@@ -7,18 +7,41 @@ namespace ui {
 namespace drawing {
 namespace gdi {
 
-void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor)
+void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept
 {
-    assert(nWidth != 0);
-    assert(nHeight != 0);
-
+    // clip to surface
     auto nStride = ra::to_signed(GetWidth());
+    if (nX >= nStride || nY >= ra::to_signed(GetHeight()))
+        return;
+
+    if (nX < 0)
+    {
+        nWidth += nX;
+        nX = 0;
+    }
+    if (nWidth > nStride - nX)
+        nWidth = nStride - nX;
+    if (nWidth <= 0)
+        return;
+
+    if (nY < 0)
+    {
+        nHeight += nY;
+        nY = 0;
+    }
+    const auto nMaxHeight = ra::to_signed(GetHeight()) - nY;
+    if (nHeight > nMaxHeight)
+        nHeight = nMaxHeight;
+    if (nHeight <= 0)
+        return;
+
+    // fill rectangle
     auto nFirstScanline = (GetHeight() - nY - nHeight); // bitmap memory starts with the bottom scanline
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
     if (nStride == nWidth)
     {
         // doing full scanlines, just bulk fill
-        auto pEnd = pBits + nWidth * nHeight;
+        const std::uint32_t* pEnd = pBits + nWidth * nHeight;
         do
         {
             *pBits++ = nColor.ARGB;
@@ -29,7 +52,7 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
         // partial scanlines, have to fill in strips
         while (nHeight--)
         {
-            auto pEnd = pBits + nWidth;
+            const std::uint32_t* pEnd = pBits + nWidth;
             do
             {
                 *pBits++ = nColor.ARGB;
@@ -40,32 +63,9 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
     }
 }
 
-static inline void BlendPixel(UINT32* nTarget, UINT32 nBlend)
+static constexpr uint8_t BlendPixel(std::uint8_t nTarget, std::uint8_t nBlend, std::uint8_t nAlpha)
 {
-    const auto alpha = nBlend >> 24;
-
-    // fully transparent - do nothing
-    if (alpha == 0)
-        return;
-
-    // fully opaque, use the blend value
-    if (alpha == 255)
-    {
-        *nTarget = nBlend;
-        return;
-    }
-
-    // blend each of the RGB values based on the blend pixel's alpha value
-    // do not modify the target pixel's alpha value.
-    UINT8* pTarget = reinterpret_cast<UINT8*>(nTarget);
-    UINT8* pBlend = reinterpret_cast<UINT8*>(&nBlend);
-
-    *pTarget++ = static_cast<UINT8>(
-        (static_cast<UINT32>(*pBlend++) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
-    *pTarget++ = static_cast<UINT8>(
-        (static_cast<UINT32>(*pBlend++) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
-    *pTarget = static_cast<UINT8>(
-        (static_cast<UINT32>(*pBlend) * alpha + static_cast<UINT32>(*pTarget) * (256 - alpha)) / 256);
+    return gsl::narrow_cast<std::uint8_t>(((nBlend * nAlpha) + (nTarget * (256 - nAlpha))) / 256);
 }
 
 void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
@@ -73,14 +73,28 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     if (sText.empty())
         return;
 
+    // clip to surface
+    auto nStride = ra::to_signed(GetWidth());
+    if (nX >= nStride || nY >= ra::to_signed(GetHeight()))
+        return;
+    assert(nX >= 0); // TODO: support negative X starting position
+
+    // measure the text to draw
     SwitchFont(nFont);
+
+    SIZE szText;
+    GetTextExtentPoint32W(m_hDC, sText.c_str(), sText.length(), &szText);
+
+    // clip to surface
+    if (szText.cx > nStride - nX)
+        szText.cx = nStride - nX;
+    const auto nMaxHeight = ra::to_signed(GetHeight()) - nY;
+    if (szText.cy > nMaxHeight)
+        szText.cy = nMaxHeight;
 
     // writing directly to the surface results in 0 for all alpha values - i.e. transparent text.
     // instead, draw white text on black background to get grayscale anti-alias values which will
     // be used as the alpha channel for applying the text to the surface.
-    SIZE szText;
-    GetTextExtentPoint32W(m_hDC, sText.c_str(), sText.length(), &szText);
-
     BITMAPINFO bmi{};
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bmi.bmiHeader.biWidth = szText.cx;
@@ -92,29 +106,53 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
 
     HDC hMemDC = CreateCompatibleDC(m_hDC);
 
-    UINT32* pTextBits{};
-    HBITMAP hBitmap = CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pTextBits), nullptr, 0);
+    std::uint32_t* pTextBits{};
+    HBITMAP hBitmap{};
+    GSL_SUPPRESS_TYPE1 hBitmap =
+        CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pTextBits), nullptr, 0);
+
+    assert(hBitmap != nullptr);
+    assert(pTextBits != nullptr);
     SelectBitmap(hMemDC, hBitmap);
 
     SelectFont(hMemDC, m_pResourceRepository.GetHFont(nFont));
-    SetTextColor(hMemDC, 0xFFFFFFFF);
+    SetTextColor(hMemDC, RGB(255, 255, 255));
+    SetBkMode(hMemDC, TRANSPARENT);
     RECT rcRect{0, 0, szText.cx, szText.cy};
     TextOutW(hMemDC, 0, 0, sText.c_str(), sText.length());
 
     // copy the greyscale text to the forground using the grey value as the alpha for antialiasing
-    auto nStride = GetWidth();
     auto nFirstScanline = (GetHeight() - nY - szText.cy); // bitmap memory starts with the bottom scanline
+    assert(ra::to_signed(nFirstScanline) >= 0);
+    assert(m_pBits != nullptr);
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
 
+    // clip to surface
     auto nLines = szText.cy;
+    if (nY < 0)
+        nLines += nY;
+
+    // copy bits
     while (nLines--)
     {
-        auto pEnd = pBits + szText.cx;
+        const std::uint32_t* pEnd = pBits + szText.cx;
         do
         {
-            UINT8 nAlpha = 0xFF - ((*pTextBits++) & 0xFF);
-            UINT32 pColor = (nColor.ARGB & 0x00FFFFFF) | ((nAlpha * nColor.Channel.A / 255) << 24);
-            BlendPixel(pBits, pColor);
+            const ra::ui::Color nTextColor(*pTextBits++);
+            if (nTextColor.Channel.R == 255)
+            {
+                *pBits = nColor.ARGB;
+            }
+            else if (nTextColor.Channel.R != 0)
+            {
+                const uint8_t nAlpha = nTextColor.Channel.R;
+                ra::ui::Color nImageColor(*pBits);
+                nImageColor.Channel.R = BlendPixel(nImageColor.Channel.R, nColor.Channel.R, nAlpha);
+                nImageColor.Channel.G = BlendPixel(nImageColor.Channel.G, nColor.Channel.G, nAlpha);
+                nImageColor.Channel.B = BlendPixel(nImageColor.Channel.B, nColor.Channel.B, nAlpha);
+                *pBits = nImageColor.ARGB;
+            }
+
             ++pBits;
         } while (pBits < pEnd);
 
@@ -125,59 +163,78 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     DeleteDC(hMemDC);
 }
 
-void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
+#pragma warning(push)
+#pragma warning(disable : 5045)
+
+void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
 {
-    int nWidth = static_cast<int>(GetWidth());
-    int nHeight = static_cast<int>(GetHeight());
+    const auto nWidth = to_signed(GetWidth());
+    const auto nHeight = to_signed(GetHeight());
 
     // copy a portion of the target surface into a buffer
-    HDC hMemDC = CreateCompatibleDC(hTargetDC);
-
-    BITMAPINFO bmi{};
-    bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    bmi.bmiHeader.biWidth = nWidth;
-    bmi.bmiHeader.biHeight = nHeight;
-    bmi.bmiHeader.biPlanes = 1;
-    bmi.bmiHeader.biBitCount = 32;
-    bmi.bmiHeader.biCompression = BI_RGB;
-    bmi.bmiHeader.biSizeImage = nWidth * nHeight * 4;
-
-    UINT32* pBits;
-    HBITMAP hBitmap = CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pBits), nullptr, 0);
-    SelectBitmap(hMemDC, hBitmap);
-
-    BitBlt(hMemDC, 0, 0, nWidth, nHeight, hTargetDC, nX, nY, SRCCOPY);
+    ::BitBlt(m_pBlendBuffer.m_hMemDC, 0, 0, nWidth, nHeight, hTargetDC, nX, nY, SRCCOPY);
 
     // merge the current surface onto the buffer - they'll both be the same size, so bulk process it
-    const UINT32* pEnd = pBits + nWidth * nHeight;
-    UINT32* pSrcBits = m_pBits;
-    do
+    std::uint8_t* pBits;
+    GSL_SUPPRESS_TYPE1 pBits = reinterpret_cast<std::uint8_t*>(m_pBlendBuffer.m_pBits);
+    assert(pBits != nullptr);
+    std::uint8_t* pSrcBits;
+    GSL_SUPPRESS_TYPE1 pSrcBits = reinterpret_cast<std::uint8_t*>(m_pBits);
+    assert(pSrcBits != nullptr);
+
+    const std::uint8_t* pEnd = pSrcBits + (nWidth * nHeight * 4);
+    while (pSrcBits < pEnd)
     {
-        BlendPixel(pBits, *pSrcBits++);
-    } while (++pBits < pEnd);
+        const auto nAlpha = pSrcBits[3];
+        if (nAlpha == 0)
+        {
+            // ignore fully transparent pixels
+        }
+        else if (nAlpha == 0xFF)
+        {
+            // copy fully opaque pixels
+            pBits[0] = pSrcBits[0];
+            pBits[1] = pSrcBits[1];
+            pBits[2] = pSrcBits[2];
+        }
+        else
+        {
+            // merge partially transparent pixels
+            pBits[0] = BlendPixel(pBits[0], pSrcBits[0], nAlpha);
+            pBits[1] = BlendPixel(pBits[1], pSrcBits[1], nAlpha);
+            pBits[2] = BlendPixel(pBits[2], pSrcBits[2], nAlpha);
+        }
+
+        pBits += 4;
+        pSrcBits += 4;
+    }
 
     // copy the buffer back onto the target surface
-    ::BitBlt(hTargetDC, nX, nY, nWidth, nHeight, hMemDC, 0, 0, SRCCOPY);
-
-    DeleteBitmap(hBitmap);
-    DeleteDC(hMemDC);
+    ::BitBlt(hTargetDC, nX, nY, nWidth, nHeight, m_pBlendBuffer.m_hMemDC, 0, 0, SRCCOPY);
 }
+
+#pragma warning(pop)
 
 void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)
 {
     assert(fAlpha >= 0.0 && fAlpha <= 1.0);
-    const auto nAlpha = static_cast<UINT8>(255 * fAlpha);
-    assert(nAlpha > 0.0); // setting opacity to 0 is irreversable - caller should just not draw it
+    const auto nAlpha = static_cast<std::uint8_t>(255 * fAlpha);
+    Expects(nAlpha > 0.0); // setting opacity to 0 is irreversible - caller should just not draw it
 
-    const UINT8* pEnd = reinterpret_cast<UINT8*>(m_pBits + GetWidth() * GetHeight());
-    UINT8* pBits = reinterpret_cast<UINT8*>(m_pBits) + 3;
+    const std::uint8_t* pEnd{};
+    GSL_SUPPRESS_TYPE1 pEnd = reinterpret_cast<const std::uint8_t*>(m_pBits + GetWidth() * GetHeight());
+
+    std::uint8_t* pBits{};
+    GSL_SUPPRESS_TYPE1 pBits = reinterpret_cast<std::uint8_t*>(m_pBits) + 3;
+
+    Expects(pBits != nullptr);
     do
     {
         // only update the alpha for non-transparent pixels
         if (*pBits)
             *pBits = nAlpha;
-
         pBits += 4;
+        Ensures(pBits != nullptr);
     } while (pBits < pEnd);
 }
 

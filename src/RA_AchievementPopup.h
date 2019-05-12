@@ -8,44 +8,41 @@
 
 #include "RA_Interface.h"
 
-//	Graphic to display an obtained achievement
-enum PopupMessageType
+// Graphic to display an obtained achievement
+enum class PopupMessageType : std::size_t
 {
-    PopupLogin,
-    PopupInfo,
-    PopupAchievementUnlocked,
-    PopupAchievementError,
-    PopupLeaderboardInfo,
-    PopupLeaderboardCancel,
-    PopupMessage,
-
-    NumMessageTypes
+    Login,
+    Info,
+    AchievementUnlocked,
+    AchievementError,
+    LeaderboardInfo,
+    LeaderboardCancel,
+    Message,
 };
 
 class MessagePopup
 {
 public:
-    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType, 
-        ra::ui::ImageType nImageType, const std::string& sImageName ) :
+    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType,
+                 ra::ui::ImageType nImageType, const std::string& sImageName) :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
         m_hMessageImage(nImageType, sImageName)
-    {
-    }
+    {}
 
-    MessagePopup(const std::string& sTitle, const std::string& sSubtitle, PopupMessageType nMsgType = PopupInfo) :
+    MessagePopup(const std::string& sTitle, const std::string& sSubtitle,
+                 PopupMessageType nMsgType = PopupMessageType::Info) :
         m_sMessageTitle(sTitle),
         m_sMessageSubtitle(sSubtitle),
         m_nMessageType(nMsgType),
         m_hMessageImage(ra::ui::ImageType::None, "")
-    {
-    }
+    {}
 
-    const std::string& Title() const { return m_sMessageTitle; }
-    const std::string& Subtitle() const { return m_sMessageSubtitle; }
-    PopupMessageType Type() const { return m_nMessageType; }
-    const ra::ui::ImageReference& Image() const { return m_hMessageImage; }
+    const std::string& Title() const noexcept { return m_sMessageTitle; }
+    const std::string& Subtitle() const noexcept { return m_sMessageSubtitle; }
+    PopupMessageType Type() const noexcept { return m_nMessageType; }
+    const ra::ui::ImageReference& Image() const noexcept { return m_hMessageImage; }
 
     const ra::ui::drawing::ISurface& GetRendered();
 
@@ -60,22 +57,20 @@ private:
 class AchievementPopup
 {
 public:
-    AchievementPopup();
-
-    void Update(_UNUSED ControllerInput, float fDelta, _UNUSED bool, bool bPaused);
-    void Render(_In_ HDC hDC, _In_ const RECT& rcDest);
+    void Update(float fDelta);
+    void Render(ra::ui::drawing::ISurface& pSurface);
 
     void AddMessage(MessagePopup&& msg);
-    float GetYOffsetPct() const;
+    float GetYOffsetPct() const noexcept;
 
-    bool MessagesPresent() const { return(m_vMessages.size() > 0); }
+    GSL_SUPPRESS_F6 bool MessagesPresent() const noexcept { return (!m_vMessages.empty()); }
 
-    void Clear();
+    void Clear() noexcept;
     void PlayAudio();
 
 private:
     std::queue<MessagePopup> m_vMessages;
-    float m_fTimer;
+    float m_fTimer{};
 };
 
 #endif // !RA_ACHIEVEMENTPOPUP_H

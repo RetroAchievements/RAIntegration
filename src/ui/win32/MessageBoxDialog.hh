@@ -16,9 +16,11 @@ public:
     public:
         Presenter() noexcept;
 
-        bool IsSupported(const ra::ui::WindowViewModelBase& viewModel) override;
+        bool IsSupported(const ra::ui::WindowViewModelBase& viewModel) noexcept override;
         void ShowWindow(ra::ui::WindowViewModelBase& viewModel) override;
-        void ShowModal(ra::ui::WindowViewModelBase& viewModel) override;
+        void ShowModal(ra::ui::WindowViewModelBase& viewModel, HWND hParentWnd) override;
+
+        static void DoShowModal(ra::ui::WindowViewModelBase& viewModel, HWND hParentWnd);
     };
 };
 

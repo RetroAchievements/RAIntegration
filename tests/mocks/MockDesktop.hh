@@ -32,15 +32,32 @@ public:
         return Handle(vmViewModel);
     }
 
-    bool WasDialogShown() { return m_bDialogShown; }
+    ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel, const WindowViewModelBase&) const override
+    {
+        return ShowModal(vmViewModel);
+    }
 
-    void GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const override
+    bool WasDialogShown() noexcept { return m_bDialogShown; }
+
+    void GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const noexcept override
     {
         oUpperLeftCorner = { 0, 0 };
         oSize = { 1920, 1080 };
     }
 
-    void Shutdown() override {}
+    ra::ui::Size GetClientSize(const WindowViewModelBase&) const noexcept override
+    {
+        return { 800, 600 };
+    }
+
+    void OpenUrl(const std::string& sUrl) const override
+    {
+        m_sLastOpenedUrl = sUrl;
+    }
+
+    const std::string& LastOpenedUrl() const noexcept { return m_sLastOpenedUrl; }
+
+    void Shutdown() noexcept override {}
 
     template<typename T>
     void ExpectWindow(std::function<ra::ui::DialogResult(T&)>&& fnHandler)
@@ -73,6 +90,7 @@ private:
     ra::services::ServiceLocator::ServiceOverride<IDesktop> m_Override;
     std::vector<DialogHandler> m_vHandlers;
     mutable bool m_bDialogShown = false;
+    mutable std::string m_sLastOpenedUrl;
 };
 
 } // namespace mocks

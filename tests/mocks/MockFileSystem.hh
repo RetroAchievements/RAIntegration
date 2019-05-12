@@ -14,12 +14,12 @@ namespace mocks {
 class MockFileSystem : public IFileSystem
 {
 public:
-    MockFileSystem() noexcept 
+    GSL_SUPPRESS_F6 MockFileSystem() noexcept 
         : m_Override(this)
     {
     }
 
-    const std::wstring& BaseDirectory() const override { return m_sBaseDirectory; }
+    const std::wstring& BaseDirectory() const noexcept override { return m_sBaseDirectory; }
     void SetBaseDirectory(const std::wstring& sBaseDirectory)
     {
         m_sBaseDirectory = sBaseDirectory;
@@ -130,13 +130,13 @@ public:
             return false;
 
         hNode.key() = sNewPath;
-        m_mFileContents.insert(std::move(hNode));
+        (void)m_mFileContents.insert(std::move(hNode));
 
         auto hNode2 = m_mFileSizes.extract(sOldPath);
         if (!hNode2.empty())
         {
             hNode2.key() = sNewPath;
-            m_mFileSizes.insert(std::move(hNode2));
+            (void)m_mFileSizes.insert(std::move(hNode2));
         }
 
         return true;

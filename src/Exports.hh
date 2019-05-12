@@ -68,9 +68,6 @@ extern "C" {
     // Use in special cases where the emulator contains more than one console ID.
     API void CCONV _RA_SetConsoleID(unsigned int nConsoleID);
 
-    // Deal with any HTTP results that come along. Call per-cycle from main thread.
-    API int CCONV _RA_HandleHTTPResults();
-
     // Update the title of the app
     API void CCONV _RA_UpdateAppTitle(const char* sMessage = nullptr);
 

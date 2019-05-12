@@ -101,6 +101,9 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
 API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* /*sClientVer*/)
 {
     InitCommon(hMainHWND, nEmulatorID);
+
+    ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().DisableLogin();
+
     return TRUE;
 }
 
@@ -286,7 +289,7 @@ API void CCONV _RA_ClearMemoryBanks()
 //	}
 //}
 
-API int CCONV _RA_HandleHTTPResults()
+int _RA_HandleHTTPResults_deprecated()
 {
     WaitForSingleObject(RAWeb::Mutex(), INFINITE);
 

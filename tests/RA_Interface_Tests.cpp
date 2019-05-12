@@ -83,7 +83,6 @@ public:
         Assert::IsNotNull((const void*)_RA_InstallMemoryBank);
         Assert::IsNotNull((const void*)_RA_ClearMemoryBanks);
         Assert::IsNotNull((const void*)_RA_UpdateAppTitle);
-        Assert::IsNotNull((const void*)_RA_HandleHTTPResults);
         Assert::IsNotNull((const void*)_RA_ConfirmLoadNewRom);
         Assert::IsNotNull((const void*)_RA_CreatePopupMenu);
         Assert::IsNotNull((const void*)_RA_InvokeDialog);
@@ -117,7 +116,6 @@ public:
         Assert::IsNull((const void*)_RA_InstallMemoryBank);
         Assert::IsNull((const void*)_RA_ClearMemoryBanks);
         Assert::IsNull((const void*)_RA_UpdateAppTitle);
-        Assert::IsNull((const void*)_RA_HandleHTTPResults);
         Assert::IsNull((const void*)_RA_ConfirmLoadNewRom);
         Assert::IsNull((const void*)_RA_CreatePopupMenu);
         Assert::IsNull((const void*)_RA_InvokeDialog);

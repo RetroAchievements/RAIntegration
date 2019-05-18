@@ -21,7 +21,7 @@ public:
         _tzset();
 
         m_tNow    = std::chrono::system_clock::from_time_t(1534889323); // 16:08:43 08/21/18
-        m_tUpTime = std::chrono::steady_clock::time_point();
+        m_tUpTime = std::chrono::steady_clock::time_point() + std::chrono::minutes(15);
     }
 
     std::chrono::system_clock::time_point Now() const noexcept override { return m_tNow; }

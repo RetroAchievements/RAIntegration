@@ -7,7 +7,6 @@
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
 #include "RA_Resource.h"
-#include "RA_User.h"
 #include "RA_httpthread.h"
 
 #include "api\FetchBadgeIds.hh"

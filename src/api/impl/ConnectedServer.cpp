@@ -4,7 +4,8 @@
 #include "RA_Defs.h"
 
 #include "RA_md5factory.h"
-#include "RA_User.h"
+
+#include "data\UserContext.hh"
 
 #include "services\Http.hh"
 #include "services\IFileSystem.hh"
@@ -511,6 +512,46 @@ SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const S
                     GetRequiredJsonField(entry.Score, pEntry, "Score", response);
                     response.TopEntries.emplace_back(entry);
                 }
+            }
+        }
+    }
+
+    return std::move(response);
+}
+
+FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFriends::Request&)
+{
+    FetchUserFriends::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    if (DoRequest(m_sHost, FetchUserFriends::Name(), "getfriendlist", sPostData, response, document))
+    {
+        response.Result = ApiResult::Success;
+
+        if (!document.HasMember("Friends"))
+        {
+            response.Result = ApiResult::Error;
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", "Friends");
+        }
+        else
+        {
+            const auto& pFriends = document["Friends"].GetArray();
+            for (const auto& pFriend : pFriends)
+            {
+                FetchUserFriends::Response::Friend oFriend;
+                GetRequiredJsonField(oFriend.User, pFriend, "Friend", response);
+                GetRequiredJsonField(oFriend.LastActivity, pFriend, "LastSeen", response);
+
+                // if server's LastSeen is empty or "Unknown", it returns "_"
+                if (oFriend.LastActivity == L"_")
+                    oFriend.LastActivity.clear();
+
+                std::string sPoints;
+                GetRequiredJsonField(sPoints, pFriend, "RAPoints", response);
+                oFriend.Score = std::stoi(sPoints);
+
+                response.Friends.emplace_back(oFriend);
             }
         }
     }

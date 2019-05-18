@@ -5,7 +5,6 @@
 #include "RA_Resource.h"
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
-#include "RA_User.h"
 
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
@@ -18,6 +17,7 @@
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
+#include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
@@ -110,15 +110,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
         if (!ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().ValidateClientVersion())
             ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().Logout();
     });
-
-    //	TBD:
-    //if( RAUsers::LocalUser().Username().length() > 0 )
-    //{
-    //	args.clear();
-    //	args[ 'u' ] = RAUsers::LocalUser().Username();
-    //	args[ 't' ] = RAUsers::LocalUser().Token();
-    //	RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
-    //}
 
     return TRUE;
 }
@@ -290,10 +281,6 @@ API int CCONV _RA_HandleHTTPResults()
         {
             switch (pObj->GetRequestType())
             {
-                case RequestFriendList:
-                    RAUsers::LocalUser().OnFriendListResponse(doc);
-                    break;
-
                 case RequestScore:
                 {
                     ASSERT(doc["Success"].GetBool());
@@ -311,7 +298,7 @@ API int CCONV _RA_HandleHTTPResults()
                         else
                         {
                             // Find friend? Update this information?
-                            RAUsers::GetUser(sUser).SetScore(nScore);
+                            //RAUsers::GetUser(sUser).SetScore(nScore);
                         }
                     }
                     else
@@ -390,8 +377,8 @@ void _FetchGameHashLibraryFromWeb()
 {
     PostArgs args;
     args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
-    args['u'] = RAUsers::LocalUser().Username();
-    args['t'] = RAUsers::LocalUser().Token();
+    args['u'] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+    args['t'] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetApiToken();
     std::string Response;
     if (RAWeb::DoBlockingRequest(RequestHashLibrary, args, Response))
         _WriteBufferToFile(g_sHomeDir + RA_GAME_HASH_FILENAME, Response);
@@ -401,8 +388,8 @@ void _FetchMyProgressFromWeb()
 {
     PostArgs args;
     args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
-    args['u'] = RAUsers::LocalUser().Username();
-    args['t'] = RAUsers::LocalUser().Token();
+    args['u'] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+    args['t'] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetApiToken();
     std::string Response;
     if (RAWeb::DoBlockingRequest(RequestAllProgress, args, Response))
         _WriteBufferToFile(g_sHomeDir + RA_MY_PROGRESS_FILENAME, Response);

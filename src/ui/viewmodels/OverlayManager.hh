@@ -66,6 +66,18 @@ public:
     }
 
     /// <summary>
+    /// Refreshes the currently visible overlay page
+    /// </summary>
+    void RefreshOverlay()
+    {
+        if (m_vmOverlay.CurrentState() != OverlayViewModel::State::Hidden)
+        {
+            m_vmOverlay.CurrentPage().Refresh();
+            RequestRender();
+        }
+    }
+
+    /// <summary>
     /// Queues a popup message.
     /// </summary>
     int QueueMessage(PopupMessageViewModel&& pMessage);

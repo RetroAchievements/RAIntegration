@@ -25,6 +25,7 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
         (1 << static_cast<int>(Feature::Hardcore)) |
         (1 << static_cast<int>(Feature::Leaderboards)) |
         (1 << static_cast<int>(Feature::LeaderboardNotifications)) |
+        (1 << static_cast<int>(Feature::LeaderboardCancelNotifications)) |
         (1 << static_cast<int>(Feature::LeaderboardCounters)) |
         (1 << static_cast<int>(Feature::LeaderboardScoreboards));
 
@@ -52,6 +53,8 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
         SetFeatureEnabled(Feature::Leaderboards, doc["Leaderboards Active"].GetBool());
     if (doc.HasMember("Leaderboard Notification Display"))
         SetFeatureEnabled(Feature::LeaderboardNotifications, doc["Leaderboard Notification Display"].GetBool());
+    if (doc.HasMember("Leaderboard Cancel Display"))
+        SetFeatureEnabled(Feature::LeaderboardCancelNotifications, doc["Leaderboard Cancel Display"].GetBool());
     if (doc.HasMember("Leaderboard Counter Display"))
         SetFeatureEnabled(Feature::LeaderboardCounters, doc["Leaderboard Counter Display"].GetBool());
     if (doc.HasMember("Leaderboard Scoreboard Display"))
@@ -110,6 +113,7 @@ void JsonFileConfiguration::Save() const
     doc.AddMember("Non Hardcore Warning", IsFeatureEnabled(Feature::NonHardcoreWarning), a);
     doc.AddMember("Leaderboards Active", IsFeatureEnabled(Feature::Leaderboards), a);
     doc.AddMember("Leaderboard Notification Display", IsFeatureEnabled(Feature::LeaderboardNotifications), a);
+    doc.AddMember("Leaderboard Cancel Display", IsFeatureEnabled(Feature::LeaderboardCancelNotifications), a);
     doc.AddMember("Leaderboard Counter Display", IsFeatureEnabled(Feature::LeaderboardCounters), a);
     doc.AddMember("Leaderboard Scoreboard Display", IsFeatureEnabled(Feature::LeaderboardScoreboards), a);
     doc.AddMember("Prefer Decimal", IsFeatureEnabled(Feature::PreferDecimal), a);

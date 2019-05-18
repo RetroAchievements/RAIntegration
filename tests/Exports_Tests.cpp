@@ -501,7 +501,7 @@ public:
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lb.wav"));
-        Assert::AreEqual(std::wstring(L"Challenge Available"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard Attempt Started"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Title"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Description"), pPopup->GetDetail());
 
@@ -532,7 +532,7 @@ public:
     TEST_METHOD(TestDoAchievementsFrameLeaderboardCanceled)
     {
         DoAchievementsFrameHarness harness;
-        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications, true);
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications, true);
         auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
         pLeaderboard.SetTitle("Title");
         pLeaderboard.SetDescription("Description");
@@ -544,17 +544,17 @@ public:
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lbcancel.wav"));
-        Assert::AreEqual(std::wstring(L"Leaderboard attempt canceled!"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard Attempt Canceled"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Title"), pPopup->GetDescription());
 
         const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);
         Assert::IsNull(pScore);
     }
 
-    TEST_METHOD(TestDoAchievementsFrameLeaderboardPopupDisabled)
+    TEST_METHOD(TestDoAchievementsFrameLeaderboardCaneledPopupDisabled)
     {
         DoAchievementsFrameHarness harness;
-        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications, false);
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications, false);
         auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
         pLeaderboard.SetTitle("Title");
         pLeaderboard.SetDescription("Description");

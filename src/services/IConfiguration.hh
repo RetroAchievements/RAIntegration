@@ -13,6 +13,7 @@ enum class Feature
     Hardcore,
     Leaderboards,
     LeaderboardNotifications,
+    LeaderboardCancelNotifications,
     LeaderboardCounters,
     LeaderboardScoreboards,
     PreferDecimal,

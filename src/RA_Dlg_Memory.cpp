@@ -1252,10 +1252,12 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                 case IDC_RA_ADDNOTE:
                 {
-                    HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
-
-                    WCHAR sNewNote[512];
-                    GetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, sNewNote, 512);
+                    HWND hNote = GetDlgItem(hDlg, IDC_RA_MEMSAVENOTE);
+                    const int nLength = GetWindowTextLengthW(hNote);
+                    std::wstring sNewNote;
+                    sNewNote.resize(nLength + 1);
+                    GetWindowTextW(hNote, sNewNote.data(), sNewNote.capacity());
+                    sNewNote.resize(nLength);
 
                     bool bUpdated = false;
                     const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
@@ -1266,13 +1268,22 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     {
                         if (*pNote != sNewNote) // New note is different
                         {
-                            const auto sPrompt = ra::StringPrintf(L"Overwrite note for address %s?", ra::ByteAddressToString(nAddr));
-                            const auto sWarning = ra::StringPrintf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
-                                sAuthor, *pNote, sNewNote);
-
                             ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
-                            vmPrompt.SetHeader(sPrompt);
-                            vmPrompt.SetMessage(sWarning);
+                            vmPrompt.SetHeader(ra::StringPrintf(L"Overwrite note for address %s?", ra::ByteAddressToString(nAddr)));
+
+                            if (sNewNote.length() > 256 || pNote->length() > 256)
+                            {
+                                std::wstring sNewNoteShort = sNewNote.length() > 256 ? (sNewNote.substr(0, 253) + L"...") : sNewNote;
+                                std::wstring sOldNoteShort = pNote->length() > 256 ? (pNote->substr(0, 253) + L"...") : *pNote;
+                                vmPrompt.SetMessage(ra::StringPrintf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
+                                    sAuthor, sOldNoteShort, sNewNoteShort));
+                            }
+                            else
+                            {
+                                vmPrompt.SetMessage(ra::StringPrintf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
+                                    sAuthor, *pNote, sNewNote));
+                            }
+
                             vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
                             vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
                             if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
@@ -1293,6 +1304,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         if (bUpdated)
                         {
                             const std::string sAddress = ra::ByteAddressToString(nAddr);
+                            HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
                             ComboBox_AddString(hMemWatch, NativeStr(sAddress).c_str());
                         }
                     }
@@ -1314,21 +1326,17 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                 case IDC_RA_REMNOTE:
                 {
-                    HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
-
                     const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
                     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
                     std::string sAuthor;
                     const auto* pNote = pGameContext.FindCodeNote(nAddr, sAuthor);
                     if (pNote != nullptr)
                     {
-                        const auto sPrompt = ra::StringPrintf(L"Delete note for address %s?", ra::ByteAddressToString(nAddr));
-                        const auto sWarning =
-                            ra::StringPrintf(L"Are you sure you want to delete %s's note:\n\n%s", sAuthor, *pNote);
+                        auto pNoteShort = (pNote->length() < 256) ? *pNote : (pNote->substr(0, 253) + L"...");
 
                         ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
-                        vmPrompt.SetHeader(sPrompt);
-                        vmPrompt.SetMessage(sWarning);
+                        vmPrompt.SetHeader(ra::StringPrintf(L"Delete note for address %s?", ra::ByteAddressToString(nAddr)));
+                        vmPrompt.SetMessage(ra::StringPrintf(L"Are you sure you want to delete %s's note:\n\n%s", sAuthor, pNoteShort));
                         vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
                         vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
                         if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
@@ -1338,6 +1346,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                 ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().Beep();
 
                                 SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, TEXT(""));
+
+                                HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
 
                                 TCHAR sAddressWide[16];
                                 ComboBox_GetText(hMemWatch, sAddressWide, 16);
@@ -1790,9 +1800,8 @@ void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)
 {
     MemoryViewerControl::setWatchedAddress(nAddr);
 
-    char buffer[32];
-    sprintf_s(buffer, 32, "0x%06x", nAddr);
-    SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
+    const auto sAddr = ra::ByteAddressToString(nAddr);
+    SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(sAddr).c_str());
     UpdateBits();
 
     OnWatchingMemChange();

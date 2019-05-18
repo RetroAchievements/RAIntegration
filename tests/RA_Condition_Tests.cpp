@@ -49,8 +49,9 @@ public:
         AssertSerialize(CompVariable::Type::Address, MemSize::Bit_6, 0x1234U, "0xS1234");
         AssertSerialize(CompVariable::Type::Address, MemSize::Bit_7, 0x1234U, "0xT1234");
 
-        // delta
+        // delta / prior
         AssertSerialize(CompVariable::Type::DeltaMem, MemSize::EightBit, 0x1234U, "d0xH1234");
+        AssertSerialize(CompVariable::Type::PriorMem, MemSize::EightBit, 0x1234U, "p0xH1234");
 
         // value (size is ignored)
         AssertSerialize(CompVariable::Type::ValueComparison, MemSize::EightBit, 123, "123");
@@ -147,6 +148,17 @@ public:
             CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
             ComparisonType::Equals,
             CompVariable::Type::DeltaMem, MemSize::EightBit, 0x4321U, "0xH1234=d0xH4321");
+
+        // prior
+        AssertSerialize(Condition::Type::Standard,
+            CompVariable::Type::PriorMem, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "p0xH1234=8");
+
+        AssertSerialize(Condition::Type::Standard,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::PriorMem, MemSize::EightBit, 0x4321U, "0xH1234=p0xH4321");
 
         // flags
         AssertSerialize(Condition::Type::ResetIf,

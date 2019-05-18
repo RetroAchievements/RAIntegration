@@ -45,10 +45,10 @@ public:
         Address,         // compare to the value of a live address in RAM
         ValueComparison, // a number. assume 32 bit
         DeltaMem,        // the value last known at this address.
-        DynamicVariable  // a custom user-set variable
+        PriorMem,        // the last differing value at this address.
     };
 
-    inline static constexpr std::array<LPCTSTR, 4> TYPE_STR{_T("Memory"), _T("Value"), _T("Delta"), _T("DynVar")};
+    inline static constexpr std::array<LPCTSTR, 4> TYPE_STR{_T("Mem"), _T("Value"), _T("Delta"), _T("Prior")};
 
 public:
     _CONSTANT_FN Set(_In_ MemSize nSize, _In_ CompVariable::Type nType, _In_ unsigned int nInitialValue) noexcept
@@ -65,6 +65,20 @@ public:
 
     _CONSTANT_FN SetType(_In_ Type nType) noexcept { m_nVarType = nType; }
     _NODISCARD _CONSTANT_FN GetType() const noexcept { return m_nVarType; }
+
+    _NODISCARD _CONSTANT_FN IsMemoryType() const noexcept
+    {
+        switch (m_nVarType)
+        {
+            case CompVariable::Type::DeltaMem:
+            case CompVariable::Type::PriorMem:
+            case CompVariable::Type::Address:
+                return true;
+
+            default:
+                return false;
+        }
+    }
 
     _CONSTANT_FN SetValue(_In_ unsigned int nValue) noexcept { m_nVal = nValue; }
     _NODISCARD _CONSTANT_FN GetValue() const noexcept { return m_nVal; }

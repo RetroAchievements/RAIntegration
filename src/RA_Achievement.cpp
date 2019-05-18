@@ -204,6 +204,10 @@ inline static constexpr void SetOperand(CompVariable& var, const rc_operand_t& o
             var.Set(GetCompVariableSize(operand.value.memref->memref.size), CompVariable::Type::DeltaMem, operand.value.memref->memref.address);
             break;
 
+        case RC_OPERAND_PRIOR:
+            var.Set(GetCompVariableSize(operand.value.memref->memref.size), CompVariable::Type::PriorMem, operand.value.memref->memref.address);
+            break;
+
         case RC_OPERAND_CONST:
             var.Set(MemSize::ThirtyTwoBit, CompVariable::Type::ValueComparison, operand.value.num);
             break;

@@ -203,20 +203,35 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
 {
     const int nRow = item.iItem;
 
-    // Update our local array:
-    const char* sMemTypStrSrc = "Value";
-    std::string sMemSizeStrSrc;
-    if (Cond.CompSource().GetType() != CompVariable::Type::ValueComparison)
+    bool bValueInDecimal = false;
+    if (!Cond.CompTarget().IsMemoryType() || !Cond.CompSource().IsMemoryType())
     {
-        sMemTypStrSrc = (Cond.CompSource().GetType() == CompVariable::Type::Address) ? "Mem" : "Delta";
-        sMemSizeStrSrc = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompSource().GetSize())));
+        auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+            bValueInDecimal = true;
     }
 
+    // Update our local array:
     SetCell(hList, item, nRow, CondSubItems::Id, std::to_string(nRow + 1));
+
     SetCell(hList, item, nRow, CondSubItems::Group, ra::Narrow(Condition::TYPE_STR.at(ra::etoi(Cond.GetConditionType()))));
-    SetCell(hList, item, nRow, CondSubItems::Type_Src, ra::Narrow(sMemTypStrSrc));
-    SetCell(hList, item, nRow, CondSubItems::Size_Src, ra::Narrow(sMemSizeStrSrc));
-    SetCell(hList, item, nRow, CondSubItems::Value_Src, ra::StringPrintf("0x%06x", Cond.CompSource().GetValue()));
+
+    SetCell(hList, item, nRow, CondSubItems::Type_Src,  ra::Narrow(CompVariable::TYPE_STR.at(ra::etoi(Cond.CompSource().GetType()))));
+
+    if (Cond.CompSource().IsMemoryType())
+    {
+        SetCell(hList, item, nRow, CondSubItems::Size_Src, ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompSource().GetSize()))));
+        SetCell(hList, item, nRow, CondSubItems::Value_Src, ra::Narrow(ra::ByteAddressToString(Cond.CompSource().GetValue())));
+    }
+    else
+    {
+        SetCell(hList, item, nRow, CondSubItems::Size_Src, "");
+
+        if (bValueInDecimal)
+            SetCell(hList, item, nRow, CondSubItems::Value_Src, std::to_string(Cond.CompSource().GetValue()));
+        else
+            SetCell(hList, item, nRow, CondSubItems::Value_Src, ra::StringPrintf("0x%02x", Cond.CompSource().GetValue()));
+    }
 
     if (Cond.IsSingleOperandConditionType())
     {
@@ -228,31 +243,26 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     }
     else
     {
-        const char* sMemTypStrDst = "Value";
-        std::string sMemSizeStrDst;
-        if (Cond.CompTarget().GetType() != CompVariable::Type::ValueComparison)
-        {
-            sMemTypStrDst = (Cond.CompTarget().GetType() == CompVariable::Type::Address) ? "Mem" : "Delta";
-            sMemSizeStrDst = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().GetSize())));
-        }
-
         SetCell(hList, item, nRow, CondSubItems::Comparison, ra::Narrow(COMPARISONTYPE_STR.at(ra::etoi(Cond.CompareType()))));
-        SetCell(hList, item, nRow, CondSubItems::Type_Tgt, ra::Narrow(sMemTypStrDst));
-        SetCell(hList, item, nRow, CondSubItems::Size_Tgt, ra::Narrow(sMemSizeStrDst));
-        SetCell(hList, item, nRow, CondSubItems::Hitcount, ra::StringPrintf("%u (%u)", Cond.RequiredHits(), nCurrentHits));
 
-        bool bValueInDecimal = false;
-        if (Cond.CompTarget().GetType() == CompVariable::Type::ValueComparison)
+        SetCell(hList, item, nRow, CondSubItems::Type_Tgt, ra::Narrow(CompVariable::TYPE_STR.at(ra::etoi(Cond.CompTarget().GetType()))));
+
+        if (Cond.CompTarget().IsMemoryType())
         {
-            auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
-                bValueInDecimal = true;
+            SetCell(hList, item, nRow, CondSubItems::Size_Tgt, ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().GetSize()))));
+            SetCell(hList, item, nRow, CondSubItems::Value_Tgt, ra::Narrow(ra::ByteAddressToString(Cond.CompTarget().GetValue())));
+        }
+        else
+        {
+            SetCell(hList, item, nRow, CondSubItems::Size_Tgt, "");
+
+            if (bValueInDecimal)
+                SetCell(hList, item, nRow, CondSubItems::Value_Tgt, std::to_string(Cond.CompTarget().GetValue()));
+            else
+                SetCell(hList, item, nRow, CondSubItems::Value_Tgt, ra::StringPrintf("0x%02x", Cond.CompTarget().GetValue()));
         }
 
-        if (bValueInDecimal)
-            SetCell(hList, item, nRow, CondSubItems::Value_Tgt, std::to_string(Cond.CompTarget().GetValue()));
-        else
-            SetCell(hList, item, nRow, CondSubItems::Value_Tgt, ra::StringPrintf("0x%02x", Cond.CompTarget().GetValue()));
+        SetCell(hList, item, nRow, CondSubItems::Hitcount, ra::StringPrintf("%u (%u)", Cond.RequiredHits(), nCurrentHits));
     }
 }
 
@@ -508,7 +518,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                     break;
             }
 
-            const int nNumItems = 3; // "Mem", "Delta" or "Value"
+            const int nNumItems = 4; // "Mem", "Delta", "Prior" or "Value"
 
             g_hIPEEdit =
                 CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
@@ -526,6 +536,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
             /*CB_ERRSPACE*/
             ComboBox_AddString(g_hIPEEdit, NativeStr("Mem").c_str());
             ComboBox_AddString(g_hIPEEdit, NativeStr("Delta").c_str());
+            ComboBox_AddString(g_hIPEEdit, NativeStr("Prior").c_str());
             ComboBox_AddString(g_hIPEEdit, NativeStr("Value").c_str());
 
             int nSel{};
@@ -533,8 +544,10 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 nSel = 0;
             else if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == "Delta")
                 nSel = 1;
-            else
+            else if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == "Prior")
                 nSel = 2;
+            else
+                nSel = 3;
 
             ComboBox_SetCurSel(g_hIPEEdit, nSel);
 
@@ -1675,6 +1688,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 rCond.CompSource().SetType(CompVariable::Type::Address);
                             else if (sData == "Delta")
                                 rCond.CompSource().SetType(CompVariable::Type::DeltaMem);
+                            else if (sData == "Prior")
+                                rCond.CompSource().SetType(CompVariable::Type::PriorMem);
                             else
                                 rCond.CompSource().SetType(CompVariable::Type::ValueComparison);
 
@@ -1695,6 +1710,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 rCond.CompTarget().SetType(CompVariable::Type::Address);
                             else if (sData == "Delta")
                                 rCond.CompTarget().SetType(CompVariable::Type::DeltaMem);
+                            else if (sData == "Prior")
+                                rCond.CompTarget().SetType(CompVariable::Type::PriorMem);
                             else
                                 rCond.CompTarget().SetType(CompVariable::Type::ValueComparison);
 
@@ -1909,16 +1926,14 @@ void Dlg_AchievementEditor::GetListViewTooltip()
     switch (ra::itoe<CondSubItems>(lvHitTestInfo.iSubItem))
     {
         case CondSubItems::Value_Src:
-            if (rCond.CompSource().GetType() != CompVariable::Type::Address &&
-                rCond.CompSource().GetType() != CompVariable::Type::DeltaMem)
+            if (!rCond.CompSource().IsMemoryType())
                 return;
 
             nAddr = rCond.CompSource().GetValue();
             break;
 
         case CondSubItems::Value_Tgt:
-            if (rCond.CompTarget().GetType() != CompVariable::Type::Address &&
-                rCond.CompTarget().GetType() != CompVariable::Type::DeltaMem)
+            if (!rCond.CompSource().IsMemoryType())
                 return;
 
             nAddr = rCond.CompTarget().GetValue();

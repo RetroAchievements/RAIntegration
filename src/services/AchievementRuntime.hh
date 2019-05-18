@@ -4,9 +4,11 @@
 
 #include "RA_AchievementSet.h"
 
+#include "services\TextReader.hh"
+
 #include <string>
 
-#include "rcheevos\include\rcheevos.h"
+#include <rcheevos\include\rcheevos.h>
 
 namespace ra {
 namespace services {
@@ -166,6 +168,10 @@ protected:
     std::vector<ActiveLeaderboard> m_vActiveLeaderboards;
 
     bool m_bPaused = false;
+
+private:
+    bool LoadProgressV1(const std::string& sProgress, std::set<unsigned int>& vProcessedAchievementIds) const;
+    bool LoadProgressV2(ra::services::TextReader& pFile, std::set<unsigned int>& vProcessedAchievementIds) const;
 };
 
 } // namespace services

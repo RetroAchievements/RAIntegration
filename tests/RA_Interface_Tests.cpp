@@ -70,6 +70,7 @@ public:
         Assert::IsNotNull((const void*)_RA_HostName);
         Assert::IsNotNull((const void*)_RA_InitI);
         Assert::IsNotNull((const void*)_RA_InitOffline);
+        Assert::IsNotNull((const void*)_RA_UpdateHWnd);
         Assert::IsNotNull((const void*)_RA_Shutdown);
         Assert::IsNotNull((const void*)_RA_AttemptLogin);
         Assert::IsNotNull((const void*)_RA_NavigateOverlay);
@@ -82,7 +83,6 @@ public:
         Assert::IsNotNull((const void*)_RA_InstallMemoryBank);
         Assert::IsNotNull((const void*)_RA_ClearMemoryBanks);
         Assert::IsNotNull((const void*)_RA_UpdateAppTitle);
-        Assert::IsNotNull((const void*)_RA_HandleHTTPResults);
         Assert::IsNotNull((const void*)_RA_ConfirmLoadNewRom);
         Assert::IsNotNull((const void*)_RA_CreatePopupMenu);
         Assert::IsNotNull((const void*)_RA_InvokeDialog);
@@ -103,6 +103,7 @@ public:
         Assert::IsNull((const void*)_RA_HostName);
         Assert::IsNull((const void*)_RA_InitI);
         Assert::IsNull((const void*)_RA_InitOffline);
+        Assert::IsNull((const void*)_RA_UpdateHWnd);
         Assert::IsNull((const void*)_RA_Shutdown);
         Assert::IsNull((const void*)_RA_AttemptLogin);
         Assert::IsNull((const void*)_RA_NavigateOverlay);
@@ -115,7 +116,6 @@ public:
         Assert::IsNull((const void*)_RA_InstallMemoryBank);
         Assert::IsNull((const void*)_RA_ClearMemoryBanks);
         Assert::IsNull((const void*)_RA_UpdateAppTitle);
-        Assert::IsNull((const void*)_RA_HandleHTTPResults);
         Assert::IsNull((const void*)_RA_ConfirmLoadNewRom);
         Assert::IsNull((const void*)_RA_CreatePopupMenu);
         Assert::IsNull((const void*)_RA_InvokeDialog);

@@ -93,8 +93,20 @@ public:
     /// </summary>
     /// <param name="nX">The x coordinate to draw at.</param>
     /// <param name="nY">The y coordinate to draw at.</param>
-    /// <param name="pImage">The surface to draw.</param>
+    /// <param name="pSurface">The surface to draw.</param>
     virtual void DrawSurface(int nX, int nY, const ISurface& pSurface) = 0;
+
+    /// <summary>
+    /// Draws part of a secondary surface onto the surface.
+    /// </summary>
+    /// <param name="nX">The x coordinate to draw at.</param>
+    /// <param name="nY">The y coordinate to draw at.</param>
+    /// <param name="pSurface">The surface to draw.</param>
+    /// <param name="nSurfaceX">The x coordinate to copy from.</param>
+    /// <param name="nSurfaceY">The y coordinate to copy from.</param>
+    /// <param name="nWidth">The width to copy.</param>
+    /// <param name="nHeight">The height to copy.</param>
+    virtual void DrawSurface(int nX, int nY, const ISurface& pSurface, int nSurfaceX, int nSurfaceY, int nWidth, int nHeight) = 0;
 
     /// <summary>
     /// Sets the alpha value of anything that's not currently transparent to the specified value.

@@ -45,8 +45,10 @@ static void RenderPopupClippedX(ra::ui::drawing::ISurface& pSurface, const Popup
     const int nX = GetAbsolutePosition(vmPopup.GetRenderLocationX(), vmPopup.GetRenderLocationXRelativePosition(), pSurface.GetWidth());
     const int nY = GetAbsolutePosition(vmPopup.GetRenderLocationY(), vmPopup.GetRenderLocationYRelativePosition(), pSurface.GetHeight());
 
-    if (nX + ra::to_signed(vmPopup.GetRenderImage().GetWidth()) > nClipX)
-        pSurface.DrawSurface(nX, nY, vmPopup.GetRenderImage());
+    const auto& pImage = vmPopup.GetRenderImage();
+    const int nVisibleWidth = nX + ra::to_signed(pImage.GetWidth()) - nClipX;
+    if (nVisibleWidth > 0)
+        pSurface.DrawSurface(nClipX, nY, pImage, pImage.GetWidth() - nVisibleWidth, 0, nVisibleWidth, pImage.GetHeight());
 }
 
 void OverlayManager::Update(const ControllerInput& pInput)
@@ -60,8 +62,9 @@ void OverlayManager::RequestRender()
     if (!m_fHandleRenderRequest)
         return;
 
-    const bool bNeedsRender = (m_vmOverlay.CurrentState() != OverlayViewModel::State::Hidden ||
-        !m_vPopupMessages.empty() || !m_vScoreboards.empty() || !m_vScoreTrackers.empty());
+    const bool bNeedsRender = (m_bRedrawAll || // changes detected in Render() - mostly for when last popup closes
+        m_vmOverlay.CurrentState() != OverlayViewModel::State::Hidden || // overlay is visible
+        !m_vPopupMessages.empty() || !m_vScoreboards.empty() || !m_vScoreTrackers.empty()); // a popup is visible
 
     if (m_bIsRendering != bNeedsRender)
     {
@@ -115,9 +118,13 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
 
     if (m_vmOverlay.CurrentState() == OverlayViewModel::State::Hidden)
     {
+        // update the visible popups - if any are updated, m_bRedrawAll will be set
         if (!m_vScoreboards.empty())
         {
             UpdateActiveScoreboard(pSurface, fElapsed);
+
+            // a visible scoreboard may not set m_bRedrawAll if it's in the pause portion of its animation loop
+            // make sure we keep the render cycle going so it'll eventually handle when the pause ends
             bRequestRender = true;
         }
 
@@ -127,6 +134,22 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
         if (!m_vPopupMessages.empty())
         {
             UpdateActiveMessage(pSurface, fElapsed);
+
+            // a visible popup may not set m_bRedrawAll if it's in the pause portion of its animation loop
+            // make sure we keep the render cycle going so it'll eventually handle when the pause ends
+            bRequestRender = true;
+        }
+
+        // if anything changed, or caller requested a repaint, do so now
+        if (m_bRedrawAll)
+        {
+            if (!m_vScoreboards.empty())
+                RenderPopup(pSurface, m_vScoreboards.front());
+            for (const auto& pScoreTracker : m_vScoreTrackers)
+                RenderPopup(pSurface, *pScoreTracker);
+            if (!m_vPopupMessages.empty())
+                RenderPopup(pSurface, m_vPopupMessages.front());
+
             bRequestRender = true;
         }
     }
@@ -230,6 +253,7 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, double fEl
     {
         const auto& pImage = vmPopup.GetRenderImage();
         pSurface.FillRectangle(nOldX, nOldY, pImage.GetWidth(), pImage.GetHeight(), ra::ui::Color::Transparent);
+        m_bRedrawAll = true;
         return;
     }
 
@@ -240,11 +264,10 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, double fEl
 
     if (bUpdated)
     {
-        const auto& pImage = vmPopup.GetRenderImage();
-
         // if the image moved, we have to blank out the area it previously covered
         if (nOldY != nNewY || nOldX != nNewX)
         {
+            const auto& pImage = vmPopup.GetRenderImage();
             const int nWidth = pImage.GetWidth() + std::abs(nNewX - nOldX);
             const int nHeight = pImage.GetHeight() + std::abs(nNewY - nOldY);
 
@@ -259,13 +282,7 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, double fEl
                 pSurface.FillRectangle(nOldX, nNewY + pImage.GetHeight() - 1, nWidth, nOldY - nNewY + 1, ra::ui::Color::Transparent);
         }
 
-        if (!vmPopup.IsAnimationComplete())
-            pSurface.DrawSurface(nNewX, nNewY, pImage);
-    }
-    else if (m_bRedrawAll)
-    {
-        if (!vmPopup.IsAnimationComplete())
-            pSurface.DrawSurface(nNewX, nNewY, vmPopup.GetRenderImage());
+        m_bRedrawAll = true;
     }
 }
 
@@ -384,9 +401,13 @@ void OverlayManager::UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double f
 
         if (!m_vPopupMessages.empty())
             RenderPopupClippedX(pSurface, m_vPopupMessages.front(), nOverlayRight);
+
+        m_bRedrawAll = true;
     }
 
     UpdatePopup(pSurface, fElapsed, m_vmOverlay);
+    if (m_bRedrawAll)
+        RenderPopup(pSurface, m_vmOverlay);
 
     if (m_vmOverlay.CurrentState() == OverlayViewModel::State::Hidden)
     {

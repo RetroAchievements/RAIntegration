@@ -34,6 +34,7 @@ public:
     void DrawImage(int, int, int, int, const ImageReference&) noexcept override {}
     void DrawImageStretched(int, int, int, int, const ImageReference&) noexcept override {}
     void DrawSurface(int, int, const ISurface&) noexcept override {}
+    void DrawSurface(int, int, const ISurface&, int, int, int, int) noexcept override {}
     void SetOpacity(double) noexcept override {}
 
 private:

@@ -125,6 +125,16 @@ void GDISurface::DrawSurface(int nX, int nY, const ISurface& pSurface)
     }
 }
 
+void GDISurface::DrawSurface(int nX, int nY, const ISurface& pSurface, int nSurfaceX, int nSurfaceY, int nWidth, int nHeight)
+{
+    assert(dynamic_cast<const GDIAlphaBitmapSurface*>(&pSurface) == nullptr); // clipped alpha blend not currently supported
+
+    auto* pGDISurface = dynamic_cast<const GDISurface*>(&pSurface);
+    assert(pGDISurface != nullptr);
+    if (pGDISurface != nullptr)
+        ::BitBlt(m_hDC, nX, nY, nWidth, nHeight, pGDISurface->m_hDC, nSurfaceX, nSurfaceY, SRCCOPY);
+}
+
 } // namespace gdi
 } // namespace drawing
 } // namespace ui

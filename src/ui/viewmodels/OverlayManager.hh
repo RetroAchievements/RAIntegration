@@ -216,6 +216,7 @@ protected:
     std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
     std::deque<ScoreboardViewModel> m_vScoreboards;
 
+    bool m_bIsRendering = false;
     bool m_bRenderRequestPending = false;
 
     void OnImageChanged(ImageType, const std::string&) override
@@ -232,7 +233,6 @@ private:
     void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);
 
     bool m_bRedrawAll = false;
-    bool m_bIsRendering = false;
     std::chrono::steady_clock::time_point m_tLastRender{};
     std::function<void()> m_fHandleRenderRequest;
 

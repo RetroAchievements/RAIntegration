@@ -2,6 +2,8 @@
 
 #include "ra_math.h"
 
+#include "services\IThreadPool.hh"
+
 #include "ui\OverlayTheme.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 

@@ -56,6 +56,9 @@ void Condition::SerializeAppend(std::string& buffer) const
         case Type::AddHits:
             buffer.append("C:");
             break;
+        case Type::AndNext:
+            buffer.append("N:");
+            break;
         default:
             break;
     }

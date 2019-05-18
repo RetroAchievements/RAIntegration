@@ -27,7 +27,10 @@ void UserContext::Logout()
         m_sApiToken.clear();
         m_nScore = 0U;
 
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        pOverlayManager.ClearPopups();
+        pOverlayManager.HideOverlay();
+
         ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 #ifndef RA_UTEST
         _RA_UpdateAppTitle();

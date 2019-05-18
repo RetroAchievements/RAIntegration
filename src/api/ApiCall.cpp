@@ -21,6 +21,7 @@ Ping::Response Ping::Request::Call() const { return Server().Ping(*this); }
 FetchUserUnlocks::Response FetchUserUnlocks::Request::Call() const { return Server().FetchUserUnlocks(*this); }
 AwardAchievement::Response AwardAchievement::Request::Call() const { return Server().AwardAchievement(*this); }
 SubmitLeaderboardEntry::Response SubmitLeaderboardEntry::Request::Call() const { return Server().SubmitLeaderboardEntry(*this); }
+FetchUserFriends::Response FetchUserFriends::Request::Call() const { return Server().FetchUserFriends(*this); }
 ResolveHash::Response ResolveHash::Request::Call() const { return Server().ResolveHash(*this); }
 FetchGameData::Response FetchGameData::Request::Call() const { return Server().FetchGameData(*this); }
 FetchCodeNotes::Response FetchCodeNotes::Request::Call() const { return Server().FetchCodeNotes(*this); }

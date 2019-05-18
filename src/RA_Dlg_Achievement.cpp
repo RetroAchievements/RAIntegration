@@ -4,12 +4,12 @@
 #include "RA_Core.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Resource.h"
-#include "RA_User.h"
 #include "RA_md5factory.h"
 
 #include "api\UpdateAchievement.hh"
 
 #include "data\GameContext.hh"
+#include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 
@@ -523,7 +523,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     //  Add a new achievement with default params
                     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
                     Achievement& Cheevo = pGameContext.NewAchievement(AchievementSet::Type::Local);
-                    Cheevo.SetAuthor(RAUsers::LocalUser().Username());
+                    Cheevo.SetAuthor(ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername());
                     Cheevo.SetBadgeImage("00000");
 
                     //  Reverse find where I am in the list:
@@ -572,7 +572,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     const Achievement& Ach = g_pActiveAchievements->GetAchievement(nSel);
 
                     NewClone.CopyFrom(Ach);
-                    NewClone.SetAuthor(RAUsers::LocalUser().Username());
+                    NewClone.SetAuthor(ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername());
                     NewClone.SetTitle(ra::StringPrintf("%s (copy)", Ach.Title()));
 
                     OnClickAchievementSet(AchievementSet::Type::Local);

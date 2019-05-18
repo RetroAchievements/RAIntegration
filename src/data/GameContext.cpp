@@ -38,6 +38,12 @@ extern bool g_bRAMTamperedWith;
 namespace ra {
 namespace data {
 
+static void RefreshOverlay()
+{
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    pOverlayManager.RefreshOverlay();
+}
+
 static void CopyAchievementData(Achievement& pAchievement,
                                 const ra::api::FetchGameData::Response::Achievement& pAchievementData)
 {
@@ -84,6 +90,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     if (nGameId == 0)
     {
         m_sGameHash.clear();
+        RefreshOverlay();
         return;
     }
 
@@ -168,6 +175,8 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
     // get user unlocks asynchronously
     RefreshUnlocks(!bWasPaused, nPopup);
+
+    RefreshOverlay();
 }
 
 void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
@@ -258,6 +267,8 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
             pPopup->RebuildRenderImage();
         }
     }
+
+    RefreshOverlay();
 }
 
 void GameContext::MergeLocalAchievements()
@@ -316,7 +327,7 @@ void GameContext::MergeLocalAchievements()
             // unquoted trigger requires special parsing because flags also use colons
             const char* pTrigger = pTokenizer.GetPointer(pTokenizer.CurrentPosition());
             const char* pScan = pTrigger;
-            while (*pScan && (*pScan != ':' || strchr("ABCPRabcpr", pScan[-1]) != nullptr))
+            while (*pScan && (*pScan != ':' || strchr("ABCNPRabcnpr", pScan[-1]) != nullptr))
                 pScan++;
 
             sTrigger.assign(pTrigger, pScan - pTrigger);

@@ -3,7 +3,6 @@
 #include "RA_Achievement.h"
 #include "RA_Core.h"
 #include "RA_Resource.h"
-#include "RA_User.h"
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
 

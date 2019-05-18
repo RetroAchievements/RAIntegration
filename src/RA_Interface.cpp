@@ -14,6 +14,7 @@ const char* (CCONV *_RA_IntegrationVersion)() = nullptr;
 const char* (CCONV *_RA_HostName)() = nullptr;
 int		(CCONV *_RA_InitI)(HWND hMainWnd, int nConsoleID, const char* sClientVer) = nullptr;
 int		(CCONV *_RA_InitOffline)(HWND hMainWnd, int nConsoleID, const char* sClientVer) = nullptr;
+void    (CCONV *_RA_UpdateHWnd)(HWND hMainHWND);
 int		(CCONV *_RA_Shutdown)() = nullptr;
 //	Load/Save
 bool    (CCONV *_RA_ConfirmLoadNewRom)(bool bQuitting) = nullptr;
@@ -33,7 +34,6 @@ void    (CCONV *_RA_AttemptLogin)(bool bBlocking) = nullptr;
 void    (CCONV *_RA_SetPaused)(bool bIsPaused) = nullptr;
 HMENU   (CCONV *_RA_CreatePopupMenu)() = nullptr;
 void    (CCONV *_RA_UpdateAppTitle)(const char* pMessage) = nullptr;
-void    (CCONV *_RA_HandleHTTPResults)(void) = nullptr;
 void    (CCONV *_RA_InvokeDialog)(LPARAM nID) = nullptr;
 void    (CCONV *_RA_InstallSharedFunctions)(bool(*)(), void(*)(), void(*)(), void(*)(), void(*)(char*), void(*)(), void(*)(const char*)) = nullptr;
 int     (CCONV *_RA_SetConsoleID)(unsigned int nConsoleID) = nullptr;
@@ -76,6 +76,12 @@ bool RA_IsOverlayFullyVisible()
         return _RA_IsOverlayFullyVisible();
 
     return false;
+}
+
+void RA_UpdateHWnd(HWND hMainWnd)
+{
+    if (_RA_UpdateHWnd != nullptr)
+        _RA_UpdateHWnd(hMainWnd);
 }
 
 unsigned int RA_IdentifyRom(BYTE* pROMData, unsigned int nROMSize)
@@ -123,8 +129,6 @@ void RA_UpdateAppTitle(const char* sCustomMsg)
 
 void RA_HandleHTTPResults()
 {
-    if (_RA_HandleHTTPResults != nullptr)
-        _RA_HandleHTTPResults();
 }
 
 bool RA_ConfirmLoadNewRom(bool bIsQuitting)
@@ -441,6 +445,7 @@ static const char* CCONV _RA_InstallIntegration()
     _RA_HostName = (const char*(CCONV *)())                                           GetProcAddress(g_hRADLL, "_RA_HostName");
     _RA_InitI = (int(CCONV *)(HWND, int, const char*))                                GetProcAddress(g_hRADLL, "_RA_InitI");
     _RA_InitOffline = (int(CCONV *)(HWND, int, const char*))                          GetProcAddress(g_hRADLL, "_RA_InitOffline");
+    _RA_UpdateHWnd = (void(CCONV *)(HWND))                                            GetProcAddress(g_hRADLL, "_RA_UpdateHWnd");
     _RA_Shutdown = (int(CCONV *)())                                                   GetProcAddress(g_hRADLL, "_RA_Shutdown");
     _RA_AttemptLogin = (void(CCONV *)(bool))                                          GetProcAddress(g_hRADLL, "_RA_AttemptLogin");
     _RA_NavigateOverlay = (void(CCONV *)(ControllerInput*))                           GetProcAddress(g_hRADLL, "_RA_NavigateOverlay");
@@ -453,7 +458,6 @@ static const char* CCONV _RA_InstallIntegration()
     _RA_InstallMemoryBank = (void(CCONV *)(int, void*, void*, int))                   GetProcAddress(g_hRADLL, "_RA_InstallMemoryBank");
     _RA_ClearMemoryBanks = (void(CCONV *)())                                          GetProcAddress(g_hRADLL, "_RA_ClearMemoryBanks");
     _RA_UpdateAppTitle = (void(CCONV *)(const char*))                                 GetProcAddress(g_hRADLL, "_RA_UpdateAppTitle");
-    _RA_HandleHTTPResults = (void(CCONV *)())                                         GetProcAddress(g_hRADLL, "_RA_HandleHTTPResults");
     _RA_ConfirmLoadNewRom = (bool(CCONV *)(bool))                                     GetProcAddress(g_hRADLL, "_RA_ConfirmLoadNewRom");
     _RA_CreatePopupMenu = (HMENU(CCONV *)(void))                                      GetProcAddress(g_hRADLL, "_RA_CreatePopupMenu");
     _RA_InvokeDialog = (void(CCONV *)(LPARAM))                                        GetProcAddress(g_hRADLL, "_RA_InvokeDialog");
@@ -615,6 +619,7 @@ void RA_Shutdown()
     _RA_HostName = nullptr;
     _RA_InitI = nullptr;
     _RA_InitOffline = nullptr;
+    _RA_UpdateHWnd = nullptr;
     _RA_Shutdown = nullptr;
     _RA_AttemptLogin = nullptr;
     _RA_NavigateOverlay = nullptr;
@@ -627,7 +632,6 @@ void RA_Shutdown()
     _RA_InstallMemoryBank = nullptr;
     _RA_ClearMemoryBanks = nullptr;
     _RA_UpdateAppTitle = nullptr;
-    _RA_HandleHTTPResults = nullptr;
     _RA_ConfirmLoadNewRom = nullptr;
     _RA_CreatePopupMenu = nullptr;
     _RA_InvokeDialog = nullptr;

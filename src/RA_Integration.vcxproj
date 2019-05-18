@@ -72,7 +72,6 @@
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="RA_MemManager.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
-    <ClCompile Include="RA_User.cpp" />
     <ClCompile Include="data\GameContext.cpp" />
     <ClCompile Include="services\AchievementRuntime.cpp" />
     <ClCompile Include="services\GameIdentifier.cpp" />
@@ -97,6 +96,7 @@
     <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayFriendsPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayListPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayManager.cpp" />
@@ -130,6 +130,7 @@
     <ClInclude Include="api\FetchGameData.hh" />
     <ClInclude Include="api\FetchGamesList.hh" />
     <ClInclude Include="api\FetchLeaderboardInfo.hh" />
+    <ClInclude Include="api\FetchUserFriends.hh" />
     <ClInclude Include="api\FetchUserUnlocks.hh" />
     <ClInclude Include="api\impl\ConnectedServer.hh" />
     <ClInclude Include="api\impl\DisconnectedServer.hh" />
@@ -182,7 +183,6 @@
     <ClInclude Include="RA_MemManager.h" />
     <ClInclude Include="RA_Resource.h" />
     <ClInclude Include="RA_StringUtils.h" />
-    <ClInclude Include="RA_User.h" />
     <ClInclude Include="services\AchievementRuntime.hh" />
     <ClInclude Include="services\GameIdentifier.hh" />
     <ClInclude Include="services\Http.hh" />
@@ -234,6 +234,7 @@
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayAchievementsPageViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayFriendsPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayListPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayManager.hh" />

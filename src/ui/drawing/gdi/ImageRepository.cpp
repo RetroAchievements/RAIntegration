@@ -105,7 +105,18 @@ bool ImageRepository::IsImageAvailable(ImageType nType, const std::string& sName
     if (sName.empty())
         return false;
 
+    HBitmapMap* mMap = const_cast<ImageRepository*>(this)->GetBitmapMap(nType);
+    if (mMap != nullptr)
+    {
+        HBitmapMap::iterator iter = mMap->find(sName);
+        if (iter != mMap->end())
+            return true;
+    }
+
     std::wstring sFilename = GetFilename(nType, sName);
+    if (m_vRequestedImages.find(sFilename) != m_vRequestedImages.end())
+        return false;
+
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     return (pFileSystem.GetFileSize(sFilename) > 0);
 }
@@ -153,12 +164,12 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     RA_LOG_INFO("Downloading %s", sUrl.c_str());
 
     ra::services::Http::Request request(sUrl);
-    request.DownloadAsync(sFilename, [this,sFilename,sUrl](const ra::services::Http::Response& response)
+    request.DownloadAsync(sFilename, [this,sFilename,sUrl,nType,sName](const ra::services::Http::Response& response)
     {
         if (response.StatusCode() == ra::services::Http::StatusCode::OK)
         {
             auto nFileSize = ra::services::ServiceLocator::Get<ra::services::IFileSystem>().GetFileSize(sFilename);
-            RA_LOG_INFO("Wrote %l bytes to %s", nFileSize, ra::Narrow(sFilename).c_str());
+            RA_LOG_INFO("Wrote %lu bytes to %s", nFileSize, ra::Narrow(sFilename).c_str());
         }
         else
         {
@@ -169,6 +180,8 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
             std::lock_guard<std::mutex> lock(m_oMutex);
             m_vRequestedImages.erase(sFilename);
         }
+
+        OnImageChanged(nType, sName);
     });
 }
 

@@ -24,6 +24,9 @@ extern "C" {
     // Initialize all data related to RA Engine for offline mode. Call as early as possible.
     API int CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nConsoleID, const char* sClientVersion);
 
+    // Changes the HWND for the main emulator window
+    API void CCONV _RA_UpdateHWnd(HWND hMainHWND);
+
     // Call for a tidy exit at end of app.
     API int CCONV _RA_Shutdown();
 
@@ -64,9 +67,6 @@ extern "C" {
 
     // Use in special cases where the emulator contains more than one console ID.
     API void CCONV _RA_SetConsoleID(unsigned int nConsoleID);
-
-    // Deal with any HTTP results that come along. Call per-cycle from main thread.
-    API int CCONV _RA_HandleHTTPResults();
 
     // Update the title of the app
     API void CCONV _RA_UpdateAppTitle(const char* sMessage = nullptr);

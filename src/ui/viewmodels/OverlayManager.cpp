@@ -211,8 +211,6 @@ void OverlayManager::ClearPopups()
     for (auto& pTracker : m_vScoreTrackers)
         pTracker->SetDestroyPending();
 
-    m_vmOverlay.Deactivate();
-
     RequestRender();
 }
 

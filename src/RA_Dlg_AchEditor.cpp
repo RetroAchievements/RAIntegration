@@ -7,7 +7,6 @@
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
 #include "RA_Resource.h"
-#include "RA_User.h"
 #include "RA_httpthread.h"
 
 #include "api\FetchBadgeIds.hh"
@@ -234,7 +233,7 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
             SetCell(hList, item, nRow, CondSubItems::Value_Src, ra::StringPrintf("0x%02x", Cond.CompSource().GetValue()));
     }
 
-    if (Cond.IsAddCondition() || Cond.IsSubCondition())
+    if (Cond.IsSingleOperandConditionType())
     {
         SetCell(hList, item, nRow, CondSubItems::Comparison, "");
         SetCell(hList, item, nRow, CondSubItems::Type_Tgt, "");
@@ -515,7 +514,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                 const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
-                if (Cond.IsAddCondition() || Cond.IsSubCondition())
+                if (Cond.IsSingleOperandConditionType())
                     break;
             }
 
@@ -579,7 +578,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                 const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
-                if (Cond.IsAddCondition() || Cond.IsSubCondition())
+                if (Cond.IsSingleOperandConditionType())
                     break;
             }
 
@@ -618,7 +617,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
 
             const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
             const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
-            if (Cond.IsAddCondition() || Cond.IsSubCondition())
+            if (Cond.IsSingleOperandConditionType())
                 break;
 
             g_hIPEEdit =
@@ -660,7 +659,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                 const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
-                if (Cond.IsAddCondition() || Cond.IsSubCondition())
+                if (Cond.IsSingleOperandConditionType())
                     break;
             }
 

@@ -117,6 +117,9 @@ enum ConsoleID
 //	Populates all function pointers so they can be used by the app.
 extern void RA_Init(HWND hMainHWND, /*enum ConsoleType*/ int console, const char* sClientVersion);
 
+//  Updates the handle for the emulator window.
+extern void RA_UpdateHWnd(HWND hMainHWND);
+
 //	Call with shared function pointers from app.
 extern void RA_InstallSharedFunctions(bool (*fpUnusedIsActive)(void), void (*fpCauseUnpause)(void),
                                       void (*fpCausePause)(void), void (*fpRebuildMenu)(void),

@@ -5,7 +5,6 @@
 #include "RA_Resource.h"
 #include "RA_httpthread.h"
 #include "RA_md5factory.h"
-#include "RA_User.h"
 
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
@@ -18,6 +17,7 @@
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
+#include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
@@ -63,17 +63,25 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
     return TRUE;
 }
 
+API void CCONV _RA_UpdateHWnd(HWND hMainHWND)
+{
+    if (hMainHWND != g_RAMainWnd)
+    {
+        auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
+        pDesktop.SetMainHWnd(hMainHWND);
+        g_RAMainWnd = hMainHWND;
+
+        auto& pOverlayWindow = ra::services::ServiceLocator::GetMutable<ra::ui::win32::OverlayWindow>();
+        pOverlayWindow.CreateOverlayWindow(hMainHWND);
+    }
+}
+
 static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
 {
     ra::services::Initialization::RegisterServices(ra::itoe<EmulatorID>(nEmulatorID));
 
     // initialize global state
-    auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
-    pDesktop.SetMainHWnd(hMainHWND);
-    g_RAMainWnd = hMainHWND;
-
-    auto& pOverlayWindow = ra::services::ServiceLocator::GetMutable<ra::ui::win32::OverlayWindow>();
-    pOverlayWindow.CreateOverlayWindow(hMainHWND);
+    _RA_UpdateHWnd(hMainHWND);
 
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     g_sHomeDir = pFileSystem.BaseDirectory();
@@ -93,6 +101,9 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
 API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* /*sClientVer*/)
 {
     InitCommon(hMainHWND, nEmulatorID);
+
+    ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().DisableLogin();
+
     return TRUE;
 }
 
@@ -110,15 +121,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
         if (!ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().ValidateClientVersion())
             ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().Logout();
     });
-
-    //	TBD:
-    //if( RAUsers::LocalUser().Username().length() > 0 )
-    //{
-    //	args.clear();
-    //	args[ 'u' ] = RAUsers::LocalUser().Username();
-    //	args[ 't' ] = RAUsers::LocalUser().Token();
-    //	RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
-    //}
 
     return TRUE;
 }
@@ -278,7 +280,7 @@ API void CCONV _RA_ClearMemoryBanks()
 //	}
 //}
 
-API int CCONV _RA_HandleHTTPResults()
+int _RA_HandleHTTPResults_deprecated()
 {
     WaitForSingleObject(RAWeb::Mutex(), INFINITE);
 
@@ -290,10 +292,6 @@ API int CCONV _RA_HandleHTTPResults()
         {
             switch (pObj->GetRequestType())
             {
-                case RequestFriendList:
-                    RAUsers::LocalUser().OnFriendListResponse(doc);
-                    break;
-
                 case RequestScore:
                 {
                     ASSERT(doc["Success"].GetBool());
@@ -311,7 +309,7 @@ API int CCONV _RA_HandleHTTPResults()
                         else
                         {
                             // Find friend? Update this information?
-                            RAUsers::GetUser(sUser).SetScore(nScore);
+                            //RAUsers::GetUser(sUser).SetScore(nScore);
                         }
                     }
                     else
@@ -364,7 +362,8 @@ API HMENU CCONV _RA_CreatePopupMenu()
         GSL_SUPPRESS_TYPE1 AppendMenu(hRA, MF_POPUP, reinterpret_cast<UINT_PTR>(hRA_LB), TEXT("Leaderboards"));
         AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
         AppendMenu(hRA_LB, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge &Notification"));
+        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Start &Notification"));
+        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_CANCEL_NOTIFS, TEXT("Display Cancel N&otification"));
         AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score &Counter"));
         AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank &Scoreboard"));
 
@@ -390,8 +389,8 @@ void _FetchGameHashLibraryFromWeb()
 {
     PostArgs args;
     args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
-    args['u'] = RAUsers::LocalUser().Username();
-    args['t'] = RAUsers::LocalUser().Token();
+    args['u'] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+    args['t'] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetApiToken();
     std::string Response;
     if (RAWeb::DoBlockingRequest(RequestHashLibrary, args, Response))
         _WriteBufferToFile(g_sHomeDir + RA_GAME_HASH_FILENAME, Response);
@@ -401,8 +400,8 @@ void _FetchMyProgressFromWeb()
 {
     PostArgs args;
     args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
-    args['u'] = RAUsers::LocalUser().Username();
-    args['t'] = RAUsers::LocalUser().Token();
+    args['u'] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+    args['t'] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetApiToken();
     std::string Response;
     if (RAWeb::DoBlockingRequest(RequestAllProgress, args, Response))
         _WriteBufferToFile(g_sHomeDir + RA_MY_PROGRESS_FILENAME, Response);
@@ -686,6 +685,16 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
             pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications,
                 !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications));
+
+            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
+        }
+        break;
+
+        case IDM_RA_TOGGLE_LB_CANCEL_NOTIFS:
+        {
+            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications,
+                !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications));
 
             ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
         }

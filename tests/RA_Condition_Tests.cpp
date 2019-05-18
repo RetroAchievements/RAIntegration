@@ -174,6 +174,11 @@ public:
             ComparisonType::Equals,
             CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "C:0xH1234=8");
 
+        AssertSerialize(Condition::Type::AndNext,
+            CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
+            ComparisonType::Equals,
+            CompVariable::Type::ValueComparison, MemSize::EightBit, 8U, "N:0xH1234=8");
+
         // hit count
         AssertSerialize(Condition::Type::Standard,
             CompVariable::Type::Address, MemSize::EightBit, 0x1234U,
@@ -205,6 +210,7 @@ public:
             Condition::Type::AddSource,
             Condition::Type::SubSource,
             Condition::Type::AddHits,
+            Condition::Type::AndNext,
         };
 
         for (const auto type : types)
@@ -212,11 +218,7 @@ public:
             Condition cond;
             cond.SetConditionType(type);
 
-            Assert::AreEqual(cond.IsResetCondition(), (type == Condition::Type::ResetIf));
-            Assert::AreEqual(cond.IsPauseCondition(), (type == Condition::Type::PauseIf));
-            Assert::AreEqual(cond.IsAddCondition(), (type == Condition::Type::AddSource));
-            Assert::AreEqual(cond.IsSubCondition(), (type == Condition::Type::SubSource));
-            Assert::AreEqual(cond.IsAddHitsCondition(), (type == Condition::Type::AddHits));
+            Assert::AreEqual(cond.GetConditionType(), type);
         }
     }
 };

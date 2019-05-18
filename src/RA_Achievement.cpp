@@ -283,6 +283,9 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
             case RC_CONDITION_ADD_HITS:
                 cond.SetConditionType(Condition::Type::AddHits);
                 break;
+            case RC_CONDITION_AND_NEXT:
+                cond.SetConditionType(Condition::Type::AndNext);
+                break;
         }
 
         cond.SetRequiredHits(pCondition->required_hits);

@@ -14,6 +14,7 @@
 #include "ui\viewmodels\OverlayAchievementsPageViewModel.hh"
 #include "ui\viewmodels\OverlayFriendsPageViewModel.hh"
 #include "ui\viewmodels\OverlayLeaderboardsPageViewModel.hh"
+#include "ui\viewmodels\OverlayRecentGamesPageViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -337,7 +338,7 @@ void OverlayViewModel::Deactivate()
 
 void OverlayViewModel::PopulatePages()
 {
-    m_vPages.resize(3);
+    m_vPages.resize(4);
 
     auto pAchievementsPage = std::make_unique<OverlayAchievementsPageViewModel>();
     m_vPages.at(0) = std::move(pAchievementsPage);
@@ -345,8 +346,11 @@ void OverlayViewModel::PopulatePages()
     auto pLeaderboardsPage = std::make_unique<OverlayLeaderboardsPageViewModel>();
     m_vPages.at(1) = std::move(pLeaderboardsPage);
 
+    auto pRecentGamesPage = std::make_unique<OverlayRecentGamesPageViewModel>();
+    m_vPages.at(2) = std::move(pRecentGamesPage);
+
     auto pFriendsPage = std::make_unique<OverlayFriendsPageViewModel>();
-    m_vPages.at(2) = std::move(pFriendsPage);
+    m_vPages.at(3) = std::move(pFriendsPage);
 }
 
 } // namespace viewmodels

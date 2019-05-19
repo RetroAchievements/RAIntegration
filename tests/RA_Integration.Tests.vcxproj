@@ -214,6 +214,7 @@
     <ClCompile Include="..\src\ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayListPageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayRecentGamesPageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
@@ -264,6 +265,7 @@
     <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayListPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayManager_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayRecentGamesPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel_Tests.cpp" />
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />

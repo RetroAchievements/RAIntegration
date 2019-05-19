@@ -42,6 +42,18 @@ public:
     /// </summary>
     bool HasSessionData() const noexcept { return !m_vGameStats.empty(); }
 
+    struct GameStats
+    {
+        unsigned int GameId{};
+        std::chrono::seconds TotalPlayTime{};
+        std::chrono::system_clock::time_point LastSessionStart;
+    };
+
+    /// <summary>
+    /// Gets the previous session data.
+    /// </summary>
+    const std::vector<GameStats>& SessionData() const { return m_vGameStats; }
+
 protected:
     virtual void LoadSessions();
     void AddSession(unsigned int nGameId, time_t tSessionStart, std::chrono::seconds tSessionDuration);
@@ -60,13 +72,6 @@ private:
 
     std::chrono::steady_clock::time_point m_tpSessionStart{};
     time_t m_tSessionStart{};
-
-    struct GameStats
-    {
-        unsigned int GameId{};
-        std::chrono::seconds TotalPlaytime{};
-        std::chrono::system_clock::time_point LastSessionStart;
-    };
 
     std::vector<GameStats> m_vGameStats;
 

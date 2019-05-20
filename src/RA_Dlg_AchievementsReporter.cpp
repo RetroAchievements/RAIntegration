@@ -116,7 +116,6 @@ INT_PTR CALLBACK Dlg_AchievementsReporter::AchievementsReporterProc(HWND hDlg, U
             }
 
             ListView_SetExtendedListViewStyle(hList, LVS_EX_CHECKBOXES | LVS_EX_HEADERDRAGDROP);
-            SetDlgItemText(hDlg, IDC_RA_BROKENACH_BUGREPORTER, NativeStr(ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername()).c_str());
         }
             return FALSE;
 

@@ -366,8 +366,20 @@ void DialogBase::UpdateAnchoredControls()
 
 #pragma warning(pop)
 
-        ::SetWindowPos(hControl, 0, nLeft, nTop, nWidth, nHeight, SWP_NOZORDER | SWP_NOACTIVATE);
+        ::MoveWindow(hControl, nLeft, nTop, nWidth, nHeight, FALSE);
+
+        if (nWidth != rcControl.right - rcControl.left || nHeight != rcControl.bottom - rcControl.top)
+        {
+            auto* pBinding = FindControlBinding(hControl);
+            if (pBinding)
+            {
+                ra::ui::Size pNewSize{ nWidth, nHeight };
+                pBinding->OnSizeChanged(pNewSize);
+            }
+        }
     }
+
+    ::InvalidateRect(m_hWnd, NULL, TRUE);
 }
 
 } // namespace win32

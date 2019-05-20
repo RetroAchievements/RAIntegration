@@ -36,12 +36,15 @@ public:
 
     void OnLvnItemChanged(LPNMLISTVIEW pnmListView);
 
+    void OnSizeChanged(const ra::ui::Size&) override { UpdateLayout(); }
+
 protected:
     void UpdateLayout();
     void UpdateAllItems();
     void UpdateItems(gsl::index nColumn);
 
 private:
+    size_t m_nColumnsCreated = 0;
     std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
     ViewModelCollectionBase* m_vmItems = nullptr;
 };

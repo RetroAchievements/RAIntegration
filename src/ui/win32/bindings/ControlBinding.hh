@@ -62,6 +62,11 @@ public:
     /// </summary>
     GSL_SUPPRESS_F6 virtual void OnValueChanged() {}
 
+    /// <summary>
+    /// Called when the bound control is resized.
+    /// </summary>
+    GSL_SUPPRESS_F6 virtual void OnSizeChanged(_UNUSED const ra::ui::Size& pNewSize) {}
+
 protected:
     void DisableBinding()
     {

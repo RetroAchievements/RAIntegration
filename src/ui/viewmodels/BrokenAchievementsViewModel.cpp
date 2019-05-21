@@ -14,7 +14,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-const IntModelProperty BrokenAchievementsViewModel::SelectedProblemIdProperty("BrokenAchievementsViewModel", "SelectedProblemId", -1);
+const IntModelProperty BrokenAchievementsViewModel::SelectedProblemIdProperty("BrokenAchievementsViewModel", "SelectedProblemId", 0);
 const StringModelProperty BrokenAchievementsViewModel::CommentProperty("BrokenAchievementsViewModel", "Comment", L"");
 
 const BoolModelProperty BrokenAchievementsViewModel::BrokenAchievementViewModel::IsSelectedProperty("BrokenAchievementViewModel", "IsSelected", false);
@@ -65,12 +65,14 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
 
     SetWindowTitle(L"Report Broken Achievements");
 
+    m_vAchievements.AddNotifyTarget(*this);
+
     return true;
 }
 
 bool BrokenAchievementsViewModel::Submit()
 {
-    if (GetSelectedProblemId() == -1)
+    if (GetSelectedProblemId() == 0)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Please select a problem type.");
         return false;
@@ -175,6 +177,51 @@ bool BrokenAchievementsViewModel::Submit()
 
     return true;
 }
+
+void BrokenAchievementsViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == BrokenAchievementViewModel::IsSelectedProperty)
+        OnItemSelectedChanged(nIndex, args);
+}
+
+void BrokenAchievementsViewModel::OnItemSelectedChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.tNewValue)
+    {
+        // if something is checked and no problem type has been selected, automatically select it
+        if (GetSelectedProblemId() == 0)
+        {
+            const auto* pItem = m_vAchievements.GetItemAt(nIndex);
+            if (pItem != nullptr)
+            {
+                SetSelectedProblemId(pItem->IsAchieved() ?
+                    ra::etoi(ra::api::SubmitTicket::ProblemType::WrongTime) :
+                    ra::etoi(ra::api::SubmitTicket::ProblemType::DidNotTrigger));
+            }
+        }
+    }
+    else
+    {
+        // if all items are unchecked, reset the problem type to unknown
+        if (GetSelectedProblemId() != 0)
+        {
+            bool bHasCheck = false;
+            for (gsl::index i = 0; i < ra::to_signed(m_vAchievements.Count()); ++i)
+            {
+                const auto* pItem = m_vAchievements.GetItemAt(i);
+                if (pItem != nullptr && pItem->IsSelected())
+                {
+                    bHasCheck = true;
+                    break;
+                }
+            }
+
+            if (!bHasCheck)
+                SetSelectedProblemId(0);
+        }
+    }
+}
+
 
 } // namespace viewmodels
 } // namespace ui

@@ -61,7 +61,7 @@ public:
     TEST_METHOD(TestInitialValues)
     {
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
-        Assert::AreEqual(-1, vmBrokenAchievements.GetSelectedProblemId());
+        Assert::AreEqual(0, vmBrokenAchievements.GetSelectedProblemId());
         Assert::AreEqual(std::wstring(L""), vmBrokenAchievements.GetComment());
         Assert::AreEqual(0U, vmBrokenAchievements.Achievements().Count());
     }
@@ -400,6 +400,38 @@ public:
 
         Assert::IsFalse(vmBrokenAchievements.Submit());
         Assert::IsTrue(bDialogSeen);
+    }
+
+    TEST_METHOD(TestAutoSelectProblemType)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+
+        Assert::AreEqual(0, vmBrokenAchievements.GetSelectedProblemId());
+
+        // a non-active achievement has been triggered, set problem type to WrongTime
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
+        Assert::AreEqual(ra::etoi(ra::api::SubmitTicket::ProblemType::WrongTime), vmBrokenAchievements.GetSelectedProblemId());
+
+        // when nothing is selected, problem type should be reset
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(false);
+        Assert::AreEqual(0, vmBrokenAchievements.GetSelectedProblemId());
+
+        // an active achievement has not been triggered, set problem type to DidNotTrigger
+        vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(true);
+        Assert::AreEqual(ra::etoi(ra::api::SubmitTicket::ProblemType::DidNotTrigger), vmBrokenAchievements.GetSelectedProblemId());
+
+        // don't change problem type if it's already set
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
+        Assert::AreEqual(ra::etoi(ra::api::SubmitTicket::ProblemType::DidNotTrigger), vmBrokenAchievements.GetSelectedProblemId());
+
+        // don't reset problem type if anything is still selected
+        vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(false);
+        Assert::AreEqual(ra::etoi(ra::api::SubmitTicket::ProblemType::DidNotTrigger), vmBrokenAchievements.GetSelectedProblemId());
+
+        // do reset problem type after everything is deselected
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(false);
+        Assert::AreEqual(0, vmBrokenAchievements.GetSelectedProblemId());
     }
 };
 

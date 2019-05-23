@@ -216,6 +216,109 @@ public:
         Assert::IsTrue(bDialogSeen);
     }
 
+    TEST_METHOD(TestSubmitDidNotTriggerAsTriggeredWrongTimeCancel)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(true);
+
+        bool bDialogSeen = false;
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"The achievement you have selected has not triggered, but you have selected 'Triggered at the wrong time'."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::No;
+        });
+
+        vmBrokenAchievements.mockServer.ExpectUncalled<ra::api::SubmitTicket>();
+
+        Assert::IsFalse(vmBrokenAchievements.Submit());
+        Assert::IsTrue(bDialogSeen);
+    }
+
+    TEST_METHOD(TestSubmitDidNotTriggerAsTriggeredWrongTimeProceed)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(true);
+        vmBrokenAchievements.SetComment(L"Comment");
+
+        bool bDialogSeen = false;
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
+        {
+            if (!bDialogSeen)
+            {
+                // first dialog is warning we want to capture, second dialog is confirmation
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"The achievement you have selected has not triggered, but you have selected 'Triggered at the wrong time'."), vmMessageBox.GetMessage());
+            }
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmBrokenAchievements.mockServer.HandleRequest<ra::api::SubmitTicket>([](const ra::api::SubmitTicket::Request&, ra::api::SubmitTicket::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            response.TicketsCreated = 1;
+            return true;
+        });
+
+        Assert::IsTrue(vmBrokenAchievements.Submit());
+        Assert::IsTrue(bDialogSeen);
+    }
+
+    TEST_METHOD(TestSubmitTriggeredWrongTimeAsDidNotTriggerCancel)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(2);
+        vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
+
+        bool bDialogSeen = false;
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"The achievement you have selected has triggered, but you have selected 'Did not trigger'."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::No;
+        });
+
+        vmBrokenAchievements.mockServer.ExpectUncalled<ra::api::SubmitTicket>();
+
+        Assert::IsFalse(vmBrokenAchievements.Submit());
+        Assert::IsTrue(bDialogSeen);
+    }
+
+    TEST_METHOD(TestSubmitTriggeredWrongTimeAsDidNotTriggerProceed)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(2);
+        vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
+
+        bool bDialogSeen = false;
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
+        {
+            if (!bDialogSeen)
+            {
+                // first dialog is warning we want to capture, second dialog is confirmation
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"The achievement you have selected has triggered, but you have selected 'Did not trigger'."), vmMessageBox.GetMessage());
+            }
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmBrokenAchievements.mockServer.HandleRequest<ra::api::SubmitTicket>([](const ra::api::SubmitTicket::Request&, ra::api::SubmitTicket::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            response.TicketsCreated = 1;
+            return true;
+        });
+
+        Assert::IsTrue(vmBrokenAchievements.Submit());
+        Assert::IsTrue(bDialogSeen);
+    }
+
     TEST_METHOD(TestSubmitTriggeredWrongTimeNoComment)
     {
         BrokenAchievementsViewModelHarness vmBrokenAchievements;

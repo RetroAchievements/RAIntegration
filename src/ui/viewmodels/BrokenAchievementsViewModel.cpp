@@ -80,6 +80,8 @@ bool BrokenAchievementsViewModel::Submit()
 
     ra::api::SubmitTicket::Request request;
     std::string sBuggedIDs;
+    size_t nAchievedSelected = 0U;
+    size_t nUnachievedSelected = 0U;
 
     for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vAchievements.Count()); ++nIndex)
     {
@@ -89,6 +91,11 @@ bool BrokenAchievementsViewModel::Submit()
             request.AchievementIds.insert(pAchievement->GetId());
             sBuggedIDs.append(std::to_string(pAchievement->GetId()));
             sBuggedIDs.push_back(',');
+
+            if (pAchievement->IsAchieved())
+                ++nAchievedSelected;
+            else
+                ++nUnachievedSelected;
         }
     }
 
@@ -107,10 +114,32 @@ bool BrokenAchievementsViewModel::Submit()
     switch (request.Problem)
     {
         case ra::api::SubmitTicket::ProblemType::DidNotTrigger:
+            if (nUnachievedSelected == 0)
+            {
+                if (ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Submit anyway?",
+                    ra::StringPrintf(L"The achievement%s you have selected %s triggered, but you have selected 'Did not trigger'.",
+                        request.AchievementIds.size() == 1 ? "" : "s", request.AchievementIds.size() == 1 ? "has" : "have"),
+                    ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo) == ra::ui::DialogResult::No)
+                {
+                    return false;
+                }
+            }
+
             sProblemType = " did not trigger";
             break;
 
         case ra::api::SubmitTicket::ProblemType::WrongTime:
+            if (nAchievedSelected == 0)
+            {
+                if (ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Submit anyway?",
+                    ra::StringPrintf(L"The achievement%s you have selected %s not triggered, but you have selected 'Triggered at the wrong time'.",
+                        request.AchievementIds.size() == 1 ? "" : "s", request.AchievementIds.size() == 1 ? "has" : "have"),
+                    ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo) == ra::ui::DialogResult::No)
+                {
+                    return false;
+                }
+            }
+
             if (GetComment().length() < 5)
             {
                 ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::StringPrintf(

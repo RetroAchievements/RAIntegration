@@ -171,6 +171,20 @@ public:
     }
 
     /// <summary>
+    /// Shows a warning message.
+    /// </summary>
+    static ra::ui::DialogResult ShowWarningMessage(std::wstring&& sHeader, std::wstring&& sMessage, Buttons buttons)
+    {
+        const auto _sMessage = std::move(sMessage);
+        MessageBoxViewModel viewModel(_sMessage);
+        const auto _sHeader = std::move(sHeader);
+        viewModel.SetHeader(_sHeader);
+        viewModel.SetIcon(Icon::Warning);
+        viewModel.SetButtons(buttons);
+        return viewModel.ShowModal();
+    }
+
+    /// <summary>
     /// Shows an error message.
     /// </summary>
     static void ShowErrorMessage(const std::wstring& sMessage)

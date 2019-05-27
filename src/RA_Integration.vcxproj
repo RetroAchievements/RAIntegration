@@ -65,7 +65,6 @@
     <ClCompile Include="RA_Dlg_GameLibrary.cpp" />
     <ClCompile Include="RA_Dlg_MemBookmark.cpp" />
     <ClCompile Include="RA_Dlg_Memory.cpp" />
-    <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
     <ClCompile Include="RA_Json.cpp" />
     <ClCompile Include="RA_Leaderboard.cpp" />
@@ -173,7 +172,6 @@
     <ClInclude Include="RA_Dlg_MemBookmark.h" />
     <ClInclude Include="RA_Dlg_Memory.h" />
     <ClInclude Include="ra_fwd.h" />
-    <ClInclude Include="RA_httpthread.h" />
     <ClInclude Include="RA_ImageFactory.h" />
     <ClInclude Include="RA_Interface.h" />
     <ClInclude Include="RA_Json.h" />

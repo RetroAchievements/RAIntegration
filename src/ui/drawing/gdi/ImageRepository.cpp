@@ -1,7 +1,6 @@
 #include "ImageRepository.hh"
 
 #include "RA_Core.h"
-#include "RA_httpthread.h"
 
 #include "services\Http.hh"
 #include "services\IFileSystem.hh"

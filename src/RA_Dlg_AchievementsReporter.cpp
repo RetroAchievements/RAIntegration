@@ -3,7 +3,6 @@
 #include "RA_AchievementSet.h"
 #include "RA_Core.h"
 #include "RA_Resource.h"
-#include "RA_httpthread.h"
 
 #include "api\SubmitTicket.hh"
 

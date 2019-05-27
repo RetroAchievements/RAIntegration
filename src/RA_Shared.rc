@@ -212,17 +212,14 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFR
 CAPTION "Report Broken Achievements"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    GROUPBOX        "Information:",IDC_RA_INFORMATION,4,4,331,40
-    LTEXT           "Use this dialog to report achievements that trigger incorrectly or not at all.",IDC_STATIC,13,14,239,8
-    LTEXT           "Please check the achievement(s) that need fixing, then select a problem type below.",IDC_STATIC,13,23,272,8
-    LTEXT           "Use the comment field to provide additional information to help the developer diagnose the issue.",IDC_STATIC,14,32,312,8
-    CONTROL         "",IDC_RA_REPORTBROKENACHIEVEMENTSLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,4,49,331,87
-    LTEXT           "Problem reported:",IDC_RA_PROBLEMHEADER,4,139,59,8
-    CONTROL         "Triggered at wrong time",IDC_RA_PROBLEMTYPE1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,159,139,93,10
-    CONTROL         "Didn't trigger at all",IDC_RA_PROBLEMTYPE2,"Button",BS_AUTORADIOBUTTON,260,139,75,10
-    LTEXT           "Comment:",IDC_RA_COMMENT_HEADER,4,152,34,8
-    EDITTEXT        IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT,45,151,290,47,ES_MULTILINE | ES_AUTOHSCROLL | ES_WANTRETURN
-    DEFPUSHBUTTON   "Send Bug Report",IDOK,178,201,75,17
+    LTEXT           "Which achievement(s) would you like to report?",IDC_RA_SELECT_ACHIEVEMENTS,4,4,152,8
+    CONTROL         "",IDC_RA_REPORTBROKENACHIEVEMENTSLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,4,14,331,87
+    LTEXT           "What problem are you having with the selected achievement(s)?",IDC_RA_PROBLEMHEADER,4,104,207,8
+    CONTROL         "Triggered at wrong time",IDC_RA_PROBLEMTYPE1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,4,114,93,10
+    CONTROL         "Didn't trigger at all",IDC_RA_PROBLEMTYPE2,"Button",BS_AUTORADIOBUTTON,98,114,75,10
+    LTEXT           "Please include any additional information that might help the developer diagnose the issue.  Things such as selected difficulty, use of level select or other cheat codes, and where it did trigger (if applicable).",IDC_RA_COMMENT_HEADER,4,127,331,17
+    EDITTEXT        IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT,4,146,331,52,ES_MULTILINE | ES_AUTOHSCROLL | ES_WANTRETURN
+    DEFPUSHBUTTON   "Submit Ticket",IDOK,178,201,75,17
     PUSHBUTTON      "Cancel",IDCANCEL,259,201,76,17
 END
 
@@ -440,7 +437,8 @@ BEGIN
         VERTGUIDE, 178
         TOPMARGIN, 4
         BOTTOMMARGIN, 218
-        HORZGUIDE, 151
+        HORZGUIDE, 124
+        HORZGUIDE, 146
         HORZGUIDE, 198
         HORZGUIDE, 201
     END

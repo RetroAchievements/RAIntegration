@@ -36,6 +36,7 @@ public:
     void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
     void DrawImageStretched(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
     void DrawSurface(int nX, int nY, const ISurface& pSurface) override;
+    void DrawSurface(int nX, int nY, const ISurface& pSurface, int nSurfaceX, int nSurfaceY, int nWidth, int nHeight) override;
 
     GSL_SUPPRESS_F6 void SetOpacity(_UNUSED double) override { assert("This surface does not support opacity"); }
 

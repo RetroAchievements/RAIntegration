@@ -66,8 +66,7 @@ void GridBinding::UpdateLayout()
     RECT rcList;
     GetClientRect(m_hWnd, &rcList);
 
-    const auto nScrollbarWidth = GetSystemMetrics(SM_CXVSCROLL);
-    const int nWidth = rcList.right - rcList.left - nScrollbarWidth;
+    const int nWidth = rcList.right - rcList.left;
     int nRemaining = nWidth;
     int nFillParts = 0;
     std::vector<int> vWidths;
@@ -106,7 +105,7 @@ void GridBinding::UpdateLayout()
     }
 
     // update or insert the columns
-    const auto nColumns = ListView_GetItemCount(ListView_GetHeader(m_hWnd));
+    const auto nColumns = m_nColumnsCreated;
     for (gsl::index i = 0; ra::to_unsigned(i) < m_vColumns.size(); ++i)
     {
         const auto& pColumn = *m_vColumns.at(i);
@@ -119,28 +118,45 @@ void GridBinding::UpdateLayout()
         col.pszText = const_cast<LPTSTR>(sHeader.c_str());
         col.iSubItem = i;
 
-        if (i < nColumns)
+        if (i < ra::to_signed(nColumns))
             ListView_SetColumn(m_hWnd, i, &col);
         else
             ListView_InsertColumn(m_hWnd, i, &col);
     }
 
     // remove any extra columns
-    if (ra::to_unsigned(nColumns) > m_vColumns.size())
+    if (nColumns > m_vColumns.size())
     {
         for (gsl::index i = nColumns - 1; ra::to_unsigned(i) >= m_vColumns.size(); --i)
             ListView_DeleteColumn(m_hWnd, i);
     }
+
+    // store the number of columns we know to be present since the suggested way to
+    // retrieve that number doesn't always work.
+    m_nColumnsCreated = m_vColumns.size();
 }
 
 void GridBinding::UpdateAllItems()
 {
+    RECT rcClientBefore{};
+    if (m_hWnd)
+        ::GetClientRect(m_hWnd, &rcClientBefore);
+
     DisableBinding();
 
     for (gsl::index nColumn = 0; ra::to_unsigned(nColumn) < m_vColumns.size(); ++nColumn)
         UpdateItems(nColumn);
 
     EnableBinding();
+
+    if (m_hWnd)
+    {
+        // if a scrollbar is added or removed, the client size will change
+        RECT rcClientAfter;
+        ::GetClientRect(m_hWnd, &rcClientAfter);
+        if (rcClientAfter.right != rcClientBefore.right)
+            UpdateLayout();
+    }
 }
 
 void GridBinding::UpdateItems(gsl::index nColumn)

@@ -115,6 +115,20 @@ protected:
 
     ra::ui::WindowViewModelBase& m_vmWindow;
 
+    enum class Anchor
+    {
+        None = 0x00,
+        Left = 0x01,
+        Top = 0x02,
+        Right = 0x04,
+        Bottom = 0x08
+    };
+
+    void SetAnchor(int nIDDlgItem, Anchor nAnchor)
+    {
+        m_vControlAnchors.emplace_back(AnchorInfo{ 0, 0, 0, 0, nIDDlgItem, nAnchor });
+    }
+
 private:
     // Allows access to `DialogProc` from static helper
     friend static INT_PTR CALLBACK StaticDialogProc(_In_ HWND hDlg,
@@ -146,6 +160,20 @@ private:
     }
 
     std::unordered_map<HWND, ra::ui::win32::bindings::ControlBinding*> m_mControlBindings;
+
+    struct AnchorInfo
+    {
+        int nMarginLeft{};
+        int nMarginTop{};
+        int nMarginRight{};
+        int nMarginBottom{};
+        int nIDDlgItem{};
+        Anchor nAnchor{};
+    };
+    std::vector<AnchorInfo> m_vControlAnchors;
+
+    void InitializeAnchors();
+    void UpdateAnchoredControls();
 };
 
 } // namespace win32

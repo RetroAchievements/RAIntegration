@@ -42,6 +42,8 @@ BrokenAchievementsDialog::BrokenAchievementsDialog(BrokenAchievementsViewModel& 
       m_bindComment(vmBrokenAchievements),
       m_bindAchievements(vmBrokenAchievements)
 {
+    m_bindWindow.SetInitialPosition(RelativePosition::Center, RelativePosition::Center, "Report Broken Achievements");
+
     m_bindWrongTime.BindCheck(BrokenAchievementsViewModel::SelectedProblemIdProperty,
         ra::etoi(ra::api::SubmitTicket::ProblemType::WrongTime));
     m_bindDidNotTrigger.BindCheck(BrokenAchievementsViewModel::SelectedProblemIdProperty,
@@ -73,6 +75,17 @@ BrokenAchievementsDialog::BrokenAchievementsDialog(BrokenAchievementsViewModel& 
     m_bindAchievements.BindColumn(3, std::move(pAchievedColumn));
 
     m_bindAchievements.BindItems(vmBrokenAchievements.Achievements());
+
+    using namespace ra::bitwise_ops;
+    SetAnchor(IDC_RA_INFORMATION, Anchor::Top | Anchor::Left | Anchor::Right);
+    SetAnchor(IDC_RA_REPORTBROKENACHIEVEMENTSLIST, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_PROBLEMHEADER, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_PROBLEMTYPE1, Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_PROBLEMTYPE2, Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_COMMENT_HEADER, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDCANCEL, Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDOK, Anchor::Bottom | Anchor::Right);
 }
 
 BOOL BrokenAchievementsDialog::OnInitDialog()

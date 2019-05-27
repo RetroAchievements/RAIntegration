@@ -21,6 +21,8 @@
 #define IDC_RA_SYSTEMNAME               1036
 #define IDC_RA_LINK                     1037
 #define IDC_RA_GAMENAME                 1038
+#define IDC_RA_INFORMATION              1039
+#define IDC_RA_PROBLEMHEADER            1040
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -111,7 +113,7 @@
 #define IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT 1587
 #define IDC_RA_PROBLEMTYPE1             1588
 #define IDC_RA_PROBLEMTYPE2             1589
-#define IDC_RA_BROKENACH_BUGREPORTER    1590
+#define IDC_RA_COMMENT_HEADER           1590
 #define IDC_RA_RESCAN                   1591
 #define IDC_RA_LBX_GAMELIST             1592
 #define IDC_RA_ROMDIR                   1593
@@ -159,9 +161,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        120
+#define _APS_NEXT_RESOURCE_VALUE        121
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1039
+#define _APS_NEXT_CONTROL_VALUE         1041
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

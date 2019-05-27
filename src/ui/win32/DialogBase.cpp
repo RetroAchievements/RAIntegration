@@ -5,6 +5,8 @@
 
 #include "RA_Core.h" // g_RAMainWnd, g_hThisDLLInst
 
+#include "ra_utility.h"
+
 namespace ra {
 namespace ui {
 namespace win32 {
@@ -106,6 +108,10 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             if (m_hWnd == nullptr)
             {
                 m_hWnd = hDlg;
+
+                // binding the window will resize it, make sure to capture sizes beforehand
+                InitializeAnchors();
+
                 m_bindWindow.SetHWND(m_hWnd);
             }
 
@@ -254,7 +260,126 @@ void DialogBase::OnMove(const ra::ui::Position& oNewPosition)
 _Use_decl_annotations_
 void DialogBase::OnSize(const ra::ui::Size& oNewSize)
 {
+    UpdateAnchoredControls();
+
     m_bindWindow.OnSizeChanged(oNewSize);
+}
+
+void DialogBase::InitializeAnchors()
+{
+    if (m_vControlAnchors.empty())
+        return;
+
+    // client rect will always be (0,0)-(width,height)
+    // but child window positions will always be screen-relative, so translate the client rect
+    // to screen coordinates
+    RECT rcWindow;
+    ::GetClientRect(m_hWnd, &rcWindow);
+
+    POINT pTopLeft = { rcWindow.left, rcWindow.top };
+    ::ClientToScreen(m_hWnd, &pTopLeft);
+    ::OffsetRect(&rcWindow, pTopLeft.x, pTopLeft.y);
+
+    for (auto& info : m_vControlAnchors)
+    {
+        auto hControl = ::GetDlgItem(m_hWnd, info.nIDDlgItem);
+        if (!hControl)
+            continue;
+
+        RECT rcControl;
+        ::GetWindowRect(hControl, &rcControl);
+
+        info.nMarginLeft = rcControl.left - rcWindow.left;
+        info.nMarginTop = rcControl.top - rcWindow.top;
+        info.nMarginRight = rcWindow.right - rcControl.right;
+        info.nMarginBottom = rcWindow.bottom - rcControl.bottom;
+    }
+}
+
+void DialogBase::UpdateAnchoredControls()
+{
+    if (m_vControlAnchors.empty())
+        return;
+
+    RECT rcWindow;
+    ::GetClientRect(m_hWnd, &rcWindow);
+    const int nWindowWidth = rcWindow.right - rcWindow.left;
+    const int nWindowHeight = rcWindow.bottom - rcWindow.top;
+
+    for (const auto& info : m_vControlAnchors)
+    {
+        auto hControl = ::GetDlgItem(m_hWnd, info.nIDDlgItem);
+        if (!hControl)
+            continue;
+
+        // GetClientRect will always return screen coordinates
+        // since we're just after the width/height, that's fine
+        RECT rcControl;
+        ::GetWindowRect(hControl, &rcControl);
+
+        int nLeft = info.nMarginLeft;
+        int nTop = info.nMarginTop;
+        int nWidth = rcControl.right - rcControl.left;
+        int nHeight = rcControl.bottom - rcControl.top;
+
+#pragma warning(push)
+#pragma warning(disable : 4063) // case invalid for entry not in enum: "Left | Right" and "Top | Bottom"
+
+        using namespace ra::bitwise_ops;
+        switch (info.nAnchor & (Anchor::Left | Anchor::Right))
+        {
+            case Anchor::None:
+                nLeft = (nWindowWidth - nWidth) / 2;
+                break;
+
+            default:
+            case Anchor::Left:
+                break;
+
+            case Anchor::Right:
+                nLeft = nWindowWidth - info.nMarginRight - nWidth;
+                break;
+
+            case Anchor::Left | Anchor::Right:
+                nWidth = nWindowWidth - info.nMarginLeft - info.nMarginRight;
+                break;
+        }
+
+        switch (info.nAnchor & (Anchor::Top | Anchor::Bottom))
+        {
+            case Anchor::None:
+                nTop = (nWindowHeight - nHeight) / 2;
+                break;
+
+            default:
+            case Anchor::Top:
+                break;
+
+            case Anchor::Bottom:
+                nTop = nWindowHeight - info.nMarginBottom - nHeight;
+                break;
+
+            case Anchor::Top | Anchor::Bottom:
+                nHeight = nWindowHeight - info.nMarginTop - info.nMarginBottom;
+                break;
+        }
+
+#pragma warning(pop)
+
+        ::MoveWindow(hControl, nLeft, nTop, nWidth, nHeight, FALSE);
+
+        if (nWidth != rcControl.right - rcControl.left || nHeight != rcControl.bottom - rcControl.top)
+        {
+            auto* pBinding = FindControlBinding(hControl);
+            if (pBinding)
+            {
+                ra::ui::Size pNewSize{ nWidth, nHeight };
+                pBinding->OnSizeChanged(pNewSize);
+            }
+        }
+    }
+
+    ::InvalidateRect(m_hWnd, NULL, TRUE);
 }
 
 } // namespace win32

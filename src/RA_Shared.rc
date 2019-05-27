@@ -212,20 +212,18 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFR
 CAPTION "Report Broken Achievements"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    DEFPUSHBUTTON   "Send Bug Report",IDOK,239,198,93,18
-    GROUPBOX        "Information:",IDC_STATIC,7,7,325,40
-    EDITTEXT        IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT,45,159,287,35,ES_MULTILINE | ES_AUTOHSCROLL | ES_WANTRETURN
-    CONTROL         "Triggered at wrong time",IDC_RA_PROBLEMTYPE1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,159,141,93,10
-    CONTROL         "Didn't trigger at all",IDC_RA_PROBLEMTYPE2,"Button",BS_AUTORADIOBUTTON,257,141,75,10
-    LTEXT           "Problem reported:",IDC_STATIC,7,141,59,8
-    LTEXT           "Comment:",IDC_STATIC,7,160,34,8
-    LTEXT           "Use this dialog to report achievements that trigger incorrectly or not at all.",IDC_STATIC,13,16,239,8
-    LTEXT           "Please check the achievement(s) that need fixing, then select a problem type below.",IDC_STATIC,13,25,272,8
-    LTEXT           "If possible, please include a comment if you can to help the developer!",IDC_STATIC,14,34,226,8
-    PUSHBUTTON      "Cancel",IDCANCEL,192,198,43,18
-    CONTROL         "",IDC_RA_REPORTBROKENACHIEVEMENTSLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,7,49,325,87
-    LTEXT           "Reporter:",IDC_STATIC,7,204,32,8
-    EDITTEXT        IDC_RA_BROKENACH_BUGREPORTER,43,202,78,14,ES_AUTOHSCROLL | WS_DISABLED
+    GROUPBOX        "Information:",IDC_RA_INFORMATION,4,4,331,40
+    LTEXT           "Use this dialog to report achievements that trigger incorrectly or not at all.",IDC_STATIC,13,14,239,8
+    LTEXT           "Please check the achievement(s) that need fixing, then select a problem type below.",IDC_STATIC,13,23,272,8
+    LTEXT           "Use the comment field to provide additional information to help the developer diagnose the issue.",IDC_STATIC,14,32,312,8
+    CONTROL         "",IDC_RA_REPORTBROKENACHIEVEMENTSLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | WS_BORDER | WS_TABSTOP,4,49,331,87
+    LTEXT           "Problem reported:",IDC_RA_PROBLEMHEADER,4,139,59,8
+    CONTROL         "Triggered at wrong time",IDC_RA_PROBLEMTYPE1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,159,139,93,10
+    CONTROL         "Didn't trigger at all",IDC_RA_PROBLEMTYPE2,"Button",BS_AUTORADIOBUTTON,260,139,75,10
+    LTEXT           "Comment:",IDC_RA_COMMENT_HEADER,4,152,34,8
+    EDITTEXT        IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT,45,151,290,47,ES_MULTILINE | ES_AUTOHSCROLL | ES_WANTRETURN
+    DEFPUSHBUTTON   "Send Bug Report",IDOK,178,201,75,17
+    PUSHBUTTON      "Cancel",IDCANCEL,259,201,76,17
 END
 
 IDD_RA_GAMELIBRARY DIALOGEX 0, 0, 380, 175
@@ -435,15 +433,16 @@ BEGIN
 
     IDD_RA_REPORTBROKENACHIEVEMENTS, DIALOG
     BEGIN
-        LEFTMARGIN, 7
-        RIGHTMARGIN, 332
+        LEFTMARGIN, 4
+        RIGHTMARGIN, 335
         VERTGUIDE, 13
-        VERTGUIDE, 83
-        VERTGUIDE, 192
-        TOPMARGIN, 7
-        BOTTOMMARGIN, 216
+        VERTGUIDE, 45
+        VERTGUIDE, 178
+        TOPMARGIN, 4
+        BOTTOMMARGIN, 218
         HORZGUIDE, 151
         HORZGUIDE, 198
+        HORZGUIDE, 201
     END
 
     IDD_RA_GAMELIBRARY, DIALOG
@@ -550,6 +549,11 @@ BEGIN
 END
 
 IDD_RA_GAMETITLESEL AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
+
+IDD_RA_REPORTBROKENACHIEVEMENTS AFX_DIALOG_LAYOUT
 BEGIN
     0
 END

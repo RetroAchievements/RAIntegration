@@ -100,6 +100,7 @@
     <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayListPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayManager.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayRecentGamesPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp" />
@@ -238,6 +239,7 @@
     <ClInclude Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayListPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayManager.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayRecentGamesPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupViewModelBase.hh" />

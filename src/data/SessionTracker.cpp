@@ -44,26 +44,22 @@ void SessionTracker::LoadSessions()
         std::string sLine;
         while (pStatsFile->GetLine(sLine))
         {
-            auto nIndex = sLine.find(':');
-            if (nIndex == std::string::npos)
+            ra::Tokenizer pTokenizer(sLine);
+
+            const auto nGameId = pTokenizer.ReadNumber();
+            if (!pTokenizer.Consume(':'))
                 continue;
 
-            const auto nGameId = std::strtoul(sLine.c_str(), nullptr, 10);
-
-            auto nIndex2 = sLine.find(':', ++nIndex);
-            if (nIndex2 == std::string::npos)
+            const auto nSessionStart = pTokenizer.ReadNumber();
+            if (!pTokenizer.Consume(':'))
                 continue;
 
-            const auto nSessionStart = std::strtoul(&sLine.at(nIndex), nullptr, 10);
-
-            nIndex = sLine.find(':', ++nIndex2);
-            if (nIndex == std::string::npos)
+            const auto nSessionLength = pTokenizer.ReadNumber();
+            if (!pTokenizer.Consume(':'))
                 continue;
-            const auto nSessionLength = std::strtoul(&sLine.at(nIndex2), nullptr, 10);
 
-            std::string md5;
-            GSL_SUPPRESS_TYPE1 md5 = RAGenerateMD5(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex + 1);
-            if (sLine.at(nIndex + 1) == md5.front() && sLine.at(nIndex + 2) == md5.back())
+            const auto md5 = RAGenerateMD5(reinterpret_cast<const unsigned char*>(sLine.c_str()), pTokenizer.CurrentPosition());
+            if (pTokenizer.Consume(md5.front()) && pTokenizer.Consume(md5.back()))
                 AddSession(nGameId, nSessionStart, std::chrono::seconds(nSessionLength));
         }
 
@@ -85,7 +81,7 @@ void SessionTracker::AddSession(unsigned int nGameId, time_t tSessionStart, std:
     }
 
     pIter->LastSessionStart = std::chrono::system_clock::from_time_t(tSessionStart);
-    pIter->TotalPlaytime += tSessionDuration;
+    pIter->TotalPlayTime += tSessionDuration;
 }
 
 void SessionTracker::SortSessions()
@@ -206,7 +202,7 @@ std::chrono::seconds SessionTracker::GetTotalPlaytime(unsigned int nGameId) cons
     {
         if (pGameStats.GameId == nGameId)
         {
-            tPlaytime += pGameStats.TotalPlaytime;
+            tPlaytime += pGameStats.TotalPlayTime;
             break;
         }
     }

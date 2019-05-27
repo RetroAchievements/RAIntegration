@@ -109,13 +109,27 @@ std::wstring& Trim(std::wstring& str)
 }
 
 _Use_decl_annotations_
-const std::string FormatDate(time_t when)
+const std::string FormatDateTime(time_t when)
 {
     struct tm tm;
     if (localtime_s(&tm, &when) == 0)
     {
         char buffer[64];
         if (std::strftime(buffer, sizeof(buffer), "%a %e %b %Y %H:%M:%S", &tm) > 0)
+            return std::string(buffer);
+    }
+
+    return std::to_string(when);
+}
+
+_Use_decl_annotations_
+const std::string FormatDate(time_t when)
+{
+    struct tm tm;
+    if (localtime_s(&tm, &when) == 0)
+    {
+        char buffer[64];
+        if (std::strftime(buffer, sizeof(buffer), "%a %e %b %Y", &tm) > 0)
             return std::string(buffer);
     }
 

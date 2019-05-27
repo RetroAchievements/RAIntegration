@@ -180,8 +180,8 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         return;
 
     auto& vmAchievement = m_vAchievementDetails.emplace(vmItem.GetId(), AchievementViewModel{}).first->second;
-    vmAchievement.SetCreatedDate(ra::Widen(ra::FormatDate(pAchievement->CreatedDate())));
-    vmAchievement.SetModifiedDate(ra::Widen(ra::FormatDate(pAchievement->ModifiedDate())));
+    vmAchievement.SetCreatedDate(ra::Widen(ra::FormatDateTime(pAchievement->CreatedDate())));
+    vmAchievement.SetModifiedDate(ra::Widen(ra::FormatDateTime(pAchievement->ModifiedDate())));
 
     if (pAchievement->Category() == ra::etoi(AchievementSet::Type::Local))
     {
@@ -214,7 +214,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         {
             auto& vmWinner = vmAchievement.RecentWinners.Add();
             vmWinner.SetLabel(ra::Widen(pWinner.User));
-            vmWinner.SetDetail(ra::StringPrintf(L"%s (%s)", ra::FormatDate(pWinner.DateAwarded), ra::FormatDateRecent(pWinner.DateAwarded)));
+            vmWinner.SetDetail(ra::StringPrintf(L"%s (%s)", ra::FormatDateTime(pWinner.DateAwarded), ra::FormatDateRecent(pWinner.DateAwarded)));
 
             if (pWinner.User == sUsername)
                 vmWinner.SetDisabled(true);

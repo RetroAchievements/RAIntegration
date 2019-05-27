@@ -26,19 +26,19 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     if (pGameContext.GameId() == 0)
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You must load a game before you can report broken achievements.");
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You must load a game before you can report achievement problems.");
         return false;
     }
 
     if (pGameContext.ActiveAchievementType() == AchievementSet::Type::Local)
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report broken local achievements.");
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report local achievement problems.");
         return false;
     }
 
     if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report broken achievements in compatibility test mode.");
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report achievement problems in compatibility test mode.");
         return false;
     }
 
@@ -63,7 +63,7 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
         return false;
     }
 
-    SetWindowTitle(L"Report Broken Achievements");
+    SetWindowTitle(L"Report Achievement Problem");
 
     m_vAchievements.AddNotifyTarget(*this);
 

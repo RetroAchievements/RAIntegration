@@ -75,7 +75,7 @@ public:
         {
             bDialogSeen = true;
 
-            Assert::AreEqual(std::wstring(L"You must load a game before you can report broken achievements."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"You must load a game before you can report achievement problems."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 
@@ -94,7 +94,7 @@ public:
         {
             bDialogSeen = true;
 
-            Assert::AreEqual(std::wstring(L"You cannot report broken local achievements."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"You cannot report local achievement problems."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 
@@ -113,7 +113,7 @@ public:
         {
             bDialogSeen = true;
 
-            Assert::AreEqual(std::wstring(L"You cannot report broken achievements in compatibility test mode."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"You cannot report achievement problems in compatibility test mode."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 

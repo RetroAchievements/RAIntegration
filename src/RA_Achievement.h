@@ -123,6 +123,9 @@ public:
 
     void RebuildTrigger();
 
+    const std::wstring& GetUnlockRichPresence() const { return m_sUnlockRichPresence; }
+    void SetUnlockRichPresence(const std::wstring& sValue) { m_sUnlockRichPresence = sValue; }
+
     // range for
     _NODISCARD inline auto begin() noexcept { return m_vConditions.begin(); }
     _NODISCARD inline auto begin() const noexcept { return m_vConditions.begin(); }
@@ -156,6 +159,8 @@ private:
     std::string m_sProgress;    // How to calculate the progress so far (syntactical)
     std::string m_sProgressMax; // Upper limit of the progress (syntactical? value?)
     std::string m_sProgressFmt; // Format of the progress to be shown (currency? step?)
+
+    std::wstring m_sUnlockRichPresence;
 
     float m_fProgressLastShown{}; // The last shown progress
 

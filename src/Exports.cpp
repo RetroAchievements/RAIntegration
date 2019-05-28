@@ -259,12 +259,16 @@ static void ProcessAchievements()
             case ra::services::AchievementRuntime::ChangeType::AchievementTriggered:
             {
                 pGameContext.AwardAchievement(pChange.nId);
+
 #pragma warning(push)
 #pragma warning(disable : 26462)
                 auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
 #pragma warning(pop)
                 if (!pAchievement)
                     break;
+
+                if (pGameContext.HasRichPresence())
+                    pAchievement->SetUnlockRichPresence(pGameContext.GetRichPresenceDisplayString());
 
 #ifndef RA_UTEST
                 //	Reverse find where I am in the list:

@@ -61,7 +61,6 @@
     <ClCompile Include="RA_Defs.cpp" />
     <ClCompile Include="RA_Dlg_AchEditor.cpp" />
     <ClCompile Include="RA_Dlg_Achievement.cpp" />
-    <ClCompile Include="RA_Dlg_AchievementsReporter.cpp" />
     <ClCompile Include="RA_Dlg_GameLibrary.cpp" />
     <ClCompile Include="RA_Dlg_MemBookmark.cpp" />
     <ClCompile Include="RA_Dlg_Memory.cpp" />
@@ -167,7 +166,6 @@
     <ClInclude Include="RA_Defs.h" />
     <ClInclude Include="RA_Dlg_AchEditor.h" />
     <ClInclude Include="RA_Dlg_Achievement.h" />
-    <ClInclude Include="RA_Dlg_AchievementsReporter.h" />
     <ClInclude Include="RA_Dlg_GameLibrary.h" />
     <ClInclude Include="RA_Dlg_MemBookmark.h" />
     <ClInclude Include="RA_Dlg_Memory.h" />

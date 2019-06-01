@@ -10,7 +10,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class BrokenAchievementsViewModel : public WindowViewModelBase
+class BrokenAchievementsViewModel : public WindowViewModelBase, protected ViewModelCollectionBase::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 BrokenAchievementsViewModel() = default;
@@ -122,7 +122,12 @@ public:
         return m_vAchievements;
     }
 
+protected:
+    void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args);
+
 private:
+    void OnItemSelectedChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args);
+
     ViewModelCollection<BrokenAchievementViewModel> m_vAchievements;
 };
 

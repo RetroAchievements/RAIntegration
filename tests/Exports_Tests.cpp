@@ -415,11 +415,26 @@ public:
         DoAchievementsFrameHarness harness;
         harness.MockAchievement(1U);
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementTriggered, 1U);
+        harness.mockGameContext.SetRichPresenceDisplayString(L"Titles");
 
         _RA_DoAchievementsFrame();
 
         Assert::IsTrue(harness.WasUnlocked(1U));
         Assert::IsFalse(harness.mockDesktop.WasDialogShown());
+        Assert::AreEqual(std::wstring(L"Titles"), harness.mockGameContext.FindAchievement(1U)->GetUnlockRichPresence());
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameAchievementTriggeredNoRichPresence)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U);
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementTriggered, 1U);
+
+        _RA_DoAchievementsFrame();
+
+        Assert::IsTrue(harness.WasUnlocked(1U));
+        Assert::IsFalse(harness.mockDesktop.WasDialogShown());
+        Assert::AreEqual(std::wstring(), harness.mockGameContext.FindAchievement(1U)->GetUnlockRichPresence());
     }
 
     TEST_METHOD(TestDoAchievementsFramePaused)

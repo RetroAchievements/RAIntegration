@@ -61,7 +61,7 @@ public:
     TEST_METHOD(TestInitialValues)
     {
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
-        Assert::AreEqual(-1, vmBrokenAchievements.GetSelectedProblemId());
+        Assert::AreEqual(0, vmBrokenAchievements.GetSelectedProblemId());
         Assert::AreEqual(std::wstring(L""), vmBrokenAchievements.GetComment());
         Assert::AreEqual(0U, vmBrokenAchievements.Achievements().Count());
     }
@@ -75,7 +75,7 @@ public:
         {
             bDialogSeen = true;
 
-            Assert::AreEqual(std::wstring(L"You must load a game before you can report broken achievements."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"You must load a game before you can report achievement problems."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 
@@ -94,7 +94,7 @@ public:
         {
             bDialogSeen = true;
 
-            Assert::AreEqual(std::wstring(L"You cannot report broken local achievements."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"You cannot report local achievement problems."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 
@@ -113,7 +113,7 @@ public:
         {
             bDialogSeen = true;
 
-            Assert::AreEqual(std::wstring(L"You cannot report broken achievements in compatibility test mode."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"You cannot report achievement problems in compatibility test mode."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 
@@ -213,6 +213,109 @@ public:
         vmBrokenAchievements.mockServer.ExpectUncalled<ra::api::SubmitTicket>();
 
         Assert::IsFalse(vmBrokenAchievements.Submit());
+        Assert::IsTrue(bDialogSeen);
+    }
+
+    TEST_METHOD(TestSubmitDidNotTriggerAsTriggeredWrongTimeCancel)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(true);
+
+        bool bDialogSeen = false;
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"The achievement you have selected has not triggered, but you have selected 'Triggered at the wrong time'."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::No;
+        });
+
+        vmBrokenAchievements.mockServer.ExpectUncalled<ra::api::SubmitTicket>();
+
+        Assert::IsFalse(vmBrokenAchievements.Submit());
+        Assert::IsTrue(bDialogSeen);
+    }
+
+    TEST_METHOD(TestSubmitDidNotTriggerAsTriggeredWrongTimeProceed)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(true);
+        vmBrokenAchievements.SetComment(L"Comment");
+
+        bool bDialogSeen = false;
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
+        {
+            if (!bDialogSeen)
+            {
+                // first dialog is warning we want to capture, second dialog is confirmation
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"The achievement you have selected has not triggered, but you have selected 'Triggered at the wrong time'."), vmMessageBox.GetMessage());
+            }
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmBrokenAchievements.mockServer.HandleRequest<ra::api::SubmitTicket>([](const ra::api::SubmitTicket::Request&, ra::api::SubmitTicket::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            response.TicketsCreated = 1;
+            return true;
+        });
+
+        Assert::IsTrue(vmBrokenAchievements.Submit());
+        Assert::IsTrue(bDialogSeen);
+    }
+
+    TEST_METHOD(TestSubmitTriggeredWrongTimeAsDidNotTriggerCancel)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(2);
+        vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
+
+        bool bDialogSeen = false;
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"The achievement you have selected has triggered, but you have selected 'Did not trigger'."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::No;
+        });
+
+        vmBrokenAchievements.mockServer.ExpectUncalled<ra::api::SubmitTicket>();
+
+        Assert::IsFalse(vmBrokenAchievements.Submit());
+        Assert::IsTrue(bDialogSeen);
+    }
+
+    TEST_METHOD(TestSubmitTriggeredWrongTimeAsDidNotTriggerProceed)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(2);
+        vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
+
+        bool bDialogSeen = false;
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
+        {
+            if (!bDialogSeen)
+            {
+                // first dialog is warning we want to capture, second dialog is confirmation
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"The achievement you have selected has triggered, but you have selected 'Did not trigger'."), vmMessageBox.GetMessage());
+            }
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmBrokenAchievements.mockServer.HandleRequest<ra::api::SubmitTicket>([](const ra::api::SubmitTicket::Request&, ra::api::SubmitTicket::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            response.TicketsCreated = 1;
+            return true;
+        });
+
+        Assert::IsTrue(vmBrokenAchievements.Submit());
         Assert::IsTrue(bDialogSeen);
     }
 
@@ -400,6 +503,135 @@ public:
 
         Assert::IsFalse(vmBrokenAchievements.Submit());
         Assert::IsTrue(bDialogSeen);
+    }
+
+    TEST_METHOD(TestSubmitOneAchievementWithRichPresence)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
+        vmBrokenAchievements.SetComment(L"I tried.");
+        vmBrokenAchievements.mockGameContext.FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
+
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([](const MessageBoxViewModel& vmMessageBox)
+        {
+            if (vmMessageBox.GetButtons() == MessageBoxViewModel::Buttons::OK)
+                return ra::ui::DialogResult::OK;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmBrokenAchievements.mockServer.HandleRequest<ra::api::SubmitTicket>([](const ra::api::SubmitTicket::Request& request, ra::api::SubmitTicket::Response& response)
+        {
+            Assert::AreEqual(1, ra::etoi(request.Problem));
+            Assert::AreEqual(std::string("HASH"), request.GameHash);
+            Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\nNowhere, 2 Lives"), request.Comment);
+            Assert::AreEqual(1U, request.AchievementIds.size());
+
+            response.Result = ra::api::ApiResult::Success;
+            response.TicketsCreated = 1;
+            return true;
+        });
+
+        Assert::IsTrue(vmBrokenAchievements.Submit());
+    }
+
+    TEST_METHOD(TestSubmitMultipleAchievementsWithSameRichPresence)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
+        vmBrokenAchievements.SetComment(L"I tried.");
+        vmBrokenAchievements.mockGameContext.FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
+        vmBrokenAchievements.mockGameContext.FindAchievement(3U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
+
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([](const MessageBoxViewModel& vmMessageBox)
+        {
+            if (vmMessageBox.GetButtons() == MessageBoxViewModel::Buttons::OK)
+                return ra::ui::DialogResult::OK;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmBrokenAchievements.mockServer.HandleRequest<ra::api::SubmitTicket>([](const ra::api::SubmitTicket::Request& request, ra::api::SubmitTicket::Response& response)
+        {
+            Assert::AreEqual(1, ra::etoi(request.Problem));
+            Assert::AreEqual(std::string("HASH"), request.GameHash);
+            Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\nNowhere, 2 Lives"), request.Comment);
+            Assert::AreEqual(2U, request.AchievementIds.size());
+
+            response.Result = ra::api::ApiResult::Success;
+            response.TicketsCreated = 2;
+            return true;
+        });
+
+        Assert::IsTrue(vmBrokenAchievements.Submit());
+    }
+
+    TEST_METHOD(TestSubmitMultipleAchievementsWithDifferingRichPresence)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
+        vmBrokenAchievements.SetComment(L"I tried.");
+        vmBrokenAchievements.mockGameContext.FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
+        vmBrokenAchievements.mockGameContext.FindAchievement(3U)->SetUnlockRichPresence(L"Somewhere, 2 Lives");
+
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([](const MessageBoxViewModel& vmMessageBox)
+        {
+            if (vmMessageBox.GetButtons() == MessageBoxViewModel::Buttons::OK)
+                return ra::ui::DialogResult::OK;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmBrokenAchievements.mockServer.HandleRequest<ra::api::SubmitTicket>([](const ra::api::SubmitTicket::Request& request, ra::api::SubmitTicket::Response& response)
+        {
+            Assert::AreEqual(1, ra::etoi(request.Problem));
+            Assert::AreEqual(std::string("HASH"), request.GameHash);
+            Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\n1: Nowhere, 2 Lives\n3: Somewhere, 2 Lives"), request.Comment);
+            Assert::AreEqual(2U, request.AchievementIds.size());
+
+            response.Result = ra::api::ApiResult::Success;
+            response.TicketsCreated = 2;
+            return true;
+        });
+
+        Assert::IsTrue(vmBrokenAchievements.Submit());
+    }
+
+    TEST_METHOD(TestAutoSelectProblemType)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+
+        Assert::AreEqual(0, vmBrokenAchievements.GetSelectedProblemId());
+
+        // a non-active achievement has been triggered, set problem type to WrongTime
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
+        Assert::AreEqual(ra::etoi(ra::api::SubmitTicket::ProblemType::WrongTime), vmBrokenAchievements.GetSelectedProblemId());
+
+        // when nothing is selected, problem type should be reset
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(false);
+        Assert::AreEqual(0, vmBrokenAchievements.GetSelectedProblemId());
+
+        // an active achievement has not been triggered, set problem type to DidNotTrigger
+        vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(true);
+        Assert::AreEqual(ra::etoi(ra::api::SubmitTicket::ProblemType::DidNotTrigger), vmBrokenAchievements.GetSelectedProblemId());
+
+        // don't change problem type if it's already set
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
+        Assert::AreEqual(ra::etoi(ra::api::SubmitTicket::ProblemType::DidNotTrigger), vmBrokenAchievements.GetSelectedProblemId());
+
+        // don't reset problem type if anything is still selected
+        vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(false);
+        Assert::AreEqual(ra::etoi(ra::api::SubmitTicket::ProblemType::DidNotTrigger), vmBrokenAchievements.GetSelectedProblemId());
+
+        // do reset problem type after everything is deselected
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(false);
+        Assert::AreEqual(0, vmBrokenAchievements.GetSelectedProblemId());
     }
 };
 

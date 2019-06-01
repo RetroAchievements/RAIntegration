@@ -14,7 +14,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-const IntModelProperty BrokenAchievementsViewModel::SelectedProblemIdProperty("BrokenAchievementsViewModel", "SelectedProblemId", -1);
+const IntModelProperty BrokenAchievementsViewModel::SelectedProblemIdProperty("BrokenAchievementsViewModel", "SelectedProblemId", 0);
 const StringModelProperty BrokenAchievementsViewModel::CommentProperty("BrokenAchievementsViewModel", "Comment", L"");
 
 const BoolModelProperty BrokenAchievementsViewModel::BrokenAchievementViewModel::IsSelectedProperty("BrokenAchievementViewModel", "IsSelected", false);
@@ -26,19 +26,19 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     if (pGameContext.GameId() == 0)
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You must load a game before you can report broken achievements.");
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You must load a game before you can report achievement problems.");
         return false;
     }
 
     if (pGameContext.ActiveAchievementType() == AchievementSet::Type::Local)
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report broken local achievements.");
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report local achievement problems.");
         return false;
     }
 
     if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report broken achievements in compatibility test mode.");
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report achievement problems in compatibility test mode.");
         return false;
     }
 
@@ -63,14 +63,52 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
         return false;
     }
 
-    SetWindowTitle(L"Report Broken Achievements");
+    SetWindowTitle(L"Report Achievement Problem");
+
+    m_vAchievements.AddNotifyTarget(*this);
 
     return true;
 }
 
+static std::wstring GetRichPresence(const ra::data::GameContext& pGameContext, const std::set<unsigned int> vAchievementIds)
+{
+    bool bMultipleRichPresence = false;
+    std::wstring sRichPresence;
+    for (const auto nId : vAchievementIds)
+    {
+        const auto* pAchievement = pGameContext.FindAchievement(nId);
+        if (pAchievement == nullptr)
+            continue;
+
+        if (!pAchievement->GetUnlockRichPresence().empty())
+        {
+            if (sRichPresence.empty())
+                sRichPresence = pAchievement->GetUnlockRichPresence();
+            else if (sRichPresence != pAchievement->GetUnlockRichPresence())
+                bMultipleRichPresence = true;
+        }
+    }
+
+    if (bMultipleRichPresence)
+    {
+        sRichPresence.clear();
+
+        for (const auto nId : vAchievementIds)
+        {
+            const auto* pAchievement = pGameContext.FindAchievement(nId);
+            if (pAchievement != nullptr && !pAchievement->GetUnlockRichPresence().empty())
+                sRichPresence.append(ra::StringPrintf(L"%u: %s\n", nId, pAchievement->GetUnlockRichPresence()));
+        }
+
+        sRichPresence.pop_back(); // remove last newline
+    }
+
+    return sRichPresence;
+}
+
 bool BrokenAchievementsViewModel::Submit()
 {
-    if (GetSelectedProblemId() == -1)
+    if (GetSelectedProblemId() == 0)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Please select a problem type.");
         return false;
@@ -78,6 +116,8 @@ bool BrokenAchievementsViewModel::Submit()
 
     ra::api::SubmitTicket::Request request;
     std::string sBuggedIDs;
+    size_t nAchievedSelected = 0U;
+    size_t nUnachievedSelected = 0U;
 
     for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vAchievements.Count()); ++nIndex)
     {
@@ -87,6 +127,11 @@ bool BrokenAchievementsViewModel::Submit()
             request.AchievementIds.insert(pAchievement->GetId());
             sBuggedIDs.append(std::to_string(pAchievement->GetId()));
             sBuggedIDs.push_back(',');
+
+            if (pAchievement->IsAchieved())
+                ++nAchievedSelected;
+            else
+                ++nUnachievedSelected;
         }
     }
 
@@ -105,10 +150,32 @@ bool BrokenAchievementsViewModel::Submit()
     switch (request.Problem)
     {
         case ra::api::SubmitTicket::ProblemType::DidNotTrigger:
+            if (nUnachievedSelected == 0)
+            {
+                if (ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Submit anyway?",
+                    ra::StringPrintf(L"The achievement%s you have selected %s triggered, but you have selected 'Did not trigger'.",
+                        request.AchievementIds.size() == 1 ? "" : "s", request.AchievementIds.size() == 1 ? "has" : "have"),
+                    ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo) == ra::ui::DialogResult::No)
+                {
+                    return false;
+                }
+            }
+
             sProblemType = " did not trigger";
             break;
 
         case ra::api::SubmitTicket::ProblemType::WrongTime:
+            if (nAchievedSelected == 0)
+            {
+                if (ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Submit anyway?",
+                    ra::StringPrintf(L"The achievement%s you have selected %s not triggered, but you have selected 'Triggered at the wrong time'.",
+                        request.AchievementIds.size() == 1 ? "" : "s", request.AchievementIds.size() == 1 ? "has" : "have"),
+                    ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo) == ra::ui::DialogResult::No)
+                {
+                    return false;
+                }
+            }
+
             if (GetComment().length() < 5)
             {
                 ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::StringPrintf(
@@ -150,6 +217,13 @@ bool BrokenAchievementsViewModel::Submit()
     request.GameHash = pGameContext.GameHash();
     request.Comment = ra::Narrow(GetComment());
 
+    const std::wstring sRichPresence = GetRichPresence(pGameContext, request.AchievementIds);
+    if (!sRichPresence.empty())
+    {
+        request.Comment.append("\n\nRich Presence at time of trigger:\n");
+        request.Comment.append(ra::Narrow(sRichPresence));
+    }
+
     const auto response = request.Call();
     if (!response.Succeeded())
     {
@@ -175,6 +249,51 @@ bool BrokenAchievementsViewModel::Submit()
 
     return true;
 }
+
+void BrokenAchievementsViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == BrokenAchievementViewModel::IsSelectedProperty)
+        OnItemSelectedChanged(nIndex, args);
+}
+
+void BrokenAchievementsViewModel::OnItemSelectedChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.tNewValue)
+    {
+        // if something is checked and no problem type has been selected, automatically select it
+        if (GetSelectedProblemId() == 0)
+        {
+            const auto* pItem = m_vAchievements.GetItemAt(nIndex);
+            if (pItem != nullptr)
+            {
+                SetSelectedProblemId(pItem->IsAchieved() ?
+                    ra::etoi(ra::api::SubmitTicket::ProblemType::WrongTime) :
+                    ra::etoi(ra::api::SubmitTicket::ProblemType::DidNotTrigger));
+            }
+        }
+    }
+    else
+    {
+        // if all items are unchecked, reset the problem type to unknown
+        if (GetSelectedProblemId() != 0)
+        {
+            bool bHasCheck = false;
+            for (gsl::index i = 0; i < ra::to_signed(m_vAchievements.Count()); ++i)
+            {
+                const auto* pItem = m_vAchievements.GetItemAt(i);
+                if (pItem != nullptr && pItem->IsSelected())
+                {
+                    bHasCheck = true;
+                    break;
+                }
+            }
+
+            if (!bHasCheck)
+                SetSelectedProblemId(0);
+        }
+    }
+}
+
 
 } // namespace viewmodels
 } // namespace ui

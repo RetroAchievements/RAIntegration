@@ -3,7 +3,6 @@
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h" // RA_httpthread.h
 #include "RA_Dlg_AchEditor.h" // RA_httpthread.h
-#include "RA_httpthread.h"
 #include "RA_md5factory.h"
 
 #include "data\GameContext.hh"

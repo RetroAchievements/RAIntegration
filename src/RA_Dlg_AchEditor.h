@@ -3,7 +3,6 @@
 #pragma once
 
 #include "RA_Achievement.h"
-#include "RA_httpthread.h"
 
 #include "ui\ImageReference.hh"
 

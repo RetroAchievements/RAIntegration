@@ -3,7 +3,6 @@
 #include "RA_ImageFactory.h"
 #include "RA_MemManager.h"
 #include "RA_Resource.h"
-#include "RA_httpthread.h"
 #include "RA_md5factory.h"
 
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
@@ -110,7 +109,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
     // Set the client version and User-Agent string
     ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().SetClientVersion(sClientVer);
-    RAWeb::SetUserAgentString();
 
     // validate version (async call)
     ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]
@@ -277,61 +275,6 @@ API void CCONV _RA_ClearMemoryBanks()
 //	}
 //}
 
-int _RA_HandleHTTPResults_deprecated()
-{
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
-
-    RequestObject* pObj = RAWeb::PopNextHttpResult();
-    while (pObj != nullptr)
-    {
-        rapidjson::Document doc;
-        if (pObj->GetResponse().size() > 0 && pObj->ParseResponseToJSON(doc))
-        {
-            switch (pObj->GetRequestType())
-            {
-                case RequestScore:
-                {
-                    ASSERT(doc["Success"].GetBool());
-                    if (doc["Success"].GetBool() && doc.HasMember("User") && doc.HasMember("Score"))
-                    {
-                        const std::string& sUser = doc["User"].GetString();
-                        const unsigned int nScore = doc["Score"].GetUint();
-                        RA_LOG("%s's score: %u", sUser.c_str(), nScore);
-
-                        auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
-                        if (sUser.compare(pUserContext.GetUsername()) == 0)
-                        {
-                            pUserContext.SetScore(nScore);
-                        }
-                        else
-                        {
-                            // Find friend? Update this information?
-                            //RAUsers::GetUser(sUser).SetScore(nScore);
-                        }
-                    }
-                    else
-                    {
-                        ASSERT(!"RequestScore bad response!?");
-                        RA_LOG("RequestScore bad response!?");
-                    }
-                }
-                break;
-
-                //case RequestNews:
-                //    _WriteBufferToFile(g_sHomeDir + RA_NEWS_FILENAME, doc);
-                //    g_AchievementOverlay.InstallNewsArticlesFromFile();
-                //    break;
-            }
-        }
-
-        SAFE_DELETE(pObj);
-        pObj = RAWeb::PopNextHttpResult();
-    }
-
-    ReleaseMutex(RAWeb::Mutex());
-    return 0;
-}
-
 //	Following this function, an app should call AppendMenu to associate this submenu.
 API HMENU CCONV _RA_CreatePopupMenu()
 {
@@ -370,7 +313,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector"));
         AppendMenu(hRA, MF_STRING, IDM_RA_PARSERICHPRESENCE, TEXT("Rich &Presence Monitor"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Broken Achievements"));
+        AppendMenu(hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Achievement Problem"));
         AppendMenu(hRA, MF_STRING, IDM_RA_GETROMCHECKSUM, TEXT("Get ROM &Checksum"));
         //AppendMenu(hRA, MF_STRING, IDM_RA_SCANFORGAMES, TEXT("Scan &for games"));
     }
@@ -380,28 +323,6 @@ API HMENU CCONV _RA_CreatePopupMenu()
     }
 
     return hRA;
-}
-
-void _FetchGameHashLibraryFromWeb()
-{
-    PostArgs args;
-    args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
-    args['u'] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
-    args['t'] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetApiToken();
-    std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestHashLibrary, args, Response))
-        _WriteBufferToFile(g_sHomeDir + RA_GAME_HASH_FILENAME, Response);
-}
-
-void _FetchMyProgressFromWeb()
-{
-    PostArgs args;
-    args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
-    args['u'] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
-    args['t'] = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetApiToken();
-    std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestAllProgress, args, Response))
-        _WriteBufferToFile(g_sHomeDir + RA_MY_PROGRESS_FILENAME, Response);
 }
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom)
@@ -615,7 +536,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             }
         }
         break;
-
+/*
         case IDM_RA_SCANFORGAMES:
 
             if (g_sROMDirLocation.length() == 0)
@@ -637,7 +558,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                     ShowWindow(g_GameLibrary.GetHWND(), SW_SHOW);
             }
             break;
-
+*/
         case IDM_RA_PARSERICHPRESENCE:
         {
             ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();

@@ -63,9 +63,6 @@
     <ClCompile Include="RA_Dlg_Achievement.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Dlg_AchievementsReporter.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Dlg_GameLibrary.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -291,9 +288,6 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_Achievement.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_AchievementsReporter.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_GameLibrary.h">

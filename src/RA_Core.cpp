@@ -8,7 +8,6 @@
 
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
-#include "RA_Dlg_AchievementsReporter.h"
 #include "RA_Dlg_GameLibrary.h"
 #include "RA_Dlg_MemBookmark.h"
 #include "RA_Dlg_Memory.h"
@@ -35,8 +34,6 @@
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 #include "ui\win32\OverlayWindow.hh"
-
-//#define NEW_REPORTER 1
 
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
@@ -373,7 +370,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector"));
         AppendMenu(hRA, MF_STRING, IDM_RA_PARSERICHPRESENCE, TEXT("Rich &Presence Monitor"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Broken Achievements"));
+        AppendMenu(hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Achievement Problem"));
         AppendMenu(hRA, MF_STRING, IDM_RA_GETROMCHECKSUM, TEXT("Get ROM &Checksum"));
         //AppendMenu(hRA, MF_STRING, IDM_RA_SCANFORGAMES, TEXT("Scan &for games"));
     }
@@ -567,16 +564,12 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         break;
 
         case IDM_RA_REPORTBROKENACHIEVEMENTS:
-#ifdef NEW_REPORTER
         {
             ra::ui::viewmodels::BrokenAchievementsViewModel vmBrokenAchievements;
             if (vmBrokenAchievements.InitializeAchievements())
                 vmBrokenAchievements.ShowModal();
         }
-#else
-            Dlg_AchievementsReporter::DoModalDialog(g_hThisDLLInst, g_RAMainWnd);
-#endif
-            break;
+        break;
 
         case IDM_RA_GETROMCHECKSUM:
         {

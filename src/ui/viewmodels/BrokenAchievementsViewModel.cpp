@@ -70,6 +70,42 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
     return true;
 }
 
+static std::wstring GetRichPresence(const ra::data::GameContext& pGameContext, const std::set<unsigned int> vAchievementIds)
+{
+    bool bMultipleRichPresence = false;
+    std::wstring sRichPresence;
+    for (const auto nId : vAchievementIds)
+    {
+        const auto* pAchievement = pGameContext.FindAchievement(nId);
+        if (pAchievement == nullptr)
+            continue;
+
+        if (!pAchievement->GetUnlockRichPresence().empty())
+        {
+            if (sRichPresence.empty())
+                sRichPresence = pAchievement->GetUnlockRichPresence();
+            else if (sRichPresence != pAchievement->GetUnlockRichPresence())
+                bMultipleRichPresence = true;
+        }
+    }
+
+    if (bMultipleRichPresence)
+    {
+        sRichPresence.clear();
+
+        for (const auto nId : vAchievementIds)
+        {
+            const auto* pAchievement = pGameContext.FindAchievement(nId);
+            if (pAchievement != nullptr && !pAchievement->GetUnlockRichPresence().empty())
+                sRichPresence.append(ra::StringPrintf(L"%u: %s\n", nId, pAchievement->GetUnlockRichPresence()));
+        }
+
+        sRichPresence.pop_back(); // remove last newline
+    }
+
+    return sRichPresence;
+}
+
 bool BrokenAchievementsViewModel::Submit()
 {
     if (GetSelectedProblemId() == 0)
@@ -180,6 +216,13 @@ bool BrokenAchievementsViewModel::Submit()
 
     request.GameHash = pGameContext.GameHash();
     request.Comment = ra::Narrow(GetComment());
+
+    const std::wstring sRichPresence = GetRichPresence(pGameContext, request.AchievementIds);
+    if (!sRichPresence.empty())
+    {
+        request.Comment.append("\n\nRich Presence at time of trigger:\n");
+        request.Comment.append(ra::Narrow(sRichPresence));
+    }
 
     const auto response = request.Call();
     if (!response.Succeeded())

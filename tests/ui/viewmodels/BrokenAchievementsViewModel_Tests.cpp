@@ -505,6 +505,103 @@ public:
         Assert::IsTrue(bDialogSeen);
     }
 
+    TEST_METHOD(TestSubmitOneAchievementWithRichPresence)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
+        vmBrokenAchievements.SetComment(L"I tried.");
+        vmBrokenAchievements.mockGameContext.FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
+
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([](const MessageBoxViewModel& vmMessageBox)
+        {
+            if (vmMessageBox.GetButtons() == MessageBoxViewModel::Buttons::OK)
+                return ra::ui::DialogResult::OK;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmBrokenAchievements.mockServer.HandleRequest<ra::api::SubmitTicket>([](const ra::api::SubmitTicket::Request& request, ra::api::SubmitTicket::Response& response)
+        {
+            Assert::AreEqual(1, ra::etoi(request.Problem));
+            Assert::AreEqual(std::string("HASH"), request.GameHash);
+            Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\nNowhere, 2 Lives"), request.Comment);
+            Assert::AreEqual(1U, request.AchievementIds.size());
+
+            response.Result = ra::api::ApiResult::Success;
+            response.TicketsCreated = 1;
+            return true;
+        });
+
+        Assert::IsTrue(vmBrokenAchievements.Submit());
+    }
+
+    TEST_METHOD(TestSubmitMultipleAchievementsWithSameRichPresence)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
+        vmBrokenAchievements.SetComment(L"I tried.");
+        vmBrokenAchievements.mockGameContext.FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
+        vmBrokenAchievements.mockGameContext.FindAchievement(3U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
+
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([](const MessageBoxViewModel& vmMessageBox)
+        {
+            if (vmMessageBox.GetButtons() == MessageBoxViewModel::Buttons::OK)
+                return ra::ui::DialogResult::OK;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmBrokenAchievements.mockServer.HandleRequest<ra::api::SubmitTicket>([](const ra::api::SubmitTicket::Request& request, ra::api::SubmitTicket::Response& response)
+        {
+            Assert::AreEqual(1, ra::etoi(request.Problem));
+            Assert::AreEqual(std::string("HASH"), request.GameHash);
+            Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\nNowhere, 2 Lives"), request.Comment);
+            Assert::AreEqual(2U, request.AchievementIds.size());
+
+            response.Result = ra::api::ApiResult::Success;
+            response.TicketsCreated = 2;
+            return true;
+        });
+
+        Assert::IsTrue(vmBrokenAchievements.Submit());
+    }
+
+    TEST_METHOD(TestSubmitMultipleAchievementsWithDifferingRichPresence)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
+        vmBrokenAchievements.SetComment(L"I tried.");
+        vmBrokenAchievements.mockGameContext.FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
+        vmBrokenAchievements.mockGameContext.FindAchievement(3U)->SetUnlockRichPresence(L"Somewhere, 2 Lives");
+
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([](const MessageBoxViewModel& vmMessageBox)
+        {
+            if (vmMessageBox.GetButtons() == MessageBoxViewModel::Buttons::OK)
+                return ra::ui::DialogResult::OK;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmBrokenAchievements.mockServer.HandleRequest<ra::api::SubmitTicket>([](const ra::api::SubmitTicket::Request& request, ra::api::SubmitTicket::Response& response)
+        {
+            Assert::AreEqual(1, ra::etoi(request.Problem));
+            Assert::AreEqual(std::string("HASH"), request.GameHash);
+            Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\n1: Nowhere, 2 Lives\n3: Somewhere, 2 Lives"), request.Comment);
+            Assert::AreEqual(2U, request.AchievementIds.size());
+
+            response.Result = ra::api::ApiResult::Success;
+            response.TicketsCreated = 2;
+            return true;
+        });
+
+        Assert::IsTrue(vmBrokenAchievements.Submit());
+    }
+
     TEST_METHOD(TestAutoSelectProblemType)
     {
         BrokenAchievementsViewModelHarness vmBrokenAchievements;

@@ -31,12 +31,7 @@ public:
     /// <summary>
     /// Adds an achievement to the processing queue and enables the AchievementReset change type for it.
     /// </summary>
-    void MonitorAchievementReset(unsigned int nId, rc_trigger_t* pTrigger) noexcept
-    {
-        GSL_SUPPRESS_F6 AddEntry(m_vActiveAchievementsMonitorReset, nId, pTrigger);
-        RemoveEntry(m_vActiveAchievements, nId);
-        RemoveEntry(m_vQueuedAchievements, nId);
-    }
+    void MonitorAchievementReset(unsigned int nId, rc_trigger_t* pTrigger) noexcept;
 
     /// <summary>
     /// Removes an achievement from the processing queue.
@@ -124,6 +119,13 @@ protected:
         unsigned int nId;
     };
 
+    struct QueuedAchievement : ActiveAchievement
+    {
+        QueuedAchievement(rc_trigger_t* pTrigger, unsigned int nId) noexcept : ActiveAchievement(pTrigger, nId) {}
+
+        bool bPauseOnReset = false;
+    };
+
     struct ActiveLeaderboard
     {
         ActiveLeaderboard(rc_lboard_t* pLeaderboard, unsigned int nId) noexcept : pLeaderboard(pLeaderboard), nId(nId) {}
@@ -161,7 +163,7 @@ protected:
         }
     }
 
-    std::vector<ActiveAchievement> m_vQueuedAchievements;
+    std::vector<QueuedAchievement> m_vQueuedAchievements;
     std::vector<ActiveAchievement> m_vActiveAchievements;
     std::vector<ActiveAchievement> m_vActiveAchievementsMonitorReset;
 

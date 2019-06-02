@@ -250,6 +250,94 @@ public:
         Assert::AreEqual(0U, vChanges.size());
     }
 
+    TEST_METHOD(TestMonitorAchievementResetPaused)
+    {
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        InitializeMemory(memory);
+
+        AchievementRuntime runtime;
+        auto* pTrigger = ParseTrigger("0xH0000=0.3._R:0xH0001=0");
+
+        runtime.SetPaused(true);
+        Assert::IsTrue(runtime.IsPaused());
+        runtime.MonitorAchievementReset(6U, pTrigger);
+        runtime.SetPaused(false);
+        Assert::IsFalse(runtime.IsPaused());
+
+        // achievement is not true and will be promoted to the unpaused queue
+        std::vector<AchievementRuntime::Change> vChanges;
+        runtime.Process(vChanges); // HitCount 1
+        Assert::AreEqual(0U, vChanges.size());
+
+        // hit count should have been reset on promotion, so reset shouldn't fire
+        memory.at(1) = 0;
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // disable reset, set hit count
+        memory.at(1) = 1;
+        runtime.Process(vChanges);
+
+        // trigger reset notification
+        memory.at(1) = 0;
+        runtime.Process(vChanges);
+        Assert::AreEqual(1U, vChanges.size());
+        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementReset, vChanges.front().nType);
+        vChanges.clear();
+
+        // already reset, shouldn't get repeated notification
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // disable reset, advance hitcount to 2
+        memory.at(1) = 1;
+        runtime.Process(vChanges);
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // reset active achievements should bump it to the queued list, and reset the hitcount
+        runtime.ResetActiveAchievements();
+
+        // repeat first test to make sure it's still being monitored
+        runtime.Process(vChanges); // promote to active queue, HitCount 0
+        Assert::AreEqual(0U, vChanges.size());
+        runtime.Process(vChanges); // HitCount 1
+        Assert::AreEqual(0U, vChanges.size());
+
+        // trigger reset notification
+        memory.at(1) = 0;
+        runtime.Process(vChanges);
+        Assert::AreEqual(1U, vChanges.size());
+        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementReset, vChanges.front().nType);
+        vChanges.clear();
+
+        // already reset, shouldn't get repeated notification
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // disable reset, advance hitcount to 2
+        memory.at(1) = 1;
+        runtime.Process(vChanges);
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, vChanges.size());
+
+        // reset active achievements should bump it to the queued list, and reset the hitcount
+        runtime.ResetActiveAchievements();
+
+        runtime.Process(vChanges); // promote to active queue, HitCount 0
+        Assert::AreEqual(0U, vChanges.size());
+        runtime.Process(vChanges); // HitCount 1
+        Assert::AreEqual(0U, vChanges.size());
+        runtime.Process(vChanges); // HitCount 2
+        Assert::AreEqual(0U, vChanges.size());
+        runtime.Process(vChanges); // HitCount 3
+        Assert::AreEqual(1U, vChanges.size());
+        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
+    }
+
     TEST_METHOD(TestResetActiveAchievements)
     {
         std::array<unsigned char, 2> memory{ 0x00, 0x00 };
@@ -257,8 +345,11 @@ public:
 
         AchievementRuntime runtime;
         auto* pTrigger = ParseTrigger("0xH0000=0_0xH0001=1");
-
         runtime.ActivateAchievement(6U, pTrigger);
+
+        std::array<unsigned char, 1024> sTriggerBuffer2{};
+        auto* pTrigger2 = ParseTrigger("0xH0000=0.30._R:0xH0001=1", sTriggerBuffer2.data(), sizeof(sTriggerBuffer2));
+        runtime.ActivateAchievement(7U, pTrigger2);
 
         // rack up some hits
         std::vector<AchievementRuntime::Change> vChanges;
@@ -268,30 +359,37 @@ public:
             Assert::AreEqual(0U, vChanges.size());
         }
         Assert::AreEqual(10U, pTrigger->requirement->conditions->current_hits);
+        Assert::AreEqual(10U, pTrigger2->requirement->conditions->current_hits);
 
         // set state to trigger achievement, then call reset. HitCount should go to 0 and trigger should be delayed
         // until inactive.
         memory.at(1) = 1;
         runtime.ResetActiveAchievements();
         Assert::AreEqual(0U, pTrigger->requirement->conditions->current_hits);
+        Assert::AreEqual(0U, pTrigger2->requirement->conditions->current_hits);
 
-        runtime.Process(vChanges);
-        Assert::AreEqual(0U, vChanges.size());
-
-        runtime.Process(vChanges);
-        Assert::AreEqual(0U, vChanges.size());
+        for (int i = 0; i < 10; i++)
+        {
+            runtime.Process(vChanges);
+            Assert::AreEqual(0U, vChanges.size());
+        }
 
         // achievement is no longer true, so it won't trigger
         memory.at(1) = 0;
         runtime.Process(vChanges);
         Assert::AreEqual(0U, vChanges.size());
 
+        // second achievement should get a hitcount since the reset condition is no longer true
+        Assert::AreEqual(1U, pTrigger2->requirement->conditions->current_hits);
+
         // achievement is true again and should trigger
+        // second achievement is reset - expect not to be notified
         memory.at(1) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual(1U, vChanges.size());
         Assert::AreEqual(6U, vChanges.front().nId);
         Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
+        Assert::AreEqual(0U, pTrigger2->requirement->conditions->current_hits);
     }
 
     TEST_METHOD(TestPersistProgress)

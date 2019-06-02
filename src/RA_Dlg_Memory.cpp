@@ -1137,9 +1137,44 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         std::array<TCHAR, 1024> nativeBuffer{};
                         if (GetDlgItemText(hDlg, IDC_RA_TESTVAL, nativeBuffer.data(), 1024))
                         {
-                            // Read hex or dec
                             const auto sAddr = ra::Narrow(&nativeBuffer.at(0));
-                            nValueQuery = ra::ByteAddressFromString(sAddr);
+                            const char* pStart = sAddr.c_str();
+
+                            if (ra::StringStartsWith(sAddr, "-"))
+                                ++pStart;
+
+                            // try decimal parse first
+                            char* pEnd;
+                            nValueQuery = std::strtoul(pStart, &pEnd, 10);
+                            assert(pEnd != nullptr);
+                            if (*pEnd)
+                            {
+                                // decimal parse failed, try hex
+                                nValueQuery = std::strtoul(pStart, &pEnd, 16);
+                                assert(pEnd != nullptr);
+                                if (*pEnd)
+                                {
+                                    // hex parse failed
+                                    nValueQuery = 0;
+                                }
+                            }
+
+                            if (pStart > sAddr.c_str())
+                            {
+                                // minus prefix - invert value
+                                nValueQuery = static_cast<unsigned int>(-static_cast<int>(nValueQuery));
+
+                                switch (MemoryViewerControl::GetDataSize())
+                                {
+                                    case MemSize::EightBit:
+                                        nValueQuery &= 0xFF;
+                                        break;
+
+                                    case MemSize::SixteenBit:
+                                        nValueQuery &= 0xFFFF;
+                                        break;
+                                }
+                            }
                         }
 
                         sr.m_results.Initialize(srPrevious.m_results, nCmpType, nValueQuery);

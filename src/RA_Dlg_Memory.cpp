@@ -1088,6 +1088,61 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             RememberWindowPosition(hDlg, "Memory Inspector");
             break;
 
+        case WM_LBUTTONDBLCLK:
+        {
+            // ignore if alt/shift/control pressed
+            if (wParam != 1)
+                break;
+
+            // ignore if memory not avaialble or mode is not 8-bit
+            if (g_MemManager.TotalBankSize() == 0 || MemoryViewerControl::GetDataSize() != MemSize::EightBit)
+                break;
+
+            POINT ptCursor{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+            const auto hChild = ChildWindowFromPoint(m_hWnd, ptCursor);
+
+            const auto hMemBits = GetDlgItem(m_hWnd, IDC_RA_MEMBITS);
+            if (hChild == hMemBits)
+            {
+                // determine the width of one character
+                // ASSERT: field is using a fixed-width font, so all characters have the same width
+                INT nCharWidth;
+                HDC hDC = GetDC(hMemBits);
+                {
+                    SelectFont(hDC, GetWindowFont(hMemBits));
+                    GetCharWidth32(hDC, static_cast<UINT>(' '), static_cast<UINT>(' '), &nCharWidth);
+                }
+                ReleaseDC(hMemBits, hDC);
+
+                // get bounding rect for membits (screen coordinates) and translate click to screen coordinates
+                RECT rcMemBits;
+                GetWindowRect(hMemBits, &rcMemBits);
+                ClientToScreen(hDlg, &ptCursor);
+
+                // figure out which bit was clicked. NOTE: text is right aligned, so start there
+                const auto nOffset = rcMemBits.right - ptCursor.x;
+                const auto nChars = (nOffset / nCharWidth);
+
+                // bits are in even indices - odd indices are spaces, ignore them
+                if ((nChars & 1) == 0)
+                {
+                    const auto nBit = nChars >> 1;
+                    if (nBit < 8)
+                    {
+                        // if we found a bit, toggle it
+                        const auto nAddr = MemoryViewerControl::getWatchedAddress();
+                        auto nVal = g_MemManager.ActiveBankRAMByteRead(nAddr);
+                        nVal ^= (1 << nBit);
+                        g_MemManager.ActiveBankRAMByteWrite(nAddr, nVal);
+                        g_bRAMTamperedWith = true;
+
+                        UpdateBits();
+                    }
+                }
+            }
+            break;
+        }
+
         case WM_COMMAND:
         {
             switch (LOWORD(wParam))

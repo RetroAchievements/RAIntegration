@@ -21,7 +21,7 @@
 #define IDC_RA_SYSTEMNAME               1036
 #define IDC_RA_LINK                     1037
 #define IDC_RA_GAMENAME                 1038
-#define IDC_RA_INFORMATION              1039
+#define IDC_RA_SELECT_ACHIEVEMENTS      1039
 #define IDC_RA_PROBLEMHEADER            1040
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502

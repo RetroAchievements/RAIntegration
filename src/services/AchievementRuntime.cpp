@@ -35,6 +35,26 @@ void AchievementRuntime::ActivateAchievement(unsigned int nId, rc_trigger_t* pTr
     RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
 }
 
+void AchievementRuntime::MonitorAchievementReset(unsigned int nId, rc_trigger_t* pTrigger) noexcept
+{
+    if (m_bPaused)
+    {
+        // If processing is paused, just queue the achievement. Once processing is unpaused, if the trigger
+        // is not false, the achievement will be moved to the active list. This ensures achievements don't
+        // trigger immediately upon loading the game due to uninitialized memory.
+        GSL_SUPPRESS_F6 AddEntry(m_vQueuedAchievements, nId, pTrigger);
+        m_vQueuedAchievements.back().bPauseOnReset = true;
+        RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
+    }
+    else
+    {
+        GSL_SUPPRESS_F6 AddEntry(m_vActiveAchievementsMonitorReset, nId, pTrigger);
+        RemoveEntry(m_vQueuedAchievements, nId);
+    }
+
+    RemoveEntry(m_vActiveAchievements, nId);
+}
+
 void AchievementRuntime::ResetActiveAchievements()
 {
     // Reset any active achievements and move them to the pending queue, where they'll stay as long as the
@@ -47,6 +67,17 @@ void AchievementRuntime::ResetActiveAchievements()
 
     m_vActiveAchievements.clear();
 
+    // make sure to also process the achievements being monitored
+    for (const auto& pAchievement : m_vActiveAchievementsMonitorReset)
+    {
+        rc_reset_trigger(pAchievement.pTrigger);
+        AddEntry(m_vQueuedAchievements, pAchievement.nId, pAchievement.pTrigger);
+        m_vQueuedAchievements.back().bPauseOnReset = true;
+    }
+
+    m_vActiveAchievementsMonitorReset.clear();
+
+    // also reset leaderboards
     for (const auto& pLeaderboard : m_vActiveLeaderboards)
     {
         rc_reset_lboard(pLeaderboard.pLeaderboard);
@@ -124,7 +155,12 @@ _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& cha
         {
             // trigger is not active, reset the achievement and allow it to be triggered on future frames
             rc_reset_trigger(pIter->pTrigger);
-            AddEntry(m_vActiveAchievements, pIter->nId, pIter->pTrigger);
+
+            if (pIter->bPauseOnReset)
+                AddEntry(m_vActiveAchievementsMonitorReset, pIter->nId, pIter->pTrigger);
+            else
+                AddEntry(m_vActiveAchievements, pIter->nId, pIter->pTrigger);
+
             pIter = m_vQueuedAchievements.erase(pIter);
         }
     }

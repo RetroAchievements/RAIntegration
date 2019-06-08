@@ -23,18 +23,12 @@ ByteAddress ByteAddressFromString(const std::string& sByteAddress) noexcept
     if (!ra::StringStartsWith(sByteAddress, "-")) // negative addresses not supported
     {
         char* pEnd;
-        address = std::strtoul(sByteAddress.c_str(), &pEnd, 10);
+        address = std::strtoul(sByteAddress.c_str(), &pEnd, 16);
         assert(pEnd != nullptr);
         if (*pEnd)
         {
-            // decimal parse failed, try hex
-            address = std::strtoul(sByteAddress.c_str(), &pEnd, 16);
-            assert(pEnd != nullptr);
-            if (*pEnd)
-            {
-                // hex parse failed
-                address = {};
-            }
+            // hex parse failed
+            address = {};
         }
     }
 

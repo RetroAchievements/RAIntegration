@@ -1136,6 +1136,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         g_MemManager.ActiveBankRAMByteWrite(nAddr, nVal);
                         g_bRAMTamperedWith = true;
 
+                        MemoryViewerControl::Invalidate();
                         UpdateBits();
                     }
                 }

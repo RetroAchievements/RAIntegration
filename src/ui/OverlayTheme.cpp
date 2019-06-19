@@ -45,6 +45,9 @@ void OverlayTheme::LoadFromFile()
 {
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     std::wstring sFullPath = pFileSystem.BaseDirectory() + L"Overlay\\theme.json";
+    if (pFileSystem.GetFileSize(sFullPath) == -1)
+        return;
+
     auto pFile = pFileSystem.OpenTextFile(sFullPath);
     if (!pFile)
         return;

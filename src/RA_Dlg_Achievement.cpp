@@ -848,7 +848,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     GSL_SUPPRESS_TYPE1
                     if (reinterpret_cast<LPNMITEMACTIVATE>(lParam)->iItem != -1)
                     {
-                        SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_ACHIEVEMENTEDITOR, 0);
+                        _RA_InvokeDialog(IDM_RA_FILES_ACHIEVEMENTEDITOR);
                         GSL_SUPPRESS_TYPE1 g_AchievementEditorDialog.LoadAchievement(
                             &g_pActiveAchievements->GetAchievement(reinterpret_cast<LPNMITEMACTIVATE>(lParam)->iItem),
                             FALSE);

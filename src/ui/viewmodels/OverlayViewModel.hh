@@ -120,7 +120,7 @@ private:
     gsl::index m_nSelectedPage = 0;
 
     double m_fAnimationProgress = -1.0;
-    static _CONSTANT_VAR INOUT_TIME = 0.8;
+    static _CONSTANT_VAR INOUT_TIME = 0.4;
 };
 
 } // namespace viewmodels

@@ -38,7 +38,7 @@ static LRESULT CALLBACK OverlayWndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARA
 static void CALLBACK HandleWinEvent(HWINEVENTHOOK, DWORD nEvent, HWND, LONG nObjectId, LONG, DWORD, DWORD)
 {
     if (nEvent == EVENT_OBJECT_LOCATIONCHANGE && nObjectId == CHILDID_SELF)
-        ra::services::ServiceLocator::GetMutable<OverlayWindow>().UpdateOverlayPosition();
+        ra::services::ServiceLocator::GetMutable<OverlayWindow>().OnOverlayMoved();
 }
 
 static DWORD WINAPI OverlayWindowThreadStart(LPVOID)
@@ -217,6 +217,7 @@ void OverlayWindow::UpdateOverlayPosition() noexcept
     rcWindowClientArea.bottom = rcWindowClientArea.top + nHeight;
 
     // move the layered window over the client window
+    m_bOverlayMoved = false;
     MoveWindow(m_hOverlayWnd, rcWindowClientArea.left, rcWindowClientArea.top, nWidth, nHeight, FALSE);
 
     // if the size changed, we want to redraw everything on the next repaint
@@ -229,14 +230,19 @@ void OverlayWindow::UpdateOverlayPosition() noexcept
 
 void OverlayWindow::Render()
 {
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    if (!pOverlayManager.IsRenderPending())
+        return;
+
+    if (m_bOverlayMoved)
+        UpdateOverlayPosition();
+
     RECT rcClientArea;
     ::GetClientRect(m_hWnd, &rcClientArea);
 
     PAINTSTRUCT ps;
     HDC hDC = BeginPaint(m_hOverlayWnd, &ps);
     ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcClientArea);
-
-    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
 
     if (m_bErase)
     {

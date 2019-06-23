@@ -210,6 +210,8 @@ public:
         m_fHandleRenderRequest = std::move(fHandleRenderRequest);
     }
 
+    bool IsRenderPending() const { return (m_bIsRendering || m_bRenderRequestPending); }
+
 protected:
     ra::ui::viewmodels::OverlayViewModel m_vmOverlay;
     std::deque<PopupMessageViewModel> m_vPopupMessages;

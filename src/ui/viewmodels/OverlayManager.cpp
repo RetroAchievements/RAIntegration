@@ -57,15 +57,35 @@ void OverlayManager::Update(const ControllerInput& pInput)
         m_vmOverlay.ProcessInput(pInput);
 }
 
+bool OverlayManager::NeedsRender() const noexcept
+{
+    if (m_bRedrawAll)
+    {
+        // changes were detected in Render() - mostly for when last popup closes
+        return true;
+    }
+
+    if (m_vmOverlay.CurrentState() != OverlayViewModel::State::Hidden)
+    {
+        // overlay is visible
+        return true;
+    }
+
+    if (!m_vPopupMessages.empty() || !m_vScoreboards.empty() || !m_vScoreTrackers.empty())
+    {
+        // a popup is visible
+        return true;
+    }
+
+    return false;
+}
+
 void OverlayManager::RequestRender()
 {
     if (!m_fHandleRenderRequest)
         return;
 
-    const bool bNeedsRender = (m_bRedrawAll || // changes detected in Render() - mostly for when last popup closes
-        m_vmOverlay.CurrentState() != OverlayViewModel::State::Hidden || // overlay is visible
-        !m_vPopupMessages.empty() || !m_vScoreboards.empty() || !m_vScoreTrackers.empty()); // a popup is visible
-
+    const bool bNeedsRender = NeedsRender();
     if (m_bIsRendering != bNeedsRender)
     {
         if (bNeedsRender)
@@ -120,7 +140,7 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
     const auto tElapsed = std::chrono::duration_cast<std::chrono::microseconds>(tNow - m_tLastRender);
     const double fElapsed = tElapsed.count() / 1000000.0;
 
-    bool bRequestRender = m_bIsRendering;
+    bool bRequestRender = false;
 
     if (m_vmOverlay.CurrentState() == OverlayViewModel::State::Hidden)
     {
@@ -168,9 +188,18 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
     }
 
     if (bRequestRender)
+    {
+        // something changed, render is explicit
         RequestRender();
-    else
+    }
+    else if (m_bIsRendering && !NeedsRender())
+    {
+        // render no longer needed, hide the overlay
         m_bIsRendering = false;
+
+        if (m_fHandleHideRequest)
+            m_fHandleHideRequest();
+    }
 
     m_tLastRender = tNow;
     m_bRedrawAll = false;

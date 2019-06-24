@@ -250,6 +250,8 @@ private:
 
     void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);
 
+    bool NeedsRender() const noexcept;
+
     bool m_bRedrawAll = false;
     std::chrono::steady_clock::time_point m_tLastRender{};
     std::function<void()> m_fHandleRenderRequest;

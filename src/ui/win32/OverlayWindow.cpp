@@ -4,8 +4,8 @@
 
 #include "services\IClock.hh"
 
+#include "ui\OverlayTheme.hh"
 #include "ui\drawing\gdi\GDISurface.hh"
-
 #include "ui\viewmodels\OverlayManager.hh"
 
 namespace ra {
@@ -114,7 +114,6 @@ void OverlayWindow::CreateOverlayWindow()
     GetClientRect(m_hWnd, &rcMainWindowClientArea);
 
     const COLORREF nTransparentColor = RGB(ra::ui::Color::Transparent.Channel.R, ra::ui::Color::Transparent.Channel.G, ra::ui::Color::Transparent.Channel.B);
-    constexpr int nAlpha = (255 * 90 / 100); // 90% transparency
 
     // Create the overlay window
     WNDCLASSEX wndEx;
@@ -151,7 +150,15 @@ void OverlayWindow::CreateOverlayWindow()
         return;
     }
 
-    SetLayeredWindowAttributes(m_hOverlayWnd, nTransparentColor, nAlpha, LWA_ALPHA | LWA_COLORKEY);
+    if (ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>().Transparent())
+    {
+        constexpr auto nAlpha = (255 * 90 / 100); // 90% opacity
+        SetLayeredWindowAttributes(m_hOverlayWnd, nTransparentColor, nAlpha, LWA_ALPHA | LWA_COLORKEY);
+    }
+    else
+    {
+        SetLayeredWindowAttributes(m_hOverlayWnd, nTransparentColor, 0, LWA_COLORKEY);
+    }
 
     ShowWindow(m_hOverlayWnd, SW_HIDE);
 
@@ -165,6 +172,7 @@ void OverlayWindow::CreateOverlayWindow()
     });
 
     pOverlayManager.SetShowRequestHandler([this]() noexcept {
+        UpdateOverlayPosition();
         ::ShowWindow(m_hOverlayWnd, SW_SHOWNOACTIVATE);
     });
 

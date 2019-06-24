@@ -59,12 +59,6 @@ void OverlayManager::Update(const ControllerInput& pInput)
 
 bool OverlayManager::NeedsRender() const noexcept
 {
-    if (m_bRedrawAll)
-    {
-        // changes were detected in Render() - mostly for when last popup closes
-        return true;
-    }
-
     if (m_vmOverlay.CurrentState() != OverlayViewModel::State::Hidden)
     {
         // overlay is visible
@@ -192,13 +186,16 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
         // something changed, render is explicit
         RequestRender();
     }
-    else if (m_bIsRendering && !NeedsRender())
+    else if (m_bIsRendering)
     {
-        // render no longer needed, hide the overlay
         m_bIsRendering = false;
 
-        if (m_fHandleHideRequest)
-            m_fHandleHideRequest();
+        if (!NeedsRender())
+        {
+            // render no longer needed, hide the overlay
+            if (m_fHandleHideRequest)
+                m_fHandleHideRequest();
+        }
     }
 
     m_tLastRender = tNow;

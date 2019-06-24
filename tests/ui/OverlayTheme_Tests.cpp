@@ -90,6 +90,8 @@ public:
             const auto nLoadedSize = pair.second(theme);
             Assert::AreEqual(nDefaultSize, nLoadedSize, ra::Widen(pair.first).c_str());
         }
+
+        Assert::AreEqual(defaultTheme.Transparent(), theme.Transparent());
     }
 
     TEST_METHOD(TestLoadFromFileInvalidJson)
@@ -234,6 +236,19 @@ public:
                     Assert::AreEqual(nDefaultSize, nLoadedSize, sMessage.c_str());
             }
         }
+    }
+
+    TEST_METHOD(TestLoadFromFileTransparent)
+    {
+        OverlayThemeHarness theme;
+
+        theme.mockFileSystem.MockFile(L".\\Overlay\\theme.json", "{\"Transparent\":false}");
+        theme.LoadFromFile();
+        Assert::AreEqual(theme.Transparent(), false);
+
+        theme.mockFileSystem.MockFile(L".\\Overlay\\theme.json", "{\"Transparent\":true}");
+        theme.LoadFromFile();
+        Assert::AreEqual(theme.Transparent(), true);
     }
 };
 

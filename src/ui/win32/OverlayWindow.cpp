@@ -153,7 +153,7 @@ void OverlayWindow::CreateOverlayWindow()
 
     SetLayeredWindowAttributes(m_hOverlayWnd, nTransparentColor, nAlpha, LWA_ALPHA | LWA_COLORKEY);
 
-    ShowWindow(m_hOverlayWnd, SW_SHOWNOACTIVATE);
+    ShowWindow(m_hOverlayWnd, SW_HIDE);
 
     // watch for location/size changes in the parent window
     m_hEventHook = SetWinEventHook(EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_LOCATIONCHANGE, nullptr, HandleWinEvent, GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
@@ -162,6 +162,14 @@ void OverlayWindow::CreateOverlayWindow()
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
     pOverlayManager.SetRenderRequestHandler([this]() noexcept {
         InvalidateRect(m_hOverlayWnd, nullptr, FALSE);
+    });
+
+    pOverlayManager.SetShowRequestHandler([this]() noexcept {
+        ::ShowWindow(m_hOverlayWnd, SW_SHOWNOACTIVATE);
+    });
+
+    pOverlayManager.SetHideRequestHandler([this]() noexcept {
+        ::ShowWindow(m_hOverlayWnd, SW_HIDE);
     });
 
     m_bErase = true;

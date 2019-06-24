@@ -73,12 +73,18 @@ void OverlayManager::RequestRender()
             auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
             m_tLastRender = pClock.UpTime();
 
+            if (m_fHandleShowRequest)
+                m_fHandleShowRequest();
+
             m_bIsRendering = true;
             m_fHandleRenderRequest();
         }
         else
         {
             m_bIsRendering = false;
+
+            if (m_fHandleHideRequest)
+                m_fHandleHideRequest();
         }
     }
     else if (m_bIsRendering && !m_bRenderRequestPending)
@@ -114,7 +120,7 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
     const auto tElapsed = std::chrono::duration_cast<std::chrono::microseconds>(tNow - m_tLastRender);
     const double fElapsed = tElapsed.count() / 1000000.0;
 
-    bool bRequestRender = false;
+    bool bRequestRender = m_bIsRendering;
 
     if (m_vmOverlay.CurrentState() == OverlayViewModel::State::Hidden)
     {

@@ -210,6 +210,22 @@ public:
         m_fHandleRenderRequest = std::move(fHandleRenderRequest);
     }
 
+    /// <summary>
+    /// Sets the function to call when there's something to be rendered.
+    /// </summary>
+    void SetShowRequestHandler(std::function<void()>&& fHandleShowRequest)
+    {
+        m_fHandleShowRequest = std::move(fHandleShowRequest);
+    }
+
+    /// <summary>
+    /// Sets the function to call when there's something to be rendered.
+    /// </summary>
+    void SetHideRequestHandler(std::function<void()>&& fHandleHideRequest)
+    {
+        m_fHandleHideRequest = std::move(fHandleHideRequest);
+    }
+
     bool IsRenderPending() const { return (m_bIsRendering || m_bRenderRequestPending); }
 
 protected:
@@ -237,6 +253,8 @@ private:
     bool m_bRedrawAll = false;
     std::chrono::steady_clock::time_point m_tLastRender{};
     std::function<void()> m_fHandleRenderRequest;
+    std::function<void()> m_fHandleShowRequest;
+    std::function<void()> m_fHandleHideRequest;
 
     std::atomic<int> m_nPopupId{ 0 };
 };

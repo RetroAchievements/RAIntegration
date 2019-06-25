@@ -226,7 +226,7 @@ public:
         m_fHandleHideRequest = std::move(fHandleHideRequest);
     }
 
-    bool IsRenderPending() const { return (m_bIsRendering || m_bRenderRequestPending); }
+    bool NeedsRender() const noexcept;
 
 protected:
     ra::ui::viewmodels::OverlayViewModel m_vmOverlay;
@@ -249,8 +249,6 @@ private:
     void UpdatePopup(ra::ui::drawing::ISurface& pSurface, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup);
 
     void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);
-
-    bool NeedsRender() const noexcept;
 
     bool m_bRedrawAll = false;
     std::chrono::steady_clock::time_point m_tLastRender{};

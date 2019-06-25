@@ -244,10 +244,19 @@ void OverlayWindow::UpdateOverlayPosition() noexcept
     }
 }
 
+void OverlayWindow::OnOverlayMoved() noexcept
+{
+    if (!m_bOverlayMoved)
+    {
+        m_bOverlayMoved = true;
+        InvalidateRect(m_hOverlayWnd, nullptr, false);
+    }
+}
+
 void OverlayWindow::Render()
 {
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-    if (!pOverlayManager.IsRenderPending())
+    if (!pOverlayManager.NeedsRender())
         return;
 
     if (m_bOverlayMoved)

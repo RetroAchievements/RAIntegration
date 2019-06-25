@@ -15,7 +15,7 @@ public:
     void CreateOverlayWindow(HWND hWnd);
     void DestroyOverlayWindow() noexcept;
 
-    void OnOverlayMoved() noexcept { m_bOverlayMoved = true; }
+    void OnOverlayMoved() noexcept;
 
     void Render();
 

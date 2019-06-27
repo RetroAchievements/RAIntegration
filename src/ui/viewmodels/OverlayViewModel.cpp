@@ -103,6 +103,12 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
                 }
             }
         }
+        else if (m_nState == State::FadeOutRequested)
+        {
+            // ignore this update event as fElapsed may exceed INOUT_TIME
+            m_nState = State::FadeOut;
+            m_fAnimationProgress = 0.0;
+        }
     }
 
     if (m_bSurfaceStale)
@@ -323,7 +329,9 @@ void OverlayViewModel::Deactivate()
     switch (m_nState)
     {
         case State::Visible:
-            m_nState = State::FadeOut;
+            // when going from Visible to FadeOut, there may have been a long period without rendering, so ignore
+            // the first Render event as its fElapsed may cause the overlay to fully disappear in one frame.
+            m_nState = State::FadeOutRequested;
             m_fAnimationProgress = 0.0;
             RefreshOverlay();
             break;

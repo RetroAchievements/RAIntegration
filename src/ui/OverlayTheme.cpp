@@ -19,6 +19,16 @@ static void ReadSize(int& nSize, const rapidjson::Value& pSizes, const char* pJs
     }
 }
 
+static void ReadBool(bool& bValue, const rapidjson::Value& pContainer, const char* pJsonField)
+{
+    if (pContainer.HasMember(pJsonField))
+    {
+        const auto& pField = pContainer[pJsonField];
+        if (pField.IsBool())
+            bValue = pField.GetBool();
+    }
+}
+
 static void ReadColor(Color& nColor, const rapidjson::Value& pColors, const char* pJsonField)
 {
     if (pColors.HasMember(pJsonField))
@@ -127,6 +137,8 @@ void OverlayTheme::LoadFromFile()
             ReadColor(m_colorOverlayScrollBarGripper, colors, "ScrollBarGripper");
         }
     }
+
+    ReadBool(m_bTransparent, document, "Transparent");
 }
 
 } // namespace ui

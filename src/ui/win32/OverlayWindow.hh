@@ -15,15 +15,17 @@ public:
     void CreateOverlayWindow(HWND hWnd);
     void DestroyOverlayWindow() noexcept;
 
-    void UpdateOverlayPosition() noexcept;
+    void OnOverlayMoved() noexcept;
 
     void Render();
 
     DWORD OverlayWindowThread();
 private:
     void CreateOverlayWindow();
+    void UpdateOverlayPosition() noexcept;
 
     bool m_bErase = false;
+    bool m_bOverlayMoved = false;
 
     HWND m_hWnd{};
     HWND m_hOverlayWnd{};

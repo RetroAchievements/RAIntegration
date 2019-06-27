@@ -17,6 +17,7 @@ public:
         Hidden,
         FadeIn,
         Visible,
+        FadeOutRequested,
         FadeOut,
     };
 

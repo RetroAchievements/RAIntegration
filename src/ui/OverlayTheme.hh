@@ -61,11 +61,15 @@ public:
     Color ColorOverlayScrollBar() const noexcept { return m_colorOverlayScrollBar; }
     Color ColorOverlayScrollBarGripper() const noexcept { return m_colorOverlayScrollBarGripper; }
 
+    bool Transparent() const noexcept { return m_bTransparent; }
+
     // ===== methods =====
 
     void LoadFromFile();
 
 private:
+    bool m_bTransparent = true;
+
     std::string m_sFontPopup = "Tahoma";
     int m_nFontSizePopupTitle = 26;
     int m_nFontSizePopupSubtitle = 18;

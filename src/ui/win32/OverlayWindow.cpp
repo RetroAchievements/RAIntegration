@@ -4,8 +4,8 @@
 
 #include "services\IClock.hh"
 
+#include "ui\OverlayTheme.hh"
 #include "ui\drawing\gdi\GDISurface.hh"
-
 #include "ui\viewmodels\OverlayManager.hh"
 
 namespace ra {
@@ -38,7 +38,7 @@ static LRESULT CALLBACK OverlayWndProc(HWND hWnd, UINT Msg, WPARAM wParam, LPARA
 static void CALLBACK HandleWinEvent(HWINEVENTHOOK, DWORD nEvent, HWND, LONG nObjectId, LONG, DWORD, DWORD)
 {
     if (nEvent == EVENT_OBJECT_LOCATIONCHANGE && nObjectId == CHILDID_SELF)
-        ra::services::ServiceLocator::GetMutable<OverlayWindow>().UpdateOverlayPosition();
+        ra::services::ServiceLocator::GetMutable<OverlayWindow>().OnOverlayMoved();
 }
 
 static DWORD WINAPI OverlayWindowThreadStart(LPVOID)
@@ -114,7 +114,6 @@ void OverlayWindow::CreateOverlayWindow()
     GetClientRect(m_hWnd, &rcMainWindowClientArea);
 
     const COLORREF nTransparentColor = RGB(ra::ui::Color::Transparent.Channel.R, ra::ui::Color::Transparent.Channel.G, ra::ui::Color::Transparent.Channel.B);
-    constexpr int nAlpha = (255 * 90 / 100); // 90% transparency
 
     // Create the overlay window
     WNDCLASSEX wndEx;
@@ -151,9 +150,17 @@ void OverlayWindow::CreateOverlayWindow()
         return;
     }
 
-    SetLayeredWindowAttributes(m_hOverlayWnd, nTransparentColor, nAlpha, LWA_ALPHA | LWA_COLORKEY);
+    if (ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>().Transparent())
+    {
+        constexpr auto nAlpha = (255 * 90 / 100); // 90% opacity
+        SetLayeredWindowAttributes(m_hOverlayWnd, nTransparentColor, nAlpha, LWA_ALPHA | LWA_COLORKEY);
+    }
+    else
+    {
+        SetLayeredWindowAttributes(m_hOverlayWnd, nTransparentColor, 0, LWA_COLORKEY);
+    }
 
-    ShowWindow(m_hOverlayWnd, SW_SHOWNOACTIVATE);
+    ShowWindow(m_hOverlayWnd, SW_HIDE);
 
     // watch for location/size changes in the parent window
     m_hEventHook = SetWinEventHook(EVENT_OBJECT_LOCATIONCHANGE, EVENT_OBJECT_LOCATIONCHANGE, nullptr, HandleWinEvent, GetCurrentProcessId(), 0, WINEVENT_OUTOFCONTEXT);
@@ -162,6 +169,15 @@ void OverlayWindow::CreateOverlayWindow()
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
     pOverlayManager.SetRenderRequestHandler([this]() noexcept {
         InvalidateRect(m_hOverlayWnd, nullptr, FALSE);
+    });
+
+    pOverlayManager.SetShowRequestHandler([this]() noexcept {
+        UpdateOverlayPosition();
+        ::ShowWindow(m_hOverlayWnd, SW_SHOWNOACTIVATE);
+    });
+
+    pOverlayManager.SetHideRequestHandler([this]() noexcept {
+        ::ShowWindow(m_hOverlayWnd, SW_HIDE);
     });
 
     m_bErase = true;
@@ -217,6 +233,7 @@ void OverlayWindow::UpdateOverlayPosition() noexcept
     rcWindowClientArea.bottom = rcWindowClientArea.top + nHeight;
 
     // move the layered window over the client window
+    m_bOverlayMoved = false;
     MoveWindow(m_hOverlayWnd, rcWindowClientArea.left, rcWindowClientArea.top, nWidth, nHeight, FALSE);
 
     // if the size changed, we want to redraw everything on the next repaint
@@ -227,16 +244,30 @@ void OverlayWindow::UpdateOverlayPosition() noexcept
     }
 }
 
+void OverlayWindow::OnOverlayMoved() noexcept
+{
+    if (!m_bOverlayMoved)
+    {
+        m_bOverlayMoved = true;
+        InvalidateRect(m_hOverlayWnd, nullptr, false);
+    }
+}
+
 void OverlayWindow::Render()
 {
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    if (!pOverlayManager.NeedsRender())
+        return;
+
+    if (m_bOverlayMoved)
+        UpdateOverlayPosition();
+
     RECT rcClientArea;
     ::GetClientRect(m_hWnd, &rcClientArea);
 
     PAINTSTRUCT ps;
     HDC hDC = BeginPaint(m_hOverlayWnd, &ps);
     ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcClientArea);
-
-    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
 
     if (m_bErase)
     {

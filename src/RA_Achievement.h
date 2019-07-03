@@ -123,7 +123,7 @@ public:
 
     void RebuildTrigger();
 
-    const std::wstring& GetUnlockRichPresence() const { return m_sUnlockRichPresence; }
+    const std::wstring& GetUnlockRichPresence() const noexcept { return m_sUnlockRichPresence; }
     void SetUnlockRichPresence(const std::wstring& sValue) { m_sUnlockRichPresence = sValue; }
 
     // range for

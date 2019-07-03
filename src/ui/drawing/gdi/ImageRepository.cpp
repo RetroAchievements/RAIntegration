@@ -104,7 +104,8 @@ bool ImageRepository::IsImageAvailable(ImageType nType, const std::string& sName
     if (sName.empty())
         return false;
 
-    HBitmapMap* mMap = const_cast<ImageRepository*>(this)->GetBitmapMap(nType);
+    HBitmapMap* mMap;
+    GSL_SUPPRESS_TYPE3{ mMap = const_cast<ImageRepository*>(this)->GetBitmapMap(nType); }
     if (mMap != nullptr)
     {
         HBitmapMap::iterator iter = mMap->find(sName);

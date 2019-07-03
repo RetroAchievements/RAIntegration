@@ -125,7 +125,7 @@ void GDISurface::DrawSurface(int nX, int nY, const ISurface& pSurface)
     }
 }
 
-void GDISurface::DrawSurface(int nX, int nY, const ISurface& pSurface, int nSurfaceX, int nSurfaceY, int nWidth, int nHeight)
+void GDISurface::DrawSurface(int nX, int nY, const ISurface& pSurface, int nSurfaceX, int nSurfaceY, int nWidth, int nHeight) noexcept
 {
     assert(dynamic_cast<const GDIAlphaBitmapSurface*>(&pSurface) == nullptr); // clipped alpha blend not currently supported
 

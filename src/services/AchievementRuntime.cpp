@@ -43,7 +43,7 @@ void AchievementRuntime::MonitorAchievementReset(unsigned int nId, rc_trigger_t*
         // is not false, the achievement will be moved to the active list. This ensures achievements don't
         // trigger immediately upon loading the game due to uninitialized memory.
         GSL_SUPPRESS_F6 AddEntry(m_vQueuedAchievements, nId, pTrigger);
-        m_vQueuedAchievements.back().bPauseOnReset = true;
+        GSL_SUPPRESS_F6 m_vQueuedAchievements.back().bPauseOnReset = true;
         RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
     }
     else

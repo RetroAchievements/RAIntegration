@@ -17,7 +17,7 @@ namespace viewmodels {
 class OverlayManager : protected ra::ui::IImageRepository::NotifyTarget {
 public:    
     GSL_SUPPRESS_F6 OverlayManager() = default;
-    virtual ~OverlayManager() noexcept = default;
+    ~OverlayManager() noexcept = default;
     OverlayManager(const OverlayManager&) noexcept = delete;
     OverlayManager& operator=(const OverlayManager&) noexcept = delete;
     OverlayManager(OverlayManager&&) noexcept = delete;

@@ -68,13 +68,13 @@ public:
     GSL_SUPPRESS_F6 virtual void OnSizeChanged(_UNUSED const ra::ui::Size& pNewSize) {}
 
 protected:
-    void DisableBinding()
+    void DisableBinding() noexcept
     {
         if (m_hWnd && m_pDialog)
             m_pDialog->RemoveControlBinding(m_hWnd);
     }
 
-    void EnableBinding()
+    void EnableBinding() noexcept
     {
         if (m_hWnd && m_pDialog)
             m_pDialog->AddControlBinding(m_hWnd, *this);

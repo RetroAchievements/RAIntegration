@@ -50,6 +50,7 @@ void OverlayFriendsPageViewModel::Refresh()
                 {
                     pvmFriend = &m_vItems.Add();
                     pvmFriend->Image.ChangeReference(ra::ui::ImageType::UserPic, pFriend.User);
+                    Ensures(pvmFriend != nullptr);
                 }
 
                 pvmFriend->SetLabel(ra::StringPrintf(L"%s (%u)", pFriend.User, pFriend.Score));

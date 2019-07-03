@@ -925,8 +925,6 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
     //  title = std::string("Upload ") + std::to_string( nNumChecked ) + std::string(" Achievements");
     //}
 
-    BOOL bErrorsEncountered = FALSE;
-
     if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
     {
         for (const auto check : nLbxItemsChecked)
@@ -988,12 +986,6 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
             }
         }
 
-        if (bErrorsEncountered)
-        {
-            MessageBox(hDlg, TEXT("Errors encountered!\nPlease recheck your data, or get latest."), TEXT("Errors!"),
-                       MB_OK);
-        }
-        else
         {
             char buffer[512];
             sprintf_s(buffer, 512, "Successfully uploaded data for %u achievements!", nNumChecked);

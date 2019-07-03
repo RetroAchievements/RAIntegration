@@ -14,8 +14,8 @@ public:
 
     struct Response : ApiResponseBase
     {
-        unsigned int FirstID;
-        unsigned int NextID;
+        unsigned int FirstID{};
+        unsigned int NextID{};
     };
 
     struct Request : ApiRequestBase

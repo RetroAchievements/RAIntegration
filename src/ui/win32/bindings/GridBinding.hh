@@ -34,7 +34,7 @@ public:
 
     void BindItems(ViewModelCollectionBase& vmItems);
 
-    void OnLvnItemChanged(LPNMLISTVIEW pnmListView);
+    GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
 
     void OnSizeChanged(const ra::ui::Size&) override { UpdateLayout(); }
 

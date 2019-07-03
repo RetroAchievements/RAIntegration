@@ -52,7 +52,7 @@ public:
     /// <summary>
     /// Gets the previous session data.
     /// </summary>
-    const std::vector<GameStats>& SessionData() const { return m_vGameStats; }
+    const std::vector<GameStats>& SessionData() const noexcept { return m_vGameStats; }
 
 protected:
     virtual void LoadSessions();

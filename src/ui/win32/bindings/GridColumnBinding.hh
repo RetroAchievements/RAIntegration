@@ -12,7 +12,15 @@ namespace bindings {
 class GridColumnBinding
 {
 public:
-    void SetHeader(const std::wstring& sHeader) noexcept { m_sHeader = sHeader; }
+    GridColumnBinding() noexcept = default;
+    virtual ~GridColumnBinding() noexcept = default;
+
+    GridColumnBinding(const GridColumnBinding&) noexcept = delete;
+    GridColumnBinding& operator=(const GridColumnBinding&) noexcept = delete;
+    GridColumnBinding(GridColumnBinding&&) noexcept = delete;
+    GridColumnBinding& operator=(GridColumnBinding&&) noexcept = delete;
+
+    void SetHeader(const std::wstring& sHeader) { m_sHeader = sHeader; }
     const std::wstring& GetHeader() const noexcept { return m_sHeader; }
 
     enum class WidthType

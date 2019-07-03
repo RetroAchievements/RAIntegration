@@ -120,6 +120,7 @@
     <ClCompile Include="ui\WindowViewModelBase.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\RAInterface\RA_Interface.h" />
     <ClInclude Include="api\ApiCall.hh" />
     <ClInclude Include="api\AwardAchievement.hh" />
     <ClInclude Include="api\DeleteCodeNote.hh" />
@@ -171,7 +172,6 @@
     <ClInclude Include="RA_Dlg_Memory.h" />
     <ClInclude Include="ra_fwd.h" />
     <ClInclude Include="RA_ImageFactory.h" />
-    <ClInclude Include="RA_Interface.h" />
     <ClInclude Include="RA_Json.h" />
     <ClInclude Include="RA_Leaderboard.h" />
     <ClInclude Include="RA_Log.h" />
@@ -439,9 +439,6 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
     </Link>
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
-    </PreBuildEvent>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
@@ -467,12 +464,12 @@
       <SubSystem>Windows</SubSystem>
       <IgnoreSpecificDefaultLibraries>libc.lib, libcmt.lib, msvcrt.lib, libcd.lib, libcmtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
-    </PreBuildEvent>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command />
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">
     <ClCompile>
@@ -493,9 +490,6 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
     </Link>
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
-    </PreBuildEvent>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
@@ -518,12 +512,12 @@
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
     </Link>
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
-    </PreBuildEvent>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command />
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -544,9 +538,6 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|Win32'">
     <ClCompile>
@@ -568,9 +559,6 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseUnicode|Win32'">
     <ClCompile>
@@ -591,9 +579,6 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugUnicode|Win32'">
     <ClCompile>
@@ -614,9 +599,6 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>"$(SolutionDir)MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -199,7 +199,7 @@ public:
     }
 
 protected:
-    ViewModelBase& Add(std::unique_ptr<ViewModelBase> vmViewModel);
+    ViewModelBase& AddItem(std::unique_ptr<ViewModelBase> vmViewModel);
 
     bool IsWatching() const noexcept { return !IsFrozen() && !m_vNotifyTargets.empty(); }
 
@@ -333,7 +333,7 @@ public:
     T& Add(Args&&... args)
     {
         auto pItem = std::make_unique<T>(std::forward<Args>(args)...);
-        return dynamic_cast<T&>(ViewModelCollectionBase::Add(std::move(pItem)));
+        return dynamic_cast<T&>(ViewModelCollectionBase::AddItem(std::move(pItem)));
     }
 
     /// <summary>

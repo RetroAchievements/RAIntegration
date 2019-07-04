@@ -131,7 +131,7 @@ void Achievement::RebuildTrigger()
     // attempt to copy over the hit counts
     if (pOldTrigger != nullptr && m_pTrigger != nullptr)
     {
-        auto* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+        const auto pTrigger = gsl::make_not_null(static_cast<rc_trigger_t*>(m_pTrigger));
         if (pTrigger->requirement && pOldTrigger->requirement)
             MergeHits(*pTrigger->requirement, *pOldTrigger->requirement);
 

@@ -3,7 +3,7 @@
 namespace ra {
 namespace ui {
 
-ViewModelBase& ViewModelCollectionBase::Add(std::unique_ptr<ViewModelBase> vmViewModel)
+ViewModelBase& ViewModelCollectionBase::AddItem(std::unique_ptr<ViewModelBase> vmViewModel)
 {
     assert(!IsFrozen());
 

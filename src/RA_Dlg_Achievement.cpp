@@ -202,37 +202,36 @@ void Dlg_Achievements::AddAchievementRow(const Achievement& Ach)
 _Success_(return ) _NODISCARD BOOL
     LocalValidateAchievementsBeforeCommit(_In_reads_(1) const std::array<int, 1> nLbxItems)
 {
-    char buffer[2048];
     for (auto& nIter : nLbxItems)
     {
         const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIter);
         if (Ach.Title().length() < 2)
         {
-            sprintf_s(buffer, 2048, "Achievement title too short:\n%s\nMust be greater than 2 characters.",
+            const std::string sError = ra::StringPrintf("Achievement title too short:\n%s\nMust be greater than 2 characters.",
                       Ach.Title().c_str());
-            MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
+            MessageBox(nullptr, NativeStr(sError).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
         }
         if (Ach.Title().length() > 63)
         {
-            sprintf_s(buffer, 2048, "Achievement title too long:\n%s\nMust be fewer than 80 characters.",
+            const std::string sError = ra::StringPrintf("Achievement title too long:\n%s\nMust be fewer than 80 characters.",
                       Ach.Title().c_str());
-            MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
+            MessageBox(nullptr, NativeStr(sError).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
         }
 
         if (Ach.Description().length() < 2)
         {
-            sprintf_s(buffer, 2048, "Achievement description too short:\n%s\nMust be greater than 2 characters.",
+            const std::string sError = ra::StringPrintf("Achievement description too short:\n%s\nMust be greater than 2 characters.",
                       Ach.Description().c_str());
-            MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
+            MessageBox(nullptr, NativeStr(sError).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
         }
         if (Ach.Description().length() > 255)
         {
-            sprintf_s(buffer, 2048, "Achievement description too long:\n%s\nMust be fewer than 255 characters.",
+            const std::string sError = ra::StringPrintf("Achievement description too long:\n%s\nMust be fewer than 255 characters.",
                       Ach.Description().c_str());
-            MessageBox(nullptr, NativeStr(buffer).c_str(), TEXT("Error!"), MB_OK);
+            MessageBox(nullptr, NativeStr(sError).c_str(), TEXT("Error!"), MB_OK);
             return FALSE;
         }
     }

@@ -32,6 +32,9 @@ public:
     std::unique_ptr<TextWriter> CreateTextFile(const std::wstring& sPath) const override;
     std::unique_ptr<TextWriter> AppendTextFile(const std::wstring& sPath) const override;
 
+    std::string GetFileName(const std::string& sPath) const override;
+    std::string RemoveExtension(const std::string& sPath) const override;
+
 private:
     const std::wstring& MakeAbsolute(std::wstring& sBuffer, const std::wstring& sPath) const noexcept;
 

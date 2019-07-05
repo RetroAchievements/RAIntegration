@@ -10,6 +10,7 @@
 #include "data\UserContext.hh"
 
 #include "services\IConfiguration.hh"
+#include "services\IFileSystem.hh"
 
 #include "ui\IDesktop.hh"
 
@@ -79,6 +80,16 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
             m_sCancelButtonText = L"Backspace";
             _RA_SetConsoleID(ConsoleID::AppleII);
             break;
+
+        default:
+        {
+            const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+            const auto sFileName = pDesktop.GetRunningExecutable();
+            const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+            m_sClientName = pFileSystem.RemoveExtension(pFileSystem.GetFileName(sFileName));
+            m_nEmulatorId = EmulatorID::UnknownEmulator;
+            break;
+        }
     }
 }
 
@@ -108,6 +119,9 @@ static unsigned long long ParseVersion(const char* sVersion)
 
 bool EmulatorContext::ValidateClientVersion()
 {
+    if (m_nEmulatorId == EmulatorID::UnknownEmulator)
+        return true;
+
     if (m_sLatestVersion.empty())
     {
         ra::api::LatestClient::Request request;

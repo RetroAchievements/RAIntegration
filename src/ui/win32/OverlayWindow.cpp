@@ -129,8 +129,22 @@ void OverlayWindow::CreateOverlayWindow()
         wndEx.hInstance = GetModuleHandle(nullptr);
         if (!RegisterClassEx(&wndEx))
         {
-            MessageBox(m_hWnd, TEXT("Failed to register overlay window class"), TEXT("Error"), MB_OK);
-            return;
+            // if the class already exists, assume the DLL was shutdown and restarted. Unregister the old one and reregister the new one
+            bool bSuccess = false;
+            if (GetLastError() == ERROR_CLASS_ALREADY_EXISTS)
+            {
+                if (UnregisterClass(wndEx.lpszClassName, wndEx.hInstance))
+                {
+                    if (RegisterClassEx(&wndEx))
+                        bSuccess = true;
+                }
+            }
+
+            if (!bSuccess)
+            {
+                MessageBox(m_hWnd, TEXT("Failed to register overlay window class"), TEXT("Error"), MB_OK);
+                return;
+            }
         }
 
         bClassRegistered = true;

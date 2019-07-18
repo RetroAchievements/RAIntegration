@@ -74,7 +74,7 @@ public:
         m_vHandlers.emplace_back(pHandler);
     }
 
-    std::string GetRunningExecutable() const { return m_sExecutable; }
+    std::string GetRunningExecutable() const override { return m_sExecutable; }
     void SetRunningExecutable(const std::string& sExecutable) { m_sExecutable = sExecutable; }
 
 private:

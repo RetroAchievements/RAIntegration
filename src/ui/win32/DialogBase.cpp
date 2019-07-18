@@ -168,7 +168,8 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 
         case WM_NOTIFY:
         {
-            LPNMHDR pnmHdr = reinterpret_cast<LPNMHDR>(lParam);
+            LPNMHDR pnmHdr;
+            GSL_SUPPRESS_TYPE1{ pnmHdr = reinterpret_cast<LPNMHDR>(lParam); }
             switch (pnmHdr->code)
             {
                 case LVN_ITEMCHANGED:
@@ -179,7 +180,8 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 
                     if (pGridBinding)
                     {
-                        LPNMLISTVIEW pnmListView = reinterpret_cast<LPNMLISTVIEW>(pnmHdr);
+                        LPNMLISTVIEW pnmListView;
+                        GSL_SUPPRESS_TYPE1{ pnmListView = reinterpret_cast<LPNMLISTVIEW>(pnmHdr); }
                         pGridBinding->OnLvnItemChanged(pnmListView);
                     }
 
@@ -265,7 +267,7 @@ void DialogBase::OnSize(const ra::ui::Size& oNewSize)
     m_bindWindow.OnSizeChanged(oNewSize);
 }
 
-void DialogBase::InitializeAnchors()
+void DialogBase::InitializeAnchors() noexcept
 {
     if (m_vControlAnchors.empty())
         return;
@@ -379,7 +381,7 @@ void DialogBase::UpdateAnchoredControls()
         }
     }
 
-    ::InvalidateRect(m_hWnd, NULL, TRUE);
+    ::InvalidateRect(m_hWnd, nullptr, TRUE);
 }
 
 } // namespace win32

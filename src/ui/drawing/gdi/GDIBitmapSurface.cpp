@@ -37,7 +37,10 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
 
     // fill rectangle
     auto nFirstScanline = (GetHeight() - nY - nHeight); // bitmap memory starts with the bottom scanline
+    assert(m_pBits != nullptr);
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
+    assert(pBits != nullptr);
+
     if (nStride == nWidth)
     {
         // doing full scanlines, just bulk fill
@@ -126,6 +129,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     assert(ra::to_signed(nFirstScanline) >= 0);
     assert(m_pBits != nullptr);
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
+    assert(pBits != nullptr);
 
     // clip to surface
     auto nLines = szText.cy;

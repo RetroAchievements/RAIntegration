@@ -1099,14 +1099,15 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 break;
 
             POINT ptCursor{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
-            const auto hChild = ChildWindowFromPoint(m_hWnd, ptCursor);
+            HWND hChild;
+            hChild = ChildWindowFromPoint(m_hWnd, ptCursor);
 
             const auto hMemBits = GetDlgItem(m_hWnd, IDC_RA_MEMBITS);
             if (hChild == hMemBits)
             {
                 // determine the width of one character
                 // ASSERT: field is using a fixed-width font, so all characters have the same width
-                INT nCharWidth;
+                INT nCharWidth{};
                 HDC hDC = GetDC(hMemBits);
                 {
                     SelectFont(hDC, GetWindowFont(hMemBits));
@@ -1218,7 +1219,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             if (pStart > sAddr.c_str())
                             {
                                 // minus prefix - invert value
-                                nValueQuery = static_cast<unsigned int>(-static_cast<int>(nValueQuery));
+                                GSL_SUPPRESS_TYPE1 nValueQuery = static_cast<unsigned int>(-static_cast<int>(nValueQuery));
 
                                 switch (MemoryViewerControl::GetDataSize())
                                 {

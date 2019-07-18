@@ -32,7 +32,7 @@ private:
 
         ItemViewModel* GetItem(gsl::index nIndex) { return m_vItems.GetItemAt(nIndex); }
 
-        size_t GetItemCount() const { return m_vItems.Count(); }
+        size_t GetItemCount() const noexcept { return m_vItems.Count(); }
 
         void MockGame(unsigned int nGameId, const std::wstring& sGameName, const std::string& sGameBadge)
         {

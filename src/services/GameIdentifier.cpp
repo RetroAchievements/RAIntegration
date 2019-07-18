@@ -144,7 +144,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
             bool bShowHardcorePrompt = false;
             if (pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning))
             {
-                pGameContext.EnumerateAchievements([&bShowHardcorePrompt](const Achievement & pAchievment)
+                pGameContext.EnumerateAchievements([&bShowHardcorePrompt](const Achievement & pAchievment) noexcept
                 {
                     if (pAchievment.Category() == ra::etoi(AchievementSet::Type::Core))
                     {

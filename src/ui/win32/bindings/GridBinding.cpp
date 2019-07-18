@@ -115,7 +115,7 @@ void GridBinding::UpdateLayout()
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
         col.cx = vWidths.at(i);
-        col.pszText = const_cast<LPTSTR>(sHeader.c_str());
+        GSL_SUPPRESS_TYPE3 col.pszText = const_cast<LPSTR>(sHeader.data());
         col.iSubItem = i;
 
         if (i < ra::to_signed(nColumns))
@@ -171,7 +171,7 @@ void GridBinding::UpdateItems(gsl::index nColumn)
         LV_ITEM item{};
         item.mask = LVIF_TEXT;
         item.iSubItem = nColumn;
-        item.pszText = const_cast<LPTSTR>(_T(""));
+        GSL_SUPPRESS_TYPE3 item.pszText = const_cast<LPSTR>("");
 
         const auto& pBoundProperty = pCheckBoxColumn->GetBoundProperty();
 
@@ -197,7 +197,7 @@ void GridBinding::UpdateItems(gsl::index nColumn)
         for (gsl::index i = 0; ra::to_unsigned(i) < m_vmItems->Count(); ++i)
         {
             sText = NativeStr(pColumn.GetText(*m_vmItems, i));
-            item.pszText = const_cast<LPTSTR>(sText.c_str());
+            item.pszText = sText.data();
             item.iItem = i;
 
             if (i < nItems)
@@ -214,13 +214,13 @@ void GridBinding::UpdateItems(gsl::index nColumn)
     }
 }
 
-void GridBinding::OnLvnItemChanged(LPNMLISTVIEW pnmListView)
+void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 {
     switch (pnmListView->uNewState)
     {
         case 0x2000: // LVIS_CHECKED
         {
-            const auto* pCheckBoxBinding = reinterpret_cast<GridCheckBoxColumnBinding*>(m_vColumns.at(0).get());
+            const auto* pCheckBoxBinding = dynamic_cast<GridCheckBoxColumnBinding*>(m_vColumns.at(0).get());
             if (pCheckBoxBinding != nullptr)
             {
                 m_vmItems->RemoveNotifyTarget(*this);
@@ -232,7 +232,7 @@ void GridBinding::OnLvnItemChanged(LPNMLISTVIEW pnmListView)
 
         case 0x1000: // LVIS_UNCHECKED
         {
-            const auto* pCheckBoxBinding = reinterpret_cast<GridCheckBoxColumnBinding*>(m_vColumns.at(0).get());
+            const auto* pCheckBoxBinding = dynamic_cast<GridCheckBoxColumnBinding*>(m_vColumns.at(0).get());
             if (pCheckBoxBinding != nullptr)
             {
                 m_vmItems->RemoveNotifyTarget(*this);

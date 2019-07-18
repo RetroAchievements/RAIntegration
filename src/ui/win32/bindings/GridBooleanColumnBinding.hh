@@ -13,7 +13,7 @@ namespace bindings {
 class GridBooleanColumnBinding : public GridColumnBinding
 {
 public:
-    GridBooleanColumnBinding(const BoolModelProperty& pBoundProperty, const std::wstring& sTrueText, const std::wstring& sFalseText) noexcept
+    GSL_SUPPRESS_F6 GridBooleanColumnBinding(const BoolModelProperty& pBoundProperty, const std::wstring& sTrueText, const std::wstring& sFalseText) noexcept
         : m_pBoundProperty(&pBoundProperty), m_sTrueText(sTrueText), m_sFalseText(sFalseText)
     {
     }

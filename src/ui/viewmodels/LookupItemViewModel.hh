@@ -65,7 +65,7 @@ public:
     GSL_SUPPRESS_C128 LookupItemViewModel& Add(int nId, const std::wstring& sLabel)
     {
         auto pItem = std::make_unique<LookupItemViewModel>(nId, sLabel);
-        return dynamic_cast<LookupItemViewModel&>(ViewModelCollectionBase::Add(std::move(pItem)));
+        return dynamic_cast<LookupItemViewModel&>(ViewModelCollectionBase::AddItem(std::move(pItem)));
     }
 
     /// <summary>

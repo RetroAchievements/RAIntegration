@@ -172,7 +172,7 @@ private:
     };
     std::vector<AnchorInfo> m_vControlAnchors;
 
-    void InitializeAnchors();
+    void InitializeAnchors() noexcept;
     void UpdateAnchoredControls();
 };
 

@@ -48,7 +48,7 @@ public:
     ra::data::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockFileSystem mockFileSystem;
 
-    rc_memref_value_t* GetMemRef(ra::AchievementID nId)
+    rc_memref_value_t* GetMemRef(ra::AchievementID nId) noexcept
     {
         for (const auto& pIter : m_vActiveAchievements)
         {

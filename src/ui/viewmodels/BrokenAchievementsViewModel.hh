@@ -123,7 +123,7 @@ public:
     }
 
 protected:
-    void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args);
+    void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
 
 private:
     void OnItemSelectedChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args);

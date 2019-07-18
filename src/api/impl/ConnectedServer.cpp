@@ -251,7 +251,7 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
     const std::wstring& sFilePath, ApiResponseBase& pResponse, rapidjson::Document& document)
 {
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
-    auto nFileSize = pFileSystem.GetFileSize(sFilePath);
+    const auto nFileSize = pFileSystem.GetFileSize(sFilePath);
     if (nFileSize < 0)
     {
         pResponse.Result = ra::api::ApiResult::Error;
@@ -264,8 +264,8 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
     if (nIndex != std::string::npos)
     {
         sExt = ra::Narrow(&sFilePath.at(nIndex + 1));
-        std::transform(sExt.begin(), sExt.end(), sExt.begin(), [](char c) {
-            return static_cast<char>(::tolower(c));
+        std::transform(sExt.begin(), sExt.end(), sExt.begin(), [](char c) noexcept {
+            return gsl::narrow_cast<char>(::tolower(c));
         });
     }
 
@@ -274,7 +274,7 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
 
     const char* sBoundary = "---------------------------41184676334";
     std::string sPostData;
-    sPostData.reserve(static_cast<size_t>(nFileSize + 512));
+    sPostData.reserve(gsl::narrow_cast<size_t>(nFileSize + 512));
 
     sPostData.append("--");
     sPostData.append(sBoundary);
@@ -303,8 +303,8 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
     if (pFile != nullptr)
     {
         const int nLength = sPostData.length();
-        sPostData.resize(static_cast<size_t>(nFileSize + nLength));
-        pFile->GetBytes(&sPostData.at(nLength), static_cast<size_t>(nFileSize));
+        sPostData.resize(gsl::narrow_cast<size_t>(nFileSize + nLength));
+        pFile->GetBytes(&sPostData.at(nLength), gsl::narrow_cast<size_t>(nFileSize));
     }
 
     sPostData.append("\r\n");

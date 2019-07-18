@@ -57,7 +57,6 @@ private:
 
 private:
     static constexpr std::size_t m_nNumCols = 10U;
-    static constexpr std::size_t MAX_CONDITIONS = 200U;
     static constexpr std::size_t MEM_STRING_TEXT_LEN = 80U;
 
     HWND m_hAchievementEditorDlg = nullptr;
@@ -68,10 +67,7 @@ private:
     ra::tstring m_sTooltip;
     WNDPROC m_pListViewWndProc = nullptr;
 
-    using LbxData = std::array<std::array<std::string, m_nNumCols>, MAX_CONDITIONS>;
-
-    LbxData m_lbxData{};
-    int m_nNumOccupiedRows = 0;
+    std::vector<std::array<std::string, m_nNumCols>> m_lbxData{};
 
     Achievement* m_pSelectedAchievement = nullptr;
     BOOL m_bPopulatingAchievementEditorData = FALSE;

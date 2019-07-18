@@ -114,9 +114,7 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
         i++;
     }
 
-    ZeroMemory(&m_lbxData, sizeof(m_lbxData));
-
-    m_nNumOccupiedRows = 0;
+    m_lbxData.clear();
 
     BOOL bSuccess = ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT);
     bSuccess = ListView_EnableGroupView(hList, FALSE);
@@ -141,36 +139,21 @@ BOOL Dlg_AchievementEditor::IsActive() const noexcept
 
 const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond, unsigned int nCurrentHits)
 {
+    m_lbxData.emplace_back();
+    int rowIdx = m_lbxData.size() - 1;
+
     LV_ITEM item{};
     item.mask = LVIF_TEXT;
     item.cchTextMax = 256;
-    item.iItem = m_nNumOccupiedRows;
-    ra::tstring sData{NativeStr(LbxDataAt(m_nNumOccupiedRows, CondSubItems::Id))};
+    item.iItem = rowIdx;
+    ra::tstring sData{NativeStr(LbxDataAt(rowIdx, CondSubItems::Id))};
     item.pszText = sData.data();
     item.iItem = ListView_InsertItem(hList, &item);
 
-    auto& pRow = m_lbxData.at(m_nNumOccupiedRows);
-    if (pRow.at(0).capacity() == 0)
-    {
-        // not sure exactly why, but the std::string objects in the LbxData nested array
-        // aren't constructed properly (they're just zeroed out memory). a std::string
-        // should never have 0 capacity - if it does, call reserve to initialize it 
-        // properly before trying to assign anything to it.
-        for (auto& pCell : pRow)
-            pCell.reserve(8);
-    }
-    else
-    {
-        // reconstructing the row - clear out any stored strings so the subitems get repopulated
-        for (auto& pCell : pRow)
-            pCell.clear();
-    }
-
     UpdateCondition(hList, item, Cond, nCurrentHits);
 
-    Ensures(item.iItem == m_nNumOccupiedRows);
+    Ensures(item.iItem == static_cast<int>(m_lbxData.size() - 1));
 
-    m_nNumOccupiedRows++;
     return item.iItem;
 }
 
@@ -2048,17 +2031,19 @@ _Use_decl_annotations_ void Dlg_AchievementEditor::PopulateConditions(const Achi
         return;
 
     ListView_DeleteAllItems(hCondList);
-    m_nNumOccupiedRows = 0;
+    m_lbxData.clear();
 
     if (pCheevo != nullptr)
     {
+        size_t maxNumConditions = m_pSelectedAchievement->NumConditions(0);
+        for (size_t i = 1; i < m_pSelectedAchievement->NumConditionGroups(); ++i)
+            maxNumConditions = std::max(maxNumConditions, m_pSelectedAchievement->NumConditions(i));
+        m_lbxData.reserve(maxNumConditions);
+
         const unsigned int nGrp = GetSelectedConditionGroup();
         for (size_t i = 0; i < m_pSelectedAchievement->NumConditions(nGrp); ++i)
             AddCondition(hCondList, m_pSelectedAchievement->GetCondition(nGrp, i),
                          m_pSelectedAchievement->GetConditionHitCount(nGrp, i));
-
-        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND),
-                     m_pSelectedAchievement->NumConditions(nGrp) < MAX_CONDITIONS);
     }
 }
 
@@ -2135,8 +2120,6 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS), TRUE);
-        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND),
-                     m_pSelectedAchievement->NumConditions(0) < MAX_CONDITIONS);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_COPYCOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_DELETECOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS), TRUE);
@@ -2222,8 +2205,6 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS), TRUE);
-        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND),
-                     m_pSelectedAchievement->NumConditions(nGrp) < MAX_CONDITIONS);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_COPYCOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_DELETECOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS), TRUE);

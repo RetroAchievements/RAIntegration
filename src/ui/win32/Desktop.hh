@@ -26,6 +26,7 @@ public:
     void Shutdown() noexcept override;
 
     void SetMainHWnd(HWND hWnd);
+    std::string GetRunningExecutable() const override;
 
 private:
     _Success_(return != nullptr)

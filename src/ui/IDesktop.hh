@@ -43,6 +43,11 @@ public:
     virtual ra::ui::Size GetClientSize(const WindowViewModelBase& vmViewModel) const = 0;
 
     /// <summary>
+    /// Gets the path/filename of the currently running executable.
+    /// </summary>
+    virtual std::string GetRunningExecutable() const = 0;
+
+    /// <summary>
     /// Opens the specified URL using the default browser.
     /// </summary>
     /// <param name="sUrl">The URL to open.</param>

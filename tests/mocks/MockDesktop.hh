@@ -74,6 +74,9 @@ public:
         m_vHandlers.emplace_back(pHandler);
     }
 
+    std::string GetRunningExecutable() const { return m_sExecutable; }
+    void SetRunningExecutable(const std::string& sExecutable) { m_sExecutable = sExecutable; }
+
 private:
     ra::ui::DialogResult Handle(WindowViewModelBase& vmViewModel) const
     {
@@ -91,6 +94,7 @@ private:
     std::vector<DialogHandler> m_vHandlers;
     mutable bool m_bDialogShown = false;
     mutable std::string m_sLastOpenedUrl;
+    std::string m_sExecutable;
 };
 
 } // namespace mocks

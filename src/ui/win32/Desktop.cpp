@@ -124,6 +124,13 @@ void Desktop::SetMainHWnd(HWND hWnd)
     m_pWindowBinding->SetHWND(hWnd);
 }
 
+std::string Desktop::GetRunningExecutable() const
+{
+    char buffer[MAX_PATH];
+    GetModuleFileNameA(nullptr, buffer, sizeof(buffer));
+    return std::string(buffer);
+}
+
 void Desktop::OpenUrl(const std::string& sUrl) const noexcept
 {
     ShellExecute(nullptr, TEXT("open"), sUrl.c_str(), nullptr, nullptr, SW_SHOWNORMAL);

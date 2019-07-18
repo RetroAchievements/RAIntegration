@@ -6,6 +6,7 @@
 
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
@@ -28,6 +29,7 @@ private:
         ra::data::mocks::MockGameContext mockGameContext;
         ra::data::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::services::mocks::MockFileSystem mockFileSystem;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
@@ -717,6 +719,23 @@ public:
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.SetClientVersion("0.57");
         Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 - Test - User [localhost]"), emulator.GetAppTitle("Test"));
+    }
+
+    TEST_METHOD(TestInitializeUnknownEmulator)
+    {
+        EmulatorContextHarness emulator;
+        emulator.mockDesktop.SetRunningExecutable("C:\\Games\\Emulator\\RATest.exe");
+        emulator.Initialize(ra::itoe<EmulatorID>(9999));
+        Assert::AreEqual(ra::etoi(EmulatorID::UnknownEmulator), ra::etoi(emulator.GetEmulatorId()));
+        Assert::AreEqual(std::string("RATest"), emulator.GetClientName());
+    }
+
+    TEST_METHOD(TestValidateUnknownEmulator)
+    {
+        EmulatorContextHarness emulator;
+        Assert::AreEqual(ra::etoi(EmulatorID::UnknownEmulator), ra::etoi(emulator.GetEmulatorId()));
+        Assert::IsTrue(emulator.ValidateClientVersion());
+        Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
     }
 };
 

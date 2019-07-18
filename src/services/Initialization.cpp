@@ -85,11 +85,16 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
 {
     RegisterCoreServices();
 
+    // The IConfiguration service should be initialized as soon as possible. To do that, the client name must
+    // be known, and it's provided by the EmulatorContext. IFileSystem and IDesktop are required for EmulatorContext
     auto& pFileSystem = ra::services::ServiceLocator::GetMutable<ra::services::IFileSystem>();
+
+    auto pDesktop = std::make_unique<ra::ui::win32::Desktop>();
+    ra::services::ServiceLocator::Provide<ra::ui::IDesktop>(std::move(pDesktop));
 
     auto pEmulatorContext = std::make_unique<ra::data::EmulatorContext>();
     pEmulatorContext->Initialize(nEmulatorId);
-    auto& sClientName = pEmulatorContext->GetClientName();
+    const auto& sClientName = pEmulatorContext->GetClientName();
     ra::services::ServiceLocator::Provide<ra::data::EmulatorContext>(std::move(pEmulatorContext));
 
     // if EmulatorContext->Initialize doesn't specify the ConsoleContext, initialize a default ConsoleContext
@@ -135,10 +140,6 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
     auto pClipboard = std::make_unique<ra::services::impl::WindowsClipboard>();
     ra::services::ServiceLocator::Provide<ra::services::IClipboard>(std::move(pClipboard));
 
-    auto pDesktop = std::make_unique<ra::ui::win32::Desktop>();
-    ra::services::ServiceLocator::Provide<ra::ui::IDesktop>(std::move(pDesktop));
-    ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::Widen(sClientName));
-
     auto pSurfaceFactory = std::make_unique<ra::ui::drawing::gdi::GDISurfaceFactory>();
     ra::services::ServiceLocator::Provide<ra::ui::drawing::ISurfaceFactory>(std::move(pSurfaceFactory));
 
@@ -148,6 +149,7 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
 
     auto pWindowManager = std::make_unique<ra::ui::viewmodels::WindowManager>();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(std::move(pWindowManager));
+    ra::ui::WindowViewModelBase::WindowTitleProperty.SetDefaultValue(ra::Widen(sClientName));
 
     auto pOverlayWindow = std::make_unique<ra::ui::win32::OverlayWindow>();
     ra::services::ServiceLocator::Provide<ra::ui::win32::OverlayWindow>(std::move(pOverlayWindow));

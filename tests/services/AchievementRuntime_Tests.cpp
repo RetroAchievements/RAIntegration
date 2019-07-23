@@ -535,6 +535,55 @@ public:
         Assert::AreEqual(1U, pAchievement5->GetConditionHitCount(0, 0));
     }
 
+    TEST_METHOD(TestPersistProgressNoCoreGroup)
+    {
+        AchievementRuntimeHarness runtime;
+        auto& ach = runtime.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        ach.SetID(9U);
+        ach.ParseTrigger("S0xH1234=1_0xX1234>d0xX1234");
+        ach.SetActive(true);
+
+        ach.SetConditionHitCount(1, 0, 2);
+        ach.SetConditionHitCount(1, 1, 0);
+        auto pMemRef = runtime.GetMemRef(9U); // 0xH1234
+        pMemRef->value = 0x02;
+        pMemRef->previous = 0x03;
+        pMemRef->prior = 0x04;
+        pMemRef = pMemRef->next; // 0xX1234
+        pMemRef->value = 0x020000;
+        pMemRef->previous = 0x030000;
+        pMemRef->prior = 0x040000;
+
+        runtime.SaveProgress("test.sav");
+
+        // modify data so we can see if the persisted data is restored
+        pMemRef = runtime.GetMemRef(9U);
+        pMemRef->value = 0;
+        pMemRef->previous = 0;
+        pMemRef->prior = 0;
+        pMemRef = pMemRef->next;
+        pMemRef->value = 0;
+        pMemRef->previous = 0;
+        pMemRef->prior = 0;
+        ach.SetConditionHitCount(1, 0, 1);
+        ach.SetConditionHitCount(1, 1, 1);
+
+        // restore persisted data
+        runtime.LoadProgress("test.sav");
+
+        Assert::AreEqual(2U, ach.GetConditionHitCount(1, 0));
+        Assert::AreEqual(0U, ach.GetConditionHitCount(1, 1));
+
+        pMemRef = runtime.GetMemRef(9U);
+        Assert::AreEqual(0x02U, pMemRef->value);
+        Assert::AreEqual(0x03U, pMemRef->previous);
+        Assert::AreEqual(0x04U, pMemRef->prior);
+        pMemRef = pMemRef->next;
+        Assert::AreEqual(0x020000U, pMemRef->value);
+        Assert::AreEqual(0x030000U, pMemRef->previous);
+        Assert::AreEqual(0x040000U, pMemRef->prior);
+    }
+
     TEST_METHOD(TestActivateClonedAchievement)
     {
         AchievementRuntime runtime;

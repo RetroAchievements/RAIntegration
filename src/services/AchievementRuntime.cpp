@@ -529,13 +529,17 @@ bool AchievementRuntime::LoadProgressV2(ra::services::TextReader& pFile, std::se
                 continue;
             }
 
-            rc_condition_t* pCondition = pTrigger->requirement->conditions;
-            while (pCondition)
+            rc_condition_t* pCondition = nullptr;
+            if (pTrigger->requirement)
             {
-                tokenizer.Advance();
-                pCondition->current_hits = tokenizer.ReadNumber();
+                pCondition = pTrigger->requirement->conditions;
+                while (pCondition)
+                {
+                    tokenizer.Advance();
+                    pCondition->current_hits = tokenizer.ReadNumber();
 
-                pCondition = pCondition->next;
+                    pCondition = pCondition->next;
+                }
             }
 
             const rc_condset_t* pCondSet = pTrigger->alternative;
@@ -739,13 +743,17 @@ void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const
         const auto sMemStringMD5 = RAGenerateMD5(sMemString);
         auto sLine = ra::StringPrintf("A%d:%s:", pAchievement.nId, sMemStringMD5);
 
-        const rc_condition_t* pCondition = pAchievement.pTrigger->requirement->conditions;
-        while (pCondition)
+        const rc_condition_t* pCondition = nullptr;
+        if (pAchievement.pTrigger->requirement)
         {
-            sLine.append(std::to_string(pCondition->current_hits));
-            sLine.push_back(',');
+            pCondition = pAchievement.pTrigger->requirement->conditions;
+            while (pCondition)
+            {
+                sLine.append(std::to_string(pCondition->current_hits));
+                sLine.push_back(',');
 
-            pCondition = pCondition->next;
+                pCondition = pCondition->next;
+            }
         }
 
         const rc_condset_t* pCondSet = pAchievement.pTrigger->alternative;

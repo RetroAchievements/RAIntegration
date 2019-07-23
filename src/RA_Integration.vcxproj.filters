@@ -305,9 +305,6 @@
     <ClInclude Include="RA_md5factory.h">
       <Filter>Services</Filter>
     </ClInclude>
-    <ClInclude Include="RA_Interface.h">
-      <Filter>Interface</Filter>
-    </ClInclude>
     <ClInclude Include="RA_Core.h">
       <Filter>Interface</Filter>
     </ClInclude>
@@ -712,6 +709,9 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\OverlayRecentGamesPageViewModel.hh">
       <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RAInterface\RA_Interface.h">
+      <Filter>Interface</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

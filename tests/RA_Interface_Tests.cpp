@@ -15,7 +15,7 @@ static std::wstring GetIntegrationPath();
 // ALSO NOTE: the cpp file is pulled in directly, instead of using the header file so we
 // can access the file-scoped methods and variables. The cpp file will include the header
 //file, so both are tested.
-#include "RA_Interface.cpp"
+#include "..\RAInterface\RA_Interface.cpp"
 
 #include "RA_BuildVer.h"
 

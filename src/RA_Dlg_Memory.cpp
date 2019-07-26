@@ -97,6 +97,9 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
 
         case WM_CHAR:
             return (!OnEditInput(static_cast<UINT>(LOWORD(wParam))));
+
+        case WM_GETDLGCODE:
+            return DLGC_WANTCHARS | DLGC_WANTARROWS;
     }
 
     return DefWindowProc(hDlg, uMsg, wParam, lParam);

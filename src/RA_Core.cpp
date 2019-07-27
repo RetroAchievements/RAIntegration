@@ -744,6 +744,8 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
         }
 
         ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().LoadProgress(sFilename);
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
+
         g_MemoryDialog.Invalidate();
 
         for (size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i)

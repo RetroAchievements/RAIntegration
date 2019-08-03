@@ -49,6 +49,13 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, unsigned int nROMSiz
         return 0U;
     }
 
+    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot load achievements",
+            L"You must be logged in to load achievements. Please reload the game after logging in.");
+        return 0U;
+    }
+
     const std::string sMD5 = RAGenerateMD5(pROM, nROMSize);
     unsigned int nGameId = 0U;
 
@@ -63,24 +70,21 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, unsigned int nROMSiz
         {
             RA_LOG("Could not identify game with MD5 %s", sMD5);
 
-            if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+            auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle();
+
+            ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
+            vmUnknownGame.InitializeGameTitles();
+            vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Name());
+            vmUnknownGame.SetChecksum(ra::Widen(sMD5));
+            vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
+            vmUnknownGame.SetNewGameName(vmUnknownGame.GetEstimatedGameName());
+
+            if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
             {
-                auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle();
+                nGameId = vmUnknownGame.GetSelectedGameId();
 
-                ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
-                vmUnknownGame.InitializeGameTitles();
-                vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Name());
-                vmUnknownGame.SetChecksum(ra::Widen(sMD5));
-                vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
-                vmUnknownGame.SetNewGameName(vmUnknownGame.GetEstimatedGameName());
-
-                if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
-                {
-                    nGameId = vmUnknownGame.GetSelectedGameId();
-
-                    if (vmUnknownGame.GetTestMode())
-                        m_nPendingMode = ra::data::GameContext::Mode::CompatibilityTest;
-                }
+                if (vmUnknownGame.GetTestMode())
+                    m_nPendingMode = ra::data::GameContext::Mode::CompatibilityTest;
             }
         }
         else

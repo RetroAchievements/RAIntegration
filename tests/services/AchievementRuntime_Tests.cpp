@@ -1,6 +1,7 @@
 #include "services\AchievementRuntime.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -44,6 +45,7 @@ public:
         mockUserContext.Initialize("User", "ApiToken");
     }
 
+    ra::data::mocks::MockEmulatorContext mockEmulatorContext;
     ra::data::mocks::MockGameContext mockGameContext;
     ra::data::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockFileSystem mockFileSystem;
@@ -133,9 +135,9 @@ public:
     TEST_METHOD(TestActivateAchievementPaused)
     {
         std::array<unsigned char, 1> memory{ 0x00 };
-        InitializeMemory(memory);
 
-        AchievementRuntime runtime;
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
         auto* pTrigger = ParseTrigger("0xH0000=0");
 
         runtime.SetPaused(true);
@@ -182,9 +184,9 @@ public:
     TEST_METHOD(TestMonitorAchievementReset)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
-        AchievementRuntime runtime;
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
         auto* pTrigger = ParseTrigger("1=1.3._R:0xH0000=1");
         runtime.ActivateAchievement(4U, pTrigger);
 
@@ -253,9 +255,9 @@ public:
     TEST_METHOD(TestMonitorAchievementResetPaused)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
-        AchievementRuntime runtime;
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
         auto* pTrigger = ParseTrigger("0xH0000=0.3._R:0xH0001=0");
 
         runtime.SetPaused(true);
@@ -341,9 +343,9 @@ public:
     TEST_METHOD(TestResetActiveAchievements)
     {
         std::array<unsigned char, 2> memory{ 0x00, 0x00 };
-        InitializeMemory(memory);
 
-        AchievementRuntime runtime;
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
         auto* pTrigger = ParseTrigger("0xH0000=0_0xH0001=1");
         runtime.ActivateAchievement(6U, pTrigger);
 
@@ -649,9 +651,9 @@ public:
     TEST_METHOD(TestActivateLeaderboard)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        InitializeMemory(memory);
 
-        AchievementRuntime runtime;
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
         auto* pLeaderboard = ParseLeaderboard("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02");
 
         // leaderboard not active, should not trigger

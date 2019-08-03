@@ -2,25 +2,8 @@
 #define RA_CONDITION_H
 #pragma once
 
-#include "ra_fwd.h"
+#include "data\Types.hh"
 #include "ra_utility.h"
-
-enum class MemSize : std::size_t
-{
-    Bit_0,
-    Bit_1,
-    Bit_2,
-    Bit_3,
-    Bit_4,
-    Bit_5,
-    Bit_6,
-    Bit_7,
-    Nibble_Lower,
-    Nibble_Upper,
-    EightBit,
-    SixteenBit,
-    ThirtyTwoBit
-};
 
 inline constexpr std::array<const LPCTSTR, 13> MEMSIZE_STR{
     _T("Bit0"), _T("Bit1"),   _T("Bit2"),   _T("Bit3"),  _T("Bit4"),   _T("Bit5"),  _T("Bit6"),

@@ -33,9 +33,6 @@
     <ClCompile Include="..\src\RA_Condition.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\RA_MemManager.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\RA_Defs.cpp">
       <Filter>Code</Filter>
     </ClCompile>

@@ -255,7 +255,6 @@
     <ClCompile Include="..\src\RA_Condition.cpp" />
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
-    <ClCompile Include="..\src\RA_MemManager.cpp" />
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />

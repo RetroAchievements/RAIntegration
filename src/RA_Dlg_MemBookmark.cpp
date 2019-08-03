@@ -6,6 +6,7 @@
 
 #include "ra_math.h"
 
+#include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 
 Dlg_MemBookmark g_MemBookmarkDialog;
@@ -489,7 +490,7 @@ void Dlg_MemBookmark::UpdateBookmarks(bool bForceWrite)
             continue;
         }
 
-        const auto mem_value = GetMemory(bookmark.Address(), bookmark.Type());
+        const auto mem_value = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(bookmark.Address(), (MemSize)bookmark.Type());
 
         if (bookmark.Value() != mem_value)
         {
@@ -593,7 +594,7 @@ void Dlg_MemBookmark::AddAddress()
         NewBookmark.SetType(3);
 
     // Get Memory Value
-    NewBookmark.SetValue(GetMemory(nAddr, NewBookmark.Type()));
+    NewBookmark.SetValue(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(nAddr, (MemSize)NewBookmark.Type()));
     NewBookmark.SetPrevious(NewBookmark.Value());
 
     // Get Code Note and add as description
@@ -650,26 +651,6 @@ void Dlg_MemBookmark::WriteFrozenValue(const MemBookmark& Bookmark)
             addr--;
         i++;
     }
-}
-
-unsigned int Dlg_MemBookmark::GetMemory(unsigned int nAddr, int type)
-{
-    unsigned int mem_value{};
-
-    switch (type)
-    {
-        case 1:
-            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, MemSize::EightBit);
-            break;
-        case 2:
-            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, MemSize::SixteenBit);
-            break;
-        case 3:
-            mem_value = g_MemManager.ActiveBankRAMRead(nAddr, MemSize::ThirtyTwoBit);
-            break;
-    }
-
-    return mem_value;
 }
 
 void Dlg_MemBookmark::ExportJSON()
@@ -791,7 +772,7 @@ void Dlg_MemBookmark::ImportFromFile(std::wstring&& sFilename)
             NewBookmark.SetType(bmData["Type"].GetInt());
             NewBookmark.SetDecimal(bmData["Decimal"].GetBool());
 
-            NewBookmark.SetValue(GetMemory(NewBookmark.Address(), NewBookmark.Type()));
+            NewBookmark.SetValue(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(NewBookmark.Address(), (MemSize)NewBookmark.Type()));
             NewBookmark.SetPrevious(NewBookmark.Value());
 
             AddBookmark(std::move(NewBookmark));

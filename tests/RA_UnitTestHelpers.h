@@ -181,11 +181,6 @@ std::wstring ToString<ra::data::GameContext::Mode>(const ra::data::GameContext::
 } // namespace VisualStudio
 } // namespace Microsoft
 
-// Loads memory into the MemoryManager
-
-// Size of the arrays used are not always the same so a span is used
-void InitializeMemory(gsl::span<unsigned char> pMemory);
-void InitializeMemory(std::unique_ptr<unsigned char[]> pMemory, size_t szMemorySize);
 void AssertContains(const std::string& sHaystack, const std::string& sNeedle);
 
 #endif /* !RA_UNITTESTHELPERS_H */

@@ -5,6 +5,8 @@
 #include "ra_fwd.h"
 #include "ra_type_traits.h"
 
+#include "data/Types.hh"
+
 #include "ui/viewmodels/MessageBoxViewModel.hh"
 
 class MemBookmark
@@ -140,7 +142,6 @@ private:
     BOOL EditLabel(int nItem, int nSubItem);
     void AddAddress();
     void ClearAllBookmarks() noexcept;
-    unsigned int GetMemory(unsigned int nAddr, int type);
 
     void ExportJSON();
     void ImportFromFile(std::wstring&& filename);

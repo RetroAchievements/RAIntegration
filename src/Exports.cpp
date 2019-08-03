@@ -157,8 +157,21 @@ API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
     ra::services::ServiceLocator::Provide<ra::data::ConsoleContext>(std::move(pContext));
 
 #ifndef RA_UTEST
-    g_MemoryDialog.UpdateMemoryRegions();
+    if (ra::services::ServiceLocator::Exists<ra::data::EmulatorContext>())
+        g_MemoryDialog.UpdateMemoryRegions();
 #endif
+}
+
+API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
+{
+    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().AddMemoryBlock(nBankID, nBankSize,
+        reinterpret_cast<ra::data::EmulatorContext::MemoryReadFunction*>(pReader),
+        reinterpret_cast<ra::data::EmulatorContext::MemoryWriteFunction*>(pWriter));
+}
+
+API void CCONV _RA_ClearMemoryBanks()
+{
+    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().ClearMemoryBlocks();
 }
 
 API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)

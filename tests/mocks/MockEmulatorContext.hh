@@ -4,7 +4,10 @@
 
 #include "data\EmulatorContext.hh"
 
+#include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
+
+#include <GSL\span>
 
 namespace ra {
 namespace data {
@@ -42,8 +45,35 @@ public:
         return true;
     }
 
+    void MockMemory(gsl::span<unsigned char> pMemory)
+    {
+        s_pMemory = pMemory;
+
+        ClearMemoryBlocks();
+        AddMemoryBlock(0, s_pMemory.size_bytes(), ReadMemoryHelper, WriteMemoryHelper);
+    }
+
+    void MockMemory(unsigned char pMemory[], size_t nBytes)
+    {
+        s_pMemory = gsl::make_span(pMemory, nBytes);
+
+        ClearMemoryBlocks();
+        AddMemoryBlock(0, nBytes, ReadMemoryHelper, WriteMemoryHelper);
+    }
+
 private:
+    static uint8_t ReadMemoryHelper(uint32_t nAddress)
+    {
+        return s_pMemory.at(nAddress);
+    }
+
+    static void WriteMemoryHelper(uint32_t nAddress, uint8_t nValue)
+    {
+        s_pMemory.at(nAddress) = nValue;
+    }
+
     ra::services::ServiceLocator::ServiceOverride<ra::data::EmulatorContext> m_Override;
+    static gsl::span<uint8_t> s_pMemory;
 };
 
 } // namespace mocks

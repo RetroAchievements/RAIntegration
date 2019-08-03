@@ -4,7 +4,7 @@
 
 #include "ApiCall.hh"
 
-#include "ra_fwd.h"
+#include "data\Types.hh"
 
 namespace ra {
 namespace api {

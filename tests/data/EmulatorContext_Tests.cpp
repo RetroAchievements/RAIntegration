@@ -737,7 +737,196 @@ public:
         Assert::IsTrue(emulator.ValidateClientVersion());
         Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
     }
+
+    static std::array<int8_t, 64> memory;
+
+    static uint8_t ReadMemory0(uint32_t nAddress) { return memory.at(nAddress); }
+    static uint8_t ReadMemory1(uint32_t nAddress) { return memory.at(nAddress + 10); }
+    static uint8_t ReadMemory2(uint32_t nAddress) { return memory.at(nAddress + 20); }
+    static uint8_t ReadMemory3(uint32_t nAddress) { return memory.at(nAddress + 30); }
+
+    static void WriteMemory0(uint32_t nAddress, uint8_t nValue) { memory.at(nAddress) = nValue; }
+    static void WriteMemory1(uint32_t nAddress, uint8_t nValue) { memory.at(nAddress + 10) = nValue; }
+    static void WriteMemory2(uint32_t nAddress, uint8_t nValue) { memory.at(nAddress + 20) = nValue; }
+    static void WriteMemory3(uint32_t nAddress, uint8_t nValue) { memory.at(nAddress + 30) = nValue; }
+
+    TEST_METHOD(TestReadMemoryByte)
+    {
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = (uint8_t)i;
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        Assert::AreEqual(30U, emulator.TotalMemorySize());
+
+        Assert::AreEqual(12, (int)emulator.ReadMemoryByte(12U));
+        Assert::AreEqual(25, (int)emulator.ReadMemoryByte(25U));
+        Assert::AreEqual(4, (int)emulator.ReadMemoryByte(4U));
+        Assert::AreEqual(29, (int)emulator.ReadMemoryByte(29U));
+        Assert::AreEqual(0, (int)emulator.ReadMemoryByte(30U));
+    }
+
+    TEST_METHOD(TestAddMemoryBlocksOutOfOrder)
+    {
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = (uint8_t)i;
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        Assert::AreEqual(30U, emulator.TotalMemorySize());
+
+        Assert::AreEqual(12, (int)emulator.ReadMemoryByte(12U));
+        Assert::AreEqual(25, (int)emulator.ReadMemoryByte(25U));
+        Assert::AreEqual(4, (int)emulator.ReadMemoryByte(4U));
+        Assert::AreEqual(29, (int)emulator.ReadMemoryByte(29U));
+        Assert::AreEqual(0, (int)emulator.ReadMemoryByte(30U));
+    }
+
+    TEST_METHOD(TestAddMemoryBlockDoesNotOverwrite)
+    {
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = (uint8_t)i;
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        emulator.AddMemoryBlock(0, 20, &ReadMemory3, &WriteMemory3);
+        Assert::AreEqual(30U, emulator.TotalMemorySize());
+
+        Assert::AreEqual(12, (int)emulator.ReadMemoryByte(12U));
+        Assert::AreEqual(25, (int)emulator.ReadMemoryByte(25U));
+        Assert::AreEqual(4, (int)emulator.ReadMemoryByte(4U));
+        Assert::AreEqual(29, (int)emulator.ReadMemoryByte(29U));
+        Assert::AreEqual(0, (int)emulator.ReadMemoryByte(30U));
+    }
+
+    TEST_METHOD(TestClearMemoryBlocks)
+    {
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = (uint8_t)i;
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        emulator.ClearMemoryBlocks();
+        emulator.AddMemoryBlock(0, 20, &ReadMemory3, &WriteMemory3);
+        Assert::AreEqual(20U, emulator.TotalMemorySize());
+
+        Assert::AreEqual(32, (int)emulator.ReadMemoryByte(2U));
+        Assert::AreEqual(41, (int)emulator.ReadMemoryByte(11U));
+        Assert::AreEqual(0, (int)emulator.ReadMemoryByte(55U));
+    }
+
+    TEST_METHOD(TestReadMemory)
+    {
+        memory.at(4) = 0xA8;
+        memory.at(5) = 0x00;
+        memory.at(6) = 0x37;
+        memory.at(7) = 0x2E;
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+
+        Assert::AreEqual(0, (int)emulator.ReadMemory(4U, MemSize::Bit_0));
+        Assert::AreEqual(0, (int)emulator.ReadMemory(4U, MemSize::Bit_1));
+        Assert::AreEqual(0, (int)emulator.ReadMemory(4U, MemSize::Bit_2));
+        Assert::AreEqual(1, (int)emulator.ReadMemory(4U, MemSize::Bit_3));
+        Assert::AreEqual(0, (int)emulator.ReadMemory(4U, MemSize::Bit_4));
+        Assert::AreEqual(1, (int)emulator.ReadMemory(4U, MemSize::Bit_5));
+        Assert::AreEqual(0, (int)emulator.ReadMemory(4U, MemSize::Bit_6));
+        Assert::AreEqual(1, (int)emulator.ReadMemory(4U, MemSize::Bit_7));
+        Assert::AreEqual(8, (int)emulator.ReadMemory(4U, MemSize::Nibble_Lower));
+        Assert::AreEqual(10, (int)emulator.ReadMemory(4U, MemSize::Nibble_Upper));
+        Assert::AreEqual(0xA8, (int)emulator.ReadMemory(4U, MemSize::EightBit));
+        Assert::AreEqual(0xA8, (int)emulator.ReadMemory(4U, MemSize::SixteenBit));
+        Assert::AreEqual(0x2E37, (int)emulator.ReadMemory(6U, MemSize::SixteenBit));
+        Assert::AreEqual(0x2E3700A8, (int)emulator.ReadMemory(4U, MemSize::ThirtyTwoBit));
+
+        memory.at(4) ^= 0xFF; // toggle all bits and verify again
+        Assert::AreEqual(1, (int)emulator.ReadMemory(4U, MemSize::Bit_0));
+        Assert::AreEqual(1, (int)emulator.ReadMemory(4U, MemSize::Bit_1));
+        Assert::AreEqual(1, (int)emulator.ReadMemory(4U, MemSize::Bit_2));
+        Assert::AreEqual(0, (int)emulator.ReadMemory(4U, MemSize::Bit_3));
+        Assert::AreEqual(1, (int)emulator.ReadMemory(4U, MemSize::Bit_4));
+        Assert::AreEqual(0, (int)emulator.ReadMemory(4U, MemSize::Bit_5));
+        Assert::AreEqual(1, (int)emulator.ReadMemory(4U, MemSize::Bit_6));
+        Assert::AreEqual(0, (int)emulator.ReadMemory(4U, MemSize::Bit_7));
+        Assert::AreEqual(7, (int)emulator.ReadMemory(4U, MemSize::Nibble_Lower));
+        Assert::AreEqual(5, (int)emulator.ReadMemory(4U, MemSize::Nibble_Upper));
+        Assert::AreEqual(0x57, (int)emulator.ReadMemory(4U, MemSize::EightBit));
+    }
+
+    TEST_METHOD(TestReadMemoryBuffer)
+    {
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = (uint8_t)i;
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        Assert::AreEqual(30U, emulator.TotalMemorySize());
+
+        uint8_t buffer[32];
+
+        // simple read within a block
+        emulator.ReadMemory(6U, buffer, 12);
+        Assert::IsTrue(memcmp(buffer, &memory.at(6), 11) == 0);
+
+        // read across block
+        emulator.ReadMemory(19U, buffer, 4);
+        Assert::IsTrue(memcmp(buffer, &memory.at(19), 4) == 0);
+
+        // read end of block
+        emulator.ReadMemory(13U, buffer, 7);
+        Assert::IsTrue(memcmp(buffer, &memory.at(13), 7) == 0);
+
+        // read start of block
+        emulator.ReadMemory(20U, buffer, 5);
+        Assert::IsTrue(memcmp(buffer, &memory.at(20), 5) == 0);
+
+        // read passed end of total memory
+        emulator.ReadMemory(28U, buffer, 4);
+        Assert::AreEqual(28, (int)buffer[0]);
+        Assert::AreEqual(29, (int)buffer[1]);
+        Assert::AreEqual(0, (int)buffer[2]);
+        Assert::AreEqual(0, (int)buffer[3]);
+
+        // read outside memory
+        buffer[0] = buffer[1] = buffer[2] = buffer[3] = 0xFF;
+        emulator.ReadMemory(37U, buffer, 4);
+        Assert::AreEqual(0, (int)buffer[0]);
+        Assert::AreEqual(0, (int)buffer[1]);
+        Assert::AreEqual(0, (int)buffer[2]);
+        Assert::AreEqual(0, (int)buffer[3]);
+    }
+
+    TEST_METHOD(TestWriteMemoryByte)
+    {
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = (uint8_t)i;
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        Assert::AreEqual(30U, emulator.TotalMemorySize());
+
+        // attempt to write all 64 bytes
+        for (size_t i = 0; i < memory.size(); ++i)
+            emulator.WriteMemoryByte(i, (uint8_t)(i + 4));
+
+        // only the 30 mapped bytes should be updated
+        for (size_t i = 0; i < emulator.TotalMemorySize(); ++i)
+            Assert::AreEqual(i + 4, (size_t)memory.at(i));
+
+        // the others should have their original values
+        for (size_t i = emulator.TotalMemorySize(); i < memory.size(); ++i)
+            Assert::AreEqual(i, (size_t)memory.at(i));
+    }
 };
+
+std::array<int8_t, 64> EmulatorContext_Tests::memory;
 
 } // namespace tests
 } // namespace data

@@ -68,7 +68,6 @@
     <ClCompile Include="RA_Json.cpp" />
     <ClCompile Include="RA_Leaderboard.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />
-    <ClCompile Include="RA_MemManager.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="data\GameContext.cpp" />
     <ClCompile Include="services\AchievementRuntime.cpp" />
@@ -154,6 +153,7 @@
     <ClInclude Include="data\EmulatorContext.hh" />
     <ClInclude Include="data\GameContext.hh" />
     <ClInclude Include="data\SessionTracker.hh" />
+    <ClInclude Include="data\Types.hh" />
     <ClInclude Include="data\UserContext.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="pch.h" />
@@ -177,7 +177,6 @@
     <ClInclude Include="RA_Log.h" />
     <ClInclude Include="ra_math.h" />
     <ClInclude Include="RA_md5factory.h" />
-    <ClInclude Include="RA_MemManager.h" />
     <ClInclude Include="RA_Resource.h" />
     <ClInclude Include="RA_StringUtils.h" />
     <ClInclude Include="services\AchievementRuntime.hh" />

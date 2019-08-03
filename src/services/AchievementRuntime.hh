@@ -179,4 +179,6 @@ private:
 } // namespace services
 } // namespace ra
 
+extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, _UNUSED void* pData);
+
 #endif // !RA_SERVICES_ACHIEVEMENT_RUNTIME_HH

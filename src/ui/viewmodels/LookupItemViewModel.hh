@@ -74,6 +74,11 @@ public:
     LookupItemViewModel* GetItemAt(gsl::index nIndex) { return dynamic_cast<LookupItemViewModel*>(GetViewModelAt(nIndex)); }
 
     /// <summary>
+    /// Gets the item at the specified index.
+    /// </summary>
+    const LookupItemViewModel* GetItemAt(gsl::index nIndex) const { return dynamic_cast<const LookupItemViewModel*>(GetViewModelAt(nIndex)); }
+
+    /// <summary>
     /// Gets the label for item specified by the provided ID.
     /// </summary>
     /// <returns>Requested label, empty string if no match was found.</returns>

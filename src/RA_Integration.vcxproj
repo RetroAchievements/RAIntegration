@@ -107,6 +107,7 @@
     <ClCompile Include="ui\viewmodels\ScoreTrackerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="ui\win32\bindings\GridBinding.cpp" />
+    <ClCompile Include="ui\win32\bindings\GridLookupColumnBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\WindowBinding.cpp" />
     <ClCompile Include="ui\win32\BrokenAchievementsDialog.cpp" />
     <ClCompile Include="ui\win32\Desktop.cpp" />

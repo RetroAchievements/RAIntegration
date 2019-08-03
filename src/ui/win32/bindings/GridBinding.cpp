@@ -233,6 +233,66 @@ void GridBinding::UpdateItems(gsl::index nColumn)
     }
 }
 
+void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
+{
+    std::string sText;
+    LV_ITEM item{};
+    item.mask = LVIF_TEXT;
+    item.iItem = nIndex;
+
+    for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
+    {
+        const auto& pColumn = *m_vColumns[nColumnIndex];
+        if (pColumn.DependsOn(args.Property))
+        {
+            item.iSubItem = nColumnIndex;
+            sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
+            item.pszText = sText.data();
+            ListView_SetItem(m_hWnd, &item);
+        }
+    }
+}
+
+void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
+{
+    std::string sText;
+    LV_ITEM item{};
+    item.mask = LVIF_TEXT;
+    item.iItem = nIndex;
+
+    for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
+    {
+        const auto& pColumn = *m_vColumns[nColumnIndex];
+        if (pColumn.DependsOn(args.Property))
+        {
+            item.iSubItem = nColumnIndex;
+            sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
+            item.pszText = sText.data();
+            ListView_SetItem(m_hWnd, &item);
+        }
+    }
+}
+
+void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
+{
+    std::string sText;
+    LV_ITEM item{};
+    item.mask = LVIF_TEXT;
+    item.iItem = nIndex;
+
+    for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
+    {
+        const auto& pColumn = *m_vColumns[nColumnIndex];
+        if (pColumn.DependsOn(args.Property))
+        {
+            item.iSubItem = nColumnIndex;
+            sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
+            item.pszText = sText.data();
+            ListView_SetItem(m_hWnd, &item);
+        }
+    }
+}
+
 void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 {
     switch (pnmListView->uNewState)
@@ -262,6 +322,56 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
         break;
     }
 }
+
+void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
+{
+    if (ra::to_unsigned(pnmItemActivate->iSubItem) < m_vColumns.size())
+    {
+        const auto& pColumn = m_vColumns.at(pnmItemActivate->iSubItem);
+        if (!pColumn->IsReadOnly())
+        {
+            auto pInfo = std::make_unique<GridColumnBinding::InPlaceEditorInfo>();
+
+            if (pnmItemActivate->iItem >= 0)
+            {
+                pInfo->nItemIndex = pnmItemActivate->iItem;
+            }
+            else
+            {
+                LVHITTESTINFO lvHitTestInfo{};
+                lvHitTestInfo.pt = pnmItemActivate->ptAction;
+                ListView_SubItemHitTest(m_hWnd, &lvHitTestInfo);
+                pInfo->nItemIndex = lvHitTestInfo.iItem;
+            }
+
+            if (pInfo->nItemIndex >= 0)
+            {
+                pInfo->nColumnIndex = pnmItemActivate->iSubItem;
+                pInfo->pGridBinding = this;
+                pInfo->pColumnBinding = pColumn.get();
+
+                RECT rcOffset{};
+                GetWindowRect(m_hWnd, &rcOffset);
+
+                ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, pInfo->nColumnIndex, LVIR_BOUNDS, &pInfo->rcSubItem);
+                pInfo->rcSubItem.left += rcOffset.left + 1;
+                pInfo->rcSubItem.right += rcOffset.left + 1;
+                pInfo->rcSubItem.top += rcOffset.top + 1;
+                pInfo->rcSubItem.bottom += rcOffset.top + 1;
+
+                const HWND hParent = GetAncestor(m_hWnd, GA_ROOT);
+                m_hInPlaceEditor = pColumn->CreateInPlaceEditor(hParent, std::move(pInfo));
+                if (m_hInPlaceEditor)
+                    return;
+            }
+        }
+    }
+
+    // if the editor is open, close it.
+    if (m_hInPlaceEditor)
+        SendMessage(m_hInPlaceEditor, WM_KILLFOCUS, 0, 0);
+}
+
 
 } // namespace bindings
 } // namespace win32

@@ -34,8 +34,10 @@ public:
     void BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBinding> pColumnBinding);
 
     void BindItems(ViewModelCollectionBase& vmItems);
+    ViewModelCollectionBase& GetItems() { return *m_vmItems; }
 
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
+    void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
 
     void OnSizeChanged(const ra::ui::Size&) override { UpdateLayout(); }
 
@@ -44,10 +46,15 @@ protected:
     void UpdateAllItems();
     void UpdateItems(gsl::index nColumn);
 
+    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
+    void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
+    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
+
 private:
     size_t m_nColumnsCreated = 0;
     std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
     ViewModelCollectionBase* m_vmItems = nullptr;
+    HWND m_hInPlaceEditor = nullptr;
 };
 
 } // namespace bindings

@@ -267,6 +267,12 @@
     <ClCompile Include="ui\viewmodels\OverlayRecentGamesPageViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\MemoryBookmarksViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\MemoryBookmarksDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -709,6 +715,21 @@
     </ClInclude>
     <ClInclude Include="data\Types.hh">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\MemoryBookmarksViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\MemoryBookmarksDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridAddressColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridLookupColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridNumberColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

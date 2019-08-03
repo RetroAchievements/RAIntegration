@@ -8,6 +8,7 @@
 #include "ui/win32/GameChecksumDialog.hh"
 #include "ui/win32/LoginDialog.hh"
 #include "ui/win32/MessageBoxDialog.hh"
+#include "ui/win32/MemoryBookmarksDialog.hh"
 #include "ui/win32/RichPresenceDialog.hh"
 #include "ui/win32/UnknownGameDialog.hh"
 
@@ -24,6 +25,7 @@ Desktop::Desktop() noexcept
     m_vDialogPresenters.emplace_back(new (std::nothrow) RichPresenceDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) GameChecksumDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) LoginDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) MemoryBookmarksDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) BrokenAchievementsDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) UnknownGameDialog::Presenter);
 }

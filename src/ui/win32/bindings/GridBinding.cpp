@@ -9,6 +9,12 @@ namespace ui {
 namespace win32 {
 namespace bindings {
 
+GridBinding::~GridBinding()
+{
+    if (m_vmItems != nullptr)
+        m_vmItems->RemoveNotifyTarget(*this);
+}
+
 void GridBinding::BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBinding> pColumnBinding)
 {
     if (dynamic_cast<GridCheckBoxColumnBinding*>(pColumnBinding.get()) != nullptr)
@@ -43,9 +49,7 @@ void GridBinding::BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBindi
 void GridBinding::BindItems(ViewModelCollectionBase& vmItems)
 {
     if (m_vmItems != nullptr)
-    {
         m_vmItems->RemoveNotifyTarget(*this);
-    }
 
     m_vmItems = &vmItems;
     m_vmItems->AddNotifyTarget(*this);
@@ -113,10 +117,25 @@ void GridBinding::UpdateLayout()
 
         LV_COLUMN col{};
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
-        col.fmt = LVCFMT_LEFT | LVCFMT_FIXED_WIDTH;
+        col.fmt = LVCFMT_FIXED_WIDTH;
         col.cx = vWidths.at(i);
         GSL_SUPPRESS_TYPE3 col.pszText = const_cast<LPSTR>(sHeader.data());
         col.iSubItem = i;
+
+        switch (pColumn.GetAlignment())
+        {
+            default:
+                col.fmt |= LVCFMT_LEFT;
+                break;
+
+            case ra::ui::RelativePosition::Center:
+                col.fmt |= LVCFMT_CENTER;
+                break;
+
+            case ra::ui::RelativePosition::Far:
+                col.fmt |= LVCFMT_RIGHT;
+                break;
+        }
 
         if (i < ra::to_signed(nColumns))
             ListView_SetColumn(m_hWnd, i, &col);

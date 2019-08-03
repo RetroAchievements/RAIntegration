@@ -38,7 +38,16 @@ _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM
     GSL_SUPPRESS_TYPE1 pDialog = reinterpret_cast<DialogBase*>(GetWindowLongPtr(hDlg, DWLP_USER));
 
     if (pDialog == nullptr)
-        return ::DefWindowProc(hDlg, uMsg, wParam, lParam);
+    {
+        if (uMsg != WM_INITDIALOG)
+            return ::DefWindowProc(hDlg, uMsg, wParam, lParam);
+
+        GSL_SUPPRESS_TYPE1 pDialog = reinterpret_cast<DialogBase*>(lParam);
+        if (pDialog == nullptr)
+            return ::DefWindowProc(hDlg, uMsg, wParam, lParam);
+
+        ::SetWindowLongPtr(hDlg, DWLP_USER, lParam);
+    }
 
     const INT_PTR result = pDialog->DialogProc(hDlg, uMsg, wParam, lParam);
 
@@ -51,13 +60,9 @@ _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM
 _Use_decl_annotations_ HWND DialogBase::CreateDialogWindow(const TCHAR* restrict sResourceId,
                                                            IDialogPresenter* const restrict pDialogPresenter)
 {
-    m_hWnd = ::CreateDialog(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc);
+    m_hWnd = ::CreateDialogParam(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc, (LPARAM)this);
     if (m_hWnd)
-    {
-        GSL_SUPPRESS_TYPE1 ::SetWindowLongPtr(m_hWnd, DWLP_USER, reinterpret_cast<LONG_PTR>(this));
         m_pDialogPresenter = pDialogPresenter;
-        m_bindWindow.SetHWND(m_hWnd);
-    }
 
     return m_hWnd;
 }

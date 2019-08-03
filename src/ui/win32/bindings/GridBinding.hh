@@ -16,6 +16,7 @@ class GridBinding : public ControlBinding, protected ViewModelCollectionBase::No
 {
 public:
     explicit GridBinding(ViewModelBase& vmViewModel) noexcept : ControlBinding(vmViewModel) {}
+    ~GridBinding() noexcept;
 
     void SetHWND(DialogBase& pDialog, HWND hControl) override
     {

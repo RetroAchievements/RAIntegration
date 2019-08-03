@@ -41,10 +41,14 @@ public:
 
     virtual std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const = 0;
 
+    ra::ui::RelativePosition GetAlignment() const { return m_nAlignment; }
+    void SetAlignment(ra::ui::RelativePosition value) { m_nAlignment = value; }
+
 protected:
     std::wstring m_sHeader;
     WidthType m_nWidthType = WidthType::Fill;
     int m_nWidth = 1;
+    ra::ui::RelativePosition m_nAlignment = ra::ui::RelativePosition::Near;
 };
 
 } // namespace bindings

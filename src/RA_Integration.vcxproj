@@ -91,6 +91,7 @@
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\MemoryBookmarksViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayFriendsPageViewModel.cpp" />
@@ -112,6 +113,7 @@
     <ClCompile Include="ui\win32\DialogBase.cpp" />
     <ClCompile Include="ui\win32\GameChecksumDialog.cpp" />
     <ClCompile Include="ui\win32\LoginDialog.cpp" />
+    <ClCompile Include="ui\win32\MemoryBookmarksDialog.cpp" />
     <ClCompile Include="ui\win32\MessageBoxDialog.cpp" />
     <ClCompile Include="ui\win32\OverlayWindow.cpp" />
     <ClCompile Include="ui\win32\RichPresenceDialog.cpp" />
@@ -228,6 +230,7 @@
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LoginViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\MemoryBookmarksViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayAchievementsPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayFriendsPageViewModel.hh" />
@@ -246,10 +249,13 @@
     <ClInclude Include="ui\win32\bindings\CheckBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\ComboBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\ControlBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridAddressColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridBooleanColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridCheckBoxColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridLookupColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridNumberColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridTextColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh" />
     <ClInclude Include="ui\win32\bindings\TextBoxBinding.hh" />
@@ -259,6 +265,7 @@
     <ClInclude Include="ui\win32\DialogBase.hh" />
     <ClInclude Include="ui\win32\GameChecksumDialog.hh" />
     <ClInclude Include="ui\win32\LoginDialog.hh" />
+    <ClInclude Include="ui\win32\MemoryBookmarksDialog.hh" />
     <ClInclude Include="ui\win32\MessageBoxDialog.hh" />
     <ClInclude Include="ui\win32\OverlayWindow.hh" />
     <ClInclude Include="ui\win32\RichPresenceDialog.hh" />

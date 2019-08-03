@@ -11,12 +11,16 @@
 
 #include "services\IAudioSystem.hh"
 
+#include "ui\viewmodels\WindowManager.hh"
+
 #ifndef ID_OK
 #define ID_OK 1024
 #endif
 #ifndef ID_CANCEL
 #define ID_CANCEL 1025
 #endif
+
+#define NEW_BOOKMARKS_DIALOG
 
 _CONSTANT_VAR MIN_RESULTS_TO_DUMP = 500000U;
 _CONSTANT_VAR MIN_SEARCH_PAGE_SIZE = 50U;
@@ -1470,13 +1474,17 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                 case IDC_RA_OPENBOOKMARKS:
                 {
+#ifdef NEW_BOOKMARKS_DIALOG
+                    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.InitBookmarks();
+                    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Show();
+#else
                     if (g_MemBookmarkDialog.GetHWND() == nullptr)
                         g_MemBookmarkDialog.InstallHWND(CreateDialog(g_hThisDLLInst,
                                                                      MAKEINTRESOURCE(IDD_RA_MEMBOOKMARK), hDlg,
                                                                      g_MemBookmarkDialog.s_MemBookmarkDialogProc));
                     if (g_MemBookmarkDialog.GetHWND() != nullptr)
                         ShowWindow(g_MemBookmarkDialog.GetHWND(), SW_SHOW);
-
+#endif
                     return FALSE;
                 }
 

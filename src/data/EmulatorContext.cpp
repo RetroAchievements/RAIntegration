@@ -407,7 +407,7 @@ void EmulatorContext::AddMemoryBlock(gsl::index nIndex, size_t nBytes,
     }
 }
 
-uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
+uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const noexcept
 {
     for (const auto& pBlock : m_vMemoryBlocks)
     {
@@ -422,6 +422,8 @@ uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
 
 void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
 {
+    Expects(pBuffer != nullptr);
+
     for (const auto& pBlock : m_vMemoryBlocks)
     {
         if (nAddress >= pBlock.size)
@@ -430,7 +432,7 @@ void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], si
             continue;
         }
 
-        size_t nBlockRemaining = pBlock.size - nAddress;
+        const size_t nBlockRemaining = pBlock.size - nAddress;
         size_t nToRead = std::min(nCount, nBlockRemaining);
         nCount -= nToRead;
 
@@ -510,7 +512,7 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) co
     }
 }
 
-void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const
+void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const noexcept
 {
     for (const auto& pBlock : m_vMemoryBlocks)
     {

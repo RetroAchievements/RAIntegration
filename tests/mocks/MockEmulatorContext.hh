@@ -62,12 +62,12 @@ public:
     }
 
 private:
-    static uint8_t ReadMemoryHelper(uint32_t nAddress)
+    static uint8_t ReadMemoryHelper(uint32_t nAddress) noexcept
     {
         return s_pMemory.at(nAddress);
     }
 
-    static void WriteMemoryHelper(uint32_t nAddress, uint8_t nValue)
+    static void WriteMemoryHelper(uint32_t nAddress, uint8_t nValue) noexcept
     {
         s_pMemory.at(nAddress) = nValue;
     }

@@ -162,7 +162,7 @@ public:
     /// <summary>
     /// Clears all registered memory blocks so they can be rebuilt.
     /// </summary>
-    void ClearMemoryBlocks()
+    void ClearMemoryBlocks() noexcept
     {
         m_vMemoryBlocks.clear();
         m_nTotalMemorySize = 0U;
@@ -171,7 +171,7 @@ public:
     /// <summary>
     /// Gets the total amount of emulator-exposed memory.
     /// </summary>
-    size_t TotalMemorySize() const { return m_nTotalMemorySize; }
+    size_t TotalMemorySize() const noexcept { return m_nTotalMemorySize; }
 
     /// <summary>
     /// Reads memory from the emulator.
@@ -181,7 +181,7 @@ public:
     /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
-    uint8_t ReadMemoryByte(ra::ByteAddress nAddress) const;
+    uint8_t ReadMemoryByte(ra::ByteAddress nAddress) const noexcept;
 
     /// <summary>
     /// Reads memory from the emulator.
@@ -191,7 +191,7 @@ public:
     /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
-    void WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const;
+    void WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const noexcept;
 
 protected:
     EmulatorID m_nEmulatorId = EmulatorID::UnknownEmulator;

@@ -1798,6 +1798,49 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     lpDispInfo->lpszText = lpDispInfo->szText;
                     return FALSE;
                 }
+
+                case UDN_DELTAPOS:
+                {
+                    Achievement* pActiveAch = ActiveAchievement();
+                    if (pActiveAch == nullptr)
+                        return FALSE;
+
+                    LPNMUPDOWN lpUpDown{};
+                    GSL_SUPPRESS_TYPE1 lpUpDown = reinterpret_cast<LPNMUPDOWN>(lParam);
+
+                    unsigned int nVal = m_nFirstBadge;
+
+                    std::string buffer(16, '\0');
+                    const auto nLength = GetDlgItemTextA(hDlg, IDC_RA_BADGENAME, buffer.data(), 16);
+                    if (nLength > 0)
+                    {
+                        buffer.resize(nLength);
+
+                        try
+                        {
+                            nVal = ra::to_unsigned(std::stoi(buffer));
+                            nVal -= lpUpDown->iDelta; // up returns negative delta
+                        }
+                        catch (const std::invalid_argument&)
+                        {
+                        }
+
+                        if (nVal < m_nFirstBadge)
+                            nVal = m_nNextBadge - 1;
+                        else if (nVal >= m_nNextBadge)
+                            nVal = m_nFirstBadge;
+                    }
+
+                    buffer = std::to_string(nVal);
+                    if (buffer.length() < 5)
+                        buffer.insert(0, 5 - buffer.length(), '0');
+
+                    pActiveAch->SetBadgeImage(buffer);
+                    pActiveAch->SetModified(TRUE);
+                    g_AchievementsDialog.OnEditAchievement(*pActiveAch);
+                    UpdateBadge(buffer);
+                    return FALSE;
+                }
             }
         }
         break;

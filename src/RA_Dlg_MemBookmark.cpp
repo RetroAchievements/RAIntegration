@@ -470,6 +470,17 @@ BOOL Dlg_MemBookmark::IsActive() const noexcept
     return (g_MemBookmarkDialog.GetHWND() != nullptr) && (IsWindowVisible(g_MemBookmarkDialog.GetHWND()));
 }
 
+static MemSize TypeToMemSize(unsigned int type)
+{
+    switch (type)
+    {
+        default:
+        case 1: return MemSize::EightBit;
+        case 2: return MemSize::SixteenBit;
+        case 3: return MemSize::ThirtyTwoBit;
+    }
+}
+
 void Dlg_MemBookmark::UpdateBookmarks(bool bForceWrite)
 {
     if (!IsWindowVisible(m_hMemBookmarkDialog))
@@ -490,7 +501,7 @@ void Dlg_MemBookmark::UpdateBookmarks(bool bForceWrite)
             continue;
         }
 
-        const auto mem_value = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(bookmark.Address(), (MemSize)bookmark.Type());
+        const auto mem_value = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(bookmark.Address(), TypeToMemSize(bookmark.Type()));
 
         if (bookmark.Value() != mem_value)
         {
@@ -594,7 +605,7 @@ void Dlg_MemBookmark::AddAddress()
         NewBookmark.SetType(3);
 
     // Get Memory Value
-    NewBookmark.SetValue(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(nAddr, (MemSize)NewBookmark.Type()));
+    NewBookmark.SetValue(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(nAddr, TypeToMemSize(NewBookmark.Type())));
     NewBookmark.SetPrevious(NewBookmark.Value());
 
     // Get Code Note and add as description
@@ -772,7 +783,7 @@ void Dlg_MemBookmark::ImportFromFile(std::wstring&& sFilename)
             NewBookmark.SetType(bmData["Type"].GetInt());
             NewBookmark.SetDecimal(bmData["Decimal"].GetBool());
 
-            NewBookmark.SetValue(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(NewBookmark.Address(), (MemSize)NewBookmark.Type()));
+            NewBookmark.SetValue(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(NewBookmark.Address(), TypeToMemSize(NewBookmark.Type())));
             NewBookmark.SetPrevious(NewBookmark.Value());
 
             AddBookmark(std::move(NewBookmark));

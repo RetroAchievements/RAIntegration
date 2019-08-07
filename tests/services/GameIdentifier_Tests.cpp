@@ -91,6 +91,7 @@ public:
     TEST_METHOD(TestIdentifyGameKnown)
     {
         GameIdentifierHarness identifier;
+        identifier.mockUserContext.Initialize("User", "ApiToken");
         identifier.MockResolveHashResponse(23U);
 
         Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
@@ -100,6 +101,7 @@ public:
     TEST_METHOD(TestIdentifyGameNull)
     {
         GameIdentifierHarness identifier;
+        identifier.mockUserContext.Initialize("User", "ApiToken");
         identifier.MockResolveHashResponse(23U);
 
         Assert::AreEqual(0U, identifier.IdentifyGame(nullptr, ROM.size()));
@@ -156,27 +158,27 @@ public:
         Assert::IsTrue(bDialogShown);
     }
 
-    TEST_METHOD(TestIdentifyGameUnknownNotLoggedIn)
+    TEST_METHOD(TestIdentifyGameNotLoggedIn)
     {
         GameIdentifierHarness identifier;
-        identifier.MockResolveHashResponse(0U);
-        identifier.mockEmulatorContext.MockGameTitle("TestGame");
+        identifier.mockUserContext.Logout();
 
         bool bDialogShown = false;
-        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
-            [&bDialogShown](ra::ui::viewmodels::UnknownGameViewModel&)
+        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
+            Assert::AreEqual(std::wstring(L"Cannot load achievements"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"You must be logged in to load achievements. Please reload the game after logging in."), vmMessageBox.GetMessage());
             bDialogShown = true;
-            return ra::ui::DialogResult::Cancel;
+            return ra::ui::DialogResult::OK;
         });
 
         Assert::AreEqual(0U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
-        Assert::IsFalse(bDialogShown);
     }
 
     TEST_METHOD(TestIdentifyGameNoConsole)
     {
         GameIdentifierHarness identifier;
+        identifier.mockUserContext.Initialize("User", "ApiToken");
         identifier.mockConsoleContext.SetId(ConsoleID::UnknownConsoleID);
 
         bool bDialogShown = false;

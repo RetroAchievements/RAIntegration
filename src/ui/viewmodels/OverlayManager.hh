@@ -213,7 +213,7 @@ public:
     /// <summary>
     /// Sets the function to call when there's something to be rendered.
     /// </summary>
-    void SetShowRequestHandler(std::function<void()>&& fHandleShowRequest)
+    void SetShowRequestHandler(std::function<void()>&& fHandleShowRequest) noexcept
     {
         m_fHandleShowRequest = std::move(fHandleShowRequest);
     }
@@ -221,7 +221,7 @@ public:
     /// <summary>
     /// Sets the function to call when there's something to be rendered.
     /// </summary>
-    void SetHideRequestHandler(std::function<void()>&& fHandleHideRequest)
+    void SetHideRequestHandler(std::function<void()>&& fHandleHideRequest) noexcept
     {
         m_fHandleHideRequest = std::move(fHandleHideRequest);
     }

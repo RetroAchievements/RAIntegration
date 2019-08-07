@@ -117,27 +117,27 @@ public:
     /// <summary>
     /// Sets a function to call to reset the emulator.
     /// </summary>
-    void SetResetFunction(std::function<void()>&& fResetEmulator) { m_fResetEmulator = std::move(fResetEmulator); }
+    void SetResetFunction(std::function<void()>&& fResetEmulator) noexcept { m_fResetEmulator = std::move(fResetEmulator); }
 
     /// <summary>
     /// Sets a function to call to pause the emulator.
     /// </summary>
-    void SetPauseFunction(std::function<void()>&& fPauseEmulator) { m_fPauseEmulator = std::move(fPauseEmulator); }
+    void SetPauseFunction(std::function<void()>&& fPauseEmulator) noexcept { m_fPauseEmulator = std::move(fPauseEmulator); }
 
     /// <summary>
     /// Sets a function to call to unpause the emulator.
     /// </summary>
-    void SetUnpauseFunction(std::function<void()>&& fUnpauseEmulator) { m_fUnpauseEmulator = std::move(fUnpauseEmulator); }
+    void SetUnpauseFunction(std::function<void()>&& fUnpauseEmulator) noexcept { m_fUnpauseEmulator = std::move(fUnpauseEmulator); }
 
     /// <summary>
     /// Sets a function to call to get the game title from the emulator.
     /// </summary>
-    void SetGetGameTitleFunction(std::function<void(char*)>&& fGetGameTitle) { m_fGetGameTitle = std::move(fGetGameTitle); }
+    void SetGetGameTitleFunction(std::function<void(char*)>&& fGetGameTitle) noexcept { m_fGetGameTitle = std::move(fGetGameTitle); }
 
     /// <summary>
     /// Sets a function to call to notify the emulator that the RetroAchievements menu has changed.
     /// </summary>
-    void SetRebuildMenuFunction(std::function<void()>&& fRebuildMenu) { m_fRebuildMenu = std::move(fRebuildMenu); }
+    void SetRebuildMenuFunction(std::function<void()>&& fRebuildMenu) noexcept { m_fRebuildMenu = std::move(fRebuildMenu); }
 
     /// <summary>
     /// Gets the text to display for the Accept button in the overlay navigation panel.

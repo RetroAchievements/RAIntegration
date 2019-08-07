@@ -140,7 +140,7 @@ BOOL Dlg_AchievementEditor::IsActive() const noexcept
 const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond, unsigned int nCurrentHits)
 {
     m_lbxData.emplace_back();
-    int rowIdx = m_lbxData.size() - 1;
+    const int rowIdx = m_lbxData.size() - 1;
 
     LV_ITEM item{};
     item.mask = LVIF_TEXT;
@@ -2265,7 +2265,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
 
 inline std::string& Dlg_AchievementEditor::LbxDataAt(unsigned int nRow, CondSubItems nCol) noexcept
 {
-    return m_lbxData.at(nRow).at(ra::etoi(nCol));
+    GSL_SUPPRESS_F6 return m_lbxData.at(nRow).at(ra::etoi(nCol));
 }
 
 void Dlg_AchievementEditor::OnLoad_NewRom()

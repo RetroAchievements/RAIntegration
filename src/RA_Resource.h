@@ -23,6 +23,7 @@
 #define IDC_RA_GAMENAME                 1038
 #define IDC_RA_SELECT_ACHIEVEMENTS      1039
 #define IDC_RA_PROBLEMHEADER            1040
+#define IDC_RA_BADGE_SPIN               1041
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -163,7 +164,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        121
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1041
+#define _APS_NEXT_CONTROL_VALUE         1042
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -6,7 +6,6 @@
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_Log.h"
-#include "RA_MemManager.h"
 #include "RA_StringUtils.h"
 
 #include "api\AwardAchievement.hh"

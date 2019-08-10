@@ -390,5 +390,141 @@ std::string EmulatorContext::GetGameTitle() const
     return std::string(buffer.data());
 }
 
+void EmulatorContext::AddMemoryBlock(gsl::index nIndex, size_t nBytes,
+    EmulatorContext::MemoryReadFunction* pReader, EmulatorContext::MemoryWriteFunction* pWriter)
+{
+    while (m_vMemoryBlocks.size() <= ra::to_unsigned(nIndex))
+        m_vMemoryBlocks.emplace_back();
+
+    MemoryBlock& pBlock = m_vMemoryBlocks.at(nIndex);
+    if (pBlock.size == 0)
+    {
+        pBlock.size = nBytes;
+        pBlock.read = pReader;
+        pBlock.write = pWriter;
+
+        m_nTotalMemorySize += nBytes;
+    }
+}
+
+uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const noexcept
+{
+    for (const auto& pBlock : m_vMemoryBlocks)
+    {
+        if (nAddress < pBlock.size)
+            return pBlock.read(nAddress);
+
+        nAddress -= pBlock.size;
+    }
+
+    return 0U;
+}
+
+void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
+{
+    Expects(pBuffer != nullptr);
+
+    for (const auto& pBlock : m_vMemoryBlocks)
+    {
+        if (nAddress >= pBlock.size)
+        {
+            nAddress -= pBlock.size;
+            continue;
+        }
+
+        const size_t nBlockRemaining = pBlock.size - nAddress;
+        size_t nToRead = std::min(nCount, nBlockRemaining);
+        nCount -= nToRead;
+
+        while (nToRead >= 8) // unrolled loop to read 8-byte chunks
+        {
+            *pBuffer++ = pBlock.read(nAddress++);
+            *pBuffer++ = pBlock.read(nAddress++);
+            *pBuffer++ = pBlock.read(nAddress++);
+            *pBuffer++ = pBlock.read(nAddress++);
+            *pBuffer++ = pBlock.read(nAddress++);
+            *pBuffer++ = pBlock.read(nAddress++);
+            *pBuffer++ = pBlock.read(nAddress++);
+            *pBuffer++ = pBlock.read(nAddress++);
+            nToRead -= 8;
+        }
+
+        switch (nToRead) // partial Duff's device to read remaining bytes
+        {
+            case 7: *pBuffer++ = pBlock.read(nAddress++);
+            case 6: *pBuffer++ = pBlock.read(nAddress++);
+            case 5: *pBuffer++ = pBlock.read(nAddress++);
+            case 4: *pBuffer++ = pBlock.read(nAddress++);
+            case 3: *pBuffer++ = pBlock.read(nAddress++);
+            case 2: *pBuffer++ = pBlock.read(nAddress++);
+            case 1: *pBuffer++ = pBlock.read(nAddress++);
+        }
+
+        if (nCount == 0)
+            return;
+
+        nAddress = 0;
+    }
+
+    if (nCount > 0)
+        memset(pBuffer, 0, nCount);
+}
+
+uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) const
+{
+    switch (nSize)
+    {
+        case MemSize::Bit_0:
+            return (ReadMemoryByte(nAddress) & 0x01);
+        case MemSize::Bit_1:
+            return (ReadMemoryByte(nAddress) & 0x02) ? 1 : 0;
+        case MemSize::Bit_2:
+            return (ReadMemoryByte(nAddress) & 0x04) ? 1 : 0;
+        case MemSize::Bit_3:
+            return (ReadMemoryByte(nAddress) & 0x08) ? 1 : 0;
+        case MemSize::Bit_4:
+            return (ReadMemoryByte(nAddress) & 0x10) ? 1 : 0;
+        case MemSize::Bit_5:
+            return (ReadMemoryByte(nAddress) & 0x20) ? 1 : 0;
+        case MemSize::Bit_6:
+            return (ReadMemoryByte(nAddress) & 0x40) ? 1 : 0;
+        case MemSize::Bit_7:
+            return (ReadMemoryByte(nAddress) & 0x80) ? 1 : 0;
+        case MemSize::Nibble_Lower:
+            return (ReadMemoryByte(nAddress) & 0x0F);
+        case MemSize::Nibble_Upper:
+            return ((ReadMemoryByte(nAddress) >> 4) & 0x0F);
+        case MemSize::EightBit:
+            return ReadMemoryByte(nAddress);
+        default:
+        case MemSize::SixteenBit:
+        {
+            uint8_t buffer[2];
+            ReadMemory(nAddress, buffer, 2);
+            return buffer[0] | (buffer[1] << 8);
+        }
+        case MemSize::ThirtyTwoBit:
+        {
+            uint8_t buffer[4];
+            ReadMemory(nAddress, buffer, 4);
+            return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
+        }
+    }
+}
+
+void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const noexcept
+{
+    for (const auto& pBlock : m_vMemoryBlocks)
+    {
+        if (nAddress < pBlock.size)
+        {
+            pBlock.write(nAddress, nValue);
+            return;
+        }
+
+        nAddress -= pBlock.size;
+    }
+}
+
 } // namespace data
 } // namespace ra

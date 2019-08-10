@@ -2,7 +2,6 @@
 #define RA_DLG_MEMORY_H
 #pragma once
 
-#include "RA_MemManager.h"
 #include "services/SearchResults.h"
 
 class MemoryViewerControl
@@ -96,8 +95,6 @@ public:
     void UpdateBits() const;
     BOOL IsActive() const noexcept;
 
-    void ClearBanks();
-    void AddBank(size_t nBankID);
     void GenerateResizes(HWND hDlg);
 
 private:

@@ -2,7 +2,6 @@
 
 #include "RA_BuildVer.h"
 #include "RA_ImageFactory.h"
-#include "RA_MemManager.h"
 #include "RA_Resource.h"
 #include "RA_md5factory.h"
 
@@ -313,19 +312,6 @@ API void CCONV _RA_OnReset()
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
 }
-
-API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
-{
-    g_MemManager.AddMemoryBank(ra::to_unsigned(nBankID), (_RAMByteReadFn*)pReader, (_RAMByteWriteFn*)pWriter, ra::to_unsigned(nBankSize));
-    g_MemoryDialog.AddBank(nBankID);
-}
-
-API void CCONV _RA_ClearMemoryBanks()
-{
-    g_MemManager.ClearMemoryBanks();
-    g_MemoryDialog.ClearBanks();
-}
-
 
 //void FetchBinaryFromWeb( const char* sFilename )
 //{

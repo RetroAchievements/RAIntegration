@@ -8,6 +8,8 @@
 #include "ScoreboardViewModel.hh"
 #include "ScoreTrackerViewModel.hh"
 
+#include "data\Types.hh"
+
 #include "ui\ImageReference.hh"
 
 namespace ra {

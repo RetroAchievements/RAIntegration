@@ -84,7 +84,7 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
         case WM_MOUSEWHEEL:
             if (GET_WHEEL_DELTA_WPARAM(wParam) > 0 && m_nAddressOffset > (0x40))
                 setAddress(m_nAddressOffset - 32);
-            else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0 && m_nAddressOffset + (0x40) < g_MemManager.TotalBankSize())
+            else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0 && m_nAddressOffset + (0x40) < ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize())
                 setAddress(m_nAddressOffset + 32);
             return FALSE;
 
@@ -151,7 +151,7 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
             return true;
 
         case VK_END:
-            m_nEditAddress = g_MemManager.TotalBankSize() - 0x10;
+            m_nEditAddress = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() - 0x10;
             m_nEditNibble = 0;
             setAddress(m_nEditAddress);
             return true;
@@ -191,7 +191,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
                 m_nEditNibble = 0;
                 m_nEditAddress += (maxNibble + 1) >> 1;
             }
-            if (m_nEditAddress >= g_MemManager.TotalBankSize())
+            if (m_nEditAddress >= ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize())
             {
                 //	Undo this movement.
                 m_nEditAddress -= (maxNibble + 1) >> 1;
@@ -217,7 +217,7 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
         }
         else
         {
-            if (m_nEditAddress >= g_MemManager.TotalBankSize())
+            if (m_nEditAddress >= ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize())
             {
                 m_nEditAddress -= offset;
                 MessageBeep(ra::to_unsigned(-1));
@@ -270,34 +270,31 @@ void MemoryViewerControl::Invalidate()
 
 void MemoryViewerControl::editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int nNewVal)
 {
+    auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    uint8_t nVal = pEmulatorContext.ReadMemoryByte(nByteAddress);
+
     //	Immediately invalidate all submissions.
     g_bRAMTamperedWith = true;
 
     if (bLowerNibble)
     {
         //	We're submitting a new lower nibble:
-        //	Fetch existing upper nibble,
-        unsigned int nVal = (g_MemManager.ActiveBankRAMByteRead(nByteAddress) >> 4) << 4;
-        //	Merge in given (lower nibble) value,
+        nVal &= 0xF0;
         nVal |= nNewVal;
-        //	Write value:
-        g_MemManager.ActiveBankRAMByteWrite(nByteAddress, nVal);
     }
     else
     {
         //	We're submitting a new upper nibble:
-        //	Fetch existing lower nibble,
-        unsigned int nVal = g_MemManager.ActiveBankRAMByteRead(nByteAddress) & 0xf;
-        //	Merge in given value at upper nibble
+        nVal &= 0x0F;
         nVal |= (nNewVal << 4);
-        //	Write value:
-        g_MemManager.ActiveBankRAMByteWrite(nByteAddress, nVal);
     }
+
+    pEmulatorContext.WriteMemoryByte(nByteAddress, nVal);
 }
 
 bool MemoryViewerControl::OnEditInput(UINT c)
 {
-    if (g_MemManager.NumMemoryBanks() == 0)
+    if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() == 0U)
         return false;
 
     if (c > 255 || ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
@@ -377,7 +374,7 @@ void MemoryViewerControl::destroyEditCaret() noexcept
 
 void MemoryViewerControl::SetCaretPos()
 {
-    if (g_MemManager.NumMemoryBanks() == 0)
+    if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() == 0U)
         return;
 
     HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
@@ -441,7 +438,8 @@ void MemoryViewerControl::SetCaretPos()
 
 void MemoryViewerControl::OnClick(POINT point)
 {
-    if (g_MemManager.NumMemoryBanks() == 0)
+    const auto nTotalMemorySize = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize();
+    if (nTotalMemorySize == 0U)
         return;
 
     HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
@@ -481,7 +479,7 @@ void MemoryViewerControl::OnClick(POINT point)
     const int nAddressRowClicked = (nTopLeft + (line << 4));
 
     // Clamp:
-    if (nAddressRowClicked < 0 || nAddressRowClicked >= ra::to_signed(g_MemManager.TotalBankSize()))
+    if (nAddressRowClicked < 0 || nAddressRowClicked >= ra::to_signed(nTotalMemorySize))
     {
         // ignore; clicked above limit
         return;
@@ -585,12 +583,14 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     r.top += m_szFontSize.cy;
     r.bottom += m_szFontSize.cy;
 
-    if (g_MemManager.NumMemoryBanks() > 0)
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto nTotalMemorySize = pEmulatorContext.TotalMemorySize();
+    if (nTotalMemorySize > 0)
     {
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
         m_nDataStartXOffset = r.left + 10 * m_szFontSize.cx;
         std::array<unsigned char, 16> data{};
-        for (auto i = 0; i < lines && addr < ra::to_signed(g_MemManager.TotalBankSize()); ++i, addr += 16)
+        for (auto i = 0; i < lines && addr < ra::to_signed(nTotalMemorySize); ++i, addr += 16)
         {
             if (addr >= 0)
             {
@@ -615,7 +615,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                     }
                 }
 
-                g_MemManager.ActiveBankRAMRead(data.data(), addr, 16);
+                pEmulatorContext.ReadMemory(addr, data.data(), 16);
 
                 TCHAR* ptr = bufferNative + _stprintf_s(bufferNative, 11, TEXT("0x%06x  "), addr);
                 switch (m_nDataSize)
@@ -843,11 +843,6 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             CheckDlgButton(hDlg, IDC_RA_RESULTS_HIGHLIGHT, BST_CHECKED);
 
-            // Fetch banks
-            ClearBanks();
-            for (const auto id : g_MemManager.GetBankIDs())
-                AddBank(id);
-
             RestoreWindowPosition(hDlg, "Memory Inspector", true, false);
             return TRUE;
         }
@@ -962,7 +957,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                         RECT rcValue = pDIS->rcItem;
                         std::wstring sAddress;
-                        if (g_MemManager.TotalBankSize() > 0x10000)
+                        if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() > 0x10000)
                         {
                             sAddress = ra::StringPrintf(L"0x%06x", result.nAddress);
                             rcValue.left += 54;
@@ -1098,7 +1093,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 break;
 
             // ignore if memory not avaialble or mode is not 8-bit
-            if (g_MemManager.TotalBankSize() == 0 || MemoryViewerControl::GetDataSize() != MemSize::EightBit)
+             auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+            if (pEmulatorContext.TotalMemorySize() == 0 || MemoryViewerControl::GetDataSize() != MemSize::EightBit)
                 break;
 
             POINT ptCursor{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
@@ -1135,9 +1131,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     {
                         // if we found a bit, toggle it
                         const auto nAddr = MemoryViewerControl::getWatchedAddress();
-                        auto nVal = g_MemManager.ActiveBankRAMByteRead(nAddr);
+                        auto nVal = pEmulatorContext.ReadMemoryByte(nAddr);
                         nVal ^= (1 << nBit);
-                        g_MemManager.ActiveBankRAMByteWrite(nAddr, nVal);
+                        pEmulatorContext.WriteMemoryByte(nAddr, nVal);
                         g_bRAMTamperedWith = true;
 
                         MemoryViewerControl::Invalidate();
@@ -1154,10 +1150,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             {
                 case IDC_RA_DOTEST:
                 {
-                    if (g_MemManager.NumMemoryBanks() == 0)
-                        return TRUE; //	Ignored
-
-                    if (g_MemManager.TotalBankSize() == 0)
+                    if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() == 0)
                         return TRUE; //	Handled
 
                     const ComparisonType nCmpType =
@@ -1597,28 +1590,6 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             // return DefWindowProc( hDlg, nMsg, wParam, lParam );
                     }
 
-                case IDC_RA_MEMBANK:
-                    switch (HIWORD(wParam))
-                    {
-                        case LBN_SELCHANGE:
-                        {
-                            RA_LOG("Sel detected!");
-                            HWND hMemBanks = GetDlgItem(m_hWnd, IDC_RA_MEMBANK);
-                            const int nSelectedIdx = ComboBox_GetCurSel(hMemBanks);
-
-                            const auto nBankID =
-                                gsl::narrow_cast<std::uint16_t>(ComboBox_GetItemData(hMemBanks, nSelectedIdx));
-
-                            MemoryViewerControl::m_nActiveMemBank = nBankID;
-                            g_MemManager.ChangeActiveMemBank(nBankID);
-
-                            MemoryViewerControl::Invalidate(); // Force redraw on mem viewer
-                            break;
-                        }
-                    }
-
-                    return TRUE;
-
                 default:
                     return FALSE; //	unhandled
             }
@@ -1797,7 +1768,7 @@ void Dlg_Memory::UpdateMemoryRegions()
         }
     }
 
-    const auto nTotalBankSize = g_MemManager.TotalBankSize();
+    const auto nTotalBankSize = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize();
     if (m_nSystemRamEnd >= nTotalBankSize)
     {
         if (nTotalBankSize == 0U)
@@ -1810,7 +1781,7 @@ void Dlg_Memory::UpdateMemoryRegions()
     {
         const auto sLabel = ra::StringPrintf("System Memory (%s-%s)", ra::ByteAddressToString(m_nSystemRamStart), ra::ByteAddressToString(m_nSystemRamEnd));
         SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, NativeStr(sLabel).c_str());
-        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), (m_nSystemRamEnd - m_nSystemRamStart + 1) < g_MemManager.TotalBankSize());
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), (m_nSystemRamEnd - m_nSystemRamStart + 1) < nTotalBankSize);
     }
     else
     {
@@ -1847,7 +1818,7 @@ void Dlg_Memory::UpdateMemoryRegions()
 
 void Dlg_Memory::Invalidate()
 {
-    if ((g_MemManager.NumMemoryBanks() == 0) || (g_MemManager.TotalBankSize() == 0))
+    if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() == 0)
         return;
 
     // Update bookmarked memory
@@ -1872,10 +1843,11 @@ void Dlg_Memory::UpdateBits() const
 {
     TCHAR sNewValue[64] = _T("");
 
-    if (g_MemManager.TotalBankSize() != 0 && MemoryViewerControl::GetDataSize() == MemSize::EightBit)
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    if (pEmulatorContext.TotalMemorySize() != 0 && MemoryViewerControl::GetDataSize() == MemSize::EightBit)
     {
         const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
-        const unsigned char nVal = g_MemManager.ActiveBankRAMByteRead(nAddr);
+        const auto nVal = pEmulatorContext.ReadMemoryByte(nAddr);
 
         _stprintf_s(sNewValue, 64, _T("      %d %d %d %d %d %d %d %d"), static_cast<int>((nVal & (1 << 7)) != 0),
                     static_cast<int>((nVal & (1 << 6)) != 0), static_cast<int>((nVal & (1 << 5)) != 0),
@@ -1904,37 +1876,6 @@ void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)
 BOOL Dlg_Memory::IsActive() const noexcept
 {
     return (g_MemoryDialog.GetHWND() != nullptr) && (IsWindowVisible(g_MemoryDialog.GetHWND()));
-}
-
-void Dlg_Memory::ClearBanks()
-{
-    if (m_hWnd == nullptr)
-        return;
-
-    HWND hMemBanks = GetDlgItem(m_hWnd, IDC_RA_MEMBANK);
-    while (ComboBox_DeleteString(hMemBanks, 0) != CB_ERR)
-    {
-    }
-
-    UpdateMemoryRegions();
-}
-
-void Dlg_Memory::AddBank(size_t nBankID)
-{
-    if (m_hWnd == nullptr)
-        return;
-
-    HWND hMemBanks = GetDlgItem(m_hWnd, IDC_RA_MEMBANK);
-    int nIndex = ComboBox_AddString(hMemBanks, NativeStr(std::to_string(nBankID)).c_str());
-    if (nIndex != CB_ERR)
-    {
-        ComboBox_SetItemData(hMemBanks, nIndex, nBankID);
-    }
-
-    //	Select first element by default ('0')
-    ComboBox_SetCurSel(hMemBanks, 0);
-
-    UpdateMemoryRegions();
 }
 
 inline static constexpr auto ParseAddress(TCHAR* ptr, ra::ByteAddress& address) noexcept
@@ -1984,7 +1925,7 @@ bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress&
     {
         // all items are in "All" range
         start = 0;
-        end = g_MemManager.TotalBankSize() - 1;
+        end = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() - 1;
         return true;
     }
 
@@ -2028,7 +1969,7 @@ bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress&
 void Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal,
                                     std::wstring& sBuffer)
 {
-    nMemVal = g_MemManager.ActiveBankRAMRead(result.nAddress, result.nSize);
+    nMemVal = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(result.nAddress, result.nSize);
 
     switch (result.nSize)
     {

@@ -1,9 +1,12 @@
 #include "SearchResults.h"
 
-#include "RA_MemManager.h"
 #include "RA_StringUtils.h"
 
 #include "ra_utility.h"
+
+#include "data/EmulatorContext.hh"
+
+#include "services/ServiceLocator.hh"
 
 #include <algorithm>
 
@@ -33,8 +36,9 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, MemSi
     m_nSize = nSize;
     m_bUnfiltered = true;
 
-    if (nBytes + nAddress > g_MemManager.TotalBankSize())
-        nBytes = g_MemManager.TotalBankSize() - nAddress;
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    if (nBytes + nAddress > pEmulatorContext.TotalMemorySize())
+        nBytes = pEmulatorContext.TotalMemorySize() - nAddress;
 
     const unsigned int nPadding = Padding(nSize);
     if (nPadding >= nBytes)
@@ -56,7 +60,7 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, MemSi
     {
         const auto nBlockSize = (nBytes > MAX_BLOCK_SIZE) ? MAX_BLOCK_SIZE : nBytes;
         auto& block = AddBlock(nAddress, nBlockSize + nPadding);
-        g_MemManager.ActiveBankRAMRead(block.GetBytes(), block.GetAddress(), nBlockSize + nPadding);
+        pEmulatorContext.ReadMemory(block.GetAddress(), block.GetBytes(), nBlockSize + nPadding);
 
         nAddress += nBlockSize;
         nBytes -= nBlockSize;
@@ -191,6 +195,7 @@ void SearchResults::ProcessBlocks(const SearchResults& srSource, std::function<b
     std::vector<unsigned int> vMatches;
     std::vector<unsigned char> vMemory;
     const unsigned int nPadding = Padding(m_nSize);
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
 
     for (auto& block : srSource.m_vBlocks)
     {
@@ -200,7 +205,7 @@ void SearchResults::ProcessBlocks(const SearchResults& srSource, std::function<b
         unsigned char* pMemory = vMemory.data();
         const unsigned char* pPrev = block.GetBytes();
 
-        g_MemManager.ActiveBankRAMRead(pMemory, block.GetAddress(), block.GetSize());
+        pEmulatorContext.ReadMemory(block.GetAddress(), pMemory, block.GetSize());
 
         for (unsigned int i = 0; i < block.GetSize() - nPadding; ++i)
         {
@@ -243,13 +248,14 @@ void SearchResults::ProcessBlocksNibbles(const SearchResults& srSource, unsigned
     std::vector<unsigned int> vMatches;
     std::vector<unsigned char> vMemory;
     const unsigned int nPadding = Padding(m_nSize);
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
 
     for (auto& block : srSource.m_vBlocks)
     {
         if (block.GetSize() > vMemory.size())
             vMemory.resize(block.GetSize());
 
-        g_MemManager.ActiveBankRAMRead(vMemory.data(), block.GetAddress(), block.GetSize());
+        pEmulatorContext.ReadMemory(block.GetAddress(), vMemory.data(), block.GetSize());
 
         for (unsigned int i = 0; i < block.GetSize() - nPadding; ++i)
         {

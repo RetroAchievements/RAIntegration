@@ -87,9 +87,6 @@
     <ClCompile Include="RA_ImageFactory.cpp">
       <Filter>Services</Filter>
     </ClCompile>
-    <ClCompile Include="RA_MemManager.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="services\SearchResults.cpp">
       <Filter>Services</Filter>
     </ClCompile>
@@ -336,9 +333,6 @@
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="RA_Json.h">
-      <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_MemManager.h">
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\SearchResults.h">
@@ -712,6 +706,9 @@
     </ClInclude>
     <ClInclude Include="..\RAInterface\RA_Interface.h">
       <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="data\Types.hh">
+      <Filter>Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

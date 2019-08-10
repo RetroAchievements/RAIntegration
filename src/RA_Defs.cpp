@@ -1,6 +1,6 @@
 #include "RA_Defs.h"
 
-#include "RA_MemManager.h"
+#include "data\EmulatorContext.hh"
 
 namespace ra {
 
@@ -8,7 +8,8 @@ _Use_decl_annotations_
 std::string ByteAddressToString(ByteAddress nAddr)
 {
 #ifndef RA_UTEST
-    if (g_MemManager.TotalBankSize() > 0x10000)
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    if (pEmulatorContext.TotalMemorySize() > 0x10000)
         return ra::StringPrintf("0x%06x", nAddr);
     else
 #endif

@@ -23,6 +23,16 @@
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <ItemGroup>
+    <None Include="base.props">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\src\rcheevos.vcxproj">
+      <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -255,7 +265,6 @@
     <ClCompile Include="..\src\RA_Condition.cpp" />
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
-    <ClCompile Include="..\src\RA_MemManager.cpp" />
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />
@@ -295,16 +304,6 @@
     <ClCompile Include="RA_Condition_Tests.cpp" />
     <ClCompile Include="RA_Leaderboard_Tests.cpp" />
     <ClCompile Include="RA_UnitTestHelpers.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="base.props">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\src\rcheevos.vcxproj">
-      <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

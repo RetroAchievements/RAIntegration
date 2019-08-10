@@ -4,6 +4,8 @@
 
 #include "RA_Interface.h"
 
+#include "Types.hh"
+
 #include <string>
 
 namespace ra {
@@ -149,6 +151,48 @@ public:
     /// </summary>
     const wchar_t* GetCancelButtonText() const noexcept { return m_sCancelButtonText; }
 
+    typedef uint8_t(MemoryReadFunction)(uint32_t nAddress);
+    typedef void (MemoryWriteFunction)(uint32_t nAddress, uint8_t nValue);
+
+    /// <summary>
+    /// Specifies functions to read and write memory in the emulator.
+    /// </summary>
+    void AddMemoryBlock(gsl::index nIndex, size_t nBytes, MemoryReadFunction* pReader, MemoryWriteFunction* pWriter);
+
+    /// <summary>
+    /// Clears all registered memory blocks so they can be rebuilt.
+    /// </summary>
+    void ClearMemoryBlocks() noexcept
+    {
+        m_vMemoryBlocks.clear();
+        m_nTotalMemorySize = 0U;
+    }
+
+    /// <summary>
+    /// Gets the total amount of emulator-exposed memory.
+    /// </summary>
+    size_t TotalMemorySize() const noexcept { return m_nTotalMemorySize; }
+
+    /// <summary>
+    /// Reads memory from the emulator.
+    /// </summary>
+    uint32_t ReadMemory(ra::ByteAddress nAddress, MemSize nSize) const;
+
+    /// <summary>
+    /// Reads memory from the emulator.
+    /// </summary>
+    uint8_t ReadMemoryByte(ra::ByteAddress nAddress) const noexcept;
+
+    /// <summary>
+    /// Reads memory from the emulator.
+    /// </summary>
+    void ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const;
+
+    /// <summary>
+    /// Reads memory from the emulator.
+    /// </summary>
+    void WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const noexcept;
+
 protected:
     EmulatorID m_nEmulatorId = EmulatorID::UnknownEmulator;
     std::string m_sVersion;
@@ -163,6 +207,16 @@ protected:
     std::function<void()> m_fUnpauseEmulator;
     std::function<void(char*)> m_fGetGameTitle;
     std::function<void()> m_fRebuildMenu;
+
+    struct MemoryBlock
+    {
+        size_t size;
+        MemoryReadFunction* read;
+        MemoryWriteFunction* write;
+    };
+
+    std::vector<MemoryBlock> m_vMemoryBlocks;
+    size_t m_nTotalMemorySize = 0U;
 };
 
 } // namespace data

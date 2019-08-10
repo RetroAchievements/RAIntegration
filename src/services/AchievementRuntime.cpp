@@ -2,11 +2,11 @@
 
 #include "RA_Defs.h"
 #include "RA_Log.h"
-#include "RA_MemManager.h"
 #include "RA_StringUtils.h"
 
 #include "RA_md5factory.h"
 
+#include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\UserContext.hh"
 
@@ -783,3 +783,19 @@ void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const
 
 } // namespace services
 } // namespace ra
+
+extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, _UNUSED void* pData)
+{
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    switch (nBytes)
+    {
+        case 1:
+            return pEmulatorContext.ReadMemoryByte(nAddress);
+        case 2:
+            return pEmulatorContext.ReadMemory(nAddress, MemSize::SixteenBit);
+        case 4:
+            return pEmulatorContext.ReadMemory(nAddress, MemSize::ThirtyTwoBit);
+        default:
+            return 0U;
+    }
+}

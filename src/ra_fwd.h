@@ -103,10 +103,6 @@ namespace ra {
 
 using tstring = std::basic_string<TCHAR>;
 
-using ByteAddress = unsigned int;
-using AchievementID = unsigned int;
-using LeaderboardID = unsigned int;
-
 } /* namespace ra */
 
 #endif /* !RA_FWD_H */

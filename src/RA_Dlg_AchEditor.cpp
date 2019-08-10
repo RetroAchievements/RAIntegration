@@ -5,7 +5,6 @@
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_ImageFactory.h"
-#include "RA_MemManager.h"
 #include "RA_Resource.h"
 
 #include "api\FetchBadgeIds.hh"
@@ -1101,7 +1100,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         unsigned int nVal = strtoul(ra::Narrow(buffer).c_str(), nullptr, 16);
                         NewCondition.CompSource().SetValue(nVal);
 
-                        NewCondition.CompTarget().SetValue(g_MemManager.ActiveBankRAMRead(nVal, NewCondition.CompTarget().GetSize()));
+                        nVal = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(nVal, NewCondition.CompTarget().GetSize());
+                        NewCondition.CompTarget().SetValue(nVal);
                     }
 
                     const size_t nNewID = pActiveAch->AddCondition(GetSelectedConditionGroup(), NewCondition) - 1;
@@ -1869,7 +1869,7 @@ unsigned int Dlg_AchievementEditor::ParseValue(const std::string& sData, CompVar
     }
     else
     {
-        nMax = g_MemManager.TotalBankSize() - 1;
+        nMax = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() - 1;
     }
 
     bool bTooLarge = false;

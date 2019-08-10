@@ -2,6 +2,7 @@
 #define RA_LEADERBOARD_H
 #pragma once
 
+#include "data\Types.hh"
 #include "ra_fwd.h"
 
 class RA_Leaderboard

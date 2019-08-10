@@ -910,7 +910,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         unsigned int nVal = 0;
                         UpdateSearchResult(result, nVal, sValue);
                         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-                        const auto* pNote = pGameContext.FindCodeNote(result.nAddress);
+                        auto sNote = pGameContext.FindCodeNote(result.nAddress, result.nSize);
 
                         HBRUSH hBrush{};
                         COLORREF color{};
@@ -931,7 +931,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             }
                             else if (g_MemBookmarkDialog.BookmarkExists(result.nAddress))
                                 color = RGB(220, 255, 220); // Green if Bookmark is found.
-                            else if (pNote != nullptr)
+                            else if (!sNote.empty())
                                 color = RGB(220, 240, 255); // Blue if Code Note is found.
                             else if (currentSearch.WasModified(result.nAddress))
                                 color = RGB(240, 240, 240); // Grey if still valid, but has changed
@@ -986,12 +986,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         DrawTextW(pDIS->hDC, sValue.c_str(), sValue.length(), &rcValue,
                             DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER);
 
-                        std::wstring sNote;
-                        if (pNote && !pNote->empty())
-                        {
-                            sNote = ra::Widen(*pNote);
-                        }
-                        else
+                        if (sNote.empty())
                         {
                             const auto* pRegion = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().GetMemoryRegion(result.nAddress);
                             if (pRegion)

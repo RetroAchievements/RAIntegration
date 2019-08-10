@@ -470,7 +470,7 @@ BOOL Dlg_MemBookmark::IsActive() const noexcept
     return (g_MemBookmarkDialog.GetHWND() != nullptr) && (IsWindowVisible(g_MemBookmarkDialog.GetHWND()));
 }
 
-static MemSize TypeToMemSize(unsigned int type)
+static MemSize TypeToMemSize(unsigned int type) noexcept
 {
     switch (type)
     {

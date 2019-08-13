@@ -2,7 +2,7 @@
 #define RA_UI_MEMORYBOOKMARKSVIEWMODEL_H
 #pragma once
 
-#include "RA_Condition.h"
+#include "data\Types.hh"
 
 #include "ui\WindowViewModelBase.hh"
 

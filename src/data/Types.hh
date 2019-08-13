@@ -21,6 +21,12 @@ enum class MemSize : uint8_t
 
 namespace ra {
 
+enum class MemFormat : uint8_t
+{
+    Hex,
+    Dec,
+};
+
 using ByteAddress = uint32_t;
 using AchievementID = uint32_t;
 using LeaderboardID = uint32_t;

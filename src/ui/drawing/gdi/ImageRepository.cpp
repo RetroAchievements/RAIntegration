@@ -3,6 +3,7 @@
 #include "RA_Core.h"
 
 #include "services\Http.hh"
+#include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
@@ -141,18 +142,21 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     }
 
     // fetch it
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     std::string sUrl;
     switch (nType)
     {
         case ImageType::Badge:
-            sUrl = "http://i.retroachievements.org/Badge/";
+            sUrl = pConfiguration.GetImageHostUrl();
+            sUrl += "/Badge/";
             break;
         case ImageType::UserPic:
-            sUrl = _RA_HostName();
+            sUrl = pConfiguration.GetHostUrl();
             sUrl += "/UserPic/";
             break;
         case ImageType::Icon:
-            sUrl = "http://i.retroachievements.org/Images/";
+            sUrl = pConfiguration.GetImageHostUrl();
+            sUrl += "/Images/";
             break;
         default:
             ASSERT(!"Unsupported image type");
@@ -170,15 +174,17 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
         {
             auto nFileSize = ra::services::ServiceLocator::Get<ra::services::IFileSystem>().GetFileSize(sFilename);
             RA_LOG_INFO("Wrote %lu bytes to %s", nFileSize, ra::Narrow(sFilename).c_str());
+
+            // only remove the image from the request queue if successful. prevents repeated requests
+            {
+                std::lock_guard<std::mutex> lock(m_oMutex);
+                m_vRequestedImages.erase(sFilename);
+            }
         }
         else
         {
             RA_LOG_WARN("Error %u fetching %s", response.StatusCode(), sUrl.c_str());
-        }
-
-        {
-            std::lock_guard<std::mutex> lock(m_oMutex);
-            m_vRequestedImages.erase(sFilename);
+            ra::services::ServiceLocator::Get<ra::services::IFileSystem>().DeleteFile(sFilename);
         }
 
         OnImageChanged(nType, sName);

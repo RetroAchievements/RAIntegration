@@ -161,7 +161,7 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
     pImageRepository->Initialize();
     ra::services::ServiceLocator::Provide<ra::ui::IImageRepository>(std::move(pImageRepository));
 
-    auto pServer = std::make_unique<ra::api::impl::DisconnectedServer>(pConfiguration->GetHostName());
+    auto pServer = std::make_unique<ra::api::impl::DisconnectedServer>(pConfiguration->GetHostUrl());
     ra::services::ServiceLocator::Provide<ra::api::IServer>(std::move(pServer));
 }
 

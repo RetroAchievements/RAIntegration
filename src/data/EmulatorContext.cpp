@@ -256,7 +256,7 @@ bool EmulatorContext::ValidateClientVersion()
     if (bUpdate)
     {
         ra::services::ServiceLocator::Get<ra::ui::IDesktop>().OpenUrl(
-            ra::StringPrintf("http://%s/download.php", pConfiguration.GetHostName()));
+            ra::StringPrintf("%s/download.php", pConfiguration.GetHostUrl()));
     }
 
     return bResult;

@@ -88,9 +88,19 @@ public:
     virtual void SetWindowSize(const std::string& sPositionKey, const ra::ui::Size& oSize) = 0;
     
     /// <summary>
-    /// Gets the name of the host to communicate with.
+    /// Gets the name of the host to communicate with (no protocol).
     /// </summary>
     virtual const std::string& GetHostName() const = 0;
+
+    /// <summary>
+    /// Gets the URL to the host to communicate with (includes protocol).
+    /// </summary>
+    virtual const std::string& GetHostUrl() const = 0;
+
+    /// <summary>
+    /// Gets the URL to the host to communicate with (includes protocol) for image retrieval.
+    /// </summary>
+    virtual const std::string& GetImageHostUrl() const = 0;
 
     /// <summary>
     /// Saves the current configuration so it can be used in a future session.

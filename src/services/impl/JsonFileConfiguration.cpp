@@ -194,20 +194,58 @@ void JsonFileConfiguration::SetWindowSize(const std::string & sPositionKey, cons
 const std::string& JsonFileConfiguration::GetHostName() const
 {
     if (m_sHostName.empty())
-    {
-        const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
-        if (pFileSystem.GetFileSize(L"host.txt") > 0)
-        {
-            auto pFile = pFileSystem.OpenTextFile(L"host.txt");
-            if (pFile != nullptr)
-                pFile->GetLine(m_sHostName);
-        }
-
-        if (m_sHostName.empty())
-            m_sHostName = "retroachievements.org";
-    }
+        const_cast<JsonFileConfiguration*>(this)->UpdateHost();
 
     return m_sHostName;
+}
+
+const std::string& JsonFileConfiguration::GetHostUrl() const
+{
+    if (m_sHostUrl.empty())
+        const_cast<JsonFileConfiguration*>(this)->UpdateHost();
+
+    return m_sHostUrl;
+}
+
+const std::string& JsonFileConfiguration::GetImageHostUrl() const
+{
+    if (m_sImageHostUrl.empty())
+        const_cast<JsonFileConfiguration*>(this)->UpdateHost();
+
+    return m_sImageHostUrl;
+}
+
+void JsonFileConfiguration::UpdateHost()
+{
+    const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    if (pFileSystem.GetFileSize(L"host.txt") > 0)
+    {
+        auto pFile = pFileSystem.OpenTextFile(L"host.txt");
+        if (pFile != nullptr)
+            pFile->GetLine(m_sHostName);
+    }
+
+    if (m_sHostName.empty())
+    {
+        m_sHostName = "retroachievements.org";
+        m_sHostUrl = "http://retroachievements.org";
+        m_sImageHostUrl = "http://i.retroachievements.org";
+    }
+    else
+    {
+        const int nIndex = m_sHostName.find("://");
+        if (nIndex == std::string::npos)
+        {
+            m_sHostUrl = "http://" + m_sHostName;
+        }
+        else
+        {
+            m_sHostUrl.swap(m_sHostName);
+            m_sHostName = m_sHostUrl.substr(nIndex + 3);
+        }
+
+        m_sImageHostUrl = m_sHostUrl;
+    }
 }
 
 } // namespace impl

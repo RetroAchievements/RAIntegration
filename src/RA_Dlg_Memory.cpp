@@ -10,6 +10,9 @@
 #include "data\GameContext.hh"
 
 #include "services\IAudioSystem.hh"
+#include "services\IConfiguration.hh"
+
+#include "ui\IDesktop.hh"
 
 #ifndef ID_OK
 #define ID_OK 1024
@@ -1455,10 +1458,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                     if (pGameContext.GameId() != 0)
                     {
-                        std::ostringstream oss;
-                        oss << "http://" << _RA_HostName() << "/codenotes.php?g=" << pGameContext.GameId();
-                        ShellExecute(nullptr, _T("open"), NativeStr(oss.str()).c_str(), nullptr, nullptr,
-                                     SW_SHOWNORMAL);
+                        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                        const auto sUrl = ra::StringPrintf("%s/codenotes.php?g=%u", pConfiguration.GetHostUrl(), pGameContext.GameId());
+
+                        const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+                        pDesktop.OpenUrl(sUrl);
                     }
                     else
                     {

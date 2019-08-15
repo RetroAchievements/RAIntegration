@@ -194,7 +194,7 @@ void JsonFileConfiguration::SetWindowSize(const std::string & sPositionKey, cons
 const std::string& JsonFileConfiguration::GetHostName() const
 {
     if (m_sHostName.empty())
-        const_cast<JsonFileConfiguration*>(this)->UpdateHost();
+        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->UpdateHost();
 
     return m_sHostName;
 }
@@ -202,7 +202,7 @@ const std::string& JsonFileConfiguration::GetHostName() const
 const std::string& JsonFileConfiguration::GetHostUrl() const
 {
     if (m_sHostUrl.empty())
-        const_cast<JsonFileConfiguration*>(this)->UpdateHost();
+        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->UpdateHost();
 
     return m_sHostUrl;
 }
@@ -210,7 +210,7 @@ const std::string& JsonFileConfiguration::GetHostUrl() const
 const std::string& JsonFileConfiguration::GetImageHostUrl() const
 {
     if (m_sImageHostUrl.empty())
-        const_cast<JsonFileConfiguration*>(this)->UpdateHost();
+        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->UpdateHost();
 
     return m_sImageHostUrl;
 }

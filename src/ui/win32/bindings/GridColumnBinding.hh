@@ -2,6 +2,7 @@
 #define RA_UI_WIN32_GRIDCOLUMNBINDING_H
 #pragma once
 
+#include "ui\Types.hh"
 #include "ui\ViewModelCollection.hh"
 
 namespace ra {
@@ -41,10 +42,34 @@ public:
 
     virtual std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const = 0;
 
+    virtual bool DependsOn(const ra::ui::BoolModelProperty&) const { return false; }
+    virtual bool DependsOn(const ra::ui::IntModelProperty&) const { return false; }
+    virtual bool DependsOn(const ra::ui::StringModelProperty&) const { return false; }
+
+    ra::ui::RelativePosition GetAlignment() const { return m_nAlignment; }
+    void SetAlignment(ra::ui::RelativePosition value) { m_nAlignment = value; }
+
+    bool IsReadOnly() const { return m_bReadOnly; }
+    void SetReadOnly(bool value) { m_bReadOnly = value; }
+    
+    struct InPlaceEditorInfo
+    {
+        gsl::index nItemIndex;
+        gsl::index nColumnIndex;
+        RECT rcSubItem;
+        WNDPROC pOriginalWndProc;
+        void* pGridBinding;
+        GridColumnBinding* pColumnBinding;
+    };
+
+    virtual HWND CreateInPlaceEditor(HWND, std::unique_ptr<InPlaceEditorInfo>) { return nullptr; }
+
 protected:
     std::wstring m_sHeader;
     WidthType m_nWidthType = WidthType::Fill;
     int m_nWidth = 1;
+    ra::ui::RelativePosition m_nAlignment = ra::ui::RelativePosition::Near;
+    bool m_bReadOnly = true;
 };
 
 } // namespace bindings

@@ -23,6 +23,11 @@ public:
         return vmItems.GetItemValue(nIndex, *m_pBoundProperty) ? m_sTrueText : m_sFalseText;
     }
 
+    bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const override
+    {
+        return pProperty == *m_pBoundProperty;
+    }
+
 protected:
     const BoolModelProperty* m_pBoundProperty = nullptr;
     std::wstring m_sTrueText;

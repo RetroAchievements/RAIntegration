@@ -23,6 +23,11 @@ public:
         return L"";
     }
 
+    bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const override
+    {
+        return pProperty == *m_pBoundProperty;
+    }
+
     const BoolModelProperty& GetBoundProperty() const noexcept { return *m_pBoundProperty; }
 
 protected:

@@ -1,5 +1,5 @@
-#ifndef RA_UI_WIN32_GRIDTEXTCOLUMNBINDING_H
-#define RA_UI_WIN32_GRIDTEXTCOLUMNBINDING_H
+#ifndef RA_UI_WIN32_GRIDNUMBERCOLUMNBINDING_H
+#define RA_UI_WIN32_GRIDNUMBERCOLUMNBINDING_H
 #pragma once
 
 #include "GridColumnBinding.hh"
@@ -10,26 +10,26 @@ namespace ui {
 namespace win32 {
 namespace bindings {
 
-class GridTextColumnBinding : public GridColumnBinding
+class GridNumberColumnBinding : public GridColumnBinding
 {
 public:
-    GridTextColumnBinding(const StringModelProperty& pBoundProperty) noexcept
+    GridNumberColumnBinding(const IntModelProperty& pBoundProperty) noexcept
         : m_pBoundProperty(&pBoundProperty)
     {
     }
 
     std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
     {
-        return vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+        return std::to_wstring(vmItems.GetItemValue(nIndex, *m_pBoundProperty));
     }
 
-    bool DependsOn(const ra::ui::StringModelProperty& pProperty) const override
+    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const override
     {
         return pProperty == *m_pBoundProperty;
     }
 
 protected:
-    const StringModelProperty* m_pBoundProperty = nullptr;
+    const IntModelProperty* m_pBoundProperty = nullptr;
 };
 
 } // namespace bindings
@@ -37,4 +37,4 @@ protected:
 } // namespace ui
 } // namespace ra
 
-#endif // !RA_UI_WIN32_GRIDCOLUMNBINDING_H
+#endif // !RA_UI_WIN32_GRIDNUMBERCOLUMNBINDING_H

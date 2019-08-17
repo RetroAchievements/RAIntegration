@@ -62,6 +62,21 @@ public:
     void SetDialogResult(DialogResult nValue) { SetValue(DialogResultProperty, etoi(nValue)); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for the window visibility.
+    /// </summary>
+    static BoolModelProperty IsVisibleProperty;
+
+    /// <summary>
+    /// Gets whether or not the window is visible.
+    /// </summary>
+    bool IsVisible() const { return GetValue(IsVisibleProperty); }
+
+    /// <summary>
+    /// Sets whether the window is visible.
+    /// </summary>
+    void SetIsVisible(bool bValue) { SetValue(IsVisibleProperty, bValue); }
+
+    /// <summary>
     /// Shows a window for this view model.
     /// </summary>
     void Show();

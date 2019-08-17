@@ -8,6 +8,7 @@ namespace ui {
 
 StringModelProperty WindowViewModelBase::WindowTitleProperty("WindowViewModelBase", "WindowTitle", L"Window");
 const IntModelProperty WindowViewModelBase::DialogResultProperty("WindowViewModelBase", "DialogResult", static_cast<int>(DialogResult::None));
+BoolModelProperty WindowViewModelBase::IsVisibleProperty("WindowViewModelBase", "IsVisible", false);
 
 const Color Color::Transparent(0x00FF01FE);
 

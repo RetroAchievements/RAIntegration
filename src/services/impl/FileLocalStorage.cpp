@@ -111,6 +111,12 @@ std::wstring FileLocalStorage::GetPath(StorageItemType nType, const std::wstring
             sPath.append(L"-history.txt");
             break;
 
+        case StorageItemType::Bookmarks:
+            sPath.append(RA_DIR_BOOKMARKS);
+            sPath.append(sKey);
+            sPath.append(L"-Bookmarks.json");
+            break;
+
         default:
             assert(!"unhandled StorageItemType");
             sPath.append(RA_DIR_DATA);

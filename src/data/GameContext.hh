@@ -259,6 +259,26 @@ public:
     /// <returns><c>true</c> if the note was deleted, </c>false</c> if an error occurred.</returns>
     bool DeleteCodeNote(ra::ByteAddress nAddress);
 
+
+    class NotifyTarget
+    {
+    public:
+        NotifyTarget() noexcept = default;
+        virtual ~NotifyTarget() noexcept = default;
+        NotifyTarget(const NotifyTarget&) noexcept = delete;
+        NotifyTarget& operator=(const NotifyTarget&) noexcept = delete;
+        NotifyTarget(NotifyTarget&&) noexcept = default;
+        NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
+
+        virtual void OnActiveGameChanged() noexcept(false) {}
+    };
+
+    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
+    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget); }
+
+private:
+    using NotifyTargetSet = std::set<NotifyTarget*>;
+
 protected:
     void MergeLocalAchievements();
     bool ReloadAchievement(Achievement& pAchievement);
@@ -288,6 +308,13 @@ protected:
         unsigned int Bytes;
     };
     std::map<ra::ByteAddress, CodeNote> m_mCodeNotes;
+
+private:
+    /// <summary>
+    /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's
+    /// impossible to create a set of <c>NotifyTarget</c> references.
+    /// </summary>
+    NotifyTargetSet m_vNotifyTargets;
 };
 
 } // namespace data

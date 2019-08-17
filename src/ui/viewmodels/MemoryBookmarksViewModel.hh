@@ -2,7 +2,10 @@
 #define RA_UI_MEMORYBOOKMARKSVIEWMODEL_H
 #pragma once
 
+#include "data\GameContext.hh"
 #include "data\Types.hh"
+
+#include "services\TextReader.hh"
 
 #include "ui\WindowViewModelBase.hh"
 
@@ -12,10 +15,13 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class MemoryBookmarksViewModel : public WindowViewModelBase, protected ViewModelCollectionBase::NotifyTarget
+class MemoryBookmarksViewModel : public WindowViewModelBase,
+    protected ra::data::GameContext::NotifyTarget,
+    protected ViewModelBase::NotifyTarget,
+    protected ViewModelCollectionBase::NotifyTarget
 {
 public:
-    GSL_SUPPRESS_F6 MemoryBookmarksViewModel() = default;
+    MemoryBookmarksViewModel() noexcept;
     ~MemoryBookmarksViewModel() = default;
 
     MemoryBookmarksViewModel(const MemoryBookmarksViewModel&) noexcept = delete;
@@ -187,11 +193,19 @@ public:
         return m_vBehaviors;
     }
 
+protected:
+    void LoadBookmarks(ra::services::TextReader& sBookmarksFile);
+
+    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+    void OnActiveGameChanged() override;
+
 private:
     ViewModelCollection<MemoryBookmarkViewModel> m_vBookmarks;
     LookupItemViewModelCollection m_vSizes;
     LookupItemViewModelCollection m_vFormats;
     LookupItemViewModelCollection m_vBehaviors;
+
+    unsigned int m_nLoadedGameId = 0;
 };
 
 } // namespace viewmodels

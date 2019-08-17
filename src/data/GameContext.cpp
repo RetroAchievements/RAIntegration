@@ -176,6 +176,14 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     RefreshUnlocks(!bWasPaused, nPopup);
 
     RefreshOverlay();
+
+    // create a copy of the list of pointers in case it's modified by one of the callbacks
+    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+    for (NotifyTarget* target : vNotifyTargets)
+    {
+        Expects(target != nullptr);
+        target->OnActiveGameChanged();
+    }
 }
 
 void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)

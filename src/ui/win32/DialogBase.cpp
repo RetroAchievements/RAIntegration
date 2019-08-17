@@ -123,12 +123,20 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             return OnInitDialog();
 
         case WM_DESTROY:
+            m_vmWindow.SetIsVisible(false);
             OnDestroy();
             return 0;
 
         case WM_SHOWWINDOW:
             if (wParam)
+            {
+                m_vmWindow.SetIsVisible(true);
                 OnShown();
+            }
+            else
+            {
+                m_vmWindow.SetIsVisible(false);
+            }
             return 0;
 
         case WM_COMMAND:

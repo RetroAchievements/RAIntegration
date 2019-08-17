@@ -9,6 +9,8 @@
 
 #include <winhttp.h>
 
+//#define ALLOW_INVALID_SSL_CERTIFICATES
+
 namespace ra {
 namespace services {
 namespace impl {
@@ -167,24 +169,54 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 sHeaders += ra::Widen(pRequest.GetContentType());
 
                 BOOL bResults{};
+                bool retry;
 
-                // send the request
-                if (sPostData.empty())
+                do
                 {
-                    bResults = WinHttpSendRequest(hRequest,
-                        sHeaders.c_str(), gsl::narrow_cast<int>(sHeaders.length()),
-                        WINHTTP_NO_REQUEST_DATA,
-                        0, 0,
-                        0);
-                }
-                else
-                {
-                    bResults = WinHttpSendRequest(hRequest,
-                        sHeaders.c_str(), gsl::narrow_cast<int>(sHeaders.length()),
-                        static_cast<LPVOID>(sPostData.data()),
-                        gsl::narrow_cast<int>(sPostData.length()), gsl::narrow_cast<int>(sPostData.length()),
-                        0);
-                }
+                    retry = false;
+
+                    // send the request
+                    if (sPostData.empty())
+                    {
+                        bResults = WinHttpSendRequest(hRequest,
+                            sHeaders.c_str(), gsl::narrow_cast<int>(sHeaders.length()),
+                            WINHTTP_NO_REQUEST_DATA,
+                            0, 0,
+                            0);
+                    }
+                    else
+                    {
+                        bResults = WinHttpSendRequest(hRequest,
+                            sHeaders.c_str(), gsl::narrow_cast<int>(sHeaders.length()),
+                            static_cast<LPVOID>(sPostData.data()),
+                            gsl::narrow_cast<int>(sPostData.length()), gsl::narrow_cast<int>(sPostData.length()),
+                            0);
+                    }
+
+                    if (!bResults)
+                    {
+                        nStatusCode = GetLastError();
+
+                        if (nStatusCode == ERROR_WINHTTP_RESEND_REQUEST)
+                        {
+                            retry = true;
+                        }
+#ifdef ALLOW_INVALID_SSL_CERTIFICATES
+                        else if (nStatusCode == ERROR_WINHTTP_SECURE_FAILURE)
+                        {
+                            // https://stackoverflow.com/questions/19338395/how-do-you-use-winhttp-to-do-ssl-with-a-self-signed-cert
+                            DWORD dwFlags =
+                                SECURITY_FLAG_IGNORE_UNKNOWN_CA |
+                                SECURITY_FLAG_IGNORE_CERT_WRONG_USAGE |
+                                SECURITY_FLAG_IGNORE_CERT_CN_INVALID |
+                                SECURITY_FLAG_IGNORE_CERT_DATE_INVALID;
+
+                            if (WinHttpSetOption(hRequest, WINHTTP_OPTION_SECURITY_FLAGS, &dwFlags, sizeof(dwFlags)))
+                                retry = true;
+                        }
+#endif
+                    }
+                } while (retry);
 
                 if (!bResults || !WinHttpReceiveResponse(hRequest, nullptr))
                 {

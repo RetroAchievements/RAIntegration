@@ -287,6 +287,8 @@ protected:
     void LoadRichPresenceScript(const std::string& sRichPresenceScript);
     void RefreshCodeNotes();
 
+    void OnActiveGameChanged();
+
     unsigned int m_nGameId = 0;
     std::wstring m_sGameTitle;
     std::string m_sGameHash;

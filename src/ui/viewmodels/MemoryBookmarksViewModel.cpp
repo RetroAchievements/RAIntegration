@@ -99,7 +99,14 @@ void MemoryBookmarksViewModel::OnActiveGameChanged()
 
             auto pReader = pLocalStorage.ReadText(ra::services::StorageItemType::Bookmarks, std::to_wstring(pGameContext.GameId()));
             if (pReader != nullptr)
+            {
                 LoadBookmarks(*pReader);
+            }
+            else
+            {
+                while (m_vBookmarks.Count() > 0)
+                    m_vBookmarks.RemoveAt(m_vBookmarks.Count() - 1);
+            }
 
             m_nLoadedGameId = pGameContext.GameId();
         }
@@ -121,10 +128,8 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
 
             for (const auto& bookmark : bookmarks.GetArray())
             {
-                MemoryBookmarkViewModel* vmBookmark;
-                if (nIndex < m_vBookmarks.Count())
-                    vmBookmark = m_vBookmarks.GetItemAt(nIndex);
-                else
+                auto* vmBookmark = m_vBookmarks.GetItemAt(nIndex);
+                if (vmBookmark == nullptr)
                     vmBookmark = &m_vBookmarks.Add();
                 ++nIndex;
 
@@ -171,7 +176,7 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
         }
     }
 
-    while (m_vBookmarks.Count() > nIndex)
+    while (m_vBookmarks.Count() > ra::to_unsigned(nIndex))
         m_vBookmarks.RemoveAt(m_vBookmarks.Count() - 1);
 }
 

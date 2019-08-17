@@ -58,7 +58,6 @@ static void CopyAchievementData(Achievement& pAchievement,
 
 void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 {
-    m_nGameId = nGameId;
     m_nMode = nMode;
     m_sGameTitle.clear();
     m_pRichPresence = nullptr;
@@ -89,9 +88,16 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     if (nGameId == 0)
     {
         m_sGameHash.clear();
-        RefreshOverlay();
+
+        if (m_nGameId != 0)
+        {
+            m_nGameId = 0;
+            OnActiveGameChanged();
+        }
         return;
     }
+
+    m_nGameId = nGameId;
 
     ra::api::FetchGameData::Request request;
     request.GameId = nGameId;
@@ -175,6 +181,11 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // get user unlocks asynchronously
     RefreshUnlocks(!bWasPaused, nPopup);
 
+    OnActiveGameChanged();
+}
+
+void GameContext::OnActiveGameChanged()
+{
     RefreshOverlay();
 
     // create a copy of the list of pointers in case it's modified by one of the callbacks

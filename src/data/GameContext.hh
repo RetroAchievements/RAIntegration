@@ -207,6 +207,15 @@ public:
     /// <summary>
     /// Returns the note associated with the specified address.
     /// </summary>
+    /// <returns>
+    ///  The note associated to the address or neighboring addresses based on <paramref name="nSize" />.
+    ///  Returns an empty string if no note is associated to the address.
+    /// </returns>
+    std::wstring FindCodeNote(ra::ByteAddress nAddress, MemSize nSize) const;
+
+    /// <summary>
+    /// Returns the note associated with the specified address.
+    /// </summary>
     /// <param name="nAddress">The address to look up.</param>
     /// <param name="sAuthor">The author associated to the address.</param>
     /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
@@ -276,6 +285,7 @@ protected:
     {
         std::string Author;
         std::wstring Note;
+        unsigned int Bytes;
     };
     std::map<ra::ByteAddress, CodeNote> m_mCodeNotes;
 };

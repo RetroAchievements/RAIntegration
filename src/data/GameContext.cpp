@@ -1028,12 +1028,120 @@ void GameContext::RefreshCodeNotes()
         }
 
         for (const auto& pNote : response.Notes)
-            m_mCodeNotes.insert_or_assign(pNote.Address, CodeNote{ pNote.Author, pNote.Note });
+        {
+            unsigned int nBytes = 1;
+
+            // attempt to match "X byte", "X Byte", "XX bytes", or "XX Bytes"
+            auto nIndex = pNote.Note.find(L"yte");
+            if (nIndex != std::string::npos && nIndex >= 3)
+            {
+                wchar_t c = pNote.Note.at(--nIndex);
+                if (c == L'b' || c == L'B')
+                {
+                    c = pNote.Note.at(--nIndex);
+                    if (c == L'-' || c == L' ')
+                        c = pNote.Note.at(--nIndex);
+
+                    if (c >= L'0' && c <= L'9')
+                    {
+                        int nMultiplier = 1;
+                        nBytes = 0;
+                        do
+                        {
+                            nBytes += (c - L'0') * nMultiplier;
+                            if (nIndex == 0)
+                                break;
+
+                            nMultiplier *= 10;
+                            c = pNote.Note.at(--nIndex);
+                        } while (c >= L'0' && c <= L'9');
+                    }
+                }
+            }
+
+            if (nBytes == 1)
+            {
+                // attempt to match "16-bit" or "32-bit"
+                nIndex = pNote.Note.find(L"Bit");
+                if (nIndex == std::string::npos)
+                    nIndex = pNote.Note.find(L"bit");
+
+                if (nIndex != std::string::npos && nIndex >= 3)
+                {
+                    wchar_t c = pNote.Note.at(--nIndex);
+                    if (c == L'-' || c == L' ')
+                        c = pNote.Note.at(--nIndex);
+
+                    if (c == L'6' && pNote.Note.at(nIndex - 1) == L'1')
+                        nBytes = 2;
+                    else if (c == L'2' && pNote.Note.at(nIndex - 1) == L'3')
+                        nBytes = 4;
+                }
+            }
+
+            m_mCodeNotes.insert_or_assign(pNote.Address, CodeNote{ pNote.Author, pNote.Note, nBytes });
+        }
 
 #ifndef RA_UTEST
         g_MemoryDialog.RepopulateCodeNotes();
 #endif
     });
+}
+
+std::wstring GameContext::FindCodeNote(ra::ByteAddress nAddress, MemSize nSize) const
+{
+    unsigned int nCheckSize = 0;
+    switch (nSize)
+    {
+        case MemSize::SixteenBit:
+            nCheckSize = 2;
+            break;
+
+        case MemSize::ThirtyTwoBit:
+            nCheckSize = 4;
+            break;
+
+        default: // 1 byte or less
+            nCheckSize = 1;
+            break;
+    }
+
+    // lower_bound will return the item if it's an exact match, or the *next* item otherwise
+    auto pIter = m_mCodeNotes.lower_bound(nAddress);
+    if (pIter != m_mCodeNotes.end())
+    {
+        const ra::ByteAddress nNoteAddress = pIter->first;
+        const unsigned int nNoteSize = pIter->second.Bytes;
+
+        // exact match
+        if (nAddress == nNoteAddress && nNoteSize == nCheckSize)
+            return pIter->second.Note;
+
+        // check for overlap
+        if (nAddress + nCheckSize - 1 >= nNoteAddress)
+        {
+            if (nCheckSize == 1)
+                return ra::StringPrintf(L"%s [%d/%d]", pIter->second.Note, nNoteAddress - nAddress + 1, nNoteSize);
+
+            return pIter->second.Note + L" [partial]";
+        }
+    }
+
+    // check previous note for overlap
+    if (pIter != m_mCodeNotes.begin())
+    {
+        --pIter;
+
+        if (pIter->first + pIter->second.Bytes - 1 >= nAddress)
+        {
+            if (nCheckSize == 1)
+                return ra::StringPrintf(L"%s [%d/%d]", pIter->second.Note, nAddress - pIter->first + 1, pIter->second.Bytes);
+
+            return pIter->second.Note + L" [partial]";
+        }
+    }
+
+    return std::wstring();
 }
 
 bool GameContext::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)

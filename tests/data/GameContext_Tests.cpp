@@ -72,6 +72,15 @@ public:
             return pLeaderboard;
         }
 
+        unsigned int GetCodeNoteSize(ra::ByteAddress nAddress)
+        {
+            const auto pIter = m_mCodeNotes.find(nAddress);
+            if (pIter == m_mCodeNotes.end())
+                return 0U;
+
+            return pIter->second.Bytes;
+        }
+
     private:
         ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_OverrideRuntime;
     };
@@ -1299,6 +1308,141 @@ public:
         game.LoadGame(0U);
         const auto* pNote5 = game.FindCodeNote(1234U);
         Assert::IsNull(pNote5);
+    }
+
+    void TestCodeNoteSize(const std::wstring& sNote, unsigned int nExpectedSize)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([&sNote](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1234, sNote, "Author" });
+            return true;
+        });
+
+        game.LoadGame(1U);
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::AreEqual(nExpectedSize, game.GetCodeNoteSize(1234U));
+    }
+
+    TEST_METHOD(TestLoadCodeNotesSized)
+    {
+        TestCodeNoteSize(L"Test", 1U);
+        TestCodeNoteSize(L"[16-bit] Test", 2U);
+        TestCodeNoteSize(L"[16 bit] Test", 2U);
+        TestCodeNoteSize(L"[16 Bit] Test", 2U);
+        TestCodeNoteSize(L"[32-bit] Test", 4U);
+        TestCodeNoteSize(L"[32 bit] Test", 4U);
+        TestCodeNoteSize(L"[32bit] Test", 4U);
+        TestCodeNoteSize(L"Test [16-bit]", 2U);
+        TestCodeNoteSize(L"Test (16-bit)", 2U);
+        TestCodeNoteSize(L"[2 Byte] Test", 2U);
+        TestCodeNoteSize(L"[4 Byte] Test", 4U);
+        TestCodeNoteSize(L"[4 Byte - Float] Test", 4U);
+        TestCodeNoteSize(L"[8 Byte] Test", 8U);
+        TestCodeNoteSize(L"[100 Bytes] Test", 100U);
+        TestCodeNoteSize(L"[2 byte] Test", 2U);
+        TestCodeNoteSize(L"[2-byte] Test", 2U);
+        TestCodeNoteSize(L"Test (6 bytes)", 6U);
+        TestCodeNoteSize(L"[2byte] Test", 2U);
+        TestCodeNoteSize(L"4=bitten", 1U);
+        TestCodeNoteSize(L"bit by bit", 1U);
+    }
+
+    TEST_METHOD(TestFindCodeNoteSized)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1000, L"[32-bit] Location", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1100, L"Level", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1110, L"[16-bit] Strength", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1120, L"[8 byte] Exp", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1200, L"[20 bytes] Items", "Author" });
+            return true;
+        });
+
+        game.LoadGame(1U);
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(100, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(999, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [1/4]"), game.FindCodeNote(1000, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [2/4]"), game.FindCodeNote(1001, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [3/4]"), game.FindCodeNote(1002, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [4/4]"), game.FindCodeNote(1003, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1004, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Level"), game.FindCodeNote(1100, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [1/2]"), game.FindCodeNote(1110, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [2/2]"), game.FindCodeNote(1111, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [1/8]"), game.FindCodeNote(1120, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [2/8]"), game.FindCodeNote(1121, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [3/8]"), game.FindCodeNote(1122, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [4/8]"), game.FindCodeNote(1123, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [5/8]"), game.FindCodeNote(1124, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [6/8]"), game.FindCodeNote(1125, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [7/8]"), game.FindCodeNote(1126, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [8/8]"), game.FindCodeNote(1127, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1128, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[20 bytes] Items [1/20]"), game.FindCodeNote(1200, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[20 bytes] Items [10/20]"), game.FindCodeNote(1209, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[20 bytes] Items [20/20]"), game.FindCodeNote(1219, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1300, MemSize::EightBit));
+
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(100, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(998, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(999, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1000, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1001, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1002, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1003, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1004, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Level [partial]"), game.FindCodeNote(1099, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Level [partial]"), game.FindCodeNote(1100, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), game.FindCodeNote(1109, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength"), game.FindCodeNote(1110, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), game.FindCodeNote(1111, MemSize::SixteenBit));
+
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(100, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(996, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(997, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location"), game.FindCodeNote(1000, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1001, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1002, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1003, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1004, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"Level [partial]"), game.FindCodeNote(1097, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"Level [partial]"), game.FindCodeNote(1100, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), game.FindCodeNote(1107, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), game.FindCodeNote(1110, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), game.FindCodeNote(1111, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1112, MemSize::ThirtyTwoBit));
     }
 
     TEST_METHOD(TestSetCodeNote)

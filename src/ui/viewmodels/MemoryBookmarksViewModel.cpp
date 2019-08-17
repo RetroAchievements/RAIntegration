@@ -25,53 +25,17 @@ const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::Behavi
 
 MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
 {
+    m_vSizes.Add(ra::etoi(MemSize::EightBit), L"8-bit");
+    m_vSizes.Add(ra::etoi(MemSize::SixteenBit), L"16-bit");
+    m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBit), L"32-bit");
+
+    m_vFormats.Add(ra::etoi(MemFormat::Hex), L"Hex");
+    m_vFormats.Add(ra::etoi(MemFormat::Dec), L"Dec");
+
+    m_vBehaviors.Add(ra::etoi(BookmarkBehavior::None), L"");
+    m_vBehaviors.Add(ra::etoi(BookmarkBehavior::Frozen), L"Frozen");
+
     AddNotifyTarget(*this);
-}
-
-void MemoryBookmarksViewModel::InitBookmarks()
-{
-    if (m_vSizes.Count() == 0)
-    {
-        m_vSizes.Add(ra::etoi(MemSize::EightBit), L"8-bit");
-        m_vSizes.Add(ra::etoi(MemSize::SixteenBit), L"16-bit");
-        m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBit), L"32-bit");
-    }
-
-    if (m_vFormats.Count() == 0)
-    {
-        m_vFormats.Add(ra::etoi(MemFormat::Hex), L"Hex");
-        m_vFormats.Add(ra::etoi(MemFormat::Dec), L"Dec");
-    }
-
-    if (m_vBehaviors.Count() == 0)
-    {
-        m_vBehaviors.Add(ra::etoi(BookmarkBehavior::None), L"");
-        m_vBehaviors.Add(ra::etoi(BookmarkBehavior::Frozen), L"Frozen");
-    }
-
-    if (m_vBookmarks.Count() == 0)
-    {
-        auto& vmAchievement = m_vBookmarks.Add();
-        vmAchievement.SetDescription(L"Test Description");
-        vmAchievement.SetAddress(0x1234);
-        vmAchievement.SetSize(MemSize::EightBit);
-        vmAchievement.SetFormat(MemFormat::Dec);
-        vmAchievement.SetCurrentValue(99);
-        vmAchievement.SetPreviousValue(66);
-        vmAchievement.SetChanges(12);
-
-        auto& vmAchievement2 = m_vBookmarks.Add();
-        vmAchievement2.SetDescription(L"Item 2");
-        vmAchievement2.SetAddress(0xABCD);
-        vmAchievement2.SetSize(MemSize::ThirtyTwoBit);
-        vmAchievement2.SetCurrentValue(99);
-        vmAchievement2.SetPreviousValue(66);
-        vmAchievement2.SetBehavior(BookmarkBehavior::Frozen);
-
-        SetWindowTitle(L"Memory Bookmarks");
-
-        m_vBookmarks.AddNotifyTarget(*this);
-    }
 }
 
 void MemoryBookmarksViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
@@ -178,6 +142,32 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
 
     while (m_vBookmarks.Count() > ra::to_unsigned(nIndex))
         m_vBookmarks.RemoveAt(m_vBookmarks.Count() - 1);
+}
+
+void MemoryBookmarksViewModel::DoFrame()
+{
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
+    {
+        auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
+        const auto nValue = pEmulatorContext.ReadMemory(pBookmark.GetAddress(), pBookmark.GetSize());
+
+        const auto nCurrentValue = pBookmark.GetCurrentValue();
+        if (nCurrentValue != nValue)
+        {
+            if (pBookmark.GetBehavior() == BookmarkBehavior::Frozen)
+            {
+                pEmulatorContext.WriteMemory(pBookmark.GetAddress(), pBookmark.GetSize(), nCurrentValue);
+            }
+            else
+            {
+                pBookmark.SetPreviousValue(nCurrentValue);
+                pBookmark.SetCurrentValue(nValue);
+                pBookmark.SetChanges(pBookmark.GetChanges() + 1);
+            }
+        }
+    }
 }
 
 } // namespace viewmodels

@@ -29,7 +29,7 @@ public:
     MemoryBookmarksViewModel(MemoryBookmarksViewModel&&) noexcept = delete;
     MemoryBookmarksViewModel& operator=(MemoryBookmarksViewModel&&) noexcept = delete;
     
-    void InitBookmarks();
+    void DoFrame();
 
     enum BookmarkBehavior
     {

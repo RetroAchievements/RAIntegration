@@ -189,9 +189,14 @@ public:
     void ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const;
 
     /// <summary>
-    /// Reads memory from the emulator.
+    /// Writes memory to the emulator.
     /// </summary>
     void WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const noexcept;
+
+    /// <summary>
+    /// Writes memory to the emulator.
+    /// </summary>
+    void WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const noexcept;
 
 protected:
     EmulatorID m_nEmulatorId = EmulatorID::UnknownEmulator;

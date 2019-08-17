@@ -49,6 +49,8 @@ protected:
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
+    void OnViewModelAdded(gsl::index nIndex) override;
+    void OnViewModelRemoved(gsl::index nIndex) override;
 
 private:
     size_t m_nColumnsCreated = 0;

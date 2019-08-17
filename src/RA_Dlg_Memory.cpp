@@ -1470,7 +1470,6 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 case IDC_RA_OPENBOOKMARKS:
                 {
 #ifdef NEW_BOOKMARKS_DIALOG
-                    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.InitBookmarks();
                     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Show();
 #else
                     if (g_MemBookmarkDialog.GetHWND() == nullptr)
@@ -1824,9 +1823,11 @@ void Dlg_Memory::Invalidate()
     if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() == 0)
         return;
 
+#ifndef NEW_BOOKMARKS_DIALOG
     // Update bookmarked memory
     if (g_MemBookmarkDialog.GetHWND() != nullptr)
         g_MemBookmarkDialog.UpdateBookmarks(FALSE);
+#endif
 
     // Update Memory Viewer
     MemoryViewerControl::Invalidate();

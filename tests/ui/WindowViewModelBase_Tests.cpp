@@ -53,6 +53,18 @@ public:
         Assert::AreEqual(DialogResult::OK, vmViewModel.GetDialogResult());
     }
 
+    TEST_METHOD(TestIsVisible)
+    {
+        WindowViewModelHarness vmViewModel;
+        Assert::IsFalse(vmViewModel.IsVisible());
+
+        vmViewModel.SetIsVisible(true);
+        Assert::IsTrue(vmViewModel.IsVisible());
+
+        vmViewModel.SetIsVisible(false);
+        Assert::IsFalse(vmViewModel.IsVisible());
+    }
+
     TEST_METHOD(TestShow)
     {
         WindowViewModelBase* vmShownWindow = nullptr;

@@ -286,6 +286,7 @@ protected:
     void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup);
     void LoadRichPresenceScript(const std::string& sRichPresenceScript);
     void RefreshCodeNotes();
+    void AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote);
 
     void OnActiveGameChanged();
 

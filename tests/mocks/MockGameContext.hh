@@ -33,6 +33,8 @@ public:
     /// </summary>
     void SetGameId(unsigned int nGameId) noexcept { m_nGameId = nGameId; }
 
+    void NotifyActiveGameChanged() { OnActiveGameChanged(); }
+
     bool HasRichPresence() const noexcept override { return !m_sRichPresenceDisplayString.empty(); }
 
     std::wstring GetRichPresenceDisplayString() const override { return m_sRichPresenceDisplayString; }
@@ -52,6 +54,11 @@ public:
     RA_Leaderboard& NewLeaderboard(ra::LeaderboardID nLeaderboardId)
     {
         return *m_vLeaderboards.emplace_back(std::make_unique<RA_Leaderboard>(nLeaderboardId));
+    }
+
+    void MockCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
+    {
+        AddCodeNote(nAddress, "Author", sNote);
     }
 
 private:

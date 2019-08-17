@@ -133,7 +133,7 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
 
                 const auto nValue = pEmulatorContext.ReadMemory(vmBookmark->GetAddress(), vmBookmark->GetSize());
                 vmBookmark->SetCurrentValue(nValue);
-                vmBookmark->SetPreviousValue(nValue);
+                vmBookmark->SetPreviousValue(0U);
                 vmBookmark->SetChanges(0U);
                 vmBookmark->SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::None);
             }

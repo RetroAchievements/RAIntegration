@@ -139,6 +139,53 @@ public:
         Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
     }
 
+    TEST_METHOD(TestLoadGameNotify)
+    {
+        class NotifyHarness : public GameContext::NotifyTarget
+        {
+        public:
+            bool m_bNotified = false;
+
+        protected:
+            void OnActiveGameChanged() override { m_bNotified = true; }
+        };
+        NotifyHarness notifyHarness;
+
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            response.Title = L"GameTitle";
+            response.ImageIcon = "9743";
+            return true;
+        });
+
+        game.AddNotifyTarget(notifyHarness);
+        game.LoadGame(0U);
+
+        Assert::AreEqual(0U, game.GameId());
+        Assert::IsFalse(notifyHarness.m_bNotified);
+
+        game.LoadGame(1U);
+        Assert::AreEqual(1U, game.GameId());
+        Assert::IsTrue(notifyHarness.m_bNotified);
+
+        notifyHarness.m_bNotified = false;
+        game.LoadGame(2U);
+        Assert::AreEqual(2U, game.GameId());
+        Assert::IsTrue(notifyHarness.m_bNotified);
+
+        notifyHarness.m_bNotified = false;
+        game.LoadGame(0U);
+        Assert::AreEqual(0U, game.GameId());
+        Assert::IsTrue(notifyHarness.m_bNotified);
+
+        notifyHarness.m_bNotified = false;
+        game.RemoveNotifyTarget(notifyHarness);
+        game.LoadGame(2U);
+        Assert::AreEqual(2U, game.GameId());
+        Assert::IsFalse(notifyHarness.m_bNotified);
+    }
+
     TEST_METHOD(TestLoadGameRichPresence)
     {
         GameContextHarness game;

@@ -242,7 +242,7 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
 
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
-        const auto& pColumn = *m_vColumns[nColumnIndex];
+        const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
             item.iSubItem = nColumnIndex;
@@ -262,7 +262,7 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
 
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
-        const auto& pColumn = *m_vColumns[nColumnIndex];
+        const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
             item.iSubItem = nColumnIndex;
@@ -282,7 +282,7 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
 
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
-        const auto& pColumn = *m_vColumns[nColumnIndex];
+        const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
             item.iSubItem = nColumnIndex;
@@ -334,7 +334,7 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
     }
 }
 
-void GridBinding::OnViewModelRemoved(gsl::index nIndex)
+void GridBinding::OnViewModelRemoved(gsl::index nIndex) noexcept
 {
     if (m_hWnd)
         ListView_DeleteItem(m_hWnd, nIndex);
@@ -400,7 +400,7 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
                 RECT rcOffset{};
                 GetWindowRect(m_hWnd, &rcOffset);
 
-                ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, pInfo->nColumnIndex, LVIR_BOUNDS, &pInfo->rcSubItem);
+                GSL_SUPPRESS_ES47 ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, pInfo->nColumnIndex, LVIR_BOUNDS, &pInfo->rcSubItem);
                 pInfo->rcSubItem.left += rcOffset.left + 1;
                 pInfo->rcSubItem.right += rcOffset.left + 1;
                 pInfo->rcSubItem.top += rcOffset.top + 1;

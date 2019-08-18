@@ -42,15 +42,15 @@ public:
 
     virtual std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const = 0;
 
-    virtual bool DependsOn(const ra::ui::BoolModelProperty&) const { return false; }
-    virtual bool DependsOn(const ra::ui::IntModelProperty&) const { return false; }
-    virtual bool DependsOn(const ra::ui::StringModelProperty&) const { return false; }
+    virtual bool DependsOn(const ra::ui::BoolModelProperty&) const noexcept(false) { return false; }
+    virtual bool DependsOn(const ra::ui::IntModelProperty&) const noexcept(false) { return false; }
+    virtual bool DependsOn(const ra::ui::StringModelProperty&) const noexcept(false) { return false; }
 
-    ra::ui::RelativePosition GetAlignment() const { return m_nAlignment; }
-    void SetAlignment(ra::ui::RelativePosition value) { m_nAlignment = value; }
+    ra::ui::RelativePosition GetAlignment() const noexcept { return m_nAlignment; }
+    void SetAlignment(ra::ui::RelativePosition value) noexcept { m_nAlignment = value; }
 
-    bool IsReadOnly() const { return m_bReadOnly; }
-    void SetReadOnly(bool value) { m_bReadOnly = value; }
+    bool IsReadOnly() const noexcept { return m_bReadOnly; }
+    void SetReadOnly(bool value) noexcept { m_bReadOnly = value; }
     
     struct InPlaceEditorInfo
     {
@@ -62,7 +62,7 @@ public:
         GridColumnBinding* pColumnBinding;
     };
 
-    virtual HWND CreateInPlaceEditor(HWND, std::unique_ptr<InPlaceEditorInfo>) { return nullptr; }
+    virtual HWND CreateInPlaceEditor(HWND, std::unique_ptr<InPlaceEditorInfo>) noexcept(false) { return nullptr; }
 
 protected:
     std::wstring m_sHeader;

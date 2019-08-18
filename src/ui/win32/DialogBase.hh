@@ -30,7 +30,7 @@ public:
     /// <param name="pDialogPresenter">Callback to call when the dialog is closed.</param>
     /// <returns>Handle of the window.</returns>
     _NODISCARD HWND CreateDialogWindow(_In_ const TCHAR* restrict sResourceId,
-                                       _In_ IDialogPresenter* const restrict pDialogPresenter);
+                                       _In_ IDialogPresenter* const restrict pDialogPresenter) noexcept;
 
     /// <summary>
     /// Creates the dialog window and does not return until the window is closed.

@@ -50,7 +50,7 @@ public:
     {
     }
 
-    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const override
+    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
     {
         return (pProperty == *m_pBoundProperty ||
             pProperty == MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty ||
@@ -59,7 +59,7 @@ public:
 
     std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
     {
-        const auto nValue = static_cast<unsigned int>(vmItems.GetItemValue(nIndex, *m_pBoundProperty));
+        const auto nValue = gsl::narrow_cast<unsigned int>(vmItems.GetItemValue(nIndex, *m_pBoundProperty));
 
         const auto nFormat = vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty);
         switch (ra::itoe<MemFormat>(nFormat))

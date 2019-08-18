@@ -58,9 +58,9 @@ _NODISCARD static INT_PTR CALLBACK StaticDialogProc(HWND hDlg, UINT uMsg, WPARAM
 }
 
 _Use_decl_annotations_ HWND DialogBase::CreateDialogWindow(const TCHAR* restrict sResourceId,
-                                                           IDialogPresenter* const restrict pDialogPresenter)
+                                                           IDialogPresenter* const restrict pDialogPresenter) noexcept
 {
-    m_hWnd = ::CreateDialogParam(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc, (LPARAM)this);
+    GSL_SUPPRESS_TYPE1 m_hWnd = ::CreateDialogParam(g_hThisDLLInst, sResourceId, g_RAMainWnd, StaticDialogProc, reinterpret_cast<LPARAM>(this));
     if (m_hWnd)
         m_pDialogPresenter = pDialogPresenter;
 

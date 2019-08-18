@@ -147,7 +147,7 @@ public:
             bool m_bNotified = false;
 
         protected:
-            void OnActiveGameChanged() override { m_bNotified = true; }
+            void OnActiveGameChanged() noexcept override { m_bNotified = true; }
         };
         NotifyHarness notifyHarness;
 

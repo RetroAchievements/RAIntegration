@@ -14,18 +14,23 @@ namespace bindings {
 
 static LRESULT NotifySelection(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* pInfo)
 {
+    Expects(pInfo != nullptr);
+
+    const auto* pColumnBinding = dynamic_cast<GridLookupColumnBinding*>(pInfo->pColumnBinding);
+    Expects(pColumnBinding != nullptr);
+
     const gsl::index nIndex = ComboBox_GetCurSel(hwnd);
-    const auto* pColumnBinding = reinterpret_cast<GridLookupColumnBinding*>(pInfo->pColumnBinding);
     const auto nValue = pColumnBinding->GetValueFromIndex(nIndex);
 
-    auto& pItems = reinterpret_cast<GridBinding*>(pInfo->pGridBinding)->GetItems();
-    pItems.SetItemValue(pInfo->nItemIndex, pColumnBinding->GetBoundProperty(), nValue);
+    GridBinding* gridBinding = static_cast<GridBinding*>(pInfo->pGridBinding);
+    Expects(gridBinding != nullptr);
+    gridBinding->GetItems().SetItemValue(pInfo->nItemIndex, pColumnBinding->GetBoundProperty(), nValue);
 
     DestroyWindow(hwnd);
     return 0;
 }
 
-static LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam) noexcept
+static LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
     GridColumnBinding::InPlaceEditorInfo* pInfo{};
     GSL_SUPPRESS_TYPE1 pInfo = reinterpret_cast<GridColumnBinding::InPlaceEditorInfo*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
@@ -81,11 +86,12 @@ HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, std::unique_ptr<
         return nullptr;
     };
 
-    const auto& pItems = reinterpret_cast<GridBinding*>(pInfo->pGridBinding)->GetItems();
+    const auto& pItems = static_cast<GridBinding*>(pInfo->pGridBinding)->GetItems();
     const auto nValue = pItems.GetItemValue(pInfo->nItemIndex, *m_pBoundProperty);
     for (size_t i = 0; i < m_vmItems.Count(); ++i)
     {
         const auto* pItem = m_vmItems.GetItemAt(i);
+        Expects(pItem != nullptr);
         const auto nIndex = ComboBox_AddString(hInPlaceEditor, NativeStr(pItem->GetLabel()).c_str());
 
         if (pItem->GetId() == nValue)
@@ -96,7 +102,7 @@ HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, std::unique_ptr<
     ComboBox_ShowDropdown(hInPlaceEditor, TRUE);
 
     pInfo->pOriginalWndProc = SubclassWindow(hInPlaceEditor, DropDownProc);
-    SetWindowLongPtr(hInPlaceEditor, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pInfo.release()));
+    GSL_SUPPRESS_TYPE1 SetWindowLongPtr(hInPlaceEditor, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pInfo.release()));
 
     return hInPlaceEditor;
 }

@@ -23,7 +23,7 @@ public:
         return vmItems.GetItemValue(nIndex, *m_pBoundProperty);
     }
 
-    bool DependsOn(const ra::ui::StringModelProperty& pProperty) const override
+    bool DependsOn(const ra::ui::StringModelProperty& pProperty) const noexcept override
     {
         return pProperty == *m_pBoundProperty;
     }

@@ -170,7 +170,7 @@ public:
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Description\":\"desc\",\"Address\":18,\"Type\":1,\"Decimal\":false}]}");
 
-        std::array<uint8_t, 64> memory;
+        std::array<uint8_t, 64> memory = {};
         for (uint8_t i = 0; i < memory.size(); ++i)
             memory.at(i) = i;
         bookmarks.mockEmulatorContext.MockMemory(memory);

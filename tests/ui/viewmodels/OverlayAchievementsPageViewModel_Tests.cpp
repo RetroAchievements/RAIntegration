@@ -285,7 +285,7 @@ public:
         Expects(pDetail != nullptr);
 
         Assert::AreEqual(std::wstring(L"Local Achievement"), pDetail->GetWonBy());
-        Assert::AreEqual(0U, pDetail->RecentWinners.Count());
+        Assert::AreEqual({ 0U }, pDetail->RecentWinners.Count());
     }
 
     TEST_METHOD(TestFetchItemDetail)
@@ -326,7 +326,7 @@ public:
         Expects(pDetail != nullptr);
 
         Assert::AreEqual(std::wstring(L"Won by 6 of 12 (50%)"), pDetail->GetWonBy());
-        Assert::AreEqual(3U, pDetail->RecentWinners.Count());
+        Assert::AreEqual({ 3U }, pDetail->RecentWinners.Count());
         auto* pItem = pDetail->RecentWinners.GetItemAt(0);
         Expects(pItem != nullptr);
         Assert::AreEqual(std::wstring(L"User1"), pItem->GetLabel());

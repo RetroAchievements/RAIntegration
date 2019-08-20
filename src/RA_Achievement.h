@@ -47,7 +47,7 @@ public:
 public:
     size_t AddCondition(size_t nConditionGroup, const Condition& pNewCond);
     size_t InsertCondition(size_t nConditionGroup, size_t nIndex, const Condition& pNewCond);
-    BOOL RemoveCondition(size_t nConditionGroup, unsigned int nConditionID);
+    BOOL RemoveCondition(size_t nConditionGroup, size_t nIndex);
     void RemoveAllConditions(size_t nConditionGroup);
 
     void CopyFrom(const Achievement& rRHS);

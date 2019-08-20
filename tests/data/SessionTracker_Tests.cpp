@@ -91,7 +91,7 @@ public:
         tracker.mockGameContext.SetGameId(1234U);
         tracker.BeginSession(1234U);
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::IsFalse(tracker.HasStoredData());
         Assert::IsTrue(bSessionStarted);
 
@@ -99,14 +99,14 @@ public:
         tracker.mockClock.AdvanceTime(std::chrono::seconds(30));
         tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(30));
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::IsFalse(tracker.HasStoredData());
 
         // after two minutes, the callback will be called again, and the file finally written
         tracker.mockClock.AdvanceTime(std::chrono::seconds(120));
         tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(120));
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::IsTrue(tracker.HasStoredData());
         Assert::AreEqual(std::string("1234:1534889323:150:5d\n"), tracker.GetStoredData());
 
@@ -114,7 +114,7 @@ public:
         tracker.mockClock.AdvanceTime(std::chrono::seconds(120));
         tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(120));
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::IsTrue(tracker.HasStoredData());
         Assert::AreEqual(std::string("1234:1534889323:270:f9\n"), tracker.GetStoredData());
     }
@@ -269,7 +269,7 @@ public:
         tracker.mockClock.AdvanceTime(std::chrono::seconds(30));
         tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(30));
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::AreEqual(1, nPings);
 
         // after two minutes, the callback will be called again, and the second ping should occur
@@ -319,7 +319,7 @@ public:
         tracker.mockClock.AdvanceTime(std::chrono::seconds(30));
         tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(30));
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::AreEqual(1, nPings);
 
         // after two minutes, the callback will be called again, and the second ping should occur

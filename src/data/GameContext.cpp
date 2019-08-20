@@ -953,7 +953,8 @@ std::wstring GameContext::GetRichPresenceDisplayString() const
     auto pRichPresence = static_cast<rc_richpresence_t*>(m_pRichPresence);
     std::string sRichPresence;
     sRichPresence.resize(512);
-    const auto nLength = rc_evaluate_richpresence(pRichPresence, sRichPresence.data(), sRichPresence.capacity(), rc_peek_callback, nullptr, nullptr);
+    const auto nLength = rc_evaluate_richpresence(pRichPresence, sRichPresence.data(),
+        gsl::narrow_cast<unsigned int>(sRichPresence.capacity()), rc_peek_callback, nullptr, nullptr);
     sRichPresence.resize(nLength);
 
     return ra::Widen(sRichPresence);

@@ -1074,7 +1074,7 @@ public:
         Assert::IsNotNull(vmScoreboard);
         Ensures(vmScoreboard != nullptr);
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
-        Assert::AreEqual(4U, vmScoreboard->Entries().Count());
+        Assert::AreEqual({ 4U }, vmScoreboard->Entries().Count());
 
         const auto* vmEntry1 = vmScoreboard->Entries().GetItemAt(0);
         Assert::IsNotNull(vmEntry1);

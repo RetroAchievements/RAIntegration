@@ -250,7 +250,7 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     bool bLocalModified = false;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    pGameContext.EnumerateAchievements([&bCoreModified, &bUnofficialModified, &bLocalModified](const Achievement& pAchievement)
+    pGameContext.EnumerateAchievements([&bCoreModified, &bUnofficialModified, &bLocalModified](const Achievement& pAchievement) noexcept
     {
         if (pAchievement.Modified())
         {

@@ -63,7 +63,7 @@ public:
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         Assert::AreEqual(0, vmBrokenAchievements.GetSelectedProblemId());
         Assert::AreEqual(std::wstring(L""), vmBrokenAchievements.GetComment());
-        Assert::AreEqual(0U, vmBrokenAchievements.Achievements().Count());
+        Assert::AreEqual({ 0U }, vmBrokenAchievements.Achievements().Count());
     }
 
     TEST_METHOD(TestInitializeAchievementsNoGameLoaded)
@@ -382,7 +382,7 @@ public:
             Assert::AreEqual(1, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
             Assert::AreEqual(std::string("I tried."), request.Comment);
-            Assert::AreEqual(1U, request.AchievementIds.size());
+            Assert::AreEqual({ 1U }, request.AchievementIds.size());
             Assert::IsTrue(request.AchievementIds.find(3U) != request.AchievementIds.end());
 
             response.Result = ra::api::ApiResult::Success;
@@ -422,7 +422,7 @@ public:
             Assert::AreEqual(2, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
             Assert::AreEqual(std::string("I tried."), request.Comment);
-            Assert::AreEqual(2U, request.AchievementIds.size());
+            Assert::AreEqual({ 2U }, request.AchievementIds.size());
             Assert::IsTrue(request.AchievementIds.find(3U) != request.AchievementIds.end());
             Assert::IsTrue(request.AchievementIds.find(5U) != request.AchievementIds.end());
 
@@ -490,7 +490,7 @@ public:
             Assert::AreEqual(1, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
             Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\nNowhere, 2 Lives"), request.Comment);
-            Assert::AreEqual(1U, request.AchievementIds.size());
+            Assert::AreEqual({ 1U }, request.AchievementIds.size());
 
             response.Result = ra::api::ApiResult::Success;
             response.TicketsCreated = 1;
@@ -523,7 +523,7 @@ public:
             Assert::AreEqual(1, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
             Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\nNowhere, 2 Lives"), request.Comment);
-            Assert::AreEqual(2U, request.AchievementIds.size());
+            Assert::AreEqual({ 2U }, request.AchievementIds.size());
 
             response.Result = ra::api::ApiResult::Success;
             response.TicketsCreated = 2;
@@ -556,7 +556,7 @@ public:
             Assert::AreEqual(1, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
             Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\n1: Nowhere, 2 Lives\n3: Somewhere, 2 Lives"), request.Comment);
-            Assert::AreEqual(2U, request.AchievementIds.size());
+            Assert::AreEqual({ 2U }, request.AchievementIds.size());
 
             response.Result = ra::api::ApiResult::Success;
             response.TicketsCreated = 2;

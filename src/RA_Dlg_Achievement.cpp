@@ -152,7 +152,7 @@ void Dlg_Achievements::RemoveAchievement(HWND hList, int nIter)
 void Dlg_Achievements::UpdateAchievementCounters()
 {
     char buffer[16];
-    sprintf_s(buffer, 16, " %u", m_vAchievementIDs.size());
+    sprintf_s(buffer, 16, " %zu", m_vAchievementIDs.size());
     SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
@@ -173,7 +173,7 @@ size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
 
     LV_ITEM item{};
     item.mask = ra::to_unsigned(LVIF_TEXT);
-    item.iItem = ra::to_signed(m_lbxData.size() - 1);
+    item.iItem = gsl::narrow_cast<int>(m_lbxData.size() - 1);
     item.cchTextMax = 256;
 
     for (item.iSubItem = 0; item.iSubItem < NUM_COLS; ++item.iSubItem)
@@ -261,8 +261,7 @@ void Dlg_Achievements::UpdateAchievementList()
             ++nInsertIndex;
         }
 
-        auto unused = ListView_GetItemCount(hList);
-        assert(unused == m_vAchievementIDs.size());
+        assert(ListView_GetItemCount(hList) == gsl::narrow_cast<int>(m_vAchievementIDs.size()));
     }
 }
 
@@ -337,7 +336,7 @@ static ra::AchievementID AttemptUploadAchievementBlocking(const Achievement& Ach
     return 0U;
 }
 
-_Use_decl_annotations_ void Dlg_Achievements::OnClickAchievementSet(Achievement::Category nAchievementSet)
+void Dlg_Achievements::OnClickAchievementSet(Achievement::Category nAchievementSet)
 {
     m_nActiveCategory = nAchievementSet;
     SetupColumns(GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS));
@@ -598,7 +597,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     ListView_EnsureVisible(hList, nNewID, FALSE);
 
                     char buffer[16];
-                    sprintf_s(buffer, 16, " %u", m_vAchievementIDs.size());
+                    sprintf_s(buffer, 16, " %zu", m_vAchievementIDs.size());
                     SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
 
                     Cheevo.SetModified(TRUE);
@@ -824,10 +823,10 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         IDYES)
                     {
                         HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
-                        const int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                        const size_t nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
 
+                        size_t nIndex = 0;
                         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-                        int nIndex = 0;
                         for (auto nAchievementID : m_vAchievementIDs)
                         {
                             Achievement& Cheevo = *pGameContext.FindAchievement(nAchievementID);
@@ -844,6 +843,8 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                 if (nIndex == nSel)
                                     UpdateSelectedAchievementButtons(&Cheevo);
                             }
+
+                            ++nIndex;
                         }
                     }
 
@@ -1016,7 +1017,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
         {
             char buffer[512];
-            sprintf_s(buffer, 512, "Successfully uploaded data for %u achievements!", nNumChecked);
+            sprintf_s(buffer, 512, "Successfully uploaded data for %zu achievements!", nNumChecked);
             MessageBox(hDlg, NativeStr(buffer).c_str(), TEXT("Success!"), MB_OK);
 
             RECT rcBounds;
@@ -1080,8 +1081,6 @@ void Dlg_Achievements::OnLoad_NewRom(unsigned int nGameID)
     EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_ACTIVATE_ALL_ACH), FALSE);
     EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), FALSE);
 
-    HWND hList = GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS);
-    if (hList != nullptr)
     {
         UpdateAchievementList();
 
@@ -1198,8 +1197,8 @@ void Dlg_Achievements::OnEditData(size_t nItem, Column nColumn, const std::strin
         ra::tstring sStr{NativeStr(LbxDataAt(nItem, nColumn))}; // scoped cache
         LV_ITEM item{};
         item.mask = UINT{LVIF_TEXT};
-        item.iItem = nItem;
-        item.iSubItem = ra::to_signed(ra::etoi(nColumn));
+        item.iItem = gsl::narrow_cast<int>(nItem);
+        item.iSubItem = gsl::narrow_cast<int>(ra::etoi(nColumn));
         item.pszText = sStr.data();
         item.cchTextMax = 256;
 

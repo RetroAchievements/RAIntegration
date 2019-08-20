@@ -255,7 +255,7 @@ std::wstring SessionTracker::GetCurrentActivity() const
             return L"Inspecting Memory in Hardcore mode";
 
         bool bHasCore = false;
-        pGameContext.EnumerateAchievements([&bHasCore](const Achievement& pAchievement)
+        pGameContext.EnumerateAchievements([&bHasCore](const Achievement& pAchievement) noexcept
         {
             switch (pAchievement.GetCategory())
             {

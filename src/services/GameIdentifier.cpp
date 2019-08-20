@@ -150,7 +150,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
             {
                 pGameContext.EnumerateAchievements([&bShowHardcorePrompt](const Achievement & pAchievment) noexcept
                 {
-                    if (pAchievment.Category() == ra::etoi(AchievementSet::Type::Core))
+                    if (pAchievment.GetCategory() == Achievement::Category::Core)
                     {
                         bShowHardcorePrompt = true;
                         return false;

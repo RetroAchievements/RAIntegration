@@ -394,7 +394,7 @@ private:
 
         void MockAchievement(unsigned int nId)
         {
-            auto& pAch = mockGameContext.NewAchievement(AchievementSet::Type::Core);
+            auto& pAch = mockGameContext.NewAchievement(Achievement::Category::Core);
             pAch.SetID(nId);
         }
 

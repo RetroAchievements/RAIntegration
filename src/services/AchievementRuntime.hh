@@ -2,7 +2,7 @@
 #define RA_SERVICES_ACHIEVEMENT_RUNTIME_HH
 #pragma once
 
-#include "RA_AchievementSet.h"
+#include "ra_fwd.h"
 
 #include "services\TextReader.hh"
 

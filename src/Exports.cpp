@@ -290,22 +290,10 @@ static void ProcessAchievements()
                     pAchievement->SetUnlockRichPresence(pGameContext.GetRichPresenceDisplayString());
 
 #ifndef RA_UTEST
-                //	Reverse find where I am in the list:
-                unsigned int nOffset = 0;
-                for (nOffset = 0; nOffset < g_pActiveAchievements->NumAchievements(); ++nOffset)
-                {
-                    if (pAchievement == &g_pActiveAchievements->GetAchievement(nOffset))
-                        break;
-                }
+                g_AchievementsDialog.ReloadLBXData(pAchievement->ID());
 
-                ASSERT(nOffset < g_pActiveAchievements->NumAchievements());
-                if (nOffset < g_pActiveAchievements->NumAchievements())
-                {
-                    g_AchievementsDialog.ReloadLBXData(nOffset);
-
-                    if (g_AchievementEditorDialog.ActiveAchievement() == pAchievement)
-                        g_AchievementEditorDialog.LoadAchievement(pAchievement, TRUE);
-                }
+                if (g_AchievementEditorDialog.ActiveAchievement() == pAchievement)
+                    g_AchievementEditorDialog.LoadAchievement(pAchievement, TRUE);
 #endif
 
                 if (pAchievement->GetPauseOnTrigger())

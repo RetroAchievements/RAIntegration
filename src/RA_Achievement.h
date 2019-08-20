@@ -14,6 +14,13 @@
 class Achievement
 {
 public:
+    enum class Category
+    {
+        Local = 0,
+        Core = 3,
+        Unofficial = 5,
+    };
+
     enum class DirtyFlags
     {
         Clean,
@@ -60,8 +67,8 @@ public:
     void SetID(ra::AchievementID nID) noexcept;
     inline ra::AchievementID ID() const noexcept { return m_nAchievementID; }
 
-    void SetCategory(int nID) noexcept { m_nCategoryID = nID; }
-    inline int Category() const noexcept { return m_nCategoryID; }
+    void SetCategory(Category nCategory) noexcept { m_nCategory = nCategory; }
+    inline Category GetCategory() const noexcept { return m_nCategory; }
 
     inline const std::string& Title() const noexcept { return m_sTitle; }
     void SetTitle(const std::string& sTitle) { m_sTitle = sTitle; }
@@ -138,7 +145,7 @@ protected:
 
 private:
     ra::AchievementID m_nAchievementID{};
-    int m_nCategoryID{};
+    Category m_nCategory{};
 
     ConditionSet m_vConditions; //  UI wrappers for trigger
 

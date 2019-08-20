@@ -2,7 +2,7 @@
 #define RA_DLG_ACHIEVEMENT_H
 #pragma once
 
-#include "RA_AchievementSet.h"
+#include "RA_Achievement.h"
 
 inline constexpr int MAX_TEXT_ITEM_SIZE = 80;
 
@@ -27,13 +27,15 @@ public:
     static INT_PTR CALLBACK s_AchievementsProc(HWND, UINT, WPARAM, LPARAM);
     INT_PTR AchievementsProc(HWND, UINT, WPARAM, LPARAM);
 
-public:
     int GetSelectedAchievementIndex() noexcept;
+    Achievement* GetAchievementAt(gsl::index nIndex) const;
     void OnLoad_NewRom(unsigned int nGameID);
-    void ReloadLBXData(int nOffset);
+    void ReloadLBXData(ra::AchievementID nID);
     void OnEditData(size_t nItem, Column nColumn, const std::string& sNewData);
     void OnEditAchievement(const Achievement& ach);
-    void OnClickAchievementSet(_In_ AchievementSet::Type nAchievementSet);
+    void OnClickAchievementSet(Achievement::Category nAchievementSet);
+    void UpdateActiveAchievements();
+    void UpdateAchievementList();
 
     _NODISCARD inline auto& LbxDataAt(_In_ std::size_t nRow, _In_ Column nCol)
     {
@@ -49,9 +51,11 @@ public:
     inline HWND GetHWND() const noexcept { return m_hAchievementsDlg; }
     void InstallHWND(HWND hWnd) noexcept { m_hAchievementsDlg = hWnd; }
 
+    const std::vector<ra::AchievementID>& FilteredAchievements() const noexcept { return m_vAchievementIDs; }
+
 private:
     void SetupColumns(HWND hList);
-    void LoadAchievements(HWND hList);
+    void UpdateAchievementCounters();
 
     void RemoveAchievement(HWND hList, int nIter);
     size_t AddAchievement(HWND hList, const Achievement& Ach);
@@ -64,6 +68,8 @@ private:
 private:
     HWND m_hAchievementsDlg = nullptr;
     std::vector<AchievementDlgRow> m_lbxData;
+    std::vector<ra::AchievementID> m_vAchievementIDs;
+    Achievement::Category m_nActiveCategory = Achievement::Category::Core;
 };
 
 extern Dlg_Achievements g_AchievementsDialog;

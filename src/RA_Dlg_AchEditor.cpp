@@ -1,6 +1,6 @@
 #include "RA_Dlg_AchEditor.h"
 
-#include "RA_AchievementSet.h"
+#include "RA_Achievement.h"
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_Memory.h"
@@ -991,8 +991,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                     pActiveAch->SetTitle(ra::Narrow(buffer));
 
                                     // Persist/Update/Inject local LBX data back into LBX (?)
-                                    g_AchievementsDialog.OnEditData(
-                                        g_pActiveAchievements->GetAchievementIndex(*pActiveAch),
+                                    g_AchievementsDialog.OnEditData(nSelectedIndex,
                                         Dlg_Achievements::Column::Title, pActiveAch->Title());
                                 }
                             }
@@ -2019,7 +2018,7 @@ void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
             m_pSelectedAchievement->SetBadgeImage(sNewName);
             m_pSelectedAchievement->SetModified(TRUE);
 
-            if (g_nActiveAchievementSet == AchievementSet::Type::Core)
+            if (m_pSelectedAchievement->GetCategory() == Achievement::Category::Core)
             {
                 const int nOffs = g_AchievementsDialog.GetSelectedAchievementIndex();
                 g_AchievementsDialog.OnEditData(nOffs, Dlg_Achievements::Column::Modified, "Yes");
@@ -2143,7 +2142,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
                        ActiveAchievement()->GetPauseOnTrigger());
         CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET, ActiveAchievement()->GetPauseOnReset());
 
-        if (m_pSelectedAchievement->Category() == ra::etoi(AchievementSet::Type::Local))
+        if (m_pSelectedAchievement->GetCategory() == Achievement::Category::Local)
             SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, "0");
         else
             SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, std::to_string(m_pSelectedAchievement->ID()).c_str());
@@ -2192,7 +2191,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         using namespace ra::bitwise_ops;
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::ID))
         {
-            if (m_pSelectedAchievement->Category() == ra::etoi(AchievementSet::Type::Local))
+            if (m_pSelectedAchievement->GetCategory() == Achievement::Category::Local)
                 SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, "0");
             else
                 SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, std::to_string(m_pSelectedAchievement->ID()).c_str());

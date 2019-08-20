@@ -64,7 +64,7 @@ public:
     TEST_METHOD(TestRefreshInactiveAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch1.SetID(1);
         pAch1.SetTitle("AchievementTitle");
         pAch1.SetDescription("Trigger this");
@@ -87,7 +87,7 @@ public:
     TEST_METHOD(TestRefreshActiveAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch1.SetID(1);
         pAch1.SetTitle("AchievementTitle");
         pAch1.SetDescription("Trigger this");
@@ -111,19 +111,19 @@ public:
     TEST_METHOD(TestRefreshActiveAndInactiveAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch1.SetID(1);
         pAch1.SetPoints(1U);
         pAch1.SetActive(true);
-        auto& pAch2 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& pAch2 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch2.SetID(2);
         pAch2.SetPoints(2U);
         pAch2.SetActive(false);
-        auto& pAch3 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& pAch3 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch3.SetID(3);
         pAch3.SetPoints(3U);
         pAch3.SetActive(true);
-        auto& pAch4 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& pAch4 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch4.SetID(4);
         pAch4.SetPoints(4U);
         pAch4.SetActive(false);
@@ -156,19 +156,19 @@ public:
     TEST_METHOD(TestRefreshCategoryFilter)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch1.SetID(1);
         pAch1.SetPoints(1U);
         pAch1.SetActive(true);
-        auto& pAch2 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Unofficial);
+        auto& pAch2 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Unofficial);
         pAch2.SetID(2);
         pAch2.SetPoints(2U);
         pAch2.SetActive(false);
-        auto& pAch3 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Local);
+        auto& pAch3 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Local);
         pAch3.SetID(3);
         pAch3.SetPoints(3U);
         pAch3.SetActive(true);
-        auto& pAch4 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& pAch4 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch4.SetID(4);
         pAch4.SetPoints(4U);
         pAch4.SetActive(false);
@@ -184,17 +184,26 @@ public:
 
         pItem = achievementsPage.GetItem(1);
         Expects(pItem != nullptr);
+        Assert::AreEqual(2, pItem->GetId());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(2);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(3, pItem->GetId());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(3);
+        Expects(pItem != nullptr);
         Assert::AreEqual(4, pItem->GetId());
         Assert::IsFalse(pItem->IsDisabled());
 
-        Assert::IsNull(achievementsPage.GetItem(2));
+        Assert::IsNull(achievementsPage.GetItem(5));
     }
 
     TEST_METHOD(TestRefreshLocalAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockGameContext.SetActiveAchievementType(AchievementSet::Type::Local);
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Local);
+        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Local);
         pAch1.SetID(1);
         pAch1.SetTitle("AchievementTitle");
         pAch1.SetDescription("Trigger this");
@@ -221,7 +230,7 @@ public:
         achievementsPage.mockGameContext.SetGameId(1U);
         achievementsPage.mockSessionTracker.MockSession(1U, 1234567879, std::chrono::minutes(347));
 
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch1.SetID(1);
         pAch1.SetPoints(5U);
         achievementsPage.Refresh();
@@ -236,7 +245,7 @@ public:
         achievementsPage.mockGameContext.SetGameId(1U);
         achievementsPage.mockSessionTracker.MockSession(1U, 1234567879, std::chrono::seconds(17 * 60 + 12));
 
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch1.SetID(1);
         pAch1.SetPoints(5U);
         achievementsPage.Refresh();
@@ -259,8 +268,7 @@ public:
     TEST_METHOD(TestFetchItemDetailLocal)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockGameContext.SetActiveAchievementType(AchievementSet::Type::Local);
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Local);
+        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Local);
         pAch1.SetID(1);
         pAch1.SetTitle("AchievementTitle");
         pAch1.SetDescription("Trigger this");
@@ -283,7 +291,7 @@ public:
     TEST_METHOD(TestFetchItemDetail)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch1.SetID(1);
         pAch1.SetTitle("AchievementTitle");
         pAch1.SetDescription("Trigger this");

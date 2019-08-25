@@ -233,7 +233,7 @@ void JsonFileConfiguration::UpdateHost()
     }
     else
     {
-        const int nIndex = m_sHostName.find("://");
+        const auto nIndex = m_sHostName.find("://");
         if (nIndex == std::string::npos)
         {
             m_sHostUrl = "http://" + m_sHostName;

@@ -2,6 +2,8 @@
 
 #include "RA_Resource.h"
 
+#include "RA_Dlg_Memory.h"
+
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
@@ -95,6 +97,8 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
       m_bindBookmarks(vmMemoryBookmarks)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Memory Bookmarks");
+    m_bindBookmarks.SetShowGridLines(true);
+    m_bindBookmarks.BindIsSelected(MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsSelectedProperty);
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::DescriptionProperty);
@@ -176,10 +180,6 @@ BOOL MemoryBookmarksDialog::OnInitDialog()
     wsListView &= ~LVS_OWNERDRAWFIXED;
     wsListView &= ~WS_CLIPCHILDREN;
     SetWindowLong(hListView, GWL_STYLE, wsListView);
-
-    wsListView = GetWindowExStyle(hListView);
-    wsListView |= LVS_EX_FULLROWSELECT;
-    SetWindowLong(hListView, GWL_EXSTYLE, wsListView);
     // ===
 
     return DialogBase::OnInitDialog();
@@ -187,11 +187,52 @@ BOOL MemoryBookmarksDialog::OnInitDialog()
 
 BOOL MemoryBookmarksDialog::OnCommand(WORD nCommand)
 {
-    if (nCommand == IDC_RA_ADD_BOOKMARK)
+    switch (nCommand)
     {
-        //auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
-        //vmMemoryBookmarks.AddBookmark();
-        return TRUE;
+        case IDC_RA_ADD_BOOKMARK:
+        {
+            // add the new bookmark
+            auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
+            vmMemoryBookmarks.AddBookmark(MemoryViewerControl::getWatchedAddress(), MemoryViewerControl::GetDataSize());
+
+            // scroll to bottom
+            const auto hList = GetDlgItem(GetHWND(), IDC_RA_LBX_ADDRESSES);
+            ListView_EnsureVisible(hList, vmMemoryBookmarks.Bookmarks().Count() - 1, FALSE);
+
+            return TRUE;
+        }
+
+        case IDC_RA_DEL_BOOKMARK:
+        {
+            auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
+            vmMemoryBookmarks.RemoveSelectedBookmarks();
+
+            return TRUE;
+        }
+
+        case IDC_RA_CLEAR_CHANGE:
+        {
+            auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
+            vmMemoryBookmarks.ClearAllChanges();
+
+            return TRUE;
+        }
+
+        case IDC_RA_LOADBOOKMARK:
+        {
+            auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
+            vmMemoryBookmarks.LoadBookmarkFile();
+
+            return TRUE;
+        }
+
+        case IDC_RA_SAVEBOOKMARK:
+        {
+            const auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
+            vmMemoryBookmarks.SaveBookmarkFile();
+
+            return TRUE;
+        }
     }
 
     return DialogBase::OnCommand(nCommand);

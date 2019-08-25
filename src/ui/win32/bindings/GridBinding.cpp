@@ -63,8 +63,12 @@ void GridBinding::UpdateLayout()
     if (m_vColumns.empty())
         return;
 
+    DWORD exStyle = LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT | LVS_EX_LABELTIP;
+    if (m_bShowGridLines)
+        exStyle |= LVS_EX_GRIDLINES;
     if (dynamic_cast<GridCheckBoxColumnBinding*>(m_vColumns.at(0).get()) != nullptr)
-        ListView_SetExtendedListViewStyle(m_hWnd, LVS_EX_CHECKBOXES);
+        exStyle |= LVS_EX_CHECKBOXES;
+    ListView_SetExtendedListViewStyle(m_hWnd, exStyle);
 
     // calculate the column widths
     RECT rcList;
@@ -120,7 +124,7 @@ void GridBinding::UpdateLayout()
         col.fmt = LVCFMT_FIXED_WIDTH;
         col.cx = vWidths.at(i);
         GSL_SUPPRESS_TYPE3 col.pszText = const_cast<LPSTR>(sHeader.data());
-        col.iSubItem = i;
+        col.iSubItem = gsl::narrow_cast<int>(i);
 
         switch (pColumn.GetAlignment())
         {
@@ -189,7 +193,7 @@ void GridBinding::UpdateItems(gsl::index nColumn)
     {
         LV_ITEM item{};
         item.mask = LVIF_TEXT;
-        item.iSubItem = nColumn;
+        item.iSubItem = gsl::narrow_cast<int>(nColumn);
         GSL_SUPPRESS_TYPE3 item.pszText = const_cast<LPSTR>("");
 
         const auto& pBoundProperty = pCheckBoxColumn->GetBoundProperty();
@@ -198,7 +202,7 @@ void GridBinding::UpdateItems(gsl::index nColumn)
         {
             if (i >= nItems)
             {
-                item.iItem = i;
+                item.iItem = gsl::narrow_cast<int>(i);
                 ListView_InsertItem(m_hWnd, &item);
             }
 
@@ -211,13 +215,13 @@ void GridBinding::UpdateItems(gsl::index nColumn)
 
         LV_ITEM item{};
         item.mask = LVIF_TEXT;
-        item.iSubItem = nColumn;
+        item.iSubItem = gsl::narrow_cast<int>(nColumn);
 
         for (gsl::index i = 0; ra::to_unsigned(i) < m_vmItems->Count(); ++i)
         {
             sText = NativeStr(pColumn.GetText(*m_vmItems, i));
             item.pszText = sText.data();
-            item.iItem = i;
+            item.iItem = gsl::narrow_cast<int>(i);
 
             if (i < nItems)
                 ListView_SetItem(m_hWnd, &item);
@@ -238,14 +242,14 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
     std::string sText;
     LV_ITEM item{};
     item.mask = LVIF_TEXT;
-    item.iItem = nIndex;
+    item.iItem = gsl::narrow_cast<int>(nIndex);
 
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
-            item.iSubItem = nColumnIndex;
+            item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
             sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
             item.pszText = sText.data();
             ListView_SetItem(m_hWnd, &item);
@@ -258,14 +262,14 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
     std::string sText;
     LV_ITEM item{};
     item.mask = LVIF_TEXT;
-    item.iItem = nIndex;
+    item.iItem = gsl::narrow_cast<int>(nIndex);
 
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
-            item.iSubItem = nColumnIndex;
+            item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
             sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
             item.pszText = sText.data();
             ListView_SetItem(m_hWnd, &item);
@@ -278,14 +282,14 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
     std::string sText;
     LV_ITEM item{};
     item.mask = LVIF_TEXT;
-    item.iItem = nIndex;
+    item.iItem = gsl::narrow_cast<int>(nIndex);
 
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
-            item.iSubItem = nColumnIndex;
+            item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
             sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
             item.pszText = sText.data();
             ListView_SetItem(m_hWnd, &item);
@@ -302,7 +306,7 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
 
     LV_ITEM item{};
     item.mask = LVIF_TEXT;
-    item.iItem = nIndex;
+    item.iItem = gsl::narrow_cast<int>(nIndex);
     item.iSubItem = 0;
 
     const auto& pColumn = *m_vColumns.at(0);
@@ -328,7 +332,7 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
         if (!sText.empty())
         {
             item.pszText = sText.data();
-            item.iSubItem = i;
+            item.iSubItem = gsl::narrow_cast<int>(i);
             ListView_SetItem(m_hWnd, &item);
         }
     }
@@ -340,9 +344,22 @@ void GridBinding::OnViewModelRemoved(gsl::index nIndex) noexcept
         ListView_DeleteItem(m_hWnd, nIndex);
 }
 
+void GridBinding::BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept
+{
+    m_pIsSelectedProperty = &pIsSelectedProperty;
+}
+
 void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 {
-    switch (pnmListView->uNewState)
+    if (m_pIsSelectedProperty)
+    {
+        if (pnmListView->uNewState & LVIS_SELECTED)
+            m_vmItems->SetItemValue(pnmListView->iItem, *m_pIsSelectedProperty, true);
+        else if (pnmListView->uOldState & LVIS_SELECTED)
+            m_vmItems->SetItemValue(pnmListView->iItem, *m_pIsSelectedProperty, false);
+    }
+
+    switch (pnmListView->uNewState & 0x3000)
     {
         case 0x2000: // LVIS_CHECKED
         {
@@ -400,7 +417,8 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
                 RECT rcOffset{};
                 GetWindowRect(m_hWnd, &rcOffset);
 
-                GSL_SUPPRESS_ES47 ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, pInfo->nColumnIndex, LVIR_BOUNDS, &pInfo->rcSubItem);
+                GSL_SUPPRESS_ES47 ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex,
+                    gsl::narrow_cast<int>(pInfo->nColumnIndex), LVIR_BOUNDS, &pInfo->rcSubItem);
                 pInfo->rcSubItem.left += rcOffset.left + 1;
                 pInfo->rcSubItem.right += rcOffset.left + 1;
                 pInfo->rcSubItem.top += rcOffset.top + 1;

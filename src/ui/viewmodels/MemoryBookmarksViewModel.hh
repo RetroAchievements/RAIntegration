@@ -6,6 +6,7 @@
 #include "data\Types.hh"
 
 #include "services\TextReader.hh"
+#include "services\TextWriter.hh"
 
 #include "ui\WindowViewModelBase.hh"
 
@@ -54,6 +55,21 @@ public:
         /// Sets the bookmark description.
         /// </summary>
         void SetDescription(const std::wstring& sValue) { SetValue(DescriptionProperty, sValue); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the whether the bookmark description is custom.
+        /// </summary>
+        static const BoolModelProperty IsCustomDescriptionProperty;
+
+        /// <summary>
+        /// Gets whether the bookmark description is custom.
+        /// </summary>
+        bool IsCustomDescription() const { return GetValue(IsCustomDescriptionProperty); }
+
+        /// <summary>
+        /// Sets whether the bookmark description is custom.
+        /// </summary>
+        void SetIsCustomDescription(bool bValue) { SetValue(IsCustomDescriptionProperty, bValue); }
 
         /// <summary>
         /// The <see cref="ModelProperty" /> for the bookmark address.
@@ -159,6 +175,21 @@ public:
         /// Sets the behavior of the bookmark.
         /// </summary>
         void SetBehavior(BookmarkBehavior value) { SetValue(BehaviorProperty, ra::etoi(value)); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the whether the bookmark is selected.
+        /// </summary>
+        static const BoolModelProperty IsSelectedProperty;
+
+        /// <summary>
+        /// Gets whether the bookmark is selected.
+        /// </summary>
+        bool IsSelected() const { return GetValue(IsSelectedProperty); }
+
+        /// <summary>
+        /// Sets whether the bookmark is selected.
+        /// </summary>
+        void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
     };
 
     /// <summary>
@@ -193,11 +224,42 @@ public:
         return m_vBehaviors;
     }
 
+    /// <summary>
+    /// Adds a bookmark to the list.
+    /// </summary>
+    void AddBookmark(ra::ByteAddress nAddress, MemSize nSize);
+
+    /// <summary>
+    /// Removes any bookmarks that are currently selected.
+    /// </summary>
+    /// <returns>Number of bookmarks that were removed</returns>
+    int RemoveSelectedBookmarks();
+
+    /// <summary>
+    /// Resets the Changes counter on all bookmarks.
+    /// </summary>
+    void ClearAllChanges();
+
+    /// <summary>
+    /// Prompts the user to select a bookmarks file to load.
+    /// </summary>
+    void LoadBookmarkFile() noexcept;
+
+    /// <summary>
+    /// Prompts the user to select a bookmarks file to save.
+    /// </summary>
+    void SaveBookmarkFile() const noexcept;
+
 protected:
     void LoadBookmarks(ra::services::TextReader& sBookmarksFile);
+    void SaveBookmarks(ra::services::TextWriter& sBookmarksFile) const;
 
     void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) noexcept override;
+    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
     void OnActiveGameChanged() override;
+
+    bool m_bModified = false;
 
 private:
     ViewModelCollection<MemoryBookmarkViewModel> m_vBookmarks;

@@ -41,10 +41,15 @@ public:
     void BindItems(ViewModelCollectionBase& vmItems);
     ViewModelCollectionBase& GetItems() noexcept { return *m_vmItems; }
 
+    void BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept;
+
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
 
     void OnSizeChanged(const ra::ui::Size&) override { UpdateLayout(); }
+
+    bool GetShowGridLines() const noexcept { return m_bShowGridLines; }
+    void SetShowGridLines(bool bValue) noexcept { m_bShowGridLines = bValue; }
 
 protected:
     void UpdateLayout();
@@ -58,9 +63,11 @@ protected:
     void OnViewModelRemoved(gsl::index nIndex) noexcept override;
 
 private:
+    bool m_bShowGridLines = false;
     size_t m_nColumnsCreated = 0;
     std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
     ViewModelCollectionBase* m_vmItems = nullptr;
+    const BoolModelProperty* m_pIsSelectedProperty = nullptr;
     HWND m_hInPlaceEditor = nullptr;
 };
 

@@ -162,7 +162,7 @@ public:
         Assert::AreEqual(2, pItem2.GetInt());
         Assert::AreEqual(std::wstring(L"Test2"), pItem2.GetString());
 
-        Assert::AreEqual(2U, vmCollection.Count());
+        Assert::AreEqual({ 2U }, vmCollection.Count());
 
         auto* pItem1b = vmCollection.GetItemAt(0);
         Assert::IsTrue(pItem1b == &pItem1);
@@ -186,7 +186,7 @@ public:
         auto& pItem3 = vmCollection.Add(3, L"Test3");
         oNotify.AssertItemAdded(2);
 
-        Assert::AreEqual(3U, vmCollection.Count());
+        Assert::AreEqual({ 3U }, vmCollection.Count());
 
         vmCollection.RemoveAt(1);
         oNotify.AssertItemRemoved(1);

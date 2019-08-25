@@ -128,7 +128,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
 
         // specify the server
         auto sHostName = ra::Widen(sUrl);
-        HINTERNET hConnect = WinHttpConnect(hSession, sHostName.c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
+        HINTERNET hConnect = WinHttpConnect(hSession, sHostName.c_str(), nPort, 0);
 
         if (hConnect == nullptr)
         {

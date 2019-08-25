@@ -563,14 +563,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
             if (pUserContext.IsLoggedIn())
             {
-                std::ostringstream oss;
-                oss << "http://" << _RA_HostName() << "/User/" << pUserContext.GetUsername();
-                ShellExecute(nullptr,
-                    TEXT("open"),
-                    NativeStr(oss.str()).c_str(),
-                    nullptr,
-                    nullptr,
-                    SW_SHOWNORMAL);
+                const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                const auto sUrl = ra::StringPrintf("%s/user/%s", pConfiguration.GetHostUrl(), pUserContext.GetUsername());
+
+                const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+                pDesktop.OpenUrl(sUrl);
             }
             break;
         }
@@ -580,14 +577,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
             if (pGameContext.GameId() != 0)
             {
-                std::ostringstream oss;
-                oss << "http://" << _RA_HostName() << "/Game/" << pGameContext.GameId();
-                ShellExecute(nullptr,
-                    TEXT("open"),
-                    NativeStr(oss.str()).c_str(),
-                    nullptr,
-                    nullptr,
-                    SW_SHOWNORMAL);
+                const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                const auto sUrl = ra::StringPrintf("%s/game/%u", pConfiguration.GetHostUrl(), pGameContext.GameId());
+
+                const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+                pDesktop.OpenUrl(sUrl);
             }
             else
             {

@@ -32,10 +32,14 @@ public:
     void SetWindowSize(const std::string& sPositionKey, const ra::ui::Size& oSize) override;
 
     const std::string& GetHostName() const override;
+    const std::string& GetHostUrl() const override;
+    const std::string& GetImageHostUrl() const override;
 
     void Save() const override;
 
 private:
+    void UpdateHost();
+
     std::string m_sUsername;
     std::string m_sApiToken;
 
@@ -53,7 +57,9 @@ private:
     typedef std::map<std::string, WindowPosition> WindowPositionMap;
     WindowPositionMap m_mWindowPositions;
 
-    mutable std::string m_sHostName;
+    std::string m_sHostName;
+    std::string m_sHostUrl;
+    std::string m_sImageHostUrl;
 
     std::wstring m_sFilename;
 };

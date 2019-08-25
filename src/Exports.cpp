@@ -41,6 +41,12 @@ API const char* CCONV _RA_HostName()
     return pConfiguration.GetHostName().c_str();
 }
 
+API const char* CCONV _RA_HostUrl()
+{
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    return pConfiguration.GetHostUrl().c_str();
+}
+
 API int CCONV _RA_HardcoreModeIsActive()
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();

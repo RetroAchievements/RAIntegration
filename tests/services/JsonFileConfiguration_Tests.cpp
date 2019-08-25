@@ -148,6 +148,8 @@ public:
         MockFileSystem mockFileSystem;
         JsonFileConfiguration config;
         Assert::AreEqual(std::string("retroachievements.org"), config.GetHostName());
+        Assert::AreEqual(std::string("http://retroachievements.org"), config.GetHostUrl());
+        Assert::AreEqual(std::string("http://i.retroachievements.org"), config.GetImageHostUrl());
     }
 
     TEST_METHOD(TestHostNameFromFile)
@@ -156,10 +158,30 @@ public:
         mockFileSystem.MockFile(L"host.txt", "stage.retroachievements.org");
         JsonFileConfiguration config;
         Assert::AreEqual(std::string("stage.retroachievements.org"), config.GetHostName());
+        Assert::AreEqual(std::string("http://stage.retroachievements.org"), config.GetHostUrl());
+        Assert::AreEqual(std::string("http://stage.retroachievements.org"), config.GetImageHostUrl());
 
         // file should only be read once
         mockFileSystem.MockFile(L"host.txt", "dev.retroachievements.org");
         Assert::AreEqual(std::string("stage.retroachievements.org"), config.GetHostName());
+        Assert::AreEqual(std::string("http://stage.retroachievements.org"), config.GetHostUrl());
+        Assert::AreEqual(std::string("http://stage.retroachievements.org"), config.GetImageHostUrl());
+    }
+
+    TEST_METHOD(TestHostNameFromFileWithProtocol)
+    {
+        MockFileSystem mockFileSystem;
+        mockFileSystem.MockFile(L"host.txt", "https://stage.retroachievements.org");
+        JsonFileConfiguration config;
+        Assert::AreEqual(std::string("stage.retroachievements.org"), config.GetHostName());
+        Assert::AreEqual(std::string("https://stage.retroachievements.org"), config.GetHostUrl());
+        Assert::AreEqual(std::string("https://stage.retroachievements.org"), config.GetImageHostUrl());
+
+        // file should only be read once
+        mockFileSystem.MockFile(L"host.txt", "https://dev.retroachievements.org");
+        Assert::AreEqual(std::string("stage.retroachievements.org"), config.GetHostName());
+        Assert::AreEqual(std::string("https://stage.retroachievements.org"), config.GetHostUrl());
+        Assert::AreEqual(std::string("https://stage.retroachievements.org"), config.GetImageHostUrl());
     }
 };
 

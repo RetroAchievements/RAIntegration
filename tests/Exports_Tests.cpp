@@ -64,6 +64,17 @@ public:
         Assert::AreEqual("stage.retroachievements.org", _RA_HostName());
     }
 
+    TEST_METHOD(TestHostUrl)
+    {
+        MockConfiguration mockConfiguration;
+
+        mockConfiguration.SetHostName("retroachievements.org");
+        Assert::AreEqual("http://retroachievements.org", _RA_HostUrl());
+
+        mockConfiguration.SetHostName("stage.retroachievements.org");
+        Assert::AreEqual("http://stage.retroachievements.org", _RA_HostUrl());
+    }
+
     TEST_METHOD(TestHardcoreModeIsActive)
     {
         MockConfiguration mockConfiguration;

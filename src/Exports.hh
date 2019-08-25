@@ -18,6 +18,9 @@ extern "C" {
     // Fetch the name of the host to connect to.
     API const char* CCONV _RA_HostName();
 
+    // Fetch the URL of the host to connect to.
+    API const char* CCONV _RA_HostUrl();
+
     // Initialize all data related to RA Engine. Call as early as possible.
     API int CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nConsoleID, const char* sClientVersion);
 

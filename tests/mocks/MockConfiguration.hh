@@ -66,7 +66,17 @@ public:
     }
 
     const std::string& GetHostName() const noexcept override { return m_sHostName; }
-    void SetHostName(const std::string& sHostName) { m_sHostName = sHostName; }
+    void SetHostName(const std::string& sHostName)
+    {
+        m_sHostName = sHostName;
+        m_sHostUrl = m_sImageHostUrl = "http://" + sHostName;
+    }
+
+    const std::string& GetHostUrl() const noexcept override { return m_sHostUrl; }
+    void SetHostUrl(const std::string& sHostUrl) { m_sHostUrl = sHostUrl; }
+
+    const std::string& GetImageHostUrl() const noexcept override { return m_sImageHostUrl; }
+    void SetImageHostUrl(const std::string& sHostUrl) { m_sImageHostUrl = sHostUrl; }
 
     void Save() const noexcept override
     {
@@ -79,6 +89,8 @@ private:
     std::string m_sApiToken;
     std::string m_sRomDirectory;
     std::string m_sHostName;
+    std::string m_sHostUrl;
+    std::string m_sImageHostUrl;
 
     unsigned int m_nBackgroundThreads = 0;
 

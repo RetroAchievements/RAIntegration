@@ -48,6 +48,11 @@ public:
     virtual std::string GetRunningExecutable() const = 0;
 
     /// <summary>
+    /// Gets a string representing the current operating system and its version.
+    /// <summary>
+    virtual std::string GetOSVersionString() const = 0;
+
+    /// <summary>
     /// Opens the specified URL using the default browser.
     /// </summary>
     /// <param name="sUrl">The URL to open.</param>

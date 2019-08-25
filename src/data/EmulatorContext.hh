@@ -29,7 +29,7 @@ public:
     /// <summary>
     /// Sets the client version.
     /// </summary>
-    void SetClientVersion(const std::string& sVersion) { m_sVersion = sVersion; }
+    void SetClientVersion(const std::string& sVersion) { m_sVersion = sVersion; UpdateUserAgent(); }
 
     /// <summary>
     /// Gets the version of the emulator this context was initialized with.
@@ -58,6 +58,11 @@ public:
     /// Gets the client name for the emulator this context was initialized with.
     /// </summary>
     const std::string& GetClientName() const noexcept { return m_sClientName; }
+
+    /// <summary>
+    /// Sets the client version.
+    /// </summary>
+    void SetClientUserAgentDetail(const std::string& sDetail) { m_sClientUserAgentDetail = sDetail; UpdateUserAgent(); }
 
     /// <summary>
     /// Disables hardcore mode and notifies other services of that fact.
@@ -199,11 +204,14 @@ public:
     void WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const noexcept;
 
 protected:
+    void UpdateUserAgent();
+
     EmulatorID m_nEmulatorId = EmulatorID::UnknownEmulator;
     std::string m_sVersion;
     std::string m_sLatestVersion;
     std::string m_sLatestVersionError;
     std::string m_sClientName;
+    std::string m_sClientUserAgentDetail;
     const wchar_t* m_sAcceptButtonText = L"\u24B6"; // encircled A
     const wchar_t* m_sCancelButtonText = L"\u24B7"; // encircled B
 

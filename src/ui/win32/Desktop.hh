@@ -27,6 +27,7 @@ public:
 
     void SetMainHWnd(HWND hWnd);
     std::string GetRunningExecutable() const override;
+    std::string GetOSVersionString() const override;
 
 private:
     _Success_(return != nullptr)

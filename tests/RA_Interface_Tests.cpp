@@ -14,7 +14,7 @@ static std::wstring GetIntegrationPath();
 
 // ALSO NOTE: the cpp file is pulled in directly, instead of using the header file so we
 // can access the file-scoped methods and variables. The cpp file will include the header
-//file, so both are tested.
+// file, so both are tested.
 #include "..\RAInterface\RA_Interface.cpp"
 
 #include "RA_BuildVer.h"
@@ -70,6 +70,7 @@ public:
         Assert::IsNotNull((const void*)_RA_HostName);
         Assert::IsNotNull((const void*)_RA_InitI);
         Assert::IsNotNull((const void*)_RA_InitOffline);
+        Assert::IsNotNull((const void*)_RA_SetUserAgentDetail);
         Assert::IsNotNull((const void*)_RA_UpdateHWnd);
         Assert::IsNotNull((const void*)_RA_Shutdown);
         Assert::IsNotNull((const void*)_RA_AttemptLogin);
@@ -103,6 +104,7 @@ public:
         Assert::IsNull((const void*)_RA_HostName);
         Assert::IsNull((const void*)_RA_InitI);
         Assert::IsNull((const void*)_RA_InitOffline);
+        Assert::IsNull((const void*)_RA_SetUserAgentDetail);
         Assert::IsNull((const void*)_RA_UpdateHWnd);
         Assert::IsNull((const void*)_RA_Shutdown);
         Assert::IsNull((const void*)_RA_AttemptLogin);

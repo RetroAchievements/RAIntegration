@@ -77,6 +77,8 @@ public:
     std::string GetRunningExecutable() const override { return m_sExecutable; }
     void SetRunningExecutable(const std::string& sExecutable) { m_sExecutable = sExecutable; }
 
+    std::string GetOSVersionString() const override { return "UnitTests"; }
+
 private:
     ra::ui::DialogResult Handle(WindowViewModelBase& vmViewModel) const
     {

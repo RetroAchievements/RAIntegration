@@ -290,7 +290,7 @@ public:
         {
             if (sFormat.back() == 'f' || sFormat.back() == 'F')
             {
-                const int nIndex = sFormat.find('.');
+                const auto nIndex = sFormat.find('.');
                 if (nIndex != std::string::npos)
                 {
                     int nPrecision = std::stoi(sFormat.c_str() + nIndex + 1);
@@ -319,7 +319,7 @@ public:
         }
         else
         {
-            const int nLength = strlen(arg);
+            const int nLength = gsl::narrow_cast<int>(strlen(arg));
             int nPadding = std::stoi(sFormat.c_str());
             nPadding -= nLength;
             if (nPadding > 0)

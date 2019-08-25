@@ -17,15 +17,12 @@ std::string Narrow(std::wstring&& wstr) noexcept
 _Use_decl_annotations_
 std::string Narrow(const wchar_t* wstr)
 {
-    const auto len{ ra::to_signed(std::wcslen(wstr)) };
-
-    const auto needed{
-        ::WideCharToMultiByte(CP_UTF8, 0, wstr, len + 1, nullptr, 0, nullptr, nullptr)
-    };
+    const auto len = gsl::narrow_cast<int>(std::wcslen(wstr));
+    const auto needed = ::WideCharToMultiByte(CP_UTF8, 0, wstr, len + 1, nullptr, 0, nullptr, nullptr);
 
     std::string str(ra::to_unsigned(needed), '\000'); // allocate required space (including terminator)
-    ::WideCharToMultiByte(CP_UTF8, 0, wstr, len + 1, str.data(), ra::to_signed(str.capacity()),
-                          nullptr, nullptr);
+    ::WideCharToMultiByte(CP_UTF8, 0, wstr, len + 1, str.data(), gsl::narrow_cast<unsigned int>(str.capacity()),
+        nullptr, nullptr);
     str.resize(ra::to_unsigned(needed - 1)); // terminator is not actually part of the string
     return str;
 }
@@ -45,12 +42,12 @@ std::wstring Widen(std::string&& str) noexcept
 _Use_decl_annotations_
 std::wstring Widen(const char* str)
 {
-    const auto len{ ra::to_signed(std::strlen(str)) };
-    const auto needed{ ::MultiByteToWideChar(CP_UTF8, 0, str, len + 1, nullptr, 0) };
+    const auto len = gsl::narrow_cast<int>(std::strlen(str));
+    const auto needed = ::MultiByteToWideChar(CP_UTF8, 0, str, len + 1, nullptr, 0);
     // doesn't seem wchar_t is treated like a character type by default
     std::wstring wstr(ra::to_unsigned(needed), L'\x0');
     ::MultiByteToWideChar(CP_UTF8, MB_ERR_INVALID_CHARS, str, len + 1, wstr.data(),
-                          ra::to_signed(wstr.capacity()));
+        gsl::narrow_cast<unsigned int>(wstr.capacity()));
     wstr.resize(ra::to_unsigned(needed - 1));
 
     return wstr;

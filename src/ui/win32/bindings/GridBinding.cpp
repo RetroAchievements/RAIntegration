@@ -242,7 +242,7 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
 
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
-        const auto& pColumn = *m_vColumns[nColumnIndex];
+        const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
             item.iSubItem = nColumnIndex;
@@ -262,7 +262,7 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
 
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
-        const auto& pColumn = *m_vColumns[nColumnIndex];
+        const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
             item.iSubItem = nColumnIndex;
@@ -282,7 +282,7 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
 
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
-        const auto& pColumn = *m_vColumns[nColumnIndex];
+        const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
             item.iSubItem = nColumnIndex;
@@ -291,6 +291,53 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
             ListView_SetItem(m_hWnd, &item);
         }
     }
+}
+
+void GridBinding::OnViewModelAdded(gsl::index nIndex)
+{
+    if (!m_hWnd || m_vColumns.empty())
+        return;
+
+    std::string sText;
+
+    LV_ITEM item{};
+    item.mask = LVIF_TEXT;
+    item.iItem = nIndex;
+    item.iSubItem = 0;
+
+    const auto& pColumn = *m_vColumns.at(0);
+    const auto* pCheckBoxColumn = dynamic_cast<const GridCheckBoxColumnBinding*>(&pColumn);
+    if (pCheckBoxColumn != nullptr)
+    {
+        GSL_SUPPRESS_TYPE3 item.pszText = const_cast<LPSTR>("");
+        ListView_InsertItem(m_hWnd, &item);
+
+        const auto& pBoundProperty = pCheckBoxColumn->GetBoundProperty();
+        ListView_SetCheckState(m_hWnd, nIndex, m_vmItems->GetItemValue(nIndex, pBoundProperty));
+    }
+    else
+    {
+        sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
+        item.pszText = sText.data();
+        ListView_InsertItem(m_hWnd, &item);
+    }
+
+    for (gsl::index i = 1; ra::to_unsigned(i) < m_vColumns.size(); ++i)
+    {
+        sText = NativeStr(m_vColumns.at(i)->GetText(*m_vmItems, nIndex));
+        if (!sText.empty())
+        {
+            item.pszText = sText.data();
+            item.iSubItem = i;
+            ListView_SetItem(m_hWnd, &item);
+        }
+    }
+}
+
+void GridBinding::OnViewModelRemoved(gsl::index nIndex) noexcept
+{
+    if (m_hWnd)
+        ListView_DeleteItem(m_hWnd, nIndex);
 }
 
 void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
@@ -353,7 +400,7 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
                 RECT rcOffset{};
                 GetWindowRect(m_hWnd, &rcOffset);
 
-                ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, pInfo->nColumnIndex, LVIR_BOUNDS, &pInfo->rcSubItem);
+                GSL_SUPPRESS_ES47 ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, pInfo->nColumnIndex, LVIR_BOUNDS, &pInfo->rcSubItem);
                 pInfo->rcSubItem.left += rcOffset.left + 1;
                 pInfo->rcSubItem.right += rcOffset.left + 1;
                 pInfo->rcSubItem.top += rcOffset.top + 1;

@@ -26,14 +26,14 @@ public:
         return m_vmItems.GetLabelForId(nValue);
     }
 
-    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const override
+    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
     {
         return pProperty == *m_pBoundProperty;
     }
 
     HWND CreateInPlaceEditor(HWND hParent, std::unique_ptr<InPlaceEditorInfo> pInfo) override;
     int GetValueFromIndex(gsl::index nIndex) const;
-    const IntModelProperty& GetBoundProperty() const { return *m_pBoundProperty; }
+    const IntModelProperty& GetBoundProperty() const noexcept { return *m_pBoundProperty; }
 
 protected:
     const IntModelProperty* m_pBoundProperty = nullptr;

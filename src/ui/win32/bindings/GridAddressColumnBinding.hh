@@ -26,7 +26,7 @@ public:
         return ra::Widen(ra::ByteAddressToString(nValue));
     }
 
-    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const override
+    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
     {
         return pProperty == *m_pBoundProperty;
     }

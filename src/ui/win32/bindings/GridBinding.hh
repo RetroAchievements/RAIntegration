@@ -16,7 +16,12 @@ class GridBinding : public ControlBinding, protected ViewModelCollectionBase::No
 {
 public:
     explicit GridBinding(ViewModelBase& vmViewModel) noexcept : ControlBinding(vmViewModel) {}
-    ~GridBinding() noexcept;
+    GSL_SUPPRESS_F6 ~GridBinding() noexcept;
+
+    GridBinding(const GridBinding&) noexcept = delete;
+    GridBinding& operator=(const GridBinding&) noexcept = delete;
+    GridBinding(GridBinding&&) noexcept = delete;
+    GridBinding& operator=(GridBinding&&) noexcept = delete;
 
     void SetHWND(DialogBase& pDialog, HWND hControl) override
     {
@@ -34,7 +39,7 @@ public:
     void BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBinding> pColumnBinding);
 
     void BindItems(ViewModelCollectionBase& vmItems);
-    ViewModelCollectionBase& GetItems() { return *m_vmItems; }
+    ViewModelCollectionBase& GetItems() noexcept { return *m_vmItems; }
 
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
@@ -49,6 +54,8 @@ protected:
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
+    void OnViewModelAdded(gsl::index nIndex) override;
+    void OnViewModelRemoved(gsl::index nIndex) noexcept override;
 
 private:
     size_t m_nColumnsCreated = 0;

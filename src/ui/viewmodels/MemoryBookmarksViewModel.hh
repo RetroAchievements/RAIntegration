@@ -2,7 +2,10 @@
 #define RA_UI_MEMORYBOOKMARKSVIEWMODEL_H
 #pragma once
 
+#include "data\GameContext.hh"
 #include "data\Types.hh"
+
+#include "services\TextReader.hh"
 
 #include "ui\WindowViewModelBase.hh"
 
@@ -12,10 +15,13 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class MemoryBookmarksViewModel : public WindowViewModelBase, protected ViewModelCollectionBase::NotifyTarget
+class MemoryBookmarksViewModel : public WindowViewModelBase,
+    protected ra::data::GameContext::NotifyTarget,
+    protected ViewModelBase::NotifyTarget,
+    protected ViewModelCollectionBase::NotifyTarget
 {
 public:
-    GSL_SUPPRESS_F6 MemoryBookmarksViewModel() = default;
+    GSL_SUPPRESS_F6 MemoryBookmarksViewModel() noexcept;
     ~MemoryBookmarksViewModel() = default;
 
     MemoryBookmarksViewModel(const MemoryBookmarksViewModel&) noexcept = delete;
@@ -23,7 +29,7 @@ public:
     MemoryBookmarksViewModel(MemoryBookmarksViewModel&&) noexcept = delete;
     MemoryBookmarksViewModel& operator=(MemoryBookmarksViewModel&&) noexcept = delete;
     
-    void InitBookmarks();
+    void DoFrame();
 
     enum BookmarkBehavior
     {
@@ -102,7 +108,7 @@ public:
         /// <summary>
         /// Gets the current value of the bookmarked address. 
         /// </summary>
-        unsigned int GetCurrentValue() const { return static_cast<unsigned int>(GetValue(CurrentValueProperty)); }
+        unsigned int GetCurrentValue() const { return gsl::narrow_cast<unsigned int>(GetValue(CurrentValueProperty)); }
 
         /// <summary>
         /// Sets the current value of the bookmarked address.
@@ -117,7 +123,7 @@ public:
         /// <summary>
         /// Gets the previous value of the bookmarked address.
         /// </summary>
-        unsigned int GetPreviousValue() const { return static_cast<unsigned int>(GetValue(PreviousValueProperty)); }
+        unsigned int GetPreviousValue() const { return gsl::narrow_cast<unsigned int>(GetValue(PreviousValueProperty)); }
 
         /// <summary>
         /// Sets the previous value of the bookmarked address.
@@ -132,7 +138,7 @@ public:
         /// <summary>
         /// Gets the number of times the value of the bookmarked address changed.
         /// </summary>
-        unsigned int GetChanges() const { return static_cast<unsigned int>(GetValue(ChangesProperty)); }
+        unsigned int GetChanges() const { return gsl::narrow_cast<unsigned int>(GetValue(ChangesProperty)); }
 
         /// <summary>
         /// Sets the number of times the value of the bookmarked address changed.
@@ -187,11 +193,19 @@ public:
         return m_vBehaviors;
     }
 
+protected:
+    void LoadBookmarks(ra::services::TextReader& sBookmarksFile);
+
+    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+    void OnActiveGameChanged() override;
+
 private:
     ViewModelCollection<MemoryBookmarkViewModel> m_vBookmarks;
     LookupItemViewModelCollection m_vSizes;
     LookupItemViewModelCollection m_vFormats;
     LookupItemViewModelCollection m_vBehaviors;
+
+    unsigned int m_nLoadedGameId = 0;
 };
 
 } // namespace viewmodels

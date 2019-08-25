@@ -58,7 +58,6 @@ static void CopyAchievementData(Achievement& pAchievement,
 
 void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 {
-    m_nGameId = nGameId;
     m_nMode = nMode;
     m_sGameTitle.clear();
     m_pRichPresence = nullptr;
@@ -89,9 +88,16 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     if (nGameId == 0)
     {
         m_sGameHash.clear();
-        RefreshOverlay();
+
+        if (m_nGameId != 0)
+        {
+            m_nGameId = 0;
+            OnActiveGameChanged();
+        }
         return;
     }
+
+    m_nGameId = nGameId;
 
     ra::api::FetchGameData::Request request;
     request.GameId = nGameId;
@@ -175,7 +181,20 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // get user unlocks asynchronously
     RefreshUnlocks(!bWasPaused, nPopup);
 
+    OnActiveGameChanged();
+}
+
+void GameContext::OnActiveGameChanged()
+{
     RefreshOverlay();
+
+    // create a copy of the list of pointers in case it's modified by one of the callbacks
+    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+    for (NotifyTarget* target : vNotifyTargets)
+    {
+        Expects(target != nullptr);
+        target->OnActiveGameChanged();
+    }
 }
 
 void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
@@ -1028,65 +1047,69 @@ void GameContext::RefreshCodeNotes()
         }
 
         for (const auto& pNote : response.Notes)
-        {
-            unsigned int nBytes = 1;
-
-            // attempt to match "X byte", "X Byte", "XX bytes", or "XX Bytes"
-            auto nIndex = pNote.Note.find(L"yte");
-            if (nIndex != std::string::npos && nIndex >= 3)
-            {
-                wchar_t c = pNote.Note.at(--nIndex);
-                if (c == L'b' || c == L'B')
-                {
-                    c = pNote.Note.at(--nIndex);
-                    if (c == L'-' || c == L' ')
-                        c = pNote.Note.at(--nIndex);
-
-                    if (c >= L'0' && c <= L'9')
-                    {
-                        int nMultiplier = 1;
-                        nBytes = 0;
-                        do
-                        {
-                            nBytes += (c - L'0') * nMultiplier;
-                            if (nIndex == 0)
-                                break;
-
-                            nMultiplier *= 10;
-                            c = pNote.Note.at(--nIndex);
-                        } while (c >= L'0' && c <= L'9');
-                    }
-                }
-            }
-
-            if (nBytes == 1)
-            {
-                // attempt to match "16-bit" or "32-bit"
-                nIndex = pNote.Note.find(L"Bit");
-                if (nIndex == std::string::npos)
-                    nIndex = pNote.Note.find(L"bit");
-
-                if (nIndex != std::string::npos && nIndex >= 3)
-                {
-                    wchar_t c = pNote.Note.at(--nIndex);
-                    if (c == L'-' || c == L' ')
-                        c = pNote.Note.at(--nIndex);
-
-                    if (c == L'6' && pNote.Note.at(nIndex - 1) == L'1')
-                        nBytes = 2;
-                    else if (c == L'2' && pNote.Note.at(nIndex - 1) == L'3')
-                        nBytes = 4;
-                }
-            }
-
-            m_mCodeNotes.insert_or_assign(pNote.Address, CodeNote{ pNote.Author, pNote.Note, nBytes });
-        }
+            AddCodeNote(pNote.Address, pNote.Author, pNote.Note);
 
 #ifndef RA_UTEST
         g_MemoryDialog.RepopulateCodeNotes();
 #endif
     });
 }
+
+void GameContext::AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
+{
+    unsigned int nBytes = 1;
+
+    // attempt to match "X byte", "X Byte", "XX bytes", or "XX Bytes"
+    auto nIndex = sNote.find(L"yte");
+    if (nIndex != std::string::npos && nIndex >= 3)
+    {
+        wchar_t c = sNote.at(--nIndex);
+        if (c == L'b' || c == L'B')
+        {
+            c = sNote.at(--nIndex);
+            if (c == L'-' || c == L' ')
+                c = sNote.at(--nIndex);
+
+            if (c >= L'0' && c <= L'9')
+            {
+                int nMultiplier = 1;
+                nBytes = 0;
+                do
+                {
+                    nBytes += (c - L'0') * nMultiplier;
+                    if (nIndex == 0)
+                        break;
+
+                    nMultiplier *= 10;
+                    c = sNote.at(--nIndex);
+                } while (c >= L'0' && c <= L'9');
+            }
+        }
+    }
+
+    if (nBytes == 1)
+    {
+        // attempt to match "16-bit" or "32-bit"
+        nIndex = sNote.find(L"Bit");
+        if (nIndex == std::string::npos)
+            nIndex = sNote.find(L"bit");
+
+        if (nIndex != std::string::npos && nIndex >= 3)
+        {
+            wchar_t c = sNote.at(--nIndex);
+            if (c == L'-' || c == L' ')
+                c = sNote.at(--nIndex);
+
+            if (c == L'6' && sNote.at(nIndex - 1) == L'1')
+                nBytes = 2;
+            else if (c == L'2' && sNote.at(nIndex - 1) == L'3')
+                nBytes = 4;
+        }
+    }
+
+    m_mCodeNotes.insert_or_assign(nAddress, CodeNote{ sAuthor, sNote, nBytes });
+}
+
 
 std::wstring GameContext::FindCodeNote(ra::ByteAddress nAddress, MemSize nSize) const
 {
@@ -1160,7 +1183,7 @@ bool GameContext::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNot
         if (response.Succeeded())
         {
             const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
-            m_mCodeNotes.insert_or_assign(nAddress, CodeNote{ pUserContext.GetUsername(), sNote });
+            AddCodeNote(nAddress, pUserContext.GetUsername(), sNote);
             return true;
         }
 

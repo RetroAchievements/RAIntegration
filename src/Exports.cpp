@@ -394,6 +394,9 @@ API void CCONV _RA_DoAchievementsFrame()
     ProcessAchievements();
 
 #ifndef RA_UTEST
+    auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+    vmBookmarks.DoFrame();
+
     // make sure we process the achievements _before_ the frozen bookmarks modify the memory
     g_MemoryDialog.Invalidate();
 #endif

@@ -526,5 +526,70 @@ void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) 
     }
 }
 
+void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const noexcept
+{
+    switch (nSize)
+    {
+        case MemSize::EightBit:
+            WriteMemoryByte(nAddress, nValue & 0xFF);
+            return;
+        case MemSize::SixteenBit:
+            WriteMemoryByte(nAddress, nValue & 0xFF);
+            nValue >>= 8;
+            WriteMemoryByte(++nAddress, nValue & 0xFF);
+            return;
+        case MemSize::ThirtyTwoBit:
+            WriteMemoryByte(nAddress, nValue & 0xFF);
+            nValue >>= 8;
+            WriteMemoryByte(++nAddress, nValue & 0xFF);
+            nValue >>= 8;
+            WriteMemoryByte(++nAddress, nValue & 0xFF);
+            nValue >>= 8;
+            WriteMemoryByte(++nAddress, nValue & 0xFF);
+            return;
+    }
+
+    const auto nCurrentValue = ReadMemoryByte(nAddress);
+    uint8_t nNewValue = gsl::narrow_cast<uint8_t>(nValue);
+
+    switch (nSize)
+    {
+        case MemSize::Bit_0:
+            nNewValue = (nCurrentValue & ~0x01) | (nNewValue & 1);
+            break;
+        case MemSize::Bit_1:
+            nNewValue = (nCurrentValue & ~0x02) | ((nNewValue & 1) << 1);
+            break;
+        case MemSize::Bit_2:
+            nNewValue = (nCurrentValue & ~0x04) | ((nNewValue & 1) << 2);
+            break;
+        case MemSize::Bit_3:
+            nNewValue = (nCurrentValue & ~0x08) | ((nNewValue & 1) << 3);
+            break;
+        case MemSize::Bit_4:
+            nNewValue = (nCurrentValue & ~0x10) | ((nNewValue & 1) << 4);
+            break;
+        case MemSize::Bit_5:
+            nNewValue = (nCurrentValue & ~0x20) | ((nNewValue & 1) << 5);
+            break;
+        case MemSize::Bit_6:
+            nNewValue = (nCurrentValue & ~0x40) | ((nNewValue & 1) << 6);
+            break;
+        case MemSize::Bit_7:
+            nNewValue = (nCurrentValue & ~0x80) | ((nNewValue & 1) << 7);
+            break;
+        case MemSize::Nibble_Lower:
+            nNewValue = (nCurrentValue & ~0x0F) | (nNewValue & 0x0F);
+            break;
+        case MemSize::Nibble_Upper:
+            nNewValue = (nCurrentValue & ~0xF0) | ((nNewValue & 0x0F) << 4);
+            break;
+        default:
+            break;
+    }
+
+    WriteMemoryByte(nAddress, nNewValue);
+}
+
 } // namespace data
 } // namespace ra

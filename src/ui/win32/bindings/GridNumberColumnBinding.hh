@@ -23,7 +23,7 @@ public:
         return std::to_wstring(vmItems.GetItemValue(nIndex, *m_pBoundProperty));
     }
 
-    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const override
+    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
     {
         return pProperty == *m_pBoundProperty;
     }

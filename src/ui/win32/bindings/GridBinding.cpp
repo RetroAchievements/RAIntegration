@@ -336,12 +336,51 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
             ListView_SetItem(m_hWnd, &item);
         }
     }
+
+    if (!m_vmItems->IsUpdating())
+        CheckForScrollBar();
 }
 
-void GridBinding::OnViewModelRemoved(gsl::index nIndex) noexcept
+void GridBinding::OnViewModelRemoved(gsl::index nIndex)
 {
     if (m_hWnd)
+    {
         ListView_DeleteItem(m_hWnd, nIndex);
+
+        if (!m_vmItems->IsUpdating())
+            CheckForScrollBar();
+    }
+}
+
+void GridBinding::CheckForScrollBar()
+{
+    SCROLLINFO info{};
+    info.cbSize = sizeof(info);
+    info.fMask = SIF_PAGE;
+    const bool bHasScrollbar = GetScrollInfo(m_hWnd, SBS_VERT, &info) && (info.nPage < m_vmItems->Count());
+
+    if (bHasScrollbar != m_bHasScrollbar)
+    {
+        m_bHasScrollbar = bHasScrollbar;
+        UpdateLayout();
+    }
+}
+
+void GridBinding::OnBeginViewModelCollectionUpdate() noexcept
+{
+    if (m_hWnd)
+        SendMessage(m_hWnd, WM_SETREDRAW, FALSE, 0);
+}
+
+void GridBinding::OnEndViewModelCollectionUpdate()
+{
+    if (m_hWnd)
+    {
+        CheckForScrollBar();
+
+        SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
+        InvalidateRect(m_hWnd, nullptr, FALSE);
+    }
 }
 
 void GridBinding::BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept

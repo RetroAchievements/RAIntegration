@@ -114,8 +114,12 @@ void MemoryBookmarksViewModel::OnActiveGameChanged()
             }
             else
             {
+                m_vBookmarks.BeginUpdate();
+
                 while (m_vBookmarks.Count() > 0)
                     m_vBookmarks.RemoveAt(m_vBookmarks.Count() - 1);
+
+                m_vBookmarks.EndUpdate();
             }
 
             m_nLoadedGameId = pGameContext.GameId();
@@ -131,6 +135,7 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     gsl::index nIndex = 0;
 
+    m_vBookmarks.BeginUpdate();
     m_vBookmarks.RemoveNotifyTarget(*this);
 
     rapidjson::Document document;
@@ -197,6 +202,7 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
         m_vBookmarks.RemoveAt(m_vBookmarks.Count() - 1);
 
     m_vBookmarks.AddNotifyTarget(*this);
+    m_vBookmarks.EndUpdate();
 }
 
 void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmarksFile) const

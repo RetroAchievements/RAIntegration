@@ -55,15 +55,19 @@ protected:
     void UpdateLayout();
     void UpdateAllItems();
     void UpdateItems(gsl::index nColumn);
+    void CheckForScrollBar();
 
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
     void OnViewModelAdded(gsl::index nIndex) override;
-    void OnViewModelRemoved(gsl::index nIndex) noexcept override;
+    void OnViewModelRemoved(gsl::index nIndex) override;
+    void OnBeginViewModelCollectionUpdate() noexcept override;
+    void OnEndViewModelCollectionUpdate() override;
 
 private:
     bool m_bShowGridLines = false;
+    bool m_bHasScrollbar = false;
     size_t m_nColumnsCreated = 0;
     std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
     ViewModelCollectionBase* m_vmItems = nullptr;

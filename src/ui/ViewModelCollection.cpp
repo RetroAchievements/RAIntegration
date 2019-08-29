@@ -101,5 +101,33 @@ void ViewModelCollectionBase::OnViewModelIntValueChanged(gsl::index nIndex,
     }
 }
 
+void ViewModelCollectionBase::BeginUpdate()
+{
+    if (m_nUpdateCount++ == 0)
+    {
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
+            target->OnBeginViewModelCollectionUpdate();
+        }
+    }
+}
+
+void ViewModelCollectionBase::EndUpdate()
+{
+    if (m_nUpdateCount > 0 && --m_nUpdateCount == 0)
+    {
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
+            target->OnEndViewModelCollectionUpdate();
+        }
+    }
+}
+
 } // namespace ui
 } // namespace ra

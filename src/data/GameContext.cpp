@@ -16,6 +16,7 @@
 #include "api\SubmitLeaderboardEntry.hh"
 #include "api\UpdateCodeNote.hh"
 
+#include "data\EmulatorContext.hh"
 #include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
@@ -31,8 +32,6 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\ScoreboardViewModel.hh"
-
-extern bool g_bRAMTamperedWith;
 
 namespace ra {
 namespace data {
@@ -618,8 +617,8 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
         bSubmit = false;
     }
 
-#ifndef RA_UTEST
-    if (bSubmit && g_bRAMTamperedWith)
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    if (bSubmit && pEmulatorContext.WasMemoryModified())
     {
         vmPopup.SetTitle(L"Achievement NOT Unlocked");
         vmPopup.SetErrorDetail(L"Error: RAM tampered with");
@@ -627,7 +626,6 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
         bIsError = true;
         bSubmit = false;
     }
-#endif
 
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
         bIsError ? L"Overlay\\acherror.wav" : L"Overlay\\unlock.wav");
@@ -796,8 +794,8 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
     if (pLeaderboard == nullptr)
         return;
 
-#ifndef RA_UTEST
-    if (g_bRAMTamperedWith)
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    if (pEmulatorContext.WasMemoryModified())
     {
         ra::ui::viewmodels::PopupMessageViewModel vmPopup;
         vmPopup.SetTitle(L"Leaderboard NOT Submitted");
@@ -808,7 +806,6 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(vmPopup));
         return;
     }
-#endif
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))

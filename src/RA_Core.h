@@ -13,7 +13,6 @@ extern std::wstring g_sHomeDir;
 extern HINSTANCE g_hRAKeysDLL;
 extern HMODULE g_hThisDLLInst;
 extern HWND g_RAMainWnd;
-extern bool g_bRAMTamperedWith;
 
 // Read a file to a malloc'd buffer. Returns nullptr on error. Owner MUST free() buffer if not nullptr.
 extern char* _MallocAndBulkReadFileToBuffer(_In_z_ const wchar_t* sFilename, _Out_ long& nFileSizeOut) noexcept;

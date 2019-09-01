@@ -568,6 +568,7 @@ void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) 
         if (nAddress < pBlock.size)
         {
             pBlock.write(nAddress, nValue);
+            m_bMemoryModified = true;
             return;
         }
 

@@ -1,6 +1,6 @@
 #include "RA_Dlg_Memory.h"
 
-#include "RA_AchievementSet.h"
+#include "RA_Achievement.h"
 #include "RA_Core.h"
 #include "RA_Dlg_MemBookmark.h"
 #include "RA_Resource.h"

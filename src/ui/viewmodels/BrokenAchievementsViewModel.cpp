@@ -2,6 +2,10 @@
 
 #include "RA_StringUtils.h"
 
+#ifndef RA_UTEST
+#include "RA_Dlg_Achievement.h"
+#endif
+
 #include "api\SubmitTicket.hh"
 
 #include "data\GameContext.hh"
@@ -30,22 +34,20 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
         return false;
     }
 
-    if (pGameContext.ActiveAchievementType() == AchievementSet::Type::Local)
-    {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report local achievement problems.");
-        return false;
-    }
-
     if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report achievement problems in compatibility test mode.");
         return false;
     }
 
-    const auto nActiveAchievementType = ra::etoi(pGameContext.ActiveAchievementType());
-    pGameContext.EnumerateAchievements([this, nActiveAchievementType](const Achievement& pAchievement)
+    bool bSawLocal = false;
+    pGameContext.EnumerateFilteredAchievements([&bSawLocal, this](const Achievement& pAchievement)
     {
-        if (pAchievement.Category() == nActiveAchievementType)
+        if (pAchievement.GetCategory() == Achievement::Category::Local)
+        {
+            bSawLocal = true;
+        }
+        else
         {
             auto& vmAchievement = m_vAchievements.Add();
             vmAchievement.SetId(pAchievement.ID());
@@ -59,7 +61,10 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
 
     if (m_vAchievements.Count() == 0)
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"There are no active achievements to report.");
+        if (bSawLocal)
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report local achievement problems.");
+        else
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"There are no active achievements to report.");
         return false;
     }
 

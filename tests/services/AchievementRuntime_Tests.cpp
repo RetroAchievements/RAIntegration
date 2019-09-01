@@ -397,10 +397,10 @@ public:
     TEST_METHOD(TestPersistProgress)
     {
         AchievementRuntimeHarness runtime;
-        auto& ach1 = runtime.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& ach1 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
         ach1.SetID(3U);
         ach1.ParseTrigger("1=1.10.");
-        auto& ach2 = runtime.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& ach2 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
         ach2.SetID(5U);
         ach2.ParseTrigger("1=1.2.");
 
@@ -464,7 +464,7 @@ public:
     TEST_METHOD(TestPersistProgressMemory)
     {
         AchievementRuntimeHarness runtime;
-        auto& ach = runtime.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& ach = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
         ach.SetID(9U);
         ach.ParseTrigger("0xH1234=1_0xX1234>d0xX1234");
         ach.SetActive(true);
@@ -513,10 +513,10 @@ public:
     TEST_METHOD(TestLoadProgressV1)
     {
         AchievementRuntimeHarness runtime;
-        auto& ach1 = runtime.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& ach1 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
         ach1.SetID(3U);
         ach1.ParseTrigger("1=1.10.");
-        auto& ach2 = runtime.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& ach2 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
         ach2.SetID(5U);
         ach2.ParseTrigger("1=1.2.");
 
@@ -540,7 +540,7 @@ public:
     TEST_METHOD(TestPersistProgressNoCoreGroup)
     {
         AchievementRuntimeHarness runtime;
-        auto& ach = runtime.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        auto& ach = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
         ach.SetID(9U);
         ach.ParseTrigger("S0xH1234=1_0xX1234>d0xX1234");
         ach.SetActive(true);

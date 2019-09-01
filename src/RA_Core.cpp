@@ -86,13 +86,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
     //////////////////////////////////////////////////////////////////////////
     //	Dialogs:
     g_MemoryDialog.Init();
-
-    //////////////////////////////////////////////////////////////////////////
-    //	Initialize All AchievementSets
-    g_pCoreAchievements = new AchievementSet();
-    g_pUnofficialAchievements = new AchievementSet();
-    g_pLocalAchievements = new AchievementSet();
-    g_pActiveAchievements = g_pCoreAchievements;
 }
 
 API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* /*sClientVer*/)
@@ -207,11 +200,6 @@ API int CCONV _RA_Shutdown()
         ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(0U);
     }
 
-    g_pActiveAchievements = nullptr;
-    SAFE_DELETE(g_pCoreAchievements);
-    SAFE_DELETE(g_pUnofficialAchievements);
-    SAFE_DELETE(g_pLocalAchievements);
-
     if (g_AchievementsDialog.GetHWND() != nullptr)
     {
         DestroyWindow(g_AchievementsDialog.GetHWND());
@@ -257,11 +245,37 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     //	Returns true if we can go ahead and load the new rom.
     std::wstring sModifiedSet;
 
-    if (g_pCoreAchievements->HasUnsavedChanges())
+    bool bCoreModified = false;
+    bool bUnofficialModified = false;
+    bool bLocalModified = false;
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    pGameContext.EnumerateAchievements([&bCoreModified, &bUnofficialModified, &bLocalModified](const Achievement& pAchievement) noexcept
+    {
+        if (pAchievement.Modified())
+        {
+            switch (pAchievement.GetCategory())
+            {
+                case Achievement::Category::Local:
+                    bLocalModified = true;
+                    break;
+                case Achievement::Category::Core:
+                    bCoreModified = true;
+                    break;
+                case Achievement::Category::Unofficial:
+                    bUnofficialModified = true;
+                    break;
+            }
+        }
+
+        return true;
+    });
+
+    if (bCoreModified)
         sModifiedSet = L"Core";
-    else if (g_pUnofficialAchievements->HasUnsavedChanges())
+    else if (bUnofficialModified)
         sModifiedSet = L"Unofficial";
-    else if (g_pLocalAchievements->HasUnsavedChanges())
+    else if (bLocalModified)
         sModifiedSet = L"Local";
     else
         return true;
@@ -728,8 +742,8 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
 
         g_MemoryDialog.Invalidate();
 
-        for (size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i)
-            g_pActiveAchievements->GetAchievement(i).SetDirtyFlag(Achievement::DirtyFlags::Conditions);
+        if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
+            g_AchievementEditorDialog.ActiveAchievement()->SetDirtyFlag(Achievement::DirtyFlags::Conditions);
     }
 }
 

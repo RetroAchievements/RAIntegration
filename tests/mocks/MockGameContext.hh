@@ -44,13 +44,6 @@ public:
     /// </summary>
     void SetRichPresenceDisplayString(std::wstring sValue) { m_sRichPresenceDisplayString = sValue; }
 
-    AchievementSet::Type ActiveAchievementType() const noexcept override { return m_nActiveAchievementType; }
-
-    /// <summary>
-    /// Sets the value for <see cref="HasActiveAchievements" />
-    /// </summary>
-    void SetActiveAchievementType(AchievementSet::Type bValue) noexcept { m_nActiveAchievementType = bValue; }
-
     RA_Leaderboard& NewLeaderboard(ra::LeaderboardID nLeaderboardId)
     {
         return *m_vLeaderboards.emplace_back(std::make_unique<RA_Leaderboard>(nLeaderboardId));
@@ -67,7 +60,6 @@ private:
     std::wstring m_sRichPresenceDisplayString;
     bool m_bHasActiveAchievements{ false };
     bool m_bWasLoaded{ false };
-    AchievementSet::Type m_nActiveAchievementType{ AchievementSet::Type::Core };
 };
 
 } // namespace mocks

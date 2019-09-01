@@ -517,11 +517,11 @@ size_t Achievement::InsertCondition(size_t nConditionGroup, size_t nIndex, const
     return group.Count();
 }
 
-BOOL Achievement::RemoveCondition(size_t nConditionGroup, unsigned int nID)
+BOOL Achievement::RemoveCondition(size_t nConditionGroup, size_t nIndex)
 {
     if (nConditionGroup < m_vConditions.GroupCount())
     {
-        m_vConditions.GetGroup(nConditionGroup).RemoveAt(nID);
+        m_vConditions.GetGroup(nConditionGroup).RemoveAt(nIndex);
         SetDirtyFlag(DirtyFlags::All); //	Not Conditions:
         return TRUE;
     }

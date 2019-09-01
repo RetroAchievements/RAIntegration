@@ -227,7 +227,7 @@ static bool HasCoreAchievements(const ra::data::GameContext& pGameContext)
     bool bResult = false;
     pGameContext.EnumerateAchievements([&bResult](const Achievement& pAchievement) noexcept
     {
-        if (pAchievement.Category() == ra::etoi(AchievementSet::Type::Core))
+        if (pAchievement.GetCategory() == Achievement::Category::Core)
         {
             bResult = true;
             return false;
@@ -254,7 +254,24 @@ std::wstring SessionTracker::GetCurrentActivity() const
         if (_RA_HardcoreModeIsActive())
             return L"Inspecting Memory in Hardcore mode";
 
-        if (pGameContext.ActiveAchievementType() == AchievementSet::Type::Core)
+        bool bHasCore = false;
+        pGameContext.EnumerateAchievements([&bHasCore](const Achievement& pAchievement) noexcept
+        {
+            switch (pAchievement.GetCategory())
+            {
+                case Achievement::Category::Local:
+                case Achievement::Category::Unofficial:
+                    break;
+
+                default:
+                    bHasCore = true;
+                    return false;
+            }
+
+            return true;
+        });
+
+        if (bHasCore)
             return L"Fixing Achievements";
 
         return L"Developing Achievements";

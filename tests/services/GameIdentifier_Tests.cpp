@@ -370,7 +370,7 @@ public:
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
         identifier.mockUserContext.Initialize("User", "ApiToken");
-        identifier.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        identifier.mockGameContext.NewAchievement(Achievement::Category::Core);
         identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel & vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Enable Hardcore mode?"), vmMessageBox.GetHeader());
@@ -400,7 +400,7 @@ public:
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
         identifier.mockUserContext.Initialize("User", "ApiToken");
-        identifier.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        identifier.mockGameContext.NewAchievement(Achievement::Category::Core);
         identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel & vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Enable Hardcore mode?"), vmMessageBox.GetHeader());

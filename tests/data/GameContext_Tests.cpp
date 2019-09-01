@@ -55,7 +55,7 @@ public:
 
         Achievement& MockAchievement()
         {
-            auto& pAch = NewAchievement(AchievementSet::Type::Core);
+            auto& pAch = NewAchievement(Achievement::Category::Core);
             pAch.SetID(1U);
             pAch.SetTitle("AchievementTitle");
             pAch.SetDescription("AchievementDescription");
@@ -242,7 +242,7 @@ public:
         Assert::AreEqual(std::string("Desc1"), pAch1->Description());
         Assert::AreEqual(std::string("Auth1"), pAch1->Author());
         Assert::AreEqual(std::string("12345"), pAch1->BadgeImageURI());
-        Assert::AreEqual(3, pAch1->Category());
+        Assert::AreEqual(Achievement::Category::Core, pAch1->GetCategory());
         Assert::AreEqual(1234567890, (int)pAch1->CreatedDate());
         Assert::AreEqual(1234599999, (int)pAch1->ModifiedDate());
         Assert::AreEqual(5U, pAch1->Points());
@@ -255,7 +255,7 @@ public:
         Assert::AreEqual(std::string("Desc2"), pAch2->Description());
         Assert::AreEqual(std::string("Auth2"), pAch2->Author());
         Assert::AreEqual(std::string("12345"), pAch2->BadgeImageURI());
-        Assert::AreEqual(5, pAch2->Category());
+        Assert::AreEqual(Achievement::Category::Unofficial, pAch2->GetCategory());
         Assert::AreEqual(1234567890, (int)pAch2->CreatedDate());
         Assert::AreEqual(1234599999, (int)pAch2->ModifiedDate());
         Assert::AreEqual(15U, pAch2->Points());
@@ -310,7 +310,7 @@ public:
         Assert::AreEqual(std::string("Desc1"), pAch->Description());
         Assert::AreEqual(std::string("Auth1"), pAch->Author());
         Assert::AreEqual(std::string("12345"), pAch->BadgeImageURI());
-        Assert::AreEqual(3, pAch->Category());
+        Assert::AreEqual(Achievement::Category::Core, pAch->GetCategory());
         Assert::AreEqual(1234567890, (int)pAch->CreatedDate());
         Assert::AreEqual(1234599999, (int)pAch->ModifiedDate());
         Assert::AreEqual(5U, pAch->Points());
@@ -323,7 +323,7 @@ public:
         Assert::AreEqual(std::string("Desc2b"), pAch->Description());
         Assert::AreEqual(std::string("Auth2"), pAch->Author()); // author not merged
         Assert::AreEqual(std::string("54321"), pAch->BadgeImageURI());
-        Assert::AreEqual(5, pAch->Category()); // category not merged
+        Assert::AreEqual(Achievement::Category::Unofficial, pAch->GetCategory()); // category not merged
         Assert::AreEqual(1234567890, (int)pAch->CreatedDate()); // created date not merged
         Assert::AreEqual(1234555555, (int)pAch->ModifiedDate());
         Assert::AreEqual(25U, pAch->Points());
@@ -336,7 +336,7 @@ public:
         Assert::AreEqual(std::string("Desc3"), pAch->Description());
         Assert::AreEqual(std::string("Auth3"), pAch->Author());
         Assert::AreEqual(std::string("555"), pAch->BadgeImageURI());
-        Assert::AreEqual(0, pAch->Category());
+        Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(20U, pAch->Points());
@@ -349,14 +349,14 @@ public:
         Assert::AreEqual(std::string("Desc4"), pAch->Description());
         Assert::AreEqual(std::string("Auth4"), pAch->Author());
         Assert::AreEqual(std::string("556"), pAch->BadgeImageURI());
-        Assert::AreEqual(0, pAch->Category());
+        Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(10U, pAch->Points());
         Assert::AreEqual(std::string("R:1=1"), pAch->CreateMemString());
 
         // new achievement should be allocated an ID higher than the largest existing local ID
-        const auto& pAch2 = game.NewAchievement(AchievementSet::Type::Local);
+        const auto& pAch2 = game.NewAchievement(Achievement::Category::Local);
         Assert::AreEqual(GameContextHarness::FirstLocalId + 2, pAch2.ID());
     }
 
@@ -386,7 +386,7 @@ public:
         Assert::AreEqual(std::string("Desc2b"), pAch->Description());
         Assert::AreEqual(std::string("Auth2b"), pAch->Author());
         Assert::AreEqual(std::string("54321"), pAch->BadgeImageURI());
-        Assert::AreEqual(0, pAch->Category()); // local
+        Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234554321, (int)pAch->CreatedDate());
         Assert::AreEqual(1234555555, (int)pAch->ModifiedDate());
         Assert::AreEqual(25U, pAch->Points());
@@ -400,7 +400,7 @@ public:
         Assert::AreEqual(std::string("Desc3"), pAch->Description());
         Assert::AreEqual(std::string("Auth3"), pAch->Author());
         Assert::AreEqual(std::string("555"), pAch->BadgeImageURI());
-        Assert::AreEqual(0, pAch->Category());
+        Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(20U, pAch->Points());
@@ -414,7 +414,7 @@ public:
         Assert::AreEqual(std::string("Desc4"), pAch->Description());
         Assert::AreEqual(std::string("Auth4"), pAch->Author());
         Assert::AreEqual(std::string("556"), pAch->BadgeImageURI());
-        Assert::AreEqual(0, pAch->Category());
+        Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(10U, pAch->Points());
@@ -422,7 +422,7 @@ public:
 
         // new achievement should be allocated an ID higher than the largest existing local
         // ID, even if intermediate values are available
-        const auto& pAch2 = game.NewAchievement(AchievementSet::Type::Local);
+        const auto& pAch2 = game.NewAchievement(Achievement::Category::Local);
         Assert::AreEqual(999000004U, pAch2.ID());
     }
 
@@ -502,7 +502,7 @@ public:
         });
         game.LoadGame(1U);
 
-        auto& ach2 = game.NewAchievement(AchievementSet::Type::Local);
+        auto& ach2 = game.NewAchievement(Achievement::Category::Local);
         ach2.SetTitle("Ach2");
         ach2.SetDescription("Desc2");
         ach2.SetAuthor("Auth2");
@@ -529,7 +529,7 @@ public:
         });
         game.LoadGame(1U);
 
-        auto& ach2 = game.NewAchievement(AchievementSet::Type::Local);
+        auto& ach2 = game.NewAchievement(Achievement::Category::Local);
         ach2.SetTitle("Ach:2");
         ach2.SetDescription("Desc \"2\"");
         ach2.SetAuthor("Auth2");
@@ -552,11 +552,11 @@ public:
         {
             auto& ach1 = response.Achievements.emplace_back();
             ach1.Id = 5;
-            ach1.CategoryId = ra::etoi(AchievementSet::Type::Core);
+            ach1.CategoryId = ra::etoi(Achievement::Category::Core);
 
             auto& ach2 = response.Achievements.emplace_back();
             ach2.Id = 7;
-            ach2.CategoryId = ra::etoi(AchievementSet::Type::Core);
+            ach2.CategoryId = ra::etoi(Achievement::Category::Core);
             return true;
         });
 
@@ -596,11 +596,11 @@ public:
         {
             auto& ach1 = response.Achievements.emplace_back();
             ach1.Id = 5;
-            ach1.CategoryId = ra::etoi(AchievementSet::Type::Core);
+            ach1.CategoryId = ra::etoi(Achievement::Category::Core);
 
             auto& ach2 = response.Achievements.emplace_back();
             ach2.Id = 7;
-            ach2.CategoryId = ra::etoi(AchievementSet::Type::Core);
+            ach2.CategoryId = ra::etoi(Achievement::Category::Core);
             return true;
         });
 
@@ -763,7 +763,7 @@ public:
         GameContextHarness game;
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
-        game.MockAchievement().SetCategory(ra::etoi(AchievementSet::Type::Local));
+        game.MockAchievement().SetCategory(Achievement::Category::Local);
         game.AwardAchievement(1U);
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
@@ -784,7 +784,7 @@ public:
         GameContextHarness game;
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
-        game.MockAchievement().SetCategory(ra::etoi(AchievementSet::Type::Unofficial));
+        game.MockAchievement().SetCategory(Achievement::Category::Unofficial);
         game.AwardAchievement(1U);
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
@@ -827,7 +827,7 @@ public:
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
         auto& pAch = game.MockAchievement();
-        pAch.SetCategory(ra::etoi(AchievementSet::Type::Local));
+        pAch.SetCategory(Achievement::Category::Local);
         pAch.SetModified(true);
         game.AwardAchievement(1U);
 
@@ -850,7 +850,7 @@ public:
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
         auto& pAch = game.MockAchievement();
-        pAch.SetCategory(ra::etoi(AchievementSet::Type::Unofficial));
+        pAch.SetCategory(Achievement::Category::Unofficial);
         pAch.SetModified(true);
         game.AwardAchievement(1U);
 
@@ -1074,7 +1074,7 @@ public:
         Assert::IsNotNull(vmScoreboard);
         Ensures(vmScoreboard != nullptr);
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
-        Assert::AreEqual(4U, vmScoreboard->Entries().Count());
+        Assert::AreEqual({ 4U }, vmScoreboard->Entries().Count());
 
         const auto* vmEntry1 = vmScoreboard->Entries().GetItemAt(0);
         Assert::IsNotNull(vmEntry1);

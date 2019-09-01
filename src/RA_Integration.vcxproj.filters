@@ -51,9 +51,6 @@
     <ClCompile Include="RA_Achievement.cpp">
       <Filter>Data</Filter>
     </ClCompile>
-    <ClCompile Include="RA_AchievementSet.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Condition.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -279,9 +276,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_AchievementSet.h">
       <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="RA_Condition.h">

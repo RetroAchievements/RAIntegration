@@ -32,23 +32,23 @@ private:
             mockGameContext.SetGameTitle(L"GAME");
             mockGameContext.SetGameHash("HASH");
 
-            auto& ach1 = mockGameContext.NewAchievement(AchievementSet::Type::Core);
+            auto& ach1 = mockGameContext.NewAchievement(Achievement::Category::Core);
             ach1.SetID(1U);
             ach1.SetTitle("Title1");
             ach1.SetActive(false);
-            auto& ach2 = mockGameContext.NewAchievement(AchievementSet::Type::Core);
+            auto& ach2 = mockGameContext.NewAchievement(Achievement::Category::Core);
             ach2.SetID(2U);
             ach2.SetTitle("Title2");
             ach2.SetActive(true);
-            auto& ach3 = mockGameContext.NewAchievement(AchievementSet::Type::Core);
+            auto& ach3 = mockGameContext.NewAchievement(Achievement::Category::Core);
             ach3.SetID(3U);
             ach3.SetTitle("Title3");
             ach3.SetActive(false);
-            auto& ach4 = mockGameContext.NewAchievement(AchievementSet::Type::Core);
+            auto& ach4 = mockGameContext.NewAchievement(Achievement::Category::Core);
             ach4.SetID(4U);
             ach4.SetTitle("Title4");
             ach4.SetActive(true);
-            auto& ach5 = mockGameContext.NewAchievement(AchievementSet::Type::Core);
+            auto& ach5 = mockGameContext.NewAchievement(Achievement::Category::Core);
             ach5.SetID(5U);
             ach5.SetTitle("Title5");
             ach5.SetActive(true);
@@ -63,7 +63,7 @@ public:
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         Assert::AreEqual(0, vmBrokenAchievements.GetSelectedProblemId());
         Assert::AreEqual(std::wstring(L""), vmBrokenAchievements.GetComment());
-        Assert::AreEqual(0U, vmBrokenAchievements.Achievements().Count());
+        Assert::AreEqual({ 0U }, vmBrokenAchievements.Achievements().Count());
     }
 
     TEST_METHOD(TestInitializeAchievementsNoGameLoaded)
@@ -87,7 +87,7 @@ public:
     {
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         vmBrokenAchievements.mockGameContext.SetGameId(1U);
-        vmBrokenAchievements.mockGameContext.SetActiveAchievementType(AchievementSet::Type::Local);
+        vmBrokenAchievements.mockGameContext.NewAchievement(Achievement::Category::Local);
 
         bool bDialogSeen = false;
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
@@ -137,42 +137,6 @@ public:
 
         Assert::IsFalse(vmBrokenAchievements.InitializeAchievements());
         Assert::IsTrue(bDialogSeen);
-    }
-
-    TEST_METHOD(TestInitializeAchievementsOnlyCore)
-    {
-        BrokenAchievementsViewModelHarness vmBrokenAchievements;
-        vmBrokenAchievements.mockGameContext.SetGameId(1U);
-        auto& ach3 = vmBrokenAchievements.mockGameContext.NewAchievement(AchievementSet::Type::Core);
-        ach3.SetID(3U);
-        ach3.SetTitle("Title3");
-        ach3.SetActive(false);
-        auto& ach4 = vmBrokenAchievements.mockGameContext.NewAchievement(AchievementSet::Type::Unofficial);
-        ach4.SetID(4U);
-        ach4.SetTitle("Title4");
-        ach4.SetActive(true);
-        auto& ach5 = vmBrokenAchievements.mockGameContext.NewAchievement(AchievementSet::Type::Core);
-        ach5.SetID(5U);
-        ach5.SetTitle("Title5");
-        ach5.SetActive(true);
-
-        Assert::IsTrue(vmBrokenAchievements.InitializeAchievements());
-        Assert::IsFalse(vmBrokenAchievements.mockDesktop.WasDialogShown());
-        Assert::AreEqual(2U, vmBrokenAchievements.Achievements().Count());
-
-        const auto* row1 = vmBrokenAchievements.Achievements().GetItemAt(0);
-        Assert::IsNotNull(row1);
-        Ensures(row1 != nullptr);
-        Assert::AreEqual(3, row1->GetId());
-        Assert::AreEqual(std::wstring(L"Title3"), row1->GetLabel());
-        Assert::AreEqual(true, row1->IsAchieved());
-
-        const auto* row2 = vmBrokenAchievements.Achievements().GetItemAt(1);
-        Assert::IsNotNull(row2);
-        Ensures(row2 != nullptr);
-        Assert::AreEqual(5, row2->GetId());
-        Assert::AreEqual(std::wstring(L"Title5"), row2->GetLabel());
-        Assert::AreEqual(false, row2->IsAchieved());
     }
 
     TEST_METHOD(TestSubmitNoProblemType)
@@ -418,7 +382,7 @@ public:
             Assert::AreEqual(1, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
             Assert::AreEqual(std::string("I tried."), request.Comment);
-            Assert::AreEqual(1U, request.AchievementIds.size());
+            Assert::AreEqual({ 1U }, request.AchievementIds.size());
             Assert::IsTrue(request.AchievementIds.find(3U) != request.AchievementIds.end());
 
             response.Result = ra::api::ApiResult::Success;
@@ -458,7 +422,7 @@ public:
             Assert::AreEqual(2, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
             Assert::AreEqual(std::string("I tried."), request.Comment);
-            Assert::AreEqual(2U, request.AchievementIds.size());
+            Assert::AreEqual({ 2U }, request.AchievementIds.size());
             Assert::IsTrue(request.AchievementIds.find(3U) != request.AchievementIds.end());
             Assert::IsTrue(request.AchievementIds.find(5U) != request.AchievementIds.end());
 
@@ -526,7 +490,7 @@ public:
             Assert::AreEqual(1, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
             Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\nNowhere, 2 Lives"), request.Comment);
-            Assert::AreEqual(1U, request.AchievementIds.size());
+            Assert::AreEqual({ 1U }, request.AchievementIds.size());
 
             response.Result = ra::api::ApiResult::Success;
             response.TicketsCreated = 1;
@@ -559,7 +523,7 @@ public:
             Assert::AreEqual(1, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
             Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\nNowhere, 2 Lives"), request.Comment);
-            Assert::AreEqual(2U, request.AchievementIds.size());
+            Assert::AreEqual({ 2U }, request.AchievementIds.size());
 
             response.Result = ra::api::ApiResult::Success;
             response.TicketsCreated = 2;
@@ -592,7 +556,7 @@ public:
             Assert::AreEqual(1, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
             Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\n1: Nowhere, 2 Lives\n3: Somewhere, 2 Lives"), request.Comment);
-            Assert::AreEqual(2U, request.AchievementIds.size());
+            Assert::AreEqual({ 2U }, request.AchievementIds.size());
 
             response.Result = ra::api::ApiResult::Success;
             response.TicketsCreated = 2;

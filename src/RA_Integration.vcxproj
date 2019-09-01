@@ -55,7 +55,6 @@
     </ClCompile>
     <ClCompile Include="Exports.cpp" />
     <ClCompile Include="RA_Achievement.cpp" />
-    <ClCompile Include="RA_AchievementSet.cpp" />
     <ClCompile Include="RA_Condition.cpp" />
     <ClCompile Include="RA_Core.cpp" />
     <ClCompile Include="RA_Defs.cpp" />
@@ -163,7 +162,6 @@
     <ClInclude Include="pch_cppcorecheck_suppressions.h" />
     <ClInclude Include="pch_microsoft_suppressions.h" />
     <ClInclude Include="RA_Achievement.h" />
-    <ClInclude Include="RA_AchievementSet.h" />
     <ClInclude Include="RA_BuildVer.h" />
     <ClInclude Include="RA_Condition.h" />
     <ClInclude Include="RA_Core.h" />

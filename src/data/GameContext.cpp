@@ -69,13 +69,6 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         for (auto& pAchievement : m_vAchievements)
             pAchievement->SetActive(false);
         m_vAchievements.clear();
-
-#ifndef RA_UTEST
-        // temporary code for compatibility until global collections are eliminated
-        g_pCoreAchievements->Clear();
-        g_pLocalAchievements->Clear();
-        g_pUnofficialAchievements->Clear();
-#endif
     }
 
     if (!m_vLeaderboards.empty())
@@ -140,7 +133,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     unsigned int nTotalCoreAchievementPoints = 0;
     for (const auto& pAchievementData : response.Achievements)
     {
-        auto& pAchievement = NewAchievement(ra::itoe<AchievementSet::Type>(pAchievementData.CategoryId));
+        auto& pAchievement = NewAchievement(ra::itoe<Achievement::Category>(pAchievementData.CategoryId));
         pAchievement.SetID(pAchievementData.Id);
         CopyAchievementData(pAchievement, pAchievementData);
 
@@ -149,7 +142,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievementData.BadgeName);
 #endif
 
-        if (pAchievementData.CategoryId == ra::to_unsigned(ra::etoi(AchievementSet::Type::Core)))
+        if (pAchievementData.CategoryId == ra::to_unsigned(ra::etoi(Achievement::Category::Core)))
         {
             ++nNumCoreAchievements;
             nTotalCoreAchievementPoints += pAchievementData.Points;
@@ -170,6 +163,10 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // merge local achievements
     m_nNextLocalId = GameContext::FirstLocalId;
     MergeLocalAchievements();
+
+#ifndef RA_UTEST
+    g_AchievementsDialog.UpdateAchievementList();
+#endif
 
     // show "game loaded" popup
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
@@ -236,7 +233,7 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
     for (auto nAchievementId : vLockedAchievements)
     {
         auto* pAchievement = FindAchievement(nAchievementId);
-        if (pAchievement && pAchievement->Category() == ra::etoi(AchievementSet::Type::Core))
+        if (pAchievement && pAchievement->GetCategory() == Achievement::Category::Core)
         {
             pAchievement->SetActive(true);
 
@@ -251,22 +248,7 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
         ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(false);
 
 #ifndef RA_UTEST
-    if (ActiveAchievementType() == AchievementSet::Type::Core)
-    {
-        for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
-        {
-            const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
-            g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Achieved, Ach.Active() ? "No" : "Yes");
-        }
-    }
-    else
-    {
-        for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
-        {
-            const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
-            g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Active, Ach.Active() ? "Yes" : "No");
-        }
-    }
+    g_AchievementsDialog.UpdateActiveAchievements();
 #endif
 
     if (nPopup)
@@ -277,7 +259,7 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
             size_t nUnlockedCoreAchievements = 0U;
             for (auto& pAchievement : m_vAchievements)
             {
-                if (pAchievement->Category() == ra::etoi(AchievementSet::Type::Core) && !pAchievement->Active())
+                if (pAchievement->GetCategory() == Achievement::Category::Core && !pAchievement->Active())
                     ++nUnlockedCoreAchievements;
             }
 
@@ -287,6 +269,20 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
     }
 
     RefreshOverlay();
+}
+
+void GameContext::EnumerateFilteredAchievements(std::function<bool(const Achievement&)> callback) const
+{
+#ifdef RA_UTEST
+    EnumerateAchievements(callback);
+#else
+    for (auto nID : g_AchievementsDialog.FilteredAchievements())
+    {
+        const auto* pAchievement = FindAchievement(nID);
+        if (pAchievement != nullptr && !callback(*pAchievement))
+            break;
+    }
+#endif
 }
 
 void GameContext::MergeLocalAchievements()
@@ -326,12 +322,8 @@ void GameContext::MergeLocalAchievements()
             // append new local achievement to collection
             pAchievement = m_vAchievements.emplace_back(std::make_unique<Achievement>()).get();
             Ensures(pAchievement != nullptr);
-            pAchievement->SetCategory(ra::etoi(AchievementSet::Type::Local));
+            pAchievement->SetCategory(Achievement::Category::Local);
             pAchievement->SetID(nId);
-
-#ifndef RA_UTEST
-            g_pLocalAchievements->AddAchievement(pAchievement);
-#endif
         }
 
         // field 2: trigger
@@ -512,7 +504,7 @@ bool GameContext::SaveLocal() const
 
     for (const auto& pAchievement : m_vAchievements)
     {
-        if (!pAchievement || pAchievement->Category() != ra::etoi(AchievementSet::Type::Local))
+        if (!pAchievement || pAchievement->GetCategory() != Achievement::Category::Local)
             continue;
 
         // field 1: ID
@@ -552,31 +544,11 @@ bool GameContext::SaveLocal() const
     return true;
 }
 
-Achievement& GameContext::NewAchievement(AchievementSet::Type nType)
+Achievement& GameContext::NewAchievement(Achievement::Category nType)
 {
     Achievement& pAchievement = *m_vAchievements.emplace_back(std::make_unique<Achievement>());
-    pAchievement.SetCategory(ra::etoi(nType));
+    pAchievement.SetCategory(nType);
     pAchievement.SetID(m_nNextLocalId++);
-
-#ifndef RA_UTEST
-    // temporary code for compatibility until global collections are eliminated
-    switch (nType)
-    {
-        case AchievementSet::Type::Core:
-            g_pCoreAchievements->AddAchievement(&pAchievement);
-            break;
-
-        default:
-        case AchievementSet::Type::Unofficial:
-            g_pUnofficialAchievements->AddAchievement(&pAchievement);
-            break;
-
-        case AchievementSet::Type::Local:
-            g_pLocalAchievements->AddAchievement(&pAchievement);
-            break;
-    }
-#endif
-
     return pAchievement;
 }
 
@@ -586,25 +558,6 @@ bool GameContext::RemoveAchievement(ra::AchievementID nAchievementId)
     {
         if (*pIter && (*pIter)->ID() == nAchievementId)
         {
-#ifndef RA_UTEST
-            // temporary code for compatibility until global collections are eliminated
-            switch (ra::itoe<AchievementSet::Type>((*pIter)->Category()))
-            {
-                case AchievementSet::Type::Core:
-                    g_pCoreAchievements->RemoveAchievement(pIter->get());
-                    break;
-
-                default:
-                case AchievementSet::Type::Unofficial:
-                    g_pUnofficialAchievements->RemoveAchievement(pIter->get());
-                    break;
-
-                case AchievementSet::Type::Local:
-                    g_pLocalAchievements->RemoveAchievement(pIter->get());
-                    break;
-            }
-#endif
-
             m_vAchievements.erase(pIter);
             return true;
         }
@@ -627,14 +580,14 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
     vmPopup.SetDetail(ra::Widen(pAchievement->Description()));
     vmPopup.SetImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
 
-    switch (ra::itoe<AchievementSet::Type>(pAchievement->Category()))
+    switch (pAchievement->GetCategory())
     {
-        case AchievementSet::Type::Local:
+        case Achievement::Category::Local:
             vmPopup.SetTitle(L"Local Achievement Unlocked");
             bSubmit = false;
             break;
 
-        case AchievementSet::Type::Unofficial:
+        case Achievement::Category::Unofficial:
             vmPopup.SetTitle(L"Unofficial Achievement Unlocked");
             bSubmit = false;
             break;
@@ -658,8 +611,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
     {
         auto sHeader = vmPopup.GetTitle();
         sHeader.insert(0, L"Modified ");
-        if (ActiveAchievementType() != AchievementSet::Type::Local)
-            sHeader.insert(sHeader.length() - 8, L"NOT ");
+        sHeader.insert(sHeader.length() - 8, L"NOT ");
         vmPopup.SetTitle(sHeader);
 
         bIsError = true;
@@ -743,24 +695,17 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
     });
 }
 
-void GameContext::ReloadAchievements(int nCategory)
+void GameContext::ReloadAchievements(Achievement::Category nCategory)
 {
-    if (nCategory == ra::etoi(AchievementSet::Type::Local))
+    if (nCategory == Achievement::Category::Local)
     {
         auto pIter = m_vAchievements.begin();
         while (pIter != m_vAchievements.end())
         {
-            if ((*pIter)->Category() == nCategory)
-            {
-#ifndef RA_UTEST
-                g_pLocalAchievements->RemoveAchievement(pIter->get());
-#endif
+            if ((*pIter)->GetCategory() == nCategory)
                 pIter = m_vAchievements.erase(pIter);
-            }
             else
-            {
                 ++pIter;
-            }
         }
 
         MergeLocalAchievements();
@@ -769,6 +714,10 @@ void GameContext::ReloadAchievements(int nCategory)
     {
         // TODO
     }
+
+#ifndef RA_UTEST
+    g_AchievementsDialog.UpdateAchievementList();
+#endif
 }
 
 bool GameContext::ReloadAchievement(ra::AchievementID nAchievementId)
@@ -793,7 +742,7 @@ bool GameContext::ReloadAchievement(ra::AchievementID nAchievementId)
 
 bool GameContext::ReloadAchievement(Achievement& pAchievement)
 {
-    if (pAchievement.Category() == ra::etoi(AchievementSet::Type::Local))
+    if (pAchievement.GetCategory() == Achievement::Category::Local)
     {
         // TODO
     }
@@ -1004,7 +953,8 @@ std::wstring GameContext::GetRichPresenceDisplayString() const
     auto pRichPresence = static_cast<rc_richpresence_t*>(m_pRichPresence);
     std::string sRichPresence;
     sRichPresence.resize(512);
-    const auto nLength = rc_evaluate_richpresence(pRichPresence, sRichPresence.data(), sRichPresence.capacity(), rc_peek_callback, nullptr, nullptr);
+    const auto nLength = rc_evaluate_richpresence(pRichPresence, sRichPresence.data(),
+        gsl::narrow_cast<unsigned int>(sRichPresence.capacity()), rc_peek_callback, nullptr, nullptr);
     sRichPresence.resize(nLength);
 
     return ra::Widen(sRichPresence);

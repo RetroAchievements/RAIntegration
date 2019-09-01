@@ -175,6 +175,22 @@ std::wstring ToString<ra::data::GameContext::Mode>(const ra::data::GameContext::
     }
 }
 
+template<>
+std::wstring ToString<Achievement::Category>(const Achievement::Category& category)
+{
+    switch (category)
+    {
+        case Achievement::Category::Local:
+            return L"Local";
+        case Achievement::Category::Core:
+            return L"Core";
+        case Achievement::Category::Unofficial:
+            return L"Unofficial";
+        default:
+            return std::to_wstring(ra::etoi(category));
+    }
+}
+
 #pragma warning(pop)
 
 } // namespace CppUnitTestFramework

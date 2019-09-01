@@ -2,7 +2,7 @@
 #define RA_DATA_GAMECONTEXT_HH
 #pragma once
 
-#include "RA_AchievementSet.h"
+#include "RA_Achievement.h"
 #include "RA_Leaderboard.h"
 
 #include <string>
@@ -67,18 +67,6 @@ public:
     void SetMode(Mode nMode) noexcept { m_nMode = nMode; }
 
     /// <summary>
-    /// Gets which achievements are active.
-    /// </summary>
-    virtual AchievementSet::Type ActiveAchievementType() const noexcept
-    {
-#ifdef RA_UTEST
-        return AchievementSet::Type::Core;
-#else
-        return g_nActiveAchievementSet;
-#endif
-    }
-
-    /// <summary>
     /// Enumerates the achievement collection.
     /// </summary>
     /// <remarks>
@@ -92,6 +80,14 @@ public:
                 break;
         }
     }
+
+    /// <summary>
+    /// Enumerates the achievements being shown in the achievement list.
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="callback" /> is called for each known achievement. If it returns <c>false</c> enumeration stops.
+    /// </remarks>
+    void EnumerateFilteredAchievements(std::function<bool(const Achievement&)> callback) const;
 
     /// <summary>
     /// Finds the achievement associated to the specified unique identifier.
@@ -108,7 +104,7 @@ public:
         return nullptr;
     }
 
-    Achievement& NewAchievement(AchievementSet::Type nType);
+    Achievement& NewAchievement(Achievement::Category nType);
 
     bool RemoveAchievement(ra::AchievementID nAchievementId);
 
@@ -180,7 +176,7 @@ public:
     /// <summary>
     /// Reloads all achievements of the specified category from local storage.
     /// </summary>
-    void ReloadAchievements(int nCategory);
+    void ReloadAchievements(Achievement::Category nCategory);
 
     /// <summary>
     /// Reloads a specific achievement from local storage.

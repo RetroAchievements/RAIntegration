@@ -1,6 +1,7 @@
 #include "EmulatorContext.hh"
 
 #include "Exports.hh"
+#include "RA_BuildVer.h"
 #include "RA_Log.h"
 #include "RA_StringUtils.h"
 
@@ -11,6 +12,7 @@
 
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
+#include "services\IHttpRequester.hh"
 
 #include "ui\IDesktop.hh"
 
@@ -91,6 +93,53 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
             break;
         }
     }
+}
+
+static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
+{
+    sUserAgent.append(ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
+        RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_PATCH,
+        RA_INTEGRATION_VERSION_REVISION));
+
+    // include branch if specified
+    if constexpr (_CONSTANT_LOC pos{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') }; pos != std::string_view::npos)
+    {
+        constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
+        sUserAgent.append(sAppend, pos);
+    }
+}
+
+void EmulatorContext::UpdateUserAgent()
+{
+    std::string sUserAgent;
+    sUserAgent.reserve(128U);
+
+    if (!m_sClientName.empty())
+    {
+        sUserAgent.append(m_sClientName);
+        sUserAgent.push_back('/');
+    }
+    else
+    {
+        sUserAgent.append("UnknownClient/");
+    }
+    sUserAgent.append(m_sVersion);
+    sUserAgent.append(" (");
+
+    const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+    sUserAgent.append(pDesktop.GetOSVersionString());
+    sUserAgent.append(") Integration/");
+    AppendIntegrationVersion(sUserAgent);
+
+    if (!m_sClientUserAgentDetail.empty())
+    {
+        sUserAgent.push_back(' ');
+        sUserAgent.append(m_sClientUserAgentDetail);
+    }
+
+    RA_LOG("User-Agent: %s", sUserAgent.c_str());
+
+    ra::services::ServiceLocator::GetMutable<ra::services::IHttpRequester>().SetUserAgent(sUserAgent);
 }
 
 static unsigned long long ParseVersion(const char* sVersion)
@@ -414,7 +463,7 @@ uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const noexcept
         if (nAddress < pBlock.size)
             return pBlock.read(nAddress);
 
-        nAddress -= pBlock.size;
+        nAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
     }
 
     return 0U;
@@ -428,7 +477,7 @@ void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], si
     {
         if (nAddress >= pBlock.size)
         {
-            nAddress -= pBlock.size;
+            nAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
             continue;
         }
 
@@ -522,7 +571,7 @@ void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) 
             return;
         }
 
-        nAddress -= pBlock.size;
+        nAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
     }
 }
 

@@ -97,83 +97,12 @@ API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorI
     return TRUE;
 }
 
-static void AppendIntegrationVersion(_Inout_ std::string& sUserAgent)
-{
-    sUserAgent.append(ra::StringPrintf("%d.%d.%d.%d", RA_INTEGRATION_VERSION_MAJOR,
-        RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_PATCH,
-        RA_INTEGRATION_VERSION_REVISION));
-
-    if constexpr (_CONSTANT_LOC pos{ std::string_view{ RA_INTEGRATION_VERSION_PRODUCT }.find('-') }; pos != std::string_view::npos)
-    {
-        constexpr std::string_view sAppend{ RA_INTEGRATION_VERSION_PRODUCT };
-        sUserAgent.append(sAppend, pos);
-    }
-}
-
-static void AppendNTVersion(_Inout_ std::string& sUserAgent)
-{
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
-    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
-    // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
-#ifndef NTSTATUS
-    using NTSTATUS = __success(return >= 0) LONG;
-#endif
-    if (const auto ntModule{ ::GetModuleHandleW(L"ntdll.dll") }; ntModule)
-    {
-        RTL_OSVERSIONINFOEXW osVersion{ sizeof(RTL_OSVERSIONINFOEXW) };
-        using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW);
-
-        fnRtlGetVersion RtlGetVersion{};
-        GSL_SUPPRESS_TYPE1 RtlGetVersion =
-            reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"));
-
-        if (RtlGetVersion)
-        {
-            RtlGetVersion(&osVersion);
-            if (osVersion.dwMajorVersion > 0UL)
-            {
-                sUserAgent.append(ra::StringPrintf("WindowsNT %lu.%lu", osVersion.dwMajorVersion,
-                    osVersion.dwMinorVersion));
-            }
-        }
-    }
-}
-
-static void SetUserAgentString()
-{
-    std::string sUserAgent;
-    sUserAgent.reserve(128U);
-
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    const auto& sClientName = pEmulatorContext.GetClientName();
-    if (!sClientName.empty())
-    {
-        sUserAgent.append(sClientName);
-        sUserAgent.append("/");
-    }
-    else
-    {
-        sUserAgent.append("UnknownClient/");
-    }
-    sUserAgent.append(pEmulatorContext.GetClientVersion());
-    sUserAgent.append(" (");
-
-    AppendNTVersion(sUserAgent);
-    sUserAgent.append(") Integration/");
-    AppendIntegrationVersion(sUserAgent);
-
-    RA_LOG("User-Agent: %s", sUserAgent.c_str());
-
-    ra::services::ServiceLocator::GetMutable<ra::services::IHttpRequester>().SetUserAgent(sUserAgent);
-}
-
 API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
 {
     InitCommon(hMainHWND, nEmulatorID);
 
     // Set the client version and User-Agent string
     ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().SetClientVersion(sClientVer);
-    SetUserAgentString();
 
     // validate version (async call)
     ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]

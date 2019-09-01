@@ -168,6 +168,12 @@ API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
 #endif
 }
 
+API void CCONV _RA_SetUserAgentDetail(const char* sDetail)
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+    pEmulatorContext.SetClientUserAgentDetail(sDetail);
+}
+
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
 {
     ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().AddMemoryBlock(nBankID, nBankSize,

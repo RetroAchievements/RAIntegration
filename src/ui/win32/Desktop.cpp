@@ -133,6 +133,35 @@ std::string Desktop::GetRunningExecutable() const
     return std::string(buffer);
 }
 
+std::string Desktop::GetOSVersionString() const
+{
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
+    // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
+#ifndef NTSTATUS
+    using NTSTATUS = __success(return >= 0) LONG;
+#endif
+    if (const auto ntModule{ ::GetModuleHandleW(L"ntdll.dll") }; ntModule)
+    {
+        RTL_OSVERSIONINFOEXW osVersion{ sizeof(RTL_OSVERSIONINFOEXW) };
+        using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW);
+
+        fnRtlGetVersion RtlGetVersion{};
+        GSL_SUPPRESS_TYPE1 RtlGetVersion =
+            reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"));
+
+        if (RtlGetVersion)
+        {
+            RtlGetVersion(&osVersion);
+            if (osVersion.dwMajorVersion > 0UL)
+                return ra::StringPrintf("WindowsNT %lu.%lu", osVersion.dwMajorVersion, osVersion.dwMinorVersion);
+        }
+    }
+
+    return "Windows";
+}
+
+
 void Desktop::OpenUrl(const std::string& sUrl) const noexcept
 {
     ShellExecute(nullptr, TEXT("open"), sUrl.c_str(), nullptr, nullptr, SW_SHOWNORMAL);

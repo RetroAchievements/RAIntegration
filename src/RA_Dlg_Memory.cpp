@@ -158,7 +158,7 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
             return true;
 
         case VK_END:
-            m_nEditAddress = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() - 0x10;
+            m_nEditAddress = gsl::narrow_cast<unsigned int>(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize()) - 0x10;
             m_nEditNibble = 0;
             setAddress(m_nEditAddress);
             return true;
@@ -584,7 +584,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     RECT r{3, 3, rect.right - 3, r.top + m_szFontSize.cy}; // left,top,right,bottom
 
     // Draw header:
-    DrawText(hMemDC, NativeStr(sHeader).c_str(), strlen(sHeader), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+    DrawText(hMemDC, NativeStr(sHeader).c_str(), gsl::narrow_cast<int>(strlen(sHeader)), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
     // Adjust for header:
     r.top += m_szFontSize.cy;
@@ -644,7 +644,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                         break;
                 }
 
-                DrawText(hMemDC, NativeStr(bufferNative).c_str(), ptr - bufferNative, &r,
+                DrawText(hMemDC, NativeStr(bufferNative).c_str(), gsl::narrow_cast<int>(ptr - bufferNative), &r,
                          DT_TOP | DT_LEFT | DT_NOPREFIX);
 
                 if ((ra::to_signed(m_nWatchedAddress) & ~0x0F) == addr)
@@ -668,8 +668,8 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                             break;
                     }
 
-                    r.left = 3 + (ptr - bufferNative) * m_szFontSize.cx;
-                    DrawText(hMemDC, ptr, stride, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+                    r.left = 3 + gsl::narrow_cast<int>(ptr - bufferNative) * m_szFontSize.cx;
+                    DrawText(hMemDC, ptr, gsl::narrow_cast<int>(stride), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
 
                     SetTextColor(hMemDC, RGB(0, 0, 0));
                     r.left = 3;
@@ -719,8 +719,8 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                                     break;
                             }
 
-                            r.left = 3 + (ptr - bufferNative) * m_szFontSize.cx;
-                            DrawText(hMemDC, NativeStr(ptr).c_str(), stride, &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
+                            r.left = 3 + gsl::narrow_cast<int>(ptr - bufferNative) * m_szFontSize.cx;
+                            DrawText(hMemDC, NativeStr(ptr).c_str(), gsl::narrow_cast<int>(stride), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
                         }
 
                         notes >>= 1;
@@ -903,7 +903,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                 sBuffer = ra::StringPrintf(L"Found %u matches!", nMatches);
                         }
 
-                        DrawTextW(pDIS->hDC, sBuffer.c_str(), sBuffer.length(), &pDIS->rcItem,
+                        DrawTextW(pDIS->hDC, sBuffer.c_str(), gsl::narrow_cast<int>(sBuffer.length()), &pDIS->rcItem,
                                   DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                     }
                     else
@@ -986,11 +986,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             rcValue.left += 6;
                         }
 
-                        DrawTextW(pDIS->hDC, sAddress.c_str(), sAddress.length(), &pDIS->rcItem,
+                        DrawTextW(pDIS->hDC, sAddress.c_str(), gsl::narrow_cast<int>(sAddress.length()), &pDIS->rcItem,
                             DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER);
 
-                        rcValue.right = rcValue.left + sValue.length() * 6;
-                        DrawTextW(pDIS->hDC, sValue.c_str(), sValue.length(), &rcValue,
+                        rcValue.right = rcValue.left + gsl::narrow_cast<int>(sValue.length()) * 6;
+                        DrawTextW(pDIS->hDC, sValue.c_str(), gsl::narrow_cast<int>(sValue.length()), &rcValue,
                             DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER);
 
                         if (sNote.empty())
@@ -1009,7 +1009,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         {
                             RECT rcNote = pDIS->rcItem;
                             rcNote.left = rcValue.right + 6;
-                            DrawTextW(pDIS->hDC, sNote.c_str(), sNote.length(), &rcNote,
+                            DrawTextW(pDIS->hDC, sNote.c_str(), gsl::narrow_cast<int>(sNote.length()), &rcNote,
                                 DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
                         }
                     }
@@ -1345,7 +1345,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     const int nLength = GetWindowTextLengthW(hNote);
                     std::wstring sNewNote;
                     sNewNote.resize(nLength + 1);
-                    GetWindowTextW(hNote, sNewNote.data(), sNewNote.capacity());
+                    GetWindowTextW(hNote, sNewNote.data(), gsl::narrow_cast<int>(sNewNote.capacity()));
                     sNewNote.resize(nLength);
 
                     bool bUpdated = false;
@@ -1774,7 +1774,7 @@ void Dlg_Memory::UpdateMemoryRegions()
         }
     }
 
-    const auto nTotalBankSize = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize();
+    const auto nTotalBankSize = gsl::narrow_cast<ra::ByteAddress>(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize());
     if (m_nSystemRamEnd >= nTotalBankSize)
     {
         if (nTotalBankSize == 0U)
@@ -1933,7 +1933,7 @@ bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress&
     {
         // all items are in "All" range
         start = 0;
-        end = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() - 1;
+        end = gsl::narrow_cast<ra::ByteAddress>(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize()) - 1;
         return true;
     }
 

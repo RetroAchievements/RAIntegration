@@ -41,26 +41,37 @@ public:
     void BindItems(ViewModelCollectionBase& vmItems);
     ViewModelCollectionBase& GetItems() noexcept { return *m_vmItems; }
 
+    void BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept;
+
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
 
     void OnSizeChanged(const ra::ui::Size&) override { UpdateLayout(); }
 
+    bool GetShowGridLines() const noexcept { return m_bShowGridLines; }
+    void SetShowGridLines(bool bValue) noexcept { m_bShowGridLines = bValue; }
+
 protected:
     void UpdateLayout();
     void UpdateAllItems();
     void UpdateItems(gsl::index nColumn);
+    void CheckForScrollBar();
 
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
     void OnViewModelAdded(gsl::index nIndex) override;
-    void OnViewModelRemoved(gsl::index nIndex) noexcept override;
+    void OnViewModelRemoved(gsl::index nIndex) override;
+    void OnBeginViewModelCollectionUpdate() noexcept override;
+    void OnEndViewModelCollectionUpdate() override;
 
 private:
+    bool m_bShowGridLines = false;
+    bool m_bHasScrollbar = false;
     size_t m_nColumnsCreated = 0;
     std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
     ViewModelCollectionBase* m_vmItems = nullptr;
+    const BoolModelProperty* m_pIsSelectedProperty = nullptr;
     HWND m_hInPlaceEditor = nullptr;
 };
 

@@ -53,6 +53,9 @@ public:
 
         virtual void OnViewModelAdded([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
         virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
+
+        virtual void OnBeginViewModelCollectionUpdate() noexcept(false) {}
+        virtual void OnEndViewModelCollectionUpdate() noexcept(false) {}
     };
 
     void AddNotifyTarget(NotifyTarget& pTarget)
@@ -198,6 +201,21 @@ public:
         return -1;
     }
 
+    /// <summary>
+    /// Calls the OnBeginViewModelCollectionUpdate method of any attached NotifyTargets.
+    /// </summary>
+    void BeginUpdate();
+
+    /// <summary>
+    /// Calls the OnEndViewModelCollectionUpdate method of any attached NotifyTargets.
+    /// </summary>
+    void EndUpdate();
+
+    /// <summary>
+    /// Determines if the collection is being updated.
+    /// </summary>
+    bool IsUpdating() const noexcept { return (m_nUpdateCount > 0); }
+
 protected:
     ViewModelBase& AddItem(std::unique_ptr<ViewModelBase> vmViewModel);
 
@@ -308,6 +326,7 @@ private:
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args);
 
     bool m_bFrozen = false;
+    unsigned int m_nUpdateCount = 0;
 
     std::vector<Item> m_vItems;
 

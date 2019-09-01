@@ -5,6 +5,7 @@
 
 #include "data\EmulatorContext.hh"
 
+#include "services\IConfiguration.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
@@ -15,6 +16,7 @@ namespace ui {
 namespace viewmodels {
 
 const StringModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::DescriptionProperty("MemoryBookmarkViewModel", "Description", L"");
+const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsCustomDescriptionProperty("MemoryBookmarkViewModel", "IsCustomDescription", false);
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty("MemoryBookmarkViewModel", "Address", 0);
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty("MemoryBookmarkViewModel", "Size", ra::etoi(MemSize::EightBit));
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty("MemoryBookmarkViewModel", "Format", ra::etoi(MemFormat::Hex));
@@ -22,6 +24,7 @@ const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::Curren
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::PreviousValueProperty("MemoryBookmarkViewModel", "PreviousValue", 0);
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangesProperty("MemoryBookmarkViewModel", "Changes", 0);
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::BehaviorProperty("MemoryBookmarkViewModel", "Behavior", ra::etoi(BookmarkBehavior::None));
+const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsSelectedProperty("MemoryBookmarkViewModel", "IsSelected", false);
 
 MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
 {
@@ -36,6 +39,7 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
     m_vBehaviors.Add(ra::etoi(BookmarkBehavior::Frozen), L"Frozen");
 
     AddNotifyTarget(*this);
+    m_vBookmarks.AddNotifyTarget(*this);
 }
 
 void MemoryBookmarksViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
@@ -52,12 +56,54 @@ void MemoryBookmarksViewModel::OnViewModelBoolValueChanged(const BoolModelProper
     }
 }
 
+void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs& args) noexcept
+{
+    if (args.Property == MemoryBookmarkViewModel::FormatProperty ||
+        args.Property == MemoryBookmarkViewModel::SizeProperty)
+    {
+        m_bModified = true;
+    }
+}
+
+void MemoryBookmarksViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
+{
+    if (args.Property == MemoryBookmarkViewModel::DescriptionProperty)
+    {
+        auto* vmBookmark = m_vBookmarks.GetItemAt(nIndex);
+        Expects(vmBookmark != nullptr);
+
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+        const auto* pNote = pGameContext.FindCodeNote(vmBookmark->GetAddress());
+
+        bool bIsCustomDescription = false;
+        if (pNote)
+        {
+            if (*pNote != args.tNewValue)
+                bIsCustomDescription = true;
+        }
+        else if (!args.tNewValue.empty())
+        {
+            bIsCustomDescription = true;
+        }
+        vmBookmark->SetIsCustomDescription(bIsCustomDescription);
+    }
+}
+
 void MemoryBookmarksViewModel::OnActiveGameChanged()
 {
-    if (IsVisible())
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    if (m_nLoadedGameId != pGameContext.GameId())
     {
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-        if (m_nLoadedGameId != pGameContext.GameId())
+        if (m_bModified && m_nLoadedGameId != 0)
+        {
+            auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+
+            auto pWriter = pLocalStorage.WriteText(ra::services::StorageItemType::Bookmarks, std::to_wstring(m_nLoadedGameId));
+            if (pWriter != nullptr)
+                SaveBookmarks(*pWriter);
+        }
+
+        if (IsVisible())
         {
             auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
 
@@ -68,12 +114,18 @@ void MemoryBookmarksViewModel::OnActiveGameChanged()
             }
             else
             {
+                m_vBookmarks.BeginUpdate();
+
                 while (m_vBookmarks.Count() > 0)
                     m_vBookmarks.RemoveAt(m_vBookmarks.Count() - 1);
+
+                m_vBookmarks.EndUpdate();
             }
 
             m_nLoadedGameId = pGameContext.GameId();
         }
+
+        m_bModified = false;
     }
 }
 
@@ -82,6 +134,9 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     gsl::index nIndex = 0;
+
+    m_vBookmarks.BeginUpdate();
+    m_vBookmarks.RemoveNotifyTarget(*this);
 
     rapidjson::Document document;
     if (LoadDocument(document, sBookmarksFile))
@@ -99,14 +154,17 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
 
                 vmBookmark->SetAddress(bookmark["Address"].GetUint());
 
+                vmBookmark->SetIsCustomDescription(false);
+                const auto* pNote = pGameContext.FindCodeNote(vmBookmark->GetAddress());
                 std::wstring sDescription;
                 if (bookmark.HasMember("Description"))
                 {
                     sDescription = ra::Widen(bookmark["Description"].GetString());
+                    if (!pNote || *pNote != sDescription)
+                        vmBookmark->SetIsCustomDescription(true);
                 }
                 else
                 {
-                    const auto* pNote = pGameContext.FindCodeNote(vmBookmark->GetAddress());
                     if (pNote)
                         sDescription = *pNote;
                 }
@@ -142,6 +200,37 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
 
     while (m_vBookmarks.Count() > ra::to_unsigned(nIndex))
         m_vBookmarks.RemoveAt(m_vBookmarks.Count() - 1);
+
+    m_vBookmarks.AddNotifyTarget(*this);
+    m_vBookmarks.EndUpdate();
+}
+
+void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmarksFile) const
+{
+    rapidjson::Document document;
+    auto& allocator = document.GetAllocator();
+    document.SetObject();
+
+    rapidjson::Value bookmarks(rapidjson::kArrayType);
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
+    {
+        const auto& vmBookmark = *m_vBookmarks.GetItemAt(nIndex);
+
+        rapidjson::Value item(rapidjson::kObjectType);
+        item.AddMember("Address", vmBookmark.GetAddress(), allocator);
+        item.AddMember("Size", gsl::narrow_cast<int>(ra::etoi(vmBookmark.GetSize())), allocator);
+
+        if (vmBookmark.GetFormat() != MemFormat::Hex)
+            item.AddMember("Decimal", true, allocator);
+
+        if (vmBookmark.IsCustomDescription())
+            item.AddMember("Description", ra::Narrow(vmBookmark.GetDescription()), allocator);
+
+        bookmarks.PushBack(item, allocator);
+    }
+
+    document.AddMember("Bookmarks", bookmarks, allocator);
+    SaveDocument(document, sBookmarksFile);
 }
 
 void MemoryBookmarksViewModel::DoFrame()
@@ -168,6 +257,61 @@ void MemoryBookmarksViewModel::DoFrame()
             }
         }
     }
+}
+
+void MemoryBookmarksViewModel::AddBookmark(ra::ByteAddress nAddress, MemSize nSize)
+{
+    auto& vmBookmark = m_vBookmarks.Add();
+    vmBookmark.SetAddress(nAddress);
+    vmBookmark.SetSize(nSize);
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    vmBookmark.SetFormat(pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal) ? MemFormat::Dec : MemFormat::Hex);
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto* pNote = pGameContext.FindCodeNote(nAddress);
+    if (pNote)
+        vmBookmark.SetDescription(*pNote);
+
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto nValue = pEmulatorContext.ReadMemory(nAddress, nSize);
+    vmBookmark.SetCurrentValue(nValue);
+    vmBookmark.SetPreviousValue(0U);
+    vmBookmark.SetChanges(0U);
+
+    m_bModified = true;
+}
+
+int MemoryBookmarksViewModel::RemoveSelectedBookmarks()
+{
+    int nRemoved = 0;
+    for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
+    {
+        if (m_vBookmarks.GetItemAt(nIndex)->IsSelected())
+        {
+            m_vBookmarks.RemoveAt(nIndex);
+            ++nRemoved;
+            m_bModified = true;
+        }
+    }
+
+    return nRemoved;
+}
+
+void MemoryBookmarksViewModel::ClearAllChanges()
+{
+    for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
+        m_vBookmarks.SetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangesProperty, 0);
+}
+
+void MemoryBookmarksViewModel::LoadBookmarkFile() noexcept
+{
+    // TODO: OpenFileDialog
+}
+
+void MemoryBookmarksViewModel::SaveBookmarkFile() const noexcept
+{
+    // TODO: OpenFileDialog
 }
 
 } // namespace viewmodels

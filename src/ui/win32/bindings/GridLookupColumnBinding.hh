@@ -31,7 +31,7 @@ public:
         return pProperty == *m_pBoundProperty;
     }
 
-    HWND CreateInPlaceEditor(HWND hParent, std::unique_ptr<InPlaceEditorInfo> pInfo) override;
+    HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override;
     int GetValueFromIndex(gsl::index nIndex) const;
     const IntModelProperty& GetBoundProperty() const noexcept { return *m_pBoundProperty; }
 

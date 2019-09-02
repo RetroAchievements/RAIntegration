@@ -142,6 +142,16 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
         case WM_COMMAND:
             switch (HIWORD(wParam))
             {
+                case EN_SETFOCUS:
+                {
+                    ra::ui::win32::bindings::ControlBinding* pControlBinding;
+                    GSL_SUPPRESS_TYPE1 pControlBinding = FindControlBinding(reinterpret_cast<HWND>(lParam));
+
+                    if (pControlBinding)
+                        pControlBinding->OnGotFocus();
+                    return TRUE;
+                }
+
                 case EN_KILLFOCUS:
                 {
                     ra::ui::win32::bindings::ControlBinding* pControlBinding;
@@ -216,6 +226,26 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 
                     return 0;
                 }
+
+                case NM_SETFOCUS:
+                {
+                    ra::ui::win32::bindings::ControlBinding* pControlBinding;
+                    GSL_SUPPRESS_TYPE1 pControlBinding = FindControlBinding(reinterpret_cast<HWND>(pnmHdr->hwndFrom));
+
+                    if (pControlBinding)
+                        pControlBinding->OnGotFocus();
+                    return 0;
+                }
+
+                case NM_KILLFOCUS:
+                {
+                    ra::ui::win32::bindings::ControlBinding* pControlBinding;
+                    GSL_SUPPRESS_TYPE1 pControlBinding = FindControlBinding(reinterpret_cast<HWND>(pnmHdr->hwndFrom));
+
+                    if (pControlBinding)
+                        pControlBinding->OnLostFocus();
+                    return 0;
+                }
             }
         }
 
@@ -236,7 +266,6 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
         default:
             return 0;
     }
-
 }
 
 void DialogBase::OnDestroy()

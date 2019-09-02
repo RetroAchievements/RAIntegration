@@ -29,14 +29,12 @@ static LRESULT NotifySelection(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* 
     Expects(gridBinding != nullptr);
     pColumnBinding->SetText(gridBinding->GetItems(), pInfo->nItemIndex, sValue);
 
-    DestroyWindow(hwnd);
-    return 0;
+    return GridBinding::CloseIPE(hwnd, pInfo);
 }
 
 static LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
-    GridColumnBinding::InPlaceEditorInfo* pInfo{};
-    GSL_SUPPRESS_TYPE1 pInfo = reinterpret_cast<GridColumnBinding::InPlaceEditorInfo*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    GridColumnBinding::InPlaceEditorInfo* pInfo = GridBinding::GetIPEInfo(hwnd);
 
     switch (nMsg)
     {
@@ -58,8 +56,7 @@ static LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM 
             if (wParam == VK_ESCAPE)
             {
                 // Undo changes: i.e. simply destroy the window!
-                DestroyWindow(hwnd);
-                return 0;
+                return GridBinding::CloseIPE(hwnd, pInfo);
             }
 
             break;
@@ -68,14 +65,13 @@ static LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM 
     return CallWindowProc(pInfo->pOriginalWndProc, hwnd, nMsg, wParam, lParam);
 }
 
-
-HWND GridTextColumnBinding::CreateInPlaceEditor(HWND hParent, std::unique_ptr<InPlaceEditorInfo> pInfo)
+HWND GridTextColumnBinding::CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo)
 {
     HWND hInPlaceEditor =
         CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("EDIT"), TEXT(""),
             WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | ES_WANTRETURN,
-            pInfo->rcSubItem.left, pInfo->rcSubItem.top, pInfo->rcSubItem.right - pInfo->rcSubItem.left,
-            pInfo->rcSubItem.bottom - pInfo->rcSubItem.top,
+            pInfo.rcSubItem.left, pInfo.rcSubItem.top, pInfo.rcSubItem.right - pInfo.rcSubItem.left,
+            pInfo.rcSubItem.bottom - pInfo.rcSubItem.top,
             hParent, nullptr, GetModuleHandle(nullptr), nullptr);
 
     if (hInPlaceEditor == nullptr)
@@ -87,14 +83,12 @@ HWND GridTextColumnBinding::CreateInPlaceEditor(HWND hParent, std::unique_ptr<In
 
     SetWindowFont(hInPlaceEditor, GetStockFont(DEFAULT_GUI_FONT), TRUE);
 
-    const auto& pItems = static_cast<GridBinding*>(pInfo->pGridBinding)->GetItems();
-    SetWindowTextW(hInPlaceEditor, GetText(pItems, pInfo->nItemIndex).c_str());
+    const auto& pItems = static_cast<GridBinding*>(pInfo.pGridBinding)->GetItems();
+    SetWindowTextW(hInPlaceEditor, GetText(pItems, pInfo.nItemIndex).c_str());
 
     Edit_SetSel(hInPlaceEditor, 0, -1);
-    SetFocus(hInPlaceEditor);
 
-    pInfo->pOriginalWndProc = SubclassWindow(hInPlaceEditor, EditBoxProc);
-    GSL_SUPPRESS_TYPE1 SetWindowLongPtr(hInPlaceEditor, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pInfo.release()));
+    pInfo.pOriginalWndProc = SubclassWindow(hInPlaceEditor, EditBoxProc);
 
     return hInPlaceEditor;
 }

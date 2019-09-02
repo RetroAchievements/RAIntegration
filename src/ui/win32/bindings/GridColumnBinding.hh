@@ -62,7 +62,7 @@ public:
         GridColumnBinding* pColumnBinding;
     };
 
-    virtual HWND CreateInPlaceEditor(HWND, std::unique_ptr<InPlaceEditorInfo>) noexcept(false) { return nullptr; }
+    virtual HWND CreateInPlaceEditor(HWND, InPlaceEditorInfo&) noexcept(false) { return nullptr; }
 
 protected:
     std::wstring m_sHeader;

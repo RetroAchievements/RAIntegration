@@ -46,10 +46,16 @@ public:
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
 
+    void OnGotFocus() override;
+    void OnLostFocus() override;
+
     void OnSizeChanged(const ra::ui::Size&) override { UpdateLayout(); }
 
     bool GetShowGridLines() const noexcept { return m_bShowGridLines; }
     void SetShowGridLines(bool bValue) noexcept { m_bShowGridLines = bValue; }
+
+    static LRESULT CloseIPE(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* pInfo);
+    static GridColumnBinding::InPlaceEditorInfo* GetIPEInfo(HWND hwnd);
 
 protected:
     void UpdateLayout();
@@ -73,6 +79,9 @@ private:
     ViewModelCollectionBase* m_vmItems = nullptr;
     const BoolModelProperty* m_pIsSelectedProperty = nullptr;
     HWND m_hInPlaceEditor = nullptr;
+
+    std::chrono::steady_clock::time_point m_tFocusTime{};
+    std::chrono::steady_clock::time_point m_tIPECloseTime{};
 };
 
 } // namespace bindings

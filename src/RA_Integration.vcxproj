@@ -87,6 +87,7 @@
     <ClCompile Include="ui\ViewModelBase.cpp" />
     <ClCompile Include="ui\ViewModelCollection.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\FileDialogViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp" />
@@ -111,6 +112,7 @@
     <ClCompile Include="ui\win32\BrokenAchievementsDialog.cpp" />
     <ClCompile Include="ui\win32\Desktop.cpp" />
     <ClCompile Include="ui\win32\DialogBase.cpp" />
+    <ClCompile Include="ui\win32\FileDialog.cpp" />
     <ClCompile Include="ui\win32\GameChecksumDialog.cpp" />
     <ClCompile Include="ui\win32\LoginDialog.cpp" />
     <ClCompile Include="ui\win32\MemoryBookmarksDialog.cpp" />
@@ -226,6 +228,7 @@
     <ClInclude Include="ui\ViewModelCollection.hh" />
     <ClInclude Include="ui\viewmodels\BrokenAchievementsViewModel.hh" />
     <ClInclude Include="ui\viewmodels\EmulatorViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\FileDialogViewModel.hh" />
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LoginViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />
@@ -262,6 +265,7 @@
     <ClInclude Include="ui\win32\BrokenAchievementsDialog.hh" />
     <ClInclude Include="ui\win32\Desktop.hh" />
     <ClInclude Include="ui\win32\DialogBase.hh" />
+    <ClInclude Include="ui\win32\FileDialog.hh" />
     <ClInclude Include="ui\win32\GameChecksumDialog.hh" />
     <ClInclude Include="ui\win32\LoginDialog.hh" />
     <ClInclude Include="ui\win32\MemoryBookmarksDialog.hh" />

@@ -243,12 +243,12 @@ public:
     /// <summary>
     /// Prompts the user to select a bookmarks file to load.
     /// </summary>
-    void LoadBookmarkFile() noexcept;
+    void LoadBookmarkFile();
 
     /// <summary>
     /// Prompts the user to select a bookmarks file to save.
     /// </summary>
-    void SaveBookmarkFile() const noexcept;
+    void SaveBookmarkFile() const;
 
 protected:
     void LoadBookmarks(ra::services::TextReader& sBookmarksFile);
@@ -258,6 +258,7 @@ protected:
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) noexcept override;
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
     void OnActiveGameChanged() override;
+    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
 
     bool m_bModified = false;
 

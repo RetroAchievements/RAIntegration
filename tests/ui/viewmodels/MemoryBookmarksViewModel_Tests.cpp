@@ -1,10 +1,13 @@
 #include "CppUnitTest.h"
 
+#include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MemoryBookmarksViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockConfiguration.hh"
+#include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
@@ -25,7 +28,9 @@ private:
         ra::data::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::services::mocks::MockFileSystem mockFileSystem;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
 
         bool IsModified() const noexcept { return m_bModified; }
@@ -426,6 +431,150 @@ public:
 
         Assert::IsFalse(bookmarks.IsModified());
     }
+
+    TEST_METHOD(TestLoadBookmarkFile)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.MockCodeNote(1234U, L"Note description");
+        bookmarks.mockFileSystem.MockFile(L"E:\\Data\\3-Bookmarks.json",
+            "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
+
+        bool bDialogSeen = false;
+        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            bDialogSeen = true;
+
+            Assert::AreEqual(std::wstring(L"Import Bookmark File"), vmFileDialog.GetWindowTitle());
+            Assert::AreEqual({ 2U }, vmFileDialog.GetFileTypes().size());
+            Assert::AreEqual(std::wstring(L"json"), vmFileDialog.GetDefaultExtension());
+            Assert::AreEqual(std::wstring(L"3-Bookmarks.json"), vmFileDialog.GetFileName());
+
+            vmFileDialog.SetFileName(L"E:\\Data\\3-Bookmarks.json");
+
+            return DialogResult::OK;
+        });
+
+        bookmarks.LoadBookmarkFile();
+
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::AreEqual(std::wstring(L"Note description"), bookmark.GetDescription());
+        Assert::AreEqual(1234U, bookmark.GetAddress());
+        Assert::AreEqual((int)MemSize::EightBit, (int)bookmark.GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
+    }
+
+    TEST_METHOD(TestLoadBookmarkFileCancel)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.MockCodeNote(1234U, L"Note description");
+        bookmarks.mockFileSystem.MockFile(L"E:\\Data\\3-Bookmarks.json",
+            "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
+
+        bool bDialogSeen = false;
+        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            bDialogSeen = true;
+
+            Assert::AreEqual(std::wstring(L"Import Bookmark File"), vmFileDialog.GetWindowTitle());
+            Assert::AreEqual({ 2U }, vmFileDialog.GetFileTypes().size());
+            Assert::AreEqual(std::wstring(L"json"), vmFileDialog.GetDefaultExtension());
+            Assert::AreEqual(std::wstring(L"3-Bookmarks.json"), vmFileDialog.GetFileName());
+
+            vmFileDialog.SetFileName(L"E:\\Data\\3-Bookmarks.json");
+
+            return DialogResult::Cancel;
+        });
+
+        bookmarks.LoadBookmarkFile();
+
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Count());
+    }
+
+    TEST_METHOD(TestSaveBookmarkFile)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.MockCodeNote(1234U, L"Note description");
+        bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
+            "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
+
+        bookmarks.mockGameContext.NotifyActiveGameChanged();
+
+        bookmarks.AddBookmark(2345U, MemSize::SixteenBit);
+        Assert::IsTrue(bookmarks.IsModified());
+
+        bool bDialogSeen = false;
+        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            bDialogSeen = true;
+
+            Assert::AreEqual(std::wstring(L"Export Bookmark File"), vmFileDialog.GetWindowTitle());
+            Assert::AreEqual({ 1U }, vmFileDialog.GetFileTypes().size());
+            Assert::AreEqual(std::wstring(L"json"), vmFileDialog.GetDefaultExtension());
+            Assert::AreEqual(std::wstring(L"3-Bookmarks.json"), vmFileDialog.GetFileName());
+
+            vmFileDialog.SetFileName(L"E:\\Data\\3-Bookmarks.json");
+
+            return DialogResult::OK;
+        });
+
+        bookmarks.SaveBookmarkFile();
+
+        Assert::IsTrue(bDialogSeen);
+        Assert::IsTrue(bookmarks.IsModified()); // export does not update modified flag
+        const std::string& sContents = bookmarks.mockFileSystem.GetFileContents(L"E:\\Data\\3-Bookmarks.json");
+        Assert::AreEqual(std::string("{\"Bookmarks\":[{\"Address\":1234,\"Size\":10},{\"Address\":2345,\"Size\":11}]}"), sContents);
+    }
+
+    TEST_METHOD(TestSaveBookmarkFileCancel)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.MockCodeNote(1234U, L"Note description");
+        bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
+            "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
+
+        bookmarks.mockGameContext.NotifyActiveGameChanged();
+
+        bookmarks.AddBookmark(2345U, MemSize::SixteenBit);
+        Assert::IsTrue(bookmarks.IsModified());
+
+        bool bDialogSeen = false;
+        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            bDialogSeen = true;
+
+            Assert::AreEqual(std::wstring(L"Export Bookmark File"), vmFileDialog.GetWindowTitle());
+            Assert::AreEqual({ 1U }, vmFileDialog.GetFileTypes().size());
+            Assert::AreEqual(std::wstring(L"json"), vmFileDialog.GetDefaultExtension());
+            Assert::AreEqual(std::wstring(L"3-Bookmarks.json"), vmFileDialog.GetFileName());
+
+            vmFileDialog.SetFileName(L"E:\\Data\\3-Bookmarks.json");
+
+            return DialogResult::Cancel;
+        });
+
+        bookmarks.SaveBookmarkFile();
+
+        Assert::IsTrue(bDialogSeen);
+        Assert::IsTrue(bookmarks.IsModified()); // export does not update modified flag
+        const std::string& sContents = bookmarks.mockFileSystem.GetFileContents(L"E:\\Data\\3-Bookmarks.json");
+        Assert::AreEqual(std::string(), sContents);
+    }
+
 };
 
 } // namespace tests

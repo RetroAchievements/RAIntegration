@@ -1058,8 +1058,22 @@ void GameContext::AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuth
     }
 
     m_mCodeNotes.insert_or_assign(nAddress, CodeNote{ sAuthor, sNote, nBytes });
+    OnCodeNoteChanged(nAddress, sNote);
 }
 
+void GameContext::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
+{
+    if (!m_vNotifyTargets.empty())
+    {
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
+            target->OnCodeNoteChanged(nAddress, sNewNote);
+        }
+    }
+}
 
 std::wstring GameContext::FindCodeNote(ra::ByteAddress nAddress, MemSize nSize) const
 {
@@ -1167,6 +1181,7 @@ bool GameContext::DeleteCodeNote(ra::ByteAddress nAddress)
         if (response.Succeeded())
         {
             m_mCodeNotes.erase(nAddress);
+            OnCodeNoteChanged(nAddress, L"");
             return true;
         }
 

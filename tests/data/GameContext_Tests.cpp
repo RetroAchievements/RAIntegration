@@ -85,6 +85,37 @@ public:
         ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_OverrideRuntime;
     };
 
+    class GameContextNotifyTarget : public GameContext::NotifyTarget
+    {
+    public:
+        bool GetActiveGameChanged() const noexcept { return m_bActiveGameChanged; }
+
+        const std::wstring* GetNewCodeNote(ra::ByteAddress nAddress)
+        {
+            const auto pIter = m_vCodeNotesChanged.find(nAddress);
+            if (pIter != m_vCodeNotesChanged.end())
+                return &pIter->second;
+
+            return nullptr;
+        }
+
+    protected:
+        void OnActiveGameChanged() override
+        {
+            m_bActiveGameChanged = true;
+            m_vCodeNotesChanged.clear();
+        }
+
+        void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override
+        {
+            m_vCodeNotesChanged.insert_or_assign(nAddress, sNewNote);
+        }
+
+    private:
+        bool m_bActiveGameChanged = false;
+        std::map<ra::ByteAddress, std::wstring> m_vCodeNotesChanged;
+    };
+
     TEST_METHOD(TestLoadGameTitle)
     {
         GameContextHarness game;
@@ -1230,7 +1261,7 @@ public:
         Assert::IsNotNull(vmScoreboard);
         Ensures(vmScoreboard != nullptr);
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
-        Assert::AreEqual(7U, vmScoreboard->Entries().Count());
+        Assert::AreEqual({ 7U }, vmScoreboard->Entries().Count());
 
         const auto* vmEntry1 = vmScoreboard->Entries().GetItemAt(0);
         Assert::IsNotNull(vmEntry1);
@@ -1296,7 +1327,7 @@ public:
         Assert::IsNotNull(vmScoreboard);
         Ensures(vmScoreboard != nullptr);
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
-        Assert::AreEqual(4U, vmScoreboard->Entries().Count());
+        Assert::AreEqual({ 4U }, vmScoreboard->Entries().Count());
 
         const auto* vmEntry2 = vmScoreboard->Entries().GetItemAt(1);
         Assert::IsNotNull(vmEntry2);
@@ -1309,6 +1340,8 @@ public:
 
     TEST_METHOD(TestLoadCodeNotes)
     {
+        GameContextNotifyTarget notifyTarget;
+
         GameContextHarness game;
         game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
         {
@@ -1330,6 +1363,8 @@ public:
             return true;
         });
 
+        game.AddNotifyTarget(notifyTarget);
+
         game.LoadGame(1U);
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
         game.mockThreadPool.ExecuteNextTask();
@@ -1338,23 +1373,39 @@ public:
         Assert::IsNotNull(pNote1);
         Ensures(pNote1 != nullptr);
         Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+        const auto* pNote1b = notifyTarget.GetNewCodeNote(1234U);
+        Assert::IsNotNull(pNote1b);
+        Ensures(pNote1b != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1"), *pNote1b);
 
         const auto* pNote2 = game.FindCodeNote(2345U);
         Assert::IsNotNull(pNote2);
         Ensures(pNote2 != nullptr);
         Assert::AreEqual(std::wstring(L"Note2"), *pNote2);
+        const auto* pNote2b = notifyTarget.GetNewCodeNote(2345U);
+        Assert::IsNotNull(pNote2b);
+        Ensures(pNote2b != nullptr);
+        Assert::AreEqual(std::wstring(L"Note2"), *pNote2b);
 
         const auto* pNote3 = game.FindCodeNote(3456U);
         Assert::IsNotNull(pNote3);
         Ensures(pNote3 != nullptr);
         Assert::AreEqual(std::wstring(L"Note3"), *pNote3);
+        const auto* pNote3b = notifyTarget.GetNewCodeNote(3456U);
+        Assert::IsNotNull(pNote3b);
+        Ensures(pNote3b != nullptr);
+        Assert::AreEqual(std::wstring(L"Note3"), *pNote3b);
 
         const auto* pNote4 = game.FindCodeNote(4567U);
         Assert::IsNull(pNote4);
+        const auto* pNote4b = notifyTarget.GetNewCodeNote(4567U);
+        Assert::IsNull(pNote4b);
 
         game.LoadGame(0U);
         const auto* pNote5 = game.FindCodeNote(1234U);
         Assert::IsNull(pNote5);
+        const auto* pNote5b = notifyTarget.GetNewCodeNote(1234U);
+        Assert::IsNull(pNote5b);
     }
 
     void TestCodeNoteSize(const std::wstring& sNote, unsigned int nExpectedSize)
@@ -1494,6 +1545,7 @@ public:
 
     TEST_METHOD(TestSetCodeNote)
     {
+        GameContextNotifyTarget notifyTarget;
         GameContextHarness game;
         game.mockServer.HandleRequest<ra::api::UpdateCodeNote>([](const ra::api::UpdateCodeNote::Request& request, ra::api::UpdateCodeNote::Response& response)
         {
@@ -1505,6 +1557,8 @@ public:
             return true;
         });
 
+        game.AddNotifyTarget(notifyTarget);
+
         game.SetGameId(1U);
         Assert::IsTrue(game.SetCodeNote(1234, L"Note1"));
 
@@ -1512,6 +1566,10 @@ public:
         Assert::IsNotNull(pNote1);
         Ensures(pNote1 != nullptr);
         Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+        const auto* pNote1b = notifyTarget.GetNewCodeNote(1234U);
+        Assert::IsNotNull(pNote1b);
+        Ensures(pNote1b != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1"), *pNote1b);
     }
 
     TEST_METHOD(TestSetCodeNoteGameNotLoaded)
@@ -1528,6 +1586,8 @@ public:
 
     TEST_METHOD(TestUpdateCodeNote)
     {
+        GameContextNotifyTarget notifyTarget;
+
         int nCalls = 0;
         GameContextHarness game;
         game.mockServer.HandleRequest<ra::api::UpdateCodeNote>([&nCalls](const ra::api::UpdateCodeNote::Request&, ra::api::UpdateCodeNote::Response& response)
@@ -1536,6 +1596,8 @@ public:
             response.Result = ra::api::ApiResult::Success;
             return true;
         });
+
+        game.AddNotifyTarget(notifyTarget);
 
         game.SetGameId(1U);
         Assert::IsTrue(game.SetCodeNote(1234, L"Note1"));
@@ -1551,11 +1613,18 @@ public:
         Ensures(pNote1b != nullptr);
         Assert::AreEqual(std::wstring(L"Note1b"), *pNote1b);
 
+        const auto* pNote1x = notifyTarget.GetNewCodeNote(1234U);
+        Assert::IsNotNull(pNote1x);
+        Ensures(pNote1x != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1b"), *pNote1x);
+
         Assert::AreEqual(2, nCalls);
     }
 
     TEST_METHOD(TestDeleteCodeNote)
     {
+        GameContextNotifyTarget notifyTarget;
+
         GameContextHarness game;
         game.mockServer.HandleRequest<ra::api::UpdateCodeNote>([](const ra::api::UpdateCodeNote::Request&, ra::api::UpdateCodeNote::Response& response)
         {
@@ -1572,6 +1641,8 @@ public:
             return true;
         });
 
+        game.AddNotifyTarget(notifyTarget);
+
         game.SetGameId(1U);
         Assert::IsTrue(game.SetCodeNote(1234, L"Note1"));
 
@@ -1583,6 +1654,11 @@ public:
         Assert::IsTrue(game.DeleteCodeNote(1234));
         const auto* pNote1b = game.FindCodeNote(1234U);
         Assert::IsNull(pNote1b);
+
+        const auto* pNote1x = notifyTarget.GetNewCodeNote(1234U);
+        Assert::IsNotNull(pNote1x);
+        Ensures(pNote1x != nullptr);
+        Assert::AreEqual(std::wstring(), *pNote1x);
     }
 
     TEST_METHOD(TestDeleteCodeNoteNonExistant)

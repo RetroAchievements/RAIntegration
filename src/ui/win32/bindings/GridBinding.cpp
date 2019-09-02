@@ -463,6 +463,14 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
                 pInfo->rcSubItem.top += rcOffset.top + 1;
                 pInfo->rcSubItem.bottom += rcOffset.top + 1;
 
+                // the SubItemRect for the first column contains the entire row, adjust to just the first column
+                if (pInfo->nColumnIndex == 0 && m_vColumns.size() > 1)
+                {
+                    RECT rcSecondColumn;
+                    ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, 1, LVIR_BOUNDS, &rcSecondColumn);
+                    pInfo->rcSubItem.right = rcSecondColumn.left + rcOffset.left + 1;
+                }
+
                 const HWND hParent = GetAncestor(m_hWnd, GA_ROOT);
                 m_hInPlaceEditor = pColumn->CreateInPlaceEditor(hParent, std::move(pInfo));
                 if (m_hInPlaceEditor)

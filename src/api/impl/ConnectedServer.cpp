@@ -302,7 +302,7 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
     auto pFile = pFileSystem.OpenTextFile(sFilePath);
     if (pFile != nullptr)
     {
-        const int nLength = sPostData.length();
+        const auto nLength = sPostData.length();
         sPostData.resize(gsl::narrow_cast<size_t>(nFileSize + nLength));
         pFile->GetBytes(&sPostData.at(nLength), gsl::narrow_cast<size_t>(nFileSize));
     }

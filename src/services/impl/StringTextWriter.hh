@@ -26,7 +26,7 @@ public:
 
     void Write(_In_ const std::string& sText) override
     {
-        if (m_nWritePosition < gsl::narrow_cast<std::size_t>(m_sOutput.length()))
+        if (gsl::narrow_cast<std::size_t>(m_nWritePosition) < m_sOutput.length())
         {
             m_sOutput.replace(gsl::narrow_cast<std::size_t>(m_nWritePosition), sText.length(), sText.c_str());
             m_nWritePosition += sText.length();

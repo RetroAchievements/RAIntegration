@@ -443,7 +443,7 @@ void GridBinding::OnGotFocus()
     }
 }
 
-void GridBinding::OnLostFocus()
+void GridBinding::OnLostFocus() noexcept
 {
     if (!m_hInPlaceEditor)
         m_tFocusTime = {};
@@ -498,8 +498,8 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
                 // the SubItemRect for the first column contains the entire row, adjust to just the first column
                 if (pInfo->nColumnIndex == 0 && m_vColumns.size() > 1)
                 {
-                    RECT rcSecondColumn;
-                    ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, 1, LVIR_BOUNDS, &rcSecondColumn);
+                    RECT rcSecondColumn{};
+                    GSL_SUPPRESS_ES47 ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, 1, LVIR_BOUNDS, &rcSecondColumn);
                     pInfo->rcSubItem.right = rcSecondColumn.left + rcOffset.left + 1;
                 }
 
@@ -516,7 +516,7 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
     }
 }
 
-GridColumnBinding::InPlaceEditorInfo* GridBinding::GetIPEInfo(HWND hwnd)
+GridColumnBinding::InPlaceEditorInfo* GridBinding::GetIPEInfo(HWND hwnd) noexcept
 {
     GridColumnBinding::InPlaceEditorInfo* pInfo;
     GSL_SUPPRESS_TYPE1 pInfo = reinterpret_cast<GridColumnBinding::InPlaceEditorInfo*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));

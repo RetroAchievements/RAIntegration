@@ -47,7 +47,7 @@ public:
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
 
     void OnGotFocus() override;
-    void OnLostFocus() override;
+    void OnLostFocus() noexcept override;
 
     void OnSizeChanged(const ra::ui::Size&) override { UpdateLayout(); }
 
@@ -55,7 +55,7 @@ public:
     void SetShowGridLines(bool bValue) noexcept { m_bShowGridLines = bValue; }
 
     static LRESULT CloseIPE(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* pInfo);
-    static GridColumnBinding::InPlaceEditorInfo* GetIPEInfo(HWND hwnd);
+    static GridColumnBinding::InPlaceEditorInfo* GetIPEInfo(HWND hwnd) noexcept;
 
 protected:
     void UpdateLayout();

@@ -93,6 +93,8 @@ protected:
         {
             if (nSize > sizeof(m_vBytes))
                 std::memcpy(m_pBytes, other.m_pBytes, nSize);
+            else
+                std::memcpy(m_vBytes, other.m_vBytes, sizeof(m_vBytes));
         }
         MemBlock& operator=(const MemBlock&) noexcept = delete;
 

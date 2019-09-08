@@ -26,14 +26,12 @@ static LRESULT NotifySelection(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* 
     Expects(gridBinding != nullptr);
     gridBinding->GetItems().SetItemValue(pInfo->nItemIndex, pColumnBinding->GetBoundProperty(), nValue);
 
-    DestroyWindow(hwnd);
-    return 0;
+    return GridBinding::CloseIPE(hwnd, pInfo);
 }
 
 static LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
-    GridColumnBinding::InPlaceEditorInfo* pInfo{};
-    GSL_SUPPRESS_TYPE1 pInfo = reinterpret_cast<GridColumnBinding::InPlaceEditorInfo*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    GridColumnBinding::InPlaceEditorInfo* pInfo = GridBinding::GetIPEInfo(hwnd);
 
     switch (nMsg)
     {
@@ -60,7 +58,7 @@ static LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM
             if (wParam == VK_ESCAPE)
             {
                 // Undo changes: i.e. simply destroy the window!
-                DestroyWindow(hwnd);
+                return GridBinding::CloseIPE(hwnd, pInfo);
             }
 
             break;
@@ -70,13 +68,13 @@ static LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM
 }
 
 
-HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, std::unique_ptr<InPlaceEditorInfo> pInfo)
+HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo)
 {
     HWND hInPlaceEditor =
         CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
             WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | CBS_DROPDOWNLIST,
-            pInfo->rcSubItem.left, pInfo->rcSubItem.top, pInfo->rcSubItem.right - pInfo->rcSubItem.left,
-            ra::ftol(1.6F * (pInfo->rcSubItem.bottom - pInfo->rcSubItem.top) * m_vmItems.Count()),
+            pInfo.rcSubItem.left, pInfo.rcSubItem.top, pInfo.rcSubItem.right - pInfo.rcSubItem.left,
+            ra::ftol(1.6F * (pInfo.rcSubItem.bottom - pInfo.rcSubItem.top) * m_vmItems.Count()),
             hParent, nullptr, GetModuleHandle(nullptr), nullptr);
 
     if (hInPlaceEditor == nullptr)
@@ -84,10 +82,10 @@ HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, std::unique_ptr<
         assert(!"Could not create combo box!");
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Could not create combo box.");
         return nullptr;
-    };
+    }
 
-    const auto& pItems = static_cast<GridBinding*>(pInfo->pGridBinding)->GetItems();
-    const auto nValue = pItems.GetItemValue(pInfo->nItemIndex, *m_pBoundProperty);
+    const auto& pItems = static_cast<GridBinding*>(pInfo.pGridBinding)->GetItems();
+    const auto nValue = pItems.GetItemValue(pInfo.nItemIndex, *m_pBoundProperty);
     for (size_t i = 0; i < m_vmItems.Count(); ++i)
     {
         const auto* pItem = m_vmItems.GetItemAt(i);
@@ -101,8 +99,7 @@ HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, std::unique_ptr<
     SetWindowFont(hInPlaceEditor, GetStockObject(DEFAULT_GUI_FONT), TRUE);
     ComboBox_ShowDropdown(hInPlaceEditor, TRUE);
 
-    pInfo->pOriginalWndProc = SubclassWindow(hInPlaceEditor, DropDownProc);
-    GSL_SUPPRESS_TYPE1 SetWindowLongPtr(hInPlaceEditor, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pInfo.release()));
+    pInfo.pOriginalWndProc = SubclassWindow(hInPlaceEditor, DropDownProc);
 
     return hInPlaceEditor;
 }

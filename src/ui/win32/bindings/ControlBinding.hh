@@ -46,7 +46,12 @@ public:
         m_pDialog = &pDialog;
         m_pDialog->AddControlBinding(hControl, *this);
     }
-    
+
+    /// <summary>
+    /// Called when the bound control gains keyboard focus.
+    /// </summary>
+    GSL_SUPPRESS_F6 virtual void OnGotFocus() {}
+
     /// <summary>
     /// Called when the bound control loses keyboard focus.
     /// </summary>

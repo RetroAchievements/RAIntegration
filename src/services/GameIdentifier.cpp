@@ -22,7 +22,6 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #ifndef RA_UTEST
-extern bool g_bRAMTamperedWith;
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_MemBookmark.h"
@@ -193,9 +192,9 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
         pGameContext.SetGameHash((m_nPendingGameId == 0) ? m_sPendingMD5 : "");
     }
 
-#ifndef RA_UTEST
-    g_bRAMTamperedWith = false;
+    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().ResetMemoryModified();
 
+#ifndef RA_UTEST
     g_AchievementsDialog.OnLoad_NewRom(nGameId);
     g_AchievementEditorDialog.OnLoad_NewRom();
     g_MemoryDialog.OnLoad_NewRom();

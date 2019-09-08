@@ -7,6 +7,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 
 #include "tests\mocks\MockAudioSystem.hh"
+#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
@@ -46,6 +47,7 @@ public:
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
+        ra::data::mocks::MockEmulatorContext mockEmulator;
         ra::data::mocks::MockUserContext mockUser;
         ra::services::AchievementRuntime runtime;
 
@@ -867,6 +869,29 @@ public:
         game.mockThreadPool.ExecuteNextTask();
     }
 
+    TEST_METHOD(TestAwardAchievementMemoryModified)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+
+        game.MockAchievement();
+        game.mockEmulator.MockMemoryModified(true);
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Error: RAM tampered with"), pPopup->GetDetail());
+        Assert::IsTrue(pPopup->IsDetailError());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
     TEST_METHOD(TestAwardAchievementDuplicate)
     {
         GameContextHarness game;
@@ -1305,6 +1330,32 @@ public:
         Assert::AreEqual(std::wstring(L"Player"), vmEntry2->GetUserName());
         Assert::AreEqual(std::wstring(L"(1234) 1200"), vmEntry2->GetScore());
         Assert::IsTrue(vmEntry2->IsHighlighted());
+    }
+
+    TEST_METHOD(TestSubmitLeaderboardEntryMemoryModified)
+    {
+        GameContextHarness game;
+        game.SetGameHash("hash");
+
+        game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
+
+        game.MockLeaderboard();
+        game.mockEmulator.MockMemoryModified(true);
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        // SubmitLeaderboardEntry API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        // error message should be reported
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Leaderboard NOT Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Error: RAM tampered with"), pPopup->GetDetail());
+        Assert::IsTrue(pPopup->IsDetailError());
     }
 
     TEST_METHOD(TestLoadCodeNotes)

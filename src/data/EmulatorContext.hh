@@ -203,6 +203,16 @@ public:
     /// </summary>
     void WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const noexcept;
 
+    /// <summary>
+    /// Gets whether or not memory has been modified.
+    /// </summary>
+    bool WasMemoryModified() const noexcept { return m_bMemoryModified; }
+
+    /// <summary>
+    /// Resets the memory modified flag.
+    /// </summary>
+    void ResetMemoryModified() noexcept { m_bMemoryModified = false; }
+
 protected:
     void UpdateUserAgent();
 
@@ -230,6 +240,7 @@ protected:
 
     std::vector<MemoryBlock> m_vMemoryBlocks;
     size_t m_nTotalMemorySize = 0U;
+    mutable bool m_bMemoryModified = false;
 };
 
 } // namespace data

@@ -4,6 +4,9 @@
 
 #include "GridCheckBoxColumnBinding.hh"
 
+#include "services\IClock.hh"
+#include "services\ServiceLocator.hh"
+
 namespace ra {
 namespace ui {
 namespace win32 {
@@ -424,12 +427,41 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
         }
         break;
     }
+
+    if (!m_hInPlaceEditor && pnmListView->uNewState & LVIS_SELECTED)
+        m_tFocusTime = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
+}
+
+void GridBinding::OnGotFocus()
+{
+    if (!m_hInPlaceEditor)
+    {
+        const auto tNow = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
+        const auto tElapsed = tNow - m_tIPECloseTime;
+        if (tElapsed > std::chrono::milliseconds(200))
+            m_tFocusTime = tNow;
+    }
+}
+
+void GridBinding::OnLostFocus() noexcept
+{
+    if (!m_hInPlaceEditor)
+        m_tFocusTime = {};
 }
 
 void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
 {
+    // if an in-place editor is open, close it.
+    if (m_hInPlaceEditor)
+        SendMessage(m_hInPlaceEditor, WM_KILLFOCUS, 0, 0);
+
     if (ra::to_unsigned(pnmItemActivate->iSubItem) < m_vColumns.size())
     {
+        // if the click also caused a focus event, ignore it
+        const auto nElapsed = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime() - m_tFocusTime;
+        if (nElapsed < std::chrono::milliseconds(200))
+            return;
+
         const auto& pColumn = m_vColumns.at(pnmItemActivate->iSubItem);
         if (!pColumn->IsReadOnly())
         {
@@ -463,19 +495,50 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
                 pInfo->rcSubItem.top += rcOffset.top + 1;
                 pInfo->rcSubItem.bottom += rcOffset.top + 1;
 
+                // the SubItemRect for the first column contains the entire row, adjust to just the first column
+                if (pInfo->nColumnIndex == 0 && m_vColumns.size() > 1)
+                {
+                    RECT rcSecondColumn{};
+                    GSL_SUPPRESS_ES47 ListView_GetSubItemRect(m_hWnd, pInfo->nItemIndex, 1, LVIR_BOUNDS, &rcSecondColumn);
+                    pInfo->rcSubItem.right = rcSecondColumn.left + rcOffset.left + 1;
+                }
+
                 const HWND hParent = GetAncestor(m_hWnd, GA_ROOT);
-                m_hInPlaceEditor = pColumn->CreateInPlaceEditor(hParent, std::move(pInfo));
+                m_hInPlaceEditor = pColumn->CreateInPlaceEditor(hParent, *pInfo);
                 if (m_hInPlaceEditor)
+                {
+                    GSL_SUPPRESS_TYPE1 SetWindowLongPtr(m_hInPlaceEditor, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(pInfo.release()));
+                    SetFocus(m_hInPlaceEditor);
                     return;
+                }
             }
         }
     }
-
-    // if the editor is open, close it.
-    if (m_hInPlaceEditor)
-        SendMessage(m_hInPlaceEditor, WM_KILLFOCUS, 0, 0);
 }
 
+GridColumnBinding::InPlaceEditorInfo* GridBinding::GetIPEInfo(HWND hwnd) noexcept
+{
+    GridColumnBinding::InPlaceEditorInfo* pInfo;
+    GSL_SUPPRESS_TYPE1 pInfo = reinterpret_cast<GridColumnBinding::InPlaceEditorInfo*>(GetWindowLongPtr(hwnd, GWLP_USERDATA));
+    return pInfo;
+}
+
+LRESULT GridBinding::CloseIPE(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* pInfo)
+{
+    GridBinding* gridBinding = static_cast<GridBinding*>(pInfo->pGridBinding);
+    Expects(gridBinding != nullptr);
+
+    // DestroyWindow will free pInfo - cannot use after this point
+    DestroyWindow(hwnd);
+
+    if (gridBinding->m_hInPlaceEditor == hwnd)
+    {
+        gridBinding->m_tIPECloseTime = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
+        gridBinding->m_hInPlaceEditor = nullptr;
+    }
+
+    return 0;
+}
 
 } // namespace bindings
 } // namespace win32

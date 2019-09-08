@@ -280,9 +280,6 @@ void MemoryViewerControl::editData(unsigned int nByteAddress, bool bLowerNibble,
     auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
     uint8_t nVal = pEmulatorContext.ReadMemoryByte(nByteAddress);
 
-    //	Immediately invalidate all submissions.
-    g_bRAMTamperedWith = true;
-
     if (bLowerNibble)
     {
         //	We're submitting a new lower nibble:
@@ -1136,7 +1133,6 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         auto nVal = pEmulatorContext.ReadMemoryByte(nAddr);
                         nVal ^= (1 << nBit);
                         pEmulatorContext.WriteMemoryByte(nAddr, nVal);
-                        g_bRAMTamperedWith = true;
 
                         MemoryViewerControl::Invalidate();
                         UpdateBits();

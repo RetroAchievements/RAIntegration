@@ -104,6 +104,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::DescriptionProperty);
     pDescriptionColumn->SetHeader(L"Description");
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 40);
+    pDescriptionColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(0, std::move(pDescriptionColumn));
 
     auto pAchievedColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(

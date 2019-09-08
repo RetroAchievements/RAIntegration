@@ -76,17 +76,17 @@ public:
         FileLocalStorage storage(mockFileSystem);
 
         std::vector<std::wstring> vFiles;
-        Assert::AreEqual(2U, mockFileSystem.GetFilesInDirectory(L".\\RACache\\Badge\\", vFiles));
+        Assert::AreEqual({ 2U }, mockFileSystem.GetFilesInDirectory(L".\\RACache\\Badge\\", vFiles));
         Assert::IsTrue(std::find(vFiles.begin(), vFiles.end(), L"00002.png") != vFiles.end());
         Assert::IsTrue(std::find(vFiles.begin(), vFiles.end(), L"00003.png") != vFiles.end());
 
         vFiles.clear();
-        Assert::AreEqual(2U, mockFileSystem.GetFilesInDirectory(L".\\RACache\\UserPic\\", vFiles));
+        Assert::AreEqual({ 2U }, mockFileSystem.GetFilesInDirectory(L".\\RACache\\UserPic\\", vFiles));
         Assert::IsTrue(std::find(vFiles.begin(), vFiles.end(), L"00002.png") != vFiles.end());
         Assert::IsTrue(std::find(vFiles.begin(), vFiles.end(), L"00003.png") != vFiles.end());
 
         vFiles.clear();
-        Assert::AreEqual(5U, mockFileSystem.GetFilesInDirectory(L".\\RACache\\Data\\", vFiles));
+        Assert::AreEqual({ 5U }, mockFileSystem.GetFilesInDirectory(L".\\RACache\\Data\\", vFiles));
         Assert::IsTrue(std::find(vFiles.begin(), vFiles.end(), L"123-User.txt") != vFiles.end()); // user file should not be deleted, regardless of age
         Assert::IsTrue(std::find(vFiles.begin(), vFiles.end(), L"456.json") != vFiles.end());
         Assert::IsTrue(std::find(vFiles.begin(), vFiles.end(), L"456-Rich.txt") != vFiles.end());
@@ -95,13 +95,13 @@ public:
 
         // bookmarks should never be deleted
         vFiles.clear();
-        Assert::AreEqual(2U, mockFileSystem.GetFilesInDirectory(L".\\RACache\\Bookmarks\\", vFiles));
+        Assert::AreEqual({ 2U }, mockFileSystem.GetFilesInDirectory(L".\\RACache\\Bookmarks\\", vFiles));
         Assert::IsTrue(std::find(vFiles.begin(), vFiles.end(), L"123-Bookmarks.txt") != vFiles.end());
         Assert::IsTrue(std::find(vFiles.begin(), vFiles.end(), L"456-Bookmarks.txt") != vFiles.end());
 
         // files in the cache root should never be deleted
         vFiles.clear();
-        Assert::AreEqual(2U, mockFileSystem.GetFilesInDirectory(L".\\RACache\\", vFiles));
+        Assert::AreEqual({ 2U }, mockFileSystem.GetFilesInDirectory(L".\\RACache\\", vFiles));
         Assert::IsTrue(std::find(vFiles.begin(), vFiles.end(), L"User-history.txt") != vFiles.end());
         Assert::IsTrue(std::find(vFiles.begin(), vFiles.end(), L"User2-history.txt") != vFiles.end());
     }

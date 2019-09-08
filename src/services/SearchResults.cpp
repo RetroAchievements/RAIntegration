@@ -38,7 +38,7 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, MemSi
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
     if (nBytes + nAddress > pEmulatorContext.TotalMemorySize())
-        nBytes = pEmulatorContext.TotalMemorySize() - nAddress;
+        nBytes = gsl::narrow<unsigned int>(pEmulatorContext.TotalMemorySize()) - nAddress;
 
     const unsigned int nPadding = Padding(nSize);
     if (nPadding >= nBytes)
@@ -414,7 +414,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
 unsigned int SearchResults::MatchingAddressCount() noexcept
 {
     if (!m_bUnfiltered)
-        return m_vMatchingAddresses.size();
+        return gsl::narrow_cast<unsigned int>(m_vMatchingAddresses.size());
 
     const unsigned int nPadding = Padding(m_nSize);
     unsigned int nCount = 0;

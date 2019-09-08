@@ -41,7 +41,6 @@ std::string g_sROMDirLocation;
 HMODULE g_hThisDLLInst = nullptr;
 HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
-bool g_bRAMTamperedWith = false;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
@@ -649,7 +648,7 @@ API void CCONV _RA_OnSaveState(const char* sFilename)
 {
     if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
-        if (!g_bRAMTamperedWith)
+        if (!ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().WasMemoryModified())
             ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgress(sFilename);
     }
 }

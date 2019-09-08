@@ -61,6 +61,11 @@ public:
         AddMemoryBlock(0, nBytes, ReadMemoryHelper, WriteMemoryHelper);
     }
 
+    void MockMemoryModified(bool bModified) noexcept
+    {
+        m_bMemoryModified = bModified;
+    }
+
 private:
     static uint8_t ReadMemoryHelper(uint32_t nAddress) noexcept
     {

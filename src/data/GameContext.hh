@@ -267,6 +267,7 @@ public:
         NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
         virtual void OnActiveGameChanged() noexcept(false) {}
+        virtual void OnCodeNoteChanged(ra::ByteAddress, const std::wstring&) noexcept(false) {}
     };
 
     void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
@@ -285,6 +286,7 @@ protected:
     void AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote);
 
     void OnActiveGameChanged();
+    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);
 
     unsigned int m_nGameId = 0;
     std::wstring m_sGameTitle;

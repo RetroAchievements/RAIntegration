@@ -31,7 +31,7 @@
 namespace ra {
 namespace services {
 
-unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, unsigned int nROMSize)
+unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
 {
     m_nPendingMode = ra::data::GameContext::Mode::Normal;
 
@@ -205,7 +205,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
 #endif
 }
 
-void GameIdentifier::IdentifyAndActivateGame(const BYTE* pROM, unsigned int nROMSize)
+void GameIdentifier::IdentifyAndActivateGame(const BYTE* pROM, size_t nROMSize)
 {
     const auto nGameId = IdentifyGame(pROM, nROMSize);
     ActivateGame(nGameId);

@@ -223,10 +223,6 @@ void Dlg_Achievements::UpdateAchievementList()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     std::vector<ra::AchievementID> vAchievementIDs;
 
-    HWND hList = GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS);
-    if (!hList)
-        return;
-
     pGameContext.EnumerateAchievements([&vAchievementIDs, nActiveCategory = m_nActiveCategory](const Achievement& pAchievement)
     {
         if (pAchievement.GetCategory() == nActiveCategory)
@@ -234,6 +230,13 @@ void Dlg_Achievements::UpdateAchievementList()
 
         return true;
     });
+
+    HWND hList = GetDlgItem(m_hAchievementsDlg, IDC_RA_LISTACHIEVEMENTS);
+    if (!hList)
+    {
+        m_vAchievementIDs.swap(vAchievementIDs);
+        return;
+    }
 
     size_t nInsertIndex = 0;
     for (auto nAchievementID : vAchievementIDs)
@@ -248,8 +251,15 @@ void Dlg_Achievements::UpdateAchievementList()
     {
         if (nInsertIndex < m_vAchievementIDs.size())
         {
-            while (nInsertIndex < m_vAchievementIDs.size())
-                ListView_DeleteItem(hList, nInsertIndex);
+            if (nInsertIndex == 0)
+            {
+                ListView_DeleteAllItems(hList);
+            }
+            else
+            {
+                for (int nIndex = m_vAchievementIDs.size() - 1; nIndex >= nInsertIndex; --nIndex)
+                    ListView_DeleteItem(hList, nIndex);
+            }
 
             m_lbxData.erase(m_lbxData.begin() + nInsertIndex, m_lbxData.end());
             m_vAchievementIDs.erase(m_vAchievementIDs.begin() + nInsertIndex, m_vAchievementIDs.end());

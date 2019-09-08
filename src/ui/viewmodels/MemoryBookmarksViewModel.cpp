@@ -6,9 +6,11 @@
 #include "data\EmulatorContext.hh"
 
 #include "services\IConfiguration.hh"
+#include "services\IFileSystem.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 namespace ra {
@@ -126,6 +128,16 @@ void MemoryBookmarksViewModel::OnActiveGameChanged()
         }
 
         m_bModified = false;
+    }
+}
+
+void MemoryBookmarksViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
+{
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
+    {
+        auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
+        if (pBookmark && pBookmark->GetAddress() == nAddress && !pBookmark->IsCustomDescription())
+            pBookmark->SetDescription(sNewNote);
     }
 }
 
@@ -304,14 +316,56 @@ void MemoryBookmarksViewModel::ClearAllChanges()
         m_vBookmarks.SetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangesProperty, 0);
 }
 
-void MemoryBookmarksViewModel::LoadBookmarkFile() noexcept
+void MemoryBookmarksViewModel::LoadBookmarkFile()
 {
-    // TODO: OpenFileDialog
-}
+    ra::ui::viewmodels::FileDialogViewModel vmFileDialog;
+    vmFileDialog.SetWindowTitle(L"Import Bookmark File");
+    vmFileDialog.AddFileType(L"JSON File", L"*.json");
+    vmFileDialog.AddFileType(L"Text File", L"*.txt");
+    vmFileDialog.SetDefaultExtension(L"json");
 
-void MemoryBookmarksViewModel::SaveBookmarkFile() const noexcept
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-Bookmarks.json", pGameContext.GameId()));
+
+    if (vmFileDialog.ShowOpenFileDialog() == ra::ui::DialogResult::OK)
+    {
+        const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+        auto pTextReader = pFileSystem.OpenTextFile(vmFileDialog.GetFileName());
+        if (pTextReader == nullptr)
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                ra::StringPrintf(L"Could not open %s", vmFileDialog.GetFileName()));
+        }
+        else
+        {
+            LoadBookmarks(*pTextReader);
+        }
+    }}
+
+void MemoryBookmarksViewModel::SaveBookmarkFile() const
 {
-    // TODO: OpenFileDialog
+    ra::ui::viewmodels::FileDialogViewModel vmFileDialog;
+    vmFileDialog.SetWindowTitle(L"Export Bookmark File");
+    vmFileDialog.AddFileType(L"JSON File", L"*.json");
+    vmFileDialog.SetDefaultExtension(L"json");
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-Bookmarks.json", pGameContext.GameId()));
+
+    if (vmFileDialog.ShowSaveFileDialog() == ra::ui::DialogResult::OK)
+    {
+        const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+        auto pTextWriter = pFileSystem.CreateTextFile(vmFileDialog.GetFileName());
+        if (pTextWriter == nullptr)
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                ra::StringPrintf(L"Could not create %s", vmFileDialog.GetFileName()));
+        }
+        else
+        {
+            SaveBookmarks(*pTextWriter);
+        }
+    }
 }
 
 } // namespace viewmodels

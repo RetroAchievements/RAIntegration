@@ -812,6 +812,47 @@ public:
         Assert::AreEqual(0U, results.MatchingAddressCount());
         Assert::AreEqual(std::string("Cleared: (16-bit) mode. Aware of 0 RAM locations."), results.Summary());
     }
+
+    TEST_METHOD(TestCopyConstructor)
+    {
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(1U, 3U, MemSize::EightBit);
+        Assert::AreEqual(3U, results1.MatchingAddressCount());
+
+        // exclude doesn't do anything to unfiltered results
+        results1.ExcludeMatchingAddress(0U);
+        Assert::AreEqual(3U, results1.MatchingAddressCount());
+
+        memory.at(1) = 0x14;
+        memory.at(2) = 0x55;
+        SearchResults results;
+        results.Initialize(results1, ComparisonType::NotEqualTo);
+        Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
+
+        SearchResults results2(results);
+
+        Assert::AreEqual(2U, results2.MatchingAddressCount());
+        Assert::IsFalse(results2.ContainsAddress(0U));
+        Assert::IsTrue(results2.ContainsAddress(1U));
+        Assert::IsTrue(results2.ContainsAddress(2U));
+        Assert::IsFalse(results2.ContainsAddress(3U));
+        Assert::IsFalse(results2.ContainsAddress(4U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(1U, result.nAddress);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
+        Assert::AreEqual(0x14U, result.nValue);
+
+        Assert::IsTrue(results.GetMatchingAddress(1U, result));
+        Assert::AreEqual(2U, result.nAddress);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
+        Assert::AreEqual(0x55U, result.nValue);
+    }
 };
 
 } // namespace tests

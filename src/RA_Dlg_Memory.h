@@ -92,6 +92,7 @@ public:
     void UpdateMemoryRegions();
 
     void SetWatchingAddress(unsigned int nAddr);
+    void GoToAddress(unsigned int nAddr);
     void UpdateBits() const;
     BOOL IsActive() const noexcept;
 

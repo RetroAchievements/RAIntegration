@@ -45,6 +45,7 @@ public:
 
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
+    void OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate);
 
     void OnGotFocus() override;
     void OnLostFocus() noexcept override;

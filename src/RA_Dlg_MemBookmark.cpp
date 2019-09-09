@@ -328,10 +328,7 @@ INT_PTR Dlg_MemBookmark::MemBookmarkDialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                     }
                     else if ((pOnClick->iItem != -1) && (pOnClick->iSubItem == SubItems::Address))
                     {
-                        g_MemoryDialog.SetWatchingAddress(m_vBookmarks.at(pOnClick->iItem).Address());
-                        MemoryViewerControl::setAddress(
-                            (m_vBookmarks.at(pOnClick->iItem).Address() & ~(0xf)) -
-                            (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
+                        g_MemoryDialog.GoToAddress(m_vBookmarks.at(pOnClick->iItem).Address());
                     }
                 }
             }

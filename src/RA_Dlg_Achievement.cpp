@@ -257,7 +257,7 @@ void Dlg_Achievements::UpdateAchievementList()
             }
             else
             {
-                for (int nIndex = m_vAchievementIDs.size() - 1; nIndex >= nInsertIndex; --nIndex)
+                for (int nIndex = m_vAchievementIDs.size() - 1; nIndex >= ra::to_signed(nInsertIndex); --nIndex)
                     ListView_DeleteItem(hList, nIndex);
             }
 

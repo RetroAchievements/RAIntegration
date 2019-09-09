@@ -31,7 +31,7 @@ public:
         return pProperty == *m_pBoundProperty;
     }
 
-    bool HandleDoubleClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex);
+    bool HandleDoubleClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override;
 
 protected:
     const IntModelProperty* m_pBoundProperty = nullptr;

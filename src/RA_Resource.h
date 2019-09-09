@@ -135,7 +135,7 @@
 #define IDM_RA_RETROACHIEVEMENTS        1700
 #define IDM_RA_FILES_TEST1              1701
 #define IDM_RA_FILES_TEST2              1702
-#define IDM_RA_FILES_CHECKFORUPDATE     1703    // available
+#define IDM_RA_FILES_MEMORYBOOKMARKS    1703
 #define IDM_RA_FILES_ACHIEVEMENTS       1704
 #define IDM_RA_FILES_MEMORYFINDER       1705
 #define IDM_RA_FILES_LOGIN              1706

@@ -10,6 +10,7 @@
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
+#include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -37,6 +38,7 @@ public:
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockStorage;
         ra::services::mocks::MockThreadPool mockThreadPool;
+        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
         bool HasStoredData() const
         {
@@ -53,9 +55,9 @@ public:
             mockStorage.MockStoredData(StorageItemType::SessionStats, m_sUsernameWide, sContents);
         }
 
-        void MockInspectingMemory(bool bInspectingMemory) noexcept 
+        void MockInspectingMemory(bool bInspectingMemory)
         {
-            m_bInspectingMemory = bInspectingMemory;
+            mockWindowManager.MemoryBookmarks.SetIsVisible(bInspectingMemory);
         }
 
         std::wstring GetActivity() const
@@ -63,11 +65,7 @@ public:
             return SessionTracker::GetCurrentActivity();
         }
 
-    protected:
-        bool IsInspectingMemory() const noexcept override { return m_bInspectingMemory; }
-
     private:
-        bool m_bInspectingMemory{ false };
         std::string m_sUsername;
         std::wstring m_sUsernameWide;
     };

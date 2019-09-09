@@ -18,6 +18,8 @@
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
 
+#include "ui\viewmodels\WindowManager.hh"
+
 namespace ra {
 namespace data {
 
@@ -213,13 +215,19 @@ std::chrono::seconds SessionTracker::GetTotalPlaytime(unsigned int nGameId) cons
     return tPlaytime;
 }
 
-bool SessionTracker::IsInspectingMemory() const noexcept
+bool SessionTracker::IsInspectingMemory() const
 {
-#ifdef RA_UTEST
-    return false;
-#else
-    return (g_MemoryDialog.IsActive() || g_AchievementEditorDialog.IsActive() || g_MemBookmarkDialog.IsActive());
+    const auto& pWindowManager = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>();
+
+    if (pWindowManager.MemoryBookmarks.IsVisible())
+        return true;
+
+#ifndef RA_UTEST
+    if (g_MemoryDialog.IsActive() || g_AchievementEditorDialog.IsActive() || g_MemBookmarkDialog.IsActive())
+        return true;
 #endif
+
+    return false;
 }
 
 static bool HasCoreAchievements(const ra::data::GameContext& pGameContext)

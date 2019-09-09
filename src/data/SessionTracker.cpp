@@ -235,13 +235,18 @@ static bool HasCoreAchievements(const ra::data::GameContext& pGameContext)
     bool bResult = false;
     pGameContext.EnumerateAchievements([&bResult](const Achievement& pAchievement) noexcept
     {
-        if (pAchievement.GetCategory() == Achievement::Category::Core)
+        switch (pAchievement.GetCategory())
         {
-            bResult = true;
-            return false;
-        }
+            case Achievement::Category::Local:
+            case Achievement::Category::Unofficial:
+                // not Core, keep looking
+                return true;
 
-        return true;
+            default:
+                // Core, Bonus, or something else that's been published, set found flag and stop looking
+                bResult = true;
+                return false;
+        }
     });
 
     return bResult;
@@ -262,27 +267,7 @@ std::wstring SessionTracker::GetCurrentActivity() const
         if (_RA_HardcoreModeIsActive())
             return L"Inspecting Memory in Hardcore mode";
 
-        bool bHasCore = false;
-        pGameContext.EnumerateAchievements([&bHasCore](const Achievement& pAchievement) noexcept
-        {
-            switch (pAchievement.GetCategory())
-            {
-                case Achievement::Category::Local:
-                case Achievement::Category::Unofficial:
-                    break;
-
-                default:
-                    bHasCore = true;
-                    return false;
-            }
-
-            return true;
-        });
-
-        if (bHasCore)
-            return L"Fixing Achievements";
-
-        return L"Developing Achievements";
+        return L"Fixing Achievements";
     }
 
     if (pGameContext.HasRichPresence())

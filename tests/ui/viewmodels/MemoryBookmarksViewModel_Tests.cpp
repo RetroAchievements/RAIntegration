@@ -86,6 +86,7 @@ public:
         Assert::AreEqual(0U, bookmark.GetCurrentValue());
         Assert::AreEqual(0U, bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
+        Assert::IsTrue(bookmarks.HasBookmark(1234U));
     }
 
     TEST_METHOD(TestLoadBookmarksOnGameChangedNotVisible)
@@ -120,6 +121,9 @@ public:
         bookmarks.mockGameContext.NotifyActiveGameChanged();
         Assert::AreEqual({ 2U }, bookmarks.Bookmarks().Count());
 
+        Assert::IsTrue(bookmarks.HasBookmark(1234U));
+        Assert::IsTrue(bookmarks.HasBookmark(1235U));
+
         bookmarks.mockGameContext.SetGameId(4U);
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"4",
             "{\"Bookmarks\":[{\"Description\":\"desc3\",\"Address\":5555,\"Type\":2,\"Decimal\":false}]}");
@@ -135,6 +139,10 @@ public:
         Assert::AreEqual(0U, bookmark.GetCurrentValue());
         Assert::AreEqual(0U, bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
+
+        Assert::IsFalse(bookmarks.HasBookmark(1234U));
+        Assert::IsFalse(bookmarks.HasBookmark(1235U));
+        Assert::IsTrue(bookmarks.HasBookmark(5555U));
     }
 
     TEST_METHOD(TestLoadBookmarksNoFile)

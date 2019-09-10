@@ -6,12 +6,12 @@
 #define IDD_RA_MEMBOOKMARK              117
 #define IDC_RA_RICHPRESENCERESULTTEXT   1022
 #define IDC_RA_LBX_ADDRESSES            1023
-#define IDC_RA_ADD_BOOKMARK             1024
+#define IDC_RA_AVAILABLE1               1024 // available
 #define IDC_RA_DEL_BOOKMARK             1025
 #define IDC_RA_CLEAR_CHANGE             1026
-#define IDC_RA_FREEZE                   1027
-#define IDC_RA_BREAKPOINT               1028
-#define IDC_RA_DECIMALBOOKMARK          1029
+#define IDC_RA_MOVE_BOOKMARK_UP         1027
+#define IDC_RA_AVAILABLE2               1028 // available
+#define IDC_RA_MOVE_BOOKMARK_DOWN       1029
 #define IDC_RA_SAVEBOOKMARK             1030
 #define IDC_RA_LOADBOOKMARK             1031
 #define IDC_RA_RESULTS_BACK             1032
@@ -40,7 +40,7 @@
 #define IDC_RA_ADDNOTE                  1515
 #define IDC_RA_REMNOTE                  1516
 #define IDC_RA_UPLOAD_BADGE             1517
-#define IDC_RA_OPENBOOKMARKS            1518
+#define IDC_RA_ADDBOOKMARK              1518
 #define IDC_RA_INFO_GG                  1519
 #define IDC_RA_MEM_LIST                 1520
 #define IDC_RA_HELP                     1521

@@ -8,7 +8,6 @@
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_GameLibrary.h"
-#include "RA_Dlg_MemBookmark.h"
 #include "RA_Dlg_Memory.h"
 
 #include "data\ConsoleContext.hh"
@@ -155,10 +154,13 @@ API int CCONV _RA_Shutdown()
 
     g_GameLibrary.KillThread();
 
-    if (g_MemBookmarkDialog.GetHWND() != nullptr)
+    if (ra::services::ServiceLocator::Exists<ra::ui::viewmodels::WindowManager>())
     {
-        DestroyWindow(g_MemBookmarkDialog.GetHWND());
-        g_MemBookmarkDialog.InstallHWND(nullptr);
+        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+        auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+
+        if (pWindowManager.MemoryBookmarks.IsVisible())
+            pDesktop.CloseWindow(pWindowManager.MemoryBookmarks);
     }
 
     ra::services::Initialization::Shutdown();

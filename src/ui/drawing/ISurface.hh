@@ -137,6 +137,11 @@ public:
     /// </summary>
     virtual std::unique_ptr<ISurface> CreateTransparentSurface(int nWidth, int nHeight) const = 0;
 
+    /// <summary>
+    /// Saves the provided surface to the specified file.
+    /// </summary>
+    virtual bool SaveImage(const ISurface& pSurface, const std::wstring& sPath) const = 0;
+
 protected:
     ISurfaceFactory() noexcept = default;
 };

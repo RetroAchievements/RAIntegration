@@ -119,6 +119,11 @@ public:
         return (m_fAnimationProgress >= TOTAL_ANIMATION_TIME);
     }
 
+    /// <summary>
+    /// Gets the final Y location to render the popup at.
+    /// </summary>
+    int GetRenderTargetY() const noexcept { return m_nTargetY; }
+
 private:
     void CreateRenderImage();
     bool m_bSurfaceStale = false;

@@ -18,8 +18,10 @@ GDISurface::GDISurface(HDC hDC, const RECT& rcDEST, ResourceRepository& pResourc
 void GDISurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept
 {
     assert(nColor.Channel.A == 0xFF || nColor.Channel.A == 0x00);
-    SetDCBrushColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
-    SetDCPenColor(m_hDC, RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B));
+
+    COLORREF pColorRef = RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B);
+    SetDCBrushColor(m_hDC, pColorRef);
+    SetDCPenColor(m_hDC, pColorRef);
     Rectangle(m_hDC, nX, nY, nX + nWidth, nY + nHeight);
 }
 

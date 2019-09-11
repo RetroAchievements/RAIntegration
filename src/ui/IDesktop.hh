@@ -2,6 +2,7 @@
 #define RA_UI_DESKTOP
 
 #include "ui/WindowViewModelBase.hh"
+#include "ui/drawing/ISurface.hh"
 
 namespace ra {
 namespace ui {
@@ -57,6 +58,11 @@ public:
     /// </summary>
     /// <param name="sUrl">The URL to open.</param>
     virtual void OpenUrl(const std::string& sUrl) const = 0;
+
+    /// <summary>
+    /// Captures the currently displayed contents of the specified window in an <see cref="ISurface" />
+    /// </summary>
+    virtual std::unique_ptr<ra::ui::drawing::ISurface> CaptureClientArea(const WindowViewModelBase& vmViewModel) const = 0;
 
     virtual void Shutdown() = 0;
 

@@ -57,6 +57,11 @@ public:
         return std::make_unique<MockSurface>(nWidth, nHeight);
     }
 
+    bool SaveImage(const ISurface&, const std::wstring&) const
+    {
+        return false;
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ISurfaceFactory> m_Override;
 };

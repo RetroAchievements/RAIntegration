@@ -29,6 +29,8 @@ public:
     std::string GetRunningExecutable() const override;
     std::string GetOSVersionString() const override;
 
+    std::unique_ptr<ra::ui::drawing::ISurface> CaptureClientArea(const WindowViewModelBase& vmViewModel) const override;
+
 private:
     _Success_(return != nullptr)
     _NODISCARD IDialogPresenter* GetDialogPresenter(_In_ const WindowViewModelBase& oViewModel) const;

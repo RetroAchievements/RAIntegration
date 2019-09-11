@@ -149,6 +149,16 @@ public:
     }
 
     /// <summary>
+    /// Captures a screenshot with the associated message
+    /// </summary>
+    void CaptureScreenshot(int nMessageId, const std::wstring& sPath);
+
+    /// <summary>
+    /// Advances the frame counter to indicate the capture screen is no longer valid.
+    /// </summary>
+    void AdvanceFrame() noexcept { ++m_nFrameId; }
+
+    /// <summary>
     /// Adds a score tracker for a leaderboard.
     /// </summary>
     ScoreTrackerViewModel& AddScoreTracker(ra::LeaderboardID nLeaderboardId);
@@ -228,6 +238,9 @@ public:
         m_fHandleHideRequest = std::move(fHandleHideRequest);
     }
 
+    /// <summary>
+    /// Gets whether or not there is something visible to render on the overlay
+    /// </summary>
     bool NeedsRender() const noexcept;
 
 protected:
@@ -252,6 +265,9 @@ private:
 
     void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);
 
+    void ProcessScreenshots();
+    std::unique_ptr<ra::ui::drawing::ISurface> RenderScreenshot(const ra::ui::drawing::ISurface& pClientSurface, const PopupMessageViewModel& vmPopup);
+
     bool m_bRedrawAll = false;
     std::chrono::steady_clock::time_point m_tLastRender{};
     std::function<void()> m_fHandleRenderRequest;
@@ -259,6 +275,18 @@ private:
     std::function<void()> m_fHandleHideRequest;
 
     std::atomic<int> m_nPopupId{ 0 };
+
+    int m_nFrameId = 0;
+
+    struct Screenshot
+    {
+        int nFrameId;
+        std::unique_ptr<ra::ui::drawing::ISurface> pScreen;
+        std::map<int, std::wstring> vMessages;
+    };
+    std::vector<Screenshot> m_vScreenshotQueue;
+    std::mutex m_pScreenshotQueueMutex;
+    bool m_bProcessingScreenshots = false;
 };
 
 } // namespace viewmodels

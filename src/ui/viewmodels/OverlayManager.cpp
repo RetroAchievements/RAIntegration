@@ -5,6 +5,11 @@
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\IDesktop.hh"
+#include "ui\OverlayTheme.hh"
+
+#include "ui\viewmodels\WindowManager.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -455,6 +460,129 @@ void OverlayManager::UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double f
         if (!m_vPopupMessages.empty())
             RenderPopup(pSurface, m_vPopupMessages.front());
     }
+}
+
+void OverlayManager::CaptureScreenshot(int nMessageId, const std::wstring& sPath)
+{
+    {
+        std::lock_guard<std::mutex> pGuard(m_pScreenshotQueueMutex);
+
+        if (!m_vScreenshotQueue.empty() && m_vScreenshotQueue.back().nFrameId == m_nFrameId)
+        {
+            m_vScreenshotQueue.back().vMessages.insert_or_assign(nMessageId, sPath);
+            return;
+        }
+
+        auto& pScreenshot = m_vScreenshotQueue.emplace_back();
+        pScreenshot.nFrameId = m_nFrameId;
+        pScreenshot.vMessages.insert_or_assign(nMessageId, sPath);
+
+        const auto& pWindowManager = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>();
+        const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+        pScreenshot.pScreen = pDesktop.CaptureClientArea(pWindowManager.Emulator);
+
+        if (m_bProcessingScreenshots)
+            return;
+
+        m_bProcessingScreenshots = true;
+    }
+
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([this]()
+    {
+        ProcessScreenshots();
+    });
+}
+
+void OverlayManager::ProcessScreenshots()
+{
+    std::map<std::wstring, std::unique_ptr<ra::ui::drawing::ISurface>> mReady;
+    const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
+
+    {
+        std::lock_guard<std::mutex> pGuard(m_pScreenshotQueueMutex);
+
+        auto pScreenshotIter = m_vScreenshotQueue.begin();
+        while (pScreenshotIter != m_vScreenshotQueue.end())
+        {
+            auto& pScreenshot = *pScreenshotIter;
+            auto iter = pScreenshot.vMessages.begin();
+            while (iter != pScreenshot.vMessages.end())
+            {
+                auto* pMessage = GetMessage(iter->first);
+                if (pMessage == nullptr)
+                {
+                    // popup no longer available, discard request
+                    iter = pScreenshot.vMessages.erase(iter);
+                }
+                else
+                {
+                    const auto& pImageReference = pMessage->GetImage();
+                    if (pImageRepository.IsImageAvailable(pImageReference.Type(), pImageReference.Name()))
+                    {
+                        if (!pMessage->IsAnimationStarted())
+                        {
+                            pMessage->BeginAnimation();
+                            pMessage->UpdateRenderImage(0.0);
+                        }
+
+                        mReady.insert_or_assign(iter->second, RenderScreenshot(*pScreenshot.pScreen, *pMessage));
+                        iter = pScreenshot.vMessages.erase(iter);
+                    }
+                    else
+                    {
+                        ++iter;
+                    }
+                }
+            }
+
+            if (pScreenshot.vMessages.empty())
+                pScreenshotIter = m_vScreenshotQueue.erase(pScreenshotIter);
+            else
+                ++pScreenshotIter;
+        }
+
+        if (m_vScreenshotQueue.empty())
+        {
+            m_bProcessingScreenshots = false;
+        }
+        else
+        {
+            ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::milliseconds(200), [this]()
+            {
+                ProcessScreenshots();
+            });
+        }
+    }
+
+    const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
+    for (const auto& pFile : mReady)
+        pSurfaceFactory.SaveImage(*pFile.second, pFile.first);
+}
+
+std::unique_ptr<ra::ui::drawing::ISurface> OverlayManager::RenderScreenshot(const ra::ui::drawing::ISurface& pClientSurface, const PopupMessageViewModel& vmPopup)
+{
+    const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
+    auto pSurface = pSurfaceFactory.CreateSurface(pClientSurface.GetWidth(), pClientSurface.GetHeight());
+
+    pSurface->DrawSurface(0, 0, pClientSurface);
+
+    const int nX = GetAbsolutePosition(vmPopup.GetRenderLocationX(), vmPopup.GetRenderLocationXRelativePosition(), pSurface->GetWidth());
+    const int nY = GetAbsolutePosition(vmPopup.GetRenderTargetY(), vmPopup.GetRenderLocationYRelativePosition(), pSurface->GetHeight());
+    const auto& pPopupImage = vmPopup.GetRenderImage();
+
+    if (ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>().Transparent())
+    {
+        auto pTransparentPopup = pSurfaceFactory.CreateTransparentSurface(pPopupImage.GetWidth(), pPopupImage.GetHeight());
+        pTransparentPopup->DrawSurface(0, 0, pPopupImage);
+        pTransparentPopup->SetOpacity(0.85);
+        pSurface->DrawSurface(nX, nY, *pTransparentPopup);
+    }
+    else
+    {
+        pSurface->DrawSurface(nX, nY, pPopupImage);
+    }
+
+    return pSurface;
 }
 
 } // namespace viewmodels

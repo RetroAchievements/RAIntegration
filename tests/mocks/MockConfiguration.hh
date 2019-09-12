@@ -38,8 +38,11 @@ public:
 
     unsigned int GetNumBackgroundThreads() const noexcept override { return m_nBackgroundThreads; }
 
-    const std::string& GetRomDirectory() const noexcept override { return m_sRomDirectory; }
-    void SetRomDirectory(const std::string& sValue) override { m_sRomDirectory = sValue; }
+    const std::wstring& GetRomDirectory() const noexcept override { return m_sRomDirectory; }
+    void SetRomDirectory(const std::wstring& sValue) override { m_sRomDirectory = sValue; }
+
+    const std::wstring& GetScreenshotDirectory() const noexcept override { return m_sScreenshotDirectory; }
+    void SetScreenshotDirectory(const std::wstring& sValue) override { m_sScreenshotDirectory = sValue; }
 
     ra::ui::Position GetWindowPosition([[maybe_unused]] const std::string& /*sPositionKey*/) const override
     {
@@ -87,7 +90,8 @@ private:
 
     std::string m_sUsername;
     std::string m_sApiToken;
-    std::string m_sRomDirectory;
+    std::wstring m_sRomDirectory;
+    std::wstring m_sScreenshotDirectory;
     std::string m_sHostName;
     std::string m_sHostUrl;
     std::string m_sImageHostUrl;

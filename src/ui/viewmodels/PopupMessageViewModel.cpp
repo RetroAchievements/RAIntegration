@@ -93,48 +93,53 @@ void PopupMessageViewModel::CreateRenderImage()
     const int nHeight = 4 + nImageSize + 4 + nShadowOffset;
 
     pSurface = pSurfaceFactory.CreateSurface(nWidth, nHeight);
-    m_pSurface = std::move(pSurface);
 
     int nX = 4;
     int nY = 4;
 
     // background
-    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), ra::ui::Color::Transparent);
-    m_pSurface->FillRectangle(nShadowOffset, nShadowOffset, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset, pOverlayTheme.ColorShadow());
+    pSurface->FillRectangle(0, 0, nWidth, nHeight, ra::ui::Color::Transparent);
+    pSurface->FillRectangle(nShadowOffset, nShadowOffset, nWidth - nShadowOffset, nHeight - nShadowOffset, pOverlayTheme.ColorShadow());
 
     // frame
-    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset, pOverlayTheme.ColorBackground());
-    m_pSurface->FillRectangle(1, 1, m_pSurface->GetWidth() - nShadowOffset - 2, m_pSurface->GetHeight() - nShadowOffset - 2, pOverlayTheme.ColorBorder());
-    m_pSurface->FillRectangle(2, 2, m_pSurface->GetWidth() - nShadowOffset - 4, m_pSurface->GetHeight() - nShadowOffset - 4, pOverlayTheme.ColorBackground());
+    pSurface->FillRectangle(0, 0, nWidth - nShadowOffset, nHeight - nShadowOffset, pOverlayTheme.ColorBackground());
+    pSurface->FillRectangle(1, 1, nWidth - nShadowOffset - 2, nHeight - nShadowOffset - 2, pOverlayTheme.ColorBorder());
+    pSurface->FillRectangle(2, 2, nWidth - nShadowOffset - 4, nHeight - nShadowOffset - 4, pOverlayTheme.ColorBackground());
 
     // image
     if (m_hImage.Type() != ra::ui::ImageType::None)
     {
-        m_pSurface->DrawImage(nX, nY, nImageSize, nImageSize, m_hImage);
+        pSurface->DrawImage(nX, nY, nImageSize, nImageSize, m_hImage);
         nX += nImageSize;
     }
     nX += 6;
 
     // title
     nY -= 1;
-    m_pSurface->WriteText(nX + 2, nY + 2, nFontTitle, pOverlayTheme.ColorTextShadow(), sTitle);
-    m_pSurface->WriteText(nX, nY, nFontTitle, pOverlayTheme.ColorTitle(), sTitle);
+    pSurface->WriteText(nX + 2, nY + 2, nFontTitle, pOverlayTheme.ColorTextShadow(), sTitle);
+    pSurface->WriteText(nX, nY, nFontTitle, pOverlayTheme.ColorTitle(), sTitle);
     nX += nSubTitleIndent;
 
     // subtitle
     nY += pOverlayTheme.FontSizePopupTitle() - 1;
     if (!sSubTitle.empty())
     {
-        m_pSurface->WriteText(nX + 2, nY + 2, nFontSubtitle, pOverlayTheme.ColorTextShadow(), sSubTitle);
-        m_pSurface->WriteText(nX, nY, nFontSubtitle, pOverlayTheme.ColorDescription(), sSubTitle);
+        pSurface->WriteText(nX + 2, nY + 2, nFontSubtitle, pOverlayTheme.ColorTextShadow(), sSubTitle);
+        pSurface->WriteText(nX, nY, nFontSubtitle, pOverlayTheme.ColorDescription(), sSubTitle);
     }
 
     // detail
     nY += pOverlayTheme.FontSizePopupSubtitle();
     if (!sDetail.empty())
     {
-        m_pSurface->WriteText(nX + 2, nY + 2, nFontDetail, pOverlayTheme.ColorTextShadow(), sDetail);
-        m_pSurface->WriteText(nX, nY, nFontDetail, IsDetailError() ? pOverlayTheme.ColorError() : pOverlayTheme.ColorDetail(), sDetail);
+        pSurface->WriteText(nX + 2, nY + 2, nFontDetail, pOverlayTheme.ColorTextShadow(), sDetail);
+        pSurface->WriteText(nX, nY, nFontDetail, IsDetailError() ? pOverlayTheme.ColorError() : pOverlayTheme.ColorDetail(), sDetail);
+    }
+
+    {
+        RenderImageLock(*this);
+
+        m_pSurface = std::move(pSurface);
     }
 }
 

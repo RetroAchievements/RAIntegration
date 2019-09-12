@@ -22,8 +22,12 @@ public:
     void SetFeatureEnabled(Feature nFeature, bool bEnabled) noexcept override;
 
     unsigned int GetNumBackgroundThreads() const noexcept override { return m_nBackgroundThreads; }
-    const std::string& GetRomDirectory() const noexcept override { return m_sRomDirectory; }
-    void SetRomDirectory(const std::string& sValue) override { m_sRomDirectory = sValue; }
+
+    const std::wstring& GetRomDirectory() const noexcept override { return m_sRomDirectory; }
+    void SetRomDirectory(const std::wstring& sValue) override { m_sRomDirectory = sValue; }
+
+    const std::wstring& GetScreenshotDirectory() const noexcept override { return m_sScreenshotDirectory; }
+    void SetScreenshotDirectory(const std::wstring& sValue) override { m_sScreenshotDirectory = sValue; }
 
     ra::ui::Position GetWindowPosition(const std::string& sPositionKey) const override;
     void SetWindowPosition(const std::string& sPositionKey, const ra::ui::Position& oPosition) override;
@@ -46,7 +50,8 @@ private:
     int m_vEnabledFeatures = 0;
 
     unsigned int m_nBackgroundThreads = 8;
-    std::string m_sRomDirectory;
+    std::wstring m_sRomDirectory;
+    std::wstring m_sScreenshotDirectory;
 
     typedef struct WindowPosition
     {

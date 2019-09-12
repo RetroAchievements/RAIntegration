@@ -82,17 +82,17 @@ public:
     /// <summary>
     /// Queues a popup message.
     /// </summary>
-    int QueueMessage(PopupMessageViewModel&& pMessage);
+    int QueueMessage(std::unique_ptr<PopupMessageViewModel>& pMessage);
 
     /// <summary>
     /// Queues a popup message.
     /// </summary>
     int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription)
     {
-        PopupMessageViewModel vmMessage;
-        vmMessage.SetTitle(sTitle);
-        vmMessage.SetDescription(sDescription);
-        return QueueMessage(std::move(vmMessage));
+        std::unique_ptr<PopupMessageViewModel> vmMessage(new PopupMessageViewModel);
+        vmMessage->SetTitle(sTitle);
+        vmMessage->SetDescription(sDescription);
+        return QueueMessage(vmMessage);
     }
 
     /// <summary>
@@ -100,11 +100,11 @@ public:
     /// </summary>
     int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription, const std::wstring& sDetail)
     {
-        PopupMessageViewModel vmMessage;
-        vmMessage.SetTitle(sTitle);
-        vmMessage.SetDescription(sDescription);
-        vmMessage.SetDetail(sDetail);
-        return QueueMessage(std::move(vmMessage));
+        std::unique_ptr<PopupMessageViewModel> vmMessage(new PopupMessageViewModel);
+        vmMessage->SetTitle(sTitle);
+        vmMessage->SetDescription(sDescription);
+        vmMessage->SetDetail(sDetail);
+        return QueueMessage(vmMessage);
     }
 
     /// <summary>
@@ -112,11 +112,11 @@ public:
     /// </summary>
     int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription, ra::ui::ImageType nImageType, const std::string& sImageName)
     {
-        PopupMessageViewModel vmMessage;
-        vmMessage.SetTitle(sTitle);
-        vmMessage.SetDescription(sDescription);
-        vmMessage.SetImage(nImageType, sImageName);
-        return QueueMessage(std::move(vmMessage));
+        std::unique_ptr<PopupMessageViewModel> vmMessage(new PopupMessageViewModel);
+        vmMessage->SetTitle(sTitle);
+        vmMessage->SetDescription(sDescription);
+        vmMessage->SetImage(nImageType, sImageName);
+        return QueueMessage(vmMessage);
     }
 
     /// <summary>
@@ -124,12 +124,12 @@ public:
     /// </summary>
     int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription, const std::wstring& sDetail, ra::ui::ImageType nImageType, const std::string& sImageName)
     {
-        PopupMessageViewModel vmMessage;
-        vmMessage.SetTitle(sTitle);
-        vmMessage.SetDescription(sDescription);
-        vmMessage.SetDetail(sDetail);
-        vmMessage.SetImage(nImageType, sImageName);
-        return QueueMessage(std::move(vmMessage));
+        std::unique_ptr<PopupMessageViewModel> vmMessage(new PopupMessageViewModel);
+        vmMessage->SetTitle(sTitle);
+        vmMessage->SetDescription(sDescription);
+        vmMessage->SetDetail(sDetail);
+        vmMessage->SetImage(nImageType, sImageName);
+        return QueueMessage(vmMessage);
     }
 
     /// <summary>
@@ -141,8 +141,8 @@ public:
     {
         for (auto& pMessage : m_vPopupMessages)
         {
-            if (pMessage.GetPopupId() == nId)
-                return &pMessage;
+            if (pMessage->GetPopupId() == nId)
+                return pMessage.get();
         }
 
         return nullptr;
@@ -245,7 +245,7 @@ public:
 
 protected:
     ra::ui::viewmodels::OverlayViewModel m_vmOverlay;
-    std::deque<PopupMessageViewModel> m_vPopupMessages;
+    std::deque<std::unique_ptr<PopupMessageViewModel>> m_vPopupMessages;
     std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
     std::deque<ScoreboardViewModel> m_vScoreboards;
 

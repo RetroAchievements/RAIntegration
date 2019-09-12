@@ -11,6 +11,12 @@ namespace viewmodels {
 class PopupMessageViewModel : public PopupViewModelBase
 {
 public:
+    PopupMessageViewModel() = default;
+    PopupMessageViewModel(const PopupMessageViewModel&) = delete;
+    PopupMessageViewModel& operator=(const PopupMessageViewModel&) = delete;
+    PopupMessageViewModel(PopupMessageViewModel&&) = default;
+    PopupMessageViewModel& operator=(PopupMessageViewModel&&) = default;
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the title message.
     /// </summary>
@@ -124,9 +130,22 @@ public:
     /// </summary>
     int GetRenderTargetY() const noexcept { return m_nTargetY; }
 
+    class RenderImageLock
+    {
+    public:
+        RenderImageLock(PopupMessageViewModel& owner)
+            : m_pLock(owner.m_pSurfaceMutex)
+        {
+        }
+
+    private:
+        std::lock_guard<std::recursive_mutex> m_pLock;
+    };
+
 private:
     void CreateRenderImage();
     bool m_bSurfaceStale = false;
+    std::recursive_mutex m_pSurfaceMutex;
 
     double m_fAnimationProgress = -1.0;
     int m_nInitialY = 0;

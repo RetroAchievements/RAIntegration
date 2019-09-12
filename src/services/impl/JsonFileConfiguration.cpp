@@ -50,6 +50,11 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     if (doc.HasMember("Non Hardcore Warning"))
         SetFeatureEnabled(Feature::NonHardcoreWarning, doc["Non Hardcore Warning"].GetBool());
 
+    if (doc.HasMember("Achievement Screenshot"))
+        SetFeatureEnabled(Feature::AchievementScreenshot, doc["Achievement Screenshot"].GetBool());
+    if (doc.HasMember("Screenshot Directory"))
+        SetScreenshotDirectory(ra::Widen(doc["Screenshot Directory"].GetString()));
+
     if (doc.HasMember("Leaderboards Active"))
         SetFeatureEnabled(Feature::Leaderboards, doc["Leaderboards Active"].GetBool());
     if (doc.HasMember("Leaderboard Notification Display"))
@@ -67,7 +72,7 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     if (doc.HasMember("Num Background Threads"))
         m_nBackgroundThreads = doc["Num Background Threads"].GetUint();
     if (doc.HasMember("ROM Directory"))
-        m_sRomDirectory = doc["ROM Directory"].GetString();
+        m_sRomDirectory = ra::Widen(doc["ROM Directory"].GetString());
 
     if (doc.HasMember("Window Positions"))
     {
@@ -112,6 +117,7 @@ void JsonFileConfiguration::Save() const
     doc.AddMember("Token", rapidjson::StringRef(m_sApiToken), a);
     doc.AddMember("Hardcore Active", IsFeatureEnabled(Feature::Hardcore), a);
     doc.AddMember("Non Hardcore Warning", IsFeatureEnabled(Feature::NonHardcoreWarning), a);
+    doc.AddMember("Achievement Screenshot", IsFeatureEnabled(Feature::AchievementScreenshot), a);
     doc.AddMember("Leaderboards Active", IsFeatureEnabled(Feature::Leaderboards), a);
     doc.AddMember("Leaderboard Notification Display", IsFeatureEnabled(Feature::LeaderboardNotifications), a);
     doc.AddMember("Leaderboard Cancel Display", IsFeatureEnabled(Feature::LeaderboardCancelNotifications), a);
@@ -121,7 +127,10 @@ void JsonFileConfiguration::Save() const
     doc.AddMember("Num Background Threads", m_nBackgroundThreads, a);
 
     if (!m_sRomDirectory.empty())
-        doc.AddMember("ROM Directory", rapidjson::StringRef(m_sRomDirectory), a);
+        doc.AddMember("ROM Directory", ra::Narrow(m_sRomDirectory), a);
+
+    if (!m_sScreenshotDirectory.empty())
+        doc.AddMember("Screenshot Directory", ra::Narrow(m_sScreenshotDirectory), a);
 
     rapidjson::Value positions(rapidjson::kObjectType);
     for (WindowPositionMap::const_iterator iter = m_mWindowPositions.begin(); iter != m_mWindowPositions.end(); ++iter)

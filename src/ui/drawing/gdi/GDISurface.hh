@@ -24,8 +24,8 @@ public:
 
     ~GDISurface() noexcept = default;
 
-    size_t GetWidth() const noexcept override { return m_nWidth; }
-    size_t GetHeight() const noexcept override { return m_nHeight; }
+    unsigned int GetWidth() const noexcept override { return m_nWidth; }
+    unsigned int GetHeight() const noexcept override { return m_nHeight; }
 
     void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
 
@@ -50,8 +50,8 @@ protected:
     ResourceRepository& m_pResourceRepository;
 
 private:
-    int m_nWidth{};
-    int m_nHeight{};
+    unsigned int m_nWidth{};
+    unsigned int m_nHeight{};
 
     ResourceRepository m_oResourceRepository;
 

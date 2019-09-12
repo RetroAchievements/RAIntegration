@@ -11,12 +11,6 @@ namespace viewmodels {
 class PopupMessageViewModel : public PopupViewModelBase
 {
 public:
-    PopupMessageViewModel() = default;
-    PopupMessageViewModel(const PopupMessageViewModel&) = delete;
-    PopupMessageViewModel& operator=(const PopupMessageViewModel&) = delete;
-    PopupMessageViewModel(PopupMessageViewModel&&) = default;
-    PopupMessageViewModel& operator=(PopupMessageViewModel&&) = default;
-
     /// <summary>
     /// The <see cref="ModelProperty" /> for the title message.
     /// </summary>

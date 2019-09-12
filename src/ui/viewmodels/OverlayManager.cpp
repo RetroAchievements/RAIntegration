@@ -16,7 +16,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-static int GetAbsolutePosition(int nValue, RelativePosition nRelativePosition, size_t nFarValue) noexcept
+static int GetAbsolutePosition(int nValue, RelativePosition nRelativePosition, unsigned int nFarValue) noexcept
 {
     switch (nRelativePosition)
     {
@@ -331,6 +331,7 @@ void OverlayManager::UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, do
     assert(!m_vPopupMessages.empty());
 
     auto* pActiveMessage = m_vPopupMessages.front().get();
+    Expects(pActiveMessage != nullptr);
     UpdatePopup(pSurface, fElapsed, *pActiveMessage);
 
     while (pActiveMessage->IsAnimationComplete() || pActiveMessage->IsDestroyPending())
@@ -340,6 +341,7 @@ void OverlayManager::UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, do
             break;
 
         pActiveMessage = m_vPopupMessages.front().get();
+        Expects(pActiveMessage != nullptr);
         pActiveMessage->BeginAnimation();
         pActiveMessage->UpdateRenderImage(0.0);
     }
@@ -582,7 +584,7 @@ std::unique_ptr<ra::ui::drawing::ISurface> OverlayManager::RenderScreenshot(cons
     {
         auto pTransparentPopup = pSurfaceFactory.CreateTransparentSurface(pPopupImage.GetWidth(), pPopupImage.GetHeight());
         pTransparentPopup->DrawSurface(0, 0, pPopupImage);
-        pTransparentPopup->SetOpacity(0.85);
+        pTransparentPopup->SetOpacity(0.90);
         pSurface->DrawSurface(nX, nY, *pTransparentPopup);
     }
     else

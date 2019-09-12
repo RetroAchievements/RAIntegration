@@ -280,7 +280,7 @@ private:
 
     struct Screenshot
     {
-        int nFrameId;
+        int nFrameId = 0;
         std::unique_ptr<ra::ui::drawing::ISurface> pScreen;
         std::map<int, std::wstring> vMessages;
     };

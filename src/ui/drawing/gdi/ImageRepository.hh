@@ -48,7 +48,7 @@ public:
 
 private:
     static std::wstring GetFilename(ImageType nType, const std::string& sName);
-    static HBITMAP LoadLocalPNG(const std::wstring& sFilename, size_t nWidth, size_t nHeight);
+    static HBITMAP LoadLocalPNG(const std::wstring& sFilename, unsigned int nWidth, unsigned int nHeight);
 
     HBITMAP GetImage(ImageType nType, const std::string& sName);
     HBITMAP GetDefaultImage(ImageType nType);

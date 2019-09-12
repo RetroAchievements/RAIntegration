@@ -137,7 +137,7 @@ void PopupMessageViewModel::CreateRenderImage()
     }
 
     {
-        RenderImageLock(*this);
+        RenderImageLock lock(*this);
 
         m_pSurface = std::move(pSurface);
     }

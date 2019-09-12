@@ -23,12 +23,12 @@ public:
     /// <summary>
     /// Gets the width of the surface.
     /// </summary>
-    virtual size_t GetWidth() const = 0;
+    virtual unsigned int GetWidth() const = 0;
 
     /// <summary>
     /// Gets the height of the surface.
     /// </summary>
-    virtual size_t GetHeight() const = 0;
+    virtual unsigned int GetHeight() const = 0;
 
     /// <summary>
     /// Draws a solid rectangle.

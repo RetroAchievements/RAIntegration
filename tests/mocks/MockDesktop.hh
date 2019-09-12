@@ -55,7 +55,7 @@ public:
         m_sLastOpenedUrl = sUrl;
     }
 
-    std::unique_ptr<ra::ui::drawing::ISurface> CaptureClientArea(const WindowViewModelBase&) const override
+    std::unique_ptr<ra::ui::drawing::ISurface> CaptureClientArea(const WindowViewModelBase&) const noexcept override
     {
         return {};
     }

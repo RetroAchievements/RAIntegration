@@ -335,7 +335,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource* pToRenderBitmapS
     return hr;
 }
 
-HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWidth, size_t nHeight)
+HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, unsigned int nWidth, unsigned int nHeight)
 {
     if (g_pIWICFactory == nullptr)
         return nullptr;
@@ -429,7 +429,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
         return nullptr;
     }
 
-    const size_t nSize = (nType == ImageType::Local) ? 0 : 64;
+    const unsigned int nSize = (nType == ImageType::Local) ? 0 : 64;
     HBITMAP hBitmap = LoadLocalPNG(sFilename, nSize, nSize);
     if (hBitmap != nullptr)
     {
@@ -456,7 +456,7 @@ HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
             if (hBitmap == nullptr)
                 return pImageRepository->GetDefaultImage(pImage.Type());
 
-            GSL_SUPPRESS_TYPE1 pImage.m_nData = reinterpret_cast<unsigned long>(hBitmap);
+            GSL_SUPPRESS_TYPE1 pImage.m_nData = reinterpret_cast<unsigned long long>(hBitmap);
 
             // ImageReference will release the reference
             pImageRepository->AddReference(pImage);
@@ -528,7 +528,7 @@ bool GDISurfaceFactory::SaveImage(const ISurface& pSurface, const std::wstring& 
 
     // create a PNG encoder
     CComPtr<IWICBitmapEncoder> pEncoder;
-    HRESULT hr = g_pIWICFactory->CreateEncoder(GUID_ContainerFormatPng, NULL, &pEncoder);
+    HRESULT hr = g_pIWICFactory->CreateEncoder(GUID_ContainerFormatPng, nullptr, &pEncoder);
 
     // open the file stream
     CComPtr<IWICStream> pStream;
@@ -544,25 +544,26 @@ bool GDISurfaceFactory::SaveImage(const ISurface& pSurface, const std::wstring& 
     // convert the image to a WICBitmap
     CComPtr<IWICBitmapFrameEncode> pFrameEncode;
     if (SUCCEEDED(hr))
-        hr = pEncoder->CreateNewFrame(&pFrameEncode, NULL);
+        hr = pEncoder->CreateNewFrame(&pFrameEncode, nullptr);
 
     if (SUCCEEDED(hr))
-        hr = pFrameEncode->Initialize(NULL);
+        hr = pFrameEncode->Initialize(nullptr);
 
     if (SUCCEEDED(hr))
         hr = pFrameEncode->SetSize(pSurface.GetWidth(), pSurface.GetHeight());
 
-    WICPixelFormatGUID pixelFormat = GUID_WICPixelFormatDontCare;
+    WICPixelFormatGUID pixelFormat;
+    GSL_SUPPRESS_CON4 pixelFormat = GUID_WICPixelFormatDontCare;
     if (SUCCEEDED(hr))
         hr = pFrameEncode->SetPixelFormat(&pixelFormat);
 
     CComPtr<IWICBitmap> pWicBitmap;
     if (SUCCEEDED(hr))
-        hr = g_pIWICFactory->CreateBitmapFromHBITMAP(pGDIBitmapSurface->GetHBitmap(), NULL, WICBitmapIgnoreAlpha, &pWicBitmap);
+        hr = g_pIWICFactory->CreateBitmapFromHBITMAP(pGDIBitmapSurface->GetHBitmap(), nullptr, WICBitmapIgnoreAlpha, &pWicBitmap);
 
     // write the image to the file
     if (SUCCEEDED(hr))
-        hr = pFrameEncode->WriteSource(pWicBitmap, NULL);
+        hr = pFrameEncode->WriteSource(pWicBitmap, nullptr);
 
     if (SUCCEEDED(hr))
         pFrameEncode->Commit();

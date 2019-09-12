@@ -19,7 +19,7 @@ void GDISurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nC
 {
     assert(nColor.Channel.A == 0xFF || nColor.Channel.A == 0x00);
 
-    COLORREF pColorRef = RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B);
+    const COLORREF pColorRef = RGB(nColor.Channel.R, nColor.Channel.G, nColor.Channel.B);
     SetDCBrushColor(m_hDC, pColorRef);
     SetDCPenColor(m_hDC, pColorRef);
     Rectangle(m_hDC, nX, nY, nX + nWidth, nY + nHeight);
@@ -35,7 +35,7 @@ ra::ui::Size GDISurface::MeasureText(int nFont, const std::wstring& sText) const
     SwitchFont(nFont);
 
     SIZE szText;
-    GetTextExtentPoint32W(m_hDC, sText.c_str(), sText.length(), &szText);
+    GetTextExtentPoint32W(m_hDC, sText.c_str(), gsl::narrow_cast<int>(sText.length()), &szText);
 
     return ra::ui::Size{ szText.cx, szText.cy };
 }
@@ -51,7 +51,7 @@ void GDISurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::w
     }
 
     SetBkMode(m_hDC, TRANSPARENT);
-    TextOutW(m_hDC, nX, nY, sText.c_str(), sText.length());
+    TextOutW(m_hDC, nX, nY, sText.c_str(), gsl::narrow_cast<int>(sText.length()));
 }
 
 void GDISurface::SwitchFont(int nFont) const

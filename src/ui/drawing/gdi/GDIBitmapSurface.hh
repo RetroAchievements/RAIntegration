@@ -38,7 +38,7 @@ public:
             DeleteDC(m_hMemDC);
     }
 
-    void CopyFromWindow(HDC hDC, int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY);
+    void CopyFromWindow(HDC hDC, int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY) noexcept;
 
     void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
     void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
@@ -123,7 +123,7 @@ public:
         return std::unique_ptr<ISurface>(pSurface.release());
     }
 
-    bool SaveImage(const ISurface& pSurface, const std::wstring& sPath) const;
+    bool SaveImage(const ISurface& pSurface, const std::wstring& sPath) const override;
 
 private:
     mutable ResourceRepository m_oResourceRepository;

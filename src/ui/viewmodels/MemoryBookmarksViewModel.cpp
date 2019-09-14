@@ -30,6 +30,8 @@ const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsSel
 
 MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
 {
+    SetWindowTitle(L"Memory Bookmarks");
+
     m_vSizes.Add(ra::etoi(MemSize::EightBit), L"8-bit");
     m_vSizes.Add(ra::etoi(MemSize::SixteenBit), L"16-bit");
     m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBit), L"32-bit");

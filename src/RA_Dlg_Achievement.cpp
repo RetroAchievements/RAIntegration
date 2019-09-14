@@ -967,7 +967,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
     if (nNumChecked == 1)
     {
-        const Achievement& pAch = *pGameContext.FindAchievement(nLbxItemsChecked.front());
+        const Achievement& pAch = *pGameContext.FindAchievement(nIDsChecked.front());
         if (pAch.GetCategory() == Achievement::Category::Local)
             vmPrompt.SetHeader(ra::StringPrintf(L"Are you sure you want to upload '%s'?", pAch.Title()));
         else
@@ -980,9 +980,9 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
     if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
     {
-        for (const auto check : nLbxItemsChecked)
+        for (size_t nIndex = 0; nIndex < nNumChecked; ++nIndex)
         {
-            Achievement& NextAch = *pGameContext.FindAchievement(check);
+            Achievement& NextAch = *pGameContext.FindAchievement(nIDsChecked.at(nIndex));
 
             BOOL bMovedFromUserToUnofficial = false;
 
@@ -1000,7 +1000,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
 
                 // Update listbox on achievements dlg
 
-                LbxDataAt(check, Column::Id) = std::to_string(nAchID);
+                LbxDataAt(nLbxItemsChecked.at(nIndex), Column::Id) = std::to_string(nAchID);
 
                 if (bMovedFromUserToUnofficial)
                 {
@@ -1010,12 +1010,13 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
                     NextAch.SetModified(FALSE);
 
                     UpdateAchievementList();
+                    UpdateAchievementCounters();
                 }
                 else
                 {
                     //  Updated an already existing achievement, still the same position/Id.
                     NextAch.SetModified(FALSE);
-                    OnEditData(nSel, Column::Modified, "No");
+                    OnEditData(nLbxItemsChecked.at(nIndex), Column::Modified, "No");
 
                     //  Save em all - we may have changed any of them :S
                     // CoreAchievements->Save();

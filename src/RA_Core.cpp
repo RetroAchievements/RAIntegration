@@ -312,6 +312,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor"));
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector"));
+        AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYBOOKMARKS, TEXT("Memory &Bookmarks"));
         AppendMenu(hRA, MF_STRING, IDM_RA_PARSERICHPRESENCE, TEXT("Rich &Presence Monitor"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
         AppendMenu(hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Achievement Problem"));
@@ -435,6 +436,10 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 g_MemoryDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc));
             if (g_MemoryDialog.GetHWND() != nullptr)
                 ShowWindow(g_MemoryDialog.GetHWND(), SW_SHOW);
+            break;
+
+        case IDM_RA_FILES_MEMORYBOOKMARKS:
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Show();
             break;
 
         case IDM_RA_FILES_LOGIN:

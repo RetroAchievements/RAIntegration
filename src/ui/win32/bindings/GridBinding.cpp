@@ -516,6 +516,18 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
     }
 }
 
+void GridBinding::OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate)
+{
+    if (ra::to_unsigned(pnmItemActivate->iSubItem) < m_vColumns.size())
+    {
+        const auto& pColumn = m_vColumns.at(pnmItemActivate->iSubItem);
+        if (pColumn->HandleDoubleClick(GetItems(), pnmItemActivate->iItem))
+            return;
+    }
+
+    // TODO: row-level double-click handler
+}
+
 GridColumnBinding::InPlaceEditorInfo* GridBinding::GetIPEInfo(HWND hwnd) noexcept
 {
     GridColumnBinding::InPlaceEditorInfo* pInfo;

@@ -102,7 +102,7 @@ public:
         }
 
     protected:
-        void OnActiveGameChanged() override
+        void OnActiveGameChanged() noexcept override
         {
             m_bActiveGameChanged = true;
             m_vCodeNotesChanged.clear();

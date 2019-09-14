@@ -1044,11 +1044,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             else
                                 SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, _T(""));
 
-                            MemoryViewerControl::setAddress(
-                                (result.nAddress & ~(0xf)) -
-                                (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
-                            MemoryViewerControl::setWatchedAddress(result.nAddress);
-                            UpdateBits();
+                            GoToAddress(result.nAddress);
                         }
                         else
                             ListView_SetItemState(GetDlgItem(hDlg, IDC_RA_MEM_LIST), -1, LVIF_STATE, LVIS_SELECTED);
@@ -1556,11 +1552,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                     if (pNote && !pNote->empty())
                                         SetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, ra::Widen(*pNote).c_str());
 
-                                    MemoryViewerControl::setAddress(
-                                        (nAddr & ~(0xf)) -
-                                        (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
-                                    MemoryViewerControl::setWatchedAddress(nAddr);
-                                    UpdateBits();
+                                    GoToAddress(nAddr);
                                 }
                             }
 
@@ -1574,11 +1566,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             TCHAR sAddrBuffer[64];
                             GetDlgItemText(hDlg, IDC_RA_WATCHING, sAddrBuffer, 64);
                             auto nAddr = ra::ByteAddressFromString(ra::Narrow(sAddrBuffer));
-                            MemoryViewerControl::setAddress(
-                                (nAddr & ~(0xf)) - (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) +
-                                (0x50));
-                            MemoryViewerControl::setWatchedAddress(nAddr);
-                            UpdateBits();
+                            GoToAddress(nAddr);
                             return TRUE;
                         }
 
@@ -1678,9 +1666,7 @@ void Dlg_Memory::RepopulateCodeNotes()
         {
             SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, pNote->c_str());
 
-            MemoryViewerControl::setAddress(
-                (nAddr & ~(0xf)) - (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
-            MemoryViewerControl::setWatchedAddress(nAddr);
+            GoToAddress(nAddr);
         }
     }
     else if (m_nCodeNotesGameId != pGameContext.GameId() && pGameContext.GameId() != 0)
@@ -1857,6 +1843,15 @@ void Dlg_Memory::UpdateBits() const
     GetDlgItemText(m_hWnd, IDC_RA_MEMBITS, sOldValue, 64);
     if (_tcscmp(sNewValue, sOldValue) != 0)
         SetDlgItemText(m_hWnd, IDC_RA_MEMBITS, sNewValue);
+}
+
+void Dlg_Memory::GoToAddress(unsigned int nAddr)
+{
+    MemoryViewerControl::setAddress(
+        (nAddr & ~(0xf)) -
+        (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
+
+    SetWatchingAddress(nAddr);
 }
 
 void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)

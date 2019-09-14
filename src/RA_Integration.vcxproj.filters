@@ -282,6 +282,9 @@
     <ClCompile Include="ui\win32\bindings\GridTextColumnBinding.cpp">
       <Filter>UI\Win32\Bindings</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\bindings\GridAddressColumnBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">

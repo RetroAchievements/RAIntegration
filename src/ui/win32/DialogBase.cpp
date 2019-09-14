@@ -227,6 +227,22 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                     return 0;
                 }
 
+                case NM_DBLCLK:
+                {
+                    ra::ui::win32::bindings::GridBinding* pGridBinding;
+                    GSL_SUPPRESS_TYPE1 pGridBinding = reinterpret_cast<ra::ui::win32::bindings::GridBinding*>(
+                        FindControlBinding(pnmHdr->hwndFrom));
+
+                    if (pGridBinding)
+                    {
+                        const NMITEMACTIVATE* pnmItemActivate;
+                        GSL_SUPPRESS_TYPE1{ pnmItemActivate = reinterpret_cast<const NMITEMACTIVATE*>(lParam); }
+                        pGridBinding->OnNmDblClick(pnmItemActivate);
+                    }
+
+                    return 0;
+                }
+
                 case NM_SETFOCUS:
                 {
                     ra::ui::win32::bindings::ControlBinding* pControlBinding;

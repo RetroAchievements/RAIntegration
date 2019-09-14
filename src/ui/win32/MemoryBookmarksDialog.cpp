@@ -125,28 +125,28 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     auto pFormatColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty, vmMemoryBookmarks.Formats());
     pFormatColumn->SetHeader(L"Format");
-    pFormatColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 40);
+    pFormatColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 32);
     pFormatColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(3, std::move(pFormatColumn));
 
     auto pValueColumn = std::make_unique<GridBookmarkValueColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::CurrentValueProperty);
     pValueColumn->SetHeader(L"Value");
-    pValueColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
+    pValueColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
     pValueColumn->SetAlignment(ra::ui::RelativePosition::Center);
     m_bindBookmarks.BindColumn(4, std::move(pValueColumn));
 
     auto pPriorColumn = std::make_unique<GridBookmarkValueColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::PreviousValueProperty);
     pPriorColumn->SetHeader(L"Prior");
-    pPriorColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
+    pPriorColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
     pPriorColumn->SetAlignment(ra::ui::RelativePosition::Center);
     m_bindBookmarks.BindColumn(5, std::move(pPriorColumn));
 
     auto pChangesColumn = std::make_unique<ra::ui::win32::bindings::GridNumberColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangesProperty);
     pChangesColumn->SetHeader(L"Changes");
-    pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
+    pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 56);
     pChangesColumn->SetAlignment(ra::ui::RelativePosition::Far);
     m_bindBookmarks.BindColumn(6, std::move(pChangesColumn));
 

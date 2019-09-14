@@ -64,6 +64,8 @@ public:
 
     virtual HWND CreateInPlaceEditor(HWND, InPlaceEditorInfo&) noexcept(false) { return nullptr; }
 
+    virtual bool HandleDoubleClick(const ra::ui::ViewModelCollectionBase&, gsl::index) noexcept(false) { return false; }
+
 protected:
     std::wstring m_sHeader;
     WidthType m_nWidthType = WidthType::Fill;

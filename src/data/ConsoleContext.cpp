@@ -342,6 +342,29 @@ const std::vector<ConsoleContext::MemoryRegion> PCEngineConsoleContext::m_vMemor
     { 0x000000U, 0x001FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // normally $2000-$3FFF
 };
 
+// ===== PlayStation =====
+
+class PlayStationConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 PlayStationConsoleContext() noexcept : ConsoleContext(ConsoleID::PlayStation, L"PlayStation") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// http://www.raphnet.net/electronique/psx_adaptor/Playstation.txt
+const std::vector<ConsoleContext::MemoryRegion> PlayStationConsoleContext::m_vMemoryRegions =
+{
+    // Note that the primary executable filename appears at both $9E18 and $B8B0 (with full path).
+    // Since the primary executable is named after the game's serial, it can be used for
+    // distinguishing between titles when multiple versions are supported.
+    { 0x000000U, 0x00FFFFU, ConsoleContext::AddressType::SystemRAM, "Kernel RAM" },
+    { 0x010000U, 0x1FFFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },
+};
+
 // ===== SG-1000 =====
 
 class SG1000ConsoleContext : public ConsoleContext
@@ -532,7 +555,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"PCFX");
 
         case ConsoleID::PlayStation:
-            return std::make_unique<ConsoleContext>(nId, L"PlayStation");
+            return std::make_unique<PlayStationConsoleContext>();
 
         case ConsoleID::PlayStation2:
             return std::make_unique<ConsoleContext>(nId, L"PlayStation 2");

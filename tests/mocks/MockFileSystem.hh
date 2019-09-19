@@ -66,7 +66,7 @@ public:
 
     const std::string& GetFileContents(const std::wstring& sPath)
     {
-        auto pIter = m_mFileContents.find(sPath);
+        const auto pIter = m_mFileContents.find(sPath);
         if (pIter != m_mFileContents.end())
             return pIter->second;
 
@@ -87,11 +87,11 @@ public:
 
     int64_t GetFileSize(const std::wstring& sPath) const override
     {
-        auto pIter = m_mFileSizes.find(sPath);
+        const auto pIter = m_mFileSizes.find(sPath);
         if (pIter != m_mFileSizes.end())
             return pIter->second;
 
-        auto pIter2 = m_mFileContents.find(sPath);
+        const auto pIter2 = m_mFileContents.find(sPath);
         if (pIter2 != m_mFileContents.end())
             return pIter2->second.length();
 
@@ -100,11 +100,11 @@ public:
 
     std::chrono::system_clock::time_point GetLastModified(const std::wstring& sPath) const override
     {
-        auto pIter = m_mFileModifiedTimes.find(sPath);
+        const auto pIter = m_mFileModifiedTimes.find(sPath);
         if (pIter != m_mFileModifiedTimes.end())
             return pIter->second;
 
-        auto pIter2 = m_mFileContents.find(sPath);
+        const auto pIter2 = m_mFileContents.find(sPath);
         if (pIter2 != m_mFileContents.end())
             return std::chrono::system_clock::now();
 
@@ -144,7 +144,7 @@ public:
 
     std::unique_ptr<TextReader> OpenTextFile(const std::wstring& sPath) const override
     {
-        auto pIter = m_mFileContents.find(sPath);
+        const auto pIter = m_mFileContents.find(sPath);
         if (pIter == m_mFileContents.end())
             return std::unique_ptr<TextReader>();
 
@@ -157,7 +157,7 @@ public:
         m_mFileSizes.erase(sPath);
 
         // insert_or_assign will replace any existing value
-        auto iter = m_mFileContents.insert_or_assign(sPath, "");
+        const auto iter = m_mFileContents.insert_or_assign(sPath, "");
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(iter.first->second);
         return std::unique_ptr<TextWriter>(pWriter.release());
     }
@@ -167,7 +167,7 @@ public:
         m_mFileSizes.erase(sPath);
 
         // insert will return a pointer to the new (or previously existing) value
-        auto iter = m_mFileContents.insert({ sPath, "" });
+        const auto iter = m_mFileContents.insert({ sPath, "" });
         auto pWriter = std::make_unique<ra::services::impl::StringTextWriter>(iter.first->second);
         return std::unique_ptr<TextWriter>(pWriter.release());
     }

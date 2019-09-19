@@ -49,8 +49,8 @@ protected:
     /// <returns>The current value of the property for this object.</returns>
     bool GetValue(const BoolModelProperty& pProperty) const
     {
-        IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
-        return static_cast<bool>(iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
+        const IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
+        return gsl::narrow_cast<bool>(iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
     }
 
     /// <summary>
@@ -67,7 +67,7 @@ protected:
     /// <returns>The current value of the property for this object.</returns>
     const std::wstring& GetValue(const StringModelProperty& pProperty) const
     {
-        StringModelProperty::ValueMap::const_iterator iter = m_mStringValues.find(pProperty.GetKey());
+        const StringModelProperty::ValueMap::const_iterator iter = m_mStringValues.find(pProperty.GetKey());
         return (iter != m_mStringValues.end() ? iter->second : pProperty.GetDefaultValue());
     }
 
@@ -85,7 +85,7 @@ protected:
     /// <returns>The current value of the property for this object.</returns>
     int GetValue(const IntModelProperty& pProperty) const
     {
-        IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
+        const IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
         return (iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
     }
 

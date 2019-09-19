@@ -17,7 +17,7 @@ std::string ByteAddressToString(ByteAddress nAddr)
 }
 
 _Use_decl_annotations_
-ByteAddress ByteAddressFromString(const std::string& sByteAddress) noexcept
+ByteAddress ByteAddressFromString(const std::string& sByteAddress)
 {
     ra::ByteAddress address{};
 
@@ -25,7 +25,7 @@ ByteAddress ByteAddressFromString(const std::string& sByteAddress) noexcept
     {
         char* pEnd;
         address = std::strtoul(sByteAddress.c_str(), &pEnd, 16);
-        assert(pEnd != nullptr);
+        Ensures(pEnd != nullptr);
         if (*pEnd)
         {
             // hex parse failed

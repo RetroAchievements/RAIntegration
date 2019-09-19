@@ -51,7 +51,7 @@ private:
     const int AddCondition(HWND hList, const Condition& Cond, unsigned int nCurrentHits);
     void UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond, unsigned int nCurrentHits);
     void SetCell(HWND hList, LV_ITEM& item, int nRow, CondSubItems nColumn, const std::string& sNewValue);
-    void SetCell(HWND hList, LV_ITEM& item, int nRow, CondSubItems nColumn, std::string&& sNewValue);
+    void SetCell(HWND hList, LV_ITEM& item, int nRow, CondSubItems nColumn, std::string&& sNewValue) noexcept;
 
     unsigned int ParseValue(const std::string& sData, CompVariable::Type nType) const;
 

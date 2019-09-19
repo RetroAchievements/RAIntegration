@@ -177,7 +177,7 @@ protected:
         typename TApi::Response response;
         std::string sApiName(TApi::Name());
 
-        auto pIter = m_mHandlers.find(sApiName);
+        const auto pIter = m_mHandlers.find(sApiName);
         if (pIter != m_mHandlers.end())
         {
             if (pIter->second(&pRequest, &response))

@@ -194,7 +194,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     request.NumEntries = 10;
     request.CallAsync([this, nId = pAchievement->ID()](const ra::api::FetchAchievementInfo::Response& response)
     {
-        auto pIter = m_vAchievementDetails.find(nId);
+        const auto pIter = m_vAchievementDetails.find(nId);
         if (pIter == m_vAchievementDetails.end())
             return;
 

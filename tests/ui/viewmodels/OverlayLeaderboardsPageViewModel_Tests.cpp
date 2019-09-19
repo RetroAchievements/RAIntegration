@@ -41,7 +41,7 @@ private:
 
         ViewModelCollection<ItemViewModel>* GetRanks(ra::LeaderboardID nId)
         {
-            auto pIter = m_vLeaderboardRanks.find(nId);
+            const auto pIter = m_vLeaderboardRanks.find(nId);
             if (pIter != m_vLeaderboardRanks.end())
                 return &pIter->second;
 

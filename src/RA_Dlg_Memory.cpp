@@ -240,10 +240,15 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
     SetCaretPos();
 }
 
+void MemoryViewerControl::gotoAddress(unsigned int nAddr)
+{
+    setAddress((nAddr & ~(0xf)) - (ra::to_signed(m_nDisplayedLines / 2) << 4) + (0x50));
+    setWatchedAddress(nAddr);
+}
+
 void MemoryViewerControl::setAddress(unsigned int address)
 {
     m_nAddressOffset = address;
-    // g_MemoryDialog.SetWatchingAddress( address );
 
     SetCaretPos();
     Invalidate();
@@ -1554,12 +1559,13 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         }
                         case CBN_EDITCHANGE:
                         {
-                            OnWatchingMemChange();
-
                             TCHAR sAddrBuffer[64];
                             GetDlgItemText(hDlg, IDC_RA_WATCHING, sAddrBuffer, 64);
                             auto nAddr = ra::ByteAddressFromString(ra::Narrow(sAddrBuffer));
-                            GoToAddress(nAddr);
+
+                            // don't call GoToAddress here to prevent updating the text box as the user types
+                            MemoryViewerControl::gotoAddress(nAddr);
+                            OnWatchingMemChange();
                             return TRUE;
                         }
 
@@ -1590,6 +1596,8 @@ void Dlg_Memory::OnWatchingMemChange()
     GetDlgItemText(m_hWnd, IDC_RA_WATCHING, sAddrNative, 1024);
     std::string sAddr = ra::Narrow(sAddrNative);
     const auto nAddr = ra::ByteAddressFromString(sAddr);
+
+    UpdateBits();
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nAddr);
@@ -1836,20 +1844,14 @@ void Dlg_Memory::UpdateBits() const
 
 void Dlg_Memory::GoToAddress(unsigned int nAddr)
 {
-    MemoryViewerControl::setAddress(
-        (nAddr & ~(0xf)) -
-        (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
-
+    MemoryViewerControl::gotoAddress(nAddr);
     SetWatchingAddress(nAddr);
 }
 
 void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)
 {
-    MemoryViewerControl::setWatchedAddress(nAddr);
-
     const auto sAddr = ra::ByteAddressToString(nAddr);
     SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(sAddr).c_str());
-    UpdateBits();
 
     OnWatchingMemChange();
 }

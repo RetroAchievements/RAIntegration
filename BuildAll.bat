@@ -55,10 +55,7 @@ rem === If the buildlog doesn't exist or the hash has changed, start a new build
 
 if not exist %BUILDLOG% echo %BUILD_HASH% > %BUILDLOG%
 find /c "%BUILD_HASH%" %BUILDLOG% >nul 2>&1
-if %ERRORLEVEL% equ 1 (
-    echo %BUILD_HASH% > %BUILDLOG%
-    set BUILDCLEAN=1
-)
+if %ERRORLEVEL% equ 1 echo %BUILD_HASH% > %BUILDLOG%
 
 rem === Initialize Visual Studio environment ===
 
@@ -139,13 +136,13 @@ rem -- https://stackoverflow.com/questions/56253635/what-could-i-be-doing-wrong-
 rem -- https://stackoverflow.com/questions/15441422/replace-character-of-string-in-batch-script/25812295
 set ESCAPEDKEY=%~1
 :replace_periods
-FOR /f "tokens=1* delims=." %%i IN ("%ESCAPEDKEY%") DO (
-   SET ESCAPEDKEY=%%j
-   IF DEFINED ESCAPEDKEY (
-      SET ESCAPEDKEY=%%i%%j
-      GOTO replace_periods
-   ) ELSE (
-      SET ESCAPEDKEY=%%i
+for /f "tokens=1* delims=." %%i in ("%ESCAPEDKEY%") do (
+   set ESCAPEDKEY=%%j
+   if defined ESCAPEDKEY (
+      set ESCAPEDKEY=%%i_%%j
+      goto replace_periods
+   ) else (
+      set ESCAPEDKEY=%%i
    )
 )
 
@@ -160,13 +157,20 @@ if not ERRORLEVEL 0 (
 
 rem === If test project, run tests ===
 
-if "%~1:~-6"==".Tests" (
-    set DLL_PATH=bin\%~2\tests\%~1.dll
-    if not exist %DLL_PATH% DLL_PATH=bin\%~2\tests\%~1\%~1.dll
+if "%ESCAPEDKEY:~-6%" neq "_Tests" goto not_tests
+
+set DLL_PATH=bin\%~2\tests\%~1.dll
+if not exist %DLL_PATH% set DLL_PATH=bin\%~2\tests\%ESCAPEDKEY:~0,-6%\%~1.dll
+
+if exist %DLL_PATH% (
     VsTest.Console.exe %DLL_PATH%
     
-    echo "foo %ERRORLEVEL%"
+    if not ERRORLEVEL 0 goto eof
+) else (
+    echo Could not locate %~1.dll
+    goto eof
 )
+:not_tests
 
 rem === Update build log and return ===
 

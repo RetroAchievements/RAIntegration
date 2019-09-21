@@ -31,6 +31,11 @@ public:
     virtual ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel, const WindowViewModelBase& vmParentWindow) const = 0;
 
     /// <summary>
+    /// Closes the window for the provided view model.
+    /// </summary>
+    virtual void CloseWindow(WindowViewModelBase& vmViewModel) const = 0;
+
+    /// <summary>
     /// Gets the bounds of the available work area of the desktop.
     /// </summary>
     /// <param name="oUpperLeftCorner">The upper left corner of the work area.</param>

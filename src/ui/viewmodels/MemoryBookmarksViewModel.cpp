@@ -273,6 +273,11 @@ void MemoryBookmarksViewModel::DoFrame()
     }
 }
 
+bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const
+{
+    return (m_vBookmarks.FindItemIndex(MemoryBookmarkViewModel::AddressProperty, nAddress) >= 0);
+}
+
 void MemoryBookmarksViewModel::AddBookmark(ra::ByteAddress nAddress, MemSize nSize)
 {
     auto& vmBookmark = m_vBookmarks.Add();

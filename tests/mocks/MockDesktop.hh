@@ -37,6 +37,11 @@ public:
         return ShowModal(vmViewModel);
     }
 
+    void CloseWindow(WindowViewModelBase& vmViewModel) const override
+    {
+        vmViewModel.SetIsVisible(false);
+    }
+
     bool WasDialogShown() noexcept { return m_bDialogShown; }
 
     void GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const noexcept override

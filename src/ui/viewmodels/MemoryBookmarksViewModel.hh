@@ -201,6 +201,19 @@ public:
     }
 
     /// <summary>
+    /// Gets the list of bookmarks.
+    /// </summary>
+    const ViewModelCollection<MemoryBookmarkViewModel>& Bookmarks() const noexcept
+    {
+        return m_vBookmarks;
+    }
+
+    /// <summary>
+    /// Determines if a bookmark exists for the specified address.
+    /// </summary>
+    bool HasBookmark(ra::ByteAddress nAddress) const;
+
+    /// <summary>
     /// Gets the list of selectable sizes for each bookmark.
     /// </summary>
     const LookupItemViewModelCollection& Sizes() const noexcept

@@ -160,28 +160,18 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     m_bindBookmarks.BindItems(vmMemoryBookmarks.Bookmarks());
 
     using namespace ra::bitwise_ops;
-    SetAnchor(IDC_RA_LBX_ADDRESSES, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_ADD_BOOKMARK, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_DEL_BOOKMARK, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_SAVEBOOKMARK, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_LOADBOOKMARK, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_CLEAR_CHANGE, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_FREEZE, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_BREAKPOINT, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_DECIMALBOOKMARK, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_SAVEBOOKMARK, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_LOADBOOKMARK, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_LBX_ADDRESSES, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_DEL_BOOKMARK, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_MOVE_BOOKMARK_UP, Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_MOVE_BOOKMARK_DOWN, Anchor::Bottom | Anchor::Right);
 }
 
 BOOL MemoryBookmarksDialog::OnInitDialog()
 {
     m_bindBookmarks.SetControl(*this, IDC_RA_LBX_ADDRESSES);
-
-    // === remove the LVS_OWNERDRAWFIXED style - not used in new mode
-    const HWND hListView = GetDlgItem(GetHWND(), IDC_RA_LBX_ADDRESSES);
-    auto wsListView = GetWindowStyle(hListView);
-    wsListView &= ~LVS_OWNERDRAWFIXED;
-    wsListView &= ~WS_CLIPCHILDREN;
-    SetWindowLong(hListView, GWL_STYLE, wsListView);
-    // ===
 
     return DialogBase::OnInitDialog();
 }
@@ -190,19 +180,6 @@ BOOL MemoryBookmarksDialog::OnCommand(WORD nCommand)
 {
     switch (nCommand)
     {
-        case IDC_RA_ADD_BOOKMARK:
-        {
-            // add the new bookmark
-            auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
-            vmMemoryBookmarks.AddBookmark(MemoryViewerControl::getWatchedAddress(), MemoryViewerControl::GetDataSize());
-
-            // scroll to bottom
-            const auto hList = GetDlgItem(GetHWND(), IDC_RA_LBX_ADDRESSES);
-            ListView_EnsureVisible(hList, vmMemoryBookmarks.Bookmarks().Count() - 1, FALSE);
-
-            return TRUE;
-        }
-
         case IDC_RA_DEL_BOOKMARK:
         {
             auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);

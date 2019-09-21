@@ -2,7 +2,6 @@
 
 #include "RA_Achievement.h"
 #include "RA_Core.h"
-#include "RA_Dlg_MemBookmark.h"
 #include "RA_Resource.h"
 
 #include "data\ConsoleContext.hh"
@@ -14,6 +13,8 @@
 
 #include "ui\IDesktop.hh"
 
+#include "ui\viewmodels\MemoryBookmarksViewModel.hh"
+#include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 #ifndef ID_OK
@@ -239,10 +240,15 @@ void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
     SetCaretPos();
 }
 
+void MemoryViewerControl::gotoAddress(unsigned int nAddr)
+{
+    setAddress((nAddr & ~(0xf)) - (ra::to_signed(m_nDisplayedLines / 2) << 4) + (0x50));
+    setWatchedAddress(nAddr);
+}
+
 void MemoryViewerControl::setAddress(unsigned int address)
 {
     m_nAddressOffset = address;
-    // g_MemoryDialog.SetWatchingAddress( address );
 
     SetCaretPos();
     Invalidate();
@@ -322,13 +328,6 @@ bool MemoryViewerControl::OnEditInput(UINT c)
         const bool bLowerNibble = (m_nEditNibble % 2 == 1);
         unsigned int nByteAddress = m_nEditAddress;
 
-        if (g_MemBookmarkDialog.GetHWND() != nullptr)
-        {
-            const auto& Bookmark{g_MemBookmarkDialog.FindBookmark(nByteAddress)};
-            if (Bookmark.Address() != MemBookmark::INVALID_ADDRESS)
-                g_MemBookmarkDialog.WriteFrozenValue(Bookmark);
-        }
-
         if (m_nDataSize == MemSize::EightBit)
         {
             //	8 bit
@@ -347,8 +346,11 @@ bool MemoryViewerControl::OnEditInput(UINT c)
 
         editData(nByteAddress, bLowerNibble, value);
 
-        if (g_MemBookmarkDialog.GetHWND() != nullptr)
-            g_MemBookmarkDialog.UpdateBookmarks(TRUE);
+        // if a bookmark exists for the modified address, update the current value
+        // if frozen, the value will be changed back!
+        auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+        if (pBookmarks.HasBookmark(nByteAddress))
+            pBookmarks.DoFrame();
 
         moveAddress(0, 1);
         Invalidate();
@@ -589,6 +591,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     const auto nTotalMemorySize = pEmulatorContext.TotalMemorySize();
     if (nTotalMemorySize > 0)
     {
+        const auto& pBookmarks = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Bookmarks();
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
         m_nDataStartXOffset = r.left + 10 * m_szFontSize.cx;
         std::array<unsigned char, 16> data{};
@@ -603,17 +606,15 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                 {
                     notes |= (pGameContext.FindCodeNote(addr + j) != nullptr) ? (1 << j) : 0;
 
-                    if (g_MemBookmarkDialog.BookmarkExists(addr + j))
+                    const auto nIndex = pBookmarks.FindItemIndex(ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty, addr + j);
+                    if (nIndex >= 0)
                     {
-                        const auto& bm = g_MemBookmarkDialog.FindBookmark(addr + j);
                         bookmarks |= (1 << j);
-                        freeze |= (bm.Frozen()) ? (1 << j) : 0;
 
-                        if (bm.Frozen())
-                        {
-                            if (g_MemBookmarkDialog.GetHWND() != nullptr)
-                                g_MemBookmarkDialog.WriteFrozenValue(bm);
-                        }
+                        const auto* pBookmark = pBookmarks.GetItemAt(nIndex);
+                        Expects(pBookmark != nullptr);
+                        if (pBookmark->GetBehavior() == ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen)
+                            freeze |= (1 << j);
                     }
                 }
 
@@ -931,7 +932,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                 if (!currentSearch.WasModified(result.nAddress))
                                     currentSearch.m_modifiedAddresses.push_back(result.nAddress);
                             }
-                            else if (g_MemBookmarkDialog.BookmarkExists(result.nAddress))
+                            else if (ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.HasBookmark(result.nAddress))
                                 color = RGB(220, 255, 220); // Green if Bookmark is found.
                             else if (!sNote.empty())
                                 color = RGB(220, 240, 255); // Blue if Code Note is found.
@@ -1461,15 +1462,12 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     return FALSE;
                 }
 
-                case IDC_RA_OPENBOOKMARKS:
+                case IDC_RA_ADDBOOKMARK:
                 {
-                    if (g_MemBookmarkDialog.GetHWND() == nullptr)
-                        g_MemBookmarkDialog.InstallHWND(CreateDialog(g_hThisDLLInst,
-                                                                     MAKEINTRESOURCE(IDD_RA_MEMBOOKMARK), hDlg,
-                                                                     g_MemBookmarkDialog.s_MemBookmarkDialogProc));
-                    if (g_MemBookmarkDialog.GetHWND() != nullptr)
-                        ShowWindow(g_MemBookmarkDialog.GetHWND(), SW_SHOW);
-
+                    auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+                    if (!pBookmarks.IsVisible())
+                        pBookmarks.Show();
+                    pBookmarks.AddBookmark(MemoryViewerControl::getWatchedAddress(), MemoryViewerControl::GetDataSize());
                     return FALSE;
                 }
 
@@ -1561,12 +1559,13 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         }
                         case CBN_EDITCHANGE:
                         {
-                            OnWatchingMemChange();
-
                             TCHAR sAddrBuffer[64];
                             GetDlgItemText(hDlg, IDC_RA_WATCHING, sAddrBuffer, 64);
                             auto nAddr = ra::ByteAddressFromString(ra::Narrow(sAddrBuffer));
-                            GoToAddress(nAddr);
+
+                            // don't call GoToAddress here to prevent updating the text box as the user types
+                            MemoryViewerControl::gotoAddress(nAddr);
+                            OnWatchingMemChange();
                             return TRUE;
                         }
 
@@ -1597,6 +1596,8 @@ void Dlg_Memory::OnWatchingMemChange()
     GetDlgItemText(m_hWnd, IDC_RA_WATCHING, sAddrNative, 1024);
     std::string sAddr = ra::Narrow(sAddrNative);
     const auto nAddr = ra::ByteAddressFromString(sAddr);
+
+    UpdateBits();
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nAddr);
@@ -1804,10 +1805,6 @@ void Dlg_Memory::Invalidate()
     if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() == 0)
         return;
 
-    // Update bookmarked memory
-    if (g_MemBookmarkDialog.GetHWND() != nullptr)
-        g_MemBookmarkDialog.UpdateBookmarks(FALSE);
-
     // Update Memory Viewer
     MemoryViewerControl::Invalidate();
     UpdateBits();
@@ -1847,20 +1844,14 @@ void Dlg_Memory::UpdateBits() const
 
 void Dlg_Memory::GoToAddress(unsigned int nAddr)
 {
-    MemoryViewerControl::setAddress(
-        (nAddr & ~(0xf)) -
-        (ra::to_signed(MemoryViewerControl::m_nDisplayedLines / 2) << 4) + (0x50));
-
+    MemoryViewerControl::gotoAddress(nAddr);
     SetWatchingAddress(nAddr);
 }
 
 void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)
 {
-    MemoryViewerControl::setWatchedAddress(nAddr);
-
     const auto sAddr = ra::ByteAddressToString(nAddr);
     SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(sAddr).c_str());
-    UpdateBits();
 
     OnWatchingMemChange();
 }

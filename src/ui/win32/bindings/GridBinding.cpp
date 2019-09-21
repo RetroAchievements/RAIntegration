@@ -300,11 +300,8 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
     }
 }
 
-void GridBinding::OnViewModelAdded(gsl::index nIndex)
+void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
 {
-    if (!m_hWnd || m_vColumns.empty())
-        return;
-
     std::string sText;
 
     LV_ITEM item{};
@@ -313,20 +310,20 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
     item.iSubItem = 0;
 
     const auto& pColumn = *m_vColumns.at(0);
+
+    sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
+    item.pszText = sText.data();
+
+    if (bExisting)
+        ListView_SetItem(m_hWnd, &item);
+    else
+        ListView_InsertItem(m_hWnd, &item);
+
     const auto* pCheckBoxColumn = dynamic_cast<const GridCheckBoxColumnBinding*>(&pColumn);
     if (pCheckBoxColumn != nullptr)
     {
-        GSL_SUPPRESS_TYPE3 item.pszText = const_cast<LPSTR>("");
-        ListView_InsertItem(m_hWnd, &item);
-
         const auto& pBoundProperty = pCheckBoxColumn->GetBoundProperty();
         ListView_SetCheckState(m_hWnd, nIndex, m_vmItems->GetItemValue(nIndex, pBoundProperty));
-    }
-    else
-    {
-        sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
-        item.pszText = sText.data();
-        ListView_InsertItem(m_hWnd, &item);
     }
 
     for (gsl::index i = 1; ra::to_unsigned(i) < m_vColumns.size(); ++i)
@@ -339,6 +336,21 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
             ListView_SetItem(m_hWnd, &item);
         }
     }
+
+    if (m_pIsSelectedProperty)
+    {
+        const bool bSelected = m_vmItems->GetItemValue(nIndex, *m_pIsSelectedProperty);
+        if (bSelected || bExisting)
+            ListView_SetItemState(m_hWnd, nIndex, bSelected ? LVIS_SELECTED : 0, LVIS_SELECTED);
+    }
+}
+
+void GridBinding::OnViewModelAdded(gsl::index nIndex)
+{
+    if (!m_hWnd || m_vColumns.empty())
+        return;
+
+    UpdateRow(nIndex, false);
 
     if (!m_vmItems->IsUpdating())
         CheckForScrollBar();
@@ -353,6 +365,12 @@ void GridBinding::OnViewModelRemoved(gsl::index nIndex)
         if (!m_vmItems->IsUpdating())
             CheckForScrollBar();
     }
+}
+
+void GridBinding::OnViewModelChanged(gsl::index nIndex)
+{
+    if (m_hWnd)
+        UpdateRow(nIndex, true);
 }
 
 void GridBinding::CheckForScrollBar()

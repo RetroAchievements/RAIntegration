@@ -211,6 +211,22 @@ BOOL MemoryBookmarksDialog::OnCommand(WORD nCommand)
 
             return TRUE;
         }
+
+        case IDC_RA_MOVE_BOOKMARK_UP:
+        {
+            auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
+            vmMemoryBookmarks.MoveSelectedBookmarksUp();
+
+            return TRUE;
+        }
+
+        case IDC_RA_MOVE_BOOKMARK_DOWN:
+        {
+            auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
+            vmMemoryBookmarks.MoveSelectedBookmarksDown();
+
+            return TRUE;
+        }
     }
 
     return DialogBase::OnCommand(nCommand);

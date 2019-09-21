@@ -317,6 +317,16 @@ int MemoryBookmarksViewModel::RemoveSelectedBookmarks()
     return nRemoved;
 }
 
+void MemoryBookmarksViewModel::MoveSelectedBookmarksUp()
+{
+    m_vBookmarks.ShiftItemsUp(MemoryBookmarkViewModel::IsSelectedProperty);
+}
+
+void MemoryBookmarksViewModel::MoveSelectedBookmarksDown()
+{
+    m_vBookmarks.ShiftItemsDown(MemoryBookmarkViewModel::IsSelectedProperty);
+}
+
 void MemoryBookmarksViewModel::ClearAllChanges()
 {
     for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)

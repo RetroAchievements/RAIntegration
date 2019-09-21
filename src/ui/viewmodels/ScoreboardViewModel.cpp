@@ -97,7 +97,7 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
             // get width of largest displayed rank so other ranks can be right-aligned with it
             const auto nRankSize = m_pSurface->MeasureText(nFontText, ra::ToWString(m_vEntries.GetItemAt(m_vEntries.Count() - 1)->GetRank()));
 
-            size_t nY = 4 + pTheme.FontSizePopupLeaderboardTitle() + 2;
+            int nY = 4 + pTheme.FontSizePopupLeaderboardTitle() + 2;
             size_t i = 0;
             while (i < NUM_ENTRIES && i < m_vEntries.Count())
             {

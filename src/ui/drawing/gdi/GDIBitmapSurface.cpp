@@ -7,7 +7,12 @@ namespace ui {
 namespace drawing {
 namespace gdi {
 
-void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept
+void GDIBitmapSurface::CopyFromWindow(HDC hDC, int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY) noexcept
+{
+    ::BitBlt(m_hMemDC, dstX, dstY, srcWidth, srcHeight, hDC, srcX, srcY, SRCCOPY);
+}
+
+void GDIBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept
 {
     // clip to surface
     auto nStride = ra::to_signed(GetWidth());
@@ -71,7 +76,7 @@ static constexpr uint8_t BlendPixel(std::uint8_t nTarget, std::uint8_t nBlend, s
     return gsl::narrow_cast<std::uint8_t>(((nBlend * nAlpha) + (nTarget * (256 - nAlpha))) / 256);
 }
 
-void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
+void GDIBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
 {
     if (sText.empty())
         return;
@@ -86,7 +91,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     SwitchFont(nFont);
 
     SIZE szText;
-    GetTextExtentPoint32W(m_hDC, sText.c_str(), sText.length(), &szText);
+    GetTextExtentPoint32W(m_hDC, sText.c_str(), gsl::narrow_cast<int>(sText.length()), &szText);
 
     // clip to surface
     if (szText.cx > nStride - nX)
@@ -122,7 +127,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     SetTextColor(hMemDC, RGB(255, 255, 255));
     SetBkMode(hMemDC, TRANSPARENT);
     RECT rcRect{0, 0, szText.cx, szText.cy};
-    TextOutW(hMemDC, 0, 0, sText.c_str(), sText.length());
+    TextOutW(hMemDC, 0, 0, sText.c_str(), gsl::narrow_cast<int>(sText.length()));
 
     // copy the greyscale text to the forground using the grey value as the alpha for antialiasing
     auto nFirstScanline = (GetHeight() - nY - szText.cy); // bitmap memory starts with the bottom scanline

@@ -2,6 +2,8 @@
 
 // Win32 specific implementation of Desktop.hh
 
+#include "ui/drawing/gdi/GDIBitmapSurface.hh"
+
 #include "ui/viewmodels/WindowManager.hh"
 
 #include "ui/win32/BrokenAchievementsDialog.hh"
@@ -175,6 +177,36 @@ void Desktop::OpenUrl(const std::string& sUrl) const noexcept
 {
     ShellExecute(nullptr, TEXT("open"), sUrl.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
+
+std::unique_ptr<ra::ui::drawing::ISurface> Desktop::CaptureClientArea(const WindowViewModelBase& vmViewModel) const
+{
+    std::unique_ptr<ra::ui::drawing::ISurface> pSurface;
+
+    const auto* const pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
+    if (pBinding != nullptr)
+    {
+        RECT rcClientArea;
+        ::GetClientRect(pBinding->GetHWnd(), &rcClientArea);
+
+        const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
+        pSurface = pSurfaceFactory.CreateSurface(rcClientArea.right - rcClientArea.left, rcClientArea.bottom - rcClientArea.top);
+
+        auto* pGDISurface = dynamic_cast<ra::ui::drawing::gdi::GDIBitmapSurface*>(pSurface.get());
+        if (pGDISurface == nullptr)
+        {
+            pSurface.reset();
+        }
+        else
+        {
+            HDC hDC = GetDC(pBinding->GetHWnd());
+            pGDISurface->CopyFromWindow(hDC, 0, 0, pSurface->GetWidth(), pSurface->GetHeight(), 0, 0);
+            ReleaseDC(pBinding->GetHWnd(), hDC);
+        }
+    }
+
+    return pSurface;
+}
+
 
 void Desktop::Shutdown() noexcept
 {

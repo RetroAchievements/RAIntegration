@@ -60,6 +60,11 @@ public:
         m_sLastOpenedUrl = sUrl;
     }
 
+    std::unique_ptr<ra::ui::drawing::ISurface> CaptureClientArea(const WindowViewModelBase&) const noexcept override
+    {
+        return {};
+    }
+
     const std::string& LastOpenedUrl() const noexcept { return m_sLastOpenedUrl; }
 
     void Shutdown() noexcept override {}

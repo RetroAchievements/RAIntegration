@@ -18,6 +18,7 @@ enum class Feature
     LeaderboardScoreboards,
     PreferDecimal,
     NonHardcoreWarning,
+    AchievementScreenshot,
 };
 
 class IConfiguration
@@ -64,8 +65,11 @@ public:
     /// </summary>
     virtual unsigned int GetNumBackgroundThreads() const = 0;
 
-    virtual const std::string& GetRomDirectory() const = 0;
-    virtual void SetRomDirectory(const std::string& sValue) = 0;
+    virtual const std::wstring& GetRomDirectory() const = 0;
+    virtual void SetRomDirectory(const std::wstring& sValue) = 0;
+
+    virtual const std::wstring& GetScreenshotDirectory() const = 0;
+    virtual void SetScreenshotDirectory(const std::wstring& sValue) = 0;
 
     /// <summary>
     /// Gets the remembered position of the window identified by <paramref name="sPositionKey"/>.

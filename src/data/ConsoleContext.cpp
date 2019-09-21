@@ -570,7 +570,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<MegaDriveConsoleContext>(ConsoleID::Sega32X, L"SEGA 32X");
 
         case ConsoleID::SegaCD:
-            return std::make_unique<ConsoleContext>(nId, L"SEGA CD");
+            return std::make_unique<MegaDriveConsoleContext>(ConsoleID::SegaCD, L"SEGA CD");
 
         case ConsoleID::SG1000:
             return std::make_unique<SG1000ConsoleContext>();

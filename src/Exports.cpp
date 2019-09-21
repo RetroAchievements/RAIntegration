@@ -94,15 +94,15 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
         // show the welcome message
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\login.wav");
 
-        ra::ui::viewmodels::PopupMessageViewModel message;
-        message.SetTitle(ra::StringPrintf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
+        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
+        vmMessage->SetTitle(ra::StringPrintf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
             response.Username.c_str()));
-        message.SetDescription((response.NumUnreadMessages == 1)
+        vmMessage->SetDescription((response.NumUnreadMessages == 1)
             ? L"You have 1 new message"
             : ra::StringPrintf(L"You have %u new messages", response.NumUnreadMessages));
-        message.SetDetail(ra::StringPrintf(L"%u points", response.Score));
-        message.SetImage(ra::ui::ImageType::UserPic, response.Username);
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(message));
+        vmMessage->SetDetail(ra::StringPrintf(L"%u points", response.Score));
+        vmMessage->SetImage(ra::ui::ImageType::UserPic, response.Username);
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmMessage);
 
         // notify the client to update the RetroAchievements menu
         ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
@@ -390,6 +390,9 @@ API void CCONV _RA_DoAchievementsFrame()
 #ifndef RA_UTEST
     auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     vmBookmarks.DoFrame();
+
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    pOverlayManager.AdvanceFrame();
 
     // make sure we process the achievements _before_ the frozen bookmarks modify the memory
     g_MemoryDialog.Invalidate();

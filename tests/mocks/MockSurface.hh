@@ -14,20 +14,20 @@ namespace mocks {
 class MockSurface : public ISurface
 {
 public:
-    MockSurface(size_t nWidth, size_t nHeight) noexcept
+    MockSurface(unsigned int nWidth, unsigned int nHeight) noexcept
         : m_nWidth(nWidth), m_nHeight(nHeight)
     {
     }
 
-    size_t GetWidth() const noexcept override { return m_nWidth; }
-    size_t GetHeight() const noexcept override { return m_nHeight; }
+    unsigned int GetWidth() const noexcept override { return m_nWidth; }
+    unsigned int GetHeight() const noexcept override { return m_nHeight; }
 
     void FillRectangle(int, int, int, int, Color) noexcept override {}
     int LoadFont(const std::string&, int, FontStyles) noexcept override { return 1; }
 
     ra::ui::Size MeasureText(int, const std::wstring& sText) const noexcept override
     {
-        return { ra::to_signed(sText.length()), 1 };
+        return { gsl::narrow_cast<int>(sText.length()), 1 };
     }
 
     void WriteText(int, int, int, Color, const std::wstring&) noexcept override {}
@@ -38,8 +38,8 @@ public:
     void SetOpacity(double) noexcept override {}
 
 private:
-    size_t m_nWidth;
-    size_t m_nHeight;
+    unsigned int m_nWidth;
+    unsigned int m_nHeight;
 };
 
 class MockSurfaceFactory : public ISurfaceFactory
@@ -55,6 +55,11 @@ public:
     std::unique_ptr<ISurface> CreateTransparentSurface(int nWidth, int nHeight) const override
     {
         return std::make_unique<MockSurface>(nWidth, nHeight);
+    }
+
+    bool SaveImage(const ISurface&, const std::wstring&) const noexcept override
+    {
+        return false;
     }
 
 private:

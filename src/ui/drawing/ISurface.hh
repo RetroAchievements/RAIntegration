@@ -23,12 +23,12 @@ public:
     /// <summary>
     /// Gets the width of the surface.
     /// </summary>
-    virtual size_t GetWidth() const = 0;
+    virtual unsigned int GetWidth() const = 0;
 
     /// <summary>
     /// Gets the height of the surface.
     /// </summary>
-    virtual size_t GetHeight() const = 0;
+    virtual unsigned int GetHeight() const = 0;
 
     /// <summary>
     /// Draws a solid rectangle.
@@ -136,6 +136,11 @@ public:
     /// Creates a new offscren surface with an alpha channel.
     /// </summary>
     virtual std::unique_ptr<ISurface> CreateTransparentSurface(int nWidth, int nHeight) const = 0;
+
+    /// <summary>
+    /// Saves the provided surface to the specified file.
+    /// </summary>
+    virtual bool SaveImage(const ISurface& pSurface, const std::wstring& sPath) const = 0;
 
 protected:
     ISurfaceFactory() noexcept = default;

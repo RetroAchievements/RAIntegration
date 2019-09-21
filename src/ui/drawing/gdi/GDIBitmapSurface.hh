@@ -38,6 +38,13 @@ public:
             DeleteDC(m_hMemDC);
     }
 
+    void CopyFromWindow(HDC hDC, int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY) noexcept;
+
+    void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
+    void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
+
+    HBITMAP GetHBitmap() const noexcept { return m_hBitmap; }
+
 protected:
     std::uint32_t* m_pBits; // see note below about initializing this
 
@@ -93,9 +100,6 @@ public:
     GDIAlphaBitmapSurface(GDIAlphaBitmapSurface&&) noexcept = delete;
     GDIAlphaBitmapSurface& operator=(GDIAlphaBitmapSurface&&) noexcept = delete;
 
-    void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
-    void WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText) override;
-
     void Blend(HDC hTargetDC, int nX, int nY) const noexcept;
 
     void SetOpacity(double fAlpha) override;
@@ -118,6 +122,8 @@ public:
         auto pSurface = std::make_unique<GDIAlphaBitmapSurface>(nWidth, nHeight, m_oResourceRepository);
         return std::unique_ptr<ISurface>(pSurface.release());
     }
+
+    bool SaveImage(const ISurface& pSurface, const std::wstring& sPath) const override;
 
 private:
     mutable ResourceRepository m_oResourceRepository;

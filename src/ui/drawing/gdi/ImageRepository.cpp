@@ -1,5 +1,7 @@
 #include "ImageRepository.hh"
 
+#include "GDIBitmapSurface.hh"
+
 #include "RA_Core.h"
 
 #include "services\Http.hh"
@@ -333,7 +335,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource* pToRenderBitmapS
     return hr;
 }
 
-HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWidth, size_t nHeight)
+HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, unsigned int nWidth, unsigned int nHeight)
 {
     if (g_pIWICFactory == nullptr)
         return nullptr;
@@ -427,7 +429,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
         return nullptr;
     }
 
-    const size_t nSize = (nType == ImageType::Local) ? 0 : 64;
+    const unsigned int nSize = (nType == ImageType::Local) ? 0 : 64;
     HBITMAP hBitmap = LoadLocalPNG(sFilename, nSize, nSize);
     if (hBitmap != nullptr)
     {
@@ -454,7 +456,7 @@ HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
             if (hBitmap == nullptr)
                 return pImageRepository->GetDefaultImage(pImage.Type());
 
-            GSL_SUPPRESS_TYPE1 pImage.m_nData = reinterpret_cast<unsigned long>(hBitmap);
+            GSL_SUPPRESS_TYPE1 pImage.m_nData = reinterpret_cast<unsigned long long>(hBitmap);
 
             // ImageReference will release the reference
             pImageRepository->AddReference(pImage);
@@ -513,6 +515,63 @@ bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const
     const auto hBitmapBefore = pImage.m_nData;
     GetHBitmap(pImage); // TBD: Is the return value supposed to be discarded?
     return (pImage.m_nData != hBitmapBefore);
+}
+
+bool GDISurfaceFactory::SaveImage(const ISurface& pSurface, const std::wstring& sPath) const
+{
+    if (g_pIWICFactory == nullptr)
+        return false;
+
+    const auto* pGDIBitmapSurface = dynamic_cast<const GDIBitmapSurface*>(&pSurface);
+    if (pGDIBitmapSurface == nullptr)
+        return false;
+
+    // create a PNG encoder
+    CComPtr<IWICBitmapEncoder> pEncoder;
+    HRESULT hr = g_pIWICFactory->CreateEncoder(GUID_ContainerFormatPng, nullptr, &pEncoder);
+
+    // open the file stream
+    CComPtr<IWICStream> pStream;
+    if (SUCCEEDED(hr))
+        hr = g_pIWICFactory->CreateStream(&pStream);
+
+    if (SUCCEEDED(hr))
+        hr = pStream->InitializeFromFilename(sPath.c_str(), GENERIC_WRITE);
+
+    if (SUCCEEDED(hr))
+        hr = pEncoder->Initialize(pStream, WICBitmapEncoderNoCache);
+
+    // convert the image to a WICBitmap
+    CComPtr<IWICBitmapFrameEncode> pFrameEncode;
+    if (SUCCEEDED(hr))
+        hr = pEncoder->CreateNewFrame(&pFrameEncode, nullptr);
+
+    if (SUCCEEDED(hr))
+        hr = pFrameEncode->Initialize(nullptr);
+
+    if (SUCCEEDED(hr))
+        hr = pFrameEncode->SetSize(pSurface.GetWidth(), pSurface.GetHeight());
+
+    WICPixelFormatGUID pixelFormat;
+    GSL_SUPPRESS_CON4 pixelFormat = GUID_WICPixelFormatDontCare;
+    if (SUCCEEDED(hr))
+        hr = pFrameEncode->SetPixelFormat(&pixelFormat);
+
+    CComPtr<IWICBitmap> pWicBitmap;
+    if (SUCCEEDED(hr))
+        hr = g_pIWICFactory->CreateBitmapFromHBITMAP(pGDIBitmapSurface->GetHBitmap(), nullptr, WICBitmapIgnoreAlpha, &pWicBitmap);
+
+    // write the image to the file
+    if (SUCCEEDED(hr))
+        hr = pFrameEncode->WriteSource(pWicBitmap, nullptr);
+
+    if (SUCCEEDED(hr))
+        pFrameEncode->Commit();
+
+    if (SUCCEEDED(hr))
+        pEncoder->Commit();
+
+    return SUCCEEDED(hr);
 }
 
 } // namespace gdi

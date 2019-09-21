@@ -105,7 +105,7 @@ DWORD OverlayWindow::OverlayWindowThread()
     }
 
     m_hOverlayWndThread = nullptr;
-    return msg.wParam;
+    return gsl::narrow_cast<DWORD>(msg.wParam);
 }
 
 void OverlayWindow::CreateOverlayWindow()

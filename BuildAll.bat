@@ -160,12 +160,21 @@ if "%ESCAPEDKEY:~-6%" neq "_Tests" goto not_tests
 set DLL_PATH=bin\%~2\tests\%~1.dll
 if not exist %DLL_PATH% set DLL_PATH=bin\%~2\tests\%ESCAPEDKEY:~0,-6%\%~1.dll
 
-if exist %DLL_PATH% (
-    VsTest.Console.exe %DLL_PATH% || goto eof
-) else (
+if not exist %DLL_PATH% (
     echo Could not locate %~1.dll
     goto eof
 )
+
+rem -- the default VsTest.Console.exe (in CommonExtensions) does not return ERRORLEVEL, use one in Extensions instead
+rem -- see https://github.com/Microsoft/vstest/issues/1113
+rem -- also, cannot use exists on path with spaces, so use dir and check result
+set VSTEST_PATH=%VSINSTALLDIR%Common7\IDE\Extensions\TestPlatform\VsTest.Console.exe
+dir "%VSTEST_PATH%" > null || set VSTEST_PATH=VsTest.Console.exe
+"%VSTEST_PATH%" %DLL_PATH%
+
+set RESULT=%ERRORLEVEL%
+if not %RESULT% equ 0 exit /B %RESULT%
+
 :not_tests
 
 rem === Update build log and return ===

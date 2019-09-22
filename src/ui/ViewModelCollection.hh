@@ -275,8 +275,7 @@ private:
 
         ~Item() noexcept
         {
-            if (m_vmViewModel) // std::move may empty out our pointer
-                StopWatching();
+            StopWatching();
         }
 
         Item(const Item&) noexcept = delete;
@@ -327,8 +326,22 @@ private:
 
         ViewModelBase& ViewModel() { return *m_vmViewModel; }
         const ViewModelBase& ViewModel() const { return *m_vmViewModel; }
-        ViewModelBase* DetachViewModel() noexcept { return m_vmViewModel.release(); }
-        void AttachViewModel(ViewModelBase* vmViewModel) noexcept { m_vmViewModel.reset(vmViewModel); }
+
+        ViewModelBase* DetachViewModel() noexcept
+        {
+            if (m_pOwner->IsWatching())
+                m_vmViewModel->RemoveNotifyTarget(*this);
+
+            return m_vmViewModel.release();
+        }
+
+        void AttachViewModel(ViewModelBase* vmViewModel) noexcept
+        {
+            m_vmViewModel.reset(vmViewModel);
+
+            if (vmViewModel != nullptr && m_pOwner->IsWatching())
+                m_vmViewModel->AddNotifyTarget(*this);
+        }
 
         gsl::index Index() const noexcept { return m_nIndex; }
         void SetIndex(gsl::index nIndex) noexcept { m_nIndex = nIndex; }

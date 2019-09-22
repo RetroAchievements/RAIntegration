@@ -169,7 +169,7 @@ rem -- the default VsTest.Console.exe (in CommonExtensions) does not return ERRO
 rem -- see https://github.com/Microsoft/vstest/issues/1113
 rem -- also, cannot use exists on path with spaces, so use dir and check result
 set VSTEST_PATH=%VSINSTALLDIR%Common7\IDE\Extensions\TestPlatform\VsTest.Console.exe
-dir "%VSTEST_PATH%" > null || set VSTEST_PATH=VsTest.Console.exe
+dir "%VSTEST_PATH%" > nul || set VSTEST_PATH=VsTest.Console.exe
 "%VSTEST_PATH%" %DLL_PATH%
 
 set RESULT=%ERRORLEVEL%

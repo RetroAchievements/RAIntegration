@@ -38,7 +38,7 @@ public:
         if (!m_pLeaderboard)
             return;
 
-        unsigned int nValue;
+        int nValue;
         const int nResult = rc_evaluate_lboard(static_cast<rc_lboard_t*>(m_pLeaderboard), &nValue, rc_peek_callback, nullptr, nullptr);
         switch (nResult)
         {
@@ -61,7 +61,7 @@ public:
 
 private:
     unsigned int m_nSubmittedScore = 0;
-    unsigned int m_nCurrentValue = 0;
+    int m_nCurrentValue = 0;
     bool m_bScoreSubmitted = false;
 };
 

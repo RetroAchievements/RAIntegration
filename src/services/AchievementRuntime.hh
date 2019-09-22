@@ -74,7 +74,7 @@ public:
     {
         ChangeType nType;
         unsigned int nId;
-        unsigned int nValue;
+        int nValue;
     };
 
     /// <summary>
@@ -132,7 +132,7 @@ protected:
 
         rc_lboard_t* pLeaderboard;
         unsigned int nId;
-        unsigned int nValue = 0;
+        int nValue = 0;
     };
 
     template<class TCollection, class TData>

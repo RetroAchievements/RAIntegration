@@ -167,7 +167,7 @@ _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& cha
 
     for (auto& pLeaderboard : m_vActiveLeaderboards)
     {
-        unsigned int nValue;
+        int nValue;
         const int nResult = rc_evaluate_lboard(pLeaderboard.pLeaderboard, &nValue, rc_peek_callback, nullptr, nullptr);
         switch (nResult)
         {

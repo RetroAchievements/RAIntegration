@@ -72,40 +72,37 @@ call "%VSINSTALLDIR%VC\Auxiliary\Build\vcvars32.bat"
 
 rem === Build each project ===
 
-if %W32_DEBUG% equ 1 (
-    if %BUILDCLEAN% equ 1 (
-        call :build Clean Debug
-    )
-    call :build RA_Integration Debug
-    if not ERRORLEVEL 0 goto eof
-)
-
 if %BUILDCLEAN% equ 1 (
+    if %W32_DEBUG% equ 1 (
+        call :build Clean Debug || goto eof
+    )
+
     if %W32_RELEASE% equ 1 (
-        call :build Clean Release
+        call :build Clean Release || goto eof
     ) else if %W32_TESTS% equ 1 (
-        call :build Clean Release
+        call :build Clean Release || goto eof
     )
-)
 
-if %W32_RELEASE% equ 1 (
-    call :build RA_Integration Release
-    if not ERRORLEVEL 0 goto eof
-)
-
-if %W32_TESTS% equ 1 (
-    call :build RA_Integration.Tests Release
-    if not ERRORLEVEL 0 goto eof
-    call :build RA_Interface.Tests Release 
-    if not ERRORLEVEL 0 goto eof
-)
-
-if %W32_ANALYSIS% equ 1 (
-    if %BUILDCLEAN% equ 1 (
-        call :build Clean Analysis
+    if %W32_ANALYSIS% equ 1 (
+        call :build Clean Analysis || goto eof
     )
-    call :build RA_Integration Analysis
-    if not ERRORLEVEL 0 goto eof
+) else (
+    if %W32_DEBUG% equ 1 (
+        call :build RA_Integration Debug || goto eof
+    )
+
+    if %W32_RELEASE% equ 1 (
+        call :build RA_Integration Release || goto eof
+    )
+
+    if %W32_TESTS% equ 1 (
+        call :build RA_Integration.Tests Release || goto eof
+        call :build RA_Interface.Tests Release || goto eof
+    )
+
+    if %W32_ANALYSIS% equ 1 (
+        call :build RA_Integration Analysis || goto eof
+    )
 )
 
 exit /B 0
@@ -122,8 +119,8 @@ if %ERRORLEVEL% equ 0 (
     if not "%~1" equ "Clean" (
         echo.
         echo %~1 %~2 up-to-date!
+        exit /B 0
     )
-    exit /B 0
 )
 
 rem === Do the build ===
@@ -147,12 +144,13 @@ for /f "tokens=1* delims=." %%i in ("%ESCAPEDKEY%") do (
 )
 
 msbuild.exe RA_Integration.sln -t:%ESCAPEDKEY% -p:Configuration=%~2 -p:Platform=Win32 /warnaserror /nowarn:MSB8051,C5045
+set RESULT=%ERRORLEVEL%
 
 rem === If build failed, bail ===
 
-if not ERRORLEVEL 0 (
-    echo %~1 %~2 failed.
-    goto eof
+if not %RESULT% equ 0 (
+    echo %~1 %~2 failed: %RESULT%
+    exit /B %RESULT%
 )
 
 rem === If test project, run tests ===
@@ -163,9 +161,7 @@ set DLL_PATH=bin\%~2\tests\%~1.dll
 if not exist %DLL_PATH% set DLL_PATH=bin\%~2\tests\%ESCAPEDKEY:~0,-6%\%~1.dll
 
 if exist %DLL_PATH% (
-    VsTest.Console.exe %DLL_PATH%
-    
-    if not ERRORLEVEL 0 goto eof
+    VsTest.Console.exe %DLL_PATH% || goto eof
 ) else (
     echo Could not locate %~1.dll
     goto eof
@@ -175,8 +171,8 @@ if exist %DLL_PATH% (
 rem === Update build log and return ===
 
 echo %PROJECTKEY% >> %BUILDLOG%
-exit /B 0
 
 rem === For termination from within function ===
 
 :eof
+exit /B 0

@@ -4,6 +4,10 @@
 
 #include "RA_Dlg_Memory.h"
 
+#include "data\EmulatorContext.hh"
+
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
@@ -44,11 +48,11 @@ void MemoryBookmarksDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); 
 
 // ------------------------------------
 
-class GridBookmarkValueColumnBinding : public GridColumnBinding
+class GridBookmarkValueColumnBinding : public ra::ui::win32::bindings::GridNumberColumnBinding
 {
 public:
     GridBookmarkValueColumnBinding(const IntModelProperty& pBoundProperty) noexcept
-        : m_pBoundProperty(&pBoundProperty)
+        : ra::ui::win32::bindings::GridNumberColumnBinding(pBoundProperty)
     {
     }
 
@@ -88,8 +92,61 @@ public:
         }
     }
 
-protected:
-    const IntModelProperty* m_pBoundProperty = nullptr;
+    bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) override
+    {
+        unsigned int nValue = 0U;
+        std::wstring sError;
+
+        const auto nSize = ra::itoe<MemSize>(vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty));
+        switch (nSize)
+        {
+            case MemSize::ThirtyTwoBit:
+                m_nMaximum = 0xFFFFFFFF;
+                break;
+
+            case MemSize::SixteenBit:
+                m_nMaximum = 0xFFFF;
+                break;
+
+            case MemSize::EightBit:
+                m_nMaximum = 0xFF;
+                break;
+        }
+
+        const auto nFormat = vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty);
+        switch (ra::itoe<MemFormat>(nFormat))
+        {
+            case MemFormat::Dec:
+                if (!ParseUnsignedInt(sValue, nValue, sError))
+                {
+                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
+                    return false;
+                }
+                break;
+
+            default:
+                if (!ParseHex(sValue, nValue, sError))
+                {
+                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
+                    return false;
+                }
+                break;
+        }
+
+        const auto nCurrentValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+        if (ra::to_unsigned(nCurrentValue) != nValue)
+        {
+            const auto nAddress = vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty);
+            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().WriteMemory(nAddress, nSize, nValue);
+
+            vmItems.SetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::PreviousValueProperty, nCurrentValue);
+            vmItems.SetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::CurrentValueProperty, nValue);
+            vmItems.SetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangesProperty,
+                vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangesProperty) + 1);
+        }
+
+        return true;
+    }
 };
 
 MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryBookmarks)
@@ -134,6 +191,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     pValueColumn->SetHeader(L"Value");
     pValueColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
     pValueColumn->SetAlignment(ra::ui::RelativePosition::Center);
+    pValueColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(4, std::move(pValueColumn));
 
     auto pPriorColumn = std::make_unique<GridBookmarkValueColumnBinding>(

@@ -10,7 +10,15 @@ namespace ui {
 namespace win32 {
 namespace bindings {
 
-class GridTextColumnBinding : public GridColumnBinding
+class GridTextColumnBindingBase : public GridColumnBinding
+{
+public:
+    virtual bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) = 0;
+
+    HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override;
+};
+
+class GridTextColumnBinding : public GridTextColumnBindingBase
 {
 public:
     GridTextColumnBinding(const StringModelProperty& pBoundProperty) noexcept
@@ -23,9 +31,10 @@ public:
         return vmItems.GetItemValue(nIndex, *m_pBoundProperty);
     }
 
-    virtual void SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue)
+    bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) override
     {
         vmItems.SetItemValue(nIndex, *m_pBoundProperty, sValue);
+        return true;
     }
 
     bool DependsOn(const ra::ui::StringModelProperty& pProperty) const noexcept override
@@ -33,7 +42,6 @@ public:
         return pProperty == *m_pBoundProperty;
     }
 
-    HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override;
     const StringModelProperty& GetBoundProperty() const noexcept { return *m_pBoundProperty; }
 
 protected:

@@ -44,6 +44,9 @@ static LRESULT CALLBACK DropDownProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM
         }
 
         case WM_KILLFOCUS:
+            if (pInfo->bIgnoreLostFocus)
+                return 0;
+
             return NotifySelection(hwnd, pInfo);
 
         case WM_COMMAND:

@@ -249,6 +249,16 @@ public:
     int RemoveSelectedBookmarks();
 
     /// <summary>
+    /// Moves the selected bookmarks higher in the list.
+    /// </summary>
+    void MoveSelectedBookmarksUp();
+
+    /// <summary>
+    /// Moves the selected bookmarks higher in the list.
+    /// </summary>
+    void MoveSelectedBookmarksDown();
+
+    /// <summary>
     /// Resets the Changes counter on all bookmarks.
     /// </summary>
     void ClearAllChanges();
@@ -267,9 +277,16 @@ protected:
     void LoadBookmarks(ra::services::TextReader& sBookmarksFile);
     void SaveBookmarks(ra::services::TextWriter& sBookmarksFile) const;
 
+    // ViewModelBase::NotifyTarget
     void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
-    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) noexcept override;
+
+    // ViewModelCollectionBase::NotifyTarget
+    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
+    void OnViewModelAdded([[maybe_unused]] gsl::index nIndex) override;
+    void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) override;
+
+    // ra::data::GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
 

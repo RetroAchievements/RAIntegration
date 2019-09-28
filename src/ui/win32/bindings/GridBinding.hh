@@ -69,10 +69,13 @@ protected:
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
     void OnViewModelAdded(gsl::index nIndex) override;
     void OnViewModelRemoved(gsl::index nIndex) override;
+    void OnViewModelChanged(gsl::index nIndex) override;
     void OnBeginViewModelCollectionUpdate() noexcept override;
     void OnEndViewModelCollectionUpdate() override;
 
 private:
+    void UpdateRow(gsl::index nIndex, bool bExisting);
+
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;
     size_t m_nColumnsCreated = 0;

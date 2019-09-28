@@ -220,7 +220,7 @@ void WindowBinding::OnViewModelStringValueChanged(const StringModelProperty::Cha
         return;
     }
 
-    auto pIter = m_mLabelBindings.find(args.Property.GetKey());
+    const auto pIter = m_mLabelBindings.find(args.Property.GetKey());
     if (pIter != m_mLabelBindings.end())
     {
         SetDlgItemTextW(m_hWnd, pIter->second, args.tNewValue.c_str());

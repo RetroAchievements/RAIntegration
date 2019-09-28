@@ -5,7 +5,7 @@ namespace ui {
 
 void ViewModelBase::SetValue(const BoolModelProperty& pProperty, bool bValue)
 {
-    IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
+    const IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
 
     if (bValue == pProperty.GetDefaultValue())
     {
@@ -42,7 +42,7 @@ void ViewModelBase::SetValue(const BoolModelProperty& pProperty, bool bValue)
 
 void ViewModelBase::SetValue(const StringModelProperty& pProperty, const std::wstring& sValue)
 {
-    StringModelProperty::ValueMap::iterator iter = m_mStringValues.find(pProperty.GetKey());
+    const StringModelProperty::ValueMap::iterator iter = m_mStringValues.find(pProperty.GetKey());
     std::wstring sOldValue;
     const std::wstring* pOldValue{};
 
@@ -98,7 +98,7 @@ void ViewModelBase::SetValue(const StringModelProperty& pProperty, const std::ws
 
 void ViewModelBase::SetValue(const IntModelProperty& pProperty, int nValue)
 {
-    IntModelProperty::ValueMap::iterator iter = m_mIntValues.find(pProperty.GetKey());
+    const IntModelProperty::ValueMap::iterator iter = m_mIntValues.find(pProperty.GetKey());
     int nOldValue{};
 
     if (nValue == pProperty.GetDefaultValue())

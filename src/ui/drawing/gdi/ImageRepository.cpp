@@ -111,7 +111,7 @@ bool ImageRepository::IsImageAvailable(ImageType nType, const std::string& sName
     GSL_SUPPRESS_TYPE3{ mMap = const_cast<ImageRepository*>(this)->GetBitmapMap(nType); }
     if (mMap != nullptr)
     {
-        HBitmapMap::iterator iter = mMap->find(sName);
+        const HBitmapMap::iterator iter = mMap->find(sName);
         if (iter != mMap->end())
             return true;
     }
@@ -416,7 +416,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
     if (mMap == nullptr)
         return nullptr;
 
-    HBitmapMap::iterator iter = mMap->find(sName);
+    const HBitmapMap::iterator iter = mMap->find(sName);
     if (iter != mMap->end())
         return iter->second.m_hBitmap;
 
@@ -475,7 +475,7 @@ void ImageRepository::AddReference(const ImageReference& pImage)
     if (mMap == nullptr)
         return;
 
-    HBitmapMap::iterator iter = mMap->find(pImage.Name());
+    const HBitmapMap::iterator iter = mMap->find(pImage.Name());
     ASSERT(iter != mMap->end()); // AddReference should only be called if an HBITMAP exists, which will be in the map
     if (iter != mMap->end())
         ++iter->second.m_nReferences;
@@ -490,7 +490,7 @@ void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
     HBitmapMap* mMap = GetBitmapMap(pImage.Type());
     if (mMap != nullptr)
     {
-        HBitmapMap::iterator iter = mMap->find(pImage.Name());
+        const HBitmapMap::iterator iter = mMap->find(pImage.Name());
 
         if(iter != mMap->end())
         {

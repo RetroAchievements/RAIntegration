@@ -42,9 +42,9 @@ void GDIBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Co
 
     // fill rectangle
     auto nFirstScanline = (GetHeight() - nY - nHeight); // bitmap memory starts with the bottom scanline
-    assert(m_pBits != nullptr);
+    GSL_SUPPRESS_F6 Expects(m_pBits != nullptr);
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
-    assert(pBits != nullptr);
+    GSL_SUPPRESS_F6 Ensures(pBits != nullptr);
 
     if (nStride == nWidth)
     {
@@ -119,8 +119,8 @@ void GDIBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const 
     GSL_SUPPRESS_TYPE1 hBitmap =
         CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pTextBits), nullptr, 0);
 
-    assert(hBitmap != nullptr);
-    assert(pTextBits != nullptr);
+    Expects(hBitmap != nullptr);
+    Ensures(pTextBits != nullptr);
     SelectBitmap(hMemDC, hBitmap);
 
     SelectFont(hMemDC, m_pResourceRepository.GetHFont(nFont));
@@ -131,10 +131,10 @@ void GDIBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const 
 
     // copy the greyscale text to the forground using the grey value as the alpha for antialiasing
     auto nFirstScanline = (GetHeight() - nY - szText.cy); // bitmap memory starts with the bottom scanline
-    assert(ra::to_signed(nFirstScanline) >= 0);
-    assert(m_pBits != nullptr);
+    Expects(ra::to_signed(nFirstScanline) >= 0);
+    Expects(m_pBits != nullptr);
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
-    assert(pBits != nullptr);
+    Ensures(pBits != nullptr);
 
     // clip to surface
     auto nLines = szText.cy;
@@ -175,7 +175,7 @@ void GDIBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const 
 #pragma warning(push)
 #pragma warning(disable : 5045)
 
-void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
+void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
 {
     const auto nWidth = to_signed(GetWidth());
     const auto nHeight = to_signed(GetHeight());
@@ -186,10 +186,10 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
     // merge the current surface onto the buffer - they'll both be the same size, so bulk process it
     std::uint8_t* pBits;
     GSL_SUPPRESS_TYPE1 pBits = reinterpret_cast<std::uint8_t*>(m_pBlendBuffer.m_pBits);
-    assert(pBits != nullptr);
+    Expects(pBits != nullptr);
     std::uint8_t* pSrcBits;
     GSL_SUPPRESS_TYPE1 pSrcBits = reinterpret_cast<std::uint8_t*>(m_pBits);
-    assert(pSrcBits != nullptr);
+    Expects(pSrcBits != nullptr);
 
     const std::uint8_t* pEnd = pSrcBits + (nWidth * nHeight * 4);
     while (pSrcBits < pEnd)

@@ -168,7 +168,7 @@ void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondS
     }
 }
 
-void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondSubItems nColumn, std::string&& sNewValue)
+void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondSubItems nColumn, std::string&& sNewValue) noexcept
 {
     std::string& sCell = LbxDataAt(nRow, nColumn);
     if (sCell != sNewValue)

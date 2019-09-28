@@ -106,7 +106,7 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     request.NumEntries = 10;
     request.CallAsync([this, nId = vmItem.GetId()](const ra::api::FetchLeaderboardInfo::Response& response)
     {
-        auto pIter = m_vLeaderboardRanks.find(nId);
+        const auto pIter = m_vLeaderboardRanks.find(nId);
         if (pIter == m_vLeaderboardRanks.end())
             return;
 

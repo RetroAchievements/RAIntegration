@@ -43,7 +43,7 @@ private:
 
         AchievementViewModel* GetItemDetail(ra::AchievementID nId)
         {
-            auto pIter = m_vAchievementDetails.find(nId);
+            const auto pIter = m_vAchievementDetails.find(nId);
             if (pIter != m_vAchievementDetails.end())
                 return &pIter->second;
 

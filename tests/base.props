@@ -36,10 +36,6 @@
       <ConformanceMode>true</ConformanceMode>
       <WarningLevel>Level4</WarningLevel>
     </ClCompile>
-    <PostBuildEvent>
-      <Command>
-      </Command>
-    </PostBuildEvent>
     <Link>
       <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>

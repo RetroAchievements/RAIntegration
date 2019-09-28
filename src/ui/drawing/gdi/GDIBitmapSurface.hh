@@ -66,8 +66,8 @@ private:
 
         LPVOID pBits{};
         m_hBitmap = CreateDIBSection(m_hMemDC, &bmi, DIB_RGB_COLORS, &pBits, nullptr, 0);
-        assert(m_hBitmap != nullptr);
-        assert(pBits != nullptr);
+        GSL_SUPPRESS_F6 Expects(m_hBitmap != nullptr);
+        GSL_SUPPRESS_F6 Ensures(pBits != nullptr);
         m_pBits = static_cast<std::uint32_t*>(pBits);
 
         SelectObject(m_hMemDC, m_hBitmap);
@@ -100,7 +100,7 @@ public:
     GDIAlphaBitmapSurface(GDIAlphaBitmapSurface&&) noexcept = delete;
     GDIAlphaBitmapSurface& operator=(GDIAlphaBitmapSurface&&) noexcept = delete;
 
-    void Blend(HDC hTargetDC, int nX, int nY) const noexcept;
+    void Blend(HDC hTargetDC, int nX, int nY) const;
 
     void SetOpacity(double fAlpha) override;
 

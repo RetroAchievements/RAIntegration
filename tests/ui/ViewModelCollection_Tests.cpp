@@ -112,32 +112,44 @@ TEST_CLASS(ViewModelCollection_Tests)
             m_sLastPropertyChanged.clear();
         }
 
-        void OnViewModelAdded(gsl::index nIndex) noexcept override
+        void OnViewModelAdded(gsl::index nIndex) override
         {
-            m_nChangeIndex = nIndex;
-            GSL_SUPPRESS_F6 m_sLastPropertyChanged = "~ADDED~";
+            m_nChanges[nIndex] = "~ADDED~";
         }
 
         void AssertItemAdded(gsl::index nIndex)
         {
-            Assert::AreEqual(nIndex, m_nChangeIndex);
-            Assert::AreEqual(std::string("~ADDED~"), m_sLastPropertyChanged);
-
-            m_sLastPropertyChanged.clear();
+            Assert::AreEqual(std::string("~ADDED~"), m_nChanges[nIndex]);
         }
 
-        void OnViewModelRemoved(gsl::index nIndex) noexcept override
+        void OnViewModelRemoved(gsl::index nIndex) override
         {
-            m_nChangeIndex = nIndex;
-            GSL_SUPPRESS_F6 m_sLastPropertyChanged = "~REMOVED~";
+            m_nChanges[nIndex] = "~REMOVED~";
         }
 
         void AssertItemRemoved(gsl::index nIndex)
         {
-            Assert::AreEqual(nIndex, m_nChangeIndex);
-            Assert::AreEqual(std::string("~REMOVED~"), m_sLastPropertyChanged);
+            Assert::AreEqual(std::string("~REMOVED~"), m_nChanges[nIndex]);
+        }
 
-            m_sLastPropertyChanged.clear();
+        void OnViewModelChanged(gsl::index nIndex) override
+        {
+            m_nChanges[nIndex] = "~CHANGED~";
+        }
+
+        void AssertItemChanged(gsl::index nIndex)
+        {
+            Assert::AreEqual(std::string("~CHANGED~"), m_nChanges[nIndex]);
+        }
+
+        void AssertItemNotChanged(gsl::index nIndex)
+        {
+            Assert::IsTrue(m_nChanges.find(nIndex) == m_nChanges.end());
+        }
+
+        void ResetChanges() noexcept
+        {
+            m_nChanges.clear();
         }
 
     private:
@@ -145,7 +157,8 @@ TEST_CLASS(ViewModelCollection_Tests)
         std::wstring m_sOldValue, m_sNewValue;
         int m_nOldValue{}, m_nNewValue{};
         bool m_bOldValue{}, m_bNewValue{};
-        gsl::index m_nChangeIndex = -1;
+        gsl::index m_nChangeIndex = 0;
+        std::map<gsl::index, std::string> m_nChanges;
     };
 
 public:
@@ -359,6 +372,223 @@ public:
         oNotify.AssertIntChanged(TestViewModel::IntProperty, 0, 2, 5);
         pItem2.SetBool(true);
         oNotify.AssertBoolChanged(TestViewModel::BoolProperty, 0, false, true);
+    }
+
+    TEST_METHOD(TestAddWhileUpdateSuspendedPropertyNotification)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        NotifyTargetHarness oNotify;
+        vmCollection.AddNotifyTarget(oNotify);
+        vmCollection.BeginUpdate();
+
+        vmCollection.Add(1, L"Test1");
+        oNotify.AssertItemNotChanged(0);
+
+        vmCollection.Add(2, L"Test2");
+        oNotify.AssertItemNotChanged(0);
+        oNotify.AssertItemNotChanged(1);
+
+        vmCollection.EndUpdate();
+        oNotify.AssertItemAdded(0);
+        oNotify.AssertItemAdded(1);
+    }
+
+    TEST_METHOD(TestRemoveWhileUpdateSuspendedPropertyNotification)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        vmCollection.Add(1, L"Test1");
+        vmCollection.Add(2, L"Test2");
+
+        NotifyTargetHarness oNotify;
+        vmCollection.AddNotifyTarget(oNotify);
+        vmCollection.BeginUpdate();
+
+        vmCollection.RemoveAt(0);
+        oNotify.AssertItemNotChanged(0);
+
+        vmCollection.RemoveAt(0);
+        oNotify.AssertItemNotChanged(0);
+        oNotify.AssertItemNotChanged(1);
+
+        vmCollection.EndUpdate();
+        oNotify.AssertItemRemoved(0);
+        oNotify.AssertItemRemoved(1);
+    }
+
+    TEST_METHOD(TestMovePropertyNotification)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        auto& pItem1 = vmCollection.Add(1, L"Test1");
+        auto& pItem2 = vmCollection.Add(2, L"Test2");
+        auto& pItem3 = vmCollection.Add(3, L"Test3");
+        auto& pItem4 = vmCollection.Add(4, L"Test4");
+        auto& pItem5 = vmCollection.Add(5, L"Test5");
+
+        NotifyTargetHarness oNotify;
+        vmCollection.AddNotifyTarget(oNotify);
+
+        // move item in slot 1 into slot 3, moving slots 2 and 3 back one to accomodate
+        vmCollection.MoveItem(1, 3);
+
+        oNotify.AssertItemNotChanged(0);
+        oNotify.AssertItemChanged(1);
+        oNotify.AssertItemChanged(2);
+        oNotify.AssertItemChanged(3);
+        oNotify.AssertItemNotChanged(4);
+
+        Assert::AreEqual((void*)&pItem1, (void*)vmCollection.GetItemAt(0));
+        Assert::AreEqual((void*)&pItem3, (void*)vmCollection.GetItemAt(1));
+        Assert::AreEqual((void*)&pItem4, (void*)vmCollection.GetItemAt(2));
+        Assert::AreEqual((void*)&pItem2, (void*)vmCollection.GetItemAt(3));
+        Assert::AreEqual((void*)&pItem5, (void*)vmCollection.GetItemAt(4));
+    }
+
+    TEST_METHOD(TestMoveWhileUpdateSuspendedPropertyNotification)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        auto& pItem1 = vmCollection.Add(1, L"Test1");
+        auto& pItem2 = vmCollection.Add(2, L"Test2");
+        auto& pItem3 = vmCollection.Add(3, L"Test3");
+        auto& pItem4 = vmCollection.Add(4, L"Test4");
+        auto& pItem5 = vmCollection.Add(5, L"Test5");
+
+        NotifyTargetHarness oNotify;
+        vmCollection.AddNotifyTarget(oNotify);
+
+        vmCollection.BeginUpdate();
+
+        // move item in slot 1 into slot 3, moving slots 2 and 3 back one to accomodate
+        vmCollection.MoveItem(1, 3);
+
+        oNotify.AssertItemNotChanged(0);
+        oNotify.AssertItemNotChanged(1);
+        oNotify.AssertItemNotChanged(2);
+        oNotify.AssertItemNotChanged(3);
+        oNotify.AssertItemNotChanged(4);
+
+        // move item in slot 3 into slot 2, moving slot 2 forward one to accomodate
+        vmCollection.MoveItem(3, 2);
+
+        oNotify.AssertItemNotChanged(0);
+        oNotify.AssertItemNotChanged(1);
+        oNotify.AssertItemNotChanged(2);
+        oNotify.AssertItemNotChanged(3);
+        oNotify.AssertItemNotChanged(4);
+
+        // EndUpdate should trigger notifications
+        vmCollection.EndUpdate();
+
+        oNotify.AssertItemNotChanged(0);
+        oNotify.AssertItemChanged(1);
+        oNotify.AssertItemChanged(2);
+        oNotify.AssertItemNotChanged(3);
+        oNotify.AssertItemNotChanged(4);
+
+        Assert::AreEqual((void*)&pItem1, (void*)vmCollection.GetItemAt(0));
+        Assert::AreEqual((void*)&pItem3, (void*)vmCollection.GetItemAt(1));
+        Assert::AreEqual((void*)&pItem2, (void*)vmCollection.GetItemAt(2));
+        Assert::AreEqual((void*)&pItem4, (void*)vmCollection.GetItemAt(3));
+        Assert::AreEqual((void*)&pItem5, (void*)vmCollection.GetItemAt(4));
+    }
+
+    TEST_METHOD(TestShiftItemsUp)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        auto& pItem1 = vmCollection.Add(1, L"Test1");
+        auto& pItem2 = vmCollection.Add(2, L"Test2");
+        auto& pItem3 = vmCollection.Add(3, L"Test3");
+        auto& pItem4 = vmCollection.Add(4, L"Test4");
+        auto& pItem5 = vmCollection.Add(5, L"Test5");
+
+        pItem2.SetBool(true);
+        pItem4.SetBool(true);
+
+        NotifyTargetHarness oNotify;
+        vmCollection.AddNotifyTarget(oNotify);
+
+        // items 2 and 4 are selected (indices 1 and 3) - they should get moved into indices 0 and 1
+        Assert::AreEqual({ 2U }, vmCollection.ShiftItemsUp(TestViewModel::BoolProperty));
+
+        Assert::AreEqual((void*)&pItem2, (void*)vmCollection.GetItemAt(0));
+        Assert::AreEqual((void*)&pItem4, (void*)vmCollection.GetItemAt(1));
+        Assert::AreEqual((void*)&pItem1, (void*)vmCollection.GetItemAt(2));
+        Assert::AreEqual((void*)&pItem3, (void*)vmCollection.GetItemAt(3));
+        Assert::AreEqual((void*)&pItem5, (void*)vmCollection.GetItemAt(4));
+
+        oNotify.AssertItemChanged(0);
+        oNotify.AssertItemChanged(1);
+        oNotify.AssertItemChanged(2);
+        oNotify.AssertItemChanged(3);
+        oNotify.AssertItemNotChanged(4);
+
+        pItem4.SetBool(false);
+        pItem1.SetBool(true);
+        oNotify.ResetChanges();
+
+        // now items 1 and 2 are selected (indices 0 and 2)
+        Assert::AreEqual({ 2U }, vmCollection.ShiftItemsUp(TestViewModel::BoolProperty));
+
+        Assert::AreEqual((void*)&pItem2, (void*)vmCollection.GetItemAt(0));
+        Assert::AreEqual((void*)&pItem1, (void*)vmCollection.GetItemAt(1));
+        Assert::AreEqual((void*)&pItem4, (void*)vmCollection.GetItemAt(2));
+        Assert::AreEqual((void*)&pItem3, (void*)vmCollection.GetItemAt(3));
+        Assert::AreEqual((void*)&pItem5, (void*)vmCollection.GetItemAt(4));
+
+        oNotify.AssertItemNotChanged(0);
+        oNotify.AssertItemChanged(1);
+        oNotify.AssertItemChanged(2);
+        oNotify.AssertItemNotChanged(3);
+        oNotify.AssertItemNotChanged(4);
+    }
+
+    TEST_METHOD(TestShiftItemsDown)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        auto& pItem1 = vmCollection.Add(1, L"Test1");
+        auto& pItem2 = vmCollection.Add(2, L"Test2");
+        auto& pItem3 = vmCollection.Add(3, L"Test3");
+        auto& pItem4 = vmCollection.Add(4, L"Test4");
+        auto& pItem5 = vmCollection.Add(5, L"Test5");
+
+        pItem2.SetBool(true);
+        pItem4.SetBool(true);
+
+        NotifyTargetHarness oNotify;
+        vmCollection.AddNotifyTarget(oNotify);
+
+        // items 2 and 4 are selected (indices 1 and 3) - they should get moved into indices 3 and 4
+        Assert::AreEqual({ 2U }, vmCollection.ShiftItemsDown(TestViewModel::BoolProperty));
+
+        Assert::AreEqual((void*)&pItem1, (void*)vmCollection.GetItemAt(0));
+        Assert::AreEqual((void*)&pItem3, (void*)vmCollection.GetItemAt(1));
+        Assert::AreEqual((void*)&pItem5, (void*)vmCollection.GetItemAt(2));
+        Assert::AreEqual((void*)&pItem2, (void*)vmCollection.GetItemAt(3));
+        Assert::AreEqual((void*)&pItem4, (void*)vmCollection.GetItemAt(4));
+
+        oNotify.AssertItemNotChanged(0);
+        oNotify.AssertItemChanged(1);
+        oNotify.AssertItemChanged(2);
+        oNotify.AssertItemChanged(3);
+        oNotify.AssertItemChanged(4);
+
+        pItem2.SetBool(false);
+        pItem5.SetBool(true);
+        oNotify.ResetChanges();
+
+        // now items 4 and 5 are selected (indices 2 and 4)
+        Assert::AreEqual({ 2U }, vmCollection.ShiftItemsDown(TestViewModel::BoolProperty));
+
+        Assert::AreEqual((void*)&pItem1, (void*)vmCollection.GetItemAt(0));
+        Assert::AreEqual((void*)&pItem3, (void*)vmCollection.GetItemAt(1));
+        Assert::AreEqual((void*)&pItem2, (void*)vmCollection.GetItemAt(2));
+        Assert::AreEqual((void*)&pItem5, (void*)vmCollection.GetItemAt(3));
+        Assert::AreEqual((void*)&pItem4, (void*)vmCollection.GetItemAt(4));
+
+        oNotify.AssertItemNotChanged(0);
+        oNotify.AssertItemNotChanged(1);
+        oNotify.AssertItemChanged(2);
+        oNotify.AssertItemChanged(3);
+        oNotify.AssertItemNotChanged(4);
     }
 };
 

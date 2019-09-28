@@ -249,6 +249,16 @@ public:
     int RemoveSelectedBookmarks();
 
     /// <summary>
+    /// Moves the selected bookmarks higher in the list.
+    /// </summary>
+    void MoveSelectedBookmarksUp();
+
+    /// <summary>
+    /// Moves the selected bookmarks higher in the list.
+    /// </summary>
+    void MoveSelectedBookmarksDown();
+
+    /// <summary>
     /// Resets the Changes counter on all bookmarks.
     /// </summary>
     void ClearAllChanges();

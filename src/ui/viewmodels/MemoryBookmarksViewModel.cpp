@@ -3,6 +3,10 @@
 #include "RA_Json.h"
 #include "RA_StringUtils.h"
 
+#ifndef RA_UTEST
+#include "RA_Dlg_Memory.h"
+#endif
+
 #include "data\EmulatorContext.hh"
 
 #include "services\IConfiguration.hh"
@@ -60,13 +64,39 @@ void MemoryBookmarksViewModel::OnViewModelBoolValueChanged(const BoolModelProper
     }
 }
 
-void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs& args) noexcept
+GSL_SUPPRESS_F6
+void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == MemoryBookmarkViewModel::FormatProperty ||
         args.Property == MemoryBookmarkViewModel::SizeProperty)
     {
         m_bModified = true;
     }
+    else if (args.Property == MemoryBookmarkViewModel::BehaviorProperty)
+    {
+#ifndef RA_UTEST
+        // force memory view to repaint - different behaviors appear as different colors
+        MemoryViewerControl::Invalidate();
+#endif
+    }
+}
+
+GSL_SUPPRESS_F6
+void MemoryBookmarksViewModel::OnViewModelAdded(gsl::index)
+{
+#ifndef RA_UTEST
+    // force memory view to repaint - bookmarked items appear as different colors
+    MemoryViewerControl::Invalidate();
+#endif
+}
+
+GSL_SUPPRESS_F6
+void MemoryBookmarksViewModel::OnViewModelRemoved(gsl::index)
+{
+#ifndef RA_UTEST
+    // force memory view to repaint - bookmarked items appear as different colors
+    MemoryViewerControl::Invalidate();
+#endif
 }
 
 void MemoryBookmarksViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)

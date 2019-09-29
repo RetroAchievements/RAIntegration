@@ -164,6 +164,32 @@ size_t ViewModelCollectionBase::ShiftItemsDown(const BoolModelProperty& pPropert
     return nMatches;
 }
 
+void ViewModelCollectionBase::Reverse()
+{
+    BeginUpdate();
+
+    gsl::index nIndexFront = 0;
+    gsl::index nIndexBack = m_nSize - 1;
+
+    while (nIndexFront < nIndexBack)
+    {
+        auto pItemFront = m_vItems.at(nIndexFront).DetachViewModel();
+        auto pItemBack = m_vItems.at(nIndexBack).DetachViewModel();
+        m_vItems.at(nIndexFront).AttachViewModel(pItemBack);
+        m_vItems.at(nIndexBack).AttachViewModel(pItemFront);
+
+        const auto nOldIndexFront = m_vItems.at(nIndexFront).Index();
+        const auto nOldIndexBack = m_vItems.at(nIndexBack).Index();
+        m_vItems.at(nIndexFront).SetIndex(nOldIndexBack);
+        m_vItems.at(nIndexBack).SetIndex(nOldIndexFront);
+
+        ++nIndexFront;
+        --nIndexBack;
+    }
+
+    EndUpdate();
+}
+
 void ViewModelCollectionBase::StartWatching() noexcept
 {
     for (auto& pItem : m_vItems)

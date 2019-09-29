@@ -130,6 +130,11 @@ public:
     size_t ShiftItemsDown(const BoolModelProperty& pProperty);
 
     /// <summary>
+    /// Reverses the items in the list.
+    /// </summary>
+    void Reverse();
+
+    /// <summary>
     /// Gets the value associated to the requested boolean property for the item at the specified index.
     /// </summary>
     /// <param name="nIndex">The index of the item to query.</param>

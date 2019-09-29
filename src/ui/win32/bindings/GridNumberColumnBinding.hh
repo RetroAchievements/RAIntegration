@@ -23,6 +23,13 @@ public:
         return std::to_wstring(vmItems.GetItemValue(nIndex, *m_pBoundProperty));
     }
 
+    std::wstring GetSortKey(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        std::wstring sText = GetText(vmItems, nIndex);
+        sText.insert(0, 10 - sText.length(), '0');
+        return sText;
+    }
+
     bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
     {
         return pProperty == *m_pBoundProperty;

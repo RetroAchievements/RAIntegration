@@ -395,7 +395,8 @@ void GridBinding::CheckForScrollBar()
     SCROLLINFO info{};
     info.cbSize = sizeof(info);
     info.fMask = SIF_PAGE;
-    const bool bHasScrollbar = GetScrollInfo(m_hWnd, SBS_VERT, &info) && (info.nPage < m_vmItems->Count());
+    const bool bHasScrollbar = GetScrollInfo(m_hWnd, SBS_VERT, &info) &&
+        (info.nPage > 0) && (info.nPage < m_vmItems->Count());
 
     if (bHasScrollbar != m_bHasScrollbar)
     {

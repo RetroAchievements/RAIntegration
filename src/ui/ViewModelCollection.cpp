@@ -254,9 +254,12 @@ void ViewModelCollectionBase::BeginUpdate()
 
 void ViewModelCollectionBase::EndUpdate()
 {
-    if (m_nUpdateCount > 0 && --m_nUpdateCount == 0)
+    if (m_nUpdateCount == 1)
     {
         UpdateIndices();
+
+        // don't actually decrement the update count until after the indices have been fixed
+        --m_nUpdateCount;
 
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
@@ -265,6 +268,10 @@ void ViewModelCollectionBase::EndUpdate()
             Expects(target != nullptr);
             target->OnEndViewModelCollectionUpdate();
         }
+    }
+    else if (m_nUpdateCount > 0)
+    {
+        --m_nUpdateCount;
     }
 }
 

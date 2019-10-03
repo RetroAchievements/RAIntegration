@@ -300,6 +300,12 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
     }
 }
 
+void DialogBase::OnShown()
+{
+    for(auto& pPair : m_mControlBindings)
+        pPair.second->OnShown();
+}
+
 void DialogBase::OnDestroy()
 {
     m_bindWindow.SetHWND(nullptr);

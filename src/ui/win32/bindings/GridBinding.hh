@@ -51,6 +51,7 @@ public:
     void OnGotFocus() override;
     void OnLostFocus() noexcept override;
 
+    void OnShown() override { CheckForScrollBar();  UpdateLayout(); }
     void OnSizeChanged(const ra::ui::Size&) override { UpdateLayout(); }
 
     bool GetShowGridLines() const noexcept { return m_bShowGridLines; }

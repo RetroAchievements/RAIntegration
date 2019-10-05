@@ -677,7 +677,7 @@ public:
         Assert::AreEqual(1U, vChanges.size());
         Assert::AreEqual(6U, vChanges.front().nId);
         Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardStarted, vChanges.front().nType);
-        Assert::AreEqual(52U, vChanges.front().nValue);
+        Assert::AreEqual(52, vChanges.front().nValue);
 
         // still active leaderboard should not notify unless the value changes
         vChanges.clear();
@@ -689,7 +689,7 @@ public:
         Assert::AreEqual(1U, vChanges.size());
         Assert::AreEqual(6U, vChanges.front().nId);
         Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardUpdated, vChanges.front().nType);
-        Assert::AreEqual(33U, vChanges.front().nValue);
+        Assert::AreEqual(33, vChanges.front().nValue);
         vChanges.clear();
 
         // leaderboard cancel condition should notify
@@ -712,7 +712,7 @@ public:
         Assert::AreEqual(1U, vChanges.size());
         Assert::AreEqual(6U, vChanges.front().nId);
         Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardStarted, vChanges.front().nType);
-        Assert::AreEqual(33U, vChanges.front().nValue);
+        Assert::AreEqual(33, vChanges.front().nValue);
         vChanges.clear();
 
         // leaderboard submit should trigger if leaderboard started
@@ -721,7 +721,7 @@ public:
         Assert::AreEqual(1U, vChanges.size());
         Assert::AreEqual(6U, vChanges.front().nId);
         Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardTriggered, vChanges.front().nType);
-        Assert::AreEqual(33U, vChanges.front().nValue);
+        Assert::AreEqual(33, vChanges.front().nValue);
         vChanges.clear();
 
         // leaderboard cancel condition should not trigger after submission
@@ -735,7 +735,7 @@ public:
         Assert::AreEqual(1U, vChanges.size());
         Assert::AreEqual(6U, vChanges.front().nId);
         Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardStarted, vChanges.front().nType);
-        Assert::AreEqual(33U, vChanges.front().nValue);
+        Assert::AreEqual(33, vChanges.front().nValue);
         vChanges.clear();
 
         // deactivated leaderboard should not trigger

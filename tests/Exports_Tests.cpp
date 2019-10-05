@@ -342,7 +342,7 @@ private:
     public:
         MockAchievementRuntime() noexcept : m_Override(this) {}
 
-        void QueueChange(ChangeType nType, unsigned int nId, unsigned int nValue = 0)
+        void QueueChange(ChangeType nType, unsigned int nId, int nValue = 0)
         {
             m_vChanges.emplace_back(Change{ nType, nId, nValue });
         }

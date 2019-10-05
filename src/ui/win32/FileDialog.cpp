@@ -29,9 +29,124 @@ void FileDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& oViewModel, H
     DoShowModal(oViewModel, hParentWnd);
 }
 
+_Success_(return == 0)
+_NODISCARD static auto CALLBACK
+BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _In_ LPARAM lpData) noexcept // it might
+{
+    if (uMsg == BFFM_INITIALIZED)
+    {
+        LPCTSTR path{};
+        GSL_SUPPRESS_TYPE1 path = reinterpret_cast<LPCTSTR>(lpData);
+        GSL_SUPPRESS_TYPE1 ::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
+    }
+    return 0;
+}
+
+static void ShowFolder(FileDialogViewModel& vmFileDialog, HWND hParentWnd)
+{
+    CComPtr<IFileDialog> pFileDialog;
+    if (SUCCEEDED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pFileDialog))))
+    {
+        pFileDialog->SetTitle(vmFileDialog.GetWindowTitle().c_str());
+
+        const std::wstring& sInitialLocation = vmFileDialog.GetInitialDirectory();
+        CComPtr<IShellItem> pShellItem;
+        if (!sInitialLocation.empty())
+        {
+            LPITEMIDLIST pItemIdList = nullptr;
+            DWORD nAttrs = 0;
+            if (SHILCreateFromPath(sInitialLocation.c_str(), &pItemIdList, &nAttrs) == 0)
+            {
+                if (SHCreateShellItem(nullptr, nullptr, pItemIdList, &pShellItem) == 0)
+                {
+                    pFileDialog->SetFolder(pShellItem);
+                    pShellItem.Release();
+                }
+            }
+        }
+
+        DWORD dwOptions;
+        if (SUCCEEDED(pFileDialog->GetOptions(&dwOptions)))
+            pFileDialog->SetOptions(dwOptions | FOS_PICKFOLDERS);
+
+        const HRESULT hr = pFileDialog->Show(hParentWnd);
+        if (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED))
+        {
+            vmFileDialog.SetDialogResult(ra::ui::DialogResult::Cancel);
+            return;
+        }
+
+        if (SUCCEEDED(hr))
+        {
+            if (SUCCEEDED(pFileDialog->GetResult(&pShellItem)))
+            {
+                wchar_t* sPath;
+                if (SUCCEEDED(pShellItem->GetDisplayName(SIGDN_DESKTOPABSOLUTEPARSING, &sPath)))
+                {
+                    vmFileDialog.SetFileName(sPath);
+                    vmFileDialog.SetDialogResult(ra::ui::DialogResult::OK);
+                }
+
+                pShellItem.Release();
+            }
+
+            return;
+        }
+    }
+
+    // fall back to BrowseFolderDialog
+    if (::OleInitialize(nullptr) == S_OK)
+    {
+        BROWSEINFOW bi{};
+        bi.hwndOwner = hParentWnd;
+
+        std::wstring sDisplayName;
+        sDisplayName.reserve(512);
+        bi.pszDisplayName = sDisplayName.data();
+        bi.lpszTitle = vmFileDialog.GetWindowTitle().c_str();
+
+        bi.ulFlags = BIF_USENEWUI | BIF_VALIDATE;
+        bi.lpfn = BrowseCallbackProc;
+
+        if (!vmFileDialog.GetInitialDirectory().empty())
+        {
+            GSL_SUPPRESS_TYPE1 bi.lParam = reinterpret_cast<LPARAM>(vmFileDialog.GetInitialDirectory().c_str());
+        }
+
+        const auto idlist_deleter = [](LPITEMIDLIST lpItemIdList) noexcept
+        {
+            ::CoTaskMemFree(lpItemIdList);
+            lpItemIdList = nullptr;
+        };
+
+        using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
+        ItemListOwner owner{ ::SHBrowseForFolderW(&bi), idlist_deleter };
+        if (owner)
+        {
+            if (::SHGetPathFromIDListW(owner.get(), bi.pszDisplayName) == 0)
+            {
+                vmFileDialog.SetDialogResult(ra::ui::DialogResult::Cancel);
+            }
+            else
+            {
+                vmFileDialog.SetFileName(bi.pszDisplayName);
+                vmFileDialog.SetDialogResult(ra::ui::DialogResult::OK);
+            }
+        }
+
+        ::OleUninitialize();
+    }
+}
+
 void FileDialog::Presenter::DoShowModal(ra::ui::WindowViewModelBase& oViewModel, HWND hParentWnd)
 {
     auto& vmFileDialog = reinterpret_cast<FileDialogViewModel&>(oViewModel);
+
+    if (vmFileDialog.GetMode() == FileDialogViewModel::Mode::Folder)
+    {
+        ShowFolder(vmFileDialog, hParentWnd);
+        return;
+    }
 
     const auto& sDefaultExtension = vmFileDialog.GetDefaultExtension();
     DWORD nFilterIndex = 0;

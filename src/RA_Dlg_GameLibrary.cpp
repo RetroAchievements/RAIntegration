@@ -8,6 +8,8 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\FileDialogViewModel.hh"
+
 #include "ra_math.h"
 
 #define KEYDOWN(vkCode) ((GetAsyncKeyState(vkCode) & 0x8000) ? true : false)
@@ -635,11 +637,15 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
 
                 case IDC_RA_PICKROMDIR:
                 {
-                    std::string sROMDirLocation = GetFolderFromDialog();
-                    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-                    pConfiguration.SetRomDirectory(ra::Widen(sROMDirLocation));
-                    RA_LOG("Selected Folder: %s\n", sROMDirLocation.c_str());
-                    SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(sROMDirLocation).c_str());
+                    ra::ui::viewmodels::FileDialogViewModel vmFileDialog;
+                    vmFileDialog.SetWindowTitle(L"Select ROM folder");
+                    if (vmFileDialog.ShowSelectFolderDialog() == ra::ui::DialogResult::OK)
+                    {
+                        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+                        pConfiguration.SetRomDirectory(vmFileDialog.GetFileName());
+                        RA_LOG("Selected Folder: %s\n", vmFileDialog.GetFileName().c_str());
+                        SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(vmFileDialog.GetFileName()).c_str());
+                    }
                     return FALSE;
                 }
 

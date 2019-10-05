@@ -48,6 +48,11 @@ public:
     }
 
     /// <summary>
+    /// Called when the control is made visible.
+    /// </summary>
+    GSL_SUPPRESS_F6 virtual void OnShown() {}
+
+    /// <summary>
     /// Called when the bound control gains keyboard focus.
     /// </summary>
     GSL_SUPPRESS_F6 virtual void OnGotFocus() {}

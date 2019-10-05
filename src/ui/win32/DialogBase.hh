@@ -80,7 +80,7 @@ protected:
     /// <summary>
     /// Called when the window is shown.
     /// </summary>
-    GSL_SUPPRESS_F6 virtual void OnShown() {}
+    virtual void OnShown();
 
     /// <summary>
     /// Called when the window is destroyed.

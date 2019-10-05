@@ -211,6 +211,22 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                     return 0;
                 }
 
+                case LVN_COLUMNCLICK:
+                {
+                    ra::ui::win32::bindings::GridBinding* pGridBinding;
+                    GSL_SUPPRESS_TYPE1 pGridBinding = reinterpret_cast<ra::ui::win32::bindings::GridBinding*>(
+                        FindControlBinding(pnmHdr->hwndFrom));
+
+                    if (pGridBinding)
+                    {
+                        LPNMLISTVIEW pnmListView;
+                        GSL_SUPPRESS_TYPE1{ pnmListView = reinterpret_cast<LPNMLISTVIEW>(pnmHdr); }
+                        pGridBinding->OnLvnColumnClick(pnmListView);
+                    }
+
+                    return 0;
+                }
+
                 case NM_CLICK:
                 {
                     ra::ui::win32::bindings::GridBinding* pGridBinding;
@@ -282,6 +298,12 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
         default:
             return 0;
     }
+}
+
+void DialogBase::OnShown()
+{
+    for(auto& pPair : m_mControlBindings)
+        pPair.second->OnShown();
 }
 
 void DialogBase::OnDestroy()

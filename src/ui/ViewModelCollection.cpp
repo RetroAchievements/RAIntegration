@@ -164,6 +164,32 @@ size_t ViewModelCollectionBase::ShiftItemsDown(const BoolModelProperty& pPropert
     return nMatches;
 }
 
+void ViewModelCollectionBase::Reverse()
+{
+    BeginUpdate();
+
+    gsl::index nIndexFront = 0;
+    gsl::index nIndexBack = m_nSize - 1;
+
+    while (nIndexFront < nIndexBack)
+    {
+        auto pItemFront = m_vItems.at(nIndexFront).DetachViewModel();
+        auto pItemBack = m_vItems.at(nIndexBack).DetachViewModel();
+        m_vItems.at(nIndexFront).AttachViewModel(pItemBack);
+        m_vItems.at(nIndexBack).AttachViewModel(pItemFront);
+
+        const auto nOldIndexFront = m_vItems.at(nIndexFront).Index();
+        const auto nOldIndexBack = m_vItems.at(nIndexBack).Index();
+        m_vItems.at(nIndexFront).SetIndex(nOldIndexBack);
+        m_vItems.at(nIndexBack).SetIndex(nOldIndexFront);
+
+        ++nIndexFront;
+        --nIndexBack;
+    }
+
+    EndUpdate();
+}
+
 void ViewModelCollectionBase::StartWatching() noexcept
 {
     for (auto& pItem : m_vItems)
@@ -228,9 +254,12 @@ void ViewModelCollectionBase::BeginUpdate()
 
 void ViewModelCollectionBase::EndUpdate()
 {
-    if (m_nUpdateCount > 0 && --m_nUpdateCount == 0)
+    if (m_nUpdateCount == 1)
     {
         UpdateIndices();
+
+        // don't actually decrement the update count until after the indices have been fixed
+        --m_nUpdateCount;
 
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
@@ -239,6 +268,10 @@ void ViewModelCollectionBase::EndUpdate()
             Expects(target != nullptr);
             target->OnEndViewModelCollectionUpdate();
         }
+    }
+    else if (m_nUpdateCount > 0)
+    {
+        --m_nUpdateCount;
     }
 }
 

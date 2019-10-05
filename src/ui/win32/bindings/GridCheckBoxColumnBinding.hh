@@ -23,6 +23,11 @@ public:
         return L"";
     }
 
+    std::wstring GetSortKey(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        return vmItems.GetItemValue(nIndex, *m_pBoundProperty) ? L"Checked" : L"Unchecked";
+    }
+
     bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const noexcept override
     {
         return pProperty == *m_pBoundProperty;

@@ -46,7 +46,7 @@ public:
 
         Assert::AreEqual({ 3U }, bookmarks.Sizes().Count());
         Assert::AreEqual((int)MemSize::EightBit, bookmarks.Sizes().GetItemAt(0)->GetId());
-        Assert::AreEqual(std::wstring(L"8-bit"), bookmarks.Sizes().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(std::wstring(L" 8-bit"), bookmarks.Sizes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)MemSize::SixteenBit, bookmarks.Sizes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"16-bit"), bookmarks.Sizes().GetItemAt(1)->GetLabel());
         Assert::AreEqual((int)MemSize::ThirtyTwoBit, bookmarks.Sizes().GetItemAt(2)->GetId());

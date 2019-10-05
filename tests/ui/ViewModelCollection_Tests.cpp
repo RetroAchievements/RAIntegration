@@ -590,6 +590,54 @@ public:
         oNotify.AssertItemChanged(3);
         oNotify.AssertItemNotChanged(4);
     }
+
+    TEST_METHOD(TestReverse)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        auto& pItem1 = vmCollection.Add(1, L"Test1");
+        auto& pItem2 = vmCollection.Add(2, L"Test2");
+        auto& pItem3 = vmCollection.Add(3, L"Test3");
+        auto& pItem4 = vmCollection.Add(4, L"Test4");
+        auto& pItem5 = vmCollection.Add(5, L"Test5");
+
+        NotifyTargetHarness oNotify;
+        vmCollection.AddNotifyTarget(oNotify);
+
+        // odd number of items, middle item shouldn't be notified
+        vmCollection.Reverse();
+
+        Assert::AreEqual((void*)&pItem5, (void*)vmCollection.GetItemAt(0));
+        Assert::AreEqual((void*)&pItem4, (void*)vmCollection.GetItemAt(1));
+        Assert::AreEqual((void*)&pItem3, (void*)vmCollection.GetItemAt(2));
+        Assert::AreEqual((void*)&pItem2, (void*)vmCollection.GetItemAt(3));
+        Assert::AreEqual((void*)&pItem1, (void*)vmCollection.GetItemAt(4));
+
+        oNotify.AssertItemChanged(0);
+        oNotify.AssertItemChanged(1);
+        oNotify.AssertItemNotChanged(2);
+        oNotify.AssertItemChanged(3);
+        oNotify.AssertItemChanged(4);
+
+        auto& pItem0 = vmCollection.Add(0, L"Test0");
+        oNotify.ResetChanges();
+
+        // even number of items, all items should be notified
+        vmCollection.Reverse();
+
+        Assert::AreEqual((void*)&pItem0, (void*)vmCollection.GetItemAt(0));
+        Assert::AreEqual((void*)&pItem1, (void*)vmCollection.GetItemAt(1));
+        Assert::AreEqual((void*)&pItem2, (void*)vmCollection.GetItemAt(2));
+        Assert::AreEqual((void*)&pItem3, (void*)vmCollection.GetItemAt(3));
+        Assert::AreEqual((void*)&pItem4, (void*)vmCollection.GetItemAt(4));
+        Assert::AreEqual((void*)&pItem5, (void*)vmCollection.GetItemAt(5));
+
+        oNotify.AssertItemChanged(0);
+        oNotify.AssertItemChanged(1);
+        oNotify.AssertItemChanged(2);
+        oNotify.AssertItemChanged(3);
+        oNotify.AssertItemChanged(4);
+        oNotify.AssertItemChanged(5);
+    }
 };
 
 } // namespace tests

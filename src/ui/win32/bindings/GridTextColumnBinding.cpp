@@ -16,7 +16,11 @@ static LRESULT NotifySelection(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* 
 {
     Expects(pInfo != nullptr);
 
-    auto* pColumnBinding = dynamic_cast<GridTextColumnBinding*>(pInfo->pColumnBinding);
+    // if SetText pops up an error message, it will cause a Lost Focus event - ignore it
+    // until after the focus has been set back to the IPE.
+    pInfo->bIgnoreLostFocus = true;
+
+    auto* pColumnBinding = dynamic_cast<GridTextColumnBindingBase*>(pInfo->pColumnBinding);
     Expects(pColumnBinding != nullptr);
 
     const auto nLength = Edit_GetTextLength(hwnd);
@@ -27,9 +31,13 @@ static LRESULT NotifySelection(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* 
 
     GridBinding* gridBinding = static_cast<GridBinding*>(pInfo->pGridBinding);
     Expects(gridBinding != nullptr);
-    pColumnBinding->SetText(gridBinding->GetItems(), pInfo->nItemIndex, sValue);
+    if (pColumnBinding->SetText(gridBinding->GetItems(), pInfo->nItemIndex, sValue))
+        return GridBinding::CloseIPE(hwnd, pInfo);
 
-    return GridBinding::CloseIPE(hwnd, pInfo);
+    SetFocus(hwnd);
+
+    pInfo->bIgnoreLostFocus = false;
+    return 0;
 }
 
 static LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM lParam)
@@ -47,6 +55,9 @@ static LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM 
         }
 
         case WM_KILLFOCUS:
+            if (pInfo->bIgnoreLostFocus)
+                return 0;
+
             return NotifySelection(hwnd, pInfo);
 
         case WM_KEYDOWN:
@@ -65,7 +76,7 @@ static LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM 
     return CallWindowProc(pInfo->pOriginalWndProc, hwnd, nMsg, wParam, lParam);
 }
 
-HWND GridTextColumnBinding::CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo)
+HWND GridTextColumnBindingBase::CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo)
 {
     HWND hInPlaceEditor =
         CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("EDIT"), TEXT(""),

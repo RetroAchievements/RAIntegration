@@ -282,6 +282,9 @@
     <ClCompile Include="ui\win32\bindings\GridAddressColumnBinding.cpp">
       <Filter>UI\Win32\Bindings</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\bindings\GridNumberColumnBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
     <ClCompile Include="ui\viewmodels\OverlaySettingsViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>

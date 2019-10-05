@@ -585,6 +585,7 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
         if (!pColumn->IsReadOnly())
         {
             auto pInfo = std::make_unique<GridColumnBinding::InPlaceEditorInfo>();
+            pInfo->bIgnoreLostFocus = false;
 
             if (pnmItemActivate->iItem >= 0)
             {
@@ -658,6 +659,8 @@ LRESULT GridBinding::CloseIPE(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* p
 {
     GridBinding* gridBinding = static_cast<GridBinding*>(pInfo->pGridBinding);
     Expects(gridBinding != nullptr);
+
+    pInfo->bIgnoreLostFocus = true;
 
     // DestroyWindow will free pInfo - cannot use after this point
     DestroyWindow(hwnd);

@@ -109,6 +109,7 @@
     <ClCompile Include="ui\win32\bindings\GridAddressColumnBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\GridBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\GridLookupColumnBinding.cpp" />
+    <ClCompile Include="ui\win32\bindings\GridNumberColumnBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\GridTextColumnBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\WindowBinding.cpp" />
     <ClCompile Include="ui\win32\BrokenAchievementsDialog.cpp" />

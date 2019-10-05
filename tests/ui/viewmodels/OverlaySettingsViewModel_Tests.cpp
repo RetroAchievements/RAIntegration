@@ -50,6 +50,8 @@ public:
     {
         ValidateFeatureInitialize(ra::services::Feature::AchievementTriggeredNotifications, [](OverlaySettingsViewModel& vm) { return vm.DisplayAchievementTrigger(); });
         ValidateFeatureInitialize(ra::services::Feature::AchievementTriggeredScreenshot, [](OverlaySettingsViewModel& vm) { return vm.ScreenshotAchievementTrigger(); });
+        ValidateFeatureInitialize(ra::services::Feature::MasteryNotification, [](OverlaySettingsViewModel& vm) { return vm.DisplayMastery(); });
+        ValidateFeatureInitialize(ra::services::Feature::MasteryNotificationScreenshot, [](OverlaySettingsViewModel& vm) { return vm.ScreenshotMastery(); });
         ValidateFeatureInitialize(ra::services::Feature::LeaderboardNotifications, [](OverlaySettingsViewModel& vm) { return vm.DisplayLeaderboardStarted(); });
         ValidateFeatureInitialize(ra::services::Feature::LeaderboardCancelNotifications, [](OverlaySettingsViewModel& vm) { return vm.DisplayLeaderboardCanceled(); });
         ValidateFeatureInitialize(ra::services::Feature::LeaderboardCounters, [](OverlaySettingsViewModel& vm) { return vm.DisplayLeaderboardValue(); });
@@ -65,6 +67,8 @@ public:
     {
         ValidateFeatureCommit(ra::services::Feature::AchievementTriggeredNotifications, [](OverlaySettingsViewModel& vm, bool bValue) { return vm.SetDisplayAchievementTrigger(bValue); });
         ValidateFeatureCommit(ra::services::Feature::AchievementTriggeredScreenshot, [](OverlaySettingsViewModel& vm, bool bValue) { return vm.SetScreenshotAchievementTrigger(bValue); });
+        ValidateFeatureCommit(ra::services::Feature::MasteryNotification, [](OverlaySettingsViewModel& vm, bool bValue) { return vm.SetDisplayMastery(bValue); });
+        ValidateFeatureCommit(ra::services::Feature::MasteryNotificationScreenshot, [](OverlaySettingsViewModel& vm, bool bValue) { return vm.SetScreenshotMastery(bValue); });
         ValidateFeatureCommit(ra::services::Feature::LeaderboardNotifications, [](OverlaySettingsViewModel& vm, bool bValue) { return vm.SetDisplayLeaderboardStarted(bValue); });
         ValidateFeatureCommit(ra::services::Feature::LeaderboardCancelNotifications, [](OverlaySettingsViewModel& vm, bool bValue) { return vm.SetDisplayLeaderboardCanceled(bValue); });
         ValidateFeatureCommit(ra::services::Feature::LeaderboardCounters, [](OverlaySettingsViewModel& vm, bool bValue) { return vm.SetDisplayLeaderboardValue(bValue); });
@@ -79,6 +83,72 @@ public:
         vmSettings.SetScreenshotLocation(L"C:\\Temp");
         vmSettings.Commit();
         Assert::AreEqual(std::wstring(L"C:\\Temp\\"), vmSettings.mockConfiguration.GetScreenshotDirectory());
+    }
+
+    TEST_METHOD(TestAchievementTriggerDependencies)
+    {
+        OverlaySettingsViewModelHarness vmSettings;
+        vmSettings.SetDisplayAchievementTrigger(false);
+        vmSettings.SetScreenshotAchievementTrigger(false);
+        Assert::IsFalse(vmSettings.DisplayAchievementTrigger());
+        Assert::IsFalse(vmSettings.ScreenshotAchievementTrigger());
+
+        vmSettings.SetDisplayAchievementTrigger(true);
+        Assert::IsTrue(vmSettings.DisplayAchievementTrigger());
+        Assert::IsFalse(vmSettings.ScreenshotAchievementTrigger());
+
+        vmSettings.SetScreenshotAchievementTrigger(true);
+        Assert::IsTrue(vmSettings.DisplayAchievementTrigger());
+        Assert::IsTrue(vmSettings.ScreenshotAchievementTrigger());
+
+        vmSettings.SetDisplayAchievementTrigger(false);
+        Assert::IsFalse(vmSettings.DisplayAchievementTrigger());
+        Assert::IsFalse(vmSettings.ScreenshotAchievementTrigger());
+
+        vmSettings.SetScreenshotAchievementTrigger(true);
+        Assert::IsTrue(vmSettings.DisplayAchievementTrigger());
+        Assert::IsTrue(vmSettings.ScreenshotAchievementTrigger());
+
+        vmSettings.SetScreenshotAchievementTrigger(false);
+        Assert::IsTrue(vmSettings.DisplayAchievementTrigger());
+        Assert::IsFalse(vmSettings.ScreenshotAchievementTrigger());
+
+        vmSettings.SetDisplayAchievementTrigger(false);
+        Assert::IsFalse(vmSettings.DisplayAchievementTrigger());
+        Assert::IsFalse(vmSettings.ScreenshotAchievementTrigger());
+    }
+
+    TEST_METHOD(TestMasteryTriggerDependencies)
+    {
+        OverlaySettingsViewModelHarness vmSettings;
+        vmSettings.SetDisplayMastery(false);
+        vmSettings.SetScreenshotMastery(false);
+        Assert::IsFalse(vmSettings.DisplayMastery());
+        Assert::IsFalse(vmSettings.ScreenshotMastery());
+
+        vmSettings.SetDisplayMastery(true);
+        Assert::IsTrue(vmSettings.DisplayMastery());
+        Assert::IsFalse(vmSettings.ScreenshotMastery());
+
+        vmSettings.SetScreenshotMastery(true);
+        Assert::IsTrue(vmSettings.DisplayMastery());
+        Assert::IsTrue(vmSettings.ScreenshotMastery());
+
+        vmSettings.SetDisplayMastery(false);
+        Assert::IsFalse(vmSettings.DisplayMastery());
+        Assert::IsFalse(vmSettings.ScreenshotMastery());
+
+        vmSettings.SetScreenshotMastery(true);
+        Assert::IsTrue(vmSettings.DisplayMastery());
+        Assert::IsTrue(vmSettings.ScreenshotMastery());
+
+        vmSettings.SetScreenshotMastery(false);
+        Assert::IsTrue(vmSettings.DisplayMastery());
+        Assert::IsFalse(vmSettings.ScreenshotMastery());
+
+        vmSettings.SetDisplayMastery(false);
+        Assert::IsFalse(vmSettings.DisplayMastery());
+        Assert::IsFalse(vmSettings.ScreenshotMastery());
     }
 };
 

@@ -20,6 +20,8 @@ enum class Feature
     NonHardcoreWarning,
     AchievementTriggeredScreenshot,
     AchievementTriggeredNotifications,
+    MasteryNotification,
+    MasteryNotificationScreenshot,
 };
 
 class IConfiguration

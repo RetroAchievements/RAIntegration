@@ -9,6 +9,8 @@ namespace viewmodels {
 
 const BoolModelProperty OverlaySettingsViewModel::DisplayAchievementTriggerProperty("OverlaySettingsViewModel", "DisplayAchievementTrigger", true);
 const BoolModelProperty OverlaySettingsViewModel::ScreenshotAchievementTriggerProperty("OverlaySettingsViewModel", "ScreenshotAchievementTrigger", false);
+const BoolModelProperty OverlaySettingsViewModel::DisplayMasteryProperty("OverlaySettingsViewModel", "DisplayMastery", true);
+const BoolModelProperty OverlaySettingsViewModel::ScreenshotMasteryProperty("OverlaySettingsViewModel", "ScreenshotMastery", false);
 const BoolModelProperty OverlaySettingsViewModel::DisplayLeaderboardStartedProperty("OverlaySettingsViewModel", "DisplayLeaderboardStarted", true);
 const BoolModelProperty OverlaySettingsViewModel::DisplayLeaderboardCanceledProperty("OverlaySettingsViewModel", "DisplayLeaderboardCanceled", true);
 const BoolModelProperty OverlaySettingsViewModel::DisplayLeaderboardValueProperty("OverlaySettingsViewModel", "DisplayLeaderboardValue", true);
@@ -18,6 +20,8 @@ const StringModelProperty OverlaySettingsViewModel::ScreenshotLocationProperty("
 OverlaySettingsViewModel::OverlaySettingsViewModel() noexcept
 {
     SetWindowTitle(L"Overlay Settings");
+
+    AddNotifyTarget(*this);
 }
 
 void OverlaySettingsViewModel::Initialize()
@@ -25,6 +29,8 @@ void OverlaySettingsViewModel::Initialize()
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     SetDisplayAchievementTrigger(pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications));
     SetScreenshotAchievementTrigger(pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot));
+    SetDisplayMastery(pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotification));
+    SetScreenshotMastery(pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot));
     SetDisplayLeaderboardStarted(pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications));
     SetDisplayLeaderboardCanceled(pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications));
     SetDisplayLeaderboardValue(pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters));
@@ -39,6 +45,8 @@ void OverlaySettingsViewModel::Commit()
 
     pConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, DisplayAchievementTrigger());
     pConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot, ScreenshotAchievementTrigger());
+    pConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotification, DisplayMastery());
+    pConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot, ScreenshotMastery());
     pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications, DisplayLeaderboardStarted());
     pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications, DisplayLeaderboardCanceled());
     pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCounters, DisplayLeaderboardValue());
@@ -51,6 +59,18 @@ void OverlaySettingsViewModel::Commit()
     pConfiguration.SetScreenshotDirectory(sLocation);
 
     pConfiguration.Save();
+}
+
+void OverlaySettingsViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == DisplayAchievementTriggerProperty && !args.tNewValue)
+        SetScreenshotAchievementTrigger(false);
+    else if (args.Property == ScreenshotAchievementTriggerProperty && args.tNewValue)
+        SetDisplayAchievementTrigger(true);
+    else if (args.Property == DisplayMasteryProperty && !args.tNewValue)
+        SetScreenshotMastery(false);
+    else if (args.Property == ScreenshotMasteryProperty && args.tNewValue)
+        SetDisplayMastery(true);
 }
 
 void OverlaySettingsViewModel::BrowseLocation() noexcept

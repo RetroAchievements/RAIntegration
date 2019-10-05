@@ -32,8 +32,18 @@ public:
 
     void OnCommand() override
     {
-        const auto nState = Button_GetCheck(m_hWnd);
-        SetValue(*m_pIsCheckedProperty, (nState == BST_CHECKED));
+        if (m_pIsCheckedProperty)
+        {
+            const auto nState = Button_GetCheck(m_hWnd);
+            SetValue(*m_pIsCheckedProperty, (nState == BST_CHECKED));
+        }
+    }
+
+protected:
+    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override
+    {
+        if (m_pIsCheckedProperty && *m_pIsCheckedProperty == args.Property)
+            Button_SetCheck(m_hWnd, args.tNewValue ? BST_CHECKED : BST_UNCHECKED);
     }
 
 private:

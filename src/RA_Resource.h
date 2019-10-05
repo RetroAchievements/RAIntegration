@@ -32,6 +32,8 @@
 #define IDC_RA_DISPLAY_LBOARD_SCOREBOARD 1127
 #define IDC_RA_LOCATION                 1128
 #define IDC_RA_SCREENSHOT_LOCATION      1129
+#define IDC_RA_DISPLAY_MASTERY          1130
+#define IDC_RA_SCREENSHOT_MASTERY       1131
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503

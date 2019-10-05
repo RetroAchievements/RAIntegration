@@ -31,6 +31,8 @@ OverlaySettingsDialog::OverlaySettingsDialog(ra::ui::viewmodels::OverlaySettings
     : DialogBase(vmSettings),
       m_bindDisplayAchievementTrigger(vmSettings),
       m_bindScreenshotAchievementTrigger(vmSettings),
+      m_bindDisplayMastery(vmSettings),
+      m_bindScreenshotMastery(vmSettings),
       m_bindDisplayLeaderboardStarted(vmSettings),
       m_bindDisplayLeaderboardCanceled(vmSettings),
       m_bindDisplayLeaderboardValue(vmSettings),
@@ -41,6 +43,8 @@ OverlaySettingsDialog::OverlaySettingsDialog(ra::ui::viewmodels::OverlaySettings
 
     m_bindDisplayAchievementTrigger.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayAchievementTriggerProperty);
     m_bindScreenshotAchievementTrigger.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::ScreenshotAchievementTriggerProperty);
+    m_bindDisplayMastery.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayMasteryProperty);
+    m_bindScreenshotMastery.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::ScreenshotMasteryProperty);
     m_bindDisplayLeaderboardStarted.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayLeaderboardStartedProperty);
     m_bindDisplayLeaderboardCanceled.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayLeaderboardCanceledProperty);
     m_bindDisplayLeaderboardValue.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayLeaderboardValueProperty);
@@ -53,6 +57,8 @@ BOOL OverlaySettingsDialog::OnInitDialog()
 {
     m_bindDisplayAchievementTrigger.SetControl(*this, IDC_RA_DISPLAY_TRIGGER);
     m_bindScreenshotAchievementTrigger.SetControl(*this, IDC_RA_SCREENSHOT_TRIGGER);
+    m_bindDisplayMastery.SetControl(*this, IDC_RA_DISPLAY_MASTERY);
+    m_bindScreenshotMastery.SetControl(*this, IDC_RA_SCREENSHOT_MASTERY);
     m_bindDisplayLeaderboardStarted.SetControl(*this, IDC_RA_DISPLAY_LBOARD_START);
     m_bindDisplayLeaderboardCanceled.SetControl(*this, IDC_RA_DISPLAY_LBOARD_CANCEL);
     m_bindDisplayLeaderboardValue.SetControl(*this, IDC_RA_DISPLAY_LBOARD_VALUE);

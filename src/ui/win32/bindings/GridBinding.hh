@@ -44,12 +44,14 @@ public:
     void BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept;
 
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
+    GSL_SUPPRESS_CON3 void OnLvnColumnClick(const LPNMLISTVIEW pnmListView);
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
     void OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate);
 
     void OnGotFocus() override;
     void OnLostFocus() noexcept override;
 
+    void OnShown() override { CheckForScrollBar();  UpdateLayout(); }
     void OnSizeChanged(const ra::ui::Size&) override { UpdateLayout(); }
 
     bool GetShowGridLines() const noexcept { return m_bShowGridLines; }
@@ -83,6 +85,8 @@ private:
     ViewModelCollectionBase* m_vmItems = nullptr;
     const BoolModelProperty* m_pIsSelectedProperty = nullptr;
     HWND m_hInPlaceEditor = nullptr;
+
+    gsl::index m_nSortIndex = -1;
 
     std::chrono::steady_clock::time_point m_tFocusTime{};
     std::chrono::steady_clock::time_point m_tIPECloseTime{};

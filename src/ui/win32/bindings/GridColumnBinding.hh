@@ -41,6 +41,10 @@ public:
     int GetWidth() const noexcept { return m_nWidth; }
 
     virtual std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const = 0;
+    virtual std::wstring GetSortKey(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
+    {
+        return GetText(vmItems, nIndex);
+    }
 
     virtual bool DependsOn(const ra::ui::BoolModelProperty&) const noexcept(false) { return false; }
     virtual bool DependsOn(const ra::ui::IntModelProperty&) const noexcept(false) { return false; }

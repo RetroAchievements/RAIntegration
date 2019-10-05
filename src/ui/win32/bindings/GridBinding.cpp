@@ -177,6 +177,8 @@ void GridBinding::UpdateAllItems()
 
     if (m_hWnd)
     {
+        CheckForScrollBar();
+
         // if a scrollbar is added or removed, the client size will change
         RECT rcClientAfter;
         ::GetClientRect(m_hWnd, &rcClientAfter);
@@ -252,6 +254,10 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
+            // if the affected data is in the sort column, it's no longer sorted
+            if (m_nSortIndex == ra::to_signed(nColumnIndex))
+                m_nSortIndex = -1;
+
             item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
             sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
             item.pszText = sText.data();
@@ -272,6 +278,10 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
+            // if the affected data is in the sort column, it's no longer sorted
+            if (m_nSortIndex == ra::to_signed(nColumnIndex))
+                m_nSortIndex = -1;
+
             item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
             sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
             item.pszText = sText.data();
@@ -292,6 +302,10 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
+            // if the affected data is in the sort column, it's no longer sorted
+            if (m_nSortIndex == ra::to_signed(nColumnIndex))
+                m_nSortIndex = -1;
+
             item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
             sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
             item.pszText = sText.data();
@@ -350,6 +364,9 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
     if (!m_hWnd || m_vColumns.empty())
         return;
 
+    // when an item is added, we can't assume the list is still sorted
+    m_nSortIndex = -1;
+
     UpdateRow(nIndex, false);
 
     if (!m_vmItems->IsUpdating())
@@ -378,7 +395,8 @@ void GridBinding::CheckForScrollBar()
     SCROLLINFO info{};
     info.cbSize = sizeof(info);
     info.fMask = SIF_PAGE;
-    const bool bHasScrollbar = GetScrollInfo(m_hWnd, SBS_VERT, &info) && (info.nPage < m_vmItems->Count());
+    const bool bHasScrollbar = GetScrollInfo(m_hWnd, SBS_VERT, &info) &&
+        (info.nPage > 0) && (info.nPage < m_vmItems->Count());
 
     if (bHasScrollbar != m_bHasScrollbar)
     {
@@ -448,6 +466,89 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 
     if (!m_hInPlaceEditor && pnmListView->uNewState & LVIS_SELECTED)
         m_tFocusTime = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
+}
+
+void GridBinding::OnLvnColumnClick(const LPNMLISTVIEW pnmListView)
+{
+    const auto nCount = ra::to_signed(m_vmItems->Count());
+
+    // if the data is already sorted by the selected column, just reverse the items
+    if (m_nSortIndex == pnmListView->iSubItem)
+    {
+        m_vmItems->Reverse();
+
+        // update the focus rectangle
+        for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
+        {
+            if (ListView_GetItemState(m_hWnd, nIndex, LVIS_FOCUSED))
+            {
+                ListView_SetItemState(m_hWnd, nCount - 1 - nIndex, LVIS_FOCUSED, LVIS_FOCUSED);
+                break;
+            }
+        }
+
+        return;
+    }
+
+    gsl::index nFocusedIndex = -1;
+
+    m_nSortIndex = pnmListView->iSubItem;
+    const auto& pColumnBinding = *m_vColumns.at(m_nSortIndex);
+
+    // sort the items into buckets associated with their key.
+    // in many cases, the key will be unique per item
+    std::map<std::wstring, std::vector<gsl::index>> mSortMap;
+    for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
+    {
+        std::wstring sKey = pColumnBinding.GetSortKey(*m_vmItems, nIndex);
+        mSortMap[sKey].push_back(nIndex);
+
+        if (nFocusedIndex == -1)
+        {
+            if (ListView_GetItemState(m_hWnd, nIndex, LVIS_FOCUSED))
+                nFocusedIndex = nIndex;
+        }
+    }
+
+    // flatten the map out into a sorted list. relies on std::map being sorted by key.
+    std::vector<gsl::index> vSorted;
+    vSorted.reserve(nCount);
+    for (const auto& pPair : mSortMap)
+    {
+        for (const auto nIndex : pPair.second)
+            vSorted.push_back(nIndex);
+    }
+
+    // update the focus rectangle
+    if (nFocusedIndex >= 0 && vSorted.at(nFocusedIndex) != nFocusedIndex)
+    {
+        for (gsl::index nIndex = nCount - 1; nIndex >= 0; --nIndex)
+        {
+            if (vSorted.at(nIndex) == nFocusedIndex)
+            {
+                ListView_SetItemState(m_hWnd, nIndex, LVIS_FOCUSED, LVIS_FOCUSED);
+                break;
+            }
+        }
+    }
+
+    // move the items around to match the new order
+    m_vmItems->BeginUpdate();
+    for (gsl::index nIndex = nCount - 1; nIndex >= 0; --nIndex)
+    {
+        const auto nOldIndex = vSorted.at(nIndex);
+        if (nOldIndex != nIndex)
+        {
+            m_vmItems->MoveItem(nOldIndex, nIndex);
+
+            for (auto pIter = vSorted.begin(); pIter < vSorted.begin() + nIndex; ++pIter)
+            {
+                if (*pIter > nOldIndex)
+                    *pIter = (*pIter) - 1;
+            }
+        }
+    }
+    m_vmItems->EndUpdate();
 }
 
 void GridBinding::OnGotFocus()

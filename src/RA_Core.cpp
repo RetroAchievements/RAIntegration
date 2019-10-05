@@ -30,6 +30,7 @@
 #include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
+#include "ui\viewmodels\OverlaySettingsViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 #include "ui\win32\OverlayWindow.hh"
@@ -282,7 +283,6 @@ API void CCONV _RA_OnReset()
 API HMENU CCONV _RA_CreatePopupMenu()
 {
     HMENU hRA = CreatePopupMenu();
-    HMENU hRA_LB = CreatePopupMenu();
     if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out"));
@@ -295,28 +295,24 @@ API HMENU CCONV _RA_CreatePopupMenu()
 
         auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
-        // TODO: Replace UINT_PTR{} with the _z literal after PR #23 gets accepted
         AppendMenu(hRA, nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
+
         AppendMenu(hRA, pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
         AppendMenu(hRA, pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_NON_HARDCORE_WARNING, TEXT("Non-Hardcore &Warning"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
 
-        GSL_SUPPRESS_TYPE1 AppendMenu(hRA, MF_POPUP, reinterpret_cast<UINT_PTR>(hRA_LB), TEXT("Leaderboards"));
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
-        AppendMenu(hRA_LB, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Start &Notification"));
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_CANCEL_NOTIFS, TEXT("Display Cancel N&otification"));
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score &Counter"));
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank &Scoreboard"));
-
+        AppendMenu(hRA, pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
+        AppendMenu(hRA, MF_STRING, IDM_RA_OVERLAYSETTINGS, TEXT("O&verlay Settings"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
+
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor"));
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector"));
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYBOOKMARKS, TEXT("Memory &Bookmarks"));
         AppendMenu(hRA, MF_STRING, IDM_RA_PARSERICHPRESENCE, TEXT("Rich &Presence Monitor"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
+
         AppendMenu(hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Achievement Problem"));
         AppendMenu(hRA, MF_STRING, IDM_RA_GETROMCHECKSUM, TEXT("Get ROM &Checksum"));
         //AppendMenu(hRA, MF_STRING, IDM_RA_SCANFORGAMES, TEXT("Scan &for games"));
@@ -596,43 +592,12 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         }
         break;
 
-        case IDM_RA_TOGGLE_LB_NOTIFICATIONS:
+        case IDM_RA_OVERLAYSETTINGS:
         {
-            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications,
-                !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications));
-
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
-        }
-        break;
-
-        case IDM_RA_TOGGLE_LB_CANCEL_NOTIFS:
-        {
-            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications,
-                !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications));
-
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
-        }
-        break;
-
-        case IDM_RA_TOGGLE_LB_COUNTER:
-        {
-            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCounters,
-                !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters));
-
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
-        }
-        break;
-
-        case IDM_RA_TOGGLE_LB_SCOREBOARD:
-        {
-            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards,
-                !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards));
-
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
+            ra::ui::viewmodels::OverlaySettingsViewModel vmSettings;
+            vmSettings.Initialize();
+            if (vmSettings.ShowModal() == ra::ui::DialogResult::OK)
+                vmSettings.Commit();
         }
         break;
 

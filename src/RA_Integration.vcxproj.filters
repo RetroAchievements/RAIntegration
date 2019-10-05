@@ -285,6 +285,12 @@
     <ClCompile Include="ui\win32\bindings\GridNumberColumnBinding.cpp">
       <Filter>UI\Win32\Bindings</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlaySettingsViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\OverlaySettingsDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -741,6 +747,12 @@
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
     <ClInclude Include="ui\win32\FileDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\OverlaySettingsViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\OverlaySettingsDialog.hh">
       <Filter>UI\Win32</Filter>
     </ClInclude>
   </ItemGroup>

@@ -35,6 +35,7 @@ public:
     ra::ui::Size GetWindowSize(const std::string& sPositionKey) const override;
     void SetWindowSize(const std::string& sPositionKey, const ra::ui::Size& oSize) override;
 
+    bool IsCustomHost() const noexcept override { return m_bCustomHost; }
     const std::string& GetHostName() const override;
     const std::string& GetHostUrl() const override;
     const std::string& GetImageHostUrl() const override;
@@ -62,6 +63,7 @@ private:
     typedef std::map<std::string, WindowPosition> WindowPositionMap;
     WindowPositionMap m_mWindowPositions;
 
+    bool m_bCustomHost = false;
     std::string m_sHostName;
     std::string m_sHostUrl;
     std::string m_sImageHostUrl;

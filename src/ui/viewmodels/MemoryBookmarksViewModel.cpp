@@ -38,6 +38,7 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
 
     m_vSizes.Add(ra::etoi(MemSize::EightBit), L" 8-bit"); // leading space for sort order
     m_vSizes.Add(ra::etoi(MemSize::SixteenBit), L"16-bit");
+    m_vSizes.Add(ra::etoi(MemSize::TwentyFourBit), L"24-bit");
     m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBit), L"32-bit");
 
     m_vFormats.Add(ra::etoi(MemFormat::Hex), L"Hex");

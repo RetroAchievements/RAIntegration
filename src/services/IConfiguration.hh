@@ -91,7 +91,12 @@ public:
     /// Sets the size to remember for the window identified by <paramref name="sPositionKey"/>.
     /// </summary>
     virtual void SetWindowSize(const std::string& sPositionKey, const ra::ui::Size& oSize) = 0;
-    
+
+    /// <summary>
+    /// Gets whether or not a custom host was provided.
+    /// </summary>
+    virtual bool IsCustomHost() const = 0;
+
     /// <summary>
     /// Gets the name of the host to communicate with (no protocol).
     /// </summary>

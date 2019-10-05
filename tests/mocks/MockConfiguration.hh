@@ -68,6 +68,8 @@ public:
         assert(!"Not implemented");
     }
 
+    bool IsCustomHost() const noexcept override { return !m_sHostName.empty(); }
+
     const std::string& GetHostName() const noexcept override { return m_sHostName; }
     void SetHostName(const std::string& sHostName)
     {

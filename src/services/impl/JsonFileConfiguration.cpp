@@ -24,6 +24,7 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     m_nBackgroundThreads = 8;
     m_vEnabledFeatures =
         (1 << static_cast<int>(Feature::Hardcore)) |
+        (1 << static_cast<int>(Feature::AchievementTriggeredNotifications)) |
         (1 << static_cast<int>(Feature::Leaderboards)) |
         (1 << static_cast<int>(Feature::LeaderboardNotifications)) |
         (1 << static_cast<int>(Feature::LeaderboardCancelNotifications)) |
@@ -50,8 +51,10 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     if (doc.HasMember("Non Hardcore Warning"))
         SetFeatureEnabled(Feature::NonHardcoreWarning, doc["Non Hardcore Warning"].GetBool());
 
-    if (doc.HasMember("Achievement Screenshot"))
-        SetFeatureEnabled(Feature::AchievementScreenshot, doc["Achievement Screenshot"].GetBool());
+    if (doc.HasMember("Achievement Triggered Notification Display"))
+        SetFeatureEnabled(Feature::AchievementTriggeredNotifications, doc["Achievement Triggered Notification Display"].GetBool());
+    if (doc.HasMember("Achievement Triggered Screenshot"))
+        SetFeatureEnabled(Feature::AchievementTriggeredScreenshot, doc["Achievement Triggered Screenshot"].GetBool());
     if (doc.HasMember("Screenshot Directory"))
         SetScreenshotDirectory(ra::Widen(doc["Screenshot Directory"].GetString()));
 
@@ -117,7 +120,8 @@ void JsonFileConfiguration::Save() const
     doc.AddMember("Token", rapidjson::StringRef(m_sApiToken), a);
     doc.AddMember("Hardcore Active", IsFeatureEnabled(Feature::Hardcore), a);
     doc.AddMember("Non Hardcore Warning", IsFeatureEnabled(Feature::NonHardcoreWarning), a);
-    doc.AddMember("Achievement Screenshot", IsFeatureEnabled(Feature::AchievementScreenshot), a);
+    doc.AddMember("Achievement Triggered Notification Display", IsFeatureEnabled(Feature::AchievementTriggeredNotifications), a);
+    doc.AddMember("Achievement Triggered Screenshot", IsFeatureEnabled(Feature::AchievementTriggeredScreenshot), a);
     doc.AddMember("Leaderboards Active", IsFeatureEnabled(Feature::Leaderboards), a);
     doc.AddMember("Leaderboard Notification Display", IsFeatureEnabled(Feature::LeaderboardNotifications), a);
     doc.AddMember("Leaderboard Cancel Display", IsFeatureEnabled(Feature::LeaderboardCancelNotifications), a);

@@ -18,7 +18,8 @@ enum class Feature
     LeaderboardScoreboards,
     PreferDecimal,
     NonHardcoreWarning,
-    AchievementScreenshot,
+    AchievementTriggeredScreenshot,
+    AchievementTriggeredNotifications,
 };
 
 class IConfiguration

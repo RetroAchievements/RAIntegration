@@ -2,28 +2,36 @@
 // Microsoft Visual C++ generated include file.
 // Used by RA_Shared.rc
 //
-#define IDD_RA_RICHPRESENCE             114
-#define IDD_RA_MEMBOOKMARK              117
-#define IDC_RA_RICHPRESENCERESULTTEXT   1022
-#define IDC_RA_LBX_ADDRESSES            1023
-#define IDC_RA_AVAILABLE1               1024 // available
-#define IDC_RA_DEL_BOOKMARK             1025
-#define IDC_RA_CLEAR_CHANGE             1026
-#define IDC_RA_MOVE_BOOKMARK_UP         1027
-#define IDC_RA_AVAILABLE2               1028 // available
-#define IDC_RA_MOVE_BOOKMARK_DOWN       1029
-#define IDC_RA_SAVEBOOKMARK             1030
-#define IDC_RA_LOADBOOKMARK             1031
-#define IDC_RA_RESULTS_BACK             1032
-#define IDC_RA_RESULTS_FORWARD          1033
-#define IDC_RA_RESULTS_REMOVE           1034
-#define IDC_RA_RESULTS_HIGHLIGHT        1035
-#define IDC_RA_SYSTEMNAME               1036
-#define IDC_RA_LINK                     1037
-#define IDC_RA_GAMENAME                 1038
-#define IDC_RA_SELECT_ACHIEVEMENTS      1039
-#define IDC_RA_PROBLEMHEADER            1040
-#define IDC_RA_BADGE_SPIN               1041
+#define IDD_RA_RICHPRESENCE             1100
+#define IDD_RA_MEMBOOKMARK              1101
+#define IDC_RA_RICHPRESENCERESULTTEXT   1102
+#define IDC_RA_LBX_ADDRESSES            1103
+#define IDC_RA_OPENPAGE                 1104
+#define IDC_RA_DEL_BOOKMARK             1105
+#define IDC_RA_CLEAR_CHANGE             1106
+#define IDC_RA_MOVE_BOOKMARK_UP         1107
+#define IDC_RA_BROWSE                   1108
+#define IDC_RA_MOVE_BOOKMARK_DOWN       1109
+#define IDC_RA_SAVEBOOKMARK             1110
+#define IDC_RA_LOADBOOKMARK             1111
+#define IDC_RA_RESULTS_BACK             1112
+#define IDC_RA_RESULTS_FORWARD          1113
+#define IDC_RA_RESULTS_REMOVE           1114
+#define IDC_RA_RESULTS_HIGHLIGHT        1115
+#define IDC_RA_SYSTEMNAME               1116
+#define IDC_RA_LINK                     1117
+#define IDC_RA_GAMENAME                 1118
+#define IDC_RA_SELECT_ACHIEVEMENTS      1119
+#define IDC_RA_PROBLEMHEADER            1120
+#define IDC_RA_BADGE_SPIN               1121
+#define IDC_RA_DISPLAY_TRIGGER          1122
+#define IDC_RA_SCREENSHOT_TRIGGER       1123
+#define IDC_RA_DISPLAY_LBOARD_START     1124
+#define IDC_RA_DISPLAY_LBOARD_CANCEL    1125
+#define IDC_RA_DISPLAY_LBOARD_VALUE     1126
+#define IDC_RA_DISPLAY_LBOARD_SCOREBOARD 1127
+#define IDC_RA_LOCATION                 1128
+#define IDC_RA_SCREENSHOT_LOCATION      1129
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -34,6 +42,7 @@
 #define IDD_RA_REPORTBROKENACHIEVEMENTS 1508
 #define IDD_RA_GAMELIBRARY              1509
 #define IDD_RA_ROMCHECKSUM              1510
+#define IDD_RA_OVERLAYSETTINGS          1511
 #define IDC_RA_TESTVAL                  1512
 #define IDC_RA_DOTEST                   1513
 #define IDC_RA_MEMSAVENOTE              1514
@@ -133,8 +142,7 @@
 #define IDC_RA_ROMCHECKSUMHEADER        1606
 #define IDM_RA_MENUSTART                1700
 #define IDM_RA_RETROACHIEVEMENTS        1700
-#define IDM_RA_FILES_TEST1              1701
-#define IDM_RA_FILES_TEST2              1702
+#define IDM_RA_OVERLAYSETTINGS          1701
 #define IDM_RA_FILES_MEMORYBOOKMARKS    1703
 #define IDM_RA_FILES_ACHIEVEMENTS       1704
 #define IDM_RA_FILES_MEMORYFINDER       1705
@@ -150,13 +158,8 @@
 #define IDM_RA_SCANFORGAMES             1715
 #define IDM_RA_PARSERICHPRESENCE        1716
 #define IDM_RA_TOGGLELEADERBOARDS       1717
-#define IDM_RA_TOGGLE_LB_NOTIFICATIONS  1718
-#define IDM_RA_TOGGLE_LB_COUNTER        1719
-#define IDM_RA_TOGGLE_LB_SCOREBOARD     1720
-#define IDM_RA_NON_HARDCORE_WARNING     1721
-#define IDM_RA_TOGGLE_LB_CANCEL_NOTIFS  1722
+#define IDM_RA_NON_HARDCORE_WARNING     1718
 #define IDM_RA_MENUEND                  1739
-#define IDC_RA_OPENPAGE                 1740
 
 // Next default values for new objects
 // 
@@ -164,7 +167,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        121
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1042
+#define _APS_NEXT_CONTROL_VALUE         1130
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

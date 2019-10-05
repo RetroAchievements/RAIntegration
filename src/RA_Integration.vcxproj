@@ -98,6 +98,7 @@
     <ClCompile Include="ui\viewmodels\OverlayListPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayManager.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayRecentGamesPageViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlaySettingsViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp" />
@@ -118,6 +119,7 @@
     <ClCompile Include="ui\win32\LoginDialog.cpp" />
     <ClCompile Include="ui\win32\MemoryBookmarksDialog.cpp" />
     <ClCompile Include="ui\win32\MessageBoxDialog.cpp" />
+    <ClCompile Include="ui\win32\OverlaySettingsDialog.cpp" />
     <ClCompile Include="ui\win32\OverlayWindow.cpp" />
     <ClCompile Include="ui\win32\RichPresenceDialog.cpp" />
     <ClCompile Include="ui\win32\UnknownGameDialog.cpp" />
@@ -240,6 +242,7 @@
     <ClInclude Include="ui\viewmodels\OverlayListPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayManager.hh" />
     <ClInclude Include="ui\viewmodels\OverlayRecentGamesPageViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\OverlaySettingsViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupViewModelBase.hh" />
@@ -270,6 +273,7 @@
     <ClInclude Include="ui\win32\LoginDialog.hh" />
     <ClInclude Include="ui\win32\MemoryBookmarksDialog.hh" />
     <ClInclude Include="ui\win32\MessageBoxDialog.hh" />
+    <ClInclude Include="ui\win32\OverlaySettingsDialog.hh" />
     <ClInclude Include="ui\win32\OverlayWindow.hh" />
     <ClInclude Include="ui\win32\RichPresenceDialog.hh" />
     <ClInclude Include="ui\win32\IDialogPresenter.hh" />

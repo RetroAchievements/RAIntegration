@@ -572,7 +572,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
         return;
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    bool bTakeScreenshot = pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementScreenshot);
+    bool bTakeScreenshot = pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot);
     bool bSubmit = false;
     bool bIsError = false;
 

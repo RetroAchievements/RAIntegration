@@ -788,14 +788,14 @@ public:
     static std::array<uint8_t, 64> memory;
 
     static uint8_t ReadMemory0(uint32_t nAddress) noexcept { return memory.at(nAddress); }
-    static uint8_t ReadMemory1(uint32_t nAddress) noexcept { return memory.at(nAddress + 10); }
-    static uint8_t ReadMemory2(uint32_t nAddress) noexcept { return memory.at(nAddress + 20); }
-    static uint8_t ReadMemory3(uint32_t nAddress) noexcept { return memory.at(nAddress + 30); }
+    static uint8_t ReadMemory1(uint32_t nAddress) noexcept { return memory.at(gsl::narrow_cast<size_t>(nAddress) + 10); }
+    static uint8_t ReadMemory2(uint32_t nAddress) noexcept { return memory.at(gsl::narrow_cast<size_t>(nAddress) + 20); }
+    static uint8_t ReadMemory3(uint32_t nAddress) noexcept { return memory.at(gsl::narrow_cast<size_t>(nAddress) + 30); }
 
     static void WriteMemory0(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(nAddress) = nValue; }
-    static void WriteMemory1(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(nAddress + 10) = nValue; }
-    static void WriteMemory2(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(nAddress + 20) = nValue; }
-    static void WriteMemory3(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(nAddress + 30) = nValue; }
+    static void WriteMemory1(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(gsl::narrow_cast<size_t>(nAddress) + 10) = nValue; }
+    static void WriteMemory2(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(gsl::narrow_cast<size_t>(nAddress) + 20) = nValue; }
+    static void WriteMemory3(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(gsl::narrow_cast<size_t>(nAddress) + 30) = nValue; }
 
     TEST_METHOD(TestReadMemoryByte)
     {

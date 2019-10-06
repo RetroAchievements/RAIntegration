@@ -58,7 +58,7 @@ private:
     void UpdateAchievementCounters();
 
     void RemoveAchievement(HWND hList, int nIter);
-    size_t AddAchievement(HWND hList, const Achievement& Ach);
+    int AddAchievement(HWND hList, const Achievement& Ach);
     void AddAchievementRow(const Achievement& Ach);
 
     INT_PTR CommitAchievements(HWND hDlg);

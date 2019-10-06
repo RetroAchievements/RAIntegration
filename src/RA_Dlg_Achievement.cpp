@@ -169,7 +169,7 @@ void Dlg_Achievements::UpdateAchievementCounters()
                    NativeStr(std::to_string(nTotalPoints)).c_str());
 }
 
-size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
+int Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
 {
     AddAchievementRow(Ach);
 
@@ -259,7 +259,7 @@ void Dlg_Achievements::UpdateAchievementList()
             }
             else
             {
-                for (int nIndex = m_vAchievementIDs.size() - 1; nIndex >= ra::to_signed(nInsertIndex); --nIndex)
+                for (auto nIndex = m_vAchievementIDs.size() - 1; nIndex >= nInsertIndex; --nIndex)
                     ListView_DeleteItem(hList, nIndex);
             }
 

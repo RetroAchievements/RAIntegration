@@ -220,7 +220,7 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
     ZeroMemory(&item, sizeof(item));
     item.mask = LVIF_TEXT;
     item.cchTextMax = 255;
-    item.iItem = m_vGameEntries.size();
+    item.iItem = gsl::narrow_cast<int>(m_vGameEntries.size());
 
     HWND hList = GetDlgItem(m_hDialogBox, IDC_RA_LBX_GAMELIST);
 

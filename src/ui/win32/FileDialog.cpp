@@ -119,7 +119,7 @@ static void ShowFolder(FileDialogViewModel& vmFileDialog, HWND hParentWnd)
             lpItemIdList = nullptr;
         };
 
-        using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
+        using ItemListOwner = std::unique_ptr<ITEMIDLIST __unaligned, decltype(idlist_deleter)>;
         ItemListOwner owner{ ::SHBrowseForFolderW(&bi), idlist_deleter };
         if (owner)
         {
@@ -202,7 +202,7 @@ void FileDialog::Presenter::DoShowModal(ra::ui::WindowViewModelBase& oViewModel,
     ofn.lpstrFilter = sFileTypes.data();
     ofn.nFilterIndex = nFilterIndex;
     ofn.lpstrFile = sFilenameBuffer.data();
-    ofn.nMaxFile = sFilenameBuffer.size();
+    ofn.nMaxFile = gsl::narrow_cast<DWORD>(sFilenameBuffer.size());
     ofn.lpstrTitle = vmFileDialog.GetWindowTitle().c_str();
     ofn.Flags = OFN_ENABLESIZING | OFN_EXPLORER | OFN_PATHMUSTEXIST;
     ofn.lpstrDefExt = sDefaultExtension.c_str();

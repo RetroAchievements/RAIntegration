@@ -744,10 +744,10 @@ char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOu
 
     //	malloc() must be managed!
     //	NB. By adding +1, we allow for a single \0 character :)
-    char* pRawFileOut = static_cast<char*>(std::malloc((nFileSizeOut + 1) * sizeof(char)));
+    char* pRawFileOut = static_cast<char*>(std::malloc((static_cast<size_t>(nFileSizeOut) + 1) * sizeof(char)));
     if (pRawFileOut)
     {
-        ZeroMemory(pRawFileOut, nFileSizeOut + 1);
+        ZeroMemory(pRawFileOut, static_cast<size_t>(nFileSizeOut) + 1);
         fread(pRawFileOut, nFileSizeOut, sizeof(char), pf);
     }
 

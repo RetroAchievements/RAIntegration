@@ -385,6 +385,7 @@ static void ProcessAchievements()
 
 API void CCONV _RA_DoAchievementsFrame()
 {
+    // make sure we process the achievements _before_ the frozen bookmarks modify the memory
     ProcessAchievements();
 
 #ifndef RA_UTEST
@@ -394,7 +395,6 @@ API void CCONV _RA_DoAchievementsFrame()
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
     pOverlayManager.AdvanceFrame();
 
-    // make sure we process the achievements _before_ the frozen bookmarks modify the memory
     g_MemoryDialog.Invalidate();
 #endif
 }

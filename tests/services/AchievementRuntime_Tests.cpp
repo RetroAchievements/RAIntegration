@@ -100,6 +100,21 @@ private:
         return rc_parse_lboard(sBuffer, sTrigger, nullptr, 0);
     }
 
+    rc_richpresence_t* ParseRichPresence(const char* sScript, unsigned char* sBuffer = nullptr, size_t nBufferSize = 0U)
+    {
+        Expects(sScript != nullptr);
+        if (sBuffer == nullptr)
+        {
+            sBuffer = sTriggerBuffer.data();
+            nBufferSize = sizeof(sTriggerBuffer);
+        }
+
+        const auto nSize = rc_richpresence_size(sScript);
+        Expects(to_unsigned(nSize) < nBufferSize);
+
+        return rc_parse_richpresence(sBuffer, sScript, nullptr, 0);
+    }
+
 public:
     TEST_METHOD(TestActivateAchievement)
     {
@@ -748,6 +763,51 @@ public:
         vChanges.clear();
         runtime.Process(vChanges);
         Assert::AreEqual(0U, vChanges.size());
+    }
+
+    TEST_METHOD(TestActivateRichPresence)
+    {
+        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        std::vector<ra::services::AchievementRuntime::Change> changes;
+        char buffer[64] = {};
+        rc_richpresence_t pRichPresence2{};
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+
+        auto* pRichPresence = ParseRichPresence("Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0xH01) @Num(d0xH01)\n");
+        runtime.ActivateRichPresence(pRichPresence);
+
+        // remove memrefs from pRichPresence2 so they don't get updated by rc_evaluate_richpresence calls
+        // we expect all memref updating to occur in AcheivementRuntime::Process.
+        memcpy(&pRichPresence2, pRichPresence, sizeof(pRichPresence2));
+        pRichPresence2.memrefs = nullptr;
+
+        // memrefs haven't been updated - expect 0/0
+        rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
+        Assert::AreEqual("0 0", buffer);
+
+        // first update - updates value, but not delta
+        runtime.Process(changes);
+        rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
+        Assert::AreEqual("18 0", buffer);
+
+        // second update - updates delta
+        runtime.Process(changes);
+        rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
+        Assert::AreEqual("18 18", buffer);
+
+        // third update - updates value after change
+        memory.at(1) = 11;
+        runtime.Process(changes);
+        rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
+        Assert::AreEqual("11 18", buffer);
+
+        // fourth update - updates delta and value after change
+        memory.at(1) = 13;
+        runtime.Process(changes);
+        rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
+        Assert::AreEqual("13 11", buffer);
     }
 };
 

@@ -77,6 +77,14 @@ public:
     /// </summary>
     GSL_SUPPRESS_F6 virtual void OnSizeChanged(_UNUSED const ra::ui::Size& pNewSize) {}
 
+    /// <summary>
+    /// Called when the bound control offers custom drawing.
+    /// </summary>
+    GSL_SUPPRESS_F6 virtual LRESULT OnCustomDraw(_UNUSED NMLVCUSTOMDRAW* pCustomDraw)
+    {
+        return CDRF_DODEFAULT;
+    }
+
 protected:
     void DisableBinding() noexcept
     {

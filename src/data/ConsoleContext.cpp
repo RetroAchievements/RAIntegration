@@ -617,7 +617,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"Wii-U");
 
         case ConsoleID::WonderSwan:
-            return std::make_unique<ConsoleContext>(nId, L"WonderSwan");
+            return std::make_unique<ConsoleContext>(ConsoleID::WS, L"WonderSwan");
 
         case ConsoleID::X68K:
             return std::make_unique<ConsoleContext>(nId, L"X68K");

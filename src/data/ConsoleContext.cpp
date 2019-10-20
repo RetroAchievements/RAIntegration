@@ -408,6 +408,26 @@ const std::vector<ConsoleContext::MemoryRegion> SuperNESConsoleContext::m_vMemor
     { 0x020000U, 0x03FFFFU, ConsoleContext::AddressType::SaveRAM, "Cartridge RAM" }, // cartridge RAM (normally $FE0000-$FF0000; up to 1MB, typically 32KB or less)
 };
 
+// ==== WonderSwan ====
+
+class WonderSwanConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 WonderSwanConsoleContext() noexcept : ConsoleContext(ConsoleID::WS, L"WonderSwan") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// WonderSwan memory is exposed as a single chunk
+// http://daifukkat.su/docs/wsman/#ovr_memmap
+const std::vector<ConsoleContext::MemoryRegion> WonderSwanContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x00FFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // internal RAM ends at 0x003FFFU for WonderSwan, WonderSwan Color uses all of the exposed memory.
+};
+
 // ===== VirtualBoy =====
 
 class VirtualBoyConsoleContext : public ConsoleContext

@@ -304,6 +304,24 @@ const std::vector<ConsoleContext::MemoryRegion> NintendoEntertainmentSystemConso
     { 0x8000U, 0xFFFFU, ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge ROM"},
 };
 
+// ===== Oric =====
+
+class OricConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 OricConsoleContext() noexcept : ConsoleContext(ConsoleID::Oric, L"Oric") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+const std::vector<ConsoleContext::MemoryRegion> OricConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x00FFFFU, ConsoleContext::AddressType::SystemRAM, "Main RAM" }, // actual size varies based on machine type, up to 64KB
+};
+
 // ===== PC-8800 =====
 
 class PC8800ConsoleContext : public ConsoleContext
@@ -518,6 +536,9 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
 
         case ConsoleID::NES:
             return std::make_unique<NintendoEntertainmentSystemConsoleContext>();
+
+        case ConsoleID::Oric:
+            return std::make_unique<OricConsoleContext>();
 
         case ConsoleID::PC8800:
             return std::make_unique<PC8800ConsoleContext>();

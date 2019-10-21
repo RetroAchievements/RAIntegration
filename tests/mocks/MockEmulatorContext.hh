@@ -4,7 +4,10 @@
 
 #include "data\EmulatorContext.hh"
 
+#include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
+
+#include <GSL\span>
 
 namespace ra {
 namespace data {
@@ -29,8 +32,53 @@ public:
         SetGetGameTitleFunction([sTitle](char* sBuffer) noexcept { strcpy_s(sBuffer, 64, sTitle); });
     }
 
+    void DisableHardcoreMode() override
+    {
+        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+        pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+    }
+
+    bool EnableHardcoreMode(bool) override
+    {
+        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+        pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        return true;
+    }
+
+    void MockMemory(gsl::span<unsigned char> pMemory)
+    {
+        s_pMemory = pMemory;
+
+        ClearMemoryBlocks();
+        AddMemoryBlock(0, s_pMemory.size_bytes(), ReadMemoryHelper, WriteMemoryHelper);
+    }
+
+    void MockMemory(unsigned char pMemory[], size_t nBytes)
+    {
+        s_pMemory = gsl::make_span(pMemory, nBytes);
+
+        ClearMemoryBlocks();
+        AddMemoryBlock(0, nBytes, ReadMemoryHelper, WriteMemoryHelper);
+    }
+
+    void MockMemoryModified(bool bModified) noexcept
+    {
+        m_bMemoryModified = bModified;
+    }
+
 private:
+    static uint8_t ReadMemoryHelper(uint32_t nAddress) noexcept
+    {
+        return s_pMemory.at(nAddress);
+    }
+
+    static void WriteMemoryHelper(uint32_t nAddress, uint8_t nValue) noexcept
+    {
+        s_pMemory.at(nAddress) = nValue;
+    }
+
     ra::services::ServiceLocator::ServiceOverride<ra::data::EmulatorContext> m_Override;
+    static gsl::span<uint8_t> s_pMemory;
 };
 
 } // namespace mocks

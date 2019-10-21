@@ -38,6 +38,13 @@ public:
         return true;
     }
 
+    size_t GetBytes(_Inout_ char pBuffer[], _In_ size_t nBytes) override
+    {
+        const auto nPos = GetPosition();
+        m_iStream.read(pBuffer, nBytes);
+        return gsl::narrow_cast<size_t>(GetPosition() - nPos);
+    }
+
     std::streampos GetPosition() const override
     {
         if (!m_iStream.good())

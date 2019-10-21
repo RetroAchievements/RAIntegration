@@ -8,24 +8,41 @@
 #include "ScoreboardViewModel.hh"
 #include "ScoreTrackerViewModel.hh"
 
+#include "data\Types.hh"
+
+#include "ui\ImageReference.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class OverlayManager {
+class OverlayManager : protected ra::ui::IImageRepository::NotifyTarget {
 public:    
+    GSL_SUPPRESS_F6 OverlayManager() = default;
+    ~OverlayManager() noexcept = default;
+    OverlayManager(const OverlayManager&) noexcept = delete;
+    OverlayManager& operator=(const OverlayManager&) noexcept = delete;
+    OverlayManager(OverlayManager&&) noexcept = delete;
+    OverlayManager& operator=(OverlayManager&&) noexcept = delete;
+
     /// <summary>
     /// Updates the overlay.
     /// </summary>
     /// <param name="pInput">The emulator input state.</param>
-    /// <param name="fElapsed">The amount of seconds that have passed.</param>
-    void Update(const ControllerInput& pInput, double fElapsed);
+    void Update(const ControllerInput& pInput);
 
     /// <summary>
     /// Renders the overlay.
     /// </summary>
-    void Render(ra::ui::drawing::ISurface& pSurface) const;
-    
+    /// <param name="pSurface">The surface to render to.</param>
+    /// <param name="bRedrawAll">True to redraw everything even if it hasn't changed or moved.</param>
+    void Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll);
+
+    /// <summary>
+    /// Requests the overlay be redrawn.
+    /// </summary>
+    void RequestRender();
+
     /// <summary>
     /// Starts the animation to show the overlay.
     /// </summary>
@@ -51,19 +68,31 @@ public:
     }
 
     /// <summary>
+    /// Refreshes the currently visible overlay page
+    /// </summary>
+    void RefreshOverlay()
+    {
+        if (m_vmOverlay.CurrentState() != OverlayViewModel::State::Hidden)
+        {
+            m_vmOverlay.CurrentPage().Refresh();
+            RequestRender();
+        }
+    }
+
+    /// <summary>
     /// Queues a popup message.
     /// </summary>
-    int QueueMessage(PopupMessageViewModel&& pMessage);
+    int QueueMessage(std::unique_ptr<PopupMessageViewModel>& pMessage);
 
     /// <summary>
     /// Queues a popup message.
     /// </summary>
     int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription)
     {
-        PopupMessageViewModel vmMessage;
-        vmMessage.SetTitle(sTitle);
-        vmMessage.SetDescription(sDescription);
-        return QueueMessage(std::move(vmMessage));
+        std::unique_ptr<PopupMessageViewModel> vmMessage(new PopupMessageViewModel);
+        vmMessage->SetTitle(sTitle);
+        vmMessage->SetDescription(sDescription);
+        return QueueMessage(vmMessage);
     }
 
     /// <summary>
@@ -71,11 +100,11 @@ public:
     /// </summary>
     int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription, const std::wstring& sDetail)
     {
-        PopupMessageViewModel vmMessage;
-        vmMessage.SetTitle(sTitle);
-        vmMessage.SetDescription(sDescription);
-        vmMessage.SetDetail(sDetail);
-        return QueueMessage(std::move(vmMessage));
+        std::unique_ptr<PopupMessageViewModel> vmMessage(new PopupMessageViewModel);
+        vmMessage->SetTitle(sTitle);
+        vmMessage->SetDescription(sDescription);
+        vmMessage->SetDetail(sDetail);
+        return QueueMessage(vmMessage);
     }
 
     /// <summary>
@@ -83,11 +112,11 @@ public:
     /// </summary>
     int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription, ra::ui::ImageType nImageType, const std::string& sImageName)
     {
-        PopupMessageViewModel vmMessage;
-        vmMessage.SetTitle(sTitle);
-        vmMessage.SetDescription(sDescription);
-        vmMessage.SetImage(nImageType, sImageName);
-        return QueueMessage(std::move(vmMessage));
+        std::unique_ptr<PopupMessageViewModel> vmMessage(new PopupMessageViewModel);
+        vmMessage->SetTitle(sTitle);
+        vmMessage->SetDescription(sDescription);
+        vmMessage->SetImage(nImageType, sImageName);
+        return QueueMessage(vmMessage);
     }
 
     /// <summary>
@@ -95,12 +124,12 @@ public:
     /// </summary>
     int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription, const std::wstring& sDetail, ra::ui::ImageType nImageType, const std::string& sImageName)
     {
-        PopupMessageViewModel vmMessage;
-        vmMessage.SetTitle(sTitle);
-        vmMessage.SetDescription(sDescription);
-        vmMessage.SetDetail(sDetail);
-        vmMessage.SetImage(nImageType, sImageName);
-        return QueueMessage(std::move(vmMessage));
+        std::unique_ptr<PopupMessageViewModel> vmMessage(new PopupMessageViewModel);
+        vmMessage->SetTitle(sTitle);
+        vmMessage->SetDescription(sDescription);
+        vmMessage->SetDetail(sDetail);
+        vmMessage->SetImage(nImageType, sImageName);
+        return QueueMessage(vmMessage);
     }
 
     /// <summary>
@@ -112,39 +141,33 @@ public:
     {
         for (auto& pMessage : m_vPopupMessages)
         {
-            if (pMessage.GetPopupId() == nId)
-                return &pMessage;
+            if (pMessage->GetPopupId() == nId)
+                return pMessage.get();
         }
 
         return nullptr;
     }
 
     /// <summary>
+    /// Captures a screenshot with the associated message
+    /// </summary>
+    void CaptureScreenshot(int nMessageId, const std::wstring& sPath);
+
+    /// <summary>
+    /// Advances the frame counter to indicate the capture screen is no longer valid.
+    /// </summary>
+    void AdvanceFrame() noexcept { ++m_nFrameId; }
+
+    /// <summary>
     /// Adds a score tracker for a leaderboard.
     /// </summary>
-    ScoreTrackerViewModel& AddScoreTracker(ra::LeaderboardID nLeaderboardId)
-    {
-        auto pScoreTracker = std::make_unique<ScoreTrackerViewModel>();
-        pScoreTracker->SetPopupId(nLeaderboardId);
-        pScoreTracker->UpdateRenderImage(0.0);
-        return *m_vScoreTrackers.emplace_back(std::move(pScoreTracker));
-    }
+    ScoreTrackerViewModel& AddScoreTracker(ra::LeaderboardID nLeaderboardId);
 
     /// <summary>
     /// Removes the score tracker associated to the specified leaderboard.
     /// </summary>
     /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the tracker.</param>
-    void RemoveScoreTracker(ra::LeaderboardID nLeaderboardId)
-    {
-        for (auto pIter = m_vScoreTrackers.begin(); pIter != m_vScoreTrackers.end(); ++pIter)
-        {
-            if (ra::to_unsigned((*pIter)->GetPopupId()) == nLeaderboardId)
-            {
-                m_vScoreTrackers.erase(pIter);
-                break;
-            }
-        }
-    }
+    void RemoveScoreTracker(ra::LeaderboardID nLeaderboardId);
 
     /// <summary>
     /// Gets the score tracker associated to the specified leaderboard.
@@ -186,19 +209,84 @@ public:
     /// <summary>
     /// Clears all popups.
     /// </summary>
-    void ClearPopups();
+    virtual void ClearPopups();
 
-private:
-    void UpdateActiveMessage(double fElapsed);
-    void UpdateActiveScoreboard(double fElapsed);
-    void RenderPopups(ra::ui::drawing::ISurface& pSurface) const;
+    /// <summary>
+    /// Sets the function to call when there's something to be rendered.
+    /// </summary>
+    void SetRenderRequestHandler(std::function<void()>&& fHandleRenderRequest)
+    {
+        auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+        pImageRepository.RemoveNotifyTarget(*this);
+        pImageRepository.AddNotifyTarget(*this);
+        m_fHandleRenderRequest = std::move(fHandleRenderRequest);
+    }
 
+    /// <summary>
+    /// Sets the function to call when there's something to be rendered.
+    /// </summary>
+    void SetShowRequestHandler(std::function<void()>&& fHandleShowRequest) noexcept
+    {
+        m_fHandleShowRequest = std::move(fHandleShowRequest);
+    }
+
+    /// <summary>
+    /// Sets the function to call when there's something to be rendered.
+    /// </summary>
+    void SetHideRequestHandler(std::function<void()>&& fHandleHideRequest) noexcept
+    {
+        m_fHandleHideRequest = std::move(fHandleHideRequest);
+    }
+
+    /// <summary>
+    /// Gets whether or not there is something visible to render on the overlay
+    /// </summary>
+    bool NeedsRender() const noexcept;
+
+protected:
     ra::ui::viewmodels::OverlayViewModel m_vmOverlay;
-
-    std::deque<PopupMessageViewModel> m_vPopupMessages;
+    std::deque<std::unique_ptr<PopupMessageViewModel>> m_vPopupMessages;
     std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
     std::deque<ScoreboardViewModel> m_vScoreboards;
+
+    bool m_bIsRendering = false;
+    bool m_bRenderRequestPending = false;
+
+    void OnImageChanged(ImageType, const std::string&) override
+    {
+        RequestRender();
+    }
+
+private:
+    void UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, double fElapsed);
+    void UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface, double fElapsed);
+    void UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, double fElapsed);
+    void UpdatePopup(ra::ui::drawing::ISurface& pSurface, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup);
+
+    void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);
+
+    void ProcessScreenshots();
+    std::unique_ptr<ra::ui::drawing::ISurface> RenderScreenshot(const ra::ui::drawing::ISurface& pClientSurface, const PopupMessageViewModel& vmPopup);
+
+    bool m_bRedrawAll = false;
+    std::chrono::steady_clock::time_point m_tLastRender{};
+    std::function<void()> m_fHandleRenderRequest;
+    std::function<void()> m_fHandleShowRequest;
+    std::function<void()> m_fHandleHideRequest;
+
     std::atomic<int> m_nPopupId{ 0 };
+
+    int m_nFrameId = 0;
+
+    struct Screenshot
+    {
+        int nFrameId = 0;
+        std::unique_ptr<ra::ui::drawing::ISurface> pScreen;
+        std::map<int, std::wstring> vMessages;
+    };
+    std::vector<Screenshot> m_vScreenshotQueue;
+    std::mutex m_pScreenshotQueueMutex;
+    bool m_bProcessingScreenshots = false;
 };
 
 } // namespace viewmodels

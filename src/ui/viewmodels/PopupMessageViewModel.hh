@@ -119,9 +119,27 @@ public:
         return (m_fAnimationProgress >= TOTAL_ANIMATION_TIME);
     }
 
+    /// <summary>
+    /// Gets the final Y location to render the popup at.
+    /// </summary>
+    int GetRenderTargetY() const noexcept { return m_nTargetY; }
+
+    class RenderImageLock
+    {
+    public:
+        RenderImageLock(PopupMessageViewModel& owner)
+            : m_pLock(owner.m_pSurfaceMutex)
+        {
+        }
+
+    private:
+        std::lock_guard<std::recursive_mutex> m_pLock;
+    };
+
 private:
     void CreateRenderImage();
     bool m_bSurfaceStale = false;
+    std::recursive_mutex m_pSurfaceMutex;
 
     double m_fAnimationProgress = -1.0;
     int m_nInitialY = 0;

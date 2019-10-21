@@ -18,6 +18,7 @@ enum class StorageItemType
     Badge,
     UserPic,
     SessionStats,
+    Bookmarks
 };
 
 class ILocalStorage

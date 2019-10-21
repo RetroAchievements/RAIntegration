@@ -22,17 +22,15 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #ifndef RA_UTEST
-extern bool g_bRAMTamperedWith;
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
-#include "RA_Dlg_MemBookmark.h"
 #include "RA_Dlg_Memory.h"
 #endif
 
 namespace ra {
 namespace services {
 
-unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, unsigned int nROMSize)
+unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
 {
     m_nPendingMode = ra::data::GameContext::Mode::Normal;
 
@@ -46,6 +44,13 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, unsigned int nROMSiz
     {
         m_sPendingMD5.clear();
         m_nPendingGameId = 0U;
+        return 0U;
+    }
+
+    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot load achievements",
+            L"You must be logged in to load achievements. Please reload the game after logging in.");
         return 0U;
     }
 
@@ -63,24 +68,21 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, unsigned int nROMSiz
         {
             RA_LOG("Could not identify game with MD5 %s", sMD5);
 
-            if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+            auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle();
+
+            ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
+            vmUnknownGame.InitializeGameTitles();
+            vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Name());
+            vmUnknownGame.SetChecksum(ra::Widen(sMD5));
+            vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
+            vmUnknownGame.SetNewGameName(vmUnknownGame.GetEstimatedGameName());
+
+            if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
             {
-                auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle();
+                nGameId = vmUnknownGame.GetSelectedGameId();
 
-                ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
-                vmUnknownGame.InitializeGameTitles();
-                vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Name());
-                vmUnknownGame.SetChecksum(ra::Widen(sMD5));
-                vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
-                vmUnknownGame.SetNewGameName(vmUnknownGame.GetEstimatedGameName());
-
-                if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
-                {
-                    nGameId = vmUnknownGame.GetSelectedGameId();
-
-                    if (vmUnknownGame.GetTestMode())
-                        m_nPendingMode = ra::data::GameContext::Mode::CompatibilityTest;
-                }
+                if (vmUnknownGame.GetTestMode())
+                    m_nPendingMode = ra::data::GameContext::Mode::CompatibilityTest;
             }
         }
         else
@@ -129,6 +131,9 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
 
         RA_LOG("Loading game %u", nGameId);
 
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        pOverlayManager.ClearPopups();
+
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
         pGameContext.LoadGame(nGameId, m_nPendingMode);
         pGameContext.SetGameHash((nGameId == m_nPendingGameId) ? m_sPendingMD5 : "");
@@ -138,12 +143,41 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
         auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
         if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
         {
-            const bool bLeaderboardsEnabled = pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
+            bool bShowHardcorePrompt = false;
+            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning))
+            {
+                pGameContext.EnumerateAchievements([&bShowHardcorePrompt](const Achievement & pAchievment) noexcept
+                {
+                    if (pAchievment.GetCategory() == Achievement::Category::Core)
+                    {
+                        bShowHardcorePrompt = true;
+                        return false;
+                    }
 
-            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                L"Playing in Softcore Mode",
-                bLeaderboardsEnabled ? L"Leaderboard submissions will be canceled." : L"");
+                    return true;
+                });
+            }
+
+            if (bShowHardcorePrompt)
+            {
+                ra::ui::viewmodels::MessageBoxViewModel vmWarning;
+                vmWarning.SetHeader(L"Enable Hardcore mode?");
+                vmWarning.SetMessage(L"You are loading a game with achievements and do not currently have hardcore mode enabled.");
+                vmWarning.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+                vmWarning.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
+                if (vmWarning.ShowModal() == ra::ui::DialogResult::Yes)
+                    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().EnableHardcoreMode(false);
+            }
+            else
+            {
+                const bool bLeaderboardsEnabled = pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
+
+                ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                    L"Playing in Softcore Mode",
+                    bLeaderboardsEnabled ? L"Leaderboard submissions will be canceled." : L"");
+            }
         }
     }
     else
@@ -157,20 +191,20 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
         pGameContext.SetGameHash((m_nPendingGameId == 0) ? m_sPendingMD5 : "");
     }
 
-#ifndef RA_UTEST
-    g_bRAMTamperedWith = false;
+    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().ResetMemoryModified();
 
+#ifndef RA_UTEST
     g_AchievementsDialog.OnLoad_NewRom(nGameId);
     g_AchievementEditorDialog.OnLoad_NewRom();
     g_MemoryDialog.OnLoad_NewRom();
-    g_MemBookmarkDialog.OnLoad_NewRom();
 
+    // TODO: have RichPresenceMonitor watch GameContext.ActiveGameChanged
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.RichPresenceMonitor.UpdateDisplayString();
 #endif
 }
 
-void GameIdentifier::IdentifyAndActivateGame(const BYTE* pROM, unsigned int nROMSize)
+void GameIdentifier::IdentifyAndActivateGame(const BYTE* pROM, size_t nROMSize)
 {
     const auto nGameId = IdentifyGame(pROM, nROMSize);
     ActivateGame(nGameId);

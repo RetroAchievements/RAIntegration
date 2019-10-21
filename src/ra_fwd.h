@@ -48,6 +48,7 @@
 #define GSL_SUPPRESS_F23 GSL_SUPPRESS(f.23)
 #define GSL_SUPPRESS_IO5 GSL_SUPPRESS(io.5)
 #define GSL_SUPPRESS_TYPE1 GSL_SUPPRESS(type.1)
+#define GSL_SUPPRESS_TYPE3 GSL_SUPPRESS(type.3)
 #define GSL_SUPPRESS_TYPE6 GSL_SUPPRESS(type.6)
 /* clang-format on */
 
@@ -101,11 +102,6 @@ using LPTSTR = TCHAR*;
 namespace ra {
 
 using tstring = std::basic_string<TCHAR>;
-
-using ARGB = DWORD;
-using ByteAddress = std::size_t;
-using AchievementID = std::size_t;
-using LeaderboardID = std::size_t;
 
 } /* namespace ra */
 

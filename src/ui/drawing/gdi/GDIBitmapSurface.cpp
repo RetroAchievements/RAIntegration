@@ -7,7 +7,12 @@ namespace ui {
 namespace drawing {
 namespace gdi {
 
-void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept
+void GDIBitmapSurface::CopyFromWindow(HDC hDC, int srcX, int srcY, int srcWidth, int srcHeight, int dstX, int dstY) noexcept
+{
+    ::BitBlt(m_hMemDC, dstX, dstY, srcWidth, srcHeight, hDC, srcX, srcY, SRCCOPY);
+}
+
+void GDIBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept
 {
     // clip to surface
     auto nStride = ra::to_signed(GetWidth());
@@ -37,7 +42,10 @@ void GDIAlphaBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeigh
 
     // fill rectangle
     auto nFirstScanline = (GetHeight() - nY - nHeight); // bitmap memory starts with the bottom scanline
+    GSL_SUPPRESS_F6 Expects(m_pBits != nullptr);
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
+    GSL_SUPPRESS_F6 Ensures(pBits != nullptr);
+
     if (nStride == nWidth)
     {
         // doing full scanlines, just bulk fill
@@ -68,7 +76,7 @@ static constexpr uint8_t BlendPixel(std::uint8_t nTarget, std::uint8_t nBlend, s
     return gsl::narrow_cast<std::uint8_t>(((nBlend * nAlpha) + (nTarget * (256 - nAlpha))) / 256);
 }
 
-void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
+void GDIBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
 {
     if (sText.empty())
         return;
@@ -83,7 +91,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     SwitchFont(nFont);
 
     SIZE szText;
-    GetTextExtentPoint32W(m_hDC, sText.c_str(), sText.length(), &szText);
+    GetTextExtentPoint32W(m_hDC, sText.c_str(), gsl::narrow_cast<int>(sText.length()), &szText);
 
     // clip to surface
     if (szText.cx > nStride - nX)
@@ -111,21 +119,22 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
     GSL_SUPPRESS_TYPE1 hBitmap =
         CreateDIBSection(hMemDC, &bmi, DIB_RGB_COLORS, reinterpret_cast<LPVOID*>(&pTextBits), nullptr, 0);
 
-    assert(hBitmap != nullptr);
-    assert(pTextBits != nullptr);
+    Expects(hBitmap != nullptr);
+    Ensures(pTextBits != nullptr);
     SelectBitmap(hMemDC, hBitmap);
 
     SelectFont(hMemDC, m_pResourceRepository.GetHFont(nFont));
     SetTextColor(hMemDC, RGB(255, 255, 255));
     SetBkMode(hMemDC, TRANSPARENT);
     RECT rcRect{0, 0, szText.cx, szText.cy};
-    TextOutW(hMemDC, 0, 0, sText.c_str(), sText.length());
+    TextOutW(hMemDC, 0, 0, sText.c_str(), gsl::narrow_cast<int>(sText.length()));
 
     // copy the greyscale text to the forground using the grey value as the alpha for antialiasing
     auto nFirstScanline = (GetHeight() - nY - szText.cy); // bitmap memory starts with the bottom scanline
-    assert(ra::to_signed(nFirstScanline) >= 0);
-    assert(m_pBits != nullptr);
+    Expects(ra::to_signed(nFirstScanline) >= 0);
+    Expects(m_pBits != nullptr);
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
+    Ensures(pBits != nullptr);
 
     // clip to surface
     auto nLines = szText.cy;
@@ -166,7 +175,7 @@ void GDIAlphaBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, c
 #pragma warning(push)
 #pragma warning(disable : 5045)
 
-void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
+void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
 {
     const auto nWidth = to_signed(GetWidth());
     const auto nHeight = to_signed(GetHeight());
@@ -177,10 +186,10 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const noexcept
     // merge the current surface onto the buffer - they'll both be the same size, so bulk process it
     std::uint8_t* pBits;
     GSL_SUPPRESS_TYPE1 pBits = reinterpret_cast<std::uint8_t*>(m_pBlendBuffer.m_pBits);
-    assert(pBits != nullptr);
+    Expects(pBits != nullptr);
     std::uint8_t* pSrcBits;
     GSL_SUPPRESS_TYPE1 pSrcBits = reinterpret_cast<std::uint8_t*>(m_pBits);
-    assert(pSrcBits != nullptr);
+    Expects(pSrcBits != nullptr);
 
     const std::uint8_t* pEnd = pSrcBits + (nWidth * nHeight * 4);
     while (pSrcBits < pEnd)

@@ -17,8 +17,7 @@ public:
 
     ~ControlBinding() noexcept
     {
-        if (m_hWnd && m_pDialog)
-            m_pDialog->RemoveControlBinding(m_hWnd);
+        DisableBinding();
     }
 
     ControlBinding(const ControlBinding&) noexcept = delete;
@@ -47,7 +46,17 @@ public:
         m_pDialog = &pDialog;
         m_pDialog->AddControlBinding(hControl, *this);
     }
-    
+
+    /// <summary>
+    /// Called when the control is made visible.
+    /// </summary>
+    GSL_SUPPRESS_F6 virtual void OnShown() {}
+
+    /// <summary>
+    /// Called when the bound control gains keyboard focus.
+    /// </summary>
+    GSL_SUPPRESS_F6 virtual void OnGotFocus() {}
+
     /// <summary>
     /// Called when the bound control loses keyboard focus.
     /// </summary>
@@ -63,7 +72,24 @@ public:
     /// </summary>
     GSL_SUPPRESS_F6 virtual void OnValueChanged() {}
 
+    /// <summary>
+    /// Called when the bound control is resized.
+    /// </summary>
+    GSL_SUPPRESS_F6 virtual void OnSizeChanged(_UNUSED const ra::ui::Size& pNewSize) {}
+
 protected:
+    void DisableBinding() noexcept
+    {
+        if (m_hWnd && m_pDialog)
+            m_pDialog->RemoveControlBinding(m_hWnd);
+    }
+
+    void EnableBinding() noexcept
+    {
+        if (m_hWnd && m_pDialog)
+            m_pDialog->AddControlBinding(m_hWnd, *this);
+    }
+
     HWND m_hWnd{};
 
 private:

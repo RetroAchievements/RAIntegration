@@ -1,16 +1,17 @@
 #include "RA_Dlg_AchEditor.h"
 
-#include "RA_AchievementSet.h"
+#include "RA_Achievement.h"
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_ImageFactory.h"
-#include "RA_MemManager.h"
 #include "RA_Resource.h"
-#include "RA_User.h"
-#include "RA_httpthread.h"
+
+#include "api\FetchBadgeIds.hh"
+#include "api\UploadBadge.hh"
 
 #include "data\EmulatorContext.hh"
+#include "data\GameContext.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
@@ -112,9 +113,7 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
         i++;
     }
 
-    ZeroMemory(&m_lbxData, sizeof(m_lbxData));
-
-    m_nNumOccupiedRows = 0;
+    m_lbxData.clear();
 
     BOOL bSuccess = ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT);
     bSuccess = ListView_EnableGroupView(hList, FALSE);
@@ -123,6 +122,13 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
     // ListBox_AddString(
     // bSuccess = ListView_SetExtendedListViewStyle( hGroupList, LVS_EX_FULLROWSELECT );
     // bSuccess = ListView_EnableGroupView( hGroupList, FALSE );
+
+    ra::api::FetchBadgeIds::Request request;
+    request.CallAsync([this](const ra::api::FetchBadgeIds::Response & response)
+        {
+            m_nFirstBadge = response.FirstID;
+            m_nNextBadge = response.NextID;
+        });
 }
 
 BOOL Dlg_AchievementEditor::IsActive() const noexcept
@@ -132,36 +138,21 @@ BOOL Dlg_AchievementEditor::IsActive() const noexcept
 
 const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond, unsigned int nCurrentHits)
 {
+    m_lbxData.emplace_back();
+    const int rowIdx = m_lbxData.size() - 1;
+
     LV_ITEM item{};
     item.mask = LVIF_TEXT;
     item.cchTextMax = 256;
-    item.iItem = m_nNumOccupiedRows;
-    ra::tstring sData{NativeStr(LbxDataAt(m_nNumOccupiedRows, CondSubItems::Id))};
+    item.iItem = rowIdx;
+    ra::tstring sData{NativeStr(LbxDataAt(rowIdx, CondSubItems::Id))};
     item.pszText = sData.data();
     item.iItem = ListView_InsertItem(hList, &item);
 
-    auto& pRow = m_lbxData.at(m_nNumOccupiedRows);
-    if (pRow.at(0).capacity() == 0)
-    {
-        // not sure exactly why, but the std::string objects in the LbxData nested array
-        // aren't constructed properly (they're just zeroed out memory). a std::string
-        // should never have 0 capacity - if it does, call reserve to initialize it 
-        // properly before trying to assign anything to it.
-        for (auto& pCell : pRow)
-            pCell.reserve(8);
-    }
-    else
-    {
-        // reconstructing the row - clear out any stored strings so the subitems get repopulated
-        for (auto& pCell : pRow)
-            pCell.clear();
-    }
-
     UpdateCondition(hList, item, Cond, nCurrentHits);
 
-    Ensures(item.iItem == m_nNumOccupiedRows);
+    Ensures(item.iItem == static_cast<int>(m_lbxData.size() - 1));
 
-    m_nNumOccupiedRows++;
     return item.iItem;
 }
 
@@ -177,7 +168,7 @@ void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondS
     }
 }
 
-void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondSubItems nColumn, std::string&& sNewValue)
+void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondSubItems nColumn, std::string&& sNewValue) noexcept
 {
     std::string& sCell = LbxDataAt(nRow, nColumn);
     if (sCell != sNewValue)
@@ -193,22 +184,37 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
 {
     const int nRow = item.iItem;
 
-    // Update our local array:
-    const char* sMemTypStrSrc = "Value";
-    std::string sMemSizeStrSrc;
-    if (Cond.CompSource().GetType() != CompVariable::Type::ValueComparison)
+    bool bValueInDecimal = false;
+    if (!Cond.CompTarget().IsMemoryType() || !Cond.CompSource().IsMemoryType())
     {
-        sMemTypStrSrc = (Cond.CompSource().GetType() == CompVariable::Type::Address) ? "Mem" : "Delta";
-        sMemSizeStrSrc = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompSource().GetSize())));
+        auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+            bValueInDecimal = true;
     }
 
+    // Update our local array:
     SetCell(hList, item, nRow, CondSubItems::Id, std::to_string(nRow + 1));
-    SetCell(hList, item, nRow, CondSubItems::Group, ra::Narrow(Condition::TYPE_STR.at(ra::etoi(Cond.GetConditionType()))));
-    SetCell(hList, item, nRow, CondSubItems::Type_Src, ra::Narrow(sMemTypStrSrc));
-    SetCell(hList, item, nRow, CondSubItems::Size_Src, ra::Narrow(sMemSizeStrSrc));
-    SetCell(hList, item, nRow, CondSubItems::Value_Src, ra::StringPrintf("0x%06x", Cond.CompSource().GetValue()));
 
-    if (Cond.IsAddCondition() || Cond.IsSubCondition())
+    SetCell(hList, item, nRow, CondSubItems::Group, ra::Narrow(Condition::TYPE_STR.at(ra::etoi(Cond.GetConditionType()))));
+
+    SetCell(hList, item, nRow, CondSubItems::Type_Src,  ra::Narrow(CompVariable::TYPE_STR.at(ra::etoi(Cond.CompSource().GetType()))));
+
+    if (Cond.CompSource().IsMemoryType())
+    {
+        SetCell(hList, item, nRow, CondSubItems::Size_Src, ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompSource().GetSize()))));
+        SetCell(hList, item, nRow, CondSubItems::Value_Src, ra::Narrow(ra::ByteAddressToString(Cond.CompSource().GetValue())));
+    }
+    else
+    {
+        SetCell(hList, item, nRow, CondSubItems::Size_Src, "");
+
+        if (bValueInDecimal)
+            SetCell(hList, item, nRow, CondSubItems::Value_Src, std::to_string(Cond.CompSource().GetValue()));
+        else
+            SetCell(hList, item, nRow, CondSubItems::Value_Src, ra::StringPrintf("0x%02x", Cond.CompSource().GetValue()));
+    }
+
+    if (Cond.IsSingleOperandConditionType())
     {
         SetCell(hList, item, nRow, CondSubItems::Comparison, "");
         SetCell(hList, item, nRow, CondSubItems::Type_Tgt, "");
@@ -218,31 +224,26 @@ void Dlg_AchievementEditor::UpdateCondition(HWND hList, LV_ITEM& item, const Con
     }
     else
     {
-        const char* sMemTypStrDst = "Value";
-        std::string sMemSizeStrDst;
-        if (Cond.CompTarget().GetType() != CompVariable::Type::ValueComparison)
-        {
-            sMemTypStrDst = (Cond.CompTarget().GetType() == CompVariable::Type::Address) ? "Mem" : "Delta";
-            sMemSizeStrDst = ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().GetSize())));
-        }
-
         SetCell(hList, item, nRow, CondSubItems::Comparison, ra::Narrow(COMPARISONTYPE_STR.at(ra::etoi(Cond.CompareType()))));
-        SetCell(hList, item, nRow, CondSubItems::Type_Tgt, ra::Narrow(sMemTypStrDst));
-        SetCell(hList, item, nRow, CondSubItems::Size_Tgt, ra::Narrow(sMemSizeStrDst));
-        SetCell(hList, item, nRow, CondSubItems::Hitcount, ra::StringPrintf("%u (%u)", Cond.RequiredHits(), nCurrentHits));
 
-        bool bValueInDecimal = false;
-        if (Cond.CompTarget().GetType() == CompVariable::Type::ValueComparison)
+        SetCell(hList, item, nRow, CondSubItems::Type_Tgt, ra::Narrow(CompVariable::TYPE_STR.at(ra::etoi(Cond.CompTarget().GetType()))));
+
+        if (Cond.CompTarget().IsMemoryType())
         {
-            auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
-                bValueInDecimal = true;
+            SetCell(hList, item, nRow, CondSubItems::Size_Tgt, ra::Narrow(MEMSIZE_STR.at(ra::etoi(Cond.CompTarget().GetSize()))));
+            SetCell(hList, item, nRow, CondSubItems::Value_Tgt, ra::Narrow(ra::ByteAddressToString(Cond.CompTarget().GetValue())));
+        }
+        else
+        {
+            SetCell(hList, item, nRow, CondSubItems::Size_Tgt, "");
+
+            if (bValueInDecimal)
+                SetCell(hList, item, nRow, CondSubItems::Value_Tgt, std::to_string(Cond.CompTarget().GetValue()));
+            else
+                SetCell(hList, item, nRow, CondSubItems::Value_Tgt, ra::StringPrintf("0x%02x", Cond.CompTarget().GetValue()));
         }
 
-        if (bValueInDecimal)
-            SetCell(hList, item, nRow, CondSubItems::Value_Tgt, std::to_string(Cond.CompTarget().GetValue()));
-        else
-            SetCell(hList, item, nRow, CondSubItems::Value_Tgt, ra::StringPrintf("0x%02x", Cond.CompTarget().GetValue()));
+        SetCell(hList, item, nRow, CondSubItems::Hitcount, ra::StringPrintf("%u (%u)", Cond.RequiredHits(), nCurrentHits));
     }
 }
 
@@ -494,11 +495,11 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                 const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
-                if (Cond.IsAddCondition() || Cond.IsSubCondition())
+                if (Cond.IsSingleOperandConditionType())
                     break;
             }
 
-            const int nNumItems = 3; // "Mem", "Delta" or "Value"
+            const int nNumItems = 4; // "Mem", "Delta", "Prior" or "Value"
 
             g_hIPEEdit =
                 CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
@@ -516,6 +517,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
             /*CB_ERRSPACE*/
             ComboBox_AddString(g_hIPEEdit, NativeStr("Mem").c_str());
             ComboBox_AddString(g_hIPEEdit, NativeStr("Delta").c_str());
+            ComboBox_AddString(g_hIPEEdit, NativeStr("Prior").c_str());
             ComboBox_AddString(g_hIPEEdit, NativeStr("Value").c_str());
 
             int nSel{};
@@ -523,8 +525,10 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 nSel = 0;
             else if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == "Delta")
                 nSel = 1;
-            else
+            else if (g_AchievementEditorDialog.LbxDataAt(nItem, nSubItem) == "Prior")
                 nSel = 2;
+            else
+                nSel = 3;
 
             ComboBox_SetCurSel(g_hIPEEdit, nSel);
 
@@ -555,7 +559,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                 const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
-                if (Cond.IsAddCondition() || Cond.IsSubCondition())
+                if (Cond.IsSingleOperandConditionType())
                     break;
             }
 
@@ -594,7 +598,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
 
             const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
             const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
-            if (Cond.IsAddCondition() || Cond.IsSubCondition())
+            if (Cond.IsSingleOperandConditionType())
                 break;
 
             g_hIPEEdit =
@@ -636,7 +640,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                 const size_t nGrp = g_AchievementEditorDialog.GetSelectedConditionGroup();
                 const Condition& Cond = g_AchievementEditorDialog.ActiveAchievement()->GetCondition(nGrp, nItem);
 
-                if (Cond.IsAddCondition() || Cond.IsSubCondition())
+                if (Cond.IsSingleOperandConditionType())
                     break;
             }
 
@@ -771,9 +775,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
             // For scanning changes to achievement conditions (hit counts)
             SetTimer(m_hAchievementEditorDlg, 1, 200, (TIMERPROC)s_AchievementEditorProc);
 
-            m_BadgeNames.InstallAchEditorCombo(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME));
-            m_BadgeNames.FetchNewBadgeNamesThreaded();
-
             // achievement loaded before UI was created won't have populated the UI. reload it.
             if (m_pSelectedAchievement != nullptr)
             {
@@ -893,23 +894,59 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case IDC_RA_BADGENAME:
                 {
-                    HWND hBadgeNameCtrl = GetDlgItem(hDlg, IDC_RA_BADGENAME);
                     switch (HIWORD(wParam))
                     {
-                        case CBN_SELENDOK:
-                        case CBN_SELCHANGE:
+                        case EN_KILLFOCUS:
                         {
-                            TCHAR buffer[16];
-                            GetWindowText(hBadgeNameCtrl, buffer, 16);
-                            UpdateBadge(ra::Narrow(buffer));
+                            if (IsPopulatingAchievementEditorData())
+                                return TRUE;
+
+                            Achievement* pActiveAch = ActiveAchievement();
+                            if (pActiveAch == nullptr)
+                                return FALSE;
+
+                            std::string buffer(16, '\0');
+                            const auto nLength = GetDlgItemTextA(hDlg, IDC_RA_BADGENAME, buffer.data(), 16);
+                            if (nLength == 0)
+                                return FALSE;
+
+                            buffer.resize(nLength);
+                            if (buffer.length() < 5)
+                                buffer.insert(0, 5 - buffer.length(), '0');
+
+                            unsigned int nVal = 0;
+                            try
+                            {
+                                nVal = ra::to_unsigned(std::stoi(NativeStr(buffer)));
+                            }
+                            catch (const std::invalid_argument& e)
+                            {
+                                RA_LOG_ERR("Invalid Argument: %s", e.what());
+                                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                                    L"The badge field may only contain digits."); // for users
+
+                                // Set it back to 0 immediately, it won't change back by itself
+                                SetDlgItemTextA(hDlg, IDC_RA_ACH_POINTS, "00000");
+                                return FALSE;
+                            }
+
+                            if (nVal < m_nFirstBadge || nVal >= m_nNextBadge)
+                            {
+                                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                                    ra::StringPrintf(L"Valid badge numbers are between %u and %u.", m_nFirstBadge, m_nNextBadge - 1));
+
+                                return FALSE;
+                            }
+
+                            pActiveAch->SetBadgeImage(buffer);
+                            pActiveAch->SetModified(TRUE);
+                            g_AchievementsDialog.OnEditAchievement(*pActiveAch);
+
+                            UpdateBadge(buffer);
+                            return TRUE;
                         }
                         break;
-                        case CBN_SELENDCANCEL:
-                            // Restore?
-                            break;
                     }
-
-                    bHandled = TRUE;
                 }
                 break;
 
@@ -954,8 +991,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                     pActiveAch->SetTitle(ra::Narrow(buffer));
 
                                     // Persist/Update/Inject local LBX data back into LBX (?)
-                                    g_AchievementsDialog.OnEditData(
-                                        g_pActiveAchievements->GetAchievementIndex(*pActiveAch),
+                                    g_AchievementsDialog.OnEditData(nSelectedIndex,
                                         Dlg_Achievements::Column::Title, pActiveAch->Title());
                                 }
                             }
@@ -1063,7 +1099,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         unsigned int nVal = strtoul(ra::Narrow(buffer).c_str(), nullptr, 16);
                         NewCondition.CompSource().SetValue(nVal);
 
-                        NewCondition.CompTarget().SetValue(g_MemManager.ActiveBankRAMRead(nVal, NewCondition.CompTarget().GetSize()));
+                        nVal = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(nVal, NewCondition.CompTarget().GetSize());
+                        NewCondition.CompTarget().SetValue(nVal);
                     }
 
                     const size_t nNewID = pActiveAch->AddCondition(GetSelectedConditionGroup(), NewCondition) - 1;
@@ -1343,43 +1380,19 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     if (ofn.lpstrFile != nullptr)
                     {
-                        rapidjson::Document Response;
-                        if (RAWeb::DoBlockingImageUpload(RequestUploadBadgeImage, ra::Narrow(ofn.lpstrFile), Response))
+                        ra::api::UploadBadge::Request request;
+                        request.ImageFilePath = ra::Widen(ofn.lpstrFile);
+                        const auto response = request.Call();
+                        if (!response.Succeeded())
                         {
-                            // TBD: ensure that:
-                            // The image is copied to the cache/badge dir
-                            // The image doesn't already exist in teh cache/badge dir (ask overwrite)
-                            // The image is the correct dimensions or can be scaled
-                            // The image can be uploaded OK
-                            // The image is not copyright
-
-                            const rapidjson::Value& ResponseData = Response["Response"];
-                            if (ResponseData.HasMember("BadgeIter"))
-                            {
-                                const char* sNewBadgeIter = ResponseData["BadgeIter"].GetString();
-
-                                // pBuffer will contain "OK:" and the number of the uploaded file.
-                                // Add the value to the available values in the cbo, and it *should* self-populate.
-                                MessageBox(nullptr, TEXT("Successful!"), TEXT("Upload OK"), MB_OK);
-
-                                m_BadgeNames.AddNewBadgeName(sNewBadgeIter, true);
-                                UpdateBadge(sNewBadgeIter);
-                            }
-                            else if (ResponseData.HasMember("Error"))
-                            {
-                                MessageBox(nullptr, NativeStr(ResponseData["Error"].GetString()).c_str(), TEXT("Error"),
-                                           MB_OK);
-                            }
-                            else
-                            {
-                                MessageBox(nullptr,
-                                           TEXT("Error in upload! Try another image format, or maybe smaller image?"),
-                                           TEXT("Error"), MB_OK);
-                            }
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to upload badge image", ra::Widen(response.ErrorMessage));
                         }
                         else
                         {
-                            MessageBox(nullptr, TEXT("Could not contact server!"), TEXT("Error"), MB_OK);
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Upload successful");
+
+                            m_nNextBadge = std::atoi(response.BadgeId.c_str()) + 1;
+                            UpdateBadge(response.BadgeId);
                         }
                     }
                 }
@@ -1656,6 +1669,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 rCond.CompSource().SetType(CompVariable::Type::Address);
                             else if (sData == "Delta")
                                 rCond.CompSource().SetType(CompVariable::Type::DeltaMem);
+                            else if (sData == "Prior")
+                                rCond.CompSource().SetType(CompVariable::Type::PriorMem);
                             else
                                 rCond.CompSource().SetType(CompVariable::Type::ValueComparison);
 
@@ -1676,6 +1691,8 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 rCond.CompTarget().SetType(CompVariable::Type::Address);
                             else if (sData == "Delta")
                                 rCond.CompTarget().SetType(CompVariable::Type::DeltaMem);
+                            else if (sData == "Prior")
+                                rCond.CompTarget().SetType(CompVariable::Type::PriorMem);
                             else
                                 rCond.CompTarget().SetType(CompVariable::Type::ValueComparison);
 
@@ -1780,6 +1797,49 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     lpDispInfo->lpszText = lpDispInfo->szText;
                     return FALSE;
                 }
+
+                case UDN_DELTAPOS:
+                {
+                    Achievement* pActiveAch = ActiveAchievement();
+                    if (pActiveAch == nullptr)
+                        return FALSE;
+
+                    LPNMUPDOWN lpUpDown{};
+                    GSL_SUPPRESS_TYPE1 lpUpDown = reinterpret_cast<LPNMUPDOWN>(lParam);
+
+                    unsigned int nVal = m_nFirstBadge;
+
+                    std::string buffer(16, '\0');
+                    const auto nLength = GetDlgItemTextA(hDlg, IDC_RA_BADGENAME, buffer.data(), 16);
+                    if (nLength > 0)
+                    {
+                        buffer.resize(nLength);
+
+                        try
+                        {
+                            nVal = ra::to_unsigned(std::stoi(buffer));
+                            nVal -= lpUpDown->iDelta; // up returns negative delta
+                        }
+                        catch (const std::invalid_argument&)
+                        {
+                        }
+
+                        if (nVal < m_nFirstBadge)
+                            nVal = m_nNextBadge - 1;
+                        else if (nVal >= m_nNextBadge)
+                            nVal = m_nFirstBadge;
+                    }
+
+                    buffer = std::to_string(nVal);
+                    if (buffer.length() < 5)
+                        buffer.insert(0, 5 - buffer.length(), '0');
+
+                    pActiveAch->SetBadgeImage(buffer);
+                    pActiveAch->SetModified(TRUE);
+                    g_AchievementsDialog.OnEditAchievement(*pActiveAch);
+                    UpdateBadge(buffer);
+                    return FALSE;
+                }
             }
         }
         break;
@@ -1808,7 +1868,7 @@ unsigned int Dlg_AchievementEditor::ParseValue(const std::string& sData, CompVar
     }
     else
     {
-        nMax = g_MemManager.TotalBankSize() - 1;
+        nMax = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() - 1;
     }
 
     bool bTooLarge = false;
@@ -1890,16 +1950,14 @@ void Dlg_AchievementEditor::GetListViewTooltip()
     switch (ra::itoe<CondSubItems>(lvHitTestInfo.iSubItem))
     {
         case CondSubItems::Value_Src:
-            if (rCond.CompSource().GetType() != CompVariable::Type::Address &&
-                rCond.CompSource().GetType() != CompVariable::Type::DeltaMem)
+            if (!rCond.CompSource().IsMemoryType())
                 return;
 
             nAddr = rCond.CompSource().GetValue();
             break;
 
         case CondSubItems::Value_Tgt:
-            if (rCond.CompTarget().GetType() != CompVariable::Type::Address &&
-                rCond.CompTarget().GetType() != CompVariable::Type::DeltaMem)
+            if (!rCond.CompSource().IsMemoryType())
                 return;
 
             nAddr = rCond.CompTarget().GetValue();
@@ -1909,16 +1967,9 @@ void Dlg_AchievementEditor::GetListViewTooltip()
             return;
     }
 
-    std::ostringstream oss;
-    oss << ra::ByteAddressToString(nAddr) << "\r\n";
-
-    const CodeNotes::CodeNoteObj* pNote = g_MemoryDialog.Notes().FindCodeNote(nAddr);
-    if (pNote != nullptr)
-        oss << pNote->Note();
-    else
-        oss << "[no notes]";
-
-    m_sTooltip = NativeStr(oss.str());
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto* pNote = pGameContext.FindCodeNote(nAddr);
+    m_sTooltip = NativeStr(ra::StringPrintf(L"%s\r\n%s", ra::ByteAddressToString(nAddr), pNote ? *pNote : L""));
 }
 
 GSL_SUPPRESS_CON4
@@ -1930,6 +1981,14 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
         sAchievementBadgeURI = m_pSelectedAchievement->BadgeImageURI();
     else if (sBackupBadgeToUse.length() > 2)
         sAchievementBadgeURI = sBackupBadgeToUse;
+
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+    if (!pImageRepository.IsImageAvailable(ra::ui::ImageType::Badge, sAchievementBadgeURI))
+    {
+        pImageRepository.FetchImage(ra::ui::ImageType::Badge, sAchievementBadgeURI);
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::seconds(1),
+            [this, sBackupBadgeToUse]() { UpdateSelectedBadgeImage(sBackupBadgeToUse); });
+    }
 
     m_hAchievementBadge.ChangeReference(ra::ui::ImageType::Badge, sAchievementBadgeURI);
     GSL_SUPPRESS_CON4 // inline suppression for this currently not working
@@ -1943,11 +2002,8 @@ void Dlg_AchievementEditor::UpdateSelectedBadgeImage(const std::string& sBackupB
         InvalidateRect(hCheevoPic, nullptr, TRUE);
     }
 
-    // Find buffer in the dropdown list
-    const int nSel = ComboBox_FindStringExact(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), 0,
-                                              sAchievementBadgeURI.c_str());
-    if (nSel != -1)
-        ComboBox_SetCurSel(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_BADGENAME), nSel); // Force select
+    // Update the text field
+    SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, sAchievementBadgeURI.c_str());
 }
 
 void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
@@ -1962,7 +2018,7 @@ void Dlg_AchievementEditor::UpdateBadge(const std::string& sNewName)
             m_pSelectedAchievement->SetBadgeImage(sNewName);
             m_pSelectedAchievement->SetModified(TRUE);
 
-            if (g_nActiveAchievementSet == AchievementSet::Type::Core)
+            if (m_pSelectedAchievement->GetCategory() == Achievement::Category::Core)
             {
                 const int nOffs = g_AchievementsDialog.GetSelectedAchievementIndex();
                 g_AchievementsDialog.OnEditData(nOffs, Dlg_Achievements::Column::Modified, "Yes");
@@ -2017,17 +2073,19 @@ _Use_decl_annotations_ void Dlg_AchievementEditor::PopulateConditions(const Achi
         return;
 
     ListView_DeleteAllItems(hCondList);
-    m_nNumOccupiedRows = 0;
+    m_lbxData.clear();
 
     if (pCheevo != nullptr)
     {
+        size_t maxNumConditions = m_pSelectedAchievement->NumConditions(0);
+        for (size_t i = 1; i < m_pSelectedAchievement->NumConditionGroups(); ++i)
+            maxNumConditions = std::max(maxNumConditions, m_pSelectedAchievement->NumConditions(i));
+        m_lbxData.reserve(maxNumConditions);
+
         const unsigned int nGrp = GetSelectedConditionGroup();
         for (size_t i = 0; i < m_pSelectedAchievement->NumConditions(nGrp); ++i)
             AddCondition(hCondList, m_pSelectedAchievement->GetCondition(nGrp, i),
                          m_pSelectedAchievement->GetConditionHitCount(nGrp, i));
-
-        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND),
-                     m_pSelectedAchievement->NumConditions(nGrp) < MAX_CONDITIONS);
     }
 }
 
@@ -2046,7 +2104,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE, TEXT("<Inactive!>"));
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_DESC, TEXT("<Select or Create an Achievement first!>"));
         SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR, TEXT("<Inactive!>"));
-        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, TEXT(""));
+        SetDlgItemText(m_hAchievementEditorDlg, IDC_RA_BADGENAME, TEXT("00000"));
 
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_AUTHOR), FALSE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_ID), FALSE);
@@ -2084,7 +2142,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
                        ActiveAchievement()->GetPauseOnTrigger());
         CheckDlgButton(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET, ActiveAchievement()->GetPauseOnReset());
 
-        if (m_pSelectedAchievement->Category() == ra::etoi(AchievementSet::Type::Local))
+        if (m_pSelectedAchievement->GetCategory() == Achievement::Category::Local)
             SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, "0");
         else
             SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, std::to_string(m_pSelectedAchievement->ID()).c_str());
@@ -2104,8 +2162,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS), TRUE);
-        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND),
-                     m_pSelectedAchievement->NumConditions(0) < MAX_CONDITIONS);
+        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_COPYCOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_DELETECOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS), TRUE);
@@ -2134,7 +2191,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         using namespace ra::bitwise_ops;
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::ID))
         {
-            if (m_pSelectedAchievement->Category() == ra::etoi(AchievementSet::Type::Local))
+            if (m_pSelectedAchievement->GetCategory() == Achievement::Category::Local)
                 SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, "0");
             else
                 SetDlgItemTextA(m_hAchievementEditorDlg, IDC_RA_ACH_ID, std::to_string(m_pSelectedAchievement->ID()).c_str());
@@ -2191,8 +2248,6 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_POINTS), TRUE);
-        EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ADDCOND),
-                     m_pSelectedAchievement->NumConditions(nGrp) < MAX_CONDITIONS);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_COPYCOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_DELETECOND), TRUE);
         EnableWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_LBX_CONDITIONS), TRUE);
@@ -2209,7 +2264,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
 
 inline std::string& Dlg_AchievementEditor::LbxDataAt(unsigned int nRow, CondSubItems nCol) noexcept
 {
-    return m_lbxData.at(nRow).at(ra::etoi(nCol));
+    GSL_SUPPRESS_F6 return m_lbxData.at(nRow).at(ra::etoi(nCol));
 }
 
 void Dlg_AchievementEditor::OnLoad_NewRom()
@@ -2249,58 +2304,6 @@ void Dlg_AchievementEditor::SetSelectedConditionGroup(size_t nGrp) const noexcep
 {
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_GROUP);
     ListBox_SetCurSel(hList, ra::to_signed(nGrp));
-}
-
-void BadgeNames::FetchNewBadgeNamesThreaded() { RAWeb::CreateThreadedHTTPRequest(RequestBadgeIter); }
-
-void BadgeNames::OnNewBadgeNames(const rapidjson::Document& data)
-{
-    const unsigned int nLowerLimit = data["FirstBadge"].GetUint();
-    const unsigned int nUpperLimit = data["NextBadge"].GetUint();
-
-    SetWindowRedraw(m_hDestComboBox, FALSE);
-
-    // Clean out cbo
-    while (ComboBox_DeleteString(m_hDestComboBox, 0) > 0)
-    {
-    }
-
-    for (unsigned int i = nLowerLimit; i < nUpperLimit; ++i)
-    {
-        TCHAR buffer[256];
-        _stprintf_s(buffer, _T("%05d"), i);
-        ComboBox_AddString(m_hDestComboBox, buffer);
-    }
-
-    SendMessage(m_hDestComboBox, WM_SETREDRAW, TRUE, LPARAM{});
-    RedrawWindow(m_hDestComboBox, nullptr, nullptr, RDW_ERASE | RDW_FRAME | RDW_INVALIDATE | RDW_ALLCHILDREN);
-
-    // Find buffer in the dropdown list
-    if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
-    {
-        const int nSel = ComboBox_FindStringExact(
-            m_hDestComboBox, 0, g_AchievementEditorDialog.ActiveAchievement()->BadgeImageURI().c_str());
-        if (nSel != -1)
-            ComboBox_SetCurSel(m_hDestComboBox, nSel); // Force select
-    }
-}
-
-void BadgeNames::AddNewBadgeName(const char* pStr, bool bAndSelect)
-{
-    {
-        const auto nSel{ComboBox_AddString(m_hDestComboBox, NativeStr(pStr).c_str())};
-        if ((nSel == CB_ERR) || (nSel == CB_ERRSPACE))
-        {
-            ::MessageBox(::GetActiveWindow(),
-                         _T("An error has occurred or there is insufficient space "
-                            "to store the new string"),
-                         _T("Error!"), MB_OK | MB_ICONERROR);
-            return;
-        }
-    }
-
-    if (bAndSelect)
-        ComboBox_SelectString(m_hDestComboBox, 0, pStr);
 }
 
 void GenerateResizes(HWND hDlg)

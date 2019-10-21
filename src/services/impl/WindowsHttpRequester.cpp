@@ -38,7 +38,7 @@ static bool ReadIntoString(const HINTERNET hRequest, std::string& sBuffer, DWORD
     while (nAvailableBytes > 0)
     {
         DWORD nBytesFetched = 0U;
-        const DWORD nBytesToRead = sBuffer.capacity() - nInsertAt;
+        const DWORD nBytesToRead = gsl::narrow_cast<DWORD>(sBuffer.capacity()) - nInsertAt;
         if (WinHttpReadData(hRequest, &sBuffer.at(nInsertAt), nBytesToRead, &nBytesFetched))
         {
             nInsertAt += nBytesFetched;
@@ -128,7 +128,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
 
         // specify the server
         auto sHostName = ra::Widen(sUrl);
-        HINTERNET hConnect = WinHttpConnect(hSession, sHostName.c_str(), INTERNET_DEFAULT_HTTP_PORT, 0);
+        HINTERNET hConnect = WinHttpConnect(hSession, sHostName.c_str(), nPort, 0);
 
         if (hConnect == nullptr)
         {
@@ -172,7 +172,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 if (sPostData.empty())
                 {
                     bResults = WinHttpSendRequest(hRequest,
-                        sHeaders.c_str(), sHeaders.length(),
+                        sHeaders.c_str(), gsl::narrow_cast<int>(sHeaders.length()),
                         WINHTTP_NO_REQUEST_DATA,
                         0, 0,
                         0);
@@ -180,9 +180,9 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 else
                 {
                     bResults = WinHttpSendRequest(hRequest,
-                        sHeaders.c_str(), sHeaders.length(),
+                        sHeaders.c_str(), gsl::narrow_cast<int>(sHeaders.length()),
                         static_cast<LPVOID>(sPostData.data()),
-                        sPostData.length(), sPostData.length(),
+                        gsl::narrow_cast<int>(sPostData.length()), gsl::narrow_cast<int>(sPostData.length()),
                         0);
                 }
 

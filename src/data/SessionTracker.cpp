@@ -2,7 +2,6 @@
 
 #include "Exports.hh"
 #include "RA_Dlg_AchEditor.h"
-#include "RA_Dlg_MemBookmark.h"
 #include "RA_Dlg_Memory.h"
 #include "RA_Log.h"
 #include "RA_md5factory.h"
@@ -17,6 +16,8 @@
 #include "services\IFileSystem.hh"
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
+
+#include "ui\viewmodels\WindowManager.hh"
 
 namespace ra {
 namespace data {
@@ -44,26 +45,25 @@ void SessionTracker::LoadSessions()
         std::string sLine;
         while (pStatsFile->GetLine(sLine))
         {
-            auto nIndex = sLine.find(':');
-            if (nIndex == std::string::npos)
+            ra::Tokenizer pTokenizer(sLine);
+
+            const auto nGameId = pTokenizer.ReadNumber();
+            if (!pTokenizer.Consume(':'))
                 continue;
 
-            const auto nGameId = std::strtoul(sLine.c_str(), nullptr, 10);
-
-            auto nIndex2 = sLine.find(':', ++nIndex);
-            if (nIndex2 == std::string::npos)
+            const auto nSessionStart = pTokenizer.ReadNumber();
+            if (!pTokenizer.Consume(':'))
                 continue;
 
-            const auto nSessionStart = std::strtoul(&sLine.at(nIndex), nullptr, 10);
-
-            nIndex = sLine.find(':', ++nIndex2);
-            if (nIndex == std::string::npos)
+            const auto nSessionLength = pTokenizer.ReadNumber();
+            if (!pTokenizer.Consume(':'))
                 continue;
-            const auto nSessionLength = std::strtoul(&sLine.at(nIndex2), nullptr, 10);
 
-            std::string md5;
-            GSL_SUPPRESS_TYPE1 md5 = RAGenerateMD5(reinterpret_cast<const unsigned char*>(sLine.c_str()), nIndex + 1);
-            if (sLine.at(nIndex + 1) == md5.front() && sLine.at(nIndex + 2) == md5.back())
+
+            const BYTE* pLine;
+            GSL_SUPPRESS_TYPE1{ pLine = reinterpret_cast<const BYTE*>(sLine.c_str()); }
+            const auto md5 = RAGenerateMD5(pLine, pTokenizer.CurrentPosition());
+            if (pTokenizer.Consume(md5.front()) && pTokenizer.Consume(md5.back()))
                 AddSession(nGameId, nSessionStart, std::chrono::seconds(nSessionLength));
         }
 
@@ -85,7 +85,7 @@ void SessionTracker::AddSession(unsigned int nGameId, time_t tSessionStart, std:
     }
 
     pIter->LastSessionStart = std::chrono::system_clock::from_time_t(tSessionStart);
-    pIter->TotalPlaytime += tSessionDuration;
+    pIter->TotalPlayTime += tSessionDuration;
 }
 
 void SessionTracker::SortSessions()
@@ -206,7 +206,7 @@ std::chrono::seconds SessionTracker::GetTotalPlaytime(unsigned int nGameId) cons
     {
         if (pGameStats.GameId == nGameId)
         {
-            tPlaytime += pGameStats.TotalPlaytime;
+            tPlaytime += pGameStats.TotalPlayTime;
             break;
         }
     }
@@ -214,13 +214,19 @@ std::chrono::seconds SessionTracker::GetTotalPlaytime(unsigned int nGameId) cons
     return tPlaytime;
 }
 
-bool SessionTracker::IsInspectingMemory() const noexcept
+bool SessionTracker::IsInspectingMemory() const
 {
-#ifdef RA_UTEST
-    return false;
-#else
-    return (g_MemoryDialog.IsActive() || g_AchievementEditorDialog.IsActive() || g_MemBookmarkDialog.IsActive());
+    const auto& pWindowManager = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>();
+
+    if (pWindowManager.MemoryBookmarks.IsVisible())
+        return true;
+
+#ifndef RA_UTEST
+    if (g_MemoryDialog.IsActive() || g_AchievementEditorDialog.IsActive())
+        return true;
 #endif
+
+    return false;
 }
 
 static bool HasCoreAchievements(const ra::data::GameContext& pGameContext)
@@ -228,13 +234,18 @@ static bool HasCoreAchievements(const ra::data::GameContext& pGameContext)
     bool bResult = false;
     pGameContext.EnumerateAchievements([&bResult](const Achievement& pAchievement) noexcept
     {
-        if (pAchievement.Category() == ra::etoi(AchievementSet::Type::Core))
+        switch (pAchievement.GetCategory())
         {
-            bResult = true;
-            return false;
-        }
+            case Achievement::Category::Local:
+            case Achievement::Category::Unofficial:
+                // not Core, keep looking
+                return true;
 
-        return true;
+            default:
+                // Core, Bonus, or something else that's been published, set found flag and stop looking
+                bResult = true;
+                return false;
+        }
     });
 
     return bResult;
@@ -255,10 +266,7 @@ std::wstring SessionTracker::GetCurrentActivity() const
         if (_RA_HardcoreModeIsActive())
             return L"Inspecting Memory in Hardcore mode";
 
-        if (pGameContext.ActiveAchievementType() == AchievementSet::Type::Core)
-            return L"Fixing Achievements";
-
-        return L"Developing Achievements";
+        return L"Fixing Achievements";
     }
 
     if (pGameContext.HasRichPresence())

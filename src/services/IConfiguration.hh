@@ -13,9 +13,13 @@ enum class Feature
     Hardcore,
     Leaderboards,
     LeaderboardNotifications,
+    LeaderboardCancelNotifications,
     LeaderboardCounters,
     LeaderboardScoreboards,
     PreferDecimal,
+    NonHardcoreWarning,
+    AchievementTriggeredScreenshot,
+    AchievementTriggeredNotifications,
 };
 
 class IConfiguration
@@ -62,8 +66,11 @@ public:
     /// </summary>
     virtual unsigned int GetNumBackgroundThreads() const = 0;
 
-    virtual const std::string& GetRomDirectory() const = 0;
-    virtual void SetRomDirectory(const std::string& sValue) = 0;
+    virtual const std::wstring& GetRomDirectory() const = 0;
+    virtual void SetRomDirectory(const std::wstring& sValue) = 0;
+
+    virtual const std::wstring& GetScreenshotDirectory() const = 0;
+    virtual void SetScreenshotDirectory(const std::wstring& sValue) = 0;
 
     /// <summary>
     /// Gets the remembered position of the window identified by <paramref name="sPositionKey"/>.
@@ -86,9 +93,19 @@ public:
     virtual void SetWindowSize(const std::string& sPositionKey, const ra::ui::Size& oSize) = 0;
     
     /// <summary>
-    /// Gets the name of the host to communicate with.
+    /// Gets the name of the host to communicate with (no protocol).
     /// </summary>
     virtual const std::string& GetHostName() const = 0;
+
+    /// <summary>
+    /// Gets the URL to the host to communicate with (includes protocol).
+    /// </summary>
+    virtual const std::string& GetHostUrl() const = 0;
+
+    /// <summary>
+    /// Gets the URL to the host to communicate with (includes protocol) for image retrieval.
+    /// </summary>
+    virtual const std::string& GetImageHostUrl() const = 0;
 
     /// <summary>
     /// Saves the current configuration so it can be used in a future session.

@@ -2,11 +2,17 @@
 
 // Win32 specific implementation of Desktop.hh
 
+#include "ui/drawing/gdi/GDIBitmapSurface.hh"
+
 #include "ui/viewmodels/WindowManager.hh"
 
+#include "ui/win32/BrokenAchievementsDialog.hh"
+#include "ui/win32/FileDialog.hh"
 #include "ui/win32/GameChecksumDialog.hh"
 #include "ui/win32/LoginDialog.hh"
 #include "ui/win32/MessageBoxDialog.hh"
+#include "ui/win32/MemoryBookmarksDialog.hh"
+#include "ui/win32/OverlaySettingsDialog.hh"
 #include "ui/win32/RichPresenceDialog.hh"
 #include "ui/win32/UnknownGameDialog.hh"
 
@@ -23,6 +29,10 @@ Desktop::Desktop() noexcept
     m_vDialogPresenters.emplace_back(new (std::nothrow) RichPresenceDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) GameChecksumDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) LoginDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) MemoryBookmarksDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) FileDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) OverlaySettingsDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) BrokenAchievementsDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) UnknownGameDialog::Presenter);
 }
 
@@ -61,6 +71,13 @@ ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel, const 
     }
 
     return vmViewModel.GetDialogResult();
+}
+
+void Desktop::CloseWindow(WindowViewModelBase& vmViewModel) const noexcept
+{
+    const auto* const pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
+    if (pBinding != nullptr)
+        ::CloseWindow(pBinding->GetHWnd());
 }
 
 void Desktop::GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const
@@ -122,10 +139,76 @@ void Desktop::SetMainHWnd(HWND hWnd)
     m_pWindowBinding->SetHWND(hWnd);
 }
 
+std::string Desktop::GetRunningExecutable() const
+{
+    char buffer[MAX_PATH];
+    GetModuleFileNameA(nullptr, buffer, sizeof(buffer));
+    return std::string(buffer);
+}
+
+std::string Desktop::GetOSVersionString() const
+{
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
+    // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
+    // https://github.com/DarthTon/Blackbone/blob/master/contrib/VersionHelpers.h
+#ifndef NTSTATUS
+    using NTSTATUS = __success(return >= 0) LONG;
+#endif
+    if (const auto ntModule{ ::GetModuleHandleW(L"ntdll.dll") }; ntModule)
+    {
+        RTL_OSVERSIONINFOEXW osVersion{ sizeof(RTL_OSVERSIONINFOEXW) };
+        using fnRtlGetVersion = NTSTATUS(NTAPI*)(PRTL_OSVERSIONINFOEXW);
+
+        fnRtlGetVersion RtlGetVersion{};
+        GSL_SUPPRESS_TYPE1 RtlGetVersion =
+            reinterpret_cast<fnRtlGetVersion>(::GetProcAddress(ntModule, "RtlGetVersion"));
+
+        if (RtlGetVersion)
+        {
+            RtlGetVersion(&osVersion);
+            if (osVersion.dwMajorVersion > 0UL)
+                return ra::StringPrintf("WindowsNT %lu.%lu", osVersion.dwMajorVersion, osVersion.dwMinorVersion);
+        }
+    }
+
+    return "Windows";
+}
+
+
 void Desktop::OpenUrl(const std::string& sUrl) const noexcept
 {
     ShellExecute(nullptr, TEXT("open"), sUrl.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
+
+std::unique_ptr<ra::ui::drawing::ISurface> Desktop::CaptureClientArea(const WindowViewModelBase& vmViewModel) const
+{
+    std::unique_ptr<ra::ui::drawing::ISurface> pSurface;
+
+    const auto* const pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
+    if (pBinding != nullptr)
+    {
+        RECT rcClientArea;
+        ::GetClientRect(pBinding->GetHWnd(), &rcClientArea);
+
+        const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
+        pSurface = pSurfaceFactory.CreateSurface(rcClientArea.right - rcClientArea.left, rcClientArea.bottom - rcClientArea.top);
+
+        auto* pGDISurface = dynamic_cast<ra::ui::drawing::gdi::GDIBitmapSurface*>(pSurface.get());
+        if (pGDISurface == nullptr)
+        {
+            pSurface.reset();
+        }
+        else
+        {
+            HDC hDC = GetDC(pBinding->GetHWnd());
+            pGDISurface->CopyFromWindow(hDC, 0, 0, pSurface->GetWidth(), pSurface->GetHeight(), 0, 0);
+            ReleaseDC(pBinding->GetHWnd(), hDC);
+        }
+    }
+
+    return pSurface;
+}
+
 
 void Desktop::Shutdown() noexcept
 {

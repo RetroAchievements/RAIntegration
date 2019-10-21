@@ -3,8 +3,6 @@
 #include "RA_Achievement.h"
 #include "RA_Core.h"
 #include "RA_Resource.h"
-#include "RA_User.h"
-#include "RA_httpthread.h"
 #include "RA_md5factory.h"
 
 #include "services\IConfiguration.hh"
@@ -639,7 +637,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
                 {
                     std::string sROMDirLocation = GetFolderFromDialog();
                     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-                    pConfiguration.SetRomDirectory(sROMDirLocation);
+                    pConfiguration.SetRomDirectory(ra::Widen(sROMDirLocation));
                     RA_LOG("Selected Folder: %s\n", sROMDirLocation.c_str());
                     SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(sROMDirLocation).c_str());
                     return FALSE;

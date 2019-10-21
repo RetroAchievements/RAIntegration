@@ -1,11 +1,11 @@
 #include "RA_Leaderboard.h"
 
 #include "RA_Defs.h"
-#include "RA_MemManager.h"
 
 #include "services\AchievementRuntime.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 
 #include <ctime>
@@ -31,6 +31,10 @@ void RA_Leaderboard::ParseFromString(const char* sBuffer, const char* sFormat)
         // parse error occurred
         RA_LOG("rc_parse_lboard returned %d", nSize);
         m_pLeaderboard = nullptr;
+
+        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+            ra::StringPrintf(L"Unable to activate leaderboard: %s", Title()),
+            ra::StringPrintf(L"Parse error %d", nSize));
     }
     else
     {

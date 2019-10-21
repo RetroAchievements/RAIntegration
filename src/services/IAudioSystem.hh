@@ -21,6 +21,11 @@ public:
     /// </summary>
     virtual void PlayAudioFile(const std::wstring& sPath) const = 0;
 
+    /// <summary>
+    /// Plays a simple beep.
+    /// </summary>
+    virtual void Beep() const = 0;
+
 protected:
     IAudioSystem() noexcept = default;
 };

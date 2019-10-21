@@ -3,6 +3,8 @@
 
 #include "OverlayListPageViewModel.hh"
 
+#include "data\Types.hh"
+
 #include "ui\ViewModelCollection.hh"
 
 namespace ra {

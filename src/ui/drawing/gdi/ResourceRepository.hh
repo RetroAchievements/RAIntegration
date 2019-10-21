@@ -50,7 +50,7 @@ public:
         if (hFont)
         {
             m_vFonts.emplace_back(sFont, nFontSize, nStyle, hFont);
-            return m_vFonts.size();
+            return gsl::narrow_cast<int>(m_vFonts.size());
         }
 
         return 0;

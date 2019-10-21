@@ -37,6 +37,11 @@ public:
         return ShowModal(vmViewModel);
     }
 
+    void CloseWindow(WindowViewModelBase& vmViewModel) const override
+    {
+        vmViewModel.SetIsVisible(false);
+    }
+
     bool WasDialogShown() noexcept { return m_bDialogShown; }
 
     void GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const noexcept override
@@ -53,6 +58,11 @@ public:
     void OpenUrl(const std::string& sUrl) const override
     {
         m_sLastOpenedUrl = sUrl;
+    }
+
+    std::unique_ptr<ra::ui::drawing::ISurface> CaptureClientArea(const WindowViewModelBase&) const noexcept override
+    {
+        return {};
     }
 
     const std::string& LastOpenedUrl() const noexcept { return m_sLastOpenedUrl; }
@@ -74,6 +84,11 @@ public:
         m_vHandlers.emplace_back(pHandler);
     }
 
+    std::string GetRunningExecutable() const override { return m_sExecutable; }
+    void SetRunningExecutable(const std::string& sExecutable) { m_sExecutable = sExecutable; }
+
+    std::string GetOSVersionString() const override { return "UnitTests"; }
+
 private:
     ra::ui::DialogResult Handle(WindowViewModelBase& vmViewModel) const
     {
@@ -91,6 +106,7 @@ private:
     std::vector<DialogHandler> m_vHandlers;
     mutable bool m_bDialogShown = false;
     mutable std::string m_sLastOpenedUrl;
+    std::string m_sExecutable;
 };
 
 } // namespace mocks

@@ -4,6 +4,7 @@
 
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
+#include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -27,6 +28,7 @@ private:
         ra::data::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
+        ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
 
         ItemViewModel* GetItem(gsl::index nIndex) { return m_vItems.GetItemAt(nIndex); }
 
@@ -39,7 +41,7 @@ private:
 
         ViewModelCollection<ItemViewModel>* GetRanks(ra::LeaderboardID nId)
         {
-            auto pIter = m_vLeaderboardRanks.find(nId);
+            const auto pIter = m_vLeaderboardRanks.find(nId);
             if (pIter != m_vLeaderboardRanks.end())
                 return &pIter->second;
 

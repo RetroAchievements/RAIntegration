@@ -4,9 +4,11 @@
 #include "RA_Defs.h"
 
 #include "RA_md5factory.h"
-#include "RA_User.h"
+
+#include "data\UserContext.hh"
 
 #include "services\Http.hh"
+#include "services\IFileSystem.hh"
 #include "services\IHttpRequester.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
@@ -96,10 +98,13 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
 
     if (pDocument.HasMember("Error"))
     {
-        pResponse.Result = ApiResult::Error;
         pResponse.ErrorMessage = pDocument["Error"].GetString();
-        RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage);
-        return false;
+        if (!pResponse.ErrorMessage.empty())
+        {
+            pResponse.Result = ApiResult::Error;
+            RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage);
+            return false;
+        }
     }
 
     if (pDocument.HasMember("Success") && !pDocument["Success"].GetBool())
@@ -219,6 +224,103 @@ static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const 
     ra::services::Http::UrlEncodeAppend(sParams, sValue);
 }
 
+static bool DoRequest(const std::string& sHost, const char* restrict sApiName, const char* restrict sRequestName,
+    const std::string& sInputParams, ApiResponseBase& pResponse, rapidjson::Document& document)
+{
+    std::string sPostData;
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    AppendUrlParam(sPostData, "u", pUserContext.GetUsername());
+    AppendUrlParam(sPostData, "t", pUserContext.GetApiToken());
+    AppendUrlParam(sPostData, "r", sRequestName);
+    if (!sInputParams.empty())
+    {
+        sPostData.push_back('&');
+        sPostData.append(sInputParams);
+    }
+    RA_LOG_INFO("%s Request: %s", sApiName, sPostData.c_str());
+
+    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/dorequest.php", sHost));
+    httpRequest.SetPostData(sPostData);
+
+    const auto httpResponse = httpRequest.Call();
+    return GetJson(sApiName, httpResponse, pResponse, document);
+}
+
+static bool DoUpload(const std::string& sHost, const char* restrict sApiName, const char* restrict sRequestName,
+    const std::wstring& sFilePath, ApiResponseBase& pResponse, rapidjson::Document& document)
+{
+    const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    const auto nFileSize = pFileSystem.GetFileSize(sFilePath);
+    if (nFileSize < 0)
+    {
+        pResponse.Result = ra::api::ApiResult::Error;
+        pResponse.ErrorMessage = ra::StringPrintf("Could not open %s", sFilePath);
+        return false;
+    }
+
+    std::string sExt = "png";
+    const auto nIndex = sFilePath.find_last_of('.');
+    if (nIndex != std::string::npos)
+    {
+        sExt = ra::Narrow(&sFilePath.at(nIndex + 1));
+        std::transform(sExt.begin(), sExt.end(), sExt.begin(), [](char c) noexcept {
+            return gsl::narrow_cast<char>(::tolower(c));
+        });
+    }
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    RA_LOG_INFO("%s Request: file=%s (%zu bytes)", sApiName, sFilePath, nFileSize);
+
+    const char* sBoundary = "---------------------------41184676334";
+    std::string sPostData;
+    sPostData.reserve(gsl::narrow_cast<size_t>(nFileSize + 512));
+
+    sPostData.append("--");
+    sPostData.append(sBoundary);
+    sPostData.append("\r\n");
+    sPostData.append("Content-Disposition: form-data; name=\"u\"\r\n\r\n");
+    sPostData.append(pUserContext.GetUsername());
+    sPostData.append("\r\n");
+
+    sPostData.append("--");
+    sPostData.append(sBoundary);
+    sPostData.append("\r\n");
+    sPostData.append("Content-Disposition: form-data; name=\"t\"\r\n\r\n");
+    sPostData.append(pUserContext.GetApiToken());
+    sPostData.append("\r\n");
+
+    // hackish trick - uploadbadgeimage API expects the filename to be uploadbadgeimage.png
+    sPostData.append("--");
+    sPostData.append(sBoundary);
+    sPostData.append("\r\n");
+    sPostData.append("Content-Disposition: form-data; name=\"file\"; filename=\"");
+    sPostData.append(sRequestName);
+    sPostData.append(ra::StringPrintf(".%s\"\r\n", sExt));
+    sPostData.append(ra::StringPrintf("Content-Type: image/%s\r\n\r\n", sExt));
+
+    auto pFile = pFileSystem.OpenTextFile(sFilePath);
+    if (pFile != nullptr)
+    {
+        const auto nLength = sPostData.length();
+        sPostData.resize(gsl::narrow_cast<size_t>(nFileSize + nLength));
+        pFile->GetBytes(&sPostData.at(nLength), gsl::narrow_cast<size_t>(nFileSize));
+    }
+
+    sPostData.append("\r\n");
+    sPostData.append("--");
+    sPostData.append(sBoundary);
+    sPostData.append("--\r\n");
+
+    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/doupload.php", sHost));
+    httpRequest.SetContentType(ra::StringPrintf("multipart/form-data; boundary=%s", sBoundary));
+
+    httpRequest.SetPostData(sPostData);
+
+    const auto httpResponse = httpRequest.Call();
+    return GetJson(sApiName, httpResponse, pResponse, document);
+}
+
 // === APIs ===
 
 Login::Response ConnectedServer::Login(const Login::Request& request)
@@ -264,29 +366,6 @@ Logout::Response ConnectedServer::Logout(const Logout::Request&)
     Logout::Response response;
     response.Result = ApiResult::Success;
     return response;
-}
-
-static bool DoRequest(const std::string& sHost, const char* restrict sApiName, const char* restrict sRequestName,
-                      const std::string& sInputParams, ApiResponseBase& pResponse, rapidjson::Document& document)
-{
-    std::string sPostData;
-
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
-    AppendUrlParam(sPostData, "u", pUserContext.GetUsername());
-    AppendUrlParam(sPostData, "t", pUserContext.GetApiToken());
-    AppendUrlParam(sPostData, "r", sRequestName);
-    if (!sInputParams.empty())
-    {
-        sPostData.push_back('&');
-        sPostData.append(sInputParams);
-    }
-    RA_LOG_INFO("%s Request: %s", sApiName, sPostData.c_str());
-
-    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/dorequest.php", sHost));
-    httpRequest.SetPostData(sPostData);
-
-    const auto httpResponse = httpRequest.Call();
-    return GetJson(sApiName, httpResponse, pResponse, document);
 }
 
 StartSession::Response ConnectedServer::StartSession(const StartSession::Request& request)
@@ -440,6 +519,46 @@ SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const S
     return std::move(response);
 }
 
+FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFriends::Request&)
+{
+    FetchUserFriends::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    if (DoRequest(m_sHost, FetchUserFriends::Name(), "getfriendlist", sPostData, response, document))
+    {
+        response.Result = ApiResult::Success;
+
+        if (!document.HasMember("Friends"))
+        {
+            response.Result = ApiResult::Error;
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", "Friends");
+        }
+        else
+        {
+            const auto& pFriends = document["Friends"].GetArray();
+            for (const auto& pFriend : pFriends)
+            {
+                FetchUserFriends::Response::Friend oFriend;
+                GetRequiredJsonField(oFriend.User, pFriend, "Friend", response);
+                GetRequiredJsonField(oFriend.LastActivity, pFriend, "LastSeen", response);
+
+                // if server's LastSeen is empty or "Unknown", it returns "_"
+                if (oFriend.LastActivity == L"_")
+                    oFriend.LastActivity.clear();
+
+                std::string sPoints;
+                GetRequiredJsonField(sPoints, pFriend, "RAPoints", response);
+                oFriend.Score = std::stoi(sPoints);
+
+                response.Friends.emplace_back(oFriend);
+            }
+        }
+    }
+
+    return std::move(response);
+}
+
 ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& request)
 {
     ResolveHash::Response response;
@@ -491,6 +610,181 @@ FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Requ
             // process it
             ProcessGamePatchData(response, PatchData);
         }
+    }
+
+    return std::move(response);
+}
+
+void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &response, const rapidjson::Value& PatchData)
+{
+    GetRequiredJsonField(response.Title, PatchData, "Title", response);
+    GetRequiredJsonField(response.ConsoleId, PatchData, "ConsoleID", response);
+    GetOptionalJsonField(response.ForumTopicId, PatchData, "ForumTopicID");
+    GetOptionalJsonField(response.Flags, PatchData, "Flags");
+    GetOptionalJsonField(response.ImageIcon, PatchData, "ImageIcon");
+    GetOptionalJsonField(response.RichPresence, PatchData, "RichPresencePatch");
+
+    if (!response.ImageIcon.empty())
+    {
+        // ImageIcon value will be "/Images/001234.png" - extract the "001234"
+        auto nIndex = response.ImageIcon.find_last_of('/');
+        if (nIndex != std::string::npos)
+            response.ImageIcon.erase(0, nIndex + 1);
+        nIndex = response.ImageIcon.find_last_of('.');
+        if (nIndex != std::string::npos)
+            response.ImageIcon.erase(nIndex);
+    }
+
+    const auto& AchievementsData{ PatchData["Achievements"] };
+    for (const auto& achData : AchievementsData.GetArray())
+    {
+        auto& pAchievement = response.Achievements.emplace_back();
+        GetRequiredJsonField(pAchievement.Id, achData, "ID", response);
+        GetRequiredJsonField(pAchievement.Title, achData, "Title", response);
+        GetRequiredJsonField(pAchievement.Description, achData, "Description", response);
+        GetRequiredJsonField(pAchievement.CategoryId, achData, "Flags", response);
+        GetOptionalJsonField(pAchievement.Points, achData, "Points");
+        GetRequiredJsonField(pAchievement.Definition, achData, "MemAddr", response);
+        GetOptionalJsonField(pAchievement.Author, achData, "Author");
+        GetRequiredJsonField(pAchievement.BadgeName, achData, "BadgeName", response);
+
+        unsigned int time;
+        GetRequiredJsonField(time, achData, "Created", response);
+        pAchievement.Created = static_cast<time_t>(time);
+        GetRequiredJsonField(time, achData, "Modified", response);
+        pAchievement.Updated = static_cast<time_t>(time);
+    }
+
+    const auto& LeaderboardsData{ PatchData["Leaderboards"] };
+    for (const auto& lbData : LeaderboardsData.GetArray())
+    {
+        auto& pLeaderboard = response.Leaderboards.emplace_back();
+        GetRequiredJsonField(pLeaderboard.Id, lbData, "ID", response);
+        GetRequiredJsonField(pLeaderboard.Title, lbData, "Title", response);
+        GetRequiredJsonField(pLeaderboard.Description, lbData, "Description", response);
+        GetRequiredJsonField(pLeaderboard.Definition, lbData, "Mem", response);
+        GetOptionalJsonField(pLeaderboard.Format, lbData, "Format", "VALUE");
+    }
+}
+
+FetchCodeNotes::Response ConnectedServer::FetchCodeNotes(const FetchCodeNotes::Request& request)
+{
+    FetchCodeNotes::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+
+    if (DoRequest(m_sHost, FetchCodeNotes::Name(), "codenotes2", sPostData, response, document))
+    {
+        if (!document.HasMember("CodeNotes"))
+        {
+            response.Result = ApiResult::Error;
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", "CodeNotes");
+        }
+        else
+        {
+            response.Result = ApiResult::Success;
+
+            const auto& CodeNotes = document["CodeNotes"];
+
+            // store a copy in the cache for offline mode
+            auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+            auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::CodeNotes, std::to_wstring(request.GameId));
+            if (pData != nullptr)
+            {
+                rapidjson::Document codeNotes;
+                codeNotes.CopyFrom(CodeNotes, document.GetAllocator());
+                SaveDocument(codeNotes, *pData.get());
+            }
+
+            // process it
+            ProcessCodeNotes(response, CodeNotes);
+        }
+    }
+
+    return std::move(response);
+}
+
+void ConnectedServer::ProcessCodeNotes(ra::api::FetchCodeNotes::Response &response, const rapidjson::Value& CodeNotes)
+{
+    for (const auto& codeNote : CodeNotes.GetArray())
+    {
+        auto& pNote = response.Notes.emplace_back();
+        GetRequiredJsonField(pNote.Author, codeNote, "User", response);
+
+        std::string sAddress;
+        GetRequiredJsonField(sAddress, codeNote, "Address", response);
+        pNote.Address = ra::ByteAddressFromString(sAddress);
+
+        GetRequiredJsonField(pNote.Note, codeNote, "Note", response);
+
+        // empty notes were deleted on the server - don't bother including them in the response
+        if (pNote.Note.empty())
+            response.Notes.pop_back();
+    }
+}
+
+UpdateCodeNote::Response ConnectedServer::UpdateCodeNote(const UpdateCodeNote::Request& request)
+{
+    UpdateCodeNote::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+    AppendUrlParam(sPostData, "m", std::to_string(request.Address));
+    AppendUrlParam(sPostData, "n", ra::Narrow(request.Note));
+
+    if (DoRequest(m_sHost, UpdateCodeNote::Name(), "submitcodenote", sPostData, response, document))
+    {
+        response.Result = ApiResult::Success;
+    }
+
+    return std::move(response);
+}
+
+DeleteCodeNote::Response ConnectedServer::DeleteCodeNote(const DeleteCodeNote::Request& request)
+{
+    DeleteCodeNote::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+    AppendUrlParam(sPostData, "m", std::to_string(request.Address));
+
+    if (DoRequest(m_sHost, DeleteCodeNote::Name(), "submitcodenote", sPostData, response, document))
+    {
+        response.Result = ApiResult::Success;
+    }
+
+    return std::move(response);
+}
+
+UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchievement::Request& request)
+{
+    UpdateAchievement::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    AppendUrlParam(sPostData, "a", std::to_string(request.AchievementId));
+    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+    AppendUrlParam(sPostData, "n", ra::Narrow(request.Title));
+    AppendUrlParam(sPostData, "d", ra::Narrow(request.Description));
+    AppendUrlParam(sPostData, "m", request.Trigger);
+    AppendUrlParam(sPostData, "z", std::to_string(request.Points));
+    AppendUrlParam(sPostData, "f", std::to_string(request.Category));
+    AppendUrlParam(sPostData, "b", request.Badge);
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const std::string sPostCode = ra::StringPrintf("%sSECRET%uSEC%s%uRE2%u",
+        pUserContext.GetUsername(), request.AchievementId, request.Trigger, request.Points, request.Points * 3);
+    const std::string sPostCodeHash = RAGenerateMD5(sPostCode);
+    AppendUrlParam(sPostData, "h", sPostCodeHash);
+
+    if (DoRequest(m_sHost, UpdateAchievement::Name(), "uploadachievement", sPostData, response, document))
+    {
+        response.Result = ApiResult::Success;
+        GetRequiredJsonField(response.AchievementId, document, "AchievementID", response);
     }
 
     return std::move(response);
@@ -616,58 +910,6 @@ FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const Fetch
     }
 
     return std::move(response);
-}
-
-void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &response, const rapidjson::Value& PatchData)
-{
-    GetRequiredJsonField(response.Title, PatchData, "Title", response);
-    GetRequiredJsonField(response.ConsoleId, PatchData, "ConsoleID", response);
-    GetOptionalJsonField(response.ForumTopicId, PatchData, "ForumTopicID");
-    GetOptionalJsonField(response.Flags, PatchData, "Flags");
-    GetOptionalJsonField(response.ImageIcon, PatchData, "ImageIcon");
-    GetOptionalJsonField(response.RichPresence, PatchData, "RichPresencePatch");
-
-    if (!response.ImageIcon.empty())
-    {
-        // ImageIcon value will be "/Images/001234.png" - extract the "001234"
-        auto nIndex = response.ImageIcon.find_last_of('/');
-        if (nIndex != std::string::npos)
-            response.ImageIcon.erase(0, nIndex + 1);
-        nIndex = response.ImageIcon.find_last_of('.');
-        if (nIndex != std::string::npos)
-            response.ImageIcon.erase(nIndex);
-    }
-
-    const auto& AchievementsData{ PatchData["Achievements"] };
-    for (const auto& achData : AchievementsData.GetArray())
-    {
-        auto& pAchievement = response.Achievements.emplace_back();
-        GetRequiredJsonField(pAchievement.Id, achData, "ID", response);
-        GetRequiredJsonField(pAchievement.Title, achData, "Title", response);
-        GetRequiredJsonField(pAchievement.Description, achData, "Description", response);
-        GetRequiredJsonField(pAchievement.CategoryId, achData, "Flags", response);
-        GetOptionalJsonField(pAchievement.Points, achData, "Points");
-        GetRequiredJsonField(pAchievement.Definition, achData, "MemAddr", response);
-        GetOptionalJsonField(pAchievement.Author, achData, "Author");
-        GetRequiredJsonField(pAchievement.BadgeName, achData, "BadgeName", response);
-
-        unsigned int time;
-        GetRequiredJsonField(time, achData, "Created", response);
-        pAchievement.Created = static_cast<time_t>(time);
-        GetRequiredJsonField(time, achData, "Modified", response);
-        pAchievement.Updated = static_cast<time_t>(time);
-    }
-
-    const auto& LeaderboardsData{ PatchData["Leaderboards"] };
-    for (const auto& lbData : LeaderboardsData.GetArray())
-    {
-        auto& pLeaderboard = response.Leaderboards.emplace_back();
-        GetRequiredJsonField(pLeaderboard.Id, lbData, "ID", response);
-        GetRequiredJsonField(pLeaderboard.Title, lbData, "Title", response);
-        GetRequiredJsonField(pLeaderboard.Description, lbData, "Description", response);
-        GetRequiredJsonField(pLeaderboard.Definition, lbData, "Mem", response);
-        GetOptionalJsonField(pLeaderboard.Format, lbData, "Format", "VALUE");
-    }
 }
 
 LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request& request)
@@ -819,6 +1061,45 @@ SubmitTicket::Response ConnectedServer::SubmitTicket(const SubmitTicket::Request
         {
             response.Result = ApiResult::Success;
             GetRequiredJsonField(response.TicketsCreated, document["Response"], "Added", response);
+        }
+    }
+
+    return response;
+}
+
+FetchBadgeIds::Response ConnectedServer::FetchBadgeIds(const FetchBadgeIds::Request&)
+{
+    FetchBadgeIds::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    if (DoRequest(m_sHost, FetchBadgeIds::Name(), "badgeiter", sPostData, response, document))
+    {
+        GetRequiredJsonField(response.FirstID, document, "FirstBadge", response);
+        GetRequiredJsonField(response.NextID, document, "NextBadge", response);
+    }
+
+    return response;
+}
+
+UploadBadge::Response ConnectedServer::UploadBadge(const UploadBadge::Request& request)
+{
+    UploadBadge::Response response;
+    rapidjson::Document document;
+    std::string sPostData;
+
+    if (DoUpload(m_sHost, UploadBadge::Name(), "uploadbadgeimage", request.ImageFilePath, response, document))
+    {
+        if (!document.HasMember("Response"))
+        {
+            response.Result = ApiResult::Error;
+            if (response.ErrorMessage.empty())
+                response.ErrorMessage = ra::BuildString("Response", " not found in response");
+        }
+        else
+        {
+            response.Result = ApiResult::Success;
+            GetRequiredJsonField(response.BadgeId, document["Response"], "BadgeIter", response);
         }
     }
 

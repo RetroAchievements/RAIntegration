@@ -2,25 +2,8 @@
 #define RA_CONDITION_H
 #pragma once
 
-#include "ra_fwd.h"
+#include "data\Types.hh"
 #include "ra_utility.h"
-
-enum class MemSize : std::size_t
-{
-    Bit_0,
-    Bit_1,
-    Bit_2,
-    Bit_3,
-    Bit_4,
-    Bit_5,
-    Bit_6,
-    Bit_7,
-    Nibble_Lower,
-    Nibble_Upper,
-    EightBit,
-    SixteenBit,
-    ThirtyTwoBit
-};
 
 inline constexpr std::array<const LPCTSTR, 13> MEMSIZE_STR{
     _T("Bit0"), _T("Bit1"),   _T("Bit2"),   _T("Bit3"),  _T("Bit4"),   _T("Bit5"),  _T("Bit6"),
@@ -45,10 +28,10 @@ public:
         Address,         // compare to the value of a live address in RAM
         ValueComparison, // a number. assume 32 bit
         DeltaMem,        // the value last known at this address.
-        DynamicVariable  // a custom user-set variable
+        PriorMem,        // the last differing value at this address.
     };
 
-    inline static constexpr std::array<LPCTSTR, 4> TYPE_STR{_T("Memory"), _T("Value"), _T("Delta"), _T("DynVar")};
+    inline static constexpr std::array<LPCTSTR, 4> TYPE_STR{_T("Mem"), _T("Value"), _T("Delta"), _T("Prior")};
 
 public:
     _CONSTANT_FN Set(_In_ MemSize nSize, _In_ CompVariable::Type nType, _In_ unsigned int nInitialValue) noexcept
@@ -65,6 +48,20 @@ public:
 
     _CONSTANT_FN SetType(_In_ Type nType) noexcept { m_nVarType = nType; }
     _NODISCARD _CONSTANT_FN GetType() const noexcept { return m_nVarType; }
+
+    _NODISCARD _CONSTANT_FN IsMemoryType() const noexcept
+    {
+        switch (m_nVarType)
+        {
+            case CompVariable::Type::DeltaMem:
+            case CompVariable::Type::PriorMem:
+            case CompVariable::Type::Address:
+                return true;
+
+            default:
+                return false;
+        }
+    }
 
     _CONSTANT_FN SetValue(_In_ unsigned int nValue) noexcept { m_nVal = nValue; }
     _NODISCARD _CONSTANT_FN GetValue() const noexcept { return m_nVal; }
@@ -85,11 +82,12 @@ public:
         ResetIf,
         AddSource,
         SubSource,
-        AddHits
+        AddHits,
+        AndNext
     };
 
-    inline static constexpr std::array<LPCTSTR, 6> TYPE_STR{_T(""),           _T("Pause If"),   _T("Reset If"),
-                                                            _T("Add Source"), _T("Sub Source"), _T("Add Hits")};
+    inline static constexpr std::array<LPCTSTR, 7> TYPE_STR{
+        _T(""), _T("Pause If"), _T("Reset If"), _T("Add Source"), _T("Sub Source"), _T("Add Hits"), _T("And Next")};
 
     void SerializeAppend(std::string& buffer) const;
 
@@ -105,11 +103,10 @@ public:
     _NODISCARD _CONSTANT_FN RequiredHits() const noexcept { return m_nRequiredHits; }
     _CONSTANT_FN SetRequiredHits(unsigned int nHits) noexcept { m_nRequiredHits = nHits; }
 
-    _NODISCARD _CONSTANT_FN IsResetCondition() const noexcept { return (m_nConditionType == Type::ResetIf); }
-    _NODISCARD _CONSTANT_FN IsPauseCondition() const noexcept { return (m_nConditionType == Type::PauseIf); }
-    _NODISCARD _CONSTANT_FN IsAddCondition() const noexcept { return (m_nConditionType == Type::AddSource); }
-    _NODISCARD _CONSTANT_FN IsSubCondition() const noexcept { return (m_nConditionType == Type::SubSource); }
-    _NODISCARD _CONSTANT_FN IsAddHitsCondition() const noexcept { return (m_nConditionType == Type::AddHits); }
+    _NODISCARD _CONSTANT_FN IsSingleOperandConditionType() const noexcept
+    {
+        return (m_nConditionType == Type::AddSource || m_nConditionType == Type::SubSource);
+    }
 
     _NODISCARD _CONSTANT_FN GetConditionType() const noexcept { return m_nConditionType; }
     _CONSTANT_FN SetConditionType(Type nNewType) noexcept { m_nConditionType = nNewType; }

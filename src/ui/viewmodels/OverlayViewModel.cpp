@@ -6,12 +6,16 @@
 #include "data\EmulatorContext.hh"
 #include "data\UserContext.hh"
 
+#include "services\IClock.hh"
 #include "services\IConfiguration.hh"
 
 #include "ui\IDesktop.hh"
 #include "ui\OverlayTheme.hh"
 #include "ui\viewmodels\OverlayAchievementsPageViewModel.hh"
+#include "ui\viewmodels\OverlayFriendsPageViewModel.hh"
 #include "ui\viewmodels\OverlayLeaderboardsPageViewModel.hh"
+#include "ui\viewmodels\OverlayRecentGamesPageViewModel.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 namespace ra {
@@ -27,11 +31,17 @@ void OverlayViewModel::BeginAnimation()
     const auto& vmEmulator = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().Emulator;
     const auto szEmulator = ra::services::ServiceLocator::Get<ra::ui::IDesktop>().GetClientSize(vmEmulator);
 
-    m_pSurface = ra::services::ServiceLocator::GetMutable<ra::ui::drawing::ISurfaceFactory>().CreateSurface(szEmulator.Width, szEmulator.Height);
-    m_bSurfaceStale = true;
+    Resize(szEmulator.Width, szEmulator.Height);
 
     SetRenderLocationX(-szEmulator.Width);
     SetRenderLocationY(0);
+}
+
+void OverlayViewModel::Resize(int nWidth, int nHeight)
+{
+    m_pSurface =
+        ra::services::ServiceLocator::GetMutable<ra::ui::drawing::ISurfaceFactory>().CreateSurface(nWidth, nHeight);
+    m_bSurfaceStale = true;
 }
 
 bool OverlayViewModel::UpdateRenderImage(double fElapsed)
@@ -66,10 +76,7 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
                 bUpdated = true;
 
                 if (nNewX == 0)
-                {
                     m_nState = State::Visible;
-                    m_fAnimationProgress = -1.0;
-                }
             }
         }
         else if (m_nState == State::FadeOut)
@@ -91,11 +98,16 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
                 {
                     m_nState = State::Hidden;
                     m_fAnimationProgress = -1.0;
-                    m_bSurfaceStale = false;
-                    m_pSurface.reset();
+                    ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Unpause();
                     return true;
                 }
             }
+        }
+        else if (m_nState == State::FadeOutRequested)
+        {
+            // ignore this update event as fElapsed may exceed INOUT_TIME
+            m_nState = State::FadeOut;
+            m_fAnimationProgress = 0.0;
         }
     }
 
@@ -122,7 +134,8 @@ void OverlayViewModel::CreateRenderImage()
     m_pSurface->DrawImageStretched(0, 0, nWidth, nHeight, pOverlayBackground);
 
     // user frame
-    const auto nFont = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_HEADER, ra::ui::FontStyles::Normal);
+    const auto nFont =
+        m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayHeader(), ra::ui::FontStyles::Normal);
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
     const auto sUserName = ra::Widen(pUserContext.GetUsername());
@@ -145,29 +158,35 @@ void OverlayViewModel::CreateRenderImage()
         m_pSurface->FillRectangle(nX, nY, nUserFrameWidth, nUserFrameHeight, pTheme.ColorOverlayPanel());
 
         const ImageReference pUserImage(ra::ui::ImageType::UserPic, pUserContext.GetUsername());
-        m_pSurface->DrawImage(nWidth - nMargin - nPadding - nImageSize, nY + nPadding, nImageSize, nImageSize, pUserImage);
+        m_pSurface->DrawImage(nWidth - nMargin - nPadding - nImageSize, nY + nPadding, nImageSize, nImageSize,
+                              pUserImage);
 
         m_pSurface->WriteText(nX + nPadding, nY + nPadding, nFont, pTheme.ColorOverlayText(), sUserName);
-        m_pSurface->WriteText(nX + nPadding, nY + nUserFrameHeight - nPadding - szPoints.Height, nFont, pTheme.ColorOverlayText(), sPoints);
+        m_pSurface->WriteText(nX + nPadding, nY + nUserFrameHeight - nPadding - szPoints.Height, nFont,
+                              pTheme.ColorOverlayText(), sPoints);
     }
 
     // hardcore indicator
-    if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(ra::services::Feature::Hardcore))
+    if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(
+            ra::services::Feature::Hardcore))
     {
-        const auto nHardcoreFont = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_SUMMARY, ra::ui::FontStyles::Normal);
+        const auto nHardcoreFont =
+            m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
         const std::wstring sHardcore = L"HARDCORE";
         const auto szHardcore = m_pSurface->MeasureText(nHardcoreFont, sHardcore);
-        m_pSurface->WriteText(nWidth - nMargin - szHardcore.Width - nPadding, nMargin + nUserFrameHeight,
-            nHardcoreFont, pTheme.ColorError(), sHardcore);
+        m_pSurface->WriteText(nWidth - nMargin - szHardcore.Width - nPadding, nMargin + nUserFrameHeight, nHardcoreFont,
+                              pTheme.ColorError(), sHardcore);
     }
 
     // page header
     const auto& pCurrentPage = CurrentPage();
-    const auto nPageHeaderFont = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
+    const auto nPageHeaderFont =
+        m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayTitle(), ra::ui::FontStyles::Normal);
     m_pSurface->WriteText(nMargin, nMargin, nPageHeaderFont, pTheme.ColorOverlayText(), pCurrentPage.GetTitle());
 
     // page content
-    pCurrentPage.Render(*m_pSurface, nMargin, nMargin + nUserFrameHeight, nWidth - nMargin * 2, nHeight - nMargin * 2 - nUserFrameHeight);
+    pCurrentPage.Render(*m_pSurface, nMargin, nMargin + nUserFrameHeight, nWidth - nMargin * 2,
+                        nHeight - nMargin * 2 - nUserFrameHeight);
 
     // navigation controls
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
@@ -176,7 +195,8 @@ void OverlayViewModel::CreateRenderImage()
     const auto sNext = std::wstring(L"\u2BC8: Next");
     const auto sPrev = std::wstring(L"\u2BC7: Prev");
 
-    const auto nNavFont = m_pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_SUMMARY, ra::ui::FontStyles::Normal);
+    const auto nNavFont =
+        m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
     const auto szBack = m_pSurface->MeasureText(nNavFont, sBack);
     const auto szSelect = m_pSurface->MeasureText(nNavFont, sSelect);
 
@@ -185,32 +205,64 @@ void OverlayViewModel::CreateRenderImage()
     const int nControlsY2 = nHeight - nMargin - nPadding - szSelect.Height;
     const int nControlsY1 = nControlsY2 - szBack.Height - nPadding;
 
-    m_pSurface->FillRectangle(nWidth - nControlsX1 - nPadding, nControlsY1 - nPadding,
-        nControlsX1 - nPadding, nHeight - nControlsY1 - nPadding, pTheme.ColorOverlayPanel());
+    m_pSurface->FillRectangle(nWidth - nControlsX1 - nPadding, nControlsY1 - nPadding, nControlsX1 - nPadding,
+                              nHeight - nControlsY1 - nPadding, pTheme.ColorOverlayPanel());
     m_pSurface->WriteText(nWidth - nControlsX1, nControlsY1, nNavFont, pTheme.ColorOverlayText(), sNext);
     m_pSurface->WriteText(nWidth - nControlsX1, nControlsY2, nNavFont, pTheme.ColorOverlayText(), sPrev);
     m_pSurface->WriteText(nWidth - nControlsX2, nControlsY1, nNavFont, pTheme.ColorOverlayText(), sSelect);
     m_pSurface->WriteText(nWidth - nControlsX2, nControlsY2, nNavFont, pTheme.ColorOverlayText(), sBack);
 }
 
+void OverlayViewModel::RefreshOverlay()
+{
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().RequestRender();
+}
+
 void OverlayViewModel::ProcessInput(const ControllerInput& pInput)
 {
-    if (m_nState == State::Hidden)
+    // only process input when fully visible
+    if (m_nState != State::Visible)
         return;
 
-    if (m_bInputLock)
+    NavButton nPrioritizedButton = NavButton::None;
+    if (pInput.m_bConfirmPressed)
+        nPrioritizedButton = NavButton::Confirm;
+    else if (pInput.m_bCancelPressed)
+        nPrioritizedButton = NavButton::Cancel;
+    else if (pInput.m_bDownPressed)
+        nPrioritizedButton = NavButton::Down;
+    else if (pInput.m_bUpPressed)
+        nPrioritizedButton = NavButton::Up;
+    else if (pInput.m_bRightPressed)
+        nPrioritizedButton = NavButton::Right;
+    else if (pInput.m_bLeftPressed)
+        nPrioritizedButton = NavButton::Left;
+    else if (pInput.m_bQuitPressed)
+        nPrioritizedButton = NavButton::Quit;
+
+    if (m_nCurrentButton == nPrioritizedButton)
     {
-        if (!pInput.m_bUpPressed && !pInput.m_bDownPressed &&
-            !pInput.m_bLeftPressed && !pInput.m_bRightPressed &&
-            !pInput.m_bConfirmPressed && !pInput.m_bCancelPressed)
-        {
-            m_bInputLock = false;
-        }
+        if (nPrioritizedButton == NavButton::None) // nothing pressed, nothing to do
+            return;
 
-        return;
+        // if the user holds the button down for 600ms, start pulsing the button every 200ms
+        const auto tNow = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
+        if (tNow - m_tCurrentButtonPressed < std::chrono::milliseconds(600))
+            return;
+
+        m_tCurrentButtonPressed += std::chrono::milliseconds(200);
+    }
+    else
+    {
+        // button changed, start the hold timer
+        m_nCurrentButton = nPrioritizedButton;
+        if (nPrioritizedButton == NavButton::None) // nothing pressed, nothing to do
+            return;
+
+        m_tCurrentButtonPressed = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
     }
 
-    if (pInput.m_bQuitPressed)
+    if (nPrioritizedButton == NavButton::Quit)
     {
         Deactivate();
     }
@@ -219,7 +271,7 @@ void OverlayViewModel::ProcessInput(const ControllerInput& pInput)
         bool bHandled = CurrentPage().ProcessInput(pInput);
         if (!bHandled)
         {
-            if (pInput.m_bLeftPressed)
+            if (nPrioritizedButton == NavButton::Left)
             {
                 if (m_nSelectedPage-- == 0)
                     m_nSelectedPage = m_vPages.size() - 1;
@@ -227,7 +279,7 @@ void OverlayViewModel::ProcessInput(const ControllerInput& pInput)
                 CurrentPage().Refresh();
                 bHandled = true;
             }
-            else if (pInput.m_bRightPressed)
+            else if (nPrioritizedButton == NavButton::Right)
             {
                 if (++m_nSelectedPage == ra::to_signed(m_vPages.size()))
                     m_nSelectedPage = 0;
@@ -235,18 +287,17 @@ void OverlayViewModel::ProcessInput(const ControllerInput& pInput)
                 CurrentPage().Refresh();
                 bHandled = true;
             }
-            else if (pInput.m_bCancelPressed)
+            else if (nPrioritizedButton == NavButton::Cancel)
             {
                 // if the current page didn't handle the keypress and cancel is pressed, close the overlay
                 Deactivate();
-                m_bInputLock = true;
             }
         }
 
         if (bHandled)
         {
             m_bSurfaceStale = true;
-            m_bInputLock = true;
+            RefreshOverlay();
         }
     }
 }
@@ -263,6 +314,7 @@ void OverlayViewModel::Activate()
                 PopulatePages();
 
             CurrentPage().Refresh();
+            RefreshOverlay();
             break;
 
         case State::FadeOut:
@@ -277,28 +329,36 @@ void OverlayViewModel::Deactivate()
     switch (m_nState)
     {
         case State::Visible:
-            m_nState = State::FadeOut;
+            // when going from Visible to FadeOut, there may have been a long period without rendering, so ignore
+            // the first Render event as its fElapsed may cause the overlay to fully disappear in one frame.
+            m_nState = State::FadeOutRequested;
             m_fAnimationProgress = 0.0;
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Unpause();
+            RefreshOverlay();
             break;
-            
+
         case State::FadeIn:
             m_nState = State::FadeOut;
             m_fAnimationProgress = INOUT_TIME - m_fAnimationProgress;
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Unpause();
+            SetRenderLocationX(GetRenderImage().GetWidth() - GetRenderLocationX());
             break;
     }
 }
 
 void OverlayViewModel::PopulatePages()
 {
-    m_vPages.resize(2);
+    m_vPages.resize(4);
 
     auto pAchievementsPage = std::make_unique<OverlayAchievementsPageViewModel>();
     m_vPages.at(0) = std::move(pAchievementsPage);
 
     auto pLeaderboardsPage = std::make_unique<OverlayLeaderboardsPageViewModel>();
     m_vPages.at(1) = std::move(pLeaderboardsPage);
+
+    auto pRecentGamesPage = std::make_unique<OverlayRecentGamesPageViewModel>();
+    m_vPages.at(2) = std::move(pRecentGamesPage);
+
+    auto pFriendsPage = std::make_unique<OverlayFriendsPageViewModel>();
+    m_vPages.at(3) = std::move(pFriendsPage);
 }
 
 } // namespace viewmodels

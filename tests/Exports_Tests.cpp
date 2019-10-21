@@ -10,10 +10,13 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockOverlayManager.hh"
+#include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
+#include "tests\mocks\MockSurface.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
+#include "tests\mocks\MockWindowManager.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
 #include "services\AchievementRuntime.hh"
@@ -33,8 +36,11 @@ using ra::services::mocks::MockAudioSystem;
 using ra::services::mocks::MockConfiguration;
 using ra::services::mocks::MockThreadPool;
 using ra::ui::mocks::MockDesktop;
+using ra::ui::mocks::MockOverlayTheme;
+using ra::ui::drawing::mocks::MockSurfaceFactory;
 using ra::ui::viewmodels::MessageBoxViewModel;
 using ra::ui::viewmodels::mocks::MockOverlayManager;
+using ra::ui::viewmodels::mocks::MockWindowManager;
 
 namespace ra {
 namespace tests {
@@ -58,6 +64,17 @@ public:
         Assert::AreEqual("stage.retroachievements.org", _RA_HostName());
     }
 
+    TEST_METHOD(TestHostUrl)
+    {
+        MockConfiguration mockConfiguration;
+
+        mockConfiguration.SetHostName("retroachievements.org");
+        Assert::AreEqual("http://retroachievements.org", _RA_HostUrl());
+
+        mockConfiguration.SetHostName("stage.retroachievements.org");
+        Assert::AreEqual("http://stage.retroachievements.org", _RA_HostUrl());
+    }
+
     TEST_METHOD(TestHardcoreModeIsActive)
     {
         MockConfiguration mockConfiguration;
@@ -73,8 +90,6 @@ private:
     class AttemptLoginHarness
     {
     public:
-        AttemptLoginHarness() noexcept : m_WindowManagerService(&windowManager) {}
-
         MockUserContext mockUserContext;
         MockSessionTracker mockSessionTracker;
         MockConfiguration mockConfiguration;
@@ -84,11 +99,7 @@ private:
         MockEmulatorContext mockEmulatorContext;
         MockDesktop mockDesktop;
         MockThreadPool mockThreadPool;
-
-        ra::ui::viewmodels::WindowManager windowManager;
-
-    private:
-        ra::services::ServiceLocator::ServiceOverride<ra::ui::viewmodels::WindowManager> m_WindowManagerService;
+        MockWindowManager mockWindowManager;
     };
 
 public:
@@ -173,7 +184,7 @@ public:
         Assert::IsTrue(bWasMenuRebuilt);
 
         // titlebar
-        Assert::AreEqual(std::wstring(L"RATests - 0.1 - User []"), harness.windowManager.Emulator.GetWindowTitle());
+        Assert::AreEqual(std::wstring(L"RATests - 0.1 - User []"), harness.mockWindowManager.Emulator.GetWindowTitle());
     }
 
     TEST_METHOD(TestAttemptLoginSuccessWithMessages)
@@ -331,7 +342,7 @@ private:
     public:
         MockAchievementRuntime() noexcept : m_Override(this) {}
 
-        void QueueChange(ChangeType nType, unsigned int nId, unsigned int nValue = 0)
+        void QueueChange(ChangeType nType, unsigned int nId, int nValue = 0)
         {
             m_vChanges.emplace_back(Change{ nType, nId, nValue });
         }
@@ -357,6 +368,8 @@ private:
         MockAudioSystem mockAudioSystem;
         MockConfiguration mockConfiguration;
         MockEmulatorContext mockEmulatorContext;
+        MockSurfaceFactory mockSurfaceFactory;
+        MockOverlayTheme mockTheme;
 
         DoAchievementsFrameHarness() noexcept
         {
@@ -381,7 +394,7 @@ private:
 
         void MockAchievement(unsigned int nId)
         {
-            auto& pAch = mockGameContext.NewAchievement(AchievementSet::Type::Core);
+            auto& pAch = mockGameContext.NewAchievement(Achievement::Category::Core);
             pAch.SetID(nId);
         }
 
@@ -413,11 +426,26 @@ public:
         DoAchievementsFrameHarness harness;
         harness.MockAchievement(1U);
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementTriggered, 1U);
+        harness.mockGameContext.SetRichPresenceDisplayString(L"Titles");
 
         _RA_DoAchievementsFrame();
 
         Assert::IsTrue(harness.WasUnlocked(1U));
         Assert::IsFalse(harness.mockDesktop.WasDialogShown());
+        Assert::AreEqual(std::wstring(L"Titles"), harness.mockGameContext.FindAchievement(1U)->GetUnlockRichPresence());
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameAchievementTriggeredNoRichPresence)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U);
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementTriggered, 1U);
+
+        _RA_DoAchievementsFrame();
+
+        Assert::IsTrue(harness.WasUnlocked(1U));
+        Assert::IsFalse(harness.mockDesktop.WasDialogShown());
+        Assert::AreEqual(std::wstring(), harness.mockGameContext.FindAchievement(1U)->GetUnlockRichPresence());
     }
 
     TEST_METHOD(TestDoAchievementsFramePaused)
@@ -499,7 +527,7 @@ public:
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lb.wav"));
-        Assert::AreEqual(std::wstring(L"Challenge Available"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard Attempt Started"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Title"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Description"), pPopup->GetDetail());
 
@@ -530,7 +558,7 @@ public:
     TEST_METHOD(TestDoAchievementsFrameLeaderboardCanceled)
     {
         DoAchievementsFrameHarness harness;
-        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications, true);
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications, true);
         auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
         pLeaderboard.SetTitle("Title");
         pLeaderboard.SetDescription("Description");
@@ -542,17 +570,17 @@ public:
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lbcancel.wav"));
-        Assert::AreEqual(std::wstring(L"Leaderboard attempt canceled!"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard Attempt Canceled"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Title"), pPopup->GetDescription());
 
         const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);
         Assert::IsNull(pScore);
     }
 
-    TEST_METHOD(TestDoAchievementsFrameLeaderboardPopupDisabled)
+    TEST_METHOD(TestDoAchievementsFrameLeaderboardCaneledPopupDisabled)
     {
         DoAchievementsFrameHarness harness;
-        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications, false);
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications, false);
         auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
         pLeaderboard.SetTitle("Title");
         pLeaderboard.SetDescription("Description");

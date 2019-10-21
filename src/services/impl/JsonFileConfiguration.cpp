@@ -2,6 +2,7 @@
 
 #include "RA_Json.h"
 #include "RA_Log.h"
+#include "RA_StringUtils.h"
 #include "ra_utility.h"
 
 #include "services\IFileSystem.hh"
@@ -23,8 +24,10 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     m_nBackgroundThreads = 8;
     m_vEnabledFeatures =
         (1 << static_cast<int>(Feature::Hardcore)) |
+        (1 << static_cast<int>(Feature::AchievementTriggeredNotifications)) |
         (1 << static_cast<int>(Feature::Leaderboards)) |
         (1 << static_cast<int>(Feature::LeaderboardNotifications)) |
+        (1 << static_cast<int>(Feature::LeaderboardCancelNotifications)) |
         (1 << static_cast<int>(Feature::LeaderboardCounters)) |
         (1 << static_cast<int>(Feature::LeaderboardScoreboards));
 
@@ -45,11 +48,22 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
         m_sApiToken = doc["Token"].GetString();
     if (doc.HasMember("Hardcore Active"))
         SetFeatureEnabled(Feature::Hardcore, doc["Hardcore Active"].GetBool());
+    if (doc.HasMember("Non Hardcore Warning"))
+        SetFeatureEnabled(Feature::NonHardcoreWarning, doc["Non Hardcore Warning"].GetBool());
+
+    if (doc.HasMember("Achievement Triggered Notification Display"))
+        SetFeatureEnabled(Feature::AchievementTriggeredNotifications, doc["Achievement Triggered Notification Display"].GetBool());
+    if (doc.HasMember("Achievement Triggered Screenshot"))
+        SetFeatureEnabled(Feature::AchievementTriggeredScreenshot, doc["Achievement Triggered Screenshot"].GetBool());
+    if (doc.HasMember("Screenshot Directory"))
+        SetScreenshotDirectory(ra::Widen(doc["Screenshot Directory"].GetString()));
 
     if (doc.HasMember("Leaderboards Active"))
         SetFeatureEnabled(Feature::Leaderboards, doc["Leaderboards Active"].GetBool());
     if (doc.HasMember("Leaderboard Notification Display"))
         SetFeatureEnabled(Feature::LeaderboardNotifications, doc["Leaderboard Notification Display"].GetBool());
+    if (doc.HasMember("Leaderboard Cancel Display"))
+        SetFeatureEnabled(Feature::LeaderboardCancelNotifications, doc["Leaderboard Cancel Display"].GetBool());
     if (doc.HasMember("Leaderboard Counter Display"))
         SetFeatureEnabled(Feature::LeaderboardCounters, doc["Leaderboard Counter Display"].GetBool());
     if (doc.HasMember("Leaderboard Scoreboard Display"))
@@ -61,7 +75,7 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     if (doc.HasMember("Num Background Threads"))
         m_nBackgroundThreads = doc["Num Background Threads"].GetUint();
     if (doc.HasMember("ROM Directory"))
-        m_sRomDirectory = doc["ROM Directory"].GetString();
+        m_sRomDirectory = ra::Widen(doc["ROM Directory"].GetString());
 
     if (doc.HasMember("Window Positions"))
     {
@@ -105,15 +119,22 @@ void JsonFileConfiguration::Save() const
     doc.AddMember("Username", rapidjson::StringRef(m_sUsername), a);
     doc.AddMember("Token", rapidjson::StringRef(m_sApiToken), a);
     doc.AddMember("Hardcore Active", IsFeatureEnabled(Feature::Hardcore), a);
+    doc.AddMember("Non Hardcore Warning", IsFeatureEnabled(Feature::NonHardcoreWarning), a);
+    doc.AddMember("Achievement Triggered Notification Display", IsFeatureEnabled(Feature::AchievementTriggeredNotifications), a);
+    doc.AddMember("Achievement Triggered Screenshot", IsFeatureEnabled(Feature::AchievementTriggeredScreenshot), a);
     doc.AddMember("Leaderboards Active", IsFeatureEnabled(Feature::Leaderboards), a);
     doc.AddMember("Leaderboard Notification Display", IsFeatureEnabled(Feature::LeaderboardNotifications), a);
+    doc.AddMember("Leaderboard Cancel Display", IsFeatureEnabled(Feature::LeaderboardCancelNotifications), a);
     doc.AddMember("Leaderboard Counter Display", IsFeatureEnabled(Feature::LeaderboardCounters), a);
     doc.AddMember("Leaderboard Scoreboard Display", IsFeatureEnabled(Feature::LeaderboardScoreboards), a);
     doc.AddMember("Prefer Decimal", IsFeatureEnabled(Feature::PreferDecimal), a);
     doc.AddMember("Num Background Threads", m_nBackgroundThreads, a);
 
     if (!m_sRomDirectory.empty())
-        doc.AddMember("ROM Directory", rapidjson::StringRef(m_sRomDirectory), a);
+        doc.AddMember("ROM Directory", ra::Narrow(m_sRomDirectory), a);
+
+    if (!m_sScreenshotDirectory.empty())
+        doc.AddMember("Screenshot Directory", ra::Narrow(m_sScreenshotDirectory), a);
 
     rapidjson::Value positions(rapidjson::kObjectType);
     for (WindowPositionMap::const_iterator iter = m_mWindowPositions.begin(); iter != m_mWindowPositions.end(); ++iter)
@@ -187,20 +208,58 @@ void JsonFileConfiguration::SetWindowSize(const std::string & sPositionKey, cons
 const std::string& JsonFileConfiguration::GetHostName() const
 {
     if (m_sHostName.empty())
-    {
-        const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
-        if (pFileSystem.GetFileSize(L"host.txt") > 0)
-        {
-            auto pFile = pFileSystem.OpenTextFile(L"host.txt");
-            if (pFile != nullptr)
-                pFile->GetLine(m_sHostName);
-        }
-
-        if (m_sHostName.empty())
-            m_sHostName = "retroachievements.org";
-    }
+        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->UpdateHost();
 
     return m_sHostName;
+}
+
+const std::string& JsonFileConfiguration::GetHostUrl() const
+{
+    if (m_sHostUrl.empty())
+        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->UpdateHost();
+
+    return m_sHostUrl;
+}
+
+const std::string& JsonFileConfiguration::GetImageHostUrl() const
+{
+    if (m_sImageHostUrl.empty())
+        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->UpdateHost();
+
+    return m_sImageHostUrl;
+}
+
+void JsonFileConfiguration::UpdateHost()
+{
+    const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    if (pFileSystem.GetFileSize(L"host.txt") > 0)
+    {
+        auto pFile = pFileSystem.OpenTextFile(L"host.txt");
+        if (pFile != nullptr)
+            pFile->GetLine(m_sHostName);
+    }
+
+    if (m_sHostName.empty())
+    {
+        m_sHostName = "retroachievements.org";
+        m_sHostUrl = "http://retroachievements.org";
+        m_sImageHostUrl = "http://i.retroachievements.org";
+    }
+    else
+    {
+        const auto nIndex = m_sHostName.find("://");
+        if (nIndex == std::string::npos)
+        {
+            m_sHostUrl = "http://" + m_sHostName;
+        }
+        else
+        {
+            m_sHostUrl.swap(m_sHostName);
+            m_sHostName = m_sHostUrl.substr(nIndex + 3);
+        }
+
+        m_sImageHostUrl = m_sHostUrl;
+    }
 }
 
 } // namespace impl

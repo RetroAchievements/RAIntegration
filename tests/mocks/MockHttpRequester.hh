@@ -17,7 +17,8 @@ public:
     {
     }
 
-    void SetUserAgent([[maybe_unused]] const std::string& /*sUserAgent*/) noexcept override {}
+    void SetUserAgent(const std::string& sUserAgent) override { m_sUserAgent = sUserAgent; }
+    const std::string& GetUserAgent() const noexcept { return m_sUserAgent; }
 
     unsigned int Request(const Http::Request& pRequest, TextWriter& pContentWriter) const override
     {
@@ -33,6 +34,7 @@ public:
 
 private:
     ServiceLocator::ServiceOverride<IHttpRequester> m_Override;
+    std::string m_sUserAgent;
 
     std::function<Http::Response(const Http::Request&)> m_fHandler;
 };

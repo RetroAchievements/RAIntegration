@@ -174,6 +174,7 @@ _NODISCARD inline const std::wstring ToWString(_In_ const char* value) { return 
 _NODISCARD inline const std::wstring ToWString(_In_ const wchar_t* value) { return std::wstring(value); }
 
 _NODISCARD const std::string FormatDate(_In_ time_t when);
+_NODISCARD const std::string FormatDateTime(_In_ time_t when);
 _NODISCARD const std::string FormatDateRecent(_In_ time_t when);
 
 // ----- string building -----
@@ -289,7 +290,7 @@ public:
         {
             if (sFormat.back() == 'f' || sFormat.back() == 'F')
             {
-                const int nIndex = sFormat.find('.');
+                const auto nIndex = sFormat.find('.');
                 if (nIndex != std::string::npos)
                 {
                     int nPrecision = std::stoi(sFormat.c_str() + nIndex + 1);
@@ -318,7 +319,7 @@ public:
         }
         else
         {
-            const int nLength = strlen(arg);
+            const int nLength = gsl::narrow_cast<int>(strlen(arg));
             int nPadding = std::stoi(sFormat.c_str());
             nPadding -= nLength;
             if (nPadding > 0)
@@ -672,7 +673,7 @@ public:
     /// <summary>
     /// If the next character is the specified character, advance the cursor over it.
     /// </summary>
-    /// <returns><c>true</c> if the next character matched and was skipped over, <c>false</c> if not.
+    /// <returns><c>true</c> if the next character matched and was skipped over, <c>false</c> if not.</returns>
     bool Consume(char c)
     {
         if (EndOfString())

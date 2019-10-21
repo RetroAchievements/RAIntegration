@@ -24,8 +24,8 @@ public:
 
     ~GDISurface() noexcept = default;
 
-    size_t GetWidth() const noexcept override { return m_nWidth; }
-    size_t GetHeight() const noexcept override { return m_nHeight; }
+    unsigned int GetWidth() const noexcept override { return m_nWidth; }
+    unsigned int GetHeight() const noexcept override { return m_nHeight; }
 
     void FillRectangle(int nX, int nY, int nWidth, int nHeight, Color nColor) noexcept override;
 
@@ -36,6 +36,7 @@ public:
     void DrawImage(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
     void DrawImageStretched(int nX, int nY, int nWidth, int nHeight, const ImageReference& pImage) override;
     void DrawSurface(int nX, int nY, const ISurface& pSurface) override;
+    void DrawSurface(int nX, int nY, const ISurface& pSurface, int nSurfaceX, int nSurfaceY, int nWidth, int nHeight) noexcept override;
 
     GSL_SUPPRESS_F6 void SetOpacity(_UNUSED double) override { assert("This surface does not support opacity"); }
 
@@ -49,8 +50,8 @@ protected:
     ResourceRepository& m_pResourceRepository;
 
 private:
-    int m_nWidth{};
-    int m_nHeight{};
+    unsigned int m_nWidth{};
+    unsigned int m_nHeight{};
 
     ResourceRepository m_oResourceRepository;
 

@@ -63,8 +63,39 @@ public:
     /// </remarks>
     virtual bool HasReferencedImageChanged(ImageReference& pImage) const = 0;
 
+    class NotifyTarget
+    {
+    public:
+        NotifyTarget() noexcept = default;
+        virtual ~NotifyTarget() noexcept = default;
+        NotifyTarget(const NotifyTarget&) noexcept = delete;
+        NotifyTarget& operator=(const NotifyTarget&) noexcept = delete;
+        NotifyTarget(NotifyTarget&&) noexcept = default;
+        NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
+
+        virtual void OnImageChanged([[maybe_unused]] ImageType nType, [[maybe_unused]] const std::string& sName) noexcept(false) {}
+    };
+
+    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
+    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget); }
+
 protected:
-    IImageRepository() noexcept = default;
+    GSL_SUPPRESS_F6 IImageRepository() = default;
+
+    void OnImageChanged(ImageType nType, const std::string& sName)
+    {
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
+            target->OnImageChanged(nType, sName);
+        }
+    }
+
+private:
+    using NotifyTargetSet = std::set<NotifyTarget*>;
+    NotifyTargetSet m_vNotifyTargets;
 };
 
 class ImageReference
@@ -126,7 +157,7 @@ public:
 private:
     ImageType m_nType{};
     std::string m_sName;
-    mutable unsigned long m_nData{};
+    mutable unsigned long long m_nData{};
     friend class drawing::gdi::ImageRepository;
 };
 

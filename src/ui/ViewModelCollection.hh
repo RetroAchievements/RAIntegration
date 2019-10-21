@@ -53,6 +53,10 @@ public:
 
         virtual void OnViewModelAdded([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
         virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
+        virtual void OnViewModelChanged([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
+
+        virtual void OnBeginViewModelCollectionUpdate() noexcept(false) {}
+        virtual void OnEndViewModelCollectionUpdate() noexcept(false) {}
     };
 
     void AddNotifyTarget(NotifyTarget& pTarget)
@@ -99,7 +103,7 @@ public:
     /// <summary>
     /// Gets the number of items in the collection.
     /// </summary>
-    size_t Count() const noexcept { return m_vItems.size(); }
+    size_t Count() const noexcept { return m_nSize; }
 
     /// <summary>
     /// Removes the item at the specified index.
@@ -107,8 +111,33 @@ public:
     void RemoveAt(gsl::index nIndex);
 
     /// <summary>
+    /// Moves an item from one index to another.
+    /// </summary>
+    void MoveItem(gsl::index nIndex, gsl::index nNewIndex);
+
+    /// <summary>
+    /// Moves any items matching the provided filter immediately before the first item matching the filter.
+    /// </summary>
+    /// <param name="pProperty">The property that determines if the item should be moved.</param>
+    /// <returns>The number of items that matched the filter.</returns>
+    size_t ShiftItemsUp(const BoolModelProperty& pProperty);
+
+    /// <summary>
+    /// Moves any items matching the provided filter immediately after the last item matching the filter.
+    /// </summary>
+    /// <param name="pProperty">The property that determines if the item should be moved.</param>
+    /// <returns>The number of items that matched the filter.</returns>
+    size_t ShiftItemsDown(const BoolModelProperty& pProperty);
+
+    /// <summary>
+    /// Reverses the items in the list.
+    /// </summary>
+    void Reverse();
+
+    /// <summary>
     /// Gets the value associated to the requested boolean property for the item at the specified index.
     /// </summary>
+    /// <param name="nIndex">The index of the item to query.</param>
     /// <param name="pProperty">The property to query.</param>
     /// <returns>The current value of the property for this object.</returns>
     bool GetItemValue(gsl::index nIndex, const BoolModelProperty& pProperty) const
@@ -120,6 +149,7 @@ public:
     /// <summary>
     /// Gets the value associated to the requested string property for the item at the specified index.
     /// </summary>
+    /// <param name="nIndex">The index of the item to query.</param>
     /// <param name="pProperty">The property to query.</param>
     /// <returns>The current value of the property for this object.</returns>
     const std::wstring& GetItemValue(gsl::index nIndex, const StringModelProperty& pProperty) const
@@ -131,6 +161,7 @@ public:
     /// <summary>
     /// Gets the value associated to the requested integer property for the item at the specified index.
     /// </summary>
+    /// <param name="nIndex">The index of the item to query.</param>
     /// <param name="pProperty">The property to query.</param>
     /// <returns>The current value of the property for this object.</returns>
     int GetItemValue(gsl::index nIndex, const IntModelProperty& pProperty) const
@@ -138,7 +169,46 @@ public:
         const auto* pViewModel = GetViewModelAt(nIndex);
         return (pViewModel != nullptr) ? pViewModel->GetValue(pProperty) : pProperty.GetDefaultValue();
     }
-    
+
+    /// <summary>
+    /// Sets the value associated to the requested boolean property for the item at the specified index.
+    /// </summary>
+    /// <param name="nIndex">The index of the item to update.</param>
+    /// <param name="pProperty">The property to update.</param>
+    /// <param name="bValue">The new value for the property.</param>
+    void SetItemValue(gsl::index nIndex, const BoolModelProperty& pProperty, bool bValue)
+    {
+        auto* pViewModel = GetViewModelAt(nIndex);
+        if (pViewModel != nullptr)
+            pViewModel->SetValue(pProperty, bValue);
+    }
+
+    /// <summary>
+    /// Sets the value associated to the requested boolean property for the item at the specified index.
+    /// </summary>
+    /// <param name="nIndex">The index of the item to update.</param>
+    /// <param name="pProperty">The property to update.</param>
+    /// <param name="bValue">The new value for the property.</param>
+    void SetItemValue(gsl::index nIndex, const StringModelProperty & pProperty, const std::wstring& sValue)
+    {
+        auto* pViewModel = GetViewModelAt(nIndex);
+        if (pViewModel != nullptr)
+            pViewModel->SetValue(pProperty, sValue);
+    }
+
+    /// <summary>
+    /// Sets the value associated to the requested boolean property for the item at the specified index.
+    /// </summary>
+    /// <param name="nIndex">The index of the item to update.</param>
+    /// <param name="pProperty">The property to update.</param>
+    /// <param name="bValue">The new value for the property.</param>
+    void SetItemValue(gsl::index nIndex, const IntModelProperty & pProperty, int nValue)
+    {
+        auto* pViewModel = GetViewModelAt(nIndex);
+        if (pViewModel != nullptr)
+            pViewModel->SetValue(pProperty, nValue);
+    }
+
     /// <summary>
     /// Finds the index of the first item where the specified property has the specified value.
     /// </summary>
@@ -156,8 +226,25 @@ public:
         return -1;
     }
 
+    /// <summary>
+    /// Calls the OnBeginViewModelCollectionUpdate method of any attached NotifyTargets.
+    /// </summary>
+    void BeginUpdate();
+
+    /// <summary>
+    /// Calls the OnEndViewModelCollectionUpdate method of any attached NotifyTargets.
+    /// </summary>
+    void EndUpdate();
+
+    /// <summary>
+    /// Determines if the collection is being updated.
+    /// </summary>
+    bool IsUpdating() const noexcept { return (m_nUpdateCount > 0); }
+
 protected:
-    ViewModelBase& Add(std::unique_ptr<ViewModelBase> vmViewModel);
+    ViewModelBase& AddItem(std::unique_ptr<ViewModelBase> vmViewModel);
+    void MoveItemInternal(gsl::index nIndex, gsl::index nNewIndex);
+    void UpdateIndices();
 
     bool IsWatching() const noexcept { return !IsFrozen() && !m_vNotifyTargets.empty(); }
 
@@ -193,8 +280,7 @@ private:
 
         ~Item() noexcept
         {
-            if (m_vmViewModel) // std::move may empty out our pointer
-                StopWatching();
+            StopWatching();
         }
 
         Item(const Item&) noexcept = delete;
@@ -231,14 +317,39 @@ private:
             return *this;
         }
 
-        void StartWatching() noexcept { m_vmViewModel->AddNotifyTarget(*this); }
-        void StopWatching() noexcept { m_vmViewModel->RemoveNotifyTarget(*this); }
+        void StartWatching() noexcept
+        {
+            if (m_vmViewModel)
+                m_vmViewModel->AddNotifyTarget(*this);
+        }
+
+        void StopWatching() noexcept
+        {
+            if (m_vmViewModel)
+                m_vmViewModel->RemoveNotifyTarget(*this);
+        }
 
         ViewModelBase& ViewModel() { return *m_vmViewModel; }
         const ViewModelBase& ViewModel() const { return *m_vmViewModel; }
 
+        ViewModelBase* DetachViewModel() noexcept
+        {
+            if (m_pOwner->IsWatching())
+                m_vmViewModel->RemoveNotifyTarget(*this);
+
+            return m_vmViewModel.release();
+        }
+
+        void AttachViewModel(ViewModelBase* vmViewModel) noexcept
+        {
+            m_vmViewModel.reset(vmViewModel);
+
+            if (vmViewModel != nullptr && m_pOwner->IsWatching())
+                m_vmViewModel->AddNotifyTarget(*this);
+        }
+
         gsl::index Index() const noexcept { return m_nIndex; }
-        void DecrementIndex() noexcept { --m_nIndex; }
+        void SetIndex(gsl::index nIndex) noexcept { m_nIndex = nIndex; }
 
     private:
         void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override
@@ -266,6 +377,8 @@ private:
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args);
 
     bool m_bFrozen = false;
+    unsigned int m_nUpdateCount = 0;
+    size_t m_nSize = 0;
 
     std::vector<Item> m_vItems;
 
@@ -291,7 +404,7 @@ public:
     T& Add(Args&&... args)
     {
         auto pItem = std::make_unique<T>(std::forward<Args>(args)...);
-        return dynamic_cast<T&>(ViewModelCollectionBase::Add(std::move(pItem)));
+        return dynamic_cast<T&>(ViewModelCollectionBase::AddItem(std::move(pItem)));
     }
 
     /// <summary>

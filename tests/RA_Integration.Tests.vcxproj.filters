@@ -33,9 +33,6 @@
     <ClCompile Include="..\src\RA_Condition.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\RA_MemManager.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\RA_Defs.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -46,9 +43,6 @@
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\services\SearchResults.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\RA_RichPresence.cpp">
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\RA_Achievement.cpp">
@@ -231,6 +225,9 @@
     <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="RA_RichPresence_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\PopupViewModelBase.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -284,6 +281,42 @@
     </ClCompile>
     <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayManager_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\OverlayFriendsPageViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayFriendsPageViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayRecentGamesPageViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\OverlayRecentGamesPageViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\MemoryBookmarksViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\MemoryBookmarksViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\FileDialogViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlaySettingsViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\OverlaySettingsViewModel.cpp">
+      <Filter>Code</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -342,6 +375,15 @@
       <Filter>Code</Filter>
     </ClInclude>
     <ClInclude Include="mocks\MockImageRepository.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockSurface.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockOverlayTheme.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockWindowManager.hh">
       <Filter>Mocks</Filter>
     </ClInclude>
   </ItemGroup>

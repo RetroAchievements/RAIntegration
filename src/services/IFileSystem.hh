@@ -87,6 +87,16 @@ public:
     /// <remarks>Will create the file if it doesn't already exist.</remarks>
     virtual std::unique_ptr<TextWriter> AppendTextFile(const std::wstring& sPath) const = 0;
 
+    /// <summary>
+    /// Gets the filename portion of a path.
+    /// </summary>
+    virtual std::string GetFileName(const std::string& sPath) const = 0;
+
+    /// <summary>
+    /// Removes the extension from a filename.
+    /// </summary>
+    virtual std::string RemoveExtension(const std::string& sPath) const = 0;
+
 protected:
     IFileSystem() noexcept = default;
 };

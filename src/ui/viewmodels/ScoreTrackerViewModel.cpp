@@ -3,41 +3,56 @@
 #include "ra_math.h"
 
 #include "ui\OverlayTheme.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 
 namespace ra {
 namespace ui {
 namespace viewmodels {
 
-static _CONSTANT_VAR FONT_TO_USE = "Tahoma";
-static _CONSTANT_VAR FONT_SIZE_TEXT = 22;
-
 const StringModelProperty ScoreTrackerViewModel::DisplayTextProperty("ScoreTrackerViewModel", "DisplayText", L"0");
 
-#ifdef RA_UTEST
-GSL_SUPPRESS_F6
-#endif
+void ScoreTrackerViewModel::SetDisplayText(const std::wstring& sValue)
+{
+    if (sValue != GetDisplayText())
+    {
+        SetValue(DisplayTextProperty, sValue);
+
+        m_bSurfaceStale = true;
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().RequestRender();
+    }
+}
+
 bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
 {
     if (m_pSurface && !m_bSurfaceStale)
-        return false;
+    {
+        const auto nOffset = GetRenderLocationY() + ra::to_signed(GetRenderImage().GetHeight());
+        if (m_nOffset != nOffset)
+        {
+            SetRenderLocationY(m_nOffset + GetRenderImage().GetHeight());
+            return true;
+        }
 
-#ifndef RA_UTEST
+        return false;
+    }
+
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+    const auto nShadowOffset = pTheme.ShadowOffset();
+
     // create a temporary surface so we can determine the size required for the actual surface
     const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
     auto pTempSurface = pSurfaceFactory.CreateSurface(1, 1);
 
-    const auto nFontText = pTempSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TEXT, ra::ui::FontStyles::Normal);
+    const auto nFontText = pTempSurface->LoadFont(pTheme.FontPopup(), pTheme.FontSizePopupLeaderboardTracker(), ra::ui::FontStyles::Normal);
 
     const auto sScoreSoFar = GetDisplayText();
     const auto szScoreSoFar = pTempSurface->MeasureText(nFontText, sScoreSoFar);
 
-    m_pSurface = pSurfaceFactory.CreateTransparentSurface(szScoreSoFar.Width + 8 + 2, szScoreSoFar.Height + 2);
+    m_pSurface = pSurfaceFactory.CreateSurface(szScoreSoFar.Width + 8 + nShadowOffset, szScoreSoFar.Height + nShadowOffset);
 
     // background
-    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
-    const auto nShadowOffset = pTheme.ShadowOffset();
-
     m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), Color::Transparent);
+    m_pSurface->FillRectangle(nShadowOffset, nShadowOffset, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset, pTheme.ColorShadow());
 
     // frame
     m_pSurface->FillRectangle(nShadowOffset, nShadowOffset, szScoreSoFar.Width + 8,
@@ -47,8 +62,12 @@ bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
     // text
     m_pSurface->WriteText(4, 0, nFontText, pTheme.ColorLeaderboardEntry(), sScoreSoFar);
 
-    m_pSurface->SetOpacity(0.85);
-#endif
+    // set location
+    SetRenderLocationX(10 + m_pSurface->GetWidth());
+    SetRenderLocationXRelativePosition(RelativePosition::Far);
+
+    SetRenderLocationY(m_nOffset + m_pSurface->GetHeight());
+    SetRenderLocationYRelativePosition(RelativePosition::Far);
 
     m_bSurfaceStale = false;
     return true;

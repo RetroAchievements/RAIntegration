@@ -1,9 +1,11 @@
 #include "ImageRepository.hh"
 
+#include "GDIBitmapSurface.hh"
+
 #include "RA_Core.h"
-#include "RA_httpthread.h"
 
 #include "services\Http.hh"
+#include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
@@ -105,7 +107,19 @@ bool ImageRepository::IsImageAvailable(ImageType nType, const std::string& sName
     if (sName.empty())
         return false;
 
+    HBitmapMap* mMap;
+    GSL_SUPPRESS_TYPE3{ mMap = const_cast<ImageRepository*>(this)->GetBitmapMap(nType); }
+    if (mMap != nullptr)
+    {
+        const HBitmapMap::iterator iter = mMap->find(sName);
+        if (iter != mMap->end())
+            return true;
+    }
+
     std::wstring sFilename = GetFilename(nType, sName);
+    if (m_vRequestedImages.find(sFilename) != m_vRequestedImages.end())
+        return false;
+
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     return (pFileSystem.GetFileSize(sFilename) > 0);
 }
@@ -130,18 +144,21 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     }
 
     // fetch it
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     std::string sUrl;
     switch (nType)
     {
         case ImageType::Badge:
-            sUrl = "http://i.retroachievements.org/Badge/";
+            sUrl = pConfiguration.GetImageHostUrl();
+            sUrl += "/Badge/";
             break;
         case ImageType::UserPic:
-            sUrl = _RA_HostName();
+            sUrl = pConfiguration.GetHostUrl();
             sUrl += "/UserPic/";
             break;
         case ImageType::Icon:
-            sUrl = "http://i.retroachievements.org/Images/";
+            sUrl = pConfiguration.GetImageHostUrl();
+            sUrl += "/Images/";
             break;
         default:
             ASSERT(!"Unsupported image type");
@@ -153,22 +170,26 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
     RA_LOG_INFO("Downloading %s", sUrl.c_str());
 
     ra::services::Http::Request request(sUrl);
-    request.DownloadAsync(sFilename, [this,sFilename,sUrl](const ra::services::Http::Response& response)
+    request.DownloadAsync(sFilename, [this,sFilename,sUrl,nType,sName](const ra::services::Http::Response& response)
     {
         if (response.StatusCode() == ra::services::Http::StatusCode::OK)
         {
             auto nFileSize = ra::services::ServiceLocator::Get<ra::services::IFileSystem>().GetFileSize(sFilename);
-            RA_LOG_INFO("Wrote %l bytes to %s", nFileSize, ra::Narrow(sFilename).c_str());
+            RA_LOG_INFO("Wrote %lu bytes to %s", nFileSize, ra::Narrow(sFilename).c_str());
+
+            // only remove the image from the request queue if successful. prevents repeated requests
+            {
+                std::lock_guard<std::mutex> lock(m_oMutex);
+                m_vRequestedImages.erase(sFilename);
+            }
         }
         else
         {
             RA_LOG_WARN("Error %u fetching %s", response.StatusCode(), sUrl.c_str());
+            ra::services::ServiceLocator::Get<ra::services::IFileSystem>().DeleteFile(sFilename);
         }
 
-        {
-            std::lock_guard<std::mutex> lock(m_oMutex);
-            m_vRequestedImages.erase(sFilename);
-        }
+        OnImageChanged(nType, sName);
     });
 }
 
@@ -286,7 +307,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource* pToRenderBitmapS
     // Size of a scan line represented in bytes: 4 bytes each pixel
     UINT cbStride = 0U;
     if (SUCCEEDED(hr))
-        hr = UIntMult(nWidth, sizeof(ra::ARGB), &cbStride);
+        hr = UIntMult(nWidth, sizeof(UINT), &cbStride);
 
     // Size of the image, represented in bytes
     UINT cbImage = 0U;
@@ -314,7 +335,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource* pToRenderBitmapS
     return hr;
 }
 
-HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, size_t nWidth, size_t nHeight)
+HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, unsigned int nWidth, unsigned int nHeight)
 {
     if (g_pIWICFactory == nullptr)
         return nullptr;
@@ -395,7 +416,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
     if (mMap == nullptr)
         return nullptr;
 
-    HBitmapMap::iterator iter = mMap->find(sName);
+    const HBitmapMap::iterator iter = mMap->find(sName);
     if (iter != mMap->end())
         return iter->second.m_hBitmap;
 
@@ -408,7 +429,7 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
         return nullptr;
     }
 
-    const size_t nSize = (nType == ImageType::Local) ? 0 : 64;
+    const unsigned int nSize = (nType == ImageType::Local) ? 0 : 64;
     HBITMAP hBitmap = LoadLocalPNG(sFilename, nSize, nSize);
     if (hBitmap != nullptr)
     {
@@ -435,7 +456,7 @@ HBITMAP ImageRepository::GetHBitmap(const ImageReference& pImage)
             if (hBitmap == nullptr)
                 return pImageRepository->GetDefaultImage(pImage.Type());
 
-            GSL_SUPPRESS_TYPE1 pImage.m_nData = reinterpret_cast<unsigned long>(hBitmap);
+            GSL_SUPPRESS_TYPE1 pImage.m_nData = reinterpret_cast<unsigned long long>(hBitmap);
 
             // ImageReference will release the reference
             pImageRepository->AddReference(pImage);
@@ -454,7 +475,7 @@ void ImageRepository::AddReference(const ImageReference& pImage)
     if (mMap == nullptr)
         return;
 
-    HBitmapMap::iterator iter = mMap->find(pImage.Name());
+    const HBitmapMap::iterator iter = mMap->find(pImage.Name());
     ASSERT(iter != mMap->end()); // AddReference should only be called if an HBITMAP exists, which will be in the map
     if (iter != mMap->end())
         ++iter->second.m_nReferences;
@@ -469,7 +490,7 @@ void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
     HBitmapMap* mMap = GetBitmapMap(pImage.Type());
     if (mMap != nullptr)
     {
-        HBitmapMap::iterator iter = mMap->find(pImage.Name());
+        const HBitmapMap::iterator iter = mMap->find(pImage.Name());
 
         if(iter != mMap->end())
         {
@@ -494,6 +515,63 @@ bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const
     const auto hBitmapBefore = pImage.m_nData;
     GetHBitmap(pImage); // TBD: Is the return value supposed to be discarded?
     return (pImage.m_nData != hBitmapBefore);
+}
+
+bool GDISurfaceFactory::SaveImage(const ISurface& pSurface, const std::wstring& sPath) const
+{
+    if (g_pIWICFactory == nullptr)
+        return false;
+
+    const auto* pGDIBitmapSurface = dynamic_cast<const GDIBitmapSurface*>(&pSurface);
+    if (pGDIBitmapSurface == nullptr)
+        return false;
+
+    // create a PNG encoder
+    CComPtr<IWICBitmapEncoder> pEncoder;
+    HRESULT hr = g_pIWICFactory->CreateEncoder(GUID_ContainerFormatPng, nullptr, &pEncoder);
+
+    // open the file stream
+    CComPtr<IWICStream> pStream;
+    if (SUCCEEDED(hr))
+        hr = g_pIWICFactory->CreateStream(&pStream);
+
+    if (SUCCEEDED(hr))
+        hr = pStream->InitializeFromFilename(sPath.c_str(), GENERIC_WRITE);
+
+    if (SUCCEEDED(hr))
+        hr = pEncoder->Initialize(pStream, WICBitmapEncoderNoCache);
+
+    // convert the image to a WICBitmap
+    CComPtr<IWICBitmapFrameEncode> pFrameEncode;
+    if (SUCCEEDED(hr))
+        hr = pEncoder->CreateNewFrame(&pFrameEncode, nullptr);
+
+    if (SUCCEEDED(hr))
+        hr = pFrameEncode->Initialize(nullptr);
+
+    if (SUCCEEDED(hr))
+        hr = pFrameEncode->SetSize(pSurface.GetWidth(), pSurface.GetHeight());
+
+    WICPixelFormatGUID pixelFormat;
+    GSL_SUPPRESS_CON4 pixelFormat = GUID_WICPixelFormatDontCare;
+    if (SUCCEEDED(hr))
+        hr = pFrameEncode->SetPixelFormat(&pixelFormat);
+
+    CComPtr<IWICBitmap> pWicBitmap;
+    if (SUCCEEDED(hr))
+        hr = g_pIWICFactory->CreateBitmapFromHBITMAP(pGDIBitmapSurface->GetHBitmap(), nullptr, WICBitmapIgnoreAlpha, &pWicBitmap);
+
+    // write the image to the file
+    if (SUCCEEDED(hr))
+        hr = pFrameEncode->WriteSource(pWicBitmap, nullptr);
+
+    if (SUCCEEDED(hr))
+        pFrameEncode->Commit();
+
+    if (SUCCEEDED(hr))
+        pEncoder->Commit();
+
+    return SUCCEEDED(hr);
 }
 
 } // namespace gdi

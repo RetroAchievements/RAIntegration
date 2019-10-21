@@ -2,6 +2,7 @@
 #define RA_UI_DESKTOP
 
 #include "ui/WindowViewModelBase.hh"
+#include "ui/drawing/ISurface.hh"
 
 namespace ra {
 namespace ui {
@@ -31,6 +32,11 @@ public:
     virtual ra::ui::DialogResult ShowModal(WindowViewModelBase& vmViewModel, const WindowViewModelBase& vmParentWindow) const = 0;
 
     /// <summary>
+    /// Closes the window for the provided view model.
+    /// </summary>
+    virtual void CloseWindow(WindowViewModelBase& vmViewModel) const = 0;
+
+    /// <summary>
     /// Gets the bounds of the available work area of the desktop.
     /// </summary>
     /// <param name="oUpperLeftCorner">The upper left corner of the work area.</param>
@@ -43,10 +49,25 @@ public:
     virtual ra::ui::Size GetClientSize(const WindowViewModelBase& vmViewModel) const = 0;
 
     /// <summary>
+    /// Gets the path/filename of the currently running executable.
+    /// </summary>
+    virtual std::string GetRunningExecutable() const = 0;
+
+    /// <summary>
+    /// Gets a string representing the current operating system and its version.
+    /// <summary>
+    virtual std::string GetOSVersionString() const = 0;
+
+    /// <summary>
     /// Opens the specified URL using the default browser.
     /// </summary>
     /// <param name="sUrl">The URL to open.</param>
     virtual void OpenUrl(const std::string& sUrl) const = 0;
+
+    /// <summary>
+    /// Captures the currently displayed contents of the specified window in an <see cref="ISurface" />
+    /// </summary>
+    virtual std::unique_ptr<ra::ui::drawing::ISurface> CaptureClientArea(const WindowViewModelBase& vmViewModel) const = 0;
 
     virtual void Shutdown() = 0;
 

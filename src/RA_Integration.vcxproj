@@ -55,27 +55,18 @@
     </ClCompile>
     <ClCompile Include="Exports.cpp" />
     <ClCompile Include="RA_Achievement.cpp" />
-    <ClCompile Include="RA_AchievementSet.cpp" />
-    <ClCompile Include="RA_CodeNotes.cpp" />
     <ClCompile Include="RA_Condition.cpp" />
     <ClCompile Include="RA_Core.cpp" />
     <ClCompile Include="RA_Defs.cpp" />
     <ClCompile Include="RA_Dlg_AchEditor.cpp" />
     <ClCompile Include="RA_Dlg_Achievement.cpp" />
-    <ClCompile Include="RA_Dlg_AchievementsReporter.cpp" />
     <ClCompile Include="RA_Dlg_GameLibrary.cpp" />
-    <ClCompile Include="RA_Dlg_MemBookmark.cpp" />
     <ClCompile Include="RA_Dlg_Memory.cpp" />
-    <ClCompile Include="RA_httpthread.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
-    <ClCompile Include="RA_Interface.cpp" />
     <ClCompile Include="RA_Json.cpp" />
     <ClCompile Include="RA_Leaderboard.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />
-    <ClCompile Include="RA_MemManager.cpp" />
-    <ClCompile Include="RA_RichPresence.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
-    <ClCompile Include="RA_User.cpp" />
     <ClCompile Include="data\GameContext.cpp" />
     <ClCompile Include="services\AchievementRuntime.cpp" />
     <ClCompile Include="services\GameIdentifier.cpp" />
@@ -94,14 +85,20 @@
     <ClCompile Include="ui\OverlayTheme.cpp" />
     <ClCompile Include="ui\ViewModelBase.cpp" />
     <ClCompile Include="ui\ViewModelCollection.cpp" />
+    <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\FileDialogViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\MemoryBookmarksViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayFriendsPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayListPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayManager.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayRecentGamesPageViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlaySettingsViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp" />
@@ -109,23 +106,38 @@
     <ClCompile Include="ui\viewmodels\ScoreboardViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\ScoreTrackerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel.cpp" />
+    <ClCompile Include="ui\win32\bindings\GridAddressColumnBinding.cpp" />
+    <ClCompile Include="ui\win32\bindings\GridBinding.cpp" />
+    <ClCompile Include="ui\win32\bindings\GridLookupColumnBinding.cpp" />
+    <ClCompile Include="ui\win32\bindings\GridNumberColumnBinding.cpp" />
+    <ClCompile Include="ui\win32\bindings\GridTextColumnBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\WindowBinding.cpp" />
+    <ClCompile Include="ui\win32\BrokenAchievementsDialog.cpp" />
     <ClCompile Include="ui\win32\Desktop.cpp" />
     <ClCompile Include="ui\win32\DialogBase.cpp" />
+    <ClCompile Include="ui\win32\FileDialog.cpp" />
     <ClCompile Include="ui\win32\GameChecksumDialog.cpp" />
     <ClCompile Include="ui\win32\LoginDialog.cpp" />
+    <ClCompile Include="ui\win32\MemoryBookmarksDialog.cpp" />
     <ClCompile Include="ui\win32\MessageBoxDialog.cpp" />
+    <ClCompile Include="ui\win32\OverlaySettingsDialog.cpp" />
+    <ClCompile Include="ui\win32\OverlayWindow.cpp" />
     <ClCompile Include="ui\win32\RichPresenceDialog.cpp" />
     <ClCompile Include="ui\win32\UnknownGameDialog.cpp" />
     <ClCompile Include="ui\WindowViewModelBase.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\RAInterface\RA_Interface.h" />
     <ClInclude Include="api\ApiCall.hh" />
     <ClInclude Include="api\AwardAchievement.hh" />
+    <ClInclude Include="api\DeleteCodeNote.hh" />
     <ClInclude Include="api\FetchAchievementInfo.hh" />
+    <ClInclude Include="api\FetchBadgeIds.hh" />
+    <ClInclude Include="api\FetchCodeNotes.hh" />
     <ClInclude Include="api\FetchGameData.hh" />
     <ClInclude Include="api\FetchGamesList.hh" />
     <ClInclude Include="api\FetchLeaderboardInfo.hh" />
+    <ClInclude Include="api\FetchUserFriends.hh" />
     <ClInclude Include="api\FetchUserUnlocks.hh" />
     <ClInclude Include="api\impl\ConnectedServer.hh" />
     <ClInclude Include="api\impl\DisconnectedServer.hh" />
@@ -141,43 +153,38 @@
     <ClInclude Include="api\SubmitLeaderboardEntry.hh" />
     <ClInclude Include="api\SubmitNewTitle.hh" />
     <ClInclude Include="api\SubmitTicket.hh" />
+    <ClInclude Include="api\UpdateAchievement.hh" />
+    <ClInclude Include="api\UpdateCodeNote.hh" />
+    <ClInclude Include="api\UploadBadge.hh" />
     <ClInclude Include="data\AsyncObject.hh" />
     <ClInclude Include="data\ConsoleContext.hh" />
     <ClInclude Include="data\EmulatorContext.hh" />
     <ClInclude Include="data\GameContext.hh" />
     <ClInclude Include="data\SessionTracker.hh" />
+    <ClInclude Include="data\Types.hh" />
     <ClInclude Include="data\UserContext.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="pch_cppcorecheck_suppressions.h" />
     <ClInclude Include="pch_microsoft_suppressions.h" />
     <ClInclude Include="RA_Achievement.h" />
-    <ClInclude Include="RA_AchievementSet.h" />
     <ClInclude Include="RA_BuildVer.h" />
-    <ClInclude Include="RA_CodeNotes.h" />
     <ClInclude Include="RA_Condition.h" />
     <ClInclude Include="RA_Core.h" />
     <ClInclude Include="RA_Defs.h" />
     <ClInclude Include="RA_Dlg_AchEditor.h" />
     <ClInclude Include="RA_Dlg_Achievement.h" />
-    <ClInclude Include="RA_Dlg_AchievementsReporter.h" />
     <ClInclude Include="RA_Dlg_GameLibrary.h" />
-    <ClInclude Include="RA_Dlg_MemBookmark.h" />
     <ClInclude Include="RA_Dlg_Memory.h" />
     <ClInclude Include="ra_fwd.h" />
-    <ClInclude Include="RA_httpthread.h" />
     <ClInclude Include="RA_ImageFactory.h" />
-    <ClInclude Include="RA_Interface.h" />
     <ClInclude Include="RA_Json.h" />
     <ClInclude Include="RA_Leaderboard.h" />
     <ClInclude Include="RA_Log.h" />
     <ClInclude Include="ra_math.h" />
     <ClInclude Include="RA_md5factory.h" />
-    <ClInclude Include="RA_MemManager.h" />
     <ClInclude Include="RA_Resource.h" />
-    <ClInclude Include="RA_RichPresence.h" />
     <ClInclude Include="RA_StringUtils.h" />
-    <ClInclude Include="RA_User.h" />
     <ClInclude Include="services\AchievementRuntime.hh" />
     <ClInclude Include="services\GameIdentifier.hh" />
     <ClInclude Include="services\Http.hh" />
@@ -222,15 +229,21 @@
     <ClInclude Include="ui\Types.hh" />
     <ClInclude Include="ui\ViewModelBase.hh" />
     <ClInclude Include="ui\ViewModelCollection.hh" />
+    <ClInclude Include="ui\viewmodels\BrokenAchievementsViewModel.hh" />
     <ClInclude Include="ui\viewmodels\EmulatorViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\FileDialogViewModel.hh" />
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LoginViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\MemoryBookmarksViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayAchievementsPageViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayFriendsPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayListPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayManager.hh" />
+    <ClInclude Include="ui\viewmodels\OverlayRecentGamesPageViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\OverlaySettingsViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupViewModelBase.hh" />
@@ -242,13 +255,27 @@
     <ClInclude Include="ui\win32\bindings\CheckBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\ComboBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\ControlBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridAddressColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridBooleanColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridCheckBoxColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridLookupColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridNumberColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\GridTextColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh" />
     <ClInclude Include="ui\win32\bindings\TextBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\WindowBinding.hh" />
+    <ClInclude Include="ui\win32\BrokenAchievementsDialog.hh" />
     <ClInclude Include="ui\win32\Desktop.hh" />
     <ClInclude Include="ui\win32\DialogBase.hh" />
+    <ClInclude Include="ui\win32\FileDialog.hh" />
     <ClInclude Include="ui\win32\GameChecksumDialog.hh" />
     <ClInclude Include="ui\win32\LoginDialog.hh" />
+    <ClInclude Include="ui\win32\MemoryBookmarksDialog.hh" />
     <ClInclude Include="ui\win32\MessageBoxDialog.hh" />
+    <ClInclude Include="ui\win32\OverlaySettingsDialog.hh" />
+    <ClInclude Include="ui\win32\OverlayWindow.hh" />
     <ClInclude Include="ui\win32\RichPresenceDialog.hh" />
     <ClInclude Include="ui\win32\IDialogPresenter.hh" />
     <ClInclude Include="ui\win32\UnknownGameDialog.hh" />
@@ -310,7 +337,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>MultiByte</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -320,7 +347,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='AnalysisUnicode|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <CharacterSet>Unicode</CharacterSet>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -370,6 +397,7 @@
     <TargetName>RA_Integration</TargetName>
     <CodeAnalysisRuleSet>ra_rules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <CAExcludePath>$(RapidJSON_IncludeDir);$(CAExcludePath)</CAExcludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">
     <OutDir>..\bin\$(Configuration)\</OutDir>
@@ -380,6 +408,7 @@
     <TargetName>RA_Integration</TargetName>
     <CodeAnalysisRuleSet>ra_rules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <CAExcludePath>$(RapidJSON_IncludeDir);$(CAExcludePath)</CAExcludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>..\bin\$(Configuration)\</OutDir>
@@ -420,15 +449,12 @@
       <AdditionalOptions>/w45045 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
     </Link>
-    <PreBuildEvent>
-      <Command>..\MakeBuildVer.bat</Command>
-    </PreBuildEvent>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
@@ -436,30 +462,29 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_DEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <ControlFlowGuard>false</ControlFlowGuard>
       <ShowIncludes>false</ShowIncludes>
       <ConformanceMode>true</ConformanceMode>
       <EnablePREfast>true</EnablePREfast>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
-      <IgnoreSpecificDefaultLibraries>libc.lib, libcmt.lib, msvcrt.lib, libcd.lib, libcmtd.lib</IgnoreSpecificDefaultLibraries>
     </Link>
-    <PreBuildEvent>
-      <Command>..\MakeBuildVer.bat</Command>
-    </PreBuildEvent>
     <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command />
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">
     <ClCompile>
@@ -474,43 +499,40 @@
       <ControlFlowGuard>false</ControlFlowGuard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
     </Link>
-    <PreBuildEvent>
-      <Command>..\MakeBuildVer.bat</Command>
-    </PreBuildEvent>
     <ResourceCompile>
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='AnalysisUnicode|Win32'">
     <ClCompile>
-      <PreprocessorDefinitions>_DEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;RA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
-      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnablePREfast>true</EnablePREfast>
       <Optimization>Disabled</Optimization>
       <ControlFlowGuard>false</ControlFlowGuard>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
       <SubSystem>Windows</SubSystem>
     </Link>
-    <PreBuildEvent>
-      <Command>..\MakeBuildVer.bat</Command>
-    </PreBuildEvent>
     <ResourceCompile>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ResourceCompile>
+    <PostBuildEvent>
+      <Command />
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -526,14 +548,11 @@
       <AdditionalOptions>/w45045 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>..\MakeBuildVer.bat</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebug|Win32'">
     <ClCompile>
@@ -550,14 +569,11 @@
       <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>..\MakeBuildVer.bat</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseUnicode|Win32'">
     <ClCompile>
@@ -573,14 +589,11 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>..\MakeBuildVer.bat</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseWithDebugUnicode|Win32'">
     <ClCompile>
@@ -596,14 +609,11 @@
       <ConformanceMode>true</ConformanceMode>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
-    <PreBuildEvent>
-      <Command>..\MakeBuildVer.bat</Command>
-    </PreBuildEvent>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

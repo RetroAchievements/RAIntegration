@@ -23,6 +23,16 @@
     <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <ItemGroup>
+    <None Include="base.props">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\src\rcheevos.vcxproj">
+      <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -33,7 +43,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>$(DefaultPlatformToolset)</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseOfMfc>false</UseOfMfc>
   </PropertyGroup>
@@ -74,6 +84,7 @@
     <IntDir>$(SolutionDir)obj\$(Configuration)\tests\</IntDir>
     <CodeAnalysisRuleSet>..\src\ra_rules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>true</RunCodeAnalysis>
+    <CAExcludePath>$(RapidJSON_IncludeDir);$(CAExcludePath)</CAExcludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -101,9 +112,9 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>$(RA_IncludePath);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;RA_UTEST;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;RA_UTEST;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <UseFullPaths>true</UseFullPaths>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <ShowIncludes>false</ShowIncludes>
       <EnablePREfast>true</EnablePREfast>
       <DisableSpecificWarnings>4201</DisableSpecificWarnings>
@@ -153,7 +164,6 @@
       <UseFullPaths>true</UseFullPaths>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <DisableSpecificWarnings>4201</DisableSpecificWarnings>
-      <AdditionalOptions>/w45045 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -199,7 +209,6 @@
     <ClCompile Include="..\src\RA_Achievement.cpp" />
     <ClCompile Include="..\src\RA_Json.cpp" />
     <ClCompile Include="..\src\RA_md5factory.cpp" />
-    <ClCompile Include="..\src\RA_RichPresence.cpp" />
     <ClCompile Include="..\src\RA_StringUtils.cpp" />
     <ClCompile Include="..\src\services\AchievementRuntime.cpp" />
     <ClCompile Include="..\src\services\GameIdentifier.cpp" />
@@ -209,11 +218,17 @@
     <ClCompile Include="..\src\services\SearchResults.cpp" />
     <ClCompile Include="..\src\ui\OverlayTheme.cpp" />
     <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\FileDialogViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\MemoryBookmarksViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayFriendsPageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayListPageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlayRecentGamesPageViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\OverlaySettingsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
@@ -253,14 +268,19 @@
     <ClCompile Include="..\src\RA_Condition.cpp" />
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
-    <ClCompile Include="..\src\RA_MemManager.cpp" />
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\MemoryBookmarksViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayFriendsPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayListPageViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayManager_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlayRecentGamesPageViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\OverlaySettingsViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel_Tests.cpp" />
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
@@ -278,24 +298,17 @@
     <ClInclude Include="mocks\MockImageRepository.hh" />
     <ClInclude Include="mocks\MockLocalStorage.hh" />
     <ClInclude Include="mocks\MockOverlayManager.hh" />
+    <ClInclude Include="mocks\MockOverlayTheme.hh" />
     <ClInclude Include="mocks\MockServer.hh" />
     <ClInclude Include="mocks\MockSessionTracker.hh" />
+    <ClInclude Include="mocks\MockSurface.hh" />
     <ClInclude Include="mocks\MockThreadPool.hh" />
     <ClInclude Include="mocks\MockUserContext.hh" />
+    <ClInclude Include="mocks\MockWindowManager.hh" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="RA_Condition_Tests.cpp" />
     <ClCompile Include="RA_Leaderboard_Tests.cpp" />
     <ClCompile Include="RA_UnitTestHelpers.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="base.props">
-      <SubType>Designer</SubType>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\src\rcheevos.vcxproj">
-      <Project>{9d55ebe7-1392-4fa1-a9b9-f022f764ce35}</Project>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

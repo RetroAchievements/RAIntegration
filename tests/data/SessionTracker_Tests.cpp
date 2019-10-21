@@ -10,6 +10,7 @@
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
+#include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -37,6 +38,7 @@ public:
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockStorage;
         ra::services::mocks::MockThreadPool mockThreadPool;
+        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
         bool HasStoredData() const
         {
@@ -53,9 +55,9 @@ public:
             mockStorage.MockStoredData(StorageItemType::SessionStats, m_sUsernameWide, sContents);
         }
 
-        void MockInspectingMemory(bool bInspectingMemory) noexcept 
+        void MockInspectingMemory(bool bInspectingMemory)
         {
-            m_bInspectingMemory = bInspectingMemory;
+            mockWindowManager.MemoryBookmarks.SetIsVisible(bInspectingMemory);
         }
 
         std::wstring GetActivity() const
@@ -63,11 +65,7 @@ public:
             return SessionTracker::GetCurrentActivity();
         }
 
-    protected:
-        bool IsInspectingMemory() const noexcept override { return m_bInspectingMemory; }
-
     private:
-        bool m_bInspectingMemory{ false };
         std::string m_sUsername;
         std::wstring m_sUsernameWide;
     };
@@ -91,7 +89,7 @@ public:
         tracker.mockGameContext.SetGameId(1234U);
         tracker.BeginSession(1234U);
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::IsFalse(tracker.HasStoredData());
         Assert::IsTrue(bSessionStarted);
 
@@ -99,14 +97,14 @@ public:
         tracker.mockClock.AdvanceTime(std::chrono::seconds(30));
         tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(30));
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::IsFalse(tracker.HasStoredData());
 
         // after two minutes, the callback will be called again, and the file finally written
         tracker.mockClock.AdvanceTime(std::chrono::seconds(120));
         tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(120));
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::IsTrue(tracker.HasStoredData());
         Assert::AreEqual(std::string("1234:1534889323:150:5d\n"), tracker.GetStoredData());
 
@@ -114,7 +112,7 @@ public:
         tracker.mockClock.AdvanceTime(std::chrono::seconds(120));
         tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(120));
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::IsTrue(tracker.HasStoredData());
         Assert::AreEqual(std::string("1234:1534889323:270:f9\n"), tracker.GetStoredData());
     }
@@ -269,7 +267,7 @@ public:
         tracker.mockClock.AdvanceTime(std::chrono::seconds(30));
         tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(30));
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::AreEqual(1, nPings);
 
         // after two minutes, the callback will be called again, and the second ping should occur
@@ -319,7 +317,7 @@ public:
         tracker.mockClock.AdvanceTime(std::chrono::seconds(30));
         tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(30));
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(1U, tracker.mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::AreEqual(1, nPings);
 
         // after two minutes, the callback will be called again, and the second ping should occur
@@ -343,7 +341,7 @@ public:
     TEST_METHOD(TestCurrentActivityNoRichPresence)
     {
         SessionTrackerHarness tracker;
-        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        tracker.mockGameContext.NewAchievement(Achievement::Category::Core);
         Assert::AreEqual(std::wstring(L"Earning Achievements"), tracker.GetActivity());
     }
 
@@ -381,7 +379,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        tracker.mockGameContext.NewAchievement(Achievement::Category::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         Assert::AreEqual(std::wstring(L"Inspecting Memory in Hardcore mode"), tracker.GetActivity());
     }
@@ -389,7 +387,7 @@ public:
     TEST_METHOD(TestCurrentActivityInspectingMemoryCompatibilityMode)
     {
         SessionTrackerHarness tracker;
-        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        tracker.mockGameContext.NewAchievement(Achievement::Category::Core);
         tracker.mockGameContext.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
         tracker.MockInspectingMemory(true);
         Assert::AreEqual(std::wstring(L"Testing Compatibility"), tracker.GetActivity());
@@ -399,9 +397,8 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        tracker.mockGameContext.NewAchievement(Achievement::Category::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        tracker.mockGameContext.SetActiveAchievementType(AchievementSet::Type::Core);
         Assert::AreEqual(std::wstring(L"Fixing Achievements"), tracker.GetActivity());
     }
 
@@ -409,9 +406,8 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        tracker.mockGameContext.NewAchievement(Achievement::Category::Unofficial);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        tracker.mockGameContext.SetActiveAchievementType(AchievementSet::Type::Unofficial);
         Assert::AreEqual(std::wstring(L"Developing Achievements"), tracker.GetActivity());
     }
 
@@ -419,9 +415,8 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.NewAchievement(AchievementSet::Type::Core);
+        tracker.mockGameContext.NewAchievement(Achievement::Category::Local);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        tracker.mockGameContext.SetActiveAchievementType(AchievementSet::Type::Local);
         Assert::AreEqual(std::wstring(L"Developing Achievements"), tracker.GetActivity());
     }
 };

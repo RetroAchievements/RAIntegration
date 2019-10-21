@@ -18,6 +18,19 @@ public:
     {
     }
 
+    void ClearPopups() override
+    {
+        // base implementation only queues the popups to be destroyed
+
+        while (!m_vPopupMessages.empty())
+            m_vPopupMessages.pop_front();
+
+        while (!m_vScoreboards.empty())
+            m_vScoreboards.pop_front();
+
+        m_vScoreTrackers.clear();
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::ui::viewmodels::OverlayManager> m_Override;
 };

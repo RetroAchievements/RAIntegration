@@ -18,7 +18,7 @@ public:
 
     bool IsImageAvailable(ImageType nType, const std::string& sName) const override
     {
-        auto vAvailableImages = m_vAvailableImages.find(nType);
+        const auto vAvailableImages = m_vAvailableImages.find(nType);
         if (vAvailableImages == m_vAvailableImages.end())
             return false;
 

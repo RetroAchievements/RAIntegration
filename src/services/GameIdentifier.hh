@@ -15,14 +15,14 @@ public:
     /// </summary>
     /// <param name="pMemory">Pointer to memory that unique identifies the game.</param>
     /// <param name="nSize">Size of the unique memory block.</param>
-    void IdentifyAndActivateGame(const BYTE* pMemory, unsigned int nSize);
+    void IdentifyAndActivateGame(const BYTE* pMemory, size_t nSize);
 
     /// <summary>
     /// Identifies a game.
     /// </summary>
     /// <param name="pMemory">Pointer to memory that unique identifies the game.</param>
     /// <param name="nSize">Size of the unique memory block.</param>
-    unsigned int IdentifyGame(const BYTE* pMemory, unsigned int nSize);
+    unsigned int IdentifyGame(const BYTE* pMemory, size_t nSize);
 
     /// <summary>
     /// Activates a game.

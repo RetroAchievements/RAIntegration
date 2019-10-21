@@ -2,7 +2,6 @@
 
 #include "RA_Core.h"
 #include "RA_Resource.h"
-#include "RA_RichPresence.h"
 
 namespace ra {
 namespace ui {

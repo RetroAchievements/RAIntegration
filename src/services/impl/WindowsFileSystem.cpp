@@ -38,6 +38,24 @@ const std::wstring& WindowsFileSystem::MakeAbsolute(std::wstring& sBuffer, const
     return sBuffer;
 }
 
+std::string WindowsFileSystem::GetFileName(const std::string& sPath) const
+{
+    const auto nIndex = sPath.find_last_of("/\\");
+    if (nIndex != std::string::npos)
+        return std::string(sPath, nIndex + 1);
+
+    return sPath;
+}
+
+std::string WindowsFileSystem::RemoveExtension(const std::string& sPath) const
+{
+    const auto nIndex = sPath.find_last_of("/\\.");
+    if (nIndex != std::string::npos && sPath.at(nIndex) == '.')
+        return std::string(sPath, 0, nIndex);
+
+    return sPath;
+}
+
 bool WindowsFileSystem::DirectoryExists(const std::wstring& sDirectory) const noexcept
 {
     std::wstring sBuffer;

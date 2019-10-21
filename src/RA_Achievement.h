@@ -14,6 +14,13 @@
 class Achievement
 {
 public:
+    enum class Category
+    {
+        Local = 0,
+        Core = 3,
+        Unofficial = 5,
+    };
+
     enum class DirtyFlags
     {
         Clean,
@@ -40,7 +47,7 @@ public:
 public:
     size_t AddCondition(size_t nConditionGroup, const Condition& pNewCond);
     size_t InsertCondition(size_t nConditionGroup, size_t nIndex, const Condition& pNewCond);
-    BOOL RemoveCondition(size_t nConditionGroup, unsigned int nConditionID);
+    BOOL RemoveCondition(size_t nConditionGroup, size_t nIndex);
     void RemoveAllConditions(size_t nConditionGroup);
 
     void CopyFrom(const Achievement& rRHS);
@@ -60,8 +67,8 @@ public:
     void SetID(ra::AchievementID nID) noexcept;
     inline ra::AchievementID ID() const noexcept { return m_nAchievementID; }
 
-    void SetCategory(int nID) noexcept { m_nCategoryID = nID; }
-    inline int Category() const noexcept { return m_nCategoryID; }
+    void SetCategory(Category nCategory) noexcept { m_nCategory = nCategory; }
+    inline Category GetCategory() const noexcept { return m_nCategory; }
 
     inline const std::string& Title() const noexcept { return m_sTitle; }
     void SetTitle(const std::string& sTitle) { m_sTitle = sTitle; }
@@ -101,7 +108,7 @@ public:
 
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
     unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const noexcept;
-    void SetConditionHitCount(size_t nCondGroup, size_t i, unsigned int nHitCount) const noexcept;
+    void SetConditionHitCount(size_t nCondGroup, size_t i, unsigned int nCurrentHits) const noexcept;
 
     std::string CreateMemString() const;
 
@@ -123,6 +130,9 @@ public:
 
     void RebuildTrigger();
 
+    const std::wstring& GetUnlockRichPresence() const noexcept { return m_sUnlockRichPresence; }
+    void SetUnlockRichPresence(const std::wstring& sValue) { m_sUnlockRichPresence = sValue; }
+
     // range for
     _NODISCARD inline auto begin() noexcept { return m_vConditions.begin(); }
     _NODISCARD inline auto begin() const noexcept { return m_vConditions.begin(); }
@@ -135,7 +145,7 @@ protected:
 
 private:
     ra::AchievementID m_nAchievementID{};
-    int m_nCategoryID{};
+    Category m_nCategory{};
 
     ConditionSet m_vConditions; //  UI wrappers for trigger
 
@@ -156,6 +166,8 @@ private:
     std::string m_sProgress;    // How to calculate the progress so far (syntactical)
     std::string m_sProgressMax; // Upper limit of the progress (syntactical? value?)
     std::string m_sProgressFmt; // Format of the progress to be shown (currency? step?)
+
+    std::wstring m_sUnlockRichPresence;
 
     float m_fProgressLastShown{}; // The last shown progress
 

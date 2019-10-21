@@ -14,7 +14,7 @@ class FileTextReader : public ra::services::TextReader
 {
 public:
     explicit FileTextReader(const std::wstring& sFilename)
-        : m_iStream(sFilename)
+        : m_iStream(sFilename, std::ios::binary)
     {
     }
 
@@ -26,6 +26,7 @@ public:
         ra::TrimLineEnding(sLine);
         return true;
     }
+
 	_Success_(return)
     _NODISCARD bool GetLine(_Out_ std::wstring& sLine) override
     {
@@ -35,6 +36,13 @@ public:
 
         sLine = ra::Widen(ra::TrimLineEnding(sNarrowLine));
         return true;
+    }
+
+    size_t GetBytes(_Inout_ char pBuffer[], _In_ size_t nBytes) override
+    {
+        const auto nPos = GetPosition();
+        m_iStream.read(pBuffer, nBytes);
+        return gsl::narrow_cast<size_t>(GetPosition() - nPos);
     }
 
     std::streampos GetPosition() const override

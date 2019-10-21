@@ -3,10 +3,14 @@
 #pragma once
 
 #include "api/AwardAchievement.hh"
+#include "api/DeleteCodeNote.hh"
 #include "api/FetchAchievementInfo.hh"
+#include "api/FetchBadgeIds.hh"
+#include "api/FetchCodeNotes.hh"
 #include "api/FetchGameData.hh"
 #include "api/FetchGamesList.hh"
 #include "api/FetchLeaderboardInfo.hh"
+#include "api/FetchUserFriends.hh"
 #include "api/FetchUserUnlocks.hh"
 #include "api/LatestClient.hh"
 #include "api/Login.hh"
@@ -17,6 +21,9 @@
 #include "api/SubmitLeaderboardEntry.hh"
 #include "api/SubmitNewTitle.hh"
 #include "api/SubmitTicket.hh"
+#include "api/UpdateAchievement.hh"
+#include "api/UpdateCodeNote.hh"
+#include "api/UploadBadge.hh"
 
 namespace ra {
 namespace api {
@@ -34,10 +41,15 @@ public:
     virtual FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) = 0;
     virtual AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) = 0;
     virtual SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) = 0;
+    virtual FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) = 0;
 
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) = 0;
     virtual FetchGameData::Response FetchGameData(const FetchGameData::Request& request) = 0;
+    virtual FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) = 0;
+    virtual UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) = 0;
+    virtual DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) = 0;
+    virtual UpdateAchievement::Response UpdateAchievement(const UpdateAchievement::Request& request) = 0;
     virtual FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) = 0;
     virtual FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) = 0;
 
@@ -46,6 +58,8 @@ public:
     virtual FetchGamesList::Response FetchGamesList(const FetchGamesList::Request& request) = 0;
     virtual SubmitNewTitle::Response SubmitNewTitle(const SubmitNewTitle::Request& request) = 0;
     virtual SubmitTicket::Response SubmitTicket(const SubmitTicket::Request& request) = 0;
+    virtual FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) = 0;
+    virtual UploadBadge::Response UploadBadge(const UploadBadge::Request& request) = 0;
 
 protected:
     IServer() noexcept = default;

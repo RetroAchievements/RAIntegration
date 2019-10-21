@@ -22,8 +22,12 @@ public:
     void SetFeatureEnabled(Feature nFeature, bool bEnabled) noexcept override;
 
     unsigned int GetNumBackgroundThreads() const noexcept override { return m_nBackgroundThreads; }
-    const std::string& GetRomDirectory() const noexcept override { return m_sRomDirectory; }
-    void SetRomDirectory(const std::string& sValue) override { m_sRomDirectory = sValue; }
+
+    const std::wstring& GetRomDirectory() const noexcept override { return m_sRomDirectory; }
+    void SetRomDirectory(const std::wstring& sValue) override { m_sRomDirectory = sValue; }
+
+    const std::wstring& GetScreenshotDirectory() const noexcept override { return m_sScreenshotDirectory; }
+    void SetScreenshotDirectory(const std::wstring& sValue) override { m_sScreenshotDirectory = sValue; }
 
     ra::ui::Position GetWindowPosition(const std::string& sPositionKey) const override;
     void SetWindowPosition(const std::string& sPositionKey, const ra::ui::Position& oPosition) override;
@@ -32,17 +36,22 @@ public:
     void SetWindowSize(const std::string& sPositionKey, const ra::ui::Size& oSize) override;
 
     const std::string& GetHostName() const override;
+    const std::string& GetHostUrl() const override;
+    const std::string& GetImageHostUrl() const override;
 
     void Save() const override;
 
 private:
+    void UpdateHost();
+
     std::string m_sUsername;
     std::string m_sApiToken;
 
     int m_vEnabledFeatures = 0;
 
     unsigned int m_nBackgroundThreads = 8;
-    std::string m_sRomDirectory;
+    std::wstring m_sRomDirectory;
+    std::wstring m_sScreenshotDirectory;
 
     typedef struct WindowPosition
     {
@@ -53,7 +62,9 @@ private:
     typedef std::map<std::string, WindowPosition> WindowPositionMap;
     WindowPositionMap m_mWindowPositions;
 
-    mutable std::string m_sHostName;
+    std::string m_sHostName;
+    std::string m_sHostUrl;
+    std::string m_sImageHostUrl;
 
     std::wstring m_sFilename;
 };

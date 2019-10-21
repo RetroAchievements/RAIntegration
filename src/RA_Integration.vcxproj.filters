@@ -51,12 +51,6 @@
     <ClCompile Include="RA_Achievement.cpp">
       <Filter>Data</Filter>
     </ClCompile>
-    <ClCompile Include="RA_AchievementSet.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_CodeNotes.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Condition.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -66,13 +60,7 @@
     <ClCompile Include="RA_Dlg_Achievement.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Dlg_AchievementsReporter.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Dlg_GameLibrary.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_Dlg_MemBookmark.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="RA_Dlg_Memory.cpp">
@@ -81,20 +69,8 @@
     <ClCompile Include="RA_Leaderboard.cpp">
       <Filter>Data</Filter>
     </ClCompile>
-    <ClCompile Include="RA_RichPresence.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_User.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_httpthread.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
     <ClCompile Include="RA_md5factory.cpp">
       <Filter>Services</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_Interface.cpp">
-      <Filter>Interface</Filter>
     </ClCompile>
     <ClCompile Include="RA_Core.cpp">
       <Filter>Interface</Filter>
@@ -103,9 +79,6 @@
       <Filter>Interface</Filter>
     </ClCompile>
     <ClCompile Include="RA_ImageFactory.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_MemManager.cpp">
       <Filter>Services</Filter>
     </ClCompile>
     <ClCompile Include="services\SearchResults.cpp">
@@ -270,15 +243,57 @@
     <ClCompile Include="ui\viewmodels\OverlayListPageViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\OverlayWindow.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\BrokenAchievementsDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\bindings\GridBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayFriendsPageViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlayRecentGamesPageViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\MemoryBookmarksViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\MemoryBookmarksDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\bindings\GridLookupColumnBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\FileDialogViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\FileDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\bindings\GridTextColumnBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\bindings\GridAddressColumnBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\bindings\GridNumberColumnBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\OverlaySettingsViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\OverlaySettingsDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_AchievementSet.h">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_CodeNotes.h">
       <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="RA_Condition.h">
@@ -290,13 +305,7 @@
     <ClInclude Include="RA_Dlg_Achievement.h">
       <Filter>UI</Filter>
     </ClInclude>
-    <ClInclude Include="RA_Dlg_AchievementsReporter.h">
-      <Filter>UI</Filter>
-    </ClInclude>
     <ClInclude Include="RA_Dlg_GameLibrary.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_MemBookmark.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_Memory.h">
@@ -305,23 +314,11 @@
     <ClInclude Include="RA_Leaderboard.h">
       <Filter>Data</Filter>
     </ClInclude>
-    <ClInclude Include="RA_RichPresence.h">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_User.h">
-      <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_httpthread.h">
-      <Filter>Services</Filter>
-    </ClInclude>
     <ClInclude Include="RA_Resource.h">
       <Filter>Resources</Filter>
     </ClInclude>
     <ClInclude Include="RA_md5factory.h">
       <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Interface.h">
-      <Filter>Interface</Filter>
     </ClInclude>
     <ClInclude Include="RA_Core.h">
       <Filter>Interface</Filter>
@@ -354,9 +351,6 @@
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="RA_Json.h">
-      <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_MemManager.h">
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="services\SearchResults.h">
@@ -673,6 +667,93 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\OverlayListPageViewModel.hh">
       <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\OverlayWindow.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\BrokenAchievementsViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\BrokenAchievementsDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="api\FetchCodeNotes.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\UpdateCodeNote.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\DeleteCodeNote.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\FetchBadgeIds.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\UploadBadge.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="api\UpdateAchievement.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridTextColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridBooleanColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridCheckBoxColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="api\FetchUserFriends.hh">
+      <Filter>API</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\OverlayFriendsPageViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\OverlayRecentGamesPageViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RAInterface\RA_Interface.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="data\Types.hh">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\MemoryBookmarksViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\MemoryBookmarksDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridAddressColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridLookupColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\GridNumberColumnBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\FileDialogViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\FileDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\OverlaySettingsViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\OverlaySettingsDialog.hh">
+      <Filter>UI\Win32</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,10 @@
 #include "RA_Leaderboard.h"
 #include "RA_UnitTestHelpers.h"
 
-#include "RA_MemManager.h"
+#include "services\AchievementRuntime.hh"
+
+#include "mocks\MockDesktop.hh"
+#include "mocks\MockEmulatorContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -14,11 +17,13 @@ class LeaderboardHarness : public RA_Leaderboard
 public:
     LeaderboardHarness() noexcept : RA_Leaderboard(1) {}
 
+    ra::ui::mocks::MockDesktop mockDesktop;
+    ra::data::mocks::MockEmulatorContext mockEmulatorContext;
+
     bool IsScoreSubmitted() const noexcept { return m_bScoreSubmitted; }
     unsigned int SubmittedScore() const noexcept { return m_nSubmittedScore; }
     unsigned int GetCurrentValue() const noexcept { return m_nCurrentValue; }
 
-public:
     void Reset() noexcept
     {
         rc_reset_lboard(static_cast<rc_lboard_t*>(m_pLeaderboard));
@@ -33,7 +38,7 @@ public:
         if (!m_pLeaderboard)
             return;
 
-        unsigned int nValue;
+        int nValue;
         const int nResult = rc_evaluate_lboard(static_cast<rc_lboard_t*>(m_pLeaderboard), &nValue, rc_peek_callback, nullptr, nullptr);
         switch (nResult)
         {
@@ -56,7 +61,7 @@ public:
 
 private:
     unsigned int m_nSubmittedScore = 0;
-    unsigned int m_nCurrentValue = 0;
+    int m_nCurrentValue = 0;
     bool m_bScoreSubmitted = false;
 };
 
@@ -67,7 +72,10 @@ TEST_CLASS(RA_Leaderboard_Tests)
         // NOTE: requires value "1" in $00
         auto sString = StringPrintf("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:%s", sSerialized);
 
+        std::array<unsigned char, 5> memory{0x01, 0x12, 0x34, 0xAB, 0x56};
         LeaderboardHarness lb;
+        lb.mockEmulatorContext.MockMemory(memory);
+
         lb.ParseFromString(sString.c_str(), "VALUE");
         lb.Test();
 
@@ -78,9 +86,9 @@ public:
     TEST_METHOD(TestSimpleLeaderboard)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
         LeaderboardHarness lb;
+        lb.mockEmulatorContext.MockMemory(memory);
         lb.ParseFromString("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", "VALUE");
         Assert::IsFalse(lb.IsActive());
         Assert::IsFalse(lb.IsScoreSubmitted());
@@ -129,9 +137,9 @@ public:
     TEST_METHOD(TestSimpleLeaderboardFormatted)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
         LeaderboardHarness lb;
+        lb.mockEmulatorContext.MockMemory(memory);
         lb.ParseFromString("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", "SCORE");
         lb.Test();
 
@@ -145,9 +153,9 @@ public:
     TEST_METHOD(TestStartAndCancelSameFrame)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
         LeaderboardHarness lb;
+        lb.mockEmulatorContext.MockMemory(memory);
         lb.ParseFromString("STA:0xH00=0::CAN:0xH01=18::SUB:0xH00=3::VAL:0xH02", "VALUE");
 
         lb.Test();
@@ -183,9 +191,9 @@ public:
     TEST_METHOD(TestStartAndSubmitSameFrame)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
         LeaderboardHarness lb;
+        lb.mockEmulatorContext.MockMemory(memory);
         lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", "VALUE");
 
         lb.Test();
@@ -209,10 +217,10 @@ public:
     TEST_METHOD(TestProgress)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
         // if PRO: mapping is available, use that for GetCurrentValueProgress
         LeaderboardHarness lb;
+        lb.mockEmulatorContext.MockMemory(memory);
         lb.ParseFromString("STA:0xH00=0::CAN:0xH00=2::SUB:0xH00=3::PRO:0xH04::VAL:0xH02", "VALUE");
         lb.Test();
         Assert::IsTrue(lb.IsActive());
@@ -220,6 +228,7 @@ public:
 
         // if PRO: mapping is not available, use VAL: for GetCurrentValueProgress
         LeaderboardHarness lb2;
+        lb2.mockEmulatorContext.MockMemory(memory);
         lb2.ParseFromString("STA:0xH00=0::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02", "VALUE");
         lb2.Test();
         Assert::IsTrue(lb2.IsActive());
@@ -229,9 +238,9 @@ public:
     TEST_METHOD(TestStartAndCondition)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
         LeaderboardHarness lb;
+        lb.mockEmulatorContext.MockMemory(memory);
         lb.ParseFromString("STA:0xH00=0_0xH01=0::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", "VALUE");
 
         lb.Test();
@@ -245,9 +254,9 @@ public:
     TEST_METHOD(TestStartOrCondition)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
         LeaderboardHarness lb;
+        lb.mockEmulatorContext.MockMemory(memory);
         lb.ParseFromString("STA:S0xH00=1S0xH01=1::CAN:0xH01=10::SUB:0xH01=18::VAL:0xH02", "VALUE");
 
         lb.Test();
@@ -288,9 +297,9 @@ public:
     TEST_METHOD(TestCancelOrCondition)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
         LeaderboardHarness lb;
+        lb.mockEmulatorContext.MockMemory(memory);
         lb.ParseFromString("STA:0xH00=0::CAN:S0xH01=12S0xH02=12::SUB:0xH00=3::VAL:0xH02", "VALUE");
 
         lb.Test();
@@ -313,9 +322,9 @@ public:
     TEST_METHOD(TestSubmitAndCondition)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
         LeaderboardHarness lb;
+        lb.mockEmulatorContext.MockMemory(memory);
         lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:0xH01=18_0xH03=18::VAL:0xH02", "VALUE");
 
         lb.Test();
@@ -330,9 +339,9 @@ public:
     TEST_METHOD(TestSubmitOrCondition)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
         LeaderboardHarness lb;
+        lb.mockEmulatorContext.MockMemory(memory);
         lb.ParseFromString("STA:0xH00=0::CAN:0xH01=10::SUB:S0xH01=12S0xH03=12::VAL:0xH02", "VALUE");
 
         lb.Test();
@@ -357,13 +366,26 @@ public:
     TEST_METHOD(TestUnparsableStringWillNotStart)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
 
         LeaderboardHarness lb;
+        lb.mockEmulatorContext.MockMemory(memory);
+        lb.SetTitle("Title");
+        bool bMessageShown = false;
+        lb.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageShown](const ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bMessageShown = true;
+            Assert::AreEqual(std::wstring(L"Unable to activate leaderboard: Title"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Parse error -6"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
+            return ra::ui::DialogResult::OK;
+        });
+
         lb.ParseFromString("STA:0xH00=0::CAN:0x0H00=1::SUB:0xH01=18::GARBAGE", "VALUE");
 
         lb.Test();
         Assert::IsFalse(lb.IsActive());
+
+        Assert::IsTrue(bMessageShown);
     }
 
     TEST_METHOD(TestSubmitRankInfo)
@@ -413,9 +435,6 @@ public:
 
     TEST_METHOD(TestValue)
     {
-        std::array<unsigned char, 5> memory{0x01, 0x12, 0x34, 0xAB, 0x56};
-        InitializeMemory(memory);
-
         // simple accessors
         AssertValue("0xH0002", 0x34U);
         AssertValue("0x000002", 0xAB34U);

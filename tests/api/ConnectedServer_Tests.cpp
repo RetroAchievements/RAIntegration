@@ -57,13 +57,13 @@ public:
         // call should be async
         Assert::IsFalse(bCallbackCalled);
         Assert::IsFalse(bHandlerCalled);
-        Assert::AreEqual(1U, mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, mockThreadPool.PendingTasks());
 
         // async call should be incomplete and requeued
         mockThreadPool.ExecuteNextTask();
         Assert::IsFalse(bCallbackCalled);
         Assert::IsTrue(bHandlerCalled);
-        Assert::AreEqual(1U, mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, mockThreadPool.PendingTasks());
         Assert::AreEqual(std::chrono::milliseconds(500), mockThreadPool.NextTaskDelay());
 
         // callback called again, still incomplete, requeue with longer delay
@@ -71,7 +71,7 @@ public:
         mockThreadPool.AdvanceTime(std::chrono::milliseconds(500));
         Assert::IsFalse(bCallbackCalled);
         Assert::IsTrue(bHandlerCalled);
-        Assert::AreEqual(1U, mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 1U }, mockThreadPool.PendingTasks());
         Assert::AreEqual(std::chrono::milliseconds(1000), mockThreadPool.NextTaskDelay());
 
         // response succeeded, should complete transaction
@@ -90,7 +90,7 @@ public:
         mockThreadPool.AdvanceTime(std::chrono::milliseconds(1000));
         Assert::IsTrue(bCallbackCalled);
         Assert::IsTrue(bHandlerCalled);
-        Assert::AreEqual(0U, mockThreadPool.PendingTasks());
+        Assert::AreEqual({ 0U }, mockThreadPool.PendingTasks());
     }
 
     TEST_METHOD(TestCallAsyncWithRetryMaxDelay)

@@ -91,6 +91,11 @@ public:
         return HandleRequest<ra::api::SubmitLeaderboardEntry>(request);
     }
 
+    FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) override
+    {
+        return HandleRequest<ra::api::FetchUserFriends>(request);
+    }
+
     // === game functions ===
 
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) override
@@ -101,6 +106,26 @@ public:
     FetchGameData::Response FetchGameData(const FetchGameData::Request& request) override
     {
         return HandleRequest<ra::api::FetchGameData>(request);
+    }
+
+    FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override
+    {
+        return HandleRequest<ra::api::FetchCodeNotes>(request);
+    }
+
+    UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) override
+    {
+        return HandleRequest<ra::api::UpdateCodeNote>(request);
+    }
+
+    DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) override
+    {
+        return HandleRequest<ra::api::DeleteCodeNote>(request);
+    }
+
+    UpdateAchievement::Response UpdateAchievement(const UpdateAchievement::Request& request) override
+    {
+        return HandleRequest<ra::api::UpdateAchievement>(request);
     }
 
     FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) override
@@ -135,6 +160,16 @@ public:
         return HandleRequest<ra::api::SubmitTicket>(request);
     }
 
+    FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) override
+    {
+        return HandleRequest<ra::api::FetchBadgeIds>(request);
+    }
+
+    UploadBadge::Response UploadBadge(const UploadBadge::Request& request) override
+    {
+        return HandleRequest<ra::api::UploadBadge>(request);
+    }
+
 protected:
     template<typename TApi>
     inline auto HandleRequest(const ApiRequestBase& pRequest) const
@@ -142,7 +177,7 @@ protected:
         typename TApi::Response response;
         std::string sApiName(TApi::Name());
 
-        auto pIter = m_mHandlers.find(sApiName);
+        const auto pIter = m_mHandlers.find(sApiName);
         if (pIter != m_mHandlers.end())
         {
             if (pIter->second(&pRequest, &response))

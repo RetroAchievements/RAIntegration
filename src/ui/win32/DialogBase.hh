@@ -30,7 +30,7 @@ public:
     /// <param name="pDialogPresenter">Callback to call when the dialog is closed.</param>
     /// <returns>Handle of the window.</returns>
     _NODISCARD HWND CreateDialogWindow(_In_ const TCHAR* restrict sResourceId,
-                                       _In_ IDialogPresenter* const restrict pDialogPresenter);
+                                       _In_ IDialogPresenter* const restrict pDialogPresenter) noexcept;
 
     /// <summary>
     /// Creates the dialog window and does not return until the window is closed.
@@ -80,7 +80,7 @@ protected:
     /// <summary>
     /// Called when the window is shown.
     /// </summary>
-    GSL_SUPPRESS_F6 virtual void OnShown() {}
+    virtual void OnShown();
 
     /// <summary>
     /// Called when the window is destroyed.
@@ -115,6 +115,20 @@ protected:
 
     ra::ui::WindowViewModelBase& m_vmWindow;
 
+    enum class Anchor
+    {
+        None = 0x00,
+        Left = 0x01,
+        Top = 0x02,
+        Right = 0x04,
+        Bottom = 0x08
+    };
+
+    void SetAnchor(int nIDDlgItem, Anchor nAnchor)
+    {
+        m_vControlAnchors.emplace_back(AnchorInfo{ 0, 0, 0, 0, nIDDlgItem, nAnchor });
+    }
+
 private:
     // Allows access to `DialogProc` from static helper
     friend static INT_PTR CALLBACK StaticDialogProc(_In_ HWND hDlg,
@@ -146,6 +160,20 @@ private:
     }
 
     std::unordered_map<HWND, ra::ui::win32::bindings::ControlBinding*> m_mControlBindings;
+
+    struct AnchorInfo
+    {
+        int nMarginLeft{};
+        int nMarginTop{};
+        int nMarginRight{};
+        int nMarginBottom{};
+        int nIDDlgItem{};
+        Anchor nAnchor{};
+    };
+    std::vector<AnchorInfo> m_vControlAnchors;
+
+    void InitializeAnchors() noexcept;
+    void UpdateAnchoredControls();
 };
 
 } // namespace win32

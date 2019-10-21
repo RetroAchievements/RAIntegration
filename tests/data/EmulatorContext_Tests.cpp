@@ -6,7 +6,10 @@
 
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockHttpRequester.hh"
+#include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -27,8 +30,16 @@ private:
         ra::data::mocks::MockGameContext mockGameContext;
         ra::data::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::services::mocks::MockFileSystem mockFileSystem;
+        ra::services::mocks::MockHttpRequester mockHttpRequester;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
+        ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
+
+        GSL_SUPPRESS_F6 EmulatorContextHarness() noexcept
+            : mockHttpRequester([](const ra::services::Http::Request&) { return ra::services::Http::Response(ra::services::Http::StatusCode::OK, ""); })
+        {
+        }
 
         void MockVersions(const std::string& sClientVersion, const std::string& sServerVersion)
         {
@@ -360,6 +371,46 @@ public:
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
     }
 
+    static void ReplaceIntegrationVersion(std::string& sVersion)
+    {
+        const auto nIndex = sVersion.find("Integration/") + 12;
+        const auto nIndex2 = sVersion.find(' ', nIndex);
+        if (nIndex2 == std::string::npos)
+            sVersion.replace(nIndex, std::string::npos, "VERSION");
+        else
+            sVersion.replace(nIndex, nIndex2 - nIndex, "VERSION");
+    }
+
+    TEST_METHOD(TestUserAgent)
+    {
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.SetClientVersion("1.0");
+
+        std::string sVersion = emulator.mockHttpRequester.GetUserAgent();
+        ReplaceIntegrationVersion(sVersion);
+        Assert::AreEqual(std::string("RASnes9X/1.0 (UnitTests) Integration/VERSION"), sVersion);
+
+        emulator.Initialize(EmulatorID::RA_AppleWin);
+        emulator.SetClientVersion("1.1.1");
+
+        sVersion = emulator.mockHttpRequester.GetUserAgent();
+        ReplaceIntegrationVersion(sVersion);
+        Assert::AreEqual(std::string("RAppleWin/1.1.1 (UnitTests) Integration/VERSION"), sVersion);
+    }
+
+    TEST_METHOD(TestUserAgentClientDetail)
+    {
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Libretro);
+        emulator.SetClientVersion("1.0.15");
+        emulator.SetClientUserAgentDetail("fceumm_libretro/(SVN)_0a0fdb8");
+
+        std::string sVersion = emulator.mockHttpRequester.GetUserAgent();
+        ReplaceIntegrationVersion(sVersion);
+        Assert::AreEqual(std::string("RALibRetro/1.0.15 (UnitTests) Integration/VERSION fceumm_libretro/(SVN)_0a0fdb8"), sVersion);
+    }
+
     TEST_METHOD(TestDisableHardcoreMode)
     {
         EmulatorContextHarness emulator;
@@ -575,6 +626,77 @@ public:
         Assert::IsFalse(bWasReset);
     }
 
+    TEST_METHOD(TestEnableHardcoreModeVersionCurrentGameLoadedNoPrompt)
+    {
+        EmulatorContextHarness emulator;
+        emulator.MockVersions("0.57", "0.57");
+        emulator.mockGameContext.SetGameId(1U);
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
+
+        bool bUnlocksRequested = false;
+        emulator.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([&bUnlocksRequested](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
+        {
+            bUnlocksRequested = true;
+            Assert::AreEqual(1U, request.GameId);
+            Assert::IsTrue(request.Hardcore);
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        const auto& pLeaderboard = emulator.mockGameContext.NewLeaderboard(32U);
+        Assert::IsFalse(pLeaderboard.IsActive());
+
+        bool bWasReset = false;
+        emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
+
+        Assert::IsTrue(emulator.EnableHardcoreMode(false));
+
+        // ensure hardcore mode was enabled
+        Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+
+        // ensure prompt was not shown
+        Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
+
+        // enabling hardcore mode should enable leaderboards
+        Assert::IsTrue(pLeaderboard.IsActive());
+
+        // enabling hardcore mode should request hardcore unlocks
+        emulator.mockThreadPool.ExecuteNextTask();
+        Assert::IsTrue(bUnlocksRequested);
+
+        // enabling hardcore mode should reset the emulator
+        Assert::IsTrue(bWasReset);
+    }
+
+    TEST_METHOD(TestEnableHardcoreModeVersionOlderGameLoadedNoPrompt)
+    {
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.mockConfiguration.SetHostName("host");
+        emulator.mockUserContext.Initialize("User", "Token");
+        emulator.mockGameContext.SetGameId(1U);
+        emulator.MockVersions("0.57.0.0", "0.58.0.0");
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+        Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
+        bool bWasReset = false;
+        emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
+
+        Assert::IsTrue(emulator.EnableHardcoreMode(false));
+
+        Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+        Assert::AreEqual(std::string("http://host/download.php"), emulator.mockDesktop.LastOpenedUrl());
+
+        // user should be logged out if hardcore was enabled on an older version
+        Assert::IsFalse(emulator.mockUserContext.IsLoggedIn());
+        Assert::IsFalse(bWasReset);
+    }
+
     TEST_METHOD(TestGetAppTitleDefault)
     {
         EmulatorContextHarness emulator;
@@ -645,7 +767,301 @@ public:
         emulator.SetClientVersion("0.57");
         Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 - Test - User [localhost]"), emulator.GetAppTitle("Test"));
     }
+
+    TEST_METHOD(TestInitializeUnknownEmulator)
+    {
+        EmulatorContextHarness emulator;
+        emulator.mockDesktop.SetRunningExecutable("C:\\Games\\Emulator\\RATest.exe");
+        emulator.Initialize(ra::itoe<EmulatorID>(9999));
+        Assert::AreEqual(ra::etoi(EmulatorID::UnknownEmulator), ra::etoi(emulator.GetEmulatorId()));
+        Assert::AreEqual(std::string("RATest"), emulator.GetClientName());
+    }
+
+    TEST_METHOD(TestValidateUnknownEmulator)
+    {
+        EmulatorContextHarness emulator;
+        Assert::AreEqual(ra::etoi(EmulatorID::UnknownEmulator), ra::etoi(emulator.GetEmulatorId()));
+        Assert::IsTrue(emulator.ValidateClientVersion());
+        Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
+    }
+
+    static std::array<uint8_t, 64> memory;
+
+    static uint8_t ReadMemory0(uint32_t nAddress) noexcept { return memory.at(nAddress); }
+    static uint8_t ReadMemory1(uint32_t nAddress) noexcept { return memory.at(nAddress + 10); }
+    static uint8_t ReadMemory2(uint32_t nAddress) noexcept { return memory.at(nAddress + 20); }
+    static uint8_t ReadMemory3(uint32_t nAddress) noexcept { return memory.at(nAddress + 30); }
+
+    static void WriteMemory0(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(nAddress) = nValue; }
+    static void WriteMemory1(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(nAddress + 10) = nValue; }
+    static void WriteMemory2(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(nAddress + 20) = nValue; }
+    static void WriteMemory3(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(nAddress + 30) = nValue; }
+
+    TEST_METHOD(TestReadMemoryByte)
+    {
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        Assert::AreEqual({ 30U }, emulator.TotalMemorySize());
+
+        Assert::AreEqual(12, static_cast<int>(emulator.ReadMemoryByte(12U)));
+        Assert::AreEqual(25, static_cast<int>(emulator.ReadMemoryByte(25U)));
+        Assert::AreEqual(4, static_cast<int>(emulator.ReadMemoryByte(4U)));
+        Assert::AreEqual(29, static_cast<int>(emulator.ReadMemoryByte(29U)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemoryByte(30U)));
+    }
+
+    TEST_METHOD(TestAddMemoryBlocksOutOfOrder)
+    {
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        Assert::AreEqual({ 30U }, emulator.TotalMemorySize());
+
+        Assert::AreEqual(12, static_cast<int>(emulator.ReadMemoryByte(12U)));
+        Assert::AreEqual(25, static_cast<int>(emulator.ReadMemoryByte(25U)));
+        Assert::AreEqual(4, static_cast<int>(emulator.ReadMemoryByte(4U)));
+        Assert::AreEqual(29, static_cast<int>(emulator.ReadMemoryByte(29U)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemoryByte(30U)));
+    }
+
+    TEST_METHOD(TestAddMemoryBlockDoesNotOverwrite)
+    {
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        emulator.AddMemoryBlock(0, 20, &ReadMemory3, &WriteMemory3);
+        Assert::AreEqual({ 30U }, emulator.TotalMemorySize());
+
+        Assert::AreEqual(12, static_cast<int>(emulator.ReadMemoryByte(12U)));
+        Assert::AreEqual(25, static_cast<int>(emulator.ReadMemoryByte(25U)));
+        Assert::AreEqual(4, static_cast<int>(emulator.ReadMemoryByte(4U)));
+        Assert::AreEqual(29, static_cast<int>(emulator.ReadMemoryByte(29U)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemoryByte(30U)));
+    }
+
+    TEST_METHOD(TestClearMemoryBlocks)
+    {
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        emulator.ClearMemoryBlocks();
+        emulator.AddMemoryBlock(0, 20, &ReadMemory3, &WriteMemory3);
+        Assert::AreEqual({ 20U }, emulator.TotalMemorySize());
+
+        Assert::AreEqual(32, static_cast<int>(emulator.ReadMemoryByte(2U)));
+        Assert::AreEqual(41, static_cast<int>(emulator.ReadMemoryByte(11U)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemoryByte(55U)));
+    }
+
+    TEST_METHOD(TestReadMemory)
+    {
+        memory.at(4) = 0xA8;
+        memory.at(5) = 0x00;
+        memory.at(6) = 0x37;
+        memory.at(7) = 0x2E;
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_0)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_1)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_2)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_3)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_4)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_5)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_6)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_7)));
+        Assert::AreEqual(8, static_cast<int>(emulator.ReadMemory(4U, MemSize::Nibble_Lower)));
+        Assert::AreEqual(10, static_cast<int>(emulator.ReadMemory(4U, MemSize::Nibble_Upper)));
+        Assert::AreEqual(0xA8, static_cast<int>(emulator.ReadMemory(4U, MemSize::EightBit)));
+        Assert::AreEqual(0xA8, static_cast<int>(emulator.ReadMemory(4U, MemSize::SixteenBit)));
+        Assert::AreEqual(0x2E37, static_cast<int>(emulator.ReadMemory(6U, MemSize::SixteenBit)));
+        Assert::AreEqual(0x2E3700A8, static_cast<int>(emulator.ReadMemory(4U, MemSize::ThirtyTwoBit)));
+
+        memory.at(4) ^= 0xFF; // toggle all bits and verify again
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_0)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_1)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_2)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_3)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_4)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_5)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_6)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_7)));
+        Assert::AreEqual(7, static_cast<int>(emulator.ReadMemory(4U, MemSize::Nibble_Lower)));
+        Assert::AreEqual(5, static_cast<int>(emulator.ReadMemory(4U, MemSize::Nibble_Upper)));
+        Assert::AreEqual(0x57, static_cast<int>(emulator.ReadMemory(4U, MemSize::EightBit)));
+    }
+
+    TEST_METHOD(TestReadMemoryBuffer)
+    {
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        Assert::AreEqual({ 30U }, emulator.TotalMemorySize());
+
+        uint8_t buffer[32];
+
+        // simple read within a block
+        emulator.ReadMemory(6U, buffer, 12);
+        Assert::IsTrue(memcmp(buffer, &memory.at(6), 11) == 0);
+
+        // read across block
+        emulator.ReadMemory(19U, buffer, 4);
+        Assert::IsTrue(memcmp(buffer, &memory.at(19), 4) == 0);
+
+        // read end of block
+        emulator.ReadMemory(13U, buffer, 7);
+        Assert::IsTrue(memcmp(buffer, &memory.at(13), 7) == 0);
+
+        // read start of block
+        emulator.ReadMemory(20U, buffer, 5);
+        Assert::IsTrue(memcmp(buffer, &memory.at(20), 5) == 0);
+
+        // read passed end of total memory
+        emulator.ReadMemory(28U, buffer, 4);
+        Assert::AreEqual(28, static_cast<int>(buffer[0]));
+        Assert::AreEqual(29, static_cast<int>(buffer[1]));
+        Assert::AreEqual(0, static_cast<int>(buffer[2]));
+        Assert::AreEqual(0, static_cast<int>(buffer[3]));
+
+        // read outside memory
+        buffer[0] = buffer[1] = buffer[2] = buffer[3] = 0xFF;
+        emulator.ReadMemory(37U, buffer, 4);
+        Assert::AreEqual(0, static_cast<int>(buffer[0]));
+        Assert::AreEqual(0, static_cast<int>(buffer[1]));
+        Assert::AreEqual(0, static_cast<int>(buffer[2]));
+        Assert::AreEqual(0, static_cast<int>(buffer[3]));
+    }
+
+    TEST_METHOD(TestWriteMemoryByte)
+    {
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        Assert::AreEqual({ 30U }, emulator.TotalMemorySize());
+
+        // attempt to write all 64 bytes
+        for (ra::ByteAddress i = 0; i < memory.size(); ++i)
+            emulator.WriteMemoryByte(i, gsl::narrow_cast<uint8_t>(i + 4));
+
+        // only the 30 mapped bytes should be updated
+        for (uint8_t i = 0; i < emulator.TotalMemorySize(); ++i)
+            Assert::AreEqual(static_cast<uint8_t>(i + 4), memory.at(i));
+
+        // the others should have their original values
+        for (uint8_t i = gsl::narrow_cast<uint8_t>(emulator.TotalMemorySize()); i < memory.size(); ++i)
+            Assert::AreEqual(i, memory.at(i));
+    }
+
+    TEST_METHOD(TestWriteMemory)
+    {
+        memory.at(4) = 0xA8;
+        memory.at(5) = 0x60;
+        memory.at(6) = 0x37;
+        memory.at(7) = 0x2E;
+        memory.at(8) = 0x04;
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+
+        emulator.WriteMemory(4U, MemSize::EightBit, 0xFC);
+        Assert::AreEqual((uint8_t)0xFC, memory.at(4));
+        Assert::AreEqual((uint8_t)0x60, memory.at(5));
+
+        emulator.WriteMemory(4U, MemSize::EightBit, 0x12345678);
+        Assert::AreEqual((uint8_t)0x78, memory.at(4));
+        Assert::AreEqual((uint8_t)0x60, memory.at(5));
+
+        emulator.WriteMemory(4U, MemSize::SixteenBit, 0xABCD);
+        Assert::AreEqual((uint8_t)0xCD, memory.at(4));
+        Assert::AreEqual((uint8_t)0xAB, memory.at(5));
+        Assert::AreEqual((uint8_t)0x37, memory.at(6));
+
+        emulator.WriteMemory(4U, MemSize::SixteenBit, 0x12345678);
+        Assert::AreEqual((uint8_t)0x78, memory.at(4));
+        Assert::AreEqual((uint8_t)0x56, memory.at(5));
+        Assert::AreEqual((uint8_t)0x37, memory.at(6));
+
+        emulator.WriteMemory(4U, MemSize::ThirtyTwoBit, 0x76543210);
+        Assert::AreEqual((uint8_t)0x10, memory.at(4));
+        Assert::AreEqual((uint8_t)0x32, memory.at(5));
+        Assert::AreEqual((uint8_t)0x54, memory.at(6));
+        Assert::AreEqual((uint8_t)0x76, memory.at(7));
+        Assert::AreEqual((uint8_t)0x04, memory.at(8));
+
+        memory.at(4) = 0xFF;
+        emulator.WriteMemory(4U, MemSize::Bit_0, 0x00);
+        Assert::AreEqual((uint8_t)0xFE, memory.at(4));
+        emulator.WriteMemory(4U, MemSize::Bit_0, 0x01);
+        Assert::AreEqual((uint8_t)0xFF, memory.at(4));
+
+        emulator.WriteMemory(4U, MemSize::Bit_1, 0x00);
+        Assert::AreEqual((uint8_t)0xFD, memory.at(4));
+        emulator.WriteMemory(4U, MemSize::Bit_1, 0x01);
+        Assert::AreEqual((uint8_t)0xFF, memory.at(4));
+
+        emulator.WriteMemory(4U, MemSize::Bit_2, 0x00);
+        Assert::AreEqual((uint8_t)0xFB, memory.at(4));
+        emulator.WriteMemory(4U, MemSize::Bit_2, 0x01);
+        Assert::AreEqual((uint8_t)0xFF, memory.at(4));
+
+        emulator.WriteMemory(4U, MemSize::Bit_3, 0x00);
+        Assert::AreEqual((uint8_t)0xF7, memory.at(4));
+        emulator.WriteMemory(4U, MemSize::Bit_3, 0x01);
+        Assert::AreEqual((uint8_t)0xFF, memory.at(4));
+
+        emulator.WriteMemory(4U, MemSize::Bit_4, 0x00);
+        Assert::AreEqual((uint8_t)0xEF, memory.at(4));
+        emulator.WriteMemory(4U, MemSize::Bit_4, 0x01);
+        Assert::AreEqual((uint8_t)0xFF, memory.at(4));
+
+        emulator.WriteMemory(4U, MemSize::Bit_5, 0x00);
+        Assert::AreEqual((uint8_t)0xDF, memory.at(4));
+        emulator.WriteMemory(4U, MemSize::Bit_5, 0x01);
+        Assert::AreEqual((uint8_t)0xFF, memory.at(4));
+
+        emulator.WriteMemory(4U, MemSize::Bit_6, 0x00);
+        Assert::AreEqual((uint8_t)0xBF, memory.at(4));
+        emulator.WriteMemory(4U, MemSize::Bit_6, 0x01);
+        Assert::AreEqual((uint8_t)0xFF, memory.at(4));
+
+        emulator.WriteMemory(4U, MemSize::Bit_7, 0x00);
+        Assert::AreEqual((uint8_t)0x7F, memory.at(4));
+        emulator.WriteMemory(4U, MemSize::Bit_7, 0x01);
+        Assert::AreEqual((uint8_t)0xFF, memory.at(4));
+
+        emulator.WriteMemory(4U, MemSize::Nibble_Lower, 0x00);
+        Assert::AreEqual((uint8_t)0xF0, memory.at(4));
+        emulator.WriteMemory(4U, MemSize::Nibble_Lower, 0x0F);
+        Assert::AreEqual((uint8_t)0xFF, memory.at(4));
+
+        emulator.WriteMemory(4U, MemSize::Nibble_Upper, 0x00);
+        Assert::AreEqual((uint8_t)0x0F, memory.at(4));
+        emulator.WriteMemory(4U, MemSize::Nibble_Upper, 0x0F);
+        Assert::AreEqual((uint8_t)0xFF, memory.at(4));
+    }
 };
+
+std::array<uint8_t, 64> EmulatorContext_Tests::memory;
 
 } // namespace tests
 } // namespace data

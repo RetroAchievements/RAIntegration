@@ -4,6 +4,7 @@
 
 #include "RA_Interface.h"
 #include "ra_fwd.h"
+#include "data\Types.hh"
 
 #include <string>
 

@@ -52,6 +52,11 @@ public:
         return UnsupportedApi<SubmitLeaderboardEntry::Response>(SubmitLeaderboardEntry::Name());
     }
 
+    FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request&) override
+    {
+        return UnsupportedApi<FetchUserFriends::Response>(FetchUserFriends::Name());
+    }
+
     // === game functions ===
 
     ResolveHash::Response ResolveHash(const ResolveHash::Request&) override
@@ -62,6 +67,26 @@ public:
     FetchGameData::Response FetchGameData(const FetchGameData::Request&) override
     {
         return UnsupportedApi<FetchGameData::Response>(FetchGameData::Name());
+    }
+
+    FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request&) override
+    {
+        return UnsupportedApi<FetchCodeNotes::Response>(FetchCodeNotes::Name());
+    }
+
+    UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request&) override
+    {
+        return UnsupportedApi<UpdateCodeNote::Response>(UpdateCodeNote::Name());
+    }
+
+    DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request&) override
+    {
+        return UnsupportedApi<DeleteCodeNote::Response>(DeleteCodeNote::Name());
+    }
+
+    UpdateAchievement::Response UpdateAchievement(const UpdateAchievement::Request&) override
+    {
+        return UnsupportedApi<UpdateAchievement::Response>(UpdateAchievement::Name());
     }
 
     FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request&) override
@@ -94,6 +119,16 @@ public:
     SubmitTicket::Response SubmitTicket(const SubmitTicket::Request&) override
     {
         return UnsupportedApi<SubmitTicket::Response>(SubmitTicket::Name());
+    }
+
+    FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request&) override
+    {
+        return UnsupportedApi<FetchBadgeIds::Response>(FetchBadgeIds::Name());
+    }
+
+    UploadBadge::Response UploadBadge(const UploadBadge::Request&) override
+    {
+        return UnsupportedApi<UploadBadge::Response>(UploadBadge::Name());
     }
 
 protected:

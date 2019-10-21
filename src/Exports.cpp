@@ -41,6 +41,12 @@ API const char* CCONV _RA_HostName()
     return pConfiguration.GetHostName().c_str();
 }
 
+API const char* CCONV _RA_HostUrl()
+{
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    return pConfiguration.GetHostUrl().c_str();
+}
+
 API int CCONV _RA_HardcoreModeIsActive()
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -88,15 +94,15 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
         // show the welcome message
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\login.wav");
 
-        ra::ui::viewmodels::PopupMessageViewModel message;
-        message.SetTitle(ra::StringPrintf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
+        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
+        vmMessage->SetTitle(ra::StringPrintf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
             response.Username.c_str()));
-        message.SetDescription((response.NumUnreadMessages == 1)
+        vmMessage->SetDescription((response.NumUnreadMessages == 1)
             ? L"You have 1 new message"
             : ra::StringPrintf(L"You have %u new messages", response.NumUnreadMessages));
-        message.SetDetail(ra::StringPrintf(L"%u points", response.Score));
-        message.SetImage(ra::ui::ImageType::UserPic, response.Username);
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(message));
+        vmMessage->SetDetail(ra::StringPrintf(L"%u points", response.Score));
+        vmMessage->SetImage(ra::ui::ImageType::UserPic, response.Username);
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmMessage);
 
         // notify the client to update the RetroAchievements menu
         ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
@@ -157,8 +163,27 @@ API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
     ra::services::ServiceLocator::Provide<ra::data::ConsoleContext>(std::move(pContext));
 
 #ifndef RA_UTEST
-    g_MemoryDialog.UpdateMemoryRegions();
+    if (ra::services::ServiceLocator::Exists<ra::data::EmulatorContext>())
+        g_MemoryDialog.UpdateMemoryRegions();
 #endif
+}
+
+API void CCONV _RA_SetUserAgentDetail(const char* sDetail)
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+    pEmulatorContext.SetClientUserAgentDetail(sDetail);
+}
+
+API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
+{
+    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().AddMemoryBlock(nBankID, nBankSize,
+        reinterpret_cast<ra::data::EmulatorContext::MemoryReadFunction*>(pReader),
+        reinterpret_cast<ra::data::EmulatorContext::MemoryWriteFunction*>(pWriter));
+}
+
+API void CCONV _RA_ClearMemoryBanks()
+{
+    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().ClearMemoryBlocks();
 }
 
 API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)
@@ -184,14 +209,25 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
     vmEmulator.SetWindowTitle(sTitle);
 }
 
+API bool _RA_IsOverlayFullyVisible()
+{
+    return ra::services::ServiceLocator::Get<ra::ui::viewmodels::OverlayManager>().IsOverlayFullyVisible();
+}
+
 _Use_decl_annotations_
-API int _RA_UpdateOverlay(const ControllerInput* pInput, float fElapsedSeconds, bool, bool)
+API void _RA_NavigateOverlay(const ControllerInput* pInput)
 {
     static const ControllerInput pNoInput{};
     if (pInput == nullptr)
         pInput = &pNoInput;
 
-    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Update(*pInput, fElapsedSeconds);
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Update(*pInput);
+}
+
+_Use_decl_annotations_
+API int _RA_UpdateOverlay(const ControllerInput* pInput, float, bool, bool)
+{
+    _RA_NavigateOverlay(pInput);
     return true; // was return state = closing - does anything check this?
 }
 
@@ -199,17 +235,18 @@ API int _RA_UpdateOverlay(const ControllerInput* pInput, float fElapsedSeconds, 
 _Use_decl_annotations_
 API void _RA_RenderOverlay(HDC hDC, const RECT* rcSize)
 {
-    ra::ui::drawing::gdi::GDISurface pSurface(hDC, *rcSize);
-    ra::services::ServiceLocator::Get<ra::ui::viewmodels::OverlayManager>().Render(pSurface);
+    switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+    {
+        case EmulatorID::RA_Gens:
+            ra::ui::drawing::gdi::GDISurface pSurface(hDC, *rcSize);
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Render(pSurface, true);
+            break;
+    }
 }
 #endif
 
-API void CCONV _RA_DoAchievementsFrame()
+static void ProcessAchievements()
 {
-#ifndef RA_UTEST
-    g_MemoryDialog.Invalidate();
-#endif
-
     auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
     if (pRuntime.IsPaused())
         return;
@@ -247,6 +284,7 @@ API void CCONV _RA_DoAchievementsFrame()
             case ra::services::AchievementRuntime::ChangeType::AchievementTriggered:
             {
                 pGameContext.AwardAchievement(pChange.nId);
+
 #pragma warning(push)
 #pragma warning(disable : 26462)
                 auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
@@ -254,23 +292,14 @@ API void CCONV _RA_DoAchievementsFrame()
                 if (!pAchievement)
                     break;
 
+                if (pGameContext.HasRichPresence())
+                    pAchievement->SetUnlockRichPresence(pGameContext.GetRichPresenceDisplayString());
+
 #ifndef RA_UTEST
-                //	Reverse find where I am in the list:
-                unsigned int nOffset = 0;
-                for (nOffset = 0; nOffset < g_pActiveAchievements->NumAchievements(); ++nOffset)
-                {
-                    if (pAchievement == &g_pActiveAchievements->GetAchievement(nOffset))
-                        break;
-                }
+                g_AchievementsDialog.ReloadLBXData(pAchievement->ID());
 
-                ASSERT(nOffset < g_pActiveAchievements->NumAchievements());
-                if (nOffset < g_pActiveAchievements->NumAchievements())
-                {
-                    g_AchievementsDialog.ReloadLBXData(nOffset);
-
-                    if (g_AchievementEditorDialog.ActiveAchievement() == pAchievement)
-                        g_AchievementEditorDialog.LoadAchievement(pAchievement, TRUE);
-                }
+                if (g_AchievementEditorDialog.ActiveAchievement() == pAchievement)
+                    g_AchievementEditorDialog.LoadAchievement(pAchievement, TRUE);
 #endif
 
                 if (pAchievement->GetPauseOnTrigger())
@@ -293,7 +322,7 @@ API void CCONV _RA_DoAchievementsFrame()
                     {
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
                         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                            L"Challenge Available", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
+                            L"Leaderboard Attempt Started", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
                     }
 
                     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -328,11 +357,11 @@ API void CCONV _RA_DoAchievementsFrame()
                 if (pLeaderboard)
                 {
                     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
+                    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications))
                     {
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lbcancel.wav");
                         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-                            L"Leaderboard attempt canceled!", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
+                            L"Leaderboard Attempt Canceled", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
                     }
 
                     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -354,3 +383,18 @@ API void CCONV _RA_DoAchievementsFrame()
     }
 }
 
+API void CCONV _RA_DoAchievementsFrame()
+{
+    ProcessAchievements();
+
+#ifndef RA_UTEST
+    auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+    vmBookmarks.DoFrame();
+
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    pOverlayManager.AdvanceFrame();
+
+    // make sure we process the achievements _before_ the frozen bookmarks modify the memory
+    g_MemoryDialog.Invalidate();
+#endif
+}

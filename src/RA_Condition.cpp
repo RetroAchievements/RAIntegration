@@ -2,7 +2,7 @@
 
 #include "RA_Defs.h"
 
-_NODISCARD inline static constexpr auto ComparisonSizeToPrefix(_In_ MemSize nSize) noexcept
+_NODISCARD static _CONSTANT_FN ComparisonSizeToPrefix(_In_ MemSize nSize) noexcept
 {
     switch (nSize)
     {
@@ -56,6 +56,9 @@ void Condition::SerializeAppend(std::string& buffer) const
         case Type::AddHits:
             buffer.append("C:");
             break;
+        case Type::AndNext:
+            buffer.append("N:");
+            break;
         default:
             break;
     }
@@ -77,22 +80,27 @@ void CompVariable::SerializeAppend(std::string& buffer) const
     {
         case Type::ValueComparison:
             buffer.append(std::to_string(m_nVal));
-            break;
+            return;
 
         case Type::DeltaMem:
             buffer.append(1, 'd');
-            _FALLTHROUGH; // explicit fallthrough to Address
+            break;
+
+        case Type::PriorMem:
+            buffer.append(1, 'p');
+            break;
 
         case Type::Address:
-            buffer.append("0x");
-            buffer.append(ComparisonSizeToPrefix(m_nVarSize));
-            buffer.append(ra::StringPrintf("%04x", m_nVal));
             break;
 
         default:
-            ASSERT(!"Unknown type? (DynMem)?");
+            ASSERT(!"Unknown type");
             break;
     }
+
+    buffer.append("0x");
+    buffer.append(ComparisonSizeToPrefix(m_nVarSize));
+    buffer.append(ra::ByteAddressToString(m_nVal), 2);
 }
 
 void ConditionGroup::RemoveAt(size_t nID)
@@ -131,7 +139,7 @@ void ConditionSet::Serialize(std::string& buffer) const
     if (m_vConditionGroups.empty())
         return;
 
-    int conditions = 0;
+    size_t conditions = 0;
     for (const ConditionGroup& group : m_vConditionGroups)
         conditions += group.Count();
 

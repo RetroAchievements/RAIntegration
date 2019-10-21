@@ -29,7 +29,6 @@
 #include "RA_Log.h"
 #include "RA_Json.h"
 
-
 //	RA-Only
 using namespace std::string_literals;
 _CONSTANT_VAR BUFSIZ{ 512U }; // ANSI buffer size
@@ -37,6 +36,8 @@ _CONSTANT_VAR BYTESTRING_BUFSIZ{ BUFSIZ*4U }; // should be the same for MultiByt
 _CONSTANT_VAR WIDESTRING_BUFSIZ{ BUFSIZ*8U };
 _CONSTANT_VAR MAX_BUFSIZ{ BUFSIZ*128U }; // Try not to use this one
 #endif	// RA_EXPORTS
+
+#include "data\Types.hh"
 
 #define RA_DIR_OVERLAY                  L"Overlay\\"
 #define RA_DIR_BASE                     L"RACache\\"
@@ -182,7 +183,7 @@ public:
 
 namespace ra {
 _NODISCARD std::string ByteAddressToString(_In_ ByteAddress nAddr);
-_NODISCARD ByteAddress ByteAddressFromString(_In_ const std::string& sByteAddress) noexcept;
+_NODISCARD ByteAddress ByteAddressFromString(_In_ const std::string& sByteAddress);
 } // namespace ra
 
 #if _MBCS

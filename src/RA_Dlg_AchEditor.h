@@ -3,24 +3,11 @@
 #pragma once
 
 #include "RA_Achievement.h"
-#include "RA_httpthread.h"
 
 #include "ui\ImageReference.hh"
 
-class BadgeNames
-{
-public:
-    void InstallAchEditorCombo(HWND hCombo) noexcept { m_hDestComboBox = hCombo; }
-
-    void FetchNewBadgeNamesThreaded();
-    void AddNewBadgeName(const char* pStr, bool bAndSelect);
-    void OnNewBadgeNames(const rapidjson::Document& data);
-
-private:
-    HWND m_hDestComboBox = nullptr;
-};
-
 enum class CondSubItems : std::size_t;
+
 class Dlg_AchievementEditor
 {
 public:
@@ -48,8 +35,6 @@ public:
     void UpdateSelectedBadgeImage(
         const std::string& sBackupBadgeToUse = std::string()); // Call to just update the badge image/bitmap
 
-    BadgeNames& GetBadgeNames() noexcept { return m_BadgeNames; }
-
     size_t GetSelectedConditionGroup() const noexcept;
     void SetSelectedConditionGroup(size_t nGrp) const noexcept;
 
@@ -66,13 +51,12 @@ private:
     const int AddCondition(HWND hList, const Condition& Cond, unsigned int nCurrentHits);
     void UpdateCondition(HWND hList, LV_ITEM& item, const Condition& Cond, unsigned int nCurrentHits);
     void SetCell(HWND hList, LV_ITEM& item, int nRow, CondSubItems nColumn, const std::string& sNewValue);
-    void SetCell(HWND hList, LV_ITEM& item, int nRow, CondSubItems nColumn, std::string&& sNewValue);
+    void SetCell(HWND hList, LV_ITEM& item, int nRow, CondSubItems nColumn, std::string&& sNewValue) noexcept;
 
     unsigned int ParseValue(const std::string& sData, CompVariable::Type nType) const;
 
 private:
     static constexpr std::size_t m_nNumCols = 10U;
-    static constexpr std::size_t MAX_CONDITIONS = 200U;
     static constexpr std::size_t MEM_STRING_TEXT_LEN = 80U;
 
     HWND m_hAchievementEditorDlg = nullptr;
@@ -83,16 +67,13 @@ private:
     ra::tstring m_sTooltip;
     WNDPROC m_pListViewWndProc = nullptr;
 
-    using LbxData = std::array<std::array<std::string, m_nNumCols>, MAX_CONDITIONS>;
-
-    LbxData m_lbxData{};
-    int m_nNumOccupiedRows = 0;
+    std::vector<std::array<std::string, m_nNumCols>> m_lbxData{};
 
     Achievement* m_pSelectedAchievement = nullptr;
     BOOL m_bPopulatingAchievementEditorData = FALSE;
     ra::ui::ImageReference m_hAchievementBadge;
-
-    BadgeNames m_BadgeNames;
+    unsigned int m_nFirstBadge = 0U;
+    unsigned int m_nNextBadge = 0U;
 };
 
 void GenerateResizes(HWND hDlg);

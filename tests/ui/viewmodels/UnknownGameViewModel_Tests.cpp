@@ -56,7 +56,7 @@ public:
         Assert::AreEqual(0, vmUnknownGame.GetSelectedGameId());
         Assert::AreEqual(std::wstring(L""), vmUnknownGame.GetNewGameName());
         Assert::AreEqual(std::wstring(L""), vmUnknownGame.GetChecksum());
-        Assert::AreEqual(0U, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual({ 0U }, vmUnknownGame.GameTitles().Count());
     }
 
     TEST_METHOD(TestInitializeGameTitles)
@@ -79,13 +79,13 @@ public:
         vmUnknownGame.InitializeGameTitles();
 
         // <New Title> item should be loaded immediately
-        Assert::AreEqual(1U, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual({ 1U }, vmUnknownGame.GameTitles().Count());
         Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GameTitles().GetLabelForId(0));
         Assert::IsFalse(vmUnknownGame.GameTitles().IsFrozen());
 
         // after server response, collection should have three items
         vmUnknownGame.mockThreadPool.ExecuteNextTask();
-        Assert::AreEqual(3U, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual({ 3U }, vmUnknownGame.GameTitles().Count());
         Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GameTitles().GetLabelForId(0));
         Assert::AreEqual(std::wstring(L"Game 33"), vmUnknownGame.GameTitles().GetLabelForId(33));
         Assert::AreEqual(std::wstring(L"Game 37"), vmUnknownGame.GameTitles().GetLabelForId(37));

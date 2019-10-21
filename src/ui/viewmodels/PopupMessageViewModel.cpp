@@ -6,11 +6,6 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-static _CONSTANT_VAR FONT_TO_USE = "Tahoma";
-static _CONSTANT_VAR FONT_SIZE_TITLE = 24;
-static _CONSTANT_VAR FONT_SIZE_SUBTITLE = 20;
-static _CONSTANT_VAR FONT_SIZE_DETAIL = 18;
-
 const StringModelProperty PopupMessageViewModel::TitleProperty("PopupMessageViewModel", "Title", L"");
 const StringModelProperty PopupMessageViewModel::DescriptionProperty("PopupMessageViewModel", "Description", L"");
 const StringModelProperty PopupMessageViewModel::DetailProperty("PopupMessageViewModel", "Detail", L"");
@@ -23,9 +18,9 @@ void PopupMessageViewModel::BeginAnimation()
     // left margin 10px
     SetRenderLocationX(10);
 
-    // animate to bottom margin 10px. assume height = 64+2
+    // animate to bottom margin 10px. assume height = 64+6
     m_nInitialY = 0;
-    m_nTargetY = 10 + 64 + 2;
+    m_nTargetY = 10 + 64 + 6;
     SetRenderLocationY(m_nInitialY);
     SetRenderLocationYRelativePosition(RelativePosition::Far);
 }
@@ -70,23 +65,24 @@ bool PopupMessageViewModel::UpdateRenderImage(double fElapsed)
 
 void PopupMessageViewModel::CreateRenderImage()
 {
+    const auto& pOverlayTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+
     // create a temporary surface so we can determine the size required for the actual surface
     const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
     auto pSurface = pSurfaceFactory.CreateSurface(1, 1);
 
-    auto nFontTitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_TITLE, ra::ui::FontStyles::Normal);
+    const auto nFontTitle = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupTitle(), ra::ui::FontStyles::Normal);
     const auto sTitle = GetTitle();
     const auto szTitle = pSurface->MeasureText(nFontTitle, sTitle);
 
-    auto nFontSubtitle = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_SUBTITLE, ra::ui::FontStyles::Normal);
+    const auto nFontSubtitle = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupSubtitle(), ra::ui::FontStyles::Normal);
     const auto sSubTitle = GetDescription();
     const auto szSubTitle = pSurface->MeasureText(nFontSubtitle, sSubTitle);
 
-    auto nFontDetail = pSurface->LoadFont(FONT_TO_USE, FONT_SIZE_DETAIL, ra::ui::FontStyles::Normal);
+    const auto nFontDetail = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupDetail(), ra::ui::FontStyles::Normal);
     const auto sDetail = GetDetail();
     const auto szDetail = pSurface->MeasureText(nFontDetail, sDetail);
 
-    const auto& pOverlayTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
     const auto nShadowOffset = pOverlayTheme.ShadowOffset();
 
     // create the actual surface
@@ -96,52 +92,55 @@ void PopupMessageViewModel::CreateRenderImage()
         std::max(szTitle.Width, std::max(szSubTitle.Width, szDetail.Width) + nSubTitleIndent) + 6 + 4 + nShadowOffset;
     const int nHeight = 4 + nImageSize + 4 + nShadowOffset;
 
-    pSurface = pSurfaceFactory.CreateTransparentSurface(nWidth, nHeight);
-    m_pSurface = std::move(pSurface);
+    pSurface = pSurfaceFactory.CreateSurface(nWidth, nHeight);
 
     int nX = 4;
     int nY = 4;
 
     // background
-    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), ra::ui::Color::Transparent);
-    m_pSurface->FillRectangle(nShadowOffset, nShadowOffset, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset, pOverlayTheme.ColorShadow());
+    pSurface->FillRectangle(0, 0, nWidth, nHeight, ra::ui::Color::Transparent);
+    pSurface->FillRectangle(nShadowOffset, nShadowOffset, nWidth - nShadowOffset, nHeight - nShadowOffset, pOverlayTheme.ColorShadow());
 
     // frame
-    m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset, pOverlayTheme.ColorBackground());
-    m_pSurface->FillRectangle(1, 1, m_pSurface->GetWidth() - nShadowOffset - 2, m_pSurface->GetHeight() - nShadowOffset - 2, pOverlayTheme.ColorBorder());
-    m_pSurface->FillRectangle(2, 2, m_pSurface->GetWidth() - nShadowOffset - 4, m_pSurface->GetHeight() - nShadowOffset - 4, pOverlayTheme.ColorBackground());
+    pSurface->FillRectangle(0, 0, nWidth - nShadowOffset, nHeight - nShadowOffset, pOverlayTheme.ColorBackground());
+    pSurface->FillRectangle(1, 1, nWidth - nShadowOffset - 2, nHeight - nShadowOffset - 2, pOverlayTheme.ColorBorder());
+    pSurface->FillRectangle(2, 2, nWidth - nShadowOffset - 4, nHeight - nShadowOffset - 4, pOverlayTheme.ColorBackground());
 
     // image
     if (m_hImage.Type() != ra::ui::ImageType::None)
     {
-        m_pSurface->DrawImage(nX, nY, nImageSize, nImageSize, m_hImage);
+        pSurface->DrawImage(nX, nY, nImageSize, nImageSize, m_hImage);
         nX += nImageSize;
     }
     nX += 6;
 
     // title
     nY -= 1;
-    m_pSurface->WriteText(nX + 1, nY + 1, nFontTitle, pOverlayTheme.ColorTextShadow(), sTitle);
-    m_pSurface->WriteText(nX, nY, nFontTitle, pOverlayTheme.ColorTitle(), sTitle);
+    pSurface->WriteText(nX + 2, nY + 2, nFontTitle, pOverlayTheme.ColorTextShadow(), sTitle);
+    pSurface->WriteText(nX, nY, nFontTitle, pOverlayTheme.ColorTitle(), sTitle);
     nX += nSubTitleIndent;
 
     // subtitle
-    nY += FONT_SIZE_TITLE - 1;
+    nY += pOverlayTheme.FontSizePopupTitle() - 1;
     if (!sSubTitle.empty())
     {
-        m_pSurface->WriteText(nX + 1, nY + 1, nFontSubtitle, pOverlayTheme.ColorTextShadow(), sSubTitle);
-        m_pSurface->WriteText(nX, nY, nFontSubtitle, pOverlayTheme.ColorDescription(), sSubTitle);
+        pSurface->WriteText(nX + 2, nY + 2, nFontSubtitle, pOverlayTheme.ColorTextShadow(), sSubTitle);
+        pSurface->WriteText(nX, nY, nFontSubtitle, pOverlayTheme.ColorDescription(), sSubTitle);
     }
 
     // detail
-    nY += FONT_SIZE_SUBTITLE;
+    nY += pOverlayTheme.FontSizePopupSubtitle();
     if (!sDetail.empty())
     {
-        m_pSurface->WriteText(nX + 1, nY + 1, nFontDetail, pOverlayTheme.ColorTextShadow(), sDetail);
-        m_pSurface->WriteText(nX, nY, nFontDetail, IsDetailError() ? pOverlayTheme.ColorError() : pOverlayTheme.ColorDetail(), sDetail);
+        pSurface->WriteText(nX + 2, nY + 2, nFontDetail, pOverlayTheme.ColorTextShadow(), sDetail);
+        pSurface->WriteText(nX, nY, nFontDetail, IsDetailError() ? pOverlayTheme.ColorError() : pOverlayTheme.ColorDetail(), sDetail);
     }
 
-    m_pSurface->SetOpacity(0.85);
+    {
+        RenderImageLock lock(*this);
+
+        m_pSurface = std::move(pSurface);
+    }
 }
 
 } // namespace viewmodels

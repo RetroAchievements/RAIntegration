@@ -2,15 +2,21 @@
 
 #include "Exports.hh"
 
+#include "RA_Defs.h"
 #include "RA_Dlg_Achievement.h"
+#include "RA_Dlg_Memory.h"
 #include "RA_Log.h"
 #include "RA_StringUtils.h"
 
 #include "api\AwardAchievement.hh"
+#include "api\DeleteCodeNote.hh"
+#include "api\FetchCodeNotes.hh"
 #include "api\FetchGameData.hh"
 #include "api\FetchUserUnlocks.hh"
 #include "api\SubmitLeaderboardEntry.hh"
+#include "api\UpdateCodeNote.hh"
 
+#include "data\EmulatorContext.hh"
 #include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
@@ -27,10 +33,14 @@
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\ScoreboardViewModel.hh"
 
-extern bool g_bRAMTamperedWith;
-
 namespace ra {
 namespace data {
+
+static void RefreshOverlay()
+{
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    pOverlayManager.RefreshOverlay();
+}
 
 static void CopyAchievementData(Achievement& pAchievement,
                                 const ra::api::FetchGameData::Response::Achievement& pAchievementData)
@@ -47,10 +57,10 @@ static void CopyAchievementData(Achievement& pAchievement,
 
 void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 {
-    m_nGameId = nGameId;
     m_nMode = nMode;
     m_sGameTitle.clear();
-    m_pRichPresenceInterpreter.reset();
+    m_pRichPresence = nullptr;
+    m_mCodeNotes.clear();
     m_nNextLocalId = GameContext::FirstLocalId;
 
     if (!m_vAchievements.empty())
@@ -58,13 +68,6 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         for (auto& pAchievement : m_vAchievements)
             pAchievement->SetActive(false);
         m_vAchievements.clear();
-
-#ifndef RA_UTEST
-        // temporary code for compatibility until global collections are eliminated
-        g_pCoreAchievements->Clear();
-        g_pLocalAchievements->Clear();
-        g_pUnofficialAchievements->Clear();
-#endif
     }
 
     if (!m_vLeaderboards.empty())
@@ -77,8 +80,16 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     if (nGameId == 0)
     {
         m_sGameHash.clear();
+
+        if (m_nGameId != 0)
+        {
+            m_nGameId = 0;
+            OnActiveGameChanged();
+        }
         return;
     }
+
+    m_nGameId = nGameId;
 
     ra::api::FetchGameData::Request request;
     request.GameId = nGameId;
@@ -91,6 +102,8 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         return;
     }
 
+    RefreshCodeNotes();
+
 #ifndef RA_UTEST
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
 #endif
@@ -101,11 +114,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // rich presence
     if (!response.RichPresence.empty())
     {
-        ra::services::impl::StringTextReader pRichPresenceTextReader(response.RichPresence);
-
-        m_pRichPresenceInterpreter.reset(new RA_RichPresenceInterpreter());
-        if (!m_pRichPresenceInterpreter->Load(pRichPresenceTextReader))
-            m_pRichPresenceInterpreter.reset();
+        LoadRichPresenceScript(response.RichPresence);
 
         // TODO: this file is written so devs can modify the rich presence without having to restart
         // the game. if the user doesn't have dev permission, there's no reason to write it.
@@ -123,7 +132,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     unsigned int nTotalCoreAchievementPoints = 0;
     for (const auto& pAchievementData : response.Achievements)
     {
-        auto& pAchievement = NewAchievement(ra::itoe<AchievementSet::Type>(pAchievementData.CategoryId));
+        auto& pAchievement = NewAchievement(ra::itoe<Achievement::Category>(pAchievementData.CategoryId));
         pAchievement.SetID(pAchievementData.Id);
         CopyAchievementData(pAchievement, pAchievementData);
 
@@ -132,7 +141,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievementData.BadgeName);
 #endif
 
-        if (pAchievementData.CategoryId == ra::to_unsigned(ra::etoi(AchievementSet::Type::Core)))
+        if (pAchievementData.CategoryId == ra::to_unsigned(ra::etoi(Achievement::Category::Core)))
         {
             ++nNumCoreAchievements;
             nTotalCoreAchievementPoints += pAchievementData.Points;
@@ -154,6 +163,10 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     m_nNextLocalId = GameContext::FirstLocalId;
     MergeLocalAchievements();
 
+#ifndef RA_UTEST
+    g_AchievementsDialog.UpdateAchievementList();
+#endif
+
     // show "game loaded" popup
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
     const auto nPopup = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
@@ -163,6 +176,21 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
     // get user unlocks asynchronously
     RefreshUnlocks(!bWasPaused, nPopup);
+
+    OnActiveGameChanged();
+}
+
+void GameContext::OnActiveGameChanged()
+{
+    RefreshOverlay();
+
+    // create a copy of the list of pointers in case it's modified by one of the callbacks
+    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+    for (NotifyTarget* target : vNotifyTargets)
+    {
+        Expects(target != nullptr);
+        target->OnActiveGameChanged();
+    }
 }
 
 void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
@@ -204,7 +232,7 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
     for (auto nAchievementId : vLockedAchievements)
     {
         auto* pAchievement = FindAchievement(nAchievementId);
-        if (pAchievement && pAchievement->Category() == ra::etoi(AchievementSet::Type::Core))
+        if (pAchievement && pAchievement->GetCategory() == Achievement::Category::Core)
         {
             pAchievement->SetActive(true);
 
@@ -219,22 +247,7 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
         ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(false);
 
 #ifndef RA_UTEST
-    if (ActiveAchievementType() == AchievementSet::Type::Core)
-    {
-        for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
-        {
-            const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
-            g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Achieved, Ach.Active() ? "No" : "Yes");
-        }
-    }
-    else
-    {
-        for (int nIndex = 0; nIndex < ra::to_signed(g_pActiveAchievements->NumAchievements()); ++nIndex)
-        {
-            const Achievement& Ach = g_pActiveAchievements->GetAchievement(nIndex);
-            g_AchievementsDialog.OnEditData(nIndex, Dlg_Achievements::Column::Active, Ach.Active() ? "Yes" : "No");
-        }
-    }
+    g_AchievementsDialog.UpdateActiveAchievements();
 #endif
 
     if (nPopup)
@@ -245,7 +258,7 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
             size_t nUnlockedCoreAchievements = 0U;
             for (auto& pAchievement : m_vAchievements)
             {
-                if (pAchievement->Category() == ra::etoi(AchievementSet::Type::Core) && !pAchievement->Active())
+                if (pAchievement->GetCategory() == Achievement::Category::Core && !pAchievement->Active())
                     ++nUnlockedCoreAchievements;
             }
 
@@ -253,6 +266,22 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
             pPopup->RebuildRenderImage();
         }
     }
+
+    RefreshOverlay();
+}
+
+void GameContext::EnumerateFilteredAchievements(std::function<bool(const Achievement&)> callback) const
+{
+#ifdef RA_UTEST
+    EnumerateAchievements(callback);
+#else
+    for (auto nID : g_AchievementsDialog.FilteredAchievements())
+    {
+        const auto* pAchievement = FindAchievement(nID);
+        if (pAchievement != nullptr && !callback(*pAchievement))
+            break;
+    }
+#endif
 }
 
 void GameContext::MergeLocalAchievements()
@@ -292,12 +321,8 @@ void GameContext::MergeLocalAchievements()
             // append new local achievement to collection
             pAchievement = m_vAchievements.emplace_back(std::make_unique<Achievement>()).get();
             Ensures(pAchievement != nullptr);
-            pAchievement->SetCategory(ra::etoi(AchievementSet::Type::Local));
+            pAchievement->SetCategory(Achievement::Category::Local);
             pAchievement->SetID(nId);
-
-#ifndef RA_UTEST
-            g_pLocalAchievements->AddAchievement(pAchievement);
-#endif
         }
 
         // field 2: trigger
@@ -311,7 +336,7 @@ void GameContext::MergeLocalAchievements()
             // unquoted trigger requires special parsing because flags also use colons
             const char* pTrigger = pTokenizer.GetPointer(pTokenizer.CurrentPosition());
             const char* pScan = pTrigger;
-            while (*pScan && (*pScan != ':' || strchr("ABCPRabcpr", pScan[-1]) != nullptr))
+            while (*pScan && (*pScan != ':' || strchr("ABCNPRabcnpr", pScan[-1]) != nullptr))
                 pScan++;
 
             sTrigger.assign(pTrigger, pScan - pTrigger);
@@ -478,7 +503,7 @@ bool GameContext::SaveLocal() const
 
     for (const auto& pAchievement : m_vAchievements)
     {
-        if (!pAchievement || pAchievement->Category() != ra::etoi(AchievementSet::Type::Local))
+        if (!pAchievement || pAchievement->GetCategory() != Achievement::Category::Local)
             continue;
 
         // field 1: ID
@@ -518,59 +543,20 @@ bool GameContext::SaveLocal() const
     return true;
 }
 
-Achievement& GameContext::NewAchievement(AchievementSet::Type nType)
+Achievement& GameContext::NewAchievement(Achievement::Category nType)
 {
     Achievement& pAchievement = *m_vAchievements.emplace_back(std::make_unique<Achievement>());
-    pAchievement.SetCategory(ra::etoi(nType));
+    pAchievement.SetCategory(nType);
     pAchievement.SetID(m_nNextLocalId++);
-
-#ifndef RA_UTEST
-    // temporary code for compatibility until global collections are eliminated
-    switch (nType)
-    {
-        case AchievementSet::Type::Core:
-            g_pCoreAchievements->AddAchievement(&pAchievement);
-            break;
-
-        default:
-        case AchievementSet::Type::Unofficial:
-            g_pUnofficialAchievements->AddAchievement(&pAchievement);
-            break;
-
-        case AchievementSet::Type::Local:
-            g_pLocalAchievements->AddAchievement(&pAchievement);
-            break;
-    }
-#endif
-
     return pAchievement;
 }
 
-bool GameContext::RemoveAchievement(unsigned int nAchievementId)
+bool GameContext::RemoveAchievement(ra::AchievementID nAchievementId)
 {
     for (auto pIter = m_vAchievements.begin(); pIter != m_vAchievements.end(); ++pIter)
     {
         if (*pIter && (*pIter)->ID() == nAchievementId)
         {
-#ifndef RA_UTEST
-            // temporary code for compatibility until global collections are eliminated
-            switch (ra::itoe<AchievementSet::Type>((*pIter)->Category()))
-            {
-                case AchievementSet::Type::Core:
-                    g_pCoreAchievements->RemoveAchievement(pIter->get());
-                    break;
-
-                default:
-                case AchievementSet::Type::Unofficial:
-                    g_pUnofficialAchievements->RemoveAchievement(pIter->get());
-                    break;
-
-                case AchievementSet::Type::Local:
-                    g_pLocalAchievements->RemoveAchievement(pIter->get());
-                    break;
-            }
-#endif
-
             m_vAchievements.erase(pIter);
             return true;
         }
@@ -579,75 +565,83 @@ bool GameContext::RemoveAchievement(unsigned int nAchievementId)
     return false;
 }
 
-void GameContext::AwardAchievement(unsigned int nAchievementId) const
+void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
 {
     auto* pAchievement = FindAchievement(nAchievementId);
     if (pAchievement == nullptr)
         return;
 
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    bool bTakeScreenshot = pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot);
     bool bSubmit = false;
     bool bIsError = false;
 
-    ra::ui::viewmodels::PopupMessageViewModel vmPopup;
-    vmPopup.SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()));
-    vmPopup.SetDetail(ra::Widen(pAchievement->Description()));
-    vmPopup.SetImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
+    std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
+    vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()));
+    vmPopup->SetDetail(ra::Widen(pAchievement->Description()));
+    vmPopup->SetImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
 
-    switch (ra::itoe<AchievementSet::Type>(pAchievement->Category()))
+    switch (pAchievement->GetCategory())
     {
-        case AchievementSet::Type::Local:
-            vmPopup.SetTitle(L"Local Achievement Unlocked");
+        case Achievement::Category::Local:
+            vmPopup->SetTitle(L"Local Achievement Unlocked");
             bSubmit = false;
+            bTakeScreenshot = false;
             break;
 
-        case AchievementSet::Type::Unofficial:
-            vmPopup.SetTitle(L"Unofficial Achievement Unlocked");
+        case Achievement::Category::Unofficial:
+            vmPopup->SetTitle(L"Unofficial Achievement Unlocked");
             bSubmit = false;
             break;
 
         default:
-            vmPopup.SetTitle(L"Achievement Unlocked");
+            vmPopup->SetTitle(L"Achievement Unlocked");
             bSubmit = true;
             break;
     }
 
     if (m_nMode == Mode::CompatibilityTest)
     {
-        auto sHeader = vmPopup.GetTitle();
+        auto sHeader = vmPopup->GetTitle();
         sHeader.insert(0, L"Test ");
-        vmPopup.SetTitle(sHeader);
+        vmPopup->SetTitle(sHeader);
 
         bSubmit = false;
     }
 
     if (pAchievement->Modified())
     {
-        auto sHeader = vmPopup.GetTitle();
+        auto sHeader = vmPopup->GetTitle();
         sHeader.insert(0, L"Modified ");
-        if (ActiveAchievementType() != AchievementSet::Type::Local)
-            sHeader.insert(sHeader.length() - 8, L"NOT ");
-        vmPopup.SetTitle(sHeader);
+        sHeader.insert(sHeader.length() - 8, L"NOT ");
+        vmPopup->SetTitle(sHeader);
 
         bIsError = true;
         bSubmit = false;
+        bTakeScreenshot = false;
     }
 
-#ifndef RA_UTEST
-    if (bSubmit && g_bRAMTamperedWith)
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    if (bSubmit && pEmulatorContext.WasMemoryModified())
     {
-        vmPopup.SetTitle(L"Achievement NOT Unlocked");
-        vmPopup.SetErrorDetail(L"Error: RAM tampered with");
+        vmPopup->SetTitle(L"Achievement NOT Unlocked");
+        vmPopup->SetErrorDetail(L"Error: RAM tampered with");
 
         bIsError = true;
         bSubmit = false;
     }
-#endif
 
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
         bIsError ? L"Overlay\\acherror.wav" : L"Overlay\\unlock.wav");
 
-    const auto nPopupId =
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(vmPopup));
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    const auto nPopupId = pOverlayManager.QueueMessage(vmPopup);
+
+    if (bTakeScreenshot)
+    {
+        std::wstring sPath = ra::StringPrintf(L"%s%u.png", pConfiguration.GetScreenshotDirectory(), nAchievementId);
+        pOverlayManager.CaptureScreenshot(nPopupId, sPath);
+    }
 
     pAchievement->SetActive(false);
 
@@ -685,48 +679,41 @@ void GameContext::AwardAchievement(unsigned int nAchievementId) const
             }
             else
             {
-                ra::ui::viewmodels::PopupMessageViewModel vmPopup;
-                vmPopup.SetTitle(L"Achievement NOT Unlocked");
-                vmPopup.SetErrorDetail(response.ErrorMessage.empty() ?
+                std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
+                vmPopup->SetTitle(L"Achievement NOT Unlocked");
+                vmPopup->SetErrorDetail(response.ErrorMessage.empty() ?
                     L"Error submitting unlock" : ra::Widen(response.ErrorMessage));
 
                 const auto& pGameContext = ra::services::ServiceLocator::Get<GameContext>();
                 const auto* pAchievement = pGameContext.FindAchievement(nAchievementId);
                 if (pAchievement != nullptr)
                 {
-                    vmPopup.SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()));
-                    vmPopup.SetImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
+                    vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()));
+                    vmPopup->SetImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
                 }
                 else
                 {
-                    vmPopup.SetDescription(ra::StringPrintf(L"Achievement %u", nAchievementId));
+                    vmPopup->SetDescription(ra::StringPrintf(L"Achievement %u", nAchievementId));
                 }
 
                 ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\acherror.wav");
-                pOverlayManager.QueueMessage(std::move(vmPopup));
+                pOverlayManager.QueueMessage(vmPopup);
             }
         }
     });
 }
 
-void GameContext::ReloadAchievements(int nCategory)
+void GameContext::ReloadAchievements(Achievement::Category nCategory)
 {
-    if (nCategory == ra::etoi(AchievementSet::Type::Local))
+    if (nCategory == Achievement::Category::Local)
     {
         auto pIter = m_vAchievements.begin();
         while (pIter != m_vAchievements.end())
         {
-            if ((*pIter)->Category() == nCategory)
-            {
-#ifndef RA_UTEST
-                g_pLocalAchievements->RemoveAchievement(pIter->get());
-#endif
+            if ((*pIter)->GetCategory() == nCategory)
                 pIter = m_vAchievements.erase(pIter);
-            }
             else
-            {
                 ++pIter;
-            }
         }
 
         MergeLocalAchievements();
@@ -735,9 +722,13 @@ void GameContext::ReloadAchievements(int nCategory)
     {
         // TODO
     }
+
+#ifndef RA_UTEST
+    g_AchievementsDialog.UpdateAchievementList();
+#endif
 }
 
-bool GameContext::ReloadAchievement(unsigned int nAchievementId)
+bool GameContext::ReloadAchievement(ra::AchievementID nAchievementId)
 {
     auto pIter = m_vAchievements.begin();
     while (pIter != m_vAchievements.end())
@@ -759,7 +750,7 @@ bool GameContext::ReloadAchievement(unsigned int nAchievementId)
 
 bool GameContext::ReloadAchievement(Achievement& pAchievement)
 {
-    if (pAchievement.Category() == ra::etoi(AchievementSet::Type::Local))
+    if (pAchievement.GetCategory() == Achievement::Category::Local)
     {
         // TODO
     }
@@ -813,42 +804,41 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
     if (pLeaderboard == nullptr)
         return;
 
-#ifndef RA_UTEST
-    if (g_bRAMTamperedWith)
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    if (pEmulatorContext.WasMemoryModified())
     {
-        ra::ui::viewmodels::PopupMessageViewModel vmPopup;
-        vmPopup.SetTitle(L"Leaderboard NOT Submitted");
-        vmPopup.SetDescription(ra::Widen(pLeaderboard->Title()));
-        vmPopup.SetErrorDetail(L"Error: RAM tampered with");
+        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
+        vmPopup->SetTitle(L"Leaderboard NOT Submitted");
+        vmPopup->SetDescription(ra::Widen(pLeaderboard->Title()));
+        vmPopup->SetErrorDetail(L"Error: RAM tampered with");
 
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(vmPopup));
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
         return;
     }
-#endif
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
-        ra::ui::viewmodels::PopupMessageViewModel vmPopup;
-        vmPopup.SetTitle(L"Leaderboard NOT Submitted");
-        vmPopup.SetDescription(ra::Widen(pLeaderboard->Title()));
-        vmPopup.SetErrorDetail(L"Submission requires Hardcore mode");
+        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
+        vmPopup->SetTitle(L"Leaderboard NOT Submitted");
+        vmPopup->SetDescription(ra::Widen(pLeaderboard->Title()));
+        vmPopup->SetErrorDetail(L"Submission requires Hardcore mode");
 
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(vmPopup));
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
         return;
     }
 
     if (m_nMode == Mode::CompatibilityTest)
     {
-        ra::ui::viewmodels::PopupMessageViewModel vmPopup;
-        vmPopup.SetTitle(L"Leaderboard NOT Submitted");
-        vmPopup.SetDescription(ra::Widen(pLeaderboard->Title()));
-        vmPopup.SetDetail(L"Leaderboards are not submitted in test mode.");
+        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
+        vmPopup->SetTitle(L"Leaderboard NOT Submitted");
+        vmPopup->SetDescription(ra::Widen(pLeaderboard->Title()));
+        vmPopup->SetDetail(L"Leaderboards are not submitted in test mode.");
 
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(vmPopup));
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
         return;
     }
 
@@ -862,12 +852,12 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
 
         if (!response.Succeeded())
         {
-            ra::ui::viewmodels::PopupMessageViewModel vmPopup;
-            vmPopup.SetTitle(L"Leaderboard NOT Submitted");
-            vmPopup.SetDescription(pLeaderboard ? ra::Widen(pLeaderboard->Title()) : ra::StringPrintf(L"Leaderboard %u", nLeaderboardId));
-            vmPopup.SetDetail(!response.ErrorMessage.empty() ? ra::StringPrintf(L"Error: %s", response.ErrorMessage) : L"Error submitting entry");
+            std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
+            vmPopup->SetTitle(L"Leaderboard NOT Submitted");
+            vmPopup->SetDescription(pLeaderboard ? ra::Widen(pLeaderboard->Title()) : ra::StringPrintf(L"Leaderboard %u", nLeaderboardId));
+            vmPopup->SetDetail(!response.ErrorMessage.empty() ? ra::StringPrintf(L"Error: %s", response.ErrorMessage) : L"Error submitting entry");
 
-            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(std::move(vmPopup));
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
         }
         else if (pLeaderboard)
         {
@@ -878,6 +868,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
                 vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->Title()));
 
                 const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+                const int nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
 
                 for (const auto& pEntry : response.TopEntries)
                 {
@@ -888,6 +879,32 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
 
                     if (pEntry.User == pUserName)
                         pEntryViewModel.SetHighlighted(true);
+
+                    if (vmScoreboard.Entries().Count() == nEntriesDisplayed)
+                        break;
+                }
+
+                if (response.NewRank >= nEntriesDisplayed)
+                {
+                    auto* pEntryViewModel = vmScoreboard.Entries().GetItemAt(6);
+                    if (pEntryViewModel != nullptr)
+                    {
+                        pEntryViewModel->SetRank(response.NewRank);
+
+                        if (response.BestScore != response.Score)
+                            pEntryViewModel->SetScore(ra::StringPrintf(L"(%s) %s", pLeaderboard->FormatScore(response.Score), pLeaderboard->FormatScore(response.BestScore)));
+                        else
+                            pEntryViewModel->SetScore(ra::Widen(pLeaderboard->FormatScore(response.BestScore)));
+
+                        pEntryViewModel->SetUserName(ra::Widen(pUserName));
+                        pEntryViewModel->SetHighlighted(true);
+                    }
+                }
+                else if (response.BestScore != response.Score)
+                {
+                    auto* pEntryViewModel = vmScoreboard.Entries().GetItemAt(response.NewRank - 1);
+                    if (pEntryViewModel != nullptr)
+                        pEntryViewModel->SetScore(ra::StringPrintf(L"(%s) %s", pLeaderboard->FormatScore(response.Score), pLeaderboard->FormatScore(response.BestScore)));
                 }
 
                 ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(
@@ -897,24 +914,294 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
     });
 }
 
+void GameContext::LoadRichPresenceScript(const std::string& sRichPresenceScript)
+{
+    if (sRichPresenceScript.empty())
+    {
+        m_pRichPresence = nullptr;
+        return;
+    }
+
+    const int nSize = rc_richpresence_size(sRichPresenceScript.c_str());
+    if (nSize < 0)
+    {
+        // parse error occurred
+        RA_LOG("rc_richpresence_size returned %d", nSize);
+        m_pRichPresence = nullptr;
+
+        const std::string sErrorRP = ra::StringPrintf("Display:\nParse error %d\n", nSize);
+        const int nSize2 = rc_richpresence_size(sErrorRP.c_str());
+        if (nSize2 > 0)
+        {
+            m_pRichPresenceBuffer = std::make_shared<std::vector<unsigned char>>(nSize2);
+            auto* pRichPresence = rc_parse_richpresence(m_pRichPresenceBuffer->data(), sErrorRP.c_str(), nullptr, 0);
+            m_pRichPresence = pRichPresence;
+        }
+    }
+    else
+    {
+        // allocate space and parse again
+        m_pRichPresenceBuffer = std::make_shared<std::vector<unsigned char>>(nSize);
+        auto* pRichPresence = rc_parse_richpresence(m_pRichPresenceBuffer->data(), sRichPresenceScript.c_str(), nullptr, 0);
+        m_pRichPresence = pRichPresence;
+    }
+}
+
 bool GameContext::HasRichPresence() const noexcept
 {
-    return (m_pRichPresenceInterpreter != nullptr && m_pRichPresenceInterpreter->Enabled());
+    return (m_pRichPresence != nullptr);
 }
 
 std::wstring GameContext::GetRichPresenceDisplayString() const
 {
-    if (m_pRichPresenceInterpreter == nullptr)
+    if (m_pRichPresence == nullptr)
         return std::wstring(L"No Rich Presence defined.");
 
-    return ra::Widen(m_pRichPresenceInterpreter->GetRichPresenceString());
+    auto pRichPresence = static_cast<rc_richpresence_t*>(m_pRichPresence);
+    std::string sRichPresence;
+    sRichPresence.resize(512);
+    const auto nLength = rc_evaluate_richpresence(pRichPresence, sRichPresence.data(),
+        gsl::narrow_cast<unsigned int>(sRichPresence.capacity()), rc_peek_callback, nullptr, nullptr);
+    sRichPresence.resize(nLength);
+
+    return ra::Widen(sRichPresence);
 }
 
 void GameContext::ReloadRichPresenceScript()
 {
-    m_pRichPresenceInterpreter.reset(new RA_RichPresenceInterpreter());
-    if (!m_pRichPresenceInterpreter->Load())
-        m_pRichPresenceInterpreter.reset();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.GameId()));
+    if (pRich == nullptr)
+        return;
+
+    std::string sRichPresence, sLine;
+    while (pRich->GetLine(sLine))
+    {
+        sRichPresence.append(sLine);
+        sRichPresence.append("\n");
+    }
+
+    LoadRichPresenceScript(sRichPresence);
+}
+
+void GameContext::RefreshCodeNotes()
+{
+    m_mCodeNotes.clear();
+
+    if (m_nGameId == 0)
+        return;
+
+    ra::api::FetchCodeNotes::Request request;
+    request.GameId = m_nGameId;
+    request.CallAsync([this](const ra::api::FetchCodeNotes::Response& response)
+    {
+        if (response.Failed())
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download code notes",
+                ra::Widen(response.ErrorMessage));
+            return;
+        }
+
+        for (const auto& pNote : response.Notes)
+            AddCodeNote(pNote.Address, pNote.Author, pNote.Note);
+
+#ifndef RA_UTEST
+        g_MemoryDialog.RepopulateCodeNotes();
+#endif
+    });
+}
+
+void GameContext::AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
+{
+    unsigned int nBytes = 1;
+
+    // attempt to match "X byte", "X Byte", "XX bytes", or "XX Bytes"
+    auto nIndex = sNote.find(L"yte");
+    if (nIndex != std::string::npos && nIndex >= 3)
+    {
+        wchar_t c = sNote.at(--nIndex);
+        if (c == L'b' || c == L'B')
+        {
+            c = sNote.at(--nIndex);
+            if (c == L'-' || c == L' ')
+                c = sNote.at(--nIndex);
+
+            if (c >= L'0' && c <= L'9')
+            {
+                int nMultiplier = 1;
+                nBytes = 0;
+                do
+                {
+                    nBytes += (c - L'0') * nMultiplier;
+                    if (nIndex == 0)
+                        break;
+
+                    nMultiplier *= 10;
+                    c = sNote.at(--nIndex);
+                } while (c >= L'0' && c <= L'9');
+            }
+        }
+    }
+
+    if (nBytes == 1)
+    {
+        // attempt to match "16-bit" or "32-bit"
+        nIndex = sNote.find(L"Bit");
+        if (nIndex == std::string::npos)
+            nIndex = sNote.find(L"bit");
+
+        if (nIndex != std::string::npos && nIndex >= 3)
+        {
+            wchar_t c = sNote.at(--nIndex);
+            if (c == L'-' || c == L' ')
+                c = sNote.at(--nIndex);
+
+            if (c == L'6' && sNote.at(nIndex - 1) == L'1')
+                nBytes = 2;
+            else if (c == L'2' && sNote.at(nIndex - 1) == L'3')
+                nBytes = 4;
+        }
+    }
+
+    m_mCodeNotes.insert_or_assign(nAddress, CodeNote{ sAuthor, sNote, nBytes });
+    OnCodeNoteChanged(nAddress, sNote);
+}
+
+void GameContext::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
+{
+    if (!m_vNotifyTargets.empty())
+    {
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
+            target->OnCodeNoteChanged(nAddress, sNewNote);
+        }
+    }
+}
+
+std::wstring GameContext::FindCodeNote(ra::ByteAddress nAddress, MemSize nSize) const
+{
+    unsigned int nCheckSize = 0;
+    switch (nSize)
+    {
+        case MemSize::SixteenBit:
+            nCheckSize = 2;
+            break;
+
+        case MemSize::ThirtyTwoBit:
+            nCheckSize = 4;
+            break;
+
+        default: // 1 byte or less
+            nCheckSize = 1;
+            break;
+    }
+
+    // lower_bound will return the item if it's an exact match, or the *next* item otherwise
+    auto pIter = m_mCodeNotes.lower_bound(nAddress);
+    if (pIter != m_mCodeNotes.end())
+    {
+        const ra::ByteAddress nNoteAddress = pIter->first;
+        const unsigned int nNoteSize = pIter->second.Bytes;
+
+        // exact match
+        if (nAddress == nNoteAddress && nNoteSize == nCheckSize)
+            return pIter->second.Note;
+
+        // check for overlap
+        if (nAddress + nCheckSize - 1 >= nNoteAddress)
+        {
+            if (nCheckSize == 1)
+                return ra::StringPrintf(L"%s [%d/%d]", pIter->second.Note, nNoteAddress - nAddress + 1, nNoteSize);
+
+            return pIter->second.Note + L" [partial]";
+        }
+    }
+
+    // check previous note for overlap
+    if (pIter != m_mCodeNotes.begin())
+    {
+        --pIter;
+
+        if (pIter->first + pIter->second.Bytes - 1 >= nAddress)
+        {
+            if (nCheckSize == 1)
+                return ra::StringPrintf(L"%s [%d/%d]", pIter->second.Note, nAddress - pIter->first + 1, pIter->second.Bytes);
+
+            return pIter->second.Note + L" [partial]";
+        }
+    }
+
+    return std::wstring();
+}
+
+bool GameContext::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
+{
+    if (m_nGameId == 0)
+        return false;
+
+    ra::api::UpdateCodeNote::Request request;
+    request.GameId = m_nGameId;
+    request.Address = nAddress;
+    request.Note = sNote;
+
+    do
+    {
+        auto response = request.Call();
+        if (response.Succeeded())
+        {
+            const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+            AddCodeNote(nAddress, pUserContext.GetUsername(), sNote);
+            return true;
+        }
+
+        ra::ui::viewmodels::MessageBoxViewModel vmMessage;
+        vmMessage.SetHeader(ra::StringPrintf(L"Error saving note for address %s", ra::ByteAddressToString(nAddress)));
+        vmMessage.SetMessage(ra::Widen(response.ErrorMessage));
+        vmMessage.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::RetryCancel);
+        if (vmMessage.ShowModal() == ra::ui::DialogResult::Cancel)
+            break;
+
+    } while (true);
+
+    return false;
+}
+
+bool GameContext::DeleteCodeNote(ra::ByteAddress nAddress)
+{
+    if (m_mCodeNotes.find(nAddress) == m_mCodeNotes.end())
+        return true;
+
+    if (m_nGameId == 0)
+        return false;
+
+    ra::api::DeleteCodeNote::Request request;
+    request.GameId = m_nGameId;
+    request.Address = nAddress;
+
+    do
+    {
+        auto response = request.Call();
+        if (response.Succeeded())
+        {
+            m_mCodeNotes.erase(nAddress);
+            OnCodeNoteChanged(nAddress, L"");
+            return true;
+        }
+
+        ra::ui::viewmodels::MessageBoxViewModel vmMessage;
+        vmMessage.SetHeader(ra::StringPrintf(L"Error deleting note for address %s", ra::ByteAddressToString(nAddress)));
+        vmMessage.SetMessage(ra::Widen(response.ErrorMessage));
+        vmMessage.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::RetryCancel);
+        if (vmMessage.ShowModal() == ra::ui::DialogResult::Cancel)
+            break;
+
+    } while (true);
+
+    return false;
 }
 
 } // namespace data

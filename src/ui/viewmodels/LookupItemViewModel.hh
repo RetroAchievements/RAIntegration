@@ -65,13 +65,18 @@ public:
     GSL_SUPPRESS_C128 LookupItemViewModel& Add(int nId, const std::wstring& sLabel)
     {
         auto pItem = std::make_unique<LookupItemViewModel>(nId, sLabel);
-        return dynamic_cast<LookupItemViewModel&>(ViewModelCollectionBase::Add(std::move(pItem)));
+        return dynamic_cast<LookupItemViewModel&>(ViewModelCollectionBase::AddItem(std::move(pItem)));
     }
 
     /// <summary>
     /// Gets the item at the specified index.
     /// </summary>
     LookupItemViewModel* GetItemAt(gsl::index nIndex) { return dynamic_cast<LookupItemViewModel*>(GetViewModelAt(nIndex)); }
+
+    /// <summary>
+    /// Gets the item at the specified index.
+    /// </summary>
+    const LookupItemViewModel* GetItemAt(gsl::index nIndex) const { return dynamic_cast<const LookupItemViewModel*>(GetViewModelAt(nIndex)); }
 
     /// <summary>
     /// Gets the label for item specified by the provided ID.

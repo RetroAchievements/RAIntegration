@@ -6,10 +6,11 @@
     <RA_DIR>$(SolutionDir)</RA_DIR>
     <RapidJSON_IncludeDir>$(RA_DIR)rapidjson\include\</RapidJSON_IncludeDir>
     <rcheevos_IncludePath>$(RA_DIR)rcheevos\include\</rcheevos_IncludePath>
+    <RAInterface_IncludePath>$(RA_DIR)RAInterface</RAInterface_IncludePath>
     <RA_SourceDir>$(RA_DIR)src\</RA_SourceDir>
     <GSL_IncludeDir>$(RA_DIR)GSL\include\</GSL_IncludeDir>
     <Lua_Dir>$(RA_DIR)lua\</Lua_Dir>
-    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RapidJSON_IncludeDir);$(rcheevos_IncludePath);$(Lua_Dir);$(MSTest_IncludePath);$(GSL_IncludeDir)</RA_IncludePath>
+    <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RAInterface_IncludePath);$(RapidJSON_IncludeDir);$(rcheevos_IncludePath);$(Lua_Dir);$(MSTest_IncludePath);$(GSL_IncludeDir)</RA_IncludePath>
     <XPDeprecationWarning>false</XPDeprecationWarning>
   </PropertyGroup>
   <PropertyGroup>
@@ -35,12 +36,8 @@
       <ConformanceMode>true</ConformanceMode>
       <WarningLevel>Level4</WarningLevel>
     </ClCompile>
-    <PostBuildEvent>
-      <Command>
-      </Command>
-    </PostBuildEvent>
     <Link>
-      <ProgramDatabaseFile>$(LocalDebuggerWorkingDirectory)\$(TargetName).pdb</ProgramDatabaseFile>
+      <ProgramDatabaseFile>$(OutDir)\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -54,6 +51,10 @@
     </BuildMacro>
     <BuildMacro Include="rcheevos_IncludePath">
       <Value>$(rcheevos_IncludePath)</Value>
+      <EnvironmentVariable>true</EnvironmentVariable>
+    </BuildMacro>
+    <BuildMacro Include="RAInterface_IncludePath">
+      <Value>$(RAInterface_IncludePath)</Value>
       <EnvironmentVariable>true</EnvironmentVariable>
     </BuildMacro>
     <BuildMacro Include="RA_SourceDir">

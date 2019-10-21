@@ -91,6 +91,7 @@ public:
     TEST_METHOD(TestIdentifyGameKnown)
     {
         GameIdentifierHarness identifier;
+        identifier.mockUserContext.Initialize("User", "ApiToken");
         identifier.MockResolveHashResponse(23U);
 
         Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
@@ -100,6 +101,7 @@ public:
     TEST_METHOD(TestIdentifyGameNull)
     {
         GameIdentifierHarness identifier;
+        identifier.mockUserContext.Initialize("User", "ApiToken");
         identifier.MockResolveHashResponse(23U);
 
         Assert::AreEqual(0U, identifier.IdentifyGame(nullptr, ROM.size()));
@@ -156,27 +158,27 @@ public:
         Assert::IsTrue(bDialogShown);
     }
 
-    TEST_METHOD(TestIdentifyGameUnknownNotLoggedIn)
+    TEST_METHOD(TestIdentifyGameNotLoggedIn)
     {
         GameIdentifierHarness identifier;
-        identifier.MockResolveHashResponse(0U);
-        identifier.mockEmulatorContext.MockGameTitle("TestGame");
+        identifier.mockUserContext.Logout();
 
         bool bDialogShown = false;
-        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
-            [&bDialogShown](ra::ui::viewmodels::UnknownGameViewModel&)
+        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
+            Assert::AreEqual(std::wstring(L"Cannot load achievements"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"You must be logged in to load achievements. Please reload the game after logging in."), vmMessageBox.GetMessage());
             bDialogShown = true;
-            return ra::ui::DialogResult::Cancel;
+            return ra::ui::DialogResult::OK;
         });
 
         Assert::AreEqual(0U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
-        Assert::IsFalse(bDialogShown);
     }
 
     TEST_METHOD(TestIdentifyGameNoConsole)
     {
         GameIdentifierHarness identifier;
+        identifier.mockUserContext.Initialize("User", "ApiToken");
         identifier.mockConsoleContext.SetId(ConsoleID::UnknownConsoleID);
 
         bool bDialogShown = false;
@@ -336,6 +338,89 @@ public:
         Expects(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Playing in Softcore Mode"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L""), pPopup->GetDescription());
+    }
+
+    TEST_METHOD(TestActivateGamePendingNonHardcoreWarningNoCoreAchievements)
+    {
+        GameIdentifierHarness identifier;
+        identifier.MockResolveHashResponse(23U);
+        identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
+        identifier.mockUserContext.Initialize("User", "ApiToken");
+
+        Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+        identifier.ActivateGame(23U);
+
+        Assert::AreEqual(23U, identifier.mockGameContext.GameId());
+        Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
+        Assert::AreEqual(23U, identifier.mockSessionTracker.CurrentSessionGameId());
+        const auto* pPopup = identifier.mockOverlayManager.GetMessage(1U);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(std::wstring(L"Playing in Softcore Mode"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L""), pPopup->GetDescription());
+
+        Assert::IsFalse(identifier.mockDesktop.WasDialogShown());
+        Assert::IsFalse(identifier.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestActivateGamePendingNonHardcoreWarningDecline)
+    {
+        GameIdentifierHarness identifier;
+        identifier.MockResolveHashResponse(23U);
+        identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
+        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockGameContext.NewAchievement(Achievement::Category::Core);
+        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel & vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Enable Hardcore mode?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"You are loading a game with achievements and do not currently have hardcore mode enabled."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return ra::ui::DialogResult::No;
+        });
+
+        Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+        identifier.ActivateGame(23U);
+
+        Assert::AreEqual(23U, identifier.mockGameContext.GameId());
+        Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
+        Assert::AreEqual(23U, identifier.mockSessionTracker.CurrentSessionGameId());
+        const auto* pPopup = identifier.mockOverlayManager.GetMessage(1U);
+        Assert::IsNull(pPopup);
+
+        Assert::IsTrue(identifier.mockDesktop.WasDialogShown());
+        Assert::IsFalse(identifier.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestActivateGamePendingNonHardcoreWarningAccept)
+    {
+        GameIdentifierHarness identifier;
+        identifier.MockResolveHashResponse(23U);
+        identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
+        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.mockGameContext.NewAchievement(Achievement::Category::Core);
+        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel & vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Enable Hardcore mode?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"You are loading a game with achievements and do not currently have hardcore mode enabled."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return ra::ui::DialogResult::Yes;
+        });
+
+        Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+        identifier.ActivateGame(23U);
+
+        Assert::AreEqual(23U, identifier.mockGameContext.GameId());
+        Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
+        Assert::AreEqual(23U, identifier.mockSessionTracker.CurrentSessionGameId());
+        const auto* pPopup = identifier.mockOverlayManager.GetMessage(1U);
+        Assert::IsNull(pPopup);
+
+        Assert::IsTrue(identifier.mockDesktop.WasDialogShown());
+        Assert::IsTrue(identifier.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
     }
 
     TEST_METHOD(TestIdentifyAndActivateGameHardcore)

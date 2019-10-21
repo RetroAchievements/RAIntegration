@@ -10,3 +10,6 @@
 [submodule "GSL"]
 	path = GSL
 	url = https://github.com/Microsoft/GSL.git
+[submodule "RAInterface"]
+	path = RAInterface
+	url = https://github.com/RetroAchievements/RAInterface.git

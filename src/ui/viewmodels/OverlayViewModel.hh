@@ -9,8 +9,20 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class OverlayViewModel : public PopupViewModelBase {
+class OverlayViewModel : public PopupViewModelBase
+{
 public:
+    enum class State
+    {
+        Hidden,
+        FadeIn,
+        Visible,
+        FadeOutRequested,
+        FadeOut,
+    };
+
+    State CurrentState() const noexcept { return m_nState; }
+
     /// <summary>
     /// Begins the animation cycle.
     /// </summary>
@@ -27,32 +39,27 @@ public:
     void RebuildRenderImage() noexcept { m_bSurfaceStale = true; }
 
     /// <summary>
+    /// Releases the memory used to cache the render image.
+    /// </summary>
+    void DestroyRenderImage() noexcept
+    {
+        m_bSurfaceStale = false;
+        m_pSurface.reset();
+    }
+
+    /// <summary>
     /// Determines whether the animation cycle has started.
     /// </summary>
-    bool IsAnimationStarted() const noexcept override
-    {
-        return (m_fAnimationProgress >= 0.0);
-    }
+    bool IsAnimationStarted() const noexcept override { return (m_fAnimationProgress >= 0.0); }
 
     /// <summary>
     /// Determines whether the animation cycle has completed.
     /// </summary>
-    bool IsAnimationComplete() const noexcept override
-    {
-        return (m_fAnimationProgress >= INOUT_TIME);
-    }
-
-    enum class State
-    {
-        Hidden,
-        FadeIn,
-        Visible,
-        FadeOut,
-    };
-
-    State CurrentState() const noexcept { return m_nState; }
+    bool IsAnimationComplete() const noexcept override { return (m_nState == State::Hidden); }
 
     void ProcessInput(const ControllerInput& pInput);
+
+    void Resize(int nWidth, int nHeight);
 
     void Activate();
     void Deactivate();
@@ -77,10 +84,7 @@ public:
 
         virtual void Refresh() = 0;
 
-        virtual bool Update(_UNUSED double fElapsed) noexcept(false)
-        {
-            return false;
-        }
+        virtual bool Update(_UNUSED double fElapsed) noexcept(false) { return false; }
 
         virtual bool ProcessInput(const ControllerInput& pInput) = 0;
 
@@ -88,26 +92,36 @@ public:
     };
 
     PageViewModel& CurrentPage() const { return *m_vPages.at(m_nSelectedPage); }
-    
-    static _CONSTANT_VAR FONT_TO_USE = "Tahoma";
-    static _CONSTANT_VAR FONT_SIZE_TITLE = 32;
-    static _CONSTANT_VAR FONT_SIZE_HEADER = 26;
-    static _CONSTANT_VAR FONT_SIZE_SUMMARY = 22;
 
 private:
     void PopulatePages();
     void CreateRenderImage();
 
+    void RefreshOverlay();
+
     State m_nState = State::Hidden;
     bool m_bSurfaceStale = false;
 
-    bool m_bInputLock = false;
+    enum class NavButton
+    {
+        None,
+        Up,
+        Down,
+        Left,
+        Right,
+        Confirm,
+        Cancel,
+        Quit,
+    };
+
+    NavButton m_nCurrentButton = NavButton::None;
+    std::chrono::steady_clock::time_point m_tCurrentButtonPressed;
 
     std::vector<std::unique_ptr<PageViewModel>> m_vPages;
     gsl::index m_nSelectedPage = 0;
 
     double m_fAnimationProgress = -1.0;
-    static _CONSTANT_VAR INOUT_TIME = 0.8;
+    static _CONSTANT_VAR INOUT_TIME = 0.4;
 };
 
 } // namespace viewmodels

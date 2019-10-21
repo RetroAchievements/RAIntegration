@@ -31,44 +31,43 @@ void OverlayAchievementsPageViewModel::Refresh()
     SetListTitle(pGameContext.GameTitle());
 
     // achievement list
-    const auto pActiveAchievementType = pGameContext.ActiveAchievementType();
     unsigned int nMaxPts = 0;
     unsigned int nUserPts = 0;
     unsigned int nUserCompleted = 0;
     size_t nNumberOfAchievements = 0;
+    size_t nNumberOfCoreAchievements = 0;
 
-    pGameContext.EnumerateAchievements([this, pActiveAchievementType, &nNumberOfAchievements,
+    pGameContext.EnumerateFilteredAchievements([this, &nNumberOfAchievements, &nNumberOfCoreAchievements,
         &nMaxPts, &nUserPts, &nUserCompleted](const Achievement& pAchievement)
     {
-        if (pAchievement.Category() == ra::etoi(pActiveAchievementType))
+        ItemViewModel* pvmAchievement = m_vItems.GetItemAt(nNumberOfAchievements);
+        if (pvmAchievement == nullptr)
         {
-            ItemViewModel* pvmAchievement = m_vItems.GetItemAt(nNumberOfAchievements);
-            if (pvmAchievement == nullptr)
+            pvmAchievement = &m_vItems.Add();
+            Ensures(pvmAchievement != nullptr);
+        }
+
+        pvmAchievement->SetId(pAchievement.ID());
+        pvmAchievement->SetLabel(ra::StringPrintf(L"%s (%s points)", pAchievement.Title(), pAchievement.Points()));
+        pvmAchievement->SetDetail(ra::Widen(pAchievement.Description()));
+        pvmAchievement->SetDisabled(false);
+        pvmAchievement->Image.ChangeReference(ra::ui::ImageType::Badge, pAchievement.BadgeImageURI());
+        ++nNumberOfAchievements;
+
+        if (pAchievement.GetCategory() == Achievement::Category::Core)
+        {
+            ++nNumberOfCoreAchievements;
+
+            nMaxPts += pAchievement.Points();
+            if (pAchievement.Active())
             {
-                pvmAchievement = &m_vItems.Add();
-                Ensures(pvmAchievement != nullptr);
+                pvmAchievement->Image.ChangeReference(ra::ui::ImageType::Badge, pAchievement.BadgeImageURI() + "_lock");
+                pvmAchievement->SetDisabled(true);
             }
-
-            pvmAchievement->SetId(pAchievement.ID());
-            pvmAchievement->SetLabel(ra::StringPrintf(L"%s (%s points)", pAchievement.Title(), pAchievement.Points()));
-            pvmAchievement->SetDetail(ra::Widen(pAchievement.Description()));
-            pvmAchievement->SetDisabled(false);
-            pvmAchievement->Image.ChangeReference(ra::ui::ImageType::Badge, pAchievement.BadgeImageURI());
-            ++nNumberOfAchievements;
-
-            if (pActiveAchievementType == AchievementSet::Type::Core)
+            else
             {
-                nMaxPts += pAchievement.Points();
-                if (pAchievement.Active())
-                {
-                    pvmAchievement->Image.ChangeReference(ra::ui::ImageType::Badge, pAchievement.BadgeImageURI() + "_lock");
-                    pvmAchievement->SetDisabled(true);
-                }
-                else
-                {
-                    nUserPts += pAchievement.Points();
-                    ++nUserCompleted;
-                }
+                nUserPts += pAchievement.Points();
+                ++nUserCompleted;
             }
         }
 
@@ -81,8 +80,8 @@ void OverlayAchievementsPageViewModel::Refresh()
     // summary
     if (nNumberOfAchievements == 0)
         m_sSummary = L"No achievements present";
-    else if (pActiveAchievementType == AchievementSet::Type::Core)
-        m_sSummary = ra::StringPrintf(L"%u of %u won (%u/%u)", nUserCompleted, nNumberOfAchievements, nUserPts, nMaxPts);
+    else if (nNumberOfCoreAchievements > 0)
+        m_sSummary = ra::StringPrintf(L"%u of %u won (%u/%u)", nUserCompleted, nNumberOfCoreAchievements, nUserPts, nMaxPts);
     else
         m_sSummary = ra::StringPrintf(L"%u achievements present", nNumberOfAchievements);
 
@@ -127,8 +126,8 @@ void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& p
         return;
 
     const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
-    const auto nFont = pSurface.LoadFont(OverlayViewModel::FONT_TO_USE, OverlayViewModel::FONT_SIZE_HEADER, ra::ui::FontStyles::Normal);
-    const auto nSubFont = pSurface.LoadFont(OverlayViewModel::FONT_TO_USE, OverlayViewModel::FONT_SIZE_SUMMARY, ra::ui::FontStyles::Normal);
+    const auto nFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayHeader(), ra::ui::FontStyles::Normal);
+    const auto nSubFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
     const auto nAchievementSize = 64;
 
     pSurface.DrawImage(nX, nY, nAchievementSize, nAchievementSize, pAchievement->Image);
@@ -180,10 +179,10 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         return;
 
     auto& vmAchievement = m_vAchievementDetails.emplace(vmItem.GetId(), AchievementViewModel{}).first->second;
-    vmAchievement.SetCreatedDate(ra::Widen(ra::FormatDate(pAchievement->CreatedDate())));
-    vmAchievement.SetModifiedDate(ra::Widen(ra::FormatDate(pAchievement->ModifiedDate())));
+    vmAchievement.SetCreatedDate(ra::Widen(ra::FormatDateTime(pAchievement->CreatedDate())));
+    vmAchievement.SetModifiedDate(ra::Widen(ra::FormatDateTime(pAchievement->ModifiedDate())));
 
-    if (pAchievement->Category() == ra::etoi(AchievementSet::Type::Local))
+    if (pAchievement->GetCategory() == Achievement::Category::Local)
     {
         vmAchievement.SetWonBy(L"Local Achievement");
         return;
@@ -195,7 +194,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     request.NumEntries = 10;
     request.CallAsync([this, nId = pAchievement->ID()](const ra::api::FetchAchievementInfo::Response& response)
     {
-        auto pIter = m_vAchievementDetails.find(nId);
+        const auto pIter = m_vAchievementDetails.find(nId);
         if (pIter == m_vAchievementDetails.end())
             return;
 
@@ -214,7 +213,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         {
             auto& vmWinner = vmAchievement.RecentWinners.Add();
             vmWinner.SetLabel(ra::Widen(pWinner.User));
-            vmWinner.SetDetail(ra::StringPrintf(L"%s (%s)", ra::FormatDate(pWinner.DateAwarded), ra::FormatDateRecent(pWinner.DateAwarded)));
+            vmWinner.SetDetail(ra::StringPrintf(L"%s (%s)", ra::FormatDateTime(pWinner.DateAwarded), ra::FormatDateRecent(pWinner.DateAwarded)));
 
             if (pWinner.User == sUsername)
                 vmWinner.SetDisabled(true);

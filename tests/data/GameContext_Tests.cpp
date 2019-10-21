@@ -7,6 +7,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 
 #include "tests\mocks\MockAudioSystem.hh"
+#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
@@ -46,14 +47,17 @@ public:
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
+        ra::data::mocks::MockEmulatorContext mockEmulator;
         ra::data::mocks::MockUserContext mockUser;
         ra::services::AchievementRuntime runtime;
 
         static const unsigned int FirstLocalId = GameContext::FirstLocalId;
 
+        void SetGameId(unsigned int nGameId) noexcept { m_nGameId = nGameId; }
+
         Achievement& MockAchievement()
         {
-            auto& pAch = NewAchievement(AchievementSet::Type::Core);
+            auto& pAch = NewAchievement(Achievement::Category::Core);
             pAch.SetID(1U);
             pAch.SetTitle("AchievementTitle");
             pAch.SetDescription("AchievementDescription");
@@ -70,8 +74,48 @@ public:
             return pLeaderboard;
         }
 
+        unsigned int GetCodeNoteSize(ra::ByteAddress nAddress)
+        {
+            const auto pIter = m_mCodeNotes.find(nAddress);
+            if (pIter == m_mCodeNotes.end())
+                return 0U;
+
+            return pIter->second.Bytes;
+        }
+
     private:
         ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_OverrideRuntime;
+    };
+
+    class GameContextNotifyTarget : public GameContext::NotifyTarget
+    {
+    public:
+        bool GetActiveGameChanged() const noexcept { return m_bActiveGameChanged; }
+
+        const std::wstring* GetNewCodeNote(ra::ByteAddress nAddress)
+        {
+            const auto pIter = m_vCodeNotesChanged.find(nAddress);
+            if (pIter != m_vCodeNotesChanged.end())
+                return &pIter->second;
+
+            return nullptr;
+        }
+
+    protected:
+        void OnActiveGameChanged() noexcept override
+        {
+            m_bActiveGameChanged = true;
+            m_vCodeNotesChanged.clear();
+        }
+
+        void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override
+        {
+            m_vCodeNotesChanged.insert_or_assign(nAddress, sNewNote);
+        }
+
+    private:
+        bool m_bActiveGameChanged = false;
+        std::map<ra::ByteAddress, std::wstring> m_vCodeNotesChanged;
     };
 
     TEST_METHOD(TestLoadGameTitle)
@@ -126,6 +170,53 @@ public:
         Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"1 achievements, 5 points"), pPopup->GetDescription());
         Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
+    }
+
+    TEST_METHOD(TestLoadGameNotify)
+    {
+        class NotifyHarness : public GameContext::NotifyTarget
+        {
+        public:
+            bool m_bNotified = false;
+
+        protected:
+            void OnActiveGameChanged() noexcept override { m_bNotified = true; }
+        };
+        NotifyHarness notifyHarness;
+
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            response.Title = L"GameTitle";
+            response.ImageIcon = "9743";
+            return true;
+        });
+
+        game.AddNotifyTarget(notifyHarness);
+        game.LoadGame(0U);
+
+        Assert::AreEqual(0U, game.GameId());
+        Assert::IsFalse(notifyHarness.m_bNotified);
+
+        game.LoadGame(1U);
+        Assert::AreEqual(1U, game.GameId());
+        Assert::IsTrue(notifyHarness.m_bNotified);
+
+        notifyHarness.m_bNotified = false;
+        game.LoadGame(2U);
+        Assert::AreEqual(2U, game.GameId());
+        Assert::IsTrue(notifyHarness.m_bNotified);
+
+        notifyHarness.m_bNotified = false;
+        game.LoadGame(0U);
+        Assert::AreEqual(0U, game.GameId());
+        Assert::IsTrue(notifyHarness.m_bNotified);
+
+        notifyHarness.m_bNotified = false;
+        game.RemoveNotifyTarget(notifyHarness);
+        game.LoadGame(2U);
+        Assert::AreEqual(2U, game.GameId());
+        Assert::IsFalse(notifyHarness.m_bNotified);
     }
 
     TEST_METHOD(TestLoadGameRichPresence)
@@ -184,7 +275,7 @@ public:
         Assert::AreEqual(std::string("Desc1"), pAch1->Description());
         Assert::AreEqual(std::string("Auth1"), pAch1->Author());
         Assert::AreEqual(std::string("12345"), pAch1->BadgeImageURI());
-        Assert::AreEqual(3, pAch1->Category());
+        Assert::AreEqual(Achievement::Category::Core, pAch1->GetCategory());
         Assert::AreEqual(1234567890, (int)pAch1->CreatedDate());
         Assert::AreEqual(1234599999, (int)pAch1->ModifiedDate());
         Assert::AreEqual(5U, pAch1->Points());
@@ -197,7 +288,7 @@ public:
         Assert::AreEqual(std::string("Desc2"), pAch2->Description());
         Assert::AreEqual(std::string("Auth2"), pAch2->Author());
         Assert::AreEqual(std::string("12345"), pAch2->BadgeImageURI());
-        Assert::AreEqual(5, pAch2->Category());
+        Assert::AreEqual(Achievement::Category::Unofficial, pAch2->GetCategory());
         Assert::AreEqual(1234567890, (int)pAch2->CreatedDate());
         Assert::AreEqual(1234599999, (int)pAch2->ModifiedDate());
         Assert::AreEqual(15U, pAch2->Points());
@@ -252,7 +343,7 @@ public:
         Assert::AreEqual(std::string("Desc1"), pAch->Description());
         Assert::AreEqual(std::string("Auth1"), pAch->Author());
         Assert::AreEqual(std::string("12345"), pAch->BadgeImageURI());
-        Assert::AreEqual(3, pAch->Category());
+        Assert::AreEqual(Achievement::Category::Core, pAch->GetCategory());
         Assert::AreEqual(1234567890, (int)pAch->CreatedDate());
         Assert::AreEqual(1234599999, (int)pAch->ModifiedDate());
         Assert::AreEqual(5U, pAch->Points());
@@ -265,7 +356,7 @@ public:
         Assert::AreEqual(std::string("Desc2b"), pAch->Description());
         Assert::AreEqual(std::string("Auth2"), pAch->Author()); // author not merged
         Assert::AreEqual(std::string("54321"), pAch->BadgeImageURI());
-        Assert::AreEqual(5, pAch->Category()); // category not merged
+        Assert::AreEqual(Achievement::Category::Unofficial, pAch->GetCategory()); // category not merged
         Assert::AreEqual(1234567890, (int)pAch->CreatedDate()); // created date not merged
         Assert::AreEqual(1234555555, (int)pAch->ModifiedDate());
         Assert::AreEqual(25U, pAch->Points());
@@ -278,7 +369,7 @@ public:
         Assert::AreEqual(std::string("Desc3"), pAch->Description());
         Assert::AreEqual(std::string("Auth3"), pAch->Author());
         Assert::AreEqual(std::string("555"), pAch->BadgeImageURI());
-        Assert::AreEqual(0, pAch->Category());
+        Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(20U, pAch->Points());
@@ -291,14 +382,14 @@ public:
         Assert::AreEqual(std::string("Desc4"), pAch->Description());
         Assert::AreEqual(std::string("Auth4"), pAch->Author());
         Assert::AreEqual(std::string("556"), pAch->BadgeImageURI());
-        Assert::AreEqual(0, pAch->Category());
+        Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(10U, pAch->Points());
         Assert::AreEqual(std::string("R:1=1"), pAch->CreateMemString());
 
         // new achievement should be allocated an ID higher than the largest existing local ID
-        const auto& pAch2 = game.NewAchievement(AchievementSet::Type::Local);
+        const auto& pAch2 = game.NewAchievement(Achievement::Category::Local);
         Assert::AreEqual(GameContextHarness::FirstLocalId + 2, pAch2.ID());
     }
 
@@ -328,7 +419,7 @@ public:
         Assert::AreEqual(std::string("Desc2b"), pAch->Description());
         Assert::AreEqual(std::string("Auth2b"), pAch->Author());
         Assert::AreEqual(std::string("54321"), pAch->BadgeImageURI());
-        Assert::AreEqual(0, pAch->Category()); // local
+        Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234554321, (int)pAch->CreatedDate());
         Assert::AreEqual(1234555555, (int)pAch->ModifiedDate());
         Assert::AreEqual(25U, pAch->Points());
@@ -342,7 +433,7 @@ public:
         Assert::AreEqual(std::string("Desc3"), pAch->Description());
         Assert::AreEqual(std::string("Auth3"), pAch->Author());
         Assert::AreEqual(std::string("555"), pAch->BadgeImageURI());
-        Assert::AreEqual(0, pAch->Category());
+        Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(20U, pAch->Points());
@@ -356,7 +447,7 @@ public:
         Assert::AreEqual(std::string("Desc4"), pAch->Description());
         Assert::AreEqual(std::string("Auth4"), pAch->Author());
         Assert::AreEqual(std::string("556"), pAch->BadgeImageURI());
-        Assert::AreEqual(0, pAch->Category());
+        Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(10U, pAch->Points());
@@ -364,7 +455,7 @@ public:
 
         // new achievement should be allocated an ID higher than the largest existing local
         // ID, even if intermediate values are available
-        const auto& pAch2 = game.NewAchievement(AchievementSet::Type::Local);
+        const auto& pAch2 = game.NewAchievement(Achievement::Category::Local);
         Assert::AreEqual(999000004U, pAch2.ID());
     }
 
@@ -377,14 +468,14 @@ public:
             lb1.Id = 7U;
             lb1.Title = "LB1";
             lb1.Description = "Desc1";
-            lb1.Definition = "STA:1=1:CAN:1=1:SUB:1=1:VAL:1";
+            lb1.Definition = "STA:1=1::CAN:1=1::SUB:1=1::VAL:1";
             lb1.Format = "SECS";
 
             auto& lb2 = response.Leaderboards.emplace_back();
             lb2.Id = 8U;
             lb2.Title = "LB2";
             lb2.Description = "Desc2";
-            lb2.Definition = "STA:1=1:CAN:1=1:SUB:1=1:VAL:1";
+            lb2.Definition = "STA:1=1::CAN:1=1::SUB:1=1::VAL:1";
             lb2.Format = "FRAMES";
 
             return true;
@@ -444,7 +535,7 @@ public:
         });
         game.LoadGame(1U);
 
-        auto& ach2 = game.NewAchievement(AchievementSet::Type::Local);
+        auto& ach2 = game.NewAchievement(Achievement::Category::Local);
         ach2.SetTitle("Ach2");
         ach2.SetDescription("Desc2");
         ach2.SetAuthor("Auth2");
@@ -471,7 +562,7 @@ public:
         });
         game.LoadGame(1U);
 
-        auto& ach2 = game.NewAchievement(AchievementSet::Type::Local);
+        auto& ach2 = game.NewAchievement(Achievement::Category::Local);
         ach2.SetTitle("Ach:2");
         ach2.SetDescription("Desc \"2\"");
         ach2.SetAuthor("Auth2");
@@ -494,11 +585,11 @@ public:
         {
             auto& ach1 = response.Achievements.emplace_back();
             ach1.Id = 5;
-            ach1.CategoryId = ra::etoi(AchievementSet::Type::Core);
+            ach1.CategoryId = ra::etoi(Achievement::Category::Core);
 
             auto& ach2 = response.Achievements.emplace_back();
             ach2.Id = 7;
-            ach2.CategoryId = ra::etoi(AchievementSet::Type::Core);
+            ach2.CategoryId = ra::etoi(Achievement::Category::Core);
             return true;
         });
 
@@ -511,8 +602,14 @@ public:
             return true;
         });
 
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
+        {
+            return true;
+        });
+
         game.LoadGame(1U);
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks is async
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
 
         const auto* pAch1 = game.FindAchievement(5U);
         Assert::IsNotNull(pAch1);
@@ -532,18 +629,24 @@ public:
         {
             auto& ach1 = response.Achievements.emplace_back();
             ach1.Id = 5;
-            ach1.CategoryId = ra::etoi(AchievementSet::Type::Core);
+            ach1.CategoryId = ra::etoi(Achievement::Category::Core);
 
             auto& ach2 = response.Achievements.emplace_back();
             ach2.Id = 7;
-            ach2.CategoryId = ra::etoi(AchievementSet::Type::Core);
+            ach2.CategoryId = ra::etoi(Achievement::Category::Core);
             return true;
         });
 
         game.mockServer.ExpectUncalled<ra::api::FetchUserUnlocks>();
 
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
+        {
+            return true;
+        });
+
         game.LoadGame(1U, ra::data::GameContext::Mode::CompatibilityTest);
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks is async
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
 
         const auto* pAch1 = game.FindAchievement(5U);
         Assert::IsNotNull(pAch1);
@@ -569,10 +672,16 @@ public:
             return true;
         });
 
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
+        {
+            return true;
+        });
+
         game.LoadGame(1U);
         Assert::IsTrue(game.runtime.IsPaused());
 
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks is async
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
         Assert::IsFalse(game.runtime.IsPaused());
     }
 
@@ -589,12 +698,18 @@ public:
             return true;
         });
 
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
+        {
+            return true;
+        });
+
         game.runtime.SetPaused(true);
 
         game.LoadGame(1U);
         Assert::IsTrue(game.runtime.IsPaused());
 
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks is async
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
         Assert::IsTrue(game.runtime.IsPaused());
     }
 
@@ -681,7 +796,7 @@ public:
         GameContextHarness game;
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
-        game.MockAchievement().SetCategory(ra::etoi(AchievementSet::Type::Local));
+        game.MockAchievement().SetCategory(Achievement::Category::Local);
         game.AwardAchievement(1U);
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
@@ -702,7 +817,7 @@ public:
         GameContextHarness game;
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
-        game.MockAchievement().SetCategory(ra::etoi(AchievementSet::Type::Unofficial));
+        game.MockAchievement().SetCategory(Achievement::Category::Unofficial);
         game.AwardAchievement(1U);
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
@@ -745,7 +860,7 @@ public:
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
         auto& pAch = game.MockAchievement();
-        pAch.SetCategory(ra::etoi(AchievementSet::Type::Local));
+        pAch.SetCategory(Achievement::Category::Local);
         pAch.SetModified(true);
         game.AwardAchievement(1U);
 
@@ -768,7 +883,7 @@ public:
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
         auto& pAch = game.MockAchievement();
-        pAch.SetCategory(ra::etoi(AchievementSet::Type::Unofficial));
+        pAch.SetCategory(Achievement::Category::Unofficial);
         pAch.SetModified(true);
         game.AwardAchievement(1U);
 
@@ -779,6 +894,29 @@ public:
         Assert::AreEqual(std::wstring(L"Modified Unofficial Achievement NOT Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
+    TEST_METHOD(TestAwardAchievementMemoryModified)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+
+        game.MockAchievement();
+        game.mockEmulator.MockMemoryModified(true);
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Error: RAM tampered with"), pPopup->GetDetail());
+        Assert::IsTrue(pPopup->IsDetailError());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         // AwardAchievement API call is async, try to execute it - expect no tasks queued
@@ -975,6 +1113,10 @@ public:
             response.TopEntries.push_back({ 2, "Player", 1234U });
             response.TopEntries.push_back({ 3, "Steve", 1500U });
             response.TopEntries.push_back({ 4, "Bill", 1700U });
+
+            response.Score = 1234U;
+            response.BestScore = 1234U;
+            response.NewRank = 2;
             return true;
         });
 
@@ -988,7 +1130,7 @@ public:
         Assert::IsNotNull(vmScoreboard);
         Ensures(vmScoreboard != nullptr);
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
-        Assert::AreEqual(4U, vmScoreboard->Entries().Count());
+        Assert::AreEqual({ 4U }, vmScoreboard->Entries().Count());
 
         const auto* vmEntry1 = vmScoreboard->Entries().GetItemAt(0);
         Assert::IsNotNull(vmEntry1);
@@ -1106,6 +1248,480 @@ public:
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Leaderboards are not submitted in test mode."), pPopup->GetDetail());
         Assert::IsFalse(pPopup->IsDetailError());
+    }
+
+    TEST_METHOD(TestSubmitLeaderboardEntryLowRank)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards, true);
+        game.mockUser.Initialize("Player", "ApiToken");
+        game.SetGameHash("hash");
+
+        game.mockServer.HandleRequest<ra::api::SubmitLeaderboardEntry>([]
+            (const ra::api::SubmitLeaderboardEntry::Request&, ra::api::SubmitLeaderboardEntry::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            response.TopEntries.push_back({ 1, "George", 1000U });
+            response.TopEntries.push_back({ 2, "Philip", 1100U });
+            response.TopEntries.push_back({ 3, "Steve", 1200U });
+            response.TopEntries.push_back({ 4, "Bill", 1300U });
+            response.TopEntries.push_back({ 5, "Roger", 1400U });
+            response.TopEntries.push_back({ 6, "Andy", 1500U });
+            response.TopEntries.push_back({ 7, "Jason", 1600U });
+            response.TopEntries.push_back({ 8, "Jeff", 1700U });
+
+            response.Score = 2000U;
+            response.BestScore = 1900U;
+            response.NewRank = 11;
+            return true;
+        });
+
+        game.MockLeaderboard();
+        game.SubmitLeaderboardEntry(1U, 2000U);
+
+        game.mockThreadPool.ExecuteNextTask();
+
+        const auto* vmScoreboard = game.mockOverlayManager.GetScoreboard(1U);
+        Assert::IsNotNull(vmScoreboard);
+        Ensures(vmScoreboard != nullptr);
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
+        Assert::AreEqual({ 7U }, vmScoreboard->Entries().Count());
+
+        const auto* vmEntry1 = vmScoreboard->Entries().GetItemAt(0);
+        Assert::IsNotNull(vmEntry1);
+        Ensures(vmEntry1 != nullptr);
+        Assert::AreEqual(1, vmEntry1->GetRank());
+        Assert::AreEqual(std::wstring(L"George"), vmEntry1->GetUserName());
+        Assert::AreEqual(std::wstring(L"1000"), vmEntry1->GetScore());
+        Assert::IsFalse(vmEntry1->IsHighlighted());
+
+        const auto* vmEntry6 = vmScoreboard->Entries().GetItemAt(5);
+        Assert::IsNotNull(vmEntry6);
+        Ensures(vmEntry6 != nullptr);
+        Assert::AreEqual(6, vmEntry6->GetRank());
+        Assert::AreEqual(std::wstring(L"Andy"), vmEntry6->GetUserName());
+        Assert::AreEqual(std::wstring(L"1500"), vmEntry6->GetScore());
+        Assert::IsFalse(vmEntry6->IsHighlighted());
+
+        const auto* vmEntry7 = vmScoreboard->Entries().GetItemAt(6);
+        Assert::IsNotNull(vmEntry7);
+        Ensures(vmEntry7 != nullptr);
+        Assert::AreEqual(11, vmEntry7->GetRank());
+        Assert::AreEqual(std::wstring(L"Player"), vmEntry7->GetUserName());
+        Assert::AreEqual(std::wstring(L"(2000) 1900"), vmEntry7->GetScore());
+        Assert::IsTrue(vmEntry7->IsHighlighted());
+    }
+
+    TEST_METHOD(TestSubmitLeaderboardEntryScoreNotImproved)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards, true);
+        game.mockUser.Initialize("Player", "ApiToken");
+        game.SetGameHash("hash");
+
+        unsigned int nNewScore = 0U;
+        game.mockServer.HandleRequest<ra::api::SubmitLeaderboardEntry>([&nNewScore]
+        (const ra::api::SubmitLeaderboardEntry::Request & request, ra::api::SubmitLeaderboardEntry::Response & response)
+        {
+            Assert::AreEqual(1U, request.LeaderboardId);
+            Assert::AreEqual(1234U, request.Score);
+            Assert::AreEqual(std::string("hash"), request.GameHash);
+            nNewScore = request.Score;
+
+            response.Result = ra::api::ApiResult::Success;
+            response.TopEntries.push_back({ 1, "George", 1000U });
+            response.TopEntries.push_back({ 2, "Player", 1200U });
+            response.TopEntries.push_back({ 3, "Steve", 1500U });
+            response.TopEntries.push_back({ 4, "Bill", 1700U });
+
+            response.Score = 1234U;
+            response.BestScore = 1200U;
+            response.NewRank = 2;
+            return true;
+        });
+
+        game.MockLeaderboard();
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        game.mockThreadPool.ExecuteNextTask();
+        Assert::AreEqual(1234U, nNewScore);
+
+        const auto* vmScoreboard = game.mockOverlayManager.GetScoreboard(1U);
+        Assert::IsNotNull(vmScoreboard);
+        Ensures(vmScoreboard != nullptr);
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
+        Assert::AreEqual({ 4U }, vmScoreboard->Entries().Count());
+
+        const auto* vmEntry2 = vmScoreboard->Entries().GetItemAt(1);
+        Assert::IsNotNull(vmEntry2);
+        Ensures(vmEntry2 != nullptr);
+        Assert::AreEqual(2, vmEntry2->GetRank());
+        Assert::AreEqual(std::wstring(L"Player"), vmEntry2->GetUserName());
+        Assert::AreEqual(std::wstring(L"(1234) 1200"), vmEntry2->GetScore());
+        Assert::IsTrue(vmEntry2->IsHighlighted());
+    }
+
+    TEST_METHOD(TestSubmitLeaderboardEntryMemoryModified)
+    {
+        GameContextHarness game;
+        game.SetGameHash("hash");
+
+        game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
+
+        game.MockLeaderboard();
+        game.mockEmulator.MockMemoryModified(true);
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        // SubmitLeaderboardEntry API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        // error message should be reported
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Leaderboard NOT Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Error: RAM tampered with"), pPopup->GetDetail());
+        Assert::IsTrue(pPopup->IsDetailError());
+    }
+
+    TEST_METHOD(TestLoadCodeNotes)
+    {
+        GameContextNotifyTarget notifyTarget;
+
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1234, L"Note1", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 2345, L"Note2", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 3456, L"Note3", "Author" });
+            return true;
+        });
+
+        game.AddNotifyTarget(notifyTarget);
+
+        game.LoadGame(1U);
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
+
+        const auto* pNote1 = game.FindCodeNote(1234U);
+        Assert::IsNotNull(pNote1);
+        Ensures(pNote1 != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+        const auto* pNote1b = notifyTarget.GetNewCodeNote(1234U);
+        Assert::IsNotNull(pNote1b);
+        Ensures(pNote1b != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1"), *pNote1b);
+
+        const auto* pNote2 = game.FindCodeNote(2345U);
+        Assert::IsNotNull(pNote2);
+        Ensures(pNote2 != nullptr);
+        Assert::AreEqual(std::wstring(L"Note2"), *pNote2);
+        const auto* pNote2b = notifyTarget.GetNewCodeNote(2345U);
+        Assert::IsNotNull(pNote2b);
+        Ensures(pNote2b != nullptr);
+        Assert::AreEqual(std::wstring(L"Note2"), *pNote2b);
+
+        const auto* pNote3 = game.FindCodeNote(3456U);
+        Assert::IsNotNull(pNote3);
+        Ensures(pNote3 != nullptr);
+        Assert::AreEqual(std::wstring(L"Note3"), *pNote3);
+        const auto* pNote3b = notifyTarget.GetNewCodeNote(3456U);
+        Assert::IsNotNull(pNote3b);
+        Ensures(pNote3b != nullptr);
+        Assert::AreEqual(std::wstring(L"Note3"), *pNote3b);
+
+        const auto* pNote4 = game.FindCodeNote(4567U);
+        Assert::IsNull(pNote4);
+        const auto* pNote4b = notifyTarget.GetNewCodeNote(4567U);
+        Assert::IsNull(pNote4b);
+
+        game.LoadGame(0U);
+        const auto* pNote5 = game.FindCodeNote(1234U);
+        Assert::IsNull(pNote5);
+        const auto* pNote5b = notifyTarget.GetNewCodeNote(1234U);
+        Assert::IsNull(pNote5b);
+    }
+
+    void TestCodeNoteSize(const std::wstring& sNote, unsigned int nExpectedSize)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([&sNote](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1234, sNote, "Author" });
+            return true;
+        });
+
+        game.LoadGame(1U);
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::AreEqual(nExpectedSize, game.GetCodeNoteSize(1234U));
+    }
+
+    TEST_METHOD(TestLoadCodeNotesSized)
+    {
+        TestCodeNoteSize(L"Test", 1U);
+        TestCodeNoteSize(L"[16-bit] Test", 2U);
+        TestCodeNoteSize(L"[16 bit] Test", 2U);
+        TestCodeNoteSize(L"[16 Bit] Test", 2U);
+        TestCodeNoteSize(L"[32-bit] Test", 4U);
+        TestCodeNoteSize(L"[32 bit] Test", 4U);
+        TestCodeNoteSize(L"[32bit] Test", 4U);
+        TestCodeNoteSize(L"Test [16-bit]", 2U);
+        TestCodeNoteSize(L"Test (16-bit)", 2U);
+        TestCodeNoteSize(L"[2 Byte] Test", 2U);
+        TestCodeNoteSize(L"[4 Byte] Test", 4U);
+        TestCodeNoteSize(L"[4 Byte - Float] Test", 4U);
+        TestCodeNoteSize(L"[8 Byte] Test", 8U);
+        TestCodeNoteSize(L"[100 Bytes] Test", 100U);
+        TestCodeNoteSize(L"[2 byte] Test", 2U);
+        TestCodeNoteSize(L"[2-byte] Test", 2U);
+        TestCodeNoteSize(L"Test (6 bytes)", 6U);
+        TestCodeNoteSize(L"[2byte] Test", 2U);
+        TestCodeNoteSize(L"4=bitten", 1U);
+        TestCodeNoteSize(L"bit by bit", 1U);
+    }
+
+    TEST_METHOD(TestFindCodeNoteSized)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1000, L"[32-bit] Location", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1100, L"Level", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1110, L"[16-bit] Strength", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1120, L"[8 byte] Exp", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1200, L"[20 bytes] Items", "Author" });
+            return true;
+        });
+
+        game.LoadGame(1U);
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(100, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(999, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [1/4]"), game.FindCodeNote(1000, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [2/4]"), game.FindCodeNote(1001, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [3/4]"), game.FindCodeNote(1002, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [4/4]"), game.FindCodeNote(1003, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1004, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Level"), game.FindCodeNote(1100, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [1/2]"), game.FindCodeNote(1110, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [2/2]"), game.FindCodeNote(1111, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [1/8]"), game.FindCodeNote(1120, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [2/8]"), game.FindCodeNote(1121, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [3/8]"), game.FindCodeNote(1122, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [4/8]"), game.FindCodeNote(1123, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [5/8]"), game.FindCodeNote(1124, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [6/8]"), game.FindCodeNote(1125, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [7/8]"), game.FindCodeNote(1126, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[8 byte] Exp [8/8]"), game.FindCodeNote(1127, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1128, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[20 bytes] Items [1/20]"), game.FindCodeNote(1200, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[20 bytes] Items [10/20]"), game.FindCodeNote(1209, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"[20 bytes] Items [20/20]"), game.FindCodeNote(1219, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1300, MemSize::EightBit));
+
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(100, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(998, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(999, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1000, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1001, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1002, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1003, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1004, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Level [partial]"), game.FindCodeNote(1099, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Level [partial]"), game.FindCodeNote(1100, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), game.FindCodeNote(1109, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength"), game.FindCodeNote(1110, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), game.FindCodeNote(1111, MemSize::SixteenBit));
+
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(100, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(996, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(997, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location"), game.FindCodeNote(1000, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1001, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1002, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[32-bit] Location [partial]"), game.FindCodeNote(1003, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1004, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"Level [partial]"), game.FindCodeNote(1097, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"Level [partial]"), game.FindCodeNote(1100, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), game.FindCodeNote(1107, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), game.FindCodeNote(1110, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), game.FindCodeNote(1111, MemSize::ThirtyTwoBit));
+        Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1112, MemSize::ThirtyTwoBit));
+    }
+
+    TEST_METHOD(TestSetCodeNote)
+    {
+        GameContextNotifyTarget notifyTarget;
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::UpdateCodeNote>([](const ra::api::UpdateCodeNote::Request& request, ra::api::UpdateCodeNote::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+            Assert::AreEqual(1234U, request.Address);
+            Assert::AreEqual(std::wstring(L"Note1"), request.Note);
+
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.AddNotifyTarget(notifyTarget);
+
+        game.SetGameId(1U);
+        Assert::IsTrue(game.SetCodeNote(1234, L"Note1"));
+
+        const auto* pNote1 = game.FindCodeNote(1234U);
+        Assert::IsNotNull(pNote1);
+        Ensures(pNote1 != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+        const auto* pNote1b = notifyTarget.GetNewCodeNote(1234U);
+        Assert::IsNotNull(pNote1b);
+        Ensures(pNote1b != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1"), *pNote1b);
+    }
+
+    TEST_METHOD(TestSetCodeNoteGameNotLoaded)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::UpdateCodeNote>();
+
+        game.SetGameId(0U);
+        Assert::IsFalse(game.SetCodeNote(1234, L"Note1"));
+
+        const auto* pNote1 = game.FindCodeNote(1234U);
+        Assert::IsNull(pNote1);
+    }
+
+    TEST_METHOD(TestUpdateCodeNote)
+    {
+        GameContextNotifyTarget notifyTarget;
+
+        int nCalls = 0;
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::UpdateCodeNote>([&nCalls](const ra::api::UpdateCodeNote::Request&, ra::api::UpdateCodeNote::Response& response)
+        {
+            ++nCalls;
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.AddNotifyTarget(notifyTarget);
+
+        game.SetGameId(1U);
+        Assert::IsTrue(game.SetCodeNote(1234, L"Note1"));
+
+        const auto* pNote1 = game.FindCodeNote(1234U);
+        Assert::IsNotNull(pNote1);
+        Ensures(pNote1 != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+
+        Assert::IsTrue(game.SetCodeNote(1234, L"Note1b"));
+        const auto* pNote1b = game.FindCodeNote(1234U);
+        Assert::IsNotNull(pNote1b);
+        Ensures(pNote1b != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1b"), *pNote1b);
+
+        const auto* pNote1x = notifyTarget.GetNewCodeNote(1234U);
+        Assert::IsNotNull(pNote1x);
+        Ensures(pNote1x != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1b"), *pNote1x);
+
+        Assert::AreEqual(2, nCalls);
+    }
+
+    TEST_METHOD(TestDeleteCodeNote)
+    {
+        GameContextNotifyTarget notifyTarget;
+
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::UpdateCodeNote>([](const ra::api::UpdateCodeNote::Request&, ra::api::UpdateCodeNote::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::DeleteCodeNote>([](const ra::api::DeleteCodeNote::Request& request, ra::api::DeleteCodeNote::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+            Assert::AreEqual(1234U, request.Address);
+
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.AddNotifyTarget(notifyTarget);
+
+        game.SetGameId(1U);
+        Assert::IsTrue(game.SetCodeNote(1234, L"Note1"));
+
+        const auto* pNote1 = game.FindCodeNote(1234U);
+        Assert::IsNotNull(pNote1);
+        Ensures(pNote1 != nullptr);
+        Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+
+        Assert::IsTrue(game.DeleteCodeNote(1234));
+        const auto* pNote1b = game.FindCodeNote(1234U);
+        Assert::IsNull(pNote1b);
+
+        const auto* pNote1x = notifyTarget.GetNewCodeNote(1234U);
+        Assert::IsNotNull(pNote1x);
+        Ensures(pNote1x != nullptr);
+        Assert::AreEqual(std::wstring(), *pNote1x);
+    }
+
+    TEST_METHOD(TestDeleteCodeNoteNonExistant)
+    {
+        GameContextHarness game;
+        game.mockServer.ExpectUncalled<ra::api::DeleteCodeNote>();
+
+        game.SetGameId(1U);
+
+        Assert::IsTrue(game.DeleteCodeNote(1234));
+        const auto* pNote1 = game.FindCodeNote(1234U);
+        Assert::IsNull(pNote1);
     }
 };
 

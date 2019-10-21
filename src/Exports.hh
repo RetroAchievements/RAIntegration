@@ -18,11 +18,20 @@ extern "C" {
     // Fetch the name of the host to connect to.
     API const char* CCONV _RA_HostName();
 
+    // Fetch the URL of the host to connect to.
+    API const char* CCONV _RA_HostUrl();
+
     // Initialize all data related to RA Engine. Call as early as possible.
     API int CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nConsoleID, const char* sClientVersion);
 
     // Initialize all data related to RA Engine for offline mode. Call as early as possible.
     API int CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nConsoleID, const char* sClientVersion);
+
+    // Specifies additional information to include in the UserAgent string
+    API void CCONV _RA_SetUserAgentDetail(const char* sDetail);
+
+    // Changes the HWND for the main emulator window
+    API void CCONV _RA_UpdateHWnd(HWND hMainHWND);
 
     // Call for a tidy exit at end of app.
     API int CCONV _RA_Shutdown();
@@ -65,9 +74,6 @@ extern "C" {
     // Use in special cases where the emulator contains more than one console ID.
     API void CCONV _RA_SetConsoleID(unsigned int nConsoleID);
 
-    // Deal with any HTTP results that come along. Call per-cycle from main thread.
-    API int CCONV _RA_HandleHTTPResults();
-
     // Update the title of the app
     API void CCONV _RA_UpdateAppTitle(const char* sMessage = nullptr);
 
@@ -93,7 +99,8 @@ extern "C" {
     API void CCONV _RA_InstallSharedFunctionsExt(bool(*)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
 
     struct ControllerInput;
-    API int CCONV _RA_UpdateOverlay(_In_ const ControllerInput* pInput, _In_ float fDTime,
+    API void CCONV _RA_NavigateOverlay(_In_ const ControllerInput* pInput);
+    API int CCONV _RA_UpdateOverlay(_In_ const ControllerInput* pInput, _In_ float /*fDTime*/,
         _In_ bool /*Full_Screen*/, _In_ bool /*Paused*/);
     API void CCONV _RA_RenderOverlay(_In_ HDC hDC, _In_ const RECT* rcSize);
     API bool CCONV _RA_IsOverlayFullyVisible();

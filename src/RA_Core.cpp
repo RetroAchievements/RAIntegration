@@ -1,39 +1,39 @@
 #include "RA_Core.h"
 
-#include "RA_CodeNotes.h"
+#include "RA_BuildVer.h"
 #include "RA_ImageFactory.h"
-#include "RA_MemManager.h"
 #include "RA_Resource.h"
-#include "RA_httpthread.h"
 #include "RA_md5factory.h"
-#include "RA_User.h"
 
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
-#include "RA_Dlg_AchievementsReporter.h"
 #include "RA_Dlg_GameLibrary.h"
-#include "RA_Dlg_MemBookmark.h"
 #include "RA_Dlg_Memory.h"
 
 #include "data\ConsoleContext.hh"
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\SessionTracker.hh"
+#include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
+#include "services\IHttpRequester.hh"
 #include "services\IThreadPool.hh"
 #include "services\Initialization.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\ImageReference.hh"
+#include "ui\viewmodels\BrokenAchievementsViewModel.hh"
 #include "ui\viewmodels\GameChecksumViewModel.hh"
 #include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
+#include "ui\viewmodels\OverlaySettingsViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
+#include "ui\win32\OverlayWindow.hh"
 
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
@@ -41,7 +41,6 @@ std::string g_sROMDirLocation;
 HMODULE g_hThisDLLInst = nullptr;
 HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
-bool g_bRAMTamperedWith = false;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
 {
@@ -60,14 +59,25 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
     return TRUE;
 }
 
+API void CCONV _RA_UpdateHWnd(HWND hMainHWND)
+{
+    if (hMainHWND != g_RAMainWnd)
+    {
+        auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
+        pDesktop.SetMainHWnd(hMainHWND);
+        g_RAMainWnd = hMainHWND;
+
+        auto& pOverlayWindow = ra::services::ServiceLocator::GetMutable<ra::ui::win32::OverlayWindow>();
+        pOverlayWindow.CreateOverlayWindow(hMainHWND);
+    }
+}
+
 static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
 {
     ra::services::Initialization::RegisterServices(ra::itoe<EmulatorID>(nEmulatorID));
 
     // initialize global state
-    auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
-    pDesktop.SetMainHWnd(hMainHWND);
-    g_RAMainWnd = hMainHWND;
+    _RA_UpdateHWnd(hMainHWND);
 
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     g_sHomeDir = pFileSystem.BaseDirectory();
@@ -75,18 +85,14 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
     //////////////////////////////////////////////////////////////////////////
     //	Dialogs:
     g_MemoryDialog.Init();
-
-    //////////////////////////////////////////////////////////////////////////
-    //	Initialize All AchievementSets
-    g_pCoreAchievements = new AchievementSet();
-    g_pUnofficialAchievements = new AchievementSet();
-    g_pLocalAchievements = new AchievementSet();
-    g_pActiveAchievements = g_pCoreAchievements;
 }
 
 API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* /*sClientVer*/)
 {
     InitCommon(hMainHWND, nEmulatorID);
+
+    ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().DisableLogin();
+
     return TRUE;
 }
 
@@ -96,7 +102,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
 
     // Set the client version and User-Agent string
     ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().SetClientVersion(sClientVer);
-    RAWeb::SetUserAgentString();
 
     // validate version (async call)
     ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]
@@ -104,15 +109,6 @@ API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, con
         if (!ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().ValidateClientVersion())
             ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().Logout();
     });
-
-    //	TBD:
-    //if( RAUsers::LocalUser().Username().length() > 0 )
-    //{
-    //	args.clear();
-    //	args[ 'u' ] = RAUsers::LocalUser().Username();
-    //	args[ 't' ] = RAUsers::LocalUser().Token();
-    //	RAWeb::CreateThreadedHTTPRequest( RequestScore, args );
-    //}
 
     return TRUE;
 }
@@ -131,11 +127,6 @@ API int CCONV _RA_Shutdown()
 
         ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(0U);
     }
-
-    g_pActiveAchievements = nullptr;
-    SAFE_DELETE(g_pCoreAchievements);
-    SAFE_DELETE(g_pUnofficialAchievements);
-    SAFE_DELETE(g_pLocalAchievements);
 
     if (g_AchievementsDialog.GetHWND() != nullptr)
     {
@@ -164,10 +155,13 @@ API int CCONV _RA_Shutdown()
 
     g_GameLibrary.KillThread();
 
-    if (g_MemBookmarkDialog.GetHWND() != nullptr)
+    if (ra::services::ServiceLocator::Exists<ra::ui::viewmodels::WindowManager>())
     {
-        DestroyWindow(g_MemBookmarkDialog.GetHWND());
-        g_MemBookmarkDialog.InstallHWND(nullptr);
+        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+        auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+
+        if (pWindowManager.MemoryBookmarks.IsVisible())
+            pDesktop.CloseWindow(pWindowManager.MemoryBookmarks);
     }
 
     ra::services::Initialization::Shutdown();
@@ -182,11 +176,37 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     //	Returns true if we can go ahead and load the new rom.
     std::wstring sModifiedSet;
 
-    if (g_pCoreAchievements->HasUnsavedChanges())
+    bool bCoreModified = false;
+    bool bUnofficialModified = false;
+    bool bLocalModified = false;
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    pGameContext.EnumerateAchievements([&bCoreModified, &bUnofficialModified, &bLocalModified](const Achievement& pAchievement) noexcept
+    {
+        if (pAchievement.Modified())
+        {
+            switch (pAchievement.GetCategory())
+            {
+                case Achievement::Category::Local:
+                    bLocalModified = true;
+                    break;
+                case Achievement::Category::Core:
+                    bCoreModified = true;
+                    break;
+                case Achievement::Category::Unofficial:
+                    bUnofficialModified = true;
+                    break;
+            }
+        }
+
+        return true;
+    });
+
+    if (bCoreModified)
         sModifiedSet = L"Core";
-    else if (g_pUnofficialAchievements->HasUnsavedChanges())
+    else if (bUnofficialModified)
         sModifiedSet = L"Unofficial";
-    else if (g_pLocalAchievements->HasUnsavedChanges())
+    else if (bLocalModified)
         sModifiedSet = L"Local";
     else
         return true;
@@ -225,6 +245,11 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
 
 API void CCONV _RA_OnReset()
 {
+    // if there's no game loaded, there shouldn't be any active achievements or popups to clear - except maybe the
+    // logging in messages, which we don't want to clear.
+    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
+        return;
+
     // Temporarily disable achievements while the system is resetting. They will automatically re-enable when
     // DoAchievementsFrame is called if the trigger is not active. Prevents most unexpected triggering caused
     // by resetting the emulator.
@@ -232,19 +257,6 @@ API void CCONV _RA_OnReset()
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
 }
-
-API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
-{
-    g_MemManager.AddMemoryBank(ra::to_unsigned(nBankID), (_RAMByteReadFn*)pReader, (_RAMByteWriteFn*)pWriter, ra::to_unsigned(nBankSize));
-    g_MemoryDialog.AddBank(nBankID);
-}
-
-API void CCONV _RA_ClearMemoryBanks()
-{
-    g_MemManager.ClearMemoryBanks();
-    g_MemoryDialog.ClearBanks();
-}
-
 
 //void FetchBinaryFromWeb( const char* sFilename )
 //{
@@ -267,78 +279,10 @@ API void CCONV _RA_ClearMemoryBanks()
 //	}
 //}
 
-API int CCONV _RA_HandleHTTPResults()
-{
-    WaitForSingleObject(RAWeb::Mutex(), INFINITE);
-
-    RequestObject* pObj = RAWeb::PopNextHttpResult();
-    while (pObj != nullptr)
-    {
-        rapidjson::Document doc;
-        if (pObj->GetResponse().size() > 0 && pObj->ParseResponseToJSON(doc))
-        {
-            switch (pObj->GetRequestType())
-            {
-                case RequestBadgeIter:
-                    g_AchievementEditorDialog.GetBadgeNames().OnNewBadgeNames(doc);
-                    break;
-
-                case RequestFriendList:
-                    RAUsers::LocalUser().OnFriendListResponse(doc);
-                    break;
-
-                case RequestScore:
-                {
-                    ASSERT(doc["Success"].GetBool());
-                    if (doc["Success"].GetBool() && doc.HasMember("User") && doc.HasMember("Score"))
-                    {
-                        const std::string& sUser = doc["User"].GetString();
-                        const unsigned int nScore = doc["Score"].GetUint();
-                        RA_LOG("%s's score: %u", sUser.c_str(), nScore);
-
-                        auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
-                        if (sUser.compare(pUserContext.GetUsername()) == 0)
-                        {
-                            pUserContext.SetScore(nScore);
-                        }
-                        else
-                        {
-                            // Find friend? Update this information?
-                            RAUsers::GetUser(sUser).SetScore(nScore);
-                        }
-                    }
-                    else
-                    {
-                        ASSERT(!"RequestScore bad response!?");
-                        RA_LOG("RequestScore bad response!?");
-                    }
-                }
-                break;
-
-                //case RequestNews:
-                //    _WriteBufferToFile(g_sHomeDir + RA_NEWS_FILENAME, doc);
-                //    g_AchievementOverlay.InstallNewsArticlesFromFile();
-                //    break;
-
-                case RequestCodeNotes:
-                    CodeNotes::OnCodeNotesResponse(doc);
-                    break;
-            }
-        }
-
-        SAFE_DELETE(pObj);
-        pObj = RAWeb::PopNextHttpResult();
-    }
-
-    ReleaseMutex(RAWeb::Mutex());
-    return 0;
-}
-
 //	Following this function, an app should call AppendMenu to associate this submenu.
 API HMENU CCONV _RA_CreatePopupMenu()
 {
     HMENU hRA = CreatePopupMenu();
-    HMENU hRA_LB = CreatePopupMenu();
     if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out"));
@@ -351,26 +295,25 @@ API HMENU CCONV _RA_CreatePopupMenu()
 
         auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
-        // TODO: Replace UINT_PTR{} with the _z literal after PR #23 gets accepted
         AppendMenu(hRA, nGameFlags, IDM_RA_OPENGAMEPAGE, TEXT("Open this &Game's Page"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
+
         AppendMenu(hRA, pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_HARDCORE_MODE, TEXT("&Hardcore Mode"));
+        AppendMenu(hRA, pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_NON_HARDCORE_WARNING, TEXT("Non-Hardcore &Warning"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
 
-        GSL_SUPPRESS_TYPE1 AppendMenu(hRA, MF_POPUP, reinterpret_cast<UINT_PTR>(hRA_LB), TEXT("Leaderboards"));
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
-        AppendMenu(hRA_LB, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_NOTIFICATIONS, TEXT("Display Challenge Notification"));
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_COUNTER, TEXT("Display Time/Score Counter"));
-        AppendMenu(hRA_LB, pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLE_LB_SCOREBOARD, TEXT("Display Rank Scoreboard"));
-
+        AppendMenu(hRA, pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards) ? MF_CHECKED : MF_UNCHECKED, IDM_RA_TOGGLELEADERBOARDS, TEXT("Enable &Leaderboards"));
+        AppendMenu(hRA, MF_STRING, IDM_RA_OVERLAYSETTINGS, TEXT("O&verlay Settings"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
+
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor"));
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector"));
+        AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYBOOKMARKS, TEXT("Memory &Bookmarks"));
         AppendMenu(hRA, MF_STRING, IDM_RA_PARSERICHPRESENCE, TEXT("Rich &Presence Monitor"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
-        AppendMenu(hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Broken Achievements"));
+
+        AppendMenu(hRA, MF_STRING, IDM_RA_REPORTBROKENACHIEVEMENTS, TEXT("&Report Achievement Problem"));
         AppendMenu(hRA, MF_STRING, IDM_RA_GETROMCHECKSUM, TEXT("Get ROM &Checksum"));
         //AppendMenu(hRA, MF_STRING, IDM_RA_SCANFORGAMES, TEXT("Scan &for games"));
     }
@@ -380,28 +323,6 @@ API HMENU CCONV _RA_CreatePopupMenu()
     }
 
     return hRA;
-}
-
-void _FetchGameHashLibraryFromWeb()
-{
-    PostArgs args;
-    args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
-    args['u'] = RAUsers::LocalUser().Username();
-    args['t'] = RAUsers::LocalUser().Token();
-    std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestHashLibrary, args, Response))
-        _WriteBufferToFile(g_sHomeDir + RA_GAME_HASH_FILENAME, Response);
-}
-
-void _FetchMyProgressFromWeb()
-{
-    PostArgs args;
-    args['c'] = std::to_string(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id());
-    args['u'] = RAUsers::LocalUser().Username();
-    args['t'] = RAUsers::LocalUser().Token();
-    std::string Response;
-    if (RAWeb::DoBlockingRequest(RequestAllProgress, args, Response))
-        _WriteBufferToFile(g_sHomeDir + RA_MY_PROGRESS_FILENAME, Response);
 }
 
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom)
@@ -515,6 +436,10 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                 ShowWindow(g_MemoryDialog.GetHWND(), SW_SHOW);
             break;
 
+        case IDM_RA_FILES_MEMORYBOOKMARKS:
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Show();
+            break;
+
         case IDM_RA_FILES_LOGIN:
         {
             const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -553,9 +478,23 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         }
         break;
 
+        case IDM_RA_NON_HARDCORE_WARNING:
+        {
+            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+            pConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning,
+                !pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning));
+
+            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
+        }
+        break;
+
         case IDM_RA_REPORTBROKENACHIEVEMENTS:
-            Dlg_AchievementsReporter::DoModalDialog(g_hThisDLLInst, g_RAMainWnd);
-            break;
+        {
+            ra::ui::viewmodels::BrokenAchievementsViewModel vmBrokenAchievements;
+            if (vmBrokenAchievements.InitializeAchievements())
+                vmBrokenAchievements.ShowModal();
+        }
+        break;
 
         case IDM_RA_GETROMCHECKSUM:
         {
@@ -569,14 +508,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
             if (pUserContext.IsLoggedIn())
             {
-                std::ostringstream oss;
-                oss << "http://" << _RA_HostName() << "/User/" << pUserContext.GetUsername();
-                ShellExecute(nullptr,
-                    TEXT("open"),
-                    NativeStr(oss.str()).c_str(),
-                    nullptr,
-                    nullptr,
-                    SW_SHOWNORMAL);
+                const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                const auto sUrl = ra::StringPrintf("%s/user/%s", pConfiguration.GetHostUrl(), pUserContext.GetUsername());
+
+                const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+                pDesktop.OpenUrl(sUrl);
             }
             break;
         }
@@ -586,14 +522,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
             if (pGameContext.GameId() != 0)
             {
-                std::ostringstream oss;
-                oss << "http://" << _RA_HostName() << "/Game/" << pGameContext.GameId();
-                ShellExecute(nullptr,
-                    TEXT("open"),
-                    NativeStr(oss.str()).c_str(),
-                    nullptr,
-                    nullptr,
-                    SW_SHOWNORMAL);
+                const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                const auto sUrl = ra::StringPrintf("%s/game/%u", pConfiguration.GetHostUrl(), pGameContext.GameId());
+
+                const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+                pDesktop.OpenUrl(sUrl);
             }
             else
             {
@@ -601,7 +534,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             }
         }
         break;
-
+/*
         case IDM_RA_SCANFORGAMES:
 
             if (g_sROMDirLocation.length() == 0)
@@ -623,7 +556,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
                     ShowWindow(g_GameLibrary.GetHWND(), SW_SHOW);
             }
             break;
-
+*/
         case IDM_RA_PARSERICHPRESENCE:
         {
             ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();
@@ -659,33 +592,12 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         }
         break;
 
-        case IDM_RA_TOGGLE_LB_NOTIFICATIONS:
+        case IDM_RA_OVERLAYSETTINGS:
         {
-            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications,
-                !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications));
-
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
-        }
-        break;
-
-        case IDM_RA_TOGGLE_LB_COUNTER:
-        {
-            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCounters,
-                !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters));
-
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
-        }
-        break;
-
-        case IDM_RA_TOGGLE_LB_SCOREBOARD:
-        {
-            auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-            pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards,
-                !pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards));
-
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
+            ra::ui::viewmodels::OverlaySettingsViewModel vmSettings;
+            vmSettings.Initialize();
+            if (vmSettings.ShowModal() == ra::ui::DialogResult::OK)
+                vmSettings.Commit();
         }
         break;
 
@@ -708,7 +620,7 @@ API void CCONV _RA_OnSaveState(const char* sFilename)
 {
     if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
-        if (!g_bRAMTamperedWith)
+        if (!ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().WasMemoryModified())
             ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgress(sFilename);
     }
 }
@@ -726,10 +638,12 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
         }
 
         ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().LoadProgress(sFilename);
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
+
         g_MemoryDialog.Invalidate();
 
-        for (size_t i = 0; i < g_pActiveAchievements->NumAchievements(); ++i)
-            g_pActiveAchievements->GetAchievement(i).SetDirtyFlag(Achievement::DirtyFlags::Conditions);
+        if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
+            g_AchievementEditorDialog.ActiveAchievement()->SetDirtyFlag(Achievement::DirtyFlags::Conditions);
     }
 }
 

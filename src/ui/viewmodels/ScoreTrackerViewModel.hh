@@ -24,14 +24,7 @@ public:
     /// <summary>
     /// Sets the title message to display, empty string for no title message.
     /// </summary>
-    void SetDisplayText(const std::wstring& sValue)
-    {
-        if (sValue != GetDisplayText())
-        {
-            SetValue(DisplayTextProperty, sValue);
-            m_bSurfaceStale = true;
-        }
-    }
+    void SetDisplayText(const std::wstring& sValue);
 
     /// <summary>
     /// Updates the image to render.
@@ -42,8 +35,19 @@ public:
     bool IsAnimationStarted() const noexcept override { return true; }
     bool IsAnimationComplete() const noexcept override { return false; }
 
+    bool SetOffset(int nValue) noexcept
+    {
+        if (m_nOffset == nValue)
+            return false;
+
+        m_nOffset = nValue;
+        return true;
+    }
+
 private:
     bool m_bSurfaceStale = false;
+
+    int m_nOffset = 10;
 };
 
 } // namespace viewmodels

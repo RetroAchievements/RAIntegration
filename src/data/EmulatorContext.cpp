@@ -83,6 +83,13 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
             _RA_SetConsoleID(ConsoleID::AppleII);
             break;
 
+        case RA_Oricutron:
+            m_sClientName = "RAOricutron";
+            m_sAcceptButtonText = L"Enter";
+            m_sCancelButtonText = L"Backspace";
+            _RA_SetConsoleID(ConsoleID::Oric);
+            break;
+
         default:
         {
             const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();

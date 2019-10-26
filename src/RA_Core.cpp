@@ -744,10 +744,10 @@ char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOu
 
     //	malloc() must be managed!
     //	NB. By adding +1, we allow for a single \0 character :)
-    char* pRawFileOut = static_cast<char*>(std::malloc((nFileSizeOut + 1) * sizeof(char)));
+    char* pRawFileOut = static_cast<char*>(std::malloc((static_cast<size_t>(nFileSizeOut) + 1) * sizeof(char)));
     if (pRawFileOut)
     {
-        ZeroMemory(pRawFileOut, nFileSizeOut + 1);
+        ZeroMemory(pRawFileOut, static_cast<size_t>(nFileSizeOut) + 1);
         fread(pRawFileOut, nFileSizeOut, sizeof(char), pf);
     }
 
@@ -756,64 +756,3 @@ char* _MallocAndBulkReadFileToBuffer(const wchar_t* sFilename, long& nFileSizeOu
     return pRawFileOut;
 }
 
-namespace ra {
-
-_Success_(return == 0)
-_NODISCARD static auto CALLBACK
-BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _In_ LPARAM lpData) noexcept // it might
-{
-    ASSERT(uMsg != BFFM_VALIDATEFAILED);
-    if (uMsg == BFFM_INITIALIZED)
-    {
-        LPCTSTR path{};
-        GSL_SUPPRESS_TYPE1 path = reinterpret_cast<LPCTSTR>(lpData);
-        GSL_SUPPRESS_TYPE1 ::SendMessage(hwnd, ra::to_unsigned(BFFM_SETSELECTION), 0U, reinterpret_cast<LPARAM>(path));
-
-    }
-    return 0;
-}
-
-} /* namespace ra */
-
-std::string GetFolderFromDialog()
-{
-    BROWSEINFO bi{};
-    bi.hwndOwner = ::GetActiveWindow();
-
-    std::array<TCHAR, RA_MAX_PATH> pDisplayName{};
-    bi.pszDisplayName = pDisplayName.data();
-    bi.lpszTitle = _T("Select ROM folder...");
-
-    if (::OleInitialize(nullptr) != S_OK)
-        return std::string();
-
-    bi.ulFlags = BIF_USENEWUI | BIF_VALIDATE;
-    bi.lpfn    = ra::BrowseCallbackProc;
-    GSL_SUPPRESS_TYPE1 bi.lParam = reinterpret_cast<LPARAM>(g_sHomeDir.c_str());
-    
-    std::string ret;
-    {
-        const auto idlist_deleter =[](LPITEMIDLIST lpItemIdList) noexcept
-        {
-            ::CoTaskMemFree(lpItemIdList);
-            lpItemIdList = nullptr;
-        };
-
-        using ItemListOwner = std::unique_ptr<ITEMIDLIST, decltype(idlist_deleter)>;
-        ItemListOwner owner{ ::SHBrowseForFolder(&bi), idlist_deleter };
-        if (!owner)
-        {
-            ::OleUninitialize();
-            return std::string();
-        }
-
-        if (::SHGetPathFromIDList(owner.get(), bi.pszDisplayName) == 0)
-        {
-            ::OleUninitialize();
-            return std::string();
-        }
-        ret = ra::Narrow(bi.pszDisplayName);
-    }
-    ::OleUninitialize();
-    return ret;
-}

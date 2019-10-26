@@ -83,6 +83,13 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
             _RA_SetConsoleID(ConsoleID::AppleII);
             break;
 
+        case RA_Oricutron:
+            m_sClientName = "RAOricutron";
+            m_sAcceptButtonText = L"Enter";
+            m_sCancelButtonText = L"Backspace";
+            _RA_SetConsoleID(ConsoleID::Oric);
+            break;
+
         default:
         {
             const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
@@ -552,6 +559,12 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) co
             ReadMemory(nAddress, buffer, 2);
             return buffer[0] | (buffer[1] << 8);
         }
+        case MemSize::TwentyFourBit:
+        {
+            uint8_t buffer[3];
+            ReadMemory(nAddress, buffer, 3);
+            return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16);
+        }
         case MemSize::ThirtyTwoBit:
         {
             uint8_t buffer[4];
@@ -585,6 +598,13 @@ void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint3
             return;
         case MemSize::SixteenBit:
             WriteMemoryByte(nAddress, nValue & 0xFF);
+            nValue >>= 8;
+            WriteMemoryByte(++nAddress, nValue & 0xFF);
+            return;
+        case MemSize::TwentyFourBit:
+            WriteMemoryByte(nAddress, nValue & 0xFF);
+            nValue >>= 8;
+            WriteMemoryByte(++nAddress, nValue & 0xFF);
             nValue >>= 8;
             WriteMemoryByte(++nAddress, nValue & 0xFF);
             return;

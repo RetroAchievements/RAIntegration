@@ -17,6 +17,7 @@ _NODISCARD static _CONSTANT_FN ComparisonSizeToPrefix(_In_ MemSize nSize) noexce
         case MemSize::Nibble_Lower: return "L";
         case MemSize::Nibble_Upper: return "U";
         case MemSize::EightBit:     return "H";
+        case MemSize::TwentyFourBit:return "W";
         case MemSize::ThirtyTwoBit: return "X";
         default:
         case MemSize::SixteenBit:   return " ";

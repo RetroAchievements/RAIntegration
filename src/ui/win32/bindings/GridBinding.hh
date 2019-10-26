@@ -42,11 +42,13 @@ public:
     ViewModelCollectionBase& GetItems() noexcept { return *m_vmItems; }
 
     void BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept;
+    void BindRowColor(const IntModelProperty& pRowColorProperty) noexcept;
 
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 void OnLvnColumnClick(const LPNMLISTVIEW pnmListView);
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
     void OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate);
+    LRESULT OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw) override;
 
     void OnGotFocus() override;
     void OnLostFocus() noexcept override;
@@ -84,6 +86,7 @@ private:
     std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
     ViewModelCollectionBase* m_vmItems = nullptr;
     const BoolModelProperty* m_pIsSelectedProperty = nullptr;
+    const IntModelProperty* m_pRowColorProperty = nullptr;
     HWND m_hInPlaceEditor = nullptr;
 
     gsl::index m_nSortIndex = -1;

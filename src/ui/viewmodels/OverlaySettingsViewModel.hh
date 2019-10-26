@@ -161,7 +161,7 @@ public:
     /// <summary>
     /// Opens the folder browser dialog to select a <see cref="ScreenshotLocation" />.
     /// </summary>
-    void BrowseLocation() noexcept;
+    void BrowseLocation();
 
 protected:
     void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;

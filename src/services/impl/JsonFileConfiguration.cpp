@@ -254,6 +254,8 @@ void JsonFileConfiguration::UpdateHost()
     }
     else
     {
+        m_bCustomHost = true;
+
         const auto nIndex = m_sHostName.find("://");
         if (nIndex == std::string::npos)
         {

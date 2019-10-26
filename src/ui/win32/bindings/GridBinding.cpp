@@ -427,6 +427,11 @@ void GridBinding::BindIsSelected(const BoolModelProperty& pIsSelectedProperty) n
     m_pIsSelectedProperty = &pIsSelectedProperty;
 }
 
+void GridBinding::BindRowColor(const IntModelProperty& pRowColorProperty) noexcept
+{
+    m_pRowColorProperty = &pRowColorProperty;
+}
+
 void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 {
     if (m_pIsSelectedProperty)
@@ -566,6 +571,29 @@ void GridBinding::OnLostFocus() noexcept
 {
     if (!m_hInPlaceEditor)
         m_tFocusTime = {};
+}
+
+LRESULT GridBinding::OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw)
+{
+    if (m_pRowColorProperty)
+    {
+        switch (pCustomDraw->nmcd.dwDrawStage)
+        {
+            case CDDS_PREPAINT:
+                return CDRF_NOTIFYITEMDRAW;
+
+            case CDDS_ITEMPREPAINT:
+            {
+                const auto nIndex = gsl::narrow_cast<gsl::index>(pCustomDraw->nmcd.dwItemSpec);
+                const Color pColor(ra::to_unsigned(m_vmItems->GetItemValue(nIndex, *m_pRowColorProperty)));
+                if (pColor.Channel.A != 0)
+                    pCustomDraw->clrTextBk = RGB(pColor.Channel.R, pColor.Channel.G, pColor.Channel.B);
+                return CDRF_DODEFAULT;
+            }
+        }
+    }
+
+    return CDRF_DODEFAULT;
 }
 
 void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)

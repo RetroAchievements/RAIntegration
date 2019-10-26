@@ -2,6 +2,8 @@
 #include "RA_UnitTestHelpers.h"
 
 #include "mocks\MockEmulatorContext.hh"
+
+#include "services\AchievementRuntime.hh"
 #include "services\impl\StringTextReader.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -16,6 +18,11 @@ public:
     class RichPresenceInterpreterHarness : public GameContext
     {
     public:
+        RichPresenceInterpreterHarness() noexcept
+            : m_pRuntimeOverride(&m_pRuntime)
+        {
+        }
+
         ra::data::mocks::MockEmulatorContext mockEmulatorContext;
 
         bool LoadTest(const std::string& sScript)
@@ -24,10 +31,23 @@ public:
             return HasRichPresence();
         }
 
-        std::string GetRichPresenceString() const
+        std::string GetRichPresenceStringDirect()
         {
             return ra::Narrow(GetRichPresenceDisplayString());
         }
+
+        std::string GetRichPresenceString()
+        {
+            // memrefs are updated by the runtime
+            std::vector<ra::services::AchievementRuntime::Change> changes;
+            m_pRuntime.Process(changes);
+
+            return GetRichPresenceStringDirect();
+        }
+
+    private:
+        ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_pRuntimeOverride;
+        ra::services::AchievementRuntime m_pRuntime;
     };
 
     TEST_METHOD(TestValue)
@@ -439,18 +459,24 @@ public:
         memory.at(0) = 1; // because the hit count is still set on the first condition, it's displayed
         Assert::AreEqual("Zero", rp.GetRichPresenceString().c_str());
 
-        memory.at(0) = 2; // this clears the hit count on the first condition, and doesn't match the second, so
-                            // default is displayed
+        // this clears the hit count on the first condition, and doesn't match the second, so default is displayed
+        memory.at(0) = 2;
         Assert::AreEqual("Default", rp.GetRichPresenceString().c_str());
 
-        memory.at(0) = 1; // the second one captures a hit count
+        memory.at(0) = 1; // the second one will capture a hit count
+        // Normally, GetRichPresenceString just calculates the string, and AchievementRunTime::Process
+        // updates the memory references. For simplicity, the harness's GetRichPresenceString does both. To
+        // ensure the hit counts aren't updated by evaluating the string, bypass the override
+        Assert::AreEqual("Default", rp.GetRichPresenceStringDirect().c_str());
+        Assert::AreEqual("Default", rp.GetRichPresenceStringDirect().c_str());
+        Assert::AreEqual("Default", rp.GetRichPresenceStringDirect().c_str());
+        // now we call the override, which updates the memory, and captures the hit count
         Assert::AreEqual("One", rp.GetRichPresenceString().c_str());
 
         memory.at(0) = 0; // the first captures a hit count
         Assert::AreEqual("Zero", rp.GetRichPresenceString().c_str());
 
-        memory.at(0) =
-            2; // this clears the hit count on the first, but the second still has a hit count, so it's used
+        memory.at(0) = 2; // this clears the hit count on the first, but the second still has a hit count, so it's used
         Assert::AreEqual("One", rp.GetRichPresenceString().c_str());
 
         memory.at(0) = 3; // this clears the hit count on the second, so the default is shown

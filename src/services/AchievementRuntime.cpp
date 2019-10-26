@@ -198,6 +198,14 @@ _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& cha
                 break;
         }
     }
+
+    if (m_pRichPresenceMemRefs)
+    {
+        // rc_update_memrefs is not exposed, create a dummy trigger with no conditions to update the memrefs
+        rc_trigger_t trigger{};
+        trigger.memrefs = m_pRichPresenceMemRefs;
+        rc_test_trigger(&trigger, rc_peek_callback, nullptr, nullptr);
+    }
 }
 
 _NODISCARD static _CONSTANT_FN ComparisonSizeToPrefix(_In_ char nSize) noexcept
@@ -215,6 +223,7 @@ _NODISCARD static _CONSTANT_FN ComparisonSizeToPrefix(_In_ char nSize) noexcept
         case RC_MEMSIZE_LOW:          return "L";
         case RC_MEMSIZE_HIGH:         return "U";
         case RC_MEMSIZE_8_BITS:       return "H";
+        case RC_MEMSIZE_24_BITS:      return "W";
         case RC_MEMSIZE_32_BITS:      return "X";
         default:
         case RC_MEMSIZE_16_BITS:      return " ";
@@ -236,6 +245,7 @@ _NODISCARD static constexpr char ComparisonSizeFromPrefix(_In_ char cPrefix) noe
         case 'l': case 'L': return RC_MEMSIZE_LOW;
         case 'u': case 'U': return RC_MEMSIZE_HIGH;
         case 'h': case 'H': return RC_MEMSIZE_8_BITS;
+        case 'w': case 'W': return RC_MEMSIZE_24_BITS;
         case 'x': case 'X': return RC_MEMSIZE_32_BITS;
         default:
         case ' ':

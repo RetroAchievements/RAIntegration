@@ -3,6 +3,8 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\FileDialogViewModel.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -73,9 +75,20 @@ void OverlaySettingsViewModel::OnViewModelBoolValueChanged(const BoolModelProper
         SetDisplayMastery(true);
 }
 
-void OverlaySettingsViewModel::BrowseLocation() noexcept
+void OverlaySettingsViewModel::BrowseLocation()
 {
-    // TODO
+    ra::ui::viewmodels::FileDialogViewModel vmFolder;
+    vmFolder.SetWindowTitle(L"Select Screenshot Location");
+    vmFolder.SetInitialDirectory(ScreenshotLocation());
+
+    if (vmFolder.ShowSelectFolderDialog(*this) == ra::ui::DialogResult::OK)
+    {
+        std::wstring sLocation = vmFolder.GetFileName();
+        if (!sLocation.empty() && sLocation.back() != '\\')
+            sLocation.push_back('\\');
+
+        SetScreenshotLocation(sLocation);
+    }
 }
 
 } // namespace viewmodels

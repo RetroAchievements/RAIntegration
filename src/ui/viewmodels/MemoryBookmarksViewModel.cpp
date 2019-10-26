@@ -31,6 +31,7 @@ const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::Previo
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangesProperty("MemoryBookmarkViewModel", "Changes", 0);
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::BehaviorProperty("MemoryBookmarkViewModel", "Behavior", ra::etoi(BookmarkBehavior::None));
 const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsSelectedProperty("MemoryBookmarkViewModel", "IsSelected", false);
+const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::RowColorProperty("MemoryBookmarkViewModel", "RowColor", 0);
 
 MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
 {
@@ -38,6 +39,7 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
 
     m_vSizes.Add(ra::etoi(MemSize::EightBit), L" 8-bit"); // leading space for sort order
     m_vSizes.Add(ra::etoi(MemSize::SixteenBit), L"16-bit");
+    m_vSizes.Add(ra::etoi(MemSize::TwentyFourBit), L"24-bit");
     m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBit), L"32-bit");
 
     m_vFormats.Add(ra::etoi(MemFormat::Hex), L"Hex");
@@ -65,7 +67,7 @@ void MemoryBookmarksViewModel::OnViewModelBoolValueChanged(const BoolModelProper
 }
 
 GSL_SUPPRESS_F6
-void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs& args)
+void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == MemoryBookmarkViewModel::FormatProperty ||
         args.Property == MemoryBookmarkViewModel::SizeProperty)
@@ -74,6 +76,18 @@ void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index, const IntM
     }
     else if (args.Property == MemoryBookmarkViewModel::BehaviorProperty)
     {
+        switch ((BookmarkBehavior)args.tNewValue)
+        {
+            case BookmarkBehavior::Frozen:
+                m_vBookmarks.SetItemValue(nIndex, MemoryBookmarkViewModel::RowColorProperty, 0xFFFFFFC0);
+                break;
+
+            default:
+                m_vBookmarks.SetItemValue(nIndex, MemoryBookmarkViewModel::RowColorProperty,
+                    MemoryBookmarkViewModel::RowColorProperty.GetDefaultValue());
+                break;
+        }
+
 #ifndef RA_UTEST
         // force memory view to repaint - different behaviors appear as different colors
         MemoryViewerControl::Invalidate();

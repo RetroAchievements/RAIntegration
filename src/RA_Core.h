@@ -34,8 +34,6 @@ extern void _WriteBufferToFile(const std::wstring& sFileName, const std::string&
 extern void _FetchGameHashLibraryFromWeb();
 extern void _FetchMyProgressFromWeb();
 
-_NODISCARD std::string GetFolderFromDialog();
-
 void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom);
 void RememberWindowPosition(HWND hDlg, const char* sDlgKey);
 void RememberWindowSize(HWND hDlg, const char* sDlgKey);

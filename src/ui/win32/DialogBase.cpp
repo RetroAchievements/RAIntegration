@@ -278,6 +278,21 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                         pControlBinding->OnLostFocus();
                     return 0;
                 }
+
+                case NM_CUSTOMDRAW:
+                {
+                    ra::ui::win32::bindings::ControlBinding* pControlBinding;
+                    GSL_SUPPRESS_TYPE1 pControlBinding = FindControlBinding(reinterpret_cast<HWND>(pnmHdr->hwndFrom));
+
+                    if (pControlBinding)
+                    {
+                        NMLVCUSTOMDRAW* pnmCustomDraw;
+                        GSL_SUPPRESS_TYPE1{ pnmCustomDraw = reinterpret_cast<NMLVCUSTOMDRAW*>(lParam); }
+                        SetWindowLongPtr(m_hWnd, DWLP_MSGRESULT, pControlBinding->OnCustomDraw(pnmCustomDraw));
+                        return 1;
+                    }
+                    return 0;
+                }
             }
         }
 

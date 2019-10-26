@@ -190,6 +190,21 @@ public:
         /// Sets whether the bookmark is selected.
         /// </summary>
         void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the row color.
+        /// </summary>
+        static const IntModelProperty RowColorProperty;
+
+        /// <summary>
+        /// Gets the row color.
+        /// </summary>
+        Color GetRowColor() const { return Color(ra::to_unsigned(GetValue(RowColorProperty))); }
+
+        /// <summary>
+        /// Sets the row color.
+        /// </summary>
+        void SetRowColor(Color value) { SetValue(RowColorProperty, ra::to_signed(value.ARGB)); }
     };
 
     /// <summary>

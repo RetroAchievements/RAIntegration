@@ -99,6 +99,7 @@ public:
         None,
         Open,
         Save,
+        Folder,
     };
 
     /// <summary>
@@ -128,10 +129,46 @@ public:
     /// <summary>
     /// Show the Save file dialog
     /// </summary>
+    DialogResult ShowOpenFileDialog(const WindowViewModelBase& vmParentWindow)
+    {
+        SetMode(Mode::Open);
+        return ShowModal(vmParentWindow);
+    }
+
+    /// <summary>
+    /// Show the Save file dialog
+    /// </summary>
     DialogResult ShowSaveFileDialog()
     {
         SetMode(Mode::Save);
         return ShowModal();
+    }
+
+    /// <summary>
+    /// Show the Save file dialog
+    /// </summary>
+    DialogResult ShowSaveFileDialog(const WindowViewModelBase& vmParentWindow)
+    {
+        SetMode(Mode::Save);
+        return ShowModal(vmParentWindow);
+    }
+
+    /// <summary>
+    /// Show the select folder dialog
+    /// </summary>
+    DialogResult ShowSelectFolderDialog()
+    {
+        SetMode(Mode::Folder);
+        return ShowModal();
+    }
+
+    /// <summary>
+    /// Show the select folder dialog
+    /// </summary>
+    DialogResult ShowSelectFolderDialog(const WindowViewModelBase& vmParentWindow)
+    {
+        SetMode(Mode::Folder);
+        return ShowModal(vmParentWindow);
     }
 
 protected:

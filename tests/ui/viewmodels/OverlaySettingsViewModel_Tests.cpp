@@ -2,8 +2,11 @@
 
 #include "ui\viewmodels\OverlaySettingsViewModel.hh"
 
+#include "ui\viewmodels\FileDialogViewModel.hh"
+
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockConfiguration.hh"
+#include "tests\mocks\MockDesktop.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -19,6 +22,7 @@ private:
     {
     public:
         ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::ui::mocks::MockDesktop mockDesktop;
     };
 
     void ValidateFeatureInitialize(ra::services::Feature feature, std::function<bool(OverlaySettingsViewModel&)> fGetValue)
@@ -79,6 +83,40 @@ public:
         vmSettings.SetScreenshotLocation(L"C:\\Temp");
         vmSettings.Commit();
         Assert::AreEqual(std::wstring(L"C:\\Temp\\"), vmSettings.mockConfiguration.GetScreenshotDirectory());
+    }
+
+    TEST_METHOD(TestBrowseLocation)
+    {
+        OverlaySettingsViewModelHarness vmSettings;
+        vmSettings.SetScreenshotLocation(L"C:\\Screenshots\\");
+
+        vmSettings.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>([](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            Assert::AreEqual(std::wstring(L"C:\\Screenshots\\"), vmFileDialog.GetInitialDirectory());
+            vmFileDialog.SetFileName(L"C:\\NewFolder");
+            return ra::ui::DialogResult::OK;
+        });
+
+        vmSettings.BrowseLocation();
+
+        Assert::AreEqual(std::wstring(L"C:\\NewFolder\\"), vmSettings.ScreenshotLocation());
+    }
+
+    TEST_METHOD(TestBrowseLocationCancel)
+    {
+        OverlaySettingsViewModelHarness vmSettings;
+        vmSettings.SetScreenshotLocation(L"C:\\Screenshots\\");
+
+        vmSettings.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>([](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            Assert::AreEqual(std::wstring(L"C:\\Screenshots\\"), vmFileDialog.GetInitialDirectory());
+            vmFileDialog.SetFileName(L"C:\\NewFolder");
+            return ra::ui::DialogResult::Cancel;
+        });
+
+        vmSettings.BrowseLocation();
+
+        Assert::AreEqual(std::wstring(L"C:\\Screenshots\\"), vmSettings.ScreenshotLocation());
     }
 };
 

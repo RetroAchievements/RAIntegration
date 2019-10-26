@@ -16,6 +16,7 @@ enum class MemSize : uint8_t
     Nibble_Upper,
     EightBit,
     SixteenBit,
+    TwentyFourBit,
     ThirtyTwoBit
 };
 

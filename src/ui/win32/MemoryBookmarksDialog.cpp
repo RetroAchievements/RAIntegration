@@ -81,6 +81,9 @@ public:
                     case MemSize::ThirtyTwoBit:
                         return ra::StringPrintf(L"%08X", nValue);
 
+                    case MemSize::TwentyFourBit:
+                        return ra::StringPrintf(L"%06X", nValue);
+
                     case MemSize::SixteenBit:
                         return ra::StringPrintf(L"%04X", nValue);
 
@@ -102,6 +105,10 @@ public:
         {
             case MemSize::ThirtyTwoBit:
                 m_nMaximum = 0xFFFFFFFF;
+                break;
+
+            case MemSize::TwentyFourBit:
+                m_nMaximum = 0xFFFFFF;
                 break;
 
             case MemSize::SixteenBit:

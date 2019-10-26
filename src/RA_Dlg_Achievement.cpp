@@ -5,6 +5,7 @@
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Resource.h"
 #include "RA_md5factory.h"
+#include "RA_BuildVer.h"
 
 #include "api\UpdateAchievement.hh"
 
@@ -12,6 +13,7 @@
 #include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\IConfiguration.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
@@ -167,7 +169,7 @@ void Dlg_Achievements::UpdateAchievementCounters()
                    NativeStr(std::to_string(nTotalPoints)).c_str());
 }
 
-size_t Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
+int Dlg_Achievements::AddAchievement(HWND hList, const Achievement& Ach)
 {
     AddAchievementRow(Ach);
 
@@ -257,7 +259,7 @@ void Dlg_Achievements::UpdateAchievementList()
             }
             else
             {
-                for (int nIndex = m_vAchievementIDs.size() - 1; nIndex >= ra::to_signed(nInsertIndex); --nIndex)
+                for (auto nIndex = m_vAchievementIDs.size() - 1; nIndex >= nInsertIndex; --nIndex)
                     ListView_DeleteItem(hList, nIndex);
             }
 
@@ -280,36 +282,51 @@ _Success_(return ) _NODISCARD BOOL
 {
     for (auto& nIter : nLbxItems)
     {
-        const Achievement& Ach = *g_AchievementsDialog.GetAchievementAt(nIter);
+        Achievement& Ach = *g_AchievementsDialog.GetAchievementAt(nIter);
         if (Ach.Title().length() < 2)
         {
-            const std::string sError = ra::StringPrintf("Achievement title too short:\n%s\nMust be greater than 2 characters.",
-                      Ach.Title().c_str());
-            MessageBox(nullptr, NativeStr(sError).c_str(), TEXT("Error!"), MB_OK);
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement title too short.",
+                ra::StringPrintf(L"Must be greater than 2 characters:\n\n%s", Ach.Title()));
             return FALSE;
         }
         if (Ach.Title().length() > 63)
         {
-            const std::string sError = ra::StringPrintf("Achievement title too long:\n%s\nMust be fewer than 80 characters.",
-                      Ach.Title().c_str());
-            MessageBox(nullptr, NativeStr(sError).c_str(), TEXT("Error!"), MB_OK);
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement title too long.",
+                ra::StringPrintf(L"Must be fewer than 64 characters:\n\n%s", Ach.Title()));
             return FALSE;
         }
 
         if (Ach.Description().length() < 2)
         {
-            const std::string sError = ra::StringPrintf("Achievement description too short:\n%s\nMust be greater than 2 characters.",
-                      Ach.Description().c_str());
-            MessageBox(nullptr, NativeStr(sError).c_str(), TEXT("Error!"), MB_OK);
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement description too short.",
+                ra::StringPrintf(L"Must be greater than 2 characters:\n\n%s", Ach.Description()));
             return FALSE;
         }
         if (Ach.Description().length() > 255)
         {
-            const std::string sError = ra::StringPrintf("Achievement description too long:\n%s\nMust be fewer than 255 characters.",
-                      Ach.Description().c_str());
-            MessageBox(nullptr, NativeStr(sError).c_str(), TEXT("Error!"), MB_OK);
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement description too long.",
+                ra::StringPrintf(L"Must be fewer than 256 characters:\n\n%s", Ach.Description()));
             return FALSE;
         }
+
+#if RA_INTEGRATION_VERSION_MINOR < 77
+        if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsCustomHost())
+        {
+            for (size_t nGroup = 0; nGroup < Ach.NumConditionGroups(); ++nGroup)
+            {
+                for (size_t nCondition = 0; nCondition < Ach.NumConditions(nGroup); ++nCondition)
+                {
+                    const auto& pCondition = Ach.GetCondition(nGroup, nCondition);
+                    if (pCondition.CompSource().GetSize() == MemSize::TwentyFourBit ||
+                        pCondition.CompTarget().GetSize() == MemSize::TwentyFourBit)
+                    {
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement contains pre-release logic.", L"* 24-bit memory size");
+                        return FALSE;
+                    }
+                }
+            }
+        }
+#endif
     }
 
     return TRUE;

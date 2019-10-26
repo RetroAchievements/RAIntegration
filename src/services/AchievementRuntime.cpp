@@ -198,6 +198,14 @@ _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& cha
                 break;
         }
     }
+
+    if (m_pRichPresenceMemRefs)
+    {
+        // rc_update_memrefs is not exposed, create a dummy trigger with no conditions to update the memrefs
+        rc_trigger_t trigger{};
+        trigger.memrefs = m_pRichPresenceMemRefs;
+        rc_test_trigger(&trigger, rc_peek_callback, nullptr, nullptr);
+    }
 }
 
 _NODISCARD static _CONSTANT_FN ComparisonSizeToPrefix(_In_ char nSize) noexcept

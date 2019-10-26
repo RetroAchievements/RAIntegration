@@ -59,6 +59,15 @@ public:
         RemoveEntry(m_vActiveLeaderboards, nId);
     }
 
+    /// <summary>
+    /// Specifies the rich presence to process each frame.
+    /// </summary>
+    /// <remarks>Only updates the memrefs each frame (for deltas), the script is not processed here.</remarks>
+    void ActivateRichPresence(rc_richpresence_t* pRichPresence) noexcept
+    {
+        m_pRichPresenceMemRefs = (pRichPresence) ? pRichPresence->memrefs : nullptr;
+    }
+
     enum class ChangeType
     {
         None = 0,
@@ -168,6 +177,8 @@ protected:
     std::vector<ActiveAchievement> m_vActiveAchievementsMonitorReset;
 
     std::vector<ActiveLeaderboard> m_vActiveLeaderboards;
+
+    rc_memref_value_t* m_pRichPresenceMemRefs = nullptr;
 
     bool m_bPaused = false;
 

@@ -1,5 +1,6 @@
 #include "MemoryBookmarksViewModel.hh"
 
+#include "RA_Defs.h"
 #include "RA_Json.h"
 #include "RA_StringUtils.h"
 
@@ -47,6 +48,7 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
 
     m_vBehaviors.Add(ra::etoi(BookmarkBehavior::None), L"");
     m_vBehaviors.Add(ra::etoi(BookmarkBehavior::Frozen), L"Frozen");
+    m_vBehaviors.Add(ra::etoi(BookmarkBehavior::PauseOnChange), L"Pause");
 
     AddNotifyTarget(*this);
     m_vBookmarks.AddNotifyTarget(*this);
@@ -294,6 +296,7 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
 void MemoryBookmarksViewModel::DoFrame()
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    std::wstring sPauseOnChangeAddresses;
 
     for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
     {
@@ -303,17 +306,39 @@ void MemoryBookmarksViewModel::DoFrame()
         const auto nCurrentValue = pBookmark.GetCurrentValue();
         if (nCurrentValue != nValue)
         {
-            if (pBookmark.GetBehavior() == BookmarkBehavior::Frozen)
+            const auto nBehavior = pBookmark.GetBehavior();
+            if (nBehavior == BookmarkBehavior::Frozen)
             {
                 pEmulatorContext.WriteMemory(pBookmark.GetAddress(), pBookmark.GetSize(), nCurrentValue);
             }
             else
             {
+                if (nBehavior == BookmarkBehavior::PauseOnChange)
+                {
+                    pBookmark.SetRowColor(ra::ui::Color(0xFFFFC0C0));
+
+                    sPauseOnChangeAddresses.append(ra::StringPrintf(L"\n* %s %s",
+                        m_vSizes.GetLabelForId(ra::etoi(pBookmark.GetSize())),
+                        ra::ByteAddressToString(pBookmark.GetAddress())));
+                }
+
                 pBookmark.SetPreviousValue(nCurrentValue);
                 pBookmark.SetCurrentValue(nValue);
                 pBookmark.SetChanges(pBookmark.GetChanges() + 1);
             }
         }
+        else if (pBookmark.GetBehavior() == BookmarkBehavior::PauseOnChange)
+        {
+            pBookmark.SetRowColor(ra::ui::Color(ra::to_unsigned(MemoryBookmarkViewModel::RowColorProperty.GetDefaultValue())));
+        }
+    }
+
+    if (!sPauseOnChangeAddresses.empty())
+    {
+        pEmulatorContext.Pause();
+
+        sPauseOnChangeAddresses = L"The following bookmarks have changed:" + sPauseOnChangeAddresses;
+        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"The emulator has been paused.", sPauseOnChangeAddresses);
     }
 }
 

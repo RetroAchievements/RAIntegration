@@ -36,6 +36,7 @@ public:
     {
         None = 0,
         Frozen,
+        PauseOnChange,
     };
 
     class MemoryBookmarkViewModel : public LookupItemViewModel

@@ -166,6 +166,25 @@ const std::vector<ConsoleContext::MemoryRegion> GameGearConsoleContext::m_vMemor
     // TODO: should cartridge memory be exposed ($0000-$BFFF)? it's usually just ROM data, but may contain on-cartridge RAM
 };
 
+// ===== Jaguar =====
+
+class JaguarConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 JaguarConsoleContext() noexcept : ConsoleContext(ConsoleID::Jaguar, L"Jaguar") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// https://www.mulle-kybernetik.com/jagdox/memorymap.html
+const std::vector<ConsoleContext::MemoryRegion> JaguarConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x1FFFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },
+};
+
 // ===== Lynx =====
 
 class LynxConsoleContext : public ConsoleContext
@@ -554,7 +573,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"Intellivision");
 
         case ConsoleID::Jaguar:
-            return std::make_unique<ConsoleContext>(nId, L"Jaguar");
+            return std::make_unique<JaguarConsoleContext>();
 
         case ConsoleID::Lynx:
             return std::make_unique<LynxConsoleContext>();

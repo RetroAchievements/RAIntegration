@@ -94,7 +94,7 @@ public:
     void SetOverwritePrompt(bool bValue) { SetValue(OverwritePromptProperty, bValue); }
 
 
-    enum Mode
+    enum class Mode
     {
         None,
         Open,

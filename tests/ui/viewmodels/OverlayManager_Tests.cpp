@@ -317,7 +317,7 @@ public:
         const auto* pScoreboard = overlay.GetScoreboard(3);
         Expects(pScoreboard != nullptr);
 
-        const auto nExpectedX = 288;
+        constexpr auto nExpectedX = 288;
 
         ra::ui::drawing::mocks::MockSurface mockSurface(800, 600);
         overlay.Render(mockSurface, false);

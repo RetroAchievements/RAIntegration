@@ -8,7 +8,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class OverlaySettingsViewModel : public WindowViewModelBase
+class OverlaySettingsViewModel : public WindowViewModelBase, ViewModelBase::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 OverlaySettingsViewModel() noexcept;
@@ -52,6 +52,36 @@ public:
     /// Sets whether or not the achievement triggered notification should be screenshoted.
     /// </summary>
     void SetScreenshotAchievementTrigger(bool bValue) { SetValue(ScreenshotAchievementTriggerProperty, bValue); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the game mastery notification should be displayed.
+    /// </summary>
+    static const BoolModelProperty DisplayMasteryProperty;
+
+    /// <summary>
+    /// Gets whether or not the game mastery notification should be displayed.
+    /// </summary>
+    bool DisplayMastery() const { return GetValue(DisplayMasteryProperty); }
+
+    /// <summary>
+    /// Sets whether or not the game mastery  notification should be displayed.
+    /// </summary>
+    void SetDisplayMastery(bool bValue) { SetValue(DisplayMasteryProperty, bValue); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the game mastery notification should be screenshoted.
+    /// </summary>
+    static const BoolModelProperty ScreenshotMasteryProperty;
+
+    /// <summary>
+    /// Gets whether or not the game mastery notification should be screenshoted.
+    /// </summary>
+    bool ScreenshotMastery() const { return GetValue(ScreenshotMasteryProperty); }
+
+    /// <summary>
+    /// Sets whether or not the game mastery notification should be screenshoted.
+    /// </summary>
+    void SetScreenshotMastery(bool bValue) { SetValue(ScreenshotMasteryProperty, bValue); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the leaderboard started notification should be displayed.
@@ -132,6 +162,9 @@ public:
     /// Opens the folder browser dialog to select a <see cref="ScreenshotLocation" />.
     /// </summary>
     void BrowseLocation();
+
+protected:
+    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 };
 
 } // namespace viewmodels

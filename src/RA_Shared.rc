@@ -277,7 +277,7 @@ BEGIN
     PUSHBUTTON      "Move Down",IDC_RA_MOVE_BOOKMARK_DOWN,290,137,50,14
 END
 
-IDD_RA_OVERLAYSETTINGS DIALOGEX 0, 0, 199, 132
+IDD_RA_OVERLAYSETTINGS DIALOGEX 0, 0, 199, 144
 STYLE DS_SYSMODAL | DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_TOPMOST
 CAPTION "Overlay Settings"
@@ -286,20 +286,24 @@ BEGIN
     CONTROL         "Display &achievement triggered notification",IDC_RA_DISPLAY_TRIGGER,
                     "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,6,6,187,10
     CONTROL         "&Capture achievement triggered screenshot",IDC_RA_SCREENSHOT_TRIGGER,
-                    "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,6,17,187,10
+                    "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,12,17,165,10
+    CONTROL         "Display game &mastery notification",IDC_RA_DISPLAY_MASTERY,
+                    "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,6,28,187,10
+    CONTROL         "Capture &game mastery screenshot",IDC_RA_SCREENSHOT_MASTERY,
+                    "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,12,39,165,10
     CONTROL         "Display &leaderboard started notification",IDC_RA_DISPLAY_LBOARD_START,
-                    "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,6,34,187,10
+                    "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,6,54,187,10
     CONTROL         "Display leader&board canceled notification",IDC_RA_DISPLAY_LBOARD_CANCEL,
-                    "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,6,45,187,10
+                    "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,6,65,187,10
     CONTROL         "Display active leaderboard &time/score values",IDC_RA_DISPLAY_LBOARD_VALUE,
-                    "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,6,56,187,10
+                    "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,6,76,187,10
     CONTROL         "Display &scoreboard after submitting leaderboard entry",IDC_RA_DISPLAY_LBOARD_SCOREBOARD,
-                    "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,6,67,187,10
-    LTEXT           "Screenshot &Location",IDC_RA_LOCATION,6,86,94,8
-    EDITTEXT        IDC_RA_SCREENSHOT_LOCATION,6,95,172,14,ES_AUTOHSCROLL | ES_READONLY
-    PUSHBUTTON      " ...",IDC_RA_BROWSE,178,95,15,14
-    DEFPUSHBUTTON   "OK",IDOK,100,112,44,14
-    PUSHBUTTON      "Cancel",IDCANCEL,148,112,44,14
+                    "Button",BS_AUTOCHECKBOX | BS_LEFT | WS_TABSTOP,6,87,187,10
+    LTEXT           "Screenshot &Location",IDC_RA_LOCATION,6,99,94,8
+    EDITTEXT        IDC_RA_SCREENSHOT_LOCATION,6,107,172,14,ES_AUTOHSCROLL | ES_READONLY
+    PUSHBUTTON      " ...",IDC_RA_BROWSE,178,107,15,14
+    DEFPUSHBUTTON   "OK",IDOK,100,123,44,15
+    PUSHBUTTON      "Cancel",IDCANCEL,148,123,44,15
 END
 
 
@@ -510,10 +514,9 @@ BEGIN
         VERTGUIDE, 144
         VERTGUIDE, 148
         TOPMARGIN, 6
-        BOTTOMMARGIN, 126
-        HORZGUIDE, 18
-        HORZGUIDE, 34
-        HORZGUIDE, 112
+        BOTTOMMARGIN, 138
+        HORZGUIDE, 107
+        HORZGUIDE, 123
     END
 END
 #endif    // APSTUDIO_INVOKED

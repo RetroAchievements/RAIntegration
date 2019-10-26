@@ -14,7 +14,8 @@ namespace data {
 class ConsoleContext
 {
 public:
-    GSL_SUPPRESS_F6 ConsoleContext(ConsoleID nId, const std::wstring&& sName) noexcept : m_nId(nId), m_sName(std::move(sName)) {}
+    GSL_SUPPRESS_F6 GSL_SUPPRESS_ENUM3 
+        ConsoleContext(ConsoleID nId, std::wstring&& sName) noexcept : m_nId(nId), m_sName(std::move(sName)) {}
     virtual ~ConsoleContext() noexcept = default;
     ConsoleContext(const ConsoleContext&) noexcept = delete;
     ConsoleContext& operator=(const ConsoleContext&) noexcept = delete;

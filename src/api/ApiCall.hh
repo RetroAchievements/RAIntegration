@@ -34,9 +34,9 @@ protected:
     static void CallAsyncWithRetry(const TRequest& request, TCallback&& callback)
     {
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync(
-            [request, callback = std::move(callback)]
+            [request, callback]
         {
-            DoAsyncWithRetry(std::move(request), std::move(callback), std::chrono::milliseconds(0));
+            DoAsyncWithRetry(request, callback, std::chrono::milliseconds(0));
         });
     }
 
@@ -65,7 +65,7 @@ private:
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(delay,
             [request = std::move(request), callback = std::move(callback), delay]
         {
-            DoAsyncWithRetry(std::move(request), std::move(callback), delay);
+            DoAsyncWithRetry(request, callback, delay);
         });
     }
 };

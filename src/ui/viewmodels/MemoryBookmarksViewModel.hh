@@ -32,7 +32,7 @@ public:
     
     void DoFrame();
 
-    enum BookmarkBehavior
+    enum class BookmarkBehavior
     {
         None = 0,
         Frozen,

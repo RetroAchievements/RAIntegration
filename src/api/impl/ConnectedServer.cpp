@@ -231,7 +231,6 @@ static bool DoRequest(const std::string& sHost, const char* restrict sApiName, c
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
     AppendUrlParam(sPostData, "u", pUserContext.GetUsername());
-    AppendUrlParam(sPostData, "t", pUserContext.GetApiToken());
     AppendUrlParam(sPostData, "r", sRequestName);
     if (!sInputParams.empty())
     {
@@ -239,6 +238,9 @@ static bool DoRequest(const std::string& sHost, const char* restrict sApiName, c
         sPostData.append(sInputParams);
     }
     RA_LOG_INFO("%s Request: %s", sApiName, sPostData.c_str());
+
+    // append token after log so it's not in the log
+    AppendUrlParam(sPostData, "t", pUserContext.GetApiToken());
 
     ra::services::Http::Request httpRequest(ra::StringPrintf("%s/dorequest.php", sHost));
     httpRequest.SetPostData(sPostData);
@@ -950,7 +952,7 @@ FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::R
         {
             response.Result = ApiResult::Error;
             if (response.ErrorMessage.empty())
-                response.ErrorMessage = ra::BuildString("Response", " not found in response");
+                response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
         }
         else
         {
@@ -1018,7 +1020,7 @@ SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::R
         {
             response.Result = ApiResult::Error;
             if (response.ErrorMessage.empty())
-                response.ErrorMessage = ra::BuildString("Response", " not found in response");
+                response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
         }
         else
         {
@@ -1055,7 +1057,7 @@ SubmitTicket::Response ConnectedServer::SubmitTicket(const SubmitTicket::Request
         {
             response.Result = ApiResult::Error;
             if (response.ErrorMessage.empty())
-                response.ErrorMessage = ra::BuildString("Response", " not found in response");
+                response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
         }
         else
         {
@@ -1094,7 +1096,7 @@ UploadBadge::Response ConnectedServer::UploadBadge(const UploadBadge::Request& r
         {
             response.Result = ApiResult::Error;
             if (response.ErrorMessage.empty())
-                response.ErrorMessage = ra::BuildString("Response", " not found in response");
+                response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
         }
         else
         {

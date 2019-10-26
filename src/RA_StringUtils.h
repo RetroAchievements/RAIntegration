@@ -255,6 +255,20 @@ public:
         Append(std::forward<Ts>(args)...);
     }
 
+    template<typename... Ts>
+    void Append(const char* const& arg, Ts&&... args)
+    {
+        AppendSubString(arg, strlen(arg));
+        Append(std::forward<Ts>(args)...);
+    }
+
+    template<typename... Ts>
+    void Append(const wchar_t* const& arg, Ts&&... args)
+    {
+        AppendSubString(arg, wcslen(arg));
+        Append(std::forward<Ts>(args)...);
+    }
+
     template<typename T>
     void AppendFormat([[maybe_unused]] const T& arg, [[maybe_unused]] const std::string& sFormat)
     {

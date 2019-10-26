@@ -396,6 +396,8 @@ private:
         {
             auto& pAch = mockGameContext.NewAchievement(Achievement::Category::Core);
             pAch.SetID(nId);
+            pAch.ParseTrigger("1=1");
+            pAch.SetActive(true);
         }
 
         bool WasUnlocked(unsigned int nId)

@@ -113,6 +113,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
     // game properties
     m_sGameTitle = response.Title;
+    m_sGameImage = response.ImageIcon;
 
     // rich presence
     if (!response.RichPresence.empty())
@@ -174,7 +175,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     const auto nPopup = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
         ra::StringPrintf(L"Loaded %s", response.Title),
         ra::StringPrintf(L"%u achievements, %u points", nNumCoreAchievements, nTotalCoreAchievementPoints),
-        ra::ui::ImageType::Icon, response.ImageIcon);
+        ra::ui::ImageType::Icon, m_sGameImage);
 
     // get user unlocks asynchronously
     RefreshUnlocks(!bWasPaused, nPopup);
@@ -567,6 +568,56 @@ bool GameContext::RemoveAchievement(ra::AchievementID nAchievementId)
     return false;
 }
 
+void GameContext::AwardMastery() const
+{
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+
+    ra::api::FetchUserUnlocks::Request masteryRequest;
+    masteryRequest.GameId = m_nGameId;
+    masteryRequest.Hardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+    masteryRequest.CallAsync([this](const ra::api::FetchUserUnlocks::Response& response)
+    {
+        unsigned int nNumCoreAchievements = 0;
+        unsigned int nTotalCoreAchievementPoints = 0;
+
+        bool bActiveCoreAchievement = false;
+        for (const auto& pAchievement : m_vAchievements)
+        {
+            if (pAchievement->GetCategory() == Achievement::Category::Core)
+            {
+                if (response.UnlockedAchievements.find(pAchievement->ID()) == response.UnlockedAchievements.end())
+                {
+                    bActiveCoreAchievement = true;
+                    break;
+                }
+
+                ++nNumCoreAchievements;
+                nTotalCoreAchievementPoints += pAchievement->Points();
+            }
+        }
+
+        if (!bActiveCoreAchievement)
+        {
+            const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            const bool bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+
+            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
+
+            auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+            const auto nPopup = pOverlayManager.QueueMessage(
+                ra::StringPrintf(L"%s %s", bHardcore ? L"Mastered" : L"Completed", m_sGameTitle),
+                ra::StringPrintf(L"%u achievements, %u points", nNumCoreAchievements, nTotalCoreAchievementPoints),
+                ra::ui::ImageType::Icon, m_sGameImage);
+
+            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot))
+            {
+                std::wstring sPath = ra::StringPrintf(L"%sGame%u.png", pConfiguration.GetScreenshotDirectory(), m_nGameId);
+                pOverlayManager.CaptureScreenshot(nPopup, sPath);
+            }
+        }
+    });
+}
+
 void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
 {
     auto* pAchievement = FindAchievement(nAchievementId);
@@ -633,16 +684,21 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
         bSubmit = false;
     }
 
-    ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
-        bIsError ? L"Overlay\\acherror.wav" : L"Overlay\\unlock.wav");
+    int nPopupId = -1;
 
-    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-    const auto nPopupId = pOverlayManager.QueueMessage(vmPopup);
-
-    if (bTakeScreenshot)
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications))
     {
-        std::wstring sPath = ra::StringPrintf(L"%s%u.png", pConfiguration.GetScreenshotDirectory(), nAchievementId);
-        pOverlayManager.CaptureScreenshot(nPopupId, sPath);
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
+            bIsError ? L"Overlay\\acherror.wav" : L"Overlay\\unlock.wav");
+
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        nPopupId = pOverlayManager.QueueMessage(vmPopup);
+
+        if (bTakeScreenshot)
+        {
+            std::wstring sPath = ra::StringPrintf(L"%s%u.png", pConfiguration.GetScreenshotDirectory(), nAchievementId);
+            pOverlayManager.CaptureScreenshot(nPopupId, sPath);
+        }
     }
 
     pAchievement->SetActive(false);
@@ -667,7 +723,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
             // "Error: User already has this achievement awarded.", just ignore the error. There's no reason to
             // notify the user that the unlock failed because it had happened previously.
         }
-        else
+        else if (nPopupId != -1)
         {
             // an error occurred, update the popup to display the error message
             auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -703,6 +759,28 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
             }
         }
     });
+
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotification))
+    {
+        bool bHasCoreAchievement = false;
+        bool bActiveCoreAchievement = false;
+        for (const auto& pCheckAchievement : m_vAchievements)
+        {
+            if (pCheckAchievement->GetCategory() == Achievement::Category::Core)
+            {
+                bHasCoreAchievement = true;
+
+                if (pCheckAchievement->Active())
+                {
+                    bActiveCoreAchievement = true;
+                    break;
+                }
+            }
+        }
+
+        if (!bActiveCoreAchievement && bHasCoreAchievement)
+            AwardMastery();
+    }
 }
 
 void GameContext::ReloadAchievements(Achievement::Category nCategory)
@@ -870,7 +948,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
                 vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->Title()));
 
                 const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
-                const int nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
+                constexpr int nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
 
                 for (const auto& pEntry : response.TopEntries)
                 {

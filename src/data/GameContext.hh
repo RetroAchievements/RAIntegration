@@ -281,6 +281,7 @@ protected:
     bool ReloadAchievement(Achievement& pAchievement);
     void RefreshUnlocks(bool bUnpause, int nPopup);
     void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup);
+    void AwardMastery() const;
     void LoadRichPresenceScript(const std::string& sRichPresenceScript);
     void RefreshCodeNotes();
     void AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote);
@@ -291,6 +292,7 @@ protected:
     unsigned int m_nGameId = 0;
     std::wstring m_sGameTitle;
     std::string m_sGameHash;
+    std::string m_sGameImage;
     Mode m_nMode{};
 
     ra::AchievementID m_nNextLocalId = 0;

@@ -22,7 +22,7 @@
 namespace ra {
 namespace data {
 
-const int SERVER_PING_FREQUENCY = 2 * 60; // seconds between server pings
+constexpr int SERVER_PING_FREQUENCY = 2 * 60; // seconds between server pings
 
 void SessionTracker::Initialize(const std::string& sUsername)
 {

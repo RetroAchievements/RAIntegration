@@ -3,7 +3,7 @@
 #include "RA_Defs.h"
 
 namespace {
-const static unsigned int MD5_STRING_LEN = 32;
+constexpr static unsigned int MD5_STRING_LEN = 32;
 }
 
 std::string RAGenerateMD5(const std::string& sStringToMD5)

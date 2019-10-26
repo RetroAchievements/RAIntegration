@@ -5,6 +5,7 @@
 #include "RA_Interface.h"
 
 #include "Types.hh"
+#include "ra_fwd.h"
 
 #include <string>
 
@@ -52,7 +53,7 @@ public:
     /// <summary>
     /// Gets the unique identifier of the emulator this context was initialized with.
     /// </summary>
-    EmulatorID GetEmulatorId() const noexcept { return m_nEmulatorId; }
+    EmulatorID GetEmulatorId() const noexcept { GSL_SUPPRESS_ENUM3 return m_nEmulatorId; }
 
     /// <summary>
     /// Gets the client name for the emulator this context was initialized with.

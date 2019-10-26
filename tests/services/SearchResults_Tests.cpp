@@ -730,7 +730,7 @@ public:
     {
         auto memory = std::make_unique<unsigned char[]>(BIG_BLOCK_SIZE);
         for (unsigned int i = 0; i < BIG_BLOCK_SIZE; ++i)
-            memory[i] = (i % 256);
+            GSL_SUPPRESS_BOUNDS4 memory[i] = (i % 256);
         ra::data::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockMemory(memory.get(), BIG_BLOCK_SIZE);
 
@@ -767,7 +767,7 @@ public:
     {
         auto memory = std::make_unique<unsigned char[]>(BIG_BLOCK_SIZE);
         for (unsigned int i = 0; i < BIG_BLOCK_SIZE; ++i)
-            memory[i] = (i % 256);
+            GSL_SUPPRESS_BOUNDS4 memory[i] = (i % 256);
         ra::data::mocks::MockEmulatorContext mockEmulatorContext;
         mockEmulatorContext.MockMemory(memory.get(), BIG_BLOCK_SIZE);
 

@@ -18,14 +18,14 @@ public:
     {
     }
 
-    MockConsoleContext(ConsoleID nId, const std::wstring&& sName) noexcept
+    MockConsoleContext(ConsoleID nId, std::wstring&& sName) noexcept
         : ConsoleContext(nId, std::move(sName)), m_Override(this)
     {
     }
 
     void SetId(ConsoleID nId) noexcept { m_nId = nId; }
 
-    void SetName(const std::wstring&& sName) { m_sName = std::move(sName); }
+    void SetName(std::wstring&& sName) noexcept { m_sName = std::move(sName); }
 
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::ConsoleContext> m_Override;

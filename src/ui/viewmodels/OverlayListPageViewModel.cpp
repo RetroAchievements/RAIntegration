@@ -90,8 +90,8 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
     // scrollbar
     const auto nSelectedIndex = ra::to_unsigned(GetSelectedItemIndex());
     gsl::index nIndex = m_nScrollOffset;
-    const auto nItemSize = 64;
-    const auto nItemSpacing = 8;
+    constexpr auto nItemSize = 64;
+    constexpr auto nItemSpacing = 8;
     m_nVisibleItems = (nHeight + nItemSpacing) / (nItemSize + nItemSpacing);
 
     if (m_nVisibleItems < m_vItems.Count())

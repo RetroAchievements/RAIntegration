@@ -499,7 +499,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
                     break;
             }
 
-            const int nNumItems = 4; // "Mem", "Delta", "Prior" or "Value"
+            constexpr int nNumItems = 4; // "Mem", "Delta", "Prior" or "Value"
 
             g_hIPEEdit =
                 CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("ComboBox"), TEXT(""),
@@ -1250,7 +1250,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                                 const Condition& CondToMove =
                                     pActiveAch->GetCondition(nSelectedConditionGroup, nUpdatedIndex);
-                                conditionsToMove.push_back(std::move(CondToMove));
+                                conditionsToMove.push_back(CondToMove);
                                 pActiveAch->RemoveCondition(nSelectedConditionGroup, nUpdatedIndex);
                             }
 
@@ -1308,7 +1308,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                                 const Condition& CondToMove =
                                     pActiveAch->GetCondition(nSelectedConditionGroup, nUpdatedIndex);
-                                conditionsToMove.push_back(std::move(CondToMove));
+                                conditionsToMove.push_back(CondToMove);
                                 pActiveAch->RemoveCondition(nSelectedConditionGroup, nUpdatedIndex);
 
                                 // want to insert after last selected item, update nSelectedIndex
@@ -1352,7 +1352,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                 case IDC_RA_UPLOAD_BADGE:
                 {
-                    const int BUF_SIZE = 1024;
+                    constexpr int BUF_SIZE = 1024;
                     TCHAR buffer[BUF_SIZE];
                     ZeroMemory(buffer, BUF_SIZE);
 

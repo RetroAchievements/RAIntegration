@@ -329,8 +329,8 @@ private:
                 m_vmViewModel->RemoveNotifyTarget(*this);
         }
 
-        ViewModelBase& ViewModel() { return *m_vmViewModel; }
-        const ViewModelBase& ViewModel() const { return *m_vmViewModel; }
+        ViewModelBase& ViewModel() noexcept { return *m_vmViewModel; }
+        const ViewModelBase& ViewModel() const noexcept { return *m_vmViewModel; }
 
         ViewModelBase* DetachViewModel() noexcept
         {

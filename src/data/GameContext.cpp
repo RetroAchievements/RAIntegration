@@ -948,7 +948,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
                 vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->Title()));
 
                 const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
-                const int nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
+                constexpr int nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
 
                 for (const auto& pEntry : response.TopEntries)
                 {

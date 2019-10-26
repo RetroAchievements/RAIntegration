@@ -95,7 +95,7 @@ const std::vector<ConsoleContext::MemoryRegion> ColecoVisionConsoleContext::m_vM
 class GameBoyConsoleContext : public ConsoleContext
 {
 public:
-    GameBoyConsoleContext(ConsoleID nId, const std::wstring&& sName) noexcept : ConsoleContext(nId, std::move(sName)) {}
+    GameBoyConsoleContext(ConsoleID nId, std::wstring&& sName) noexcept : ConsoleContext(nId, std::move(sName)) {}
 
     const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
 
@@ -217,7 +217,7 @@ const std::vector<ConsoleContext::MemoryRegion> MasterSystemConsoleContext::m_vM
 class MegaDriveConsoleContext : public ConsoleContext
 {
 public:
-    MegaDriveConsoleContext(ConsoleID nId, const std::wstring&& sName) noexcept : ConsoleContext(nId, std::move(sName)) {}
+    MegaDriveConsoleContext(ConsoleID nId, std::wstring&& sName) noexcept : ConsoleContext(nId, std::move(sName)) {}
 
     const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
 

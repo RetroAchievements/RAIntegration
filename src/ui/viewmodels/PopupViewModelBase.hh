@@ -104,7 +104,7 @@ public:
     /// </summary>
     const ra::ui::drawing::ISurface& GetRenderImage() const
     {
-        assert(m_pSurface != nullptr);
+        Expects(m_pSurface != nullptr);
         return *m_pSurface;
     }
 

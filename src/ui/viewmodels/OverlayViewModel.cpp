@@ -144,16 +144,16 @@ void OverlayViewModel::CreateRenderImage()
     const auto sPoints = ra::StringPrintf(L"%u Points", pUserContext.GetScore());
     const auto szPoints = m_pSurface->MeasureText(nFont, sPoints);
 
-    const auto nImageSize = 64;
-    const auto nMargin = 8;
-    const auto nPadding = 4;
-    const auto nUserFrameHeight = nImageSize + nPadding * 2;
+    constexpr auto nImageSize = 64;
+    constexpr auto nMargin = 8;
+    constexpr auto nPadding = 4;
+    constexpr auto nUserFrameHeight = nImageSize + nPadding * 2;
     const auto nUserFrameWidth = nImageSize + nPadding * 4 + std::max(szUsername.Width, szPoints.Width);
 
     const int nX = nWidth - nUserFrameWidth - nMargin;
     if (nX > 200)
     {
-        const int nY = nMargin;
+        constexpr int nY = nMargin;
 
         m_pSurface->FillRectangle(nX, nY, nUserFrameWidth, nUserFrameHeight, pTheme.ColorOverlayPanel());
 

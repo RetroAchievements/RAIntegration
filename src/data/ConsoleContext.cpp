@@ -383,6 +383,26 @@ const std::vector<ConsoleContext::MemoryRegion> PlayStationConsoleContext::m_vMe
     { 0x010000U, 0x1FFFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },
 };
 
+// ===== Sega Saturn =====
+
+class SaturnConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 SaturnConsoleContext() noexcept : ConsoleContext(ConsoleID::Saturn, L"Saturn") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// https://segaretro.org/Sega_Saturn_hardware_notes_(2004-04-27)
+const std::vector<ConsoleContext::MemoryRegion> SaturnConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x0FFFFFU, ConsoleContext::AddressType::SystemRAM, "Work RAM Low" },  // RAM (normally $00200000-$002FFFFF)
+    { 0x100000U, 0x1FFFFFU, ConsoleContext::AddressType::SystemRAM, "Work RAM High" }, // RAM (normally $06000000-$07FFFFFF, mirrored every megabyte)
+};
+
 // ===== SG-1000 =====
 
 class SG1000ConsoleContext : public ConsoleContext
@@ -585,7 +605,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"PlayStation Portable");
 
         case ConsoleID::Saturn:
-            return std::make_unique<ConsoleContext>(nId, L"Saturn");
+            return std::make_unique<SaturnConsoleContext>();
 
         case ConsoleID::Sega32X:
             return std::make_unique<MegaDriveConsoleContext>(ConsoleID::Sega32X, L"SEGA 32X");

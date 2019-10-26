@@ -585,6 +585,24 @@ public:
         Assert::AreEqual(std::string(), sContents);
     }
 
+    TEST_METHOD(TestBehaviorColoring)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.AddBookmark(1234U, MemSize::EightBit);
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, (int)bookmark.GetBehavior());
+        Assert::AreEqual(0U, bookmark.GetRowColor().ARGB);
+
+        bookmark.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::Frozen, (int)bookmark.GetBehavior());
+        Assert::AreEqual(0xFFFFFFC0U, bookmark.GetRowColor().ARGB);
+
+        bookmark.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::None);
+        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, (int)bookmark.GetBehavior());
+        Assert::AreEqual(0U, bookmark.GetRowColor().ARGB);
+    }
 };
 
 } // namespace tests

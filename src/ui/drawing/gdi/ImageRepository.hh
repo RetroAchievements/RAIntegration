@@ -60,7 +60,7 @@ private:
 
     HBitmapMap* GetBitmapMap(ImageType nType) noexcept;
 
-    std::mutex m_oMutex;
+    mutable std::mutex m_oMutex;
     std::set<std::wstring> m_vRequestedImages;
     bool m_bShutdownCOM = false;
 };

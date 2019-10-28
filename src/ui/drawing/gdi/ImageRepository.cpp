@@ -111,14 +111,18 @@ bool ImageRepository::IsImageAvailable(ImageType nType, const std::string& sName
     GSL_SUPPRESS_TYPE3{ mMap = const_cast<ImageRepository*>(this)->GetBitmapMap(nType); }
     if (mMap != nullptr)
     {
+        std::lock_guard<std::mutex> lock(m_oMutex);
         const HBitmapMap::iterator iter = mMap->find(sName);
         if (iter != mMap->end())
             return true;
     }
 
     std::wstring sFilename = GetFilename(nType, sName);
-    if (m_vRequestedImages.find(sFilename) != m_vRequestedImages.end())
-        return false;
+    {
+        std::lock_guard<std::mutex> lock(m_oMutex);
+        if (m_vRequestedImages.find(sFilename) != m_vRequestedImages.end())
+            return false;
+    }
 
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     return (pFileSystem.GetFileSize(sFilename) > 0);
@@ -416,9 +420,13 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
     if (mMap == nullptr)
         return nullptr;
 
-    const HBitmapMap::iterator iter = mMap->find(sName);
-    if (iter != mMap->end())
-        return iter->second.m_hBitmap;
+    {
+        std::lock_guard<std::mutex> lock(m_oMutex);
+
+        const HBitmapMap::iterator iter = mMap->find(sName);
+        if (iter != mMap->end())
+            return iter->second.m_hBitmap;
+    }
 
     std::wstring sFilename = GetFilename(nType, sName);
 
@@ -433,6 +441,8 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
     HBITMAP hBitmap = LoadLocalPNG(sFilename, nSize, nSize);
     if (hBitmap != nullptr)
     {
+        std::lock_guard<std::mutex> lock(m_oMutex);
+
         // bracket operator appears to be the only way to add an item to the map since
         // std::atomic deleted its move and copy constructors.
         auto& item = (*mMap)[sName];
@@ -475,10 +485,14 @@ void ImageRepository::AddReference(const ImageReference& pImage)
     if (mMap == nullptr)
         return;
 
-    const HBitmapMap::iterator iter = mMap->find(pImage.Name());
-    ASSERT(iter != mMap->end()); // AddReference should only be called if an HBITMAP exists, which will be in the map
-    if (iter != mMap->end())
-        ++iter->second.m_nReferences;
+    {
+        std::lock_guard<std::mutex> lock(m_oMutex);
+
+        const HBitmapMap::iterator iter = mMap->find(pImage.Name());
+        ASSERT(iter != mMap->end()); // AddReference should only be called if an HBITMAP exists, which will be in the map
+        if (iter != mMap->end())
+            ++iter->second.m_nReferences;
+    }
 }
 
 void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
@@ -490,6 +504,8 @@ void ImageRepository::ReleaseReference(ImageReference& pImage) noexcept
     HBitmapMap* mMap = GetBitmapMap(pImage.Type());
     if (mMap != nullptr)
     {
+        std::lock_guard<std::mutex> lock(m_oMutex);
+
         const HBitmapMap::iterator iter = mMap->find(pImage.Name());
 
         if(iter != mMap->end())

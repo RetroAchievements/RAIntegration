@@ -65,7 +65,15 @@ public:
     /// <remarks>Only updates the memrefs each frame (for deltas), the script is not processed here.</remarks>
     void ActivateRichPresence(rc_richpresence_t* pRichPresence) noexcept
     {
-        m_pRichPresenceMemRefs = (pRichPresence) ? pRichPresence->memrefs : nullptr;
+        if (pRichPresence)
+        {
+            m_pRichPresenceMemRefs = pRichPresence->memrefs;
+            UpdateRichPresenceMemRefs();
+        }
+        else
+        {
+            m_pRichPresenceMemRefs = nullptr;
+        }
     }
 
     enum class ChangeType
@@ -185,6 +193,8 @@ protected:
 private:
     bool LoadProgressV1(const std::string& sProgress, std::set<unsigned int>& vProcessedAchievementIds) const;
     bool LoadProgressV2(ra::services::TextReader& pFile, std::set<unsigned int>& vProcessedAchievementIds) const;
+
+    void UpdateRichPresenceMemRefs() noexcept;
 };
 
 } // namespace services

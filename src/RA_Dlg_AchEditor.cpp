@@ -1094,12 +1094,16 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     //  is probably what they are about to want to add a cond for.
                     if (g_MemoryDialog.GetHWND() != nullptr)
                     {
+                        const auto nSize = MemoryViewerControl::GetDataSize();
+
                         TCHAR buffer[256];
                         GetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256);
                         unsigned int nVal = strtoul(ra::Narrow(buffer).c_str(), nullptr, 16);
+                        NewCondition.CompSource().SetSize(nSize);
                         NewCondition.CompSource().SetValue(nVal);
 
-                        nVal = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(nVal, NewCondition.CompTarget().GetSize());
+                        nVal = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(nVal, nSize);
+                        NewCondition.CompTarget().SetSize(nSize);
                         NewCondition.CompTarget().SetValue(nVal);
                     }
 

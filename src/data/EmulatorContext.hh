@@ -210,6 +210,11 @@ public:
     bool WasMemoryModified() const noexcept { return m_bMemoryModified; }
 
     /// <summary>
+    /// Sets the memory modified flag.
+    /// </summary>
+    void SetMemoryModified() noexcept { m_bMemoryModified = true; }
+
+    /// <summary>
     /// Resets the memory modified flag.
     /// </summary>
     void ResetMemoryModified() noexcept { m_bMemoryModified = false; }

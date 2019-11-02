@@ -84,6 +84,8 @@ public:
         m_vHandlers.emplace_back(pHandler);
     }
 
+    void ResetExpectedWindows() noexcept { m_vHandlers.clear(); }
+
     std::string GetRunningExecutable() const override { return m_sExecutable; }
     void SetRunningExecutable(const std::string& sExecutable) { m_sExecutable = sExecutable; }
 

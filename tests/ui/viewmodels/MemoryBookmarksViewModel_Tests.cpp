@@ -60,11 +60,13 @@ public:
         Assert::AreEqual((int)MemFormat::Dec, bookmarks.Formats().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Dec"), bookmarks.Formats().GetItemAt(1)->GetLabel());
 
-        Assert::AreEqual({ 2U }, bookmarks.Behaviors().Count());
+        Assert::AreEqual({ 3U }, bookmarks.Behaviors().Count());
         Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Behaviors().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L""), bookmarks.Behaviors().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Behaviors().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Frozen"), bookmarks.Behaviors().GetItemAt(1)->GetLabel());
+        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange, bookmarks.Behaviors().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Pause"), bookmarks.Behaviors().GetItemAt(2)->GetLabel());
     }
 
     TEST_METHOD(TestLoadBookmarksOnGameChanged)
@@ -599,9 +601,98 @@ public:
         Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::Frozen, (int)bookmark.GetBehavior());
         Assert::AreEqual(0xFFFFFFC0U, bookmark.GetRowColor().ARGB);
 
+        bookmark.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
+        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange, (int)bookmark.GetBehavior());
+        Assert::AreEqual(0U, bookmark.GetRowColor().ARGB);
+
+        bookmark.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::Frozen, (int)bookmark.GetBehavior());
+        Assert::AreEqual(0xFFFFFFC0U, bookmark.GetRowColor().ARGB);
+
         bookmark.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::None);
         Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, (int)bookmark.GetBehavior());
         Assert::AreEqual(0U, bookmark.GetRowColor().ARGB);
+    }
+
+    TEST_METHOD(TestPauseOnChange)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.AddBookmark(4U, MemSize::EightBit);
+        auto& bookmark1 = *bookmarks.Bookmarks().GetItemAt(0);
+        bookmarks.AddBookmark(5U, MemSize::EightBit);
+        auto& bookmark2 = *bookmarks.Bookmarks().GetItemAt(1);
+
+        bool bPaused = false;
+        bookmarks.mockEmulatorContext.SetPauseFunction([&bPaused]() { bPaused = true; });
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = i;
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.DoFrame(); // initialize current and previous values
+        Assert::IsFalse(bPaused);
+
+        bookmark1.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
+        bookmark2.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
+
+        bool bSawDialog = false;
+        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bSawDialog](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bSawDialog = true;
+
+            Assert::AreEqual(std::wstring(L"The emulator has been paused."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The following bookmarks have changed:\n*  8-bit 0x0004"), vmMessageBox.GetMessage());
+
+            return ra::ui::DialogResult::OK;
+        });
+
+        // no change, dialog should not be shown
+        bookmarks.DoFrame();
+        Assert::IsFalse(bSawDialog);
+        Assert::IsFalse(bPaused);
+
+        // change, dialog should be shown and emulator should be paused
+        memory.at(4) = 9;
+        bookmarks.DoFrame();
+        Assert::IsTrue(bSawDialog);
+        Assert::IsTrue(bPaused);
+
+        // only row that caused the pause should be highlighted
+        Assert::AreEqual(0xFFFFC0C0U, bookmark1.GetRowColor().ARGB);
+        Assert::AreEqual(0U, bookmark2.GetRowColor().ARGB);
+
+        // unpause, dialog should not show, emulator should not pause, row should unhighlight
+        bSawDialog = false;
+        bPaused = false;
+        bookmarks.DoFrame();
+        Assert::IsFalse(bSawDialog);
+        Assert::IsFalse(bPaused);
+        Assert::AreEqual(0U, bookmark1.GetRowColor().ARGB);
+        Assert::AreEqual(0U, bookmark2.GetRowColor().ARGB);
+
+        // both change in one frame, expect a single dialog
+        bool bSawDialog2 = false;
+        bookmarks.mockDesktop.ResetExpectedWindows();
+        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bSawDialog2](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bSawDialog2 = true;
+
+            Assert::AreEqual(std::wstring(L"The emulator has been paused."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The following bookmarks have changed:\n*  8-bit 0x0004\n*  8-bit 0x0005"), vmMessageBox.GetMessage());
+
+            return ra::ui::DialogResult::OK;
+        });
+
+        memory.at(4) = 77;
+        memory.at(5) = 77;
+        bookmarks.DoFrame();
+        Assert::IsTrue(bSawDialog2);
+        Assert::IsTrue(bPaused);
+
+        // both rows that caused the pause should be highlighted
+        Assert::AreEqual(0xFFFFC0C0U, bookmark1.GetRowColor().ARGB);
+        Assert::AreEqual(0xFFFFC0C0U, bookmark2.GetRowColor().ARGB);
     }
 };
 

@@ -244,6 +244,12 @@ void GridBinding::UpdateItems(gsl::index nColumn)
 
 void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
 {
+    if (m_pRowColorProperty && *m_pRowColorProperty == args.Property)
+    {
+        ListView_RedrawItems(m_hWnd, nIndex, nIndex);
+        return;
+    }
+
     std::string sText;
     LV_ITEM item{};
     item.mask = LVIF_TEXT;

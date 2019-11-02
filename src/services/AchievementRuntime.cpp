@@ -199,6 +199,11 @@ _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& cha
         }
     }
 
+    UpdateRichPresenceMemRefs();
+}
+
+void AchievementRuntime::UpdateRichPresenceMemRefs() noexcept
+{
     if (m_pRichPresenceMemRefs)
     {
         // rc_update_memrefs is not exposed, create a dummy trigger with no conditions to update the memrefs

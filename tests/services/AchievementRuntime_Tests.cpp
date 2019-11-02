@@ -783,14 +783,14 @@ public:
         memcpy(&pRichPresence2, pRichPresence, sizeof(pRichPresence2));
         pRichPresence2.memrefs = nullptr;
 
-        // memrefs haven't been updated - expect 0/0
-        rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
-        Assert::AreEqual("0 0", buffer);
-
-        // first update - updates value, but not delta
-        runtime.Process(changes);
+        // memrefs are updated by ActivateRichPresence - expect 18/0
         rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
         Assert::AreEqual("18 0", buffer);
+
+        // first update - updates value and delta
+        runtime.Process(changes);
+        rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
+        Assert::AreEqual("18 18", buffer);
 
         // second update - updates delta
         runtime.Process(changes);

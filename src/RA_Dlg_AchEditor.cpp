@@ -1957,7 +1957,7 @@ void Dlg_AchievementEditor::GetListViewTooltip()
             break;
 
         case CondSubItems::Value_Tgt:
-            if (!rCond.CompSource().IsMemoryType())
+            if (!rCond.CompTarget().IsMemoryType())
                 return;
 
             nAddr = rCond.CompTarget().GetValue();

@@ -166,12 +166,12 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
         {
             SetSelectedItemIndex(nSelectedItemIndex + 1);
 
-            if (nSelectedItemIndex + 1 - m_nScrollOffset == ra::to_signed(m_nVisibleItems))
+            if (gsl::narrow_cast<size_t>(nSelectedItemIndex) + 1 - m_nScrollOffset == gsl::narrow_cast<size_t>(m_nVisibleItems))
                 ++m_nScrollOffset;
 
             if (m_bDetail)
             {
-                auto* vmItem = m_vItems.GetItemAt(nSelectedItemIndex + 1);
+                auto* vmItem = m_vItems.GetItemAt(gsl::narrow_cast<size_t>(nSelectedItemIndex) + 1);
                 if (vmItem != nullptr)
                     FetchItemDetail(*vmItem);
             }
@@ -191,7 +191,7 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
 
             if (m_bDetail)
             {
-                auto* vmItem = m_vItems.GetItemAt(nSelectedItemIndex - 1);
+                auto* vmItem = m_vItems.GetItemAt(gsl::narrow_cast<size_t>(nSelectedItemIndex) - 1);
                 if (vmItem != nullptr)
                     FetchItemDetail(*vmItem);
             }

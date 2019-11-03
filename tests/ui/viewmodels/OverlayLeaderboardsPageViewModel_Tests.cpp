@@ -111,13 +111,13 @@ public:
 
         auto* pDetail = leaderboardsPage.GetRanks(1);
         Expects(pDetail != nullptr);
-        Assert::AreEqual(0U, pDetail->Count());
+        Assert::AreEqual({ 0U }, pDetail->Count());
 
         leaderboardsPage.mockThreadPool.ExecuteNextTask();
         pDetail = leaderboardsPage.GetRanks(1);
         Expects(pDetail != nullptr);
 
-        Assert::AreEqual(3U, pDetail->Count());
+        Assert::AreEqual({ 3U }, pDetail->Count());
         auto* pItem = pDetail->GetItemAt(0);
         Expects(pItem != nullptr);
         Assert::AreEqual(std::wstring(L"User1"), pItem->GetLabel());

@@ -59,7 +59,7 @@ public:
     HFONT GetHFont(int nFont)
     {
         if (nFont > 0 && ra::to_unsigned(nFont) <= m_vFonts.size())
-            return m_vFonts.at(nFont - 1).hFont;
+            return m_vFonts.at(gsl::narrow_cast<size_t>(nFont) - 1).hFont;
 
         return nullptr;
     }

@@ -41,7 +41,7 @@ void GDIBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Co
         return;
 
     // fill rectangle
-    auto nFirstScanline = (GetHeight() - nY - nHeight); // bitmap memory starts with the bottom scanline
+    size_t nFirstScanline = (gsl::narrow_cast<size_t>(GetHeight()) - nY - nHeight); // bitmap memory starts with the bottom scanline
     GSL_SUPPRESS_F6 Expects(m_pBits != nullptr);
     auto pBits = m_pBits + nStride * nFirstScanline + nX;
     GSL_SUPPRESS_F6 Ensures(pBits != nullptr);
@@ -49,7 +49,7 @@ void GDIBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Co
     if (nStride == nWidth)
     {
         // doing full scanlines, just bulk fill
-        const std::uint32_t* pEnd = pBits + nWidth * nHeight;
+        const std::uint32_t* pEnd = pBits + gsl::narrow_cast<size_t>(nWidth) * gsl::narrow_cast<size_t>(nHeight);
         do
         {
             *pBits++ = nColor.ARGB;
@@ -133,7 +133,7 @@ void GDIBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const 
     auto nFirstScanline = (GetHeight() - nY - szText.cy); // bitmap memory starts with the bottom scanline
     Expects(ra::to_signed(nFirstScanline) >= 0);
     Expects(m_pBits != nullptr);
-    auto pBits = m_pBits + nStride * nFirstScanline + nX;
+    auto pBits = m_pBits + gsl::narrow_cast<size_t>(nStride) * nFirstScanline + nX;
     Ensures(pBits != nullptr);
 
     // clip to surface
@@ -165,7 +165,7 @@ void GDIBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const 
             ++pBits;
         } while (pBits < pEnd);
 
-        pBits += (nStride - szText.cx);
+        pBits += (gsl::narrow_cast<size_t>(nStride) - szText.cx);
     }
 
     DeleteBitmap(hBitmap);
@@ -191,7 +191,7 @@ void GDIAlphaBitmapSurface::Blend(HDC hTargetDC, int nX, int nY) const
     GSL_SUPPRESS_TYPE1 pSrcBits = reinterpret_cast<std::uint8_t*>(m_pBits);
     Expects(pSrcBits != nullptr);
 
-    const std::uint8_t* pEnd = pSrcBits + (nWidth * nHeight * 4);
+    const std::uint8_t* pEnd = pSrcBits + (gsl::narrow_cast<size_t>(nWidth) * nHeight * 4);
     while (pSrcBits < pEnd)
     {
         const auto nAlpha = pSrcBits[3];
@@ -231,7 +231,7 @@ void GDIAlphaBitmapSurface::SetOpacity(double fAlpha)
     Expects(nAlpha > 0.0); // setting opacity to 0 is irreversible - caller should just not draw it
 
     const std::uint8_t* pEnd{};
-    GSL_SUPPRESS_TYPE1 pEnd = reinterpret_cast<const std::uint8_t*>(m_pBits + GetWidth() * GetHeight());
+    GSL_SUPPRESS_TYPE1 pEnd = reinterpret_cast<const std::uint8_t*>(m_pBits + static_cast<size_t>(GetWidth()) * GetHeight());
 
     std::uint8_t* pBits{};
     GSL_SUPPRESS_TYPE1 pBits = reinterpret_cast<std::uint8_t*>(m_pBits) + 3;

@@ -59,7 +59,7 @@ public:
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
 
         Assert::AreEqual(std::wstring(), friendsPage.GetSummary());
-        Assert::AreEqual(0U, friendsPage.GetItemCount());
+        Assert::AreEqual({ 0U }, friendsPage.GetItemCount());
     }
 
     TEST_METHOD(TestRefreshSeveralFriends)
@@ -122,7 +122,7 @@ public:
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
 
         Assert::AreEqual(std::wstring(L"Failed to find friends"), friendsPage.GetSummary());
-        Assert::AreEqual(0U, friendsPage.GetItemCount());
+        Assert::AreEqual({ 0U }, friendsPage.GetItemCount());
     }
 
     TEST_METHOD(TestRefreshTimer)
@@ -144,7 +144,7 @@ public:
         Assert::AreEqual(std::wstring(), friendsPage.GetSummary());
 
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
-        Assert::AreEqual(3U, friendsPage.GetItemCount());
+        Assert::AreEqual({ 3U }, friendsPage.GetItemCount());
 
         // two friends updated, one added
         friendsPage.mockServer.HandleRequest<ra::api::FetchUserFriends>(
@@ -160,18 +160,18 @@ public:
 
         friendsPage.Refresh();
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
-        Assert::AreEqual(3U, friendsPage.GetItemCount()); // refresh should not have occured
+        Assert::AreEqual({ 3U }, friendsPage.GetItemCount()); // refresh should not have occured
 
         friendsPage.mockClock.AdvanceTime(std::chrono::minutes(1));
         friendsPage.Refresh();
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
-        Assert::AreEqual(3U, friendsPage.GetItemCount()); // refresh should not have occured
+        Assert::AreEqual({ 3U }, friendsPage.GetItemCount()); // refresh should not have occured
 
 
         friendsPage.mockClock.AdvanceTime(std::chrono::minutes(1));
         friendsPage.Refresh();
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
-        Assert::AreEqual(4U, friendsPage.GetItemCount()); // refresh should have occured
+        Assert::AreEqual({ 4U }, friendsPage.GetItemCount()); // refresh should have occured
 
         const auto* pFriend1 = friendsPage.GetItem(0);
         Assert::IsNotNull(pFriend1);

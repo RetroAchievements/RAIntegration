@@ -570,12 +570,18 @@ void Achievement::CopyFrom(const Achievement& rRHS)
 
 unsigned int Achievement::MeasuredTarget() const noexcept
 {
+    if (m_pTrigger == nullptr)
+        return 0;
+
     rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
     return pTrigger->measured_target;
 }
 
 unsigned int Achievement::MeasuredValue() const noexcept
 {
+    if (m_pTrigger == nullptr)
+        return 0;
+
     rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
     return pTrigger->measured_value;
 }

@@ -317,6 +317,13 @@ _Success_(return ) _NODISCARD BOOL
                 for (size_t nCondition = 0; nCondition < Ach.NumConditions(nGroup); ++nCondition)
                 {
                     const auto& pCondition = Ach.GetCondition(nGroup, nCondition);
+
+                    if (pCondition.GetConditionType() == Condition::Type::Measured)
+                    {
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement contains pre-release logic.", L"* Measured");
+                        return FALSE;
+                    }
+
                     if (pCondition.CompSource().GetSize() == MemSize::TwentyFourBit ||
                         pCondition.CompTarget().GetSize() == MemSize::TwentyFourBit)
                     {

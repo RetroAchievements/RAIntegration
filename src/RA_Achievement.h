@@ -84,6 +84,9 @@ public:
     inline time_t ModifiedDate() const noexcept { return m_nTimestampModified; }
     void SetModifiedDate(time_t nTimeModified) noexcept { m_nTimestampModified = nTimeModified; }
 
+    unsigned int MeasuredValue() const noexcept;
+    unsigned int MeasuredTarget() const noexcept;
+
     inline unsigned short Upvotes() const noexcept { return m_nUpvotes; }
     inline unsigned short Downvotes() const noexcept { return m_nDownvotes; }
 

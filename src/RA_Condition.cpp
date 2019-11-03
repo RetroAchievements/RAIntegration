@@ -60,6 +60,9 @@ void Condition::SerializeAppend(std::string& buffer) const
         case Type::AndNext:
             buffer.append("N:");
             break;
+        case Type::Measured:
+            buffer.append("M:");
+            break;
         default:
             break;
     }

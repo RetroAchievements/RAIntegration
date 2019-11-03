@@ -71,6 +71,17 @@ void OverlayAchievementsPageViewModel::Refresh()
             }
         }
 
+        if (pAchievement.Active())
+        {
+            pvmAchievement->SetProgressMaximum(pAchievement.MeasuredTarget());
+            pvmAchievement->SetProgressValue(pAchievement.MeasuredValue());
+        }
+        else
+        {
+            pvmAchievement->SetProgressMaximum(0);
+            pvmAchievement->SetProgressValue(0);
+        }
+
         return true;
     });
 

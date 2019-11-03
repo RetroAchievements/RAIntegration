@@ -97,6 +97,36 @@ public:
         void SetDisabled(bool bValue) { SetValue(IsDisabledProperty, bValue); }
 
         ImageReference Image{};
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the maximum progress bar value.
+        /// </summary>
+        static const IntModelProperty ProgressMaximumProperty;
+
+        /// <summary>
+        /// Gets the maximum progress bar value.
+        /// </summary>
+        unsigned int GetProgressMaximum() const { return ra::to_unsigned(GetValue(ProgressMaximumProperty)); }
+
+        /// <summary>
+        /// Sets the maximum progress bar value.
+        /// </summary>
+        void SetProgressMaximum(unsigned int nValue) { SetValue(ProgressMaximumProperty, ra::to_signed(nValue)); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the current progress bar value.
+        /// </summary>
+        static const IntModelProperty ProgressValueProperty;
+
+        /// <summary>
+        /// Gets the current progress bar value.
+        /// </summary>
+        unsigned int GetProgressValue() const { return ra::to_unsigned(GetValue(ProgressValueProperty)); }
+
+        /// <summary>
+        /// Sets the current progress bar value.
+        /// </summary>
+        void SetProgressValue(unsigned int nValue) { SetValue(ProgressValueProperty, ra::to_signed(nValue)); }
     };
 
 protected:

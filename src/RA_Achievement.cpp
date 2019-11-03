@@ -291,6 +291,9 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
             case RC_CONDITION_AND_NEXT:
                 cond.SetConditionType(Condition::Type::AndNext);
                 break;
+            case RC_CONDITION_MEASURED:
+                cond.SetConditionType(Condition::Type::Measured);
+                break;
         }
 
         cond.SetRequiredHits(pCondition->required_hits);
@@ -563,4 +566,16 @@ void Achievement::CopyFrom(const Achievement& rRHS)
     ParseTrigger(rRHS.CreateMemString().c_str());
 
     SetDirtyFlag(DirtyFlags::All);
+}
+
+unsigned int Achievement::MeasuredTarget() const noexcept
+{
+    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+    return pTrigger->measured_target;
+}
+
+unsigned int Achievement::MeasuredValue() const noexcept
+{
+    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+    return pTrigger->measured_value;
 }

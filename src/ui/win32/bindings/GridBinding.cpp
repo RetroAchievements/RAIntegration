@@ -320,6 +320,26 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
     }
 }
 
+int GridBinding::UpdateSelected(const IntModelProperty& pProperty, int nNewValue)
+{
+    if (m_pIsSelectedProperty == nullptr)
+        return 0;
+
+    int nUpdated = 0;
+
+    const auto nCount = ra::to_signed(m_vmItems->Count());
+    for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
+    {
+        if (m_vmItems->GetItemValue(nIndex, *m_pIsSelectedProperty))
+        {
+            m_vmItems->SetItemValue(nIndex, pProperty, nNewValue);
+            ++nUpdated;
+        }
+    }
+
+    return nUpdated;
+}
+
 void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
 {
     std::string sText;

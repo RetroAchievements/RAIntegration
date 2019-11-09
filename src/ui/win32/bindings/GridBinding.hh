@@ -62,6 +62,8 @@ public:
     static LRESULT CloseIPE(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* pInfo);
     static GridColumnBinding::InPlaceEditorInfo* GetIPEInfo(HWND hwnd) noexcept;
 
+    int UpdateSelected(const IntModelProperty& pProperty, int nNewValue);
+
 protected:
     void UpdateLayout();
     void UpdateAllItems();

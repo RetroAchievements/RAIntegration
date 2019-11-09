@@ -44,6 +44,7 @@ public:
     void BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept;
     void BindRowColor(const IntModelProperty& pRowColorProperty) noexcept;
 
+    GSL_SUPPRESS_CON3 LRESULT OnLvnItemChanging(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 void OnLvnColumnClick(const LPNMLISTVIEW pnmListView);
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);

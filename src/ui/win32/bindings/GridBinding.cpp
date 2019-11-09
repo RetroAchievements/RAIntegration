@@ -458,6 +458,37 @@ void GridBinding::BindRowColor(const IntModelProperty& pRowColorProperty) noexce
     m_pRowColorProperty = &pRowColorProperty;
 }
 
+LRESULT GridBinding::OnLvnItemChanging(const LPNMLISTVIEW pnmListView)
+{
+    // if an item is being unselected
+    if (pnmListView->uChanged & LVIF_STATE && !(pnmListView->uNewState & LVIS_SELECTED) && pnmListView->uOldState & LVIS_SELECTED)
+    {
+        // and the in-place editor is not open
+        if (m_hInPlaceEditor == nullptr)
+        {
+            // determine which row/column the user actually clicked on
+            LVHITTESTINFO lvHitTestInfo{};
+            GetCursorPos(&lvHitTestInfo.pt);
+            ScreenToClient(m_hWnd, &lvHitTestInfo.pt);
+            ListView_SubItemHitTest(m_hWnd, &lvHitTestInfo);
+
+            // if the click was for the currently focused item, the in-place editor might open. check to see if the column supports editing
+            if (lvHitTestInfo.iItem == pnmListView->iItem && ListView_GetItemState(m_hWnd, lvHitTestInfo.iItem, LVIS_FOCUSED))
+            {
+                if (ra::to_unsigned(lvHitTestInfo.iSubItem) < m_vColumns.size())
+                {
+                    // the in-place editor will open. prevent the item from being unselected.
+                    const auto& pColumn = m_vColumns.at(lvHitTestInfo.iSubItem);
+                    if (!pColumn->IsReadOnly())
+                        return TRUE;
+                }
+            }
+        }
+    }
+
+    return FALSE;
+}
+
 void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 {
     if (m_pIsSelectedProperty)

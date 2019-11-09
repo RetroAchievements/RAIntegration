@@ -9,6 +9,7 @@
 
 #include "api\UpdateAchievement.hh"
 
+#include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\UserContext.hh"
 
@@ -791,6 +792,8 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                 {
                     auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
                     pRuntime.SetPaused(IsDlgButtonChecked(hDlg, IDC_RA_CHKACHPROCESSINGACTIVE) == FALSE);
+                    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+                    pEmulatorContext.SetMemoryModified();
                     return TRUE;
                 }
 

@@ -72,9 +72,9 @@ public:
     TEST_METHOD(TestInitialValues)
     {
         OverlayListPageViewModelHarness vmListPage;
-        Assert::AreEqual(0, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 0 }, vmListPage.GetScrollOffset());
         Assert::AreEqual(0, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(0U, vmListPage.GetItemCount());
+        Assert::AreEqual({ 0U }, vmListPage.GetItemCount());
         Assert::IsFalse(vmListPage.IsDetail());
         Assert::AreEqual(std::wstring(), vmListPage.GetTitle());
         Assert::AreEqual(std::wstring(), vmListPage.GetListTitle());
@@ -86,9 +86,9 @@ public:
         OverlayListPageViewModelHarness vmListPage;
         vmListPage.Refresh();
 
-        Assert::AreEqual(0, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 0 }, vmListPage.GetScrollOffset());
         Assert::AreEqual(0, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(12U, vmListPage.GetItemCount());
+        Assert::AreEqual({ 12U }, vmListPage.GetItemCount());
         Assert::IsFalse(vmListPage.IsDetail());
         Assert::AreEqual(std::wstring(L"Title"), vmListPage.GetTitle());
         Assert::AreEqual(std::wstring(), vmListPage.GetListTitle());
@@ -172,106 +172,106 @@ public:
         pInput.m_bDownPressed = true;
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(1, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(0, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 0 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(2, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(0, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 0 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(3, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(0, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 0 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(4, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(0, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 0 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(5, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(1, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 1 }, vmListPage.GetScrollOffset());
 
         // five visible items, list should start scrolling now
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(6, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(2, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 2 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(7, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(3, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 3 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(8, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(4, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 4 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(9, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(5, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 5 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(10, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(6, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 6 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(11, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(7, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 7 }, vmListPage.GetScrollOffset());
 
         // end of list
         Assert::IsFalse(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(11, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(7, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 7 }, vmListPage.GetScrollOffset());
 
         // going up shouldn't immediately update the scroll offset
         pInput.m_bDownPressed = false;
         pInput.m_bUpPressed = true;
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(10, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(7, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 7 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(9, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(7, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 7 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(8, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(7, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 7 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(7, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(7, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 7 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(6, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(6, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 6 }, vmListPage.GetScrollOffset());
 
         // now we should start scrolling again
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(5, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(5, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 5 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(4, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(4, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 4 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(3, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(3, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 3 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(2, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(2, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 2 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(1, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(1, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 1 }, vmListPage.GetScrollOffset());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(0, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(0, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 0 }, vmListPage.GetScrollOffset());
 
         // end of list
         Assert::IsFalse(vmListPage.ProcessInput(pInput));
         Assert::AreEqual(0, vmListPage.GetSelectedItemIndex());
-        Assert::AreEqual(0, vmListPage.GetScrollOffset());
+        Assert::AreEqual({ 0 }, vmListPage.GetScrollOffset());
     }
 
     TEST_METHOD(TestProcessInputDetailToggle)

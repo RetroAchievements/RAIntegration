@@ -84,15 +84,8 @@ public:
     inline time_t ModifiedDate() const noexcept { return m_nTimestampModified; }
     void SetModifiedDate(time_t nTimeModified) noexcept { m_nTimestampModified = nTimeModified; }
 
-    inline unsigned short Upvotes() const noexcept { return m_nUpvotes; }
-    inline unsigned short Downvotes() const noexcept { return m_nDownvotes; }
-
-    inline const std::string& Progress() const noexcept { return m_sProgress; }
-    void SetProgressIndicator(const std::string& sProgress) { m_sProgress = sProgress; }
-    inline const std::string& ProgressMax() const noexcept { return m_sProgressMax; }
-    void SetProgressIndicatorMax(const std::string& sProgressMax) { m_sProgressMax = sProgressMax; }
-    inline const std::string& ProgressFmt() const noexcept { return m_sProgressFmt; }
-    void SetProgressIndicatorFormat(const std::string& sProgressFmt) { m_sProgressFmt = sProgressFmt; }
+    unsigned int MeasuredValue() const noexcept;
+    unsigned int MeasuredTarget() const noexcept;
 
     void AddAltGroup() noexcept;
     void RemoveAltGroup(gsl::index nIndex);
@@ -130,6 +123,9 @@ public:
 
     void RebuildTrigger();
 
+    // for unit tests
+    void* GetRawTrigger() const noexcept { return m_pTrigger; }
+
     const std::wstring& GetUnlockRichPresence() const noexcept { return m_sUnlockRichPresence; }
     void SetUnlockRichPresence(const std::wstring& sValue) { m_sUnlockRichPresence = sValue; }
 
@@ -160,13 +156,6 @@ private:
     BOOL m_bPauseOnTrigger{};
     BOOL m_bPauseOnReset{};
 
-    // Progress:
-    BOOL m_bProgressEnabled{}; // on/off
-
-    std::string m_sProgress;    // How to calculate the progress so far (syntactical)
-    std::string m_sProgressMax; // Upper limit of the progress (syntactical? value?)
-    std::string m_sProgressFmt; // Format of the progress to be shown (currency? step?)
-
     std::wstring m_sUnlockRichPresence;
 
     float m_fProgressLastShown{}; // The last shown progress
@@ -175,9 +164,6 @@ private:
 
     time_t m_nTimestampCreated{};
     time_t m_nTimestampModified{};
-
-    unsigned short m_nUpvotes{};
-    unsigned short m_nDownvotes{};
 };
 
 #endif // !RA_ACHIEVEMENT_H

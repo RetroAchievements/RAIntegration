@@ -17,6 +17,8 @@ const IntModelProperty OverlayListPageViewModel::SelectedItemIndexProperty("Over
 
 const StringModelProperty OverlayListPageViewModel::ItemViewModel::DetailProperty("ItemViewModel", "Detail", L"");
 const BoolModelProperty OverlayListPageViewModel::ItemViewModel::IsDisabledProperty("ItemViewModel", "IsDisabled", false);
+const IntModelProperty OverlayListPageViewModel::ItemViewModel::ProgressMaximumProperty("ItemViewModel", "ProgressMaximum", 0);
+const IntModelProperty OverlayListPageViewModel::ItemViewModel::ProgressValueProperty("ItemViewModel", "ProgressValue", 0);
 
 void OverlayListPageViewModel::Refresh()
 {
@@ -106,7 +108,7 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
         nX += 20;
     }
 
-    // achievements list
+    // items list
     while (nHeight >= nItemSize)
     {
         const auto* pItem = m_vItems.GetItemAt(nIndex);
@@ -135,8 +137,19 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
             nTextColor = pTheme.ColorOverlayDisabledText();
         }
 
-        pSurface.WriteText(nTextX + 12, nY + 4, nFont, nTextColor, pItem->GetLabel());
-        pSurface.WriteText(nTextX + 12, nY + 4 + 26, nSubFont, nSubTextColor, pItem->GetDetail());
+        pSurface.WriteText(nTextX + 12, nY + 1, nFont, nTextColor, pItem->GetLabel());
+        pSurface.WriteText(nTextX + 12, nY + 1 + 26, nSubFont, nSubTextColor, pItem->GetDetail());
+
+        const auto nTarget = pItem->GetProgressMaximum();
+        if (nTarget != 0)
+        {
+            const auto nProgressBarWidth = (nWidth - nTextX - 12) * 2 / 3;
+            const auto nValue = pItem->GetProgressValue();
+            const auto nProgressBarFillWidth = (nProgressBarWidth - 2) * nValue / nTarget;
+
+            pSurface.FillRectangle(nTextX + 12, nY + 1 + 26 + 25, nProgressBarWidth, 8, pTheme.ColorOverlayScrollBar());
+            pSurface.FillRectangle(nTextX + 12 + 2, nY + 1 + 26 + 25 + 2, nProgressBarFillWidth - 4, 8 - 4, pTheme.ColorOverlayScrollBarGripper());
+        }
 
         nIndex++;
         nY += nItemSize + nItemSpacing;
@@ -153,12 +166,12 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
         {
             SetSelectedItemIndex(nSelectedItemIndex + 1);
 
-            if (nSelectedItemIndex + 1 - m_nScrollOffset == ra::to_signed(m_nVisibleItems))
+            if (gsl::narrow_cast<size_t>(nSelectedItemIndex) + 1 - m_nScrollOffset == gsl::narrow_cast<size_t>(m_nVisibleItems))
                 ++m_nScrollOffset;
 
             if (m_bDetail)
             {
-                auto* vmItem = m_vItems.GetItemAt(nSelectedItemIndex + 1);
+                auto* vmItem = m_vItems.GetItemAt(gsl::narrow_cast<size_t>(nSelectedItemIndex) + 1);
                 if (vmItem != nullptr)
                     FetchItemDetail(*vmItem);
             }
@@ -178,7 +191,7 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
 
             if (m_bDetail)
             {
-                auto* vmItem = m_vItems.GetItemAt(nSelectedItemIndex - 1);
+                auto* vmItem = m_vItems.GetItemAt(gsl::narrow_cast<size_t>(nSelectedItemIndex) - 1);
                 if (vmItem != nullptr)
                     FetchItemDetail(*vmItem);
             }

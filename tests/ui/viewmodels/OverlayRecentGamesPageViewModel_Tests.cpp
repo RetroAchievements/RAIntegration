@@ -50,7 +50,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"Recent Games"), gamesPage.GetTitle());
         Assert::AreEqual(std::wstring(), gamesPage.GetSummary());
-        Assert::AreEqual(0U, gamesPage.GetItemCount());
+        Assert::AreEqual({ 0U }, gamesPage.GetItemCount());
     }
 
     TEST_METHOD(TestRefreshOneGameDataAvailable)
@@ -63,7 +63,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"Recent Games"), gamesPage.GetTitle());
         Assert::AreEqual(std::wstring(), gamesPage.GetSummary());
-        Assert::AreEqual(1U, gamesPage.GetItemCount());
+        Assert::AreEqual({ 1U }, gamesPage.GetItemCount());
 
         const auto* pItem1 = gamesPage.GetItem(0);
         Assert::IsNotNull(pItem1);
@@ -94,7 +94,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"Recent Games"), gamesPage.GetTitle());
         Assert::AreEqual(std::wstring(), gamesPage.GetSummary());
-        Assert::AreEqual(1U, gamesPage.GetItemCount());
+        Assert::AreEqual({ 1U }, gamesPage.GetItemCount());
 
         // data is not initially available
         auto* pItem1 = gamesPage.GetItem(0);
@@ -121,7 +121,7 @@ public:
         gamesPage.mockTheadPool.ExecuteNextTask(); // request is asynchronous
 
         // data was fetched from the server
-        Assert::AreEqual(1U, gamesPage.GetItemCount());
+        Assert::AreEqual({ 1U }, gamesPage.GetItemCount());
         pItem1 = gamesPage.GetItem(0);
         Assert::IsNotNull(pItem1);
         Ensures(pItem1 != nullptr);
@@ -144,7 +144,7 @@ public:
 
         Assert::AreEqual(std::wstring(L"Recent Games"), gamesPage.GetTitle());
         Assert::AreEqual(std::wstring(), gamesPage.GetSummary());
-        Assert::AreEqual(1U, gamesPage.GetItemCount());
+        Assert::AreEqual({ 1U }, gamesPage.GetItemCount());
 
         // data is not initially available
         auto* pItem1 = gamesPage.GetItem(0);
@@ -159,7 +159,7 @@ public:
         gamesPage.mockTheadPool.ExecuteNextTask(); // scanning cache occurs on background thread
 
         // data is in the cache
-        Assert::AreEqual(1U, gamesPage.GetItemCount());
+        Assert::AreEqual({ 1U }, gamesPage.GetItemCount());
         pItem1 = gamesPage.GetItem(0);
         Assert::IsNotNull(pItem1);
         Ensures(pItem1 != nullptr);

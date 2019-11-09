@@ -51,6 +51,15 @@ private:
         }
     };
 
+    static void SetProgress(Achievement& pAch, int nValue, int nMax)
+    {
+        pAch.ParseTrigger("0=1");
+
+        rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(pAch.GetRawTrigger());
+        pTrigger->measured_value = nValue;
+        pTrigger->measured_target = nMax;
+    }
+
 public:
     TEST_METHOD(TestRefreshNoAchievements)
     {
@@ -222,6 +231,55 @@ public:
         Assert::AreEqual(std::wstring(L"Trigger this"), pItem->GetDetail());
         Assert::IsFalse(pItem->IsDisabled()); // local achievement never disabled
         Assert::AreEqual(std::string("BADGE_URI"), pItem->Image.Name());
+    }
+
+    TEST_METHOD(TestRefreshProgressAchievements)
+    {
+        OverlayAchievementsPageViewModelHarness achievementsPage;
+        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        pAch1.SetID(1);
+        pAch1.SetPoints(1U);
+        pAch1.SetActive(true);
+        SetProgress(pAch1, 1, 10);
+        auto& pAch2 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        pAch2.SetID(2);
+        pAch2.SetPoints(2U);
+        pAch2.SetActive(false);
+        SetProgress(pAch2, 1, 10);
+        auto& pAch3 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        pAch3.SetID(3);
+        pAch3.SetPoints(3U);
+        pAch3.SetActive(true);
+        SetProgress(pAch3, 0, 0);
+        auto& pAch4 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        pAch4.SetID(4);
+        pAch4.SetPoints(4U);
+        pAch4.SetActive(false);
+        achievementsPage.Refresh();
+        SetProgress(pAch4, 0, 0);
+
+        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"2 of 4 won (6/10)"), achievementsPage.GetSummary());
+
+        auto const* pItem = achievementsPage.GetItem(0);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(10U, pItem->GetProgressMaximum()); // active item with progress
+        Assert::AreEqual(1U, pItem->GetProgressValue());
+
+        pItem = achievementsPage.GetItem(1);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // inactive item with progress should not display it
+        Assert::AreEqual(0U, pItem->GetProgressValue());
+
+        pItem = achievementsPage.GetItem(2);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // active item without progress
+        Assert::AreEqual(0U, pItem->GetProgressValue());
+
+        pItem = achievementsPage.GetItem(3);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // inactive item without progress
+        Assert::AreEqual(0U, pItem->GetProgressValue());
     }
 
     TEST_METHOD(TestRefreshSession)

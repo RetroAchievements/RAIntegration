@@ -609,7 +609,7 @@ void GameContext::AwardMastery() const
                 ra::StringPrintf(L"%u achievements, %u points", nNumCoreAchievements, nTotalCoreAchievementPoints),
                 ra::ui::ImageType::Icon, m_sGameImage);
 
-            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot))
+            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot))
             {
                 std::wstring sPath = ra::StringPrintf(L"%sGame%u.png", pConfiguration.GetScreenshotDirectory(), m_nGameId);
                 pOverlayManager.CaptureScreenshot(nPopup, sPath);
@@ -779,7 +779,12 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
         }
 
         if (!bActiveCoreAchievement && bHasCoreAchievement)
-            AwardMastery();
+        {
+            // delay mastery notification by 500ms to avoid race conditions where the get unlocks API returns
+            // before the last achievement was unlocked for the user.
+            ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>()
+                .ScheduleAsync(std::chrono::milliseconds(500), [this]() { AwardMastery(); });
+        }
     }
 }
 

@@ -147,7 +147,7 @@ public:
         lb.Test();
         Assert::IsTrue(lb.IsActive());
 
-        Assert::AreEqual("000018 Points", lb.FormatScore(18).c_str());
+        Assert::AreEqual("000018", lb.FormatScore(18).c_str());
     }
 
     TEST_METHOD(TestStartAndCancelSameFrame)

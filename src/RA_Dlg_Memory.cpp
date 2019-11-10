@@ -1471,6 +1471,47 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     return FALSE;
                 }
 
+                case IDC_RA_RESULTS_BOOKMARK:
+                {
+                    if (!m_SearchResults.empty())
+                    {
+                        auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+                        if (!pBookmarks.IsVisible())
+                            pBookmarks.Show();
+
+                        HWND hList = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
+                        int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                        auto& currentSearch = m_SearchResults.at(m_nPage);
+
+                        int nCount = 0;
+                        pBookmarks.Bookmarks().BeginUpdate();
+                        while (nSel >= 0)
+                        {
+                            ra::services::SearchResults::Result result;
+                            if (!currentSearch.m_results.GetMatchingAddress(nSel - 2, result))
+                                break;
+
+                            if (result.nSize == MemSize::Nibble_Lower || result.nSize == MemSize::Nibble_Upper)
+                            {
+                                ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"4-bit bookmarks are not supported");
+                                break;
+                            }
+
+                            pBookmarks.AddBookmark(result.nAddress, result.nSize);
+
+                            nSel = ListView_GetNextItem(hList, nSel, LVNI_SELECTED);
+                            if (++nCount == 100)
+                                break;
+                        }
+                        pBookmarks.Bookmarks().EndUpdate();
+
+                        if (nCount == 100)
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"Can only create 100 new bookmarks at a time.");
+                    }
+
+                    return FALSE;
+                }
+
                 case IDC_RA_RESULTS_BACK:
                 {
                     m_nPage--;

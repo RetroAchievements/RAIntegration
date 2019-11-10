@@ -237,7 +237,7 @@ void GridBinding::UpdateItems(gsl::index nColumn)
 
     if (ra::to_unsigned(nItems) > m_vmItems->Count())
     {
-        for (gsl::index i = nItems - 1; ra::to_unsigned(i) >= m_vmItems->Count(); --i)
+        for (gsl::index i = gsl::narrow_cast<gsl::index>(nItems) - 1; ra::to_unsigned(i) >= m_vmItems->Count(); --i)
             ListView_DeleteItem(m_hWnd, i);
     }
 }

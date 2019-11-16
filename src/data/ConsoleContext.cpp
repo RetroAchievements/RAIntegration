@@ -402,6 +402,26 @@ const std::vector<ConsoleContext::MemoryRegion> PlayStationConsoleContext::m_vMe
     { 0x010000U, 0x1FFFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },
 };
 
+// ===== Pokemon Mini =====
+
+class PokemonMiniConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 PokemonMiniConsoleContext() noexcept : ConsoleContext(ConsoleID::PokemonMini, L"Pokemon Mini") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// https://www.pokemon-mini.net/documentation/memory-map/
+const std::vector<ConsoleContext::MemoryRegion> PokemonMiniConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x000FFFU, ConsoleContext::AddressType::SystemRAM, "BIOS RAM" },
+    { 0x001000U, 0x001FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },
+};
+
 // ===== Sega Saturn =====
 
 class SaturnConsoleContext : public ConsoleContext
@@ -559,6 +579,9 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
         case ConsoleID::C64:
             return std::make_unique<ConsoleContext>(nId, L"Commodore 64");
 
+        case ConsoleID::CassetteVision:
+            return std::make_unique<ConsoleContext>(nId, L"Cassette Vision");
+
         case ConsoleID::CDi:
             return std::make_unique<ConsoleContext>(nId, L"CD-I");
 
@@ -640,6 +663,9 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
         case ConsoleID::PlayStation2:
             return std::make_unique<ConsoleContext>(nId, L"PlayStation 2");
 
+        case ConsoleID::PokemonMini:
+            return std::make_unique<PokemonMiniConsoleContext>();
+
         case ConsoleID::PSP:
             return std::make_unique<ConsoleContext>(nId, L"PlayStation Portable");
 
@@ -657,6 +683,9 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
 
         case ConsoleID::SNES:
             return std::make_unique<SuperNESConsoleContext>();
+
+        case ConsoleID::SuperCassetteVision:
+            return std::make_unique<ConsoleContext>(nId, L"Super Cassette Vision");
 
         case ConsoleID::ThreeDO:
             return std::make_unique<ConsoleContext>(nId, L"3D0");
@@ -684,9 +713,6 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
 
         case ConsoleID::Xbox:
             return std::make_unique<ConsoleContext>(nId, L"XBOX");
-
-        case ConsoleID::XboxOne:
-            return std::make_unique<ConsoleContext>(nId, L"Xbox One");
 
         case ConsoleID::ZX81:
             return std::make_unique<ConsoleContext>(nId, L"ZX-81");

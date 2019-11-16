@@ -90,7 +90,7 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
         case WM_MOUSEWHEEL:
             if (GET_WHEEL_DELTA_WPARAM(wParam) > 0 && m_nAddressOffset > (0x40))
                 setAddress(m_nAddressOffset - 32);
-            else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0 && m_nAddressOffset + (0x40) < ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize())
+            else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0 && gsl::narrow_cast<size_t>(m_nAddressOffset) + (0x40) < ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize())
                 setAddress(m_nAddressOffset + 32);
             return FALSE;
 
@@ -629,13 +629,13 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                         break;
                     case MemSize::SixteenBit:
                         for (int j = 0; j < 16; j += 2)
-                            ptr += _stprintf_s(ptr, 6, TEXT("%02x%02x "), data.at(j + 1), data.at(j));
+                            ptr += _stprintf_s(ptr, 6, TEXT("%02x%02x "), data.at(gsl::narrow_cast<size_t>(j) + 1), data.at(j));
                         break;
                     case MemSize::ThirtyTwoBit:
                         for (int j = 0; j < 16; j += 4)
                         {
-                            ptr += _stprintf_s(ptr, 10, TEXT("%02x%02x%02x%02x "), data.at(j + 3), data.at(j + 2),
-                                               data.at(j + 1), data.at(j));
+                            ptr += _stprintf_s(ptr, 10, TEXT("%02x%02x%02x%02x "), data.at(gsl::narrow_cast<size_t>(j) + 3),
+                                data.at(gsl::narrow_cast<size_t>(j) + 2), data.at(gsl::narrow_cast<size_t>(j) + 1), data.at(j));
                         }
                         break;
                 }
@@ -651,15 +651,15 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                     switch (m_nDataSize)
                     {
                         case MemSize::EightBit:
-                            ptr = bufferNative + 10 + 3 * (m_nWatchedAddress & 0x0F);
+                            ptr = bufferNative + 10 + 3 * gsl::narrow_cast<size_t>(m_nWatchedAddress & 0x0F);
                             stride = 2;
                             break;
                         case MemSize::SixteenBit:
-                            ptr = bufferNative + 10 + 5 * ((m_nWatchedAddress & 0x0F) / 2);
+                            ptr = bufferNative + 10 + 5 * (gsl::narrow_cast<size_t>(m_nWatchedAddress & 0x0F) / 2);
                             stride = 4;
                             break;
                         case MemSize::ThirtyTwoBit:
-                            ptr = bufferNative + 10 + 9 * ((m_nWatchedAddress & 0x0F) / 4);
+                            ptr = bufferNative + 10 + 9 * (gsl::narrow_cast<size_t>(m_nWatchedAddress & 0x0F) / 4);
                             stride = 8;
                             break;
                     }
@@ -702,15 +702,15 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
                             switch (m_nDataSize)
                             {
                                 case MemSize::EightBit:
-                                    ptr = bufferNative + 10 + 3 * j;
+                                    ptr = bufferNative + 10 + 3 * gsl::narrow_cast<size_t>(j);
                                     stride = 2;
                                     break;
                                 case MemSize::SixteenBit:
-                                    ptr = bufferNative + 10 + 5 * (j / 2);
+                                    ptr = bufferNative + 10 + 5 * (gsl::narrow_cast<size_t>(j) / 2);
                                     stride = 4;
                                     break;
                                 case MemSize::ThirtyTwoBit:
-                                    ptr = bufferNative + 10 + 9 * (j / 4);
+                                    ptr = bufferNative + 10 + 9 * (gsl::narrow_cast<size_t>(j) / 4);
                                     stride = 8;
                                     break;
                             }
@@ -1149,7 +1149,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     const ComparisonType nCmpType =
                         static_cast<ComparisonType>(ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE)));
 
-                    while (m_SearchResults.size() > m_nPage + 1)
+                    while (m_SearchResults.size() > gsl::narrow_cast<size_t>(m_nPage) + 1)
                         m_SearchResults.pop_back();
 
                     ClearLogOutput();
@@ -1249,7 +1249,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     if (nMatches > MIN_RESULTS_TO_DUMP)
                         ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), MIN_RESULTS_TO_DUMP + 2);
                     else
-                        ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), nMatches + 2);
+                        ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), gsl::narrow_cast<size_t>(nMatches) + 2);
 
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), nMatches > 0);
                     return TRUE;
@@ -1335,7 +1335,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     HWND hNote = GetDlgItem(hDlg, IDC_RA_MEMSAVENOTE);
                     const int nLength = GetWindowTextLengthW(hNote);
                     std::wstring sNewNote;
-                    sNewNote.resize(nLength + 1);
+                    sNewNote.resize(gsl::narrow_cast<size_t>(nLength) + 1);
                     GetWindowTextW(hNote, sNewNote.data(), gsl::narrow_cast<int>(sNewNote.capacity()));
                     sNewNote.resize(nLength);
 
@@ -1471,6 +1471,47 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     return FALSE;
                 }
 
+                case IDC_RA_RESULTS_BOOKMARK:
+                {
+                    if (!m_SearchResults.empty())
+                    {
+                        auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+                        if (!pBookmarks.IsVisible())
+                            pBookmarks.Show();
+
+                        HWND hList = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
+                        int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
+                        auto& currentSearch = m_SearchResults.at(m_nPage);
+
+                        int nCount = 0;
+                        pBookmarks.Bookmarks().BeginUpdate();
+                        while (nSel >= 0)
+                        {
+                            ra::services::SearchResults::Result result;
+                            if (!currentSearch.m_results.GetMatchingAddress(nSel - 2, result))
+                                break;
+
+                            if (result.nSize == MemSize::Nibble_Lower || result.nSize == MemSize::Nibble_Upper)
+                            {
+                                ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"4-bit bookmarks are not supported");
+                                break;
+                            }
+
+                            pBookmarks.AddBookmark(result.nAddress, result.nSize);
+
+                            nSel = ListView_GetNextItem(hList, nSel, LVNI_SELECTED);
+                            if (++nCount == 100)
+                                break;
+                        }
+                        pBookmarks.Bookmarks().EndUpdate();
+
+                        if (nCount == 100)
+                            ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"Can only create 100 new bookmarks at a time.");
+                    }
+
+                    return FALSE;
+                }
+
                 case IDC_RA_RESULTS_BACK:
                 {
                     m_nPage--;
@@ -1482,7 +1523,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), 1);
                     else
                         ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST),
-                                              sr.m_results.MatchingAddressCount() + 2);
+                            gsl::narrow_cast<size_t>(sr.m_results.MatchingAddressCount()) + 2);
 
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), sr.m_results.MatchingAddressCount() > 0);
                     return FALSE;
@@ -1492,14 +1533,14 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 {
                     m_nPage++;
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_BACK), TRUE);
-                    EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), m_nPage + 1 < m_SearchResults.size());
+                    EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), gsl::narrow_cast<size_t>(m_nPage) + 1 < m_SearchResults.size());
 
                     SearchResult& sr = m_SearchResults.at(m_nPage);
                     if (sr.m_results.Summary().empty())
                         ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), 1);
                     else
                         ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST),
-                                              sr.m_results.MatchingAddressCount() + 2);
+                            gsl::narrow_cast<size_t>(sr.m_results.MatchingAddressCount()) + 2);
 
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), sr.m_results.MatchingAddressCount() > 0);
                     return FALSE;
@@ -1512,7 +1553,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                     if (nSel != -1)
                     {
-                        while (m_SearchResults.size() > m_nPage + 1)
+                        while (m_SearchResults.size() > gsl::narrow_cast<size_t>(m_nPage) + 1)
                             m_SearchResults.pop_back();
 
                         // copy the selected page, so we can return to it if we want

@@ -37,8 +37,8 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, MemSi
     m_bUnfiltered = true;
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    if (nBytes + nAddress > pEmulatorContext.TotalMemorySize())
-        nBytes = gsl::narrow<unsigned int>(pEmulatorContext.TotalMemorySize()) - nAddress;
+    if (gsl::narrow_cast<size_t>(nBytes) + nAddress > pEmulatorContext.TotalMemorySize())
+        nBytes = gsl::narrow_cast<unsigned int>(pEmulatorContext.TotalMemorySize()) - nAddress;
 
     const unsigned int nPadding = Padding(nSize);
     if (nPadding >= nBytes)
@@ -60,7 +60,7 @@ void SearchResults::Initialize(unsigned int nAddress, unsigned int nBytes, MemSi
     {
         const auto nBlockSize = (nBytes > MAX_BLOCK_SIZE) ? MAX_BLOCK_SIZE : nBytes;
         auto& block = AddBlock(nAddress, nBlockSize + nPadding);
-        pEmulatorContext.ReadMemory(block.GetAddress(), block.GetBytes(), nBlockSize + nPadding);
+        pEmulatorContext.ReadMemory(block.GetAddress(), block.GetBytes(), gsl::narrow_cast<size_t>(nBlockSize) + nPadding);
 
         nAddress += nBlockSize;
         nBytes -= nBlockSize;

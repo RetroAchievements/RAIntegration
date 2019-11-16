@@ -66,7 +66,7 @@ void GDIBitmapSurface::FillRectangle(int nX, int nY, int nWidth, int nHeight, Co
                 *pBits++ = nColor.ARGB;
             } while (pBits < pEnd);
 
-            pBits += (nStride - nWidth);
+            pBits += gsl::narrow_cast<size_t>(nStride) - gsl::narrow_cast<size_t>(nWidth);
         }
     }
 }

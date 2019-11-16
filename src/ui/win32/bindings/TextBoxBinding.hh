@@ -62,7 +62,7 @@ private:
         const int nLength = GetWindowTextLengthW(m_hWnd);
 
         std::wstring sBuffer;
-        sBuffer.resize(nLength + 1);
+        sBuffer.resize(gsl::narrow_cast<size_t>(nLength) + 1);
         GetWindowTextW(m_hWnd, sBuffer.data(), gsl::narrow_cast<int>(sBuffer.capacity()));
         sBuffer.resize(nLength);
 

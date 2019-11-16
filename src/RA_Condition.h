@@ -84,11 +84,12 @@ public:
         SubSource,
         AddHits,
         AndNext,
-        Measured
+        Measured,
+        AddAddress
     };
 
-    inline static constexpr std::array<LPCTSTR, 8> TYPE_STR{
-        _T(""), _T("Pause If"), _T("Reset If"), _T("Add Source"), _T("Sub Source"), _T("Add Hits"), _T("And Next"), _T("Measured")};
+    inline static constexpr std::array<LPCTSTR, 9> TYPE_STR{
+        _T(""), _T("Pause If"), _T("Reset If"), _T("Add Source"), _T("Sub Source"), _T("Add Hits"), _T("And Next"), _T("Measured"), _T("Add Address")};
 
     void SerializeAppend(std::string& buffer) const;
 
@@ -106,7 +107,7 @@ public:
 
     _NODISCARD _CONSTANT_FN IsSingleOperandConditionType() const noexcept
     {
-        return (m_nConditionType == Type::AddSource || m_nConditionType == Type::SubSource);
+        return (m_nConditionType == Type::AddSource || m_nConditionType == Type::SubSource || m_nConditionType == Type::AddAddress);
     }
 
     _NODISCARD _CONSTANT_FN GetConditionType() const noexcept { return m_nConditionType; }

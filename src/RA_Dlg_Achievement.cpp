@@ -325,6 +325,12 @@ _Success_(return ) _NODISCARD BOOL
                         return FALSE;
                     }
 
+                    if (pCondition.GetConditionType() == Condition::Type::AddAddress)
+                    {
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement contains pre-release logic.", L"* AddAddress");
+                        return FALSE;
+                    }
+
                     if (pCondition.CompSource().GetSize() == MemSize::TwentyFourBit ||
                         pCondition.CompTarget().GetSize() == MemSize::TwentyFourBit)
                     {

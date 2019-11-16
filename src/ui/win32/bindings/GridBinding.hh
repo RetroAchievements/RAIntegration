@@ -44,6 +44,7 @@ public:
     void BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept;
     void BindRowColor(const IntModelProperty& pRowColorProperty) noexcept;
 
+    GSL_SUPPRESS_CON3 LRESULT OnLvnItemChanging(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 void OnLvnColumnClick(const LPNMLISTVIEW pnmListView);
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
@@ -61,6 +62,8 @@ public:
 
     static LRESULT CloseIPE(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* pInfo);
     static GridColumnBinding::InPlaceEditorInfo* GetIPEInfo(HWND hwnd) noexcept;
+
+    int UpdateSelected(const IntModelProperty& pProperty, int nNewValue);
 
 protected:
     void UpdateLayout();

@@ -34,6 +34,7 @@
 #define IDC_RA_SCREENSHOT_LOCATION      1129
 #define IDC_RA_DISPLAY_MASTERY          1130
 #define IDC_RA_SCREENSHOT_MASTERY       1131
+#define IDC_RA_RESULTS_BOOKMARK         1132
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -169,7 +170,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        121
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1130
+#define _APS_NEXT_CONTROL_VALUE         1133
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

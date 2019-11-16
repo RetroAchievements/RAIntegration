@@ -372,6 +372,8 @@ void MemoryBookmarksViewModel::AddBookmark(ra::ByteAddress nAddress, MemSize nSi
 
 int MemoryBookmarksViewModel::RemoveSelectedBookmarks()
 {
+    m_vBookmarks.BeginUpdate();
+
     int nRemoved = 0;
     for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
     {
@@ -382,6 +384,8 @@ int MemoryBookmarksViewModel::RemoveSelectedBookmarks()
             m_bModified = true;
         }
     }
+
+    m_vBookmarks.EndUpdate();
 
     return nRemoved;
 }

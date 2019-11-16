@@ -25,7 +25,7 @@ static LRESULT NotifySelection(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* 
 
     const auto nLength = Edit_GetTextLength(hwnd);
     std::wstring sValue;
-    sValue.resize(nLength + 1);
+    sValue.resize(gsl::narrow_cast<size_t>(nLength) + 1);
     GetWindowTextW(hwnd, sValue.data(), nLength + 1);
     sValue.resize(nLength);
 

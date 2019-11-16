@@ -1142,6 +1142,7 @@ public:
 
         game.mockThreadPool.ExecuteNextTask(); // award achievement 1
         game.mockThreadPool.ExecuteNextTask(); // award achievement 2
+        game.mockThreadPool.AdvanceTime(std::chrono::milliseconds(500)); // mastery unlock check is delayed
         game.mockThreadPool.ExecuteNextTask(); // check unlocks
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
@@ -1202,6 +1203,7 @@ public:
 
         game.mockThreadPool.ExecuteNextTask(); // award achievement 1
         game.mockThreadPool.ExecuteNextTask(); // award achievement 2
+        game.mockThreadPool.AdvanceTime(std::chrono::milliseconds(500)); // mastery unlock check is delayed
         game.mockThreadPool.ExecuteNextTask(); // check unlocks
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));

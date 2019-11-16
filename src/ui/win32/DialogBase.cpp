@@ -195,6 +195,23 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             GSL_SUPPRESS_TYPE1{ pnmHdr = reinterpret_cast<LPNMHDR>(lParam); }
             switch (pnmHdr->code)
             {
+                case LVN_ITEMCHANGING:
+                {
+                    ra::ui::win32::bindings::GridBinding* pGridBinding;
+                    GSL_SUPPRESS_TYPE1 pGridBinding = reinterpret_cast<ra::ui::win32::bindings::GridBinding*>(
+                        FindControlBinding(pnmHdr->hwndFrom));
+
+                    if (pGridBinding)
+                    {
+                        LPNMLISTVIEW pnmListView;
+                        GSL_SUPPRESS_TYPE1{ pnmListView = reinterpret_cast<LPNMLISTVIEW>(pnmHdr); }
+                        SetWindowLongPtr(m_hWnd, DWLP_MSGRESULT, pGridBinding->OnLvnItemChanging(pnmListView));
+                        return TRUE;
+                    }
+
+                    return FALSE;
+                }
+
                 case LVN_ITEMCHANGED:
                 {
                     ra::ui::win32::bindings::GridBinding* pGridBinding;

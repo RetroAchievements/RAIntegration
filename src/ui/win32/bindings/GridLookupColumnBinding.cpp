@@ -24,7 +24,8 @@ static LRESULT NotifySelection(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* 
 
     GridBinding* gridBinding = static_cast<GridBinding*>(pInfo->pGridBinding);
     Expects(gridBinding != nullptr);
-    gridBinding->GetItems().SetItemValue(pInfo->nItemIndex, pColumnBinding->GetBoundProperty(), nValue);
+    if (gridBinding->UpdateSelected(pColumnBinding->GetBoundProperty(), nValue) == 0)
+        gridBinding->GetItems().SetItemValue(pInfo->nItemIndex, pColumnBinding->GetBoundProperty(), nValue);
 
     return GridBinding::CloseIPE(hwnd, pInfo);
 }

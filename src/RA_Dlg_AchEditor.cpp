@@ -645,7 +645,7 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
             }
 
             g_hIPEEdit = CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("EDIT"), TEXT(""),
-                                        WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | ES_WANTRETURN,
+                                        WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | ES_WANTRETURN | ES_AUTOHSCROLL,
                                         rcSubItem.left, rcSubItem.top, nWidth, ra::ftoi(1.5f * nHeight),
                                         g_AchievementEditorDialog.GetHWND(), nullptr, GetModuleHandle(nullptr), nullptr);
 

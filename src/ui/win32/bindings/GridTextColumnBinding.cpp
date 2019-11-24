@@ -80,7 +80,7 @@ HWND GridTextColumnBindingBase::CreateInPlaceEditor(HWND hParent, InPlaceEditorI
 {
     HWND hInPlaceEditor =
         CreateWindowEx(WS_EX_CLIENTEDGE, TEXT("EDIT"), TEXT(""),
-            WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | ES_WANTRETURN,
+            WS_CHILD | WS_VISIBLE | WS_POPUPWINDOW | WS_BORDER | ES_WANTRETURN | ES_AUTOHSCROLL,
             pInfo.rcSubItem.left, pInfo.rcSubItem.top, pInfo.rcSubItem.right - pInfo.rcSubItem.left,
             pInfo.rcSubItem.bottom - pInfo.rcSubItem.top,
             hParent, nullptr, GetModuleHandle(nullptr), nullptr);

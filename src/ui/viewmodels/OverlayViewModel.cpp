@@ -128,10 +128,24 @@ void OverlayViewModel::CreateRenderImage()
     const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
     const int nWidth = m_pSurface->GetWidth();
     const int nHeight = m_pSurface->GetHeight();
+    constexpr auto nMargin = 8;
 
     // background image
     const ImageReference pOverlayBackground(ra::ui::ImageType::Local, "Overlay\\overlayBG.png");
-    m_pSurface->DrawImageStretched(0, 0, nWidth, nHeight, pOverlayBackground);
+    if (ra::services::ServiceLocator::Get<ra::ui::IImageRepository>().IsImageAvailable(pOverlayBackground.Type(), pOverlayBackground.Name()))
+    {
+        m_pSurface->DrawImageStretched(0, 0, nWidth, nHeight, pOverlayBackground);
+    }
+    else
+    {
+        const std::wstring sError = L"WARNING: overlayBG.png not found";
+        const auto nErrorFont =
+            m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
+        const auto szError = m_pSurface->MeasureText(nErrorFont, sError);
+
+        m_pSurface->FillRectangle(0, 0, nWidth, nHeight, pTheme.ColorBackground());
+        m_pSurface->WriteText(nMargin, nHeight - szError.Height - nMargin, nErrorFont, pTheme.ColorError(), sError);
+    }
 
     // user frame
     const auto nFont =
@@ -145,7 +159,6 @@ void OverlayViewModel::CreateRenderImage()
     const auto szPoints = m_pSurface->MeasureText(nFont, sPoints);
 
     constexpr auto nImageSize = 64;
-    constexpr auto nMargin = 8;
     constexpr auto nPadding = 4;
     constexpr auto nUserFrameHeight = nImageSize + nPadding * 2;
     const auto nUserFrameWidth = nImageSize + nPadding * 4 + std::max(szUsername.Width, szPoints.Width);

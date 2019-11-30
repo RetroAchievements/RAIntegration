@@ -273,6 +273,25 @@ const std::vector<ConsoleContext::MemoryRegion> Nintendo64ConsoleContext::m_vMem
     { 0x400000U, 0x7FFFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // Expansion PAK memory (4MB)
 };
 
+// ===== Nintendo DS =====
+
+class NintendoDSConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 NintendoDSConsoleContext() noexcept : ConsoleContext(ConsoleID::DS, L"Nintendo DS") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// https://www.akkit.org/info/gbatek.htm#dsmemorymaps
+const std::vector<ConsoleContext::MemoryRegion> NintendoDSConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x3FFFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // Main Memory 4MB ($02000000-$023FFFFF)
+};
+
 // ===== NeoGeo Pocket =====
 
 class NeoGeoPocketConsoleContext : public ConsoleContext
@@ -592,7 +611,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"Dreamcast");
 
         case ConsoleID::DS:
-            return std::make_unique<ConsoleContext>(nId, L"Nintendo DS");
+            return std::make_unique<NintendoDSConsoleContext>();
 
         case ConsoleID::Events:
             return std::make_unique<ConsoleContext>(nId, L"Events");

@@ -447,7 +447,7 @@ const std::vector<ConsoleContext::MemoryRegion> SaturnConsoleContext::m_vMemoryR
 class SG1000ConsoleContext : public ConsoleContext
 {
 public:
-    GSL_SUPPRESS_F6 SG1000ConsoleContext() noexcept : ConsoleContext(ConsoleID::MasterSystem, L"SG-1000") {}
+    GSL_SUPPRESS_F6 SG1000ConsoleContext() noexcept : ConsoleContext(ConsoleID::SG1000, L"SG-1000") {}
 
     const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
 

@@ -245,6 +245,7 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
             default:
                 ASSERT(!"Unsupported operator");
                 _FALLTHROUGH;
+            case RC_CONDITION_NONE:
             case RC_CONDITION_EQ:
                 cond.SetCompareType(ComparisonType::Equals);
                 break;

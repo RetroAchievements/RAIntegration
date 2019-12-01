@@ -536,7 +536,10 @@ bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const
 bool GDISurfaceFactory::SaveImage(const ISurface& pSurface, const std::wstring& sPath) const
 {
     if (g_pIWICFactory == nullptr)
+    {
+        RA_LOG_WARN("WICFactory not initialized saving %s", sPath);
         return false;
+    }
 
     const auto* pGDIBitmapSurface = dynamic_cast<const GDIBitmapSurface*>(&pSurface);
     if (pGDIBitmapSurface == nullptr)
@@ -586,6 +589,9 @@ bool GDISurfaceFactory::SaveImage(const ISurface& pSurface, const std::wstring& 
 
     if (SUCCEEDED(hr))
         pEncoder->Commit();
+
+    if (!SUCCEEDED(hr))
+        RA_LOG_WARN("Error %08x saving %s", hr, sPath);
 
     return SUCCEEDED(hr);
 }

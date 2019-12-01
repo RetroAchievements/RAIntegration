@@ -10,6 +10,7 @@ const StringModelProperty PopupMessageViewModel::TitleProperty("PopupMessageView
 const StringModelProperty PopupMessageViewModel::DescriptionProperty("PopupMessageViewModel", "Description", L"");
 const StringModelProperty PopupMessageViewModel::DetailProperty("PopupMessageViewModel", "Detail", L"");
 const BoolModelProperty PopupMessageViewModel::IsDetailErrorProperty("PopupMessageViewModel", "IsDetailError", false);
+const BoolModelProperty PopupMessageViewModel::IsMasteryProperty("PopupMessageViewModel", "IsMastery", false);
 
 void PopupMessageViewModel::BeginAnimation()
 {
@@ -102,9 +103,10 @@ void PopupMessageViewModel::CreateRenderImage()
     pSurface->FillRectangle(nShadowOffset, nShadowOffset, nWidth - nShadowOffset, nHeight - nShadowOffset, pOverlayTheme.ColorShadow());
 
     // frame
-    pSurface->FillRectangle(0, 0, nWidth - nShadowOffset, nHeight - nShadowOffset, pOverlayTheme.ColorBackground());
+    const auto nColorBackground = IsMastery() ? pOverlayTheme.ColorMasteryBackground() : pOverlayTheme.ColorBackground();
+    pSurface->FillRectangle(0, 0, nWidth - nShadowOffset, nHeight - nShadowOffset, nColorBackground);
     pSurface->FillRectangle(1, 1, nWidth - nShadowOffset - 2, nHeight - nShadowOffset - 2, pOverlayTheme.ColorBorder());
-    pSurface->FillRectangle(2, 2, nWidth - nShadowOffset - 4, nHeight - nShadowOffset - 4, pOverlayTheme.ColorBackground());
+    pSurface->FillRectangle(2, 2, nWidth - nShadowOffset - 4, nHeight - nShadowOffset - 4, nColorBackground);
 
     // image
     if (m_hImage.Type() != ra::ui::ImageType::None)

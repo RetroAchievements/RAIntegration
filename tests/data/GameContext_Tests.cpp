@@ -8,10 +8,12 @@
 
 #include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
+#include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 
@@ -42,12 +44,14 @@ public:
         GameContextHarness() noexcept : m_OverrideRuntime(&runtime) {}
 
         ra::api::mocks::MockServer mockServer;
+        ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockStorage;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::data::mocks::MockEmulatorContext mockEmulator;
+        ra::data::mocks::MockSessionTracker mockSessionTracker;
         ra::data::mocks::MockUserContext mockUser;
         ra::services::AchievementRuntime runtime;
 
@@ -1098,6 +1102,7 @@ public:
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotification, true);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.SetGameId(1U);
         game.SetGameHash("hash");
         game.SetGameTitle(L"GameName");
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
@@ -1113,6 +1118,9 @@ public:
             response.Result = ra::api::ApiResult::Success;
             return true;
         });
+
+        game.mockConfiguration.SetUsername("Username");
+        game.mockSessionTracker.MockSession(1, 123456789, std::chrono::seconds(78 * 60));
 
         game.MockAchievement();
         auto& pAch2 = game.MockAchievement();
@@ -1151,6 +1159,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Mastered GameName"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"2 achievements, 10 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Username | Play time: 1h18m"), pPopup->GetDetail());
     }
 
     TEST_METHOD(TestAwardAchievementMasteryNonHardcore)
@@ -1159,6 +1168,7 @@ public:
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotification, true);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        game.SetGameId(1U);
         game.SetGameHash("hash");
         game.SetGameTitle(L"GameName");
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
@@ -1174,6 +1184,9 @@ public:
             response.Result = ra::api::ApiResult::Success;
             return true;
         });
+
+        game.mockConfiguration.SetUsername("Player");
+        game.mockSessionTracker.MockSession(1, 123456789, std::chrono::seconds((102*60 + 3) * 60));
 
         game.MockAchievement();
         auto& pAch2 = game.MockAchievement();
@@ -1212,6 +1225,7 @@ public:
         Assert::IsNotNull(pPopup);
         Assert::AreEqual(std::wstring(L"Completed GameName"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"2 achievements, 10 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Player | Play time: 102h03m"), pPopup->GetDetail());
     }
 
     TEST_METHOD(TestAwardAchievementMasteryIncomplete)

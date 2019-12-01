@@ -614,6 +614,10 @@ void GameContext::AwardMastery() const
                 ra::StringPrintf(L"%s | Play time: %dh%02dm", pConfiguration.GetUsername(), nPlayTimeMinutes / 60, nPlayTimeMinutes % 60),
                 ra::ui::ImageType::Icon, m_sGameImage);
 
+            auto* pPopup = pOverlayManager.GetMessage(nPopup);
+            if (pPopup != nullptr)
+                pPopup->SetIsMastery(true);
+
             if (pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot))
             {
                 std::wstring sPath = ra::StringPrintf(L"%sGame%u.png", pConfiguration.GetScreenshotDirectory(), m_nGameId);

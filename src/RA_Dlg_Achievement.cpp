@@ -283,7 +283,7 @@ _Success_(return ) _NODISCARD BOOL
 {
     for (auto& nIter : nLbxItems)
     {
-        Achievement& Ach = *g_AchievementsDialog.GetAchievementAt(nIter);
+        const Achievement& Ach = *g_AchievementsDialog.GetAchievementAt(nIter);
         if (Ach.Title().length() < 2)
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement title too short.",

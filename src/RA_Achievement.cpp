@@ -120,6 +120,50 @@ void Achievement::RebuildTrigger()
     std::shared_ptr<std::vector<unsigned char>> pOldTriggerBuffer = m_pTriggerBuffer;
     auto* pOldTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
 
+    // perform validation - if the new trigger will result in a parse error, the changes will be lost.
+    // attempt to detect and correct for these to minimize the impact to the user.
+    unsigned int nMeasuredTarget = 0U;
+    for (auto& pGroup : m_vConditions)
+    {
+        for (size_t i = 0; i < pGroup.Count(); ++i)
+        {
+            auto& pCond = pGroup.GetAt(i);
+
+            if (pCond.GetConditionType() == Condition::Type::Measured)
+            {
+                unsigned int nCondTarget = pCond.RequiredHits();
+                if (nCondTarget == 0 && pCond.CompTarget().GetType() != CompVariable::Type::ValueComparison)
+                {
+                    // RC_INVALID_MEASURED_TARGET
+                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                        L"Removing Measured flag",
+                        L"A Measured condition requires a non-zero hit count target, or a constant value for the right operand.");
+
+                    pCond.SetConditionType(Condition::Type::Standard);
+                }
+                else
+                {
+                    if (nCondTarget == 0)
+                        nCondTarget = pCond.CompTarget().GetValue();
+
+                    if (nMeasuredTarget == 0U)
+                    {
+                        nMeasuredTarget = nCondTarget;
+                    }
+                    else if (nMeasuredTarget != nCondTarget)
+                    {
+                        // RC_MULTIPLE_MEASURED
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                            L"Removing Measured flag",
+                            ra::StringPrintf(L"Another Measured condition already exists with a target of %u.", nMeasuredTarget));
+
+                        pCond.SetConditionType(Condition::Type::Standard);
+                    }
+                }
+            }
+        }
+    }
+
     // convert the UI definition into a string
     std::string sTrigger;
     m_vConditions.Serialize(sTrigger);

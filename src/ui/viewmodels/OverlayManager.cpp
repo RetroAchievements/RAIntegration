@@ -486,6 +486,8 @@ void OverlayManager::CaptureScreenshot(int nMessageId, const std::wstring& sPath
         const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
         pScreenshot.pScreen = pDesktop.CaptureClientArea(pWindowManager.Emulator);
 
+        RA_LOG_INFO("Queued screenshot %s", sPath);
+
         if (m_bProcessingScreenshots)
             return;
 
@@ -518,25 +520,28 @@ void OverlayManager::ProcessScreenshots()
                 {
                     // popup no longer available, discard request
                     iter = pScreenshot.vMessages.erase(iter);
+                    RA_LOG_INFO("Popup no longer available for %s", iter->second);
                 }
                 else
                 {
                     const auto& pImageReference = pMessage->GetImage();
                     if (pImageRepository.IsImageAvailable(pImageReference.Type(), pImageReference.Name()))
                     {
+                        RA_LOG_INFO("Rendering screenshot for %s", iter->second);
+
                         PopupMessageViewModel::RenderImageLock lock(*pMessage);
 
                         if (!pMessage->IsAnimationStarted())
-                        {
                             pMessage->BeginAnimation();
-                            pMessage->UpdateRenderImage(0.0);
-                        }
+
+                        pMessage->UpdateRenderImage(0.0);
 
                         mReady.insert_or_assign(iter->second, RenderScreenshot(*pScreenshot.pScreen, *pMessage));
                         iter = pScreenshot.vMessages.erase(iter);
                     }
                     else
                     {
+                        RA_LOG_INFO("Image no longer available for %s", iter->second);
                         ++iter;
                     }
                 }

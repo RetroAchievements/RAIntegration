@@ -17,6 +17,7 @@
 #include "api\UpdateCodeNote.hh"
 
 #include "data\EmulatorContext.hh"
+#include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
@@ -603,10 +604,14 @@ void GameContext::AwardMastery() const
 
             ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
 
+            const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::SessionTracker>().GetTotalPlaytime(m_nGameId);
+            const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
+
             auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
             const auto nPopup = pOverlayManager.QueueMessage(
                 ra::StringPrintf(L"%s %s", bHardcore ? L"Mastered" : L"Completed", m_sGameTitle),
                 ra::StringPrintf(L"%u achievements, %u points", nNumCoreAchievements, nTotalCoreAchievementPoints),
+                ra::StringPrintf(L"%s | Play time: %dh%02dm", pConfiguration.GetUsername(), nPlayTimeMinutes / 60, nPlayTimeMinutes % 60),
                 ra::ui::ImageType::Icon, m_sGameImage);
 
             if (pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot))

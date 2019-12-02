@@ -22,10 +22,10 @@ extern "C" {
     API const char* CCONV _RA_HostUrl();
 
     // Initialize all data related to RA Engine. Call as early as possible.
-    API int CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nConsoleID, const char* sClientVersion);
+    API int CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVersion);
 
     // Initialize all data related to RA Engine for offline mode. Call as early as possible.
-    API int CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nConsoleID, const char* sClientVersion);
+    API int CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVersion);
 
     // Specifies additional information to include in the UserAgent string
     API void CCONV _RA_SetUserAgentDetail(const char* sDetail);
@@ -44,6 +44,9 @@ extern "C" {
 
     //  Gets the unique identifier of the game associated to the provided ROM data
     API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROMData, unsigned int nROMSize);
+
+    //  Gets the unique identifier of the game associated to the provided file (which may already be loaded into memory)
+    API unsigned int CCONV _RA_IdentifyHash(const char* sHash);
 
     //  Downloads and activates the achievements for the specified game.
     API void CCONV _RA_ActivateGame(unsigned int nGameId);

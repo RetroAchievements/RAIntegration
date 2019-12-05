@@ -230,6 +230,11 @@ public:
     bool HasBookmark(ra::ByteAddress nAddress) const;
 
     /// <summary>
+    /// Tells the control that the user has modified memory and any associated bookmarks should be updated
+    /// </summary>
+    void OnEditMemory(ra::ByteAddress nAddress);
+
+    /// <summary>
     /// Gets the list of selectable sizes for each bookmark.
     /// </summary>
     const LookupItemViewModelCollection& Sizes() const noexcept
@@ -315,6 +320,7 @@ private:
     LookupItemViewModelCollection m_vBehaviors;
 
     unsigned int m_nLoadedGameId = 0;
+    bool m_bIgnoreValueChanged = false;
 };
 
 } // namespace viewmodels

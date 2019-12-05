@@ -349,8 +349,7 @@ bool MemoryViewerControl::OnEditInput(UINT c)
         // if a bookmark exists for the modified address, update the current value
         // if frozen, the value will be changed back!
         auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-        if (pBookmarks.HasBookmark(nByteAddress))
-            pBookmarks.DoFrame();
+        pBookmarks.OnEditMemory(nByteAddress);
 
         moveAddress(0, 1);
         Invalidate();

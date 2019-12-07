@@ -466,21 +466,26 @@ LRESULT GridBinding::OnLvnItemChanging(const LPNMLISTVIEW pnmListView)
         // and the in-place editor is not open
         if (m_hInPlaceEditor == nullptr)
         {
-            // determine which row/column the user actually clicked on
-            LVHITTESTINFO lvHitTestInfo{};
-            GetCursorPos(&lvHitTestInfo.pt);
-            ScreenToClient(m_hWnd, &lvHitTestInfo.pt);
-            ListView_SubItemHitTest(m_hWnd, &lvHitTestInfo);
-
-            // if the click was for the currently focused item, the in-place editor might open. check to see if the column supports editing
-            if (lvHitTestInfo.iItem == pnmListView->iItem && ListView_GetItemState(m_hWnd, lvHitTestInfo.iItem, LVIS_FOCUSED))
+            // when CTRL+clicking to open the in-place editor, the CTRL+click will try to deselect the item.
+            // if CTRL is pressed and the in-place editor will open, prevent the deselect.
+            if (GetAsyncKeyState(VK_LCONTROL) < 0 | GetAsyncKeyState(VK_RCONTROL) < 0)
             {
-                if (ra::to_unsigned(lvHitTestInfo.iSubItem) < m_vColumns.size())
+                // determine which row/column the user actually clicked on
+                LVHITTESTINFO lvHitTestInfo{};
+                GetCursorPos(&lvHitTestInfo.pt);
+                ScreenToClient(m_hWnd, &lvHitTestInfo.pt);
+                ListView_SubItemHitTest(m_hWnd, &lvHitTestInfo);
+
+                // if the click was for the currently focused item, the in-place editor might open. check to see if the column supports editing
+                if (lvHitTestInfo.iItem == pnmListView->iItem && ListView_GetItemState(m_hWnd, lvHitTestInfo.iItem, LVIS_FOCUSED))
                 {
-                    // the in-place editor will open. prevent the item from being unselected.
-                    const auto& pColumn = m_vColumns.at(lvHitTestInfo.iSubItem);
-                    if (!pColumn->IsReadOnly())
-                        return TRUE;
+                    if (ra::to_unsigned(lvHitTestInfo.iSubItem) < m_vColumns.size())
+                    {
+                        // the in-place editor will open. prevent the item from being unselected.
+                        const auto& pColumn = m_vColumns.at(lvHitTestInfo.iSubItem);
+                        if (!pColumn->IsReadOnly())
+                            return TRUE;
+                    }
                 }
             }
         }

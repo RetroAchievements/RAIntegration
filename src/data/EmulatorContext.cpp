@@ -90,6 +90,11 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
             _RA_SetConsoleID(ConsoleID::Oric);
             break;
 
+        case RA_MelonDS:
+            m_sClientName = "RAMelonDS";
+            _RA_SetConsoleID(ConsoleID::DS);
+            break;
+
         default:
         {
             const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();

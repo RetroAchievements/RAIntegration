@@ -86,6 +86,9 @@ extern "C" {
     // Attempt to login, or present login dialog.
     API void CCONV _RA_AttemptLogin(bool bBlocking);
 
+    // Gets the user name of the currently logged in user - empty string is no user is currently logged in.
+    API const char* CCONV _RA_UserName();
+
     // Return whether or not the hardcore mode is active.
     API int CCONV _RA_HardcoreModeIsActive();
 

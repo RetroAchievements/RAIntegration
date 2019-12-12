@@ -161,7 +161,9 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         pLeaderboard.ParseFromString(pLeaderboardData.Definition.c_str(), pLeaderboardData.Format.c_str());
     }
 
-    ActivateLeaderboards();
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+        ActivateLeaderboards();
 
     // merge local achievements
     m_nNextLocalId = GameContext::FirstLocalId;

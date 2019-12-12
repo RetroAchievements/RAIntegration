@@ -145,7 +145,7 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
         if (nTarget != 0)
         {
             const auto nProgressBarWidth = (nWidth - nTextX - 12) * 2 / 3;
-            const auto nValue = std::max(pItem->GetProgressValue(), nTarget);
+            const auto nValue = std::min(pItem->GetProgressValue(), nTarget);
             const auto nProgressBarFillWidth = gsl::narrow_cast<int>(((static_cast<long>(nProgressBarWidth) - 2) * nValue) / nTarget);
             const auto nProgressBarPercent = gsl::narrow_cast<int>(static_cast<long>(nValue) * 100 / nTarget);
 

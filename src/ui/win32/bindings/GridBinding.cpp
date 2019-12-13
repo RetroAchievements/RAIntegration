@@ -369,12 +369,10 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
     for (gsl::index i = 1; ra::to_unsigned(i) < m_vColumns.size(); ++i)
     {
         sText = NativeStr(m_vColumns.at(i)->GetText(*m_vmItems, nIndex));
-        if (!sText.empty())
-        {
-            item.pszText = sText.data();
-            item.iSubItem = gsl::narrow_cast<int>(i);
-            ListView_SetItem(m_hWnd, &item);
-        }
+
+        item.pszText = sText.data();
+        item.iSubItem = gsl::narrow_cast<int>(i);
+        ListView_SetItem(m_hWnd, &item);
     }
 
     if (m_pIsSelectedProperty)

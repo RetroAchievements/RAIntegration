@@ -191,6 +191,11 @@ API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)
     return ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().IdentifyGame(pROM, nROMSize);
 }
 
+API unsigned int CCONV _RA_IdentifyHash(const char* sHash)
+{
+    return ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().IdentifyHash(sHash);
+}
+
 API void CCONV _RA_ActivateGame(unsigned int nGameId)
 {
     ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().ActivateGame(nGameId);

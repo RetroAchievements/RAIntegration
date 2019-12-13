@@ -47,6 +47,12 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
         return 0U;
     }
 
+    const std::string sMD5 = RAGenerateMD5(pROM, nROMSize);
+    return IdentifyHash(sMD5);
+}
+
+unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
+{
     if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot load achievements",
@@ -54,7 +60,6 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
         return 0U;
     }
 
-    const std::string sMD5 = RAGenerateMD5(pROM, nROMSize);
     unsigned int nGameId = 0U;
 
     ra::api::ResolveHash::Request request;

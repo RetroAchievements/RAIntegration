@@ -392,10 +392,13 @@ private:
     static const std::vector<MemoryRegion> m_vMemoryRegions;
 };
 
-// https://cc65.github.io/doc/pce.html
+// https://db-electronics.ca/wiki/wikis/consoles/turbografx-16/memory-map/#CD-ROM
 const std::vector<ConsoleContext::MemoryRegion> PCEngineConsoleContext::m_vMemoryRegions =
 {
-    { 0x000000U, 0x001FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" }, // normally $2000-$3FFF
+    { 0x000000U, 0x001FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },            // normally $1F0000-$1F7FFF - listed first for compatibility with non-CD titles
+    { 0x002000U, 0x011FFFU, ConsoleContext::AddressType::SystemRAM, "CD RAM" },                // normally $100000-$10FFFF
+    { 0x012000U, 0x041FFFU, ConsoleContext::AddressType::SystemRAM, "Super System Card RAM" }, // normally $0D0000-$0FFFFF
+    { 0x042000U, 0x0427FFU, ConsoleContext::AddressType::SaveRAM,   "CD Battery-backed RAM" }, // normally $1EE000-$1EE7FF
 };
 
 // ===== PlayStation =====
@@ -671,7 +674,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<ConsoleContext>(nId, L"PC-9800");
 
         case ConsoleID::PCEngine:
-            return std::make_unique<ConsoleContext>(nId, L"PCEngine / TurboGrafx 16");
+            return std::make_unique<PCEngineConsoleContext>();
 
         case ConsoleID::PCFX:
             return std::make_unique<ConsoleContext>(nId, L"PCFX");

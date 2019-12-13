@@ -336,6 +336,19 @@ public:
         Assert::IsFalse(bWasMenuRebuilt);
     }
 
+    TEST_METHOD(TestUserNameNotLoggedIn)
+    {
+        MockUserContext mockUserContext;
+        Assert::AreEqual(_RA_UserName(), "");
+    }
+
+    TEST_METHOD(TestUserNameLoggedIn)
+    {
+        MockUserContext mockUserContext;
+        mockUserContext.Initialize("Test", "ABCDEFG");
+        Assert::AreEqual(_RA_UserName(), "Test");
+    }
+
 private:
     class MockAchievementRuntime : public ra::services::AchievementRuntime
     {

@@ -95,6 +95,37 @@ void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index nIndex, con
         MemoryViewerControl::Invalidate();
 #endif
     }
+    else if (args.Property == MemoryBookmarkViewModel::CurrentValueProperty)
+    {
+        if (!m_bIgnoreValueChanged)
+        {
+            const auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
+            if (pBookmark)
+            {
+                const auto nAddress = pBookmark->GetAddress();
+                switch (pBookmark->GetSize())
+                {
+                    case MemSize::ThirtyTwoBit:
+                        OnEditMemory(nAddress + 3);
+                        _FALLTHROUGH;
+                    case MemSize::TwentyFourBit:
+                        OnEditMemory(nAddress + 2);
+                        _FALLTHROUGH;
+                    case MemSize::SixteenBit:
+                        OnEditMemory(nAddress + 1);
+                        _FALLTHROUGH;
+                    default:
+                        OnEditMemory(nAddress);
+                        break;
+                }
+            }
+
+#ifndef RA_UTEST
+            // force memory view to repaint - important if the edited memory was on screen
+            MemoryViewerControl::Invalidate();
+#endif
+        }
+    }
 }
 
 GSL_SUPPRESS_F6
@@ -322,9 +353,11 @@ void MemoryBookmarksViewModel::DoFrame()
                         ra::ByteAddressToString(pBookmark.GetAddress())));
                 }
 
+                m_bIgnoreValueChanged = true;
                 pBookmark.SetPreviousValue(nCurrentValue);
                 pBookmark.SetCurrentValue(nValue);
                 pBookmark.SetChanges(pBookmark.GetChanges() + 1);
+                m_bIgnoreValueChanged = false;
             }
         }
         else if (pBookmark.GetBehavior() == BookmarkBehavior::PauseOnChange)
@@ -347,6 +380,57 @@ bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const
     return (m_vBookmarks.FindItemIndex(MemoryBookmarkViewModel::AddressProperty, nAddress) >= 0);
 }
 
+void MemoryBookmarksViewModel::OnEditMemory(ra::ByteAddress nAddress)
+{
+    // this function is very similar to DoFrame, but does not trigger behaviors.
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
+    {
+        auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
+        const auto nBookmarkAddress = pBookmark.GetAddress();
+        const int distance = ra::to_signed(nBookmarkAddress) - ra::to_signed(nAddress);
+        if (distance > 3)
+            continue;
+
+        const auto nBookmarkSize = pBookmark.GetSize();
+        if (distance != 0)
+        {
+            bool bInBookmark = false;
+
+            switch (nBookmarkSize)
+            {
+                case MemSize::SixteenBit:
+                    bInBookmark = (distance <= 1);
+                    break;
+
+                case MemSize::TwentyFourBit:
+                    bInBookmark = (distance <= 2);
+                    break;
+
+                case MemSize::ThirtyTwoBit:
+                    bInBookmark = (distance <= 3);
+                    break;
+            }
+
+            if (!bInBookmark)
+                continue;
+        }
+
+        const auto nValue = pEmulatorContext.ReadMemory(nBookmarkAddress, nBookmarkSize);
+
+        const auto nCurrentValue = pBookmark.GetCurrentValue();
+        if (nCurrentValue != nValue)
+        {
+            m_bIgnoreValueChanged = true;
+            pBookmark.SetPreviousValue(nCurrentValue);
+            pBookmark.SetCurrentValue(nValue);
+            pBookmark.SetChanges(pBookmark.GetChanges() + 1);
+            m_bIgnoreValueChanged = false;
+        }
+    }
+}
+
 void MemoryBookmarksViewModel::AddBookmark(ra::ByteAddress nAddress, MemSize nSize)
 {
     auto& vmBookmark = m_vBookmarks.Add();
@@ -363,9 +447,12 @@ void MemoryBookmarksViewModel::AddBookmark(ra::ByteAddress nAddress, MemSize nSi
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
     const auto nValue = pEmulatorContext.ReadMemory(nAddress, nSize);
+
+    m_bIgnoreValueChanged = true;
     vmBookmark.SetCurrentValue(nValue);
     vmBookmark.SetPreviousValue(0U);
     vmBookmark.SetChanges(0U);
+    m_bIgnoreValueChanged = false;
 
     m_bModified = true;
 }

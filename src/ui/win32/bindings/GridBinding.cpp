@@ -466,7 +466,7 @@ LRESULT GridBinding::OnLvnItemChanging(const LPNMLISTVIEW pnmListView)
         {
             // when CTRL+clicking to open the in-place editor, the CTRL+click will try to deselect the item.
             // if CTRL is pressed and the in-place editor will open, prevent the deselect.
-            if (GetAsyncKeyState(VK_LCONTROL) < 0 | GetAsyncKeyState(VK_RCONTROL) < 0)
+            if (GetAsyncKeyState(VK_LCONTROL) < 0 || GetAsyncKeyState(VK_RCONTROL) < 0)
             {
                 // determine which row/column the user actually clicked on
                 LVHITTESTINFO lvHitTestInfo{};

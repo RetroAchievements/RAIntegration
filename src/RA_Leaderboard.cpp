@@ -65,6 +65,8 @@ void RA_Leaderboard::SetActive(bool bActive) noexcept
             {
                 auto pLeaderboard = static_cast<rc_lboard_t*>(m_pLeaderboard);
                 rc_reset_lboard(pLeaderboard);
+                pLeaderboard->submitted = 1;
+
                 pRuntime.ActivateLeaderboard(ID(), pLeaderboard);
             }
         }

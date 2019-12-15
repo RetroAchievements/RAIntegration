@@ -24,7 +24,7 @@
 
 inline constexpr std::array<const char*, 10> COLUMN_TITLE{"ID",  "Flag", "Type", "Size",    "Memory",
                                                           "Cmp", "Type", "Size", "Mem/Val", "Hits"};
-inline constexpr std::array<int, 10> COLUMN_WIDTH{30, 75, 42, 50, 72, 35, 42, 50, 72, 72};
+inline constexpr std::array<int, 10> COLUMN_WIDTH{30, 75, 42, 50, 72, 35, 42, 50, 72, 84};
 static_assert(COLUMN_TITLE.size() == COLUMN_WIDTH.size());
 
 enum class CondSubItems : std::size_t

@@ -25,6 +25,12 @@ public:
     unsigned int IdentifyGame(const BYTE* pMemory, size_t nSize);
 
     /// <summary>
+    /// Identifies a game.
+    /// </summary>
+    /// <param name="sMD5">The unique identifier of the game.</param>
+    unsigned int IdentifyHash(const std::string& sMD5);
+
+    /// <summary>
     /// Activates a game.
     /// </summary>
     /// <param name="nGameId">Unique identifier of the game to activate.</param>

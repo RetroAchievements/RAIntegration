@@ -156,6 +156,12 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
     }
 }
 
+API const char* CCONV _RA_UserName()
+{
+    auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    return pUserContext.GetUsername().c_str();
+}
+
 API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
 {
     auto pContext = ra::data::ConsoleContext::GetContext(ra::itoe<ConsoleID>(nConsoleId));
@@ -189,6 +195,11 @@ API void CCONV _RA_ClearMemoryBanks()
 API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)
 {
     return ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().IdentifyGame(pROM, nROMSize);
+}
+
+API unsigned int CCONV _RA_IdentifyHash(const char* sHash)
+{
+    return ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().IdentifyHash(sHash);
 }
 
 API void CCONV _RA_ActivateGame(unsigned int nGameId)

@@ -694,6 +694,90 @@ public:
         Assert::AreEqual(0xFFFFC0C0U, bookmark1.GetRowColor().ARGB);
         Assert::AreEqual(0xFFFFC0C0U, bookmark2.GetRowColor().ARGB);
     }
+
+    TEST_METHOD(TestOnEditMemory)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = i;
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.mockGameContext.NotifyActiveGameChanged();
+        bookmarks.AddBookmark(1, MemSize::ThirtyTwoBit);
+        bookmarks.AddBookmark(2, MemSize::TwentyFourBit);
+        bookmarks.AddBookmark(3, MemSize::SixteenBit);
+        bookmarks.AddBookmark(4, MemSize::EightBit);
+        bookmarks.AddBookmark(4, MemSize::SixteenBit);
+        bookmarks.AddBookmark(5, MemSize::EightBit);
+
+        auto& bookmark1 = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::AreEqual(0x04030201U, bookmark1.GetCurrentValue());
+        Assert::AreEqual(0U, bookmark1.GetPreviousValue());
+        Assert::AreEqual(0U, bookmark1.GetChanges());
+
+        auto& bookmark2 = *bookmarks.Bookmarks().GetItemAt(1);
+        Assert::AreEqual(0x040302U, bookmark2.GetCurrentValue());
+        Assert::AreEqual(0U, bookmark2.GetPreviousValue());
+        Assert::AreEqual(0U, bookmark2.GetChanges());
+        bookmark2.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::Frozen); // OnEditMemory should ignore frozen bookmarks
+
+        auto& bookmark3 = *bookmarks.Bookmarks().GetItemAt(2);
+        Assert::AreEqual(0x0403U, bookmark3.GetCurrentValue());
+        Assert::AreEqual(0U, bookmark3.GetPreviousValue());
+        Assert::AreEqual(0U, bookmark3.GetChanges());
+
+        auto& bookmark4a = *bookmarks.Bookmarks().GetItemAt(3);
+        Assert::AreEqual(0x04U, bookmark4a.GetCurrentValue());
+        Assert::AreEqual(0U, bookmark4a.GetPreviousValue());
+        Assert::AreEqual(0U, bookmark4a.GetChanges());
+        bookmark4a.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange); // OnEditMemory should not trigger pause
+        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            Assert::IsFalse(true, L"No dialog should have been shown.");
+            return DialogResult::None;
+        });
+
+        auto& bookmark4b = *bookmarks.Bookmarks().GetItemAt(4);
+        Assert::AreEqual(0x0504U, bookmark4b.GetCurrentValue());
+        Assert::AreEqual(0U, bookmark4b.GetPreviousValue());
+        Assert::AreEqual(0U, bookmark4b.GetChanges());
+
+        auto& bookmark5 = *bookmarks.Bookmarks().GetItemAt(5);
+        Assert::AreEqual(0x05U, bookmark5.GetCurrentValue());
+        Assert::AreEqual(0U, bookmark5.GetPreviousValue());
+        Assert::AreEqual(0U, bookmark5.GetChanges());
+
+        memory.at(4) = 0x40;
+        bookmarks.OnEditMemory(4U);
+
+        Assert::AreEqual(0x40030201U, bookmark1.GetCurrentValue());
+        Assert::AreEqual(0x04030201U, bookmark1.GetPreviousValue());
+        Assert::AreEqual(1U, bookmark1.GetChanges());
+
+        Assert::AreEqual(0x400302U, bookmark2.GetCurrentValue());
+        Assert::AreEqual(0x040302U, bookmark2.GetPreviousValue());
+        Assert::AreEqual(1U, bookmark2.GetChanges());
+
+        Assert::AreEqual(0x4003U, bookmark3.GetCurrentValue());
+        Assert::AreEqual(0x0403U, bookmark3.GetPreviousValue());
+        Assert::AreEqual(1U, bookmark3.GetChanges());
+
+        Assert::AreEqual(0x40U, bookmark4a.GetCurrentValue());
+        Assert::AreEqual(0x04U, bookmark4a.GetPreviousValue());
+        Assert::AreEqual(1U, bookmark4a.GetChanges());
+
+        Assert::AreEqual(0x0540U, bookmark4b.GetCurrentValue());
+        Assert::AreEqual(0x0504U, bookmark4b.GetPreviousValue());
+        Assert::AreEqual(1U, bookmark4b.GetChanges());
+
+        Assert::AreEqual(0x05U, bookmark5.GetCurrentValue()); // not affected by the edited memory, should not update
+        Assert::AreEqual(0U, bookmark5.GetPreviousValue());
+        Assert::AreEqual(0U, bookmark5.GetChanges());
+    }
 };
 
 } // namespace tests

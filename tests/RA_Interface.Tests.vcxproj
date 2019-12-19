@@ -77,19 +77,23 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(Configuration)\tests\RA_Interface\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(Configuration)\tests\RA_Interface\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\tests\RA_Interface\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\tests\RA_Interface\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\tests\RA_Interface\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\tests\RA_Interface\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(Configuration)\tests\RA_Interface\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(Configuration)\tests\RA_Interface\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\tests\RA_Interface\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\tests\RA_Interface\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\tests\RA_Interface\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\tests\RA_Interface\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

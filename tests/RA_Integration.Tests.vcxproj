@@ -121,16 +121,18 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(Configuration)\tests\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(Configuration)\tests\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\tests\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\tests\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\tests\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\tests\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Analysis|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(Configuration)\tests\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(Configuration)\tests\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\tests\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\tests\</IntDir>
     <CodeAnalysisRuleSet>..\src\ra_rules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>true</RunCodeAnalysis>
     <CAExcludePath>$(RapidJSON_IncludeDir);$(CAExcludePath)</CAExcludePath>
@@ -140,14 +142,18 @@
     <RunCodeAnalysis>true</RunCodeAnalysis>
     <CAExcludePath>$(RapidJSON_IncludeDir);$(CAExcludePath)</CAExcludePath>
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\tests\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\tests\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <OutDir>$(SolutionDir)bin\$(Configuration)\tests\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(Configuration)\tests\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\tests\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\tests\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\tests\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\tests\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>

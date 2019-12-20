@@ -35,6 +35,12 @@ std::wstring ToString<std::chrono::milliseconds>(const std::chrono::milliseconds
 }
 
 template<>
+std::wstring ToString<__int64>(const __int64& t)
+{
+    RETURN_WIDE_STRING(t);
+}
+
+template<>
 std::wstring ToString<MemSize>(const MemSize& t)
 {
     return MEMSIZE_STR.at(ra::etoi(t));

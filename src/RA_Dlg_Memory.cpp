@@ -270,12 +270,17 @@ void MemoryViewerControl::Invalidate()
     {
         InvalidateRect(hOurDlg, nullptr, FALSE);
 
-        // In RALibRetro, s_MemoryDrawProc doesn't seem to be getting trigger by the InvalidateRect, so explicitly force
-        // the render by calling UpdateWindow
-        // TODO: figure out why this is necessary and remove it. There's a similar check in Dlg_Memory::Invalidate for
-        // the search results
-        if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId() == RA_Libretro)
-            UpdateWindow(hOurDlg);
+        // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
+        // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
+        // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
+        // Similar code exists in Dlg_Memory::Invalidate for the search results
+        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+        {
+            case RA_Libretro:
+            case RA_Oricutron:
+                UpdateWindow(hOurDlg);
+                break;
+        }
     }
 }
 
@@ -1853,8 +1858,14 @@ void Dlg_Memory::Invalidate()
     if (hList != nullptr)
     {
         InvalidateRect(hList, nullptr, FALSE);
-        if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId() == RA_Libretro)
-            UpdateWindow(hList);
+
+        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+        {
+            case RA_Libretro:
+            case RA_Oricutron:
+                UpdateWindow(hList);
+                break;
+        }
     }
 }
 

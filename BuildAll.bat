@@ -7,34 +7,45 @@ set BUILDLOG=obj\buildall.log
 
 set BUILDALL=1
 set BUILDCLEAN=0
-set W32_DEBUG=0
-set W32_RELEASE=0
-set W32_TESTS=0
-set W32_ANALYSIS=0
+set DEBUG=0
+set RELEASE=0
+set TESTS=0
+set ANALYSIS=0
+set W32=0
+set W64=0
 
 for %%A in (%*) do (
     if /I "%%A" == "Clean" (
         set BUILDCLEAN=1
     ) else if /I "%%A" == "Debug" (
-        set W32_DEBUG=1
+        set DEBUG=1
         set BUILDALL=0
     ) else if /I "%%A" == "Release" (
-        set W32_RELEASE=1
+        set RELEASE=1
         set BUILDALL=0
     ) else if /I "%%A" == "Tests" (
-        set W32_TESTS=1
+        set TESTS=1
         set BUILDALL=0
     ) else if /I "%%A" == "Analysis" (
-        set W32_ANALYSIS=1
+        set ANALYSIS=1
         set BUILDALL=0   
+    ) else if /I "%%A" == "x86" (
+        set W32=1
+    ) else if /I "%%A" == "x64" (
+        set W64=1
     )
 )
 
 if %BUILDALL% equ 1 (
-    set W32_DEBUG=1
-    set W32_RELEASE=1
-    set W32_TESTS=1
-    set W32_ANALYSIS=1
+    set DEBUG=1
+    set RELEASE=1
+    set TESTS=1
+    set ANALYSIS=1
+)
+
+if %W32% equ 0 if %W64% equ 0 (
+    set W32=1
+    set W64=1
 )
 
 rem === Get hash for current code state ===
@@ -73,34 +84,34 @@ call "%VSINSTALLDIR%VC\Auxiliary\Build\vcvars32.bat"
 rem === Build each project ===
 
 if %BUILDCLEAN% equ 1 (
-    if %W32_DEBUG% equ 1 (
+    if %DEBUG% equ 1 (
         call :build Clean Debug || goto eof
     )
 
-    if %W32_RELEASE% equ 1 (
+    if %RELEASE% equ 1 (
         call :build Clean Release || goto eof
-    ) else if %W32_TESTS% equ 1 (
+    ) else if %TESTS% equ 1 (
         call :build Clean Release || goto eof
     )
 
-    if %W32_ANALYSIS% equ 1 (
+    if %ANALYSIS% equ 1 (
         call :build Clean Analysis || goto eof
     )
 ) else (
-    if %W32_DEBUG% equ 1 (
+    if %DEBUG% equ 1 (
         call :build RA_Integration Debug || goto eof
     )
 
-    if %W32_RELEASE% equ 1 (
+    if %RELEASE% equ 1 (
         call :build RA_Integration Release || goto eof
     )
 
-    if %W32_TESTS% equ 1 (
+    if %TESTS% equ 1 (
         call :build RA_Integration.Tests Release || goto eof
         call :build RA_Interface.Tests Release || goto eof
     )
 
-    if %W32_ANALYSIS% equ 1 (
+    if %ANALYSIS% equ 1 (
         call :build RA_Integration Analysis || goto eof
     )
 )
@@ -111,14 +122,24 @@ rem === Build subroutine ===
 
 :build
 
+set PROJECT=%~1
+set CONFIG=%~2
+
+if %W32% equ 1 call :build2 %PROJECT% %CONFIG% Win32
+if %W64% equ 1 call :build2 %PROJECT% %CONFIG% x64
+
+exit /B 0
+
+:build2
+
 rem === If the project was already successfully built for this hash, ignore it ===
 
-set PROJECTKEY=%~1-%~2
+set PROJECTKEY=%~1-%~2-%~3
 find /c "%PROJECTKEY%" %BUILDLOG% >nul 2>&1 
 if %ERRORLEVEL% equ 0 (
     if not "%~1" equ "Clean" (
         echo.
-        echo %~1 %~2 up-to-date!
+        echo %~1 %~2 %~3 up-to-date!
         exit /B 0
     )
 )
@@ -126,7 +147,7 @@ if %ERRORLEVEL% equ 0 (
 rem === Do the build ===
 
 echo.
-echo Building %~1 %~2
+echo Building %~1 %~2 %~3
 
 rem -- vsbuild doesn't like periods in the "-t" parameter, so replace them with underscores
 rem -- https://stackoverflow.com/questions/56253635/what-could-i-be-doing-wrong-with-my-msbuild-argument
@@ -143,7 +164,7 @@ for /f "tokens=1* delims=." %%i in ("%ESCAPEDKEY%") do (
    )
 )
 
-msbuild.exe RA_Integration.sln -t:%ESCAPEDKEY% -p:Configuration=%~2 -p:Platform=Win32 /warnaserror /nowarn:MSB8051,C5045
+msbuild.exe RA_Integration.sln -t:%ESCAPEDKEY% -p:Configuration=%~2 -p:Platform=%~3 /warnaserror /nowarn:MSB8051,C5045
 set RESULT=%ERRORLEVEL%
 
 rem === If build failed, bail ===

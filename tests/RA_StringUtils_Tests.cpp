@@ -1,5 +1,7 @@
 #include "RA_Defs.h"
 
+#include "RA_UnitTestHelpers.h"
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {

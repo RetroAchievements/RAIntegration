@@ -7,7 +7,7 @@
 #include "api\IServer.hh"
 #include "services\ServiceLocator.hh"
 
-#include "CppUnitTest.h"
+#include <CppUnitTest.h>
 
 namespace ra {
 namespace api {
@@ -50,7 +50,8 @@ public:
     {
         HandleRequest<TApi>([](const typename TApi::Request&, typename TApi::Response&) -> bool
         {
-            Assert::Fail(ra::StringPrintf(L"%s should not have been invoked", TApi::Name()).c_str());
+            Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(
+                ra::StringPrintf(L"%s should not have been invoked", TApi::Name()).c_str());
         });
     }
 

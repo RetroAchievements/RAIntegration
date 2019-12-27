@@ -112,7 +112,7 @@ public:
     /// Updates the image to render.
     /// </summary>
     /// <param name="fElapsed">The fractional of seconds that have passed.</param>
-    /// <returns><c>true</c> if the image or location was updatedm <c>false</c> if not.</returns>
+    /// <returns><c>true</c> if the image or location was updated, <c>false</c> if not.</returns>
     virtual bool UpdateRenderImage(double fElapsed) = 0;
 
     /// <summary>

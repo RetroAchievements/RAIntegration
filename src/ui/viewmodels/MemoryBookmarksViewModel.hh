@@ -230,6 +230,11 @@ public:
     bool HasBookmark(ra::ByteAddress nAddress) const;
 
     /// <summary>
+    /// Determines if a bookmark that is frozen exists for the specified address.
+    /// </summary>
+    bool HasFrozenBookmark(ra::ByteAddress nAddress) const;
+
+    /// <summary>
     /// Tells the control that the user has modified memory and any associated bookmarks should be updated
     /// </summary>
     void OnEditMemory(ra::ByteAddress nAddress);

@@ -291,6 +291,9 @@
     <ClCompile Include="ui\win32\OverlaySettingsDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\MemoryViewerViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -754,6 +757,9 @@
     </ClInclude>
     <ClInclude Include="ui\win32\OverlaySettingsDialog.hh">
       <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\MemoryViewerViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

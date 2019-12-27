@@ -380,6 +380,18 @@ bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const
     return (m_vBookmarks.FindItemIndex(MemoryBookmarkViewModel::AddressProperty, nAddress) >= 0);
 }
 
+bool MemoryBookmarksViewModel::HasFrozenBookmark(ra::ByteAddress nAddress) const
+{
+    for (size_t nIndex = 0; nIndex < m_vBookmarks.Count(); ++nIndex)
+    {
+        const auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
+        if (pBookmark != nullptr && pBookmark->GetBehavior() == BookmarkBehavior::Frozen && pBookmark->GetAddress() == nAddress)
+            return true;
+    }
+
+    return false;
+}
+
 void MemoryBookmarksViewModel::OnEditMemory(ra::ByteAddress nAddress)
 {
     // this function is very similar to DoFrame, but does not trigger behaviors.

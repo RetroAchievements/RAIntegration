@@ -14,8 +14,11 @@
 #include "ui\IDesktop.hh"
 
 #include "ui\viewmodels\MemoryBookmarksViewModel.hh"
+#include "ui\viewmodels\MemoryViewerViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
+
+#include "ui\drawing\gdi\GDISurface.hh"
 
 #ifndef ID_OK
 #define ID_OK 1024
@@ -26,6 +29,9 @@
 
 _CONSTANT_VAR MIN_RESULTS_TO_DUMP = 500000U;
 _CONSTANT_VAR MIN_SEARCH_PAGE_SIZE = 50U;
+
+static ra::ui::viewmodels::MemoryViewerViewModel g_pMemoryViewer;
+constexpr int MEMVIEW_MARGIN = 4;
 
 Dlg_Memory g_MemoryDialog;
 
@@ -445,317 +451,44 @@ void MemoryViewerControl::SetCaretPos()
 
 void MemoryViewerControl::OnClick(POINT point)
 {
-    const auto nTotalMemorySize = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize();
-    if (nTotalMemorySize == 0U)
-        return;
+    g_pMemoryViewer.OnClick(point.x, point.y);
 
     HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
-
-    int x = point.x;
-    const int y = point.y - m_szFontSize.cy; //	Adjust for header
-    const int line = ((y - 3) / m_szFontSize.cy);
-
-    if (line == -1 || line >= ra::to_signed(m_nDisplayedLines))
-        return; //	clicked on header
-
-    int rowLengthPx = m_nDataStartXOffset;
-    int inc = 1;
-    int sub = 3 * m_szFontSize.cx;
-
-    switch (m_nDataSize)
-    {
-        case MemSize::EightBit:
-            rowLengthPx += 47 * m_szFontSize.cx;
-            inc = 1;                   // increment mem offset by 1 each subset
-            sub = 3 * m_szFontSize.cx; // 2 char set plus one char space
-            break;
-        case MemSize::SixteenBit:
-            rowLengthPx += 39 * m_szFontSize.cx;
-            inc = 2;                   // increment mem offset by 2 each subset
-            sub = 5 * m_szFontSize.cx; // 4 char set plus one char space
-            break;
-        case MemSize::ThirtyTwoBit:
-            rowLengthPx += 35 * m_szFontSize.cx;
-            inc = 4;                   // increment mem offset by 4 each subset
-            sub = 9 * m_szFontSize.cx; // 8 char set plus one char space
-            break;
-    }
-
-    const int nTopLeft = m_nAddressOffset - 0x40;
-
-    const int nAddressRowClicked = (nTopLeft + (line << 4));
-
-    // Clamp:
-    if (nAddressRowClicked < 0 || nAddressRowClicked >= ra::to_signed(nTotalMemorySize))
-    {
-        // ignore; clicked above limit
-        return;
-    }
-
-    m_nEditAddress = ra::to_unsigned(nAddressRowClicked);
-
-    if (x >= ra::to_signed(m_nDataStartXOffset) && x < rowLengthPx)
-    {
-        x -= m_nDataStartXOffset;
-        m_nEditNibble = 0;
-
-        while (x > 0)
-        {
-            // Adjust x by one subset til we find out the correct offset:
-            x -= sub;
-            if (x >= 0)
-                m_nEditAddress += inc;
-            else
-                m_nEditNibble = (x + sub) / m_szFontSize.cx;
-        }
-    }
-    else
-    {
-        return;
-    }
-
-    const unsigned int maxNibble = GetMaxNibble(m_nDataSize);
-    if (m_nEditNibble > maxNibble)
-        m_nEditNibble = maxNibble;
-
     SetFocus(hOurDlg);
-    SetCaretPos();
 }
 
 void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 {
+    g_pMemoryViewer.UpdateRenderImage();
+
     PAINTSTRUCT ps;
-    HDC dc = BeginPaint(hTarget, &ps);
+    HDC hDC = BeginPaint(hTarget, &ps);
 
-    HDC hMemDC = CreateCompatibleDC(dc);
+    RECT rcClient;
+    GetClientRect(hTarget, &rcClient);
 
-    RECT rect;
-    GetClientRect(hTarget, &rect);
-    const int w = rect.right - rect.left;
-    const int h = rect.bottom - rect.top - 6;
+    const auto& pRenderImage = g_pMemoryViewer.GetRenderImage();
 
-    //	Pick font
-    if (m_hViewerFont == nullptr)
-        m_hViewerFont = GetStockFont(SYSTEM_FIXED_FONT);
-    HGDIOBJ hOldFont = SelectObject(hMemDC, m_hViewerFont);
+    HBRUSH hBackground = GetStockBrush(WHITE_BRUSH);
+    RECT rcFill{ rcClient.left + 1, rcClient.top + 1, rcClient.left + MEMVIEW_MARGIN, rcClient.bottom - 2 };
+    FillRect(hDC, &rcFill, hBackground);
 
-    HBITMAP hBitmap = CreateCompatibleBitmap(dc, w, rect.bottom - rect.top);
-    HGDIOBJ hOldBitmap = SelectObject(hMemDC, hBitmap);
+    rcFill.left = rcClient.left + MEMVIEW_MARGIN + pRenderImage.GetWidth();
+    rcFill.right = rcClient.right - 2;
+    FillRect(hDC, &rcFill, hBackground);
 
-    GetTextExtentPoint32(hMemDC, TEXT("0"), 1, &m_szFontSize);
+    rcFill.left = rcClient.left + 1;
+    rcFill.bottom = rcClient.top + MEMVIEW_MARGIN;
+    FillRect(hDC, &rcFill, hBackground);
 
-    //	Fill white:
-    HBRUSH hBrush = GetStockBrush(WHITE_BRUSH);
-    FillRect(hMemDC, &rect, hBrush);
-    DrawEdge(hMemDC, &rect, EDGE_ETCHED, BF_RECT);
+    rcFill.top = rcClient.top + MEMVIEW_MARGIN + pRenderImage.GetHeight();
+    rcFill.bottom = rcClient.bottom - 2;
+    FillRect(hDC, &rcFill, hBackground);
 
-    const char* sHeader{};
-    switch (m_nDataSize)
-    {
-        case MemSize::ThirtyTwoBit:
-            sHeader = "          0        4        8        c";
-            break;
-        case MemSize::SixteenBit:
-            sHeader = "          0    2    4    6    8    a    c    e";
-            break;
-        default:
-            m_nDataSize = MemSize::EightBit;
-            // fallthrough to MemSize::EightBit
-        case MemSize::EightBit:
-            sHeader = "          0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f";
-            break;
-    }
+    DrawEdge(hDC, &rcClient, EDGE_ETCHED, BF_RECT);
 
-    int lines = h / m_szFontSize.cy;
-    lines -= 1; // Watch out for header
-    m_nDisplayedLines = lines;
-
-    TCHAR bufferNative[64]{};
-
-    int addr = m_nAddressOffset;
-    addr -= (0x40); // Offset will be this quantity (push up four lines)...
-
-    SetTextColor(hMemDC, RGB(0, 0, 0));
-
-    unsigned int notes{};
-    unsigned int bookmarks{};
-    unsigned int freeze{};
-
-    RECT r{3, 3, rect.right - 3, r.top + m_szFontSize.cy}; // left,top,right,bottom
-
-    // Draw header:
-    DrawText(hMemDC, NativeStr(sHeader).c_str(), gsl::narrow_cast<int>(strlen(sHeader)), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
-
-    // Adjust for header:
-    r.top += m_szFontSize.cy;
-    r.bottom += m_szFontSize.cy;
-
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    const auto nTotalMemorySize = pEmulatorContext.TotalMemorySize();
-    if (nTotalMemorySize > 0)
-    {
-        const auto& pBookmarks = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Bookmarks();
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-        m_nDataStartXOffset = r.left + 10 * m_szFontSize.cx;
-        std::array<unsigned char, 16> data{};
-        for (auto i = 0; i < lines && addr < ra::to_signed(nTotalMemorySize); ++i, addr += 16)
-        {
-            if (addr >= 0)
-            {
-                notes = 0;
-                bookmarks = 0;
-                freeze = 0;
-                for (int j = 0; j < 16; ++j)
-                {
-                    notes |= (pGameContext.FindCodeNote(addr + j) != nullptr) ? (1 << j) : 0;
-
-                    const auto nIndex = pBookmarks.FindItemIndex(ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty, addr + j);
-                    if (nIndex >= 0)
-                    {
-                        bookmarks |= (1 << j);
-
-                        const auto* pBookmark = pBookmarks.GetItemAt(nIndex);
-                        Expects(pBookmark != nullptr);
-                        if (pBookmark->GetBehavior() == ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen)
-                            freeze |= (1 << j);
-                    }
-                }
-
-                pEmulatorContext.ReadMemory(addr, data.data(), 16);
-
-                TCHAR* ptr = bufferNative + _stprintf_s(bufferNative, 11, TEXT("0x%06x  "), addr);
-                switch (m_nDataSize)
-                {
-                    case MemSize::EightBit:
-                        for (int j = 0; j < 16; ++j)
-                            ptr += _stprintf_s(ptr, 4, TEXT("%02x "), data.at(j));
-                        break;
-                    case MemSize::SixteenBit:
-                        for (int j = 0; j < 16; j += 2)
-                            ptr += _stprintf_s(ptr, 6, TEXT("%02x%02x "), data.at(gsl::narrow_cast<size_t>(j) + 1), data.at(j));
-                        break;
-                    case MemSize::ThirtyTwoBit:
-                        for (int j = 0; j < 16; j += 4)
-                        {
-                            ptr += _stprintf_s(ptr, 10, TEXT("%02x%02x%02x%02x "), data.at(gsl::narrow_cast<size_t>(j) + 3),
-                                data.at(gsl::narrow_cast<size_t>(j) + 2), data.at(gsl::narrow_cast<size_t>(j) + 1), data.at(j));
-                        }
-                        break;
-                }
-
-                DrawText(hMemDC, NativeStr(bufferNative).c_str(), gsl::narrow_cast<int>(ptr - bufferNative), &r,
-                         DT_TOP | DT_LEFT | DT_NOPREFIX);
-
-                if ((ra::to_signed(m_nWatchedAddress) & ~0x0F) == addr)
-                {
-                    SetTextColor(hMemDC, RGB(255, 0, 0));
-
-                    size_t stride{};
-                    switch (m_nDataSize)
-                    {
-                        case MemSize::EightBit:
-                            ptr = bufferNative + 10 + 3 * gsl::narrow_cast<size_t>(m_nWatchedAddress & 0x0F);
-                            stride = 2;
-                            break;
-                        case MemSize::SixteenBit:
-                            ptr = bufferNative + 10 + 5 * (gsl::narrow_cast<size_t>(m_nWatchedAddress & 0x0F) / 2);
-                            stride = 4;
-                            break;
-                        case MemSize::ThirtyTwoBit:
-                            ptr = bufferNative + 10 + 9 * (gsl::narrow_cast<size_t>(m_nWatchedAddress & 0x0F) / 4);
-                            stride = 8;
-                            break;
-                    }
-
-                    r.left = 3 + gsl::narrow_cast<int>(ptr - bufferNative) * m_szFontSize.cx;
-                    DrawText(hMemDC, ptr, gsl::narrow_cast<int>(stride), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
-
-                    SetTextColor(hMemDC, RGB(0, 0, 0));
-                    r.left = 3;
-
-                    // make sure we don't overwrite the current address with an indicator
-                    notes &= ~(1 << (m_nWatchedAddress & 0x0F));
-                    bookmarks &= ~(1 << (m_nWatchedAddress & 0x0F));
-                }
-
-                if (notes || bookmarks)
-                {
-                    for (int j = 0; j < 16; ++j)
-                    {
-                        bool bDraw = FALSE;
-
-                        if (bookmarks & 0x01)
-                        {
-                            if (freeze & 0x01)
-                                SetTextColor(hMemDC, RGB(255, 200, 0));
-                            else
-                                SetTextColor(hMemDC, RGB(0, 160, 0));
-
-                            bDraw = TRUE;
-                        }
-                        else if (notes & 0x01)
-                        {
-                            SetTextColor(hMemDC, RGB(0, 0, 255));
-                            bDraw = TRUE;
-                        }
-
-                        if (bDraw)
-                        {
-                            size_t stride{};
-                            switch (m_nDataSize)
-                            {
-                                case MemSize::EightBit:
-                                    ptr = bufferNative + 10 + 3 * gsl::narrow_cast<size_t>(j);
-                                    stride = 2;
-                                    break;
-                                case MemSize::SixteenBit:
-                                    ptr = bufferNative + 10 + 5 * (gsl::narrow_cast<size_t>(j) / 2);
-                                    stride = 4;
-                                    break;
-                                case MemSize::ThirtyTwoBit:
-                                    ptr = bufferNative + 10 + 9 * (gsl::narrow_cast<size_t>(j) / 4);
-                                    stride = 8;
-                                    break;
-                            }
-
-                            r.left = 3 + gsl::narrow_cast<int>(ptr - bufferNative) * m_szFontSize.cx;
-                            DrawText(hMemDC, NativeStr(ptr).c_str(), gsl::narrow_cast<int>(stride), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
-                        }
-
-                        notes >>= 1;
-                        bookmarks >>= 1;
-                        freeze >>= 1;
-                    }
-
-                    r.left = 3;
-                }
-
-                SetTextColor(hMemDC, RGB(0, 0, 0));
-            }
-
-            r.top += m_szFontSize.cy;
-            r.bottom += m_szFontSize.cy;
-        }
-    }
-
-    {
-        HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-        HGDIOBJ hOldPen = SelectObject(hMemDC, hPen);
-
-        MoveToEx(hMemDC, 3 + m_szFontSize.cx * 9, 3 + m_szFontSize.cy, nullptr);
-        LineTo(hMemDC, 3 + m_szFontSize.cx * 9, 3 + ((m_nDisplayedLines + 1) * m_szFontSize.cy));
-
-        SelectObject(hMemDC, hOldPen);
-        DeleteObject(hPen);
-    }
-
-    SelectObject(hMemDC, hOldFont);
-
-    BitBlt(dc, 0, 0, w, rect.bottom - rect.top, hMemDC, 0, 0, SRCCOPY);
-
-    SelectObject(hMemDC, hOldBitmap);
-    DeleteDC(hMemDC);
-    DeleteObject(hBitmap);
+    ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcClient);
+    pSurface.DrawSurface(MEMVIEW_MARGIN, MEMVIEW_MARGIN, pRenderImage);
 
     EndPaint(hTarget, &ps);
 }
@@ -1076,6 +809,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 content.Resize(winRect.Width(), winRect.Height());
 
             RememberWindowSize(hDlg, "Memory Inspector");
+
+            GetWindowRect(GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), &winRect);
+            g_pMemoryViewer.OnResized(winRect.right - winRect.left - MEMVIEW_MARGIN * 2,
+                winRect.bottom - winRect.top - MEMVIEW_MARGIN * 2);
             return TRUE;
         }
 
@@ -1849,8 +1586,29 @@ void Dlg_Memory::Invalidate()
     if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() == 0)
         return;
 
+    if (!IsWindowVisible(m_hWnd))
+        return;
+
     // Update Memory Viewer
-    MemoryViewerControl::Invalidate();
+    g_pMemoryViewer.DoFrame();
+    if (g_pMemoryViewer.NeedsRedraw())
+    {
+        HWND hMemViewer = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
+        InvalidateRect(hMemViewer, nullptr, FALSE);
+
+        // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
+        // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
+        // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
+        // Similar code exists in Dlg_Memory::Invalidate for the search results
+        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+        {
+            case RA_Libretro:
+            case RA_Oricutron:
+                UpdateWindow(hMemViewer);
+                break;
+        }
+    }
+
     UpdateBits();
 
     // Update Search Results

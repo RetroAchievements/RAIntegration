@@ -271,23 +271,6 @@ void MemoryViewerControl::setWatchedAddress(unsigned int address)
 
 void MemoryViewerControl::Invalidate()
 {
-    HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
-    if (hOurDlg != nullptr)
-    {
-        InvalidateRect(hOurDlg, nullptr, FALSE);
-
-        // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
-        // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
-        // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
-        // Similar code exists in Dlg_Memory::Invalidate for the search results
-        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
-        {
-            case RA_Libretro:
-            case RA_Oricutron:
-                UpdateWindow(hOurDlg);
-                break;
-        }
-    }
 }
 
 void MemoryViewerControl::editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int nNewVal)
@@ -525,6 +508,14 @@ void Dlg_Memory::ClearLogOutput() noexcept
     EnableWindow(GetDlgItem(m_hWnd, IDC_RA_RESULTS_FORWARD), FALSE);
 }
 
+void Dlg_Memory::OnViewModelIntValueChanged(const ra::ui::IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == ra::ui::viewmodels::MemoryViewerViewModel::AddressProperty)
+    {
+        SetWatchingAddress(g_pMemoryViewer->GetAddress());
+    }
+}
+
 INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (nMsg)
@@ -534,6 +525,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             g_MemoryDialog.m_hWnd = hDlg;
 
             g_pMemoryViewer.reset(new ra::ui::viewmodels::MemoryViewerViewModel());
+            g_pMemoryViewer->AddNotifyTarget(*this);
 
             GenerateResizes(hDlg);
 

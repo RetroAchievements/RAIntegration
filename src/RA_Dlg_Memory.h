@@ -4,6 +4,8 @@
 
 #include "services/SearchResults.h"
 
+#include "ui/ViewModelBase.hh"
+
 class MemoryViewerControl
 {
 public:
@@ -69,7 +71,7 @@ struct SearchResult
     }
 };
 
-class Dlg_Memory
+class Dlg_Memory : protected ra::ui::ViewModelBase::NotifyTarget
 {
 public:
     void Init() noexcept;
@@ -98,6 +100,9 @@ public:
     BOOL IsActive() const noexcept;
 
     void GenerateResizes(HWND hDlg);
+
+protected:
+    void OnViewModelIntValueChanged(const ra::ui::IntModelProperty::ChangeArgs& args) override;
 
 private:
     bool GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);

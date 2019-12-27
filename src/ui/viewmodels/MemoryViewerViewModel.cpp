@@ -220,7 +220,7 @@ void MemoryViewerViewModel::BuildFontSurface()
     m_pFontSurface->FillRectangle(0, 0, m_pFontSurface->GetWidth(), m_pFontSurface->GetHeight(), ra::ui::Color(0xFFFFFFFF));
 
     m_pFontSurface->FillRectangle(0, m_szChar.Height * ra::etoi(TextColor::RedOnBlack),
-        m_pFontSurface->GetWidth(), m_szChar.Height, ra::ui::Color(0xFF000000));
+        m_pFontSurface->GetWidth(), m_szChar.Height, ra::ui::Color(0xFFC0C0C0));
 
     constexpr wchar_t m_sHexChars[] = L"0123456789abcdef";
     std::wstring sHexChar = L"0";

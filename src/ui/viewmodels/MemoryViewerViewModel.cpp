@@ -30,6 +30,9 @@ MemoryViewerViewModel::MemoryViewerViewModel() noexcept
     m_pColor[0] = HIGHLIGHTED_COLOR;
 
     AddNotifyTarget(*this);
+
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    pGameContext.AddNotifyTarget(*this);
 }
 
 static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
@@ -98,9 +101,8 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
     }
     else if (args.Property == FirstAddressProperty)
     {
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
         const auto nVisibleLines = GetNumVisibleLines();
-        const auto nMaxFirstAddress = ra::to_signed((pEmulatorContext.TotalMemorySize() + 15) & ~0x0F) - (nVisibleLines * 16);
+        const auto nMaxFirstAddress = ra::to_signed((m_nTotalMemorySize + 15) & ~0x0F) - (nVisibleLines * 16);
         if (args.tNewValue > nMaxFirstAddress)
         {
             SetFirstAddress(std::max(0, nMaxFirstAddress));
@@ -124,6 +126,36 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
     }
 }
 
+void MemoryViewerViewModel::OnActiveGameChanged()
+{
+    if (m_pSurface != nullptr)
+        RenderAddresses();
+
+    UpdateColors();
+}
+
+void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring&)
+{
+    const auto nFirstAddress = GetFirstAddress();
+    if (nAddress < nFirstAddress)
+        return;
+
+    const auto nOffset = nAddress - nFirstAddress;
+    const auto nVisibleLines = GetNumVisibleLines();
+    if (nOffset >= nVisibleLines * 16)
+        return;
+
+    const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto nNewColor = GetColor(nAddress, pBookmarksViewModel, pGameContext);
+
+    if ((m_pColor[nOffset] & 0x0F) != ra::etoi(nNewColor))
+    {
+        m_pColor[nOffset] = 0x80 | gsl::narrow_cast<unsigned char>(ra::etoi(nNewColor));
+        m_bNeedsRedraw = true;
+    }
+}
+
 void MemoryViewerViewModel::OnClick(int nX, int nY)
 {
     const int nRow = nY / m_szChar.Height;
@@ -134,10 +166,8 @@ void MemoryViewerViewModel::OnClick(int nX, int nY)
     if (nColumn < 10)
         return;
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-
     const auto nNewAddress = GetFirstAddress() + (nRow - 1) * 16 + (nColumn - 10) / 3;
-    if (nNewAddress < pEmulatorContext.TotalMemorySize())
+    if (nNewAddress < m_nTotalMemorySize)
         SetAddress(nNewAddress);
 }
 
@@ -156,6 +186,14 @@ void MemoryViewerViewModel::DoFrame()
     const auto nVisibleLines = GetNumVisibleLines();
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    if (m_nTotalMemorySize == 0)
+    {
+        m_nTotalMemorySize = pEmulatorContext.TotalMemorySize();
+
+        if (m_nTotalMemorySize != 0 && m_pSurface != nullptr)
+            RenderAddresses();
+    }
+
     pEmulatorContext.ReadMemory(nAddress, pMemory, nVisibleLines * 16);
 
     for (auto nIndex = 0; nIndex < nVisibleLines * 16; ++nIndex)
@@ -235,10 +273,9 @@ void MemoryViewerViewModel::UpdateRenderImage()
         RenderHeader();
     }
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
     const auto nFirstAddress = GetFirstAddress();
-    if (nFirstAddress + nVisibleLines * 16 > pEmulatorContext.TotalMemorySize())
-        nVisibleLines = (pEmulatorContext.TotalMemorySize() - nFirstAddress) / 16;
+    if (nFirstAddress + nVisibleLines * 16 > m_nTotalMemorySize)
+        nVisibleLines = (m_nTotalMemorySize - nFirstAddress) / 16;
 
     unsigned char* pMemory = m_pMemory;
     unsigned char* pColor = m_pColor;
@@ -277,20 +314,19 @@ void MemoryViewerViewModel::RenderAddresses()
 {
     auto nVisibleLines = GetNumVisibleLines();
     const auto nCursorAddress = GetAddress() & ~0x0F;
-    auto nAddress = GetFirstAddress();
-    int nY = m_szChar.Height;
+    auto nFirstAddress = GetFirstAddress();
+    int nY = m_szChar.Height - 1;
 
-    m_pSurface->FillRectangle(0, 0, m_szChar.Width * 8, nVisibleLines * m_szChar.Height, ra::ui::Color(0xFFFFFFFF));
+    m_pSurface->FillRectangle(0, m_szChar.Height, m_szChar.Width * 8, nVisibleLines * m_szChar.Height, ra::ui::Color(0xFFFFFFFF));
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    if (nAddress + nVisibleLines * 16 > pEmulatorContext.TotalMemorySize())
-        nVisibleLines = (pEmulatorContext.TotalMemorySize() - nAddress) / 16;
+    if (nFirstAddress + nVisibleLines * 16 > m_nTotalMemorySize)
+        nVisibleLines = (m_nTotalMemorySize - nFirstAddress) / 16;
 
     for (int i = 0; i < nVisibleLines; ++i)
     {
-        const auto nColor = (nCursorAddress == nAddress) ? ra::ui::Color(0xFFFF8080) : ra::ui::Color(0xFF808080);
-        const auto sAddress = ra::StringPrintf(L"0x%06x", nAddress);
-        nAddress += 16;
+        const auto nColor = (nCursorAddress == nFirstAddress) ? ra::ui::Color(0xFFFF8080) : ra::ui::Color(0xFF808080);
+        const auto sAddress = ra::StringPrintf(L"0x%06x", nFirstAddress);
+        nFirstAddress += 16;
 
         m_pSurface->WriteText(0, nY, m_nFont, nColor, sAddress);
         nY += m_szChar.Height;
@@ -313,7 +349,7 @@ void MemoryViewerViewModel::RenderHeader()
     {
         const auto nColor = (nCursorAddress == i) ? ra::ui::Color(0xFFFF8080) : ra::ui::Color(0xFF808080);
         const auto sValue = ra::StringPrintf(L"%02x", i);
-        m_pSurface->WriteText(nX, 0, m_nFont, nColor, sValue);
+        m_pSurface->WriteText(nX, -2, m_nFont, nColor, sValue);
         nX += m_szChar.Width * 3;
     }
 }

@@ -30,7 +30,7 @@
 _CONSTANT_VAR MIN_RESULTS_TO_DUMP = 500000U;
 _CONSTANT_VAR MIN_SEARCH_PAGE_SIZE = 50U;
 
-static ra::ui::viewmodels::MemoryViewerViewModel g_pMemoryViewer;
+static std::unique_ptr<ra::ui::viewmodels::MemoryViewerViewModel> g_pMemoryViewer;
 constexpr int MEMVIEW_MARGIN = 4;
 
 Dlg_Memory g_MemoryDialog;
@@ -451,7 +451,7 @@ void MemoryViewerControl::SetCaretPos()
 
 void MemoryViewerControl::OnClick(POINT point)
 {
-    g_pMemoryViewer.OnClick(point.x, point.y);
+    g_pMemoryViewer->OnClick(point.x, point.y);
 
     HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
     SetFocus(hOurDlg);
@@ -459,7 +459,7 @@ void MemoryViewerControl::OnClick(POINT point)
 
 void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 {
-    g_pMemoryViewer.UpdateRenderImage();
+    g_pMemoryViewer->UpdateRenderImage();
 
     PAINTSTRUCT ps;
     HDC hDC = BeginPaint(hTarget, &ps);
@@ -467,7 +467,7 @@ void MemoryViewerControl::RenderMemViewer(HWND hTarget)
     RECT rcClient;
     GetClientRect(hTarget, &rcClient);
 
-    const auto& pRenderImage = g_pMemoryViewer.GetRenderImage();
+    const auto& pRenderImage = g_pMemoryViewer->GetRenderImage();
 
     HBRUSH hBackground = GetStockBrush(WHITE_BRUSH);
     RECT rcFill{ rcClient.left + 1, rcClient.top + 1, rcClient.left + MEMVIEW_MARGIN, rcClient.bottom - 2 };
@@ -532,6 +532,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         case WM_INITDIALOG:
         {
             g_MemoryDialog.m_hWnd = hDlg;
+
+            g_pMemoryViewer.reset(new ra::ui::viewmodels::MemoryViewerViewModel());
 
             GenerateResizes(hDlg);
 
@@ -811,7 +813,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             RememberWindowSize(hDlg, "Memory Inspector");
 
             GetWindowRect(GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), &winRect);
-            g_pMemoryViewer.OnResized(winRect.right - winRect.left - MEMVIEW_MARGIN * 2,
+            g_pMemoryViewer->OnResized(winRect.right - winRect.left - MEMVIEW_MARGIN * 2,
                 winRect.bottom - winRect.top - MEMVIEW_MARGIN * 2);
             return TRUE;
         }
@@ -1590,22 +1592,25 @@ void Dlg_Memory::Invalidate()
         return;
 
     // Update Memory Viewer
-    g_pMemoryViewer.DoFrame();
-    if (g_pMemoryViewer.NeedsRedraw())
+    if (g_pMemoryViewer != nullptr)
     {
-        HWND hMemViewer = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
-        InvalidateRect(hMemViewer, nullptr, FALSE);
-
-        // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
-        // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
-        // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
-        // Similar code exists in Dlg_Memory::Invalidate for the search results
-        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+        g_pMemoryViewer->DoFrame();
+        if (g_pMemoryViewer->NeedsRedraw())
         {
-            case RA_Libretro:
-            case RA_Oricutron:
-                UpdateWindow(hMemViewer);
-                break;
+            HWND hMemViewer = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
+            InvalidateRect(hMemViewer, nullptr, FALSE);
+
+            // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
+            // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
+            // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
+            // Similar code exists in Dlg_Memory::Invalidate for the search results
+            switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+            {
+                case RA_Libretro:
+                case RA_Oricutron:
+                    UpdateWindow(hMemViewer);
+                    break;
+            }
         }
     }
 

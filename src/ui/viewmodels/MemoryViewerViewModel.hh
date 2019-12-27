@@ -2,6 +2,7 @@
 #define RA_UI_MEMORYVIEWERVIEWMODEL_H
 #pragma once
 
+#include "data\GameContext.hh"
 #include "data\Types.hh"
 
 #include "ui\WindowViewModelBase.hh"
@@ -14,7 +15,9 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class MemoryViewerViewModel : public ViewModelBase, protected ViewModelBase::NotifyTarget
+class MemoryViewerViewModel : public ViewModelBase, 
+    protected ViewModelBase::NotifyTarget,
+    protected ra::data::GameContext::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 MemoryViewerViewModel() noexcept;
@@ -100,10 +103,14 @@ public:
 
     void OnClick(int nX, int nY);
 
-    void OnResized(int nWidth, int nHeight);
+    void OnResized(_UNUSED int nWidth, int nHeight);
 
 protected:
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
+    // GameContext::NotifyTarget
+    void OnActiveGameChanged() override;
+    void OnCodeNoteChanged(ra::ByteAddress, const std::wstring&) override;
 
     unsigned char* m_pMemory;
     unsigned char* m_pColor;
@@ -125,6 +132,7 @@ private:
 
     bool m_bNeedsRedraw = true;
     bool m_bUpperNibbleSelected = true;
+    size_t m_nTotalMemorySize = 0;
     int m_nFont = 0;
 };
 

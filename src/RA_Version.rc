@@ -8,6 +8,12 @@
 #define RA_INTEGRATION_IS_PRERELEASE 0
 #endif
 
+#ifdef _WIN64
+#define RA_INTEGRATION_VERSION_PRODUCT_ARCH RA_INTEGRATION_VERSION_PRODUCT " (x64)"
+#else
+#define RA_INTEGRATION_VERSION_PRODUCT_ARCH RA_INTEGRATION_VERSION_PRODUCT " (x86)"
+#endif
+
 #define APSTUDIO_READONLY_SYMBOLS
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -74,7 +80,7 @@ BEGIN
             VALUE "LegalCopyright", "Copyright (C) 2019 retroachievements.org"
             VALUE "OriginalFilename", "RA_Integration.dll"
             VALUE "ProductName", "RetroAchievements Integration Toolkit"
-            VALUE "ProductVersion", RA_INTEGRATION_VERSION_PRODUCT
+            VALUE "ProductVersion", RA_INTEGRATION_VERSION_PRODUCT_ARCH
         END
     END
     BLOCK "VarFileInfo"

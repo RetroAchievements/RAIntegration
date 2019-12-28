@@ -115,57 +115,78 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
     }
 
     return DefWindowProc(hDlg, uMsg, wParam, lParam);
-    // return FALSE;
 }
 
 bool MemoryViewerControl::OnKeyDown(UINT nChar)
 {
     const unsigned int maxNibble = GetMaxNibble(m_nDataSize);
 
-    const bool bShiftHeld = (GetKeyState(VK_SHIFT) & 0x80000000) == 0x80000000;
+    const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
+    const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
 
     switch (nChar)
     {
         case VK_RIGHT:
-            if (bShiftHeld)
-                moveAddress((maxNibble + 1) >> 1, 0);
+            if (bShiftHeld || bControlHeld)
+                g_pMemoryViewer->AdvanceCursorWord();
             else
-                moveAddress(0, 1);
+                g_pMemoryViewer->AdvanceCursor();
             return true;
 
         case VK_LEFT:
-            if (bShiftHeld)
-                moveAddress(-(ra::to_signed(maxNibble + 1) >> 1), 0);
+            if (bShiftHeld || bControlHeld)
+                g_pMemoryViewer->RetreatCursorWord();
             else
-                moveAddress(0, -1);
+                g_pMemoryViewer->RetreatCursor();
             return true;
 
         case VK_DOWN:
-            moveAddress(0x10, 0);
+            if (bControlHeld)
+                g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() + 0x10);
+            else
+                g_pMemoryViewer->AdvanceCursorLine();
             return true;
 
         case VK_UP:
-            moveAddress(-0x10, 0);
+            if (bControlHeld)
+                g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() - 0x10);
+            else
+                g_pMemoryViewer->RetreatCursorLine();
             return true;
 
         case VK_PRIOR: // Page up (!)
-            moveAddress(-ra::to_signed(m_nDisplayedLines << 4), 0);
+            g_pMemoryViewer->RetreatCursorPage();
             return true;
 
         case VK_NEXT: // Page down (!)
-            moveAddress((m_nDisplayedLines << 4), 0);
+            g_pMemoryViewer->AdvanceCursorPage();
             return true;
 
         case VK_HOME:
-            m_nEditAddress = 0;
-            m_nEditNibble = 0;
-            setAddress(0);
+            if (bControlHeld)
+            {
+                g_pMemoryViewer->SetFirstAddress(0);
+                g_pMemoryViewer->SetAddress(0);
+            }
+            else
+            {
+                g_pMemoryViewer->SetAddress(g_pMemoryViewer->GetAddress() & ~0x0F);
+            }
             return true;
 
         case VK_END:
-            m_nEditAddress = gsl::narrow_cast<unsigned int>(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize()) - 0x10;
-            m_nEditNibble = 0;
-            setAddress(m_nEditAddress);
+            if (bControlHeld)
+            {
+                const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+                const auto nTotalBytes = pEmulatorContext.TotalMemorySize();
+
+                g_pMemoryViewer->SetFirstAddress(nTotalBytes & ~0x0F);
+                g_pMemoryViewer->SetAddress(nTotalBytes - 1);
+            }
+            else
+            {
+                g_pMemoryViewer->SetAddress(g_pMemoryViewer->GetAddress() | 0x0F);
+            }
             return true;
     }
 

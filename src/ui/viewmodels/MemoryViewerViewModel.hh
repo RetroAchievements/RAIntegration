@@ -102,8 +102,16 @@ public:
 
 
     void OnClick(int nX, int nY);
-
     void OnResized(_UNUSED int nWidth, int nHeight);
+
+    void AdvanceCursor();
+    void RetreatCursor();
+    void AdvanceCursorWord();
+    void RetreatCursorWord();
+    void AdvanceCursorLine();
+    void RetreatCursorLine();
+    void AdvanceCursorPage();
+    void RetreatCursorPage();
 
 protected:
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;

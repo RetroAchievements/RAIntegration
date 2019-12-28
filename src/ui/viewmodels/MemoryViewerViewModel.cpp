@@ -75,22 +75,29 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
 {
     if (args.Property == AddressProperty)
     {
-        const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-
         auto nFirstAddress = GetFirstAddress();
-        m_pColor[args.tOldValue - nFirstAddress] = 0x80 | gsl::narrow_cast<unsigned char>(ra::etoi(GetColor(args.tOldValue, pBookmarksViewModel, pGameContext)));
-
         const auto nVisibleLines = GetNumVisibleLines();
-        if (args.tNewValue >= ra::to_signed(nFirstAddress + nVisibleLines * 16))
+        const auto nMaxAddress = nFirstAddress + nVisibleLines * 16;
+
+        const auto nOldValue = ra::to_unsigned(args.tOldValue);
+        if (nOldValue >= nFirstAddress && nOldValue < nMaxAddress)
         {
-            nFirstAddress = (args.tNewValue & ~0x0F) - ((nVisibleLines / 2) * 16);
+            const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+
+            m_pColor[nOldValue - nFirstAddress] = 0x80 | gsl::narrow_cast<unsigned char>(ra::etoi(GetColor(nOldValue, pBookmarksViewModel, pGameContext)));
+        }
+
+        const auto nNewValue = ra::to_unsigned(args.tNewValue);
+        if (nNewValue < nFirstAddress || nNewValue >= nMaxAddress)
+        {
+            nFirstAddress = (nNewValue & ~0x0F) - ((nVisibleLines / 2) * 16);
             SetFirstAddress(nFirstAddress);
 
             nFirstAddress = GetFirstAddress();
         }
 
-        m_pColor[args.tNewValue - nFirstAddress] = HIGHLIGHTED_COLOR;
+        m_pColor[nNewValue - nFirstAddress] = HIGHLIGHTED_COLOR;
         m_bNeedsRedraw = true;
 
         if (m_pSurface != nullptr)
@@ -123,6 +130,164 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
     {
         m_pSurface.reset();
         m_bNeedsRedraw = true;
+    }
+}
+
+void MemoryViewerViewModel::AdvanceCursor()
+{
+    if (m_bUpperNibbleSelected)
+    {
+        m_bUpperNibbleSelected = false;
+
+        const auto nAddress = GetAddress();
+        const auto nFirstAddress = GetFirstAddress();
+
+        m_pColor[nAddress - nFirstAddress] |= 0x80;
+        m_bNeedsRedraw = true;
+    }
+    else
+    {
+        AdvanceCursorWord();
+    }
+}
+
+void MemoryViewerViewModel::RetreatCursor()
+{
+    const auto nAddress = GetAddress();
+    const auto nFirstAddress = GetFirstAddress();
+
+    if (!m_bUpperNibbleSelected)
+    {
+        m_bUpperNibbleSelected = true;
+
+        m_pColor[nAddress - nFirstAddress] |= 0x80;
+        m_bNeedsRedraw = true;
+    }
+    else if (nAddress > 0)
+    {
+        m_bUpperNibbleSelected = false;
+
+        const auto nNewAddress = nAddress - 1;
+        if (nNewAddress < nFirstAddress)
+            SetFirstAddress(nFirstAddress - 16);
+
+        SetAddress(nNewAddress);
+    }
+}
+
+void MemoryViewerViewModel::AdvanceCursorWord()
+{
+    const auto nAddress = GetAddress();
+    if (nAddress < m_nTotalMemorySize)
+    {
+        m_bUpperNibbleSelected = true;
+
+        const auto nNewAddress = nAddress + 1;
+        if ((nNewAddress & 0x0F) == 0)
+        {
+            const auto nFirstAddress = GetFirstAddress();
+            if (nNewAddress == nFirstAddress + GetNumVisibleLines() * 16)
+                SetFirstAddress(nFirstAddress + 16);
+        }
+
+        SetAddress(nNewAddress);
+    }
+}
+
+void MemoryViewerViewModel::RetreatCursorWord()
+{
+    const auto nAddress = GetAddress();
+    if (nAddress > 0)
+    {
+        m_bUpperNibbleSelected = true;
+
+        const auto nNewAddress = nAddress - 1;
+        if ((nNewAddress & 0x0F) == 0x0F)
+        {
+            const auto nFirstAddress = GetFirstAddress();
+            if (nNewAddress < nFirstAddress)
+                SetFirstAddress(nFirstAddress - 16);
+        }
+
+        SetAddress(nNewAddress);
+    }
+}
+
+void MemoryViewerViewModel::AdvanceCursorLine()
+{
+    const auto nAddress = GetAddress();
+    if (nAddress < m_nTotalMemorySize - 16)
+    {
+        m_bUpperNibbleSelected = true;
+
+        const auto nNewAddress = nAddress + 16;
+        const auto nFirstAddress = GetFirstAddress();
+        if (nNewAddress >= nFirstAddress + GetNumVisibleLines() * 16)
+            SetFirstAddress(nFirstAddress + 16);
+
+        SetAddress(nNewAddress);
+    }
+}
+
+void MemoryViewerViewModel::RetreatCursorLine()
+{
+    const auto nAddress = GetAddress();
+    if (nAddress > 15)
+    {
+        m_bUpperNibbleSelected = true;
+
+        const auto nNewAddress = nAddress - 16;
+        const auto nFirstAddress = GetFirstAddress();
+        if (nNewAddress < nFirstAddress)
+            SetFirstAddress(nFirstAddress - 16);
+
+        SetAddress(nNewAddress);
+    }
+}
+
+void MemoryViewerViewModel::AdvanceCursorPage()
+{
+    const auto nVisibleLines = GetNumVisibleLines();
+    const auto nAddress = GetAddress();
+    if (nAddress < m_nTotalMemorySize - 16)
+    {
+        m_bUpperNibbleSelected = true;
+
+        const auto nFirstAddress = GetFirstAddress();
+        const auto nNewFirstAddress = nFirstAddress + (nVisibleLines - 1) * 16;
+        const auto nMaxFirstAddress = m_nTotalMemorySize - nVisibleLines * 16;
+        if (nNewFirstAddress < nMaxFirstAddress)
+        {
+            SetFirstAddress(nNewFirstAddress);
+            SetAddress(nNewFirstAddress + (nAddress - nFirstAddress));
+        }
+        else
+        {
+            SetFirstAddress(nMaxFirstAddress);
+            SetAddress(((m_nTotalMemorySize - 15) & ~0x0F) | (nAddress & 0x0F));
+        }
+    }
+}
+
+void MemoryViewerViewModel::RetreatCursorPage()
+{
+    const auto nAddress = GetAddress();
+    if (nAddress > 15)
+    {
+        m_bUpperNibbleSelected = true;
+
+        const auto nFirstAddress = GetFirstAddress();
+        const auto nNewFirstAddress = ra::to_signed(nFirstAddress) - (GetNumVisibleLines() - 1) * 16;
+        if (nNewFirstAddress >= 0)
+        {
+            SetFirstAddress(nNewFirstAddress);
+            SetAddress(nNewFirstAddress + (nAddress - nFirstAddress));
+        }
+        else
+        {
+            SetFirstAddress(0);
+            SetAddress(nAddress & 0x0F);
+        }
     }
 }
 

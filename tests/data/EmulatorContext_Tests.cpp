@@ -438,8 +438,8 @@ public:
         // ensure mode was deactivated
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
 
-        // deactivating hardcore mode should disable leaderboards
-        Assert::IsFalse(pLeaderboard.IsActive());
+        // deactivating hardcore mode should not disable leaderboards
+        Assert::IsTrue(pLeaderboard.IsActive());
 
         // deactivating hardcore mode should request non-hardcore unlocks
         emulator.mockThreadPool.ExecuteNextTask();

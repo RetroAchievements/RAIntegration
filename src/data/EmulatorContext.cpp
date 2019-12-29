@@ -334,7 +334,6 @@ void EmulatorContext::DisableHardcoreMode()
 
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
         pGameContext.RefreshUnlocks();
-        pGameContext.DeactivateLeaderboards();
     }
 }
 

@@ -37,7 +37,7 @@ MemoryViewerViewModel::MemoryViewerViewModel() noexcept
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     pGameContext.AddNotifyTarget(*this);
 
-    m_bGameLoaded = (pGameContext.GameId() != 0);
+    m_bReadOnly = (pGameContext.GameId() == 0);
 #endif
 }
 
@@ -75,6 +75,27 @@ void MemoryViewerViewModel::UpdateColors()
         m_pColor[nAddress - nFirstAddress] = HIGHLIGHTED_COLOR;
 
     m_bNeedsRedraw = true;
+}
+
+void MemoryViewerViewModel::SetFirstAddress(ra::ByteAddress value)
+{
+    int nSignedValue = ra::to_signed(value);
+    if (nSignedValue < 0)
+    {
+        nSignedValue = 0;
+    }
+    else
+    {
+        const auto nVisibleLines = GetNumVisibleLines();
+        const auto nMaxFirstAddress = ra::to_signed((m_nTotalMemorySize + 15) & ~0x0F) - (nVisibleLines * 16);
+
+        if (nSignedValue > nMaxFirstAddress)
+            nSignedValue = nMaxFirstAddress;
+        else
+            nSignedValue &= ~0x0F;
+    }
+
+    SetValue(FirstAddressProperty, nSignedValue);
 }
 
 void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
@@ -115,48 +136,28 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
     }
     else if (args.Property == FirstAddressProperty)
     {
-        const auto nVisibleLines = GetNumVisibleLines();
-        const auto nMaxFirstAddress = ra::to_signed((m_nTotalMemorySize + 15) & ~0x0F) - (nVisibleLines * 16);
-        if (args.tNewValue > nMaxFirstAddress)
-        {
-            SetFirstAddress(std::max(0, nMaxFirstAddress));
-        }
-        else if (args.tNewValue < 0)
-        {
-            SetFirstAddress(0);
-        }
-        else
-        {
-            if (m_pSurface != nullptr)
-                RenderAddresses();
+        if (m_pSurface != nullptr)
+            RenderAddresses();
 
-            const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-            pEmulatorContext.ReadMemory(args.tNewValue, m_pMemory, nVisibleLines * 16);
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+        pEmulatorContext.ReadMemory(args.tNewValue, m_pMemory, GetNumVisibleLines() * 16);
 
-            UpdateColors();
-        }
+        UpdateColors();
     }
     else if (args.Property == NumVisibleLinesProperty)
     {
-        if (args.tNewValue > MaxLines)
+        if (args.tNewValue > args.tOldValue)
         {
-            SetNumVisibleLines(MaxLines);
+            const auto nFirstAddress = GetFirstAddress();
+
+            const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+            pEmulatorContext.ReadMemory(nFirstAddress, m_pMemory, args.tNewValue * 16);
+
+            UpdateColors();
         }
-        else
-        {
-            if (args.tNewValue > args.tOldValue)
-            {
-                const auto nFirstAddress = GetFirstAddress();
 
-                const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-                pEmulatorContext.ReadMemory(nFirstAddress, m_pMemory, args.tNewValue * 16);
-
-                UpdateColors();
-            }
-
-            m_pSurface.reset();
-            m_bNeedsRedraw = true;
-        }
+        m_pSurface.reset();
+        m_bNeedsRedraw = true;
     }
 }
 
@@ -339,7 +340,7 @@ void MemoryViewerViewModel::OnActiveGameChanged()
     UpdateColors();
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    m_bGameLoaded = (pGameContext.GameId() != 0);
+    m_bReadOnly = (pGameContext.GameId() == 0);
 }
 
 void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring&)
@@ -400,7 +401,7 @@ void MemoryViewerViewModel::OnResized(_UNUSED int nWidth, int nHeight)
 
 bool MemoryViewerViewModel::OnChar(char c)
 {
-    if (m_nTotalMemorySize == 0 || !m_bGameLoaded)
+    if (m_nTotalMemorySize == 0 || m_bReadOnly)
         return false;
 
     unsigned char value;
@@ -579,7 +580,7 @@ void MemoryViewerViewModel::UpdateRenderImage()
             TextColor nColorUpper = ra::itoe<TextColor>(nColor);
             TextColor nColorLower = nColorUpper;
 
-            if (nColorUpper == TextColor::Red && m_bGameLoaded)
+            if (nColorUpper == TextColor::Red && !m_bReadOnly)
             {
                 if (m_nSelectedNibble == 0)
                     nColorUpper = TextColor::RedOnBlack;

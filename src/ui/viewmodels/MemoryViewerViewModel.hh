@@ -15,9 +15,9 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class MemoryViewerViewModel : public ViewModelBase, 
-    protected ViewModelBase::NotifyTarget,
-    protected ra::data::GameContext::NotifyTarget
+class MemoryViewerViewModel : public ViewModelBase,
+                              protected ViewModelBase::NotifyTarget,
+                              protected ra::data::GameContext::NotifyTarget
 {
 public:
     MemoryViewerViewModel() noexcept;
@@ -46,12 +46,12 @@ public:
 
     enum class TextColor
     {
-        Black = 0, // default
-        Red,       // selected
-        RedOnBlack,// selected and highlighted
-        Blue,      // has notes
-        Green,     // has bookmark
-        Yellow,    // has frozen bookmark
+        Black = 0,  // default
+        Red,        // selected
+        RedOnBlack, // selected and highlighted
+        Blue,       // has notes
+        Green,      // has bookmark
+        Yellow,     // has frozen bookmark
 
         NumColors
     };
@@ -69,7 +69,16 @@ public:
     /// <summary>
     /// Sets the address of the selected byte.
     /// </summary>
-    void SetAddress(ByteAddress value) { SetValue(AddressProperty, value); }
+    void SetAddress(ByteAddress value)
+    {
+        int nSignedValue = ra::to_signed(value);
+        if (nSignedValue < 0)
+            nSignedValue = 0;
+        else if (nSignedValue >= gsl::narrow_cast<int>(m_nTotalMemorySize))
+            nSignedValue = gsl::narrow_cast<int>(m_nTotalMemorySize) - 1;
+
+        SetValue(AddressProperty, nSignedValue);
+    }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for address of the first visible byte.
@@ -84,7 +93,7 @@ public:
     /// <summary>
     /// Sets the address of the first visible byte.
     /// </summary>
-    void SetFirstAddress(ByteAddress value) { SetValue(FirstAddressProperty, value); }
+    void SetFirstAddress(ByteAddress value);
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the number of visible lines.
@@ -99,7 +108,15 @@ public:
     /// <summary>
     /// Sets the number of visible lines.
     /// </summary>
-    void SetNumVisibleLines(int value) { SetValue(NumVisibleLinesProperty, value); }
+    void SetNumVisibleLines(int value)
+    {
+        if (value > MaxLines)
+            value = MaxLines;
+        else if (value < 1)
+            value = 1;
+
+        SetValue(NumVisibleLinesProperty, value);
+    }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the memory word size.
@@ -161,7 +178,7 @@ private:
     ra::ui::Size m_szChar;
 
     int m_nFont = 0;
-    bool m_bGameLoaded = false;
+    bool m_bReadOnly = true;
 };
 
 } // namespace viewmodels

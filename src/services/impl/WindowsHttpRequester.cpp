@@ -154,7 +154,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                 nullptr,
                 WINHTTP_NO_REFERER,
                 WINHTTP_DEFAULT_ACCEPT_TYPES,
-                0);
+                (nPort == INTERNET_DEFAULT_HTTPS_PORT) ? WINHTTP_FLAG_SECURE : 0);
 
             if (hRequest == nullptr)
             {

@@ -20,14 +20,15 @@ class MemoryViewerViewModel : public ViewModelBase,
     protected ra::data::GameContext::NotifyTarget
 {
 public:
-    GSL_SUPPRESS_F6 MemoryViewerViewModel() noexcept;
+    MemoryViewerViewModel() noexcept;
+    MemoryViewerViewModel(ra::data::GameContext& pGameContext) noexcept;
     ~MemoryViewerViewModel() = default;
 
     MemoryViewerViewModel(const MemoryViewerViewModel&) noexcept = delete;
     MemoryViewerViewModel& operator=(const MemoryViewerViewModel&) noexcept = delete;
     MemoryViewerViewModel(MemoryViewerViewModel&&) noexcept = delete;
     MemoryViewerViewModel& operator=(MemoryViewerViewModel&&) noexcept = delete;
-    
+
     void DoFrame();
 
     bool NeedsRedraw() const { return m_bNeedsRedraw; }
@@ -100,6 +101,20 @@ public:
     /// </summary>
     void SetNumVisibleLines(int value) { SetValue(NumVisibleLinesProperty, value); }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the memory word size.
+    /// </summary>
+    static const IntModelProperty SizeProperty;
+
+    /// <summary>
+    /// Gets the memory word size.
+    /// </summary>
+    MemSize GetSize() const { return ra::itoe<MemSize>(GetValue(SizeProperty)); }
+
+    /// <summary>
+    /// Sets the memory word size.
+    /// </summary>
+    void SetSize(MemSize value) { SetValue(SizeProperty, ra::etoi(value)); }
 
     void OnClick(int nX, int nY);
     void OnResized(_UNUSED int nWidth, int nHeight);
@@ -123,6 +138,10 @@ protected:
     unsigned char* m_pMemory;
     unsigned char* m_pColor;
 
+    int m_nSelectedNibble = 0;
+    bool m_bNeedsRedraw = true;
+    size_t m_nTotalMemorySize = 0;
+
     static constexpr int MaxLines = 128;
 
 private:
@@ -132,15 +151,14 @@ private:
     void WriteChar(int nX, int nY, TextColor nColor, int hexChar);
     void UpdateColors();
 
+    int NibblesPerWord() const;
+
     std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
     std::unique_ptr<ra::ui::drawing::ISurface> m_pFontSurface;
     std::unique_ptr<unsigned char[]> m_pBuffer;
 
     ra::ui::Size m_szChar;
 
-    bool m_bNeedsRedraw = true;
-    bool m_bUpperNibbleSelected = true;
-    size_t m_nTotalMemorySize = 0;
     int m_nFont = 0;
 };
 

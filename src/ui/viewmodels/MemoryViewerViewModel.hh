@@ -118,6 +118,7 @@ public:
 
     void OnClick(int nX, int nY);
     void OnResized(_UNUSED int nWidth, int nHeight);
+    bool OnChar(char c);
 
     void AdvanceCursor();
     void RetreatCursor();
@@ -160,6 +161,7 @@ private:
     ra::ui::Size m_szChar;
 
     int m_nFont = 0;
+    bool m_bGameLoaded = false;
 };
 
 } // namespace viewmodels

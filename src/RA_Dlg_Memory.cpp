@@ -61,20 +61,6 @@ int nDlgMemoryMinX;
 int nDlgMemoryMinY;
 int nDlgMemViewerGapY;
 
-_NODISCARD _CONSTANT_FN GetMaxNibble(_In_ MemSize size) noexcept
-{
-    switch (size)
-    {
-        default:
-        case MemSize::EightBit:
-            return 1U;
-        case MemSize::SixteenBit:
-            return 3U;
-        case MemSize::ThirtyTwoBit:
-            return 7U;
-    }
-}
-
 LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -94,14 +80,14 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
             return TRUE;
 
         case WM_MOUSEWHEEL:
-            if (GET_WHEEL_DELTA_WPARAM(wParam) > 0 && m_nAddressOffset > (0x40))
-                setAddress(m_nAddressOffset - 32);
-            else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0 && gsl::narrow_cast<size_t>(m_nAddressOffset) + (0x40) < ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize())
-                setAddress(m_nAddressOffset + 32);
+            if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
+                g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() - 32);
+            else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0)
+                g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() + 32);
             return FALSE;
 
         case WM_LBUTTONUP:
-            OnClick({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
+            OnClick({GET_X_LPARAM(lParam) - MEMVIEW_MARGIN, GET_Y_LPARAM(lParam) - MEMVIEW_MARGIN});
             return FALSE;
 
         case WM_KEYDOWN:
@@ -119,8 +105,6 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
 
 bool MemoryViewerControl::OnKeyDown(UINT nChar)
 {
-    const unsigned int maxNibble = GetMaxNibble(m_nDataSize);
-
     const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
     const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
 
@@ -193,80 +177,6 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
     return false;
 }
 
-void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
-{
-    const unsigned int maxNibble = GetMaxNibble(m_nDataSize);
-
-    if (offset == 0)
-    {
-        if (nibbleOff == -1)
-        {
-            //	Going left
-            m_nEditNibble--;
-            if (m_nEditAddress == 0 && m_nEditNibble == -1)
-            {
-                m_nEditNibble = 0;
-                MessageBeep(ra::to_unsigned(-1));
-                return;
-            }
-            if (m_nEditNibble == -1)
-            {
-                m_nEditAddress -= (maxNibble + 1) >> 1;
-                m_nEditNibble = maxNibble;
-            }
-        }
-        else
-        {
-            //	Going right
-            m_nEditNibble++;
-            if (m_nEditNibble > maxNibble)
-            {
-                m_nEditNibble = 0;
-                m_nEditAddress += (maxNibble + 1) >> 1;
-            }
-            if (m_nEditAddress >= ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize())
-            {
-                //	Undo this movement.
-                m_nEditAddress -= (maxNibble + 1) >> 1;
-                m_nEditNibble = maxNibble;
-                MessageBeep(ra::to_unsigned(-1));
-                return;
-            }
-        }
-    }
-    else
-    {
-        m_nEditAddress += offset;
-
-        if (offset < 0)
-        {
-            if (m_nEditAddress > (m_nAddressOffset - 1 + (m_nDisplayedLines << 4)) &&
-                ra::to_signed(m_nEditAddress) < (0x10))
-            {
-                m_nEditAddress -= offset;
-                MessageBeep(ra::to_unsigned(-1));
-                return;
-            }
-        }
-        else
-        {
-            if (m_nEditAddress >= ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize())
-            {
-                m_nEditAddress -= offset;
-                MessageBeep(ra::to_unsigned(-1));
-                return;
-            }
-        }
-    }
-
-    if (m_nEditAddress + (0x40) < m_nAddressOffset)
-        setAddress((m_nEditAddress & ~(0xf)) + (0x40));
-    else if (m_nEditAddress >= (m_nAddressOffset + (m_nDisplayedLines << 4) - (0x40)))
-        setAddress((m_nEditAddress & ~(0xf)) - (m_nDisplayedLines << 4) + (0x50));
-
-    SetCaretPos();
-}
-
 void MemoryViewerControl::gotoAddress(unsigned int nAddr)
 {
     setAddress((nAddr & ~(0xf)) - (ra::to_signed(m_nDisplayedLines / 2) << 4) + (0x50));
@@ -317,59 +227,7 @@ void MemoryViewerControl::editData(unsigned int nByteAddress, bool bLowerNibble,
 
 bool MemoryViewerControl::OnEditInput(UINT c)
 {
-    if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() == 0U)
-        return false;
-
-    if (c > 255 || ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
-    {
-        MessageBeep(ra::to_unsigned(-1));
-        return false;
-    }
-
-    c = tolower(c);
-
-    unsigned int value = 256;
-
-    if (c >= 'a' && c <= 'f')
-        value = 10 + (c - 'a');
-    else if (c >= '0' && c <= '9')
-        value = (c - '0');
-
-    if (value != 256)
-    {
-        // value <<= 4*(maxNibble-m_nEditNibble);
-        // unsigned int mask = ~(15 << 4*(maxNibble - m_nEditNibble));
-
-        const bool bLowerNibble = (m_nEditNibble % 2 == 1);
-        unsigned int nByteAddress = m_nEditAddress;
-
-        if (m_nDataSize == MemSize::EightBit)
-        {
-            //	8 bit
-            // nByteAddress = m_nEditAddress;
-        }
-        else if (m_nDataSize == MemSize::SixteenBit)
-        {
-            //	16 bit
-            nByteAddress += (1 - (m_nEditNibble >> 1));
-        }
-        else
-        {
-            //	32 bit
-            nByteAddress += (3 - (m_nEditNibble >> 1));
-        }
-
-        editData(nByteAddress, bLowerNibble, value);
-
-        // if a bookmark exists for the modified address, update the current value
-        auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-        pBookmarks.OnEditMemory(nByteAddress);
-
-        moveAddress(0, 1);
-        Invalidate();
-    }
-
-    return true;
+    return g_pMemoryViewer->OnChar(gsl::narrow_cast<char>(c));
 }
 
 void MemoryViewerControl::createEditCaret(int w, int h) noexcept

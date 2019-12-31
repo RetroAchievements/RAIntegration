@@ -16,7 +16,8 @@ const IntModelProperty MemoryViewerViewModel::FirstAddressProperty("MemoryViewer
 const IntModelProperty MemoryViewerViewModel::NumVisibleLinesProperty("MemoryViewerViewModel", "NumVisibleLines", 8);
 const IntModelProperty MemoryViewerViewModel::SizeProperty("MemoryViewerViewModel", "Size", ra::etoi(MemSize::EightBit));
 
-constexpr unsigned char HIGHLIGHTED_COLOR = 0x80 | gsl::narrow_cast<unsigned char>(ra::etoi(MemoryViewerViewModel::TextColor::Red));
+constexpr unsigned char STALE_COLOR = 0x80;
+constexpr unsigned char HIGHLIGHTED_COLOR = STALE_COLOR | gsl::narrow_cast<unsigned char>(ra::etoi(MemoryViewerViewModel::TextColor::Red));
 
 MemoryViewerViewModel::MemoryViewerViewModel() noexcept
 {
@@ -26,7 +27,7 @@ MemoryViewerViewModel::MemoryViewerViewModel() noexcept
     memset(m_pMemory, 0, MaxLines * 16);
 
     m_pColor = m_pMemory + MaxLines * 16;
-    memset(m_pColor, 0x80, MaxLines * 16);
+    memset(m_pColor, STALE_COLOR, MaxLines * 16);
 
     m_pColor[0] = HIGHLIGHTED_COLOR;
 
@@ -35,6 +36,8 @@ MemoryViewerViewModel::MemoryViewerViewModel() noexcept
 #ifndef RA_UTEST
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     pGameContext.AddNotifyTarget(*this);
+
+    m_bGameLoaded = (pGameContext.GameId() != 0);
 #endif
 }
 
@@ -65,7 +68,7 @@ void MemoryViewerViewModel::UpdateColors()
     const auto nFirstAddress = GetFirstAddress();
 
     for (int i = 0; i < nVisibleLines * 16; ++i)
-        m_pColor[i] = 0x80 | gsl::narrow_cast<unsigned char>(ra::etoi(GetColor(nFirstAddress + i, pBookmarksViewModel, pGameContext)));
+        m_pColor[i] = STALE_COLOR | gsl::narrow_cast<unsigned char>(ra::etoi(GetColor(nFirstAddress + i, pBookmarksViewModel, pGameContext)));
 
     const auto nAddress = GetAddress();
     if (nAddress >= nFirstAddress && nAddress < nFirstAddress + nVisibleLines * 16)
@@ -88,7 +91,7 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
             const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
-            m_pColor[nOldValue - nFirstAddress] = 0x80 | gsl::narrow_cast<unsigned char>(ra::etoi(GetColor(nOldValue, pBookmarksViewModel, pGameContext)));
+            m_pColor[nOldValue - nFirstAddress] = STALE_COLOR | gsl::narrow_cast<unsigned char>(ra::etoi(GetColor(nOldValue, pBookmarksViewModel, pGameContext)));
         }
 
         const auto nNewValue = ra::to_unsigned(args.tNewValue);
@@ -177,7 +180,7 @@ void MemoryViewerViewModel::AdvanceCursor()
         const auto nAddress = GetAddress();
         const auto nFirstAddress = GetFirstAddress();
 
-        m_pColor[nAddress - nFirstAddress] |= 0x80;
+        m_pColor[nAddress - nFirstAddress] |= STALE_COLOR;
         m_bNeedsRedraw = true;
     }
     else
@@ -195,7 +198,7 @@ void MemoryViewerViewModel::RetreatCursor()
     {
         --m_nSelectedNibble;
 
-        m_pColor[nAddress - nFirstAddress] |= 0x80;
+        m_pColor[nAddress - nFirstAddress] |= STALE_COLOR;
         m_bNeedsRedraw = true;
     }
     else if (nAddress > 0)
@@ -235,7 +238,7 @@ void MemoryViewerViewModel::RetreatCursorWord()
         m_nSelectedNibble = 0;
 
         const auto nFirstAddress = GetFirstAddress();
-        m_pColor[nAddress - nFirstAddress] |= 0x80;
+        m_pColor[nAddress - nFirstAddress] |= STALE_COLOR;
         m_bNeedsRedraw = true;
     }
     else if (nAddress > 0)
@@ -334,6 +337,9 @@ void MemoryViewerViewModel::OnActiveGameChanged()
         RenderAddresses();
 
     UpdateColors();
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    m_bGameLoaded = (pGameContext.GameId() != 0);
 }
 
 void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring&)
@@ -353,7 +359,7 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
 
     if ((m_pColor[nOffset] & 0x0F) != ra::etoi(nNewColor))
     {
-        m_pColor[nOffset] = 0x80 | gsl::narrow_cast<unsigned char>(ra::etoi(nNewColor));
+        m_pColor[nOffset] = STALE_COLOR | gsl::narrow_cast<unsigned char>(ra::etoi(nNewColor));
         m_bNeedsRedraw = true;
     }
 }
@@ -364,13 +370,24 @@ void MemoryViewerViewModel::OnClick(int nX, int nY)
     if (nRow == 0)
         return;
 
-    const int nColumn = (nX + m_szChar.Width / 2) / m_szChar.Width;
+    const int nColumn = nX / m_szChar.Width;
     if (nColumn < 10)
         return;
 
-    const auto nNewAddress = GetFirstAddress() + (nRow - 1) * 16 + (nColumn - 10) / 3;
+    const auto nFirstAddress = GetFirstAddress();
+    const auto nNewAddress = nFirstAddress + (nRow - 1) * 16 + (nColumn - 10) / 3;
     if (nNewAddress < m_nTotalMemorySize)
-        SetAddress(nNewAddress);
+    {
+        const auto nNewNibble = (nColumn - 10) % 3;
+        if (nNewNibble != 2)
+        {
+            SetAddress(nNewAddress);
+
+            m_nSelectedNibble = nNewNibble;
+            m_pColor[nNewAddress - nFirstAddress] |= 0x80;
+            m_bNeedsRedraw = true;
+        }
+    }
 }
 
 void MemoryViewerViewModel::OnResized(_UNUSED int nWidth, int nHeight)
@@ -379,6 +396,75 @@ void MemoryViewerViewModel::OnResized(_UNUSED int nWidth, int nHeight)
         BuildFontSurface();
 
     SetNumVisibleLines((nHeight / m_szChar.Height) - 1);
+}
+
+bool MemoryViewerViewModel::OnChar(char c)
+{
+    if (m_nTotalMemorySize == 0 || !m_bGameLoaded)
+        return false;
+
+    unsigned char value;
+    switch (c)
+    {
+        case '0': value = 0; break;
+        case '1': value = 1; break;
+        case '2': value = 2; break;
+        case '3': value = 3; break;
+        case '4': value = 4; break;
+        case '5': value = 5; break;
+        case '6': value = 6; break;
+        case '7': value = 7; break;
+        case '8': value = 8; break;
+        case '9': value = 9; break;
+        case 'a': case 'A': value = 10; break;
+        case 'b': case 'B': value = 11; break;
+        case 'c': case 'C': value = 12; break;
+        case 'd': case 'D': value = 13; break;
+        case 'e': case 'E': value = 14; break;
+        case 'f': case 'F': value = 15; break;
+        default:
+            return false;
+    }
+
+    auto nIndex = GetAddress() - GetFirstAddress();
+
+    auto nSelectedNibble = m_nSelectedNibble;
+    while (nSelectedNibble > 1)
+    {
+        ++nIndex;
+        nSelectedNibble -= 2;
+    }
+
+    auto nByte = m_pMemory[nIndex];
+    if (nSelectedNibble == 0)
+    {
+        nByte &= 0x0F;
+        nByte |= (value << 4);
+    }
+    else
+    {
+        nByte &= 0xF0;
+        nByte |= value;
+    }
+
+    m_pMemory[nIndex] = nByte;
+    m_pColor[nIndex] |= STALE_COLOR;
+    m_bNeedsRedraw = true;
+
+    const auto nAddress = GetFirstAddress() + nIndex;
+
+    // push the updated value to the emulator
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+    pEmulatorContext.WriteMemoryByte(nAddress, nByte);
+
+    // if a bookmark exists for the modified address, update the current value
+    auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+    pBookmarks.OnEditMemory(nAddress);
+
+    // advance the cursor to the next nibble
+    AdvanceCursor();
+
+    return true;
 }
 
 void MemoryViewerViewModel::DoFrame()
@@ -403,7 +489,7 @@ void MemoryViewerViewModel::DoFrame()
         if (m_pMemory[nIndex] != pMemory[nIndex])
         {
             m_pMemory[nIndex] = pMemory[nIndex];
-            m_pColor[nIndex] |= 0x80;
+            m_pColor[nIndex] |= STALE_COLOR;
             m_bNeedsRedraw = true;
         }
     }
@@ -485,7 +571,7 @@ void MemoryViewerViewModel::UpdateRenderImage()
 
     for (int i = 0; i < nVisibleLines * 16; ++i)
     {
-        if (m_pColor[i] & 0x80)
+        if (m_pColor[i] & STALE_COLOR)
         {
             const unsigned char nColor = m_pColor[i] & 0x0F;
             m_pColor[i] = nColor;
@@ -493,7 +579,7 @@ void MemoryViewerViewModel::UpdateRenderImage()
             TextColor nColorUpper = ra::itoe<TextColor>(nColor);
             TextColor nColorLower = nColorUpper;
 
-            if (nColorUpper == TextColor::Red)
+            if (nColorUpper == TextColor::Red && m_bGameLoaded)
             {
                 if (m_nSelectedNibble == 0)
                     nColorUpper = TextColor::RedOnBlack;

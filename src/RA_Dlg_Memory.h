@@ -22,11 +22,8 @@ public:
     static bool OnKeyDown(UINT nChar);
     static bool OnEditInput(UINT c);
 
-    static void gotoAddress(unsigned int nAddr);
     static void setAddress(unsigned int nAddr);
-    static void setWatchedAddress(unsigned int nAddr);
     static unsigned int getWatchedAddress() noexcept { return m_nWatchedAddress; }
-    static void editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int value);
     static void Invalidate();
 
     static void SetDataSize(MemSize value)

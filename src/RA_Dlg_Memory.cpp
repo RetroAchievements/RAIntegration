@@ -177,12 +177,6 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
     return false;
 }
 
-void MemoryViewerControl::gotoAddress(unsigned int nAddr)
-{
-    setAddress((nAddr & ~(0xf)) - (ra::to_signed(m_nDisplayedLines / 2) << 4) + (0x50));
-    setWatchedAddress(nAddr);
-}
-
 void MemoryViewerControl::setAddress(unsigned int address)
 {
     m_nAddressOffset = address;
@@ -191,38 +185,8 @@ void MemoryViewerControl::setAddress(unsigned int address)
     Invalidate();
 }
 
-void MemoryViewerControl::setWatchedAddress(unsigned int address)
-{
-    if (m_nWatchedAddress != address)
-    {
-        m_nWatchedAddress = address;
-        Invalidate();
-    }
-}
-
 void MemoryViewerControl::Invalidate()
 {
-}
-
-void MemoryViewerControl::editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int nNewVal)
-{
-    auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    uint8_t nVal = pEmulatorContext.ReadMemoryByte(nByteAddress);
-
-    if (bLowerNibble)
-    {
-        //	We're submitting a new lower nibble:
-        nVal &= 0xF0;
-        nVal |= nNewVal;
-    }
-    else
-    {
-        //	We're submitting a new upper nibble:
-        nVal &= 0x0F;
-        nVal |= (nNewVal << 4);
-    }
-
-    pEmulatorContext.WriteMemoryByte(nByteAddress, nVal);
 }
 
 bool MemoryViewerControl::OnEditInput(UINT c)
@@ -259,7 +223,6 @@ void MemoryViewerControl::SetCaretPos()
         return;
     }
 
-    setWatchedAddress(m_nEditAddress); // update local reference before notifying parent
     g_MemoryDialog.SetWatchingAddress(m_nEditAddress);
 
     const int subAddress = (m_nEditAddress - m_nAddressOffset);
@@ -1217,8 +1180,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             GetDlgItemText(hDlg, IDC_RA_WATCHING, sAddrBuffer, 64);
                             auto nAddr = ra::ByteAddressFromString(ra::Narrow(sAddrBuffer));
 
-                            // don't call GoToAddress here to prevent updating the text box as the user types
-                            MemoryViewerControl::gotoAddress(nAddr);
+                            // disable callback while updating address to prevent updating the text box as the user types
+                            g_pMemoryViewer->RemoveNotifyTarget(*this);
+                            g_pMemoryViewer->SetAddress(nAddr);
+                            g_pMemoryViewer->AddNotifyTarget(*this);
+
                             OnWatchingMemChange();
                             return TRUE;
                         }
@@ -1528,7 +1494,7 @@ void Dlg_Memory::UpdateBits() const
 
 void Dlg_Memory::GoToAddress(unsigned int nAddr)
 {
-    MemoryViewerControl::gotoAddress(nAddr);
+    g_pMemoryViewer->SetAddress(nAddr);
     SetWatchingAddress(nAddr);
 }
 

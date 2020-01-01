@@ -65,6 +65,11 @@ protected:
             if (pBookmark != nullptr)
                 m_pOwner.UpdateColor(pBookmark->GetAddress());
         }
+        else if (args.Property == ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty)
+        {
+            m_pOwner.UpdateColor(static_cast<ra::ByteAddress>(args.tOldValue));
+            m_pOwner.UpdateColor(static_cast<ra::ByteAddress>(args.tNewValue));
+        }
     }
 
 private:

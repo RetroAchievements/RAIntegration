@@ -14,40 +14,12 @@ public:
 public:
     static void RenderMemViewer(HWND hTarget);
 
-    static void createEditCaret(int w, int h) noexcept;
-    static void destroyEditCaret() noexcept;
-    static void SetCaretPos();
     static void OnClick(POINT point);
 
     static bool OnKeyDown(UINT nChar);
     static bool OnEditInput(UINT c);
 
-    static void setAddress(unsigned int nAddr);
-    static unsigned int getWatchedAddress() noexcept { return m_nWatchedAddress; }
-
-    static void SetDataSize(MemSize value)
-    {
-        m_nDataSize = value;
-    }
-    static MemSize GetDataSize() noexcept { return m_nDataSize; }
-
-public:
-    static unsigned short m_nActiveMemBank;
-    static unsigned int m_nDisplayedLines;
-
-private:
-    static HFONT m_hViewerFont;
-    static SIZE m_szFontSize;
-    static unsigned int m_nDataStartXOffset;
-    static unsigned int m_nAddressOffset;
-    static unsigned int m_nWatchedAddress;
-    static MemSize m_nDataSize;
-    static unsigned int m_nEditAddress;
-    static unsigned int m_nEditNibble;
-
-    static bool m_bHasCaret;
-    static unsigned int m_nCaretWidth;
-    static unsigned int m_nCaretHeight;
+    static MemSize GetDataSize();
 };
 
 struct SearchResult

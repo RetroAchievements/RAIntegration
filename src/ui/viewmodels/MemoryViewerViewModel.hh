@@ -159,6 +159,7 @@ protected:
     int m_nSelectedNibble = 0;
     bool m_bNeedsRedraw = true;
     size_t m_nTotalMemorySize = 0;
+    bool m_bReadOnly = true;
 
     static constexpr int MaxLines = 128;
 
@@ -178,7 +179,6 @@ private:
     ra::ui::Size m_szChar;
 
     int m_nFont = 0;
-    bool m_bReadOnly = true;
 };
 
 } // namespace viewmodels

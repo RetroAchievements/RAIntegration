@@ -51,6 +51,9 @@ private:
             return gsl::narrow_cast<unsigned char>(ra::itoe<TextColor>(m_pColor[nAddress - GetFirstAddress()]));
         }
 
+        bool IsReadOnly() const { return m_bReadOnly; }
+        void SetReadOnly(bool value) { m_bReadOnly = value;  }
+
         void InitializeMemory(size_t nSize)
         {
             unsigned char* pBytes = new unsigned char[nSize];
@@ -595,6 +598,86 @@ public:
         Assert::IsFalse(viewer.NeedsRedraw());
     }
 
+    TEST_METHOD(TestOnCharEightBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.MockRender();
+
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0U }, viewer.GetByte(0U));
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // ignore if readonly
+        Assert::IsTrue(viewer.IsReadOnly());
+        Assert::IsFalse(viewer.OnChar('6'));
+
+        viewer.SetReadOnly(false);
+        Assert::IsFalse(viewer.IsReadOnly());
+
+        // '6' should be set as upper nibble of selected byte
+        Assert::IsTrue(viewer.OnChar('6'));
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x60U }, viewer.GetByte(0U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(0U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // ignore invalid character
+        Assert::IsFalse(viewer.OnChar('G'));
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x60U }, viewer.GetByte(0U));
+        Assert::AreEqual({ COLOR_RED }, viewer.GetColor(0U));
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // 'B' should be set as lower nibble of selected byte
+        viewer.OnChar('B');
+        Assert::AreEqual({ 1U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x6BU }, viewer.GetByte(0U));
+        Assert::AreEqual({ 0x01U }, viewer.GetByte(1U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(0U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(1U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // 'F' should be set as upper nibble of next byte
+        viewer.OnChar('F');
+        Assert::AreEqual({ 1U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0xF1U }, viewer.GetByte(1U));
+
+        // jump to last address - cannot advance past last nibble
+        viewer.SetAddress(255U);
+        Assert::AreEqual({ 255U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0xFFU }, viewer.GetByte(255U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.OnChar('0');
+        Assert::AreEqual({ 255U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x0FU }, viewer.GetByte(255U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.OnChar('9');
+        Assert::AreEqual({ 255U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x09U }, viewer.GetByte(255U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.OnChar('A');
+        Assert::AreEqual({ 255U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x0AU }, viewer.GetByte(255U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+    }
 };
 
 } // namespace tests

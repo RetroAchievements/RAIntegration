@@ -16,12 +16,65 @@ const IntModelProperty MemoryViewerViewModel::FirstAddressProperty("MemoryViewer
 const IntModelProperty MemoryViewerViewModel::NumVisibleLinesProperty("MemoryViewerViewModel", "NumVisibleLines", 8);
 const IntModelProperty MemoryViewerViewModel::SizeProperty("MemoryViewerViewModel", "Size", ra::etoi(MemSize::EightBit));
 
-constexpr unsigned char STALE_COLOR = 0x80;
-constexpr unsigned char HIGHLIGHTED_COLOR = STALE_COLOR | gsl::narrow_cast<unsigned char>(ra::etoi(MemoryViewerViewModel::TextColor::Red));
+constexpr uint8_t STALE_COLOR = 0x80;
+constexpr uint8_t HIGHLIGHTED_COLOR = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(MemoryViewerViewModel::TextColor::Red));
+
+class MemoryViewerViewModel::MemoryBookmarkMonitor : protected ViewModelCollectionBase::NotifyTarget
+{
+public:
+    MemoryBookmarkMonitor(MemoryViewerViewModel& pOwner)
+        : m_pOwner(pOwner),
+          m_vBookmarks(ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Bookmarks())
+    {
+        m_vBookmarks.AddNotifyTarget(*this);
+    }
+
+    ~MemoryBookmarkMonitor()
+    {
+        m_vBookmarks.RemoveNotifyTarget(*this);
+    }
+
+protected:
+    void OnEndViewModelCollectionUpdate() override
+    {
+        m_pOwner.UpdateColors();
+    }
+
+    void OnViewModelAdded(gsl::index nIndex) override
+    {
+        if (!m_vBookmarks.IsUpdating())
+        {
+            const auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
+            if (pBookmark != nullptr)
+                m_pOwner.UpdateColor(pBookmark->GetAddress());
+        }
+    }
+
+    void OnViewModelRemoved(gsl::index) override
+    {
+        if (!m_vBookmarks.IsUpdating())
+            m_pOwner.UpdateColors();
+    }
+
+    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override
+    {
+        if (args.Property == ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel::BehaviorProperty)
+        {
+            // different behaviors appear as different colors
+            const auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
+            if (pBookmark != nullptr)
+                m_pOwner.UpdateColor(pBookmark->GetAddress());
+        }
+    }
+
+private:
+    ViewModelCollection<ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel>& m_vBookmarks;
+    MemoryViewerViewModel& m_pOwner;
+};
 
 MemoryViewerViewModel::MemoryViewerViewModel() noexcept
 {
-    m_pBuffer.reset(new unsigned char[MaxLines * 16 * 2]);
+    m_pBuffer.reset(new uint8_t[MaxLines * 16 * 2]);
 
     m_pMemory = m_pBuffer.get();
     memset(m_pMemory, 0, MaxLines * 16);
@@ -34,11 +87,23 @@ MemoryViewerViewModel::MemoryViewerViewModel() noexcept
     AddNotifyTarget(*this);
 
 #ifndef RA_UTEST
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+    pEmulatorContext.AddNotifyTarget(*this);
+
+    m_nTotalMemorySize = pEmulatorContext.TotalMemorySize();
+
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     pGameContext.AddNotifyTarget(*this);
 
     m_bReadOnly = (pGameContext.GameId() == 0);
+
+    m_pBookmarkMonitor.reset(new MemoryBookmarkMonitor(*this));
 #endif
+}
+
+MemoryViewerViewModel::~MemoryViewerViewModel()
+{
+    // empty function definition required to generate destroy for forward-declared MemoryBookmarkMonitor
 }
 
 static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
@@ -68,7 +133,7 @@ void MemoryViewerViewModel::UpdateColors()
     const auto nFirstAddress = GetFirstAddress();
 
     for (int i = 0; i < nVisibleLines * 16; ++i)
-        m_pColor[i] = STALE_COLOR | gsl::narrow_cast<unsigned char>(ra::etoi(GetColor(nFirstAddress + i, pBookmarksViewModel, pGameContext)));
+        m_pColor[i] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nFirstAddress + i, pBookmarksViewModel, pGameContext)));
 
     const auto nAddress = GetAddress();
     if (nAddress >= nFirstAddress && nAddress < nFirstAddress + nVisibleLines * 16)
@@ -112,7 +177,7 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
             const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
-            m_pColor[nOldValue - nFirstAddress] = STALE_COLOR | gsl::narrow_cast<unsigned char>(ra::etoi(GetColor(nOldValue, pBookmarksViewModel, pGameContext)));
+            m_pColor[nOldValue - nFirstAddress] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nOldValue, pBookmarksViewModel, pGameContext)));
         }
 
         const auto nNewValue = ra::to_unsigned(args.tNewValue);
@@ -360,8 +425,68 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
 
     if ((m_pColor[nOffset] & 0x0F) != ra::etoi(nNewColor))
     {
-        m_pColor[nOffset] = STALE_COLOR | gsl::narrow_cast<unsigned char>(ra::etoi(nNewColor));
+        m_pColor[nOffset] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(nNewColor));
         m_bNeedsRedraw = true;
+    }
+}
+
+void MemoryViewerViewModel::OnTotalMemorySizeChanged()
+{
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    m_nTotalMemorySize = pEmulatorContext.TotalMemorySize();
+
+    const auto nVisibleLines = GetNumVisibleLines();
+    const auto nMaxFirstAddress = m_nTotalMemorySize - nVisibleLines * 16;
+    const auto nFirstAddress = GetFirstAddress();
+    if (nFirstAddress > nMaxFirstAddress)
+        SetFirstAddress(nMaxFirstAddress);
+
+    if (m_pSurface != nullptr)
+        RenderAddresses();
+}
+
+void MemoryViewerViewModel::OnByteWritten(ra::ByteAddress nAddress, uint8_t nValue)
+{
+    auto nFirstAddress = GetFirstAddress();
+    if (nAddress < nFirstAddress)
+        return;
+
+    const auto nVisibleLines = GetNumVisibleLines();
+    const auto nMaxAddress = nFirstAddress + nVisibleLines * 16;
+    if (nAddress < nMaxAddress)
+    {
+        m_pMemory[nAddress - nFirstAddress] = nValue;
+        m_pColor[nAddress - nFirstAddress] |= STALE_COLOR;
+        m_bNeedsRedraw = true;
+    }
+}
+
+void MemoryViewerViewModel::UpdateColor(ra::ByteAddress nAddress)
+{
+    auto nFirstAddress = GetFirstAddress();
+    if (nAddress < nFirstAddress)
+        return;
+
+    const auto nVisibleLines = GetNumVisibleLines();
+    const auto nMaxAddress = nFirstAddress + nVisibleLines * 16;
+    if (nAddress < nMaxAddress)
+    {
+        const auto nColor = ra::itoe<TextColor>(m_pColor[nAddress - nFirstAddress] & 0x0F);
+
+        // byte is selected, ignore
+        if (nColor == TextColor::Red)
+            return;
+
+        // byte is not selected, update
+        const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+
+        const auto nNewColor = GetColor(nAddress, pBookmarksViewModel, pGameContext);
+        if (nNewColor != nColor)
+        {
+            m_pColor[nAddress - nFirstAddress] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(nNewColor));
+            m_bNeedsRedraw = true;
+        }
     }
 }
 
@@ -404,7 +529,7 @@ bool MemoryViewerViewModel::OnChar(char c)
     if (m_nTotalMemorySize == 0 || m_bReadOnly)
         return false;
 
-    unsigned char value;
+    uint8_t value;
     switch (c)
     {
         case '0': value = 0; break;
@@ -470,19 +595,11 @@ bool MemoryViewerViewModel::OnChar(char c)
 
 void MemoryViewerViewModel::DoFrame()
 {
-    unsigned char pMemory[MaxLines * 16];
+    uint8_t pMemory[MaxLines * 16];
     const auto nAddress = GetFirstAddress();
     const auto nVisibleLines = GetNumVisibleLines();
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    if (m_nTotalMemorySize == 0)
-    {
-        m_nTotalMemorySize = pEmulatorContext.TotalMemorySize();
-
-        if (m_nTotalMemorySize != 0 && m_pSurface != nullptr)
-            RenderAddresses();
-    }
-
     pEmulatorContext.ReadMemory(nAddress, pMemory, nVisibleLines * 16);
 
     for (auto nIndex = 0; nIndex < nVisibleLines * 16; ++nIndex)
@@ -574,7 +691,7 @@ void MemoryViewerViewModel::UpdateRenderImage()
     {
         if (m_pColor[i] & STALE_COLOR)
         {
-            const unsigned char nColor = m_pColor[i] & 0x0F;
+            const uint8_t nColor = m_pColor[i] & 0x0F;
             m_pColor[i] = nColor;
 
             TextColor nColorUpper = ra::itoe<TextColor>(nColor);

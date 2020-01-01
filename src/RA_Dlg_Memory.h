@@ -24,12 +24,10 @@ public:
 
     static void setAddress(unsigned int nAddr);
     static unsigned int getWatchedAddress() noexcept { return m_nWatchedAddress; }
-    static void Invalidate();
 
     static void SetDataSize(MemSize value)
     {
         m_nDataSize = value;
-        Invalidate();
     }
     static MemSize GetDataSize() noexcept { return m_nDataSize; }
 
@@ -106,6 +104,8 @@ private:
 
     static void UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal, std::wstring& sBuffer);
     bool CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal);
+
+    void InvalidateMemoryViewer();
 
     static HWND m_hWnd;
 

@@ -182,11 +182,6 @@ void MemoryViewerControl::setAddress(unsigned int address)
     m_nAddressOffset = address;
 
     SetCaretPos();
-    Invalidate();
-}
-
-void MemoryViewerControl::Invalidate()
-{
 }
 
 bool MemoryViewerControl::OnEditInput(UINT c)
@@ -705,7 +700,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         nVal ^= (1 << nBit);
                         pEmulatorContext.WriteMemoryByte(nAddr, nVal);
 
-                        MemoryViewerControl::Invalidate();
+                        InvalidateMemoryViewer();
+
                         UpdateBits();
                     }
                 }
@@ -1337,7 +1333,6 @@ void Dlg_Memory::OnLoad_NewRom()
     UpdateMemoryRegions();
 
     MemoryViewerControl::destroyEditCaret();
-    MemoryViewerControl::Invalidate();
 }
 
 void Dlg_Memory::UpdateMemoryRegions()
@@ -1432,23 +1427,7 @@ void Dlg_Memory::Invalidate()
     if (g_pMemoryViewer != nullptr)
     {
         g_pMemoryViewer->DoFrame();
-        if (g_pMemoryViewer->NeedsRedraw())
-        {
-            HWND hMemViewer = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
-            InvalidateRect(hMemViewer, nullptr, FALSE);
-
-            // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
-            // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
-            // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
-            // Similar code exists in Dlg_Memory::Invalidate for the search results
-            switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
-            {
-                case RA_Libretro:
-                case RA_Oricutron:
-                    UpdateWindow(hMemViewer);
-                    break;
-            }
-        }
+        InvalidateMemoryViewer();
     }
 
     UpdateBits();
@@ -1464,6 +1443,27 @@ void Dlg_Memory::Invalidate()
             case RA_Libretro:
             case RA_Oricutron:
                 UpdateWindow(hList);
+                break;
+        }
+    }
+}
+
+void Dlg_Memory::InvalidateMemoryViewer()
+{
+    if (g_pMemoryViewer->NeedsRedraw())
+    {
+        HWND hMemViewer = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
+        InvalidateRect(hMemViewer, nullptr, FALSE);
+
+        // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
+        // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
+        // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
+        // Similar code exists in Dlg_Memory::Invalidate for the search results
+        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+        {
+            case RA_Libretro:
+            case RA_Oricutron:
+                UpdateWindow(hMemViewer);
                 break;
         }
     }

@@ -464,6 +464,19 @@ void EmulatorContext::AddMemoryBlock(gsl::index nIndex, size_t nBytes,
         pBlock.write = pWriter;
 
         m_nTotalMemorySize += nBytes;
+
+        OnTotalMemorySizeChanged();
+    }
+}
+
+void EmulatorContext::OnTotalMemorySizeChanged()
+{
+    // create a copy of the list of pointers in case it's modified by one of the callbacks
+    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+    for (NotifyTarget* target : vNotifyTargets)
+    {
+        Expects(target != nullptr);
+        target->OnTotalMemorySizeChanged();
     }
 }
 
@@ -586,6 +599,15 @@ void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) 
         {
             pBlock.write(nAddress, nValue);
             m_bMemoryModified = true;
+
+            // create a copy of the list of pointers in case it's modified by one of the callbacks
+            NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+            for (NotifyTarget* target : vNotifyTargets)
+            {
+                Expects(target != nullptr);
+                target->OnByteWritten(nAddress, nValue);
+            }
+
             return;
         }
 

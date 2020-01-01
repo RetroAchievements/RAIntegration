@@ -2,6 +2,7 @@
 #define RA_UI_MEMORYVIEWERVIEWMODEL_H
 #pragma once
 
+#include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 #include "data\Types.hh"
 
@@ -17,12 +18,12 @@ namespace viewmodels {
 
 class MemoryViewerViewModel : public ViewModelBase,
                               protected ViewModelBase::NotifyTarget,
-                              protected ra::data::GameContext::NotifyTarget
+                              protected ra::data::GameContext::NotifyTarget,
+                              protected ra::data::EmulatorContext::NotifyTarget
 {
 public:
     MemoryViewerViewModel() noexcept;
-    MemoryViewerViewModel(ra::data::GameContext& pGameContext) noexcept;
-    ~MemoryViewerViewModel() = default;
+    ~MemoryViewerViewModel();
 
     MemoryViewerViewModel(const MemoryViewerViewModel&) noexcept = delete;
     MemoryViewerViewModel& operator=(const MemoryViewerViewModel&) noexcept = delete;
@@ -153,8 +154,12 @@ protected:
     void OnActiveGameChanged() override;
     void OnCodeNoteChanged(ra::ByteAddress, const std::wstring&) override;
 
-    unsigned char* m_pMemory;
-    unsigned char* m_pColor;
+    // EmulatorContext::NotifyTarget
+    void OnTotalMemorySizeChanged() override;
+    void OnByteWritten(ra::ByteAddress nAddress, uint8_t nValue) override;
+
+    uint8_t* m_pMemory;
+    uint8_t* m_pColor;
 
     int m_nSelectedNibble = 0;
     bool m_bNeedsRedraw = true;
@@ -168,17 +173,23 @@ private:
     void RenderAddresses();
     void RenderHeader();
     void WriteChar(int nX, int nY, TextColor nColor, int hexChar);
+
+    void UpdateColor(ra::ByteAddress nAddress);
     void UpdateColors();
 
     int NibblesPerWord() const;
 
     std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
     std::unique_ptr<ra::ui::drawing::ISurface> m_pFontSurface;
-    std::unique_ptr<unsigned char[]> m_pBuffer;
+    std::unique_ptr<uint8_t[]> m_pBuffer;
 
     ra::ui::Size m_szChar;
 
     int m_nFont = 0;
+
+    class MemoryBookmarkMonitor;
+    friend class MemoryBookmarkMonitor;
+    std::unique_ptr<MemoryBookmarkMonitor> m_pBookmarkMonitor;
 };
 
 } // namespace viewmodels

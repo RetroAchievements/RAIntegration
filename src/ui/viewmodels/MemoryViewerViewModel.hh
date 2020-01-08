@@ -148,6 +148,8 @@ public:
     void RetreatCursorPage();
 
 protected:
+    void InitializeNotifyTargets();
+
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     // GameContext::NotifyTarget

@@ -34,7 +34,7 @@ private:
 
         MemoryViewerViewModelHarness() : MemoryViewerViewModel()
         {
-            mockGameContext.AddNotifyTarget(*this);
+            InitializeNotifyTargets();
         }
 
         int GetSelectedNibble() const { return m_nSelectedNibble; }
@@ -63,7 +63,7 @@ private:
 
             mockEmulatorContext.MockMemory(pBytes, nSize);
 
-            DoFrame(); // populates m_nTotalMemorySize, m_pMemory, and m_pColor
+            DoFrame(); // populates m_pMemory and m_pColor
         }
 
         void MockRender()

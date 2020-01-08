@@ -92,6 +92,12 @@ MemoryViewerViewModel::MemoryViewerViewModel() noexcept
     AddNotifyTarget(*this);
 
 #ifndef RA_UTEST
+    InitNotifyTargets();
+#endif
+}
+
+void MemoryViewerViewModel::InitializeNotifyTargets()
+{
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
     pEmulatorContext.AddNotifyTarget(*this);
 
@@ -103,7 +109,6 @@ MemoryViewerViewModel::MemoryViewerViewModel() noexcept
     m_bReadOnly = (pGameContext.GameId() == 0);
 
     m_pBookmarkMonitor.reset(new MemoryBookmarkMonitor(*this));
-#endif
 }
 
 MemoryViewerViewModel::~MemoryViewerViewModel()
@@ -369,7 +374,7 @@ void MemoryViewerViewModel::AdvanceCursorPage()
 
         const auto nFirstAddress = GetFirstAddress();
         const auto nMaxFirstAddress = m_nTotalMemorySize - nVisibleLines * 16;
-        const auto nNewFirstAddress = std::min(nFirstAddress + (nVisibleLines - 1) * 16, nMaxFirstAddress);
+        const auto nNewFirstAddress = std::min(gsl::narrow<size_t>(nFirstAddress) + (nVisibleLines - 1) * 16, nMaxFirstAddress);
         SetFirstAddress(nNewFirstAddress);
 
         auto nNewAddress = nAddress + (nVisibleLines - 1) * 16;

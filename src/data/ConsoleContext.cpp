@@ -231,7 +231,7 @@ const std::vector<ConsoleContext::MemoryRegion> MasterSystemConsoleContext::m_vM
     // TODO: should cartridge memory be exposed ($0000-$BFFF)? it's usually just ROM data, but may contain on-cartridge RAM
 };
 
-// ===== MegaDrive / Genesis | Sega 32X | Sega CD =====
+// ===== MegaDrive / Genesis | Sega 32X =====
 
 class MegaDriveConsoleContext : public ConsoleContext
 {
@@ -442,6 +442,26 @@ const std::vector<ConsoleContext::MemoryRegion> PokemonMiniConsoleContext::m_vMe
 {
     { 0x000000U, 0x000FFFU, ConsoleContext::AddressType::SystemRAM, "BIOS RAM" },
     { 0x001000U, 0x001FFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },
+};
+
+// ===== Sega CD =====
+
+class SegaCDConsoleContext : public ConsoleContext
+{
+public:
+    SegaCDConsoleContext() noexcept : ConsoleContext(ConsoleID::SegaCD, L"SEGA CD") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+// Sega CD memory is exposed as two chunks
+const std::vector<ConsoleContext::MemoryRegion> SegaCDConsoleContext::m_vMemoryRegions =
+{
+    { 0x000000U, 0x00FFFFU, ConsoleContext::AddressType::SystemRAM, "68000 RAM" }, // 68000 RAM (normally $FF0000-$FFFFFF)
+    { 0x010000U, 0x08FFFFU, ConsoleContext::AddressType::SystemRAM, "CD PRG RAM" }, // PRG RAM (normally banked into $020000-$03FFFF)
 };
 
 // ===== Sega Saturn =====
@@ -698,7 +718,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<MegaDriveConsoleContext>(ConsoleID::Sega32X, L"SEGA 32X");
 
         case ConsoleID::SegaCD:
-            return std::make_unique<MegaDriveConsoleContext>(ConsoleID::SegaCD, L"SEGA CD");
+            return std::make_unique<SegaCDConsoleContext>();
 
         case ConsoleID::SG1000:
             return std::make_unique<SG1000ConsoleContext>();

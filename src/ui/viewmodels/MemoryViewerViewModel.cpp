@@ -700,6 +700,18 @@ bool MemoryViewerViewModel::OnChar(char c)
     return true;
 }
 
+void MemoryViewerViewModel::OnGotFocus()
+{
+    m_bHasFocus = true;
+    UpdateHighlight(GetAddress(), NibblesPerWord() / 2, 0);
+}
+
+void MemoryViewerViewModel::OnLostFocus()
+{
+    m_bHasFocus = false;
+    UpdateHighlight(GetAddress(), NibblesPerWord() / 2, 0);
+}
+
 void MemoryViewerViewModel::DoFrame()
 {
     uint8_t pMemory[MaxLines * 16];
@@ -818,7 +830,7 @@ void MemoryViewerViewModel::UpdateRenderImage()
             const int nByteOffset = ((nBytesPerWord - 1) - (i % nBytesPerWord));
             nX += (nByteOffset * 2) * m_szChar.Width;
 
-            if (nColorUpper == TextColor::Red && !m_bReadOnly)
+            if (nColorUpper == TextColor::Red && m_bHasFocus && !m_bReadOnly)
             {
                 if (m_nSelectedNibble / 2 == nByteOffset)
                 {
@@ -831,7 +843,7 @@ void MemoryViewerViewModel::UpdateRenderImage()
         }
         else
         {
-            if (nColorUpper == TextColor::Red && !m_bReadOnly)
+            if (nColorUpper == TextColor::Red && m_bHasFocus && !m_bReadOnly)
             {
                 if (m_nSelectedNibble == 0)
                     nColorUpper = TextColor::RedOnBlack;

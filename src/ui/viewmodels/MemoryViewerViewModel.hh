@@ -137,6 +137,8 @@ public:
     void OnClick(int nX, int nY);
     void OnResized(_UNUSED int nWidth, int nHeight);
     bool OnChar(char c);
+    void OnGotFocus();
+    void OnLostFocus();
 
     void AdvanceCursor();
     void RetreatCursor();
@@ -167,6 +169,7 @@ protected:
     bool m_bNeedsRedraw = true;
     ra::ByteAddress m_nTotalMemorySize = 0;
     bool m_bReadOnly = true;
+    bool m_bHasFocus = false;
 
     static constexpr int MaxLines = 128;
 

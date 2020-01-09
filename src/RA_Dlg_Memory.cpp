@@ -82,6 +82,14 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
         case WM_CHAR:
             return (!OnEditInput(static_cast<UINT>(LOWORD(wParam))));
 
+        case WM_SETFOCUS:
+            g_pMemoryViewer->OnGotFocus();
+            return FALSE;
+
+        case WM_KILLFOCUS:
+            g_pMemoryViewer->OnLostFocus();
+            return FALSE;
+
         case WM_GETDLGCODE:
             return DLGC_WANTCHARS | DLGC_WANTARROWS;
     }
@@ -148,7 +156,7 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
             if (bControlHeld)
             {
                 const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-                const auto nTotalBytes = pEmulatorContext.TotalMemorySize();
+                const auto nTotalBytes = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
                 g_pMemoryViewer->SetFirstAddress(nTotalBytes & ~0x0F);
                 g_pMemoryViewer->SetAddress(nTotalBytes - 1);

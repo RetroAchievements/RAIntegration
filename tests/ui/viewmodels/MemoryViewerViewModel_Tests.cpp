@@ -153,7 +153,7 @@ public:
         Assert::AreEqual({ 36U }, viewer.GetAddress());
         Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(0U));
         Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(36U));
-        for (size_t i = 1; i < 128; ++i)
+        for (ra::ByteAddress i = 1; i < 128; ++i)
         {
             if (i != 36)
                 Assert::AreEqual(COLOR_BLACK, viewer.GetColor(i));
@@ -166,7 +166,7 @@ public:
         Assert::AreEqual({ 368U }, viewer.GetFirstAddress()); // (444 & 0x0F) - 4 * 16
         Assert::AreEqual({ 444U }, viewer.GetAddress());
         Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(444U));
-        for (size_t i = 1; i < 128; ++i)
+        for (ra::ByteAddress i = 1; i < 128; ++i)
         {
             if (i != 444 - 368)
                 Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(i + 368));
@@ -178,7 +178,7 @@ public:
         Assert::AreEqual({ 288U }, viewer.GetFirstAddress()); // (360U & 0x0F) - 4 * 16
         Assert::AreEqual({ 360U }, viewer.GetAddress());
         Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(360U));
-        for (size_t i = 1; i < 128; ++i)
+        for (ra::ByteAddress i = 1; i < 128; ++i)
         {
             if (i != 360 - 288)
                 Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(i + 288));
@@ -621,6 +621,7 @@ public:
         Assert::AreEqual({ 0U }, viewer.GetAddress());
         Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
         Assert::AreEqual({ 0x60U }, viewer.GetByte(0U));
+        Assert::AreEqual({ 0x60U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
         Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(0U));
         Assert::IsTrue(viewer.NeedsRedraw());
         viewer.MockRender();
@@ -630,6 +631,7 @@ public:
         Assert::AreEqual({ 0U }, viewer.GetAddress());
         Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
         Assert::AreEqual({ 0x60U }, viewer.GetByte(0U));
+        Assert::AreEqual({ 0x60U }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
         Assert::AreEqual({ COLOR_RED }, viewer.GetColor(0U));
         Assert::IsFalse(viewer.NeedsRedraw());
 
@@ -638,6 +640,7 @@ public:
         Assert::AreEqual({ 1U }, viewer.GetAddress());
         Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
         Assert::AreEqual({ 0x6BU }, viewer.GetByte(0U));
+        Assert::AreEqual({ 0x6BU }, viewer.mockEmulatorContext.ReadMemoryByte(0U));
         Assert::AreEqual({ 0x01U }, viewer.GetByte(1U));
         Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(0U));
         Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(1U));
@@ -649,6 +652,7 @@ public:
         Assert::AreEqual({ 1U }, viewer.GetAddress());
         Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
         Assert::AreEqual({ 0xF1U }, viewer.GetByte(1U));
+        Assert::AreEqual({ 0xF1U }, viewer.mockEmulatorContext.ReadMemoryByte(1U));
 
         // jump to last address - cannot advance past last nibble
         viewer.SetAddress(255U);
@@ -662,6 +666,7 @@ public:
         Assert::AreEqual({ 255U }, viewer.GetAddress());
         Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
         Assert::AreEqual({ 0x0FU }, viewer.GetByte(255U));
+        Assert::AreEqual({ 0x0FU }, viewer.mockEmulatorContext.ReadMemoryByte(255U));
         Assert::IsTrue(viewer.NeedsRedraw());
         viewer.MockRender();
 
@@ -669,6 +674,7 @@ public:
         Assert::AreEqual({ 255U }, viewer.GetAddress());
         Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
         Assert::AreEqual({ 0x09U }, viewer.GetByte(255U));
+        Assert::AreEqual({ 0x09U }, viewer.mockEmulatorContext.ReadMemoryByte(255U));
         Assert::IsTrue(viewer.NeedsRedraw());
         viewer.MockRender();
 
@@ -676,7 +682,857 @@ public:
         Assert::AreEqual({ 255U }, viewer.GetAddress());
         Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
         Assert::AreEqual({ 0x0AU }, viewer.GetByte(255U));
+        Assert::AreEqual({ 0x0AU }, viewer.mockEmulatorContext.ReadMemoryByte(255U));
         Assert::IsTrue(viewer.NeedsRedraw());
+    }
+
+    TEST_METHOD(TestAdvanceCursorSixteenBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetSize(MemSize::SixteenBit);
+        viewer.MockRender();
+
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(1U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(0U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(1U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(0U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 2U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(0U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(1U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(2U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(3U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 2U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 2U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 2U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+
+        // last visible word
+        viewer.SetAddress(126U);
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 126U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 126U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 126U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+
+        // beyond visible range, will scroll one line
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 16U }, viewer.GetFirstAddress());
+
+        // jump to last address - cannot advance past last nibble
+        viewer.SetAddress(254U);
+        Assert::AreEqual({ 254U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 254U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 254U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 254U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 254U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // address not aligned - advance jumps to next aligned address
+        viewer.SetAddress(251U);
+        Assert::AreEqual({ 251U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 252U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+    }
+
+    TEST_METHOD(TestRetreatCursorSixteenBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetFirstAddress(128U);
+        viewer.SetSize(MemSize::SixteenBit);
+        viewer.SetAddress(130U);
+        viewer.MockRender();
+
+        Assert::AreEqual({ 130U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(128U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(129U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(130U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(131U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(128U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(128U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(129U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(129U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+        Assert::AreEqual({ 128U }, viewer.GetFirstAddress());
+
+        // beyond visible range, will scroll one line
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 126U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 112U }, viewer.GetFirstAddress());
+
+        // jump to first address - cannot retreat beyond first nibble
+        viewer.SetAddress(0U);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        viewer.MockRender();
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // address not aligned - retreat jumps to aligned address
+        viewer.SetAddress(3U);
+        Assert::AreEqual({ 3U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 2U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+    }
+
+    TEST_METHOD(TestAdvanceCursorWordSixteenBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetSize(MemSize::SixteenBit);
+        viewer.MockRender();
+
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        viewer.AdvanceCursorWord();
+        Assert::AreEqual({ 2U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(0U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(1U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(2U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(3U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // mid-word jumps to start of next word
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 2U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursorWord();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        viewer.SetAddress(5U);
+        viewer.AdvanceCursorWord();
+        Assert::AreEqual({ 6U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        // beyond visible range, will scroll one line
+        viewer.SetAddress(126U);
+        viewer.AdvanceCursorWord();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 16U }, viewer.GetFirstAddress());
+
+        // jump to last address - cannot advance past last byte
+        viewer.SetAddress(254U);
+        Assert::AreEqual({ 254U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursorWord();
+        Assert::AreEqual({ 254U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+    }
+
+    TEST_METHOD(TestRetreatCursorWordSixteenBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetFirstAddress(128U);
+        viewer.SetSize(MemSize::SixteenBit);
+        viewer.SetAddress(130U);
+        viewer.MockRender();
+
+        Assert::AreEqual({ 130U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        viewer.RetreatCursorWord();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(128U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(129U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(130U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(131U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // mid-word jumps to start of current word
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        viewer.MockRender();
+
+        viewer.RetreatCursorWord();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(129U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.SetAddress(129U);
+        viewer.RetreatCursorWord();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        // beyond visible range, will scroll one line
+        viewer.RetreatCursorWord();
+        Assert::AreEqual({ 126U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 112U }, viewer.GetFirstAddress());
+
+        // jump to first address - cannot retreat beyond first nibble
+        viewer.SetAddress(0U);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        viewer.MockRender();
+
+        viewer.RetreatCursorWord();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+    }
+
+    TEST_METHOD(TestAdvanceCursorThirtyTwoBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetSize(MemSize::ThirtyTwoBit);
+        viewer.MockRender();
+
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(3U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(2U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(3U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(2U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 4U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(1U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(2U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 5U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(1U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 6U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(0U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(1U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 7U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(0U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(0U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(1U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(2U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(3U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(4U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(5U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(6U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(7U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 4U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 5U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 6U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 7U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 8U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+
+        // last visible word
+        viewer.SetAddress(124U);
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 124U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+
+        viewer.AdvanceCursor();
+        viewer.AdvanceCursor();
+        viewer.AdvanceCursor();
+        viewer.AdvanceCursor();
+        viewer.AdvanceCursor();
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 124U }, viewer.GetAddress());
+        Assert::AreEqual({ 7U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+
+        // beyond visible range, will scroll one line
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 16U }, viewer.GetFirstAddress());
+
+        // jump to last address - cannot advance past last nibble
+        viewer.SetAddress(252U);
+        Assert::AreEqual({ 252U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        viewer.AdvanceCursor();
+        viewer.AdvanceCursor();
+        viewer.AdvanceCursor();
+        viewer.AdvanceCursor();
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 252U }, viewer.GetAddress());
+        Assert::AreEqual({ 6U }, viewer.GetSelectedNibble());
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 252U }, viewer.GetAddress());
+        Assert::AreEqual({ 7U }, viewer.GetSelectedNibble());
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 252U }, viewer.GetAddress());
+        Assert::AreEqual({ 7U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // address not aligned - advance jumps to next aligned address
+        viewer.SetAddress(250U);
+        Assert::AreEqual({ 250U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 252U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+    }
+
+    TEST_METHOD(TestRetreatCursorThirtyTwoBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetFirstAddress(128U);
+        viewer.SetSize(MemSize::ThirtyTwoBit);
+        viewer.SetAddress(132U);
+        viewer.MockRender();
+
+        Assert::AreEqual({ 132U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 7U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(128U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(129U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(130U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(131U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(132U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(133U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(134U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(135U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 6U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(128U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 5U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(128U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(129U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 4U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(129U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(129U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(130U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(130U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(130U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(131U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(131U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+        Assert::AreEqual({ 128U }, viewer.GetFirstAddress());
+
+        // beyond visible range, will scroll one line
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 124U }, viewer.GetAddress());
+        Assert::AreEqual({ 7U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 112U }, viewer.GetFirstAddress());
+
+        // jump to first address - cannot retreat beyond first nibble
+        viewer.SetAddress(0U);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        viewer.MockRender();
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // address not aligned - retreat jumps to aligned address
+        viewer.SetAddress(7U);
+        Assert::AreEqual({ 7U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        viewer.RetreatCursor();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+    }
+
+    TEST_METHOD(TestAdvanceCursorWordThirtyTwoBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetSize(MemSize::ThirtyTwoBit);
+        viewer.MockRender();
+
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        viewer.AdvanceCursorWord();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(0U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(1U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(2U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(3U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(4U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(5U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(6U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(7U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // mid-word jumps to start of next word
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+
+        viewer.AdvanceCursorWord();
+        Assert::AreEqual({ 8U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        viewer.SetAddress(10U);
+        viewer.AdvanceCursorWord();
+        Assert::AreEqual({ 12U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        // beyond visible range, will scroll one line
+        viewer.SetAddress(124U);
+        viewer.AdvanceCursorWord();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 16U }, viewer.GetFirstAddress());
+
+        // jump to last address - cannot advance past last byte
+        viewer.SetAddress(252U);
+        Assert::AreEqual({ 252U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.AdvanceCursorWord();
+        Assert::AreEqual({ 252U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+    }
+
+    TEST_METHOD(TestRetreatCursorWordThirtyTwoBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetFirstAddress(128U);
+        viewer.SetSize(MemSize::ThirtyTwoBit);
+        viewer.SetAddress(132U);
+        viewer.MockRender();
+
+        Assert::AreEqual({ 132U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        viewer.RetreatCursorWord();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(128U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(129U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(130U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(131U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(132U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(133U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(134U));
+        Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(135U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // mid-word jumps to start of current word
+        viewer.AdvanceCursor();
+        viewer.AdvanceCursor();
+        viewer.AdvanceCursor();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+        viewer.MockRender();
+
+        viewer.RetreatCursorWord();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(131U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(130U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.SetAddress(131U);
+        viewer.RetreatCursorWord();
+        Assert::AreEqual({ 128U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        // beyond visible range, will scroll one line
+        viewer.RetreatCursorWord();
+        Assert::AreEqual({ 124U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 112U }, viewer.GetFirstAddress());
+
+        // jump to first address - cannot retreat beyond first nibble
+        viewer.SetAddress(0U);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        viewer.MockRender();
+
+        viewer.RetreatCursorWord();
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+    }
+
+    TEST_METHOD(TestOnCharSixteenBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetSize(MemSize::SixteenBit);
+        viewer.MockRender();
+
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0U }, viewer.GetByte(0U));
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // ignore if readonly
+        Assert::IsTrue(viewer.IsReadOnly());
+        Assert::IsFalse(viewer.OnChar('6'));
+
+        viewer.SetReadOnly(false);
+        Assert::IsFalse(viewer.IsReadOnly());
+
+        // '6' should be set as upper nibble of selected byte
+        Assert::IsTrue(viewer.OnChar('6'));
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x61U }, viewer.GetByte(1U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(1U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // ignore invalid character
+        Assert::IsFalse(viewer.OnChar('G'));
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x61U }, viewer.GetByte(1U));
+        Assert::AreEqual({ COLOR_RED }, viewer.GetColor(1U));
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // 'B' should be set as lower nibble of selected byte
+        viewer.OnChar('B');
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x6BU }, viewer.GetByte(1U));
+        Assert::AreEqual({ 0x00U }, viewer.GetByte(0U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(0U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(1U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // 'F' should be set as upper nibble of next byte
+        viewer.OnChar('F');
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0xF0U }, viewer.GetByte(0U));
+
+        // '2' should be set as lower nibble of selected byte
+        viewer.OnChar('2');
+        Assert::AreEqual({ 2U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0xF2U }, viewer.GetByte(0U));
+
+        // '3' should be set as upper nibble of next byte
+        viewer.OnChar('3');
+        Assert::AreEqual({ 2U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x33U }, viewer.GetByte(3U));
+    }
+
+    TEST_METHOD(TestOnCharThirtyTwoBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetSize(MemSize::ThirtyTwoBit);
+        viewer.MockRender();
+
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0U }, viewer.GetByte(0U));
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // ignore if readonly
+        Assert::IsTrue(viewer.IsReadOnly());
+        Assert::IsFalse(viewer.OnChar('6'));
+
+        viewer.SetReadOnly(false);
+        Assert::IsFalse(viewer.IsReadOnly());
+
+        // '6' should be set as upper nibble of selected byte
+        Assert::IsTrue(viewer.OnChar('6'));
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x63U }, viewer.GetByte(3U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(3U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // ignore invalid character
+        Assert::IsFalse(viewer.OnChar('G'));
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x63U }, viewer.GetByte(3U));
+        Assert::AreEqual({ COLOR_RED }, viewer.GetColor(3U));
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // 'B' should be set as lower nibble of selected byte
+        viewer.OnChar('B');
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x6BU }, viewer.GetByte(3U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(3U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // 'F' should be set as upper nibble of next byte
+        viewer.OnChar('F');
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0xF2U }, viewer.GetByte(2U));
+
+        viewer.OnChar('3');
+        viewer.OnChar('D');
+        viewer.OnChar('E');
+        viewer.OnChar('6');
+        viewer.OnChar('8');
+
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0xF3U }, viewer.GetByte(2U));
+        Assert::AreEqual({ 0xDEU }, viewer.GetByte(1U));
+        Assert::AreEqual({ 0x68U }, viewer.GetByte(0U));
+
+        viewer.OnChar('2');
+        Assert::AreEqual({ 4U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x27U }, viewer.GetByte(7U));
     }
 };
 

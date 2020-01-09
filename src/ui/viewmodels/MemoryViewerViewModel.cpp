@@ -18,6 +18,7 @@ const IntModelProperty MemoryViewerViewModel::SizeProperty("MemoryViewerViewMode
 
 constexpr uint8_t STALE_COLOR = 0x80;
 constexpr uint8_t HIGHLIGHTED_COLOR = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(MemoryViewerViewModel::TextColor::Red));
+constexpr int ADDRESS_COLUMN_WIDTH = 10;
 
 class MemoryViewerViewModel::MemoryBookmarkMonitor : protected ViewModelCollectionBase::NotifyTarget
 {
@@ -92,7 +93,7 @@ MemoryViewerViewModel::MemoryViewerViewModel() noexcept
     AddNotifyTarget(*this);
 
 #ifndef RA_UTEST
-    InitNotifyTargets();
+    InitializeNotifyTargets();
 #endif
 }
 
@@ -101,7 +102,7 @@ void MemoryViewerViewModel::InitializeNotifyTargets()
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
     pEmulatorContext.AddNotifyTarget(*this);
 
-    m_nTotalMemorySize = pEmulatorContext.TotalMemorySize();
+    m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     pGameContext.AddNotifyTarget(*this);
@@ -114,6 +115,22 @@ void MemoryViewerViewModel::InitializeNotifyTargets()
 MemoryViewerViewModel::~MemoryViewerViewModel()
 {
     // empty function definition required to generate destroy for forward-declared MemoryBookmarkMonitor
+}
+
+static constexpr int NibblesForSize(MemSize nSize)
+{
+    switch (nSize)
+    {
+        default:
+        case MemSize::EightBit: return 2;
+        case MemSize::SixteenBit: return 4;
+        case MemSize::ThirtyTwoBit: return 8;
+    }
+}
+
+int MemoryViewerViewModel::NibblesPerWord() const
+{
+    return NibblesForSize(GetSize());
 }
 
 static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
@@ -145,11 +162,63 @@ void MemoryViewerViewModel::UpdateColors()
     for (int i = 0; i < nVisibleLines * 16; ++i)
         m_pColor[i] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nFirstAddress + i, pBookmarksViewModel, pGameContext)));
 
-    const auto nAddress = GetAddress();
-    if (nAddress >= nFirstAddress && nAddress < nFirstAddress + nVisibleLines * 16)
-        m_pColor[nAddress - nFirstAddress] = HIGHLIGHTED_COLOR;
+    UpdateHighlight(GetAddress(), NibblesPerWord() / 2, 0);
 
     m_bNeedsRedraw = true;
+}
+
+void MemoryViewerViewModel::UpdateHighlight(ra::ByteAddress nAddress, int nNewLength, int nOldLength)
+{
+    if (nNewLength == nOldLength)
+        return;
+
+    const auto nFirstAddress = GetFirstAddress();
+    if (nAddress < nFirstAddress && nAddress + nNewLength < nFirstAddress && nAddress + nOldLength < nFirstAddress)
+        return;
+
+    const auto nVisibleLines = GetNumVisibleLines();
+    const auto nMaxAddress = nFirstAddress + nVisibleLines * 16;
+    if (nAddress >= nMaxAddress)
+        return;
+
+    m_bNeedsRedraw = true;
+
+    for (int i = 0; i < nNewLength; ++i)
+    {
+        m_pColor[nAddress - nFirstAddress] = HIGHLIGHTED_COLOR;
+        if (++nAddress == nMaxAddress)
+            return;
+    }
+
+    if (nOldLength > nNewLength)
+    {
+        const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+
+        while (nOldLength > nNewLength)
+        {
+            m_pColor[nAddress - nFirstAddress] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nAddress, pBookmarksViewModel, pGameContext)));
+            if (++nAddress == nMaxAddress)
+                return;
+
+            --nOldLength;
+        }
+    }
+}
+
+void MemoryViewerViewModel::UpdateSelectedNibble(int nNewNibble)
+{
+    if (nNewNibble != m_nSelectedNibble)
+    {
+        const auto nAddress = GetAddress();
+        const auto nFirstAddress = GetFirstAddress();
+        const auto nNibblesPerWord = NibblesPerWord();
+        m_pColor[nAddress - nFirstAddress + (nNibblesPerWord - m_nSelectedNibble - 1) / 2] |= STALE_COLOR;
+        m_nSelectedNibble = nNewNibble;
+
+        m_pColor[nAddress - nFirstAddress + (nNibblesPerWord - m_nSelectedNibble - 1) / 2] |= STALE_COLOR;
+        m_bNeedsRedraw = true;
+    }
 }
 
 void MemoryViewerViewModel::SetFirstAddress(ra::ByteAddress value)
@@ -181,14 +250,8 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
         const auto nVisibleLines = GetNumVisibleLines();
         const auto nMaxAddress = nFirstAddress + nVisibleLines * 16;
 
-        const auto nOldValue = ra::to_unsigned(args.tOldValue);
-        if (nOldValue >= nFirstAddress && nOldValue < nMaxAddress)
-        {
-            const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-
-            m_pColor[nOldValue - nFirstAddress] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nOldValue, pBookmarksViewModel, pGameContext)));
-        }
+        const auto nBytes = NibblesPerWord() / 2;
+        UpdateHighlight(ra::to_unsigned(args.tOldValue), 0, nBytes);
 
         const auto nNewValue = ra::to_unsigned(args.tNewValue);
         if (nNewValue < nFirstAddress || nNewValue >= nMaxAddress)
@@ -199,8 +262,7 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
             nFirstAddress = GetFirstAddress();
         }
 
-        m_pColor[nNewValue - nFirstAddress] = HIGHLIGHTED_COLOR;
-        m_bNeedsRedraw = true;
+        UpdateHighlight(ra::to_unsigned(args.tNewValue), nBytes, 0);
         m_nSelectedNibble = 0;
 
         if (m_pSurface != nullptr)
@@ -219,6 +281,19 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
 
         UpdateColors();
     }
+    else if (args.Property == SizeProperty)
+    {
+        const int nOldBytes = NibblesForSize(ra::itoe<MemSize>(args.tOldValue)) / 2;
+        const int nNewBytes = NibblesForSize(ra::itoe<MemSize>(args.tNewValue)) / 2;
+        UpdateHighlight(GetAddress(), nNewBytes, nOldBytes);
+
+        const auto nVisibleLines = GetNumVisibleLines();
+        for (int i = 0; i < nVisibleLines * 16; ++i)
+            m_pColor[i] |= STALE_COLOR;
+
+        m_pSurface.reset();
+        m_bNeedsRedraw = true;
+    }
     else if (args.Property == NumVisibleLinesProperty)
     {
         if (args.tNewValue > args.tOldValue)
@@ -236,28 +311,24 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
     }
 }
 
-int MemoryViewerViewModel::NibblesPerWord() const
-{
-    switch (GetSize())
-    {
-        default:
-        case MemSize::EightBit: return 2;
-        case MemSize::SixteenBit: return 4;
-        case MemSize::ThirtyTwoBit: return 8;
-    }
-}
-
 void MemoryViewerViewModel::AdvanceCursor()
 {
-    if (m_nSelectedNibble < NibblesPerWord() - 1)
+    const auto nNibblesPerWord = NibblesPerWord();
+    if (m_nSelectedNibble < nNibblesPerWord - 1)
     {
-        ++m_nSelectedNibble;
-
         const auto nAddress = GetAddress();
-        const auto nFirstAddress = GetFirstAddress();
+        if (nNibblesPerWord > 2)
+        {
+            const auto nAddressMask = (nNibblesPerWord / 2) - 1;
+            if (nAddress & nAddressMask)
+            {
+                // address is in the middle of a word, move to start of next word
+                AdvanceCursorWord();
+                return;
+            }
+        }
 
-        m_pColor[nAddress - nFirstAddress] |= STALE_COLOR;
-        m_bNeedsRedraw = true;
+        UpdateSelectedNibble(m_nSelectedNibble + 1);
     }
     else
     {
@@ -272,28 +343,39 @@ void MemoryViewerViewModel::RetreatCursor()
 
     if (m_nSelectedNibble > 0)
     {
-        --m_nSelectedNibble;
-
-        m_pColor[nAddress - nFirstAddress] |= STALE_COLOR;
-        m_bNeedsRedraw = true;
+        UpdateSelectedNibble(m_nSelectedNibble - 1);
     }
     else if (nAddress > 0)
     {
-        const auto nNewAddress = nAddress - 1;
-        if (nNewAddress < nFirstAddress)
-            SetFirstAddress(nFirstAddress - 16);
+        const auto nNibblesPerWord = NibblesPerWord();
+        const auto nBytesPerWord = nNibblesPerWord / 2;
+        if (nBytesPerWord > 1 && (nAddress & (nBytesPerWord - 1)))
+        {
+            // address is in the middle of a word, move to start of the word
+            SetAddress(nAddress & ~(nBytesPerWord - 1));
+            UpdateSelectedNibble(0);
+        }
+        else
+        {
+            // move to end of previous word
+            const auto nNewAddress = nAddress - nBytesPerWord;
+            if (nNewAddress < nFirstAddress)
+                SetFirstAddress(nFirstAddress - 16);
 
-        SetAddress(nNewAddress);
-        m_nSelectedNibble = NibblesPerWord() - 1;
+            SetAddress(nNewAddress);
+            UpdateSelectedNibble(nNibblesPerWord - 1);
+        }
     }
 }
 
 void MemoryViewerViewModel::AdvanceCursorWord()
 {
     const auto nAddress = GetAddress();
-    if (nAddress + 1 < m_nTotalMemorySize)
+    const auto nBytesPerWord = NibblesPerWord() / 2;
+    const auto nNewAddress = (nAddress + nBytesPerWord) & ~(nBytesPerWord - 1);
+
+    if (nNewAddress < m_nTotalMemorySize)
     {
-        const auto nNewAddress = nAddress + 1;
         if ((nNewAddress & 0x0F) == 0)
         {
             const auto nFirstAddress = GetFirstAddress();
@@ -311,23 +393,29 @@ void MemoryViewerViewModel::RetreatCursorWord()
     const auto nAddress = GetAddress();
     if (m_nSelectedNibble > 0)
     {
-        m_nSelectedNibble = 0;
-
-        const auto nFirstAddress = GetFirstAddress();
-        m_pColor[nAddress - nFirstAddress] |= STALE_COLOR;
-        m_bNeedsRedraw = true;
+        UpdateSelectedNibble(0);
     }
     else if (nAddress > 0)
     {
-        const auto nNewAddress = nAddress - 1;
-        if ((nNewAddress & 0x0F) == 0x0F)
+        const auto nBytesPerWord = NibblesPerWord() / 2;
+        if (nBytesPerWord > 1 && (nAddress & (nBytesPerWord - 1)))
         {
-            const auto nFirstAddress = GetFirstAddress();
-            if (nNewAddress < nFirstAddress)
-                SetFirstAddress(nFirstAddress - 16);
+            // address is in the middle of a word, adjust to start of the word
+            SetAddress(nAddress & ~(nBytesPerWord - 1));
         }
+        else
+        {
+            // move to beginning of previous word; adjust first address if necessary
+            const auto nNewAddress = nAddress - nBytesPerWord;
+            if ((nAddress & 0x0F) == 0)
+            {
+                const auto nFirstAddress = GetFirstAddress();
+                if (nNewAddress < nFirstAddress)
+                    SetFirstAddress(nFirstAddress - 16);
+            }
 
-        SetAddress(nNewAddress);
+            SetAddress(nNewAddress);
+        }
         m_nSelectedNibble = 0;
     }
 }
@@ -344,7 +432,7 @@ void MemoryViewerViewModel::AdvanceCursorLine()
             SetFirstAddress(nFirstAddress + 16);
 
         SetAddress(nNewAddress);
-        m_nSelectedNibble = nSelectedNibble;
+        UpdateSelectedNibble(nSelectedNibble);
     }
 }
 
@@ -360,7 +448,7 @@ void MemoryViewerViewModel::RetreatCursorLine()
             SetFirstAddress(nFirstAddress - 16);
 
         SetAddress(nNewAddress);
-        m_nSelectedNibble = nSelectedNibble;
+        UpdateSelectedNibble(nSelectedNibble);
     }
 }
 
@@ -374,15 +462,14 @@ void MemoryViewerViewModel::AdvanceCursorPage()
 
         const auto nFirstAddress = GetFirstAddress();
         const auto nMaxFirstAddress = m_nTotalMemorySize - nVisibleLines * 16;
-        const auto nNewFirstAddress = std::min(gsl::narrow<size_t>(nFirstAddress) + (nVisibleLines - 1) * 16, nMaxFirstAddress);
+        const auto nNewFirstAddress = std::min(nFirstAddress + (nVisibleLines - 1) * 16, nMaxFirstAddress);
         SetFirstAddress(nNewFirstAddress);
 
         auto nNewAddress = nAddress + (nVisibleLines - 1) * 16;
         if (nNewAddress >= m_nTotalMemorySize)
             nNewAddress = ((m_nTotalMemorySize - 15) & ~0x0F) | (nAddress & 0x0F);
         SetAddress(nNewAddress);
-
-        m_nSelectedNibble = nSelectedNibble;
+        UpdateSelectedNibble(nSelectedNibble);
     }
 }
 
@@ -402,8 +489,7 @@ void MemoryViewerViewModel::RetreatCursorPage()
         if (nNewAddress < 0)
             nNewAddress = (nAddress & 0x0F);
         SetAddress(nNewAddress);
-
-        m_nSelectedNibble = nSelectedNibble;
+        UpdateSelectedNibble(nSelectedNibble);
     }
 }
 
@@ -443,7 +529,7 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
 void MemoryViewerViewModel::OnTotalMemorySizeChanged()
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    m_nTotalMemorySize = pEmulatorContext.TotalMemorySize();
+    m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
     const auto nVisibleLines = GetNumVisibleLines();
     const auto nMaxFirstAddress = m_nTotalMemorySize - nVisibleLines * 16;
@@ -470,6 +556,9 @@ void MemoryViewerViewModel::OnByteWritten(ra::ByteAddress nAddress, uint8_t nVal
         m_bNeedsRedraw = true;
     }
 }
+
+#pragma warning(push)
+#pragma warning(disable : 5045)
 
 void MemoryViewerViewModel::UpdateColor(ra::ByteAddress nAddress)
 {
@@ -500,6 +589,8 @@ void MemoryViewerViewModel::UpdateColor(ra::ByteAddress nAddress)
     }
 }
 
+#pragma warning(pop)
+
 void MemoryViewerViewModel::OnClick(int nX, int nY)
 {
     const int nRow = nY / m_szChar.Height;
@@ -507,20 +598,25 @@ void MemoryViewerViewModel::OnClick(int nX, int nY)
         return;
 
     const int nColumn = nX / m_szChar.Width;
-    if (nColumn < 10)
+    if (nColumn < ADDRESS_COLUMN_WIDTH)
         return;
 
     const auto nFirstAddress = GetFirstAddress();
-    const auto nNewAddress = nFirstAddress + (nRow - 1) * 16 + (nColumn - 10) / 3;
+    const auto nNibblesPerWord = NibblesPerWord();
+    const auto nWordSpacing = nNibblesPerWord + 1;
+    const auto nBytesPerWord = nNibblesPerWord / 2;
+
+    const auto nNewAddress = nFirstAddress + (nRow - 1) * 16 + ((nColumn - ADDRESS_COLUMN_WIDTH) / nWordSpacing) * nBytesPerWord;
     if (nNewAddress < m_nTotalMemorySize)
     {
-        const auto nNewNibble = (nColumn - 10) % 3;
-        if (nNewNibble != 2)
+        const auto nNewNibble = (nColumn - ADDRESS_COLUMN_WIDTH) % nWordSpacing;
+        if (nNewNibble != nNibblesPerWord)
         {
             SetAddress(nNewAddress);
 
             m_nSelectedNibble = nNewNibble;
-            m_pColor[nNewAddress - nFirstAddress] |= 0x80;
+            for (int i = 0; i < nBytesPerWord; ++i)
+                m_pColor[nNewAddress - nFirstAddress + i] |= STALE_COLOR;
             m_bNeedsRedraw = true;
         }
     }
@@ -564,7 +660,8 @@ bool MemoryViewerViewModel::OnChar(char c)
 
     auto nIndex = GetAddress() - GetFirstAddress();
 
-    auto nSelectedNibble = m_nSelectedNibble;
+    const auto nNibblesPerWord = NibblesPerWord();
+    auto nSelectedNibble = (nNibblesPerWord - m_nSelectedNibble - 1);
     while (nSelectedNibble > 1)
     {
         ++nIndex;
@@ -572,7 +669,7 @@ bool MemoryViewerViewModel::OnChar(char c)
     }
 
     auto nByte = m_pMemory[nIndex];
-    if (nSelectedNibble == 0)
+    if (nSelectedNibble != 0)
     {
         nByte &= 0x0F;
         nByte |= (value << 4);
@@ -625,6 +722,10 @@ void MemoryViewerViewModel::DoFrame()
 
 // ====== Render ==============================================================
 
+static constexpr std::array<wchar_t, 16> g_sHexChars = {
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+};
+
 void MemoryViewerViewModel::BuildFontSurface()
 {
     const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
@@ -640,7 +741,6 @@ void MemoryViewerViewModel::BuildFontSurface()
     m_pFontSurface->FillRectangle(0, m_szChar.Height * ra::etoi(TextColor::RedOnBlack),
         m_pFontSurface->GetWidth(), m_szChar.Height, ra::ui::Color(0xFFC0C0C0));
 
-    constexpr wchar_t m_sHexChars[] = L"0123456789abcdef";
     std::wstring sHexChar = L"0";
     ra::ui::Color nColor(0);
     for (int i = 0; i < ra::etoi(TextColor::NumColors); ++i)
@@ -657,7 +757,7 @@ void MemoryViewerViewModel::BuildFontSurface()
 
         for (int j = 0; j < 16; ++j)
         {
-            sHexChar[0] = m_sHexChars[j];
+            sHexChar[0] = g_sHexChars.at(j);
             m_pFontSurface->WriteText(j * m_szChar.Width, i * m_szChar.Height - 1, m_nFont, nColor, sHexChar);
         }
     }
@@ -697,16 +797,40 @@ void MemoryViewerViewModel::UpdateRenderImage()
     if (nFirstAddress + nVisibleLines * 16 > m_nTotalMemorySize)
         nVisibleLines = (m_nTotalMemorySize - nFirstAddress) / 16;
 
+    const int nWordSpacing = NibblesPerWord() + 1;
+    const int nBytesPerWord = nWordSpacing / 2;
     for (int i = 0; i < nVisibleLines * 16; ++i)
     {
-        if (m_pColor[i] & STALE_COLOR)
+        if (!(m_pColor[i] & STALE_COLOR))
+            continue;
+
+        const uint8_t nColor = m_pColor[i] & 0x0F;
+        m_pColor[i] = nColor;
+
+        TextColor nColorUpper = ra::itoe<TextColor>(nColor);
+        TextColor nColorLower = nColorUpper;
+
+        const int nY = ((i / 16) + 1) * m_szChar.Height;
+
+        int nX = (((i & 0x0F) / nBytesPerWord) * nWordSpacing + ADDRESS_COLUMN_WIDTH) * m_szChar.Width;
+        if (nBytesPerWord > 1)
         {
-            const uint8_t nColor = m_pColor[i] & 0x0F;
-            m_pColor[i] = nColor;
+            const int nByteOffset = ((nBytesPerWord - 1) - (i % nBytesPerWord));
+            nX += (nByteOffset * 2) * m_szChar.Width;
 
-            TextColor nColorUpper = ra::itoe<TextColor>(nColor);
-            TextColor nColorLower = nColorUpper;
-
+            if (nColorUpper == TextColor::Red && !m_bReadOnly)
+            {
+                if (m_nSelectedNibble / 2 == nByteOffset)
+                {
+                    if ((m_nSelectedNibble & 1) == 0)
+                        nColorUpper = TextColor::RedOnBlack;
+                    else
+                        nColorLower = TextColor::RedOnBlack;
+                }
+            }
+        }
+        else
+        {
             if (nColorUpper == TextColor::Red && !m_bReadOnly)
             {
                 if (m_nSelectedNibble == 0)
@@ -714,14 +838,11 @@ void MemoryViewerViewModel::UpdateRenderImage()
                 else
                     nColorLower = TextColor::RedOnBlack;
             }
-
-            const int nX = ((i & 0x0F) * 3 + 10) * m_szChar.Width;
-            const int nY = ((i >> 4) + 1) * m_szChar.Height;
-
-            const auto nValue = m_pMemory[i];
-            WriteChar(nX, nY, nColorUpper, nValue >> 4);
-            WriteChar(nX + m_szChar.Width, nY, nColorLower, nValue & 0x0F);
         }
+
+        const auto nValue = m_pMemory[i];
+        WriteChar(nX, nY, nColorUpper, nValue >> 4);
+        WriteChar(nX + m_szChar.Width, nY, nColorLower, nValue & 0x0F);
     }
 }
 
@@ -759,15 +880,17 @@ void MemoryViewerViewModel::RenderHeader()
 {
     const auto nCursorAddress = ra::to_signed(GetAddress() & 0x0F);
 
-    auto nX = 10 * m_szChar.Width;
+    auto nX = ADDRESS_COLUMN_WIDTH * m_szChar.Width;
     m_pSurface->FillRectangle(nX, 0, 16 * 3 * m_szChar.Width, m_szChar.Height, ra::ui::Color(0xFFFFFFFF));
 
-    for (int i = 0; i < 16; ++i)
+    const auto nNibblesPerWord = NibblesPerWord();
+    std::wstring sValue(nNibblesPerWord, ' ');
+    for (int i = 0; i < 16; i += nNibblesPerWord / 2)
     {
         const auto nColor = (nCursorAddress == i) ? ra::ui::Color(0xFFFF8080) : ra::ui::Color(0xFF808080);
-        const auto sValue = ra::StringPrintf(L"%02x", i);
+        sValue[nNibblesPerWord - 1] = g_sHexChars.at(i);
         m_pSurface->WriteText(nX, -2, m_nFont, nColor, sValue);
-        nX += m_szChar.Width * 3;
+        nX += m_szChar.Width * (nNibblesPerWord + 1);
     }
 }
 

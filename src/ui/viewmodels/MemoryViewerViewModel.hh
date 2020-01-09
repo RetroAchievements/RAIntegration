@@ -165,7 +165,7 @@ protected:
 
     int m_nSelectedNibble = 0;
     bool m_bNeedsRedraw = true;
-    size_t m_nTotalMemorySize = 0;
+    ra::ByteAddress m_nTotalMemorySize = 0;
     bool m_bReadOnly = true;
 
     static constexpr int MaxLines = 128;
@@ -178,8 +178,10 @@ private:
 
     void UpdateColor(ra::ByteAddress nAddress);
     void UpdateColors();
+    void UpdateHighlight(ra::ByteAddress nAddress, int nNewLength, int nOldLength);
 
     int NibblesPerWord() const;
+    void UpdateSelectedNibble(int nNewNibble);
 
     std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
     std::unique_ptr<ra::ui::drawing::ISurface> m_pFontSurface;

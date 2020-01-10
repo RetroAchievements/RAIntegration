@@ -71,7 +71,7 @@ private:
             for (size_t i = 0; i < m_nTotalMemorySize; ++i)
                 m_pColor[i] &= 0x0F;
 
-            m_bNeedsRedraw = false;
+            m_nNeedsRedraw = 0;
         }
 
     private:

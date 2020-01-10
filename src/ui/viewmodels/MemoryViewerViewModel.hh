@@ -32,7 +32,7 @@ public:
 
     void DoFrame();
 
-    bool NeedsRedraw() const { return m_bNeedsRedraw; }
+    bool NeedsRedraw() const { return (m_nNeedsRedraw != 0); }
 
     void UpdateRenderImage();
 
@@ -166,10 +166,15 @@ protected:
     uint8_t* m_pColor;
 
     int m_nSelectedNibble = 0;
-    bool m_bNeedsRedraw = true;
     ra::ByteAddress m_nTotalMemorySize = 0;
     bool m_bReadOnly = true;
     bool m_bHasFocus = false;
+
+    static constexpr int REDRAW_MEMORY = 1;
+    static constexpr int REDRAW_ADDRESSES = 2;
+    static constexpr int REDRAW_HEADERS = 4;
+    static constexpr int REDRAW_ALL = REDRAW_MEMORY | REDRAW_ADDRESSES | REDRAW_HEADERS;
+    int m_nNeedsRedraw = REDRAW_ALL;
 
     static constexpr int MaxLines = 128;
 
@@ -177,6 +182,7 @@ private:
     void BuildFontSurface();
     void RenderAddresses();
     void RenderHeader();
+    void RenderMemory();
     void WriteChar(int nX, int nY, TextColor nColor, int hexChar);
 
     void UpdateColor(ra::ByteAddress nAddress);

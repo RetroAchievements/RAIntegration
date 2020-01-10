@@ -164,7 +164,7 @@ void MemoryViewerViewModel::UpdateColors()
 
     UpdateHighlight(GetAddress(), NibblesPerWord() / 2, 0);
 
-    m_bNeedsRedraw = true;
+    m_nNeedsRedraw |= REDRAW_MEMORY;
 }
 
 void MemoryViewerViewModel::UpdateHighlight(ra::ByteAddress nAddress, int nNewLength, int nOldLength)
@@ -181,7 +181,7 @@ void MemoryViewerViewModel::UpdateHighlight(ra::ByteAddress nAddress, int nNewLe
     if (nAddress >= nMaxAddress)
         return;
 
-    m_bNeedsRedraw = true;
+    m_nNeedsRedraw |= REDRAW_MEMORY;
 
     for (int i = 0; i < nNewLength; ++i)
     {
@@ -217,7 +217,7 @@ void MemoryViewerViewModel::UpdateSelectedNibble(int nNewNibble)
         m_nSelectedNibble = nNewNibble;
 
         m_pColor[nAddress - nFirstAddress + (nNibblesPerWord - m_nSelectedNibble - 1) / 2] |= STALE_COLOR;
-        m_bNeedsRedraw = true;
+        m_nNeedsRedraw |= REDRAW_MEMORY;
     }
 }
 
@@ -267,16 +267,11 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
         UpdateHighlight(ra::to_unsigned(args.tNewValue), nBytes, 0);
         m_nSelectedNibble = 0;
 
-        if (m_pSurface != nullptr)
-        {
-            RenderAddresses();
-            RenderHeader();
-        }
+        m_nNeedsRedraw |= REDRAW_ADDRESSES | REDRAW_HEADERS;
     }
     else if (args.Property == FirstAddressProperty)
     {
-        if (m_pSurface != nullptr)
-            RenderAddresses();
+        m_nNeedsRedraw |= REDRAW_ADDRESSES;
 
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
         pEmulatorContext.ReadMemory(args.tNewValue, m_pMemory, GetNumVisibleLines() * 16);
@@ -294,7 +289,7 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
             m_pColor[i] |= STALE_COLOR;
 
         m_pSurface.reset();
-        m_bNeedsRedraw = true;
+        m_nNeedsRedraw = REDRAW_ALL;
     }
     else if (args.Property == NumVisibleLinesProperty)
     {
@@ -309,7 +304,7 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
         }
 
         m_pSurface.reset();
-        m_bNeedsRedraw = true;
+        m_nNeedsRedraw = REDRAW_ALL;
     }
 }
 
@@ -497,8 +492,7 @@ void MemoryViewerViewModel::RetreatCursorPage()
 
 void MemoryViewerViewModel::OnActiveGameChanged()
 {
-    if (m_pSurface != nullptr)
-        RenderAddresses();
+    m_nNeedsRedraw |= REDRAW_ADDRESSES;
 
     UpdateColors();
 
@@ -524,7 +518,7 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
     if ((m_pColor[nOffset] & 0x0F) != ra::etoi(nNewColor))
     {
         m_pColor[nOffset] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(nNewColor));
-        m_bNeedsRedraw = true;
+        m_nNeedsRedraw |= REDRAW_MEMORY;
     }
 }
 
@@ -550,8 +544,7 @@ void MemoryViewerViewModel::OnTotalMemorySizeChanged()
             SetFirstAddress(nMaxFirstAddress);
     }
 
-    if (m_pSurface != nullptr)
-        RenderAddresses();
+    m_nNeedsRedraw |= REDRAW_ADDRESSES | REDRAW_MEMORY;
 }
 
 void MemoryViewerViewModel::OnByteWritten(ra::ByteAddress nAddress, uint8_t nValue)
@@ -566,7 +559,7 @@ void MemoryViewerViewModel::OnByteWritten(ra::ByteAddress nAddress, uint8_t nVal
     {
         m_pMemory[nAddress - nFirstAddress] = nValue;
         m_pColor[nAddress - nFirstAddress] |= STALE_COLOR;
-        m_bNeedsRedraw = true;
+        m_nNeedsRedraw |= REDRAW_MEMORY;
     }
 }
 
@@ -597,7 +590,7 @@ void MemoryViewerViewModel::UpdateColor(ra::ByteAddress nAddress)
         if (nNewColor != nColor)
         {
             m_pColor[nAddress - nFirstAddress] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(nNewColor));
-            m_bNeedsRedraw = true;
+            m_nNeedsRedraw |= REDRAW_MEMORY;
         }
     }
 }
@@ -630,7 +623,8 @@ void MemoryViewerViewModel::OnClick(int nX, int nY)
             m_nSelectedNibble = nNewNibble;
             for (int i = 0; i < nBytesPerWord; ++i)
                 m_pColor[nNewAddress - nFirstAddress + i] |= STALE_COLOR;
-            m_bNeedsRedraw = true;
+
+            m_nNeedsRedraw |= REDRAW_MEMORY;
         }
     }
 }
@@ -695,7 +689,7 @@ bool MemoryViewerViewModel::OnChar(char c)
 
     m_pMemory[nIndex] = nByte;
     m_pColor[nIndex] |= STALE_COLOR;
-    m_bNeedsRedraw = true;
+    m_nNeedsRedraw |= REDRAW_MEMORY;
 
     const auto nAddress = GetFirstAddress() + nIndex;
 
@@ -740,7 +734,7 @@ void MemoryViewerViewModel::DoFrame()
         {
             m_pMemory[nIndex] = pMemory[nIndex];
             m_pColor[nIndex] |= STALE_COLOR;
-            m_bNeedsRedraw = true;
+            m_nNeedsRedraw |= REDRAW_MEMORY;
         }
     }
 }
@@ -793,12 +787,11 @@ void MemoryViewerViewModel::BuildFontSurface()
 
 void MemoryViewerViewModel::UpdateRenderImage()
 {
-    if (!m_bNeedsRedraw)
+    if (m_nNeedsRedraw == 0)
         return;
 
-    m_bNeedsRedraw = false;
-
-    auto nVisibleLines = GetNumVisibleLines();
+    int nNeedsRedraw = m_nNeedsRedraw;
+    m_nNeedsRedraw = 0;
 
     if (m_pSurface == nullptr)
     {
@@ -806,19 +799,30 @@ void MemoryViewerViewModel::UpdateRenderImage()
             BuildFontSurface();
 
         const int nWidth = (16 * 3 + 1 + 8) * m_szChar.Width;
-        const int nHeight = (nVisibleLines + 1) * m_szChar.Height;
-
+        const int nHeight = (GetNumVisibleLines() + 1) * m_szChar.Height;
         m_pSurface = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>().CreateSurface(nWidth, nHeight);
+
+        // background
         m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), ra::ui::Color(0xFFFFFFFF));
 
-        RenderAddresses();
-
+        // separator
         m_pSurface->FillRectangle(9 * m_szChar.Width, m_szChar.Height, 1, nHeight, ra::ui::Color(0xFFC0C0C0));
 
-        RenderHeader();
+        nNeedsRedraw = REDRAW_ALL;
     }
 
+    if (nNeedsRedraw & REDRAW_ADDRESSES)
+        RenderAddresses();
+    if (nNeedsRedraw & REDRAW_HEADERS)
+        RenderHeader();
+    if (nNeedsRedraw & REDRAW_MEMORY)
+        RenderMemory();
+}
+
+void MemoryViewerViewModel::RenderMemory()
+{
     const auto nFirstAddress = GetFirstAddress();
+    auto nVisibleLines = GetNumVisibleLines();
     if (nFirstAddress + nVisibleLines * 16 > m_nTotalMemorySize)
         nVisibleLines = (m_nTotalMemorySize - nFirstAddress) / 16;
 

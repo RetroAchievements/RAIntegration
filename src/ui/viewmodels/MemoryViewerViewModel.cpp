@@ -233,7 +233,9 @@ void MemoryViewerViewModel::SetFirstAddress(ra::ByteAddress value)
         const auto nVisibleLines = GetNumVisibleLines();
         const auto nMaxFirstAddress = ra::to_signed((m_nTotalMemorySize + 15) & ~0x0F) - (nVisibleLines * 16);
 
-        if (nSignedValue > nMaxFirstAddress)
+        if (nMaxFirstAddress < 0)
+            nSignedValue = 0;
+        else if (nSignedValue > nMaxFirstAddress)
             nSignedValue = nMaxFirstAddress;
         else
             nSignedValue &= ~0x0F;
@@ -531,11 +533,22 @@ void MemoryViewerViewModel::OnTotalMemorySizeChanged()
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
     m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
+    if (GetAddress() >= m_nTotalMemorySize)
+        SetAddress(m_nTotalMemorySize - 1);
+
     const auto nVisibleLines = GetNumVisibleLines();
-    const auto nMaxFirstAddress = m_nTotalMemorySize - nVisibleLines * 16;
-    const auto nFirstAddress = GetFirstAddress();
-    if (nFirstAddress > nMaxFirstAddress)
-        SetFirstAddress(nMaxFirstAddress);
+    if (m_nTotalMemorySize < ra::to_unsigned(nVisibleLines * 16))
+    {
+        SetFirstAddress(0);
+    }
+    else
+    {
+        // we don't expect to hit this code - memory should only shrink when calling ClearMemoryBanks()
+        // but there are unit tests for it just in case
+        const auto nMaxFirstAddress = m_nTotalMemorySize - nVisibleLines * 16;
+        if (GetFirstAddress() > nMaxFirstAddress)
+            SetFirstAddress(nMaxFirstAddress);
+    }
 
     if (m_pSurface != nullptr)
         RenderAddresses();

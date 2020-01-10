@@ -1534,6 +1534,44 @@ public:
         Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
         Assert::AreEqual({ 0x27U }, viewer.GetByte(7U));
     }
+
+    TEST_METHOD(TestTotalMemorySizeChanged)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetFirstAddress(128);
+        viewer.SetAddress(160);
+
+        // growth - no change necessary
+        viewer.mockEmulatorContext.MockTotalMemorySizeChanged(256);
+        Assert::AreEqual({ 128U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 160U }, viewer.GetAddress());
+
+        // shrink above max viewable address - no change necessary
+        viewer.mockEmulatorContext.MockTotalMemorySizeChanged(384);
+        Assert::AreEqual({ 128U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 160U }, viewer.GetAddress());
+
+        // shrink below max viewable address, but above current address, first address should change
+        viewer.mockEmulatorContext.MockTotalMemorySizeChanged(192);
+        Assert::AreEqual({ 64U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 160U }, viewer.GetAddress());
+
+        // shrink below current address (and max viewable address), both addresses should change
+        viewer.mockEmulatorContext.MockTotalMemorySizeChanged(144);
+        Assert::AreEqual({ 16U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 143U }, viewer.GetAddress()); // last visible byte
+
+        // shrink below visiblelines, both addresses should change to 0
+        viewer.mockEmulatorContext.MockTotalMemorySizeChanged(96);
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 95U }, viewer.GetAddress());
+
+        // shrink to 0
+        viewer.mockEmulatorContext.ClearMemoryBlocks();
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+    }
 };
 
 } // namespace tests

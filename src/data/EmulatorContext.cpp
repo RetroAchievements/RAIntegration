@@ -183,6 +183,7 @@ bool EmulatorContext::ValidateClientVersion()
     if (m_nEmulatorId == EmulatorID::UnknownEmulator)
         return true;
 
+    unsigned long long nMinimumVersion = 0;
     if (m_sLatestVersion.empty())
     {
         ra::api::LatestClient::Request request;
@@ -206,6 +207,7 @@ bool EmulatorContext::ValidateClientVersion()
         else
         {
             m_sLatestVersion = response.LatestVersion;
+            nMinimumVersion = ParseVersion(response.MinimumVersion.c_str());
 
             const unsigned long long nServerVersion = ParseVersion(m_sLatestVersion.c_str());
             const unsigned long long nLocalVersion = ParseVersion(m_sVersion.c_str());
@@ -274,10 +276,10 @@ bool EmulatorContext::ValidateClientVersion()
 
     std::wstring sMessage;
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+    if (nLocalVersion < nMinimumVersion && pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-        vmMessageBox.SetHeader(L"The latest client is required for hardcore mode.");
+        vmMessageBox.SetHeader(L"A newer client is required for hardcore mode.");
         vmMessageBox.SetMessage(ra::StringPrintf(
             L"A new version of %s is available to download at %s.\n\n- Current version: %s\n- New version: %s\n\n"
             L"Press OK to logout and download the new version, or Cancel to disable hardcore mode and proceed.",

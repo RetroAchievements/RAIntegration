@@ -41,15 +41,21 @@ private:
         {
         }
 
-        void MockVersions(const std::string& sClientVersion, const std::string& sServerVersion)
+        void MockVersions(const std::string& sClientVersion, const std::string& sServerVersion, const std::string& sMinimumVersion)
         {
             SetClientVersion(sClientVersion);
-            mockServer.HandleRequest<ra::api::LatestClient>([sServerVersion](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
+            mockServer.HandleRequest<ra::api::LatestClient>([sServerVersion, sMinimumVersion](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
             {
                 response.LatestVersion = sServerVersion;
+                response.MinimumVersion = sMinimumVersion;
                 response.Result = ra::api::ApiResult::Success;
                 return true;
             });
+        }
+
+        void MockVersions(const std::string& sClientVersion, const std::string& sServerVersion)
+        {
+            MockVersions(sClientVersion, sServerVersion, sServerVersion);
         }
     };
 
@@ -87,6 +93,12 @@ public:
 
         emulator.Initialize(EmulatorID::RA_VisualboyAdvance);
         Assert::AreEqual(std::string("RAVisualBoyAdvance"), emulator.GetClientName());
+
+        emulator.Initialize(EmulatorID::RA_AppleWin);
+        Assert::AreEqual(std::string("RAppleWin"), emulator.GetClientName());
+
+        emulator.Initialize(EmulatorID::RA_Oricutron);
+        Assert::AreEqual(std::string("RAOricutron"), emulator.GetClientName());
     }
 
     TEST_METHOD(TestValidateClientVersionCurrent)
@@ -280,7 +292,7 @@ public:
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::Cancel;
         });
@@ -300,7 +312,7 @@ public:
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
@@ -309,6 +321,97 @@ public:
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
         Assert::AreEqual(std::string("http://host/download.php"), emulator.mockDesktop.LastOpenedUrl());
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestValidateClientVersionAboveMinimumHardcoreProceed)
+    {
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.mockConfiguration.SetHostName("host");
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        emulator.MockVersions("0.57.0.0", "0.58.0.0", "0.56.0.0");
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Would you like to update?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58"), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::No;
+        });
+
+        Assert::IsTrue(emulator.ValidateClientVersion());
+        Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+        Assert::AreEqual(std::string(), emulator.mockDesktop.LastOpenedUrl());
+        Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestValidateClientVersionAboveMinimumHardcoreAcknowledge)
+    {
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.mockConfiguration.SetHostName("host");
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        emulator.MockVersions("0.57.0.0", "0.58.0.0", "0.56.0.0");
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Would you like to update?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58"), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::Yes;
+        });
+
+        Assert::IsTrue(emulator.ValidateClientVersion());
+        Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+        Assert::AreEqual(std::string("http://host/download.php"), emulator.mockDesktop.LastOpenedUrl());
+        Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestValidateClientVersionAtMinimumHardcoreProceed)
+    {
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.mockConfiguration.SetHostName("host");
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        emulator.MockVersions("0.57.0.0", "0.58.0.0", "0.57.0.0");
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Would you like to update?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58"), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::No;
+        });
+
+        Assert::IsTrue(emulator.ValidateClientVersion());
+        Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+        Assert::AreEqual(std::string(), emulator.mockDesktop.LastOpenedUrl());
+        Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+
+    TEST_METHOD(TestValidateClientVersionBelowMinimumHardcoreAcknowledge)
+    {
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.mockConfiguration.SetHostName("host");
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        emulator.MockVersions("0.56.0.0", "0.58.0.0", "0.57.0.0");
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.56\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+
+        Assert::IsFalse(emulator.ValidateClientVersion());
+        Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+        Assert::AreEqual(std::string("http://host/download.php"), emulator.mockDesktop.LastOpenedUrl());
+        Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestValidateClientVersionCurrentAboveMinimum)
+    {
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.MockVersions("0.56", "0.56", "0.55");
+
+        Assert::IsTrue(emulator.ValidateClientVersion());
+        Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
     }
 
     TEST_METHOD(TestValidateClientVersionTo1_0)
@@ -321,7 +424,7 @@ public:
         emulator.MockVersions("0.57.0.0", "1.0.0.0");
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 1.0\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::Cancel;
         });
@@ -340,7 +443,7 @@ public:
         emulator.MockVersions("1.0.0.0", "1.0.1.0");
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 1.0\n- New version: 1.0.1\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::Cancel;
         });
@@ -580,7 +683,7 @@ public:
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
@@ -609,7 +712,7 @@ public:
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::Cancel;
         });
@@ -678,7 +781,7 @@ public:
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"The latest client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });

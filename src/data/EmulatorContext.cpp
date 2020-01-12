@@ -493,6 +493,7 @@ uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const noexcept
     return 0U;
 }
 
+_Use_decl_annotations_
 void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
 {
     Expects(pBuffer != nullptr);
@@ -591,7 +592,7 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) co
     }
 }
 
-void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const noexcept
+void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const
 {
     for (const auto& pBlock : m_vMemoryBlocks)
     {
@@ -615,7 +616,7 @@ void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) 
     }
 }
 
-void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const noexcept
+void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const
 {
     switch (nSize)
     {

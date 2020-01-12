@@ -22,7 +22,7 @@ class MemoryViewerViewModel : public ViewModelBase,
                               protected ra::data::EmulatorContext::NotifyTarget
 {
 public:
-    MemoryViewerViewModel() noexcept;
+    GSL_SUPPRESS_F6 MemoryViewerViewModel();
     ~MemoryViewerViewModel();
 
     MemoryViewerViewModel(const MemoryViewerViewModel&) noexcept = delete;
@@ -32,7 +32,7 @@ public:
 
     void DoFrame();
 
-    bool NeedsRedraw() const { return (m_nNeedsRedraw != 0); }
+    bool NeedsRedraw() const noexcept { return (m_nNeedsRedraw != 0); }
 
     void UpdateRenderImage();
 

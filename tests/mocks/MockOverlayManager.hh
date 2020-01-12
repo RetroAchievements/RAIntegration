@@ -18,7 +18,7 @@ public:
     {
     }
 
-    void ClearPopups() override
+    void ClearPopups() noexcept override
     {
         // base implementation only queues the popups to be destroyed
 

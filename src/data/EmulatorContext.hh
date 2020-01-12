@@ -168,7 +168,7 @@ public:
     /// <summary>
     /// Clears all registered memory blocks so they can be rebuilt.
     /// </summary>
-    void ClearMemoryBlocks() noexcept
+    void ClearMemoryBlocks()
     {
         m_vMemoryBlocks.clear();
 
@@ -197,17 +197,17 @@ public:
     /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
-    void ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const;
+    void ReadMemory(ra::ByteAddress nAddress, _Out_writes_(nCount) uint8_t pBuffer[], size_t nCount) const;
 
     /// <summary>
     /// Writes memory to the emulator.
     /// </summary>
-    void WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const noexcept;
+    void WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const;
 
     /// <summary>
     /// Writes memory to the emulator.
     /// </summary>
-    void WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const noexcept;
+    void WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const;
 
     /// <summary>
     /// Gets whether or not memory has been modified.

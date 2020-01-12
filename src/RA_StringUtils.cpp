@@ -76,7 +76,7 @@ std::string Narrow(const std::string& str)
 }
 
 _Use_decl_annotations_
-std::string& TrimLineEnding(std::string& str)
+std::string& TrimLineEnding(std::string& str) noexcept
 {
     if (!str.empty())
     {

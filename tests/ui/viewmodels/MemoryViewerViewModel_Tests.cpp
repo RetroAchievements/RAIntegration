@@ -32,14 +32,14 @@ private:
         ra::data::mocks::MockGameContext mockGameContext;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-        MemoryViewerViewModelHarness() : MemoryViewerViewModel()
+        GSL_SUPPRESS_F6 MemoryViewerViewModelHarness() : MemoryViewerViewModel()
         {
             InitializeNotifyTargets();
         }
 
-        int GetSelectedNibble() const { return m_nSelectedNibble; }
+        int GetSelectedNibble() const noexcept { return m_nSelectedNibble; }
 
-        size_t GetTotalMemorySize() const { return m_nTotalMemorySize; }
+        size_t GetTotalMemorySize() const noexcept { return m_nTotalMemorySize; }
 
         unsigned char GetByte(ra::ByteAddress nAddress) const
         {
@@ -51,8 +51,8 @@ private:
             return gsl::narrow_cast<unsigned char>(ra::itoe<TextColor>(m_pColor[nAddress - GetFirstAddress()]));
         }
 
-        bool IsReadOnly() const { return m_bReadOnly; }
-        void SetReadOnly(bool value) { m_bReadOnly = value;  }
+        bool IsReadOnly() const noexcept { return m_bReadOnly; }
+        void SetReadOnly(bool value) noexcept { m_bReadOnly = value;  }
 
         void InitializeMemory(size_t nSize)
         {
@@ -66,7 +66,7 @@ private:
             DoFrame(); // populates m_pMemory and m_pColor
         }
 
-        void MockRender()
+        void MockRender() noexcept
         {
             for (size_t i = 0; i < m_nTotalMemorySize; ++i)
                 m_pColor[i] &= 0x0F;

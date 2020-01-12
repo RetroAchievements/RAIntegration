@@ -32,8 +32,13 @@ public:
 
     ~MemoryBookmarkMonitor()
     {
-        m_vBookmarks.RemoveNotifyTarget(*this);
+        GSL_SUPPRESS_F6 m_vBookmarks.RemoveNotifyTarget(*this);
     }
+
+    MemoryBookmarkMonitor(const MemoryBookmarkMonitor&) noexcept = delete;
+    MemoryBookmarkMonitor& operator=(const MemoryBookmarkMonitor&) noexcept = delete;
+    MemoryBookmarkMonitor(MemoryBookmarkMonitor&&) noexcept = delete;
+    MemoryBookmarkMonitor& operator=(MemoryBookmarkMonitor&&) noexcept = delete;
 
 protected:
     void OnEndViewModelCollectionUpdate() override
@@ -78,7 +83,7 @@ private:
     MemoryViewerViewModel& m_pOwner;
 };
 
-MemoryViewerViewModel::MemoryViewerViewModel() noexcept
+MemoryViewerViewModel::MemoryViewerViewModel()
 {
     m_pBuffer.reset(new uint8_t[MaxLines * 16 * 2]);
 
@@ -642,7 +647,7 @@ bool MemoryViewerViewModel::OnChar(char c)
     if (m_nTotalMemorySize == 0 || m_bReadOnly)
         return false;
 
-    uint8_t value;
+    uint8_t value = 0;
     switch (c)
     {
         case '0': value = 0; break;
@@ -719,11 +724,16 @@ void MemoryViewerViewModel::OnLostFocus()
     UpdateHighlight(GetAddress(), NibblesPerWord() / 2, 0);
 }
 
+#pragma warning(push)
+#pragma warning(disable : 26446) // pMemory[] is unchecked   (nVisibleLines assertion enforces range)
+#pragma warning(disable : 26494) // pMemory is uninitialized (initialized by ReadMemory)
+
 void MemoryViewerViewModel::DoFrame()
 {
     uint8_t pMemory[MaxLines * 16];
     const auto nAddress = GetFirstAddress();
     const auto nVisibleLines = GetNumVisibleLines();
+    Expects(nVisibleLines < MaxLines);
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
     pEmulatorContext.ReadMemory(nAddress, pMemory, nVisibleLines * 16);
@@ -738,6 +748,8 @@ void MemoryViewerViewModel::DoFrame()
         }
     }
 }
+
+#pragma warning(pop)
 
 // ====== Render ==============================================================
 
@@ -764,7 +776,7 @@ void MemoryViewerViewModel::BuildFontSurface()
     ra::ui::Color nColor(0);
     for (int i = 0; i < ra::etoi(TextColor::NumColors); ++i)
     {
-        switch ((TextColor)i)
+        switch (ra::itoe<TextColor>(i))
         {
             case TextColor::Black:  nColor.ARGB = 0xFF000000; break;
             case TextColor::Blue:   nColor.ARGB = 0xFF0000FF; break;
@@ -776,7 +788,7 @@ void MemoryViewerViewModel::BuildFontSurface()
 
         for (int j = 0; j < 16; ++j)
         {
-            sHexChar[0] = g_sHexChars.at(j);
+            sHexChar.at(0) = g_sHexChars.at(j);
             m_pFontSurface->WriteText(j * m_szChar.Width, i * m_szChar.Height - 1, m_nFont, nColor, sHexChar);
         }
     }
@@ -879,7 +891,7 @@ void MemoryViewerViewModel::RenderMemory()
 
 void MemoryViewerViewModel::WriteChar(int nX, int nY, TextColor nColor, int hexChar)
 {
-    m_pSurface->DrawSurface(nX, nY, *m_pFontSurface, hexChar * m_szChar.Width, (int)nColor * m_szChar.Height, m_szChar.Width, m_szChar.Height);
+    m_pSurface->DrawSurface(nX, nY, *m_pFontSurface, hexChar * m_szChar.Width, ra::etoi(nColor) * m_szChar.Height, m_szChar.Width, m_szChar.Height);
 }
 
 void MemoryViewerViewModel::RenderAddresses()
@@ -917,7 +929,7 @@ void MemoryViewerViewModel::RenderHeader()
     for (int i = 0; i < 16; i += nNibblesPerWord / 2)
     {
         const auto nColor = (nCursorAddress == i) ? ra::ui::Color(0xFFFF8080) : ra::ui::Color(0xFF808080);
-        sValue[nNibblesPerWord - 1] = g_sHexChars.at(i);
+        sValue.at(nNibblesPerWord - 1) = g_sHexChars.at(i);
         m_pSurface->WriteText(nX, -2, m_nFont, nColor, sValue);
         nX += m_szChar.Width * (nNibblesPerWord + 1);
     }

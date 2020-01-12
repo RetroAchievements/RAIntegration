@@ -24,7 +24,7 @@ _NODISCARD std::string Narrow(_In_ const std::string& wstr);
 /// Removes one "\r", "\n", or "\r\n" from the end of a string.
 /// </summary>
 /// <returns>Reference to <paramref name="str" /> for chaining.</returns>
-std::string& TrimLineEnding(_Inout_ std::string& str);
+std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
 
 /// <summary>
 /// Removes all whitespace characters from the front and back of a string.

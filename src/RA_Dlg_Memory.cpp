@@ -163,7 +163,20 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
             }
             else
             {
-                g_pMemoryViewer->SetAddress(g_pMemoryViewer->GetAddress() | 0x0F);
+                switch (g_pMemoryViewer->GetSize())
+                {
+                    case MemSize::ThirtyTwoBit:
+                        g_pMemoryViewer->SetAddress((g_pMemoryViewer->GetAddress() & ~0x0F) | 0x0C);
+                        break;
+
+                    case MemSize::SixteenBit:
+                        g_pMemoryViewer->SetAddress((g_pMemoryViewer->GetAddress() & ~0x0F) | 0x0E);
+                        break;
+
+                    default:
+                        g_pMemoryViewer->SetAddress(g_pMemoryViewer->GetAddress() | 0x0F);
+                        break;
+                }
             }
             return true;
     }

@@ -32,6 +32,7 @@ _CONSTANT_VAR MIN_SEARCH_PAGE_SIZE = 50U;
 
 static std::unique_ptr<ra::ui::viewmodels::MemoryViewerViewModel> g_pMemoryViewer;
 constexpr int MEMVIEW_MARGIN = 4;
+static bool g_bSuppressMemoryViewerInvalidate = false;
 
 Dlg_Memory g_MemoryDialog;
 
@@ -43,9 +44,7 @@ unsigned int m_nPage = 0;
 // Dialog Resizing
 std::vector<ResizeContent> vDlgMemoryResize;
 POINT pDlgMemoryMin;
-int nDlgMemoryMinX;
-int nDlgMemoryMinY;
-int nDlgMemViewerGapY;
+
 
 LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -67,9 +66,15 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
 
         case WM_MOUSEWHEEL:
             if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
+            {
                 g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() - 32);
+                Invalidate();
+            }
             else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0)
+            {
                 g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() + 32);
+                Invalidate();
+            }
             return FALSE;
 
         case WM_LBUTTONUP:
@@ -101,6 +106,10 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
 {
     const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
     const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
+    bool bHandled = false;
+
+    // multiple properties may change while navigating, we'll do a single Invalidate after we're done
+    g_bSuppressMemoryViewerInvalidate = true;
 
     switch (nChar)
     {
@@ -109,36 +118,42 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
                 g_pMemoryViewer->AdvanceCursorWord();
             else
                 g_pMemoryViewer->AdvanceCursor();
-            return true;
+            bHandled = true;
+            break;
 
         case VK_LEFT:
             if (bShiftHeld || bControlHeld)
                 g_pMemoryViewer->RetreatCursorWord();
             else
                 g_pMemoryViewer->RetreatCursor();
-            return true;
+            bHandled = true;
+            break;
 
         case VK_DOWN:
             if (bControlHeld)
                 g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() + 0x10);
             else
                 g_pMemoryViewer->AdvanceCursorLine();
-            return true;
+            bHandled = true;
+            break;
 
         case VK_UP:
             if (bControlHeld)
                 g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() - 0x10);
             else
                 g_pMemoryViewer->RetreatCursorLine();
-            return true;
+            bHandled = true;
+            break;
 
         case VK_PRIOR: // Page up (!)
             g_pMemoryViewer->RetreatCursorPage();
-            return true;
+            bHandled = true;
+            break;
 
         case VK_NEXT: // Page down (!)
             g_pMemoryViewer->AdvanceCursorPage();
-            return true;
+            bHandled = true;
+            break;
 
         case VK_HOME:
             if (bControlHeld)
@@ -150,7 +165,8 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
             {
                 g_pMemoryViewer->SetAddress(g_pMemoryViewer->GetAddress() & ~0x0F);
             }
-            return true;
+            bHandled = true;
+            break;
 
         case VK_END:
             if (bControlHeld)
@@ -178,28 +194,69 @@ bool MemoryViewerControl::OnKeyDown(UINT nChar)
                         break;
                 }
             }
-            return true;
+            bHandled = true;
+            break;
     }
 
-    return false;
+    g_bSuppressMemoryViewerInvalidate = false;
+
+    if (bHandled)
+        Invalidate();
+
+    return bHandled;
 }
 
 bool MemoryViewerControl::OnEditInput(UINT c)
 {
-    return g_pMemoryViewer->OnChar(gsl::narrow_cast<char>(c));
+    // multiple properties may change while typing, we'll do a single Invalidate after we're done
+    g_bSuppressMemoryViewerInvalidate = true;
+    const bool bResult = g_pMemoryViewer->OnChar(gsl::narrow_cast<char>(c));
+    g_bSuppressMemoryViewerInvalidate = false;
+
+    if (bResult)
+        Invalidate();
+
+    return bResult;
 }
 
 void MemoryViewerControl::OnClick(POINT point)
 {
+    // multiple properties may change while typing, we'll do a single Invalidate after we're done
+    g_bSuppressMemoryViewerInvalidate = true;
     g_pMemoryViewer->OnClick(point.x, point.y);
+    g_bSuppressMemoryViewerInvalidate = false;
 
     HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
     SetFocus(hOurDlg);
+
+    Invalidate();
 }
 
 MemSize MemoryViewerControl::GetDataSize()
 {
     return g_pMemoryViewer->GetSize();
+}
+
+void MemoryViewerControl::Invalidate()
+{
+    if (g_pMemoryViewer->NeedsRedraw() && !g_bSuppressMemoryViewerInvalidate)
+    {
+        HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
+
+        InvalidateRect(hOurDlg, nullptr, FALSE);
+
+        // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
+        // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
+        // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
+        // Similar code exists in Dlg_Memory::Invalidate for the search results
+        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+        {
+            case RA_Libretro:
+            case RA_Oricutron:
+                UpdateWindow(hOurDlg);
+                break;
+        }
+    }
 }
 
 void MemoryViewerControl::RenderMemViewer(HWND hTarget)
@@ -625,7 +682,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         nVal ^= (1 << nBit);
                         pEmulatorContext.WriteMemoryByte(nAddr, nVal);
 
-                        InvalidateMemoryViewer();
+                        MemoryViewerControl::Invalidate();
 
                         UpdateBits();
                     }
@@ -1345,7 +1402,7 @@ void Dlg_Memory::Invalidate()
     if (g_pMemoryViewer != nullptr)
     {
         g_pMemoryViewer->DoFrame();
-        InvalidateMemoryViewer();
+        MemoryViewerControl::Invalidate();
     }
 
     UpdateBits();
@@ -1361,27 +1418,6 @@ void Dlg_Memory::Invalidate()
             case RA_Libretro:
             case RA_Oricutron:
                 UpdateWindow(hList);
-                break;
-        }
-    }
-}
-
-void Dlg_Memory::InvalidateMemoryViewer()
-{
-    if (g_pMemoryViewer->NeedsRedraw())
-    {
-        HWND hMemViewer = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
-        InvalidateRect(hMemViewer, nullptr, FALSE);
-
-        // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
-        // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
-        // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
-        // Similar code exists in Dlg_Memory::Invalidate for the search results
-        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
-        {
-            case RA_Libretro:
-            case RA_Oricutron:
-                UpdateWindow(hMemViewer);
                 break;
         }
     }

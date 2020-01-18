@@ -19,6 +19,8 @@ public:
     static bool OnKeyDown(UINT nChar);
     static bool OnEditInput(UINT c);
 
+    static void Invalidate();
+
     static MemSize GetDataSize();
 };
 
@@ -76,8 +78,6 @@ private:
 
     static void UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal, std::wstring& sBuffer);
     bool CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal);
-
-    void InvalidateMemoryViewer();
 
     static HWND m_hWnd;
 

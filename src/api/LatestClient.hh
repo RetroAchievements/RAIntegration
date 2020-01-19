@@ -15,6 +15,7 @@ public:
     struct Response : ApiResponseBase
     {
         std::string LatestVersion;
+        std::string MinimumVersion;
     };
 
     struct Request : ApiRequestBase

@@ -933,6 +933,9 @@ LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request
     {
         response.Result = ApiResult::Success;
         GetRequiredJsonField(response.LatestVersion, document, "LatestVersion", response);
+        GetOptionalJsonField(response.MinimumVersion, document, "MinimumVersion");
+        if (response.MinimumVersion.empty())
+            response.MinimumVersion = response.LatestVersion;
     }
 
     return response;

@@ -466,6 +466,19 @@ void EmulatorContext::AddMemoryBlock(gsl::index nIndex, size_t nBytes,
         pBlock.write = pWriter;
 
         m_nTotalMemorySize += nBytes;
+
+        OnTotalMemorySizeChanged();
+    }
+}
+
+void EmulatorContext::OnTotalMemorySizeChanged()
+{
+    // create a copy of the list of pointers in case it's modified by one of the callbacks
+    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+    for (NotifyTarget* target : vNotifyTargets)
+    {
+        Expects(target != nullptr);
+        target->OnTotalMemorySizeChanged();
     }
 }
 
@@ -482,6 +495,7 @@ uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const noexcept
     return 0U;
 }
 
+_Use_decl_annotations_
 void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
 {
     Expects(pBuffer != nullptr);
@@ -580,7 +594,7 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) co
     }
 }
 
-void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const noexcept
+void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const
 {
     for (const auto& pBlock : m_vMemoryBlocks)
     {
@@ -588,6 +602,15 @@ void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) 
         {
             pBlock.write(nAddress, nValue);
             m_bMemoryModified = true;
+
+            // create a copy of the list of pointers in case it's modified by one of the callbacks
+            NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+            for (NotifyTarget* target : vNotifyTargets)
+            {
+                Expects(target != nullptr);
+                target->OnByteWritten(nAddress, nValue);
+            }
+
             return;
         }
 
@@ -595,7 +618,7 @@ void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) 
     }
 }
 
-void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const noexcept
+void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const
 {
     switch (nSize)
     {

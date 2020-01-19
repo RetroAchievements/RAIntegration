@@ -296,6 +296,7 @@
     <ClCompile Include="..\src\ui\viewmodels\FileDialogViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MemoryBookmarksViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\MemoryViewerViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayFriendsPageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
@@ -347,6 +348,7 @@
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\MemoryBookmarksViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\MemoryViewerViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayFriendsPageViewModel_Tests.cpp" />

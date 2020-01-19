@@ -66,6 +66,12 @@ public:
         m_bMemoryModified = bModified;
     }
 
+    void MockTotalMemorySizeChanged(size_t nNewSize)
+    {
+        m_nTotalMemorySize = nNewSize;
+        OnTotalMemorySizeChanged();
+    }
+
 private:
     static uint8_t ReadMemoryHelper(uint32_t nAddress) noexcept
     {

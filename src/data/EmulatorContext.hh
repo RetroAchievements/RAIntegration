@@ -15,7 +15,7 @@ namespace data {
 class EmulatorContext
 {
 public:
-    EmulatorContext() noexcept = default;
+    GSL_SUPPRESS_F6 EmulatorContext() = default;
     virtual ~EmulatorContext() noexcept = default;
     EmulatorContext(const EmulatorContext&) noexcept = delete;
     EmulatorContext& operator=(const EmulatorContext&) noexcept = delete;
@@ -168,10 +168,15 @@ public:
     /// <summary>
     /// Clears all registered memory blocks so they can be rebuilt.
     /// </summary>
-    void ClearMemoryBlocks() noexcept
+    void ClearMemoryBlocks()
     {
         m_vMemoryBlocks.clear();
-        m_nTotalMemorySize = 0U;
+
+        if (m_nTotalMemorySize != 0U)
+        {
+            m_nTotalMemorySize = 0U;
+            OnTotalMemorySizeChanged();
+        }
     }
 
     /// <summary>
@@ -192,17 +197,17 @@ public:
     /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
-    void ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const;
+    void ReadMemory(ra::ByteAddress nAddress, _Out_writes_(nCount) uint8_t pBuffer[], size_t nCount) const;
 
     /// <summary>
     /// Writes memory to the emulator.
     /// </summary>
-    void WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const noexcept;
+    void WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const;
 
     /// <summary>
     /// Writes memory to the emulator.
     /// </summary>
-    void WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const noexcept;
+    void WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const;
 
     /// <summary>
     /// Gets whether or not memory has been modified.
@@ -219,8 +224,30 @@ public:
     /// </summary>
     void ResetMemoryModified() noexcept { m_bMemoryModified = false; }
 
+    class NotifyTarget
+    {
+    public:
+        NotifyTarget() noexcept = default;
+        virtual ~NotifyTarget() noexcept = default;
+        NotifyTarget(const NotifyTarget&) noexcept = delete;
+        NotifyTarget& operator=(const NotifyTarget&) noexcept = delete;
+        NotifyTarget(NotifyTarget&&) noexcept = default;
+        NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
+
+        virtual void OnTotalMemorySizeChanged() noexcept(false) {}
+        virtual void OnByteWritten(ra::ByteAddress, uint8_t) noexcept(false) {}
+    };
+
+    void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
+    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget); }
+
+private:
+    using NotifyTargetSet = std::set<NotifyTarget*>;
+    NotifyTargetSet m_vNotifyTargets;
+
 protected:
     void UpdateUserAgent();
+    void OnTotalMemorySizeChanged();
 
     EmulatorID m_nEmulatorId = EmulatorID::UnknownEmulator;
     std::string m_sVersion;

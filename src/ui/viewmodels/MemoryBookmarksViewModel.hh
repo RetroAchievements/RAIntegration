@@ -230,6 +230,11 @@ public:
     bool HasBookmark(ra::ByteAddress nAddress) const;
 
     /// <summary>
+    /// Determines if a bookmark that is frozen exists for the specified address.
+    /// </summary>
+    bool HasFrozenBookmark(ra::ByteAddress nAddress) const;
+
+    /// <summary>
     /// Tells the control that the user has modified memory and any associated bookmarks should be updated
     /// </summary>
     void OnEditMemory(ra::ByteAddress nAddress);
@@ -304,8 +309,6 @@ protected:
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
-    void OnViewModelAdded([[maybe_unused]] gsl::index nIndex) override;
-    void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) override;
 
     // ra::data::GameContext::NotifyTarget
     void OnActiveGameChanged() override;

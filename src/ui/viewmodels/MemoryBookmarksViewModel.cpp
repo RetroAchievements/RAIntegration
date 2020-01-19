@@ -4,10 +4,6 @@
 #include "RA_Json.h"
 #include "RA_StringUtils.h"
 
-#ifndef RA_UTEST
-#include "RA_Dlg_Memory.h"
-#endif
-
 #include "data\EmulatorContext.hh"
 
 #include "services\IConfiguration.hh"
@@ -89,11 +85,6 @@ void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index nIndex, con
                     MemoryBookmarkViewModel::RowColorProperty.GetDefaultValue());
                 break;
         }
-
-#ifndef RA_UTEST
-        // force memory view to repaint - different behaviors appear as different colors
-        MemoryViewerControl::Invalidate();
-#endif
     }
     else if (args.Property == MemoryBookmarkViewModel::CurrentValueProperty)
     {
@@ -119,31 +110,8 @@ void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index nIndex, con
                         break;
                 }
             }
-
-#ifndef RA_UTEST
-            // force memory view to repaint - important if the edited memory was on screen
-            MemoryViewerControl::Invalidate();
-#endif
         }
     }
-}
-
-GSL_SUPPRESS_F6
-void MemoryBookmarksViewModel::OnViewModelAdded(gsl::index)
-{
-#ifndef RA_UTEST
-    // force memory view to repaint - bookmarked items appear as different colors
-    MemoryViewerControl::Invalidate();
-#endif
-}
-
-GSL_SUPPRESS_F6
-void MemoryBookmarksViewModel::OnViewModelRemoved(gsl::index)
-{
-#ifndef RA_UTEST
-    // force memory view to repaint - bookmarked items appear as different colors
-    MemoryViewerControl::Invalidate();
-#endif
 }
 
 void MemoryBookmarksViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
@@ -378,6 +346,18 @@ void MemoryBookmarksViewModel::DoFrame()
 bool MemoryBookmarksViewModel::HasBookmark(ra::ByteAddress nAddress) const
 {
     return (m_vBookmarks.FindItemIndex(MemoryBookmarkViewModel::AddressProperty, nAddress) >= 0);
+}
+
+bool MemoryBookmarksViewModel::HasFrozenBookmark(ra::ByteAddress nAddress) const
+{
+    for (size_t nIndex = 0; nIndex < m_vBookmarks.Count(); ++nIndex)
+    {
+        const auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
+        if (pBookmark != nullptr && pBookmark->GetBehavior() == BookmarkBehavior::Frozen && pBookmark->GetAddress() == nAddress)
+            return true;
+    }
+
+    return false;
 }
 
 void MemoryBookmarksViewModel::OnEditMemory(ra::ByteAddress nAddress)

@@ -14,8 +14,11 @@
 #include "ui\IDesktop.hh"
 
 #include "ui\viewmodels\MemoryBookmarksViewModel.hh"
+#include "ui\viewmodels\MemoryViewerViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
+
+#include "ui\drawing\gdi\GDISurface.hh"
 
 #ifndef ID_OK
 #define ID_OK 1024
@@ -27,47 +30,21 @@
 _CONSTANT_VAR MIN_RESULTS_TO_DUMP = 500000U;
 _CONSTANT_VAR MIN_SEARCH_PAGE_SIZE = 50U;
 
+static std::unique_ptr<ra::ui::viewmodels::MemoryViewerViewModel> g_pMemoryViewer;
+constexpr int MEMVIEW_MARGIN = 4;
+static bool g_bSuppressMemoryViewerInvalidate = false;
+
 Dlg_Memory g_MemoryDialog;
 
 // static
 HWND Dlg_Memory::m_hWnd = nullptr;
-
-HFONT MemoryViewerControl::m_hViewerFont = nullptr;
-SIZE MemoryViewerControl::m_szFontSize;
-unsigned int MemoryViewerControl::m_nDataStartXOffset = 0;
-unsigned int MemoryViewerControl::m_nAddressOffset = 0;
-unsigned int MemoryViewerControl::m_nWatchedAddress = 0;
-MemSize MemoryViewerControl::m_nDataSize = MemSize::EightBit;
-unsigned int MemoryViewerControl::m_nEditAddress = 0;
-unsigned int MemoryViewerControl::m_nEditNibble = 0;
-bool MemoryViewerControl::m_bHasCaret = 0;
-unsigned int MemoryViewerControl::m_nCaretWidth = 0;
-unsigned int MemoryViewerControl::m_nCaretHeight = 0;
-unsigned int MemoryViewerControl::m_nDisplayedLines = 8;
-unsigned short MemoryViewerControl::m_nActiveMemBank = 0;
 
 unsigned int m_nPage = 0;
 
 // Dialog Resizing
 std::vector<ResizeContent> vDlgMemoryResize;
 POINT pDlgMemoryMin;
-int nDlgMemoryMinX;
-int nDlgMemoryMinY;
-int nDlgMemViewerGapY;
 
-_NODISCARD _CONSTANT_FN GetMaxNibble(_In_ MemSize size) noexcept
-{
-    switch (size)
-    {
-        default:
-        case MemSize::EightBit:
-            return 1U;
-        case MemSize::SixteenBit:
-            return 3U;
-        case MemSize::ThirtyTwoBit:
-            return 7U;
-    }
-}
 
 LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -88,14 +65,20 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
             return TRUE;
 
         case WM_MOUSEWHEEL:
-            if (GET_WHEEL_DELTA_WPARAM(wParam) > 0 && m_nAddressOffset > (0x40))
-                setAddress(m_nAddressOffset - 32);
-            else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0 && gsl::narrow_cast<size_t>(m_nAddressOffset) + (0x40) < ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize())
-                setAddress(m_nAddressOffset + 32);
+            if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
+            {
+                g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() - 32);
+                Invalidate();
+            }
+            else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0)
+            {
+                g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() + 32);
+                Invalidate();
+            }
             return FALSE;
 
         case WM_LBUTTONUP:
-            OnClick({GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)});
+            OnClick({GET_X_LPARAM(lParam) - MEMVIEW_MARGIN, GET_Y_LPARAM(lParam) - MEMVIEW_MARGIN});
             return FALSE;
 
         case WM_KEYDOWN:
@@ -104,170 +87,162 @@ LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPA
         case WM_CHAR:
             return (!OnEditInput(static_cast<UINT>(LOWORD(wParam))));
 
+        case WM_SETFOCUS:
+            g_pMemoryViewer->OnGotFocus();
+            return FALSE;
+
+        case WM_KILLFOCUS:
+            g_pMemoryViewer->OnLostFocus();
+            return FALSE;
+
         case WM_GETDLGCODE:
             return DLGC_WANTCHARS | DLGC_WANTARROWS;
     }
 
     return DefWindowProc(hDlg, uMsg, wParam, lParam);
-    // return FALSE;
 }
 
 bool MemoryViewerControl::OnKeyDown(UINT nChar)
 {
-    const unsigned int maxNibble = GetMaxNibble(m_nDataSize);
+    const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
+    const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
+    bool bHandled = false;
 
-    const bool bShiftHeld = (GetKeyState(VK_SHIFT) & 0x80000000) == 0x80000000;
+    // multiple properties may change while navigating, we'll do a single Invalidate after we're done
+    g_bSuppressMemoryViewerInvalidate = true;
 
     switch (nChar)
     {
         case VK_RIGHT:
-            if (bShiftHeld)
-                moveAddress((maxNibble + 1) >> 1, 0);
+            if (bShiftHeld || bControlHeld)
+                g_pMemoryViewer->AdvanceCursorWord();
             else
-                moveAddress(0, 1);
-            return true;
+                g_pMemoryViewer->AdvanceCursor();
+            bHandled = true;
+            break;
 
         case VK_LEFT:
-            if (bShiftHeld)
-                moveAddress(-(ra::to_signed(maxNibble + 1) >> 1), 0);
+            if (bShiftHeld || bControlHeld)
+                g_pMemoryViewer->RetreatCursorWord();
             else
-                moveAddress(0, -1);
-            return true;
+                g_pMemoryViewer->RetreatCursor();
+            bHandled = true;
+            break;
 
         case VK_DOWN:
-            moveAddress(0x10, 0);
-            return true;
+            if (bControlHeld)
+                g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() + 0x10);
+            else
+                g_pMemoryViewer->AdvanceCursorLine();
+            bHandled = true;
+            break;
 
         case VK_UP:
-            moveAddress(-0x10, 0);
-            return true;
+            if (bControlHeld)
+                g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() - 0x10);
+            else
+                g_pMemoryViewer->RetreatCursorLine();
+            bHandled = true;
+            break;
 
         case VK_PRIOR: // Page up (!)
-            moveAddress(-ra::to_signed(m_nDisplayedLines << 4), 0);
-            return true;
+            g_pMemoryViewer->RetreatCursorPage();
+            bHandled = true;
+            break;
 
         case VK_NEXT: // Page down (!)
-            moveAddress((m_nDisplayedLines << 4), 0);
-            return true;
+            g_pMemoryViewer->AdvanceCursorPage();
+            bHandled = true;
+            break;
 
         case VK_HOME:
-            m_nEditAddress = 0;
-            m_nEditNibble = 0;
-            setAddress(0);
-            return true;
+            if (bControlHeld)
+            {
+                g_pMemoryViewer->SetFirstAddress(0);
+                g_pMemoryViewer->SetAddress(0);
+            }
+            else
+            {
+                g_pMemoryViewer->SetAddress(g_pMemoryViewer->GetAddress() & ~0x0F);
+            }
+            bHandled = true;
+            break;
 
         case VK_END:
-            m_nEditAddress = gsl::narrow_cast<unsigned int>(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize()) - 0x10;
-            m_nEditNibble = 0;
-            setAddress(m_nEditAddress);
-            return true;
+            if (bControlHeld)
+            {
+                const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+                const auto nTotalBytes = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
+
+                g_pMemoryViewer->SetFirstAddress(nTotalBytes & ~0x0F);
+                g_pMemoryViewer->SetAddress(nTotalBytes - 1);
+            }
+            else
+            {
+                switch (g_pMemoryViewer->GetSize())
+                {
+                    case MemSize::ThirtyTwoBit:
+                        g_pMemoryViewer->SetAddress((g_pMemoryViewer->GetAddress() & ~0x0F) | 0x0C);
+                        break;
+
+                    case MemSize::SixteenBit:
+                        g_pMemoryViewer->SetAddress((g_pMemoryViewer->GetAddress() & ~0x0F) | 0x0E);
+                        break;
+
+                    default:
+                        g_pMemoryViewer->SetAddress(g_pMemoryViewer->GetAddress() | 0x0F);
+                        break;
+                }
+            }
+            bHandled = true;
+            break;
     }
 
-    return false;
+    g_bSuppressMemoryViewerInvalidate = false;
+
+    if (bHandled)
+        Invalidate();
+
+    return bHandled;
 }
 
-void MemoryViewerControl::moveAddress(int offset, int nibbleOff)
+bool MemoryViewerControl::OnEditInput(UINT c)
 {
-    const unsigned int maxNibble = GetMaxNibble(m_nDataSize);
+    // multiple properties may change while typing, we'll do a single Invalidate after we're done
+    g_bSuppressMemoryViewerInvalidate = true;
+    const bool bResult = g_pMemoryViewer->OnChar(gsl::narrow_cast<char>(c));
+    g_bSuppressMemoryViewerInvalidate = false;
 
-    if (offset == 0)
-    {
-        if (nibbleOff == -1)
-        {
-            //	Going left
-            m_nEditNibble--;
-            if (m_nEditAddress == 0 && m_nEditNibble == -1)
-            {
-                m_nEditNibble = 0;
-                MessageBeep(ra::to_unsigned(-1));
-                return;
-            }
-            if (m_nEditNibble == -1)
-            {
-                m_nEditAddress -= (maxNibble + 1) >> 1;
-                m_nEditNibble = maxNibble;
-            }
-        }
-        else
-        {
-            //	Going right
-            m_nEditNibble++;
-            if (m_nEditNibble > maxNibble)
-            {
-                m_nEditNibble = 0;
-                m_nEditAddress += (maxNibble + 1) >> 1;
-            }
-            if (m_nEditAddress >= ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize())
-            {
-                //	Undo this movement.
-                m_nEditAddress -= (maxNibble + 1) >> 1;
-                m_nEditNibble = maxNibble;
-                MessageBeep(ra::to_unsigned(-1));
-                return;
-            }
-        }
-    }
-    else
-    {
-        m_nEditAddress += offset;
+    if (bResult)
+        Invalidate();
 
-        if (offset < 0)
-        {
-            if (m_nEditAddress > (m_nAddressOffset - 1 + (m_nDisplayedLines << 4)) &&
-                ra::to_signed(m_nEditAddress) < (0x10))
-            {
-                m_nEditAddress -= offset;
-                MessageBeep(ra::to_unsigned(-1));
-                return;
-            }
-        }
-        else
-        {
-            if (m_nEditAddress >= ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize())
-            {
-                m_nEditAddress -= offset;
-                MessageBeep(ra::to_unsigned(-1));
-                return;
-            }
-        }
-    }
-
-    if (m_nEditAddress + (0x40) < m_nAddressOffset)
-        setAddress((m_nEditAddress & ~(0xf)) + (0x40));
-    else if (m_nEditAddress >= (m_nAddressOffset + (m_nDisplayedLines << 4) - (0x40)))
-        setAddress((m_nEditAddress & ~(0xf)) - (m_nDisplayedLines << 4) + (0x50));
-
-    SetCaretPos();
+    return bResult;
 }
 
-void MemoryViewerControl::gotoAddress(unsigned int nAddr)
+void MemoryViewerControl::OnClick(POINT point)
 {
-    setAddress((nAddr & ~(0xf)) - (ra::to_signed(m_nDisplayedLines / 2) << 4) + (0x50));
-    setWatchedAddress(nAddr);
-}
+    // multiple properties may change while typing, we'll do a single Invalidate after we're done
+    g_bSuppressMemoryViewerInvalidate = true;
+    g_pMemoryViewer->OnClick(point.x, point.y);
+    g_bSuppressMemoryViewerInvalidate = false;
 
-void MemoryViewerControl::setAddress(unsigned int address)
-{
-    m_nAddressOffset = address;
+    HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
+    SetFocus(hOurDlg);
 
-    SetCaretPos();
     Invalidate();
 }
 
-void MemoryViewerControl::setWatchedAddress(unsigned int address)
+MemSize MemoryViewerControl::GetDataSize()
 {
-    if (m_nWatchedAddress != address)
-    {
-        m_nWatchedAddress = address;
-        Invalidate();
-    }
+    return g_pMemoryViewer->GetSize();
 }
 
 void MemoryViewerControl::Invalidate()
 {
-    HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
-    if (hOurDlg != nullptr)
+    if (g_pMemoryViewer->NeedsRedraw() && !g_bSuppressMemoryViewerInvalidate)
     {
+        HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
+
         InvalidateRect(hOurDlg, nullptr, FALSE);
 
         // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
@@ -284,478 +259,38 @@ void MemoryViewerControl::Invalidate()
     }
 }
 
-void MemoryViewerControl::editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int nNewVal)
-{
-    auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    uint8_t nVal = pEmulatorContext.ReadMemoryByte(nByteAddress);
-
-    if (bLowerNibble)
-    {
-        //	We're submitting a new lower nibble:
-        nVal &= 0xF0;
-        nVal |= nNewVal;
-    }
-    else
-    {
-        //	We're submitting a new upper nibble:
-        nVal &= 0x0F;
-        nVal |= (nNewVal << 4);
-    }
-
-    pEmulatorContext.WriteMemoryByte(nByteAddress, nVal);
-}
-
-bool MemoryViewerControl::OnEditInput(UINT c)
-{
-    if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() == 0U)
-        return false;
-
-    if (c > 255 || ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
-    {
-        MessageBeep(ra::to_unsigned(-1));
-        return false;
-    }
-
-    c = tolower(c);
-
-    unsigned int value = 256;
-
-    if (c >= 'a' && c <= 'f')
-        value = 10 + (c - 'a');
-    else if (c >= '0' && c <= '9')
-        value = (c - '0');
-
-    if (value != 256)
-    {
-        // value <<= 4*(maxNibble-m_nEditNibble);
-        // unsigned int mask = ~(15 << 4*(maxNibble - m_nEditNibble));
-
-        const bool bLowerNibble = (m_nEditNibble % 2 == 1);
-        unsigned int nByteAddress = m_nEditAddress;
-
-        if (m_nDataSize == MemSize::EightBit)
-        {
-            //	8 bit
-            // nByteAddress = m_nEditAddress;
-        }
-        else if (m_nDataSize == MemSize::SixteenBit)
-        {
-            //	16 bit
-            nByteAddress += (1 - (m_nEditNibble >> 1));
-        }
-        else
-        {
-            //	32 bit
-            nByteAddress += (3 - (m_nEditNibble >> 1));
-        }
-
-        editData(nByteAddress, bLowerNibble, value);
-
-        // if a bookmark exists for the modified address, update the current value
-        auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-        pBookmarks.OnEditMemory(nByteAddress);
-
-        moveAddress(0, 1);
-        Invalidate();
-    }
-
-    return true;
-}
-
-void MemoryViewerControl::createEditCaret(int w, int h) noexcept
-{
-    if (!m_bHasCaret || ra::to_signed(m_nCaretWidth) != w || ra::to_signed(m_nCaretHeight) != h)
-    {
-        m_bHasCaret = true;
-        m_nCaretWidth = w;
-        m_nCaretHeight = h;
-        ::CreateCaret(GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER), nullptr, w, h);
-    }
-}
-
-void MemoryViewerControl::destroyEditCaret() noexcept
-{
-    m_bHasCaret = false;
-    DestroyCaret();
-}
-
-void MemoryViewerControl::SetCaretPos()
-{
-    if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() == 0U)
-        return;
-
-    HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
-    if (GetFocus() != hOurDlg)
-    {
-        destroyEditCaret();
-        return;
-    }
-
-    setWatchedAddress(m_nEditAddress); // update local reference before notifying parent
-    g_MemoryDialog.SetWatchingAddress(m_nEditAddress);
-
-    const int subAddress = (m_nEditAddress - m_nAddressOffset);
-
-    const int linePosition = (subAddress & ~(0xF)) / (0x10) + 4;
-
-    if (linePosition < 0 || linePosition > ra::to_signed(m_nDisplayedLines) - 1)
-
-    {
-        destroyEditCaret();
-        return;
-    }
-
-    const int nYSpacing = linePosition;
-
-    int x = 3 + (10 * m_szFontSize.cx) + (m_nEditNibble * m_szFontSize.cx);
-    int y = 3 + (nYSpacing * m_szFontSize.cy);
-
-    y += m_szFontSize.cy; //	Account for header
-
-    switch (m_nDataSize)
-    {
-        case MemSize::EightBit:
-            x += 3 * m_szFontSize.cx * (subAddress & 15);
-            break;
-        case MemSize::SixteenBit:
-            x += 5 * m_szFontSize.cx * ((subAddress >> 1) & 7);
-            break;
-        case MemSize::ThirtyTwoBit:
-            x += 9 * m_szFontSize.cx * ((subAddress >> 2) & 3);
-            break;
-    }
-
-    RECT r;
-    GetClientRect(hOurDlg, &r);
-    r.right -= 3;
-    if (x >= r.right)
-    {
-        destroyEditCaret();
-        return;
-    }
-    int w = m_szFontSize.cx;
-    if ((x + m_szFontSize.cx) >= r.right)
-    {
-        w = r.right - x;
-    }
-    createEditCaret(w, m_szFontSize.cy);
-    ::SetCaretPos(x, y);
-    ShowCaret(hOurDlg);
-}
-
-void MemoryViewerControl::OnClick(POINT point)
-{
-    const auto nTotalMemorySize = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize();
-    if (nTotalMemorySize == 0U)
-        return;
-
-    HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
-
-    int x = point.x;
-    const int y = point.y - m_szFontSize.cy; //	Adjust for header
-    const int line = ((y - 3) / m_szFontSize.cy);
-
-    if (line == -1 || line >= ra::to_signed(m_nDisplayedLines))
-        return; //	clicked on header
-
-    int rowLengthPx = m_nDataStartXOffset;
-    int inc = 1;
-    int sub = 3 * m_szFontSize.cx;
-
-    switch (m_nDataSize)
-    {
-        case MemSize::EightBit:
-            rowLengthPx += 47 * m_szFontSize.cx;
-            inc = 1;                   // increment mem offset by 1 each subset
-            sub = 3 * m_szFontSize.cx; // 2 char set plus one char space
-            break;
-        case MemSize::SixteenBit:
-            rowLengthPx += 39 * m_szFontSize.cx;
-            inc = 2;                   // increment mem offset by 2 each subset
-            sub = 5 * m_szFontSize.cx; // 4 char set plus one char space
-            break;
-        case MemSize::ThirtyTwoBit:
-            rowLengthPx += 35 * m_szFontSize.cx;
-            inc = 4;                   // increment mem offset by 4 each subset
-            sub = 9 * m_szFontSize.cx; // 8 char set plus one char space
-            break;
-    }
-
-    const int nTopLeft = m_nAddressOffset - 0x40;
-
-    const int nAddressRowClicked = (nTopLeft + (line << 4));
-
-    // Clamp:
-    if (nAddressRowClicked < 0 || nAddressRowClicked >= ra::to_signed(nTotalMemorySize))
-    {
-        // ignore; clicked above limit
-        return;
-    }
-
-    m_nEditAddress = ra::to_unsigned(nAddressRowClicked);
-
-    if (x >= ra::to_signed(m_nDataStartXOffset) && x < rowLengthPx)
-    {
-        x -= m_nDataStartXOffset;
-        m_nEditNibble = 0;
-
-        while (x > 0)
-        {
-            // Adjust x by one subset til we find out the correct offset:
-            x -= sub;
-            if (x >= 0)
-                m_nEditAddress += inc;
-            else
-                m_nEditNibble = (x + sub) / m_szFontSize.cx;
-        }
-    }
-    else
-    {
-        return;
-    }
-
-    const unsigned int maxNibble = GetMaxNibble(m_nDataSize);
-    if (m_nEditNibble > maxNibble)
-        m_nEditNibble = maxNibble;
-
-    SetFocus(hOurDlg);
-    SetCaretPos();
-}
-
 void MemoryViewerControl::RenderMemViewer(HWND hTarget)
 {
+    g_pMemoryViewer->UpdateRenderImage();
+
     PAINTSTRUCT ps;
-    HDC dc = BeginPaint(hTarget, &ps);
+    HDC hDC = BeginPaint(hTarget, &ps);
 
-    HDC hMemDC = CreateCompatibleDC(dc);
+    RECT rcClient;
+    GetClientRect(hTarget, &rcClient);
 
-    RECT rect;
-    GetClientRect(hTarget, &rect);
-    const int w = rect.right - rect.left;
-    const int h = rect.bottom - rect.top - 6;
+    const auto& pRenderImage = g_pMemoryViewer->GetRenderImage();
 
-    //	Pick font
-    if (m_hViewerFont == nullptr)
-        m_hViewerFont = GetStockFont(SYSTEM_FIXED_FONT);
-    HGDIOBJ hOldFont = SelectObject(hMemDC, m_hViewerFont);
+    HBRUSH hBackground = GetStockBrush(WHITE_BRUSH);
+    RECT rcFill{ rcClient.left + 1, rcClient.top + 1, rcClient.left + MEMVIEW_MARGIN, rcClient.bottom - 2 };
+    FillRect(hDC, &rcFill, hBackground);
 
-    HBITMAP hBitmap = CreateCompatibleBitmap(dc, w, rect.bottom - rect.top);
-    HGDIOBJ hOldBitmap = SelectObject(hMemDC, hBitmap);
+    rcFill.left = rcClient.left + MEMVIEW_MARGIN + pRenderImage.GetWidth();
+    rcFill.right = rcClient.right - 2;
+    FillRect(hDC, &rcFill, hBackground);
 
-    GetTextExtentPoint32(hMemDC, TEXT("0"), 1, &m_szFontSize);
+    rcFill.left = rcClient.left + 1;
+    rcFill.bottom = rcClient.top + MEMVIEW_MARGIN;
+    FillRect(hDC, &rcFill, hBackground);
 
-    //	Fill white:
-    HBRUSH hBrush = GetStockBrush(WHITE_BRUSH);
-    FillRect(hMemDC, &rect, hBrush);
-    DrawEdge(hMemDC, &rect, EDGE_ETCHED, BF_RECT);
+    rcFill.top = rcClient.top + MEMVIEW_MARGIN + pRenderImage.GetHeight();
+    rcFill.bottom = rcClient.bottom - 2;
+    FillRect(hDC, &rcFill, hBackground);
 
-    const char* sHeader{};
-    switch (m_nDataSize)
-    {
-        case MemSize::ThirtyTwoBit:
-            sHeader = "          0        4        8        c";
-            break;
-        case MemSize::SixteenBit:
-            sHeader = "          0    2    4    6    8    a    c    e";
-            break;
-        default:
-            m_nDataSize = MemSize::EightBit;
-            // fallthrough to MemSize::EightBit
-        case MemSize::EightBit:
-            sHeader = "          0  1  2  3  4  5  6  7  8  9  a  b  c  d  e  f";
-            break;
-    }
+    DrawEdge(hDC, &rcClient, EDGE_ETCHED, BF_RECT);
 
-    int lines = h / m_szFontSize.cy;
-    lines -= 1; // Watch out for header
-    m_nDisplayedLines = lines;
-
-    TCHAR bufferNative[64]{};
-
-    int addr = m_nAddressOffset;
-    addr -= (0x40); // Offset will be this quantity (push up four lines)...
-
-    SetTextColor(hMemDC, RGB(0, 0, 0));
-
-    unsigned int notes{};
-    unsigned int bookmarks{};
-    unsigned int freeze{};
-
-    RECT r{3, 3, rect.right - 3, r.top + m_szFontSize.cy}; // left,top,right,bottom
-
-    // Draw header:
-    DrawText(hMemDC, NativeStr(sHeader).c_str(), gsl::narrow_cast<int>(strlen(sHeader)), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
-
-    // Adjust for header:
-    r.top += m_szFontSize.cy;
-    r.bottom += m_szFontSize.cy;
-
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    const auto nTotalMemorySize = pEmulatorContext.TotalMemorySize();
-    if (nTotalMemorySize > 0)
-    {
-        const auto& pBookmarks = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Bookmarks();
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-        m_nDataStartXOffset = r.left + 10 * m_szFontSize.cx;
-        std::array<unsigned char, 16> data{};
-        for (auto i = 0; i < lines && addr < ra::to_signed(nTotalMemorySize); ++i, addr += 16)
-        {
-            if (addr >= 0)
-            {
-                notes = 0;
-                bookmarks = 0;
-                freeze = 0;
-                for (int j = 0; j < 16; ++j)
-                {
-                    notes |= (pGameContext.FindCodeNote(addr + j) != nullptr) ? (1 << j) : 0;
-
-                    const auto nIndex = pBookmarks.FindItemIndex(ra::ui::viewmodels::MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty, addr + j);
-                    if (nIndex >= 0)
-                    {
-                        bookmarks |= (1 << j);
-
-                        const auto* pBookmark = pBookmarks.GetItemAt(nIndex);
-                        Expects(pBookmark != nullptr);
-                        if (pBookmark->GetBehavior() == ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen)
-                            freeze |= (1 << j);
-                    }
-                }
-
-                pEmulatorContext.ReadMemory(addr, data.data(), 16);
-
-                TCHAR* ptr = bufferNative + _stprintf_s(bufferNative, 11, TEXT("0x%06x  "), addr);
-                switch (m_nDataSize)
-                {
-                    case MemSize::EightBit:
-                        for (int j = 0; j < 16; ++j)
-                            ptr += _stprintf_s(ptr, 4, TEXT("%02x "), data.at(j));
-                        break;
-                    case MemSize::SixteenBit:
-                        for (int j = 0; j < 16; j += 2)
-                            ptr += _stprintf_s(ptr, 6, TEXT("%02x%02x "), data.at(gsl::narrow_cast<size_t>(j) + 1), data.at(j));
-                        break;
-                    case MemSize::ThirtyTwoBit:
-                        for (int j = 0; j < 16; j += 4)
-                        {
-                            ptr += _stprintf_s(ptr, 10, TEXT("%02x%02x%02x%02x "), data.at(gsl::narrow_cast<size_t>(j) + 3),
-                                data.at(gsl::narrow_cast<size_t>(j) + 2), data.at(gsl::narrow_cast<size_t>(j) + 1), data.at(j));
-                        }
-                        break;
-                }
-
-                DrawText(hMemDC, NativeStr(bufferNative).c_str(), gsl::narrow_cast<int>(ptr - bufferNative), &r,
-                         DT_TOP | DT_LEFT | DT_NOPREFIX);
-
-                if ((ra::to_signed(m_nWatchedAddress) & ~0x0F) == addr)
-                {
-                    SetTextColor(hMemDC, RGB(255, 0, 0));
-
-                    size_t stride{};
-                    switch (m_nDataSize)
-                    {
-                        case MemSize::EightBit:
-                            ptr = bufferNative + 10 + 3 * gsl::narrow_cast<size_t>(m_nWatchedAddress & 0x0F);
-                            stride = 2;
-                            break;
-                        case MemSize::SixteenBit:
-                            ptr = bufferNative + 10 + 5 * (gsl::narrow_cast<size_t>(m_nWatchedAddress & 0x0F) / 2);
-                            stride = 4;
-                            break;
-                        case MemSize::ThirtyTwoBit:
-                            ptr = bufferNative + 10 + 9 * (gsl::narrow_cast<size_t>(m_nWatchedAddress & 0x0F) / 4);
-                            stride = 8;
-                            break;
-                    }
-
-                    r.left = 3 + gsl::narrow_cast<int>(ptr - bufferNative) * m_szFontSize.cx;
-                    DrawText(hMemDC, ptr, gsl::narrow_cast<int>(stride), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
-
-                    SetTextColor(hMemDC, RGB(0, 0, 0));
-                    r.left = 3;
-
-                    // make sure we don't overwrite the current address with an indicator
-                    notes &= ~(1 << (m_nWatchedAddress & 0x0F));
-                    bookmarks &= ~(1 << (m_nWatchedAddress & 0x0F));
-                }
-
-                if (notes || bookmarks)
-                {
-                    for (int j = 0; j < 16; ++j)
-                    {
-                        bool bDraw = FALSE;
-
-                        if (bookmarks & 0x01)
-                        {
-                            if (freeze & 0x01)
-                                SetTextColor(hMemDC, RGB(255, 200, 0));
-                            else
-                                SetTextColor(hMemDC, RGB(0, 160, 0));
-
-                            bDraw = TRUE;
-                        }
-                        else if (notes & 0x01)
-                        {
-                            SetTextColor(hMemDC, RGB(0, 0, 255));
-                            bDraw = TRUE;
-                        }
-
-                        if (bDraw)
-                        {
-                            size_t stride{};
-                            switch (m_nDataSize)
-                            {
-                                case MemSize::EightBit:
-                                    ptr = bufferNative + 10 + 3 * gsl::narrow_cast<size_t>(j);
-                                    stride = 2;
-                                    break;
-                                case MemSize::SixteenBit:
-                                    ptr = bufferNative + 10 + 5 * (gsl::narrow_cast<size_t>(j) / 2);
-                                    stride = 4;
-                                    break;
-                                case MemSize::ThirtyTwoBit:
-                                    ptr = bufferNative + 10 + 9 * (gsl::narrow_cast<size_t>(j) / 4);
-                                    stride = 8;
-                                    break;
-                            }
-
-                            r.left = 3 + gsl::narrow_cast<int>(ptr - bufferNative) * m_szFontSize.cx;
-                            DrawText(hMemDC, NativeStr(ptr).c_str(), gsl::narrow_cast<int>(stride), &r, DT_TOP | DT_LEFT | DT_NOPREFIX);
-                        }
-
-                        notes >>= 1;
-                        bookmarks >>= 1;
-                        freeze >>= 1;
-                    }
-
-                    r.left = 3;
-                }
-
-                SetTextColor(hMemDC, RGB(0, 0, 0));
-            }
-
-            r.top += m_szFontSize.cy;
-            r.bottom += m_szFontSize.cy;
-        }
-    }
-
-    {
-        HPEN hPen = CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-        HGDIOBJ hOldPen = SelectObject(hMemDC, hPen);
-
-        MoveToEx(hMemDC, 3 + m_szFontSize.cx * 9, 3 + m_szFontSize.cy, nullptr);
-        LineTo(hMemDC, 3 + m_szFontSize.cx * 9, 3 + ((m_nDisplayedLines + 1) * m_szFontSize.cy));
-
-        SelectObject(hMemDC, hOldPen);
-        DeleteObject(hPen);
-    }
-
-    SelectObject(hMemDC, hOldFont);
-
-    BitBlt(dc, 0, 0, w, rect.bottom - rect.top, hMemDC, 0, 0, SRCCOPY);
-
-    SelectObject(hMemDC, hOldBitmap);
-    DeleteDC(hMemDC);
-    DeleteObject(hBitmap);
+    ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcClient);
+    pSurface.DrawSurface(MEMVIEW_MARGIN, MEMVIEW_MARGIN, pRenderImage);
 
     EndPaint(hTarget, &ps);
 }
@@ -792,6 +327,14 @@ void Dlg_Memory::ClearLogOutput() noexcept
     EnableWindow(GetDlgItem(m_hWnd, IDC_RA_RESULTS_FORWARD), FALSE);
 }
 
+void Dlg_Memory::OnViewModelIntValueChanged(const ra::ui::IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == ra::ui::viewmodels::MemoryViewerViewModel::AddressProperty)
+    {
+        SetWatchingAddress(g_pMemoryViewer->GetAddress());
+    }
+}
+
 INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (nMsg)
@@ -799,6 +342,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         case WM_INITDIALOG:
         {
             g_MemoryDialog.m_hWnd = hDlg;
+
+            g_pMemoryViewer.reset(new ra::ui::viewmodels::MemoryViewerViewModel());
+            g_pMemoryViewer->AddNotifyTarget(*this);
 
             GenerateResizes(hDlg);
 
@@ -1076,6 +622,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 content.Resize(winRect.Width(), winRect.Height());
 
             RememberWindowSize(hDlg, "Memory Inspector");
+
+            GetWindowRect(GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), &winRect);
+            g_pMemoryViewer->OnResized(winRect.right - winRect.left - MEMVIEW_MARGIN * 2,
+                winRect.bottom - winRect.top - MEMVIEW_MARGIN * 2);
             return TRUE;
         }
 
@@ -1091,7 +641,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             // ignore if memory not avaialble or mode is not 8-bit
              auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
-            if (pEmulatorContext.TotalMemorySize() == 0 || MemoryViewerControl::GetDataSize() != MemSize::EightBit)
+            if (pEmulatorContext.TotalMemorySize() == 0 || g_pMemoryViewer->GetSize() != MemSize::EightBit)
                 break;
 
             POINT ptCursor{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
@@ -1127,12 +677,13 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     if (nBit < 8)
                     {
                         // if we found a bit, toggle it
-                        const auto nAddr = MemoryViewerControl::getWatchedAddress();
+                        const auto nAddr = g_pMemoryViewer->GetAddress();
                         auto nVal = pEmulatorContext.ReadMemoryByte(nAddr);
                         nVal ^= (1 << nBit);
                         pEmulatorContext.WriteMemoryByte(nAddr, nVal);
 
                         MemoryViewerControl::Invalidate();
+
                         UpdateBits();
                     }
                 }
@@ -1213,7 +764,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                 // minus prefix - invert value
                                 GSL_SUPPRESS_TYPE1 nValueQuery = static_cast<unsigned int>(-static_cast<int>(nValueQuery));
 
-                                switch (MemoryViewerControl::GetDataSize())
+                                switch (g_pMemoryViewer->GetSize())
                                 {
                                     case MemSize::EightBit:
                                         nValueQuery &= 0xFF;
@@ -1259,22 +810,19 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 }
 
                 case IDC_RA_MEMVIEW8BIT:
-                    MemoryViewerControl::SetDataSize(MemSize::EightBit);
-                    MemoryViewerControl::destroyEditCaret();
+                    g_pMemoryViewer->SetSize(MemSize::EightBit);
                     SetDlgItemText(hDlg, IDC_RA_MEMBITS_TITLE, TEXT("Bits: 7 6 5 4 3 2 1 0"));
                     UpdateBits();
                     return FALSE;
 
                 case IDC_RA_MEMVIEW16BIT:
-                    MemoryViewerControl::SetDataSize(MemSize::SixteenBit);
-                    MemoryViewerControl::destroyEditCaret();
+                    g_pMemoryViewer->SetSize(MemSize::SixteenBit);
                     SetDlgItemText(hDlg, IDC_RA_MEMBITS_TITLE, TEXT(""));
                     SetDlgItemText(m_hWnd, IDC_RA_MEMBITS, TEXT(""));
                     return FALSE;
 
                 case IDC_RA_MEMVIEW32BIT:
-                    MemoryViewerControl::SetDataSize(MemSize::ThirtyTwoBit);
-                    MemoryViewerControl::destroyEditCaret();
+                    g_pMemoryViewer->SetSize(MemSize::ThirtyTwoBit);
                     SetDlgItemText(hDlg, IDC_RA_MEMBITS_TITLE, TEXT(""));
                     SetDlgItemText(m_hWnd, IDC_RA_MEMBITS, TEXT(""));
                     return FALSE;
@@ -1343,7 +891,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     sNewNote.resize(nLength);
 
                     bool bUpdated = false;
-                    const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
+                    const ra::ByteAddress nAddr = g_pMemoryViewer->GetAddress();
                     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
                     std::string sAuthor;
                     const auto* pNote = pGameContext.FindCodeNote(nAddr, sAuthor);
@@ -1409,7 +957,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                 case IDC_RA_REMNOTE:
                 {
-                    const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
+                    const ra::ByteAddress nAddr = g_pMemoryViewer->GetAddress();
                     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
                     std::string sAuthor;
                     const auto* pNote = pGameContext.FindCodeNote(nAddr, sAuthor);
@@ -1470,7 +1018,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
                     if (!pBookmarks.IsVisible())
                         pBookmarks.Show();
-                    pBookmarks.AddBookmark(MemoryViewerControl::getWatchedAddress(), MemoryViewerControl::GetDataSize());
+                    pBookmarks.AddBookmark(g_pMemoryViewer->GetAddress(), g_pMemoryViewer->GetSize());
                     return FALSE;
                 }
 
@@ -1607,8 +1155,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             GetDlgItemText(hDlg, IDC_RA_WATCHING, sAddrBuffer, 64);
                             auto nAddr = ra::ByteAddressFromString(ra::Narrow(sAddrBuffer));
 
-                            // don't call GoToAddress here to prevent updating the text box as the user types
-                            MemoryViewerControl::gotoAddress(nAddr);
+                            // disable callback while updating address to prevent updating the text box as the user types
+                            g_pMemoryViewer->RemoveNotifyTarget(*this);
+                            g_pMemoryViewer->SetAddress(nAddr);
+                            g_pMemoryViewer->AddNotifyTarget(*this);
+
                             OnWatchingMemChange();
                             return TRUE;
                         }
@@ -1647,8 +1198,6 @@ void Dlg_Memory::OnWatchingMemChange()
     const auto* pNote = pGameContext.FindCodeNote(nAddr);
     SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, (pNote != nullptr) ? pNote->c_str() : L"");
 
-    MemoryViewerControl::destroyEditCaret();
-
     Invalidate();
 }
 
@@ -1658,7 +1207,7 @@ void Dlg_Memory::RepopulateCodeNotes()
     if (hMemWatch == nullptr)
         return;
 
-    auto nAddr = MemoryViewerControl::getWatchedAddress();
+    auto nAddr = g_pMemoryViewer->GetAddress();
     ra::ByteAddress nFirst = 0xFFFFFFFF;
     gsl::index nIndex = -1;
     size_t nScan = 0;
@@ -1759,9 +1308,6 @@ void Dlg_Memory::OnLoad_NewRom()
     }
 
     UpdateMemoryRegions();
-
-    MemoryViewerControl::destroyEditCaret();
-    MemoryViewerControl::Invalidate();
 }
 
 void Dlg_Memory::UpdateMemoryRegions()
@@ -1849,8 +1395,16 @@ void Dlg_Memory::Invalidate()
     if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() == 0)
         return;
 
+    if (!IsWindowVisible(m_hWnd))
+        return;
+
     // Update Memory Viewer
-    MemoryViewerControl::Invalidate();
+    if (g_pMemoryViewer != nullptr)
+    {
+        g_pMemoryViewer->DoFrame();
+        MemoryViewerControl::Invalidate();
+    }
+
     UpdateBits();
 
     // Update Search Results
@@ -1874,9 +1428,9 @@ void Dlg_Memory::UpdateBits() const
     TCHAR sNewValue[64] = _T("");
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    if (pEmulatorContext.TotalMemorySize() != 0 && MemoryViewerControl::GetDataSize() == MemSize::EightBit)
+    if (pEmulatorContext.TotalMemorySize() != 0 && g_pMemoryViewer->GetSize() == MemSize::EightBit)
     {
-        const ra::ByteAddress nAddr = MemoryViewerControl::getWatchedAddress();
+        const ra::ByteAddress nAddr = g_pMemoryViewer->GetAddress();
         const auto nVal = pEmulatorContext.ReadMemoryByte(nAddr);
 
         _stprintf_s(sNewValue, 64, _T("      %d %d %d %d %d %d %d %d"), static_cast<int>((nVal & (1 << 7)) != 0),
@@ -1894,7 +1448,7 @@ void Dlg_Memory::UpdateBits() const
 
 void Dlg_Memory::GoToAddress(unsigned int nAddr)
 {
-    MemoryViewerControl::gotoAddress(nAddr);
+    g_pMemoryViewer->SetAddress(nAddr);
     SetWatchingAddress(nAddr);
 }
 

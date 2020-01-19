@@ -45,7 +45,7 @@ public:
         const auto nStrikeOut = ((nStyle & FontStyles::Strikethrough) == FontStyles::Strikethrough) ? TRUE : FALSE;
 
         HFONT hFont = CreateFontA(nFontSize, 0, 0, 0, nWeight, nItalic, nUnderline, nStrikeOut,
-            DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH, sFont.c_str());
+            DEFAULT_CHARSET, OUT_DEFAULT_PRECIS, CLIP_CHARACTER_PRECIS, CLEARTYPE_NATURAL_QUALITY, DEFAULT_PITCH, sFont.c_str());
 
         if (hFont)
         {

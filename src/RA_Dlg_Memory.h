@@ -4,6 +4,8 @@
 
 #include "services/SearchResults.h"
 
+#include "ui/ViewModelBase.hh"
+
 class MemoryViewerControl
 {
 public:
@@ -12,46 +14,14 @@ public:
 public:
     static void RenderMemViewer(HWND hTarget);
 
-    static void createEditCaret(int w, int h) noexcept;
-    static void destroyEditCaret() noexcept;
-    static void SetCaretPos();
     static void OnClick(POINT point);
 
     static bool OnKeyDown(UINT nChar);
     static bool OnEditInput(UINT c);
 
-    static void gotoAddress(unsigned int nAddr);
-    static void setAddress(unsigned int nAddr);
-    static void setWatchedAddress(unsigned int nAddr);
-    static unsigned int getWatchedAddress() noexcept { return m_nWatchedAddress; }
-    static void moveAddress(int offset, int nibbleOff);
-    static void editData(unsigned int nByteAddress, bool bLowerNibble, unsigned int value);
     static void Invalidate();
 
-    static void SetDataSize(MemSize value)
-    {
-        m_nDataSize = value;
-        Invalidate();
-    }
-    static MemSize GetDataSize() noexcept { return m_nDataSize; }
-
-public:
-    static unsigned short m_nActiveMemBank;
-    static unsigned int m_nDisplayedLines;
-
-private:
-    static HFONT m_hViewerFont;
-    static SIZE m_szFontSize;
-    static unsigned int m_nDataStartXOffset;
-    static unsigned int m_nAddressOffset;
-    static unsigned int m_nWatchedAddress;
-    static MemSize m_nDataSize;
-    static unsigned int m_nEditAddress;
-    static unsigned int m_nEditNibble;
-
-    static bool m_bHasCaret;
-    static unsigned int m_nCaretWidth;
-    static unsigned int m_nCaretHeight;
+    static MemSize GetDataSize();
 };
 
 struct SearchResult
@@ -69,7 +39,7 @@ struct SearchResult
     }
 };
 
-class Dlg_Memory
+class Dlg_Memory : protected ra::ui::ViewModelBase::NotifyTarget
 {
 public:
     void Init() noexcept;
@@ -98,6 +68,9 @@ public:
     BOOL IsActive() const noexcept;
 
     void GenerateResizes(HWND hDlg);
+
+protected:
+    void OnViewModelIntValueChanged(const ra::ui::IntModelProperty::ChangeArgs& args) override;
 
 private:
     bool GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);

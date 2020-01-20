@@ -829,7 +829,6 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                             if (MessageBox(hDlg, sMessage, TEXT("Activate Achievement"), MB_YESNO) == IDYES)
                             {
-                                Cheevo.Reset();
                                 Cheevo.SetActive(true);
 
                                 if (m_nActiveCategory == Achievement::Category::Core)
@@ -875,7 +874,6 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             Achievement& Cheevo = *pGameContext.FindAchievement(nAchievementID);
                             if (!Cheevo.Active())
                             {
-                                Cheevo.Reset();
                                 Cheevo.SetActive(true);
 
                                 if (m_nActiveCategory == Achievement::Category::Core)

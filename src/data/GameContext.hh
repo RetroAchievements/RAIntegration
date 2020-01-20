@@ -298,9 +298,6 @@ protected:
     ra::AchievementID m_nNextLocalId = 0;
     static const ra::AchievementID FirstLocalId = 111000001;
 
-    void* m_pRichPresence = nullptr;                                   // rc_richpresence_t
-    std::shared_ptr<std::vector<unsigned char>> m_pRichPresenceBuffer; // buffer for rc_richpresence_t
-
     std::vector<std::unique_ptr<Achievement>> m_vAchievements;
     std::vector<std::unique_ptr<RA_Leaderboard>> m_vLeaderboards;
 

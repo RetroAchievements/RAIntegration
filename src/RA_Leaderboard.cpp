@@ -24,26 +24,8 @@ RA_Leaderboard::~RA_Leaderboard() noexcept
 
 void RA_Leaderboard::ParseFromString(const char* sBuffer, const char* sFormat)
 {
-    // call with nullptr to determine space required
-    const int nSize = rc_lboard_size(sBuffer);
-    if (nSize < 0)
-    {
-        // parse error occurred
-        RA_LOG("rc_parse_lboard returned %d", nSize);
-        m_pLeaderboard = nullptr;
-
-        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
-            ra::StringPrintf(L"Unable to activate leaderboard: %s", Title()),
-            ra::StringPrintf(L"Parse error %d", nSize));
-    }
-    else
-    {
-        // allocate space and parse again
-        m_pLeaderboardBuffer = std::make_shared<std::vector<unsigned char>>(nSize);
-        m_pLeaderboard = rc_parse_lboard(m_pLeaderboardBuffer->data(), sBuffer, nullptr, 0);
-
-        m_nFormat = rc_parse_format(sFormat);
-    }
+    m_sDefinition = sBuffer;
+    m_nFormat = rc_parse_format(sFormat);
 }
 
 void RA_Leaderboard::SetActive(bool bActive) noexcept
@@ -52,7 +34,7 @@ void RA_Leaderboard::SetActive(bool bActive) noexcept
     {
         m_bActive = bActive;
 
-        if (m_pLeaderboard && ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        if (!m_sDefinition.empty() && ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
         {
             auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
             if (!m_bActive)
@@ -63,11 +45,16 @@ void RA_Leaderboard::SetActive(bool bActive) noexcept
             }
             else
             {
-                auto pLeaderboard = static_cast<rc_lboard_t*>(m_pLeaderboard);
-                rc_reset_lboard(pLeaderboard);
-                pLeaderboard->submitted = 1;
+                int nResult = pRuntime.ActivateLeaderboard(ID(), m_sDefinition.c_str());
+                if (nResult < 0)
+                {
+                    // parse error occurred
+                    RA_LOG("rc_parse_trigger returned %d for achievement %u", nResult, ID());
 
-                pRuntime.ActivateLeaderboard(ID(), pLeaderboard);
+                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                        ra::StringPrintf(L"Unable to activate leaderboard: %s", Title()),
+                        ra::StringPrintf(L"Parse error %d", nResult));
+                }
             }
         }
     }

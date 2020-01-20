@@ -2,6 +2,7 @@
 
 #include "ui\viewmodels\OverlayAchievementsPageViewModel.hh"
 
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
@@ -28,6 +29,7 @@ private:
         ra::data::mocks::MockGameContext mockGameContext;
         ra::data::mocks::MockSessionTracker mockSessionTracker;
         ra::data::mocks::MockUserContext mockUserContext;
+        ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
@@ -49,16 +51,20 @@ private:
 
             return nullptr;
         }
+
+        void SetProgress(ra::AchievementID nId, int nValue, int nMax)
+        {
+            auto* pTrigger = mockAchievementRuntime.GetAchievementTrigger(nId);
+            if (pTrigger == nullptr)
+            {
+                mockAchievementRuntime.ActivateAchievement(nId, "0=1");
+                pTrigger = mockAchievementRuntime.GetAchievementTrigger(nId);
+            }
+
+            pTrigger->measured_value = nValue;
+            pTrigger->measured_target = nMax;
+        }
     };
-
-    static void SetProgress(Achievement& pAch, int nValue, int nMax)
-    {
-        pAch.ParseTrigger("0=1");
-
-        rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(pAch.GetRawTrigger());
-        pTrigger->measured_value = nValue;
-        pTrigger->measured_target = nMax;
-    }
 
 public:
     TEST_METHOD(TestRefreshNoAchievements)
@@ -240,23 +246,23 @@ public:
         pAch1.SetID(1);
         pAch1.SetPoints(1U);
         pAch1.SetActive(true);
-        SetProgress(pAch1, 1, 10);
+        achievementsPage.SetProgress(1U, 1, 10);
         auto& pAch2 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch2.SetID(2);
         pAch2.SetPoints(2U);
         pAch2.SetActive(false);
-        SetProgress(pAch2, 1, 10);
+        achievementsPage.SetProgress(2U, 1, 10);
         auto& pAch3 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch3.SetID(3);
         pAch3.SetPoints(3U);
         pAch3.SetActive(true);
-        SetProgress(pAch3, 0, 0);
+        achievementsPage.SetProgress(3U, 0, 0);
         auto& pAch4 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
         pAch4.SetID(4);
         pAch4.SetPoints(4U);
         pAch4.SetActive(false);
         achievementsPage.Refresh();
-        SetProgress(pAch4, 0, 0);
+        achievementsPage.SetProgress(4U, 0, 0);
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"2 of 4 won (6/10)"), achievementsPage.GetSummary());

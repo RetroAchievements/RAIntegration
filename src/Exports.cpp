@@ -281,11 +281,11 @@ static void ProcessAchievements()
         {
             case ra::services::AchievementRuntime::ChangeType::AchievementReset:
             {
-                // we only watch for AchievementReset if PauseOnReset is set, so handle that now.
-                ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Pause();
                 const auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
-                if (pAchievement)
+                if (pAchievement && pAchievement->GetPauseOnReset())
                 {
+                    ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Pause();
+
                     std::wstring sMessage = ra::StringPrintf(L"Pause on Reset: %s", pAchievement->Title());
                     ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
                 }

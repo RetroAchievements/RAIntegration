@@ -74,7 +74,7 @@ static void MergeHits(rc_condset_t& pGroup, rc_condset_t& pOldGroup) noexcept
                 case RC_OPERAND_DELTA:
                 case RC_OPERAND_PRIOR:
                     if (pOldCondition->operand1.value.memref->memref.address != pCondition->operand1.value.memref->memref.address ||
-                        pOldCondition->operand1.value.memref->memref.size != pCondition->operand1.value.memref->memref.size)
+                        pOldCondition->operand1.size != pCondition->operand1.size)
                     {
                         continue;
                     }
@@ -117,8 +117,8 @@ static void MergeHits(rc_condset_t& pGroup, rc_condset_t& pOldGroup) noexcept
 void Achievement::RebuildTrigger()
 {
     // store the original trigger for later
-    std::shared_ptr<std::vector<unsigned char>> pOldTriggerBuffer = m_pTriggerBuffer;
-    auto* pOldTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    auto* pOldTrigger = pRuntime.DetachAchievementTrigger(ID());
 
     // perform validation - if the new trigger will result in a parse error, the changes will be lost.
     // attempt to detect and correct for these to minimize the impact to the user.
@@ -165,20 +165,27 @@ void Achievement::RebuildTrigger()
     }
 
     // convert the UI definition into a string
-    std::string sTrigger;
-    m_vConditions.Serialize(sTrigger);
-
-    // parse the string into a trigger and rebuild the UI elements
-    ParseTrigger(sTrigger.c_str());
+    m_vConditions.Serialize(m_sTrigger);
 
     // attempt to copy over the hit counts
-    if (pOldTrigger != nullptr && m_pTrigger != nullptr)
+    if (pOldTrigger != nullptr)
     {
-        const auto pTrigger = gsl::make_not_null(static_cast<rc_trigger_t*>(m_pTrigger));
-        if (pTrigger->requirement && pOldTrigger->requirement)
-            MergeHits(*pTrigger->requirement, *pOldTrigger->requirement);
+        const auto nResult = pRuntime.ActivateAchievement(ID(), m_sTrigger);
+        if (nResult != RC_OK)
+        {
+            // parse error occurred
+            RA_LOG("rc_parse_trigger returned %d for achievement %u", nResult, ID());
 
-        auto* pAltGroup = pTrigger->alternative;
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                ra::StringPrintf(L"Unable to rebuild achievement: %s", Title()),
+                ra::StringPrintf(L"Parse error %d", nResult));
+        }
+
+        m_pTrigger = pRuntime.GetAchievementTrigger(ID());
+        if (m_pTrigger->requirement && pOldTrigger->requirement)
+            MergeHits(*m_pTrigger->requirement, *pOldTrigger->requirement);
+
+        auto* pAltGroup = m_pTrigger->alternative;
         auto* pOldAltGroup = pOldTrigger->alternative;
         while (pAltGroup && pOldAltGroup)
         {
@@ -186,17 +193,16 @@ void Achievement::RebuildTrigger()
             pAltGroup = pAltGroup->next;
             pOldAltGroup = pOldAltGroup->next;
         }
+
+        pRuntime.ReleaseAchievementTrigger(ID(), pOldTrigger);
+    }
+    else
+    {
+        m_pTrigger = nullptr;
     }
 
     // mark the conditions as dirty so they will get repainted
     SetDirtyFlag(DirtyFlags::Conditions);
-
-    if (m_bActive)
-    {
-        // disassociate the old trigger and register the new one
-        SetActive(false);
-        SetActive(true);
-    }
 }
 
 static constexpr MemSize GetCompVariableSize(char nOperandSize) noexcept
@@ -242,15 +248,15 @@ inline static constexpr void SetOperand(CompVariable& var, const rc_operand_t& o
     switch (operand.type)
     {
         case RC_OPERAND_ADDRESS:
-            var.Set(GetCompVariableSize(operand.value.memref->memref.size), CompVariable::Type::Address, operand.value.memref->memref.address);
+            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::Address, operand.value.memref->memref.address);
             break;
 
         case RC_OPERAND_DELTA:
-            var.Set(GetCompVariableSize(operand.value.memref->memref.size), CompVariable::Type::DeltaMem, operand.value.memref->memref.address);
+            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::DeltaMem, operand.value.memref->memref.address);
             break;
 
         case RC_OPERAND_PRIOR:
-            var.Set(GetCompVariableSize(operand.value.memref->memref.size), CompVariable::Type::PriorMem, operand.value.memref->memref.address);
+            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::PriorMem, operand.value.memref->memref.address);
             break;
 
         case RC_OPERAND_CONST:
@@ -351,74 +357,63 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
     }
 }
 
-void Achievement::ParseTrigger(const char* sTrigger)
+void Achievement::SetTrigger(const std::string& sTrigger)
 {
+    m_sTrigger = sTrigger;
+    m_pTrigger = nullptr;
     m_vConditions.Clear();
-
-    const int nSize = rc_trigger_size(sTrigger);
-    if (nSize < 0)
-    {
-        // parse error occurred
-        RA_LOG("rc_parse_trigger returned %d", nSize);
-        m_pTrigger = nullptr;
-
-        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
-            ra::StringPrintf(L"Unable to activate achievement: %s", Title()),
-            ra::StringPrintf(L"Parse error %d", nSize));
-    }
-    else
-    {
-        // allocate space and parse again
-        m_pTriggerBuffer = std::make_shared<std::vector<unsigned char>>(nSize);
-        auto* pTrigger = rc_parse_trigger(m_pTriggerBuffer->data(), sTrigger, nullptr, 0);
-        m_pTrigger = pTrigger;
-
-        if (m_bActive)
-        {
-            SetActive(false);
-            SetActive(true);
-        }
-
-        // wrap rc_trigger_t in a ConditionSet for the UI
-        MakeConditionGroup(m_vConditions, pTrigger->requirement);
-        rc_condset_t* alternative = pTrigger->alternative;
-        while (alternative != nullptr)
-        {
-            MakeConditionGroup(m_vConditions, alternative);
-            alternative = alternative->next;
-        }
-    }
 }
 
-static constexpr bool HasHitCounts(const rc_condset_t* pCondSet) noexcept
+static rc_trigger_t* GetRawTrigger(ra::AchievementID nId, const std::string& sTrigger)
 {
-    rc_condition_t* condition = pCondSet->conditions;
-    while (condition != nullptr)
-    {
-        if (condition->current_hits)
-            return true;
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    rc_trigger_t* pTrigger = pRuntime.GetAchievementTrigger(nId);
+    if (pTrigger == nullptr)
+        pTrigger = pRuntime.GetAchievementTrigger(nId, sTrigger);
 
-        condition = condition->next;
-    }
-
-    return false;
+    return pTrigger;
 }
 
-static constexpr bool HasHitCounts(const rc_trigger_t* pTrigger) noexcept
+void Achievement::GenerateConditions()
 {
-    if (HasHitCounts(pTrigger->requirement))
-        return true;
+    if (!m_vConditions.EmptyGroup())
+        return;
 
-    rc_condset_t* pAlternate = pTrigger->alternative;
-    while (pAlternate != nullptr)
+    std::vector<unsigned char> pBuffer;
+
+    rc_trigger_t* pTrigger = m_pTrigger;
+    if (pTrigger == nullptr)
     {
-        if (HasHitCounts(pAlternate))
-            return true;
+        pTrigger = m_pTrigger = GetRawTrigger(ID(), m_sTrigger);
 
-        pAlternate = pAlternate->next;
+        if (pTrigger == nullptr)
+        {
+            const int nSize = rc_trigger_size(m_sTrigger.c_str());
+            if (nSize < 0)
+            {
+                // parse error occurred
+                RA_LOG("rc_parse_trigger returned %d for achievement %u", nSize, ID());
+
+                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                    ra::StringPrintf(L"Unable to activate achievement: %s", Title()),
+                    ra::StringPrintf(L"Parse error %d", nSize));
+
+                return;
+            }
+
+            pBuffer.resize(nSize);
+            pTrigger = rc_parse_trigger(&pBuffer.front(), m_sTrigger.c_str(), nullptr, 0);
+        }
     }
 
-    return false;
+    // wrap rc_trigger_t in a ConditionSet for the UI
+    MakeConditionGroup(m_vConditions, pTrigger->requirement);
+    rc_condset_t* alternative = pTrigger->alternative;
+    while (alternative != nullptr)
+    {
+        MakeConditionGroup(m_vConditions, alternative);
+        alternative = alternative->next;
+    }
 }
 
 static constexpr rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, size_t nGroup, size_t nIndex) noexcept
@@ -452,22 +447,27 @@ static constexpr rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, siz
 unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) const noexcept
 {
     if (m_pTrigger == nullptr)
-        return 0U;
+    {
+        m_pTrigger = GetRawTrigger(ID(), m_sTrigger);
+        if (m_pTrigger == nullptr)
+            return 0U;
+    }
 
-    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-    const rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
+    const rc_condition_t* pCondition = GetTriggerCondition(m_pTrigger, nGroup, nIndex);
     return pCondition ? pCondition->current_hits : 0U;
 }
 
 void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned int nCurrentHits) const noexcept
 {
     if (m_pTrigger == nullptr)
-        return;
+        m_pTrigger = GetRawTrigger(ID(), m_sTrigger);
 
-    rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-    rc_condition_t* pCondition = GetTriggerCondition(pTrigger, nGroup, nIndex);
-    if (pCondition)
-        pCondition->current_hits = nCurrentHits;
+    if (m_pTrigger != nullptr)
+    {
+        rc_condition_t* pCondition = GetTriggerCondition(m_pTrigger, nGroup, nIndex);
+        if (pCondition)
+            pCondition->current_hits = nCurrentHits;
+    }
 }
 
 void Achievement::AddAltGroup() noexcept { m_vConditions.AddGroup(); }
@@ -475,6 +475,10 @@ void Achievement::RemoveAltGroup(gsl::index nIndex) { m_vConditions.RemoveAltGro
 
 void Achievement::SetID(ra::AchievementID nID) noexcept
 {
+#ifndef RA_UTEST
+    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().UpdateAchievementId(m_nAchievementID, nID);
+#endif
+
     m_nAchievementID = nID;
     SetDirtyFlag(DirtyFlags::ID);
 }
@@ -486,32 +490,26 @@ void Achievement::SetActive(BOOL bActive) noexcept
         m_bActive = bActive;
         SetDirtyFlag(DirtyFlags::All);
 
-        if (m_pTrigger && ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        if (!m_sTrigger.empty() && ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
         {
             auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
             if (!m_bActive)
+            {
                 pRuntime.DeactivateAchievement(ID());
-            else if (m_bPauseOnReset)
-                pRuntime.MonitorAchievementReset(ID(), static_cast<rc_trigger_t*>(m_pTrigger));
+            }
             else
-                pRuntime.ActivateAchievement(ID(), static_cast<rc_trigger_t*>(m_pTrigger));
-        }
-    }
-}
+            {
+                const int nResult = pRuntime.ActivateAchievement(ID(), m_sTrigger);
+                if (nResult != RC_OK)
+                {
+                    // parse error occurred
+                    RA_LOG("rc_parse_trigger returned %d for achievement %u", nResult, ID());
 
-void Achievement::SetPauseOnReset(BOOL bPause)
-{
-    if (m_bPauseOnReset != bPause)
-    {
-        m_bPauseOnReset = bPause;
-
-        if (m_bActive)
-        {
-            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-            if (m_bPauseOnReset)
-                pRuntime.MonitorAchievementReset(ID(), static_cast<rc_trigger_t*>(m_pTrigger));
-            else
-                pRuntime.ActivateAchievement(ID(), static_cast<rc_trigger_t*>(m_pTrigger));
+                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
+                        ra::StringPrintf(L"Unable to activate achievement: %s", Title()),
+                        ra::StringPrintf(L"Parse error %d", nResult));
+                }
+            }
         }
     }
 }
@@ -533,17 +531,6 @@ void Achievement::SetBadgeImage(const std::string& sBadgeURI)
         m_sBadgeImageURI.assign(sBadgeURI.c_str(), sBadgeURI.length() - 5);
     else
         m_sBadgeImageURI = sBadgeURI;
-}
-
-void Achievement::Reset() noexcept
-{
-    if (m_pTrigger)
-    {
-        rc_trigger_t* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-        rc_reset_trigger(pTrigger);
-
-        SetDirtyFlag(DirtyFlags::Conditions);
-    }
 }
 
 size_t Achievement::AddCondition(size_t nConditionGroup, const Condition& rNewCond)
@@ -611,25 +598,7 @@ void Achievement::CopyFrom(const Achievement& rRHS)
     SetModifiedDate(rRHS.m_nTimestampModified);
     SetCreatedDate(rRHS.m_nTimestampCreated);
 
-    ParseTrigger(rRHS.CreateMemString().c_str());
+    m_sTrigger = rRHS.m_sTrigger;
 
     SetDirtyFlag(DirtyFlags::All);
-}
-
-unsigned int Achievement::MeasuredTarget() const noexcept
-{
-    if (m_pTrigger == nullptr)
-        return 0;
-
-    const auto* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-    return pTrigger->measured_target;
-}
-
-unsigned int Achievement::MeasuredValue() const noexcept
-{
-    if (m_pTrigger == nullptr)
-        return 0;
-
-    const auto* pTrigger = static_cast<rc_trigger_t*>(m_pTrigger);
-    return pTrigger->measured_value;
 }

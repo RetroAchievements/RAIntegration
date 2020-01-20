@@ -225,9 +225,6 @@
     <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="RA_RichPresence_Tests.cpp">
-      <Filter>Tests\Data</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\PopupViewModelBase.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -235,9 +232,6 @@
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="RA_Condition_Tests.cpp">
-      <Filter>Tests\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_Leaderboard_Tests.cpp">
       <Filter>Tests\Data</Filter>
     </ClCompile>
     <ClCompile Include="RA_RichPresence_Tests.cpp">
@@ -390,6 +384,9 @@
       <Filter>Mocks</Filter>
     </ClInclude>
     <ClInclude Include="mocks\MockWindowManager.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockAchievementRuntime.hh">
       <Filter>Mocks</Filter>
     </ClInclude>
   </ItemGroup>

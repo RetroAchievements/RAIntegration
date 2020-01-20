@@ -2128,6 +2128,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
     }
     else if (m_pSelectedAchievement != pCheevo)
     {
+        pCheevo->GenerateConditions();
         m_pSelectedAchievement = pCheevo;
 
         // New achievement selected.

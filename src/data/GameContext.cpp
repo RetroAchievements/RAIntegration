@@ -1005,7 +1005,7 @@ void GameContext::LoadRichPresenceScript(const std::string& sRichPresenceScript)
     ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().ActivateRichPresence(sRichPresenceScript);
 }
 
-bool GameContext::HasRichPresence() const noexcept
+bool GameContext::HasRichPresence() const
 {
     return ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().HasRichPresence();
 }

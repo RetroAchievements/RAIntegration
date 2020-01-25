@@ -55,12 +55,12 @@ public:
         return m_pRuntime.memrefs;
     }
 
-    void ForceRichPresenceUpdate()
+    void ForceRichPresenceUpdate() noexcept
     {
         m_pRuntime.richpresence_update_timer = 0;
     }
 
-    size_t GetTriggerCount()
+    size_t GetTriggerCount() const noexcept
     {
         return m_pRuntime.trigger_count;
     }
@@ -278,7 +278,7 @@ public:
 
         // update the ID (this simulates uploading a local achievement)
         runtime.UpdateAchievementId(110000006U, 99001U);
-        auto* pTrigger2 = runtime.GetAchievementTrigger(99001U);
+        auto const* pTrigger2 = runtime.GetAchievementTrigger(99001U);
         Assert::IsTrue(pTrigger == pTrigger2);
 
         pTrigger = runtime.GetAchievementTrigger(110000006U);
@@ -306,7 +306,6 @@ public:
         auto* pTrigger = runtime.GetAchievementTrigger(6U);
         pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
 
-        std::array<unsigned char, 1024> sTriggerBuffer2{};
         runtime.ActivateAchievement(7U, "0xH0000=0.30._R:0xH0001=1");
         auto* pTrigger2 = runtime.GetAchievementTrigger(7U);
         pTrigger2->state = RC_TRIGGER_STATE_ACTIVE;

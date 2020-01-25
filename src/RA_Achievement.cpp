@@ -444,7 +444,7 @@ static constexpr rc_condition_t* GetTriggerCondition(rc_trigger_t* pTrigger, siz
     return pCondition;
 }
 
-unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) const noexcept
+unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) const
 {
     if (m_pTrigger == nullptr)
     {
@@ -457,7 +457,7 @@ unsigned int Achievement::GetConditionHitCount(size_t nGroup, size_t nIndex) con
     return pCondition ? pCondition->current_hits : 0U;
 }
 
-void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned int nCurrentHits) const noexcept
+void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned int nCurrentHits) const
 {
     if (m_pTrigger == nullptr)
         m_pTrigger = GetRawTrigger(ID(), m_sTrigger);
@@ -475,10 +475,6 @@ void Achievement::RemoveAltGroup(gsl::index nIndex) { m_vConditions.RemoveAltGro
 
 void Achievement::SetID(ra::AchievementID nID) noexcept
 {
-#ifndef RA_UTEST
-    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().UpdateAchievementId(m_nAchievementID, nID);
-#endif
-
     m_nAchievementID = nID;
     SetDirtyFlag(DirtyFlags::ID);
 }

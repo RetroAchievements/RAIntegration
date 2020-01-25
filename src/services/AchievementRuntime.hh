@@ -19,7 +19,7 @@ class AchievementRuntime
 {
 public:
     GSL_SUPPRESS_F6 AchievementRuntime() = default;
-    virtual ~AchievementRuntime() noexcept
+    virtual ~AchievementRuntime()
     {
         ResetRuntime();
     }
@@ -32,12 +32,12 @@ public:
     /// <summary>
     /// Clears all active achievements/leaderboards/rich presence from the runtime.
     /// </summary>
-    void ResetRuntime();
+    void ResetRuntime() noexcept;
 
     /// <summary>
     /// Adds an achievement to the processing queue.
     /// </summary>
-    int ActivateAchievement(ra::AchievementID nId, const std::string& sTrigger) noexcept;
+    int ActivateAchievement(ra::AchievementID nId, const std::string& sTrigger);
 
     /// <summary>
     /// Removes an achievement from the processing queue.
@@ -47,12 +47,23 @@ public:
     /// <summary>
     /// Updates any references using the provided ID to a new value
     /// </summary>
-    void UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId);
+    void UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId) noexcept;
 
     /// <summary>
     /// Gets the raw trigger for the achievement (if active)
     /// </summary>
-    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId)
+    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) noexcept
+    {
+        if (!m_bInitialized)
+            return nullptr;
+
+        return rc_runtime_get_achievement(&m_pRuntime, nId);
+    }
+
+    /// <summary>
+    /// Gets the raw trigger for the achievement (if active)
+    /// </summary>
+    const rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const noexcept
     {
         if (!m_bInitialized)
             return nullptr;
@@ -68,23 +79,12 @@ public:
     /// <summary>
     /// Gets the raw trigger for the achievement (if active)
     /// </summary>
-    const rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const
-    {
-        if (!m_bInitialized)
-            return nullptr;
-
-        return rc_runtime_get_achievement(&m_pRuntime, nId);
-    }
-
-    /// <summary>
-    /// Gets the raw trigger for the achievement (if active)
-    /// </summary>
     rc_trigger_t* DetachAchievementTrigger(ra::AchievementID nId) noexcept;
 
     /// <summary>
     /// Removes an achievement from the processing queue.
     /// </summary>
-    void ReleaseAchievementTrigger(ra::AchievementID nId, rc_trigger_t* pTrigger);
+    void ReleaseAchievementTrigger(ra::AchievementID nId, _In_ rc_trigger_t* pTrigger) noexcept;
 
     /// <summary>
     /// Adds a leaderboard to the processing queue.
@@ -104,7 +104,7 @@ public:
     /// Specifies the rich presence to process each frame.
     /// </summary>
     /// <remarks>Only updates the memrefs each frame (for deltas), the script is not processed here.</remarks>
-    void ActivateRichPresence(const std::string& sScript) noexcept;
+    void ActivateRichPresence(const std::string& sScript);
 
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
@@ -144,7 +144,7 @@ public:
     /// <summary>
     /// Processes all active achievements for the current frame.
     /// </summary>
-    virtual void Process(_Inout_ std::vector<Change>& changes);
+    virtual void Process(_Inout_ std::vector<Change>& changes) noexcept;
 
     /// <summary>
     /// Loads HitCount data for active achievements from a save state file.
@@ -167,12 +167,12 @@ public:
     /// <summary>
     /// Sets whether achievement processing should be temporarily suspended.
     /// </summary>
-    void SetPaused(bool bValue) noexcept;
+    void SetPaused(bool bValue);
 
     /// <summary>
     /// Resets any active achievements and disables them until their triggers are false.
     /// </summary>
-    void ResetActiveAchievements()
+    void ResetActiveAchievements() noexcept
     {
         if (m_bInitialized)
             rc_runtime_reset(&m_pRuntime);
@@ -180,13 +180,13 @@ public:
 
 protected:
     bool m_bPaused = false;
-    rc_runtime_t m_pRuntime;
+    rc_runtime_t m_pRuntime{};
 
 private:
     bool LoadProgressV1(const std::string& sProgress, std::set<unsigned int>& vProcessedAchievementIds);
     bool LoadProgressV2(ra::services::TextReader& pFile, std::set<unsigned int>& vProcessedAchievementIds);
 
-    void EnsureInitialized();
+    void EnsureInitialized() noexcept;
 
     std::map<unsigned int, std::string> m_vQueuedAchievements;
     bool m_bInitialized = false;

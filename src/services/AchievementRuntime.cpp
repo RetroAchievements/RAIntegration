@@ -18,7 +18,7 @@
 namespace ra {
 namespace services {
 
-void AchievementRuntime::EnsureInitialized()
+void AchievementRuntime::EnsureInitialized() noexcept
 {
     if (!m_bInitialized)
     {
@@ -27,7 +27,7 @@ void AchievementRuntime::EnsureInitialized()
     }
 }
 
-void AchievementRuntime::ResetRuntime()
+void AchievementRuntime::ResetRuntime() noexcept
 {
     if (m_bInitialized)
     {
@@ -36,7 +36,7 @@ void AchievementRuntime::ResetRuntime()
     }
 }
 
-int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::string& sTrigger) noexcept
+int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::string& sTrigger)
 {
     EnsureInitialized();
 
@@ -58,11 +58,13 @@ rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId, c
     if (!m_bInitialized)
         return nullptr;
 
-    unsigned char md5[16];
-    md5_state_t state;
+    unsigned char md5[16]{};
+    md5_state_t state{};
+    const md5_byte_t* bytes;
+    GSL_SUPPRESS_TYPE1 bytes = reinterpret_cast<const md5_byte_t*>(sTrigger.c_str());
 
     md5_init(&state);
-    md5_append(&state, (unsigned char*)sTrigger.c_str(), (int)sTrigger.length());
+    md5_append(&state, bytes, gsl::narrow_cast<int>(sTrigger.length()));
     md5_finish(&state, md5);
 
     for (size_t i = 0; i < m_pRuntime.trigger_count; ++i)
@@ -72,7 +74,7 @@ rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId, c
             if (m_pRuntime.triggers[i].trigger)
                 return m_pRuntime.triggers[i].trigger;
 
-            return reinterpret_cast<rc_trigger_t*>(m_pRuntime.triggers[i].buffer);
+            return static_cast<rc_trigger_t*>(m_pRuntime.triggers[i].buffer);
         }
     }
 
@@ -108,14 +110,17 @@ rc_trigger_t* AchievementRuntime::DetachAchievementTrigger(ra::AchievementID nId
     return nullptr;
 }
 
-void AchievementRuntime::ReleaseAchievementTrigger(ra::AchievementID nId, rc_trigger_t* pTrigger)
+void AchievementRuntime::ReleaseAchievementTrigger(ra::AchievementID nId, _In_ rc_trigger_t* pTrigger) noexcept
 {
     if (!m_bInitialized)
         return;
 
+#pragma warning(push)
+#pragma warning(disable:6001) // Using uninitialized memory 'pTrigger'
+
     for (unsigned i = 0; i < m_pRuntime.trigger_count; ++i)
     {
-        if (m_pRuntime.triggers[i].id == nId && m_pRuntime.triggers[i].buffer == pTrigger)
+        if (m_pRuntime.triggers[i].id == nId && static_cast<rc_trigger_t*>(m_pRuntime.triggers[i].buffer) == pTrigger)
         {
             // this duplicates logic from rc_runtime_deactivate_trigger_by_index
             if (!m_pRuntime.triggers[i].owns_memrefs)
@@ -128,9 +133,11 @@ void AchievementRuntime::ReleaseAchievementTrigger(ra::AchievementID nId, rc_tri
             }
         }
     }
+
+#pragma warning(pop)
 }
 
-void AchievementRuntime::UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId)
+void AchievementRuntime::UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId) noexcept
 {
     if (!m_bInitialized)
         return;
@@ -149,7 +156,7 @@ int AchievementRuntime::ActivateLeaderboard(unsigned int nId, const std::string&
     return rc_runtime_activate_lboard(&m_pRuntime, nId, sDefinition.c_str(), nullptr, 0);
 }
 
-void AchievementRuntime::ActivateRichPresence(const std::string& sScript) noexcept
+void AchievementRuntime::ActivateRichPresence(const std::string& sScript)
 {
     EnsureInitialized();
 
@@ -173,7 +180,7 @@ std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
     return ra::Widen(sRichPresence);
 }
 
-void AchievementRuntime::SetPaused(bool bValue) noexcept 
+void AchievementRuntime::SetPaused(bool bValue) 
 { 
     if (!bValue && m_bPaused && !m_vQueuedAchievements.empty())
     {
@@ -222,7 +229,7 @@ static void map_event_to_change(const rc_runtime_event_t* pRuntimeEvent)
     g_pChanges->emplace_back(AchievementRuntime::Change{ nChangeType, pRuntimeEvent->id, pRuntimeEvent->value });
 }
 
-_Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& changes)
+_Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& changes) noexcept
 {
     if (!m_bInitialized || m_bPaused)
         return;

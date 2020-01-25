@@ -97,13 +97,13 @@ public:
     void SetBadgeImage(const std::string& sFilename);
 
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
-    unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const noexcept;
-    void SetConditionHitCount(size_t nCondGroup, size_t i, unsigned int nCurrentHits) const noexcept;
+    unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const;
+    void SetConditionHitCount(size_t nCondGroup, size_t i, unsigned int nCurrentHits) const;
 
     std::string CreateMemString() const;
 
     void SetTrigger(const std::string& pTrigger);
-    const std::string& GetTrigger() const { return m_sTrigger; }
+    const std::string& GetTrigger() const noexcept { return m_sTrigger; }
     void GenerateConditions();
 
     // Used for rendering updates when editing achievements. Usually always false.

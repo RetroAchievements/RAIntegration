@@ -261,9 +261,9 @@ public:
         pAch4.SetID(4);
         pAch4.SetPoints(4U);
         pAch4.SetActive(false);
-        achievementsPage.Refresh();
         achievementsPage.SetProgress(4U, 0, 0);
 
+        achievementsPage.Refresh();
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"2 of 4 won (6/10)"), achievementsPage.GetSummary());
 

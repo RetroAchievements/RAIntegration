@@ -14,7 +14,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-constexpr size_t SEARCH_ROWS_DISPLAYED = 8;
+constexpr size_t SEARCH_ROWS_DISPLAYED = 10;
 constexpr size_t SEARCH_MAX_HISTORY = 50;
 
 const StringModelProperty MemorySearchViewModel::FilterRangeProperty("MemorySearchViewModel", "FilterRange", L"");
@@ -39,22 +39,22 @@ void MemorySearchViewModel::SearchResultViewModel::UpdateRowColor()
     if (!bMatchesFilter)
     {
         // red if value no longer matches filter
-        SetRowColor(ra::ui::Color(0xFFFFD0D0)); // was FFD7D7
+        SetRowColor(ra::ui::Color(0xFFFFE0E0));
     }
     else if (bHasBookmark)
     {
         // green if bookmark found
-        SetRowColor(ra::ui::Color(0xFFD0FFD0));
+        SetRowColor(ra::ui::Color(0xFFE0FFE0));
     }
     else if (bHasCodeNote)
     {
         // blue if code note found
-        SetRowColor(ra::ui::Color(0xFFD0F0FF));
+        SetRowColor(ra::ui::Color(0xFFE0F0FF));
     }
     else if (bHasBeenModified)
     {
         // grey if the filter currently matches, but did not at some point
-        SetRowColor(ra::ui::Color(0xFFE0E0E0));
+        SetRowColor(ra::ui::Color(0xFFF0F0F0));
     }
     else
     {
@@ -96,6 +96,8 @@ void MemorySearchViewModel::DoFrame()
 {
     if (m_vSearchResults.size() < 2)
         return;
+
+    m_bNeedsRedraw = false;
 
     const ra::services::SearchResults& pPreviousResults = (m_vSearchResults.end() - 2)->pResults;
 
@@ -172,6 +174,13 @@ void MemorySearchViewModel::DoFrame()
             pRow->UpdateRowColor();
         }
     }
+}
+
+bool MemorySearchViewModel::NeedsRedraw() noexcept
+{
+    const bool bNeedsRedraw = m_bNeedsRedraw;
+    m_bNeedsRedraw = false;
+    return bNeedsRedraw;
 }
 
 inline static constexpr auto ParseAddress(const wchar_t* ptr, ra::ByteAddress& address) noexcept
@@ -516,6 +525,18 @@ void MemorySearchViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const
     }
 }
 
+void MemorySearchViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
+{
+    // assume color
+    m_bNeedsRedraw = true;
+}
+
+void MemorySearchViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
+{
+    // assume text
+    m_bNeedsRedraw = true;
+}
+
 void MemorySearchViewModel::NextPage()
 {
     if (m_nSelectedSearchResult < m_vSearchResults.size() - 1)
@@ -597,6 +618,9 @@ void MemorySearchViewModel::ExcludeSelected()
 
 void MemorySearchViewModel::BookmarkSelected()
 {
+    if (m_vSelectedAddresses.empty())
+        return;
+
     MemSize nSize = MemSize::EightBit;
     switch (GetSearchType())
     {

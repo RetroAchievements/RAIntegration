@@ -29,6 +29,8 @@ public:
 
     void DoFrame();
 
+    bool NeedsRedraw() noexcept;
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the filter range.
     /// </summary>
@@ -340,6 +342,8 @@ protected:
 
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
+    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
+    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
 
 private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);
@@ -352,6 +356,7 @@ private:
     LookupItemViewModelCollection m_vValueTypes;
 
     ViewModelCollection<SearchResultViewModel> m_vResults;
+    bool m_bNeedsRedraw = false;
 
     struct SearchResult
     {

@@ -342,7 +342,7 @@ void Dlg_Memory::OnViewModelBoolValueChanged(gsl::index nIndex, const ra::ui::Bo
             if (g_pMemorySearch->ResultMemSize() == MemSize::Nibble_Lower)
                 nAddress >>= 1;
 
-            SetWatchingAddress(nAddress);
+            GoToAddress(nAddress);
         }
     }
 }
@@ -1153,7 +1153,28 @@ void Dlg_Memory::Invalidate()
 
     // Update Search Results
     if (g_pMemorySearch != nullptr)
+    {
         g_pMemorySearch->DoFrame();
+
+        if (g_pMemorySearch->NeedsRedraw())
+        {
+            HWND hListbox = GetDlgItem(m_hWnd, IDC_RA_MEM_LIST);
+
+            InvalidateRect(hListbox, nullptr, FALSE);
+
+            // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
+            // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
+            // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
+            // Similar code exists in Dlg_Memory::Invalidate for the search results
+            switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+            {
+                case RA_Libretro:
+                case RA_Oricutron:
+                    UpdateWindow(hListbox);
+                    break;
+            }
+        }
+    }
 }
 
 void Dlg_Memory::UpdateBits() const

@@ -67,7 +67,7 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, MemSize 
     }
 }
 
-SearchResults::MemBlock& SearchResults::AddBlock(unsigned int nAddress, unsigned int nSize)
+SearchResults::MemBlock& SearchResults::AddBlock(ra::ByteAddress nAddress, unsigned int nSize)
 {
     m_vBlocks.emplace_back(nAddress, nSize);
     return m_vBlocks.back();

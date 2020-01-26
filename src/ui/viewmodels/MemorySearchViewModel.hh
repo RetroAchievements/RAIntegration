@@ -277,6 +277,8 @@ public:
     /// </summary>
     unsigned int GetScrollOffset() const { return gsl::narrow_cast<unsigned int>(GetValue(ScrollOffsetProperty)); }
 
+    void SetScrollOffset(unsigned int nOffset) { SetValue(ScrollOffsetProperty, ra::to_signed(nOffset)); }
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the maximum scroll offset.
     /// </summary>
@@ -298,6 +300,16 @@ public:
     const std::wstring& GetSelectedPage() const { return GetValue(SelectedPageProperty); }
 
     /// <summary>
+    /// Advances to the next page of results (if available).
+    /// </summary>
+    void NextPage();
+
+    /// <summary>
+    /// Returns to the previous page of results (if available).
+    /// </summary>
+    void PreviousPage();
+
+    /// <summary>
     /// Starts a new search.
     /// </summary>
     void BeginNewSearch();
@@ -307,6 +319,16 @@ public:
     /// </summary>
     void ApplyFilter();
 
+    /// <summary>
+    /// Excludes the currently selected items from the search results.
+    /// </summary>
+    void ExcludeSelected();
+
+    /// <summary>
+    /// Bookmarks the currently selected items from the search results.
+    /// </summary>
+    void BookmarkSelected();
+
 protected:
 
     // ViewModelBase::NotifyTarget
@@ -315,6 +337,8 @@ protected:
 private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);
     void UpdateResults();
+    void AddNewPage();
+    void ChangePage(size_t nNewPage);
 
     LookupItemViewModelCollection m_vSearchTypes;
     LookupItemViewModelCollection m_vComparisonTypes;

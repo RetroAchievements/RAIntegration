@@ -6,6 +6,8 @@
 
 #include "ui/ViewModelBase.hh"
 
+#include "ui/win32/bindings/GridBinding.hh"
+
 class MemoryViewerControl
 {
 public:
@@ -45,8 +47,6 @@ public:
     void Init() noexcept;
     void Shutdown() noexcept;
 
-    void ClearLogOutput() noexcept;
-
     static INT_PTR CALLBACK s_MemoryProc(HWND, UINT, WPARAM, LPARAM);
     INT_PTR MemoryProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -73,6 +73,7 @@ protected:
     void OnViewModelIntValueChanged(const ra::ui::IntModelProperty::ChangeArgs& args) override;
 
 private:
+    void SetAddressRange();
     bool GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
     ra::ByteAddress m_nSystemRamStart{}, m_nSystemRamEnd{}, m_nGameRamStart{}, m_nGameRamEnd{};
 
@@ -88,6 +89,8 @@ private:
     MemSize m_nCompareSize = MemSize{};
 
     std::vector<SearchResult> m_SearchResults;
+
+    std::unique_ptr<ra::ui::win32::bindings::GridBinding> m_pSearchGridBinding;
 };
 
 extern Dlg_Memory g_MemoryDialog;

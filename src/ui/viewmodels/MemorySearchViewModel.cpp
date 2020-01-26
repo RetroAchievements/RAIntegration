@@ -14,7 +14,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-constexpr size_t SEARCH_ROWS_DISPLAYED = 10;
+constexpr size_t SEARCH_ROWS_DISPLAYED = 8;
 constexpr size_t SEARCH_MAX_HISTORY = 50;
 
 const StringModelProperty MemorySearchViewModel::FilterRangeProperty("MemorySearchViewModel", "FilterRange", L"");
@@ -188,6 +188,20 @@ void MemorySearchViewModel::BeginNewSearch()
     SetValue(ResultCountProperty, nEnd - nStart + 1);
 }
 
+void MemorySearchViewModel::AddNewPage()
+{
+    // remove any search history after the current node
+    while (m_vSearchResults.size() - 1 > m_nSelectedSearchResult)
+        m_vSearchResults.pop_back();
+
+    // add a new search history entry
+    m_vSearchResults.emplace_back();
+    if (m_vSearchResults.size() > SEARCH_MAX_HISTORY)
+        m_vSearchResults.erase(m_vSearchResults.begin());
+    else
+        ++m_nSelectedSearchResult;
+}
+
 void MemorySearchViewModel::ApplyFilter()
 {
     if (m_vSearchResults.empty())
@@ -215,19 +229,10 @@ void MemorySearchViewModel::ApplyFilter()
         }
     }
 
-    // remove any search history after the current node
-    while (m_vSearchResults.size() > m_nSelectedSearchResult)
-        m_vSearchResults.pop_back();
+    AddNewPage();
 
-    // add a new search history entry
-    m_vSearchResults.emplace_back();
-    if (m_vSearchResults.size() > SEARCH_MAX_HISTORY)
-        m_vSearchResults.erase(m_vSearchResults.begin());
-    else
-        ++m_nSelectedSearchResult;
-
-    SearchResult pPreviousResult = *(m_vSearchResults.end() - 2);
-    SearchResult pResult = m_vSearchResults.back();
+    SearchResult& pPreviousResult = *(m_vSearchResults.end() - 2);
+    SearchResult& pResult = m_vSearchResults.back();
 
     pResult.nCompareType = GetComparisonType();
     pResult.nValueType = GetValueType();
@@ -253,15 +258,22 @@ void MemorySearchViewModel::ApplyFilter()
                 --m_nSelectedSearchResult;
 
                 // in case we removed some
-                SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult + 1, m_vSearchResults.size() + 1));
+                SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult + 1, m_vSearchResults.size()));
                 return;
             }
         }
     }
 
-    SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult + 1, m_vSearchResults.size() + 1));
+    ChangePage(m_nSelectedSearchResult);
+}
+
+void MemorySearchViewModel::ChangePage(size_t nNewPage)
+{
+    m_nSelectedSearchResult = nNewPage;
+    SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult + 1, m_vSearchResults.size()));
     SetValue(ScrollOffsetProperty, 0);
 
+    const auto nMatches = m_vSearchResults.at(nNewPage).pResults.MatchingAddressCount();
     if (nMatches > SEARCH_ROWS_DISPLAYED)
         SetValue(ScrollMaximumProperty, gsl::narrow_cast<int>(nMatches - SEARCH_ROWS_DISPLAYED));
     else
@@ -269,13 +281,16 @@ void MemorySearchViewModel::ApplyFilter()
 
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(nMatches));
 
+    m_vModifiedAddresses.clear();
+    m_vSelectedAddresses.clear();
+
     UpdateResults();
 }
 
 void MemorySearchViewModel::UpdateResults()
 {
-    const auto& pPreviousResults = (m_vSearchResults.end() - 2)->pResults;
-    const auto& pCurrentResults = m_vSearchResults.back().pResults;
+    const auto& pPreviousResults = m_vSearchResults.at(m_nSelectedSearchResult - 1);
+    const auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
     ra::services::SearchResults::Result pResult;
     auto nIndex = GetScrollOffset();
 
@@ -283,13 +298,15 @@ void MemorySearchViewModel::UpdateResults()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>();
 
+    m_vResults.BeginUpdate();
+
     unsigned int nRow = 0;
     while (nRow < SEARCH_ROWS_DISPLAYED)
     {
-        if (!pCurrentResults.GetMatchingAddress(nIndex + nRow, pResult))
+        if (!pCurrentResults.pResults.GetMatchingAddress(nIndex + nRow, pResult))
             break;
 
-        if (m_vResults.Count() < nRow)
+        if (m_vResults.Count() <= nRow)
             m_vResults.Add();
 
         auto* pRow = m_vResults.GetItemAt(nRow);
@@ -317,7 +334,7 @@ void MemorySearchViewModel::UpdateResults()
         pRow->SetAddress(ra::Widen(sAddress));
         pRow->SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
 
-        const auto nPreviousValue = pPreviousResults.GetValue(pResult.nAddress, pResult.nSize);
+        const auto nPreviousValue = pPreviousResults.pResults.GetValue(pResult.nAddress, pResult.nSize);
         pRow->SetPreviousValue(ra::StringPrintf(sValueFormat, nPreviousValue));
 
         const auto* pCodeNote = pGameContext.FindCodeNote(pResult.nAddress);
@@ -373,13 +390,83 @@ void MemorySearchViewModel::UpdateResults()
             // default color otherwise
             pRow->SetRowColor(ra::ui::Color(ra::to_unsigned(SearchResultViewModel::RowColorProperty.GetDefaultValue())));
         }
+
+        ++nRow;
     }
+
+    while (m_vResults.Count() > nRow)
+        m_vResults.RemoveAt(m_vResults.Count() - 1);
+
+    m_vResults.EndUpdate();
 }
 
 void MemorySearchViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == ScrollOffsetProperty)
         UpdateResults();
+}
+
+void MemorySearchViewModel::NextPage()
+{
+    if (m_nSelectedSearchResult < m_vSearchResults.size() - 1)
+        ChangePage(m_nSelectedSearchResult + 1);
+}
+
+void MemorySearchViewModel::PreviousPage()
+{
+    if (m_nSelectedSearchResult > 0)
+        ChangePage(m_nSelectedSearchResult - 1);
+}
+
+void MemorySearchViewModel::ExcludeSelected()
+{
+    AddNewPage();
+
+    SearchResult pPreviousResult = *(m_vSearchResults.end() - 2);
+
+    m_vSearchResults.pop_back(); // remove temporary item
+    SearchResult& pResult = m_vSearchResults.emplace_back(pPreviousResult); // clone previous item
+
+    for (const auto nAddress : m_vSelectedAddresses)
+        pResult.pResults.ExcludeAddress(nAddress);
+
+    ChangePage(m_nSelectedSearchResult);
+}
+
+void MemorySearchViewModel::BookmarkSelected()
+{
+    MemSize nSize = MemSize::EightBit;
+    switch (GetSearchType())
+    {
+        case SearchType::FourBit:
+            ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"4-bit bookmarks are not supported");
+            return;
+
+        case SearchType::EightBit:
+            nSize = MemSize::EightBit;
+            break;
+
+        case SearchType::SixteenBit:
+            nSize = MemSize::SixteenBit;
+            break;
+    }
+
+    auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+    vmBookmarks.Bookmarks().BeginUpdate();
+
+    int nCount = 0;
+    for (const auto nAddress : m_vSelectedAddresses)
+    {
+        vmBookmarks.AddBookmark(nAddress, nSize);
+
+        if (++nCount == 100)
+            break;
+    }
+
+    vmBookmarks.Bookmarks().EndUpdate();
+
+    if (nCount == 100)
+        ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"Can only create 100 new bookmarks at a time.");
 }
 
 } // namespace viewmodels

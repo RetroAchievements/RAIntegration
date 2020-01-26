@@ -412,6 +412,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::DescriptionProperty);
             pDescriptionColumn->SetHeader(L"Description");
             pDescriptionColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Fill, 40);
+            pDescriptionColumn->SetTextColorProperty(ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::DescriptionColorProperty);
             m_pSearchGridBinding->BindColumn(2, std::move(pDescriptionColumn));
 
             m_pSearchGridBinding->BindItems(g_pMemorySearch->Results());

@@ -53,6 +53,12 @@ public:
     ra::ui::RelativePosition GetAlignment() const noexcept { return m_nAlignment; }
     void SetAlignment(ra::ui::RelativePosition value) noexcept { m_nAlignment = value; }
 
+    const IntModelProperty* GetTextColorProperty() const noexcept { return m_pTextColorProperty; }
+    void SetTextColorProperty(const IntModelProperty& pTextColorProperty) noexcept
+    {
+        m_pTextColorProperty = &pTextColorProperty;
+    }
+
     bool IsReadOnly() const noexcept { return m_bReadOnly; }
     void SetReadOnly(bool value) noexcept { m_bReadOnly = value; }
     
@@ -77,6 +83,7 @@ protected:
     int m_nWidth = 1;
     ra::ui::RelativePosition m_nAlignment = ra::ui::RelativePosition::Near;
     bool m_bReadOnly = true;
+    const IntModelProperty* m_pTextColorProperty = nullptr;
 };
 
 } // namespace bindings

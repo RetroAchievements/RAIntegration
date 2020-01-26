@@ -34,6 +34,9 @@ void GridBinding::BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBindi
         m_vColumns.resize(nColumn + 1);
     }
 
+    if (pColumnBinding->GetTextColorProperty() != nullptr)
+        m_bHasColoredColumns = true;
+
     m_vColumns.at(nColumn) = std::move(pColumnBinding);
 
     if (m_hWnd)
@@ -711,12 +714,15 @@ void GridBinding::OnLostFocus() noexcept
 
 LRESULT GridBinding::OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw)
 {
+    LRESULT nResult = CDRF_DODEFAULT;
+
     if (m_pRowColorProperty)
     {
         switch (pCustomDraw->nmcd.dwDrawStage)
         {
             case CDDS_PREPAINT:
-                return CDRF_NOTIFYITEMDRAW;
+                nResult |= CDRF_NOTIFYITEMDRAW;
+                break;
 
             case CDDS_ITEMPREPAINT:
             {
@@ -724,12 +730,40 @@ LRESULT GridBinding::OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw)
                 const Color pColor(ra::to_unsigned(m_vmItems->GetItemValue(nIndex, *m_pRowColorProperty)));
                 if (pColor.Channel.A != 0)
                     pCustomDraw->clrTextBk = RGB(pColor.Channel.R, pColor.Channel.G, pColor.Channel.B);
-                return CDRF_DODEFAULT;
+                break;
             }
         }
     }
 
-    return CDRF_DODEFAULT;
+    if (m_bHasColoredColumns)
+    {
+        switch (pCustomDraw->nmcd.dwDrawStage)
+        {
+            case CDDS_PREPAINT:
+                nResult |= CDRF_NOTIFYITEMDRAW;
+                break;
+
+            case CDDS_ITEMPREPAINT:
+                nResult |= CDRF_NOTIFYSUBITEMDRAW;
+                break;
+
+            case CDDS_ITEMPREPAINT | CDDS_SUBITEM:
+                if (pCustomDraw->iSubItem >= 0 && pCustomDraw->iSubItem < m_vColumns.size())
+                {
+                    const auto& pColumn = *m_vColumns.at(pCustomDraw->iSubItem);
+                    if (pColumn.GetTextColorProperty() != nullptr)
+                    {
+                        const auto nIndex = gsl::narrow_cast<gsl::index>(pCustomDraw->nmcd.dwItemSpec) - m_nScrollOffset;
+                        const Color pColor(ra::to_unsigned(m_vmItems->GetItemValue(nIndex, *pColumn.GetTextColorProperty())));
+                        if (pColor.Channel.A != 0)
+                            pCustomDraw->clrText = RGB(pColor.Channel.R, pColor.Channel.G, pColor.Channel.B);
+                    }
+                }
+                break;
+        }
+    }
+
+    return nResult;
 }
 
 void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)

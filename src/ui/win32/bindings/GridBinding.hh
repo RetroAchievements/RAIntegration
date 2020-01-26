@@ -93,11 +93,16 @@ private:
 
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;
+
     size_t m_nColumnsCreated = 0;
     std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
+    bool m_bHasColoredColumns = false;
+
     ViewModelCollectionBase* m_vmItems = nullptr;
+
     const BoolModelProperty* m_pIsSelectedProperty = nullptr;
     const IntModelProperty* m_pRowColorProperty = nullptr;
+
     const IntModelProperty* m_pScrollOffsetProperty = nullptr;
     const IntModelProperty* m_pScrollMaximumProperty = nullptr;
     int m_nScrollOffset = 0;

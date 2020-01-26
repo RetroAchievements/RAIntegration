@@ -488,6 +488,31 @@ void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, cons
     m_nScrollOffset = GetValue(pScrollOffsetProperty);
 }
 
+void GridBinding::UpdateScroll()
+{
+    // attempting to access an out-of-range item. assume the user has scrolled and update m_nScrollOffset
+    const auto nMax = ra::to_unsigned(GetValue(*m_pScrollMaximumProperty) - ListView_GetCountPerPage(m_hWnd) - 1);
+    auto nOffset = ra::to_unsigned(ListView_GetTopIndex(m_hWnd));
+    if (nOffset > nMax)
+        nOffset = nMax;
+
+    // SetValue detaches the change notification event, so we won't be notified.
+    // update the value manually. also, it's important to make sure that it's set
+    // before notifying other targets in case they call back into us.
+    m_nScrollOffset = nOffset;
+
+    SetValue(*m_pScrollOffsetProperty, nOffset);
+
+    if (m_pIsSelectedProperty)
+    {
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow<gsl::index>(m_vmItems->Count()); ++nIndex)
+        {
+            const bool bIsSelected = ListView_GetItemState(m_hWnd, nIndex + nOffset, LVIS_SELECTED) != 0;
+            m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, bIsSelected);
+        }
+    }
+}
+
 LRESULT GridBinding::OnLvnItemChanging(const LPNMLISTVIEW pnmListView)
 {
     // if an item is being unselected
@@ -659,19 +684,7 @@ void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
     auto nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
     if (m_pScrollOffsetProperty && (nIndex < 0 || nIndex > m_vmItems->Count()))
     {
-        // attempting to access an out-of-range item. assume the user has scrolled and update m_nScrollOffset
-        const auto nMax = ra::to_unsigned(GetValue(*m_pScrollMaximumProperty) - ListView_GetCountPerPage(m_hWnd) - 1);
-        auto nOffset = ra::to_unsigned(ListView_GetTopIndex(m_hWnd));
-        if (nOffset > nMax)
-            nOffset = nMax;
-
-        // SetValue detaches the change notification event, so we won't be notified.
-        // update the value manually. also, it's important to make sure that it's set
-        // before notifying other targets in case they call back into us.
-        m_nScrollOffset = nOffset;
-
-        SetValue(*m_pScrollOffsetProperty, nOffset);
-
+        UpdateScroll();
         nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
     }
 

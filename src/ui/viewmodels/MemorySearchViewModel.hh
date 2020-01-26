@@ -266,6 +266,11 @@ public:
     }
 
     /// <summary>
+    /// Gets the memory size of the items in <see cref="Results"/>.
+    /// </summary>
+    MemSize ResultMemSize() const;
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the number of results found.
     /// </summary>
     static const IntModelProperty ResultCountProperty;

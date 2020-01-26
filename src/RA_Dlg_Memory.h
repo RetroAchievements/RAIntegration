@@ -41,7 +41,8 @@ struct SearchResult
     }
 };
 
-class Dlg_Memory : protected ra::ui::ViewModelBase::NotifyTarget
+class Dlg_Memory : protected ra::ui::ViewModelBase::NotifyTarget,
+                   protected ra::ui::ViewModelCollectionBase::NotifyTarget
 {
 public:
     void Init() noexcept;
@@ -70,7 +71,11 @@ public:
     void GenerateResizes(HWND hDlg);
 
 protected:
+    // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const ra::ui::IntModelProperty::ChangeArgs& args) override;
+
+    // ViewModelCollectionBase::NotifyTarget
+    void OnViewModelBoolValueChanged(gsl::index nIndex, const ra::ui::BoolModelProperty::ChangeArgs& args) override;
 
 private:
     void SetAddressRange();

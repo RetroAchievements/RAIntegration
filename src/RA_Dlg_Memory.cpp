@@ -332,6 +332,21 @@ void Dlg_Memory::OnViewModelIntValueChanged(const ra::ui::IntModelProperty::Chan
     }
 }
 
+void Dlg_Memory::OnViewModelBoolValueChanged(gsl::index nIndex, const ra::ui::BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::IsSelectedProperty)
+    {
+        if (args.tNewValue)
+        {
+            auto nAddress = g_pMemorySearch->Results().GetItemAt(nIndex)->nAddress;
+            if (g_pMemorySearch->ResultMemSize() == MemSize::Nibble_Lower)
+                nAddress >>= 1;
+
+            SetWatchingAddress(nAddress);
+        }
+    }
+}
+
 void Dlg_Memory::SetAddressRange()
 {
     if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHCUSTOM) == BST_CHECKED)
@@ -375,6 +390,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             g_pMemoryViewer->AddNotifyTarget(*this);
 
             g_pMemorySearch.reset(new ra::ui::viewmodels::MemorySearchViewModel());
+            g_pMemorySearch->Results().AddNotifyTarget(*this);
 
             // these _will_ go out of scope, but as long as the binding doesn't disable itself, it doesn't matter
             HWND hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);

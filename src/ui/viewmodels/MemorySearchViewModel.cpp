@@ -83,6 +83,14 @@ MemorySearchViewModel::MemorySearchViewModel()
     AddNotifyTarget(*this);
 }
 
+MemSize MemorySearchViewModel::ResultMemSize() const
+{
+    if (m_vSearchResults.empty())
+        return MemSize::EightBit;
+
+    return m_vSearchResults.back().pResults.GetSize();
+}
+
 void MemorySearchViewModel::DoFrame()
 {
     if (m_vSearchResults.size() < 2)

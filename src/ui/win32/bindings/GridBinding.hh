@@ -73,6 +73,7 @@ protected:
     void UpdateAllItems();
     void UpdateItems(gsl::index nColumn);
     void CheckForScrollBar();
+    void UpdateScroll();
 
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
@@ -87,14 +88,13 @@ protected:
     void OnBeginViewModelCollectionUpdate() noexcept override;
     void OnEndViewModelCollectionUpdate() override;
 
-    std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
-
 private:
     void UpdateRow(gsl::index nIndex, bool bExisting);
 
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;
     size_t m_nColumnsCreated = 0;
+    std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
     ViewModelCollectionBase* m_vmItems = nullptr;
     const BoolModelProperty* m_pIsSelectedProperty = nullptr;
     const IntModelProperty* m_pRowColorProperty = nullptr;

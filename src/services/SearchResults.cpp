@@ -415,7 +415,7 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
     m_sSummary.append(" last known value...");
 }
 
-size_t SearchResults::MatchingAddressCount() noexcept
+size_t SearchResults::MatchingAddressCount() const noexcept
 {
     if (!m_bUnfiltered)
         return m_vMatchingAddresses.size();
@@ -429,6 +429,37 @@ size_t SearchResults::MatchingAddressCount() noexcept
         nCount *= 2;
 
     return nCount;
+}
+
+void SearchResults::IterateMatchingAddresses(std::function<void(ra::ByteAddress)> pHandler) const
+{
+    if (!m_bUnfiltered)
+    {
+        for (const auto nAddress : m_vMatchingAddresses)
+            pHandler(nAddress);
+    }
+    else if (m_nSize == MemSize::Nibble_Lower)
+    {
+        for (auto& block : m_vBlocks)
+        {
+            auto nAddress = block.GetAddress() << 1;
+            for (unsigned int i = 0; i < block.GetSize(); ++i)
+            {
+                pHandler(nAddress++); // low nibble
+                pHandler(nAddress++); // high nibble
+            }
+        }
+    }
+    else
+    {
+        const unsigned int nPadding = Padding(m_nSize);
+        for (auto& block : m_vBlocks)
+        {
+            auto nAddress = block.GetAddress();
+            for (unsigned int i = 0; i < block.GetSize() - nPadding; ++i)
+                pHandler(nAddress++);
+        }
+    }
 }
 
 void SearchResults::ExcludeAddress(ra::ByteAddress nAddress)
@@ -483,11 +514,10 @@ bool SearchResults::GetMatchingAddress(gsl::index nIndex, _Out_ SearchResults::R
         }
     }
 
-    result.nValue = GetValue(result.nAddress, result.nSize);
-    return true;
+    return GetValue(result.nAddress, result.nSize, result.nValue);
 }
 
-unsigned int SearchResults::GetValue(ra::ByteAddress nAddress, MemSize nSize) const
+bool SearchResults::GetValue(ra::ByteAddress nAddress, MemSize nSize, _Out_ unsigned int& nValue) const
 {
     unsigned int nPadding = (m_bUnfiltered) ? Padding(m_nSize) : 0;
     size_t nBlockIndex = 0;
@@ -495,11 +525,16 @@ unsigned int SearchResults::GetValue(ra::ByteAddress nAddress, MemSize nSize) co
     while (nAddress >= block->GetAddress() + block->GetSize() - nPadding)
     {
         if (++nBlockIndex == m_vBlocks.size())
-            return 0;
+        {
+            nValue = 0;
+            return false;
+        }
+
         block = gsl::make_not_null(&m_vBlocks.at(nBlockIndex));
     }
 
-    return BuildValue(block->GetBytes(), nAddress - block->GetAddress(), nSize);
+    nValue = BuildValue(block->GetBytes(), nAddress - block->GetAddress(), nSize);
+    return true;
 }
 
 } // namespace services

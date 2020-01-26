@@ -459,10 +459,6 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     GSL_SUPPRESS_TYPE1{ pnmHdr = reinterpret_cast<LPNMHDR>(lParam); }
                     switch (pnmHdr->code)
                     {
-                        case LVN_ENDSCROLL:
-                            m_pSearchGridBinding->OnLvnEndScroll();
-                            return 0;
-
                         case LVN_ITEMCHANGING:
                         {
                             LPNMLISTVIEW pnmListView;
@@ -1128,19 +1124,8 @@ void Dlg_Memory::Invalidate()
     UpdateBits();
 
     // Update Search Results
-    HWND hList = GetDlgItem(m_hWnd, IDC_RA_MEM_LIST);
-    if (hList != nullptr)
-    {
-        InvalidateRect(hList, nullptr, FALSE);
-
-        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
-        {
-            case RA_Libretro:
-            case RA_Oricutron:
-                UpdateWindow(hList);
-                break;
-        }
-    }
+    if (g_pMemorySearch != nullptr)
+        g_pMemorySearch->DoFrame();
 }
 
 void Dlg_Memory::UpdateBits() const

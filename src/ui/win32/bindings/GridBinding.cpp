@@ -526,6 +526,10 @@ LRESULT GridBinding::OnLvnItemChanging(const LPNMLISTVIEW pnmListView)
 
 void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 {
+    // we don't handle message for all items
+    if (pnmListView->iItem == -1)
+        return;
+
     const auto nIndex = pnmListView->iItem - m_nScrollOffset;
 
     if (m_pIsSelectedProperty)
@@ -652,24 +656,27 @@ void GridBinding::OnLvnColumnClick(const LPNMLISTVIEW pnmListView)
 
 void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
 {
-    const auto nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
-    m_sDispInfo = ra::Narrow(m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));
-    pnmDispInfo.item.pszText = const_cast<LPSTR>(m_sDispInfo.c_str());
-}
-
-void GridBinding::OnLvnEndScroll()
-{
-    if (m_pScrollOffsetProperty)
+    auto nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
+    if (m_pScrollOffsetProperty && (nIndex < 0 || nIndex > m_vmItems->Count()))
     {
+        // attempting to access an out-of-range item. assume the user has scrolled and update m_nScrollOffset
         const auto nMax = ra::to_unsigned(GetValue(*m_pScrollMaximumProperty) - ListView_GetCountPerPage(m_hWnd) - 1);
         auto nOffset = ra::to_unsigned(ListView_GetTopIndex(m_hWnd));
         if (nOffset > nMax)
             nOffset = nMax;
+
+        // SetValue detaches the change notification event, so we won't be notified.
+        // update the value manually. also, it's important to make sure that it's set
+        // before notifying other targets in case they call back into us.
+        m_nScrollOffset = nOffset;
+
         SetValue(*m_pScrollOffsetProperty, nOffset);
 
-        // SetValue detaches the change notification event, so update manually
-        m_nScrollOffset = nOffset;
+        nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
     }
+
+    m_sDispInfo = ra::Narrow(m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));
+    pnmDispInfo.item.pszText = const_cast<LPSTR>(m_sDispInfo.c_str());
 }
 
 void GridBinding::OnGotFocus()

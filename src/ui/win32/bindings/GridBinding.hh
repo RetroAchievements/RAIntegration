@@ -50,7 +50,6 @@ public:
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 void OnLvnColumnClick(const LPNMLISTVIEW pnmListView);
     void OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo);
-    void OnLvnEndScroll();
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
     void OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate);
     LRESULT OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw) override;

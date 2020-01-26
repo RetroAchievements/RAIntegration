@@ -36,7 +36,7 @@ public:
     /// <summary>
     /// Gets the number of matching addresses.
     /// </summary>
-    size_t MatchingAddressCount() noexcept;
+    size_t MatchingAddressCount() const noexcept;
 
     /// <summary>
     /// Gets a summary of the results
@@ -62,7 +62,12 @@ public:
     /// <summary>
     /// Gets the value at the specified address.
     /// </summary>
-    unsigned int GetValue(ra::ByteAddress nAddress, MemSize nSize) const;
+    bool GetValue(ra::ByteAddress nAddress, MemSize nSize, _Out_ unsigned int& nValue) const;
+
+    /// <summary>
+    /// Gets the size of the matching items.
+    /// </summary>
+    MemSize GetSize() const noexcept { return m_nSize; }
 
     /// <summary>
     /// Determines whether the specified address appears in the matching address list.
@@ -83,6 +88,11 @@ public:
     /// </summary>
     /// <param name="nAddress">The index of the address to remove.</param>
     void ExcludeMatchingAddress(gsl::index nIndex);
+
+    /// <summary>
+    /// Performs the provided functionality on each matching address.
+    /// </summary>
+    void IterateMatchingAddresses(std::function<void(ra::ByteAddress)> pHandler) const;
 
 protected:
     class MemBlock

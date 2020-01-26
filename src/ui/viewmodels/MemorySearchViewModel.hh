@@ -15,7 +15,7 @@ namespace ui {
 namespace viewmodels {
 
 class MemorySearchViewModel : public ViewModelBase,
-                              protected ViewModelBase::NotifyTarget
+    protected ViewModelBase::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 MemorySearchViewModel();
@@ -201,7 +201,7 @@ public:
         /// <summary>
         /// Sets the previous value of the address.
         /// </summary>
-        void SetPreviousValue(const std::wstring&  value) { SetValue(PreviousValueProperty, value); }
+        void SetPreviousValue(const std::wstring& value) { SetValue(PreviousValueProperty, value); }
 
         /// <summary>
         /// The <see cref="ModelProperty" /> for the whether the result is selected.
@@ -247,6 +247,14 @@ public:
         /// Sets the description color.
         /// </summary>
         void SetDescriptionColor(Color value) { SetValue(DescriptionColorProperty, ra::to_signed(value.ARGB)); }
+
+        ra::ByteAddress nAddress = 0;
+        bool bMatchesFilter = false;
+        bool bHasBookmark = false;
+        bool bHasCodeNote = false;
+        bool bHasBeenModified = false;
+
+        void UpdateRowColor();
     };
 
     /// <summary>
@@ -347,6 +355,8 @@ private:
     std::vector<SearchResult> m_vSearchResults;
     std::set<unsigned int> m_vModifiedAddresses;
     std::set<unsigned int> m_vSelectedAddresses;
+
+    static bool TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue);
 };
 
 } // namespace viewmodels

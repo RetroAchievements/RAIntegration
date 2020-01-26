@@ -34,6 +34,36 @@ const BoolModelProperty MemorySearchViewModel::SearchResultViewModel::IsSelected
 const IntModelProperty MemorySearchViewModel::SearchResultViewModel::RowColorProperty("SearchResultViewModel", "RowColor", 0);
 const IntModelProperty MemorySearchViewModel::SearchResultViewModel::DescriptionColorProperty("SearchResultViewModel", "DescriptionColor", 0);
 
+void MemorySearchViewModel::SearchResultViewModel::UpdateRowColor()
+{
+    if (!bMatchesFilter)
+    {
+        // red if value no longer matches filter
+        SetRowColor(ra::ui::Color(0xFFFFD0D0)); // was FFD7D7
+    }
+    else if (bHasBookmark)
+    {
+        // green if bookmark found
+        SetRowColor(ra::ui::Color(0xFFD0FFD0));
+    }
+    else if (bHasCodeNote)
+    {
+        // blue if code note found
+        SetRowColor(ra::ui::Color(0xFFD0F0FF));
+    }
+    else if (bHasBeenModified)
+    {
+        // grey if the filter currently matches, but did not at some point
+        SetRowColor(ra::ui::Color(0xFFE0E0E0));
+    }
+    else
+    {
+        // default color otherwise
+        SetRowColor(ra::ui::Color(ra::to_unsigned(RowColorProperty.GetDefaultValue())));
+    }
+}
+
+
 MemorySearchViewModel::MemorySearchViewModel()
 {
     m_vSearchTypes.Add(ra::etoi(SearchType::FourBit), L"4-bit");
@@ -55,7 +85,84 @@ MemorySearchViewModel::MemorySearchViewModel()
 
 void MemorySearchViewModel::DoFrame()
 {
+    if (m_vSearchResults.size() < 2)
+        return;
 
+    const ra::services::SearchResults& pPreviousResults = (m_vSearchResults.end() - 2)->pResults;
+
+    const wchar_t* sValueFormat = L"0x%02x";
+    switch (pPreviousResults.GetSize())
+    {
+        case MemSize::Nibble_Lower:
+            sValueFormat = L"0x%01x";
+            break;
+
+        case MemSize::SixteenBit:
+            sValueFormat = L"0x%04x";
+            break;
+    }
+
+    const auto& pCurrentResults = m_vSearchResults.back().pResults;
+    if (pCurrentResults.MatchingAddressCount() > 1000)
+    {
+        // only process the visible items if there's more than 1000 results remaining
+        ra::services::SearchResults pNextResults;
+        ra::services::SearchResults::Result pResult;
+        unsigned int nPreviousValue;
+
+        gsl::index nIndex = GetScrollOffset();
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++i)
+        {
+            auto* pRow = m_vResults.GetItemAt(i);
+            Expects(pRow != nullptr);
+
+            pCurrentResults.GetMatchingAddress(nIndex++, pResult);
+            pNextResults.Initialize(pResult.nAddress, 1, pResult.nSize);
+            pNextResults.GetValue(pResult.nAddress, pResult.nSize, pResult.nValue);
+            pPreviousResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
+            pRow->bMatchesFilter = TestFilter(pResult, m_vSearchResults.back(), nPreviousValue);
+
+            pRow->SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
+
+            if (pResult.nValue != nPreviousValue)
+            {
+                m_vModifiedAddresses.insert(pResult.nAddress);
+                pRow->bHasBeenModified = true;
+            }
+
+            pRow->UpdateRowColor();
+        }
+    }
+    else
+    {
+        ra::services::SearchResults pNextResults;
+        pNextResults.Initialize(pPreviousResults, ComparisonType::NotEqualTo);
+
+        pNextResults.IterateMatchingAddresses([this](ra::ByteAddress nAddress)
+        {
+            m_vModifiedAddresses.insert(nAddress);
+        });
+
+        ra::services::SearchResults::Result pResult;
+        unsigned int nPreviousValue;
+
+        gsl::index nIndex = GetScrollOffset();
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++i)
+        {
+            auto* pRow = m_vResults.GetItemAt(i);
+            Expects(pRow != nullptr);
+
+            pCurrentResults.GetMatchingAddress(nIndex++, pResult);
+            if (!pPreviousResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue))
+                nPreviousValue = pResult.nValue;
+            pNextResults.GetValue(pResult.nAddress, pResult.nSize, pResult.nValue);
+            pRow->bMatchesFilter = TestFilter(pResult, m_vSearchResults.back(), nPreviousValue);
+
+            pRow->SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
+            pRow->bHasBeenModified = (m_vModifiedAddresses.find(pRow->nAddress) != m_vModifiedAddresses.end());
+            pRow->UpdateRowColor();
+        }
+    }
 }
 
 inline static constexpr auto ParseAddress(const wchar_t* ptr, ra::ByteAddress& address) noexcept
@@ -307,6 +414,7 @@ void MemorySearchViewModel::UpdateResults()
 
         auto* pRow = m_vResults.GetItemAt(nRow);
         Expects(pRow != nullptr);
+        pRow->nAddress = pResult.nAddress;
 
         auto sAddress = ra::ByteAddressToString(pResult.nAddress);
         const wchar_t* sValueFormat = L"0x%02x";
@@ -315,11 +423,13 @@ void MemorySearchViewModel::UpdateResults()
             case MemSize::Nibble_Lower:
                 sValueFormat = L"0x%01x";
                 sAddress.push_back('L');
+                pRow->nAddress <<= 1;
                 break;
 
             case MemSize::Nibble_Upper:
                 sValueFormat = L"0x%01x";
                 sAddress.push_back('U');
+                pRow->nAddress = (pRow->nAddress << 1) | 1;
                 break;
 
             case MemSize::SixteenBit:
@@ -330,7 +440,8 @@ void MemorySearchViewModel::UpdateResults()
         pRow->SetAddress(ra::Widen(sAddress));
         pRow->SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
 
-        const auto nPreviousValue = pPreviousResults.pResults.GetValue(pResult.nAddress, pResult.nSize);
+        unsigned int nPreviousValue;
+        pPreviousResults.pResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
         pRow->SetPreviousValue(ra::StringPrintf(sValueFormat, nPreviousValue));
 
         const auto* pCodeNote = pGameContext.FindCodeNote(pResult.nAddress);
@@ -349,44 +460,11 @@ void MemorySearchViewModel::UpdateResults()
             }
         }
 
-        bool bFilterApplies = false;
-        switch (m_vSearchResults.back().nValueType)
-        {
-            case ValueType::Constant:
-                bFilterApplies = pResult.Compare(m_vSearchResults.back().nValue, m_vSearchResults.back().nCompareType);
-                break;
-
-            case ValueType::LastKnownValue:
-                bFilterApplies = pResult.Compare(nPreviousValue, m_vSearchResults.back().nCompareType);
-                break;
-        }
-
-        if (!bFilterApplies)
-        {
-            // red if value no longer matches filter
-            pRow->SetRowColor(ra::ui::Color(0xFFFFD0D0)); // was FFD7D7
-        }
-        else if (vmBookmarks.HasBookmark(pResult.nAddress))
-        {
-            // green if bookmark found
-            pRow->SetRowColor(ra::ui::Color(0xFFD0FFD0));
-        }
-        else if (pCodeNote != nullptr)
-        {
-            // blue if code note found
-            pRow->SetRowColor(ra::ui::Color(0xFFD0F0FF));
-        }
-        else if (m_vModifiedAddresses.find(pResult.nAddress) != m_vModifiedAddresses.end())
-        {
-            // grey if the filter currently matches, but did not at some point
-            pRow->SetRowColor(ra::ui::Color(0xFFE0E0E0));
-        }
-        else
-        {
-            // default color otherwise
-            pRow->SetRowColor(ra::ui::Color(ra::to_unsigned(SearchResultViewModel::RowColorProperty.GetDefaultValue())));
-        }
-
+        pRow->bMatchesFilter = TestFilter(pResult, pCurrentResults, nPreviousValue);
+        pRow->bHasBookmark = vmBookmarks.HasBookmark(pResult.nAddress);
+        pRow->bHasCodeNote = (pCodeNote != nullptr);
+        pRow->bHasBeenModified = (m_vModifiedAddresses.find(pRow->nAddress) != m_vModifiedAddresses.end());
+        pRow->UpdateRowColor();
         ++nRow;
     }
 
@@ -394,6 +472,21 @@ void MemorySearchViewModel::UpdateResults()
         m_vResults.RemoveAt(m_vResults.Count() - 1);
 
     m_vResults.EndUpdate();
+}
+
+bool MemorySearchViewModel::TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue)
+{
+    switch (pCurrentResults.nValueType)
+    {
+        case ValueType::Constant:
+            return pResult.Compare(pCurrentResults.nValue, pCurrentResults.nCompareType);
+
+        case ValueType::LastKnownValue:
+            return pResult.Compare(nPreviousValue, pCurrentResults.nCompareType);
+
+        default:
+            return false;
+    }
 }
 
 void MemorySearchViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)

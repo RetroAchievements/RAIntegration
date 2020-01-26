@@ -419,7 +419,10 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             m_pSearchGridBinding->BindRowColor(ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::RowColorProperty);
             m_pSearchGridBinding->BindIsSelected(ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::IsSelectedProperty);
             m_pSearchGridBinding->Virtualize(ra::ui::viewmodels::MemorySearchViewModel::ScrollOffsetProperty,
-                ra::ui::viewmodels::MemorySearchViewModel::ResultCountProperty);
+                ra::ui::viewmodels::MemorySearchViewModel::ResultCountProperty, [](gsl::index nFrom, gsl::index nTo, bool bIsSelected)
+            {
+                g_pMemorySearch->SelectRange(nFrom, nTo, bIsSelected);
+            });
 
             ListView_SetExtendedListViewStyle(hListbox, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
@@ -489,6 +492,14 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             LPNMLISTVIEW pnmListView;
                             GSL_SUPPRESS_TYPE1{ pnmListView = reinterpret_cast<LPNMLISTVIEW>(pnmHdr); }
                             m_pSearchGridBinding->OnLvnItemChanged(pnmListView);
+                            return 0;
+                        }
+
+                        case LVN_ODSTATECHANGED:
+                        {
+                            LPNMLVODSTATECHANGE pnmStateChanged;
+                            GSL_SUPPRESS_TYPE1{ pnmStateChanged = reinterpret_cast<LPNMLVODSTATECHANGE>(pnmHdr); }
+                            m_pSearchGridBinding->OnLvnOwnerDrawStateChanged(pnmStateChanged);
                             return 0;
                         }
 

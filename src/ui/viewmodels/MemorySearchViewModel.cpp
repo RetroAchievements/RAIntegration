@@ -81,6 +81,7 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vValueTypes.Add(ra::etoi(ValueType::LastKnownValue), L"Last Known Value");
 
     AddNotifyTarget(*this);
+    m_vResults.AddNotifyTarget(*this);
 }
 
 MemSize MemorySearchViewModel::ResultMemSize() const
@@ -503,6 +504,18 @@ void MemorySearchViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
         UpdateResults();
 }
 
+void MemorySearchViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == SearchResultViewModel::IsSelectedProperty)
+    {
+        const auto* pRow = m_vResults.GetItemAt(nIndex);
+        if (args.tNewValue)
+            m_vSelectedAddresses.insert(pRow->nAddress);
+        else
+            m_vSelectedAddresses.erase(pRow->nAddress);
+    }
+}
+
 void MemorySearchViewModel::NextPage()
 {
     if (m_nSelectedSearchResult < m_vSearchResults.size() - 1)
@@ -515,8 +528,60 @@ void MemorySearchViewModel::PreviousPage()
         ChangePage(m_nSelectedSearchResult - 1);
 }
 
+void MemorySearchViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue)
+{
+    if (m_vSearchResults.empty())
+        return;
+
+    const auto& pCurrentResults = m_vSearchResults.back().pResults;
+    if (!bValue && nFrom == 0 && nTo >= pCurrentResults.MatchingAddressCount() - 1)
+    {
+        m_vSelectedAddresses.clear();
+        return;
+    }
+
+    ra::services::SearchResults::Result pResult;
+
+    if (pCurrentResults.GetSize() == MemSize::Nibble_Lower)
+    {
+        for (auto nIndex = nFrom; nIndex <= nTo; ++nIndex)
+        {
+            if (pCurrentResults.GetMatchingAddress(nIndex, pResult))
+            {
+                auto nAddress = pResult.nAddress << 1;
+                if (pResult.nSize == MemSize::Nibble_Upper)
+                    nAddress |= 1;
+
+                if (bValue)
+                    m_vSelectedAddresses.insert(nAddress);
+                else
+                    m_vSelectedAddresses.erase(nAddress);
+            }
+        }
+    }
+    else if (bValue)
+    {
+        for (auto nIndex = nFrom; nIndex <= nTo; ++nIndex)
+        {
+            if (pCurrentResults.GetMatchingAddress(nIndex, pResult))
+                m_vSelectedAddresses.insert(pResult.nAddress);
+        }
+    }
+    else
+    {
+        for (auto nIndex = nFrom; nIndex <= nTo; ++nIndex)
+        {
+            if (pCurrentResults.GetMatchingAddress(nIndex, pResult))
+                m_vSelectedAddresses.erase(pResult.nAddress);
+        }
+    }
+}
+
 void MemorySearchViewModel::ExcludeSelected()
 {
+    if (m_vSelectedAddresses.empty())
+        return;
+
     AddNewPage();
 
     SearchResult pPreviousResult = *(m_vSearchResults.end() - 2);

@@ -258,7 +258,7 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
         if (*m_pScrollMaximumProperty == args.Property)
         {
             if (m_hWnd)
-                ListView_SetItemCount(m_hWnd, args.tNewValue - ListView_GetCountPerPage(m_hWnd) - 1);
+                ListView_SetItemCount(m_hWnd, args.tNewValue - 1);
             return;
         }
     }
@@ -478,7 +478,8 @@ void GridBinding::BindRowColor(const IntModelProperty& pRowColorProperty) noexce
     m_pRowColorProperty = &pRowColorProperty;
 }
 
-void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty)
+void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty,
+    std::function<void(gsl::index, gsl::index, bool)> pUpdateSelectedItems)
 {
     if (m_hWnd)
     {
@@ -487,6 +488,7 @@ void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, cons
 
     m_pScrollOffsetProperty = &pScrollOffsetProperty;
     m_pScrollMaximumProperty = &pScrollMaximumProperty;
+    m_pUpdateSelectedItems = pUpdateSelectedItems;
 
     m_nScrollOffset = GetValue(pScrollOffsetProperty);
 }
@@ -554,9 +556,20 @@ LRESULT GridBinding::OnLvnItemChanging(const LPNMLISTVIEW pnmListView)
 
 void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 {
-    // we don't handle message for all items
     if (pnmListView->iItem == -1)
+    {
+        if (m_pUpdateSelectedItems)
+        {
+            NMLVODSTATECHANGE pnmStateChange{};
+            pnmStateChange.iFrom = 0;
+            pnmStateChange.iTo = GetValue(*m_pScrollMaximumProperty) - 1;
+            pnmStateChange.uNewState = pnmListView->uNewState;
+            pnmStateChange.uOldState = pnmListView->uOldState;
+            OnLvnOwnerDrawStateChanged(&pnmStateChange);
+        }
+
         return;
+    }
 
     const auto nIndex = pnmListView->iItem - m_nScrollOffset;
 
@@ -597,6 +610,35 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 
     if (!m_hInPlaceEditor && pnmListView->uNewState & LVIS_SELECTED)
         m_tFocusTime = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
+}
+
+void GridBinding::OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateChanged)
+{
+    if (m_pUpdateSelectedItems &&
+        (pnmStateChanged->uNewState ^ pnmStateChanged->uOldState) & LVIS_SELECTED)
+    {
+        bool bSelected = pnmStateChanged->uNewState & LVIS_SELECTED;
+        gsl::index nFrom = pnmStateChanged->iFrom;
+        gsl::index nTo = pnmStateChanged->iTo;
+
+        m_pUpdateSelectedItems(nFrom, nTo, bSelected);
+
+        if (m_pIsSelectedProperty)
+        {
+            if (nFrom < m_nScrollOffset)
+                nFrom = 0;
+            else
+                nFrom -= m_nScrollOffset;
+
+            if (nTo >= m_nScrollOffset + m_vmItems->Count())
+                nTo = m_vmItems->Count() - 1;
+            else
+                nTo -= m_nScrollOffset;
+
+            for (gsl::index nIndex = nFrom; nIndex < nTo; ++nIndex)
+                m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, bSelected);
+        }
+    }
 }
 
 void GridBinding::OnLvnColumnClick(const LPNMLISTVIEW pnmListView)

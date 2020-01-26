@@ -15,7 +15,8 @@ namespace ui {
 namespace viewmodels {
 
 class MemorySearchViewModel : public ViewModelBase,
-    protected ViewModelBase::NotifyTarget
+    protected ViewModelBase::NotifyTarget,
+    protected ViewModelCollectionBase::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 MemorySearchViewModel();
@@ -300,6 +301,8 @@ public:
     /// </summary>
     const std::wstring& GetSelectedPage() const { return GetValue(SelectedPageProperty); }
 
+    void SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue);
+
     /// <summary>
     /// Advances to the next page of results (if available).
     /// </summary>
@@ -334,6 +337,9 @@ protected:
 
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
+    // ViewModelCollectionBase::NotifyTarget
+    void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
 
 private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);

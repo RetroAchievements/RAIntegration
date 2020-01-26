@@ -41,13 +41,15 @@ public:
     void BindItems(ViewModelCollectionBase& vmItems);
     ViewModelCollectionBase& GetItems() noexcept { return *m_vmItems; }
 
-    void Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty);
+    void Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty,
+        std::function<void(gsl::index, gsl::index, bool)> pUpdateSelectedItems);
 
     void BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept;
     void BindRowColor(const IntModelProperty& pRowColorProperty) noexcept;
    
     GSL_SUPPRESS_CON3 LRESULT OnLvnItemChanging(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
+    GSL_SUPPRESS_CON3 void OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateChanged);
     GSL_SUPPRESS_CON3 void OnLvnColumnClick(const LPNMLISTVIEW pnmListView);
     void OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo);
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
@@ -107,6 +109,7 @@ private:
     const IntModelProperty* m_pScrollMaximumProperty = nullptr;
     int m_nScrollOffset = 0;
     std::string m_sDispInfo;
+    std::function<void(gsl::index, gsl::index, bool)> m_pUpdateSelectedItems = nullptr;
 
     HWND m_hInPlaceEditor = nullptr;
 

@@ -438,7 +438,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         else
                         {
                             SetTextColor(pDIS->hDC, RGB(0, 100, 150));
-                            const unsigned int nMatches = m_SearchResults.at(m_nPage).m_results.MatchingAddressCount();
+                            const auto nMatches = m_SearchResults.at(m_nPage).m_results.MatchingAddressCount();
                             if (nMatches > MIN_RESULTS_TO_DUMP)
                                 sBuffer = ra::StringPrintf(L"Found %u matches! (Displaying first %u results)",
                                                            nMatches, MIN_RESULTS_TO_DUMP);
@@ -782,7 +782,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         sr.m_bUseLastValue = false;
                     }
 
-                    const unsigned int nMatches = sr.m_results.MatchingAddressCount();
+                    const auto nMatches = sr.m_results.MatchingAddressCount();
                     if (nMatches == srPrevious.m_results.MatchingAddressCount())
                     {
                         // same number of matches, if the same query was used, don't double up on the search results

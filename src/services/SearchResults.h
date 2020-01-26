@@ -16,7 +16,7 @@ public:
     /// <param name="nAddress">The address to start reading from.</param>
     /// <param name="nBytes">The number of bytes to read.</param>
     /// <param name="nSize">Size of the entries.</param>
-    void Initialize(unsigned int nAddress, unsigned int nBytes, MemSize nSize);
+    void Initialize(ra::ByteAddress nAddress, size_t nBytes, MemSize nSize);
 
     /// <summary>
     /// Initializes a result set by comparing against the previous result set.
@@ -36,7 +36,7 @@ public:
     /// <summary>
     /// Gets the number of matching addresses.
     /// </summary>
-    unsigned int MatchingAddressCount() noexcept;
+    size_t MatchingAddressCount() noexcept;
 
     /// <summary>
     /// Gets a summary of the results
@@ -45,17 +45,24 @@ public:
 
     struct Result
     {
-        unsigned int nAddress{};
+        ra::ByteAddress nAddress{};
         unsigned int nValue{};
         MemSize nSize{};
+
+        bool Compare(unsigned int nPreviousValue, ComparisonType nCompareType) const;
     };
 
     /// <summary>
-    /// Gets the nIndex matching address
+    /// Gets the nIndex'th matching address.
     /// </summary>
     /// <param name="result">The result.</param>
     /// <returns><c>true</c> if result was populated, <c>false</c> if the index was invalid.</returns>
-    bool GetMatchingAddress(unsigned int nIndex, _Out_ Result& result);
+    bool GetMatchingAddress(gsl::index nIndex, _Out_ Result& result) const;
+
+    /// <summary>
+    /// Gets the value at the specified address.
+    /// </summary>
+    unsigned int GetValue(ra::ByteAddress nAddress, MemSize nSize) const;
 
     /// <summary>
     /// Determines whether the specified address appears in the matching address list.
@@ -63,19 +70,19 @@ public:
     /// <param name="nAddress">The n address.</param>
     /// <returns><c>true</c> if the specified address is in the matching address list; otherwise,
     /// <c>false</c>.</returns>
-    bool ContainsAddress(unsigned int nAddress) const;
+    bool ContainsAddress(ra::ByteAddress nAddress) const;
 
     /// <summary>
     /// Removes an address from the matching address list.
     /// </summary>
     /// <param name="nAddress">The address to remove.</param>
-    void ExcludeAddress(unsigned int nAddress);
+    void ExcludeAddress(ra::ByteAddress nAddress);
 
     /// <summary>
     /// Removes an address from the matching address list.
     /// </summary>
     /// <param name="nAddress">The index of the address to remove.</param>
-    void ExcludeMatchingAddress(unsigned int nIndex);
+    void ExcludeMatchingAddress(gsl::index nIndex);
 
 protected:
     class MemBlock
@@ -122,7 +129,7 @@ protected:
         const unsigned char* GetBytes() const noexcept { return (nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
         unsigned char GetByte(std::size_t nIndex) noexcept { return GetBytes()[nIndex]; }
         unsigned char GetByte(std::size_t nIndex) const noexcept { return GetBytes()[nIndex]; }
-        unsigned int GetAddress() const noexcept { return nAddress; }
+        ra::ByteAddress GetAddress() const noexcept { return nAddress; }
         unsigned int GetSize() const noexcept { return nSize; }
 
     private:
@@ -132,30 +139,31 @@ protected:
             unsigned char* m_pBytes;
         };
 
-        unsigned int nAddress; // 4 bytes
-        unsigned int nSize;    // 4 bytes
+        ra::ByteAddress nAddress; // 4 bytes
+        unsigned int nSize;       // 4 bytes
     };
     static_assert(sizeof(MemBlock) == 16, "sizeof(MemBlock) is incorrect");
 
-    MemBlock& AddBlock(unsigned int nAddress, unsigned int nSize);
+    MemBlock& AddBlock(ra::ByteAddress nAddress, unsigned int nSize);
 
 private:
     void ProcessBlocks(
         const SearchResults& srSource,
-        std::function<bool(unsigned int, const unsigned char* restrict, const unsigned char* restrict)>
+        std::function<bool(gsl::index, const unsigned char* restrict, const unsigned char* restrict)>
             testIndexFunction);
     void ProcessBlocksNibbles(const SearchResults& srSource, unsigned int nTestValue, ComparisonType nCompareType);
-    void AddMatches(unsigned int nAddressBase, const unsigned char* restrict pMemory,
-                    const std::vector<unsigned int>& vMatches);
-    void AddMatchesNibbles(unsigned int nAddressBase, const unsigned char* restrict pMemory,
-                           const std::vector<unsigned int>& vMatches);
-    bool ContainsNibble(unsigned int nAddress) const;
+    void AddMatches(ra::ByteAddress nAddressBase, const unsigned char* restrict pMemory,
+                    const std::vector<ra::ByteAddress>& vMatches);
+    void AddMatchesNibbles(ra::ByteAddress nAddressBase, const unsigned char* restrict pMemory,
+                           const std::vector<ra::ByteAddress>& vMatches);
+    bool ContainsNibble(ra::ByteAddress nAddress) const;
+
 
     std::string m_sSummary;
     std::vector<MemBlock> m_vBlocks;
     MemSize m_nSize = MemSize::EightBit;
 
-    std::vector<unsigned int> m_vMatchingAddresses;
+    std::vector<ra::ByteAddress> m_vMatchingAddresses;
     bool m_bUnfiltered = false;
 };
 

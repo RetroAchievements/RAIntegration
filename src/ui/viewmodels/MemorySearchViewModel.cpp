@@ -24,7 +24,6 @@ const IntModelProperty MemorySearchViewModel::ValueTypeProperty("MemorySearchVie
 const StringModelProperty MemorySearchViewModel::FilterValueProperty("MemorySearchViewModel", "FilterValue", L"");
 const IntModelProperty MemorySearchViewModel::ResultCountProperty("MemorySearchViewModel", "ResultCount", 0);
 const IntModelProperty MemorySearchViewModel::ScrollOffsetProperty("MemorySearchViewModel", "ScrollOffset", 0);
-const IntModelProperty MemorySearchViewModel::ScrollMaximumProperty("MemorySearchViewModel", "ScrollMaximum", 0);
 const StringModelProperty MemorySearchViewModel::SelectedPageProperty("MemorySearchViewModel", "SelectedPageProperty", L"0/0");
 
 const StringModelProperty MemorySearchViewModel::SearchResultViewModel::DescriptionProperty("SearchResultViewModel", "Description", L"");
@@ -184,7 +183,6 @@ void MemorySearchViewModel::BeginNewSearch()
 
     SetValue(SelectedPageProperty, L"0/0");
     SetValue(ScrollOffsetProperty, 0);
-    SetValue(ScrollMaximumProperty, 0);
     SetValue(ResultCountProperty, nEnd - nStart + 1);
 }
 
@@ -274,11 +272,6 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
     SetValue(ScrollOffsetProperty, 0);
 
     const auto nMatches = m_vSearchResults.at(nNewPage).pResults.MatchingAddressCount();
-    if (nMatches > SEARCH_ROWS_DISPLAYED)
-        SetValue(ScrollMaximumProperty, gsl::narrow_cast<int>(nMatches - SEARCH_ROWS_DISPLAYED));
-    else
-        SetValue(ScrollMaximumProperty, 0);
-
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(nMatches));
 
     m_vModifiedAddresses.clear();
@@ -289,6 +282,9 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
 
 void MemorySearchViewModel::UpdateResults()
 {
+    if (m_vSearchResults.size() < 2)
+        return;
+
     const auto& pPreviousResults = m_vSearchResults.at(m_nSelectedSearchResult - 1);
     const auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
     ra::services::SearchResults::Result pResult;

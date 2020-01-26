@@ -277,18 +277,6 @@ public:
     /// </summary>
     unsigned int GetScrollOffset() const { return gsl::narrow_cast<unsigned int>(GetValue(ScrollOffsetProperty)); }
 
-    void SetScrollOffset(unsigned int nOffset) { SetValue(ScrollOffsetProperty, ra::to_signed(nOffset)); }
-
-    /// <summary>
-    /// The <see cref="ModelProperty" /> for the maximum scroll offset.
-    /// </summary>
-    static const IntModelProperty ScrollMaximumProperty;
-
-    /// <summary>
-    /// Gets the maximum scroll offset.
-    /// </summary>
-    unsigned int GetScrollMaximum() const { return gsl::narrow_cast<unsigned int>(GetValue(ScrollMaximumProperty)); }
-
     /// <summary>
     /// The <see cref="ModelProperty" /> for the selected page description.
     /// </summary>

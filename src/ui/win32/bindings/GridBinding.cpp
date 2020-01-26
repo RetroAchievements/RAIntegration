@@ -242,6 +242,25 @@ void GridBinding::UpdateItems(gsl::index nColumn)
     }
 }
 
+void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    if (m_pScrollOffsetProperty)
+    {
+        if (*m_pScrollOffsetProperty == args.Property)
+        {
+            m_nScrollOffset = args.tNewValue;
+            return;
+        }
+
+        if (*m_pScrollMaximumProperty == args.Property)
+        {
+            if (m_hWnd)
+                ListView_SetItemCount(m_hWnd, args.tNewValue - ListView_GetCountPerPage(m_hWnd) - 1);
+            return;
+        }
+    }
+}
+
 void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
 {
     if (m_pRowColorProperty && *m_pRowColorProperty == args.Property)
@@ -456,6 +475,19 @@ void GridBinding::BindRowColor(const IntModelProperty& pRowColorProperty) noexce
     m_pRowColorProperty = &pRowColorProperty;
 }
 
+void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty)
+{
+    if (m_hWnd)
+    {
+        Expects((GetWindowStyle(m_hWnd) & LVS_OWNERDATA) != 0);
+    }
+
+    m_pScrollOffsetProperty = &pScrollOffsetProperty;
+    m_pScrollMaximumProperty = &pScrollMaximumProperty;
+
+    m_nScrollOffset = GetValue(pScrollOffsetProperty);
+}
+
 LRESULT GridBinding::OnLvnItemChanging(const LPNMLISTVIEW pnmListView)
 {
     // if an item is being unselected
@@ -494,12 +526,14 @@ LRESULT GridBinding::OnLvnItemChanging(const LPNMLISTVIEW pnmListView)
 
 void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 {
+    const auto nIndex = pnmListView->iItem - m_nScrollOffset;
+
     if (m_pIsSelectedProperty)
     {
         if (pnmListView->uNewState & LVIS_SELECTED)
-            m_vmItems->SetItemValue(pnmListView->iItem, *m_pIsSelectedProperty, true);
+            m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, true);
         else if (pnmListView->uOldState & LVIS_SELECTED)
-            m_vmItems->SetItemValue(pnmListView->iItem, *m_pIsSelectedProperty, false);
+            m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, false);
     }
 
     switch (pnmListView->uNewState & 0x3000)
@@ -510,7 +544,7 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
             if (pCheckBoxBinding != nullptr)
             {
                 m_vmItems->RemoveNotifyTarget(*this);
-                m_vmItems->SetItemValue(pnmListView->iItem, pCheckBoxBinding->GetBoundProperty(), true);
+                m_vmItems->SetItemValue(nIndex, pCheckBoxBinding->GetBoundProperty(), true);
                 m_vmItems->AddNotifyTarget(*this);
             }
         }
@@ -522,7 +556,7 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
             if (pCheckBoxBinding != nullptr)
             {
                 m_vmItems->RemoveNotifyTarget(*this);
-                m_vmItems->SetItemValue(pnmListView->iItem, pCheckBoxBinding->GetBoundProperty(), false);
+                m_vmItems->SetItemValue(nIndex, pCheckBoxBinding->GetBoundProperty(), false);
                 m_vmItems->AddNotifyTarget(*this);
             }
         }
@@ -616,6 +650,28 @@ void GridBinding::OnLvnColumnClick(const LPNMLISTVIEW pnmListView)
     m_vmItems->EndUpdate();
 }
 
+void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
+{
+    const auto nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
+    m_sDispInfo = ra::Narrow(m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));
+    pnmDispInfo.item.pszText = const_cast<LPSTR>(m_sDispInfo.c_str());
+}
+
+void GridBinding::OnLvnEndScroll()
+{
+    if (m_pScrollOffsetProperty)
+    {
+        const auto nMax = ra::to_unsigned(GetValue(*m_pScrollMaximumProperty) - ListView_GetCountPerPage(m_hWnd) - 1);
+        auto nOffset = ra::to_unsigned(ListView_GetTopIndex(m_hWnd));
+        if (nOffset > nMax)
+            nOffset = nMax;
+        SetValue(*m_pScrollOffsetProperty, nOffset);
+
+        // SetValue detaches the change notification event, so update manually
+        m_nScrollOffset = nOffset;
+    }
+}
+
 void GridBinding::OnGotFocus()
 {
     if (!m_hInPlaceEditor)
@@ -644,7 +700,7 @@ LRESULT GridBinding::OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw)
 
             case CDDS_ITEMPREPAINT:
             {
-                const auto nIndex = gsl::narrow_cast<gsl::index>(pCustomDraw->nmcd.dwItemSpec);
+                const auto nIndex = gsl::narrow_cast<gsl::index>(pCustomDraw->nmcd.dwItemSpec) - m_nScrollOffset;
                 const Color pColor(ra::to_unsigned(m_vmItems->GetItemValue(nIndex, *m_pRowColorProperty)));
                 if (pColor.Channel.A != 0)
                     pCustomDraw->clrTextBk = RGB(pColor.Channel.R, pColor.Channel.G, pColor.Channel.B);
@@ -711,6 +767,8 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
                     pInfo->rcSubItem.right = rcSecondColumn.left + rcOffset.left + 1;
                 }
 
+                pInfo->nItemIndex -= m_nScrollOffset;
+
                 const HWND hParent = GetAncestor(m_hWnd, GA_ROOT);
                 m_hInPlaceEditor = pColumn->CreateInPlaceEditor(hParent, *pInfo);
                 if (m_hInPlaceEditor)
@@ -729,7 +787,7 @@ void GridBinding::OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate)
     if (ra::to_unsigned(pnmItemActivate->iSubItem) < m_vColumns.size())
     {
         const auto& pColumn = m_vColumns.at(pnmItemActivate->iSubItem);
-        if (pColumn->HandleDoubleClick(GetItems(), pnmItemActivate->iItem))
+        if (pColumn->HandleDoubleClick(GetItems(), pnmItemActivate->iItem - m_nScrollOffset))
             return;
     }
 

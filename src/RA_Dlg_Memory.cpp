@@ -361,16 +361,6 @@ public:
     {
         m_hWnd = hWnd;
     }
-
-    TCHAR* GetColumnText(gsl::index nIndex, size_t nColumn)
-    {
-        const auto pString = m_vColumns.at(nColumn)->GetText(GetItems(), nIndex);
-        _tcscpy_s(buffer, sizeof(buffer)/sizeof(buffer[0]), NativeStr(pString).c_str());
-        return buffer;
-    }
-
-private:
-    TCHAR buffer[256];
 };
 
 INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
@@ -411,6 +401,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             m_pSearchGridBinding->BindItems(g_pMemorySearch->Results());
             m_pSearchGridBinding->BindRowColor(ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::RowColorProperty);
             m_pSearchGridBinding->BindIsSelected(ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::IsSelectedProperty);
+            m_pSearchGridBinding->Virtualize(ra::ui::viewmodels::MemorySearchViewModel::ScrollOffsetProperty,
+                ra::ui::viewmodels::MemorySearchViewModel::ResultCountProperty);
 
             ListView_SetExtendedListViewStyle(hListbox, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
@@ -463,28 +455,19 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             {
                 case IDC_RA_MEM_LIST:
                 {
-                    const auto nScrollOffset = g_pMemorySearch->GetScrollOffset();
-
                     LPNMHDR pnmHdr;
                     GSL_SUPPRESS_TYPE1{ pnmHdr = reinterpret_cast<LPNMHDR>(lParam); }
                     switch (pnmHdr->code)
                     {
                         case LVN_ENDSCROLL:
-                        {
-                            auto nIndex = ra::to_unsigned(ListView_GetTopIndex(pnmHdr->hwndFrom));
-                            if (nIndex > g_pMemorySearch->GetScrollMaximum())
-                                nIndex = g_pMemorySearch->GetScrollMaximum();
-                            g_pMemorySearch->SetScrollOffset(nIndex);
+                            m_pSearchGridBinding->OnLvnEndScroll();
                             return 0;
-                        }
 
                         case LVN_ITEMCHANGING:
                         {
                             LPNMLISTVIEW pnmListView;
                             GSL_SUPPRESS_TYPE1{ pnmListView = reinterpret_cast<LPNMLISTVIEW>(pnmHdr); }
-                            pnmListView->iItem -= nScrollOffset;
                             SetWindowLongPtr(m_hWnd, DWLP_MSGRESULT, m_pSearchGridBinding->OnLvnItemChanging(pnmListView));
-                            pnmListView->iItem += nScrollOffset;
                             return TRUE;
                         }
 
@@ -492,9 +475,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         {
                             LPNMLISTVIEW pnmListView;
                             GSL_SUPPRESS_TYPE1{ pnmListView = reinterpret_cast<LPNMLISTVIEW>(pnmHdr); }
-                            pnmListView->iItem -= nScrollOffset;
                             m_pSearchGridBinding->OnLvnItemChanged(pnmListView);
-                            pnmListView->iItem += nScrollOffset;
                             return 0;
                         }
 
@@ -502,9 +483,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         {
                             NMITEMACTIVATE* pnmItemActivate;
                             GSL_SUPPRESS_TYPE1{ pnmItemActivate = reinterpret_cast<NMITEMACTIVATE*>(lParam); }
-                            pnmItemActivate->iItem -= nScrollOffset;
                             m_pSearchGridBinding->OnNmClick(pnmItemActivate);
-                            pnmItemActivate->iItem += nScrollOffset;
                             return 0;
                         }
 
@@ -512,9 +491,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         {
                             NMLVCUSTOMDRAW* pnmCustomDraw;
                             GSL_SUPPRESS_TYPE1{ pnmCustomDraw = reinterpret_cast<NMLVCUSTOMDRAW*>(lParam); }
-                            pnmCustomDraw->nmcd.dwItemSpec -= nScrollOffset;
                             SetWindowLongPtr(m_hWnd, DWLP_MSGRESULT, m_pSearchGridBinding->OnCustomDraw(pnmCustomDraw));
-                            pnmCustomDraw->nmcd.dwItemSpec += nScrollOffset;
                             return 1;
                         }
 
@@ -522,10 +499,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         {
                             NMLVDISPINFO* plvdi;
                             GSL_SUPPRESS_TYPE1{ plvdi = reinterpret_cast<NMLVDISPINFO*>(lParam); }
-                            auto* pStandaloneGridBinding = dynamic_cast<StandaloneGridBinding*>(m_pSearchGridBinding.get());
-                            const auto nIndex = plvdi->item.iItem - nScrollOffset;
-                            plvdi->item.pszText = pStandaloneGridBinding->GetColumnText(nIndex, plvdi->item.iSubItem);
-                            return TRUE;
+                            m_pSearchGridBinding->OnLvnGetDispInfo(*plvdi);
+                            return 1;
                         }
                     }
                 }
@@ -643,8 +618,6 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_BACK), TRUE);
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), FALSE);
-
-                    ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), gsl::narrow_cast<size_t>(g_pMemorySearch->GetResultCount()));
 
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), g_pMemorySearch->GetResultCount() > 0);
                     return TRUE;
@@ -859,16 +832,12 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     g_pMemorySearch->PreviousPage();
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_BACK), m_nPage > 0);
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), TRUE);
-                    ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST),
-                        gsl::narrow_cast<size_t>(g_pMemorySearch->GetResultCount()));
                     return FALSE;
 
                 case IDC_RA_RESULTS_FORWARD:
                     g_pMemorySearch->PreviousPage();
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_BACK), TRUE);
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), TRUE);
-                    ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST),
-                        gsl::narrow_cast<size_t>(g_pMemorySearch->GetResultCount()));
                     return FALSE;
 
                 case IDC_RA_RESULTS_REMOVE:

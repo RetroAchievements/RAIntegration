@@ -84,12 +84,41 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vResults.AddNotifyTarget(*this);
 }
 
+static constexpr MemSize SearchTypeToMemSize(MemorySearchViewModel::SearchType nSearchType) 
+{
+    switch (nSearchType)
+    {
+        case MemorySearchViewModel::SearchType::FourBit:
+            return MemSize::Nibble_Lower;
+        default:
+        case MemorySearchViewModel::SearchType::EightBit:
+            return MemSize::EightBit;
+        case MemorySearchViewModel::SearchType::SixteenBit:
+            return MemSize::SixteenBit;
+    }
+}
+
 MemSize MemorySearchViewModel::ResultMemSize() const
 {
     if (m_vSearchResults.empty())
-        return MemSize::EightBit;
+        return SearchTypeToMemSize(GetSearchType());
 
     return m_vSearchResults.back().pResults.GetSize();
+}
+
+static constexpr const wchar_t* MemSizeFormat(MemSize nSize) 
+{
+    switch (nSize)
+    {
+        case MemSize::Nibble_Lower:
+        case MemSize::Nibble_Upper:
+            return L"0x%01x";
+        default:
+        case MemSize::EightBit:
+            return L"0x%02x";
+        case MemSize::SixteenBit:
+            return L"0x%04x";
+    }
 }
 
 void MemorySearchViewModel::DoFrame()
@@ -101,17 +130,7 @@ void MemorySearchViewModel::DoFrame()
 
     const ra::services::SearchResults& pPreviousResults = (m_vSearchResults.end() - 2)->pResults;
 
-    const wchar_t* sValueFormat = L"0x%02x";
-    switch (pPreviousResults.GetSize())
-    {
-        case MemSize::Nibble_Lower:
-            sValueFormat = L"0x%01x";
-            break;
-
-        case MemSize::SixteenBit:
-            sValueFormat = L"0x%04x";
-            break;
-    }
+    const wchar_t* sValueFormat = MemSizeFormat(pPreviousResults.GetSize());
 
     const auto& pCurrentResults = m_vSearchResults.back().pResults;
     if (pCurrentResults.MatchingAddressCount() > 1000)
@@ -164,9 +183,10 @@ void MemorySearchViewModel::DoFrame()
             Expects(pRow != nullptr);
 
             pCurrentResults.GetMatchingAddress(nIndex++, pResult);
-            if (!pPreviousResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue))
-                nPreviousValue = pResult.nValue;
-            pNextResults.GetValue(pResult.nAddress, pResult.nSize, pResult.nValue);
+            pPreviousResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
+            if (!pNextResults.GetValue(pResult.nAddress, pResult.nSize, pResult.nValue))
+                pResult.nValue = nPreviousValue;
+
             pRow->bMatchesFilter = TestFilter(pResult, m_vSearchResults.back(), nPreviousValue);
 
             pRow->SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
@@ -275,19 +295,7 @@ void MemorySearchViewModel::BeginNewSearch()
         return;
     }
 
-    MemSize nMemSize = MemSize::EightBit;
-    switch (GetSearchType())
-    {
-        case SearchType::FourBit:
-            nMemSize = MemSize::Nibble_Lower;
-            break;
-        case SearchType::EightBit:
-            nMemSize = MemSize::EightBit;
-            break;
-        case SearchType::SixteenBit:
-            nMemSize = MemSize::SixteenBit;
-            break;
-    }
+    const MemSize nMemSize = SearchTypeToMemSize(GetSearchType());
 
     m_vModifiedAddresses.clear();
     m_vSelectedAddresses.clear();
@@ -306,9 +314,9 @@ void MemorySearchViewModel::BeginNewSearch()
         m_vResults.RemoveAt(m_vResults.Count() - 1);
     m_vResults.EndUpdate();
 
-    SetValue(SelectedPageProperty, L"0/0");
+    SetValue(SelectedPageProperty, L"1/1");
     SetValue(ScrollOffsetProperty, 0);
-    SetValue(ResultCountProperty, nEnd - nStart + 1);
+    SetValue(ResultCountProperty, gsl::narrow_cast<int>(pResult.pResults.MatchingAddressCount()));
 }
 
 void MemorySearchViewModel::AddNewPage()
@@ -369,10 +377,12 @@ void MemorySearchViewModel::ApplyFilter()
     const auto nMatches = pResult.pResults.MatchingAddressCount();
     if (nMatches == pPreviousResult.pResults.MatchingAddressCount())
     {
-        // same number of matches. if the same filter was applied, don't double up on the search history
+        // same number of matches. if the same filter was applied, don't double up on the search history.
+        // unless this is the first filter, then display it anyway.
         if (pResult.nCompareType == pPreviousResult.nCompareType &&
             pResult.nValueType == pPreviousResult.nValueType &&
-            pResult.nValue == pPreviousResult.nValue)
+            pResult.nValue == pPreviousResult.nValue &&
+            m_vSearchResults.size() > 2)
         {
             // comparing against last known value with not equals may result in different highlights, keep it.
             if (pResult.nValueType == ValueType::LastKnownValue || pResult.nCompareType == ComparisonType::Equals)
@@ -381,7 +391,8 @@ void MemorySearchViewModel::ApplyFilter()
                 --m_nSelectedSearchResult;
 
                 // in case we removed some
-                SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult + 1, m_vSearchResults.size()));
+                SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult, m_vSearchResults.size() - 1));
+
                 return;
             }
         }
@@ -393,7 +404,7 @@ void MemorySearchViewModel::ApplyFilter()
 void MemorySearchViewModel::ChangePage(size_t nNewPage)
 {
     m_nSelectedSearchResult = nNewPage;
-    SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult + 1, m_vSearchResults.size()));
+    SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult, m_vSearchResults.size() - 1));
     SetValue(ScrollOffsetProperty, 0);
 
     const auto nMatches = m_vSearchResults.at(nNewPage).pResults.MatchingAddressCount();
@@ -435,23 +446,17 @@ void MemorySearchViewModel::UpdateResults()
         pRow->nAddress = pResult.nAddress;
 
         auto sAddress = ra::ByteAddressToString(pResult.nAddress);
-        const wchar_t* sValueFormat = L"0x%02x";
+        const wchar_t* sValueFormat = MemSizeFormat(pResult.nSize);
         switch (pResult.nSize)
         {
             case MemSize::Nibble_Lower:
-                sValueFormat = L"0x%01x";
                 sAddress.push_back('L');
                 pRow->nAddress <<= 1;
                 break;
 
             case MemSize::Nibble_Upper:
-                sValueFormat = L"0x%01x";
                 sAddress.push_back('U');
                 pRow->nAddress = (pRow->nAddress << 1) | 1;
-                break;
-
-            case MemSize::SixteenBit:
-                sValueFormat = L"0x%04x";
                 break;
         }
 
@@ -476,7 +481,14 @@ void MemorySearchViewModel::UpdateResults()
                 pRow->SetDescription(ra::Widen(pRegion->Description));
                 pRow->SetDescriptionColor(ra::ui::Color(0xFFA0A0A0));
             }
+            else
+            {
+                pRow->SetDescription(L"");
+                pRow->SetDescriptionColor(ra::ui::Color(ra::to_unsigned(SearchResultViewModel::DescriptionColorProperty.GetDefaultValue())));
+            }
         }
+
+        pRow->SetSelected(m_vSelectedAddresses.find(pRow->nAddress) != m_vSelectedAddresses.end());
 
         pRow->bMatchesFilter = TestFilter(pResult, pCurrentResults, nPreviousValue);
         pRow->bHasBookmark = vmBookmarks.HasBookmark(pResult.nAddress);
@@ -525,13 +537,13 @@ void MemorySearchViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const
     }
 }
 
-void MemorySearchViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
+void MemorySearchViewModel::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs&)
 {
     // assume color
     m_bNeedsRedraw = true;
 }
 
-void MemorySearchViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
+void MemorySearchViewModel::OnViewModelStringValueChanged(gsl::index, const StringModelProperty::ChangeArgs&)
 {
     // assume text
     m_bNeedsRedraw = true;
@@ -545,7 +557,8 @@ void MemorySearchViewModel::NextPage()
 
 void MemorySearchViewModel::PreviousPage()
 {
-    if (m_nSelectedSearchResult > 0)
+    // at least two pages (initialization and first filter) must be avaiable to go back to
+    if (m_nSelectedSearchResult > 1)
         ChangePage(m_nSelectedSearchResult - 1);
 }
 
@@ -555,7 +568,7 @@ void MemorySearchViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool b
         return;
 
     const auto& pCurrentResults = m_vSearchResults.back().pResults;
-    if (!bValue && nFrom == 0 && nTo >= pCurrentResults.MatchingAddressCount() - 1)
+    if (!bValue && nFrom == 0 && nTo >= gsl::narrow_cast<gsl::index>(pCurrentResults.MatchingAddressCount()) - 1)
     {
         m_vSelectedAddresses.clear();
         return;
@@ -621,20 +634,11 @@ void MemorySearchViewModel::BookmarkSelected()
     if (m_vSelectedAddresses.empty())
         return;
 
-    MemSize nSize = MemSize::EightBit;
-    switch (GetSearchType())
+    const MemSize nSize = SearchTypeToMemSize(GetSearchType());
+    if (nSize == MemSize::Nibble_Lower)
     {
-        case SearchType::FourBit:
-            ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"4-bit bookmarks are not supported");
-            return;
-
-        case SearchType::EightBit:
-            nSize = MemSize::EightBit;
-            break;
-
-        case SearchType::SixteenBit:
-            nSize = MemSize::SixteenBit;
-            break;
+        ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"4-bit bookmarks are not supported");
+        return;
     }
 
     auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;

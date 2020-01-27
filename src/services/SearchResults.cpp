@@ -519,9 +519,15 @@ bool SearchResults::GetMatchingAddress(gsl::index nIndex, _Out_ SearchResults::R
 
 bool SearchResults::GetValue(ra::ByteAddress nAddress, MemSize nSize, _Out_ unsigned int& nValue) const
 {
-    unsigned int nPadding = (m_bUnfiltered) ? Padding(m_nSize) : 0;
     size_t nBlockIndex = 0;
     gsl::not_null<const MemBlock*> block{gsl::make_not_null(&m_vBlocks.at(nBlockIndex))};
+    if (nAddress < block->GetAddress())
+    {
+        nValue = 0;
+        return false;
+    }
+
+    unsigned int nPadding = (m_bUnfiltered) ? Padding(m_nSize) : 0;
     while (nAddress >= block->GetAddress() + block->GetSize() - nPadding)
     {
         if (++nBlockIndex == m_vBlocks.size())

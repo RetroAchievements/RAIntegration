@@ -121,12 +121,12 @@ public:
     /// <summary>
     /// Gets the selected value type.
     /// </summary>
-    ValueType GetValueType() const { return ra::itoe<ValueType>(GetValue(SearchTypeProperty)); }
+    ValueType GetValueType() const { return ra::itoe<ValueType>(GetValue(ValueTypeProperty)); }
 
     /// <summary>
     /// Sets the selected value type.
     /// </summary>
-    void SetValueType(ValueType value) { SetValue(SearchTypeProperty, ra::etoi(value)); }
+    void SetValueType(ValueType value) { SetValue(ValueTypeProperty, ra::etoi(value)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the value.
@@ -303,6 +303,11 @@ public:
     /// </summary>
     const std::wstring& GetSelectedPage() const { return GetValue(SelectedPageProperty); }
 
+    /// <summary>
+    /// DO NOT CALL! This is a helper function used by the virtualizing GridBinding to notify the view model when
+    /// multiple items (which may or may not be visible) are selected or deselected at once. This does not update
+    /// the IsSelected property of each visible item in the range - that's handled by the GridBinding.
+    /// <summary>
     void SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue);
 
     /// <summary>

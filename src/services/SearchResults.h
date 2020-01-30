@@ -49,7 +49,7 @@ public:
         unsigned int nValue{};
         MemSize nSize{};
 
-        bool Compare(unsigned int nPreviousValue, ComparisonType nCompareType) const;
+        bool Compare(unsigned int nPreviousValue, ComparisonType nCompareType) const noexcept;
     };
 
     /// <summary>

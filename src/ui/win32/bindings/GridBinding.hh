@@ -78,7 +78,7 @@ protected:
     void UpdateScroll();
 
     // ViewModelBase::NotifyTarget
-    void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override;
 
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;

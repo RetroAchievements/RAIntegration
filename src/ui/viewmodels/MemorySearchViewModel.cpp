@@ -138,7 +138,7 @@ void MemorySearchViewModel::DoFrame()
         // only process the visible items if there's more than 1000 results remaining
         ra::services::SearchResults pNextResults;
         ra::services::SearchResults::Result pResult;
-        unsigned int nPreviousValue;
+        unsigned int nPreviousValue = 0U;
 
         gsl::index nIndex = GetScrollOffset();
         for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++i)
@@ -174,7 +174,7 @@ void MemorySearchViewModel::DoFrame()
         });
 
         ra::services::SearchResults::Result pResult;
-        unsigned int nPreviousValue;
+        unsigned int nPreviousValue = 0U;
 
         gsl::index nIndex = GetScrollOffset();
         for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++i)
@@ -307,7 +307,7 @@ void MemorySearchViewModel::BeginNewSearch()
     pResult.nCompareType = GetComparisonType();
     pResult.nValueType = GetValueType();
     pResult.nValue = 0;
-    pResult.pResults.Initialize(nStart, nEnd - nStart + 1, nMemSize);
+    pResult.pResults.Initialize(nStart, gsl::narrow<size_t>(nEnd) - nStart + 1, nMemSize);
 
     m_vResults.BeginUpdate();
     while (m_vResults.Count() > 0)
@@ -347,7 +347,7 @@ void MemorySearchViewModel::ApplyFilter()
         // try decimal first
         wchar_t* pEnd;
         nValue = std::wcstoul(pStart, &pEnd, 10);
-        if (*pEnd)
+        if (pEnd && *pEnd)
         {
             // decimal parse failed, try hex
             nValue = std::wcstoul(pStart, &pEnd, 16);
@@ -362,7 +362,7 @@ void MemorySearchViewModel::ApplyFilter()
 
     AddNewPage();
 
-    SearchResult& pPreviousResult = *(m_vSearchResults.end() - 2);
+    SearchResult const& pPreviousResult = *(m_vSearchResults.end() - 2);
     SearchResult& pResult = m_vSearchResults.back();
 
     pResult.nCompareType = GetComparisonType();
@@ -424,7 +424,7 @@ void MemorySearchViewModel::UpdateResults()
     const auto& pPreviousResults = m_vSearchResults.at(m_nSelectedSearchResult - 1);
     const auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
     ra::services::SearchResults::Result pResult;
-    auto nIndex = GetScrollOffset();
+    const auto nIndex = gsl::narrow_cast<gsl::index>(GetScrollOffset());
 
     const auto& vmBookmarks = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
@@ -504,7 +504,7 @@ void MemorySearchViewModel::UpdateResults()
     m_vResults.EndUpdate();
 }
 
-bool MemorySearchViewModel::TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue)
+bool MemorySearchViewModel::TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue) noexcept
 {
     switch (pCurrentResults.nValueType)
     {
@@ -537,13 +537,13 @@ void MemorySearchViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const
     }
 }
 
-void MemorySearchViewModel::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs&)
+void MemorySearchViewModel::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs&) noexcept
 {
     // assume color
     m_bNeedsRedraw = true;
 }
 
-void MemorySearchViewModel::OnViewModelStringValueChanged(gsl::index, const StringModelProperty::ChangeArgs&)
+void MemorySearchViewModel::OnViewModelStringValueChanged(gsl::index, const StringModelProperty::ChangeArgs&) noexcept
 {
     // assume text
     m_bNeedsRedraw = true;

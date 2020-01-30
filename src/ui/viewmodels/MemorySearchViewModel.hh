@@ -46,7 +46,7 @@ public:
     /// </summary>
     void SetFilterRange(const std::wstring& sValue) { SetValue(FilterRangeProperty, sValue); }
 
-    enum SearchType
+    enum class SearchType
     {
         FourBit,
         EightBit,
@@ -99,7 +99,7 @@ public:
     /// </summary>
     void SetComparisonType(ComparisonType value) { SetValue(ComparisonTypeProperty, ra::etoi(value)); }
 
-    enum ValueType
+    enum class ValueType
     {
         Constant,
         LastKnownValue,
@@ -347,8 +347,8 @@ protected:
 
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
-    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
-    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
+    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) noexcept override;
+    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) noexcept override;
 
 private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);
@@ -369,15 +369,15 @@ private:
 
         ValueType nValueType = ValueType::Constant;
         ComparisonType nCompareType = ComparisonType::Equals;
-        unsigned int nValue;
+        unsigned int nValue = 0U;
     };
 
-    size_t m_nSelectedSearchResult;
+    size_t m_nSelectedSearchResult = 0U;
     std::vector<SearchResult> m_vSearchResults;
     std::set<unsigned int> m_vModifiedAddresses;
     std::set<unsigned int> m_vSelectedAddresses;
 
-    static bool TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue);
+    static bool TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue) noexcept;
 };
 
 } // namespace viewmodels

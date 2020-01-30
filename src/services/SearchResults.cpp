@@ -97,7 +97,7 @@ _NODISCARD _CONSTANT_FN CompareValues(_In_ unsigned int nLeft,
     }
 }
 
-bool SearchResults::Result::Compare(unsigned int nPreviousValue, ComparisonType nCompareType) const
+bool SearchResults::Result::Compare(unsigned int nPreviousValue, ComparisonType nCompareType) const noexcept
 {
     return CompareValues(nValue, nPreviousValue, nCompareType);
 }
@@ -527,7 +527,7 @@ bool SearchResults::GetValue(ra::ByteAddress nAddress, MemSize nSize, _Out_ unsi
         return false;
     }
 
-    unsigned int nPadding = (m_bUnfiltered) ? Padding(m_nSize) : 0;
+    const unsigned int nPadding = (m_bUnfiltered) ? Padding(m_nSize) : 0;
     while (nAddress >= block->GetAddress() + block->GetSize() - nPadding)
     {
         if (++nBlockIndex == m_vBlocks.size())

@@ -245,7 +245,7 @@ void GridBinding::UpdateItems(gsl::index nColumn)
     }
 }
 
-void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept
 {
     if (m_pScrollOffsetProperty)
     {
@@ -258,7 +258,7 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
         if (*m_pScrollMaximumProperty == args.Property)
         {
             if (m_hWnd)
-                ListView_SetItemCount(m_hWnd, args.tNewValue - 1);
+                ListView_SetItemCount(m_hWnd, gsl::narrow_cast<size_t>(args.tNewValue) - 1);
             return;
         }
     }
@@ -617,7 +617,7 @@ void GridBinding::OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateC
     if (m_pUpdateSelectedItems &&
         (pnmStateChanged->uNewState ^ pnmStateChanged->uOldState) & LVIS_SELECTED)
     {
-        bool bSelected = pnmStateChanged->uNewState & LVIS_SELECTED;
+        const bool bSelected = pnmStateChanged->uNewState & LVIS_SELECTED;
         gsl::index nFrom = pnmStateChanged->iFrom;
         gsl::index nTo = pnmStateChanged->iTo;
 
@@ -630,7 +630,7 @@ void GridBinding::OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateC
             else
                 nFrom -= m_nScrollOffset;
 
-            if (nTo >= m_nScrollOffset + m_vmItems->Count())
+            if (nTo >= gsl::narrow_cast<gsl::index>(m_nScrollOffset) + ra::to_signed(m_vmItems->Count()))
                 nTo = m_vmItems->Count() - 1;
             else
                 nTo -= m_nScrollOffset;
@@ -734,7 +734,7 @@ void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
     }
 
     m_sDispInfo = ra::Narrow(m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));
-    pnmDispInfo.item.pszText = const_cast<LPSTR>(m_sDispInfo.c_str());
+    GSL_SUPPRESS_TYPE3 pnmDispInfo.item.pszText = const_cast<LPSTR>(m_sDispInfo.c_str());
 }
 
 void GridBinding::OnGotFocus()
@@ -883,7 +883,7 @@ void GridBinding::OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate)
     if (ra::to_unsigned(pnmItemActivate->iSubItem) < m_vColumns.size())
     {
         const auto& pColumn = m_vColumns.at(pnmItemActivate->iSubItem);
-        if (pColumn->HandleDoubleClick(GetItems(), pnmItemActivate->iItem - m_nScrollOffset))
+        if (pColumn->HandleDoubleClick(GetItems(), gsl::narrow_cast<gsl::index>(pnmItemActivate->iItem) - m_nScrollOffset))
             return;
     }
 

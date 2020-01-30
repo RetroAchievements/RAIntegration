@@ -70,7 +70,7 @@ private:
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-        std::array<unsigned char, 32> memory;
+        std::array<unsigned char, 32> memory{};
 
         void InitializeMemory()
         {

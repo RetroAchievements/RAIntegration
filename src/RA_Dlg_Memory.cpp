@@ -372,7 +372,8 @@ void Dlg_Memory::SetAddressRange()
 class StandaloneGridBinding : public ra::ui::win32::bindings::GridBinding
 {
 public:
-    StandaloneGridBinding(HWND hWnd, ra::ui::viewmodels::MemorySearchViewModel& vmViewModel) : ra::ui::win32::bindings::GridBinding(vmViewModel)
+    StandaloneGridBinding(HWND hWnd, ra::ui::viewmodels::MemorySearchViewModel& vmViewModel) noexcept
+        : ra::ui::win32::bindings::GridBinding(vmViewModel)
     {
         m_hWnd = hWnd;
     }

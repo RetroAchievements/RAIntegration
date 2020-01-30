@@ -467,14 +467,17 @@ void MemorySearchViewModel::UpdateResults()
         pPreviousResults.pResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
         pRow->SetPreviousValue(ra::StringPrintf(sValueFormat, nPreviousValue));
 
-        const auto* pCodeNote = pGameContext.FindCodeNote(pResult.nAddress);
-        if (pCodeNote != nullptr)
+        const auto pCodeNote = pGameContext.FindCodeNote(pResult.nAddress, pResult.nSize);
+        if (!pCodeNote.empty())
         {
-            pRow->SetDescription(*pCodeNote);
+            pRow->bHasCodeNote = true;
+            pRow->SetDescription(pCodeNote);
             pRow->SetDescriptionColor(ra::ui::Color(ra::to_unsigned(SearchResultViewModel::DescriptionColorProperty.GetDefaultValue())));
         }
         else
         {
+            pRow->bHasCodeNote = false;
+
             const auto* pRegion = pConsoleContext.GetMemoryRegion(pResult.nAddress);
             if (pRegion)
             {
@@ -492,7 +495,6 @@ void MemorySearchViewModel::UpdateResults()
 
         pRow->bMatchesFilter = TestFilter(pResult, pCurrentResults, nPreviousValue);
         pRow->bHasBookmark = vmBookmarks.HasBookmark(pResult.nAddress);
-        pRow->bHasCodeNote = (pCodeNote != nullptr);
         pRow->bHasBeenModified = (m_vModifiedAddresses.find(pRow->nAddress) != m_vModifiedAddresses.end());
         pRow->UpdateRowColor();
         ++nRow;

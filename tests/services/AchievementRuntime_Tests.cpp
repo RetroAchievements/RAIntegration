@@ -784,8 +784,8 @@ public:
         auto* pRichPresence = "Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0xH01) @Num(d0xH01)\n";
         runtime.ActivateRichPresence(pRichPresence);
 
-        // string is not evaluated by ActivateRichPresence - expect "No Rich Presence defined"
-        Assert::AreEqual(std::wstring(L"No Rich Presence defined."), runtime.GetRichPresenceDisplayString());
+        // string is evaluated with current memrefs (which will be 0)
+        Assert::AreEqual(std::wstring(L"0 0"), runtime.GetRichPresenceDisplayString());
 
         // do_frame should immediately process the rich presence
         runtime.Process(changes);

@@ -160,6 +160,9 @@ API int CCONV _RA_Shutdown()
         auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
         auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
 
+        if (pWindowManager.RichPresenceMonitor.IsVisible())
+            pDesktop.CloseWindow(pWindowManager.RichPresenceMonitor);
+
         if (pWindowManager.MemoryBookmarks.IsVisible())
             pDesktop.CloseWindow(pWindowManager.MemoryBookmarks);
     }

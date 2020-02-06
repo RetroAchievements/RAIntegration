@@ -406,7 +406,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             auto pValueColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
                 ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::CurrentValueProperty);
             pValueColumn->SetHeader(L"Value");
-            pValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, 40);
+            pValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, 50);
             m_pSearchGridBinding->BindColumn(1, std::move(pValueColumn));
 
             auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(

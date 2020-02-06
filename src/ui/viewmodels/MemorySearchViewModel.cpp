@@ -14,7 +14,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-constexpr size_t SEARCH_ROWS_DISPLAYED = 10;
+constexpr size_t SEARCH_ROWS_DISPLAYED = 12;
 constexpr size_t SEARCH_MAX_HISTORY = 50;
 
 const StringModelProperty MemorySearchViewModel::FilterRangeProperty("MemorySearchViewModel", "FilterRange", L"");
@@ -133,7 +133,7 @@ void MemorySearchViewModel::DoFrame()
     const wchar_t* sValueFormat = MemSizeFormat(pPreviousResults.GetSize());
 
     const auto& pCurrentResults = m_vSearchResults.back().pResults;
-    if (pCurrentResults.MatchingAddressCount() > 1000)
+    if (pCurrentResults.MatchingAddressCount() > 64)
     {
         // only process the visible items if there's more than 1000 results remaining
         ra::services::SearchResults pNextResults;

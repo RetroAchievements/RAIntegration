@@ -79,11 +79,7 @@ protected:
 
 private:
     void SetAddressRange();
-    bool GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end);
     ra::ByteAddress m_nSystemRamStart{}, m_nSystemRamEnd{}, m_nGameRamStart{}, m_nGameRamEnd{};
-
-    static void UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal, std::wstring& sBuffer);
-    bool CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal);
 
     static HWND m_hWnd;
 

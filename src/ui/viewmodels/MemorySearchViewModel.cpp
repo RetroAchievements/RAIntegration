@@ -130,9 +130,8 @@ void MemorySearchViewModel::DoFrame()
     m_bNeedsRedraw = false;
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    const auto& pPreviousResults = (m_vSearchResults.end() - 2)->pResults;
-    const auto& pCurrentResults = m_vSearchResults.back().pResults;
-    const wchar_t* sValueFormat = MemSizeFormat(pPreviousResults.GetSize());
+    const auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
+    const wchar_t* sValueFormat = MemSizeFormat(pCurrentResults.pResults.GetSize());
 
     // only process the visible items
     ra::services::SearchResults::Result pResult;
@@ -144,10 +143,10 @@ void MemorySearchViewModel::DoFrame()
         auto* pRow = m_vResults.GetItemAt(i);
         Expects(pRow != nullptr);
 
-        pCurrentResults.GetMatchingAddress(nIndex++, pResult);
+        pCurrentResults.pResults.GetMatchingAddress(nIndex++, pResult);
+        nPreviousValue = pResult.nValue;
         pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, pResult.nSize);
-        pPreviousResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
-        pRow->bMatchesFilter = TestFilter(pResult, m_vSearchResults.back(), nPreviousValue);
+        pRow->bMatchesFilter = TestFilter(pResult, pCurrentResults, nPreviousValue);
 
         pRow->SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
 
@@ -367,7 +366,7 @@ void MemorySearchViewModel::ApplyFilter()
 
     ra::StringBuilder builder;
     builder.Append(L"Filter: ");
-    builder.Append(SearchTypes().GetLabelForId(ra::etoi(GetSearchType())));
+    builder.Append(ComparisonTypes().GetLabelForId(ra::etoi(GetComparisonType())));
     builder.Append(L" ");
     switch (GetValueType())
     {

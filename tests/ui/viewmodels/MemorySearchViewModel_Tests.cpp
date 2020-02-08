@@ -512,6 +512,44 @@ public:
         AssertRow(search, 0, 5U, L"0x0005", L"0x05", L"0x05");
     }
 
+    TEST_METHOD(TestDoFramePreviousPage)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.BeginNewSearch();
+
+        search.SetComparisonType(ComparisonType::LessThan);
+        search.SetValueType(MemorySearchViewModel::ValueType::Constant);
+        search.SetFilterValue(L"8");
+        search.ApplyFilter();
+        Assert::AreEqual({ 8U }, search.GetResultCount());
+
+        search.SetComparisonType(ComparisonType::GreaterThan);
+        search.SetFilterValue(L"3");
+        search.ApplyFilter();
+        Assert::AreEqual({ 4U }, search.GetResultCount());
+
+        search.SetComparisonType(ComparisonType::NotEqualTo);
+        search.SetFilterValue(L"6");
+        search.ApplyFilter();
+        Assert::AreEqual({ 3U }, search.GetResultCount());
+
+        search.PreviousPage();
+        Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual(std::wstring(L"2/3"), search.GetSelectedPage());
+        Assert::AreEqual({ 4U }, search.GetResultCount());
+        Assert::AreEqual({ 4U }, search.Results().Count());
+        AssertRow(search, 2, 6U, L"0x0006", L"0x06", L"0x06");
+
+        search.memory.at(6) = 9;
+        search.DoFrame();
+        Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual(std::wstring(L"2/3"), search.GetSelectedPage());
+        Assert::AreEqual({ 4U }, search.GetResultCount());
+        Assert::AreEqual({ 4U }, search.Results().Count());
+        AssertRow(search, 2, 6U, L"0x0006", L"0x09", L"0x06");
+    }
+
     TEST_METHOD(TestExcludeSelected)
     {
         MemorySearchViewModelHarness search;

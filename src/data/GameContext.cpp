@@ -53,33 +53,21 @@ static void CopyAchievementData(Achievement& pAchievement,
     pAchievement.SetCreatedDate(pAchievementData.Created);
     pAchievement.SetModifiedDate(pAchievementData.Updated);
     pAchievement.SetBadgeImage(pAchievementData.BadgeName);
-    pAchievement.ParseTrigger(pAchievementData.Definition.c_str());
+    pAchievement.SetTrigger(pAchievementData.Definition);
 }
 
 void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 {
     auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    pRuntime.ActivateRichPresence(nullptr);
+    pRuntime.ResetRuntime();
 
     m_nMode = nMode;
     m_sGameTitle.clear();
-    m_pRichPresence = nullptr;
     m_mCodeNotes.clear();
     m_nNextLocalId = GameContext::FirstLocalId;
 
-    if (!m_vAchievements.empty())
-    {
-        for (auto& pAchievement : m_vAchievements)
-            pAchievement->SetActive(false);
-        m_vAchievements.clear();
-    }
-
-    if (!m_vLeaderboards.empty())
-    {
-        for (auto& pLeaderboard : m_vLeaderboards)
-            pLeaderboard->SetActive(false);
-        m_vLeaderboards.clear();
-    }
+    m_vAchievements.clear();
+    m_vLeaderboards.clear();
 
     if (nGameId == 0)
     {
@@ -219,15 +207,19 @@ void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
 
 void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup)
 {
+    // start by identifying all available achievements
     std::set<unsigned int> vLockedAchievements;
     for (auto& pAchievement : m_vAchievements)
-    {
         vLockedAchievements.insert(pAchievement->ID());
-        pAchievement->SetActive(false);
-    }
 
+    // deactivate anything the player has already unlocked
     for (const auto nUnlockedAchievement : vUnlockedAchievements)
+    {
         vLockedAchievements.erase(nUnlockedAchievement);
+        auto* pAchievement = FindAchievement(nUnlockedAchievement);
+        if (pAchievement != nullptr)
+            pAchievement->SetActive(false);
+    }
 
 #ifndef RA_UTEST
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
@@ -444,7 +436,7 @@ void GameContext::MergeLocalAchievements()
         // line is valid, parse the trigger
         if (bIsNew)
         {
-            pAchievement->ParseTrigger(sTrigger.c_str());
+            pAchievement->SetTrigger(sTrigger);
             pAchievement->SetModified(false);
         }
         else
@@ -452,7 +444,7 @@ void GameContext::MergeLocalAchievements()
             auto sExistingTrigger = pAchievement->CreateMemString();
             if (sExistingTrigger != sTrigger)
             {
-                pAchievement->ParseTrigger(sTrigger.c_str());
+                pAchievement->SetTrigger(sTrigger);
                 pAchievement->SetModified(true);
             }
         }
@@ -514,7 +506,7 @@ bool GameContext::SaveLocal() const
         pData->Write(std::to_string(pAchievement->ID()));
         // field 2: trigger
         pData->Write(":\"");
-        pData->Write(pAchievement->CreateMemString());
+        pData->Write(pAchievement->GetTrigger());
         pData->Write("\":");
         // field 3: title
         WriteEscaped(*pData, pAchievement->Title());
@@ -1010,67 +1002,17 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
 
 void GameContext::LoadRichPresenceScript(const std::string& sRichPresenceScript)
 {
-    if (sRichPresenceScript.empty())
-    {
-        m_pRichPresence = nullptr;
-    }
-    else
-    {
-        const int nSize = rc_richpresence_size(sRichPresenceScript.c_str());
-        if (nSize < 0)
-        {
-            // parse error occurred
-            RA_LOG("rc_richpresence_size returned %d", nSize);
-            m_pRichPresence = nullptr;
-
-            const std::string sErrorRP = ra::StringPrintf("Display:\nParse error %d\n", nSize);
-            const int nSize2 = rc_richpresence_size(sErrorRP.c_str());
-            if (nSize2 > 0)
-            {
-                m_pRichPresenceBuffer = std::make_shared<std::vector<unsigned char>>(nSize2);
-                auto* pRichPresence = rc_parse_richpresence(m_pRichPresenceBuffer->data(), sErrorRP.c_str(), nullptr, 0);
-                m_pRichPresence = pRichPresence;
-            }
-        }
-        else
-        {
-            // allocate space and parse again
-            m_pRichPresenceBuffer = std::make_shared<std::vector<unsigned char>>(nSize);
-            auto* pRichPresence = rc_parse_richpresence(m_pRichPresenceBuffer->data(), sRichPresenceScript.c_str(), nullptr, 0);
-            m_pRichPresence = pRichPresence;
-        }
-    }
-
-    auto* pRichPresence = static_cast<rc_richpresence_t*>(m_pRichPresence);
-    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().ActivateRichPresence(pRichPresence);
+    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().ActivateRichPresence(sRichPresenceScript);
 }
 
-bool GameContext::HasRichPresence() const noexcept
+bool GameContext::HasRichPresence() const
 {
-    return (m_pRichPresence != nullptr);
+    return ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().HasRichPresence();
 }
 
 std::wstring GameContext::GetRichPresenceDisplayString() const
 {
-    if (m_pRichPresence == nullptr)
-        return std::wstring(L"No Rich Presence defined.");
-
-    auto* pRichPresence = static_cast<rc_richpresence_t*>(m_pRichPresence);
-
-    // we evaluate the memrefs in AchievementRuntime::Process - don't evaluate them again
-    auto* pRichPresenceMemRefs = pRichPresence->memrefs;
-    pRichPresence->memrefs = nullptr;
-
-    std::string sRichPresence;
-    sRichPresence.resize(512);
-    const auto nLength = rc_evaluate_richpresence(pRichPresence, sRichPresence.data(),
-        gsl::narrow_cast<unsigned int>(sRichPresence.capacity()), rc_peek_callback, nullptr, nullptr);
-    sRichPresence.resize(nLength);
-
-    // restore memrefs pointer
-    pRichPresence->memrefs = pRichPresenceMemRefs;
-
-    return ra::Widen(sRichPresence);
+    return ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetRichPresenceDisplayString();
 }
 
 void GameContext::ReloadRichPresenceScript()

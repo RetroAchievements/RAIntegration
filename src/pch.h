@@ -72,8 +72,6 @@
 #include <gsl\gsl>
 #pragma warning(pop)
 
-#include <md5.h>
-
 #if RA_UTEST
 #include <CodeAnalysis\Warnings.h>
 #pragma warning(push)

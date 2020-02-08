@@ -317,7 +317,6 @@
     <ClCompile Include="data\EmulatorContext_Tests.cpp" />
     <ClCompile Include="data\GameContext_Tests.cpp" />
     <ClCompile Include="data\SessionTracker_Tests.cpp" />
-    <ClCompile Include="RA_RichPresence_Tests.cpp" />
     <ClInclude Include="..\src\RA_Achievement.h" />
     <ClInclude Include="..\src\RA_Defs.h" />
     <ClInclude Include="..\src\RA_Leaderboard.h" />
@@ -363,6 +362,7 @@
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel_Tests.cpp" />
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
     <ClInclude Include="..\src\pch.h" />
+    <ClInclude Include="mocks\MockAchievementRuntime.hh" />
     <ClInclude Include="mocks\MockAudioSystem.hh" />
     <ClInclude Include="mocks\MockClipboard.hh" />
     <ClInclude Include="mocks\MockClock.hh" />
@@ -385,7 +385,6 @@
     <ClInclude Include="mocks\MockWindowManager.hh" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="RA_Condition_Tests.cpp" />
-    <ClCompile Include="RA_Leaderboard_Tests.cpp" />
     <ClCompile Include="RA_UnitTestHelpers.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -77,7 +77,7 @@ void Desktop::CloseWindow(WindowViewModelBase& vmViewModel) const noexcept
 {
     const auto* const pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
     if (pBinding != nullptr)
-        ::CloseWindow(pBinding->GetHWnd());
+        ::DestroyWindow(pBinding->GetHWnd());
 }
 
 void Desktop::GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const

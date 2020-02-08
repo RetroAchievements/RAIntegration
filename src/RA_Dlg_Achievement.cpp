@@ -829,7 +829,6 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                             if (MessageBox(hDlg, sMessage, TEXT("Activate Achievement"), MB_YESNO) == IDYES)
                             {
-                                Cheevo.Reset();
                                 Cheevo.SetActive(true);
 
                                 if (m_nActiveCategory == Achievement::Category::Core)
@@ -875,7 +874,6 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             Achievement& Cheevo = *pGameContext.FindAchievement(nAchievementID);
                             if (!Cheevo.Active())
                             {
-                                Cheevo.Reset();
                                 Cheevo.SetActive(true);
 
                                 if (m_nActiveCategory == Achievement::Category::Core)
@@ -1029,11 +1027,16 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
             const auto nAchID = AttemptUploadAchievementBlocking(NextAch, nFlags);
             if (nAchID > 0)
             {
-                NextAch.SetID(nAchID);
+                const auto nCurrentId = NextAch.ID();
+                if (nCurrentId != nAchID)
+                {
+                    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().UpdateAchievementId(nCurrentId, nAchID);
+                    NextAch.SetID(nAchID);
+
+                    LbxDataAt(nLbxItemsChecked.at(nIndex), Column::Id) = std::to_string(nAchID);
+                }
 
                 // Update listbox on achievements dlg
-
-                LbxDataAt(nLbxItemsChecked.at(nIndex), Column::Id) = std::to_string(nAchID);
 
                 if (bMovedFromUserToUnofficial)
                 {

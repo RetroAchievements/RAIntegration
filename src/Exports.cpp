@@ -281,11 +281,11 @@ static void ProcessAchievements()
         {
             case ra::services::AchievementRuntime::ChangeType::AchievementReset:
             {
-                // we only watch for AchievementReset if PauseOnReset is set, so handle that now.
-                ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Pause();
                 const auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
-                if (pAchievement)
+                if (pAchievement && pAchievement->GetPauseOnReset())
                 {
+                    ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Pause();
+
                     std::wstring sMessage = ra::StringPrintf(L"Pause on Reset: %s", pAchievement->Title());
                     ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
                 }
@@ -430,11 +430,7 @@ API void CCONV _RA_DoAchievementsFrame()
 
 API void CCONV _RA_OnSaveState(const char* sFilename)
 {
-    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
-    {
-        if (!ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().WasMemoryModified())
-            ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgress(sFilename);
-    }
+    ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgress(sFilename);
 }
 
 API void CCONV _RA_OnLoadState(const char* sFilename)
@@ -449,7 +445,7 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
             ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();
         }
 
-        ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().LoadProgress(sFilename);
+        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().LoadProgress(sFilename);
 
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
 

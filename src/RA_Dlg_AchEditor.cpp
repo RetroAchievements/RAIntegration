@@ -114,8 +114,8 @@ void Dlg_AchievementEditor::SetupColumns(HWND hList)
 
     m_lbxData.clear();
 
-    BOOL bSuccess = ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT);
-    bSuccess = ListView_EnableGroupView(hList, FALSE);
+    ListView_SetExtendedListViewStyle(hList, LVS_EX_FULLROWSELECT);
+    ListView_EnableGroupView(hList, FALSE);
 
     // HWND hGroupList = GetDlgItem( m_hAchievementEditorDlg, IDC_RA_ACH_GROUP );
     // ListBox_AddString(
@@ -138,7 +138,7 @@ BOOL Dlg_AchievementEditor::IsActive() const noexcept
 const int Dlg_AchievementEditor::AddCondition(HWND hList, const Condition& Cond, unsigned int nCurrentHits)
 {
     m_lbxData.emplace_back();
-    const int rowIdx = m_lbxData.size() - 1;
+    const int rowIdx = gsl::narrow_cast<int>(m_lbxData.size()) - 1;
 
     LV_ITEM item{};
     item.mask = LVIF_TEXT;
@@ -161,7 +161,7 @@ void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondS
     if (sCell != sNewValue)
     {
         sCell.assign(sNewValue);
-        lvItem.iSubItem = ra::etoi(nColumn);
+        lvItem.iSubItem = gsl::narrow_cast<int>(ra::etoi(nColumn));
         lvItem.pszText = sCell.data();
         ListView_SetItem(hList, &lvItem);
     }
@@ -173,7 +173,7 @@ void Dlg_AchievementEditor::SetCell(HWND hList, LV_ITEM& lvItem, int nRow, CondS
     if (sCell != sNewValue)
     {
         sCell = std::move(sNewValue);
-        lvItem.iSubItem = ra::etoi(nColumn);
+        lvItem.iSubItem = gsl::narrow_cast<int>(ra::etoi(nColumn));
         lvItem.pszText = sCell.data();
         ListView_SetItem(hList, &lvItem);
     }
@@ -422,7 +422,8 @@ BOOL CreateIPE(int nItem, CondSubItems nSubItem)
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_LBX_CONDITIONS);
 
     RECT rcSubItem{};
-    GSL_SUPPRESS_ES47 ListView_GetSubItemRect(hList, nItem, ra::etoi(nSubItem), LVIR_BOUNDS, &rcSubItem);
+    GSL_SUPPRESS_ES47 ListView_GetSubItemRect(hList, nItem,
+        gsl::narrow_cast<int>(ra::etoi(nSubItem)), LVIR_BOUNDS, &rcSubItem);
 
     RECT rcOffset{};
     GetWindowRect(hList, &rcOffset);
@@ -1315,13 +1316,13 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 pActiveAch->RemoveCondition(nSelectedConditionGroup, nUpdatedIndex);
 
                                 // want to insert after last selected item, update nSelectedIndex
-                                nSelectedIndex = nUpdatedIndex;
+                                nSelectedIndex = gsl::narrow_cast<int>(nUpdatedIndex);
                             }
 
                             //  Insert at new location
-                            const int nConditionCount = pActiveAch->NumConditions(nSelectedConditionGroup);
-                            const int nInsertIndex =
-                                (nSelectedIndex < nConditionCount) ? nSelectedIndex + 1 : nConditionCount;
+                            const size_t nConditionCount = pActiveAch->NumConditions(nSelectedConditionGroup);
+                            const size_t nInsertIndex =
+                                (nSelectedIndex < nConditionCount) ? gsl::narrow_cast<size_t>(nSelectedIndex) + 1 : nConditionCount;
                             const size_t nInsertCount = conditionsToMove.size();
 
                             for (size_t i = 0; i < nInsertCount; ++i)
@@ -1449,7 +1450,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             break;
                     }
 
-                    pActiveAchievement->RemoveAltGroup(nSel - 1);
+                    pActiveAchievement->RemoveAltGroup(gsl::narrow_cast<gsl::index>(nSel) - 1);
                     ListBox_SetCurSel(hGroupList, nSel == ra::to_signed(pActiveAchievement->NumConditionGroups()) ? nSel - 1 : nSel);
 
                     RepopulateGroupList(pActiveAchievement);
@@ -1871,7 +1872,7 @@ unsigned int Dlg_AchievementEditor::ParseValue(const std::string& sData, CompVar
     }
     else
     {
-        nMax = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() - 1;
+        nMax = gsl::narrow_cast<unsigned int>(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize()) - 1;
     }
 
     bool bTooLarge = false;
@@ -2043,7 +2044,7 @@ _Use_decl_annotations_ void
     const int nSel = ListBox_GetCurSel(hGroupList);
 
     int nItems = ListBox_GetCount(hGroupList);
-    const int nGroups = pCheevo ? pCheevo->NumConditionGroups() : 0;
+    const int nGroups = pCheevo ? gsl::narrow_cast<int>(pCheevo->NumConditionGroups()) : 0;
 
     while (nItems > nGroups)
         ListBox_DeleteString(hGroupList, --nItems);
@@ -2066,7 +2067,7 @@ _Use_decl_annotations_ void
     if (nSel < 0)
         ListBox_SetCurSel(hGroupList, 0);
     else if (nSel >= nGroups)
-        ListBox_SetCurSel(hGroupList, nGroups - 1);
+        ListBox_SetCurSel(hGroupList, static_cast<size_t>(nGroups) - 1);
 }
 
 _Use_decl_annotations_ void Dlg_AchievementEditor::PopulateConditions(const Achievement* const restrict pCheevo)
@@ -2085,7 +2086,7 @@ _Use_decl_annotations_ void Dlg_AchievementEditor::PopulateConditions(const Achi
             maxNumConditions = std::max(maxNumConditions, m_pSelectedAchievement->NumConditions(i));
         m_lbxData.reserve(maxNumConditions);
 
-        const unsigned int nGrp = GetSelectedConditionGroup();
+        const auto nGrp = GetSelectedConditionGroup();
         for (size_t i = 0; i < m_pSelectedAchievement->NumConditions(nGrp); ++i)
             AddCondition(hCondList, m_pSelectedAchievement->GetCondition(nGrp, i),
                          m_pSelectedAchievement->GetConditionHitCount(nGrp, i));
@@ -2128,6 +2129,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
     }
     else if (m_pSelectedAchievement != pCheevo)
     {
+        pCheevo->GenerateConditions();
         m_pSelectedAchievement = pCheevo;
 
         // New achievement selected.
@@ -2218,7 +2220,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
             UpdateBadge(m_pSelectedAchievement->BadgeImageURI());
         }
 
-        const unsigned int nGrp = GetSelectedConditionGroup();
+        const auto nGrp = GetSelectedConditionGroup();
 
         if (ra::etoi(pCheevo->GetDirtyFlags() & Achievement::DirtyFlags::Conditions))
         {
@@ -2239,7 +2241,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
                     for (size_t i = 0; i < m_pSelectedAchievement->NumConditions(nGrp); ++i)
                     {
                         const Condition& Cond = m_pSelectedAchievement->GetCondition(nGrp, i);
-                        item.iItem = i;
+                        item.iItem = gsl::narrow_cast<int>(i);
                         UpdateCondition(hCondList, item, Cond, m_pSelectedAchievement->GetConditionHitCount(nGrp, i));
                     }
                 }

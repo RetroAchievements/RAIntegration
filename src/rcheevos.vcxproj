@@ -176,7 +176,7 @@
   <ItemGroup>
     <ClInclude Include="..\rcheevos\include\rcheevos.h" />
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h" />
-    <ClInclude Include="..\src\md5.h" />
+    <ClInclude Include="..\rcheevos\src\rhash\md5.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\rcheevos\src\rcheevos\memref.c" />
@@ -209,10 +209,11 @@
     <ClCompile Include="..\rcheevos\src\rcheevos\format.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\operand.c" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\runtime.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\term.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\value.c" />
-    <ClCompile Include="..\src\md5.c" />
+    <ClCompile Include="..\rcheevos\src\rhash\md5.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -8,6 +8,8 @@
 #include "data\SessionTracker.hh"
 #include "data\UserContext.hh"
 
+#include "services\AchievementRuntime.hh"
+
 #include "ui\OverlayTheme.hh"
 
 namespace ra {
@@ -73,8 +75,18 @@ void OverlayAchievementsPageViewModel::Refresh()
 
         if (pAchievement.Active())
         {
-            pvmAchievement->SetProgressMaximum(pAchievement.MeasuredTarget());
-            pvmAchievement->SetProgressValue(pAchievement.MeasuredValue());
+            const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+            const auto* pTrigger = pRuntime.GetAchievementTrigger(pAchievement.ID());
+            if (pTrigger != nullptr)
+            {
+                pvmAchievement->SetProgressMaximum(pTrigger->measured_target);
+                pvmAchievement->SetProgressValue(pTrigger->measured_value);
+            }
+            else
+            {
+                pvmAchievement->SetProgressMaximum(0);
+                pvmAchievement->SetProgressValue(0);
+            }
         }
         else
         {

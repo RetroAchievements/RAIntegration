@@ -62,7 +62,7 @@ public:
     void SetPauseOnTrigger(BOOL bPause) noexcept { m_bPauseOnTrigger = bPause; }
 
     inline BOOL GetPauseOnReset() const noexcept { return m_bPauseOnReset; }
-    void SetPauseOnReset(BOOL bPause);
+    void SetPauseOnReset(BOOL bPause) noexcept { m_bPauseOnReset = bPause; }
 
     void SetID(ra::AchievementID nID) noexcept;
     inline ra::AchievementID ID() const noexcept { return m_nAchievementID; }
@@ -84,9 +84,6 @@ public:
     inline time_t ModifiedDate() const noexcept { return m_nTimestampModified; }
     void SetModifiedDate(time_t nTimeModified) noexcept { m_nTimestampModified = nTimeModified; }
 
-    unsigned int MeasuredValue() const noexcept;
-    unsigned int MeasuredTarget() const noexcept;
-
     void AddAltGroup() noexcept;
     void RemoveAltGroup(gsl::index nIndex);
 
@@ -100,14 +97,14 @@ public:
     void SetBadgeImage(const std::string& sFilename);
 
     Condition& GetCondition(size_t nCondGroup, size_t i) { return m_vConditions.GetGroup(nCondGroup).GetAt(i); }
-    unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const noexcept;
-    void SetConditionHitCount(size_t nCondGroup, size_t i, unsigned int nCurrentHits) const noexcept;
+    unsigned int GetConditionHitCount(size_t nCondGroup, size_t i) const;
+    void SetConditionHitCount(size_t nCondGroup, size_t i, unsigned int nCurrentHits) const;
 
     std::string CreateMemString() const;
 
-    void Reset() noexcept;
-
-    void ParseTrigger(const char* pTrigger);
+    void SetTrigger(const std::string& pTrigger);
+    const std::string& GetTrigger() const noexcept { return m_sTrigger; }
+    void GenerateConditions();
 
     // Used for rendering updates when editing achievements. Usually always false.
     _NODISCARD _CONSTANT_FN GetDirtyFlags() const noexcept { return m_nDirtyFlags; }
@@ -123,9 +120,6 @@ public:
 
     void RebuildTrigger();
 
-    // for unit tests
-    void* GetRawTrigger() const noexcept { return m_pTrigger; }
-
     const std::wstring& GetUnlockRichPresence() const noexcept { return m_sUnlockRichPresence; }
     void SetUnlockRichPresence(const std::wstring& sValue) { m_sUnlockRichPresence = sValue; }
 
@@ -134,10 +128,6 @@ public:
     _NODISCARD inline auto begin() const noexcept { return m_vConditions.begin(); }
     _NODISCARD inline auto end() noexcept { return m_vConditions.end(); }
     _NODISCARD inline auto end() const noexcept { return m_vConditions.end(); }
-
-protected:
-    void* m_pTrigger = nullptr;                                   // rc_trigger_t
-    std::shared_ptr<std::vector<unsigned char>> m_pTriggerBuffer; // buffer for rc_trigger_t
 
 private:
     ra::AchievementID m_nAchievementID{};
@@ -149,6 +139,8 @@ private:
     std::string m_sDescription;
     std::string m_sAuthor;
     std::string m_sBadgeImageURI;
+    std::string m_sTrigger;
+    mutable rc_trigger_t* m_pTrigger{};
 
     unsigned int m_nPointValue{};
     BOOL m_bActive{};

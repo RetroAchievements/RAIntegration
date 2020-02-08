@@ -360,8 +360,9 @@ private:
             m_vChanges.emplace_back(Change{ nType, nId, nValue });
         }
 
-        void Process(_Inout_ std::vector<Change>& changes) override
+        void Process(_Inout_ std::vector<Change>& changes) noexcept override
         {
+            GSL_SUPPRESS_F6
             changes.insert(changes.begin(), m_vChanges.begin(), m_vChanges.end());
             m_vChanges.clear();
         }
@@ -409,7 +410,7 @@ private:
         {
             auto& pAch = mockGameContext.NewAchievement(Achievement::Category::Core);
             pAch.SetID(nId);
-            pAch.ParseTrigger("1=1");
+            pAch.SetTrigger("1=1");
             pAch.SetActive(true);
         }
 

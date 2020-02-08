@@ -91,7 +91,8 @@ void GDIBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const 
     SwitchFont(nFont);
 
     SIZE szText;
-    GetTextExtentPoint32W(m_hDC, sText.c_str(), gsl::narrow_cast<int>(sText.length()), &szText);
+    if (!GetTextExtentPoint32W(m_hDC, sText.c_str(), gsl::narrow_cast<int>(sText.length()), &szText))
+        return;
 
     // clip to surface
     if (szText.cx > nStride - nX)

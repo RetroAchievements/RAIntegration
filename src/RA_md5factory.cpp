@@ -2,45 +2,45 @@
 
 #include "RA_Defs.h"
 
+#include <rcheevos/src/rhash/md5.h>
+
 namespace {
 constexpr static unsigned int MD5_STRING_LEN = 32;
 }
 
-std::string RAGenerateMD5(const std::string& sStringToMD5)
+std::string RAFormatMD5(const BYTE* digest)
 {
-    static char buffer[33];
+    char buffer[33] = "";
+    Expects(digest != nullptr);
 
-    md5_state_t pms{};
-    md5_byte_t digest[16]{};
-
-    md5_byte_t* pDataBuffer = new md5_byte_t[sStringToMD5.length()];
-    ASSERT(pDataBuffer != nullptr);
-    if (pDataBuffer == nullptr)
-        return "";
-
-    memcpy(pDataBuffer, sStringToMD5.c_str(), sStringToMD5.length());
-
-    md5_init(&pms);
-    md5_append(&pms, pDataBuffer, gsl::narrow_cast<int>(sStringToMD5.length()));
-    md5_finish(&pms, digest);
-
-    memset(buffer, 0, MD5_STRING_LEN + 1);
     sprintf_s(buffer, MD5_STRING_LEN + 1,
         "%02x%02x%02x%02x%02x%02x%02x%02x"
         "%02x%02x%02x%02x%02x%02x%02x%02x",
         digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
         digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
 
-    delete[] pDataBuffer;
-    pDataBuffer = nullptr;
+    return std::string(buffer, 32);
+}
 
-    return buffer;
+std::string RAGenerateMD5(const std::string& sStringToMD5)
+{
+    md5_state_t pms{};
+    md5_byte_t digest[16]{};
+
+    static_assert(sizeof(md5_byte_t) == sizeof(char), "Must be equivalent for the MD5 to work!");
+
+    const md5_byte_t* bytes;
+    GSL_SUPPRESS_TYPE1 bytes = reinterpret_cast<const md5_byte_t*>(sStringToMD5.c_str());
+
+    md5_init(&pms);
+    md5_append(&pms, bytes, gsl::narrow_cast<int>(sStringToMD5.length()));
+    md5_finish(&pms, digest);
+
+    return RAFormatMD5(digest);
 }
 
 std::string RAGenerateMD5(const BYTE* pRawData, size_t nDataLen)
 {
-    static char buffer[33];
-
     md5_state_t pms;
     md5_byte_t digest[16];
 
@@ -50,14 +50,7 @@ std::string RAGenerateMD5(const BYTE* pRawData, size_t nDataLen)
     md5_append(&pms, pRawData, gsl::narrow_cast<int>(nDataLen));
     md5_finish(&pms, digest);
 
-    memset(buffer, 0, MD5_STRING_LEN + 1);
-    sprintf_s(buffer, MD5_STRING_LEN + 1,
-        "%02x%02x%02x%02x%02x%02x%02x%02x"
-        "%02x%02x%02x%02x%02x%02x%02x%02x",
-        digest[0], digest[1], digest[2], digest[3], digest[4], digest[5], digest[6], digest[7],
-        digest[8], digest[9], digest[10], digest[11], digest[12], digest[13], digest[14], digest[15]);
-
-    return buffer;	//	Implicit promotion to std::string
+    return RAFormatMD5(digest);
 }
 
 std::string RAGenerateMD5(const std::vector<BYTE> DataIn)

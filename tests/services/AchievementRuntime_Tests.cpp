@@ -50,15 +50,19 @@ public:
     ra::data::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockFileSystem mockFileSystem;
 
-    rc_memref_value_t* GetMemRef(ra::AchievementID nId) noexcept
+    rc_memref_value_t* GetMemRefs() noexcept
     {
-        for (const auto& pIter : m_vActiveAchievements)
-        {
-            if (pIter.nId == nId)
-                return pIter.pTrigger->memrefs;
-        }
+        return m_pRuntime.memrefs;
+    }
 
-        return nullptr;
+    void ForceRichPresenceUpdate() noexcept
+    {
+        m_pRuntime.richpresence_update_timer = 0;
+    }
+
+    size_t GetTriggerCount() const noexcept
+    {
+        return m_pRuntime.trigger_count;
     }
 
 private:
@@ -118,30 +122,30 @@ private:
 public:
     TEST_METHOD(TestActivateAchievement)
     {
-        AchievementRuntime runtime;
-        auto* pTrigger = ParseTrigger("1=1");
+        std::array<unsigned char, 1> memory{ 0x00 };
 
-        // achievement not active, should not trigger
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        auto* pTrigger = "0xH0000=1";
+
+        // achievement not active, should not raise events
         std::vector<AchievementRuntime::Change> vChanges;
         runtime.Process(vChanges);
         Assert::AreEqual({ 0U }, vChanges.size());
 
-        // active achievement should trigger
+        // first Process call will switch the state from Waiting to Active - we ignore that
         runtime.ActivateAchievement(6U, pTrigger);
         runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
+        Assert::AreEqual({ 0U }, vChanges.size());
 
-        // still active achievement should continue to trigger
-        vChanges.clear();
+        // now that it's active, we can trigger it
+        memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
         Assert::AreEqual(6U, vChanges.front().nId);
         Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
 
-        // deactivated achievement should not trigger
-        runtime.DeactivateAchievement(6U);
+        // triggered achievement should not continue to trigger
         vChanges.clear();
         runtime.Process(vChanges);
         Assert::AreEqual({ 0U }, vChanges.size());
@@ -153,15 +157,13 @@ public:
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        auto* pTrigger = ParseTrigger("0xH0000=0");
+        auto* pTrigger = "0xH0000=0";
 
         runtime.SetPaused(true);
         Assert::IsTrue(runtime.IsPaused());
         runtime.ActivateAchievement(6U, pTrigger);
-        runtime.SetPaused(false);
-        Assert::IsFalse(runtime.IsPaused());
 
-        // achievement is paused and will be ignored as long as its true
+        // runtime is paused and achievement will be ignored as long as its true
         std::vector<AchievementRuntime::Change> vChanges;
         for (int i = 0; i < 10; i++)
         {
@@ -169,19 +171,24 @@ public:
             Assert::AreEqual({ 0U }, vChanges.size());
         }
 
-        // achievement is no longer true, so it won't trigger
+        runtime.SetPaused(false);
+        Assert::IsFalse(runtime.IsPaused());
+
+        // achievement will initially be "waiting" and must be false before it can activate
+        runtime.Process(vChanges);
+        for (int i = 0; i < 10; i++)
+        {
+            runtime.Process(vChanges);
+            Assert::AreEqual({ 0U }, vChanges.size());
+        }
+
+        // achievement is no longer true, so it can activate
         memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual({ 0U }, vChanges.size());
 
-        // achievement is true again and should trigger
+        // achievement is true again, but should not trigger when paused
         memory.at(0) = 0;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
-
-        // processing is paused, achievement should not trigger
         runtime.SetPaused(true);
         Assert::IsTrue(runtime.IsPaused());
         vChanges.clear();
@@ -202,21 +209,24 @@ public:
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        auto* pTrigger = ParseTrigger("1=1.3._R:0xH0000=1");
+        auto* pTrigger = "1=1.3._R:0xH0000=1";
         runtime.ActivateAchievement(4U, pTrigger);
+        runtime.GetAchievementTrigger(4U)->state = RC_TRIGGER_STATE_ACTIVE;
 
         // HitCount should increase, but no trigger
         std::vector<AchievementRuntime::Change> vChanges;
         runtime.Process(vChanges);
         Assert::AreEqual({ 0U }, vChanges.size());
 
-        // trigger reset, but not watching for reset, no notification
+        // trigger reset, expect notification
         memory.at(0) = 1;
         runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        Assert::AreEqual({ 1U }, vChanges.size());
+        Assert::AreEqual(4U, vChanges.front().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementReset, vChanges.front().nType);
+        vChanges.clear();
 
         // watch for notification, already reset, no notification
-        runtime.MonitorAchievementReset(4U, pTrigger);
         runtime.Process(vChanges);
         Assert::AreEqual({ 0U }, vChanges.size());
 
@@ -246,112 +256,43 @@ public:
         Assert::AreEqual(4U, vChanges.front().nId);
         Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
         vChanges.clear();
-
-        // enable reset, reset prevents trigger, expect reset notification
-        memory.at(0) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(4U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementReset, vChanges.front().nType);
-        vChanges.clear();
-
-        // disable reset, no change expected
-        memory.at(0) = 0;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // disable reset monitor and reset, expect no notification
-        runtime.ActivateAchievement(4U, pTrigger);
-        memory.at(0) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
     }
 
-    TEST_METHOD(TestMonitorAchievementResetPaused)
+    TEST_METHOD(TestUpdateAchievementId)
     {
-        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        std::array<unsigned char, 1> memory{ 0x00 };
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        auto* pTrigger = ParseTrigger("0xH0000=0.3._R:0xH0001=0");
+        auto* sTrigger = "0xH0000=1";
 
-        runtime.SetPaused(true);
-        Assert::IsTrue(runtime.IsPaused());
-        runtime.MonitorAchievementReset(6U, pTrigger);
-        runtime.SetPaused(false);
-        Assert::IsFalse(runtime.IsPaused());
-
-        // achievement is not true and will be promoted to the unpaused queue
+        // achievement not active, should not raise events
         std::vector<AchievementRuntime::Change> vChanges;
-        runtime.Process(vChanges); // HitCount 1
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // hit count should have been reset on promotion, so reset shouldn't fire
-        memory.at(1) = 0;
         runtime.Process(vChanges);
         Assert::AreEqual({ 0U }, vChanges.size());
 
-        // disable reset, set hit count
-        memory.at(1) = 1;
-        runtime.Process(vChanges);
+        // make sure the trigger is registered correctly
+        runtime.ActivateAchievement(110000006U, sTrigger);
+        auto* pTrigger = runtime.GetAchievementTrigger(110000006U);
+        Assert::IsNotNull(pTrigger);
 
-        // trigger reset notification
-        memory.at(1) = 0;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementReset, vChanges.front().nType);
-        vChanges.clear();
+        // update the ID (this simulates uploading a local achievement)
+        runtime.UpdateAchievementId(110000006U, 99001U);
+        auto const* pTrigger2 = runtime.GetAchievementTrigger(99001U);
+        Assert::IsTrue(pTrigger == pTrigger2);
 
-        // already reset, shouldn't get repeated notification
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        pTrigger = runtime.GetAchievementTrigger(110000006U);
+        Assert::IsNull(pTrigger);
 
-        // disable reset, advance hitcount to 2
-        memory.at(1) = 1;
-        runtime.Process(vChanges);
+        // first Process call will switch the state from Waiting to Active - we ignore that
         runtime.Process(vChanges);
         Assert::AreEqual({ 0U }, vChanges.size());
 
-        // reset active achievements should bump it to the queued list, and reset the hitcount
-        runtime.ResetActiveAchievements();
-
-        // repeat first test to make sure it's still being monitored
-        runtime.Process(vChanges); // promote to active queue, HitCount 0
-        Assert::AreEqual({ 0U }, vChanges.size());
-        runtime.Process(vChanges); // HitCount 1
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // trigger reset notification
-        memory.at(1) = 0;
+        // now that it's active, we can trigger it
+        memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementReset, vChanges.front().nType);
-        vChanges.clear();
-
-        // already reset, shouldn't get repeated notification
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // disable reset, advance hitcount to 2
-        memory.at(1) = 1;
-        runtime.Process(vChanges);
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // reset active achievements should bump it to the queued list, and reset the hitcount
-        runtime.ResetActiveAchievements();
-
-        runtime.Process(vChanges); // promote to active queue, HitCount 0
-        Assert::AreEqual({ 0U }, vChanges.size());
-        runtime.Process(vChanges); // HitCount 1
-        Assert::AreEqual({ 0U }, vChanges.size());
-        runtime.Process(vChanges); // HitCount 2
-        Assert::AreEqual({ 0U }, vChanges.size());
-        runtime.Process(vChanges); // HitCount 3
-        Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
+        Assert::AreEqual(99001U, vChanges.front().nId);
         Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
     }
 
@@ -361,12 +302,13 @@ public:
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        auto* pTrigger = ParseTrigger("0xH0000=0_0xH0001=1");
-        runtime.ActivateAchievement(6U, pTrigger);
+        runtime.ActivateAchievement(6U, "0xH0000=0_0xH0001=1");
+        auto* pTrigger = runtime.GetAchievementTrigger(6U);
+        pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
 
-        std::array<unsigned char, 1024> sTriggerBuffer2{};
-        auto* pTrigger2 = ParseTrigger("0xH0000=0.30._R:0xH0001=1", sTriggerBuffer2.data(), sizeof(sTriggerBuffer2));
-        runtime.ActivateAchievement(7U, pTrigger2);
+        runtime.ActivateAchievement(7U, "0xH0000=0.30._R:0xH0001=1");
+        auto* pTrigger2 = runtime.GetAchievementTrigger(7U);
+        pTrigger2->state = RC_TRIGGER_STATE_ACTIVE;
 
         // rack up some hits
         std::vector<AchievementRuntime::Change> vChanges;
@@ -391,7 +333,7 @@ public:
             Assert::AreEqual({ 0U }, vChanges.size());
         }
 
-        // achievement is no longer true, so it won't trigger
+        // achievement is no longer true, so it will transition from waiting to active
         memory.at(1) = 0;
         runtime.Process(vChanges);
         Assert::AreEqual({ 0U }, vChanges.size());
@@ -400,12 +342,14 @@ public:
         Assert::AreEqual(1U, pTrigger2->requirement->conditions->current_hits);
 
         // achievement is true again and should trigger
-        // second achievement is reset - expect not to be notified
+        // second achievement is reset - expect to be notified
         memory.at(1) = 1;
         runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
+        Assert::AreEqual({ 2U }, vChanges.size());
         Assert::AreEqual(6U, vChanges.front().nId);
         Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
+        Assert::AreEqual(7U, vChanges.back().nId);
+        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementReset, vChanges.back().nType);
         Assert::AreEqual(0U, pTrigger2->requirement->conditions->current_hits);
     }
 
@@ -414,10 +358,10 @@ public:
         AchievementRuntimeHarness runtime;
         auto& ach1 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
         ach1.SetID(3U);
-        ach1.ParseTrigger("1=1.10.");
+        ach1.SetTrigger("1=1.10.");
         auto& ach2 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
         ach2.SetID(5U);
-        ach2.ParseTrigger("1=1.2.");
+        ach2.SetTrigger("1=1.2.");
 
         const gsl::not_null<Achievement*> pAchievement3{
             gsl::make_not_null(runtime.mockGameContext.FindAchievement(3U))};
@@ -433,15 +377,18 @@ public:
         pAchievement3->SetConditionHitCount(0, 0, 1);
         pAchievement5->SetConditionHitCount(0, 0, 1);
         runtime.LoadProgress("test.sav");
-        Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
-        Assert::AreEqual(1U, pAchievement5->GetConditionHitCount(0, 0));
+        Assert::AreEqual(0U, pAchievement3->GetConditionHitCount(0, 0));
+        Assert::AreEqual(0U, pAchievement5->GetConditionHitCount(0, 0));
 
         // activate one achievement, save, activate other, restore - only first should be restored,
         // second should be reset because it wasn't captured.
         pAchievement3->SetActive(true);
+        runtime.GetAchievementTrigger(3U)->state = RC_TRIGGER_STATE_ACTIVE;
+        pAchievement3->SetConditionHitCount(0, 0, 1);
+        pAchievement5->SetConditionHitCount(0, 0, 1);
         runtime.SaveProgress("test.sav");
         pAchievement5->SetActive(true);
-        pAchievement5->SetPauseOnReset(true); // make sure these get persisted too
+        runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
 
         pAchievement3->SetConditionHitCount(0, 0, 2);
         pAchievement5->SetConditionHitCount(0, 0, 2);
@@ -450,6 +397,7 @@ public:
         Assert::AreEqual(0U, pAchievement5->GetConditionHitCount(0, 0));
 
         // both active, save and restore should reset both
+        runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
         pAchievement5->SetConditionHitCount(0, 0, 1);
         runtime.SaveProgress("test.sav");
 
@@ -460,14 +408,15 @@ public:
         Assert::AreEqual(1U, pAchievement5->GetConditionHitCount(0, 0));
 
         // second no longer active, file contains data that should be ignored
-        pAchievement3->SetConditionHitCount(0, 0, 2);
-        pAchievement5->SetConditionHitCount(0, 0, 2);
+        pAchievement3->SetConditionHitCount(0, 0, 6);
+        pAchievement5->SetConditionHitCount(0, 0, 6);
         pAchievement5->SetActive(false);
         runtime.LoadProgress("test.sav");
         Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
-        Assert::AreEqual(2U, pAchievement5->GetConditionHitCount(0, 0));
+        Assert::AreEqual(6U, pAchievement5->GetConditionHitCount(0, 0));
 
         // if the definition changes, the hits should be reset instead of remembered
+        pAchievement3->GenerateConditions();
         pAchievement3->GetCondition(0, 0).CompSource().SetValue(2);
         pAchievement3->RebuildTrigger();
         pAchievement3->SetConditionHitCount(0, 0, 2);
@@ -481,12 +430,13 @@ public:
         AchievementRuntimeHarness runtime;
         auto& ach = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
         ach.SetID(9U);
-        ach.ParseTrigger("0xH1234=1_0xX1234>d0xX1234");
+        ach.SetTrigger("0xH1234=1_0xX1234>d0xX1234");
         ach.SetActive(true);
+        runtime.GetAchievementTrigger(9U)->state = RC_TRIGGER_STATE_ACTIVE;
 
         ach.SetConditionHitCount(0, 0, 2);
         ach.SetConditionHitCount(0, 1, 0);
-        auto pMemRef = runtime.GetMemRef(9U); // 0xH1234
+        auto pMemRef = runtime.GetMemRefs(); // 0xH1234
         pMemRef->value = 0x02;
         pMemRef->previous = 0x03;
         pMemRef->prior = 0x04;
@@ -498,7 +448,7 @@ public:
         runtime.SaveProgress("test.sav");
 
         // modify data so we can see if the persisted data is restored
-        pMemRef = runtime.GetMemRef(9U);
+        pMemRef = runtime.GetMemRefs();
         pMemRef->value = 0;
         pMemRef->previous = 0;
         pMemRef->prior = 0;
@@ -515,7 +465,7 @@ public:
         Assert::AreEqual(2U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 1));
 
-        pMemRef = runtime.GetMemRef(9U);
+        pMemRef = runtime.GetMemRefs();
         Assert::AreEqual(0x02U, pMemRef->value);
         Assert::AreEqual(0x03U, pMemRef->previous);
         Assert::AreEqual(0x04U, pMemRef->prior);
@@ -530,10 +480,10 @@ public:
         AchievementRuntimeHarness runtime;
         auto& ach1 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
         ach1.SetID(3U);
-        ach1.ParseTrigger("1=1.10.");
+        ach1.SetTrigger("1=1.10.");
         auto& ach2 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
         ach2.SetID(5U);
-        ach2.ParseTrigger("1=1.2.");
+        ach2.SetTrigger("1=1.2.");
 
         const gsl::not_null<Achievement*> pAchievement3{
             gsl::make_not_null(runtime.mockGameContext.FindAchievement(3U)) };
@@ -557,12 +507,13 @@ public:
         AchievementRuntimeHarness runtime;
         auto& ach = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
         ach.SetID(9U);
-        ach.ParseTrigger("S0xH1234=1_0xX1234>d0xX1234");
+        ach.SetTrigger("S0xH1234=1_0xX1234>d0xX1234");
         ach.SetActive(true);
+        runtime.GetAchievementTrigger(9U)->state = RC_TRIGGER_STATE_ACTIVE;
 
         ach.SetConditionHitCount(1, 0, 2);
         ach.SetConditionHitCount(1, 1, 0);
-        auto pMemRef = runtime.GetMemRef(9U); // 0xH1234
+        auto pMemRef = runtime.GetMemRefs(); // 0xH1234
         pMemRef->value = 0x02;
         pMemRef->previous = 0x03;
         pMemRef->prior = 0x04;
@@ -574,7 +525,7 @@ public:
         runtime.SaveProgress("test.sav");
 
         // modify data so we can see if the persisted data is restored
-        pMemRef = runtime.GetMemRef(9U);
+        pMemRef = runtime.GetMemRefs();
         pMemRef->value = 0;
         pMemRef->previous = 0;
         pMemRef->prior = 0;
@@ -591,7 +542,7 @@ public:
         Assert::AreEqual(2U, ach.GetConditionHitCount(1, 0));
         Assert::AreEqual(0U, ach.GetConditionHitCount(1, 1));
 
-        pMemRef = runtime.GetMemRef(9U);
+        pMemRef = runtime.GetMemRefs();
         Assert::AreEqual(0x02U, pMemRef->value);
         Assert::AreEqual(0x03U, pMemRef->previous);
         Assert::AreEqual(0x04U, pMemRef->prior);
@@ -608,7 +559,7 @@ public:
 
         Achievement pAchievement1, pAchievement2;
         pAchievement1.SetID(1U);
-        pAchievement1.ParseTrigger("1=1");
+        pAchievement1.SetTrigger("1=1");
         pAchievement1.SetTitle("Title");
         pAchievement1.SetDescription("Desc");
         pAchievement1.SetAuthor("Auth");
@@ -616,12 +567,14 @@ public:
         pAchievement1.SetCreatedDate(1234567890);
         pAchievement1.SetModifiedDate(1234567890);
         pAchievement1.SetBadgeImage("12345");
-
         pAchievement1.SetActive(true);
+        runtime.GetAchievementTrigger(1U)->state = RC_TRIGGER_STATE_ACTIVE;
+
         pAchievement2.CopyFrom(pAchievement1);
-        pAchievement2.SetID(12);
+        pAchievement2.SetID(12U);
         Assert::IsFalse(pAchievement2.Active()); // clone should not be immediately active
         pAchievement2.SetActive(true);
+        runtime.GetAchievementTrigger(12U)->state = RC_TRIGGER_STATE_ACTIVE;
 
         // both achievements should trigger
         std::vector<AchievementRuntime::Change> vChanges;
@@ -635,32 +588,87 @@ public:
 
     TEST_METHOD(TestReactivateAchievement)
     {
-        AchievementRuntime runtime;
-        auto* pTrigger = ParseTrigger("1=1_1=0");
+        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+
+        auto* sTrigger = "0xH0001=0_0xH0000=1";
+        runtime.ActivateAchievement(6U, sTrigger);
+        auto* pTrigger = runtime.GetAchievementTrigger(6U);
+        pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
 
         std::vector<AchievementRuntime::Change> vChanges;
-        runtime.ActivateAchievement(6U, pTrigger);
         runtime.Process(vChanges);
         runtime.Process(vChanges);
         runtime.Process(vChanges);
         Assert::AreEqual(3U, pTrigger->requirement->conditions->current_hits);
 
         // deactivating achievement should not reset hit count
+        // so user can examine hit counts after achievement has triggered
         runtime.DeactivateAchievement(6U);
         Assert::AreEqual(3U, pTrigger->requirement->conditions->current_hits);
 
         runtime.Process(vChanges);
         Assert::AreEqual(3U, pTrigger->requirement->conditions->current_hits);
 
-        // reactivating achievement should not reset hit count
-        // this behavior is important for GameContext.RefreshUnlocks - when switching from hardcore to non-hardcore,
-        // the achievement is deactivated and reactivated (if not unlocked). since the emulator is not reset, the
-        // hit count shouldn't be reset either.
-        runtime.ActivateAchievement(6U, pTrigger);
-        Assert::AreEqual(3U, pTrigger->requirement->conditions->current_hits);
+        // reactivating achievement will reset hit count and allow it to increment again
+        runtime.ActivateAchievement(6U, sTrigger);
+        Assert::AreEqual(0U, pTrigger->requirement->conditions->current_hits);
 
         runtime.Process(vChanges);
-        Assert::AreEqual(4U, pTrigger->requirement->conditions->current_hits);
+        Assert::AreEqual(1U, pTrigger->requirement->conditions->current_hits);
+    }
+
+    TEST_METHOD(TestReleaseAchievementTrigger)
+    {
+        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+
+        const auto* sTrigger = "0xH0001=0_0xH0000=1";
+        runtime.ActivateAchievement(6U, sTrigger);
+        auto* pTrigger = runtime.GetAchievementTrigger(6U);
+
+        // deactivated achievement shouldn't be found without passing in the trigger
+        runtime.DeactivateAchievement(6U);
+        auto* pTrigger2 = runtime.GetAchievementTrigger(6U);
+        Assert::IsNull(pTrigger2);
+        pTrigger2 = runtime.GetAchievementTrigger(6U, sTrigger);
+        Assert::IsNotNull(pTrigger2);
+        Assert::IsTrue(pTrigger == pTrigger2);
+
+        // cannot release trigger that has memrefs
+        runtime.ReleaseAchievementTrigger(6U, pTrigger);
+        pTrigger2 = runtime.GetAchievementTrigger(6U);
+        Assert::IsNull(pTrigger2);
+        pTrigger2 = runtime.GetAchievementTrigger(6U, sTrigger);
+        Assert::IsNotNull(pTrigger2);
+        Assert::IsTrue(pTrigger == pTrigger2);
+
+        // register second trigger that will not have memrefs
+        runtime.ActivateAchievement(7U, sTrigger);
+        pTrigger = runtime.GetAchievementTrigger(7U);
+        runtime.DeactivateAchievement(7U);
+        pTrigger2 = runtime.GetAchievementTrigger(7U);
+        Assert::IsNull(pTrigger2);
+        pTrigger2 = runtime.GetAchievementTrigger(7U, sTrigger);
+        Assert::IsNotNull(pTrigger2);
+        Assert::IsTrue(pTrigger == pTrigger2);
+
+        // can release trigger that does not have memrefs
+        Assert::AreEqual({ 2U }, runtime.GetTriggerCount());
+        runtime.ReleaseAchievementTrigger(7U, pTrigger);
+        Assert::AreEqual({ 1U }, runtime.GetTriggerCount());
+        pTrigger2 = runtime.GetAchievementTrigger(7U);
+        Assert::IsNull(pTrigger2);
+        pTrigger2 = runtime.GetAchievementTrigger(7U, sTrigger);
+        Assert::IsNull(pTrigger2);
+
+        // first trigger should still be findable
+        pTrigger2 = runtime.GetAchievementTrigger(6U, sTrigger);
+        Assert::IsNotNull(pTrigger2);
     }
 
     TEST_METHOD(TestActivateLeaderboard)
@@ -669,7 +677,7 @@ public:
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        auto* pLeaderboard = ParseLeaderboard("STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02");
+        auto* pLeaderboard = "STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02";
 
         // leaderboard not active, should not trigger
         std::vector<AchievementRuntime::Change> vChanges;
@@ -769,45 +777,41 @@ public:
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
         std::vector<ra::services::AchievementRuntime::Change> changes;
-        char buffer[64] = {};
-        rc_richpresence_t pRichPresence2{};
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
 
-        auto* pRichPresence = ParseRichPresence("Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0xH01) @Num(d0xH01)\n");
+        auto* pRichPresence = "Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0xH01) @Num(d0xH01)\n";
         runtime.ActivateRichPresence(pRichPresence);
 
-        // remove memrefs from pRichPresence2 so they don't get updated by rc_evaluate_richpresence calls
-        // we expect all memref updating to occur in AcheivementRuntime::Process.
-        memcpy(&pRichPresence2, pRichPresence, sizeof(pRichPresence2));
-        pRichPresence2.memrefs = nullptr;
+        // string is evaluated with current memrefs (which will be 0)
+        Assert::AreEqual(std::wstring(L"0 0"), runtime.GetRichPresenceDisplayString());
 
-        // memrefs are updated by ActivateRichPresence - expect 18/0
-        rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
-        Assert::AreEqual("18 0", buffer);
+        // do_frame should immediately process the rich presence
+        runtime.Process(changes);
+        Assert::AreEqual(std::wstring(L"18 0"), runtime.GetRichPresenceDisplayString());
 
         // first update - updates value and delta
+        runtime.ForceRichPresenceUpdate();
         runtime.Process(changes);
-        rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
-        Assert::AreEqual("18 18", buffer);
+        Assert::AreEqual(std::wstring(L"18 18"), runtime.GetRichPresenceDisplayString());
 
         // second update - updates delta
+        runtime.ForceRichPresenceUpdate();
         runtime.Process(changes);
-        rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
-        Assert::AreEqual("18 18", buffer);
+        Assert::AreEqual(std::wstring(L"18 18"), runtime.GetRichPresenceDisplayString());
 
         // third update - updates value after change
         memory.at(1) = 11;
+        runtime.ForceRichPresenceUpdate();
         runtime.Process(changes);
-        rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
-        Assert::AreEqual("11 18", buffer);
+        Assert::AreEqual(std::wstring(L"11 18"), runtime.GetRichPresenceDisplayString());
 
         // fourth update - updates delta and value after change
         memory.at(1) = 13;
+        runtime.ForceRichPresenceUpdate();
         runtime.Process(changes);
-        rc_evaluate_richpresence(&pRichPresence2, buffer, sizeof(buffer), rc_peek_callback, nullptr, nullptr);
-        Assert::AreEqual("13 11", buffer);
+        Assert::AreEqual(std::wstring(L"13 11"), runtime.GetRichPresenceDisplayString());
     }
 };
 

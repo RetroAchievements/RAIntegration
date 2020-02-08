@@ -160,6 +160,9 @@ API int CCONV _RA_Shutdown()
         auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
         auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
 
+        if (pWindowManager.RichPresenceMonitor.IsVisible())
+            pDesktop.CloseWindow(pWindowManager.RichPresenceMonitor);
+
         if (pWindowManager.MemoryBookmarks.IsVisible())
             pDesktop.CloseWindow(pWindowManager.MemoryBookmarks);
     }
@@ -618,11 +621,7 @@ API void CCONV _RA_SetPaused(bool bIsPaused)
 
 API void CCONV _RA_OnSaveState(const char* sFilename)
 {
-    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
-    {
-        if (!ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().WasMemoryModified())
-            ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgress(sFilename);
-    }
+    ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgress(sFilename);
 }
 
 API void CCONV _RA_OnLoadState(const char* sFilename)
@@ -637,7 +636,7 @@ API void CCONV _RA_OnLoadState(const char* sFilename)
             ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();
         }
 
-        ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().LoadProgress(sFilename);
+        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().LoadProgress(sFilename);
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
 
         g_MemoryDialog.Invalidate();

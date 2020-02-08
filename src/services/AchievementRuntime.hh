@@ -4,6 +4,8 @@
 
 #include "ra_fwd.h"
 
+#include "data\Types.hh"
+
 #include "services\TextReader.hh"
 
 #include <string>
@@ -16,65 +18,110 @@ namespace services {
 class AchievementRuntime
 {
 public:
-    AchievementRuntime() noexcept = default;
-    virtual ~AchievementRuntime() noexcept = default;
+    GSL_SUPPRESS_F6 AchievementRuntime() = default;
+    virtual ~AchievementRuntime()
+    {
+        ResetRuntime();
+    }
+
     AchievementRuntime(const AchievementRuntime&) noexcept = delete;
     AchievementRuntime& operator=(const AchievementRuntime&) noexcept = delete;
     AchievementRuntime(AchievementRuntime&&) noexcept = delete;
     AchievementRuntime& operator=(AchievementRuntime&&) noexcept = delete;
 
     /// <summary>
-    /// Adds an achievement to the processing queue.
+    /// Clears all active achievements/leaderboards/rich presence from the runtime.
     /// </summary>
-    void ActivateAchievement(unsigned int nId, rc_trigger_t* pTrigger) noexcept;
+    void ResetRuntime() noexcept;
 
     /// <summary>
-    /// Adds an achievement to the processing queue and enables the AchievementReset change type for it.
+    /// Adds an achievement to the processing queue.
     /// </summary>
-    void MonitorAchievementReset(unsigned int nId, rc_trigger_t* pTrigger) noexcept;
+    int ActivateAchievement(ra::AchievementID nId, const std::string& sTrigger);
 
     /// <summary>
     /// Removes an achievement from the processing queue.
     /// </summary>
-    void DeactivateAchievement(unsigned int nId) noexcept
+    void DeactivateAchievement(ra::AchievementID nId) noexcept;
+
+    /// <summary>
+    /// Updates any references using the provided ID to a new value
+    /// </summary>
+    void UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId) noexcept;
+
+    /// <summary>
+    /// Gets the raw trigger for the achievement (if active)
+    /// </summary>
+    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) noexcept
     {
-        RemoveEntry(m_vQueuedAchievements, nId);
-        RemoveEntry(m_vActiveAchievements, nId);
-        RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
+        if (!m_bInitialized)
+            return nullptr;
+
+        return rc_runtime_get_achievement(&m_pRuntime, nId);
     }
+
+    /// <summary>
+    /// Gets the raw trigger for the achievement (if active)
+    /// </summary>
+    const rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const noexcept
+    {
+        if (!m_bInitialized)
+            return nullptr;
+
+        return rc_runtime_get_achievement(&m_pRuntime, nId);
+    }
+
+    /// <summary>
+    /// Gets the raw trigger for the achievement (if ever active)
+    /// </summary>
+    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId, const std::string& sTrigger) noexcept;
+
+    /// <summary>
+    /// Gets the raw trigger for the achievement (if active)
+    /// </summary>
+    rc_trigger_t* DetachAchievementTrigger(ra::AchievementID nId) noexcept;
+
+    /// <summary>
+    /// Removes an achievement from the processing queue.
+    /// </summary>
+    void ReleaseAchievementTrigger(ra::AchievementID nId, _In_ rc_trigger_t* pTrigger) noexcept;
 
     /// <summary>
     /// Adds a leaderboard to the processing queue.
     /// </summary>
-    void ActivateLeaderboard(unsigned int nId, rc_lboard_t* pLeaderboard) noexcept
-    {
-        GSL_SUPPRESS_F6 AddEntry(m_vActiveLeaderboards, nId, pLeaderboard);
-    }
+    int ActivateLeaderboard(unsigned int nId, const std::string& sDefinition) noexcept;
 
     /// <summary>
     /// Removes a leaderboard from the processing queue.
     /// </summary>
     void DeactivateLeaderboard(unsigned int nId) noexcept
     {
-        RemoveEntry(m_vActiveLeaderboards, nId);
+        if (m_bInitialized)
+            rc_runtime_deactivate_lboard(&m_pRuntime, nId);
     }
 
     /// <summary>
     /// Specifies the rich presence to process each frame.
     /// </summary>
     /// <remarks>Only updates the memrefs each frame (for deltas), the script is not processed here.</remarks>
-    void ActivateRichPresence(rc_richpresence_t* pRichPresence) noexcept
+    void ActivateRichPresence(const std::string& sScript);
+
+    /// <summary>
+    /// Gets whether or not the loaded game has a rich presence script.
+    /// </summary>
+    bool HasRichPresence() const noexcept
     {
-        if (pRichPresence)
-        {
-            m_pRichPresenceMemRefs = pRichPresence->memrefs;
-            UpdateRichPresenceMemRefs();
-        }
-        else
-        {
-            m_pRichPresenceMemRefs = nullptr;
-        }
+        if (!m_bInitialized)
+            return false;
+
+        return (m_pRuntime.richpresence_display_buffer != nullptr);
     }
+
+    /// <summary>
+    /// Gets the current rich presence display string.
+    /// </summary>
+    std::wstring GetRichPresenceDisplayString() const;
+
 
     enum class ChangeType
     {
@@ -97,14 +144,14 @@ public:
     /// <summary>
     /// Processes all active achievements for the current frame.
     /// </summary>
-    virtual void Process(_Inout_ std::vector<Change>& changes);
+    virtual void Process(_Inout_ std::vector<Change>& changes) noexcept;
 
     /// <summary>
     /// Loads HitCount data for active achievements from a save state file.
     /// </summary>
     /// <param name="sLoadStateFilename">The name of the save state file.</param>
     /// <returns><c>true</c> if the achievement HitCounts were modified, <c>false</c> if not.</returns>
-    bool LoadProgress(const char* sLoadStateFilename) const;
+    bool LoadProgress(const char* sLoadStateFilename);
 
     /// <summary>
     /// Writes HitCount data for active achievements to a save state file.
@@ -120,81 +167,29 @@ public:
     /// <summary>
     /// Sets whether achievement processing should be temporarily suspended.
     /// </summary>
-    void SetPaused(bool bValue) noexcept { m_bPaused = bValue; }
+    void SetPaused(bool bValue);
 
     /// <summary>
     /// Resets any active achievements and disables them until their triggers are false.
     /// </summary>
-    void ResetActiveAchievements();
+    void ResetActiveAchievements() noexcept
+    {
+        if (m_bInitialized)
+            rc_runtime_reset(&m_pRuntime);
+    }
 
 protected:
-    struct ActiveAchievement
-    {
-        ActiveAchievement(rc_trigger_t* pTrigger, unsigned int nId) noexcept : pTrigger(pTrigger), nId(nId) {}
-
-        rc_trigger_t* pTrigger;
-        unsigned int nId;
-    };
-
-    struct QueuedAchievement : ActiveAchievement
-    {
-        QueuedAchievement(rc_trigger_t* pTrigger, unsigned int nId) noexcept : ActiveAchievement(pTrigger, nId) {}
-
-        bool bPauseOnReset = false;
-    };
-
-    struct ActiveLeaderboard
-    {
-        ActiveLeaderboard(rc_lboard_t* pLeaderboard, unsigned int nId) noexcept : pLeaderboard(pLeaderboard), nId(nId) {}
-
-        rc_lboard_t* pLeaderboard;
-        unsigned int nId;
-        int nValue = 0;
-    };
-
-    template<class TCollection, class TData>
-    static void AddEntry(std::vector<TCollection>& vEntries, unsigned int nId, TData* pData)
-    {
-        Expects(pData != nullptr);
-
-        for (const auto& pAchievement : vEntries)
-        {
-            if (pAchievement.nId == nId)
-                return;
-        }
-
-        vEntries.emplace_back(pData, nId);
-    }
-
-    template<class T>
-    GSL_SUPPRESS_F6
-    static void RemoveEntry(std::vector<T>& vEntries, unsigned int nId) noexcept
-    {
-        for (auto pIter = vEntries.begin(); pIter != vEntries.end(); ++pIter)
-        {
-            if (pIter->nId == nId)
-            {
-                vEntries.erase(pIter);
-                break;
-            }
-        }
-    }
-
-    std::vector<QueuedAchievement> m_vQueuedAchievements;
-    std::vector<ActiveAchievement> m_vActiveAchievements;
-    std::vector<ActiveAchievement> m_vActiveAchievementsMonitorReset;
-
-    std::vector<ActiveLeaderboard> m_vActiveLeaderboards;
-
-    rc_memref_value_t* m_pRichPresenceMemRefs = nullptr;
-
     bool m_bPaused = false;
+    rc_runtime_t m_pRuntime{};
 
 private:
-    bool LoadProgressV1(const std::string& sProgress, std::set<unsigned int>& vProcessedAchievementIds) const;
-    bool LoadProgressV2(ra::services::TextReader& pFile, std::set<unsigned int>& vProcessedAchievementIds) const;
+    bool LoadProgressV1(const std::string& sProgress, std::set<unsigned int>& vProcessedAchievementIds);
+    bool LoadProgressV2(ra::services::TextReader& pFile, std::set<unsigned int>& vProcessedAchievementIds);
 
-    void UpdateRichPresenceMemRefs() noexcept;
+    void EnsureInitialized() noexcept;
+
+    std::map<unsigned int, std::string> m_vQueuedAchievements;
+    bool m_bInitialized = false;
 };
 
 } // namespace services

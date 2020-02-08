@@ -13,204 +13,230 @@
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
+#include <rcheevos\src\rhash\md5.h>
+
 namespace ra {
 namespace services {
 
-void AchievementRuntime::ActivateAchievement(unsigned int nId, rc_trigger_t* pTrigger) noexcept
+void AchievementRuntime::EnsureInitialized() noexcept
 {
+    if (!m_bInitialized)
+    {
+        rc_runtime_init(&m_pRuntime);
+        m_bInitialized = true;
+    }
+}
+
+void AchievementRuntime::ResetRuntime() noexcept
+{
+    if (m_bInitialized)
+    {
+        rc_runtime_destroy(&m_pRuntime);
+        m_bInitialized = false;
+    }
+}
+
+int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::string& sTrigger)
+{
+    EnsureInitialized();
+
     if (m_bPaused)
     {
         // If processing is paused, just queue the achievement. Once processing is unpaused, if the trigger
         // is not false, the achievement will be moved to the active list. This ensures achievements don't
         // trigger immediately upon loading the game due to uninitialized memory.
-        GSL_SUPPRESS_F6 AddEntry(m_vQueuedAchievements, nId, pTrigger);
-        RemoveEntry(m_vActiveAchievements, nId);
-    }
-    else
-    {
-        GSL_SUPPRESS_F6 AddEntry(m_vActiveAchievements, nId, pTrigger);
-        RemoveEntry(m_vQueuedAchievements, nId);
+        m_vQueuedAchievements.insert_or_assign(nId, sTrigger);
+        rc_runtime_deactivate_achievement(&m_pRuntime, nId);
+        return RC_OK;
     }
 
-    RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
+    return rc_runtime_activate_achievement(&m_pRuntime, nId, sTrigger.c_str(), nullptr, 0);
 }
 
-void AchievementRuntime::MonitorAchievementReset(unsigned int nId, rc_trigger_t* pTrigger) noexcept
+rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId, const std::string& sTrigger) noexcept
 {
-    if (m_bPaused)
+    if (!m_bInitialized)
+        return nullptr;
+
+    unsigned char md5[16]{};
+    md5_state_t state{};
+    const md5_byte_t* bytes;
+    GSL_SUPPRESS_TYPE1 bytes = reinterpret_cast<const md5_byte_t*>(sTrigger.c_str());
+
+    md5_init(&state);
+    md5_append(&state, bytes, gsl::narrow_cast<int>(sTrigger.length()));
+    md5_finish(&state, md5);
+
+    for (size_t i = 0; i < m_pRuntime.trigger_count; ++i)
     {
-        // If processing is paused, just queue the achievement. Once processing is unpaused, if the trigger
-        // is not false, the achievement will be moved to the active list. This ensures achievements don't
-        // trigger immediately upon loading the game due to uninitialized memory.
-        GSL_SUPPRESS_F6 AddEntry(m_vQueuedAchievements, nId, pTrigger);
-        GSL_SUPPRESS_F6 m_vQueuedAchievements.back().bPauseOnReset = true;
-        RemoveEntry(m_vActiveAchievementsMonitorReset, nId);
-    }
-    else
-    {
-        GSL_SUPPRESS_F6 AddEntry(m_vActiveAchievementsMonitorReset, nId, pTrigger);
-        RemoveEntry(m_vQueuedAchievements, nId);
+        if (m_pRuntime.triggers[i].id == nId && memcmp(m_pRuntime.triggers[i].md5, md5, sizeof(md5)) == 0)
+        {
+            if (m_pRuntime.triggers[i].trigger)
+                return m_pRuntime.triggers[i].trigger;
+
+            return static_cast<rc_trigger_t*>(m_pRuntime.triggers[i].buffer);
+        }
     }
 
-    RemoveEntry(m_vActiveAchievements, nId);
+    return nullptr;
 }
 
-void AchievementRuntime::ResetActiveAchievements()
+void AchievementRuntime::DeactivateAchievement(ra::AchievementID nId) noexcept
 {
-    // Reset any active achievements and move them to the pending queue, where they'll stay as long as the
-    // trigger is active. This ensures they don't trigger while we're resetting.
-    for (const auto& pAchievement : m_vActiveAchievements)
-    {
-        rc_reset_trigger(pAchievement.pTrigger);
-        AddEntry(m_vQueuedAchievements, pAchievement.nId, pAchievement.pTrigger);
-    }
-
-    m_vActiveAchievements.clear();
-
-    // make sure to also process the achievements being monitored
-    for (const auto& pAchievement : m_vActiveAchievementsMonitorReset)
-    {
-        rc_reset_trigger(pAchievement.pTrigger);
-        AddEntry(m_vQueuedAchievements, pAchievement.nId, pAchievement.pTrigger);
-        m_vQueuedAchievements.back().bPauseOnReset = true;
-    }
-
-    m_vActiveAchievementsMonitorReset.clear();
-
-    // also reset leaderboards
-    for (const auto& pLeaderboard : m_vActiveLeaderboards)
-    {
-        rc_reset_lboard(pLeaderboard.pLeaderboard);
-
-        // this ensures the leaderboard won't restart until the start trigger is false for at least one frame
-        pLeaderboard.pLeaderboard->submitted = 1;
-    }
+    // NOTE: rc_runtime_deactivate_achievement will either reset the trigger or free it
+    // we want to keep it so the user can examine the hit counts after an incorrect trigger
+    // so we're just going to detach it (memory is still held by m_pRuntime.triggers[i].buffer
+    DetachAchievementTrigger(nId);
 }
 
-static constexpr bool HasHitCounts(const rc_condset_t* pCondSet) noexcept
+rc_trigger_t* AchievementRuntime::DetachAchievementTrigger(ra::AchievementID nId) noexcept
 {
-    rc_condition_t* condition = pCondSet->conditions;
-    while (condition != nullptr)
-    {
-        if (condition->current_hits)
-            return true;
+    if (!m_bInitialized)
+        return nullptr;
 
-        condition = condition->next;
+    for (unsigned i = 0; i < m_pRuntime.trigger_count; ++i)
+    {
+        if (m_pRuntime.triggers[i].id == nId)
+        {
+            auto* pTrigger = m_pRuntime.triggers[i].trigger;
+            if (pTrigger)
+            {
+                m_pRuntime.triggers[i].trigger = nullptr;
+                return pTrigger;
+            }
+        }
     }
 
-    return false;
+    return nullptr;
 }
 
-static constexpr bool HasHitCounts(const rc_trigger_t* pTrigger) noexcept
+void AchievementRuntime::ReleaseAchievementTrigger(ra::AchievementID nId, _In_ rc_trigger_t* pTrigger) noexcept
 {
-    if (HasHitCounts(pTrigger->requirement))
-        return true;
-
-    rc_condset_t* pAlternate = pTrigger->alternative;
-    while (pAlternate != nullptr)
-    {
-        if (HasHitCounts(pAlternate))
-            return true;
-
-        pAlternate = pAlternate->next;
-    }
-
-    return false;
-}
-
-_Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& changes)
-{
-    if (m_bPaused)
+    if (!m_bInitialized)
         return;
 
-    for (auto& pAchievement : m_vActiveAchievements)
-    {
-        const bool bResult = rc_test_trigger(pAchievement.pTrigger, rc_peek_callback, nullptr, nullptr);
-        if (bResult)
-            changes.emplace_back(Change{ChangeType::AchievementTriggered, pAchievement.nId, 0U});
-    }
+#pragma warning(push)
+#pragma warning(disable:6001) // Using uninitialized memory 'pTrigger'
 
-    for (auto& pAchievement : m_vActiveAchievementsMonitorReset)
+    for (unsigned i = 0; i < m_pRuntime.trigger_count; ++i)
     {
-        const bool bHasHits = HasHitCounts(pAchievement.pTrigger);
-
-        const bool bResult = rc_test_trigger(pAchievement.pTrigger, rc_peek_callback, nullptr, nullptr);
-        if (bResult)
-            changes.emplace_back(Change{ChangeType::AchievementTriggered, pAchievement.nId, 0U});
-        else if (bHasHits && !HasHitCounts(pAchievement.pTrigger))
-            changes.emplace_back(Change{ChangeType::AchievementReset, pAchievement.nId, 0U});
-    }
-
-    auto pIter = m_vQueuedAchievements.begin();
-    while (pIter != m_vQueuedAchievements.end())
-    {
-        const bool bResult = rc_test_trigger(pIter->pTrigger, rc_peek_callback, nullptr, nullptr);
-        if (bResult)
+        if (m_pRuntime.triggers[i].id == nId && static_cast<rc_trigger_t*>(m_pRuntime.triggers[i].buffer) == pTrigger)
         {
-            // trigger is active, ignore the achievement for now. reset it so it can't pause itself.
-            rc_reset_trigger(pIter->pTrigger);
-            ++pIter;
-        }
-        else
-        {
-            // trigger is not active, reset the achievement and allow it to be triggered on future frames
-            rc_reset_trigger(pIter->pTrigger);
+            // this duplicates logic from rc_runtime_deactivate_trigger_by_index
+            if (!m_pRuntime.triggers[i].owns_memrefs)
+            {
+                free(pTrigger);
 
-            if (pIter->bPauseOnReset)
-                AddEntry(m_vActiveAchievementsMonitorReset, pIter->nId, pIter->pTrigger);
-            else
-                AddEntry(m_vActiveAchievements, pIter->nId, pIter->pTrigger);
+                if (--m_pRuntime.trigger_count > i)
+                    memcpy(&m_pRuntime.triggers[i], &m_pRuntime.triggers[m_pRuntime.trigger_count], sizeof(rc_runtime_trigger_t));
 
-            pIter = m_vQueuedAchievements.erase(pIter);
+            }
         }
     }
 
-    for (auto& pLeaderboard : m_vActiveLeaderboards)
-    {
-        int nValue;
-        const int nResult = rc_evaluate_lboard(pLeaderboard.pLeaderboard, &nValue, rc_peek_callback, nullptr, nullptr);
-        switch (nResult)
-        {
-            default:
-            case RC_LBOARD_INACTIVE:
-                break;
-
-            case RC_LBOARD_ACTIVE:
-                if (pLeaderboard.nValue != nValue)
-                {
-                    pLeaderboard.nValue = nValue;
-                    changes.emplace_back(Change{ChangeType::LeaderboardUpdated, pLeaderboard.nId, nValue});
-                }
-                break;
-
-            case RC_LBOARD_STARTED:
-                pLeaderboard.nValue = nValue;
-                changes.emplace_back(Change{ChangeType::LeaderboardStarted, pLeaderboard.nId, nValue});
-                break;
-
-            case RC_LBOARD_CANCELED:
-                changes.emplace_back(Change{ChangeType::LeaderboardCanceled, pLeaderboard.nId, 0U});
-                break;
-
-            case RC_LBOARD_TRIGGERED:
-                pLeaderboard.nValue = nValue;
-                changes.emplace_back(Change{ChangeType::LeaderboardTriggered, pLeaderboard.nId, nValue});
-                break;
-        }
-    }
-
-    UpdateRichPresenceMemRefs();
+#pragma warning(pop)
 }
 
-void AchievementRuntime::UpdateRichPresenceMemRefs() noexcept
+void AchievementRuntime::UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId) noexcept
 {
-    if (m_pRichPresenceMemRefs)
+    if (!m_bInitialized)
+        return;
+
+    for (unsigned i = 0; i < m_pRuntime.trigger_count; ++i)
     {
-        // rc_update_memrefs is not exposed, create a dummy trigger with no conditions to update the memrefs
-        rc_trigger_t trigger{};
-        trigger.memrefs = m_pRichPresenceMemRefs;
-        rc_test_trigger(&trigger, rc_peek_callback, nullptr, nullptr);
+        if (m_pRuntime.triggers[i].id == nOldId)
+            m_pRuntime.triggers[i].id = nNewId;
     }
+}
+
+int AchievementRuntime::ActivateLeaderboard(unsigned int nId, const std::string& sDefinition) noexcept
+{
+    EnsureInitialized();
+
+    return rc_runtime_activate_lboard(&m_pRuntime, nId, sDefinition.c_str(), nullptr, 0);
+}
+
+void AchievementRuntime::ActivateRichPresence(const std::string& sScript)
+{
+    EnsureInitialized();
+
+    const auto nResult = rc_runtime_activate_richpresence(&m_pRuntime, sScript.c_str(), nullptr, 0);
+    if (nResult != RC_OK)
+    {
+        const std::string sErrorRP = ra::StringPrintf("Parse error %d\n", nResult);
+        m_pRuntime.richpresence_display_buffer = _strdup(sErrorRP.c_str());
+    }
+}
+
+std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
+{
+    if (!m_bInitialized)
+        return std::wstring(L"No Rich Presence defined.");
+
+    const char* sRichPresence = rc_runtime_get_richpresence(&m_pRuntime);
+    if (sRichPresence == nullptr || *sRichPresence == '\0')
+        return std::wstring(L"No Rich Presence defined.");
+
+    return ra::Widen(sRichPresence);
+}
+
+void AchievementRuntime::SetPaused(bool bValue) 
+{ 
+    if (!bValue && m_bPaused && !m_vQueuedAchievements.empty())
+    {
+        m_bPaused = false;
+
+        for (const auto pPair : m_vQueuedAchievements)
+            ActivateAchievement(pPair.first, pPair.second);
+
+        m_vQueuedAchievements.clear();
+    }
+
+    m_bPaused = bValue; 
+}
+
+static std::vector<AchievementRuntime::Change>* g_pChanges;
+
+static void map_event_to_change(const rc_runtime_event_t* pRuntimeEvent)
+{
+    auto nChangeType = AchievementRuntime::ChangeType::None;
+
+    switch (pRuntimeEvent->type)
+    {
+        case RC_RUNTIME_EVENT_ACHIEVEMENT_TRIGGERED:
+            nChangeType = AchievementRuntime::ChangeType::AchievementTriggered;
+            break;
+        case RC_RUNTIME_EVENT_ACHIEVEMENT_RESET:
+            nChangeType = AchievementRuntime::ChangeType::AchievementReset;
+            break;
+        case RC_RUNTIME_EVENT_LBOARD_STARTED:
+            nChangeType = AchievementRuntime::ChangeType::LeaderboardStarted;
+            break;
+        case RC_RUNTIME_EVENT_LBOARD_CANCELED:
+            nChangeType = AchievementRuntime::ChangeType::LeaderboardCanceled;
+            break;
+        case RC_RUNTIME_EVENT_LBOARD_UPDATED:
+            nChangeType = AchievementRuntime::ChangeType::LeaderboardUpdated;
+            break;
+        case RC_RUNTIME_EVENT_LBOARD_TRIGGERED:
+            nChangeType = AchievementRuntime::ChangeType::LeaderboardTriggered;
+            break;
+        default:
+            // unsupported
+            return;
+    }
+
+    g_pChanges->emplace_back(AchievementRuntime::Change{ nChangeType, pRuntimeEvent->id, pRuntimeEvent->value });
+}
+
+_Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& changes) noexcept
+{
+    if (!m_bInitialized || m_bPaused)
+        return;
+
+    g_pChanges = &changes;
+    rc_runtime_do_frame(&m_pRuntime, map_event_to_change, rc_peek_callback, nullptr, nullptr);
+    g_pChanges = nullptr;
 }
 
 _NODISCARD static _CONSTANT_FN ComparisonSizeToPrefix(_In_ char nSize) noexcept
@@ -390,7 +416,7 @@ static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigg
     }
 }
 
-bool AchievementRuntime::LoadProgressV1(const std::string& sProgress, std::set<unsigned int>& vProcessedAchievementIds) const
+bool AchievementRuntime::LoadProgressV1(const std::string& sProgress, std::set<unsigned int>& vProcessedAchievementIds)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
@@ -402,28 +428,7 @@ bool AchievementRuntime::LoadProgressV1(const std::string& sProgress, std::set<u
         const unsigned int nId = pTokenizer.PeekNumber();
         vProcessedAchievementIds.insert(nId);
 
-        rc_trigger_t* pTrigger = nullptr;
-        for (const auto& pActiveAchievement : m_vActiveAchievements)
-        {
-            if (pActiveAchievement.nId == nId)
-            {
-                pTrigger = pActiveAchievement.pTrigger;
-                break;
-            }
-        }
-
-        if (pTrigger == nullptr)
-        {
-            for (const auto& pActiveAchievement : m_vActiveAchievementsMonitorReset)
-            {
-                if (pActiveAchievement.nId == nId)
-                {
-                    pTrigger = pActiveAchievement.pTrigger;
-                    break;
-                }
-            }
-        }
-
+        rc_trigger_t* pTrigger = rc_runtime_get_achievement(&m_pRuntime, nId);
         if (pTrigger == nullptr)
         {
             // achievement not active, still have to process state string to skip over it
@@ -433,19 +438,17 @@ bool AchievementRuntime::LoadProgressV1(const std::string& sProgress, std::set<u
         else
         {
             const auto* pAchievement = pGameContext.FindAchievement(nId);
-            std::string sMemString = pAchievement ? pAchievement->CreateMemString() : "";
+            std::string sMemString = pAchievement ? pAchievement->GetTrigger() : "";
             ProcessStateString(pTokenizer, nId, pTrigger, pUserContext.GetUsername(), sMemString);
+            pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
         }
     }
 
     return true;
 }
 
-bool AchievementRuntime::LoadProgressV2(ra::services::TextReader& pFile, std::set<unsigned int>& vProcessedAchievementIds) const
+bool AchievementRuntime::LoadProgressV2(ra::services::TextReader& pFile, std::set<unsigned int>& vProcessedAchievementIds)
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    std::vector<rc_memref_value_t> vMemoryReferences;
-
     std::string sLine;
     while (pFile.GetLine(sLine))
     {
@@ -491,8 +494,21 @@ bool AchievementRuntime::LoadProgressV2(ra::services::TextReader& pFile, std::se
                     tokenizer.Advance();
                     if (tokenizer.PeekChar() == sLineMD5.at(31))
                     {
-                        // match! store it
-                        vMemoryReferences.push_back(pMemRef);
+                        // match! attempt to store it
+                        rc_memref_value_t* pMemoryReference = m_pRuntime.memrefs;
+                        while (pMemoryReference)
+                        {
+                            if (pMemoryReference->memref.address == pMemRef.memref.address &&
+                                pMemoryReference->memref.size == pMemRef.memref.size)
+                            {
+                                pMemoryReference->value = pMemRef.value;
+                                pMemoryReference->previous = pMemRef.previous;
+                                pMemoryReference->prior = pMemRef.prior;
+                                break;
+                            }
+
+                            pMemoryReference = pMemoryReference->next;
+                        }
                     }
                 }
             }
@@ -502,47 +518,31 @@ bool AchievementRuntime::LoadProgressV2(ra::services::TextReader& pFile, std::se
             const auto nId = tokenizer.ReadNumber();
             tokenizer.Advance();
 
-            rc_trigger_t* pTrigger = nullptr;
-            for (const auto& pAchievement : m_vActiveAchievements)
+            rc_runtime_trigger_t* pRuntimeTrigger = nullptr;
+            for (size_t i = 0; i < m_pRuntime.trigger_count; ++i)
             {
-                if (pAchievement.nId == nId)
+                if (m_pRuntime.triggers[i].id == nId && m_pRuntime.triggers[i].trigger)
                 {
-                    pTrigger = pAchievement.pTrigger;
+                    pRuntimeTrigger = &m_pRuntime.triggers[i];
                     break;
                 }
             }
-            if (pTrigger == nullptr)
-            {
-                for (const auto& pAchievement : m_vActiveAchievementsMonitorReset)
-                {
-                    if (pAchievement.nId == nId)
-                    {
-                        pTrigger = pAchievement.pTrigger;
-                        break;
-                    }
-                }
 
-                if (pTrigger == nullptr) // not active, ignore
-                    continue;
-            }
-
-            const auto* pAch = pGameContext.FindAchievement(nId);
-            if (pAch == nullptr)
-            {
-                rc_reset_trigger(pTrigger);
+            if (pRuntimeTrigger == nullptr) // not active, ignore
                 continue;
-            }
+            auto* pTrigger = pRuntimeTrigger->trigger;
 
             const auto sChecksumMD5 = sLine.substr(tokenizer.CurrentPosition(), 32);
             tokenizer.Advance(32);
 
-            const auto sMemString = pAch->CreateMemString();
-            const auto sMemStringMD5 = RAGenerateMD5(sMemString);
+            const auto sMemStringMD5 = RAFormatMD5(pRuntimeTrigger->md5);
             if (sMemStringMD5 != sChecksumMD5) // modified since captured
             {
                 rc_reset_trigger(pTrigger);
                 continue;
             }
+
+            pTrigger->has_hits = 0;
 
             rc_condition_t* pCondition = nullptr;
             if (pTrigger->requirement)
@@ -552,6 +552,7 @@ bool AchievementRuntime::LoadProgressV2(ra::services::TextReader& pFile, std::se
                 {
                     tokenizer.Advance();
                     pCondition->current_hits = tokenizer.ReadNumber();
+                    pTrigger->has_hits |= (pCondition->current_hits != 0);
 
                     pCondition = pCondition->next;
                 }
@@ -565,6 +566,7 @@ bool AchievementRuntime::LoadProgressV2(ra::services::TextReader& pFile, std::se
                 {
                     tokenizer.Advance();
                     pCondition->current_hits = tokenizer.ReadNumber();
+                    pTrigger->has_hits |= (pCondition->current_hits != 0);
 
                     pCondition = pCondition->next;
                 }
@@ -586,47 +588,30 @@ bool AchievementRuntime::LoadProgressV2(ra::services::TextReader& pFile, std::se
                     tokenizer.Advance();
                     bValid = (tokenizer.PeekChar() == sLineMD5.at(31));
                 }
-
-                rc_memref_value_t* pMemRef = pTrigger->memrefs;
-                while (pMemRef)
-                {
-                    bool bFound = false;
-                    for (const auto& pMemoryReference : vMemoryReferences)
-                    {
-                        if (pMemoryReference.memref.address == pMemRef->memref.address &&
-                            pMemoryReference.memref.size == pMemRef->memref.size)
-                        {
-                            pMemRef->value = pMemoryReference.value;
-                            pMemRef->previous = pMemoryReference.previous;
-                            pMemRef->prior = pMemoryReference.prior;
-
-                            bFound = true;
-                            break;
-                        }
-                    }
-
-                    if (!bFound)
-                        bValid = false;
-
-                    pMemRef = pMemRef->next;
-                }
             }
 
             if (bValid)
+            {
+                pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
                 vProcessedAchievementIds.insert(nId);
+            }
             else
+            {
                 rc_reset_trigger(pTrigger);
+            }
         }
     }
 
     return true;
 }
 
-bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const
+bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename)
 {
-    // leaderboards aren't currently managed by the save/load progress functions, just reset them all
-    for (const auto& pLeaderboard : m_vActiveLeaderboards)
-        rc_reset_lboard(pLeaderboard.pLeaderboard);
+    if (!m_bInitialized)
+        return true;
+
+    // reset the runtime state, then apply state from file
+    rc_runtime_reset(&m_pRuntime);
 
     if (sLoadStateFilename == nullptr)
         return false;
@@ -667,34 +652,7 @@ bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename) const
             vProcessedAchievementIds.clear();
     }
 
-    // reset any active achievements that weren't in the file
-    for (auto& pActiveAchievement : m_vActiveAchievements)
-    {
-        if (vProcessedAchievementIds.find(pActiveAchievement.nId) == vProcessedAchievementIds.end())
-            rc_reset_trigger(pActiveAchievement.pTrigger);
-    }
-
-    for (auto& pActiveAchievement : m_vActiveAchievementsMonitorReset)
-    {
-        if (vProcessedAchievementIds.find(pActiveAchievement.nId) == vProcessedAchievementIds.end())
-            rc_reset_trigger(pActiveAchievement.pTrigger);
-    }
-
     return true;
-}
-
-static void AddMemoryReference(std::vector<rc_memref_value_t>& vMemoryReferences, const rc_memref_value_t& pNewMemoryReference)
-{
-    for (const auto& pMemoryReference : vMemoryReferences)
-    {
-        if (pMemoryReference.memref.address == pNewMemoryReference.memref.address &&
-            pMemoryReference.memref.size == pNewMemoryReference.memref.size)
-        {
-            return;
-        }
-    }
-
-    vMemoryReferences.push_back(pNewMemoryReference);
 }
 
 void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const
@@ -716,52 +674,49 @@ void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const
 
     pFile->WriteLine("v2");
 
-    // get active achievements
-    std::vector<ActiveAchievement> vActiveAchievements(m_vActiveAchievements);
-    for (const auto& pAchievement : m_vActiveAchievementsMonitorReset)
-        vActiveAchievements.push_back(pAchievement);
-
-    // extract memory references
-    std::vector<rc_memref_value_t> vMemoryReferences;
-    for (const auto& pAchievement : vActiveAchievements)
-    {
-        const rc_memref_value_t* pMemRef = pAchievement.pTrigger->memrefs;
-        while (pMemRef)
-        {
-            AddMemoryReference(vMemoryReferences, *pMemRef);
-            pMemRef = pMemRef->next;
-        }
-    }
+    if (!m_bInitialized)
+        return;
 
     // write memory references
-    for (const auto& pMemoryReference : vMemoryReferences)
+    const auto* pMemoryReference = m_pRuntime.memrefs;
+    while (pMemoryReference != nullptr)
     {
-        auto sLine = ra::StringPrintf("$%s%s:v=%d;d=%d;p=%d", ComparisonSizeToPrefix(pMemoryReference.memref.size),
-            ra::ByteAddressToString(pMemoryReference.memref.address), pMemoryReference.value, pMemoryReference.previous, pMemoryReference.prior);
+        auto sLine = ra::StringPrintf("$%s%s:v=%d;d=%d;p=%d", ComparisonSizeToPrefix(pMemoryReference->memref.size),
+            ra::ByteAddressToString(pMemoryReference->memref.address), pMemoryReference->value, pMemoryReference->previous, pMemoryReference->prior);
 
         const auto sLineMD5 = RAGenerateMD5(sLine);
         sLine.push_back('#');
         sLine.push_back(sLineMD5.at(0));
         sLine.push_back(sLineMD5.at(31));
         pFile->WriteLine(sLine);
+
+        pMemoryReference = pMemoryReference->next;
     }
 
     // write hitcounts
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    for (const auto& pAchievement : vActiveAchievements)
+    for (size_t i = 0; i < m_pRuntime.trigger_count; ++i)
     {
-        const auto* pAch = pGameContext.FindAchievement(pAchievement.nId);
-        if (pAch == nullptr)
+        const auto& pTrigger = m_pRuntime.triggers[i];
+        if (!pTrigger.trigger)
             continue;
 
-        const auto sMemString = pAch->CreateMemString();
-        const auto sMemStringMD5 = RAGenerateMD5(sMemString);
-        auto sLine = ra::StringPrintf("A%d:%s:", pAchievement.nId, sMemStringMD5);
+        switch (pTrigger.trigger->state)
+        {
+            case RC_TRIGGER_STATE_ACTIVE:
+            case RC_TRIGGER_STATE_PAUSED:
+                break;
+
+            default:
+                continue;
+        }
+
+        auto sMemStringMD5 = RAFormatMD5(pTrigger.md5);
+        auto sLine = ra::StringPrintf("A%d:%s:", pTrigger.id, sMemStringMD5);
 
         const rc_condition_t* pCondition = nullptr;
-        if (pAchievement.pTrigger->requirement)
+        if (pTrigger.trigger->requirement)
         {
-            pCondition = pAchievement.pTrigger->requirement->conditions;
+            pCondition = pTrigger.trigger->requirement->conditions;
             while (pCondition)
             {
                 sLine.append(std::to_string(pCondition->current_hits));
@@ -771,7 +726,7 @@ void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const
             }
         }
 
-        const rc_condset_t* pCondSet = pAchievement.pTrigger->alternative;
+        const rc_condset_t* pCondSet = pTrigger.trigger->alternative;
         while (pCondSet)
         {
             pCondition = pCondSet->conditions;

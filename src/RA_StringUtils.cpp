@@ -155,7 +155,7 @@ const std::string FormatDateRecent(time_t when)
     if (localtime_s(&tm_when, &when) != 0)
         return ra::StringPrintf("%u days ago", days);
 
-    const auto months = (tm.tm_mon + 1200 - tm_when.tm_mon) % 12;
+    const auto months = (tm.tm_mon + 12 * tm.tm_year) - (tm_when.tm_mon + 12 * tm_when.tm_year);
     if (months < 1)
         return "This month";
     if (months < 2)

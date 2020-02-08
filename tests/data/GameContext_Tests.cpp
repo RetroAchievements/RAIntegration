@@ -284,7 +284,7 @@ public:
         Assert::AreEqual(1234567890, (int)pAch1->CreatedDate());
         Assert::AreEqual(1234599999, (int)pAch1->ModifiedDate());
         Assert::AreEqual(5U, pAch1->Points());
-        Assert::AreEqual(std::string("1=1"), pAch1->CreateMemString());
+        Assert::AreEqual(std::string("1=1"), pAch1->GetTrigger());
 
         const auto* pAch2 = game.FindAchievement(7U);
         Assert::IsNotNull(pAch2);
@@ -297,7 +297,7 @@ public:
         Assert::AreEqual(1234567890, (int)pAch2->CreatedDate());
         Assert::AreEqual(1234599999, (int)pAch2->ModifiedDate());
         Assert::AreEqual(15U, pAch2->Points());
-        Assert::AreEqual(std::string("1=1"), pAch2->CreateMemString());
+        Assert::AreEqual(std::string("1=1"), pAch2->GetTrigger());
     }
 
     TEST_METHOD(TestLoadGameMergeLocalAchievements)
@@ -352,7 +352,7 @@ public:
         Assert::AreEqual(1234567890, (int)pAch->CreatedDate());
         Assert::AreEqual(1234599999, (int)pAch->ModifiedDate());
         Assert::AreEqual(5U, pAch->Points());
-        Assert::AreEqual(std::string("1=1"), pAch->CreateMemString());
+        Assert::AreEqual(std::string("1=1"), pAch->GetTrigger());
 
         // local achievement data for 7 should be merged with server achievement data
         pAch = game.FindAchievement(7U);
@@ -365,7 +365,7 @@ public:
         Assert::AreEqual(1234567890, (int)pAch->CreatedDate()); // created date not merged
         Assert::AreEqual(1234555555, (int)pAch->ModifiedDate());
         Assert::AreEqual(25U, pAch->Points());
-        Assert::AreEqual(std::string("1=2"), pAch->CreateMemString());
+        Assert::AreEqual(std::string("1=2"), pAch->GetTrigger());
 
         // no server achievement, assign FirstLocalId
         pAch = game.FindAchievement(GameContextHarness::FirstLocalId);
@@ -378,7 +378,7 @@ public:
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(20U, pAch->Points());
-        Assert::AreEqual(std::string("1=1"), pAch->CreateMemString());
+        Assert::AreEqual(std::string("1=1"), pAch->GetTrigger());
 
         // no server achievement, assign next local id
         pAch = game.FindAchievement(GameContextHarness::FirstLocalId + 1);
@@ -391,7 +391,7 @@ public:
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(10U, pAch->Points());
-        Assert::AreEqual(std::string("R:1=1"), pAch->CreateMemString());
+        Assert::AreEqual(std::string("R:1=1"), pAch->GetTrigger());
 
         // new achievement should be allocated an ID higher than the largest existing local ID
         const auto& pAch2 = game.NewAchievement(Achievement::Category::Local);
@@ -428,7 +428,7 @@ public:
         Assert::AreEqual(1234554321, (int)pAch->CreatedDate());
         Assert::AreEqual(1234555555, (int)pAch->ModifiedDate());
         Assert::AreEqual(25U, pAch->Points());
-        Assert::AreEqual(std::string("1=2"), pAch->CreateMemString());
+        Assert::AreEqual(std::string("1=2"), pAch->GetTrigger());
 
         // explicit ID should be recognized
         pAch = game.FindAchievement(999000001U);
@@ -442,7 +442,7 @@ public:
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(20U, pAch->Points());
-        Assert::AreEqual(std::string("1=1"), pAch->CreateMemString());
+        Assert::AreEqual(std::string("1=1"), pAch->GetTrigger());
 
         // explicit ID should be recognized
         pAch = game.FindAchievement(999000003U);
@@ -456,7 +456,7 @@ public:
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(10U, pAch->Points());
-        Assert::AreEqual(std::string("1=1"), pAch->CreateMemString());
+        Assert::AreEqual(std::string("1=1"), pAch->GetTrigger());
 
         // new achievement should be allocated an ID higher than the largest existing local
         // ID, even if intermediate values are available
@@ -547,7 +547,7 @@ public:
         ach2.SetBadgeImage("54321");
         ach2.SetCreatedDate(1234567891);
         ach2.SetModifiedDate(1234599998);
-        ach2.ParseTrigger("2=2");
+        ach2.SetTrigger("2=2");
         ach2.SetPoints(15);
 
         Assert::IsTrue(game.SaveLocal());
@@ -574,7 +574,7 @@ public:
         ach2.SetBadgeImage("54321");
         ach2.SetCreatedDate(1234567891);
         ach2.SetModifiedDate(1234599998);
-        ach2.ParseTrigger("2=2");
+        ach2.SetTrigger("2=2");
         ach2.SetPoints(15);
 
         Assert::IsTrue(game.SaveLocal());

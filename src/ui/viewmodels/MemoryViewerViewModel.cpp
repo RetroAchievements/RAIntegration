@@ -279,7 +279,7 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
         m_nNeedsRedraw |= REDRAW_ADDRESSES;
 
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-        pEmulatorContext.ReadMemory(args.tNewValue, m_pMemory, GetNumVisibleLines() * 16);
+        pEmulatorContext.ReadMemory(args.tNewValue, m_pMemory, gsl::narrow_cast<size_t>(GetNumVisibleLines()) * 16);
 
         UpdateColors();
     }
@@ -303,7 +303,7 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
             const auto nFirstAddress = GetFirstAddress();
 
             const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-            pEmulatorContext.ReadMemory(nFirstAddress, m_pMemory, args.tNewValue * 16);
+            pEmulatorContext.ReadMemory(nFirstAddress, m_pMemory, gsl::narrow_cast<size_t>(args.tNewValue) * 16);
 
             UpdateColors();
         }
@@ -736,7 +736,7 @@ void MemoryViewerViewModel::DoFrame()
     Expects(nVisibleLines < MaxLines);
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    pEmulatorContext.ReadMemory(nAddress, pMemory, nVisibleLines * 16);
+    pEmulatorContext.ReadMemory(nAddress, pMemory, gsl::narrow_cast<size_t>(nVisibleLines) * 16);
 
     for (auto nIndex = 0; nIndex < nVisibleLines * 16; ++nIndex)
     {
@@ -929,7 +929,7 @@ void MemoryViewerViewModel::RenderHeader()
     for (int i = 0; i < 16; i += nNibblesPerWord / 2)
     {
         const auto nColor = (nCursorAddress == i) ? ra::ui::Color(0xFFFF8080) : ra::ui::Color(0xFF808080);
-        sValue.at(nNibblesPerWord - 1) = g_sHexChars.at(i);
+        sValue.at(gsl::narrow_cast<size_t>(nNibblesPerWord) - 1) = g_sHexChars.at(i);
         m_pSurface->WriteText(nX, -2, m_nFont, nColor, sValue);
         nX += m_szChar.Width * (nNibblesPerWord + 1);
     }

@@ -59,8 +59,6 @@ public:
     bool IsActive() const noexcept { return m_bActive; }
 
 protected:
-    void* m_pLeaderboard = nullptr;                                   //  rc_lboard_t
-    std::shared_ptr<std::vector<unsigned char>> m_pLeaderboardBuffer; //  buffer for rc_lboard_t
 
     bool m_bActive = false;
 
@@ -72,6 +70,7 @@ private:
 
     std::string m_sTitle;       //  The title of the leaderboard
     std::string m_sDescription; //  A brief description of the leaderboard
+    std::string m_sDefinition;  //  The serialized definition
 
     std::vector<Entry> m_RankInfo; //  Recent users ranks
 };

@@ -394,18 +394,66 @@ static void ProcessAchievements()
     }
 }
 
+API void CCONV _RA_SetPaused(bool bIsPaused)
+{
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    if (bIsPaused)
+        pOverlayManager.ShowOverlay();
+    else
+        pOverlayManager.HideOverlay();
+}
+
+#ifndef RA_UTEST
+
+static void UpdateUIForFrameChange()
+{
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    pOverlayManager.AdvanceFrame();
+
+    auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+    pWindowManager.MemoryBookmarks.DoFrame();
+
+    g_MemoryDialog.Invalidate();
+}
+
+#endif
+
 API void CCONV _RA_DoAchievementsFrame()
 {
     // make sure we process the achievements _before_ the frozen bookmarks modify the memory
     ProcessAchievements();
 
 #ifndef RA_UTEST
-    auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-    vmBookmarks.DoFrame();
-
-    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-    pOverlayManager.AdvanceFrame();
-
-    g_MemoryDialog.Invalidate();
+    UpdateUIForFrameChange();
 #endif
+}
+
+API void CCONV _RA_OnSaveState(const char* sFilename)
+{
+    ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgress(sFilename);
+}
+
+API void CCONV _RA_OnLoadState(const char* sFilename)
+{
+    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+    {
+        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+        {
+            // save state is being allowed by app (user should have been warned!)
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Disabling Hardcore mode.", L"Loading save states is not allowed in Hardcore mode.");
+            ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();
+        }
+
+        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().LoadProgress(sFilename);
+
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
+
+#ifndef RA_UTEST
+        UpdateUIForFrameChange();
+
+        if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
+            g_AchievementEditorDialog.ActiveAchievement()->SetDirtyFlag(Achievement::DirtyFlags::Conditions);
+#endif
+    }
 }

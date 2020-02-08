@@ -449,7 +449,7 @@ const std::vector<ConsoleContext::MemoryRegion> PokemonMiniConsoleContext::m_vMe
 class SegaCDConsoleContext : public ConsoleContext
 {
 public:
-    SegaCDConsoleContext() noexcept : ConsoleContext(ConsoleID::SegaCD, L"SEGA CD") {}
+    GSL_SUPPRESS_F6 SegaCDConsoleContext() noexcept : ConsoleContext(ConsoleID::SegaCD, L"SEGA CD") {}
 
     const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
 

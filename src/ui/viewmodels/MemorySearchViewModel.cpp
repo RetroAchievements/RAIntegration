@@ -22,6 +22,7 @@ const IntModelProperty MemorySearchViewModel::SearchTypeProperty("MemorySearchVi
 const IntModelProperty MemorySearchViewModel::ComparisonTypeProperty("MemorySearchViewModel", "ComparisonType", ra::etoi(ComparisonType::Equals));
 const IntModelProperty MemorySearchViewModel::ValueTypeProperty("MemorySearchViewModel", "ValueType", ra::etoi(MemorySearchViewModel::ValueType::LastKnownValue));
 const StringModelProperty MemorySearchViewModel::FilterValueProperty("MemorySearchViewModel", "FilterValue", L"");
+const StringModelProperty MemorySearchViewModel::FilterSummaryProperty("MemorySearchViewModel", "FilterSummary", L"");
 const IntModelProperty MemorySearchViewModel::ResultCountProperty("MemorySearchViewModel", "ResultCount", 0);
 const IntModelProperty MemorySearchViewModel::ScrollOffsetProperty("MemorySearchViewModel", "ScrollOffset", 0);
 const StringModelProperty MemorySearchViewModel::SelectedPageProperty("MemorySearchViewModel", "SelectedPageProperty", L"0/0");
@@ -128,71 +129,35 @@ void MemorySearchViewModel::DoFrame()
 
     m_bNeedsRedraw = false;
 
-    const ra::services::SearchResults& pPreviousResults = (m_vSearchResults.end() - 2)->pResults;
-
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pPreviousResults = (m_vSearchResults.end() - 2)->pResults;
+    const auto& pCurrentResults = m_vSearchResults.back().pResults;
     const wchar_t* sValueFormat = MemSizeFormat(pPreviousResults.GetSize());
 
-    const auto& pCurrentResults = m_vSearchResults.back().pResults;
-    if (pCurrentResults.MatchingAddressCount() > 64)
+    // only process the visible items
+    ra::services::SearchResults::Result pResult;
+    unsigned int nPreviousValue = 0U;
+
+    gsl::index nIndex = GetScrollOffset();
+    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++i)
     {
-        // only process the visible items if there's more than 1000 results remaining
-        ra::services::SearchResults pNextResults;
-        ra::services::SearchResults::Result pResult;
-        unsigned int nPreviousValue = 0U;
+        auto* pRow = m_vResults.GetItemAt(i);
+        Expects(pRow != nullptr);
 
-        gsl::index nIndex = GetScrollOffset();
-        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++i)
+        pCurrentResults.GetMatchingAddress(nIndex++, pResult);
+        pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, pResult.nSize);
+        pPreviousResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
+        pRow->bMatchesFilter = TestFilter(pResult, m_vSearchResults.back(), nPreviousValue);
+
+        pRow->SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
+
+        if (pResult.nValue != nPreviousValue)
         {
-            auto* pRow = m_vResults.GetItemAt(i);
-            Expects(pRow != nullptr);
-
-            pCurrentResults.GetMatchingAddress(nIndex++, pResult);
-            pNextResults.Initialize(pResult.nAddress, 1, pResult.nSize);
-            pNextResults.GetValue(pResult.nAddress, pResult.nSize, pResult.nValue);
-            pPreviousResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
-            pRow->bMatchesFilter = TestFilter(pResult, m_vSearchResults.back(), nPreviousValue);
-
-            pRow->SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
-
-            if (pResult.nValue != nPreviousValue)
-            {
-                m_vModifiedAddresses.insert(pResult.nAddress);
-                pRow->bHasBeenModified = true;
-            }
-
-            pRow->UpdateRowColor();
+            m_vModifiedAddresses.insert(pResult.nAddress);
+            pRow->bHasBeenModified = true;
         }
-    }
-    else
-    {
-        ra::services::SearchResults pNextResults;
-        pNextResults.Initialize(pPreviousResults, ComparisonType::NotEqualTo);
 
-        pNextResults.IterateMatchingAddresses([this](ra::ByteAddress nAddress)
-        {
-            m_vModifiedAddresses.insert(nAddress);
-        });
-
-        ra::services::SearchResults::Result pResult;
-        unsigned int nPreviousValue = 0U;
-
-        gsl::index nIndex = GetScrollOffset();
-        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++i)
-        {
-            auto* pRow = m_vResults.GetItemAt(i);
-            Expects(pRow != nullptr);
-
-            pCurrentResults.GetMatchingAddress(nIndex++, pResult);
-            pPreviousResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
-            if (!pNextResults.GetValue(pResult.nAddress, pResult.nSize, pResult.nValue))
-                pResult.nValue = nPreviousValue;
-
-            pRow->bMatchesFilter = TestFilter(pResult, m_vSearchResults.back(), nPreviousValue);
-
-            pRow->SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
-            pRow->bHasBeenModified = (m_vModifiedAddresses.find(pRow->nAddress) != m_vModifiedAddresses.end());
-            pRow->UpdateRowColor();
-        }
+        pRow->UpdateRowColor();
     }
 }
 
@@ -308,12 +273,14 @@ void MemorySearchViewModel::BeginNewSearch()
     pResult.nValueType = GetValueType();
     pResult.nValue = 0;
     pResult.pResults.Initialize(nStart, gsl::narrow<size_t>(nEnd) - nStart + 1, nMemSize);
+    pResult.sSummary = ra::StringPrintf(L"New %s Search", SearchTypes().GetLabelForId(ra::etoi(GetSearchType())));
 
     m_vResults.BeginUpdate();
     while (m_vResults.Count() > 0)
         m_vResults.RemoveAt(m_vResults.Count() - 1);
     m_vResults.EndUpdate();
 
+    SetValue(FilterSummaryProperty, pResult.sSummary);
     SetValue(SelectedPageProperty, L"1/1");
     SetValue(ScrollOffsetProperty, 0);
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(pResult.pResults.MatchingAddressCount()));
@@ -398,6 +365,23 @@ void MemorySearchViewModel::ApplyFilter()
         }
     }
 
+    ra::StringBuilder builder;
+    builder.Append(L"Filter: ");
+    builder.Append(SearchTypes().GetLabelForId(ra::etoi(GetSearchType())));
+    builder.Append(L" ");
+    switch (GetValueType())
+    {
+        case ValueType::Constant:
+            builder.Append(GetFilterValue());
+            break;
+
+        case ValueType::LastKnownValue:
+            builder.Append(L"Last Known Value");
+            break;
+    }
+    pResult.sSummary = builder.ToWString();
+    SetValue(FilterSummaryProperty, pResult.sSummary);
+
     ChangePage(m_nSelectedSearchResult);
 }
 
@@ -409,6 +393,7 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
 
     const auto nMatches = m_vSearchResults.at(nNewPage).pResults.MatchingAddressCount();
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(nMatches));
+    SetValue(FilterSummaryProperty, m_vSearchResults.at(nNewPage).sSummary);
 
     m_vModifiedAddresses.clear();
     m_vSelectedAddresses.clear();

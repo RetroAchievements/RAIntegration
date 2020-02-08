@@ -43,18 +43,8 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, MemSize 
     const unsigned int nPadding = Padding(nSize);
     if (nPadding >= nBytes)
         nBytes = 0;
-    else
+    else if (nBytes > nPadding)
         nBytes -= nPadding;
-
-    m_sSummary.reserve(64);
-    m_sSummary.append("Cleared: (");
-    m_sSummary.append(ra::Narrow(MEMSIZE_STR.at(ra::etoi(nSize))));
-    m_sSummary.append(") mode. Aware of ");
-    if (nSize == MemSize::Nibble_Lower)
-        m_sSummary.append(std::to_string(nBytes * 2));
-    else
-        m_sSummary.append(std::to_string(nBytes));
-    m_sSummary.append(" RAM locations.");
 
     while (nBytes > 0)
     {
@@ -348,13 +338,6 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
             });
             break;
     }
-
-    m_sSummary.reserve(64);
-    m_sSummary.append("Filtering for ");
-    m_sSummary.append(ComparisonString(nCompareType));
-    m_sSummary.append(" ");
-    m_sSummary.append(std::to_string(nTestValue));
-    m_sSummary.append("...");
 }
 
 _Use_decl_annotations_
@@ -408,11 +391,6 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
             return CompareValues(nValue, nPrevValue, nCompareType);
         });
     }
-
-    m_sSummary.reserve(64);
-    m_sSummary.append("Filtering for ");
-    m_sSummary.append(ComparisonString(nCompareType));
-    m_sSummary.append(" last known value...");
 }
 
 size_t SearchResults::MatchingAddressCount() const noexcept

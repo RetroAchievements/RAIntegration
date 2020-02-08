@@ -38,11 +38,6 @@ public:
     /// </summary>
     size_t MatchingAddressCount() const noexcept;
 
-    /// <summary>
-    /// Gets a summary of the results
-    /// </summary>
-    const std::string& Summary() const noexcept { return m_sSummary; }
-
     struct Result
     {
         ra::ByteAddress nAddress{};
@@ -169,7 +164,6 @@ private:
     bool ContainsNibble(ra::ByteAddress nAddress) const;
 
 
-    std::string m_sSummary;
     std::vector<MemBlock> m_vBlocks;
     MemSize m_nSize = MemSize::EightBit;
 

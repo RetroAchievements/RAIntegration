@@ -129,19 +129,29 @@ public:
     void SetValueType(ValueType value) { SetValue(ValueTypeProperty, ra::etoi(value)); }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the value.
+    /// The <see cref="ModelProperty" /> for the filter value.
     /// </summary>
     static const StringModelProperty FilterValueProperty;
 
     /// <summary>
-    /// Gets the value.
+    /// Gets the filter value.
     /// </summary>
     const std::wstring& GetFilterValue() const { return GetValue(FilterValueProperty); }
 
     /// <summary>
-    /// Sets the value.
+    /// Sets the filter value.
     /// </summary>
     void SetFilterValue(const std::wstring& sValue) { SetValue(FilterValueProperty, sValue); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the filter summary.
+    /// </summary>
+    static const StringModelProperty FilterSummaryProperty;
+
+    /// <summary>
+    /// Gets the filter summary.
+    /// </summary>
+    const std::wstring& GetFilterSummary() const { return GetValue(FilterSummaryProperty); }
 
     class SearchResultViewModel : public ViewModelBase
     {
@@ -341,7 +351,6 @@ public:
     void BookmarkSelected();
 
 protected:
-
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
@@ -367,6 +376,7 @@ private:
     {
         ra::services::SearchResults pResults;
 
+        std::wstring sSummary;
         ValueType nValueType = ValueType::Constant;
         ComparisonType nCompareType = ComparisonType::Equals;
         unsigned int nValue = 0U;

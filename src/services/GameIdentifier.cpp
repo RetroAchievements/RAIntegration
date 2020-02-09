@@ -61,6 +61,7 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
     }
 
     unsigned int nGameId = 0U;
+    m_nPendingMode = ra::data::GameContext::Mode::Normal;
 
     ra::api::ResolveHash::Request request;
     request.Hash = sMD5;

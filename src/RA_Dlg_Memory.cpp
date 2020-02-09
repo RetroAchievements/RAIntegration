@@ -1280,6 +1280,7 @@ void Dlg_Memory::OnLoad_NewRom()
 
     if (pGameContext.GameId() == 0)
     {
+        SetWindowText(g_MemoryDialog.m_hWnd, TEXT("Memory Inspector [no game loaded]"));
         SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, TEXT(""));
 
         EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADDNOTE), FALSE);
@@ -1293,12 +1294,16 @@ void Dlg_Memory::OnLoad_NewRom()
 
         if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
         {
+            SetWindowText(g_MemoryDialog.m_hWnd, TEXT("Memory Inspector [compatibility mode]"));
+
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADDNOTE), FALSE);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_MEMSAVENOTE), FALSE);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_REMNOTE), FALSE);
         }
         else
         {
+            SetWindowText(g_MemoryDialog.m_hWnd, TEXT("Memory Inspector"));
+
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADDNOTE), TRUE);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_MEMSAVENOTE), TRUE);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_REMNOTE), TRUE);

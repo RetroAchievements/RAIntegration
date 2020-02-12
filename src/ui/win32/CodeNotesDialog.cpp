@@ -1,10 +1,10 @@
 #include "CodeNotesDialog.hh"
 
+#include "RA_Log.h"
 #include "RA_Resource.h"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
-#include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
 using ra::ui::viewmodels::CodeNotesViewModel;
@@ -47,21 +47,20 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
       m_bindNotes(vmCodeNotes)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Code Notes");
-    m_bindNotes.SetShowGridLines(true);
     m_bindNotes.BindIsSelected(CodeNotesViewModel::CodeNoteViewModel::IsSelectedProperty);
 
-    auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(
-        CodeNotesViewModel::CodeNoteViewModel::IdProperty);
+    auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        CodeNotesViewModel::CodeNoteViewModel::LabelProperty);
     pAddressColumn->SetHeader(L"Address");
     pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
     pAddressColumn->SetAlignment(ra::ui::RelativePosition::Far);
     m_bindNotes.BindColumn(0, std::move(pAddressColumn));
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        CodeNotesViewModel::CodeNoteViewModel::LabelProperty);
+        CodeNotesViewModel::CodeNoteViewModel::NoteProperty);
     pDescriptionColumn->SetHeader(L"Note");
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 40);
-    m_bindNotes.BindColumn(0, std::move(pDescriptionColumn));
+    m_bindNotes.BindColumn(1, std::move(pDescriptionColumn));
 
     m_bindNotes.BindItems(vmCodeNotes.Notes());
 

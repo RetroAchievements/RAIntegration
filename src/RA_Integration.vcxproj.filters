@@ -300,6 +300,9 @@
     <ClCompile Include="ui\win32\CodeNotesDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\bindings\MultiLineGridBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -772,6 +775,9 @@
     </ClInclude>
     <ClInclude Include="ui\win32\CodeNotesDialog.hh">
       <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\MultiLineGridBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -234,9 +234,6 @@
     <ClCompile Include="RA_Condition_Tests.cpp">
       <Filter>Tests\Data</Filter>
     </ClCompile>
-    <ClCompile Include="RA_RichPresence_Tests.cpp">
-      <Filter>Tests\Data</Filter>
-    </ClCompile>
     <ClCompile Include="RA_StringUtils_Tests.cpp">
       <Filter>Tests\Services</Filter>
     </ClCompile>
@@ -316,6 +313,9 @@
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\MemoryViewerViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\CodeNotesViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
   </ItemGroup>

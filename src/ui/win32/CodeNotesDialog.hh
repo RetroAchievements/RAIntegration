@@ -3,7 +3,7 @@
 #pragma once
 
 #include "ui/viewmodels/CodeNotesViewModel.hh"
-#include "ui/win32/bindings/GridBinding.hh"
+#include "ui/win32/bindings/MultiLineGridBinding.hh"
 #include "ui/win32/DialogBase.hh"
 #include "ui/win32/IDialogPresenter.hh"
 
@@ -38,7 +38,7 @@ protected:
     BOOL OnCommand(WORD nCommand) override;
     
 private:
-    ra::ui::win32::bindings::GridBinding m_bindNotes;
+    ra::ui::win32::bindings::MultiLineGridBinding m_bindNotes;
 };
 
 } // namespace win32

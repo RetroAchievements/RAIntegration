@@ -44,11 +44,11 @@ public:
     void BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept;
     void BindRowColor(const IntModelProperty& pRowColorProperty) noexcept;
 
-    GSL_SUPPRESS_CON3 LRESULT OnLvnItemChanging(const LPNMLISTVIEW pnmListView);
-    GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
+    GSL_SUPPRESS_CON3 virtual LRESULT OnLvnItemChanging(const LPNMLISTVIEW pnmListView);
+    GSL_SUPPRESS_CON3 virtual void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 void OnLvnColumnClick(const LPNMLISTVIEW pnmListView);
-    void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
-    void OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate);
+    virtual void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
+    virtual void OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate);
     LRESULT OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw) override;
 
     void OnGotFocus() override;
@@ -67,8 +67,8 @@ public:
 
 protected:
     void UpdateLayout();
-    void UpdateAllItems();
-    void UpdateItems(gsl::index nColumn);
+    virtual void UpdateAllItems();
+    virtual void UpdateItems(gsl::index nColumn);
     void CheckForScrollBar();
 
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
@@ -80,15 +80,16 @@ protected:
     void OnBeginViewModelCollectionUpdate() noexcept override;
     void OnEndViewModelCollectionUpdate() override;
 
+    std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
+    ViewModelCollectionBase* m_vmItems = nullptr;
+    const BoolModelProperty* m_pIsSelectedProperty = nullptr;
+
 private:
     void UpdateRow(gsl::index nIndex, bool bExisting);
 
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;
     size_t m_nColumnsCreated = 0;
-    std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
-    ViewModelCollectionBase* m_vmItems = nullptr;
-    const BoolModelProperty* m_pIsSelectedProperty = nullptr;
     const IntModelProperty* m_pRowColorProperty = nullptr;
     HWND m_hInPlaceEditor = nullptr;
 

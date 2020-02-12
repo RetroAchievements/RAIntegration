@@ -294,6 +294,12 @@
     <ClCompile Include="ui\viewmodels\MemoryViewerViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\CodeNotesViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\CodeNotesDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -760,6 +766,12 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\MemoryViewerViewModel.hh">
       <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\CodeNotesViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\CodeNotesDialog.hh">
+      <Filter>UI\Win32</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

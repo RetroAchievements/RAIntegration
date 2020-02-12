@@ -7,6 +7,7 @@
 #include "ui/viewmodels/WindowManager.hh"
 
 #include "ui/win32/BrokenAchievementsDialog.hh"
+#include "ui/win32/CodeNotesDialog.hh"
 #include "ui/win32/FileDialog.hh"
 #include "ui/win32/GameChecksumDialog.hh"
 #include "ui/win32/LoginDialog.hh"
@@ -30,6 +31,7 @@ Desktop::Desktop() noexcept
     m_vDialogPresenters.emplace_back(new (std::nothrow) GameChecksumDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) LoginDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) MemoryBookmarksDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) CodeNotesDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) FileDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) OverlaySettingsDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) BrokenAchievementsDialog::Presenter);

@@ -61,9 +61,6 @@ INT_PTR CALLBACK AchProgressProc(HWND hDlg, UINT nMsg, WPARAM wParam, _UNUSED LP
         {
             switch (LOWORD(wParam))
             {
-                case IDC_RA_ACHPROGRESSENABLE:
-                    return FALSE;
-
                 case IDOK:
                 case IDCLOSE:
                     EndDialog(hDlg, true);
@@ -947,15 +944,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         }
                         break;
                     }
-                }
-                break;
-
-                case IDC_RA_PROGRESSINDICATORS:
-                {
-                    DialogBox((HINSTANCE)(GetModuleHandle(nullptr)), MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTPROGRESS), hDlg,
-                              AchProgressProc);
-                    // DialogBox( ghInstance, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTPROGRESS), hDlg, AchProgressProc );
-                    bHandled = TRUE;
                 }
                 break;
 

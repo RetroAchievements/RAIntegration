@@ -126,6 +126,7 @@
     <ClCompile Include="ui\ViewModelBase.cpp" />
     <ClCompile Include="ui\ViewModelCollection.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\CodeNotesViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\FileDialogViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel.cpp" />
@@ -154,6 +155,7 @@
     <ClCompile Include="ui\win32\bindings\GridTextColumnBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\WindowBinding.cpp" />
     <ClCompile Include="ui\win32\BrokenAchievementsDialog.cpp" />
+    <ClCompile Include="ui\win32\CodeNotesDialog.cpp" />
     <ClCompile Include="ui\win32\Desktop.cpp" />
     <ClCompile Include="ui\win32\DialogBase.cpp" />
     <ClCompile Include="ui\win32\FileDialog.cpp" />
@@ -271,6 +273,7 @@
     <ClInclude Include="ui\ViewModelBase.hh" />
     <ClInclude Include="ui\ViewModelCollection.hh" />
     <ClInclude Include="ui\viewmodels\BrokenAchievementsViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\CodeNotesViewModel.hh" />
     <ClInclude Include="ui\viewmodels\EmulatorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\FileDialogViewModel.hh" />
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh" />
@@ -309,6 +312,7 @@
     <ClInclude Include="ui\win32\bindings\TextBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\WindowBinding.hh" />
     <ClInclude Include="ui\win32\BrokenAchievementsDialog.hh" />
+    <ClInclude Include="ui\win32\CodeNotesDialog.hh" />
     <ClInclude Include="ui\win32\Desktop.hh" />
     <ClInclude Include="ui\win32\DialogBase.hh" />
     <ClInclude Include="ui\win32\FileDialog.hh" />

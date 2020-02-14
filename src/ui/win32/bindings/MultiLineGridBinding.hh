@@ -31,12 +31,17 @@ protected:
     void UpdateItems(gsl::index nColumn) override;
 
     //void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
-    //void OnViewModelAdded(gsl::index nIndex) override;
-    //void OnViewModelRemoved(gsl::index nIndex) override;
+    void OnViewModelAdded(gsl::index nIndex) override;
+    void OnViewModelRemoved(gsl::index nIndex) override;
     //void OnViewModelChanged(gsl::index nIndex) override;
+    void OnEndViewModelCollectionUpdate() override;
 
 private:
     gsl::index GetIndexForLine(gsl::index nLine) const;
+    void UpdateLineBreaks(gsl::index nIndex, gsl::index nColumn, const ra::ui::win32::bindings::GridColumnBinding* pColumn, int nChars);
+    static void GetLineBreaks(const std::wstring& sText, int nChars, std::vector<unsigned int>& vLineBreaks);
+    void UpdateLineOffsets();
+    int GetMaxCharsForColumn(gsl::index nColumn) const;
 
     struct ItemMetrics
     {

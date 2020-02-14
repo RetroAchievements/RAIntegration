@@ -56,9 +56,12 @@ void MemoryBookmarksViewModel::OnViewModelBoolValueChanged(const BoolModelProper
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
         if (args.tNewValue)
         {
-            pGameContext.RemoveNotifyTarget(*this);
             pGameContext.AddNotifyTarget(*this);
             OnActiveGameChanged();
+        }
+        else
+        {
+            pGameContext.RemoveNotifyTarget(*this);
         }
     }
 }

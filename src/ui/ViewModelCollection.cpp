@@ -283,27 +283,36 @@ void ViewModelCollectionBase::UpdateIndices()
         const auto nDeletedIndices = m_vItems.size() - m_nSize;
         std::vector<gsl::index> vDeletedIndices;
         vDeletedIndices.reserve(nDeletedIndices);
-        for (gsl::index nIndex = m_vItems.size() - 1; nIndex >= ra::to_signed(m_vItems.size() - nDeletedIndices); --nIndex)
+
+        // identify the deleted items
+        for (gsl::index nIndex = m_vItems.size() - 1; nIndex >= 0; --nIndex)
         {
             auto& pItem = m_vItems.at(nIndex);
-            vDeletedIndices.push_back(pItem.Index());
+            if (!pItem.HasViewModel())
+            {
+                vDeletedIndices.push_back(pItem.Index());
+                m_vItems.erase(m_vItems.begin() + nIndex);
+            }
         }
+        assert(vDeletedIndices.size() == nDeletedIndices);
 
-        m_vItems.erase(m_vItems.begin() + m_nSize, m_vItems.end());
-
-        // remove the later indices first
+        // use a reversed list so later indices are removed first when the callbacks are called
         std::sort(vDeletedIndices.rbegin(), vDeletedIndices.rend());
 
+        // update the indices of any items after the deleted items
         for (auto& pItem : m_vItems)
         {
             gsl::index nIndex = pItem.Index();
-            for (auto nDeletedIndex : vDeletedIndices)
+            if (nIndex > vDeletedIndices.back())
             {
-                if (nDeletedIndex < nIndex)
-                    --nIndex;
-            }
+                for (auto nDeletedIndex : vDeletedIndices)
+                {
+                    if (nDeletedIndex < nIndex)
+                        --nIndex;
+                }
 
-            pItem.SetIndex(nIndex);
+                pItem.SetIndex(nIndex);
+            }
         }
 
         if (IsWatching())

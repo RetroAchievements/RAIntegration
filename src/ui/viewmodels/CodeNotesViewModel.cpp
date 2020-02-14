@@ -1,5 +1,6 @@
 #include "CodeNotesViewModel.hh"
 
+#include "RA_Defs.h"
 #include "RA_StringUtils.h"
 
 #include "data\GameContext.hh"
@@ -12,28 +13,87 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-const StringModelProperty CodeNotesViewModel::CodeNoteViewModel::LabelProperty("CodeNotesViewModel", "Label", L"");
-const StringModelProperty CodeNotesViewModel::CodeNoteViewModel::NoteProperty("CodeNotesViewModel", "Note", L"");
-const IntModelProperty CodeNotesViewModel::CodeNoteViewModel::RowColorProperty("CodeNotesViewModel", "RowColor", 0);
-const BoolModelProperty CodeNotesViewModel::CodeNoteViewModel::IsSelectedProperty("CodeNotesViewModel", "IsSelected", false);
+const StringModelProperty CodeNotesViewModel::ResultCountProperty("CodeNotesViewModel", "ResultCount", L"0/0");
+
+const StringModelProperty CodeNotesViewModel::CodeNoteViewModel::LabelProperty("CodeNoteViewModel", "Label", L"");
+const StringModelProperty CodeNotesViewModel::CodeNoteViewModel::NoteProperty("CodeNoteViewModel", "Note", L"");
+const IntModelProperty CodeNotesViewModel::CodeNoteViewModel::RowColorProperty("CodeNoteViewModel", "RowColor", 0);
+const BoolModelProperty CodeNotesViewModel::CodeNoteViewModel::IsSelectedProperty("CodeNoteViewModel", "IsSelected", false);
 
 CodeNotesViewModel::CodeNotesViewModel() noexcept
 {
     SetWindowTitle(L"Code Notes");
 
-    m_vNotes.Add(L"0x10038", L"[32-bit] music ID");
-    m_vNotes.Add(L"0x1003C", L"[32-bit] in game timer (seconds)");
-    m_vNotes.Add(L"0x10069", L"C0 = combat\nE0 = non-combat");
-    m_vNotes.Add(L"0x10093", L"bit4: in skystone?");
-    m_vNotes.Add(L"0x100a1", L"?? boat facing");
-    m_vNotes.Add(L"0x100b4", L"[16-bit] skystone parked location X");
-    m_vNotes.Add(L"0x100b6", L"[16-bit] skystone parked location Y");
-    m_vNotes.Add(L"0x100b8", L"bits0-5: SE red pillar\nbits6-7: SW red pillar");
-    m_vNotes.Add(L"0x100b9", L"bits0-1: SW red pillar\nbits2-6: central red pillar\nbit7: NE red pillar");
-    m_vNotes.Add(L"0x100ba", L"bits0-3: NE red pillar\nbits4-7: NW yellow pillar");
-
     m_vNotes.AddNotifyTarget(*this);
+    AddNotifyTarget(*this);
 }
+
+void CodeNotesViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == IsVisibleProperty)
+    {
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+        if (args.tNewValue)
+        {
+            pGameContext.AddNotifyTarget(*this);
+            ResetFilter();
+        }
+        else
+        {
+            pGameContext.RemoveNotifyTarget(*this);
+        }
+    }
+}
+
+void CodeNotesViewModel::OnActiveGameChanged()
+{
+    ResetFilter();
+}
+
+void CodeNotesViewModel::ResetFilter()
+{
+    m_vNotes.BeginUpdate();
+
+    gsl::index nIndex = 0;
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    pGameContext.EnumerateCodeNotes([this, &nIndex](ra::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)
+    {
+        std::wstring sAddress;
+        if (nBytes <= 4)
+            sAddress = ra::Widen(ra::ByteAddressToString(nAddress));
+        else
+            sAddress = ra::StringPrintf(L"%s\n- %s", ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nAddress + nBytes - 1));
+
+        auto* vmNote = m_vNotes.GetItemAt(nIndex);
+        if (vmNote)
+        {
+            vmNote->SetLabel(sAddress);
+            vmNote->SetNote(sNote);
+        }
+        else
+        {
+            m_vNotes.Add(sAddress, sNote);
+        }
+
+        ++nIndex;
+        return true;
+    });
+
+    for (gsl::index i = ra::to_signed(m_vNotes.Count()) - 1; i >= nIndex; --i)
+        m_vNotes.RemoveAt(i);
+
+    m_vNotes.EndUpdate();
+
+    m_nUnfilteredNotesCount = m_vNotes.Count();
+    SetValue(ResultCountProperty, ra::StringPrintf(L"%u/%u", m_nUnfilteredNotesCount, m_nUnfilteredNotesCount));
+}
+
+void CodeNotesViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
+{
+
+}
+
 
 GSL_SUPPRESS_F6
 void CodeNotesViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)

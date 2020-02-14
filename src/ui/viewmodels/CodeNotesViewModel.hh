@@ -2,6 +2,8 @@
 #define RA_UI_CODENOTESVIEWMODEL_H
 #pragma once
 
+#include "data\GameContext.hh"
+
 #include "ui\WindowViewModelBase.hh"
 
 #include "ui\viewmodels\LookupItemViewModel.hh"
@@ -12,7 +14,8 @@ namespace viewmodels {
 
 class CodeNotesViewModel : public WindowViewModelBase,
     protected ViewModelBase::NotifyTarget,
-    protected ViewModelCollectionBase::NotifyTarget
+    protected ViewModelCollectionBase::NotifyTarget,
+    protected ra::data::GameContext::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 CodeNotesViewModel() noexcept;
@@ -116,14 +119,34 @@ public:
         return m_vNotes;
     }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the result count.
+    /// </summary>
+    static const StringModelProperty ResultCountProperty;
+
+    /// <summary>
+    /// Gets the result count to display.
+    /// </summary>
+    const std::wstring& GetResultCount() const { return GetValue(ResultCountProperty); }
+
+    void ResetFilter();
+
     void ApplyFilter();
 
 protected:
+    // ViewModelBase::NotifyTarget
+    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
 
+    // ra::data::GameContext::NotifyTarget
+    void OnActiveGameChanged() override;
+    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
+
 private:
     ViewModelCollection<CodeNoteViewModel> m_vNotes;
+    size_t m_nUnfilteredNotesCount = 0U;
 
     gsl::index m_nSelectionStart = -1, m_nSelectionEnd = -1;
 };

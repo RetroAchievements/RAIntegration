@@ -47,7 +47,8 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
       m_bindNotes(vmCodeNotes)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Code Notes");
-    m_bindNotes.BindIsSelected(CodeNotesViewModel::CodeNoteViewModel::IsSelectedProperty);
+
+    m_bindWindow.BindLabel(IDC_RA_RESULT_COUNT, CodeNotesViewModel::ResultCountProperty);
 
     auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         CodeNotesViewModel::CodeNoteViewModel::LabelProperty);
@@ -63,6 +64,7 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
     m_bindNotes.BindColumn(1, std::move(pDescriptionColumn));
 
     m_bindNotes.BindItems(vmCodeNotes.Notes());
+    m_bindNotes.BindIsSelected(CodeNotesViewModel::CodeNoteViewModel::IsSelectedProperty);
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_FILTER_VALUE, Anchor::Top | Anchor::Left | Anchor::Right);

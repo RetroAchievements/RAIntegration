@@ -373,7 +373,7 @@ public:
         Assert::AreEqual(std::string("Ach3"), pAch->Title());
         Assert::AreEqual(std::string("Desc3"), pAch->Description());
         Assert::AreEqual(std::string("Auth3"), pAch->Author());
-        Assert::AreEqual(std::string("555"), pAch->BadgeImageURI());
+        Assert::AreEqual(std::string("00555"), pAch->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
@@ -386,7 +386,7 @@ public:
         Assert::AreEqual(std::string("Ach4"), pAch->Title());
         Assert::AreEqual(std::string("Desc4"), pAch->Description());
         Assert::AreEqual(std::string("Auth4"), pAch->Author());
-        Assert::AreEqual(std::string("556"), pAch->BadgeImageURI());
+        Assert::AreEqual(std::string("00556"), pAch->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
@@ -437,7 +437,7 @@ public:
         Assert::AreEqual(std::string("Ach3"), pAch->Title());
         Assert::AreEqual(std::string("Desc3"), pAch->Description());
         Assert::AreEqual(std::string("Auth3"), pAch->Author());
-        Assert::AreEqual(std::string("555"), pAch->BadgeImageURI());
+        Assert::AreEqual(std::string("00555"), pAch->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
@@ -451,7 +451,7 @@ public:
         Assert::AreEqual(std::string("Ach4"), pAch->Title());
         Assert::AreEqual(std::string("Desc4"), pAch->Description());
         Assert::AreEqual(std::string("Auth4"), pAch->Author());
-        Assert::AreEqual(std::string("556"), pAch->BadgeImageURI());
+        Assert::AreEqual(std::string("00556"), pAch->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
         Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
         Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());

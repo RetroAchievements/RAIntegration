@@ -9,7 +9,7 @@ inline constexpr std::array<const LPCTSTR, 14> MEMSIZE_STR{
     _T("Bit0"), _T("Bit1"),   _T("Bit2"),   _T("Bit3"),  _T("Bit4"),   _T("Bit5"),   _T("Bit6"),
     _T("Bit7"), _T("Lower4"), _T("Upper4"), _T("8-bit"), _T("16-bit"), _T("24-bit"), _T("32-bit")};
 
-enum class ComparisonType : std::size_t
+enum class ComparisonType
 {
     Equals,
     LessThan,
@@ -23,7 +23,7 @@ inline constexpr std::array<LPCTSTR, 6> COMPARISONTYPE_STR{_T("="), _T("<"), _T(
 class CompVariable
 {
 public:
-    enum class Type : std::size_t
+    enum class Type
     {
         Address,         // compare to the value of a live address in RAM
         ValueComparison, // a number. assume 32 bit

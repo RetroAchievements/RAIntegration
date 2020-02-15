@@ -1154,18 +1154,25 @@ std::wstring GameContext::FindCodeNote(ra::ByteAddress nAddress, MemSize nSize) 
     {
         const ra::ByteAddress nNoteAddress = pIter->first;
         const unsigned int nNoteSize = pIter->second.Bytes;
+        std::wstring sNote = pIter->second.Note;
+
+        const auto iNewLine = sNote.find('\n');
+        if (iNewLine != std::string::npos)
+            sNote.resize(iNewLine);
 
         // exact match
         if (nAddress == nNoteAddress && nNoteSize == nCheckSize)
-            return pIter->second.Note;
+            return sNote;
 
         // check for overlap
         if (nAddress + nCheckSize - 1 >= nNoteAddress)
         {
             if (nCheckSize == 1)
-                return ra::StringPrintf(L"%s [%d/%d]", pIter->second.Note, nNoteAddress - nAddress + 1, nNoteSize);
+                sNote.append(ra::StringPrintf(L" [%d/%d]", nNoteAddress - nAddress + 1, nNoteSize));
+            else
+                sNote.append(L" [partial]");
 
-            return pIter->second.Note + L" [partial]";
+            return sNote;
         }
     }
 
@@ -1174,12 +1181,22 @@ std::wstring GameContext::FindCodeNote(ra::ByteAddress nAddress, MemSize nSize) 
     {
         --pIter;
 
-        if (pIter->first + pIter->second.Bytes - 1 >= nAddress)
+        const ra::ByteAddress nNoteAddress = pIter->first;
+        const unsigned int nNoteSize = pIter->second.Bytes;
+        if (nNoteAddress + nNoteSize - 1 >= nAddress)
         {
-            if (nCheckSize == 1)
-                return ra::StringPrintf(L"%s [%d/%d]", pIter->second.Note, nAddress - pIter->first + 1, pIter->second.Bytes);
+            std::wstring sNote = pIter->second.Note;
 
-            return pIter->second.Note + L" [partial]";
+            const auto iNewLine = sNote.find('\n');
+            if (iNewLine != std::string::npos)
+                sNote.resize(iNewLine);
+
+            if (nCheckSize == 1)
+                sNote.append(ra::StringPrintf(L" [%d/%d]", nAddress - nNoteAddress + 1, nNoteSize));
+            else
+                sNote.append(L" [partial]");
+
+            return sNote;
         }
     }
 

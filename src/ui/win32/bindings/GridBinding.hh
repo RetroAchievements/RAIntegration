@@ -41,12 +41,17 @@ public:
     void BindItems(ViewModelCollectionBase& vmItems);
     ViewModelCollectionBase& GetItems() noexcept { return *m_vmItems; }
 
+    void Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty,
+        std::function<void(gsl::index, gsl::index, bool)> pUpdateSelectedItems);
+
     void BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept;
     void BindRowColor(const IntModelProperty& pRowColorProperty) noexcept;
-
+   
     GSL_SUPPRESS_CON3 LRESULT OnLvnItemChanging(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
+    GSL_SUPPRESS_CON3 void OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateChanged);
     GSL_SUPPRESS_CON3 void OnLvnColumnClick(const LPNMLISTVIEW pnmListView);
+    void OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo);
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
     void OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate);
     LRESULT OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw) override;
@@ -70,7 +75,12 @@ protected:
     void UpdateAllItems();
     void UpdateItems(gsl::index nColumn);
     void CheckForScrollBar();
+    void UpdateScroll();
 
+    // ViewModelBase::NotifyTarget
+    void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override;
+
+    // ViewModelCollectionBase::NotifyTarget
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
@@ -85,11 +95,22 @@ private:
 
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;
+
     size_t m_nColumnsCreated = 0;
     std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
+    bool m_bHasColoredColumns = false;
+
     ViewModelCollectionBase* m_vmItems = nullptr;
+
     const BoolModelProperty* m_pIsSelectedProperty = nullptr;
     const IntModelProperty* m_pRowColorProperty = nullptr;
+
+    const IntModelProperty* m_pScrollOffsetProperty = nullptr;
+    const IntModelProperty* m_pScrollMaximumProperty = nullptr;
+    int m_nScrollOffset = 0;
+    std::string m_sDispInfo;
+    std::function<void(gsl::index, gsl::index, bool)> m_pUpdateSelectedItems = nullptr;
+
     HWND m_hInPlaceEditor = nullptr;
 
     gsl::index m_nSortIndex = -1;

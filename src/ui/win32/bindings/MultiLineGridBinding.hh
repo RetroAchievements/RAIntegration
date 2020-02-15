@@ -30,10 +30,9 @@ protected:
     void UpdateAllItems() override;
     void UpdateItems(gsl::index nColumn) override;
 
-    //void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
+    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
     void OnViewModelAdded(gsl::index nIndex) override;
     void OnViewModelRemoved(gsl::index nIndex) override;
-    //void OnViewModelChanged(gsl::index nIndex) override;
     void OnEndViewModelCollectionUpdate() override;
 
 private:

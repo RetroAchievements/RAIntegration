@@ -165,6 +165,9 @@ API int CCONV _RA_Shutdown()
 
         if (pWindowManager.MemoryBookmarks.IsVisible())
             pDesktop.CloseWindow(pWindowManager.MemoryBookmarks);
+
+        if (pWindowManager.CodeNotes.IsVisible())
+            pDesktop.CloseWindow(pWindowManager.CodeNotes);
     }
 
     ra::services::Initialization::Shutdown();
@@ -419,7 +422,8 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_MEMORYBOOKMARKS:
-            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Show();
+            //ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Show();
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().CodeNotes.Show();
             break;
 
         case IDM_RA_FILES_LOGIN:

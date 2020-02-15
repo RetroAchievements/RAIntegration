@@ -37,7 +37,7 @@
 #define IDC_RA_RESULTS_BOOKMARK         1132
 #define IDC_RA_FILTER_VALUE             1133
 #define IDC_RA_APPLY_FILTER             1134
-#define IDC_RA_RESET_FILTER_RESET       1135
+#define IDC_RA_RESET_FILTER             1135
 #define IDC_RA_RESULT_COUNT             1136
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502

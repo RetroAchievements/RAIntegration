@@ -277,6 +277,11 @@ void ViewModelCollectionBase::EndUpdate()
 
 void ViewModelCollectionBase::UpdateIndices()
 {
+    // create a copy of the list of pointers in case it's modified by one of the callbacks
+    NotifyTargetSet vNotifyTargets;
+    if (IsWatching())
+        vNotifyTargets = m_vNotifyTargets;
+
     // first pass, deal with removed items
     if (m_vItems.size() > m_nSize)
     {
@@ -318,7 +323,6 @@ void ViewModelCollectionBase::UpdateIndices()
         if (IsWatching())
         {
             // create a copy of the list of pointers in case it's modified by one of the callbacks
-            NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
             for (auto nDeletedIndex : vDeletedIndices)
             {
                 for (NotifyTarget* target : vNotifyTargets)
@@ -335,14 +339,16 @@ void ViewModelCollectionBase::UpdateIndices()
 
     // second pass, deal with new items
     gsl::index nIndex = 0;
-    for (auto& pItem : m_vItems)
+    for (; nIndex < m_vItems.size(); ++nIndex)
     {
+        auto& pItem = m_vItems.at(nIndex);
         if (pItem.Index() == -1)
         {
-            for (auto& pIter : m_vItems)
+            for (gsl::index nIndex2 = nIndex + 1; nIndex2 < m_vItems.size(); ++nIndex2)
             {
-                if (pIter.Index() >= nIndex)
-                    pIter.SetIndex(pIter.Index() + 1);
+                auto& pItem2 = m_vItems.at(nIndex2);
+                if (pItem2.Index() >= nIndex)
+                    pItem2.SetIndex(pItem2.Index() + 1);
             }
 
             pItem.SetIndex(nIndex);
@@ -352,16 +358,16 @@ void ViewModelCollectionBase::UpdateIndices()
                 pItem.StartWatching();
 
                 // create a copy of the list of pointers in case it's modified by one of the callbacks
-                NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
                 for (NotifyTarget* target : vNotifyTargets)
                 {
                     Expects(target != nullptr);
                     target->OnViewModelAdded(nIndex);
                 }
+
+                if (vNotifyTargets.size() != m_vNotifyTargets.size())
+                    vNotifyTargets = m_vNotifyTargets;
             }
         }
-
-        ++nIndex;
     }
 
     // third pass, deal with moved items
@@ -375,12 +381,14 @@ void ViewModelCollectionBase::UpdateIndices()
             if (IsWatching())
             {
                 // create a copy of the list of pointers in case it's modified by one of the callbacks
-                NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
                 for (NotifyTarget* target : vNotifyTargets)
                 {
                     Expects(target != nullptr);
                     target->OnViewModelChanged(nIndex);
                 }
+
+                if (vNotifyTargets.size() != m_vNotifyTargets.size())
+                    vNotifyTargets = m_vNotifyTargets;
             }
         }
 

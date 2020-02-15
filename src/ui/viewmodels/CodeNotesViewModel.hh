@@ -14,7 +14,6 @@ namespace viewmodels {
 
 class CodeNotesViewModel : public WindowViewModelBase,
     protected ViewModelBase::NotifyTarget,
-    protected ViewModelCollectionBase::NotifyTarget,
     protected ra::data::GameContext::NotifyTarget
 {
 public:
@@ -87,20 +86,8 @@ public:
         /// </summary>
         void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
 
-        /// <summary>
-        /// The <see cref="ModelProperty" /> for the row color.
-        /// </summary>
-        static const IntModelProperty RowColorProperty;
-
-        /// <summary>
-        /// Gets the row color.
-        /// </summary>
-        Color GetRowColor() const { return Color(ra::to_unsigned(GetValue(RowColorProperty))); }
-
-        /// <summary>
-        /// Sets the row color.
-        /// </summary>
-        void SetRowColor(Color value) { SetValue(RowColorProperty, ra::to_signed(value.ARGB)); }
+        ra::ByteAddress nAddress;
+        unsigned int nBytes;
     };
 
     /// <summary>
@@ -129,19 +116,35 @@ public:
     /// </summary>
     const std::wstring& GetResultCount() const { return GetValue(ResultCountProperty); }
 
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the filter value.
+    /// </summary>
+    static const StringModelProperty FilterValueProperty;
+
+    /// <summary>
+    /// Gets the filter value.
+    /// </summary>
+    const std::wstring& GetFilterValue() const { return GetValue(FilterValueProperty); }
+
+    /// <summary>
+    /// Sets the filter value.
+    /// </summary>
+    void SetFilterValue(const std::wstring& sValue) { SetValue(FilterValueProperty, sValue); }
+
     void ResetFilter();
 
     void ApplyFilter();
+
+    void BookmarkSelected() const;
 
 protected:
     // ViewModelBase::NotifyTarget
     void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
-    // ViewModelCollectionBase::NotifyTarget
-    void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
-
     // ra::data::GameContext::NotifyTarget
     void OnActiveGameChanged() override;
+    void OnEndGameLoad() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
 
 private:
@@ -149,6 +152,7 @@ private:
     size_t m_nUnfilteredNotesCount = 0U;
 
     gsl::index m_nSelectionStart = -1, m_nSelectionEnd = -1;
+    unsigned int m_nGameId = 0U;
 };
 
 } // namespace viewmodels

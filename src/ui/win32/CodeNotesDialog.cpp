@@ -7,6 +7,10 @@
 
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
+#ifndef RA_UTEST
+#include "RA_Dlg_Memory.h"
+#endif
+
 using ra::ui::viewmodels::CodeNotesViewModel;
 using ra::ui::win32::bindings::GridColumnBinding;
 
@@ -42,15 +46,41 @@ void CodeNotesDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
 
 // ------------------------------------
 
+class GridAddressRangeColumnBinding : public ra::ui::win32::bindings::GridTextColumnBinding
+{
+public:
+    GridAddressRangeColumnBinding(const StringModelProperty& pBoundProperty) noexcept
+        : GridTextColumnBinding(pBoundProperty)
+    {
+    }
+
+    bool HandleDoubleClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override
+    {
+#ifndef RA_UTEST
+        const auto* pItems = reinterpret_cast<const ra::ui::ViewModelCollection<CodeNotesViewModel::CodeNoteViewModel>*>(&vmItems);
+        if (pItems)
+        {
+            const auto* pItem = pItems->GetItemAt(nIndex);
+            if (pItem)
+                g_MemoryDialog.GoToAddress(pItem->nAddress);
+        }
+#endif
+        return true;
+    }
+};
+
 CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
     : DialogBase(vmCodeNotes),
-      m_bindNotes(vmCodeNotes)
+      m_bindNotes(vmCodeNotes),
+      m_bindFilterValue(vmCodeNotes)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Code Notes");
 
+    m_bindFilterValue.BindText(CodeNotesViewModel::FilterValueProperty);
+
     m_bindWindow.BindLabel(IDC_RA_RESULT_COUNT, CodeNotesViewModel::ResultCountProperty);
 
-    auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+    auto pAddressColumn = std::make_unique<GridAddressRangeColumnBinding>(
         CodeNotesViewModel::CodeNoteViewModel::LabelProperty);
     pAddressColumn->SetHeader(L"Address");
     pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
@@ -70,13 +100,14 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
     SetAnchor(IDC_RA_FILTER_VALUE, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_APPLY_FILTER, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Top);
-    SetAnchor(IDC_RA_RESET_FILTER_RESET, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_RESET_FILTER, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_LBX_ADDRESSES, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
 }
 
 BOOL CodeNotesDialog::OnInitDialog()
 {
     m_bindNotes.SetControl(*this, IDC_RA_LBX_ADDRESSES);
+    m_bindFilterValue.SetControl(*this, IDC_RA_FILTER_VALUE);
 
     return DialogBase::OnInitDialog();
 }
@@ -85,10 +116,26 @@ BOOL CodeNotesDialog::OnCommand(WORD nCommand)
 {
     switch (nCommand)
     {
+        case IDC_RA_RESET_FILTER:
+        {
+            auto& vmCodeNotes = reinterpret_cast<CodeNotesViewModel&>(m_vmWindow);
+            vmCodeNotes.ResetFilter();
+
+            return TRUE;
+        }
+
         case IDC_RA_APPLY_FILTER:
         {
             auto& vmCodeNotes = reinterpret_cast<CodeNotesViewModel&>(m_vmWindow);
             vmCodeNotes.ApplyFilter();
+
+            return TRUE;
+        }
+
+        case IDC_RA_ADDBOOKMARK:
+        {
+            auto& vmCodeNotes = reinterpret_cast<CodeNotesViewModel&>(m_vmWindow);
+            vmCodeNotes.BookmarkSelected();
 
             return TRUE;
         }

@@ -91,6 +91,7 @@ protected:
     void OnEndViewModelCollectionUpdate() override;
 
     std::vector<std::unique_ptr<GridColumnBinding>> m_vColumns;
+    std::vector<int> m_vColumnWidths;
     ViewModelCollectionBase* m_vmItems = nullptr;
     const BoolModelProperty* m_pIsSelectedProperty = nullptr;
 

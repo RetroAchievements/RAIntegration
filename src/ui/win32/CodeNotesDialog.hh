@@ -3,7 +3,10 @@
 #pragma once
 
 #include "ui/viewmodels/CodeNotesViewModel.hh"
+
 #include "ui/win32/bindings/MultiLineGridBinding.hh"
+#include "ui/win32/bindings/TextBoxBinding.hh"
+
 #include "ui/win32/DialogBase.hh"
 #include "ui/win32/IDialogPresenter.hh"
 
@@ -39,6 +42,7 @@ protected:
     
 private:
     ra::ui::win32::bindings::MultiLineGridBinding m_bindNotes;
+    ra::ui::win32::bindings::TextBoxBinding m_bindFilterValue;
 };
 
 } // namespace win32

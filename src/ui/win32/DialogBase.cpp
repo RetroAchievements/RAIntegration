@@ -7,6 +7,8 @@
 
 #include "ra_utility.h"
 
+#define WM_QUEUED_ACTION WM_USER + 1
+
 namespace ra {
 namespace ui {
 namespace win32 {
@@ -327,9 +329,27 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             return 0;
         }
 
+        case WM_QUEUED_ACTION:
+        {
+            if (!m_qActions.empty())
+            {
+                std::function<void()> fAction = m_qActions.front();
+                m_qActions.pop();
+                fAction();
+                if (!m_qActions.empty())
+                    PostMessage(m_hWnd, WM_QUEUED_ACTION, NULL, NULL);
+            }
+        }
+
         default:
             return 0;
     }
+}
+
+void DialogBase::QueueFunction(std::function<void()> fAction)
+{
+    m_qActions.push(fAction);
+    PostMessage(m_hWnd, WM_QUEUED_ACTION, NULL, NULL);
 }
 
 void DialogBase::OnShown()

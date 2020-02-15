@@ -81,6 +81,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         return;
     }
 
+    BeginLoad();
     m_nGameId = nGameId;
 
     ra::api::FetchGameData::Request request;
@@ -91,6 +92,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download game data",
                                                                   ra::Widen(response.ErrorMessage));
+        EndLoad();
         return;
     }
 
@@ -169,6 +171,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // get user unlocks asynchronously
     RefreshUnlocks(!bWasPaused, nPopup);
 
+    EndLoad();
     OnActiveGameChanged();
 }
 
@@ -185,6 +188,34 @@ void GameContext::OnActiveGameChanged()
     }
 }
 
+void GameContext::BeginLoad()
+{
+    if (m_nLoadCount.fetch_add(1) == 0)
+    {
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
+            target->OnBeginGameLoad();
+        }
+    }
+}
+
+void GameContext::EndLoad()
+{
+    if (m_nLoadCount.fetch_sub(1) == 1)
+    {
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
+            target->OnEndGameLoad();
+        }
+    }
+}
+
 void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
 {
     if (m_nMode == Mode::CompatibilityTest)
@@ -194,6 +225,8 @@ void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
         return;
     }
 
+    BeginLoad();
+
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
     ra::api::FetchUserUnlocks::Request request;
@@ -202,6 +235,7 @@ void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
     request.CallAsync([this, bUnpause, nPopup](const ra::api::FetchUserUnlocks::Response& response)
     {
         UpdateUnlocks(response.UnlockedAchievements, bUnpause, nPopup);
+        EndLoad();
     });
 }
 
@@ -1040,6 +1074,8 @@ void GameContext::RefreshCodeNotes()
     if (m_nGameId == 0)
         return;
 
+    BeginLoad();
+
     ra::api::FetchCodeNotes::Request request;
     request.GameId = m_nGameId;
     request.CallAsync([this](const ra::api::FetchCodeNotes::Response& response)
@@ -1053,6 +1089,8 @@ void GameContext::RefreshCodeNotes()
 
         for (const auto& pNote : response.Notes)
             AddCodeNote(pNote.Address, pNote.Author, pNote.Note);
+
+        EndLoad();
 
 #ifndef RA_UTEST
         g_MemoryDialog.RepopulateCodeNotes();

@@ -61,20 +61,54 @@ void MultiLineGridBinding::OnViewModelRemoved(gsl::index nIndex)
         UpdateLineOffsets();
 }
 
+void MultiLineGridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
+{
+    for (gsl::index nColumn = 0; nColumn < ra::to_signed(m_vColumns.size()); ++nColumn)
+    {
+        const auto* pColumn = m_vColumns.at(nColumn).get();
+        if (reinterpret_cast<const GridTextColumnBinding*>(pColumn) != nullptr && pColumn->DependsOn(args.Property))
+        {
+            auto& pItemMetrics = m_vItemMetrics.at(nIndex);
+            const auto nChars = GetMaxCharsForColumn(nColumn);
+            std::vector<unsigned int> vLineBreaks;
+            const auto sText = pColumn->GetText(*m_vmItems, nIndex);
+
+            GetLineBreaks(sText, nChars, vLineBreaks);
+
+            if (vLineBreaks.empty())
+            {
+                pItemMetrics.mColumnLineOffsets.erase(gsl::narrow_cast<int>(nColumn));
+            }
+            else
+            {
+                auto& pColumnLineBreaks = pItemMetrics.mColumnLineOffsets[gsl::narrow_cast<int>(nColumn)];
+                pColumnLineBreaks.swap(vLineBreaks);
+            }
+
+            pItemMetrics.nNumLines = 0;
+            for (const auto& pPair : pItemMetrics.mColumnLineOffsets)
+            {
+                if (pPair.second.size() > pItemMetrics.nNumLines)
+                    pItemMetrics.nNumLines = gsl::narrow_cast<unsigned int>(pPair.second.size());
+            }
+            ++pItemMetrics.nNumLines;
+        }
+    }
+}
+
 void MultiLineGridBinding::OnEndViewModelCollectionUpdate()
 {
     UpdateLineOffsets();
-    GridBinding::UpdateAllItems();
-    GridBinding::OnEndViewModelCollectionUpdate();
+
+    InvokeOnUIThread([this]() {
+        GridBinding::UpdateAllItems();
+        GridBinding::OnEndViewModelCollectionUpdate();
+    });
 }
 
 int MultiLineGridBinding::GetMaxCharsForColumn(gsl::index nColumn) const
 {
-    LV_COLUMN col{};
-    col.mask = LVCF_WIDTH | LVCF_SUBITEM;
-    col.iSubItem = gsl::narrow_cast<int>(nColumn);
-    ListView_GetColumn(m_hWnd, nColumn, &col);
-    return std::max(col.cx / 6, 32);
+    return std::max(m_vColumnWidths.at(nColumn) / 6, 32);
 }
 
 void MultiLineGridBinding::UpdateLineBreaks(gsl::index nIndex, gsl::index nColumn, const ra::ui::win32::bindings::GridColumnBinding* pColumn, int nChars)

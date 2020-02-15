@@ -14,9 +14,12 @@
 #include "ui\IDesktop.hh"
 
 #include "ui\viewmodels\MemoryBookmarksViewModel.hh"
+#include "ui\viewmodels\MemorySearchViewModel.hh"
 #include "ui\viewmodels\MemoryViewerViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
+
+#include "ui\win32\bindings\GridTextColumnBinding.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
 
@@ -31,6 +34,7 @@ _CONSTANT_VAR MIN_RESULTS_TO_DUMP = 500000U;
 _CONSTANT_VAR MIN_SEARCH_PAGE_SIZE = 50U;
 
 static std::unique_ptr<ra::ui::viewmodels::MemoryViewerViewModel> g_pMemoryViewer;
+static std::unique_ptr<ra::ui::viewmodels::MemorySearchViewModel> g_pMemorySearch;
 constexpr int MEMVIEW_MARGIN = 4;
 static bool g_bSuppressMemoryViewerInvalidate = false;
 
@@ -320,13 +324,6 @@ INT_PTR CALLBACK Dlg_Memory::s_MemoryProc(HWND hDlg, UINT uMsg, WPARAM wParam, L
     return g_MemoryDialog.MemoryProc(hDlg, uMsg, wParam, lParam);
 }
 
-void Dlg_Memory::ClearLogOutput() noexcept
-{
-    ListView_SetItemCount(GetDlgItem(m_hWnd, IDC_RA_MEM_LIST), 1);
-    EnableWindow(GetDlgItem(m_hWnd, IDC_RA_RESULTS_BACK), FALSE);
-    EnableWindow(GetDlgItem(m_hWnd, IDC_RA_RESULTS_FORWARD), FALSE);
-}
-
 void Dlg_Memory::OnViewModelIntValueChanged(const ra::ui::IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == ra::ui::viewmodels::MemoryViewerViewModel::AddressProperty)
@@ -334,6 +331,53 @@ void Dlg_Memory::OnViewModelIntValueChanged(const ra::ui::IntModelProperty::Chan
         SetWatchingAddress(g_pMemoryViewer->GetAddress());
     }
 }
+
+void Dlg_Memory::OnViewModelBoolValueChanged(gsl::index nIndex, const ra::ui::BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::IsSelectedProperty)
+    {
+        if (args.tNewValue)
+        {
+            auto nAddress = g_pMemorySearch->Results().GetItemAt(nIndex)->nAddress;
+            if (g_pMemorySearch->ResultMemSize() == MemSize::Nibble_Lower)
+                nAddress >>= 1;
+
+            GoToAddress(nAddress);
+        }
+    }
+}
+
+void Dlg_Memory::SetAddressRange()
+{
+    if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHCUSTOM) == BST_CHECKED)
+    {
+        std::array<TCHAR, 1024> nativeBuffer{};
+        if (GetDlgItemText(m_hWnd, IDC_RA_SEARCHRANGE, nativeBuffer.data(), gsl::narrow_cast<int>(nativeBuffer.size())))
+            g_pMemorySearch->SetFilterRange(ra::Widen(&nativeBuffer.at(0)));
+    }
+    else if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHALL) == BST_CHECKED)
+    {
+        g_pMemorySearch->SetFilterRange(L"");
+    }
+    else if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM) == BST_CHECKED)
+    {
+        g_pMemorySearch->SetFilterRange(ra::StringPrintf(L"%08X-%08X", m_nSystemRamStart, m_nSystemRamEnd));
+    }
+    else if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHGAMERAM) == BST_CHECKED)
+    {
+        g_pMemorySearch->SetFilterRange(ra::StringPrintf(L"%08X-%08X", m_nGameRamStart, m_nGameRamEnd));
+    }
+}
+
+class StandaloneGridBinding : public ra::ui::win32::bindings::GridBinding
+{
+public:
+    StandaloneGridBinding(HWND hWnd, ra::ui::viewmodels::MemorySearchViewModel& vmViewModel) noexcept
+        : ra::ui::win32::bindings::GridBinding(vmViewModel)
+    {
+        m_hWnd = hWnd;
+    }
+};
 
 INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -345,6 +389,43 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             g_pMemoryViewer.reset(new ra::ui::viewmodels::MemoryViewerViewModel());
             g_pMemoryViewer->AddNotifyTarget(*this);
+
+            g_pMemorySearch.reset(new ra::ui::viewmodels::MemorySearchViewModel());
+            g_pMemorySearch->Results().AddNotifyTarget(*this);
+
+            // these _will_ go out of scope, but as long as the binding doesn't disable itself, it doesn't matter
+            HWND hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
+            m_pSearchGridBinding.reset(new StandaloneGridBinding(hListbox, *g_pMemorySearch));
+
+            auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+                ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::AddressProperty);
+            pAddressColumn->SetHeader(L"Address");
+            pAddressColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, 60);
+            m_pSearchGridBinding->BindColumn(0, std::move(pAddressColumn));
+
+            auto pValueColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+                ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::CurrentValueProperty);
+            pValueColumn->SetHeader(L"Value");
+            pValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, 50);
+            m_pSearchGridBinding->BindColumn(1, std::move(pValueColumn));
+
+            auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+                ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::DescriptionProperty);
+            pDescriptionColumn->SetHeader(L"Description");
+            pDescriptionColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Fill, 40);
+            pDescriptionColumn->SetTextColorProperty(ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::DescriptionColorProperty);
+            m_pSearchGridBinding->BindColumn(2, std::move(pDescriptionColumn));
+
+            m_pSearchGridBinding->BindItems(g_pMemorySearch->Results());
+            m_pSearchGridBinding->BindRowColor(ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::RowColorProperty);
+            m_pSearchGridBinding->BindIsSelected(ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel::IsSelectedProperty);
+            m_pSearchGridBinding->Virtualize(ra::ui::viewmodels::MemorySearchViewModel::ScrollOffsetProperty,
+                ra::ui::viewmodels::MemorySearchViewModel::ResultCountProperty, [](gsl::index nFrom, gsl::index nTo, bool bIsSelected)
+            {
+                g_pMemorySearch->SelectRange(nFrom, nTo, bIsSelected);
+            });
+
+            ListView_SetExtendedListViewStyle(hListbox, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
             GenerateResizes(hDlg);
 
@@ -375,24 +456,6 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             g_MemoryDialog.OnLoad_NewRom();
 
-            // Add a single column for list view
-            LVCOLUMN Col{};
-            Col.mask = LVCF_FMT | LVCF_ORDER | LVCF_SUBITEM | LVCF_TEXT | LVCF_WIDTH;
-            Col.fmt = LVCFMT_CENTER;
-            RECT rc{};
-            GetWindowRect(GetDlgItem(hDlg, IDC_RA_MEM_LIST), &rc);
-            for (int i = 0; i < 1; i++)
-            {
-                Col.iOrder = i;
-                Col.iSubItem = i;
-                ra::tstring str{_T("Search Result")};
-                Col.pszText = str.data();
-                Col.cx = rc.right - rc.left - 24;
-                ListView_InsertColumn(GetDlgItem(hDlg, IDC_RA_MEM_LIST), i, &Col);
-            }
-            ListView_SetExtendedListViewStyle(GetDlgItem(hDlg, IDC_RA_MEM_LIST),
-                                              LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
-
             CheckDlgButton(hDlg, IDC_RA_RESULTS_HIGHLIGHT, BST_CHECKED);
 
             RestoreWindowPosition(hDlg, "Memory Inspector", true, false);
@@ -407,197 +470,63 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             return TRUE;
         }
 
-        case WM_DRAWITEM:
-        {
-            LPDRAWITEMSTRUCT pDIS{};
-            GSL_SUPPRESS_TYPE1 pDIS = reinterpret_cast<LPDRAWITEMSTRUCT>(lParam);
-            HWND hListbox{};
-            hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
-
-            if (pDIS->hwndItem == hListbox)
-            {
-                if (pDIS->itemID == -1)
-                    break;
-
-                if (!m_SearchResults.empty())
-                {
-                    if (pDIS->itemID < 2)
-                    {
-                        std::wstring sBuffer;
-                        if (pDIS->itemID == 0)
-                        {
-                            try
-                            {
-                                const std::string& sFirstLine = m_SearchResults.at(m_nPage).m_results.Summary();
-                                sBuffer = ra::Widen(sFirstLine);
-                            } catch (const std::out_of_range& e)
-                            {
-                                sBuffer = ra::Widen(e.what());
-                            }
-                        }
-                        else
-                        {
-                            SetTextColor(pDIS->hDC, RGB(0, 100, 150));
-                            const unsigned int nMatches = m_SearchResults.at(m_nPage).m_results.MatchingAddressCount();
-                            if (nMatches > MIN_RESULTS_TO_DUMP)
-                                sBuffer = ra::StringPrintf(L"Found %u matches! (Displaying first %u results)",
-                                                           nMatches, MIN_RESULTS_TO_DUMP);
-                            else if (nMatches == 0)
-                                sBuffer = L"Found *ZERO* matches!";
-                            else
-                                sBuffer = ra::StringPrintf(L"Found %u matches!", nMatches);
-                        }
-
-                        DrawTextW(pDIS->hDC, sBuffer.c_str(), gsl::narrow_cast<int>(sBuffer.length()), &pDIS->rcItem,
-                                  DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
-                    }
-                    else
-                    {
-                        auto& currentSearch = m_SearchResults.at(m_nPage);
-                        ra::services::SearchResults::Result result;
-                        if (!currentSearch.m_results.GetMatchingAddress(pDIS->itemID - 2, result))
-                            break;
-
-                        std::wstring sValue;
-                        unsigned int nVal = 0;
-                        UpdateSearchResult(result, nVal, sValue);
-                        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-                        auto sNote = pGameContext.FindCodeNote(result.nAddress, result.nSize);
-
-                        HBRUSH hBrush{};
-                        COLORREF color{};
-
-                        if (pDIS->itemState & ODS_SELECTED)
-                        {
-                            SetTextColor(pDIS->hDC, GetSysColor(COLOR_HIGHLIGHTTEXT));
-                            hBrush = GetSysColorBrush(COLOR_HIGHLIGHT);
-                        }
-                        else if (SendMessage(GetDlgItem(hDlg, IDC_RA_RESULTS_HIGHLIGHT), BM_GETCHECK, 0, 0))
-                        {
-                            SetTextColor(pDIS->hDC, GetSysColor(COLOR_WINDOWTEXT));
-                            if (!CompareSearchResult(nVal, result.nValue))
-                            {
-                                color = RGB(255, 215, 215); // Red if search result doesn't match comparison.
-                                if (!currentSearch.WasModified(result.nAddress))
-                                    currentSearch.m_modifiedAddresses.push_back(result.nAddress);
-                            }
-                            else if (ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.HasBookmark(result.nAddress))
-                                color = RGB(220, 255, 220); // Green if Bookmark is found.
-                            else if (!sNote.empty())
-                                color = RGB(220, 240, 255); // Blue if Code Note is found.
-                            else if (currentSearch.WasModified(result.nAddress))
-                                color = RGB(240, 240, 240); // Grey if still valid, but has changed
-                            else
-                                hBrush = GetSysColorBrush(COLOR_WINDOW);
-                        }
-                        else
-                        {
-                            SetTextColor(pDIS->hDC, GetSysColor(COLOR_WINDOWTEXT));
-                            hBrush = GetSysColorBrush(COLOR_WINDOW);
-                        }
-
-                        if (hBrush)
-                        {
-                            FillRect(pDIS->hDC, &pDIS->rcItem, hBrush);
-                        }
-                        else
-                        {
-                            hBrush = CreateSolidBrush(color);
-                            FillRect(pDIS->hDC, &pDIS->rcItem, hBrush);
-                            DeleteObject(hBrush);
-                        }
-
-                        RECT rcValue = pDIS->rcItem;
-                        std::wstring sAddress;
-                        if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() > 0x10000)
-                        {
-                            sAddress = ra::StringPrintf(L"0x%06x", result.nAddress);
-                            rcValue.left += 54;
-                        }
-                        else
-                        {
-                            sAddress = ra::StringPrintf(L"0x%04x", result.nAddress);
-                            rcValue.left += 44;
-                        }
-
-                        if (result.nSize == MemSize::Nibble_Lower)
-                        {
-                            sAddress.push_back('L');
-                            rcValue.left += 6;
-                        }
-                        else if (result.nSize == MemSize::Nibble_Upper)
-                        {
-                            sAddress.push_back('U');
-                            rcValue.left += 6;
-                        }
-
-                        DrawTextW(pDIS->hDC, sAddress.c_str(), gsl::narrow_cast<int>(sAddress.length()), &pDIS->rcItem,
-                            DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER);
-
-                        rcValue.right = rcValue.left + gsl::narrow_cast<int>(sValue.length()) * 6;
-                        DrawTextW(pDIS->hDC, sValue.c_str(), gsl::narrow_cast<int>(sValue.length()), &rcValue,
-                            DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER);
-
-                        if (sNote.empty())
-                        {
-                            const auto* pRegion = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().GetMemoryRegion(result.nAddress);
-                            if (pRegion)
-                            {
-                                sNote = ra::Widen(pRegion->Description);
-
-                                if (!(pDIS->itemState & ODS_SELECTED))
-                                    SetTextColor(pDIS->hDC, RGB(160, 160, 160));
-                            }
-                        }
-
-                        if (!sNote.empty())
-                        {
-                            RECT rcNote = pDIS->rcItem;
-                            rcNote.left = rcValue.right + 6;
-                            DrawTextW(pDIS->hDC, sNote.c_str(), gsl::narrow_cast<int>(sNote.length()), &rcNote,
-                                DT_SINGLELINE | DT_LEFT | DT_NOPREFIX | DT_NOCLIP | DT_VCENTER | DT_END_ELLIPSIS);
-                        }
-                    }
-                }
-            }
-            return TRUE;
-        }
-
         case WM_NOTIFY:
         {
             switch (LOWORD(wParam))
             {
                 case IDC_RA_MEM_LIST:
                 {
-                    GSL_SUPPRESS_IO5 GSL_SUPPRESS_TYPE1
-#pragma warning(suppress: 26454 26490)
-                    if ((reinterpret_cast<LPNMHDR>(lParam))->code == LVN_ITEMCHANGED ||
-                        (reinterpret_cast<LPNMHDR>(lParam))->code == NM_CLICK)
+                    LPNMHDR pnmHdr;
+                    GSL_SUPPRESS_TYPE1{ pnmHdr = reinterpret_cast<LPNMHDR>(lParam); }
+                    switch (pnmHdr->code)
                     {
-                        const int nSelect = ListView_GetNextItem(GetDlgItem(hDlg, IDC_RA_MEM_LIST), -1, LVNI_FOCUSED);
-
-                        if (nSelect == -1)
-                            break;
-                        else if (nSelect >= 2)
+                        case LVN_ITEMCHANGING:
                         {
-                            ra::services::SearchResults::Result result;
-                            if (!m_SearchResults.at(m_nPage).m_results.GetMatchingAddress(nSelect - 2, result))
-                                break;
-
-                            ComboBox_SetText(GetDlgItem(hDlg, IDC_RA_WATCHING),
-                                             NativeStr(ra::ByteAddressToString(result.nAddress)).c_str());
-
-                            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-                            const auto* pNote = pGameContext.FindCodeNote(result.nAddress);
-                            if (pNote && !pNote->empty())
-                                SetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, ra::Widen(*pNote).c_str());
-                            else
-                                SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, _T(""));
-
-                            GoToAddress(result.nAddress);
+                            LPNMLISTVIEW pnmListView;
+                            GSL_SUPPRESS_TYPE1{ pnmListView = reinterpret_cast<LPNMLISTVIEW>(pnmHdr); }
+                            SetWindowLongPtr(m_hWnd, DWLP_MSGRESULT, m_pSearchGridBinding->OnLvnItemChanging(pnmListView));
+                            return TRUE;
                         }
-                        else
-                            ListView_SetItemState(GetDlgItem(hDlg, IDC_RA_MEM_LIST), -1, LVIF_STATE, LVIS_SELECTED);
+
+                        case LVN_ITEMCHANGED:
+                        {
+                            LPNMLISTVIEW pnmListView;
+                            GSL_SUPPRESS_TYPE1{ pnmListView = reinterpret_cast<LPNMLISTVIEW>(pnmHdr); }
+                            m_pSearchGridBinding->OnLvnItemChanged(pnmListView);
+                            return 0;
+                        }
+
+                        case LVN_ODSTATECHANGED:
+                        {
+                            LPNMLVODSTATECHANGE pnmStateChanged;
+                            GSL_SUPPRESS_TYPE1{ pnmStateChanged = reinterpret_cast<LPNMLVODSTATECHANGE>(pnmHdr); }
+                            m_pSearchGridBinding->OnLvnOwnerDrawStateChanged(pnmStateChanged);
+                            return 0;
+                        }
+
+                        case NM_CLICK:
+                        {
+                            NMITEMACTIVATE* pnmItemActivate;
+                            GSL_SUPPRESS_TYPE1{ pnmItemActivate = reinterpret_cast<NMITEMACTIVATE*>(lParam); }
+                            m_pSearchGridBinding->OnNmClick(pnmItemActivate);
+                            return 0;
+                        }
+
+                        case NM_CUSTOMDRAW:
+                        {
+                            NMLVCUSTOMDRAW* pnmCustomDraw;
+                            GSL_SUPPRESS_TYPE1{ pnmCustomDraw = reinterpret_cast<NMLVCUSTOMDRAW*>(lParam); }
+                            SetWindowLongPtr(m_hWnd, DWLP_MSGRESULT, m_pSearchGridBinding->OnCustomDraw(pnmCustomDraw));
+                            return 1;
+                        }
+
+                        case LVN_GETDISPINFO:
+                        {
+                            NMLVDISPINFO* plvdi;
+                            GSL_SUPPRESS_TYPE1{ plvdi = reinterpret_cast<NMLVDISPINFO*>(lParam); }
+                            m_pSearchGridBinding->OnLvnGetDispInfo(*plvdi);
+                            return 1;
+                        }
                     }
                 }
             }
@@ -697,115 +626,25 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             {
                 case IDC_RA_DOTEST:
                 {
-                    if (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize() == 0)
-                        return TRUE; //	Handled
-
                     const ComparisonType nCmpType =
                         static_cast<ComparisonType>(ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE)));
+                    g_pMemorySearch->SetComparisonType(nCmpType);
 
-                    while (m_SearchResults.size() > gsl::narrow_cast<size_t>(m_nPage) + 1)
-                        m_SearchResults.pop_back();
+                    if (IsDlgButtonChecked(hDlg, IDC_RA_CBO_GIVENVAL) == BST_CHECKED)
+                        g_pMemorySearch->SetValueType(ra::ui::viewmodels::MemorySearchViewModel::ValueType::Constant);
+                    else
+                        g_pMemorySearch->SetValueType(ra::ui::viewmodels::MemorySearchViewModel::ValueType::LastKnownValue);
 
-                    ClearLogOutput();
+                    std::array<TCHAR, 1024> nativeBuffer{};
+                    if (GetDlgItemText(hDlg, IDC_RA_TESTVAL, nativeBuffer.data(), gsl::narrow_cast<int>(nativeBuffer.size())))
+                        g_pMemorySearch->SetFilterValue(ra::Widen(&nativeBuffer.at(0)));
 
-                    m_SearchResults.emplace_back();
-                    m_nPage++;
-
-                    if (m_SearchResults.size() > MIN_SEARCH_PAGE_SIZE)
-                    {
-                        m_SearchResults.erase(m_SearchResults.begin());
-                        m_nPage--;
-                    }
+                    g_pMemorySearch->ApplyFilter();
 
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_BACK), TRUE);
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), FALSE);
 
-                    assert(m_SearchResults.size() >= 2); // expect at least initial search and new filter holder
-                    SearchResult& srPrevious = *(m_SearchResults.end() - 2);
-                    SearchResult& sr = m_SearchResults.back();
-                    sr.m_nCompareType = nCmpType;
-
-                    if (IsDlgButtonChecked(hDlg, IDC_RA_CBO_GIVENVAL) == BST_UNCHECKED)
-                    {
-                        sr.m_results.Initialize(srPrevious.m_results, nCmpType);
-                        sr.m_bUseLastValue = true;
-                    }
-                    else
-                    {
-                        unsigned int nValueQuery = 0;
-
-                        std::array<TCHAR, 1024> nativeBuffer{};
-                        if (GetDlgItemText(hDlg, IDC_RA_TESTVAL, nativeBuffer.data(), 1024))
-                        {
-                            const auto sAddr = ra::Narrow(&nativeBuffer.at(0));
-                            const char* pStart = sAddr.c_str();
-
-                            if (ra::StringStartsWith(sAddr, "-"))
-                                ++pStart;
-
-                            // try decimal parse first
-                            char* pEnd;
-                            nValueQuery = std::strtoul(pStart, &pEnd, 10);
-                            assert(pEnd != nullptr);
-                            if (*pEnd)
-                            {
-                                // decimal parse failed, try hex
-                                nValueQuery = std::strtoul(pStart, &pEnd, 16);
-                                assert(pEnd != nullptr);
-                                if (*pEnd)
-                                {
-                                    // hex parse failed
-                                    nValueQuery = 0;
-                                }
-                            }
-
-                            if (pStart > sAddr.c_str())
-                            {
-                                // minus prefix - invert value
-                                GSL_SUPPRESS_TYPE1 nValueQuery = static_cast<unsigned int>(-static_cast<int>(nValueQuery));
-
-                                switch (g_pMemoryViewer->GetSize())
-                                {
-                                    case MemSize::EightBit:
-                                        nValueQuery &= 0xFF;
-                                        break;
-
-                                    case MemSize::SixteenBit:
-                                        nValueQuery &= 0xFFFF;
-                                        break;
-                                }
-                            }
-                        }
-
-                        sr.m_results.Initialize(srPrevious.m_results, nCmpType, nValueQuery);
-                        sr.m_nLastQueryVal = nValueQuery;
-                        sr.m_bUseLastValue = false;
-                    }
-
-                    const unsigned int nMatches = sr.m_results.MatchingAddressCount();
-                    if (nMatches == srPrevious.m_results.MatchingAddressCount())
-                    {
-                        // same number of matches, if the same query was used, don't double up on the search results
-                        if (sr.m_bUseLastValue == srPrevious.m_bUseLastValue &&
-                            sr.m_nCompareType == srPrevious.m_nCompareType &&
-                            sr.m_nLastQueryVal == srPrevious.m_nLastQueryVal)
-                        {
-                            // comparing against last value for non-equals case may result in different match
-                            // highlights, keep it.
-                            if (!sr.m_bUseLastValue || sr.m_nCompareType == ComparisonType::Equals)
-                            {
-                                m_SearchResults.erase(m_SearchResults.end() - 1);
-                                m_nPage--;
-                            }
-                        }
-                    }
-
-                    if (nMatches > MIN_RESULTS_TO_DUMP)
-                        ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), MIN_RESULTS_TO_DUMP + 2);
-                    else
-                        ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), gsl::narrow_cast<size_t>(nMatches) + 2);
-
-                    EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), nMatches > 0);
+                    EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), g_pMemorySearch->GetResultCount() > 0);
                     return TRUE;
                 }
 
@@ -828,40 +667,28 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     return FALSE;
 
                 case IDC_RA_CBO_4BIT:
-                case IDC_RA_CBO_8BIT:
-                case IDC_RA_CBO_16BIT:
-                case IDC_RA_CBO_32BIT:
-                {
-                    MemSize nCompSize = MemSize::Nibble_Lower; //	or upper, doesn't really matter
-                    if (SendDlgItemMessage(hDlg, IDC_RA_CBO_8BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                        nCompSize = MemSize::EightBit;
-                    else if (SendDlgItemMessage(hDlg, IDC_RA_CBO_16BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                        nCompSize = MemSize::SixteenBit;
-                    else if (SendDlgItemMessage(hDlg, IDC_RA_CBO_32BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                        nCompSize = MemSize::ThirtyTwoBit;
-                    else // if (SendDlgItemMessage(hDlg, IDC_RA_CBO_4BIT, BM_GETCHECK, 0, 0) == BST_CHECKED)
-                        nCompSize = MemSize::Nibble_Lower;
-
-                    ClearLogOutput();
-                    m_nPage = 0;
-
-                    m_SearchResults.clear();
-                    m_SearchResults.emplace_back();
-                    SearchResult& sr = m_SearchResults.back();
-
-                    ra::ByteAddress start, end;
-                    if (GetSelectedMemoryRange(start, end))
-                    {
-                        m_nCompareSize = nCompSize;
-                        m_nStart = start;
-                        m_nEnd = end;
-                        sr.m_results.Initialize(start, end - start + 1, nCompSize);
-
-                        EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), sr.m_results.MatchingAddressCount() > 0);
-                    }
-
+                    g_pMemorySearch->SetSearchType(ra::ui::viewmodels::MemorySearchViewModel::SearchType::FourBit);
+                    SetAddressRange();
+                    g_pMemorySearch->BeginNewSearch();
+                    if (g_pMemorySearch->GetResultCount() > 0)
+                        EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), TRUE);
                     return FALSE;
-                }
+
+                case IDC_RA_CBO_8BIT:
+                    g_pMemorySearch->SetSearchType(ra::ui::viewmodels::MemorySearchViewModel::SearchType::EightBit);
+                    SetAddressRange();
+                    g_pMemorySearch->BeginNewSearch();
+                    if (g_pMemorySearch->GetResultCount() > 0)
+                        EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), TRUE);
+                    return FALSE;
+
+                case IDC_RA_CBO_16BIT:
+                    g_pMemorySearch->SetSearchType(ra::ui::viewmodels::MemorySearchViewModel::SearchType::SixteenBit);
+                    SetAddressRange();
+                    g_pMemorySearch->BeginNewSearch();
+                    if (g_pMemorySearch->GetResultCount() > 0)
+                        EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), TRUE);
+                    return FALSE;
 
                 case ID_OK:
                     EndDialog(hDlg, TRUE);
@@ -1023,106 +850,24 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 }
 
                 case IDC_RA_RESULTS_BOOKMARK:
-                {
-                    if (!m_SearchResults.empty())
-                    {
-                        auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-                        if (!pBookmarks.IsVisible())
-                            pBookmarks.Show();
-
-                        HWND hList = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
-                        int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
-                        auto& currentSearch = m_SearchResults.at(m_nPage);
-
-                        int nCount = 0;
-                        pBookmarks.Bookmarks().BeginUpdate();
-                        while (nSel >= 0)
-                        {
-                            ra::services::SearchResults::Result result;
-                            if (!currentSearch.m_results.GetMatchingAddress(nSel - 2, result))
-                                break;
-
-                            if (result.nSize == MemSize::Nibble_Lower || result.nSize == MemSize::Nibble_Upper)
-                            {
-                                ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"4-bit bookmarks are not supported");
-                                break;
-                            }
-
-                            pBookmarks.AddBookmark(result.nAddress, result.nSize);
-
-                            nSel = ListView_GetNextItem(hList, nSel, LVNI_SELECTED);
-                            if (++nCount == 100)
-                                break;
-                        }
-                        pBookmarks.Bookmarks().EndUpdate();
-
-                        if (nCount == 100)
-                            ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"Can only create 100 new bookmarks at a time.");
-                    }
-
+                    g_pMemorySearch->BookmarkSelected();
                     return FALSE;
-                }
 
                 case IDC_RA_RESULTS_BACK:
-                {
-                    m_nPage--;
+                    g_pMemorySearch->PreviousPage();
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_BACK), m_nPage > 0);
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), TRUE);
-
-                    SearchResult& sr = m_SearchResults.at(m_nPage);
-                    if (sr.m_results.Summary().empty())
-                        ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), 1);
-                    else
-                        ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST),
-                            gsl::narrow_cast<size_t>(sr.m_results.MatchingAddressCount()) + 2);
-
-                    EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), sr.m_results.MatchingAddressCount() > 0);
                     return FALSE;
-                }
 
                 case IDC_RA_RESULTS_FORWARD:
-                {
-                    m_nPage++;
+                    g_pMemorySearch->PreviousPage();
                     EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_BACK), TRUE);
-                    EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), gsl::narrow_cast<size_t>(m_nPage) + 1 < m_SearchResults.size());
-
-                    SearchResult& sr = m_SearchResults.at(m_nPage);
-                    if (sr.m_results.Summary().empty())
-                        ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST), 1);
-                    else
-                        ListView_SetItemCount(GetDlgItem(hDlg, IDC_RA_MEM_LIST),
-                            gsl::narrow_cast<size_t>(sr.m_results.MatchingAddressCount()) + 2);
-
-                    EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), sr.m_results.MatchingAddressCount() > 0);
+                    EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), TRUE);
                     return FALSE;
-                }
 
                 case IDC_RA_RESULTS_REMOVE:
-                {
-                    HWND hList = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
-                    int nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
-
-                    if (nSel != -1)
-                    {
-                        while (m_SearchResults.size() > gsl::narrow_cast<size_t>(m_nPage) + 1)
-                            m_SearchResults.pop_back();
-
-                        // copy the selected page, so we can return to it if we want
-                        m_SearchResults.push_back(m_SearchResults.at(m_nPage));
-                        SearchResult& sr = m_SearchResults.back();
-                        m_nPage++;
-
-                        while (nSel >= 0)
-                        {
-                            sr.m_results.ExcludeMatchingAddress(nSel - 2);
-
-                            ListView_DeleteItem(hList, nSel);
-                            nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
-                        }
-                    }
-
+                    g_pMemorySearch->ExcludeSelected();
                     return FALSE;
-                }
 
                 case IDC_RA_WATCHING:
                     switch (HIWORD(wParam))
@@ -1280,6 +1025,7 @@ void Dlg_Memory::OnLoad_NewRom()
 
     if (pGameContext.GameId() == 0)
     {
+        SetWindowText(g_MemoryDialog.m_hWnd, TEXT("Memory Inspector [no game loaded]"));
         SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, TEXT(""));
 
         EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADDNOTE), FALSE);
@@ -1293,12 +1039,16 @@ void Dlg_Memory::OnLoad_NewRom()
 
         if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
         {
+            SetWindowText(g_MemoryDialog.m_hWnd, TEXT("Memory Inspector [compatibility mode]"));
+
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADDNOTE), FALSE);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_MEMSAVENOTE), FALSE);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_REMNOTE), FALSE);
         }
         else
         {
+            SetWindowText(g_MemoryDialog.m_hWnd, TEXT("Memory Inspector"));
+
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADDNOTE), TRUE);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_MEMSAVENOTE), TRUE);
             EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_REMNOTE), TRUE);
@@ -1408,17 +1158,27 @@ void Dlg_Memory::Invalidate()
     UpdateBits();
 
     // Update Search Results
-    HWND hList = GetDlgItem(m_hWnd, IDC_RA_MEM_LIST);
-    if (hList != nullptr)
+    if (g_pMemorySearch != nullptr)
     {
-        InvalidateRect(hList, nullptr, FALSE);
+        g_pMemorySearch->DoFrame();
 
-        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+        if (g_pMemorySearch->NeedsRedraw())
         {
-            case RA_Libretro:
-            case RA_Oricutron:
-                UpdateWindow(hList);
-                break;
+            HWND hListbox = GetDlgItem(m_hWnd, IDC_RA_MEM_LIST);
+
+            InvalidateRect(hListbox, nullptr, FALSE);
+
+            // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
+            // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
+            // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
+            // Similar code exists in Dlg_Memory::Invalidate for the search results
+            switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+            {
+                case RA_Libretro:
+                case RA_Oricutron:
+                    UpdateWindow(hListbox);
+                    break;
+            }
         }
     }
 }
@@ -1463,151 +1223,6 @@ void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)
 BOOL Dlg_Memory::IsActive() const noexcept
 {
     return (g_MemoryDialog.GetHWND() != nullptr) && (IsWindowVisible(g_MemoryDialog.GetHWND()));
-}
-
-inline static constexpr auto ParseAddress(TCHAR* ptr, ra::ByteAddress& address) noexcept
-{
-    if (ptr == nullptr)
-        return ptr;
-
-    if (*ptr == '$')
-    {
-        ++ptr;
-    }
-    else if (ptr[0] == '0' && ptr[1] == 'x')
-    {
-        ptr += 2;
-    }
-
-    address = 0;
-    while (*ptr)
-    {
-        if (*ptr >= '0' && *ptr <= '9')
-        {
-            address <<= 4;
-            address += (*ptr - '0');
-        }
-        else if (*ptr >= 'a' && *ptr <= 'f')
-        {
-            address <<= 4;
-            address += (*ptr - 'a' + 10);
-        }
-        else if (*ptr >= 'A' && *ptr <= 'F')
-        {
-            address <<= 4;
-            address += (*ptr - 'A' + 10);
-        }
-        else
-            break;
-
-        ++ptr;
-    }
-
-    return ptr;
-}
-
-bool Dlg_Memory::GetSelectedMemoryRange(ra::ByteAddress& start, ra::ByteAddress& end)
-{
-    if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHALL) == BST_CHECKED)
-    {
-        // all items are in "All" range
-        start = 0;
-        end = gsl::narrow_cast<ra::ByteAddress>(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize()) - 1;
-        return true;
-    }
-
-    if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM) == BST_CHECKED)
-    {
-        start = m_nSystemRamStart;
-        end = m_nSystemRamEnd;
-        return (end > start);
-    }
-
-    if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHGAMERAM) == BST_CHECKED)
-    {
-        start = m_nGameRamStart;
-        end = m_nGameRamEnd;
-        return (end > start);
-    }
-
-    if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHCUSTOM) == BST_CHECKED)
-    {
-        std::array<TCHAR, 128> buffer{};
-        GetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_SEARCHRANGE, buffer.data(), 128);
-
-        auto ptr = ParseAddress(buffer.data(), start);
-        Expects(ptr != nullptr);
-        while (iswspace(*ptr))
-            ++ptr;
-        if (*ptr != '-')
-            return false;
-        ++ptr;
-
-        while (iswspace(*ptr))
-            ++ptr;
-
-        ptr = ParseAddress(ptr, end);
-        Ensures(ptr != nullptr);
-        return (*ptr == '\0');
-    }
-    return false;
-}
-
-void Dlg_Memory::UpdateSearchResult(const ra::services::SearchResults::Result& result, _Out_ unsigned int& nMemVal,
-                                    std::wstring& sBuffer)
-{
-    nMemVal = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(result.nAddress, result.nSize);
-
-    switch (result.nSize)
-    {
-        case MemSize::ThirtyTwoBit:
-            sBuffer = ra::StringPrintf(L"0x%08x", nMemVal);
-            break;
-        case MemSize::SixteenBit:
-            sBuffer = ra::StringPrintf(L"0x%04x", nMemVal);
-            break;
-        default:
-        case MemSize::EightBit:
-            sBuffer = ra::StringPrintf(L"0x%02x", nMemVal);
-            break;
-        case MemSize::Nibble_Lower:
-        case MemSize::Nibble_Upper:
-            sBuffer = ra::StringPrintf(L"0x%01x", nMemVal);
-            break;
-    }
-}
-
-bool Dlg_Memory::CompareSearchResult(unsigned int nCurVal, unsigned int nPrevVal)
-{
-    const unsigned int nVal =
-        (m_SearchResults.at(m_nPage).m_bUseLastValue) ? nPrevVal : m_SearchResults.at(m_nPage).m_nLastQueryVal;
-    bool bResult = false;
-
-    switch (m_SearchResults.at(m_nPage).m_nCompareType)
-    {
-        case ComparisonType::Equals:
-            bResult = (nCurVal == nVal);
-            break;
-        case ComparisonType::LessThan:
-            bResult = (nCurVal < nVal);
-            break;
-        case ComparisonType::LessThanOrEqual:
-            bResult = (nCurVal <= nVal);
-            break;
-        case ComparisonType::GreaterThan:
-            bResult = (nCurVal > nVal);
-            break;
-        case ComparisonType::GreaterThanOrEqual:
-            bResult = (nCurVal >= nVal);
-            break;
-        case ComparisonType::NotEqualTo:
-            bResult = (nCurVal != nVal);
-            break;
-        default:
-            bResult = false;
-            break;
-    }
-    return bResult;
 }
 
 void Dlg_Memory::GenerateResizes(HWND hDlg)

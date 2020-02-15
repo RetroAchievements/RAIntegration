@@ -303,6 +303,9 @@
     <ClCompile Include="ui\win32\bindings\MultiLineGridBinding.cpp">
       <Filter>UI\Win32\Bindings</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\MemorySearchViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -778,6 +781,9 @@
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\MultiLineGridBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\MemorySearchViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

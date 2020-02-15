@@ -132,6 +132,7 @@
     <ClCompile Include="ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MemoryBookmarksViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\MemorySearchViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MemoryViewerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
@@ -281,6 +282,7 @@
     <ClInclude Include="ui\viewmodels\LoginViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MemoryBookmarksViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\MemorySearchViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MemoryViewerViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayAchievementsPageViewModel.hh" />

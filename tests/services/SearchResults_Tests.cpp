@@ -18,8 +18,7 @@ public:
     TEST_METHOD(TestEmpty)
     {
         SearchResults results;
-        Assert::AreEqual(0U, results.MatchingAddressCount());
-        Assert::AreEqual(std::string(""), results.Summary());
+        Assert::AreEqual({ 0U }, results.MatchingAddressCount());
 
         SearchResults::Result result;
         Assert::IsFalse(results.GetMatchingAddress(0, result));
@@ -34,8 +33,7 @@ public:
         SearchResults results;
         results.Initialize(1U, 3U, MemSize::EightBit);
 
-        Assert::AreEqual(3U, results.MatchingAddressCount());
-        Assert::AreEqual(std::string("Cleared: (8-bit) mode. Aware of 3 RAM locations."), results.Summary());
+        Assert::AreEqual({ 3U }, results.MatchingAddressCount());
 
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
@@ -69,8 +67,7 @@ public:
         SearchResults results;
         results.Initialize(1U, 3U, MemSize::SixteenBit);
 
-        Assert::AreEqual(2U, results.MatchingAddressCount());
-        Assert::AreEqual(std::string("Cleared: (16-bit) mode. Aware of 2 RAM locations."), results.Summary());
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
 
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
@@ -98,8 +95,7 @@ public:
         SearchResults results;
         results.Initialize(1U, 4U, MemSize::ThirtyTwoBit);
 
-        Assert::AreEqual(1U, results.MatchingAddressCount());
-        Assert::AreEqual(std::string("Cleared: (32-bit) mode. Aware of 1 RAM locations."), results.Summary());
+        Assert::AreEqual({ 1U }, results.MatchingAddressCount());
 
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
@@ -121,8 +117,7 @@ public:
         SearchResults results;
         results.Initialize(1U, 3U, MemSize::Nibble_Upper);
 
-        Assert::AreEqual(6U, results.MatchingAddressCount());
-        Assert::AreEqual(std::string("Cleared: (Lower4) mode. Aware of 6 RAM locations."), results.Summary());
+        Assert::AreEqual({ 6U }, results.MatchingAddressCount());
 
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
@@ -172,8 +167,7 @@ public:
         SearchResults results;
         results.Initialize(1U, 3U, MemSize::Nibble_Lower); // should behave identical to Nibble_Upper
 
-        Assert::AreEqual(6U, results.MatchingAddressCount());
-        Assert::AreEqual(std::string("Cleared: (Lower4) mode. Aware of 6 RAM locations."), results.Summary());
+        Assert::AreEqual({ 6U }, results.MatchingAddressCount());
 
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
@@ -223,8 +217,7 @@ public:
         SearchResults results;
         results.Initialize(1U, 8U, MemSize::SixteenBit);
 
-        Assert::AreEqual(3U, results.MatchingAddressCount());
-        Assert::AreEqual(std::string("Cleared: (16-bit) mode. Aware of 3 RAM locations."), results.Summary());
+        Assert::AreEqual({ 3U }, results.MatchingAddressCount());
 
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
@@ -257,13 +250,12 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
         results.Initialize(results1, ComparisonType::Equals, 0xABU);
-        Assert::AreEqual(std::string("Filtering for EQUAL 171..."), results.Summary());
 
-        Assert::AreEqual(1U, results.MatchingAddressCount());
+        Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsFalse(results.ContainsAddress(1U));
         Assert::IsFalse(results.ContainsAddress(2U));
@@ -285,13 +277,12 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo, 0xABU);
-        Assert::AreEqual(std::string("Filtering for NOT EQUAL 171..."), results.Summary());
 
-        Assert::AreEqual(2U, results.MatchingAddressCount());
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
         Assert::IsTrue(results.ContainsAddress(2U));
@@ -318,13 +309,12 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo, 0x34U);
-        Assert::AreEqual(std::string("Filtering for NOT EQUAL 52..."), results.Summary());
 
-        Assert::AreEqual(2U, results.MatchingAddressCount());
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
         Assert::IsFalse(results.ContainsAddress(2U));
@@ -351,13 +341,12 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
         results.Initialize(results1, ComparisonType::GreaterThan, 0x34U);
-        Assert::AreEqual(std::string("Filtering for GREATER THAN 52..."), results.Summary());
 
-        Assert::AreEqual(1U, results.MatchingAddressCount());
+        Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsFalse(results.ContainsAddress(1U));
         Assert::IsFalse(results.ContainsAddress(2U));
@@ -379,13 +368,12 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
         results.Initialize(results1, ComparisonType::GreaterThanOrEqual, 0x34U);
-        Assert::AreEqual(std::string("Filtering for GREATER THAN/EQUAL 52..."), results.Summary());
 
-        Assert::AreEqual(2U, results.MatchingAddressCount());
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsFalse(results.ContainsAddress(1U));
         Assert::IsTrue(results.ContainsAddress(2U));
@@ -412,13 +400,12 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
         results.Initialize(results1, ComparisonType::LessThan, 0x34U);
-        Assert::AreEqual(std::string("Filtering for LESS THAN 52..."), results.Summary());
 
-        Assert::AreEqual(1U, results.MatchingAddressCount());
+        Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
         Assert::IsFalse(results.ContainsAddress(2U));
@@ -440,13 +427,12 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
         results.Initialize(results1, ComparisonType::LessThanOrEqual, 0x34U);
-        Assert::AreEqual(std::string("Filtering for LESS THAN/EQUAL 52..."), results.Summary());
 
-        Assert::AreEqual(2U, results.MatchingAddressCount());
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
         Assert::IsTrue(results.ContainsAddress(2U));
@@ -473,16 +459,15 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         // swap bytes 1 and 3, match should be found at address 1, not address 3
         memory.at(1) = 0xAB;
         memory.at(3) = 0x12;
         SearchResults results;
         results.Initialize(results1, ComparisonType::Equals, 0xABU);
-        Assert::AreEqual(std::string("Filtering for EQUAL 171..."), results.Summary());
 
-        Assert::AreEqual(1U, results.MatchingAddressCount());
+        Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
         Assert::IsFalse(results.ContainsAddress(2U));
@@ -504,15 +489,14 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         memory.at(1) = 0x14;
         memory.at(2) = 0x55;
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo);
-        Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
 
-        Assert::AreEqual(2U, results.MatchingAddressCount());
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
         Assert::IsTrue(results.ContainsAddress(2U));
@@ -539,14 +523,13 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 4U, MemSize::SixteenBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         memory.at(2) = 0x55;
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo);
-        Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
 
-        Assert::AreEqual(2U, results.MatchingAddressCount());
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
         Assert::IsTrue(results.ContainsAddress(2U));
@@ -572,15 +555,14 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::Nibble_Lower);
-        Assert::AreEqual(6U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 6U }, results1.MatchingAddressCount());
 
         memory.at(1) = 0x14;
         memory.at(2) = 0x55;
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo);
-        Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
 
-        Assert::AreEqual(3U, results.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
         Assert::IsTrue(results.ContainsAddress(2U));
@@ -612,11 +594,11 @@ public:
 
         SearchResults results;
         results.Initialize(1U, 3U, MemSize::Nibble_Lower);
-        Assert::AreEqual(6U, results.MatchingAddressCount());
+        Assert::AreEqual({ 6U }, results.MatchingAddressCount());
 
         SearchResults filtered1;
         filtered1.Initialize(results, ComparisonType::Equals, 1);
-        Assert::AreEqual(1U, filtered1.MatchingAddressCount());
+        Assert::AreEqual({ 1U }, filtered1.MatchingAddressCount());
 
         SearchResults::Result result;
         Assert::IsTrue(filtered1.GetMatchingAddress(0U, result));
@@ -628,13 +610,13 @@ public:
         memory.at(1) = 0x21;
         SearchResults filtered2;
         filtered2.Initialize(filtered1, ComparisonType::Equals, 1);
-        Assert::AreEqual(0U, filtered2.MatchingAddressCount());
+        Assert::AreEqual({ 0U }, filtered2.MatchingAddressCount());
 
         // Both nibbles match, only previously matched one should be returned
         memory.at(1) = 0x11;
         SearchResults filtered3;
         filtered3.Initialize(filtered1, ComparisonType::Equals, 1);
-        Assert::AreEqual(1U, filtered3.MatchingAddressCount());
+        Assert::AreEqual({ 1U }, filtered3.MatchingAddressCount());
 
         Assert::IsTrue(filtered3.GetMatchingAddress(0U, result));
         Assert::AreEqual(1U, result.nAddress);
@@ -650,19 +632,18 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
         results1.ExcludeAddress(1U);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         memory.at(1) = 0x14;
         memory.at(2) = 0x55;
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo);
-        Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
 
-        Assert::AreEqual(2U, results.MatchingAddressCount());
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
         Assert::IsTrue(results.ContainsAddress(2U));
@@ -670,7 +651,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(4U));
 
         results.ExcludeAddress(1U);
-        Assert::AreEqual(1U, results.MatchingAddressCount());
+        Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsFalse(results.ContainsAddress(1U));
         Assert::IsTrue(results.ContainsAddress(2U));
@@ -692,19 +673,18 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
         results1.ExcludeMatchingAddress(0U);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         memory.at(1) = 0x14;
         memory.at(2) = 0x55;
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo);
-        Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
 
-        Assert::AreEqual(2U, results.MatchingAddressCount());
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(1U));
         Assert::IsTrue(results.ContainsAddress(2U));
@@ -712,7 +692,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(4U));
 
         results.ExcludeMatchingAddress(0U);
-        Assert::AreEqual(1U, results.MatchingAddressCount());
+        Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsFalse(results.ContainsAddress(1U));
         Assert::IsTrue(results.ContainsAddress(2U));
@@ -737,7 +717,7 @@ public:
         SearchResults results;
         results.Initialize(0U, BIG_BLOCK_SIZE, MemSize::EightBit);
 
-        Assert::AreEqual(BIG_BLOCK_SIZE, results.MatchingAddressCount());
+        Assert::AreEqual({ BIG_BLOCK_SIZE }, results.MatchingAddressCount());
         Assert::IsTrue(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(MAX_BLOCK_SIZE - 1));
         Assert::IsTrue(results.ContainsAddress(MAX_BLOCK_SIZE));
@@ -774,7 +754,7 @@ public:
         SearchResults results;
         results.Initialize(0U, BIG_BLOCK_SIZE, MemSize::SixteenBit);
 
-        Assert::AreEqual(BIG_BLOCK_SIZE - 1, results.MatchingAddressCount());
+        Assert::AreEqual({ BIG_BLOCK_SIZE - 1 }, results.MatchingAddressCount());
         Assert::IsTrue(results.ContainsAddress(0U));
         Assert::IsTrue(results.ContainsAddress(MAX_BLOCK_SIZE - 1));
         Assert::IsTrue(results.ContainsAddress(MAX_BLOCK_SIZE));
@@ -809,8 +789,7 @@ public:
         SearchResults results;
         results.Initialize(0U, 0U, MemSize::SixteenBit);
 
-        Assert::AreEqual(0U, results.MatchingAddressCount());
-        Assert::AreEqual(std::string("Cleared: (16-bit) mode. Aware of 0 RAM locations."), results.Summary());
+        Assert::AreEqual({ 0U }, results.MatchingAddressCount());
     }
 
     TEST_METHOD(TestCopyConstructor)
@@ -821,21 +800,20 @@ public:
 
         SearchResults results1;
         results1.Initialize(1U, 3U, MemSize::EightBit);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
         results1.ExcludeMatchingAddress(0U);
-        Assert::AreEqual(3U, results1.MatchingAddressCount());
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         memory.at(1) = 0x14;
         memory.at(2) = 0x55;
         SearchResults results;
         results.Initialize(results1, ComparisonType::NotEqualTo);
-        Assert::AreEqual(std::string("Filtering for NOT EQUAL last known value..."), results.Summary());
 
         SearchResults results2(results);
 
-        Assert::AreEqual(2U, results2.MatchingAddressCount());
+        Assert::AreEqual({ 2U }, results2.MatchingAddressCount());
         Assert::IsFalse(results2.ContainsAddress(0U));
         Assert::IsTrue(results2.ContainsAddress(1U));
         Assert::IsTrue(results2.ContainsAddress(2U));

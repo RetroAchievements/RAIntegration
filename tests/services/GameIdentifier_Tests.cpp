@@ -423,6 +423,35 @@ public:
         Assert::IsTrue(identifier.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
     }
 
+    TEST_METHOD(TestActivateGameResetCompatibility)
+    {
+        GameIdentifierHarness identifier;
+        identifier.MockCompatibilityTest(23U);
+        identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        identifier.mockUserContext.Initialize("User", "ApiToken");
+
+        Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+        identifier.ActivateGame(23U);
+
+        Assert::AreEqual(23U, identifier.mockGameContext.GameId());
+        Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
+        Assert::AreEqual(ra::data::GameContext::Mode::CompatibilityTest, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(23U, identifier.mockSessionTracker.CurrentSessionGameId());
+        Assert::IsNull(identifier.mockOverlayManager.GetMessage(1U));
+        Assert::IsTrue(identifier.mockGameContext.WasLoaded());
+
+        identifier.MockResolveHashResponse(22U);
+        Assert::AreEqual(22U, identifier.IdentifyHash(ROM_HASH));
+        identifier.ActivateGame(22U);
+
+        Assert::AreEqual(22U, identifier.mockGameContext.GameId());
+        Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
+        Assert::AreEqual(ra::data::GameContext::Mode::Normal, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(22U, identifier.mockSessionTracker.CurrentSessionGameId());
+        Assert::IsNull(identifier.mockOverlayManager.GetMessage(1U));
+        Assert::IsTrue(identifier.mockGameContext.WasLoaded());
+    }
+
     TEST_METHOD(TestIdentifyAndActivateGameHardcore)
     {
         GameIdentifierHarness identifier;

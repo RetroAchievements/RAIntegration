@@ -527,6 +527,9 @@ void Achievement::SetBadgeImage(const std::string& sBadgeURI)
         m_sBadgeImageURI.assign(sBadgeURI.c_str(), sBadgeURI.length() - 5);
     else
         m_sBadgeImageURI = sBadgeURI;
+
+    if (m_sBadgeImageURI.length() < 5)
+        m_sBadgeImageURI.insert(0, 5 - m_sBadgeImageURI.length(), '0');
 }
 
 size_t Achievement::AddCondition(size_t nConditionGroup, const Condition& rNewCond)

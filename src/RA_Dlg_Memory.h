@@ -2,7 +2,7 @@
 #define RA_DLG_MEMORY_H
 #pragma once
 
-#include "services/SearchResults.h"
+#include "data/GameContext.hh"
 
 #include "ui/ViewModelBase.hh"
 
@@ -26,23 +26,9 @@ public:
     static MemSize GetDataSize();
 };
 
-struct SearchResult
-{
-    ra::services::SearchResults m_results;
-
-    std::vector<unsigned int> m_modifiedAddresses;
-    bool m_bUseLastValue = false;
-    unsigned int m_nLastQueryVal = 0;
-    ComparisonType m_nCompareType = ComparisonType::Equals;
-
-    bool WasModified(unsigned int nAddress)
-    {
-        return std::find(m_modifiedAddresses.begin(), m_modifiedAddresses.end(), nAddress) != m_modifiedAddresses.end();
-    }
-};
-
 class Dlg_Memory : protected ra::ui::ViewModelBase::NotifyTarget,
-                   protected ra::ui::ViewModelCollectionBase::NotifyTarget
+                   protected ra::ui::ViewModelCollectionBase::NotifyTarget,
+                   protected ra::data::GameContext::NotifyTarget
 {
 public:
     void Init() noexcept;
@@ -58,7 +44,6 @@ public:
 
     void OnWatchingMemChange();
 
-    void RepopulateCodeNotes();
     void Invalidate();
 
     void UpdateMemoryRegions();
@@ -77,19 +62,18 @@ protected:
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const ra::ui::BoolModelProperty::ChangeArgs& args) override;
 
+    // GameContext::NotifyTarget
+    void OnEndGameLoad() override;
+
 private:
     void SetAddressRange();
     ra::ByteAddress m_nSystemRamStart{}, m_nSystemRamEnd{}, m_nGameRamStart{}, m_nGameRamEnd{};
 
     static HWND m_hWnd;
 
-    unsigned int m_nCodeNotesGameId = 0;
-
     unsigned int m_nStart = 0;
     unsigned int m_nEnd = 0;
     MemSize m_nCompareSize = MemSize{};
-
-    std::vector<SearchResult> m_SearchResults;
 
     std::unique_ptr<ra::ui::win32::bindings::GridBinding> m_pSearchGridBinding;
 };

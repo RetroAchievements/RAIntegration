@@ -39,6 +39,7 @@
 #define IDC_RA_APPLY_FILTER             1134
 #define IDC_RA_RESET_FILTER             1135
 #define IDC_RA_RESULT_COUNT             1136
+#define IDC_RA_VIEW_CODENOTES           1137
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -106,7 +107,6 @@
 #define IDC_RA_BADGENAME                1564
 #define IDC_RA_KNOWNGAMES               1565
 #define IDC_RA_CHECKSUM                 1566
-#define IDC_RA_MEMBANK                  1567
 #define IDC_RA_MOVECONDUP               1568
 #define IDC_RA_ACTIVATE_ALL_ACH         1574
 #define IDC_RA_ACH_GROUP                1575

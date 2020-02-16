@@ -3,7 +3,9 @@
 #include "RA_Log.h"
 #include "RA_Resource.h"
 
+#include "ui\IDesktop.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
@@ -23,9 +25,12 @@ bool CodeNotesDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& 
     return (dynamic_cast<const CodeNotesViewModel*>(&vmViewModel) != nullptr);
 }
 
-void CodeNotesDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND)
+void CodeNotesDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
-    ShowWindow(vmViewModel);
+    auto& vmCodeNotes = reinterpret_cast<CodeNotesViewModel&>(vmViewModel);
+
+    CodeNotesDialog oDialog(vmCodeNotes);
+    oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_CODENOTES), this, hParentWnd);
 }
 
 void CodeNotesDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& vmViewModel)
@@ -62,7 +67,13 @@ public:
         {
             const auto* pItem = pItems->GetItemAt(nIndex);
             if (pItem)
+            {
                 g_MemoryDialog.GoToAddress(pItem->nAddress);
+
+                auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+                auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+                pDesktop.CloseWindow(pWindowManager.CodeNotes);
+            }
         }
 #endif
         return true;

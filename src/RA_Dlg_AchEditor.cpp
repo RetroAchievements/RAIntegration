@@ -1557,14 +1557,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 // Wake up the mem dlg via the main app
                                 SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
 
-                                // Update the text to match
-                                char buffer[16];
-                                sprintf_s(buffer, 16, "0x%06x", rCond.CompSource().GetValue());
-                                SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
-
-                                // Nudge the ComboBox to update the mem note
-                                SendMessage(g_MemoryDialog.GetHWND(), WM_COMMAND,
-                                            MAKELONG(IDC_RA_WATCHING, CBN_EDITCHANGE), 0);
+                                g_MemoryDialog.GoToAddress(rCond.CompSource().GetValue());
                             }
                         }
                         else if (pOnClick->iSubItem == CondSubItems::Value_Tgt)
@@ -1574,14 +1567,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                                 // Wake up the mem dlg via the main app
                                 SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
 
-                                // Update the text to match
-                                char buffer[16];
-                                sprintf_s(buffer, 16, "0x%06x", rCond.CompTarget().GetValue());
-                                SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(buffer).c_str());
-
-                                // Nudge the ComboBox to update the mem note
-                                SendMessage(g_MemoryDialog.GetHWND(), WM_COMMAND,
-                                            MAKELONG(IDC_RA_WATCHING, CBN_EDITCHANGE), 0);
+                                g_MemoryDialog.GoToAddress(rCond.CompTarget().GetValue());
                             }
                         }
                     }

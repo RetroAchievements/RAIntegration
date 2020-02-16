@@ -422,8 +422,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_MEMORYBOOKMARKS:
-            //ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Show();
-            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().CodeNotes.Show();
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks.Show();
             break;
 
         case IDM_RA_FILES_LOGIN:

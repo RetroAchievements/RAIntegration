@@ -4,7 +4,6 @@
 
 #include "RA_Defs.h"
 #include "RA_Dlg_Achievement.h"
-#include "RA_Dlg_Memory.h"
 #include "RA_Log.h"
 #include "RA_StringUtils.h"
 
@@ -1091,10 +1090,6 @@ void GameContext::RefreshCodeNotes()
             AddCodeNote(pNote.Address, pNote.Author, pNote.Note);
 
         EndLoad();
-
-#ifndef RA_UTEST
-        g_MemoryDialog.RepopulateCodeNotes();
-#endif
     });
 }
 

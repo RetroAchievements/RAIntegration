@@ -28,8 +28,6 @@ private:
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-        void SetIsVisible(bool bValue) { SetValue(IsVisibleProperty, bValue); }
-
         void PopulateNotes()
         {
             mockGameContext.SetGameId(1U);

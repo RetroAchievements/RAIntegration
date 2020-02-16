@@ -27,19 +27,21 @@ bool CodeNotesDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& 
 
 void CodeNotesDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
-    auto& vmCodeNotes = reinterpret_cast<CodeNotesViewModel&>(vmViewModel);
+    auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&vmViewModel);
+    Expects(vmCodeNotes != nullptr);
 
-    CodeNotesDialog oDialog(vmCodeNotes);
+    CodeNotesDialog oDialog(*vmCodeNotes);
     oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_CODENOTES), this, hParentWnd);
 }
 
 void CodeNotesDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& vmViewModel)
 {
-    auto& vmCodeNotes = reinterpret_cast<CodeNotesViewModel&>(vmViewModel);
+    auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&vmViewModel);
+    Expects(vmCodeNotes != nullptr);
 
     if (m_pDialog == nullptr)
     {
-        m_pDialog.reset(new CodeNotesDialog(vmCodeNotes));
+        m_pDialog.reset(new CodeNotesDialog(*vmCodeNotes));
         if (!m_pDialog->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_CODENOTES), this))
             RA_LOG_ERR("Could not create Code Notes dialog!");
     }
@@ -62,7 +64,7 @@ public:
     bool HandleDoubleClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override
     {
 #ifndef RA_UTEST
-        const auto* pItems = reinterpret_cast<const ra::ui::ViewModelCollection<CodeNotesViewModel::CodeNoteViewModel>*>(&vmItems);
+        const auto* pItems = dynamic_cast<const ra::ui::ViewModelCollection<CodeNotesViewModel::CodeNoteViewModel>*>(&vmItems);
         if (pItems)
         {
             const auto* pItem = pItems->GetItemAt(nIndex);
@@ -129,24 +131,27 @@ BOOL CodeNotesDialog::OnCommand(WORD nCommand)
     {
         case IDC_RA_RESET_FILTER:
         {
-            auto& vmCodeNotes = reinterpret_cast<CodeNotesViewModel&>(m_vmWindow);
-            vmCodeNotes.ResetFilter();
+            auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
+            if (vmCodeNotes)
+                vmCodeNotes->ResetFilter();
 
             return TRUE;
         }
 
         case IDC_RA_APPLY_FILTER:
         {
-            auto& vmCodeNotes = reinterpret_cast<CodeNotesViewModel&>(m_vmWindow);
-            vmCodeNotes.ApplyFilter();
+            auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
+            if (vmCodeNotes)
+                vmCodeNotes->ApplyFilter();
 
             return TRUE;
         }
 
         case IDC_RA_ADDBOOKMARK:
         {
-            auto& vmCodeNotes = reinterpret_cast<CodeNotesViewModel&>(m_vmWindow);
-            vmCodeNotes.BookmarkSelected();
+            const auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
+            if (vmCodeNotes)
+                vmCodeNotes->BookmarkSelected();
 
             return TRUE;
         }

@@ -339,12 +339,12 @@ void ViewModelCollectionBase::UpdateIndices()
 
     // second pass, deal with new items
     gsl::index nIndex = 0;
-    for (; nIndex < m_vItems.size(); ++nIndex)
+    for (; nIndex < ra::to_signed(m_vItems.size()); ++nIndex)
     {
         auto& pItem = m_vItems.at(nIndex);
         if (pItem.Index() == -1)
         {
-            for (gsl::index nIndex2 = nIndex + 1; nIndex2 < m_vItems.size(); ++nIndex2)
+            for (gsl::index nIndex2 = nIndex + 1; nIndex2 < ra::to_signed(m_vItems.size()); ++nIndex2)
             {
                 auto& pItem2 = m_vItems.at(nIndex2);
                 if (pItem2.Index() >= nIndex)

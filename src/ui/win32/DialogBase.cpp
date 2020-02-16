@@ -200,7 +200,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                 case LVN_ITEMCHANGING:
                 {
                     ra::ui::win32::bindings::GridBinding* pGridBinding;
-                    GSL_SUPPRESS_TYPE1 pGridBinding = reinterpret_cast<ra::ui::win32::bindings::GridBinding*>(
+                    GSL_SUPPRESS_TYPE1 pGridBinding = dynamic_cast<ra::ui::win32::bindings::GridBinding*>(
                         FindControlBinding(pnmHdr->hwndFrom));
 
                     if (pGridBinding)
@@ -217,7 +217,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                 case LVN_ITEMCHANGED:
                 {
                     ra::ui::win32::bindings::GridBinding* pGridBinding;
-                    GSL_SUPPRESS_TYPE1 pGridBinding = reinterpret_cast<ra::ui::win32::bindings::GridBinding*>(
+                    GSL_SUPPRESS_TYPE1 pGridBinding = dynamic_cast<ra::ui::win32::bindings::GridBinding*>(
                         FindControlBinding(pnmHdr->hwndFrom));
 
                     if (pGridBinding)
@@ -233,7 +233,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                 case LVN_COLUMNCLICK:
                 {
                     ra::ui::win32::bindings::GridBinding* pGridBinding;
-                    GSL_SUPPRESS_TYPE1 pGridBinding = reinterpret_cast<ra::ui::win32::bindings::GridBinding*>(
+                    GSL_SUPPRESS_TYPE1 pGridBinding = dynamic_cast<ra::ui::win32::bindings::GridBinding*>(
                         FindControlBinding(pnmHdr->hwndFrom));
 
                     if (pGridBinding)
@@ -249,7 +249,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                 case NM_CLICK:
                 {
                     ra::ui::win32::bindings::GridBinding* pGridBinding;
-                    GSL_SUPPRESS_TYPE1 pGridBinding = reinterpret_cast<ra::ui::win32::bindings::GridBinding*>(
+                    GSL_SUPPRESS_TYPE1 pGridBinding = dynamic_cast<ra::ui::win32::bindings::GridBinding*>(
                         FindControlBinding(pnmHdr->hwndFrom));
 
                     if (pGridBinding)
@@ -265,7 +265,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                 case NM_DBLCLK:
                 {
                     ra::ui::win32::bindings::GridBinding* pGridBinding;
-                    GSL_SUPPRESS_TYPE1 pGridBinding = reinterpret_cast<ra::ui::win32::bindings::GridBinding*>(
+                    GSL_SUPPRESS_TYPE1 pGridBinding = dynamic_cast<ra::ui::win32::bindings::GridBinding*>(
                         FindControlBinding(pnmHdr->hwndFrom));
 
                     if (pGridBinding)

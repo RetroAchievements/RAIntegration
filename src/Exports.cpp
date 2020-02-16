@@ -183,8 +183,8 @@ API void CCONV _RA_SetUserAgentDetail(const char* sDetail)
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
 {
     ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().AddMemoryBlock(nBankID, nBankSize,
-        reinterpret_cast<ra::data::EmulatorContext::MemoryReadFunction*>(pReader),
-        reinterpret_cast<ra::data::EmulatorContext::MemoryWriteFunction*>(pWriter));
+        static_cast<ra::data::EmulatorContext::MemoryReadFunction*>(pReader),
+        static_cast<ra::data::EmulatorContext::MemoryWriteFunction*>(pWriter));
 }
 
 API void CCONV _RA_ClearMemoryBanks()

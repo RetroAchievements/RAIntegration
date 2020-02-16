@@ -9,6 +9,11 @@ namespace ui {
 namespace win32 {
 namespace bindings {
 
+static bool SupportsMultipleLines(const GridColumnBinding* pColumn) noexcept
+{
+    return (dynamic_cast<const GridTextColumnBinding*>(pColumn) != nullptr);
+}
+
 gsl::index MultiLineGridBinding::GetIndexForLine(gsl::index nLine) const
 {
     // TODO: update m_nFirstVisibleItem in UpdateScroll
@@ -23,7 +28,7 @@ gsl::index MultiLineGridBinding::GetIndexForLine(gsl::index nLine) const
             if (--nIndex == 0)
                 break;
         }
-        else if (pItemMetrics.nFirstLine + pItemMetrics.nNumLines <= nLine)
+        else if (gsl::narrow_cast<gsl::index>(pItemMetrics.nFirstLine) + pItemMetrics.nNumLines <= nLine)
         {
             ++nIndex;
         }
@@ -42,7 +47,7 @@ void MultiLineGridBinding::OnViewModelAdded(gsl::index nIndex)
     for (gsl::index nColumn = 0; nColumn < ra::to_signed(m_vColumns.size()); ++nColumn)
     {
         const auto* pColumn = m_vColumns.at(nColumn).get();
-        if (reinterpret_cast<const GridTextColumnBinding*>(pColumn) != nullptr)
+        if (SupportsMultipleLines(pColumn))
         {
             const auto nChars = GetMaxCharsForColumn(nColumn);
             UpdateLineBreaks(nIndex, nColumn, pColumn, nChars);
@@ -66,7 +71,7 @@ void MultiLineGridBinding::OnViewModelStringValueChanged(gsl::index nIndex, cons
     for (gsl::index nColumn = 0; nColumn < ra::to_signed(m_vColumns.size()); ++nColumn)
     {
         const auto* pColumn = m_vColumns.at(nColumn).get();
-        if (reinterpret_cast<const GridTextColumnBinding*>(pColumn) != nullptr && pColumn->DependsOn(args.Property))
+        if (pColumn && SupportsMultipleLines(pColumn) && pColumn->DependsOn(args.Property))
         {
             auto& pItemMetrics = m_vItemMetrics.at(nIndex);
             const auto nChars = GetMaxCharsForColumn(nColumn);
@@ -114,6 +119,7 @@ int MultiLineGridBinding::GetMaxCharsForColumn(gsl::index nColumn) const
 void MultiLineGridBinding::UpdateLineBreaks(gsl::index nIndex, gsl::index nColumn, const ra::ui::win32::bindings::GridColumnBinding* pColumn, int nChars)
 {
     std::vector<unsigned int> vLineBreaks;
+    Expects(pColumn != nullptr);
 
     const auto sText = pColumn->GetText(*m_vmItems, nIndex);
     GetLineBreaks(sText, nChars, vLineBreaks);
@@ -184,7 +190,7 @@ void MultiLineGridBinding::UpdateAllItems()
     for (gsl::index nColumn = 0; nColumn < ra::to_signed(m_vColumns.size()); ++nColumn)
     {
         const auto* pColumn = m_vColumns.at(nColumn).get();
-        if (reinterpret_cast<const GridTextColumnBinding*>(pColumn) != nullptr)
+        if (SupportsMultipleLines(pColumn))
         {
             const auto nChars = GetMaxCharsForColumn(nColumn);
             for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vmItems->Count()); ++nIndex)

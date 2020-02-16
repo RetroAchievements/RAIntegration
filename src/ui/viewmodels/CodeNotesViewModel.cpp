@@ -152,6 +152,7 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::
     for (; nIndex < ra::to_signed(m_vNotes.Count()); ++nIndex)
     {
         auto* pNote = m_vNotes.GetItemAt(nIndex);
+        Ensures(pNote != nullptr);
         if (pNote->nAddress == nAddress)
         {
             if (bMatchesFilter)

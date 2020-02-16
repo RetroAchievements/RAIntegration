@@ -86,8 +86,8 @@ public:
         /// </summary>
         void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
 
-        ra::ByteAddress nAddress;
-        unsigned int nBytes;
+        ra::ByteAddress nAddress = 0;
+        unsigned int nBytes = 1;
     };
 
     /// <summary>

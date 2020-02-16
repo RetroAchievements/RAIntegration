@@ -15,7 +15,7 @@ protected:
     GSL_SUPPRESS_F6 ViewModelCollectionBase() = default;
 
 public:
-    ~ViewModelCollectionBase() noexcept
+    virtual ~ViewModelCollectionBase() noexcept
     {
         if (!m_bFrozen)
             StopWatching();

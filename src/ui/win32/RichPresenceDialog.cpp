@@ -19,11 +19,12 @@ void RichPresenceDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmVie
 
 void RichPresenceDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& vmViewModel)
 {
-    auto& vmRichPresenceViewModel = reinterpret_cast<ra::ui::viewmodels::RichPresenceMonitorViewModel&>(vmViewModel);
+    auto* vmRichPresenceViewModel = dynamic_cast<ra::ui::viewmodels::RichPresenceMonitorViewModel*>(&vmViewModel);
+    Expects(vmRichPresenceViewModel != nullptr);
 
     if (m_pDialog == nullptr)
     {
-        m_pDialog.reset(new RichPresenceDialog(vmRichPresenceViewModel));
+        m_pDialog.reset(new RichPresenceDialog(*vmRichPresenceViewModel));
         if (!m_pDialog->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_RICHPRESENCE), this))
             RA_LOG_ERR("Could not create RichPresence dialog!");
     }

@@ -309,7 +309,7 @@ GSL_SUPPRESS_F6 _NODISCARD bool StringContainsCaseInsensitive(_In_ const std::ws
         return false;
 
     std::wstring sMatchLower;
-    const wchar_t* pMatch = sMatch.data();
+    const wchar_t* pMatch = sMatch.c_str();
     if (!bMatchIsLowerCased)
     {
         sMatchLower = sMatch;
@@ -319,8 +319,11 @@ GSL_SUPPRESS_F6 _NODISCARD bool StringContainsCaseInsensitive(_In_ const std::ws
 
         pMatch = sMatchLower.data();
     }
+    Ensures(pMatch != nullptr);
 
-    const wchar_t* pScan = sString.data();
+    const wchar_t* pScan = sString.c_str();
+    Ensures(pScan != nullptr);
+
     const wchar_t* pEnd = pScan + sString.length() - sMatch.length() + 1;
     while (pScan < pEnd)
     {

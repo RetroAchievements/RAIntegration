@@ -295,23 +295,23 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
             default:
                 ASSERT(!"Unsupported operator");
                 _FALLTHROUGH;
-            case RC_CONDITION_NONE:
-            case RC_CONDITION_EQ:
+            case RC_OPERATOR_NONE:
+            case RC_OPERATOR_EQ:
                 cond.SetCompareType(ComparisonType::Equals);
                 break;
-            case RC_CONDITION_NE:
+            case RC_OPERATOR_NE:
                 cond.SetCompareType(ComparisonType::NotEqualTo);
                 break;
-            case RC_CONDITION_LT:
+            case RC_OPERATOR_LT:
                 cond.SetCompareType(ComparisonType::LessThan);
                 break;
-            case RC_CONDITION_LE:
+            case RC_OPERATOR_LE:
                 cond.SetCompareType(ComparisonType::LessThanOrEqual);
                 break;
-            case RC_CONDITION_GT:
+            case RC_OPERATOR_GT:
                 cond.SetCompareType(ComparisonType::GreaterThan);
                 break;
-            case RC_CONDITION_GE:
+            case RC_OPERATOR_GE:
                 cond.SetCompareType(ComparisonType::GreaterThanOrEqual);
                 break;
         }

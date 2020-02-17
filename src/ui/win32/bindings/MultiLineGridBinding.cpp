@@ -226,10 +226,11 @@ void MultiLineGridBinding::UpdateItems(gsl::index nColumn)
             const auto pIter = pItemMetrics.mColumnLineOffsets.find(gsl::narrow_cast<int>(nColumn));
             if (pIter != pItemMetrics.mColumnLineOffsets.end())
             {
+                gsl::index nStop = 0;
                 for (auto nIndex : pIter->second)
                 {
                     auto nIndex2 = nIndex - 1;
-                    while (isspace(sText.at(nIndex2 - 1)))
+                    while (nIndex2 > nStop && isspace(sText.at(nIndex2 - 1)))
                         --nIndex2;
                     sText.at(nIndex2) = '\0';
 
@@ -238,8 +239,10 @@ void MultiLineGridBinding::UpdateItems(gsl::index nColumn)
                     else
                         ListView_InsertItem(m_hWnd, &item);
 
-                    item.pszText = &sText.at(nIndex);
+                    item.pszText = nIndex < sText.length() ? &sText.at(nIndex) : &sText.at(nIndex2);
                     item.iItem = gsl::narrow_cast<int>(++nLine);
+
+                    nStop = nIndex;
                 }
             }
             else

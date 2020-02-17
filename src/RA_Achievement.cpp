@@ -237,6 +237,8 @@ static constexpr MemSize GetCompVariableSize(char nOperandSize) noexcept
             return MemSize::TwentyFourBit;
         case RC_MEMSIZE_32_BITS:
             return MemSize::ThirtyTwoBit;
+        case RC_MEMSIZE_8_BITS_BITCOUNT:
+            return MemSize::BitCount;
         default:
             ASSERT(!"Unsupported operand size");
             return MemSize::EightBit;
@@ -341,6 +343,9 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
                 break;
             case RC_CONDITION_AND_NEXT:
                 cond.SetConditionType(Condition::Type::AndNext);
+                break;
+            case RC_CONDITION_OR_NEXT:
+                cond.SetConditionType(Condition::Type::OrNext);
                 break;
             case RC_CONDITION_MEASURED:
                 cond.SetConditionType(Condition::Type::Measured);

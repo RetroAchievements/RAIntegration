@@ -5,9 +5,10 @@
 #include "data\Types.hh"
 #include "ra_utility.h"
 
-inline constexpr std::array<const LPCTSTR, 14> MEMSIZE_STR{
+inline constexpr std::array<const LPCTSTR, 15> MEMSIZE_STR{
     _T("Bit0"), _T("Bit1"),   _T("Bit2"),   _T("Bit3"),  _T("Bit4"),   _T("Bit5"),   _T("Bit6"),
-    _T("Bit7"), _T("Lower4"), _T("Upper4"), _T("8-bit"), _T("16-bit"), _T("24-bit"), _T("32-bit")};
+    _T("Bit7"), _T("Lower4"), _T("Upper4"), _T("8-bit"), _T("16-bit"), _T("24-bit"), _T("32-bit"),
+    _T("BitCount")};
 
 enum class ComparisonType
 {
@@ -84,12 +85,13 @@ public:
         SubSource,
         AddHits,
         AndNext,
+        OrNext,
         Measured,
         AddAddress
     };
 
-    inline static constexpr std::array<LPCTSTR, 9> TYPE_STR{
-        _T(""), _T("Pause If"), _T("Reset If"), _T("Add Source"), _T("Sub Source"), _T("Add Hits"), _T("And Next"), _T("Measured"), _T("Add Address")};
+    inline static constexpr std::array<LPCTSTR, 10> TYPE_STR{
+        _T(""), _T("Pause If"), _T("Reset If"), _T("Add Source"), _T("Sub Source"), _T("Add Hits"), _T("And Next"), _T("Or Next"), _T("Measured"), _T("Add Address")};
 
     void SerializeAppend(std::string& buffer) const;
 

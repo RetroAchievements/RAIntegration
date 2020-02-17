@@ -310,7 +310,7 @@ _Success_(return ) _NODISCARD BOOL
             return FALSE;
         }
 
-#if RA_INTEGRATION_VERSION_MINOR < 77
+#if RA_INTEGRATION_VERSION_MINOR < 78
         if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsCustomHost())
         {
             for (size_t nGroup = 0; nGroup < Ach.NumConditionGroups(); ++nGroup)
@@ -319,22 +319,16 @@ _Success_(return ) _NODISCARD BOOL
                 {
                     const auto& pCondition = Ach.GetCondition(nGroup, nCondition);
 
-                    if (pCondition.GetConditionType() == Condition::Type::Measured)
+                    if (pCondition.GetConditionType() == Condition::Type::OrNext)
                     {
-                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement contains pre-release logic.", L"* Measured");
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement contains pre-release logic.", L"* OrNext");
                         return FALSE;
                     }
 
-                    if (pCondition.GetConditionType() == Condition::Type::AddAddress)
+                    if (pCondition.CompSource().GetSize() == MemSize::BitCount ||
+                        pCondition.CompTarget().GetSize() == MemSize::BitCount)
                     {
-                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement contains pre-release logic.", L"* AddAddress");
-                        return FALSE;
-                    }
-
-                    if (pCondition.CompSource().GetSize() == MemSize::TwentyFourBit ||
-                        pCondition.CompTarget().GetSize() == MemSize::TwentyFourBit)
-                    {
-                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement contains pre-release logic.", L"* 24-bit memory size");
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement contains pre-release logic.", L"* BitCount memory size");
                         return FALSE;
                     }
                 }

@@ -16,8 +16,10 @@ static bool SupportsMultipleLines(const GridColumnBinding* pColumn) noexcept
 
 gsl::index MultiLineGridBinding::GetIndexForLine(gsl::index nLine) const
 {
-    // TODO: update m_nFirstVisibleItem in UpdateScroll
-    gsl::index nIndex = m_nFirstVisibleItem;
+    // minor optimization: m_nScrollOffset is the number of lines that are not-visible
+    // if they're all single-line, it'll also be the first visible item. if some are multi-line,
+    // it allows us to start the scan closer to the data we actually care about.
+    gsl::index nIndex = m_nScrollOffset;
     while (nIndex < ra::to_signed(m_vItemMetrics.size()))
     {
         const auto& pItemMetrics = m_vItemMetrics.at(nIndex);

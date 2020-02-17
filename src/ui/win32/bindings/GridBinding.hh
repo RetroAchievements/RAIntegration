@@ -95,6 +95,8 @@ protected:
     ViewModelCollectionBase* m_vmItems = nullptr;
     const BoolModelProperty* m_pIsSelectedProperty = nullptr;
 
+    int m_nScrollOffset = 0;
+
 private:
     void UpdateRow(gsl::index nIndex, bool bExisting);
 
@@ -108,7 +110,6 @@ private:
 
     const IntModelProperty* m_pScrollOffsetProperty = nullptr;
     const IntModelProperty* m_pScrollMaximumProperty = nullptr;
-    int m_nScrollOffset = 0;
     std::string m_sDispInfo;
     std::function<void(gsl::index, gsl::index, bool)> m_pUpdateSelectedItems = nullptr;
 

@@ -50,7 +50,6 @@ private:
     };
 
     std::vector<ItemMetrics> m_vItemMetrics;
-    gsl::index m_nFirstVisibleItem = 0;
     gsl::index m_nLastClickedItem = 0;
 };
 

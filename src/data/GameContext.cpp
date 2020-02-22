@@ -332,7 +332,7 @@ void GameContext::MergeLocalAchievements()
             // unquoted trigger requires special parsing because flags also use colons
             const char* pTrigger = pTokenizer.GetPointer(pTokenizer.CurrentPosition());
             const char* pScan = pTrigger;
-            while (*pScan && (*pScan != ':' || strchr("ABCMNOPRabcmnopr", pScan[-1]) != nullptr))
+            while (*pScan && (*pScan != ':' || strchr("ABCMNOPRTabcmnoprt", pScan[-1]) != nullptr))
                 pScan++;
 
             sTrigger.assign(pTrigger, pScan - pTrigger);

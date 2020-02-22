@@ -96,10 +96,6 @@ MemoryViewerViewModel::MemoryViewerViewModel()
     m_pColor[0] = HIGHLIGHTED_COLOR;
 
     AddNotifyTarget(*this);
-
-#ifndef RA_UTEST
-    InitializeNotifyTargets();
-#endif
 }
 
 void MemoryViewerViewModel::InitializeNotifyTargets()

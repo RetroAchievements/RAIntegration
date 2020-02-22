@@ -35,6 +35,8 @@
 #include "ui\win32\Desktop.hh"
 #include "ui\win32\OverlayWindow.hh"
 
+//#define NEW_MEM_INSPECTOR
+
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
 
@@ -81,10 +83,6 @@ static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
 
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     g_sHomeDir = pFileSystem.BaseDirectory();
-
-    //////////////////////////////////////////////////////////////////////////
-    //	Dialogs:
-    g_MemoryDialog.Init();
 }
 
 API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* /*sClientVer*/)
@@ -145,7 +143,6 @@ API int CCONV _RA_Shutdown()
         DestroyWindow(g_MemoryDialog.GetHWND());
         g_MemoryDialog.InstallHWND(nullptr);
     }
-    g_MemoryDialog.Shutdown();
 
     if (g_GameLibrary.GetHWND() != nullptr)
     {
@@ -162,6 +159,9 @@ API int CCONV _RA_Shutdown()
 
         if (pWindowManager.RichPresenceMonitor.IsVisible())
             pDesktop.CloseWindow(pWindowManager.RichPresenceMonitor);
+
+        if (pWindowManager.MemoryInspector.IsVisible())
+            pDesktop.CloseWindow(pWindowManager.MemoryInspector);
 
         if (pWindowManager.MemoryBookmarks.IsVisible())
             pDesktop.CloseWindow(pWindowManager.MemoryBookmarks);
@@ -415,10 +415,14 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_MEMORYFINDER:
+#ifdef NEW_MEM_INSPECTOR
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector.Show();
+#else
             if (g_MemoryDialog.GetHWND() == nullptr)
                 g_MemoryDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc));
             if (g_MemoryDialog.GetHWND() != nullptr)
                 ShowWindow(g_MemoryDialog.GetHWND(), SW_SHOW);
+#endif
             break;
 
         case IDM_RA_FILES_MEMORYBOOKMARKS:

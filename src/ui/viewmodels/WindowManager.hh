@@ -4,6 +4,7 @@
 #include "CodeNotesViewModel.hh"
 #include "EmulatorViewModel.hh"
 #include "MemoryBookmarksViewModel.hh"
+#include "MemoryInspectorViewModel.hh"
 #include "RichPresenceMonitorViewModel.hh"
 
 namespace ra {
@@ -15,6 +16,7 @@ public:
     EmulatorViewModel Emulator;
     RichPresenceMonitorViewModel RichPresenceMonitor;
     MemoryBookmarksViewModel MemoryBookmarks;
+    MemoryInspectorViewModel MemoryInspector;
     CodeNotesViewModel CodeNotes;
 };
 

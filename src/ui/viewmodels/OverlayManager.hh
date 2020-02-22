@@ -22,12 +22,14 @@ class OverlayManager :
     protected ra::data::GameContext::NotifyTarget
 {
 public:    
-    GSL_SUPPRESS_F6 OverlayManager();
+    GSL_SUPPRESS_F6 OverlayManager() = default;
     ~OverlayManager() noexcept = default;
     OverlayManager(const OverlayManager&) noexcept = delete;
     OverlayManager& operator=(const OverlayManager&) noexcept = delete;
     OverlayManager(OverlayManager&&) noexcept = delete;
     OverlayManager& operator=(OverlayManager&&) noexcept = delete;
+
+    void InitializeNotifyTargets();
 
     /// <summary>
     /// Updates the overlay.
@@ -248,8 +250,6 @@ public:
     bool NeedsRender() const noexcept;
 
 protected:
-    void InitializeNotifyTargets();
-
     ra::ui::viewmodels::OverlayViewModel m_vmOverlay;
     std::deque<std::unique_ptr<PopupMessageViewModel>> m_vPopupMessages;
     std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;

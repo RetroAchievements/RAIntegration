@@ -27,16 +27,14 @@ MemoryInspectorViewModel::MemoryInspectorViewModel()
 
     AddNotifyTarget(*this);
     m_pViewer.AddNotifyTarget(*this);
-
-#ifndef RA_UTEST
-    InitializeNotifyTargets();
-#endif
 }
 
 void MemoryInspectorViewModel::InitializeNotifyTargets()
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     pGameContext.AddNotifyTarget(*this);
+
+    m_pViewer.InitializeNotifyTargets();
 }
 
 void MemoryInspectorViewModel::DoFrame()

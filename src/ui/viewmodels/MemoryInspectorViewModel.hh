@@ -28,6 +28,8 @@ public:
     MemoryInspectorViewModel(MemoryInspectorViewModel&&) noexcept = delete;
     MemoryInspectorViewModel& operator=(MemoryInspectorViewModel&&) noexcept = delete;
 
+    void InitializeNotifyTargets();
+
     void DoFrame();
 
     MemorySearchViewModel& Search() { return m_pSearch; }
@@ -93,8 +95,6 @@ public:
     void ToggleBit(int nBit);
 
 protected:
-    void InitializeNotifyTargets();
-
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;

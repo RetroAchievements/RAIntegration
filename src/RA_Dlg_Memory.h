@@ -8,23 +8,7 @@
 
 #include "ui/win32/bindings/GridBinding.hh"
 
-class MemoryViewerControl
-{
-public:
-    static LRESULT CALLBACK s_MemoryDrawProc(HWND, UINT, WPARAM, LPARAM);
 
-public:
-    static void RenderMemViewer(HWND hTarget);
-
-    static void OnClick(POINT point);
-
-    static bool OnKeyDown(UINT nChar);
-    static bool OnEditInput(UINT c);
-
-    static void Invalidate();
-
-    static MemSize GetDataSize();
-};
 
 class Dlg_Memory : protected ra::ui::ViewModelBase::NotifyTarget,
                    protected ra::ui::ViewModelCollectionBase::NotifyTarget,

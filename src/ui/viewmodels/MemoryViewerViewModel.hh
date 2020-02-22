@@ -30,6 +30,8 @@ public:
     MemoryViewerViewModel(MemoryViewerViewModel&&) noexcept = delete;
     MemoryViewerViewModel& operator=(MemoryViewerViewModel&&) noexcept = delete;
 
+    void InitializeNotifyTargets();
+
     void DoFrame();
 
     bool NeedsRedraw() const noexcept { return (m_nNeedsRedraw != 0); }
@@ -148,14 +150,6 @@ public:
     void RetreatCursorLine();
     void AdvanceCursorPage();
     void RetreatCursorPage();
-
-#ifdef RA_UTEST
-public:
-    void InitializeNotifyTargets();
-#else
-protected:
-    void InitializeNotifyTargets();
-#endif
 
 protected:
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;

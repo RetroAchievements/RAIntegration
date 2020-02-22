@@ -309,6 +309,12 @@
     <ClCompile Include="ui\viewmodels\MemoryInspectorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\MemoryInspectorDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\bindings\MemoryViewerControlBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -790,6 +796,12 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\MemoryInspectorViewModel.hh">
       <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\MemoryInspectorDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\MemoryViewerControlBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

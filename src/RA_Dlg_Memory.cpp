@@ -20,6 +20,7 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
+#include "ui\win32\bindings\MemoryViewerControlBinding.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
 
@@ -33,10 +34,11 @@
 _CONSTANT_VAR MIN_RESULTS_TO_DUMP = 500000U;
 _CONSTANT_VAR MIN_SEARCH_PAGE_SIZE = 50U;
 
-static std::unique_ptr<ra::ui::viewmodels::MemoryViewerViewModel> g_pMemoryViewer;
-static std::unique_ptr<ra::ui::viewmodels::MemorySearchViewModel> g_pMemorySearch;
 constexpr int MEMVIEW_MARGIN = 4;
-static bool g_bSuppressMemoryViewerInvalidate = false;
+
+static ra::ui::viewmodels::MemoryViewerViewModel* g_pMemoryViewer;
+static std::unique_ptr<ra::ui::win32::bindings::MemoryViewerControlBinding> g_pMemoryViewerBinding;
+static std::unique_ptr<ra::ui::viewmodels::MemorySearchViewModel> g_pMemorySearch;
 
 Dlg_Memory g_MemoryDialog;
 
@@ -48,277 +50,6 @@ unsigned int m_nPage = 0;
 // Dialog Resizing
 std::vector<ResizeContent> vDlgMemoryResize;
 POINT pDlgMemoryMin;
-
-
-
-
-LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-    switch (uMsg)
-    {
-        case WM_NCCREATE:
-        case WM_NCDESTROY:
-            return TRUE;
-
-        case WM_CREATE:
-            return TRUE;
-
-        case WM_PAINT:
-            RenderMemViewer(hDlg);
-            return 0;
-
-        case WM_ERASEBKGND:
-            return TRUE;
-
-        case WM_MOUSEWHEEL:
-            if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
-            {
-                g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() - 32);
-                Invalidate();
-            }
-            else if (GET_WHEEL_DELTA_WPARAM(wParam) < 0)
-            {
-                g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() + 32);
-                Invalidate();
-            }
-            return FALSE;
-
-        case WM_LBUTTONUP:
-            OnClick({GET_X_LPARAM(lParam) - MEMVIEW_MARGIN, GET_Y_LPARAM(lParam) - MEMVIEW_MARGIN});
-            return FALSE;
-
-        case WM_KEYDOWN:
-            return (!OnKeyDown(static_cast<UINT>(LOWORD(wParam))));
-
-        case WM_CHAR:
-            return (!OnEditInput(static_cast<UINT>(LOWORD(wParam))));
-
-        case WM_SETFOCUS:
-            g_pMemoryViewer->OnGotFocus();
-            return FALSE;
-
-        case WM_KILLFOCUS:
-            g_pMemoryViewer->OnLostFocus();
-            return FALSE;
-
-        case WM_GETDLGCODE:
-            return DLGC_WANTCHARS | DLGC_WANTARROWS;
-    }
-
-    return DefWindowProc(hDlg, uMsg, wParam, lParam);
-}
-
-bool MemoryViewerControl::OnKeyDown(UINT nChar)
-{
-    const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
-    const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
-    bool bHandled = false;
-
-    // multiple properties may change while navigating, we'll do a single Invalidate after we're done
-    g_bSuppressMemoryViewerInvalidate = true;
-
-    switch (nChar)
-    {
-        case VK_RIGHT:
-            if (bShiftHeld || bControlHeld)
-                g_pMemoryViewer->AdvanceCursorWord();
-            else
-                g_pMemoryViewer->AdvanceCursor();
-            bHandled = true;
-            break;
-
-        case VK_LEFT:
-            if (bShiftHeld || bControlHeld)
-                g_pMemoryViewer->RetreatCursorWord();
-            else
-                g_pMemoryViewer->RetreatCursor();
-            bHandled = true;
-            break;
-
-        case VK_DOWN:
-            if (bControlHeld)
-                g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() + 0x10);
-            else
-                g_pMemoryViewer->AdvanceCursorLine();
-            bHandled = true;
-            break;
-
-        case VK_UP:
-            if (bControlHeld)
-                g_pMemoryViewer->SetFirstAddress(g_pMemoryViewer->GetFirstAddress() - 0x10);
-            else
-                g_pMemoryViewer->RetreatCursorLine();
-            bHandled = true;
-            break;
-
-        case VK_PRIOR: // Page up (!)
-            g_pMemoryViewer->RetreatCursorPage();
-            bHandled = true;
-            break;
-
-        case VK_NEXT: // Page down (!)
-            g_pMemoryViewer->AdvanceCursorPage();
-            bHandled = true;
-            break;
-
-        case VK_HOME:
-            if (bControlHeld)
-            {
-                g_pMemoryViewer->SetFirstAddress(0);
-                g_pMemoryViewer->SetAddress(0);
-            }
-            else
-            {
-                g_pMemoryViewer->SetAddress(g_pMemoryViewer->GetAddress() & ~0x0F);
-            }
-            bHandled = true;
-            break;
-
-        case VK_END:
-            if (bControlHeld)
-            {
-                const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-                const auto nTotalBytes = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
-
-                g_pMemoryViewer->SetFirstAddress(nTotalBytes & ~0x0F);
-                g_pMemoryViewer->SetAddress(nTotalBytes - 1);
-            }
-            else
-            {
-                switch (g_pMemoryViewer->GetSize())
-                {
-                    case MemSize::ThirtyTwoBit:
-                        g_pMemoryViewer->SetAddress((g_pMemoryViewer->GetAddress() & ~0x0F) | 0x0C);
-                        break;
-
-                    case MemSize::SixteenBit:
-                        g_pMemoryViewer->SetAddress((g_pMemoryViewer->GetAddress() & ~0x0F) | 0x0E);
-                        break;
-
-                    default:
-                        g_pMemoryViewer->SetAddress(g_pMemoryViewer->GetAddress() | 0x0F);
-                        break;
-                }
-            }
-            bHandled = true;
-            break;
-    }
-
-    g_bSuppressMemoryViewerInvalidate = false;
-
-    if (bHandled)
-        Invalidate();
-
-    return bHandled;
-}
-
-bool MemoryViewerControl::OnEditInput(UINT c)
-{
-    // multiple properties may change while typing, we'll do a single Invalidate after we're done
-    g_bSuppressMemoryViewerInvalidate = true;
-    const bool bResult = g_pMemoryViewer->OnChar(gsl::narrow_cast<char>(c));
-    g_bSuppressMemoryViewerInvalidate = false;
-
-    if (bResult)
-        Invalidate();
-
-    return bResult;
-}
-
-void MemoryViewerControl::OnClick(POINT point)
-{
-    // multiple properties may change while typing, we'll do a single Invalidate after we're done
-    g_bSuppressMemoryViewerInvalidate = true;
-    g_pMemoryViewer->OnClick(point.x, point.y);
-    g_bSuppressMemoryViewerInvalidate = false;
-
-    HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
-    SetFocus(hOurDlg);
-
-    Invalidate();
-}
-
-MemSize MemoryViewerControl::GetDataSize()
-{
-    return g_pMemoryViewer->GetSize();
-}
-
-void MemoryViewerControl::Invalidate()
-{
-    if (g_pMemoryViewer->NeedsRedraw() && !g_bSuppressMemoryViewerInvalidate)
-    {
-        HWND hOurDlg = GetDlgItem(g_MemoryDialog.GetHWND(), IDC_RA_MEMTEXTVIEWER);
-
-        InvalidateRect(hOurDlg, nullptr, FALSE);
-
-        // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
-        // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
-        // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
-        // Similar code exists in Dlg_Memory::Invalidate for the search results
-        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
-        {
-            case RA_Libretro:
-            case RA_Oricutron:
-                UpdateWindow(hOurDlg);
-                break;
-        }
-    }
-}
-
-void MemoryViewerControl::RenderMemViewer(HWND hTarget)
-{
-    g_pMemoryViewer->UpdateRenderImage();
-
-    PAINTSTRUCT ps;
-    HDC hDC = BeginPaint(hTarget, &ps);
-
-    RECT rcClient;
-    GetClientRect(hTarget, &rcClient);
-
-    const auto& pRenderImage = g_pMemoryViewer->GetRenderImage();
-
-    HBRUSH hBackground = GetStockBrush(WHITE_BRUSH);
-    RECT rcFill{ rcClient.left + 1, rcClient.top + 1, rcClient.left + MEMVIEW_MARGIN, rcClient.bottom - 2 };
-    FillRect(hDC, &rcFill, hBackground);
-
-    rcFill.left = rcClient.left + MEMVIEW_MARGIN + pRenderImage.GetWidth();
-    rcFill.right = rcClient.right - 2;
-    FillRect(hDC, &rcFill, hBackground);
-
-    rcFill.left = rcClient.left + 1;
-    rcFill.bottom = rcClient.top + MEMVIEW_MARGIN;
-    FillRect(hDC, &rcFill, hBackground);
-
-    rcFill.top = rcClient.top + MEMVIEW_MARGIN + pRenderImage.GetHeight();
-    rcFill.bottom = rcClient.bottom - 2;
-    FillRect(hDC, &rcFill, hBackground);
-
-    DrawEdge(hDC, &rcClient, EDGE_ETCHED, BF_RECT);
-
-    ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcClient);
-    pSurface.DrawSurface(MEMVIEW_MARGIN, MEMVIEW_MARGIN, pRenderImage);
-
-    EndPaint(hTarget, &ps);
-}
-
-void Dlg_Memory::Init() noexcept
-{
-    WNDCLASSEX wc{sizeof(WNDCLASSEX)};
-    wc.style = ra::to_unsigned(CS_PARENTDC | CS_HREDRAW | CS_VREDRAW | CS_GLOBALCLASS);
-    wc.lpfnWndProc = MemoryViewerControl::s_MemoryDrawProc;
-    wc.hInstance = g_hThisDLLInst;
-    wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
-    wc.hbrBackground = GetStockBrush(WHITE_BRUSH);
-    wc.lpszClassName = TEXT("MemoryViewerControl");
-
-    [[maybe_unused]] const auto checkAtom = ::RegisterClassEx(&wc);
-    ASSERT(checkAtom != 0);
-}
-
-void Dlg_Memory::Shutdown() noexcept
-{
-    ::UnregisterClass(TEXT("MemoryViewerControl"), g_hThisDLLInst);
-}
 
 // static
 INT_PTR CALLBACK Dlg_Memory::s_MemoryProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -394,6 +125,17 @@ public:
     }
 };
 
+class StandaloneMemoryViewerControlBinding : public ra::ui::win32::bindings::MemoryViewerControlBinding
+{
+public:
+    StandaloneMemoryViewerControlBinding(HWND hControl, ra::ui::viewmodels::MemoryViewerViewModel& vmMemoryViewer)
+        : ra::ui::win32::bindings::MemoryViewerControlBinding(vmMemoryViewer)
+    {
+        m_hWnd = hControl;
+        GSL_SUPPRESS_TYPE1 SetWindowLongPtr(hControl, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    }
+};
+
 INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (nMsg)
@@ -402,8 +144,11 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         {
             g_MemoryDialog.m_hWnd = hDlg;
 
-            g_pMemoryViewer.reset(new ra::ui::viewmodels::MemoryViewerViewModel());
+            auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+            g_pMemoryViewer = &pWindowManager.MemoryInspector.Viewer();
             g_pMemoryViewer->AddNotifyTarget(*this);
+
+            g_pMemoryViewerBinding.reset(new StandaloneMemoryViewerControlBinding(GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), *g_pMemoryViewer));
 
             g_pMemorySearch.reset(new ra::ui::viewmodels::MemorySearchViewModel());
             g_pMemorySearch->Results().AddNotifyTarget(*this);
@@ -627,8 +372,6 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                         auto nVal = pEmulatorContext.ReadMemoryByte(nAddr);
                         nVal ^= (1 << nBit);
                         pEmulatorContext.WriteMemoryByte(nAddr, nVal);
-
-                        MemoryViewerControl::Invalidate();
 
                         UpdateBits();
                     }
@@ -1063,7 +806,7 @@ void Dlg_Memory::Invalidate()
     if (g_pMemoryViewer != nullptr)
     {
         g_pMemoryViewer->DoFrame();
-        MemoryViewerControl::Invalidate();
+        g_pMemoryViewerBinding->Invalidate();
     }
 
     UpdateBits();

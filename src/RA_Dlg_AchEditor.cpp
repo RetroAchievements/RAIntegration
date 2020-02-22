@@ -18,6 +18,7 @@
 
 #include "ui\drawing\gdi\ImageRepository.hh"
 
+#include "ui\viewmodels\MemoryInspectorViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "ra_math.h"
@@ -1080,17 +1081,15 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                     // Helper: guess that the currently watched memory location
                     //  is probably what they are about to want to add a cond for.
-                    if (g_MemoryDialog.GetHWND() != nullptr)
                     {
-                        const auto nSize = MemoryViewerControl::GetDataSize();
+                        const auto& pMemoryInspector = ra::services::ServiceLocator::Get<ra::ui::viewmodels::MemoryInspectorViewModel>();
+                        const auto nSize = pMemoryInspector.Viewer().GetSize();
+                        const auto nAddress = pMemoryInspector.Viewer().GetAddress();
 
-                        TCHAR buffer[256];
-                        GetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, buffer, 256);
-                        unsigned int nVal = strtoul(ra::Narrow(buffer).c_str(), nullptr, 16);
                         NewCondition.CompSource().SetSize(nSize);
-                        NewCondition.CompSource().SetValue(nVal);
+                        NewCondition.CompSource().SetValue(nAddress);
 
-                        nVal = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(nVal, nSize);
+                        const auto nVal = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(nAddress, nSize);
                         NewCondition.CompTarget().SetSize(nSize);
                         NewCondition.CompTarget().SetValue(nVal);
                     }

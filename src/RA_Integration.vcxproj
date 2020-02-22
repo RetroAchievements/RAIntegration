@@ -155,6 +155,7 @@
     <ClCompile Include="ui\win32\bindings\GridLookupColumnBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\GridNumberColumnBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\GridTextColumnBinding.cpp" />
+    <ClCompile Include="ui\win32\bindings\MemoryViewerControlBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\MultiLineGridBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\WindowBinding.cpp" />
     <ClCompile Include="ui\win32\BrokenAchievementsDialog.cpp" />
@@ -165,6 +166,7 @@
     <ClCompile Include="ui\win32\GameChecksumDialog.cpp" />
     <ClCompile Include="ui\win32\LoginDialog.cpp" />
     <ClCompile Include="ui\win32\MemoryBookmarksDialog.cpp" />
+    <ClCompile Include="ui\win32\MemoryInspectorDialog.cpp" />
     <ClCompile Include="ui\win32\MessageBoxDialog.cpp" />
     <ClCompile Include="ui\win32\OverlaySettingsDialog.cpp" />
     <ClCompile Include="ui\win32\OverlayWindow.cpp" />
@@ -313,6 +315,7 @@
     <ClInclude Include="ui\win32\bindings\GridLookupColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridNumberColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridTextColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\MemoryViewerControlBinding.hh" />
     <ClInclude Include="ui\win32\bindings\MultiLineGridBinding.hh" />
     <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh" />
     <ClInclude Include="ui\win32\bindings\TextBoxBinding.hh" />
@@ -325,6 +328,7 @@
     <ClInclude Include="ui\win32\GameChecksumDialog.hh" />
     <ClInclude Include="ui\win32\LoginDialog.hh" />
     <ClInclude Include="ui\win32\MemoryBookmarksDialog.hh" />
+    <ClInclude Include="ui\win32\MemoryInspectorDialog.hh" />
     <ClInclude Include="ui\win32\MessageBoxDialog.hh" />
     <ClInclude Include="ui\win32\OverlaySettingsDialog.hh" />
     <ClInclude Include="ui\win32\OverlayWindow.hh" />

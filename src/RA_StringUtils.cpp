@@ -300,4 +300,55 @@ std::string Tokenizer::ReadQuotedString()
     return sString;
 }
 
+#pragma warning(push)
+#pragma warning(disable : 5045)
+
+GSL_SUPPRESS_F6 _NODISCARD bool StringContainsCaseInsensitive(_In_ const std::wstring& sString, _In_ const std::wstring& sMatch, bool bMatchIsLowerCased) noexcept
+{
+    if (sString.length() < sMatch.length())
+        return false;
+
+    std::wstring sMatchLower;
+    const wchar_t* pMatch = sMatch.c_str();
+    if (!bMatchIsLowerCased)
+    {
+        sMatchLower = sMatch;
+        std::transform(sMatchLower.begin(), sMatchLower.end(), sMatchLower.begin(), [](wchar_t c) noexcept {
+            return gsl::narrow_cast<wchar_t>(std::tolower(c));
+        });
+
+        pMatch = sMatchLower.data();
+    }
+    Ensures(pMatch != nullptr);
+
+    const wchar_t* pScan = sString.c_str();
+    Ensures(pScan != nullptr);
+
+    const wchar_t* pEnd = pScan + sString.length() - sMatch.length() + 1;
+    while (pScan < pEnd)
+    {
+        if (std::tolower(*pScan) == *pMatch)
+        {
+            bool bMatch = true;
+            for (size_t i = 1; i < sMatch.length(); i++)
+            {
+                if (std::tolower(pScan[i]) != pMatch[i])
+                {
+                    bMatch = false;
+                    break;
+                }
+            }
+
+            if (bMatch)
+                return true;
+        }
+
+        ++pScan;
+    }
+
+    return false;
+}
+
+#pragma warning(pop)
+
 } /* namespace ra */

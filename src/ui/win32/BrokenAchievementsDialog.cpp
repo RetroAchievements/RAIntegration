@@ -22,9 +22,10 @@ bool BrokenAchievementsDialog::Presenter::IsSupported(const ra::ui::WindowViewMo
 
 void BrokenAchievementsDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
-    auto& vmBrokenAchievements = reinterpret_cast<BrokenAchievementsViewModel&>(vmViewModel);
+    auto* vmBrokenAchievements = dynamic_cast<BrokenAchievementsViewModel*>(&vmViewModel);
+    Expects(vmBrokenAchievements != nullptr);
 
-    BrokenAchievementsDialog oDialog(vmBrokenAchievements);
+    BrokenAchievementsDialog oDialog(*vmBrokenAchievements);
     oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_REPORTBROKENACHIEVEMENTS), this, hParentWnd);
 }
 
@@ -104,8 +105,8 @@ BOOL BrokenAchievementsDialog::OnCommand(WORD nCommand)
 {
     if (nCommand == IDOK)
     {
-        auto& vmBrokenAchievements = reinterpret_cast<BrokenAchievementsViewModel&>(m_vmWindow);
-        if (vmBrokenAchievements.Submit())
+        auto* vmBrokenAchievements = dynamic_cast<BrokenAchievementsViewModel*>(&m_vmWindow);
+        if (vmBrokenAchievements && vmBrokenAchievements->Submit())
             SetDialogResult(ra::ui::DialogResult::OK);
         return TRUE;
     }

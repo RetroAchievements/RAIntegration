@@ -6,6 +6,7 @@
 #include "RA_Leaderboard.h"
 
 #include <string>
+#include <atomic>
 
 namespace ra {
 namespace data {
@@ -30,6 +31,11 @@ public:
     /// Loads the data for the specified game id.
     /// </summary>
     virtual void LoadGame(unsigned int nGameId, Mode nMode = Mode::Normal);
+
+    /// <summary>
+    /// Determines whether a game is being loaded.
+    /// </summary>
+    bool IsGameLoading() const noexcept { return m_nLoadCount != 0; }
 
     /// <summary>
     /// Gets the unique identifier of the currently loaded game.
@@ -241,6 +247,21 @@ public:
     }
 
     /// <summary>
+    /// Enumerates the code notes
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="callback" /> is called for each known code note. If it returns <c>false</c> enumeration stops.
+    /// </remarks>
+    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)> callback) const
+    {
+        for (auto& pCodeNote : m_mCodeNotes)
+        {
+            if (!callback(pCodeNote.first, pCodeNote.second.Bytes, pCodeNote.second.Note))
+                break;
+        }
+    }
+
+    /// <summary>
     /// Sets the note to associate with the specified address.
     /// </summary>
     /// <param name="nAddress">The address to set the note for.</param>
@@ -255,6 +276,10 @@ public:
     /// <returns><c>true</c> if the note was deleted, </c>false</c> if an error occurred.</returns>
     bool DeleteCodeNote(ra::ByteAddress nAddress);
 
+    /// <summary>
+    /// Returns the number of known code notes
+    /// </summary>
+    size_t CodeNoteCount() const noexcept { return m_mCodeNotes.size(); }
 
     class NotifyTarget
     {
@@ -267,6 +292,8 @@ public:
         NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
         virtual void OnActiveGameChanged() noexcept(false) {}
+        virtual void OnBeginGameLoad() noexcept(false) {}
+        virtual void OnEndGameLoad() noexcept(false) {}
         virtual void OnCodeNoteChanged(ra::ByteAddress, const std::wstring&) noexcept(false) {}
     };
 
@@ -315,6 +342,10 @@ private:
     /// impossible to create a set of <c>NotifyTarget</c> references.
     /// </summary>
     NotifyTargetSet m_vNotifyTargets;
+
+    void BeginLoad();
+    void EndLoad();
+    std::atomic<int> m_nLoadCount = 0;
 };
 
 } // namespace data

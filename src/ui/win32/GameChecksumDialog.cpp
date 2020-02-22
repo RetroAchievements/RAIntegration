@@ -14,9 +14,10 @@ bool GameChecksumDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBas
 
 void GameChecksumDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
-    auto& vmGameChecksum = reinterpret_cast<ra::ui::viewmodels::GameChecksumViewModel&>(vmViewModel);
+    auto* vmGameChecksum = dynamic_cast<ra::ui::viewmodels::GameChecksumViewModel*>(&vmViewModel);
+    Expects(vmGameChecksum != nullptr);
 
-    GameChecksumDialog oDialog(vmGameChecksum);
+    GameChecksumDialog oDialog(*vmGameChecksum);
     oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_ROMCHECKSUM), this, hParentWnd);
 }
 
@@ -38,8 +39,9 @@ BOOL GameChecksumDialog::OnCommand(WORD nCommand)
 {
     if (nCommand == IDC_RA_COPYCHECKSUMCLIPBOARD)
     {
-        const auto& vmGameChecksum = reinterpret_cast<ra::ui::viewmodels::GameChecksumViewModel&>(m_vmWindow);
-        vmGameChecksum.CopyChecksumToClipboard();
+        const auto* vmGameChecksum = dynamic_cast<ra::ui::viewmodels::GameChecksumViewModel*>(&m_vmWindow);
+        if (vmGameChecksum)
+            vmGameChecksum->CopyChecksumToClipboard();
         return TRUE;
     }
 

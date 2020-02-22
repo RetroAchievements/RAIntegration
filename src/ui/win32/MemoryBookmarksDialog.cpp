@@ -32,11 +32,12 @@ void MemoryBookmarksDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vm
 
 void MemoryBookmarksDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& vmViewModel)
 {
-    auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(vmViewModel);
+    auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&vmViewModel);
+    Expects(vmMemoryBookmarks != nullptr);
 
     if (m_pDialog == nullptr)
     {
-        m_pDialog.reset(new MemoryBookmarksDialog(vmMemoryBookmarks));
+        m_pDialog.reset(new MemoryBookmarksDialog(*vmMemoryBookmarks));
         if (!m_pDialog->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_MEMBOOKMARK), this))
             RA_LOG_ERR("Could not create Memory Bookmarks dialog!");
     }
@@ -172,12 +173,12 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     pDescriptionColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(0, std::move(pDescriptionColumn));
 
-    auto pAchievedColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(
+    auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty);
-    pAchievedColumn->SetHeader(L"Address");
-    pAchievedColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
-    pAchievedColumn->SetAlignment(ra::ui::RelativePosition::Far);
-    m_bindBookmarks.BindColumn(1, std::move(pAchievedColumn));
+    pAddressColumn->SetHeader(L"Address");
+    pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
+    pAddressColumn->SetAlignment(ra::ui::RelativePosition::Far);
+    m_bindBookmarks.BindColumn(1, std::move(pAddressColumn));
 
     auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty, vmMemoryBookmarks.Sizes());
@@ -248,48 +249,54 @@ BOOL MemoryBookmarksDialog::OnCommand(WORD nCommand)
     {
         case IDC_RA_DEL_BOOKMARK:
         {
-            auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
-            vmMemoryBookmarks.RemoveSelectedBookmarks();
+            auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
+            if (vmMemoryBookmarks)
+                vmMemoryBookmarks->RemoveSelectedBookmarks();
 
             return TRUE;
         }
 
         case IDC_RA_CLEAR_CHANGE:
         {
-            auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
-            vmMemoryBookmarks.ClearAllChanges();
+            auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
+            if (vmMemoryBookmarks)
+                vmMemoryBookmarks->ClearAllChanges();
 
             return TRUE;
         }
 
         case IDC_RA_LOADBOOKMARK:
         {
-            auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
-            vmMemoryBookmarks.LoadBookmarkFile();
+            auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
+            if (vmMemoryBookmarks)
+                vmMemoryBookmarks->LoadBookmarkFile();
 
             return TRUE;
         }
 
         case IDC_RA_SAVEBOOKMARK:
         {
-            const auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
-            vmMemoryBookmarks.SaveBookmarkFile();
+            const auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
+            if (vmMemoryBookmarks)
+                vmMemoryBookmarks->SaveBookmarkFile();
 
             return TRUE;
         }
 
         case IDC_RA_MOVE_BOOKMARK_UP:
         {
-            auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
-            vmMemoryBookmarks.MoveSelectedBookmarksUp();
+            auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
+            if (vmMemoryBookmarks)
+                vmMemoryBookmarks->MoveSelectedBookmarksUp();
 
             return TRUE;
         }
 
         case IDC_RA_MOVE_BOOKMARK_DOWN:
         {
-            auto& vmMemoryBookmarks = reinterpret_cast<MemoryBookmarksViewModel&>(m_vmWindow);
-            vmMemoryBookmarks.MoveSelectedBookmarksDown();
+            auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
+            if (vmMemoryBookmarks)
+                vmMemoryBookmarks->MoveSelectedBookmarksDown();
 
             return TRUE;
         }

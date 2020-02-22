@@ -358,6 +358,33 @@ public:
         Assert::IsFalse(tokenizer.Consume('d'));
         Assert::IsFalse(tokenizer.Consume('\0'));
     }
+
+    TEST_METHOD(TestStringContainsCaseInsensitive)
+    {
+        std::wstring input(L"ThIs Is ThE EnD");
+
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"ThIs")));
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"this")));
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"THIS")));
+        Assert::IsFalse(StringContainsCaseInsensitive(input, std::wstring(L"ThIs"), true));
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"this"), true));
+
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"EnD")));
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"end")));
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"END")));
+        Assert::IsFalse(StringContainsCaseInsensitive(input, std::wstring(L"EnD"), true));
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"end"), true));
+
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"ThE")));
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"the")));
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"THE")));
+        Assert::IsFalse(StringContainsCaseInsensitive(input, std::wstring(L"ThE"), true));
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"the"), true));
+
+        Assert::IsFalse(StringContainsCaseInsensitive(input, std::wstring(L"cat")));
+
+        Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"E E")));
+    }
 };
 
 } // namespace tests

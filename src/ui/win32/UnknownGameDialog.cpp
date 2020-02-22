@@ -14,9 +14,10 @@ bool UnknownGameDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase
 
 void UnknownGameDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
-    auto& vmLogin = reinterpret_cast<ra::ui::viewmodels::UnknownGameViewModel&>(vmViewModel);
+    auto* vmUnknownGame = dynamic_cast<ra::ui::viewmodels::UnknownGameViewModel*>(&vmViewModel);
+    Expects(vmUnknownGame != nullptr);
 
-    UnknownGameDialog oDialog(vmLogin);
+    UnknownGameDialog oDialog(*vmUnknownGame);
     oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_GAMETITLESEL), this, hParentWnd);
 }
 
@@ -56,24 +57,25 @@ BOOL UnknownGameDialog::OnCommand(WORD nCommand)
     {
         case IDOK:
         {
-            auto& vmUnknownGame = reinterpret_cast<ra::ui::viewmodels::UnknownGameViewModel&>(m_vmWindow);
-            if (vmUnknownGame.BeginTest())
+            auto* vmUnknownGame = dynamic_cast<ra::ui::viewmodels::UnknownGameViewModel*>(&m_vmWindow);
+            if (vmUnknownGame && vmUnknownGame->BeginTest())
                 SetDialogResult(ra::ui::DialogResult::OK);
             return TRUE;
         }
 
         case IDC_RA_LINK:
         {
-            auto& vmUnknownGame = reinterpret_cast<ra::ui::viewmodels::UnknownGameViewModel&>(m_vmWindow);
-            if (vmUnknownGame.Associate())
+            auto* vmUnknownGame = dynamic_cast<ra::ui::viewmodels::UnknownGameViewModel*>(&m_vmWindow);
+            if (vmUnknownGame && vmUnknownGame->Associate())
                 SetDialogResult(ra::ui::DialogResult::OK);
             return TRUE;
         }
 
         case IDC_RA_COPYCHECKSUMCLIPBOARD:
         {
-            const auto& vmUnknownGame = reinterpret_cast<ra::ui::viewmodels::UnknownGameViewModel&>(m_vmWindow);
-            vmUnknownGame.CopyChecksumToClipboard();
+            const auto* vmUnknownGame = dynamic_cast<ra::ui::viewmodels::UnknownGameViewModel*>(&m_vmWindow);
+            if (vmUnknownGame)
+                vmUnknownGame->CopyChecksumToClipboard();
             return TRUE;
         }
     }

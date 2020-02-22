@@ -116,7 +116,7 @@ TEST_CLASS(ViewModelCollection_Tests)
 
         void OnViewModelAdded(gsl::index nIndex) override
         {
-            m_nChanges[nIndex] = "~ADDED~";
+            m_nChanges[nIndex] += "~ADDED~";
         }
 
         void AssertItemAdded(gsl::index nIndex)
@@ -126,7 +126,7 @@ TEST_CLASS(ViewModelCollection_Tests)
 
         void OnViewModelRemoved(gsl::index nIndex) override
         {
-            m_nChanges[nIndex] = "~REMOVED~";
+            m_nChanges[nIndex] += "~REMOVED~";
         }
 
         void AssertItemRemoved(gsl::index nIndex)
@@ -134,9 +134,14 @@ TEST_CLASS(ViewModelCollection_Tests)
             Assert::AreEqual(std::string("~REMOVED~"), m_nChanges[nIndex]);
         }
 
+        void AssertItemReplaced(gsl::index nIndex)
+        {
+            Assert::AreEqual(std::string("~REMOVED~~ADDED~"), m_nChanges[nIndex]);
+        }
+
         void OnViewModelChanged(gsl::index nIndex) override
         {
-            m_nChanges[nIndex] = "~CHANGED~";
+            m_nChanges[nIndex] += "~CHANGED~";
         }
 
         void AssertItemChanged(gsl::index nIndex)
@@ -194,12 +199,15 @@ public:
 
         vmCollection.Add();
         oNotify.AssertItemAdded(0);
+        oNotify.ResetChanges();
 
         vmCollection.Add(2, L"Test2");
         oNotify.AssertItemAdded(1);
+        oNotify.ResetChanges();
 
         auto& pItem3 = vmCollection.Add(3, L"Test3");
         oNotify.AssertItemAdded(2);
+        oNotify.ResetChanges();
 
         Assert::AreEqual({ 3U }, vmCollection.Count());
 
@@ -352,9 +360,11 @@ public:
 
         auto& pItem1 = vmCollection.Add(1, L"Test1");
         oNotify.AssertItemAdded(0);
+        oNotify.ResetChanges();
 
         auto& pItem2 = vmCollection.Add(2, L"Test2");
         oNotify.AssertItemAdded(1);
+        oNotify.ResetChanges();
 
         pItem1.SetString(L"Test1a");
         oNotify.AssertStringChanged(TestViewModel::StringProperty, 0, L"Test1", L"Test1a");
@@ -415,6 +425,30 @@ public:
         vmCollection.EndUpdate();
         oNotify.AssertItemRemoved(0);
         oNotify.AssertItemRemoved(1);
+    }
+
+    TEST_METHOD(TestReplaceWhileUpdateSuspendedPropertyNotification)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        NotifyTargetHarness oNotify;
+        vmCollection.AddNotifyTarget(oNotify);
+
+        vmCollection.Add(1, L"Test1");
+        oNotify.AssertItemAdded(0);
+        oNotify.ResetChanges();
+
+        vmCollection.BeginUpdate();
+
+        vmCollection.RemoveAt(0);
+        oNotify.AssertItemNotChanged(0);
+
+        vmCollection.Add(2, L"Test2");
+        oNotify.AssertItemNotChanged(0);
+        oNotify.AssertItemNotChanged(1);
+
+        vmCollection.EndUpdate();
+
+        oNotify.AssertItemReplaced(0);
     }
 
     TEST_METHOD(TestMovePropertyNotification)

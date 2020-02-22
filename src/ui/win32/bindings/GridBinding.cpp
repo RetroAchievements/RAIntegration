@@ -163,6 +163,7 @@ void GridBinding::UpdateLayout()
     // store the number of columns we know to be present since the suggested way to
     // retrieve that number doesn't always work.
     m_nColumnsCreated = m_vColumns.size();
+    m_vColumnWidths.swap(vWidths);
 }
 
 void GridBinding::UpdateAllItems()

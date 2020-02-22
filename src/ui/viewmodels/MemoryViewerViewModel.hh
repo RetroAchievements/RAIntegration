@@ -73,7 +73,7 @@ public:
     void SetAddress(ByteAddress value)
     {
         int nSignedValue = ra::to_signed(value);
-        if (nSignedValue < 0)
+        if (nSignedValue < 0 || m_nTotalMemorySize == 0)
             nSignedValue = 0;
         else if (nSignedValue >= gsl::narrow_cast<int>(m_nTotalMemorySize))
             nSignedValue = gsl::narrow_cast<int>(m_nTotalMemorySize) - 1;

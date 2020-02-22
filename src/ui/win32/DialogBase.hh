@@ -144,7 +144,7 @@ private:
     IDialogPresenter* m_pDialogPresenter = nullptr; // nullable reference, not allocated
     bool m_bModal = false;
 
-    // allow ControlBinding to access AddControlBinding and RemoveControlBinding methods
+    // allow ControlBinding to access AddControlBinding, RemoveControlBinding, and QueueFunction methods
     friend class ra::ui::win32::bindings::ControlBinding;
     void AddControlBinding(HWND hControl, ra::ui::win32::bindings::ControlBinding& pControlBinding) noexcept
     {
@@ -152,6 +152,8 @@ private:
     }
 
     void RemoveControlBinding(HWND hControl) noexcept { GSL_SUPPRESS_F6 m_mControlBindings.erase(hControl); }
+
+    void QueueFunction(std::function<void()> fAction);
 
     ra::ui::win32::bindings::ControlBinding* FindControlBinding(HWND hControl)
     {
@@ -171,6 +173,8 @@ private:
         Anchor nAnchor{};
     };
     std::vector<AnchorInfo> m_vControlAnchors;
+
+    std::queue<std::function<void()>> m_qActions;
 
     void InitializeAnchors() noexcept;
     void UpdateAnchoredControls();

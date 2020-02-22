@@ -178,21 +178,6 @@ public:
         void SetBehavior(BookmarkBehavior value) { SetValue(BehaviorProperty, ra::etoi(value)); }
 
         /// <summary>
-        /// The <see cref="ModelProperty" /> for the whether the bookmark is selected.
-        /// </summary>
-        static const BoolModelProperty IsSelectedProperty;
-
-        /// <summary>
-        /// Gets whether the bookmark is selected.
-        /// </summary>
-        bool IsSelected() const { return GetValue(IsSelectedProperty); }
-
-        /// <summary>
-        /// Sets whether the bookmark is selected.
-        /// </summary>
-        void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
-
-        /// <summary>
         /// The <see cref="ModelProperty" /> for the row color.
         /// </summary>
         static const IntModelProperty RowColorProperty;

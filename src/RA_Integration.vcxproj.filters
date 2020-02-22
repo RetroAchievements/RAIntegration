@@ -294,6 +294,15 @@
     <ClCompile Include="ui\viewmodels\MemoryViewerViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\CodeNotesViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\CodeNotesDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\bindings\MultiLineGridBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
     <ClCompile Include="ui\viewmodels\MemorySearchViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -763,6 +772,15 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\MemoryViewerViewModel.hh">
       <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\CodeNotesViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\CodeNotesDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\MultiLineGridBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\MemorySearchViewModel.hh">
       <Filter>UI\ViewModels</Filter>

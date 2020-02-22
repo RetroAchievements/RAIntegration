@@ -50,6 +50,8 @@ std::vector<ResizeContent> vDlgMemoryResize;
 POINT pDlgMemoryMin;
 
 
+
+
 LRESULT CALLBACK MemoryViewerControl::s_MemoryDrawProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
     switch (uMsg)
@@ -347,6 +349,19 @@ void Dlg_Memory::OnViewModelBoolValueChanged(gsl::index nIndex, const ra::ui::Bo
     }
 }
 
+void Dlg_Memory::OnEndGameLoad()
+{
+    ra::ByteAddress nFirstAddress = 0U;
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    pGameContext.EnumerateCodeNotes([&nFirstAddress](ra::ByteAddress nAddress)
+    {
+        nFirstAddress = nAddress;
+        return false;
+    });
+
+    GoToAddress(nFirstAddress);
+}
+
 void Dlg_Memory::SetAddressRange()
 {
     if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHCUSTOM) == BST_CHECKED)
@@ -425,6 +440,8 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 g_pMemorySearch->SelectRange(nFrom, nTo, bIsSelected);
             });
 
+            ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().AddNotifyTarget(*this);
+
             ListView_SetExtendedListViewStyle(hListbox, LVS_EX_FULLROWSELECT | LVS_EX_DOUBLEBUFFER);
 
             GenerateResizes(hDlg);
@@ -445,7 +462,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), FALSE);
 
-            SetDlgItemText(hDlg, IDC_RA_WATCHING, TEXT("0x0000"));
+            SetDlgItemText(hDlg, IDC_RA_WATCHING, TEXT(""));
 
             SetWindowFont(GetDlgItem(hDlg, IDC_RA_MEMBITS), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
             SetWindowFont(GetDlgItem(hDlg, IDC_RA_MEMBITS_TITLE), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
@@ -708,6 +725,13 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                  IsDlgButtonChecked(hDlg, IDC_RA_CBO_SEARCHCUSTOM) == BST_CHECKED);
                     return TRUE;
 
+                case IDC_RA_VIEW_CODENOTES:
+                {
+                    auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+                    pWindowManager.CodeNotes.Show();
+                    return true;
+                }
+
                 case IDC_RA_ADDNOTE:
                 {
                     HWND hNote = GetDlgItem(hDlg, IDC_RA_MEMSAVENOTE);
@@ -759,12 +783,6 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     {
                         //	Doesn't yet exist: add it newly!
                         bUpdated = pGameContext.SetCodeNote(nAddr, sNewNote);
-                        if (bUpdated)
-                        {
-                            const std::string sAddress = ra::ByteAddressToString(nAddr);
-                            HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
-                            ComboBox_AddString(hMemWatch, NativeStr(sAddress).c_str());
-                        }
                     }
 
                     if (bUpdated)
@@ -804,16 +822,6 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                                 ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().Beep();
 
                                 SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, TEXT(""));
-
-                                HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
-
-                                TCHAR sAddressWide[16];
-                                ComboBox_GetText(hMemWatch, sAddressWide, 16);
-                                int nIndex = ComboBox_FindString(hMemWatch, -1, NativeStr(sAddressWide).c_str());
-                                if (nIndex != CB_ERR)
-                                    ComboBox_DeleteString(hMemWatch, nIndex);
-
-                                ComboBox_SetText(hMemWatch, sAddressWide);
                             }
                         }
                     }
@@ -872,29 +880,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                 case IDC_RA_WATCHING:
                     switch (HIWORD(wParam))
                     {
-                        case CBN_SELCHANGE:
-                        {
-                            HWND hMemWatch = GetDlgItem(hDlg, IDC_RA_WATCHING);
-                            const int nSel = ComboBox_GetCurSel(hMemWatch);
-                            if (nSel != CB_ERR)
-                            {
-                                const TCHAR sAddr[64]{};
-                                if (ComboBox_GetLBText(hMemWatch, nSel, sAddr) > 0)
-                                {
-                                    auto nAddr = ra::ByteAddressFromString(ra::Narrow(sAddr));
-                                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-                                    const auto* pNote = pGameContext.FindCodeNote(nAddr);
-                                    if (pNote && !pNote->empty())
-                                        SetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, ra::Widen(*pNote).c_str());
-
-                                    GoToAddress(nAddr);
-                                }
-                            }
-
-                            Invalidate();
-                            return TRUE;
-                        }
-                        case CBN_EDITCHANGE:
+                        case EN_CHANGE:
                         {
                             TCHAR sAddrBuffer[64];
                             GetDlgItemText(hDlg, IDC_RA_WATCHING, sAddrBuffer, 64);
@@ -911,7 +897,6 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
                         default:
                             return FALSE;
-                            // return DefWindowProc( hDlg, nMsg, wParam, lParam );
                     }
 
                 default:
@@ -946,82 +931,9 @@ void Dlg_Memory::OnWatchingMemChange()
     Invalidate();
 }
 
-void Dlg_Memory::RepopulateCodeNotes()
-{
-    HWND hMemWatch = GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING);
-    if (hMemWatch == nullptr)
-        return;
-
-    auto nAddr = g_pMemoryViewer->GetAddress();
-    ra::ByteAddress nFirst = 0xFFFFFFFF;
-    gsl::index nIndex = -1;
-    size_t nScan = 0;
-
-    // find the index of the previous selection
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    pGameContext.EnumerateCodeNotes([&nScan, &nIndex, &nFirst, nAddr](ra::ByteAddress nAddress)
-    {
-        if (nScan == 0)
-            nFirst = nAddress;
-
-        if (nAddress == nAddr)
-        {
-            nIndex = nScan;
-            return false;
-        }
-
-        ++nScan;
-        return true;
-    });
-
-    // reset the combobox
-    SetDlgItemText(m_hWnd, IDC_RA_MEMSAVENOTE, TEXT(""));
-    SetDlgItemText(hMemWatch, IDC_RA_WATCHING, TEXT(""));
-    while (ComboBox_DeleteString(hMemWatch, 0) != CB_ERR)
-    {
-    }
-
-    pGameContext.EnumerateCodeNotes([hMemWatch](ra::ByteAddress nAddress)
-    {
-        const std::string sAddr = ra::ByteAddressToString(nAddress);
-        ComboBox_AddString(hMemWatch, NativeStr(sAddr).c_str());
-        return true;
-    });
-
-    // reselect the previous selection - if nFirst is MAX_INT, no items are available
-    if (nFirst != 0xFFFFFFFF)
-    {
-        // if the previous selection was not found, select the first entry
-        if (nIndex == -1)
-        {
-            nIndex = 0;
-            nAddr = nFirst;
-        }
-
-        ComboBox_SetCurSel(hMemWatch, nIndex);
-
-        const auto* pNote = pGameContext.FindCodeNote(nAddr);
-        if (pNote && !pNote->empty())
-        {
-            SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, pNote->c_str());
-
-            GoToAddress(nAddr);
-        }
-    }
-    else if (m_nCodeNotesGameId != pGameContext.GameId() && pGameContext.GameId() != 0)
-    {
-        SetDlgItemText(m_hWnd, IDC_RA_WATCHING, TEXT("Loading..."));
-    }
-
-    // prevent "Loading..." from being displayed until the game changes
-    m_nCodeNotesGameId = pGameContext.GameId();
-}
-
 void Dlg_Memory::OnLoad_NewRom()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-
-    EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_DOTEST), m_SearchResults.size() >= 2);
 
     if (pGameContext.GameId() == 0)
     {
@@ -1035,8 +947,6 @@ void Dlg_Memory::OnLoad_NewRom()
     }
     else
     {
-        RepopulateCodeNotes();
-
         if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
         {
             SetWindowText(g_MemoryDialog.m_hWnd, TEXT("Memory Inspector [compatibility mode]"));
@@ -1055,6 +965,7 @@ void Dlg_Memory::OnLoad_NewRom()
         }
 
         EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_OPENPAGE), TRUE);
+        SetWatchingAddress(0U);
     }
 
     UpdateMemoryRegions();

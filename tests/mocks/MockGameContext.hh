@@ -51,7 +51,17 @@ public:
 
     void MockCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
     {
-        AddCodeNote(nAddress, "Author", sNote);
+        if (sNote.empty())
+        {
+            // non-API part of DeleteCodeNote
+            m_mCodeNotes.erase(nAddress);
+            OnCodeNoteChanged(nAddress, sNote);
+        }
+        else
+        {
+            // non-API part of SetCodeNote
+            AddCodeNote(nAddress, "Author", sNote);
+        }
     }
 
 private:

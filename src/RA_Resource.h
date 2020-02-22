@@ -35,12 +35,17 @@
 #define IDC_RA_DISPLAY_MASTERY          1130
 #define IDC_RA_SCREENSHOT_MASTERY       1131
 #define IDC_RA_RESULTS_BOOKMARK         1132
+#define IDC_RA_FILTER_VALUE             1133
+#define IDC_RA_APPLY_FILTER             1134
+#define IDC_RA_RESET_FILTER             1135
+#define IDC_RA_RESULT_COUNT             1136
+#define IDC_RA_VIEW_CODENOTES           1137
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
 #define IDD_RA_LOGIN                    1504
 #define IDD_RA_GAMETITLESEL             1505
-#define IDD_RA_ACHIEVEMENTPROGRESS      1506
+#define IDD_RA_CODENOTES                1506
 #define IDD_RA_LEADERBOARDEDITOR        1507
 #define IDD_RA_REPORTBROKENACHIEVEMENTS 1508
 #define IDD_RA_GAMELIBRARY              1509
@@ -102,13 +107,7 @@
 #define IDC_RA_BADGENAME                1564
 #define IDC_RA_KNOWNGAMES               1565
 #define IDC_RA_CHECKSUM                 1566
-#define IDC_RA_MEMBANK                  1567
 #define IDC_RA_MOVECONDUP               1568
-#define IDC_RA_ACHPROGRESS_FORMULA      1569
-#define IDC_RA_ACHPROGRESS_EXAMPLE      1570
-#define IDC_RA_ACHPROGRESSENABLE        1571
-#define IDC_RA_ACHPROGRESS_FORMATTING   1572
-#define IDC_RA_ACHPROGRESS_MAXIMUM      1573
 #define IDC_RA_ACTIVATE_ALL_ACH         1574
 #define IDC_RA_ACH_GROUP                1575
 #define IDC_RA_ACH_DELGROUP             1576
@@ -170,7 +169,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        121
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1133
+#define _APS_NEXT_CONTROL_VALUE         1137
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -14,9 +14,10 @@ bool LoginDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmVi
 
 void LoginDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
-    auto& vmLogin = reinterpret_cast<ra::ui::viewmodels::LoginViewModel&>(vmViewModel);
+    auto* vmLogin = dynamic_cast<ra::ui::viewmodels::LoginViewModel*>(&vmViewModel);
+    Expects(vmLogin != nullptr);
 
-    LoginDialog oDialog(vmLogin);
+    LoginDialog oDialog(*vmLogin);
     oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_LOGIN), this, hParentWnd);
 }
 
@@ -50,8 +51,8 @@ BOOL LoginDialog::OnCommand(WORD nCommand)
 {
     if (nCommand == IDOK)
     {
-        const auto& vmLogin = reinterpret_cast<ra::ui::viewmodels::LoginViewModel&>(m_vmWindow);
-        if (!vmLogin.Login())
+        const auto* vmLogin = dynamic_cast<ra::ui::viewmodels::LoginViewModel*>(&m_vmWindow);
+        if (vmLogin && !vmLogin->Login())
             return TRUE;
     }
 

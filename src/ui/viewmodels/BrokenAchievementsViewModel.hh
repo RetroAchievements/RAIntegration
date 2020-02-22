@@ -69,21 +69,6 @@ public:
     {
     public:
         /// <summary>
-        /// The <see cref="ModelProperty" /> for the whether the achievement is selected.
-        /// </summary>
-        static const BoolModelProperty IsSelectedProperty;
-
-        /// <summary>
-        /// Gets whether the achievement is selected.
-        /// </summary>
-        bool IsSelected() const { return GetValue(IsSelectedProperty); }
-
-        /// <summary>
-        /// Sets whether the achievement is selected.
-        /// </summary>
-        void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
-        
-        /// <summary>
         /// The <see cref="ModelProperty" /> for the achievement description.
         /// </summary>
         static const StringModelProperty DescriptionProperty;

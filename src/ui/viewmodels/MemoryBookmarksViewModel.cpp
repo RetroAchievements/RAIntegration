@@ -27,7 +27,6 @@ const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::Curren
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::PreviousValueProperty("MemoryBookmarkViewModel", "PreviousValue", 0);
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangesProperty("MemoryBookmarkViewModel", "Changes", 0);
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::BehaviorProperty("MemoryBookmarkViewModel", "Behavior", ra::etoi(BookmarkBehavior::None));
-const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsSelectedProperty("MemoryBookmarkViewModel", "IsSelected", false);
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::RowColorProperty("MemoryBookmarkViewModel", "RowColor", 0);
 
 MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
@@ -57,9 +56,12 @@ void MemoryBookmarksViewModel::OnViewModelBoolValueChanged(const BoolModelProper
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
         if (args.tNewValue)
         {
-            pGameContext.RemoveNotifyTarget(*this);
             pGameContext.AddNotifyTarget(*this);
             OnActiveGameChanged();
+        }
+        else
+        {
+            pGameContext.RemoveNotifyTarget(*this);
         }
     }
 }

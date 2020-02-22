@@ -842,6 +842,13 @@ GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const CharT* restrict sStrin
     return (std::basic_string<CharT>{sString}.compare(sStringLen - sMatchLen, sMatchLen, sMatch) == 0);
 }
 
+/// <summary>
+/// Determines if <paramref name="sString" /> contains <paramref name="sMatch" />.
+/// </summary>
+GSL_SUPPRESS_F6 _NODISCARD bool StringContainsCaseInsensitive(_In_ const std::wstring& sString,
+                                                              _In_ const std::wstring& sMatch,
+                                                              bool bMatchIsLowerCased = false) noexcept;
+
 } // namespace ra
 
 #ifdef UNICODE

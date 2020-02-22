@@ -15,7 +15,7 @@ protected:
     GSL_SUPPRESS_F6 ViewModelCollectionBase() = default;
 
 public:
-    ~ViewModelCollectionBase() noexcept
+    virtual ~ViewModelCollectionBase() noexcept
     {
         if (!m_bFrozen)
             StopWatching();
@@ -291,7 +291,7 @@ private:
             m_nIndex(pSource.m_nIndex),
             m_pOwner(pSource.m_pOwner)
         {
-            if (m_pOwner->IsWatching())
+            if (m_vmViewModel && m_pOwner->IsWatching())
             {
                 m_vmViewModel->RemoveNotifyTarget(pSource);
                 m_vmViewModel->AddNotifyTarget(*this);
@@ -306,7 +306,7 @@ private:
                 m_nIndex = pSource.m_nIndex;
                 m_pOwner = pSource.m_pOwner;
 
-                if (m_pOwner->IsWatching())
+                if (m_vmViewModel && m_pOwner->IsWatching())
                 {
                     m_vmViewModel->RemoveNotifyTarget(pSource);
                     m_vmViewModel->AddNotifyTarget(*this);
@@ -329,12 +329,13 @@ private:
                 m_vmViewModel->RemoveNotifyTarget(*this);
         }
 
+        bool HasViewModel() const noexcept { return m_vmViewModel != nullptr; }
         ViewModelBase& ViewModel() noexcept { return *m_vmViewModel; }
         const ViewModelBase& ViewModel() const noexcept { return *m_vmViewModel; }
 
         ViewModelBase* DetachViewModel() noexcept
         {
-            if (m_pOwner->IsWatching())
+            if (m_vmViewModel && m_pOwner->IsWatching())
                 m_vmViewModel->RemoveNotifyTarget(*this);
 
             return m_vmViewModel.release();

@@ -54,6 +54,21 @@ public:
     /// Sets the label to display.
     /// </summary>
     void SetLabel(const std::wstring& sValue) { SetValue(LabelProperty, sValue); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the whether the bookmark is selected.
+    /// </summary>
+    static const BoolModelProperty IsSelectedProperty;
+
+    /// <summary>
+    /// Gets whether the bookmark is selected.
+    /// </summary>
+    bool IsSelected() const { return GetValue(IsSelectedProperty); }
+
+    /// <summary>
+    /// Sets whether the bookmark is selected.
+    /// </summary>
+    void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
 };
 
 class LookupItemViewModelCollection : public ViewModelCollectionBase

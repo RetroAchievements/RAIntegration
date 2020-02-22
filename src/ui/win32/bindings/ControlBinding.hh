@@ -98,6 +98,12 @@ protected:
             m_pDialog->AddControlBinding(m_hWnd, *this);
     }
 
+    void InvokeOnUIThread(std::function<void()> fAction)
+    {
+        if (m_pDialog)
+            m_pDialog->QueueFunction(fAction);
+    }
+
     HWND m_hWnd{};
 
 private:

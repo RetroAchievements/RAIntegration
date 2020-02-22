@@ -165,6 +165,9 @@ API int CCONV _RA_Shutdown()
 
         if (pWindowManager.MemoryBookmarks.IsVisible())
             pDesktop.CloseWindow(pWindowManager.MemoryBookmarks);
+
+        if (pWindowManager.CodeNotes.IsVisible())
+            pDesktop.CloseWindow(pWindowManager.CodeNotes);
     }
 
     ra::services::Initialization::Shutdown();

@@ -21,7 +21,6 @@ namespace viewmodels {
 const IntModelProperty BrokenAchievementsViewModel::SelectedProblemIdProperty("BrokenAchievementsViewModel", "SelectedProblemId", 0);
 const StringModelProperty BrokenAchievementsViewModel::CommentProperty("BrokenAchievementsViewModel", "Comment", L"");
 
-const BoolModelProperty BrokenAchievementsViewModel::BrokenAchievementViewModel::IsSelectedProperty("BrokenAchievementViewModel", "IsSelected", false);
 const StringModelProperty BrokenAchievementsViewModel::BrokenAchievementViewModel::DescriptionProperty("BrokenAchievementViewModel", "Description", L"");
 const BoolModelProperty BrokenAchievementsViewModel::BrokenAchievementViewModel::IsAchievedProperty("BrokenAchievementViewModel", "IsAchieved", false);
 

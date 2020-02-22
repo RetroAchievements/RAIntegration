@@ -170,7 +170,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.MockCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
@@ -189,7 +189,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.MockCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
@@ -211,7 +211,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.MockCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
@@ -329,7 +329,7 @@ public:
     TEST_METHOD(TestAddBookmarkForNote)
     {
         MemoryBookmarksViewModelHarness bookmarks;
-        bookmarks.mockGameContext.MockCodeNote(2345U, L"NOTE");
+        bookmarks.mockGameContext.SetCodeNote(2345U, L"NOTE");
 
         bookmarks.AddBookmark(2345U, MemSize::SixteenBit);
 
@@ -449,7 +449,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.MockCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
         bookmarks.mockFileSystem.MockFile(L"E:\\Data\\3-Bookmarks.json",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
@@ -485,7 +485,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.MockCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
         bookmarks.mockFileSystem.MockFile(L"E:\\Data\\3-Bookmarks.json",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
@@ -516,7 +516,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.MockCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 
@@ -554,7 +554,7 @@ public:
         MemoryBookmarksViewModelHarness bookmarks;
         bookmarks.SetIsVisible(true);
         bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockGameContext.MockCodeNote(1234U, L"Note description");
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
         bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
             "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
 

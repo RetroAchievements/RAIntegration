@@ -149,9 +149,15 @@ public:
     void AdvanceCursorPage();
     void RetreatCursorPage();
 
+#ifdef RA_UTEST
+public:
+    void InitializeNotifyTargets();
+#else
 protected:
     void InitializeNotifyTargets();
+#endif
 
+protected:
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     // GameContext::NotifyTarget

@@ -36,12 +36,6 @@
 namespace ra {
 namespace data {
 
-static void RefreshOverlay()
-{
-    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-    pOverlayManager.RefreshOverlay();
-}
-
 static void CopyAchievementData(Achievement& pAchievement,
                                 const ra::api::FetchGameData::Response::Achievement& pAchievementData)
 {
@@ -176,8 +170,6 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
 void GameContext::OnActiveGameChanged()
 {
-    RefreshOverlay();
-
     // create a copy of the list of pointers in case it's modified by one of the callbacks
     NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
     for (NotifyTarget* target : vNotifyTargets)
@@ -295,8 +287,6 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
             pPopup->RebuildRenderImage();
         }
     }
-
-    RefreshOverlay();
 }
 
 void GameContext::EnumerateFilteredAchievements(std::function<bool(const Achievement&)> callback) const

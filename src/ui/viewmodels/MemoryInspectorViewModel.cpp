@@ -222,7 +222,7 @@ void MemoryInspectorViewModel::ToggleBit(int nBit)
     nValue ^= (1 << nBit);
     pEmulatorContext.WriteMemoryByte(nAddress, nValue);
     
-    nValue = (uint8_t)GetValue(CurrentAddressValueProperty);
+    nValue = gsl::narrow_cast<uint8_t>(GetValue(CurrentAddressValueProperty));
     nValue ^= (1 << nBit);
     SetValue(CurrentAddressValueProperty, nValue);
 }

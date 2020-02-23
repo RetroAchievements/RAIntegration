@@ -27,7 +27,7 @@ public:
     MemoryViewerControlBinding& operator=(MemoryViewerControlBinding&&) noexcept = delete;
 
 
-    static void RegisterControlClass();
+    static void RegisterControlClass() noexcept;
 
     void RenderMemViewer();
 

@@ -32,11 +32,11 @@ public:
 
     void DoFrame();
 
-    MemorySearchViewModel& Search() { return m_pSearch; }
-    const MemorySearchViewModel& Search() const { return m_pSearch; }
+    MemorySearchViewModel& Search() noexcept { return m_pSearch; }
+    const MemorySearchViewModel& Search() const noexcept { return m_pSearch; }
 
-    MemoryViewerViewModel& Viewer() { return m_pViewer; }
-    const MemoryViewerViewModel& Viewer() const { return m_pViewer; }
+    MemoryViewerViewModel& Viewer() noexcept { return m_pViewer; }
+    const MemoryViewerViewModel& Viewer() const noexcept { return m_pViewer; }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the current address.
@@ -46,7 +46,7 @@ public:
     /// <summary>
     /// Gets the current address.
     /// </summary>
-    ra::ByteAddress GetCurrentAddress() const { return (ra::ByteAddress)GetValue(CurrentAddressProperty); }
+    ra::ByteAddress GetCurrentAddress() const { return GetValue(CurrentAddressProperty); }
 
     /// <summary>
     /// Sets the current address.

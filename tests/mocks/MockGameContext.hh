@@ -35,8 +35,6 @@ public:
 
     void NotifyActiveGameChanged() { OnActiveGameChanged(); }
 
-    void SetMode(Mode nMode) noexcept { m_nMode = nMode; }
-
     void NotifyGameLoad() { BeginLoad(); EndLoad(); }
 
     bool HasRichPresence() const noexcept override { return !m_sRichPresenceDisplayString.empty(); }

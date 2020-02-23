@@ -128,7 +128,7 @@ public:
 class StandaloneMemoryViewerControlBinding : public ra::ui::win32::bindings::MemoryViewerControlBinding
 {
 public:
-    StandaloneMemoryViewerControlBinding(HWND hControl, ra::ui::viewmodels::MemoryViewerViewModel& vmMemoryViewer)
+    StandaloneMemoryViewerControlBinding(HWND hControl, ra::ui::viewmodels::MemoryViewerViewModel& vmMemoryViewer) noexcept
         : ra::ui::win32::bindings::MemoryViewerControlBinding(vmMemoryViewer)
     {
         m_hWnd = hControl;

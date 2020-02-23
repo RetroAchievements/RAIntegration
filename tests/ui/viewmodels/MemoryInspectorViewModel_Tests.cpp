@@ -36,7 +36,7 @@ private:
 
         std::array<unsigned char, 32> memory{};
 
-        MemoryInspectorViewModelHarness()
+        GSL_SUPPRESS_F6 MemoryInspectorViewModelHarness()
         {
             InitializeNotifyTargets();
 
@@ -143,6 +143,7 @@ public:
 
         const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
         Assert::IsNotNull(pNote);
+        Ensures(pNote != nullptr);
         Assert::AreEqual(std::wstring(L"Test"), *pNote);
         Assert::IsTrue(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
     }
@@ -171,6 +172,7 @@ public:
 
         const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
         Assert::IsNotNull(pNote);
+        Ensures(pNote != nullptr);
         Assert::AreEqual(std::wstring(L"Test"), *pNote);
         Assert::IsFalse(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
     }
@@ -197,6 +199,7 @@ public:
 
         const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
         Assert::IsNotNull(pNote);
+        Ensures(pNote != nullptr);
         Assert::AreEqual(std::wstring(L"Test2"), *pNote);
         Assert::AreEqual(std::wstring(L"Test2"), inspector.GetCurrentAddressNote()); // text should not be reset
         Assert::IsTrue(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
@@ -224,6 +227,7 @@ public:
 
         const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
         Assert::IsNotNull(pNote);
+        Ensures(pNote != nullptr);
         Assert::AreEqual(std::wstring(L"Test"), *pNote);
         Assert::AreEqual(std::wstring(L"Test"), inspector.GetCurrentAddressNote()); // text should be reset
         Assert::IsFalse(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
@@ -318,6 +322,7 @@ public:
 
         const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
         Assert::IsNotNull(pNote);
+        Ensures(pNote != nullptr);
         Assert::AreEqual(std::wstring(L"Test"), *pNote);
         Assert::AreEqual(std::wstring(L"Test"), inspector.GetCurrentAddressNote()); // text should not be updated
         Assert::IsFalse(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));

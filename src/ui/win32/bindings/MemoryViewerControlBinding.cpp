@@ -16,23 +16,14 @@ static LRESULT CALLBACK s_MemoryViewerControlWndProc(HWND hControl, UINT uMsg, W
 {
     MemoryViewerControlBinding* pControl{};
     GSL_SUPPRESS_TYPE1 pControl = reinterpret_cast<MemoryViewerControlBinding*>(GetWindowLongPtr(hControl, GWLP_USERDATA));
+    if (pControl == nullptr)
+        return DefWindowProc(hControl, uMsg, wParam, lParam);
 
     switch (uMsg)
     {
-        case WM_NCCREATE:
-        case WM_NCDESTROY:
-            return TRUE;
-
-        case WM_CREATE:
-            return TRUE;
-
         case WM_PAINT:
-            if (pControl)
-                pControl->RenderMemViewer();
+            pControl->RenderMemViewer();
             return 0;
-
-        case WM_ERASEBKGND:
-            return TRUE;
 
         case WM_MOUSEWHEEL:
             if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
@@ -66,7 +57,7 @@ static LRESULT CALLBACK s_MemoryViewerControlWndProc(HWND hControl, UINT uMsg, W
     return DefWindowProc(hControl, uMsg, wParam, lParam);
 }
 
-void MemoryViewerControlBinding::RegisterControlClass()
+void MemoryViewerControlBinding::RegisterControlClass() noexcept
 {
     static bool bClassRegistered = false;
     if (!bClassRegistered)

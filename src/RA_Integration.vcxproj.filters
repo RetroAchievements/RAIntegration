@@ -315,6 +315,9 @@
     <ClCompile Include="ui\win32\bindings\ControlBinding.cpp">
       <Filter>UI\Win32\Bindings</Filter>
     </ClCompile>
+    <ClCompile Include="services\PerformanceCounter.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -799,6 +802,9 @@
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\MemoryViewerControlBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="services\PerformanceCounter.hh">
+      <Filter>Services</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -10,6 +10,7 @@
 
 #include "services\AchievementRuntime.hh"
 #include "services\GameIdentifier.hh"
+#include "services\PerformanceCounter.hh"
 #include "services\ServiceLocator.hh"
 #include "services\impl\Clock.hh"
 #include "services\impl\FileLocalStorage.hh"
@@ -118,6 +119,11 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
 
     auto pHttpRequester = std::make_unique<ra::services::impl::WindowsHttpRequester>();
     ra::services::ServiceLocator::Provide<ra::services::IHttpRequester>(std::move(pHttpRequester));
+
+#ifdef PERFORMANCE_COUNTERS
+    auto pPerformanceCounter = std::make_unique<ra::services::PerformanceCounter>();
+    ra::services::ServiceLocator::Provide<ra::services::PerformanceCounter>(std::move(pPerformanceCounter));
+#endif
 
     auto pUserContext = std::make_unique<ra::data::UserContext>();
     ra::services::ServiceLocator::Provide<ra::data::UserContext>(std::move(pUserContext));

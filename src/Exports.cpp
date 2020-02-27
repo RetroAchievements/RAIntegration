@@ -18,6 +18,7 @@
 #include "services\Http.hh"
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
+#include "services\PerformanceCounter.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
@@ -266,9 +267,11 @@ static void ProcessAchievements()
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
+    TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeProcess);
     std::vector<ra::services::AchievementRuntime::Change> vChanges;
     pRuntime.Process(vChanges);
 
+    TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeEvents);
     for (const auto& pChange : vChanges)
     {
         switch (pChange.nType)
@@ -401,11 +404,15 @@ API void CCONV _RA_SetPaused(bool bIsPaused)
 
 static void UpdateUIForFrameChange()
 {
+    TALLY_PERFORMANCE(PerformanceCheckpoint::OverlayManagerAdvanceFrame);
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
     pOverlayManager.AdvanceFrame();
 
+    TALLY_PERFORMANCE(PerformanceCheckpoint::MemoryBookmarksDoFrame);
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.MemoryBookmarks.DoFrame();
+
+    TALLY_PERFORMANCE(PerformanceCheckpoint::MemoryDialogInvalidate);
     pWindowManager.MemoryInspector.DoFrame();
 }
 
@@ -419,6 +426,8 @@ API void CCONV _RA_DoAchievementsFrame()
 #ifndef RA_UTEST
     UpdateUIForFrameChange();
 #endif
+
+    CHECK_PERFORMANCE();
 }
 
 API void CCONV _RA_OnSaveState(const char* sFilename)

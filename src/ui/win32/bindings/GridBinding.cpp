@@ -465,8 +465,13 @@ void GridBinding::OnEndViewModelCollectionUpdate()
         CheckForScrollBar();
 
         SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
-        InvalidateRect(m_hWnd, nullptr, FALSE);
+        Invalidate();
     }
+}
+
+void GridBinding::Invalidate()
+{
+    InvalidateRect(m_hWnd, nullptr, FALSE);
 }
 
 void GridBinding::BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept
@@ -492,6 +497,24 @@ void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, cons
     m_pUpdateSelectedItems = pUpdateSelectedItems;
 
     m_nScrollOffset = GetValue(pScrollOffsetProperty);
+}
+
+void GridBinding::SetHWND(DialogBase& pDialog, HWND hControl)
+{
+    ControlBinding::SetHWND(pDialog, hControl);
+
+    if (m_pScrollOffsetProperty)
+    {
+        Expects((GetWindowStyle(m_hWnd) & LVS_OWNERDATA) != 0);
+    }
+
+    if (!m_vColumns.empty())
+    {
+        UpdateLayout();
+
+        if (m_vmItems)
+            UpdateAllItems();
+    }
 }
 
 void GridBinding::UpdateScroll()

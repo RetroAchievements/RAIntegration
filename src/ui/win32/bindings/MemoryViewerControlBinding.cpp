@@ -99,6 +99,12 @@ void MemoryViewerControlBinding::SetHWND(DialogBase& pDialog, HWND hControl)
     ControlBinding::SetHWND(pDialog, hControl);
 
     GSL_SUPPRESS_TYPE1 SetWindowLongPtr(hControl, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
+    RECT rcRect;
+    GetWindowRect(hControl, &rcRect);
+
+    ra::ui::Size szSize{ rcRect.right - rcRect.left, rcRect.bottom - rcRect.top };
+    OnSizeChanged(szSize);
 }
 
 void MemoryViewerControlBinding::ScrollUp()
@@ -252,9 +258,9 @@ void MemoryViewerControlBinding::OnLostFocus()
     m_pViewModel.OnLostFocus();
 }
 
-MemSize MemoryViewerControlBinding::GetDataSize()
+void MemoryViewerControlBinding::OnSizeChanged(const ra::ui::Size& pNewSize)
 {
-    return m_pViewModel.GetSize();
+    m_pViewModel.OnResized(pNewSize.Width - MEMVIEW_MARGIN * 2, pNewSize.Height - MEMVIEW_MARGIN * 2);
 }
 
 void MemoryViewerControlBinding::Invalidate()

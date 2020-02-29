@@ -95,24 +95,24 @@ void Dlg_Memory::OnEndGameLoad()
 
 void Dlg_Memory::SetAddressRange()
 {
-    if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHCUSTOM) == BST_CHECKED)
-    {
-        std::array<TCHAR, 1024> nativeBuffer{};
-        if (GetDlgItemText(m_hWnd, IDC_RA_SEARCHRANGE, nativeBuffer.data(), gsl::narrow_cast<int>(nativeBuffer.size())))
-            g_pMemorySearch->SetFilterRange(ra::Widen(&nativeBuffer.at(0)));
-    }
-    else if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHALL) == BST_CHECKED)
-    {
-        g_pMemorySearch->SetFilterRange(L"");
-    }
-    else if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM) == BST_CHECKED)
-    {
-        g_pMemorySearch->SetFilterRange(ra::StringPrintf(L"%08X-%08X", m_nSystemRamStart, m_nSystemRamEnd));
-    }
-    else if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHGAMERAM) == BST_CHECKED)
-    {
-        g_pMemorySearch->SetFilterRange(ra::StringPrintf(L"%08X-%08X", m_nGameRamStart, m_nGameRamEnd));
-    }
+    //if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHCUSTOM) == BST_CHECKED)
+    //{
+    //    std::array<TCHAR, 1024> nativeBuffer{};
+    //    if (GetDlgItemText(m_hWnd, IDC_RA_SEARCHRANGE, nativeBuffer.data(), gsl::narrow_cast<int>(nativeBuffer.size())))
+    //        g_pMemorySearch->SetFilterRange(ra::Widen(&nativeBuffer.at(0)));
+    //}
+    //else if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHALL) == BST_CHECKED)
+    //{
+    //    g_pMemorySearch->SetFilterRange(L"");
+    //}
+    //else if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM) == BST_CHECKED)
+    //{
+    //    g_pMemorySearch->SetFilterRange(ra::StringPrintf(L"%08X-%08X", m_nSystemRamStart, m_nSystemRamEnd));
+    //}
+    //else if (IsDlgButtonChecked(m_hWnd, IDC_RA_CBO_SEARCHGAMERAM) == BST_CHECKED)
+    //{
+    //    g_pMemorySearch->SetFilterRange(ra::StringPrintf(L"%08X-%08X", m_nGameRamStart, m_nGameRamEnd));
+    //}
 }
 
 class StandaloneGridBinding : public ra::ui::win32::bindings::GridBinding
@@ -148,13 +148,13 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
             g_pMemoryViewer = &pWindowManager.MemoryInspector.Viewer();
             g_pMemoryViewer->AddNotifyTarget(*this);
 
-            g_pMemoryViewerBinding.reset(new StandaloneMemoryViewerControlBinding(GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), *g_pMemoryViewer));
+            g_pMemoryViewerBinding.reset(new StandaloneMemoryViewerControlBinding(GetDlgItem(hDlg, IDC_RA_MEMVIEWER), *g_pMemoryViewer));
 
             g_pMemorySearch.reset(new ra::ui::viewmodels::MemorySearchViewModel());
             g_pMemorySearch->Results().AddNotifyTarget(*this);
 
             // these _will_ go out of scope, but as long as the binding doesn't disable itself, it doesn't matter
-            HWND hListbox = GetDlgItem(hDlg, IDC_RA_MEM_LIST);
+            HWND hListbox = GetDlgItem(hDlg, IDC_RA_RESULTS);
             m_pSearchGridBinding.reset(new StandaloneGridBinding(hListbox, *g_pMemorySearch));
 
             auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
@@ -191,34 +191,34 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             GenerateResizes(hDlg);
 
-            CheckDlgButton(hDlg, IDC_RA_CBO_SEARCHALL, BST_CHECKED);
-            CheckDlgButton(hDlg, IDC_RA_CBO_SEARCHCUSTOM, BST_UNCHECKED);
+            //CheckDlgButton(hDlg, IDC_RA_CBO_SEARCHALL, BST_CHECKED);
+            //CheckDlgButton(hDlg, IDC_RA_CBO_SEARCHCUSTOM, BST_UNCHECKED);
             EnableWindow(GetDlgItem(hDlg, IDC_RA_SEARCHRANGE), FALSE);
-            CheckDlgButton(hDlg, IDC_RA_CBO_SEARCHSYSTEMRAM, BST_UNCHECKED);
-            CheckDlgButton(hDlg, IDC_RA_CBO_SEARCHGAMERAM, BST_UNCHECKED);
-            CheckDlgButton(hDlg, IDC_RA_CBO_GIVENVAL, BST_UNCHECKED);
-            CheckDlgButton(hDlg, IDC_RA_CBO_LASTKNOWNVAL, BST_CHECKED);
-            EnableWindow(GetDlgItem(hDlg, IDC_RA_TESTVAL), FALSE);
+            //CheckDlgButton(hDlg, IDC_RA_CBO_SEARCHSYSTEMRAM, BST_UNCHECKED);
+            //CheckDlgButton(hDlg, IDC_RA_CBO_SEARCHGAMERAM, BST_UNCHECKED);
+            //CheckDlgButton(hDlg, IDC_RA_CBO_GIVENVAL, BST_UNCHECKED);
+            //CheckDlgButton(hDlg, IDC_RA_CBO_LASTKNOWNVAL, BST_CHECKED);
+            EnableWindow(GetDlgItem(hDlg, IDC_RA_APPLY_FILTER), FALSE);
 
             for (const auto str : COMPARISONTYPE_STR)
-                ComboBox_AddString(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), str);
+                ComboBox_AddString(GetDlgItem(hDlg, IDC_RA_COMPARISON), str);
 
-            ComboBox_SetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE), 0);
+            ComboBox_SetCurSel(GetDlgItem(hDlg, IDC_RA_COMPARISON), 0);
 
-            EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), FALSE);
+            EnableWindow(GetDlgItem(hDlg, IDC_RA_APPLY_FILTER), FALSE);
 
-            SetDlgItemText(hDlg, IDC_RA_WATCHING, TEXT(""));
+            SetDlgItemText(hDlg, IDC_RA_ADDRESS, TEXT(""));
 
             SetWindowFont(GetDlgItem(hDlg, IDC_RA_MEMBITS), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
             SetWindowFont(GetDlgItem(hDlg, IDC_RA_MEMBITS_TITLE), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
 
-            CheckDlgButton(hDlg, IDC_RA_MEMVIEW8BIT, BST_CHECKED);
-            CheckDlgButton(hDlg, IDC_RA_MEMVIEW16BIT, BST_UNCHECKED);
-            CheckDlgButton(hDlg, IDC_RA_MEMVIEW32BIT, BST_UNCHECKED);
+            CheckDlgButton(hDlg, IDC_RA_MEMVIEW_8BIT, BST_CHECKED);
+            CheckDlgButton(hDlg, IDC_RA_MEMVIEW_16BIT, BST_UNCHECKED);
+            CheckDlgButton(hDlg, IDC_RA_MEMVIEW_32BIT, BST_UNCHECKED);
 
             g_MemoryDialog.OnLoad_NewRom();
 
-            CheckDlgButton(hDlg, IDC_RA_RESULTS_HIGHLIGHT, BST_CHECKED);
+            //CheckDlgButton(hDlg, IDC_RA_RESULTS_HIGHLIGHT, BST_CHECKED);
 
             RestoreWindowPosition(hDlg, "Memory Inspector", true, false);
             return TRUE;
@@ -236,7 +236,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         {
             switch (LOWORD(wParam))
             {
-                case IDC_RA_MEM_LIST:
+                case IDC_RA_RESULTS:
                 {
                     LPNMHDR pnmHdr;
                     GSL_SUPPRESS_TYPE1{ pnmHdr = reinterpret_cast<LPNMHDR>(lParam); }
@@ -314,7 +314,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 
             RememberWindowSize(hDlg, "Memory Inspector");
 
-            GetWindowRect(GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), &winRect);
+            GetWindowRect(GetDlgItem(hDlg, IDC_RA_MEMVIEWER), &winRect);
             g_pMemoryViewer->OnResized(winRect.right - winRect.left - MEMVIEW_MARGIN * 2,
                 winRect.bottom - winRect.top - MEMVIEW_MARGIN * 2);
             return TRUE;
@@ -384,89 +384,89 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
         {
             switch (LOWORD(wParam))
             {
-                case IDC_RA_DOTEST:
+                case IDC_RA_APPLY_FILTER:
                 {
-                    const ComparisonType nCmpType =
-                        static_cast<ComparisonType>(ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE)));
-                    g_pMemorySearch->SetComparisonType(nCmpType);
+                    //const ComparisonType nCmpType =
+                    //    static_cast<ComparisonType>(ComboBox_GetCurSel(GetDlgItem(hDlg, IDC_RA_CBO_CMPTYPE)));
+                    //g_pMemorySearch->SetComparisonType(nCmpType);
 
-                    if (IsDlgButtonChecked(hDlg, IDC_RA_CBO_GIVENVAL) == BST_CHECKED)
-                        g_pMemorySearch->SetValueType(ra::ui::viewmodels::MemorySearchViewModel::ValueType::Constant);
-                    else
-                        g_pMemorySearch->SetValueType(ra::ui::viewmodels::MemorySearchViewModel::ValueType::LastKnownValue);
+                    //if (IsDlgButtonChecked(hDlg, IDC_RA_CBO_GIVENVAL) == BST_CHECKED)
+                    //    g_pMemorySearch->SetValueType(ra::ui::viewmodels::MemorySearchViewModel::ValueType::Constant);
+                    //else
+                    //    g_pMemorySearch->SetValueType(ra::ui::viewmodels::MemorySearchViewModel::ValueType::LastKnownValue);
 
-                    std::array<TCHAR, 1024> nativeBuffer{};
-                    if (GetDlgItemText(hDlg, IDC_RA_TESTVAL, nativeBuffer.data(), gsl::narrow_cast<int>(nativeBuffer.size())))
-                        g_pMemorySearch->SetFilterValue(ra::Widen(&nativeBuffer.at(0)));
+                    //std::array<TCHAR, 1024> nativeBuffer{};
+                    //if (GetDlgItemText(hDlg, IDC_RA_TESTVAL, nativeBuffer.data(), gsl::narrow_cast<int>(nativeBuffer.size())))
+                    //    g_pMemorySearch->SetFilterValue(ra::Widen(&nativeBuffer.at(0)));
 
-                    g_pMemorySearch->ApplyFilter();
+                    //g_pMemorySearch->ApplyFilter();
 
-                    EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_BACK), TRUE);
-                    EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), FALSE);
+                    //EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_BACK), TRUE);
+                    //EnableWindow(GetDlgItem(hDlg, IDC_RA_RESULTS_FORWARD), FALSE);
 
-                    EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), g_pMemorySearch->GetResultCount() > 0);
+                    //EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), g_pMemorySearch->GetResultCount() > 0);
                     return TRUE;
                 }
 
-                case IDC_RA_MEMVIEW8BIT:
+                case IDC_RA_MEMVIEW_8BIT:
                     g_pMemoryViewer->SetSize(MemSize::EightBit);
                     SetDlgItemText(hDlg, IDC_RA_MEMBITS_TITLE, TEXT("Bits: 7 6 5 4 3 2 1 0"));
                     UpdateBits();
                     return FALSE;
 
-                case IDC_RA_MEMVIEW16BIT:
+                case IDC_RA_MEMVIEW_16BIT:
                     g_pMemoryViewer->SetSize(MemSize::SixteenBit);
                     SetDlgItemText(hDlg, IDC_RA_MEMBITS_TITLE, TEXT(""));
                     SetDlgItemText(m_hWnd, IDC_RA_MEMBITS, TEXT(""));
                     return FALSE;
 
-                case IDC_RA_MEMVIEW32BIT:
+                case IDC_RA_MEMVIEW_32BIT:
                     g_pMemoryViewer->SetSize(MemSize::ThirtyTwoBit);
                     SetDlgItemText(hDlg, IDC_RA_MEMBITS_TITLE, TEXT(""));
                     SetDlgItemText(m_hWnd, IDC_RA_MEMBITS, TEXT(""));
                     return FALSE;
 
-                case IDC_RA_CBO_4BIT:
-                    g_pMemorySearch->SetSearchType(ra::ui::viewmodels::MemorySearchViewModel::SearchType::FourBit);
-                    SetAddressRange();
-                    g_pMemorySearch->BeginNewSearch();
-                    if (g_pMemorySearch->GetResultCount() > 0)
-                        EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), TRUE);
-                    return FALSE;
+                //case IDC_RA_CBO_4BIT:
+                //    g_pMemorySearch->SetSearchType(ra::ui::viewmodels::MemorySearchViewModel::SearchType::FourBit);
+                //    SetAddressRange();
+                //    g_pMemorySearch->BeginNewSearch();
+                //    if (g_pMemorySearch->GetResultCount() > 0)
+                //        EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), TRUE);
+                //    return FALSE;
 
-                case IDC_RA_CBO_8BIT:
-                    g_pMemorySearch->SetSearchType(ra::ui::viewmodels::MemorySearchViewModel::SearchType::EightBit);
-                    SetAddressRange();
-                    g_pMemorySearch->BeginNewSearch();
-                    if (g_pMemorySearch->GetResultCount() > 0)
-                        EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), TRUE);
-                    return FALSE;
+                //case IDC_RA_CBO_8BIT:
+                //    g_pMemorySearch->SetSearchType(ra::ui::viewmodels::MemorySearchViewModel::SearchType::EightBit);
+                //    SetAddressRange();
+                //    g_pMemorySearch->BeginNewSearch();
+                //    if (g_pMemorySearch->GetResultCount() > 0)
+                //        EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), TRUE);
+                //    return FALSE;
 
-                case IDC_RA_CBO_16BIT:
-                    g_pMemorySearch->SetSearchType(ra::ui::viewmodels::MemorySearchViewModel::SearchType::SixteenBit);
-                    SetAddressRange();
-                    g_pMemorySearch->BeginNewSearch();
-                    if (g_pMemorySearch->GetResultCount() > 0)
-                        EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), TRUE);
-                    return FALSE;
+                //case IDC_RA_CBO_16BIT:
+                //    g_pMemorySearch->SetSearchType(ra::ui::viewmodels::MemorySearchViewModel::SearchType::SixteenBit);
+                //    SetAddressRange();
+                //    g_pMemorySearch->BeginNewSearch();
+                //    if (g_pMemorySearch->GetResultCount() > 0)
+                //        EnableWindow(GetDlgItem(hDlg, IDC_RA_DOTEST), TRUE);
+                //    return FALSE;
 
                 case ID_OK:
                     EndDialog(hDlg, TRUE);
                     return TRUE;
 
-                case IDC_RA_CBO_GIVENVAL:
-                case IDC_RA_CBO_LASTKNOWNVAL:
-                    EnableWindow(GetDlgItem(hDlg, IDC_RA_TESTVAL),
-                                 (IsDlgButtonChecked(hDlg, IDC_RA_CBO_GIVENVAL) == BST_CHECKED));
-                    return TRUE;
+                //case IDC_RA_CBO_GIVENVAL:
+                //case IDC_RA_CBO_LASTKNOWNVAL:
+                //    EnableWindow(GetDlgItem(hDlg, IDC_RA_TESTVAL),
+                //                 (IsDlgButtonChecked(hDlg, IDC_RA_CBO_GIVENVAL) == BST_CHECKED));
+                //    return TRUE;
 
-                case IDC_RA_CBO_SEARCHALL:
-                case IDC_RA_CBO_SEARCHCUSTOM:
-                case IDC_RA_CBO_SEARCHSYSTEMRAM:
-                case IDC_RA_CBO_SEARCHGAMERAM:
-                    EnableWindow(GetDlgItem(hDlg, IDC_RA_SEARCHRANGE),
-                                 IsDlgButtonChecked(hDlg, IDC_RA_CBO_SEARCHCUSTOM) == BST_CHECKED);
-                    return TRUE;
+                //case IDC_RA_CBO_SEARCHALL:
+                //case IDC_RA_CBO_SEARCHCUSTOM:
+                //case IDC_RA_CBO_SEARCHSYSTEMRAM:
+                //case IDC_RA_CBO_SEARCHGAMERAM:
+                //    EnableWindow(GetDlgItem(hDlg, IDC_RA_SEARCHRANGE),
+                //                 IsDlgButtonChecked(hDlg, IDC_RA_CBO_SEARCHCUSTOM) == BST_CHECKED);
+                //    return TRUE;
 
                 case IDC_RA_VIEW_CODENOTES:
                 {
@@ -475,9 +475,9 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     return true;
                 }
 
-                case IDC_RA_ADDNOTE:
+                case IDC_RA_ADD_NOTE:
                 {
-                    HWND hNote = GetDlgItem(hDlg, IDC_RA_MEMSAVENOTE);
+                    HWND hNote = GetDlgItem(hDlg, IDC_RA_NOTE_TEXT);
                     const int nLength = GetWindowTextLengthW(hNote);
                     std::wstring sNewNote;
                     sNewNote.resize(gsl::narrow_cast<size_t>(nLength) + 1);
@@ -536,14 +536,14 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     {
                         // update failed, revert to previous text
                         if (pNote)
-                            SetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, pNote->c_str());
+                            SetDlgItemTextW(hDlg, IDC_RA_NOTE_TEXT, pNote->c_str());
                         else
-                            SetDlgItemTextW(hDlg, IDC_RA_MEMSAVENOTE, L"");
+                            SetDlgItemTextW(hDlg, IDC_RA_NOTE_TEXT, L"");
                     }
                     return FALSE;
                 }
 
-                case IDC_RA_REMNOTE:
+                case IDC_RA_DELETE_NOTE:
                 {
                     const ra::ByteAddress nAddr = g_pMemoryViewer->GetAddress();
                     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
@@ -564,7 +564,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                             {
                                 ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().Beep();
 
-                                SetDlgItemText(hDlg, IDC_RA_MEMSAVENOTE, TEXT(""));
+                                SetDlgItemText(hDlg, IDC_RA_NOTE_TEXT, TEXT(""));
                             }
                         }
                     }
@@ -620,13 +620,13 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
                     g_pMemorySearch->ExcludeSelected();
                     return FALSE;
 
-                case IDC_RA_WATCHING:
+                case IDC_RA_ADDRESS:
                     switch (HIWORD(wParam))
                     {
                         case EN_CHANGE:
                         {
                             TCHAR sAddrBuffer[64];
-                            GetDlgItemText(hDlg, IDC_RA_WATCHING, sAddrBuffer, 64);
+                            GetDlgItemText(hDlg, IDC_RA_ADDRESS, sAddrBuffer, 64);
                             auto nAddr = ra::ByteAddressFromString(ra::Narrow(sAddrBuffer));
 
                             // disable callback while updating address to prevent updating the text box as the user types
@@ -661,7 +661,7 @@ INT_PTR Dlg_Memory::MemoryProc(HWND hDlg, UINT nMsg, WPARAM wParam, LPARAM lPara
 void Dlg_Memory::OnWatchingMemChange()
 {
     TCHAR sAddrNative[1024];
-    GetDlgItemText(m_hWnd, IDC_RA_WATCHING, sAddrNative, 1024);
+    GetDlgItemText(m_hWnd, IDC_RA_ADDRESS, sAddrNative, 1024);
     std::string sAddr = ra::Narrow(sAddrNative);
     const auto nAddr = ra::ByteAddressFromString(sAddr);
 
@@ -669,7 +669,7 @@ void Dlg_Memory::OnWatchingMemChange()
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nAddr);
-    SetDlgItemTextW(m_hWnd, IDC_RA_MEMSAVENOTE, (pNote != nullptr) ? pNote->c_str() : L"");
+    SetDlgItemTextW(m_hWnd, IDC_RA_NOTE_TEXT, (pNote != nullptr) ? pNote->c_str() : L"");
 
     Invalidate();
 }
@@ -681,11 +681,11 @@ void Dlg_Memory::OnLoad_NewRom()
     if (pGameContext.GameId() == 0)
     {
         SetWindowText(g_MemoryDialog.m_hWnd, TEXT("Memory Inspector [no game loaded]"));
-        SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_WATCHING, TEXT(""));
+        SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_ADDRESS, TEXT(""));
 
-        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADDNOTE), FALSE);
-        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_MEMSAVENOTE), FALSE);
-        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_REMNOTE), FALSE);
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADD_NOTE), FALSE);
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_NOTE_TEXT), FALSE);
+        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_DELETE_NOTE), FALSE);
         EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_OPENPAGE), FALSE);
     }
     else
@@ -694,17 +694,17 @@ void Dlg_Memory::OnLoad_NewRom()
         {
             SetWindowText(g_MemoryDialog.m_hWnd, TEXT("Memory Inspector [compatibility mode]"));
 
-            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADDNOTE), FALSE);
-            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_MEMSAVENOTE), FALSE);
-            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_REMNOTE), FALSE);
+            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADD_NOTE), FALSE);
+            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_NOTE_TEXT), FALSE);
+            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_DELETE_NOTE), FALSE);
         }
         else
         {
             SetWindowText(g_MemoryDialog.m_hWnd, TEXT("Memory Inspector"));
 
-            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADDNOTE), TRUE);
-            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_MEMSAVENOTE), TRUE);
-            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_REMNOTE), TRUE);
+            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_ADD_NOTE), TRUE);
+            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_NOTE_TEXT), TRUE);
+            EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_DELETE_NOTE), TRUE);
         }
 
         EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_OPENPAGE), TRUE);
@@ -755,17 +755,17 @@ void Dlg_Memory::UpdateMemoryRegions()
             m_nSystemRamEnd = nTotalBankSize - 1;
     }
 
-    if (m_nSystemRamEnd != 0U)
-    {
-        const auto sLabel = ra::StringPrintf("System Memory (%s-%s)", ra::ByteAddressToString(m_nSystemRamStart), ra::ByteAddressToString(m_nSystemRamEnd));
-        SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, NativeStr(sLabel).c_str());
-        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), (m_nSystemRamEnd - m_nSystemRamStart + 1) < nTotalBankSize);
-    }
-    else
-    {
-        SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, TEXT("System Memory (unspecified)"));
-        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), FALSE);
-    }
+    //if (m_nSystemRamEnd != 0U)
+    //{
+    //    const auto sLabel = ra::StringPrintf("System Memory (%s-%s)", ra::ByteAddressToString(m_nSystemRamStart), ra::ByteAddressToString(m_nSystemRamEnd));
+    //    SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, NativeStr(sLabel).c_str());
+    //    EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), (m_nSystemRamEnd - m_nSystemRamStart + 1) < nTotalBankSize);
+    //}
+    //else
+    //{
+    //    SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM, TEXT("System Memory (unspecified)"));
+    //    EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHSYSTEMRAM), FALSE);
+    //}
 
     if (m_nGameRamEnd >= nTotalBankSize)
     {
@@ -781,17 +781,17 @@ void Dlg_Memory::UpdateMemoryRegions()
         }
     }
 
-    if (m_nGameRamEnd != 0U)
-    {
-        const auto sLabel = ra::StringPrintf("Game Memory (%s-%s)", ra::ByteAddressToString(m_nGameRamStart), ra::ByteAddressToString(m_nGameRamEnd));
-        SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, NativeStr(sLabel).c_str());
-        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM), TRUE);
-    }
-    else
-    {
-        SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, TEXT("Game Memory (unspecified)"));
-        EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM), FALSE);
-    }
+    //if (m_nGameRamEnd != 0U)
+    //{
+    //    const auto sLabel = ra::StringPrintf("Game Memory (%s-%s)", ra::ByteAddressToString(m_nGameRamStart), ra::ByteAddressToString(m_nGameRamEnd));
+    //    SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, NativeStr(sLabel).c_str());
+    //    EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM), TRUE);
+    //}
+    //else
+    //{
+    //    SetDlgItemText(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM, TEXT("Game Memory (unspecified)"));
+    //    EnableWindow(GetDlgItem(g_MemoryDialog.m_hWnd, IDC_RA_CBO_SEARCHGAMERAM), FALSE);
+    //}
 }
 
 void Dlg_Memory::Invalidate()
@@ -816,24 +816,24 @@ void Dlg_Memory::Invalidate()
     {
         g_pMemorySearch->DoFrame();
 
-        if (g_pMemorySearch->NeedsRedraw())
-        {
-            HWND hListbox = GetDlgItem(m_hWnd, IDC_RA_MEM_LIST);
+        //if (g_pMemorySearch->NeedsRedraw())
+        //{
+        //    HWND hListbox = GetDlgItem(m_hWnd, IDC_RA_RESULTS);
 
-            InvalidateRect(hListbox, nullptr, FALSE);
+        //    InvalidateRect(hListbox, nullptr, FALSE);
 
-            // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
-            // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
-            // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
-            // Similar code exists in Dlg_Memory::Invalidate for the search results
-            switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
-            {
-                case RA_Libretro:
-                case RA_Oricutron:
-                    UpdateWindow(hListbox);
-                    break;
-            }
-        }
+        //    // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
+        //    // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
+        //    // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
+        //    // Similar code exists in Dlg_Memory::Invalidate for the search results
+        //    switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+        //    {
+        //        case RA_Libretro:
+        //        case RA_Oricutron:
+        //            UpdateWindow(hListbox);
+        //            break;
+        //    }
+        //}
     }
 }
 
@@ -869,7 +869,7 @@ void Dlg_Memory::GoToAddress(unsigned int nAddr)
 void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)
 {
     const auto sAddr = ra::ByteAddressToString(nAddr);
-    SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_WATCHING, NativeStr(sAddr).c_str());
+    SetDlgItemText(g_MemoryDialog.GetHWND(), IDC_RA_ADDRESS, NativeStr(sAddr).c_str());
 
     OnWatchingMemChange();
 }
@@ -887,5 +887,5 @@ void Dlg_Memory::GenerateResizes(HWND hDlg)
     pDlgMemoryMin.y = windowRect.Height();
 
     using AlignType = ResizeContent::AlignType;
-    vDlgMemoryResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_MEMTEXTVIEWER), AlignType::Bottom, true);
+    vDlgMemoryResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_MEMVIEWER), AlignType::Bottom, true);
 }

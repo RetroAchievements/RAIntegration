@@ -285,10 +285,6 @@ void MemoryViewerViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
         const int nNewBytes = NibblesForSize(ra::itoe<MemSize>(args.tNewValue)) / 2;
         UpdateHighlight(GetAddress(), nNewBytes, nOldBytes);
 
-        const auto nVisibleLines = GetNumVisibleLines();
-        for (int i = 0; i < nVisibleLines * 16; ++i)
-            m_pColor[i] |= STALE_COLOR;
-
         m_pSurface.reset();
         m_nNeedsRedraw = REDRAW_ALL;
     }
@@ -743,6 +739,12 @@ void MemoryViewerViewModel::DoFrame()
             m_nNeedsRedraw |= REDRAW_MEMORY;
         }
     }
+
+    if (m_nNeedsRedraw)
+    {
+        if (m_pRepaintNotifyTarget != nullptr)
+            m_pRepaintNotifyTarget->OnRepaintMemoryViewer();
+    }
 }
 
 #pragma warning(pop)
@@ -817,6 +819,10 @@ void MemoryViewerViewModel::UpdateRenderImage()
         m_pSurface->FillRectangle(9 * m_szChar.Width, m_szChar.Height, 1, nHeight, ra::ui::Color(0xFFC0C0C0));
 
         nNeedsRedraw = REDRAW_ALL;
+
+        const auto nVisibleLines = GetNumVisibleLines();
+        for (int i = 0; i < nVisibleLines * 16; ++i)
+            m_pColor[i] |= STALE_COLOR;
     }
 
     if (nNeedsRedraw & REDRAW_ADDRESSES)

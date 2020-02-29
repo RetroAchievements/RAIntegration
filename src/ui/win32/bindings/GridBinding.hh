@@ -23,18 +23,7 @@ public:
     GridBinding(GridBinding&&) noexcept = delete;
     GridBinding& operator=(GridBinding&&) noexcept = delete;
 
-    void SetHWND(DialogBase& pDialog, HWND hControl) override
-    {
-        ControlBinding::SetHWND(pDialog, hControl);
-
-        if (!m_vColumns.empty())
-        {
-            UpdateLayout();
-
-            if (m_vmItems)
-                UpdateAllItems();
-        }
-    }
+    void SetHWND(DialogBase& pDialog, HWND hControl) override;
 
     void BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBinding> pColumnBinding);
 
@@ -76,6 +65,7 @@ protected:
     virtual void UpdateItems(gsl::index nColumn);
     void CheckForScrollBar();
     void UpdateScroll();
+    virtual void Invalidate();
 
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override;

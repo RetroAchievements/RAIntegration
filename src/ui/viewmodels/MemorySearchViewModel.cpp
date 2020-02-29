@@ -17,6 +17,12 @@ namespace viewmodels {
 constexpr size_t SEARCH_ROWS_DISPLAYED = 12;
 constexpr size_t SEARCH_MAX_HISTORY = 50;
 
+constexpr int MEMORY_RANGE_ALL = 0;
+constexpr int MEMORY_RANGE_SYSTEM = 1;
+constexpr int MEMORY_RANGE_GAME = 2;
+constexpr int MEMORY_RANGE_CUSTOM = 3;
+
+const IntModelProperty MemorySearchViewModel::PredefinedFilterRangeProperty("MemorySearchViewModel", "PredefinedFilterRange", MEMORY_RANGE_ALL);
 const StringModelProperty MemorySearchViewModel::FilterRangeProperty("MemorySearchViewModel", "FilterRange", L"");
 const IntModelProperty MemorySearchViewModel::SearchTypeProperty("MemorySearchViewModel", "SearchType", ra::etoi(MemorySearchViewModel::SearchType::EightBit));
 const IntModelProperty MemorySearchViewModel::ComparisonTypeProperty("MemorySearchViewModel", "ComparisonType", ra::etoi(ComparisonType::Equals));
@@ -24,8 +30,18 @@ const IntModelProperty MemorySearchViewModel::ValueTypeProperty("MemorySearchVie
 const StringModelProperty MemorySearchViewModel::FilterValueProperty("MemorySearchViewModel", "FilterValue", L"");
 const StringModelProperty MemorySearchViewModel::FilterSummaryProperty("MemorySearchViewModel", "FilterSummary", L"");
 const IntModelProperty MemorySearchViewModel::ResultCountProperty("MemorySearchViewModel", "ResultCount", 0);
+const StringModelProperty MemorySearchViewModel::ResultCountTextProperty("MemorySearchViewModel", "ResultCountText", L"0");
 const IntModelProperty MemorySearchViewModel::ScrollOffsetProperty("MemorySearchViewModel", "ScrollOffset", 0);
 const StringModelProperty MemorySearchViewModel::SelectedPageProperty("MemorySearchViewModel", "SelectedPageProperty", L"0/0");
+const BoolModelProperty MemorySearchViewModel::CanBeginNewSearchProperty("MemorySearchViewModel", "CanBeginNewSearch", true);
+const BoolModelProperty MemorySearchViewModel::CanFilterProperty("MemorySearchViewModel", "CanFilter", true);
+const BoolModelProperty MemorySearchViewModel::CanEditFilterValueProperty("MemorySearchViewModel", "CanEditFilterValue", true);
+const BoolModelProperty MemorySearchViewModel::CanGoToPreviousPageProperty("MemorySearchViewModel", "CanGoToPreviousPage", true);
+const BoolModelProperty MemorySearchViewModel::CanGoToNextPageProperty("MemorySearchViewModel", "CanGoToNextPage", false);
+const BoolModelProperty MemorySearchViewModel::HasSelectionProperty("MemorySearchViewModel", "HasSelection", false);
+
+const IntModelProperty MemorySearchViewModel::PredefinedFilterRangeViewModel::StartAddressProperty("PredefinedFilterRangeViewModel", "StartAddress", 0);
+const IntModelProperty MemorySearchViewModel::PredefinedFilterRangeViewModel::EndAddressProperty("PredefinedFilterRangeViewModel", "EndAddress", 0);
 
 const StringModelProperty MemorySearchViewModel::SearchResultViewModel::DescriptionProperty("SearchResultViewModel", "Description", L"");
 const StringModelProperty MemorySearchViewModel::SearchResultViewModel::AddressProperty("SearchResultViewModel", "Address", L"");
@@ -67,6 +83,9 @@ void MemorySearchViewModel::SearchResultViewModel::UpdateRowColor()
 
 MemorySearchViewModel::MemorySearchViewModel()
 {
+    m_vPredefinedFilterRanges.Add(MEMORY_RANGE_ALL, L"All");
+    m_vPredefinedFilterRanges.Add(MEMORY_RANGE_CUSTOM, L"Custom");
+
     m_vSearchTypes.Add(ra::etoi(SearchType::FourBit), L"4-bit");
     m_vSearchTypes.Add(ra::etoi(SearchType::EightBit), L"8-bit");
     m_vSearchTypes.Add(ra::etoi(SearchType::SixteenBit), L"16-bit");
@@ -83,6 +102,174 @@ MemorySearchViewModel::MemorySearchViewModel()
 
     AddNotifyTarget(*this);
     m_vResults.AddNotifyTarget(*this);
+
+    SetValue(CanBeginNewSearchProperty, false);
+}
+
+void MemorySearchViewModel::InitializeNotifyTargets()
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+    pEmulatorContext.AddNotifyTarget(*this);
+    OnTotalMemorySizeChanged();
+}
+
+void MemorySearchViewModel::OnTotalMemorySizeChanged()
+{
+    ra::ByteAddress nGameRamStart = 0U;
+    ra::ByteAddress nGameRamEnd = 0U;
+    ra::ByteAddress nSystemRamStart = 0U;
+    ra::ByteAddress nSystemRamEnd = 0U;
+
+    for (const auto& pRegion : ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().MemoryRegions())
+    {
+        if (pRegion.Type == ra::data::ConsoleContext::AddressType::SystemRAM)
+        {
+            if (nSystemRamEnd == 0U)
+            {
+                nSystemRamStart = pRegion.StartAddress;
+                nSystemRamEnd = pRegion.EndAddress;
+            }
+            else if (pRegion.StartAddress == nSystemRamEnd + 1)
+            {
+                nSystemRamEnd = pRegion.EndAddress;
+            }
+        }
+        else if (pRegion.Type == ra::data::ConsoleContext::AddressType::SaveRAM)
+        {
+            if (nGameRamEnd == 0U)
+            {
+                nGameRamStart = pRegion.StartAddress;
+                nGameRamEnd = pRegion.EndAddress;
+            }
+            else if (pRegion.StartAddress == nGameRamEnd + 1)
+            {
+                nGameRamEnd = pRegion.EndAddress;
+            }
+        }
+    }
+
+    m_vPredefinedFilterRanges.BeginUpdate();
+
+    const auto nTotalBankSize = gsl::narrow_cast<ra::ByteAddress>(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize());
+    if (nGameRamEnd >= nTotalBankSize)
+    {
+        if (nTotalBankSize == 0U)
+        {
+            nGameRamEnd = 0U;
+        }
+        else
+        {
+            nGameRamEnd = nTotalBankSize - 1;
+            if (nGameRamEnd < nGameRamStart)
+                nGameRamStart = nGameRamEnd = 0;
+        }
+    }
+
+    if (nSystemRamEnd >= nTotalBankSize)
+    {
+        if (nTotalBankSize == 0U)
+            nSystemRamEnd = 0U;
+        else
+            nSystemRamEnd = nTotalBankSize - 1;
+    }
+
+    auto nIndex = m_vPredefinedFilterRanges.FindItemIndex(ra::ui::viewmodels::LookupItemViewModel::IdProperty, MEMORY_RANGE_SYSTEM);
+    if (nSystemRamEnd != 0U)
+    {
+        const auto sLabel = ra::StringPrintf(L"System Memory (%s-%s)", ra::ByteAddressToString(nSystemRamStart), ra::ByteAddressToString(nSystemRamEnd));
+
+        auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
+        if (pEntry == nullptr)
+            pEntry = &m_vPredefinedFilterRanges.Add(MEMORY_RANGE_SYSTEM, sLabel);
+        else
+            pEntry->SetLabel(sLabel);
+
+        pEntry->SetStartAddress(nSystemRamStart);
+        pEntry->SetEndAddress(nSystemRamEnd);
+    }
+    else if (nIndex >= 0)
+    {
+        m_vPredefinedFilterRanges.RemoveAt(nIndex);
+    }
+
+    nIndex = m_vPredefinedFilterRanges.FindItemIndex(ra::ui::viewmodels::LookupItemViewModel::IdProperty, MEMORY_RANGE_SYSTEM);
+    if (nGameRamEnd != 0U)
+    {
+        const auto sLabel = ra::StringPrintf(L"Game Memory (%s-%s)", ra::ByteAddressToString(nGameRamStart), ra::ByteAddressToString(nGameRamEnd));
+
+        auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
+        if (pEntry == nullptr)
+            pEntry = &m_vPredefinedFilterRanges.Add(MEMORY_RANGE_GAME, sLabel);
+        else
+            pEntry->SetLabel(sLabel);
+
+        pEntry->SetStartAddress(nGameRamStart);
+        pEntry->SetEndAddress(nGameRamEnd);
+    }
+    else if (nIndex >= 0)
+    {
+        m_vPredefinedFilterRanges.RemoveAt(nIndex);
+    }
+
+    m_vPredefinedFilterRanges.EndUpdate();
+
+    SetValue(CanBeginNewSearchProperty, (nTotalBankSize > 0U));
+}
+
+void MemorySearchViewModel::OnPredefinedFilterRangeChanged()
+{
+    const auto nValue = GetPredefinedFilterRange();
+    if (nValue == MEMORY_RANGE_ALL)
+    {
+        RemoveNotifyTarget(*this);
+        SetFilterRange(L"");
+        AddNotifyTarget(*this);
+        return;
+    }
+
+    const auto nIndex = m_vPredefinedFilterRanges.FindItemIndex(ra::ui::viewmodels::LookupItemViewModel::IdProperty, nValue);
+    if (nIndex == -1)
+        return;
+
+    const auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
+    Ensures(pEntry != nullptr);
+
+    RemoveNotifyTarget(*this);
+    SetFilterRange(ra::StringPrintf(L"%s-%s",
+        ra::ByteAddressToString(pEntry->GetStartAddress()), ra::ByteAddressToString(pEntry->GetEndAddress())));
+    AddNotifyTarget(*this);
+}
+
+void MemorySearchViewModel::OnFilterRangeChanged()
+{
+    ra::ByteAddress nStart, nEnd;
+    if (!ParseFilterRange(nStart, nEnd))
+        return;
+
+    for (gsl::index nIndex = 1; nIndex < ra::to_signed(m_vPredefinedFilterRanges.Count()); ++nIndex)
+    {
+        const auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
+        Ensures(pEntry != nullptr);
+
+        if (pEntry->GetStartAddress() == nStart && pEntry->GetEndAddress() == nEnd)
+        {
+            SetPredefinedFilterRange(pEntry->GetId());
+            return;
+        }
+    }
+
+    const auto nIndex = m_vPredefinedFilterRanges.FindItemIndex(ra::ui::viewmodels::LookupItemViewModel::IdProperty, MEMORY_RANGE_CUSTOM);
+    if (nIndex == -1)
+        return;
+
+    auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
+    Ensures(pEntry != nullptr);
+
+    pEntry->SetStartAddress(nStart);
+    pEntry->SetEndAddress(nEnd);
+    pEntry->SetLabel(ra::StringPrintf(L"Custom (%s-%s)", ra::ByteAddressToString(nStart), ra::ByteAddressToString(nEnd)));
+
+    SetPredefinedFilterRange(MEMORY_RANGE_CUSTOM);
 }
 
 static constexpr MemSize SearchTypeToMemSize(MemorySearchViewModel::SearchType nSearchType) 
@@ -128,9 +315,10 @@ void MemorySearchViewModel::DoFrame()
         return;
 
     m_bNeedsRedraw = false;
+    m_vResults.BeginUpdate();
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    const auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
+    auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
     const wchar_t* sValueFormat = MemSizeFormat(pCurrentResults.pResults.GetSize());
 
     // only process the visible items
@@ -152,12 +340,14 @@ void MemorySearchViewModel::DoFrame()
 
         if (pResult.nValue != nPreviousValue)
         {
-            m_vModifiedAddresses.insert(pResult.nAddress);
+            pCurrentResults.vModifiedAddresses.insert(pResult.nAddress);
             pRow->bHasBeenModified = true;
         }
 
         pRow->UpdateRowColor();
     }
+
+    m_vResults.EndUpdate();
 }
 
 bool MemorySearchViewModel::NeedsRedraw() noexcept
@@ -261,7 +451,6 @@ void MemorySearchViewModel::BeginNewSearch()
 
     const MemSize nMemSize = SearchTypeToMemSize(GetSearchType());
 
-    m_vModifiedAddresses.clear();
     m_vSelectedAddresses.clear();
 
     m_vSearchResults.clear();
@@ -359,13 +548,15 @@ void MemorySearchViewModel::ApplyFilter()
                 // in case we removed some
                 SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult, m_vSearchResults.size() - 1));
 
+                // reset modification tracking
+                m_vSearchResults.back().vModifiedAddresses.clear();
+
                 return;
             }
         }
     }
 
     ra::StringBuilder builder;
-    builder.Append(L"Filter: ");
     builder.Append(ComparisonTypes().GetLabelForId(ra::etoi(GetComparisonType())));
     builder.Append(L" ");
     switch (GetValueType())
@@ -394,10 +585,12 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(nMatches));
     SetValue(FilterSummaryProperty, m_vSearchResults.at(nNewPage).sSummary);
 
-    m_vModifiedAddresses.clear();
     m_vSelectedAddresses.clear();
 
     UpdateResults();
+
+    SetValue(CanGoToPreviousPageProperty, (nNewPage > 1));
+    SetValue(CanGoToNextPageProperty, (nNewPage < m_vSearchResults.size() - 1));
 }
 
 void MemorySearchViewModel::UpdateResults()
@@ -479,7 +672,7 @@ void MemorySearchViewModel::UpdateResults()
 
         pRow->bMatchesFilter = TestFilter(pResult, pCurrentResults, nPreviousValue);
         pRow->bHasBookmark = vmBookmarks.HasBookmark(pResult.nAddress);
-        pRow->bHasBeenModified = (m_vModifiedAddresses.find(pRow->nAddress) != m_vModifiedAddresses.end());
+        pRow->bHasBeenModified = (pCurrentResults.vModifiedAddresses.find(pRow->nAddress) != pCurrentResults.vModifiedAddresses.end());
         pRow->UpdateRowColor();
         ++nRow;
     }
@@ -505,10 +698,49 @@ bool MemorySearchViewModel::TestFilter(const ra::services::SearchResults::Result
     }
 }
 
+void MemorySearchViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == CanFilterProperty)
+    {
+        if (args.tNewValue)
+            SetValue(CanEditFilterValueProperty, GetValueType() == ValueType::Constant);
+        else
+            SetValue(CanEditFilterValueProperty, false);
+    }
+    else if (args.Property == CanBeginNewSearchProperty)
+    {
+        if (args.tNewValue)
+            SetValue(CanFilterProperty, GetResultCount() > 0);
+        else
+            SetValue(CanFilterProperty, false);
+    }
+}
+
 void MemorySearchViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == ScrollOffsetProperty)
+    {
         UpdateResults();
+    }
+    else if (args.Property == ResultCountProperty)
+    {
+        SetValue(ResultCountTextProperty, std::to_wstring(args.tNewValue));
+        SetValue(CanFilterProperty, args.tNewValue > 0);
+    }
+    else if (args.Property == ValueTypeProperty)
+    {
+        SetValue(CanEditFilterValueProperty, GetValueType() == ValueType::Constant && GetValue(CanFilterProperty));
+    }
+    else if (args.Property == PredefinedFilterRangeProperty)
+    {
+        OnPredefinedFilterRangeChanged();
+    }
+}
+
+void MemorySearchViewModel::OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args)
+{
+    if (args.Property == FilterRangeProperty)
+        OnFilterRangeChanged();
 }
 
 void MemorySearchViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
@@ -520,6 +752,8 @@ void MemorySearchViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const
             m_vSelectedAddresses.insert(pRow->nAddress);
         else
             m_vSelectedAddresses.erase(pRow->nAddress);
+
+        SetValue(HasSelectionProperty, (m_vSelectedAddresses.size() > 0));
     }
 }
 

@@ -5,7 +5,7 @@
 #include "ra_math.h"
 #include "RA_StringUtils.h"
 
-#include "RA_Dlg_Memory.h"
+#include "ui/viewmodels/WindowManager.hh"
 
 namespace ra {
 namespace ui {
@@ -17,7 +17,7 @@ bool GridAddressColumnBinding::HandleDoubleClick(const ra::ui::ViewModelCollecti
     if (IsReadOnly())
     {
         const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
-        g_MemoryDialog.GoToAddress(nValue);
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector.SetCurrentAddress(nValue);
 
         return true;
     }

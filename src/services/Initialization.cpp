@@ -163,6 +163,10 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
 
     auto pServer = std::make_unique<ra::api::impl::DisconnectedServer>(pConfiguration->GetHostUrl());
     ra::services::ServiceLocator::Provide<ra::api::IServer>(std::move(pServer));
+
+
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().InitializeNotifyTargets();
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector.InitializeNotifyTargets();
 }
 
 void Initialization::Shutdown()

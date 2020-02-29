@@ -8,6 +8,7 @@
 #include "ScoreboardViewModel.hh"
 #include "ScoreTrackerViewModel.hh"
 
+#include "data\GameContext.hh"
 #include "data\Types.hh"
 
 #include "ui\ImageReference.hh"
@@ -16,7 +17,10 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class OverlayManager : protected ra::ui::IImageRepository::NotifyTarget {
+class OverlayManager : 
+    protected ra::ui::IImageRepository::NotifyTarget,
+    protected ra::data::GameContext::NotifyTarget
+{
 public:    
     GSL_SUPPRESS_F6 OverlayManager() = default;
     ~OverlayManager() noexcept = default;
@@ -24,6 +28,8 @@ public:
     OverlayManager& operator=(const OverlayManager&) noexcept = delete;
     OverlayManager(OverlayManager&&) noexcept = delete;
     OverlayManager& operator=(OverlayManager&&) noexcept = delete;
+
+    void InitializeNotifyTargets();
 
     /// <summary>
     /// Updates the overlay.
@@ -252,6 +258,11 @@ protected:
     bool m_bIsRendering = false;
     bool m_bRenderRequestPending = false;
 
+    // GameContext::NotifyTarget
+    void OnActiveGameChanged() override { RefreshOverlay(); }
+    void OnEndGameLoad() override { RefreshOverlay(); }
+
+    // IImageRepository::NotifyTarget
     void OnImageChanged(ImageType, const std::string&) override
     {
         RequestRender();

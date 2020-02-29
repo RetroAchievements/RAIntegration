@@ -267,14 +267,14 @@ public:
     /// <param name="nAddress">The address to set the note for.</param>
     /// <param name="sNote">The new note for the address.</param>
     /// <returns><c>true</c> if the note was updated, </c>false</c> if an error occurred.</returns>
-    bool SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote);
+    virtual bool SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote);
 
     /// <summary>
     /// Deletes the note associated with the specified address.
     /// </summary>
     /// <param name="nAddress">The address to delete the note for.</param>
     /// <returns><c>true</c> if the note was deleted, </c>false</c> if an error occurred.</returns>
-    bool DeleteCodeNote(ra::ByteAddress nAddress);
+    virtual bool DeleteCodeNote(ra::ByteAddress nAddress);
 
     /// <summary>
     /// Returns the number of known code notes
@@ -315,6 +315,8 @@ protected:
 
     void OnActiveGameChanged();
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);
+    void BeginLoad();
+    void EndLoad();
 
     unsigned int m_nGameId = 0;
     std::wstring m_sGameTitle;
@@ -343,8 +345,6 @@ private:
     /// </summary>
     NotifyTargetSet m_vNotifyTargets;
 
-    void BeginLoad();
-    void EndLoad();
     std::atomic<int> m_nLoadCount = 0;
 };
 

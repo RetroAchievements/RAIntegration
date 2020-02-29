@@ -35,6 +35,8 @@ public:
 
     void NotifyActiveGameChanged() { OnActiveGameChanged(); }
 
+    void NotifyGameLoad() { BeginLoad(); EndLoad(); }
+
     bool HasRichPresence() const noexcept override { return !m_sRichPresenceDisplayString.empty(); }
 
     std::wstring GetRichPresenceDisplayString() const override { return m_sRichPresenceDisplayString; }
@@ -49,19 +51,19 @@ public:
         return *m_vLeaderboards.emplace_back(std::make_unique<RA_Leaderboard>(nLeaderboardId));
     }
 
-    void MockCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
+    bool SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote) override
     {
-        if (sNote.empty())
-        {
-            // non-API part of DeleteCodeNote
-            m_mCodeNotes.erase(nAddress);
-            OnCodeNoteChanged(nAddress, sNote);
-        }
-        else
-        {
-            // non-API part of SetCodeNote
-            AddCodeNote(nAddress, "Author", sNote);
-        }
+        // non-API part of SetCodeNote
+        AddCodeNote(nAddress, "Author", sNote);
+        return true;
+    }
+
+    bool DeleteCodeNote(ra::ByteAddress nAddress) override
+    {
+        // non-API part of DeleteCodeNote
+        m_mCodeNotes.erase(nAddress);
+        OnCodeNoteChanged(nAddress, L"");
+        return true;
     }
 
 private:

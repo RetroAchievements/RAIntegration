@@ -32,24 +32,24 @@ private:
         {
             mockGameContext.SetGameId(1U);
 
-            mockGameContext.MockCodeNote(0x0010, L"Score X000");
-            mockGameContext.MockCodeNote(0x0011, L"Score 0X00");
-            mockGameContext.MockCodeNote(0x0012, L"Score 00X0");
-            mockGameContext.MockCodeNote(0x0013, L"Score 000X");
-            mockGameContext.MockCodeNote(0x0016, L"[32-bit] Score");
+            mockGameContext.SetCodeNote(0x0010, L"Score X000");
+            mockGameContext.SetCodeNote(0x0011, L"Score 0X00");
+            mockGameContext.SetCodeNote(0x0012, L"Score 00X0");
+            mockGameContext.SetCodeNote(0x0013, L"Score 000X");
+            mockGameContext.SetCodeNote(0x0016, L"[32-bit] Score");
 
-            mockGameContext.MockCodeNote(0x001A, L"Gender\n0=Male\n1=Female");
+            mockGameContext.SetCodeNote(0x001A, L"Gender\n0=Male\n1=Female");
 
-            mockGameContext.MockCodeNote(0x0020, L"[16-bit] Max HP");
-            mockGameContext.MockCodeNote(0x0022, L"[16-bit] Current HP");
+            mockGameContext.SetCodeNote(0x0020, L"[16-bit] Max HP");
+            mockGameContext.SetCodeNote(0x0022, L"[16-bit] Current HP");
 
-            mockGameContext.MockCodeNote(0x0030, L"Item 1 Quantity");
-            mockGameContext.MockCodeNote(0x0031, L"Item 2 Quantity");
-            mockGameContext.MockCodeNote(0x0032, L"Item 3 Quantity");
-            mockGameContext.MockCodeNote(0x0033, L"Item 4 Quantity");
-            mockGameContext.MockCodeNote(0x0034, L"Item 5 Quantity");
+            mockGameContext.SetCodeNote(0x0030, L"Item 1 Quantity");
+            mockGameContext.SetCodeNote(0x0031, L"Item 2 Quantity");
+            mockGameContext.SetCodeNote(0x0032, L"Item 3 Quantity");
+            mockGameContext.SetCodeNote(0x0033, L"Item 4 Quantity");
+            mockGameContext.SetCodeNote(0x0034, L"Item 5 Quantity");
 
-            mockGameContext.MockCodeNote(0x0040, L"[10 bytes] Inventory");
+            mockGameContext.SetCodeNote(0x0040, L"[10 bytes] Inventory");
         }
     };
 
@@ -158,7 +158,7 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.MockCodeNote(0x0024, L"New Note");
+        notes.mockGameContext.SetCodeNote(0x0024, L"New Note");
 
         Assert::AreEqual({ 15U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -183,7 +183,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.MockCodeNote(0x0024, L"New em Note");
+        notes.mockGameContext.SetCodeNote(0x0024, L"New em Note");
         Assert::AreEqual({ 7U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"7/15"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0024, L"0x0024", L"New em Note");
@@ -203,7 +203,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.MockCodeNote(0x0024, L"New Note");
+        notes.mockGameContext.SetCodeNote(0x0024, L"New Note");
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/15"), notes.GetResultCount());
     }
@@ -219,7 +219,7 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.MockCodeNote(0x0022, L"[8-bit] Current HP");
+        notes.mockGameContext.SetCodeNote(0x0022, L"[8-bit] Current HP");
 
         Assert::AreEqual({ 14U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -243,7 +243,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.MockCodeNote(0x0030, L"Item 1s");
+        notes.mockGameContext.SetCodeNote(0x0030, L"Item 1s");
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1s");
@@ -263,7 +263,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.MockCodeNote(0x0030, L"Thing 1 Quantity");
+        notes.mockGameContext.SetCodeNote(0x0030, L"Thing 1 Quantity");
         Assert::AreEqual({ 5U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"5/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0031, L"0x0031", L"Item 2 Quantity");
@@ -283,7 +283,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.MockCodeNote(0x0020, L"Still hidden");
+        notes.mockGameContext.SetCodeNote(0x0020, L"Still hidden");
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1 Quantity");
@@ -303,7 +303,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.MockCodeNote(0x0020, L"Heal them max");
+        notes.mockGameContext.SetCodeNote(0x0020, L"Heal them max");
         Assert::AreEqual({ 7U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"7/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0020, L"0x0020", L"Heal them max");
@@ -321,7 +321,7 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.MockCodeNote(0x0022, L"");
+        notes.mockGameContext.DeleteCodeNote(0x0022);
 
         Assert::AreEqual({ 13U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -347,7 +347,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.MockCodeNote(0x0031, L"");
+        notes.mockGameContext.DeleteCodeNote(0x0031);
         Assert::AreEqual({ 5U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"5/13"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1 Quantity");
@@ -370,7 +370,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.MockCodeNote(0x0022, L"");
+        notes.mockGameContext.DeleteCodeNote(0x0022);
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/13"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1 Quantity");

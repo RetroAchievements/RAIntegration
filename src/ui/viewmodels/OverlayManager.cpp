@@ -58,6 +58,12 @@ static void RenderPopupClippedX(ra::ui::drawing::ISurface& pSurface, const Popup
         pSurface.DrawSurface(nClipX, nY, pImage, pImage.GetWidth() - nVisibleWidth, 0, nVisibleWidth, pImage.GetHeight());
 }
 
+void OverlayManager::InitializeNotifyTargets()
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    pGameContext.AddNotifyTarget(*this);
+}
+
 void OverlayManager::Update(const ControllerInput& pInput)
 {
     if (m_vmOverlay.CurrentState() == OverlayViewModel::State::Visible)

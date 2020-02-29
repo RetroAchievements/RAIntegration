@@ -30,6 +30,8 @@ public:
     MemoryViewerViewModel(MemoryViewerViewModel&&) noexcept = delete;
     MemoryViewerViewModel& operator=(MemoryViewerViewModel&&) noexcept = delete;
 
+    void InitializeNotifyTargets();
+
     void DoFrame();
 
     bool NeedsRedraw() const noexcept { return (m_nNeedsRedraw != 0); }
@@ -150,8 +152,6 @@ public:
     void RetreatCursorPage();
 
 protected:
-    void InitializeNotifyTargets();
-
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     // GameContext::NotifyTarget

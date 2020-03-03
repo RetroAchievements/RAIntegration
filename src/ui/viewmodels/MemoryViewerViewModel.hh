@@ -36,6 +36,26 @@ public:
 
     bool NeedsRedraw() const noexcept { return (m_nNeedsRedraw != 0); }
 
+    class RepaintNotifyTarget
+    {
+    public:
+        RepaintNotifyTarget() noexcept = default;
+        virtual ~RepaintNotifyTarget() noexcept = default;
+        RepaintNotifyTarget(const RepaintNotifyTarget&) noexcept = delete;
+        RepaintNotifyTarget& operator=(const RepaintNotifyTarget&) noexcept = delete;
+        RepaintNotifyTarget(RepaintNotifyTarget&&) noexcept = default;
+        RepaintNotifyTarget& operator=(RepaintNotifyTarget&&) noexcept = default;
+
+        virtual void OnRepaintMemoryViewer() noexcept(false) {}
+    };
+
+    void AddRepaintNotifyTarget(RepaintNotifyTarget& pTarget) noexcept { m_pRepaintNotifyTarget = &pTarget; }
+    void RemoveRepaintNotifyTarget(RepaintNotifyTarget& pTarget) noexcept { if (m_pRepaintNotifyTarget == &pTarget) m_pRepaintNotifyTarget = nullptr; }
+
+private:
+    RepaintNotifyTarget* m_pRepaintNotifyTarget;
+
+public:
     void UpdateRenderImage();
 
     /// <summary>

@@ -2,6 +2,7 @@
 #define RA_UI_MEMORYSEARCHVIEWMODEL_H
 #pragma once
 
+#include "data\EmulatorContext.hh"
 #include "data\Types.hh"
 
 #include "services\SearchResults.h"
@@ -16,7 +17,8 @@ namespace viewmodels {
 
 class MemorySearchViewModel : public ViewModelBase,
     protected ViewModelBase::NotifyTarget,
-    protected ViewModelCollectionBase::NotifyTarget
+    protected ViewModelCollectionBase::NotifyTarget,
+    protected data::EmulatorContext::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 MemorySearchViewModel();
@@ -27,9 +29,79 @@ public:
     MemorySearchViewModel(MemorySearchViewModel&&) noexcept = delete;
     MemorySearchViewModel& operator=(MemorySearchViewModel&&) noexcept = delete;
 
+    void InitializeNotifyTargets();
+
+
     void DoFrame();
 
     bool NeedsRedraw() noexcept;
+
+    class PredefinedFilterRangeViewModel : public LookupItemViewModel
+    {
+    public:
+        PredefinedFilterRangeViewModel(int nId, const std::wstring& sLabel) noexcept
+            : LookupItemViewModel(nId, sLabel)
+        {
+        }
+
+        PredefinedFilterRangeViewModel(int nId, const std::wstring&& sLabel) noexcept
+            : LookupItemViewModel(nId, sLabel)
+        {
+        }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the start address of the predefined filter range.
+        /// </summary>
+        static const IntModelProperty StartAddressProperty;
+
+        /// <summary>
+        /// Gets the start address of the predefined filter range.
+        /// </summary>
+        const ra::ByteAddress GetStartAddress() const { return static_cast<ra::ByteAddress>(GetValue(StartAddressProperty)); }
+
+        /// <summary>
+        /// Sets the start address of the predefined filter range.
+        /// </summary>
+        void SetStartAddress(ra::ByteAddress nValue) { SetValue(StartAddressProperty, static_cast<int>(nValue)); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the end address of the predefined filter range.
+        /// </summary>
+        static const IntModelProperty EndAddressProperty;
+
+        /// <summary>
+        /// Gets the end address of the predefined filter range.
+        /// </summary>
+        const ra::ByteAddress GetEndAddress() const { return static_cast<ra::ByteAddress>(GetValue(EndAddressProperty)); }
+
+        /// <summary>
+        /// Sets the end address of the predefined filter range.
+        /// </summary>
+        void SetEndAddress(ra::ByteAddress nValue) { SetValue(EndAddressProperty, static_cast<int>(nValue)); }
+    };
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the predefined filter ranges.
+    /// </summary>
+    static const IntModelProperty PredefinedFilterRangeProperty;
+
+    /// <summary>
+    /// Gets the selected predefined filter range.
+    /// </summary>
+    const int GetPredefinedFilterRange() const { return GetValue(PredefinedFilterRangeProperty); }
+
+    /// <summary>
+    /// Sets the selected predefined filter range.
+    /// </summary>
+    void SetPredefinedFilterRange(int nPredefinedFilterRangeIndex) { SetValue(PredefinedFilterRangeProperty, nPredefinedFilterRangeIndex); }
+
+    /// <summary>
+    /// Gets the list of selectable search types.
+    /// </summary>
+    ViewModelCollection<PredefinedFilterRangeViewModel>& PredefinedFilterRanges() noexcept
+    {
+        return m_vPredefinedFilterRanges;
+    }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the filter range.
@@ -294,6 +366,16 @@ public:
     unsigned int GetResultCount() const { return gsl::narrow_cast<unsigned int>(GetValue(ResultCountProperty)); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for the string representation of <see cref="ResultCountProperty" />.
+    /// </summary>
+    static const StringModelProperty ResultCountTextProperty;
+
+    /// <summary>
+    /// Gets the string representation of the number of results found.
+    /// </summary>
+    const std::wstring& GetResultCountText() const { return GetValue(ResultCountTextProperty); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the scroll offset.
     /// </summary>
     static const IntModelProperty ScrollOffsetProperty;
@@ -324,26 +406,32 @@ public:
     /// Advances to the next page of results (if available).
     /// </summary>
     void NextPage();
+    static const BoolModelProperty CanGoToNextPageProperty;
 
     /// <summary>
     /// Returns to the previous page of results (if available).
     /// </summary>
     void PreviousPage();
+    static const BoolModelProperty CanGoToPreviousPageProperty;
 
     /// <summary>
     /// Starts a new search.
     /// </summary>
     void BeginNewSearch();
+    static const BoolModelProperty CanBeginNewSearchProperty;
 
     /// <summary>
     /// Applies the current filter.
     /// </summary>
     void ApplyFilter();
+    static const BoolModelProperty CanFilterProperty;
+    static const BoolModelProperty CanEditFilterValueProperty;
 
     /// <summary>
     /// Excludes the currently selected items from the search results.
     /// </summary>
     void ExcludeSelected();
+    static const BoolModelProperty HasSelectionProperty;
 
     /// <summary>
     /// Bookmarks the currently selected items from the search results.
@@ -352,12 +440,17 @@ public:
 
 protected:
     // ViewModelBase::NotifyTarget
+    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
 
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) noexcept override;
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) noexcept override;
+
+    // EmulatorContext::NotifyTarget
+    void OnTotalMemorySizeChanged() override;
 
 private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);
@@ -365,6 +458,10 @@ private:
     void AddNewPage();
     void ChangePage(size_t nNewPage);
 
+    void OnPredefinedFilterRangeChanged();
+    void OnFilterRangeChanged();
+
+    ViewModelCollection<PredefinedFilterRangeViewModel> m_vPredefinedFilterRanges;
     LookupItemViewModelCollection m_vSearchTypes;
     LookupItemViewModelCollection m_vComparisonTypes;
     LookupItemViewModelCollection m_vValueTypes;
@@ -375,6 +472,7 @@ private:
     struct SearchResult
     {
         ra::services::SearchResults pResults;
+        std::set<unsigned int> vModifiedAddresses;
 
         std::wstring sSummary;
         ValueType nValueType = ValueType::Constant;
@@ -384,7 +482,6 @@ private:
 
     size_t m_nSelectedSearchResult = 0U;
     std::vector<SearchResult> m_vSearchResults;
-    std::set<unsigned int> m_vModifiedAddresses;
     std::set<unsigned int> m_vSelectedAddresses;
 
     static bool TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue) noexcept;

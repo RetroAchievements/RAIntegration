@@ -20,6 +20,7 @@ const StringModelProperty MemoryInspectorViewModel::CurrentAddressTextProperty("
 const StringModelProperty MemoryInspectorViewModel::CurrentAddressNoteProperty("MemoryInspectorViewModel", "CurrentAddressNote", L"");
 const StringModelProperty MemoryInspectorViewModel::CurrentAddressBitsProperty("MemoryInspectorViewModel", "CurrentAddressBits", L"0 0 0 0 0 0 0 0");
 const IntModelProperty MemoryInspectorViewModel::CurrentAddressValueProperty("MemoryInspectorViewModel", "CurrentAddressValue", 0);
+const BoolModelProperty MemoryInspectorViewModel::CanModifyNotesProperty("MemoryInspectorViewModel", "CanModifyNotes", true);
 
 MemoryInspectorViewModel::MemoryInspectorViewModel()
 {
@@ -27,6 +28,8 @@ MemoryInspectorViewModel::MemoryInspectorViewModel()
 
     AddNotifyTarget(*this);
     m_pViewer.AddNotifyTarget(*this);
+
+    SetValue(CanModifyNotesProperty, false);
 }
 
 void MemoryInspectorViewModel::InitializeNotifyTargets()
@@ -34,6 +37,7 @@ void MemoryInspectorViewModel::InitializeNotifyTargets()
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     pGameContext.AddNotifyTarget(*this);
 
+    m_pSearch.InitializeNotifyTargets();
     m_pViewer.InitializeNotifyTargets();
 }
 
@@ -233,14 +237,17 @@ void MemoryInspectorViewModel::OnActiveGameChanged()
     if (pGameContext.GameId() == 0)
     {
         SetWindowTitle(L"Memory Inspector [no game loaded]");
+        SetValue(CanModifyNotesProperty, false);
     }
     else if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
     {
         SetWindowTitle(L"Memory Inspector [compatibility mode]");
+        SetValue(CanModifyNotesProperty, false);
     }
     else
     {
         SetWindowTitle(L"Memory Inspector");
+        SetValue(CanModifyNotesProperty, true);
     }
 }
 

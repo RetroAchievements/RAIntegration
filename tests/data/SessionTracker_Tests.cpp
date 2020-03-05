@@ -331,18 +331,11 @@ public:
         Assert::AreEqual(std::string(""), tracker.GetStoredData());
     }
 
-    TEST_METHOD(TestCurrentActivityNoAchievements)
+    TEST_METHOD(TestCurrentActivityNoRichPresence)
     {
         SessionTrackerHarness tracker;
         tracker.mockGameContext.SetGameTitle(L"GameTitle");
         Assert::AreEqual(std::wstring(L"Playing GameTitle"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityNoRichPresence)
-    {
-        SessionTrackerHarness tracker;
-        tracker.mockGameContext.NewAchievement(Achievement::Category::Core);
-        Assert::AreEqual(std::wstring(L"Earning Achievements"), tracker.GetActivity());
     }
 
     TEST_METHOD(TestCurrentActivityRichPresence)

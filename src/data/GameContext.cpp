@@ -102,8 +102,16 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     m_sGameImage = response.ImageIcon;
 
     // rich presence
-    LoadRichPresenceScript(response.RichPresence);
-    m_sServerRichPresenceMD5 = RAGenerateMD5(response.RichPresence);
+    {
+        // normalize for MD5 calulation (unix line endings, must end with a line ending)
+        std::string sRichPresence = response.RichPresence;
+        sRichPresence.erase(std::remove(sRichPresence.begin(), sRichPresence.end(), '\r'), sRichPresence.end());
+        if (!sRichPresence.empty() && sRichPresence.back() != '\n')
+            sRichPresence.push_back('\n');
+
+        LoadRichPresenceScript(sRichPresence);
+        m_sServerRichPresenceMD5 = RAGenerateMD5(sRichPresence);
+    }
 
     if (!response.RichPresence.empty())
     {
@@ -1055,7 +1063,6 @@ void GameContext::ReloadRichPresenceScript()
             sRichPresence.append(sLine);
             sRichPresence.append("\n");
         }
-        sRichPresence.resize(pRich->GetPosition()); // remove trailing newline if not present in file
     }
 
     const auto sFileRichPresenceMD5 = RAGenerateMD5(sRichPresence);

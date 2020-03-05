@@ -17,6 +17,14 @@ const StringModelProperty RichPresenceMonitorViewModel::DisplayStringProperty("R
 RichPresenceMonitorViewModel::RichPresenceMonitorViewModel() noexcept
 {
     SetWindowTitle(L"Rich Presence Monitor");
+
+    AddNotifyTarget(*this);
+}
+
+void RichPresenceMonitorViewModel::InitializeNotifyTargets()
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    pGameContext.AddNotifyTarget(*this);
 }
 
 static time_t GetRichPresenceModified()
@@ -136,6 +144,28 @@ void RichPresenceMonitorViewModel::UpdateDisplayString()
         {
             m_nState = MonitorState::Active;
             ScheduleUpdateDisplayString();
+        }
+    }
+}
+
+void RichPresenceMonitorViewModel::OnActiveGameChanged()
+{
+    if (IsVisible())
+        UpdateDisplayString();
+}
+
+void RichPresenceMonitorViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == IsVisibleProperty)
+    {
+        if (args.tNewValue)
+        {
+            UpdateDisplayString();
+            StartMonitoring();
+        }
+        else
+        {
+            StopMonitoring();
         }
     }
 }

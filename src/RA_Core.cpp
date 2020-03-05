@@ -536,8 +536,6 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
             auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
             pWindowManager.RichPresenceMonitor.Show();
-            pWindowManager.RichPresenceMonitor.StartMonitoring();
-
             break;
         }
 

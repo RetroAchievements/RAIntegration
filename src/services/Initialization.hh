@@ -15,6 +15,9 @@ public:
     static void RegisterServices(EmulatorID nEmulatorId);
 
     static void Shutdown();
+
+private:
+    static void InitializeNotifyTargets();
 };
 
 } // namespace services

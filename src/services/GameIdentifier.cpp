@@ -201,10 +201,6 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
 #ifndef RA_UTEST
     g_AchievementsDialog.OnLoad_NewRom(nGameId);
     g_AchievementEditorDialog.OnLoad_NewRom();
-
-    // TODO: have RichPresenceMonitor watch GameContext.ActiveGameChanged
-    auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-    pWindowManager.RichPresenceMonitor.UpdateDisplayString();
 #endif
 }
 

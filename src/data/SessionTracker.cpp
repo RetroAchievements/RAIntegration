@@ -269,15 +269,12 @@ std::wstring SessionTracker::GetCurrentActivity() const
         return L"Fixing Achievements";
     }
 
-    if (pGameContext.HasRichPresence())
+    if (pGameContext.HasRichPresence() && !pGameContext.IsRichPresenceFromFile())
     {
         const auto sRPResponse = pGameContext.GetRichPresenceDisplayString();
         if (!sRPResponse.empty())
             return sRPResponse;
     }
-
-    if (HasCoreAchievements(pGameContext))
-        return L"Earning Achievements";
 
     return L"Playing " + pGameContext.GameTitle();
 }

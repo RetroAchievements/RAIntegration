@@ -160,11 +160,22 @@ void AchievementRuntime::ActivateRichPresence(const std::string& sScript)
 {
     EnsureInitialized();
 
-    const auto nResult = rc_runtime_activate_richpresence(&m_pRuntime, sScript.c_str(), nullptr, 0);
-    if (nResult != RC_OK)
+    if (sScript.empty())
     {
-        const std::string sErrorRP = ra::StringPrintf("Parse error %d\n", nResult);
-        m_pRuntime.richpresence_display_buffer = _strdup(sErrorRP.c_str());
+        if (m_pRuntime.richpresence_display_buffer != nullptr)
+        {
+            free(m_pRuntime.richpresence_display_buffer);
+            m_pRuntime.richpresence_display_buffer = nullptr;
+        }
+    }
+    else
+    {
+        const auto nResult = rc_runtime_activate_richpresence(&m_pRuntime, sScript.c_str(), nullptr, 0);
+        if (nResult != RC_OK)
+        {
+            const std::string sErrorRP = ra::StringPrintf("Parse error %d\n", nResult);
+            m_pRuntime.richpresence_display_buffer = _strdup(sErrorRP.c_str());
+        }
     }
 }
 

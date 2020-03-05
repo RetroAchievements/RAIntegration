@@ -352,6 +352,15 @@ public:
         Assert::AreEqual(std::wstring(L"Level 10"), tracker.GetActivity());
     }
 
+    TEST_METHOD(TestCurrentActivityRichPresenceFromFile)
+    {
+        SessionTrackerHarness tracker;
+        tracker.mockGameContext.SetGameTitle(L"GameTitle");
+        tracker.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
+        tracker.mockGameContext.SetRichPresenceFromFile(true);
+        Assert::AreEqual(std::wstring(L"Playing GameTitle"), tracker.GetActivity());
+    }
+
     TEST_METHOD(TestCurrentActivityRichPresenceCompatibilityMode)
     {
         SessionTrackerHarness tracker;

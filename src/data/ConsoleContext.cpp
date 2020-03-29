@@ -527,6 +527,29 @@ const std::vector<ConsoleContext::MemoryRegion> SuperNESConsoleContext::m_vMemor
     { 0x020000U, 0x03FFFFU, ConsoleContext::AddressType::SaveRAM, "Cartridge RAM" }, // cartridge RAM (normally $FE0000-$FF0000; up to 1MB, typically 32KB or less)
 };
 
+// ===== Super Cassette Vision =====
+
+class SuperCassetteVisionConsoleContext : public ConsoleContext
+{
+public:
+    GSL_SUPPRESS_F6 SuperCassetteVisionConsoleContext() noexcept : ConsoleContext(ConsoleID::SuperCassetteVision, L"Super Cassette Vision") {}
+
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vMemoryRegions; }
+
+private:
+    static const std::vector<MemoryRegion> m_vMemoryRegions;
+};
+
+const std::vector<ConsoleContext::MemoryRegion> SuperCassetteVisionConsoleContext::m_vMemoryRegions = {
+    { 0x000000U, 0x000FFFU, ConsoleContext::AddressType::ReadOnlyMemory, "System ROM" },
+    { 0x001000U, 0x001FFFU, ConsoleContext::AddressType::Unknown, "Unused Memory" },
+    { 0x002000U, 0x003FFFU, ConsoleContext::AddressType::VideoRAM, "Video RAM" },
+    { 0x004000U, 0x007FFFU, ConsoleContext::AddressType::Unknown, "Unused Memory" },
+    { 0x008000U, 0x00DFFFU, ConsoleContext::AddressType::ReadOnlyMemory, "Cartridge ROM" },
+    { 0x00E000U, 0x00FF7FU, ConsoleContext::AddressType::SaveRAM, "Cartridge RAM" },
+    { 0x00FF80U, 0x00FFFFU, ConsoleContext::AddressType::SystemRAM, "System RAM" },
+};
+
 // ==== WonderSwan ====
 
 class WonderSwanConsoleContext : public ConsoleContext
@@ -727,7 +750,7 @@ std::unique_ptr<ConsoleContext> ConsoleContext::GetContext(ConsoleID nId)
             return std::make_unique<SuperNESConsoleContext>();
 
         case ConsoleID::SuperCassetteVision:
-            return std::make_unique<ConsoleContext>(nId, L"Super Cassette Vision");
+            return std::make_unique<SuperCassetteVisionConsoleContext>();
 
         case ConsoleID::ThreeDO:
             return std::make_unique<ConsoleContext>(nId, L"3D0");

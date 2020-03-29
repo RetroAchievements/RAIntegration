@@ -37,6 +37,13 @@ public:
         return sEmpty;
     }
 
+    void DeleteStoredData(ra::services::StorageItemType nType, const std::wstring& sKey)
+    {
+        auto pMap = m_mStoredData.find(nType);
+        if (pMap != m_mStoredData.end())
+            pMap->second.erase(sKey);
+    }
+
     std::chrono::system_clock::time_point GetLastModified(_UNUSED StorageItemType nType,
                                                           _UNUSED const std::wstring& sKey) noexcept override
     {

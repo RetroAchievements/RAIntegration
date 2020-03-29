@@ -813,6 +813,24 @@ public:
         runtime.Process(changes);
         Assert::AreEqual(std::wstring(L"13 11"), runtime.GetRichPresenceDisplayString());
     }
+
+    TEST_METHOD(TestActivateRichPresenceChange)
+    {
+        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        std::vector<ra::services::AchievementRuntime::Change> changes;
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+
+        runtime.ActivateRichPresence("Display:\nHello, World\n");
+        Assert::AreEqual(std::wstring(L"Hello, World"), runtime.GetRichPresenceDisplayString());
+
+        runtime.ActivateRichPresence("Display:\nNew String\n");
+        Assert::AreEqual(std::wstring(L"New String"), runtime.GetRichPresenceDisplayString());
+
+        runtime.ActivateRichPresence("");
+        Assert::AreEqual(std::wstring(L"No Rich Presence defined."), runtime.GetRichPresenceDisplayString());
+    }
 };
 
 } // namespace tests

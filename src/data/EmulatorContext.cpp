@@ -95,11 +95,6 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
             _RA_SetConsoleID(ConsoleID::DS);
             break;
 
-        case RA_SCV:
-            m_sClientName = "RASCV";
-            _RA_SetConsoleID(ConsoleID::SuperCassetteVision);
-            break;
-
         default:
         {
             const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();

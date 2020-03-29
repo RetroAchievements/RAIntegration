@@ -5,6 +5,7 @@
 #include "RA_Defs.h"
 #include "RA_Dlg_Achievement.h"
 #include "RA_Log.h"
+#include "RA_md5factory.h"
 #include "RA_StringUtils.h"
 
 #include "api\AwardAchievement.hh"
@@ -56,6 +57,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
     m_nMode = nMode;
     m_sGameTitle.clear();
+    m_bRichPresenceFromFile = false;
     m_mCodeNotes.clear();
     m_nNextLocalId = GameContext::FirstLocalId;
 
@@ -100,10 +102,19 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     m_sGameImage = response.ImageIcon;
 
     // rich presence
+    {
+        // normalize for MD5 calulation (unix line endings, must end with a line ending)
+        std::string sRichPresence = response.RichPresence;
+        sRichPresence.erase(std::remove(sRichPresence.begin(), sRichPresence.end(), '\r'), sRichPresence.end());
+        if (!sRichPresence.empty() && sRichPresence.back() != '\n')
+            sRichPresence.push_back('\n');
+
+        LoadRichPresenceScript(sRichPresence);
+        m_sServerRichPresenceMD5 = RAGenerateMD5(sRichPresence);
+    }
+
     if (!response.RichPresence.empty())
     {
-        LoadRichPresenceScript(response.RichPresence);
-
         // TODO: this file is written so devs can modify the rich presence without having to restart
         // the game. if the user doesn't have dev permission, there's no reason to write it.
         auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
@@ -1040,18 +1051,22 @@ std::wstring GameContext::GetRichPresenceDisplayString() const
 
 void GameContext::ReloadRichPresenceScript()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.GameId()));
-    if (pRich == nullptr)
-        return;
+    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(GameId()));
 
-    std::string sRichPresence, sLine;
-    while (pRich->GetLine(sLine))
+    std::string sRichPresence;
+    if (pRich != nullptr)
     {
-        sRichPresence.append(sLine);
-        sRichPresence.append("\n");
+        std::string sLine;
+        while (pRich->GetLine(sLine))
+        {
+            sRichPresence.append(sLine);
+            sRichPresence.append("\n");
+        }
     }
+
+    const auto sFileRichPresenceMD5 = RAGenerateMD5(sRichPresence);
+    m_bRichPresenceFromFile = (sFileRichPresenceMD5 != m_sServerRichPresenceMD5);
 
     LoadRichPresenceScript(sRichPresence);
 }

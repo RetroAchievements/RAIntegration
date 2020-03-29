@@ -170,6 +170,11 @@ public:
     virtual bool HasRichPresence() const;
     
     /// <summary>
+    /// Gets whether or not the loaded game has a rich presence script.
+    /// </summary>
+    bool IsRichPresenceFromFile() const noexcept { return m_bRichPresenceFromFile; }
+
+    /// <summary>
     /// Gets the current rich presence display string.
     /// </summary>
     virtual std::wstring GetRichPresenceDisplayString() const;
@@ -323,6 +328,8 @@ protected:
     std::string m_sGameHash;
     std::string m_sGameImage;
     Mode m_nMode{};
+    std::string m_sServerRichPresenceMD5;
+    bool m_bRichPresenceFromFile = false;
 
     ra::AchievementID m_nNextLocalId = 0;
     static const ra::AchievementID FirstLocalId = 111000001;

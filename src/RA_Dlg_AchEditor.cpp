@@ -18,8 +18,8 @@
 
 #include "ui\drawing\gdi\ImageRepository.hh"
 
-#include "ui\viewmodels\MemoryInspectorViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 #include "ra_math.h"
 
@@ -1082,7 +1082,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     // Helper: guess that the currently watched memory location
                     //  is probably what they are about to want to add a cond for.
                     {
-                        const auto& pMemoryInspector = ra::services::ServiceLocator::Get<ra::ui::viewmodels::MemoryInspectorViewModel>();
+                        const auto& pMemoryInspector = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryInspector;
                         const auto nSize = pMemoryInspector.Viewer().GetSize();
                         const auto nAddress = pMemoryInspector.Viewer().GetAddress();
 

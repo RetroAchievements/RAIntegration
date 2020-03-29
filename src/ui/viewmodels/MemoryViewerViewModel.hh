@@ -53,7 +53,7 @@ public:
     void RemoveRepaintNotifyTarget(RepaintNotifyTarget& pTarget) noexcept { if (m_pRepaintNotifyTarget == &pTarget) m_pRepaintNotifyTarget = nullptr; }
 
 private:
-    RepaintNotifyTarget* m_pRepaintNotifyTarget;
+    RepaintNotifyTarget* m_pRepaintNotifyTarget = nullptr;
 
 public:
     void UpdateRenderImage();

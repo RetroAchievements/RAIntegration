@@ -63,6 +63,11 @@ private:
     class MemorySearchViewModelHarness : public MemorySearchViewModel
     {
     public:
+        MemorySearchViewModelHarness() : MemorySearchViewModel()
+        {
+            InitializeNotifyTargets();
+        }
+
         ra::data::mocks::MockConsoleContext mockConsoleContext;
         ra::data::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::mocks::MockGameContext mockGameContext;
@@ -79,6 +84,13 @@ private:
 
             mockEmulatorContext.MockMemory(memory);
         }
+
+        bool CanBeginNewSearch() const { return (bool)GetValue(CanBeginNewSearchProperty); }
+        bool CanFilter() const { return (bool)GetValue(CanFilterProperty); }
+        bool CanEditFilterValue() const { return (bool)GetValue(CanEditFilterValueProperty); }
+        bool CanGoToPreviousPage() const { return (bool)GetValue(CanGoToPreviousPageProperty); }
+        bool CanGoToNextPage() const { return (bool)GetValue(CanGoToNextPageProperty); }
+        bool HasSelection() const { return (bool)GetValue(HasSelectionProperty); }
     };
 
     void AssertRow(MemorySearchViewModelHarness& search, gsl::index nRow, ra::ByteAddress nAddress,
@@ -141,12 +153,20 @@ public:
         Assert::AreEqual(std::wstring(L"0/0"), search.GetSelectedPage());
 
         Assert::AreEqual(std::wstring(L""), search.GetFilterSummary());
+
+        Assert::IsFalse(search.CanBeginNewSearch());
+        Assert::IsFalse(search.CanFilter());
+        Assert::IsFalse(search.CanEditFilterValue());
+        Assert::IsFalse(search.CanGoToPreviousPage());
+        Assert::IsFalse(search.CanGoToNextPage());
+        Assert::IsFalse(search.HasSelection());
     }
 
     TEST_METHOD(TestBeginNewSearchEightBit)
     {
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
+        Assert::IsFalse(search.CanFilter());
 
         search.BeginNewSearch();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
@@ -154,6 +174,9 @@ public:
         Assert::AreEqual({ 32U }, search.GetResultCount());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"New 8-bit Search"), search.GetFilterSummary());
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsFalse(search.CanGoToPreviousPage());
+        Assert::IsFalse(search.CanGoToNextPage());
     }
 
     TEST_METHOD(TestBeginNewSearchSixteenBit)
@@ -161,6 +184,7 @@ public:
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
         search.SetSearchType(MemorySearchViewModel::SearchType::SixteenBit);
+        Assert::IsFalse(search.CanFilter());
 
         search.BeginNewSearch();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
@@ -168,6 +192,9 @@ public:
         Assert::AreEqual({ 31U }, search.GetResultCount());
         Assert::AreEqual(MemSize::SixteenBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"New 16-bit Search"), search.GetFilterSummary());
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsFalse(search.CanGoToPreviousPage());
+        Assert::IsFalse(search.CanGoToNextPage());
     }
 
     TEST_METHOD(TestBeginNewSearchFourBit)
@@ -175,6 +202,7 @@ public:
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
         search.SetSearchType(MemorySearchViewModel::SearchType::FourBit);
+        Assert::IsFalse(search.CanFilter());
 
         search.BeginNewSearch();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
@@ -182,6 +210,9 @@ public:
         Assert::AreEqual({ 64U }, search.GetResultCount());
         Assert::AreEqual(MemSize::Nibble_Lower, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"New 4-bit Search"), search.GetFilterSummary());
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsFalse(search.CanGoToPreviousPage());
+        Assert::IsFalse(search.CanGoToNextPage());
     }
 
     TEST_METHOD(TestApplyFilterEightBitConstantDecimal)
@@ -199,7 +230,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
-        Assert::AreEqual(std::wstring(L"Filter: = 12"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"= 12"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
         AssertRow(search, 0, 12U, L"0x000c", L"0x0c", L"0x0c");
@@ -220,7 +251,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
-        Assert::AreEqual(std::wstring(L"Filter: = 0x0C"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"= 0x0C"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
         AssertRow(search, 0, 12U, L"0x000c", L"0x0c", L"0x0c");
@@ -234,6 +265,7 @@ public:
 
         search.SetComparisonType(ComparisonType::Equals);
         search.SetValueType(MemorySearchViewModel::ValueType::Constant);
+        Assert::IsTrue(search.CanEditFilterValue());
         search.SetFilterValue(L"banana");
 
         bool bSawDialog = false;
@@ -250,6 +282,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 32U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"32"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
         Assert::AreEqual(std::wstring(L"New 8-bit Search"), search.GetFilterSummary());
         Assert::AreEqual({ 0U }, search.Results().Count());
@@ -263,14 +296,16 @@ public:
 
         search.SetComparisonType(ComparisonType::NotEqualTo);
         search.SetValueType(MemorySearchViewModel::ValueType::LastKnownValue);
+        Assert::IsFalse(search.CanEditFilterValue());
         search.memory.at(12) = 9;
 
         search.ApplyFilter();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
-        Assert::AreEqual(std::wstring(L"Filter: != Last Known Value"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"!= Last Known Value"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
         AssertRow(search, 0, 12U, L"0x000c", L"0x09", L"0x0c");
@@ -281,8 +316,9 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
-        Assert::AreEqual(std::wstring(L"Filter: != Last Known Value"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"!= Last Known Value"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
 
@@ -305,7 +341,7 @@ public:
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
-        Assert::AreEqual(std::wstring(L"Filter: != Last Known Value"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"!= Last Known Value"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
         AssertRow(search, 0, 12U, L"0x000c", L"0x09", L"0x0c");
@@ -317,7 +353,7 @@ public:
         Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
-        Assert::AreEqual(std::wstring(L"Filter: = Last Known Value"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"= Last Known Value"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
         AssertRow(search, 0, 12U, L"0x000c", L"0x09", L"0x09");
@@ -337,6 +373,7 @@ public:
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 32U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"32"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
 
         Assert::IsTrue(search.Results().Count() > 3);
@@ -400,88 +437,126 @@ public:
         search.SetComparisonType(ComparisonType::LessThan);
         search.SetValueType(MemorySearchViewModel::ValueType::Constant);
         search.SetFilterValue(L"8");
+        Assert::IsFalse(search.CanGoToPreviousPage());
+        Assert::IsFalse(search.CanGoToNextPage());
 
         search.ApplyFilter();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
-        Assert::AreEqual(std::wstring(L"Filter: < 8"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
         AssertRow(search, 2, 2U, L"0x0002", L"0x02", L"0x02");
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsFalse(search.CanGoToPreviousPage());
+        Assert::IsFalse(search.CanGoToNextPage());
 
         search.SetComparisonType(ComparisonType::GreaterThan);
         search.SetFilterValue(L"3");
         search.ApplyFilter();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
-        Assert::AreEqual(std::wstring(L"Filter: > 3"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"> 3"), search.GetFilterSummary());
         Assert::AreEqual({ 4U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"4"), search.GetResultCountText());
         Assert::AreEqual({ 4U }, search.Results().Count());
         AssertRow(search, 2, 6U, L"0x0006", L"0x06", L"0x06");
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsTrue(search.CanGoToPreviousPage());
+        Assert::IsFalse(search.CanGoToNextPage());
 
         search.SetComparisonType(ComparisonType::NotEqualTo);
         search.SetFilterValue(L"6");
         search.ApplyFilter();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"3/3"), search.GetSelectedPage());
-        Assert::AreEqual(std::wstring(L"Filter: != 6"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"!= 6"), search.GetFilterSummary());
         Assert::AreEqual({ 3U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"3"), search.GetResultCountText());
         Assert::AreEqual({ 3U }, search.Results().Count());
         AssertRow(search, 2, 7U, L"0x0007", L"0x07", L"0x07");
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsTrue(search.CanGoToPreviousPage());
+        Assert::IsFalse(search.CanGoToNextPage());
 
         // cannot go forward
         search.NextPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"3/3"), search.GetSelectedPage());
-        Assert::AreEqual(std::wstring(L"Filter: != 6"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"!= 6"), search.GetFilterSummary());
         Assert::AreEqual({ 3U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"3"), search.GetResultCountText());
         Assert::AreEqual({ 3U }, search.Results().Count());
         AssertRow(search, 2, 7U, L"0x0007", L"0x07", L"0x07");
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsTrue(search.CanGoToPreviousPage());
+        Assert::IsFalse(search.CanGoToNextPage());
 
         search.PreviousPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"2/3"), search.GetSelectedPage());
-        Assert::AreEqual(std::wstring(L"Filter: > 3"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"> 3"), search.GetFilterSummary());
         Assert::AreEqual({ 4U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"4"), search.GetResultCountText());
         Assert::AreEqual({ 4U }, search.Results().Count());
         AssertRow(search, 2, 6U, L"0x0006", L"0x06", L"0x06");
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsTrue(search.CanGoToPreviousPage());
+        Assert::IsTrue(search.CanGoToNextPage());
 
         search.PreviousPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/3"), search.GetSelectedPage());
-        Assert::AreEqual(std::wstring(L"Filter: < 8"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
         AssertRow(search, 2, 2U, L"0x0002", L"0x02", L"0x02");
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsFalse(search.CanGoToPreviousPage());
+        Assert::IsTrue(search.CanGoToNextPage());
 
         // cannot go back any further
         search.PreviousPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/3"), search.GetSelectedPage());
-        Assert::AreEqual(std::wstring(L"Filter: < 8"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
         AssertRow(search, 2, 2U, L"0x0002", L"0x02", L"0x02");
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsFalse(search.CanGoToPreviousPage());
+        Assert::IsTrue(search.CanGoToNextPage());
 
         search.NextPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"2/3"), search.GetSelectedPage());
-        Assert::AreEqual(std::wstring(L"Filter: > 3"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"> 3"), search.GetFilterSummary());
         Assert::AreEqual({ 4U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"4"), search.GetResultCountText());
         Assert::AreEqual({ 4U }, search.Results().Count());
         AssertRow(search, 2, 6U, L"0x0006", L"0x06", L"0x06");
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsTrue(search.CanGoToPreviousPage());
+        Assert::IsTrue(search.CanGoToNextPage());
 
         search.PreviousPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/3"), search.GetSelectedPage());
-        Assert::AreEqual(std::wstring(L"Filter: < 8"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
         AssertRow(search, 2, 2U, L"0x0002", L"0x02", L"0x02");
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsFalse(search.CanGoToPreviousPage());
+        Assert::IsTrue(search.CanGoToNextPage());
 
         // not at last page - filter should replace any pages after current
         search.SetComparisonType(ComparisonType::Equals);
@@ -489,27 +564,39 @@ public:
         search.ApplyFilter();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
-        Assert::AreEqual(std::wstring(L"Filter: = 5"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"= 5"), search.GetFilterSummary());
         Assert::AreEqual({ 1U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
         Assert::AreEqual({ 1U }, search.Results().Count());
         AssertRow(search, 0, 5U, L"0x0005", L"0x05", L"0x05");
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsTrue(search.CanGoToPreviousPage());
+        Assert::IsFalse(search.CanGoToNextPage());
 
         search.PreviousPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/2"), search.GetSelectedPage());
-        Assert::AreEqual(std::wstring(L"Filter: < 8"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
         AssertRow(search, 2, 2U, L"0x0002", L"0x02", L"0x02");
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsFalse(search.CanGoToPreviousPage());
+        Assert::IsTrue(search.CanGoToNextPage());
 
         search.NextPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
-        Assert::AreEqual(std::wstring(L"Filter: = 5"), search.GetFilterSummary());
+        Assert::AreEqual(std::wstring(L"= 5"), search.GetFilterSummary());
         Assert::AreEqual({ 1U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
         Assert::AreEqual({ 1U }, search.Results().Count());
         AssertRow(search, 0, 5U, L"0x0005", L"0x05", L"0x05");
+        Assert::IsTrue(search.CanFilter());
+        Assert::IsTrue(search.CanGoToPreviousPage());
+        Assert::IsFalse(search.CanGoToNextPage());
     }
 
     TEST_METHOD(TestDoFramePreviousPage)
@@ -567,17 +654,22 @@ public:
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
 
         Assert::AreEqual({ 5U }, search.Results().Count());
+        Assert::IsFalse(search.HasSelection());
         search.Results().GetItemAt(2)->SetSelected(true);
+        Assert::IsTrue(search.HasSelection());
         search.Results().GetItemAt(3)->SetSelected(true);
+        Assert::IsTrue(search.HasSelection());
 
         search.ExcludeSelected();
         Assert::AreEqual({ 3U }, search.Results().Count());
+        Assert::IsFalse(search.HasSelection());
         Assert::AreEqual(0U, search.Results().GetItemAt(0)->nAddress);
         Assert::AreEqual(1U, search.Results().GetItemAt(1)->nAddress);
         Assert::AreEqual(4U, search.Results().GetItemAt(2)->nAddress);
         Assert::IsFalse(search.Results().GetItemAt(2)->IsSelected());
 
         search.ExcludeSelected();
+        Assert::IsFalse(search.HasSelection());
         Assert::AreEqual({ 3U }, search.Results().Count());
     }
 
@@ -598,11 +690,15 @@ public:
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
 
         Assert::AreEqual({ 5U }, search.Results().Count());
+        Assert::IsFalse(search.HasSelection());
         search.Results().GetItemAt(2)->SetSelected(true);
+        Assert::IsTrue(search.HasSelection());
         search.Results().GetItemAt(3)->SetSelected(true);
+        Assert::IsTrue(search.HasSelection());
 
         search.BookmarkSelected();
         Assert::AreEqual({ 5U }, search.Results().Count());
+        Assert::IsTrue(search.HasSelection());
 
         const auto& pBookmarks = search.mockWindowManager.MemoryBookmarks.Bookmarks();
         Assert::AreEqual({ 2U }, pBookmarks.Count());
@@ -651,6 +747,118 @@ public:
 
         Assert::IsTrue(search.Results().GetItemAt(2)->IsSelected());
         Assert::IsTrue(search.Results().GetItemAt(3)->IsSelected());
+    }
+
+    TEST_METHOD(TestPredefinedFilterRanges)
+    {
+        MemorySearchViewModelHarness search;
+
+        // no memory ranges defined
+        Assert::AreEqual({ 2U }, search.PredefinedFilterRanges().Count());
+        Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"All"), search.PredefinedFilterRanges().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(3, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
+
+        // only system range defined
+        search.mockConsoleContext.AddMemoryRegion(0U, 0xFFFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
+        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+
+        Assert::AreEqual({ 3U }, search.PredefinedFilterRanges().Count());
+        Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"All"), search.PredefinedFilterRanges().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(1, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"System Memory (0x0000-0xffff)"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(3, search.PredefinedFilterRanges().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(2)->GetLabel());
+
+        // system and game ranges defined
+        search.mockConsoleContext.ResetMemoryRegions();
+        search.mockConsoleContext.AddMemoryRegion(0U, 0xBFFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+
+        Assert::AreEqual({ 4U }, search.PredefinedFilterRanges().Count());
+        Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"All"), search.PredefinedFilterRanges().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(1, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"System Memory (0x0000-0xbfff)"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(2, search.PredefinedFilterRanges().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Game Memory (0xe000-0xefff)"), search.PredefinedFilterRanges().GetItemAt(2)->GetLabel());
+        Assert::AreEqual(3, search.PredefinedFilterRanges().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(3)->GetLabel());
+
+        // multiple system and game ranges defined
+        search.mockConsoleContext.ResetMemoryRegions();
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0xBFFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xF000U, 0xFFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+
+        Assert::AreEqual({ 4U }, search.PredefinedFilterRanges().Count());
+        Assert::AreEqual(0, search.PredefinedFilterRanges().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"All"), search.PredefinedFilterRanges().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(1, search.PredefinedFilterRanges().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"System Memory (0x0000-0xbfff)"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(2, search.PredefinedFilterRanges().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Game Memory (0xe000-0xffff)"), search.PredefinedFilterRanges().GetItemAt(2)->GetLabel());
+        Assert::AreEqual(3, search.PredefinedFilterRanges().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(3)->GetLabel());
+    }
+
+    TEST_METHOD(TestPredefinedFilterRangeAll)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.SetFilterRange(L"0x0000-0x1FFF");
+
+        search.SetPredefinedFilterRange(0);
+        Assert::AreEqual(std::wstring(L""), search.GetFilterRange());
+    }
+
+    TEST_METHOD(TestPredefinedFilterRangeSystem)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.SetFilterRange(L"0x0000-0x1FFF");
+
+        search.SetPredefinedFilterRange(1);
+        Assert::AreEqual(std::wstring(L"0x0000-0x7fff"), search.GetFilterRange());
+    }
+
+    TEST_METHOD(TestPredefinedFilterRangeGame)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.SetFilterRange(L"0x0000-0x1FFF");
+
+        search.SetPredefinedFilterRange(2);
+        Assert::AreEqual(std::wstring(L"0xc000-0xcfff"), search.GetFilterRange());
+    }
+
+    TEST_METHOD(TestPredefinedFilterRangeCustom)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
+        search.SetFilterRange(L"0x0000-0x1FFF");
+
+        search.SetPredefinedFilterRange(0);
+        Assert::AreEqual(std::wstring(L""), search.GetFilterRange());
+
+        Assert::AreEqual(3, search.PredefinedFilterRanges().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"Custom (0x0000-0x1fff)"), search.PredefinedFilterRanges().GetItemAt(3)->GetLabel());
+
+        search.SetPredefinedFilterRange(3);
+        Assert::AreEqual(std::wstring(L"0x0000-0x1fff"), search.GetFilterRange());
     }
 };
 

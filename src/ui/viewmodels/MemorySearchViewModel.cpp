@@ -104,6 +104,7 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vResults.AddNotifyTarget(*this);
 
     SetValue(CanBeginNewSearchProperty, false);
+    SetValue(CanGoToPreviousPageProperty, false);
 }
 
 void MemorySearchViewModel::InitializeNotifyTargets()
@@ -192,7 +193,7 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
         m_vPredefinedFilterRanges.RemoveAt(nIndex);
     }
 
-    nIndex = m_vPredefinedFilterRanges.FindItemIndex(ra::ui::viewmodels::LookupItemViewModel::IdProperty, MEMORY_RANGE_SYSTEM);
+    nIndex = m_vPredefinedFilterRanges.FindItemIndex(ra::ui::viewmodels::LookupItemViewModel::IdProperty, MEMORY_RANGE_GAME);
     if (nGameRamEnd != 0U)
     {
         const auto sLabel = ra::StringPrintf(L"Game Memory (%s-%s)", ra::ByteAddressToString(nGameRamStart), ra::ByteAddressToString(nGameRamEnd));
@@ -209,6 +210,25 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
     else if (nIndex >= 0)
     {
         m_vPredefinedFilterRanges.RemoveAt(nIndex);
+    }
+
+    for (gsl::index nInsert = 0; nInsert < m_vPredefinedFilterRanges.Count(); ++nInsert)
+    {
+        gsl::index nMinimumIndex = nInsert;
+        int nMinimum = m_vPredefinedFilterRanges.GetItemValue(nInsert, ra::ui::viewmodels::LookupItemViewModel::IdProperty);
+
+        for (gsl::index nScan = nInsert + 1; nScan < m_vPredefinedFilterRanges.Count(); ++nScan)
+        {
+            int nScanId = m_vPredefinedFilterRanges.GetItemValue(nScan, ra::ui::viewmodels::LookupItemViewModel::IdProperty);
+            if (nScanId < nMinimum)
+            {
+                nMinimumIndex = nScan;
+                nMinimum = nScanId;
+            }
+        }
+
+        if (nMinimumIndex != nInsert)
+            m_vPredefinedFilterRanges.MoveItem(nMinimumIndex, nInsert);
     }
 
     m_vPredefinedFilterRanges.EndUpdate();

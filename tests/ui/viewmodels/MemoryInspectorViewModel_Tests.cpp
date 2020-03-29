@@ -46,6 +46,8 @@ private:
             Viewer().InitializeNotifyTargets();
             mockEmulatorContext.MockMemory(memory);
         }
+
+        bool CanModifyCodeNotes() const { return GetValue(CanModifyNotesProperty); }
     };
 
 
@@ -58,6 +60,7 @@ public:
         Assert::AreEqual(std::wstring(L"0x0000"), inspector.GetCurrentAddressText());
         Assert::AreEqual(std::wstring(), inspector.GetCurrentAddressNote());
         Assert::AreEqual(std::wstring(L"0 0 0 0 0 0 0 0"), inspector.GetCurrentAddressBits());
+        Assert::IsFalse(inspector.CanModifyCodeNotes());
 
         Assert::AreEqual({ 0U }, inspector.Viewer().GetAddress());
     }
@@ -332,19 +335,23 @@ public:
     {
         MemoryInspectorViewModelHarness inspector;
         Assert::AreEqual(std::wstring(L"Memory Inspector [no game loaded]"), inspector.GetWindowTitle());
+        Assert::IsFalse(inspector.CanModifyCodeNotes());
 
         inspector.mockGameContext.SetGameId({ 3 });
         inspector.mockGameContext.NotifyActiveGameChanged();
         Assert::AreEqual(std::wstring(L"Memory Inspector"), inspector.GetWindowTitle());
+        Assert::IsTrue(inspector.CanModifyCodeNotes());
 
         inspector.mockGameContext.SetGameId({ 0 });
         inspector.mockGameContext.NotifyActiveGameChanged();
         Assert::AreEqual(std::wstring(L"Memory Inspector [no game loaded]"), inspector.GetWindowTitle());
+        Assert::IsFalse(inspector.CanModifyCodeNotes());
 
         inspector.mockGameContext.SetGameId({ 5 });
         inspector.mockGameContext.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
         inspector.mockGameContext.NotifyActiveGameChanged();
         Assert::AreEqual(std::wstring(L"Memory Inspector [compatibility mode]"), inspector.GetWindowTitle());
+        Assert::IsFalse(inspector.CanModifyCodeNotes());
     }
 
     TEST_METHOD(TestEndGameLoad)

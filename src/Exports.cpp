@@ -303,7 +303,7 @@ static void ProcessAchievements()
                 if (!pAchievement)
                     break;
 
-                if (pGameContext.HasRichPresence())
+                if (pGameContext.HasRichPresence() && !pGameContext.IsRichPresenceFromFile())
                     pAchievement->SetUnlockRichPresence(pGameContext.GetRichPresenceDisplayString());
 
 #ifndef RA_UTEST

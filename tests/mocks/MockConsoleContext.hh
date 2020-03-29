@@ -27,8 +27,22 @@ public:
 
     void SetName(std::wstring&& sName) noexcept { m_sName = std::move(sName); }
 
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept { return m_vRegions; }
+
+    void ResetMemoryRegions() { m_vRegions.clear(); }
+
+    void AddMemoryRegion(ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, AddressType nAddressType) noexcept 
+    { 
+        auto& pRegion = m_vRegions.emplace_back();
+        pRegion.StartAddress = nStartAddress;
+        pRegion.EndAddress = nEndAddress;
+        pRegion.Type = nAddressType;
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::ConsoleContext> m_Override;
+
+    std::vector<MemoryRegion> m_vRegions;
 };
 
 } // namespace mocks

@@ -46,6 +46,8 @@ public:
     /// </summary>
     void SetRichPresenceDisplayString(std::wstring sValue) { m_sRichPresenceDisplayString = sValue; }
 
+    void SetRichPresenceFromFile(bool bValue) noexcept { m_bRichPresenceFromFile = bValue; }
+
     RA_Leaderboard& NewLeaderboard(ra::LeaderboardID nLeaderboardId)
     {
         return *m_vLeaderboards.emplace_back(std::make_unique<RA_Leaderboard>(nLeaderboardId));

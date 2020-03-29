@@ -80,6 +80,8 @@ public:
 
     void SaveCurrentAddressNote();
     void DeleteCurrentAddressNote();
+    static const BoolModelProperty CanModifyNotesProperty;
+
     void OpenNotesList();
 
     /// <summary>

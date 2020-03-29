@@ -288,7 +288,7 @@ BOOL MemoryInspectorDialog::OnCommand(WORD nCommand)
         {
             auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
             if (vmMemoryInspector)
-                vmMemoryInspector->Search().NextPage();
+                vmMemoryInspector->Search().PreviousPage();
 
             return TRUE;
         }
@@ -297,7 +297,7 @@ BOOL MemoryInspectorDialog::OnCommand(WORD nCommand)
         {
             auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
             if (vmMemoryInspector)
-                vmMemoryInspector->Search().PreviousPage();
+                vmMemoryInspector->Search().NextPage();
 
             return TRUE;
         }

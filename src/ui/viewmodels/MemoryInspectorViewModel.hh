@@ -63,6 +63,8 @@ public:
     /// </summary>
     const std::wstring& GetCurrentAddressText() const { return GetValue(CurrentAddressTextProperty); }
 
+    void BookmarkCurrentAddress() const;
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the current address's note.
     /// </summary>

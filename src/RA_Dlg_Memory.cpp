@@ -862,8 +862,7 @@ void Dlg_Memory::UpdateBits() const
 
 void Dlg_Memory::GoToAddress(unsigned int nAddr)
 {
-    g_pMemoryViewer->SetAddress(nAddr);
-    SetWatchingAddress(nAddr);
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector.SetCurrentAddress(nAddr);
 }
 
 void Dlg_Memory::SetWatchingAddress(unsigned int nAddr)

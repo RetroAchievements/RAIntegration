@@ -369,6 +369,29 @@ public:
 
         Assert::AreEqual({ 3U }, inspector.Viewer().GetAddress());
     }
+
+    TEST_METHOD(TestBookmarkCurrentAddress)
+    {
+        MemoryInspectorViewModelHarness inspector;
+
+        inspector.SetCurrentAddress(2U);
+        inspector.BookmarkCurrentAddress();
+
+        const auto& pBookmarks = inspector.mockWindowManager.MemoryBookmarks.Bookmarks();
+        Assert::AreEqual({ 1U }, pBookmarks.Count());
+        Assert::AreEqual({ 2U }, pBookmarks.GetItemAt(0)->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, pBookmarks.GetItemAt(0)->GetSize());
+
+        inspector.Viewer().SetSize(MemSize::ThirtyTwoBit);
+        inspector.SetCurrentAddress(5U);
+        inspector.BookmarkCurrentAddress();
+
+        Assert::AreEqual({ 2U }, pBookmarks.Count());
+        Assert::AreEqual({ 2U }, pBookmarks.GetItemAt(0)->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, pBookmarks.GetItemAt(0)->GetSize());
+        Assert::AreEqual({ 5U }, pBookmarks.GetItemAt(1)->GetAddress());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.GetItemAt(1)->GetSize());
+    }
 };
 
 } // namespace tests

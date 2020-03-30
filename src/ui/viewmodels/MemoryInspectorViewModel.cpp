@@ -110,6 +110,15 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddre
     m_pViewer.SetAddress(nNewAddress);
 }
 
+void MemoryInspectorViewModel::BookmarkCurrentAddress() const
+{
+    auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+    if (!pBookmarks.IsVisible())
+        pBookmarks.Show();
+
+    pBookmarks.AddBookmark(GetCurrentAddress(), Viewer().GetSize());
+}
+
 static std::wstring ShortenNote(const std::wstring& sNote)
 {
     return sNote.length() > 256 ? (sNote.substr(0, 253) + L"...") : sNote;

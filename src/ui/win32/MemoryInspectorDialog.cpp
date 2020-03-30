@@ -331,9 +331,9 @@ BOOL MemoryInspectorDialog::OnCommand(WORD nCommand)
 
         case IDC_RA_ADDBOOKMARK:
         {
-            //auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
-            //if (vmMemoryInspector)
-            //    vmMemoryInspector->Bookmark();
+            auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
+            if (vmMemoryInspector)
+                vmMemoryInspector->BookmarkCurrentAddress();
 
             return TRUE;
         }

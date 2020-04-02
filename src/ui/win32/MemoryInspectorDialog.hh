@@ -43,6 +43,7 @@ public:
 protected:
     BOOL OnInitDialog() override;
     BOOL OnCommand(WORD nCommand) override;
+    INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
 private:
     bindings::ComboBoxBinding m_bindSearchRanges;

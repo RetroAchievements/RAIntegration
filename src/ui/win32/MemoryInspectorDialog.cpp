@@ -360,6 +360,71 @@ BOOL MemoryInspectorDialog::OnCommand(WORD nCommand)
     return DialogBase::OnCommand(nCommand);
 }
 
+INT_PTR CALLBACK MemoryInspectorDialog::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+        case WM_LBUTTONDBLCLK:
+        {
+            // ignore if alt/shift/control pressed
+            if (wParam != 1)
+                break;
+
+            // ignore if memory not avaialble
+            const auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+            if (pEmulatorContext.TotalMemorySize() == 0)
+                break;
+
+            // ignore if not 8-bit mode
+            auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
+            if (vmMemoryInspector->Viewer().GetSize() != MemSize::EightBit)
+                break;
+
+            POINT ptCursor{ GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam) };
+            HWND hChild;
+            hChild = ChildWindowFromPoint(GetHWND(), ptCursor);
+
+            const auto hMemBits = GetDlgItem(GetHWND(), IDC_RA_MEMBITS);
+            if (hChild == hMemBits)
+            {
+                // determine the width of one character
+                // ASSERT: field is using a fixed-width font, so all characters have the same width
+                INT nCharWidth{};
+                HDC hDC = GetDC(hMemBits);
+                {
+                    SelectFont(hDC, GetWindowFont(hMemBits));
+                    GetCharWidth32(hDC, static_cast<UINT>(' '), static_cast<UINT>(' '), &nCharWidth);
+                }
+                ReleaseDC(hMemBits, hDC);
+
+                // get bounding rect for membits (screen coordinates) and translate click to screen coordinates
+                RECT rcMemBits;
+                GetWindowRect(hMemBits, &rcMemBits);
+                ClientToScreen(hDlg, &ptCursor);
+
+                // figure out which bit was clicked. NOTE: text is right aligned, so start there
+                const auto nOffset = rcMemBits.right - ptCursor.x;
+                const auto nChars = (nOffset / nCharWidth);
+
+                // bits are in even indices - odd indices are spaces, ignore them
+                if ((nChars & 1) == 0)
+                {
+                    const auto nBit = nChars >> 1;
+                    if (nBit < 8)
+                        vmMemoryInspector->ToggleBit(nBit);
+                }
+            }
+            break;
+        }
+
+        default:
+            break;
+    }
+
+    return DialogBase::DialogProc(hDlg, uMsg, wParam, lParam);
+}
+
+
 } // namespace win32
 } // namespace ui
 } // namespace ra

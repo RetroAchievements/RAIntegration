@@ -55,19 +55,21 @@ private:
     bindings::ComboBoxBinding m_bindValueType;
     bindings::TextBoxBinding m_bindFilterValue;
 
-    class RepaintingGridSearchBinding : public ra::ui::win32::bindings::GridBinding
+    class SearchResultsGridBinding : public ra::ui::win32::bindings::GridBinding
     {
     public:
-        explicit RepaintingGridSearchBinding(ViewModelBase& vmViewModel) noexcept
+        explicit SearchResultsGridBinding(ViewModelBase& vmViewModel) noexcept
             : ra::ui::win32::bindings::GridBinding(vmViewModel)
         {
         }
+
+        void OnLvnItemChanged(const LPNMLISTVIEW pnmListView) override;
 
     protected:
         void Invalidate() override;
     };
 
-    RepaintingGridSearchBinding m_bindSearchResults;
+    SearchResultsGridBinding m_bindSearchResults;
 
     bindings::TextBoxBinding m_bindAddress;
     bindings::TextBoxBinding m_bindNoteText;

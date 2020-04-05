@@ -51,25 +51,7 @@ void MemoryInspectorDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); 
 
 // ------------------------------------
 
-class GridSearchAddressColumnBinding : public ra::ui::win32::bindings::GridTextColumnBinding
-{
-public:
-    GridSearchAddressColumnBinding(const StringModelProperty& pBoundProperty) noexcept
-        : ra::ui::win32::bindings::GridTextColumnBinding(pBoundProperty)
-    {
-    }
-
-    bool HandleDoubleClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override
-    {
-        const auto sValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
-        const auto nAddress = ra::ByteAddressFromString(ra::Narrow(sValue));
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector.SetCurrentAddress(nAddress);
-
-        return true;
-    }
-};
-
-void MemoryInspectorDialog::RepaintingGridSearchBinding::Invalidate()
+void MemoryInspectorDialog::SearchResultsGridBinding::Invalidate()
 {
     if (GetViewModel<MemorySearchViewModel>().NeedsRedraw())
     {
@@ -88,6 +70,25 @@ void MemoryInspectorDialog::RepaintingGridSearchBinding::Invalidate()
         }
     }
 }
+
+void MemoryInspectorDialog::SearchResultsGridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
+{
+    GridBinding::OnLvnItemChanged(pnmListView);
+
+    if (pnmListView->uNewState & LVIS_SELECTED)
+    {
+        if (ListView_GetItemState(m_hWnd, pnmListView->iItem, LVIS_FOCUSED))
+        {
+            auto& vmMemory = GetViewModel<MemorySearchViewModel>();
+            const auto sValue = vmMemory.Results().GetItemValue(pnmListView->iItem - m_nScrollOffset,
+                MemorySearchViewModel::SearchResultViewModel::AddressProperty);
+            const auto nAddress = ra::ByteAddressFromString(ra::Narrow(sValue));
+
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector.SetCurrentAddress(nAddress);
+        }
+    }
+}
+
 
 MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryInspector)
     : DialogBase(vmMemoryInspector),
@@ -144,7 +145,7 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     m_bindWindow.BindEnabled(IDC_RA_RESULTS_REMOVE, MemorySearchViewModel::HasSelectionProperty);
     m_bindWindow.BindEnabled(IDC_RA_RESULTS_BOOKMARK, MemorySearchViewModel::HasSelectionProperty);
 
-    auto pAddressColumn = std::make_unique<GridSearchAddressColumnBinding>(
+    auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         MemorySearchViewModel::SearchResultViewModel::AddressProperty);
     pAddressColumn->SetHeader(L"Address");
     pAddressColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, 60);

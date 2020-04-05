@@ -167,7 +167,7 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     m_bindSearchResults.BindRowColor(MemorySearchViewModel::SearchResultViewModel::RowColorProperty);
     m_bindSearchResults.BindIsSelected(MemorySearchViewModel::SearchResultViewModel::IsSelectedProperty);
     m_bindSearchResults.Virtualize(MemorySearchViewModel::ScrollOffsetProperty,
-        MemorySearchViewModel::ResultCountProperty, [&vmMemoryInspector](gsl::index nFrom, gsl::index nTo, bool bIsSelected)
+        MemorySearchViewModel::ScrollMaximumProperty, [&vmMemoryInspector](gsl::index nFrom, gsl::index nTo, bool bIsSelected)
     {
         vmMemoryInspector.Search().SelectRange(nFrom, nTo, bIsSelected);
     });
@@ -258,6 +258,8 @@ BOOL MemoryInspectorDialog::OnInitDialog()
 
     SetWindowFont(GetDlgItem(GetHWND(), IDC_RA_MEMBITS), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
     SetWindowFont(GetDlgItem(GetHWND(), IDC_RA_MEMBITS_TITLE), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
+
+    ShowWindow(GetDlgItem(GetHWND(), IDC_RA_CONTINUOUS_FILTER), SW_HIDE);
 
     return DialogBase::OnInitDialog();
 }

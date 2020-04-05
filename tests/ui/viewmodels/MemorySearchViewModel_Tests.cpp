@@ -170,6 +170,7 @@ public:
 
         search.BeginNewSearch();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 0 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 32U }, search.GetResultCount());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
@@ -188,6 +189,7 @@ public:
 
         search.BeginNewSearch();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 0 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 31U }, search.GetResultCount());
         Assert::AreEqual(MemSize::SixteenBit, search.ResultMemSize());
@@ -206,6 +208,7 @@ public:
 
         search.BeginNewSearch();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 0 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual({ 64U }, search.GetResultCount());
         Assert::AreEqual(MemSize::Nibble_Lower, search.ResultMemSize());
@@ -442,6 +445,7 @@ public:
 
         search.ApplyFilter();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 8 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
         Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
@@ -457,6 +461,7 @@ public:
         search.SetFilterValue(L"3");
         search.ApplyFilter();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 4 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
         Assert::AreEqual(std::wstring(L"> 3"), search.GetFilterSummary());
         Assert::AreEqual({ 4U }, search.GetResultCount());
@@ -471,6 +476,7 @@ public:
         search.SetFilterValue(L"6");
         search.ApplyFilter();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 3 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"3/3"), search.GetSelectedPage());
         Assert::AreEqual(std::wstring(L"!= 6"), search.GetFilterSummary());
         Assert::AreEqual({ 3U }, search.GetResultCount());
@@ -484,6 +490,7 @@ public:
         // cannot go forward
         search.NextPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 3 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"3/3"), search.GetSelectedPage());
         Assert::AreEqual(std::wstring(L"!= 6"), search.GetFilterSummary());
         Assert::AreEqual({ 3U }, search.GetResultCount());
@@ -496,6 +503,7 @@ public:
 
         search.PreviousPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 4 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"2/3"), search.GetSelectedPage());
         Assert::AreEqual(std::wstring(L"> 3"), search.GetFilterSummary());
         Assert::AreEqual({ 4U }, search.GetResultCount());
@@ -508,6 +516,7 @@ public:
 
         search.PreviousPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 8 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"1/3"), search.GetSelectedPage());
         Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
@@ -522,6 +531,7 @@ public:
         // cannot go back any further
         search.PreviousPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 8 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"1/3"), search.GetSelectedPage());
         Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
@@ -535,6 +545,7 @@ public:
 
         search.NextPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 4 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"2/3"), search.GetSelectedPage());
         Assert::AreEqual(std::wstring(L"> 3"), search.GetFilterSummary());
         Assert::AreEqual({ 4U }, search.GetResultCount());
@@ -547,6 +558,7 @@ public:
 
         search.PreviousPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 8 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"1/3"), search.GetSelectedPage());
         Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
@@ -563,6 +575,7 @@ public:
         search.SetFilterValue(L"5");
         search.ApplyFilter();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 1 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
         Assert::AreEqual(std::wstring(L"= 5"), search.GetFilterSummary());
         Assert::AreEqual({ 1U }, search.GetResultCount());
@@ -575,6 +588,7 @@ public:
 
         search.PreviousPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 8 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"1/2"), search.GetSelectedPage());
         Assert::AreEqual(std::wstring(L"< 8"), search.GetFilterSummary());
         Assert::AreEqual({ 8U }, search.GetResultCount());
@@ -588,6 +602,7 @@ public:
 
         search.NextPage();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual({ 1 }, search.GetScrollMaximum());
         Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
         Assert::AreEqual(std::wstring(L"= 5"), search.GetFilterSummary());
         Assert::AreEqual({ 1U }, search.GetResultCount());

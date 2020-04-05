@@ -386,6 +386,16 @@ public:
     unsigned int GetScrollOffset() const { return gsl::narrow_cast<unsigned int>(GetValue(ScrollOffsetProperty)); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for the scroll maximum.
+    /// </summary>
+    static const IntModelProperty ScrollMaximumProperty;
+
+    /// <summary>
+    /// Gets the scroll maximum.
+    /// </summary>
+    unsigned int GetScrollMaximum() const { return gsl::narrow_cast<unsigned int>(GetValue(ScrollMaximumProperty)); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the selected page description.
     /// </summary>
     static const StringModelProperty SelectedPageProperty;

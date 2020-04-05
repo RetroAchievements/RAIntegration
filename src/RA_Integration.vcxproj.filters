@@ -315,6 +315,9 @@
     <ClCompile Include="ui\win32\bindings\MemoryViewerControlBinding.cpp">
       <Filter>UI\Win32\Bindings</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\bindings\ControlBinding.cpp">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">

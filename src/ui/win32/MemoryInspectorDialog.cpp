@@ -57,17 +57,7 @@ void MemoryInspectorDialog::SearchResultsGridBinding::Invalidate()
     {
         GridBinding::Invalidate();
 
-        // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
-        // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
-        // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
-        // Similar code exists in Dlg_Memory::Invalidate for the search results
-        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
-        {
-            case RA_Libretro:
-            case RA_Oricutron:
-                UpdateWindow(m_hWnd);
-                break;
-        }
+        ControlBinding::ForceRepaint(m_hWnd);
     }
 }
 

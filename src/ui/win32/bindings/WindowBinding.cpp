@@ -7,6 +7,7 @@
 
 #include "ui\IDesktop.hh"
 #include "ui\viewmodels\WindowManager.hh"
+#include "ui\win32\bindings\ControlBinding.hh"
 
 namespace ra {
 namespace ui {
@@ -259,7 +260,10 @@ void WindowBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeA
         {
             auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
             if (hControl)
+            {
                 EnableWindow(hControl, args.tNewValue ? TRUE : FALSE);
+                ControlBinding::ForceRepaint(hControl);
+            }
         }
     }
 }

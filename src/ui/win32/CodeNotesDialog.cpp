@@ -9,10 +9,6 @@
 
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
-#ifndef RA_UTEST
-#include "RA_Dlg_Memory.h"
-#endif
-
 using ra::ui::viewmodels::CodeNotesViewModel;
 using ra::ui::win32::bindings::GridColumnBinding;
 

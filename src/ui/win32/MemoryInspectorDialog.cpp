@@ -2,9 +2,6 @@
 
 #include "RA_Resource.h"
 
-#include "RA_Dlg_Memory.h"
-
-
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 

@@ -30,7 +30,6 @@
 #include "RA_Dlg_Achievement.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_GameLibrary.h"
-#include "RA_Dlg_Memory.h"
 #endif
 
 API const char* CCONV _RA_IntegrationVersion() { return RA_INTEGRATION_VERSION; }
@@ -167,11 +166,6 @@ API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
     auto pContext = ra::data::ConsoleContext::GetContext(ra::itoe<ConsoleID>(nConsoleId));
     RA_LOG("Console set to %u (%s)", pContext->Id(), pContext->Name());
     ra::services::ServiceLocator::Provide<ra::data::ConsoleContext>(std::move(pContext));
-
-#ifndef RA_UTEST
-    if (ra::services::ServiceLocator::Exists<ra::data::EmulatorContext>())
-        g_MemoryDialog.UpdateMemoryRegions();
-#endif
 }
 
 API void CCONV _RA_SetUserAgentDetail(const char* sDetail)
@@ -413,8 +407,6 @@ static void UpdateUIForFrameChange()
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.MemoryBookmarks.DoFrame();
     pWindowManager.MemoryInspector.DoFrame();
-
-    g_MemoryDialog.Invalidate();
 }
 
 #endif

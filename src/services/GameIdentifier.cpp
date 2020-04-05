@@ -24,7 +24,6 @@
 #ifndef RA_UTEST
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
-#include "RA_Dlg_Memory.h"
 #endif
 
 namespace ra {
@@ -202,7 +201,6 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
 #ifndef RA_UTEST
     g_AchievementsDialog.OnLoad_NewRom(nGameId);
     g_AchievementEditorDialog.OnLoad_NewRom();
-    g_MemoryDialog.OnLoad_NewRom();
 
     // TODO: have RichPresenceMonitor watch GameContext.ActiveGameChanged
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();

@@ -8,7 +8,6 @@
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_GameLibrary.h"
-#include "RA_Dlg_Memory.h"
 
 #include "data\ConsoleContext.hh"
 #include "data\EmulatorContext.hh"
@@ -134,12 +133,6 @@ API int CCONV _RA_Shutdown()
     {
         DestroyWindow(g_AchievementEditorDialog.GetHWND());
         g_AchievementEditorDialog.InstallHWND(nullptr);
-    }
-
-    if (g_MemoryDialog.GetHWND() != nullptr)
-    {
-        DestroyWindow(g_MemoryDialog.GetHWND());
-        g_MemoryDialog.InstallHWND(nullptr);
     }
 
     if (g_GameLibrary.GetHWND() != nullptr)

@@ -63,9 +63,6 @@
     <ClCompile Include="RA_Dlg_GameLibrary.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Dlg_Memory.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Leaderboard.cpp">
       <Filter>Data</Filter>
     </ClCompile>
@@ -333,9 +330,6 @@
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_GameLibrary.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_Memory.h">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Leaderboard.h">

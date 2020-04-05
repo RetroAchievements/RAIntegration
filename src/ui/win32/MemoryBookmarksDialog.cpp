@@ -2,8 +2,6 @@
 
 #include "RA_Resource.h"
 
-#include "RA_Dlg_Memory.h"
-
 #include "data\EmulatorContext.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"

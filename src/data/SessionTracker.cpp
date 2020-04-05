@@ -2,7 +2,6 @@
 
 #include "Exports.hh"
 #include "RA_Dlg_AchEditor.h"
-#include "RA_Dlg_Memory.h"
 #include "RA_Log.h"
 #include "RA_md5factory.h"
 #include "RA_StringUtils.h"
@@ -221,8 +220,11 @@ bool SessionTracker::IsInspectingMemory() const
     if (pWindowManager.MemoryBookmarks.IsVisible())
         return true;
 
+    if (pWindowManager.MemoryInspector.IsVisible())
+        return true;
+
 #ifndef RA_UTEST
-    if (g_MemoryDialog.IsActive() || g_AchievementEditorDialog.IsActive())
+    if (g_AchievementEditorDialog.IsActive())
         return true;
 #endif
 

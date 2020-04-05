@@ -58,7 +58,10 @@
 #define IDC_RA_MEMBITS                  1153
 #define IDC_RA_MEMBITS_TITLE            1154
 #define IDC_RA_RESULT_PAGE              1155
-
+#define IDC_RA_GBX_SEARCH               1156
+#define IDC_RA_GBX_FILTER               1157
+#define IDC_RA_GBX_RESULTS              1158
+#define IDC_RA_GBX_NOTES                1159
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -70,7 +73,6 @@
 #define IDD_RA_GAMELIBRARY              1509
 #define IDD_RA_ROMCHECKSUM              1510
 #define IDD_RA_OVERLAYSETTINGS          1511
-
 #define IDC_RA_UPLOAD_BADGE             1517
 #define IDC_RA_ADDBOOKMARK              1518
 #define IDC_RA_INFO_GG                  1519
@@ -137,7 +139,6 @@
 #define IDC_RA_COPYCHECKSUMCLIPBOARD    1599
 #define IDC_RA_MOVECONDDOWN             1605
 #define IDC_RA_ROMCHECKSUMHEADER        1606
-
 #define IDM_RA_MENUSTART                1700
 #define IDM_RA_RETROACHIEVEMENTS        1700
 #define IDM_RA_OVERLAYSETTINGS          1701
@@ -165,7 +166,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        121
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1156
+#define _APS_NEXT_CONTROL_VALUE         1160
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

@@ -188,18 +188,20 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
 
     // Resize behavior
     using namespace ra::bitwise_ops;
+    SetAnchor(IDC_RA_GBX_SEARCH, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_SEARCHRANGES, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_SEARCHRANGE, Anchor::Top | Anchor::Left);
-
     SetAnchor(IDC_RA_SEARCHTYPE, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_RESET_FILTER, Anchor::Top | Anchor::Left);
 
+    SetAnchor(IDC_RA_GBX_FILTER, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_COMPARISON, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_SPECIAL_FILTER, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_FILTER_VALUE, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_APPLY_FILTER, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_CONTINUOUS_FILTER, Anchor::Top | Anchor::Right);
 
+    SetAnchor(IDC_RA_GBX_RESULTS, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_RESULT_COUNT, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_RESULT_FILTER, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_RESULTS_BACK, Anchor::Top | Anchor::Left);
@@ -207,13 +209,12 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     SetAnchor(IDC_RA_RESULTS_FORWARD, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_RESULTS_REMOVE, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_RESULTS_BOOKMARK, Anchor::Top | Anchor::Left);
-
     SetAnchor(IDC_RA_RESULTS, Anchor::Top | Anchor::Left | Anchor::Right);
 
+    SetAnchor(IDC_RA_GBX_NOTES, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_ADDRESS, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_VIEW_CODENOTES, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Top | Anchor::Left);
-
     SetAnchor(IDC_RA_NOTE_TEXT, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_ADD_NOTE, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_DELETE_NOTE, Anchor::Top | Anchor::Right);

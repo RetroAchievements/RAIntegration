@@ -11,6 +11,7 @@ namespace win32 {
 namespace bindings {
 
 constexpr int MEMVIEW_MARGIN = 4;
+constexpr UINT WM_USER_INVALIDATE = WM_USER + 1;
 
 static LRESULT CALLBACK s_MemoryViewerControlWndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -52,6 +53,10 @@ static LRESULT CALLBACK s_MemoryViewerControlWndProc(HWND hControl, UINT uMsg, W
 
         case WM_GETDLGCODE:
             return DLGC_WANTCHARS | DLGC_WANTARROWS;
+
+        case WM_USER_INVALIDATE:
+            pControl->Invalidate();
+            return FALSE;
     }
 
     return DefWindowProc(hControl, uMsg, wParam, lParam);
@@ -261,6 +266,12 @@ void MemoryViewerControlBinding::OnLostFocus()
 void MemoryViewerControlBinding::OnSizeChanged(const ra::ui::Size& pNewSize)
 {
     m_pViewModel.OnResized(pNewSize.Width - MEMVIEW_MARGIN * 2, pNewSize.Height - MEMVIEW_MARGIN * 2);
+}
+
+void MemoryViewerControlBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == ra::ui::viewmodels::MemoryViewerViewModel::AddressProperty)
+        PostMessage(m_hWnd, WM_USER_INVALIDATE, 0, 0);
 }
 
 void MemoryViewerControlBinding::Invalidate()

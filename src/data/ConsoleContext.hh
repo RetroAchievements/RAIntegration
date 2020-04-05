@@ -72,9 +72,9 @@ public:
 
     struct MemoryRegion
     {
-        ra::ByteAddress StartAddress;
-        ra::ByteAddress EndAddress;
-        AddressType Type;
+        ra::ByteAddress StartAddress = 0U;
+        ra::ByteAddress EndAddress = 0U;
+        AddressType Type = AddressType::Unknown;
         std::string Description;
     };
 

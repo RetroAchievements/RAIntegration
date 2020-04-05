@@ -63,7 +63,7 @@ private:
     class MemorySearchViewModelHarness : public MemorySearchViewModel
     {
     public:
-        MemorySearchViewModelHarness() : MemorySearchViewModel()
+        GSL_SUPPRESS_F6 MemorySearchViewModelHarness() : MemorySearchViewModel()
         {
             InitializeNotifyTargets();
         }
@@ -85,12 +85,12 @@ private:
             mockEmulatorContext.MockMemory(memory);
         }
 
-        bool CanBeginNewSearch() const { return (bool)GetValue(CanBeginNewSearchProperty); }
-        bool CanFilter() const { return (bool)GetValue(CanFilterProperty); }
-        bool CanEditFilterValue() const { return (bool)GetValue(CanEditFilterValueProperty); }
-        bool CanGoToPreviousPage() const { return (bool)GetValue(CanGoToPreviousPageProperty); }
-        bool CanGoToNextPage() const { return (bool)GetValue(CanGoToNextPageProperty); }
-        bool HasSelection() const { return (bool)GetValue(HasSelectionProperty); }
+        bool CanBeginNewSearch() const { return GetValue(CanBeginNewSearchProperty); }
+        bool CanFilter() const { return GetValue(CanFilterProperty); }
+        bool CanEditFilterValue() const { return GetValue(CanEditFilterValueProperty); }
+        bool CanGoToPreviousPage() const { return GetValue(CanGoToPreviousPageProperty); }
+        bool CanGoToNextPage() const { return GetValue(CanGoToNextPageProperty); }
+        bool HasSelection() const { return GetValue(HasSelectionProperty); }
     };
 
     void AssertRow(MemorySearchViewModelHarness& search, gsl::index nRow, ra::ByteAddress nAddress,

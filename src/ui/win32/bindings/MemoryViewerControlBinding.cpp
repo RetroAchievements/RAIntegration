@@ -268,7 +268,7 @@ void MemoryViewerControlBinding::OnSizeChanged(const ra::ui::Size& pNewSize)
     m_pViewModel.OnResized(pNewSize.Width - MEMVIEW_MARGIN * 2, pNewSize.Height - MEMVIEW_MARGIN * 2);
 }
 
-void MemoryViewerControlBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+void MemoryViewerControlBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept
 {
     if (args.Property == ra::ui::viewmodels::MemoryViewerViewModel::AddressProperty)
         PostMessage(m_hWnd, WM_USER_INVALIDATE, 0, 0);

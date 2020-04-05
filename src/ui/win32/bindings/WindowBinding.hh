@@ -121,16 +121,18 @@ private:
     class ChildBinding : public BindingBase
     {
     public:
-        ChildBinding(ViewModelBase& vmViewModel, WindowBinding& pOwner)
+        ChildBinding(ViewModelBase& vmViewModel, WindowBinding& pOwner) noexcept
             : BindingBase(vmViewModel), m_pOwner(pOwner)
         {
         }
 
+        GSL_SUPPRESS_C128 /* intentionally hiding base implementation to change scope*/
         const std::wstring& GetValue(const StringModelProperty& pProperty) const
         {
             return BindingBase::GetValue(pProperty);
         }
 
+        GSL_SUPPRESS_C128 /* intentionally hiding base implementation to change scope*/
         bool GetValue(const BoolModelProperty& pProperty) const
         {
             return BindingBase::GetValue(pProperty);

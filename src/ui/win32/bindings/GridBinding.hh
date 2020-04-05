@@ -65,10 +65,10 @@ protected:
     virtual void UpdateItems(gsl::index nColumn);
     void CheckForScrollBar();
     void UpdateScroll();
-    virtual void Invalidate();
+    virtual void Invalidate() noexcept(false);
 
     // ViewModelBase::NotifyTarget
-    void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override;
+    void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;

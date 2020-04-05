@@ -52,7 +52,7 @@ public:
     void SetHWND(DialogBase& pDialog, HWND hControl) override;
 
 protected:
-    void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override;
 
     // MemoryViewerViewModel::RepaintNotifyTarget
     void OnRepaintMemoryViewer() override { Invalidate(); }

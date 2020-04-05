@@ -70,7 +70,7 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnLvnItemChanged(const LPN
         if (ListView_GetItemState(m_hWnd, pnmListView->iItem, LVIS_FOCUSED))
         {
             auto& vmMemory = GetViewModel<MemorySearchViewModel>();
-            const auto sValue = vmMemory.Results().GetItemValue(pnmListView->iItem - m_nScrollOffset,
+            const auto sValue = vmMemory.Results().GetItemValue(gsl::narrow_cast<gsl::index>(pnmListView->iItem) - m_nScrollOffset,
                 MemorySearchViewModel::SearchResultViewModel::AddressProperty);
             const auto nAddress = ra::ByteAddressFromString(ra::Narrow(sValue));
 
@@ -325,7 +325,7 @@ BOOL MemoryInspectorDialog::OnCommand(WORD nCommand)
 
         case IDC_RA_ADDBOOKMARK:
         {
-            auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
+            const auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
             if (vmMemoryInspector)
                 vmMemoryInspector->BookmarkCurrentAddress();
 

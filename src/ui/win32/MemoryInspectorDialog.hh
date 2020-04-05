@@ -22,7 +22,7 @@ class MemoryInspectorDialog : public DialogBase,
 {
 public:
     explicit MemoryInspectorDialog(ra::ui::viewmodels::MemoryInspectorViewModel& vmMemoryBookmarks);
-    virtual ~MemoryInspectorDialog() noexcept = default;
+    ~MemoryInspectorDialog() noexcept = default;
     MemoryInspectorDialog(const MemoryInspectorDialog&) noexcept = delete;
     MemoryInspectorDialog& operator=(const MemoryInspectorDialog&) noexcept = delete;
     MemoryInspectorDialog(MemoryInspectorDialog&&) noexcept = delete;

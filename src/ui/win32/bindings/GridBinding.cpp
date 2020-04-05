@@ -246,7 +246,7 @@ void GridBinding::UpdateItems(gsl::index nColumn)
     }
 }
 
-void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept
+void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (m_pScrollOffsetProperty)
     {

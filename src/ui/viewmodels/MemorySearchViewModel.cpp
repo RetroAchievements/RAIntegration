@@ -182,9 +182,14 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
 
         auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
         if (pEntry == nullptr)
+        {
             pEntry = &m_vPredefinedFilterRanges.Add(MEMORY_RANGE_SYSTEM, sLabel);
+            Ensures(pEntry != nullptr);
+        }
         else
+        {
             pEntry->SetLabel(sLabel);
+        }
 
         pEntry->SetStartAddress(nSystemRamStart);
         pEntry->SetEndAddress(nSystemRamEnd);
@@ -201,9 +206,14 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
 
         auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
         if (pEntry == nullptr)
+        {
             pEntry = &m_vPredefinedFilterRanges.Add(MEMORY_RANGE_GAME, sLabel);
+            Ensures(pEntry != nullptr);
+        }
         else
+        {
             pEntry->SetLabel(sLabel);
+        }
 
         pEntry->SetStartAddress(nGameRamStart);
         pEntry->SetEndAddress(nGameRamEnd);
@@ -213,14 +223,14 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
         m_vPredefinedFilterRanges.RemoveAt(nIndex);
     }
 
-    for (gsl::index nInsert = 0; nInsert < ra::to_signed(m_vPredefinedFilterRanges.Count()); ++nInsert)
+    for (gsl::index nInsert = 0; nInsert < gsl::narrow_cast<gsl::index>(m_vPredefinedFilterRanges.Count()); ++nInsert)
     {
         gsl::index nMinimumIndex = nInsert;
         int nMinimum = m_vPredefinedFilterRanges.GetItemValue(nInsert, ra::ui::viewmodels::LookupItemViewModel::IdProperty);
 
-        for (gsl::index nScan = nInsert + 1; nScan < m_vPredefinedFilterRanges.Count(); ++nScan)
+        for (gsl::index nScan = nInsert + 1; nScan < gsl::narrow_cast<gsl::index>(m_vPredefinedFilterRanges.Count()); ++nScan)
         {
-            int nScanId = m_vPredefinedFilterRanges.GetItemValue(nScan, ra::ui::viewmodels::LookupItemViewModel::IdProperty);
+            const int nScanId = m_vPredefinedFilterRanges.GetItemValue(nScan, ra::ui::viewmodels::LookupItemViewModel::IdProperty);
             if (nScanId < nMinimum)
             {
                 nMinimumIndex = nScan;

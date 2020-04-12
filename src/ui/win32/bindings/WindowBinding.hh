@@ -73,13 +73,28 @@ public:
     HWND GetHWnd() const noexcept { return m_hWnd; }
 
     /// <summary>
+    /// Specifies a secondary view model to watch for BindLabel and BindEnabled bindings.
+    /// </summary>
+    void AddChildViewModel(ViewModelBase& vmChild)
+    {
+        auto pChild = std::make_unique<ChildBinding>(vmChild, *this);
+        m_vChildViewModels.emplace_back(std::move(pChild));
+    }
+
+    /// <summary>
     /// Binds the a label to a property of the viewmodel.
     /// </summary>
     /// <param name="nDlgItemId">The unique identifier of the label in the dialog.</param>
     /// <param name="pSourceProperty">The property to bind to.</param>
     void BindLabel(int nDlgItemId, const StringModelProperty& pSourceProperty);
 
-    
+    /// <summary>
+    /// Binds the a enabledness of a control to a property of the viewmodel.
+    /// </summary>
+    /// <param name="nDlgItemId">The unique identifier of the control in the dialog.</param>
+    /// <param name="pSourceProperty">The property to bind to.</param>
+    void BindEnabled(int nDlgItemId, const BoolModelProperty& pSourceProperty);
+
     /// <summary>
     /// Called when the window's size changes.
     /// </summary>
@@ -93,12 +108,54 @@ public:
     void OnPositionChanged(ra::ui::Position oPosition);
 
 protected:
+    // ViewModelBase::NotifyTarget
     GSL_SUPPRESS_F6 void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override;
+    GSL_SUPPRESS_F6 void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override;
 
     void RestoreSizeAndPosition();
 
 private:
     std::unordered_map<int, int> m_mLabelBindings;
+    std::unordered_map<int, std::set<int>> m_mEnabledBindings;
+
+    class ChildBinding : public BindingBase
+    {
+    public:
+        ChildBinding(ViewModelBase& vmViewModel, WindowBinding& pOwner) noexcept
+            : BindingBase(vmViewModel), m_pOwner(pOwner)
+        {
+        }
+
+        GSL_SUPPRESS_C128 /* intentionally hiding base implementation to change scope*/
+        const std::wstring& GetValue(const StringModelProperty& pProperty) const
+        {
+            return BindingBase::GetValue(pProperty);
+        }
+
+        GSL_SUPPRESS_C128 /* intentionally hiding base implementation to change scope*/
+        bool GetValue(const BoolModelProperty& pProperty) const
+        {
+            return BindingBase::GetValue(pProperty);
+        }
+
+    protected:
+        void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override
+        {
+            m_pOwner.OnViewModelStringValueChanged(args);
+        }
+
+        void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override
+        {
+            m_pOwner.OnViewModelBoolValueChanged(args);
+        }
+
+    private:
+        WindowBinding& m_pOwner;
+    };
+    std::vector<std::unique_ptr<ChildBinding>> m_vChildViewModels;
+
+    const std::wstring& GetValueFromAny(const StringModelProperty& pProperty) const;
+    bool GetValueFromAny(const BoolModelProperty& pProperty) const;
 
     std::string m_sSizeAndPositionKey;
     RelativePosition m_nDefaultHorizontalLocation{ RelativePosition::None };

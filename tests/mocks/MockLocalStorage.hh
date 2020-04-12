@@ -39,7 +39,7 @@ public:
 
     void DeleteStoredData(ra::services::StorageItemType nType, const std::wstring& sKey)
     {
-        auto pMap = m_mStoredData.find(nType);
+        const auto pMap = m_mStoredData.find(nType);
         if (pMap != m_mStoredData.end())
             pMap->second.erase(sKey);
     }

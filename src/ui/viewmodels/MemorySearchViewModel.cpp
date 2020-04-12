@@ -32,6 +32,7 @@ const StringModelProperty MemorySearchViewModel::FilterSummaryProperty("MemorySe
 const IntModelProperty MemorySearchViewModel::ResultCountProperty("MemorySearchViewModel", "ResultCount", 0);
 const StringModelProperty MemorySearchViewModel::ResultCountTextProperty("MemorySearchViewModel", "ResultCountText", L"0");
 const IntModelProperty MemorySearchViewModel::ScrollOffsetProperty("MemorySearchViewModel", "ScrollOffset", 0);
+const IntModelProperty MemorySearchViewModel::ScrollMaximumProperty("MemorySearchViewModel", "ScrollMaximum", 0);
 const StringModelProperty MemorySearchViewModel::SelectedPageProperty("MemorySearchViewModel", "SelectedPageProperty", L"0/0");
 const BoolModelProperty MemorySearchViewModel::CanBeginNewSearchProperty("MemorySearchViewModel", "CanBeginNewSearch", true);
 const BoolModelProperty MemorySearchViewModel::CanFilterProperty("MemorySearchViewModel", "CanFilter", true);
@@ -181,9 +182,14 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
 
         auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
         if (pEntry == nullptr)
+        {
             pEntry = &m_vPredefinedFilterRanges.Add(MEMORY_RANGE_SYSTEM, sLabel);
+            Ensures(pEntry != nullptr);
+        }
         else
+        {
             pEntry->SetLabel(sLabel);
+        }
 
         pEntry->SetStartAddress(nSystemRamStart);
         pEntry->SetEndAddress(nSystemRamEnd);
@@ -200,9 +206,14 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
 
         auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
         if (pEntry == nullptr)
+        {
             pEntry = &m_vPredefinedFilterRanges.Add(MEMORY_RANGE_GAME, sLabel);
+            Ensures(pEntry != nullptr);
+        }
         else
+        {
             pEntry->SetLabel(sLabel);
+        }
 
         pEntry->SetStartAddress(nGameRamStart);
         pEntry->SetEndAddress(nGameRamEnd);
@@ -212,14 +223,14 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
         m_vPredefinedFilterRanges.RemoveAt(nIndex);
     }
 
-    for (gsl::index nInsert = 0; nInsert < m_vPredefinedFilterRanges.Count(); ++nInsert)
+    for (gsl::index nInsert = 0; nInsert < gsl::narrow_cast<gsl::index>(m_vPredefinedFilterRanges.Count()); ++nInsert)
     {
         gsl::index nMinimumIndex = nInsert;
         int nMinimum = m_vPredefinedFilterRanges.GetItemValue(nInsert, ra::ui::viewmodels::LookupItemViewModel::IdProperty);
 
-        for (gsl::index nScan = nInsert + 1; nScan < m_vPredefinedFilterRanges.Count(); ++nScan)
+        for (gsl::index nScan = nInsert + 1; nScan < gsl::narrow_cast<gsl::index>(m_vPredefinedFilterRanges.Count()); ++nScan)
         {
-            int nScanId = m_vPredefinedFilterRanges.GetItemValue(nScan, ra::ui::viewmodels::LookupItemViewModel::IdProperty);
+            const int nScanId = m_vPredefinedFilterRanges.GetItemValue(nScan, ra::ui::viewmodels::LookupItemViewModel::IdProperty);
             if (nScanId < nMinimum)
             {
                 nMinimumIndex = nScan;
@@ -491,6 +502,7 @@ void MemorySearchViewModel::BeginNewSearch()
     SetValue(FilterSummaryProperty, pResult.sSummary);
     SetValue(SelectedPageProperty, L"1/1");
     SetValue(ScrollOffsetProperty, 0);
+    SetValue(ScrollMaximumProperty, 0);
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(pResult.pResults.MatchingAddressCount()));
 }
 
@@ -603,6 +615,7 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
 
     const auto nMatches = m_vSearchResults.at(nNewPage).pResults.MatchingAddressCount();
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(nMatches));
+    SetValue(ScrollMaximumProperty, gsl::narrow_cast<int>(nMatches));
     SetValue(FilterSummaryProperty, m_vSearchResults.at(nNewPage).sSummary);
 
     m_vSelectedAddresses.clear();

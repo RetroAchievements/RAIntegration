@@ -6,17 +6,23 @@
 
 #include "ui/win32/DialogBase.hh"
 #include "ui/win32/IDialogPresenter.hh"
+
+#include "ui/win32/bindings/ComboBoxBinding.hh"
+#include "ui/win32/bindings/GridBinding.hh"
 #include "ui/win32/bindings/MemoryViewerControlBinding.hh"
+#include "ui/win32/bindings/RadioButtonBinding.hh"
+#include "ui/win32/bindings/TextBoxBinding.hh"
 
 namespace ra {
 namespace ui {
 namespace win32 {
 
-class MemoryInspectorDialog : public DialogBase
+class MemoryInspectorDialog : public DialogBase,
+    protected ra::ui::viewmodels::MemoryViewerViewModel::RepaintNotifyTarget
 {
 public:
     explicit MemoryInspectorDialog(ra::ui::viewmodels::MemoryInspectorViewModel& vmMemoryBookmarks);
-    virtual ~MemoryInspectorDialog() noexcept = default;
+    ~MemoryInspectorDialog() noexcept = default;
     MemoryInspectorDialog(const MemoryInspectorDialog&) noexcept = delete;
     MemoryInspectorDialog& operator=(const MemoryInspectorDialog&) noexcept = delete;
     MemoryInspectorDialog(MemoryInspectorDialog&&) noexcept = delete;
@@ -37,8 +43,40 @@ public:
 protected:
     BOOL OnInitDialog() override;
     BOOL OnCommand(WORD nCommand) override;
+    INT_PTR CALLBACK DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
 private:
+    bindings::ComboBoxBinding m_bindSearchRanges;
+    bindings::TextBoxBinding m_bindSearchRange;
+
+    bindings::ComboBoxBinding m_bindSearchType;
+
+    bindings::ComboBoxBinding m_bindComparison;
+    bindings::ComboBoxBinding m_bindValueType;
+    bindings::TextBoxBinding m_bindFilterValue;
+
+    class SearchResultsGridBinding : public ra::ui::win32::bindings::GridBinding
+    {
+    public:
+        explicit SearchResultsGridBinding(ViewModelBase& vmViewModel) noexcept
+            : ra::ui::win32::bindings::GridBinding(vmViewModel)
+        {
+        }
+
+        void OnLvnItemChanged(const LPNMLISTVIEW pnmListView) override;
+
+    protected:
+        void Invalidate() override;
+    };
+
+    SearchResultsGridBinding m_bindSearchResults;
+
+    bindings::TextBoxBinding m_bindAddress;
+    bindings::TextBoxBinding m_bindNoteText;
+
+    bindings::RadioButtonBinding m_bindViewer8Bit;
+    bindings::RadioButtonBinding m_bindViewer16Bit;
+    bindings::RadioButtonBinding m_bindViewer32Bit;
     bindings::MemoryViewerControlBinding m_bindViewer;
 };
 

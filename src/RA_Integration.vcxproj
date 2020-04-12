@@ -101,7 +101,6 @@
     <ClCompile Include="RA_Dlg_AchEditor.cpp" />
     <ClCompile Include="RA_Dlg_Achievement.cpp" />
     <ClCompile Include="RA_Dlg_GameLibrary.cpp" />
-    <ClCompile Include="RA_Dlg_Memory.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
     <ClCompile Include="RA_Json.cpp" />
     <ClCompile Include="RA_Leaderboard.cpp" />
@@ -150,6 +149,7 @@
     <ClCompile Include="ui\viewmodels\ScoreboardViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\ScoreTrackerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel.cpp" />
+    <ClCompile Include="ui\win32\bindings\ControlBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\GridAddressColumnBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\GridBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\GridLookupColumnBinding.cpp" />
@@ -223,7 +223,6 @@
     <ClInclude Include="RA_Dlg_AchEditor.h" />
     <ClInclude Include="RA_Dlg_Achievement.h" />
     <ClInclude Include="RA_Dlg_GameLibrary.h" />
-    <ClInclude Include="RA_Dlg_Memory.h" />
     <ClInclude Include="ra_fwd.h" />
     <ClInclude Include="RA_ImageFactory.h" />
     <ClInclude Include="RA_Json.h" />

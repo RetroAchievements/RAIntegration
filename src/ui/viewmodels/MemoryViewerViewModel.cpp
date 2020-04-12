@@ -510,7 +510,8 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
 
     const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    const auto nNewColor = GetColor(nAddress, pBookmarksViewModel, pGameContext);
+    const auto nNewColor = (nAddress == GetAddress()) ? ra::itoe<TextColor>(HIGHLIGHTED_COLOR & 0x0F) :
+        GetColor(nAddress, pBookmarksViewModel, pGameContext);
 
     if ((m_pColor[nOffset] & 0x0F) != ra::etoi(nNewColor))
     {

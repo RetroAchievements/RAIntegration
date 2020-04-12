@@ -7,6 +7,7 @@
 
 #include "ui\IDesktop.hh"
 #include "ui\viewmodels\WindowManager.hh"
+#include "ui\win32\bindings\ControlBinding.hh"
 
 namespace ra {
 namespace ui {
@@ -28,7 +29,21 @@ void WindowBinding::SetHWND(HWND hWnd)
         {
             auto* pProperty = dynamic_cast<const StringModelProperty*>(ModelPropertyBase::GetPropertyForKey(pIter.first));
             if (pProperty != nullptr)
-                SetDlgItemTextW(m_hWnd, pIter.second, GetValue(*pProperty).c_str());
+                SetDlgItemTextW(m_hWnd, pIter.second, GetValueFromAny(*pProperty).c_str());
+        }
+
+        for (auto& pIter : m_mEnabledBindings)
+        {
+            auto* pProperty = dynamic_cast<const BoolModelProperty*>(ModelPropertyBase::GetPropertyForKey(pIter.first));
+            if (pProperty != nullptr)
+            {
+                for (const auto nDlgItemId : pIter.second)
+                {
+                    auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
+                    if (hControl)
+                        EnableWindow(hControl, GetValueFromAny(*pProperty) ? TRUE : FALSE);
+                }
+            }
         }
 
         RestoreSizeAndPosition();
@@ -222,10 +237,7 @@ void WindowBinding::OnViewModelStringValueChanged(const StringModelProperty::Cha
 
     const auto pIter = m_mLabelBindings.find(args.Property.GetKey());
     if (pIter != m_mLabelBindings.end())
-    {
         SetDlgItemTextW(m_hWnd, pIter->second, args.tNewValue.c_str());
-        return;
-    }
 }
 
 void WindowBinding::BindLabel(int nDlgItemId, const StringModelProperty& pSourceProperty)
@@ -235,8 +247,70 @@ void WindowBinding::BindLabel(int nDlgItemId, const StringModelProperty& pSource
     if (m_hWnd)
     {
         // immediately push values from the viewmodel to the UI
-        SetDlgItemTextW(m_hWnd, nDlgItemId, GetValue(pSourceProperty).c_str());
+        SetDlgItemTextW(m_hWnd, nDlgItemId, GetValueFromAny(pSourceProperty).c_str());
     }
+}
+
+void WindowBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept
+{
+    const auto pEnabledIter = m_mEnabledBindings.find(args.Property.GetKey());
+    if (pEnabledIter != m_mEnabledBindings.end())
+    {
+        for (const auto nDlgItemId : pEnabledIter->second)
+        {
+            auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
+            if (hControl)
+            {
+                EnableWindow(hControl, args.tNewValue ? TRUE : FALSE);
+                ControlBinding::ForceRepaint(hControl);
+            }
+        }
+    }
+}
+
+void WindowBinding::BindEnabled(int nDlgItemId, const BoolModelProperty& pSourceProperty)
+{
+    m_mEnabledBindings[pSourceProperty.GetKey()].insert(nDlgItemId);
+
+    if (m_hWnd)
+    {
+        // immediately push values from the viewmodel to the UI
+        auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
+        if (hControl)
+            EnableWindow(hControl, GetValueFromAny(pSourceProperty) ? TRUE : FALSE);
+    }
+}
+
+const std::wstring& WindowBinding::GetValueFromAny(const StringModelProperty& pProperty) const
+{
+    const std::wstring& sValue = GetValue(pProperty);
+    if (sValue == pProperty.GetDefaultValue())
+    {
+        for (const auto& pChild : m_vChildViewModels)
+        {
+            const std::wstring& sChildValue = pChild->GetValue(pProperty);
+            if (sChildValue != pProperty.GetDefaultValue())
+                return sChildValue;
+        }
+    }
+
+    return sValue;
+}
+
+bool WindowBinding::GetValueFromAny(const BoolModelProperty& pProperty) const
+{
+    bool bValue = GetValue(pProperty);
+    if (bValue == pProperty.GetDefaultValue())
+    {
+        for (const auto& pChild : m_vChildViewModels)
+        {
+            bValue = pChild->GetValue(pProperty);
+            if (bValue != pProperty.GetDefaultValue())
+                break;
+        }
+    }
+
+    return bValue;
 }
 
 } // namespace bindings

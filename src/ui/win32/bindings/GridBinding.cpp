@@ -246,7 +246,7 @@ void GridBinding::UpdateItems(gsl::index nColumn)
     }
 }
 
-void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept
+void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (m_pScrollOffsetProperty)
     {
@@ -259,7 +259,14 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
         if (*m_pScrollMaximumProperty == args.Property)
         {
             if (m_hWnd)
-                ListView_SetItemCount(m_hWnd, gsl::narrow_cast<size_t>(args.tNewValue) - 1);
+            {
+                if (args.tNewValue < 1)
+                    ListView_SetItemCount(m_hWnd, 0);
+                else
+                    ListView_SetItemCount(m_hWnd, gsl::narrow_cast<size_t>(args.tNewValue) - 1);
+
+                CheckForScrollBar();
+            }
             return;
         }
     }
@@ -439,14 +446,19 @@ void GridBinding::OnViewModelChanged(gsl::index nIndex)
 
 void GridBinding::CheckForScrollBar()
 {
+    int nItems = gsl::narrow_cast<int>(m_vmItems->Count());
+    if (m_pScrollMaximumProperty)
+        nItems = GetValue(*m_pScrollMaximumProperty);
+
     SCROLLINFO info{};
     info.cbSize = sizeof(info);
     info.fMask = SIF_PAGE;
     const bool bHasScrollbar = GetScrollInfo(m_hWnd, SBS_VERT, &info) &&
-        (info.nPage > 0) && (info.nPage < m_vmItems->Count());
+        (info.nPage > 0) && (info.nPage < ra::to_unsigned(nItems));
 
     if (bHasScrollbar != m_bHasScrollbar)
     {
+        // we think the scrollbar has appeared or disappeared - update the column widths
         m_bHasScrollbar = bHasScrollbar;
         UpdateLayout();
     }
@@ -465,8 +477,13 @@ void GridBinding::OnEndViewModelCollectionUpdate()
         CheckForScrollBar();
 
         SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
-        InvalidateRect(m_hWnd, nullptr, FALSE);
+        Invalidate();
     }
+}
+
+void GridBinding::Invalidate()
+{
+    InvalidateRect(m_hWnd, nullptr, FALSE);
 }
 
 void GridBinding::BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept
@@ -492,6 +509,24 @@ void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, cons
     m_pUpdateSelectedItems = pUpdateSelectedItems;
 
     m_nScrollOffset = GetValue(pScrollOffsetProperty);
+}
+
+void GridBinding::SetHWND(DialogBase& pDialog, HWND hControl)
+{
+    ControlBinding::SetHWND(pDialog, hControl);
+
+    if (m_pScrollOffsetProperty)
+    {
+        Expects((GetWindowStyle(m_hWnd) & LVS_OWNERDATA) != 0);
+    }
+
+    if (!m_vColumns.empty())
+    {
+        UpdateLayout();
+
+        if (m_vmItems)
+            UpdateAllItems();
+    }
 }
 
 void GridBinding::UpdateScroll()

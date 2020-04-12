@@ -11,6 +11,7 @@ namespace win32 {
 namespace bindings {
 
 constexpr int MEMVIEW_MARGIN = 4;
+constexpr UINT WM_USER_INVALIDATE = WM_USER + 1;
 
 static LRESULT CALLBACK s_MemoryViewerControlWndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam)
 {
@@ -52,6 +53,10 @@ static LRESULT CALLBACK s_MemoryViewerControlWndProc(HWND hControl, UINT uMsg, W
 
         case WM_GETDLGCODE:
             return DLGC_WANTCHARS | DLGC_WANTARROWS;
+
+        case WM_USER_INVALIDATE:
+            pControl->Invalidate();
+            return FALSE;
     }
 
     return DefWindowProc(hControl, uMsg, wParam, lParam);
@@ -99,6 +104,12 @@ void MemoryViewerControlBinding::SetHWND(DialogBase& pDialog, HWND hControl)
     ControlBinding::SetHWND(pDialog, hControl);
 
     GSL_SUPPRESS_TYPE1 SetWindowLongPtr(hControl, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+
+    RECT rcRect;
+    GetWindowRect(hControl, &rcRect);
+
+    ra::ui::Size szSize{ rcRect.right - rcRect.left, rcRect.bottom - rcRect.top };
+    OnSizeChanged(szSize);
 }
 
 void MemoryViewerControlBinding::ScrollUp()
@@ -252,29 +263,21 @@ void MemoryViewerControlBinding::OnLostFocus()
     m_pViewModel.OnLostFocus();
 }
 
-MemSize MemoryViewerControlBinding::GetDataSize()
+void MemoryViewerControlBinding::OnSizeChanged(const ra::ui::Size& pNewSize)
 {
-    return m_pViewModel.GetSize();
+    m_pViewModel.OnResized(pNewSize.Width - MEMVIEW_MARGIN * 2, pNewSize.Height - MEMVIEW_MARGIN * 2);
+}
+
+void MemoryViewerControlBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept
+{
+    if (args.Property == ra::ui::viewmodels::MemoryViewerViewModel::AddressProperty)
+        PostMessage(m_hWnd, WM_USER_INVALIDATE, 0, 0);
 }
 
 void MemoryViewerControlBinding::Invalidate()
 {
     if (m_pViewModel.NeedsRedraw() && !m_bSuppressMemoryViewerInvalidate)
-    {
-        InvalidateRect(m_hWnd, nullptr, FALSE);
-
-        // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
-        // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
-        // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
-        // Similar code exists in Dlg_Memory::Invalidate for the search results
-        switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
-        {
-            case RA_Libretro:
-            case RA_Oricutron:
-                UpdateWindow(m_hWnd);
-                break;
-        }
-    }
+        ControlBinding::ForceRepaint(m_hWnd);
 }
 
 void MemoryViewerControlBinding::RenderMemViewer()

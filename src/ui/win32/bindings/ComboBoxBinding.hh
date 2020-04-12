@@ -21,8 +21,8 @@ public:
 
     GSL_SUPPRESS_F6 ~ComboBoxBinding() noexcept
     {
-        if (m_pViewModelCollection)
-            m_pViewModelCollection->RemoveNotifyTarget(*this);
+        if (m_pMutableViewModelCollection)
+            m_pMutableViewModelCollection->RemoveNotifyTarget(*this);
     }
 
     ComboBoxBinding(const ComboBoxBinding&) noexcept = delete;
@@ -53,7 +53,21 @@ public:
             ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
     }
 
+    void BindItems(const ra::ui::viewmodels::LookupItemViewModelCollection& pViewModels)
+    {
+        BindItems(pViewModels, ra::ui::viewmodels::LookupItemViewModel::IdProperty,
+            ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
+    }
+
     void BindItems(ViewModelCollectionBase& pViewModels, const IntModelProperty& pIdProperty, const StringModelProperty& pTextProperty)
+    {
+        BindItems(const_cast<const ViewModelCollectionBase&>(pViewModels), pIdProperty, pTextProperty);
+
+        m_pMutableViewModelCollection = &pViewModels;
+        pViewModels.AddNotifyTarget(*this);
+    }
+
+    void BindItems(const ViewModelCollectionBase& pViewModels, const IntModelProperty& pIdProperty, const StringModelProperty& pTextProperty)
     {
         m_pViewModelCollection = &pViewModels;
         m_pItemIdProperty = &pIdProperty;
@@ -64,8 +78,6 @@ public:
 
         if (m_pSelectedIdProperty)
             UpdateSelectedItem();
-
-        pViewModels.AddNotifyTarget(*this);
     }
 
     void BindSelectedItem(const IntModelProperty& pSelectedIdProperty)
@@ -92,6 +104,22 @@ protected:
             UpdateSelectedItem();
     }
 
+    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override
+    {
+        if (args.Property == *m_pItemTextProperty)
+        {
+            const auto& pLabel = m_pViewModelCollection->GetItemValue(nIndex, *m_pItemTextProperty);
+            ComboBox_DeleteString(m_hWnd, nIndex);
+            ComboBox_InsertString(m_hWnd, nIndex, NativeStr(pLabel).c_str());
+
+            if (m_nSelectedIndex == nIndex)
+            {
+                ComboBox_SetCurSel(m_hWnd, nIndex);
+                ComboBox_SetText(m_hWnd, NativeStr(pLabel).c_str());
+            }
+        }
+    }
+
     void OnViewModelAdded(gsl::index nIndex) override
     {
         const auto& pLabel = m_pViewModelCollection->GetItemValue(nIndex, *m_pItemTextProperty);
@@ -105,6 +133,7 @@ private:
         for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
         {
             const auto& pLabel = m_pViewModelCollection->GetItemValue(nIndex, *m_pItemTextProperty);
+
             ComboBox_AddString(m_hWnd, NativeStr(pLabel).c_str());
         }
     }
@@ -126,7 +155,8 @@ private:
     }
 
     const IntModelProperty* m_pSelectedIdProperty = nullptr;
-    ViewModelCollectionBase* m_pViewModelCollection = nullptr;
+    const ViewModelCollectionBase* m_pViewModelCollection = nullptr;
+    ViewModelCollectionBase* m_pMutableViewModelCollection = nullptr;
     const IntModelProperty* m_pItemIdProperty = nullptr;
     const StringModelProperty* m_pItemTextProperty = nullptr;
     gsl::index m_nSelectedIndex = -1;

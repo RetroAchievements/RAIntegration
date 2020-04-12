@@ -3,7 +3,6 @@
 #include "RA_Achievement.h"
 #include "RA_Core.h"
 #include "RA_Dlg_Achievement.h"
-#include "RA_Dlg_Memory.h"
 #include "RA_ImageFactory.h"
 #include "RA_Resource.h"
 
@@ -1553,20 +1552,22 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         {
                             if (rCond.CompSource().GetType() != CompVariable::Type::ValueComparison)
                             {
-                                // Wake up the mem dlg via the main app
-                                SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
+                                auto& vmMemory = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector;
+                                if (!vmMemory.IsVisible())
+                                    vmMemory.Show();
 
-                                g_MemoryDialog.GoToAddress(rCond.CompSource().GetValue());
+                                vmMemory.SetCurrentAddress(rCond.CompSource().GetValue());
                             }
                         }
                         else if (pOnClick->iSubItem == CondSubItems::Value_Tgt)
                         {
                             if (rCond.CompTarget().GetType() != CompVariable::Type::ValueComparison)
                             {
-                                // Wake up the mem dlg via the main app
-                                SendMessage(g_RAMainWnd, WM_COMMAND, IDM_RA_FILES_MEMORYFINDER, 0);
+                                auto& vmMemory = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector;
+                                if (!vmMemory.IsVisible())
+                                    vmMemory.Show();
 
-                                g_MemoryDialog.GoToAddress(rCond.CompTarget().GetValue());
+                                vmMemory.SetCurrentAddress(rCond.CompTarget().GetValue());
                             }
                         }
                     }

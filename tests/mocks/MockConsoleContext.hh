@@ -27,11 +27,11 @@ public:
 
     void SetName(std::wstring&& sName) noexcept { m_sName = std::move(sName); }
 
-    const std::vector<MemoryRegion>& MemoryRegions() const noexcept { return m_vRegions; }
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vRegions; }
 
-    void ResetMemoryRegions() { m_vRegions.clear(); }
+    void ResetMemoryRegions() noexcept { m_vRegions.clear(); }
 
-    void AddMemoryRegion(ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, AddressType nAddressType) noexcept 
+    void AddMemoryRegion(ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, AddressType nAddressType)
     { 
         auto& pRegion = m_vRegions.emplace_back();
         pRegion.StartAddress = nStartAddress;

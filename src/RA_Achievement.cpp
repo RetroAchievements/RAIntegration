@@ -167,7 +167,7 @@ void Achievement::RebuildTrigger()
     // convert the UI definition into a string
     m_vConditions.Serialize(m_sTrigger);
 
-    // attempt to copy over the hit counts
+    // if achievement was previously active, reactivate it
     if (pOldTrigger != nullptr)
     {
         const auto nResult = pRuntime.ActivateAchievement(ID(), m_sTrigger);
@@ -182,19 +182,26 @@ void Achievement::RebuildTrigger()
         }
 
         m_pTrigger = pRuntime.GetAchievementTrigger(ID());
-        if (m_pTrigger->requirement && pOldTrigger->requirement)
-            MergeHits(*m_pTrigger->requirement, *pOldTrigger->requirement);
 
-        auto* pAltGroup = m_pTrigger->alternative;
-        auto* pOldAltGroup = pOldTrigger->alternative;
-        while (pAltGroup && pOldAltGroup)
+        // if the trigger hasn't actually changed, it will be recycled.
+        // otherwise, attempt to copy over the hit counts.
+        if (m_pTrigger != pOldTrigger)
         {
-            MergeHits(*pAltGroup, *pOldAltGroup);
-            pAltGroup = pAltGroup->next;
-            pOldAltGroup = pOldAltGroup->next;
-        }
+            if (m_pTrigger->requirement && pOldTrigger->requirement)
+                MergeHits(*m_pTrigger->requirement, *pOldTrigger->requirement);
 
-        pRuntime.ReleaseAchievementTrigger(ID(), pOldTrigger);
+            auto* pAltGroup = m_pTrigger->alternative;
+            auto* pOldAltGroup = pOldTrigger->alternative;
+            while (pAltGroup && pOldAltGroup)
+            {
+                MergeHits(*pAltGroup, *pOldAltGroup);
+                pAltGroup = pAltGroup->next;
+                pOldAltGroup = pOldAltGroup->next;
+            }
+
+            // relese the memory associated with the previous trigger
+            pRuntime.ReleaseAchievementTrigger(ID(), pOldTrigger);
+        }
     }
     else
     {

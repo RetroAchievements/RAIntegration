@@ -11,15 +11,20 @@ namespace ui {
 namespace win32 {
 namespace bindings {
 
-class MemoryViewerControlBinding : public ControlBinding
+class MemoryViewerControlBinding : public ControlBinding,
+    protected ra::ui::viewmodels::MemoryViewerViewModel::RepaintNotifyTarget
 {
 public:
     explicit MemoryViewerControlBinding(ra::ui::viewmodels::MemoryViewerViewModel& vmViewModel) noexcept
         : ControlBinding(vmViewModel), m_pViewModel(vmViewModel)
     {
+        vmViewModel.AddRepaintNotifyTarget(*this);
     }
 
-    ~MemoryViewerControlBinding() noexcept = default;
+    ~MemoryViewerControlBinding() noexcept
+    {
+        m_pViewModel.RemoveRepaintNotifyTarget(*this);
+    }
 
     MemoryViewerControlBinding(const MemoryViewerControlBinding&) noexcept = delete;
     MemoryViewerControlBinding& operator=(const MemoryViewerControlBinding&) noexcept = delete;
@@ -44,9 +49,15 @@ public:
 
     void Invalidate();
 
-    MemSize GetDataSize();
-
     void SetHWND(DialogBase& pDialog, HWND hControl) override;
+
+protected:
+    void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override;
+
+    // MemoryViewerViewModel::RepaintNotifyTarget
+    void OnRepaintMemoryViewer() override { Invalidate(); }
+
+    void OnSizeChanged(const ra::ui::Size& pNewSize) override;
 
 private:
     bool m_bSuppressMemoryViewerInvalidate = false;

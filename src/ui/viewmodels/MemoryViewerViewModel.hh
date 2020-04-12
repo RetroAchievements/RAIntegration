@@ -50,10 +50,10 @@ public:
     };
 
     void AddRepaintNotifyTarget(RepaintNotifyTarget& pTarget) noexcept { m_pRepaintNotifyTarget = &pTarget; }
-    void RemoveRepaintNotifyTarget(RepaintNotifyTarget& pTarget) noexcept { if (m_pRepaintNotifyTarget == &pTarget) m_pRepaintNotifyTarget = nullptr; }
+    void RemoveRepaintNotifyTarget(const RepaintNotifyTarget& pTarget) noexcept { if (m_pRepaintNotifyTarget == &pTarget) m_pRepaintNotifyTarget = nullptr; }
 
 private:
-    RepaintNotifyTarget* m_pRepaintNotifyTarget;
+    RepaintNotifyTarget* m_pRepaintNotifyTarget = nullptr;
 
 public:
     void UpdateRenderImage();

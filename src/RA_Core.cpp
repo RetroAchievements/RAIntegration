@@ -8,7 +8,6 @@
 #include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_GameLibrary.h"
-#include "RA_Dlg_Memory.h"
 
 #include "data\ConsoleContext.hh"
 #include "data\EmulatorContext.hh"
@@ -34,8 +33,6 @@
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 #include "ui\win32\OverlayWindow.hh"
-
-//#define NEW_MEM_INSPECTOR
 
 std::wstring g_sHomeDir;
 std::string g_sROMDirLocation;
@@ -136,12 +133,6 @@ API int CCONV _RA_Shutdown()
     {
         DestroyWindow(g_AchievementEditorDialog.GetHWND());
         g_AchievementEditorDialog.InstallHWND(nullptr);
-    }
-
-    if (g_MemoryDialog.GetHWND() != nullptr)
-    {
-        DestroyWindow(g_MemoryDialog.GetHWND());
-        g_MemoryDialog.InstallHWND(nullptr);
     }
 
     if (g_GameLibrary.GetHWND() != nullptr)
@@ -415,14 +406,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             break;
 
         case IDM_RA_FILES_MEMORYFINDER:
-#ifdef NEW_MEM_INSPECTOR
             ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector.Show();
-#else
-            if (g_MemoryDialog.GetHWND() == nullptr)
-                g_MemoryDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_MEMORY), g_RAMainWnd, g_MemoryDialog.s_MemoryProc));
-            if (g_MemoryDialog.GetHWND() != nullptr)
-                ShowWindow(g_MemoryDialog.GetHWND(), SW_SHOW);
-#endif
             break;
 
         case IDM_RA_FILES_MEMORYBOOKMARKS:

@@ -312,6 +312,23 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                     }
                     return 0;
                 }
+
+                case LVN_GETDISPINFO:
+                {
+                    ra::ui::win32::bindings::GridBinding* pGridBinding;
+                    GSL_SUPPRESS_TYPE1 pGridBinding = dynamic_cast<ra::ui::win32::bindings::GridBinding*>(
+                        FindControlBinding(pnmHdr->hwndFrom));
+
+                    if (pGridBinding)
+                    {
+                        NMLVDISPINFO* plvdi;
+                        GSL_SUPPRESS_TYPE1{ plvdi = reinterpret_cast<NMLVDISPINFO*>(lParam); }
+                        Expects(plvdi != nullptr);
+                        pGridBinding->OnLvnGetDispInfo(*plvdi);
+                    }
+
+                    return 0;
+                }
             }
         }
 

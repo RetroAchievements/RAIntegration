@@ -57,12 +57,12 @@ public:
         /// <summary>
         /// Gets the start address of the predefined filter range.
         /// </summary>
-        const ra::ByteAddress GetStartAddress() const { return static_cast<ra::ByteAddress>(GetValue(StartAddressProperty)); }
+        const ra::ByteAddress GetStartAddress() const { return gsl::narrow_cast<ra::ByteAddress>(GetValue(StartAddressProperty)); }
 
         /// <summary>
         /// Sets the start address of the predefined filter range.
         /// </summary>
-        void SetStartAddress(ra::ByteAddress nValue) { SetValue(StartAddressProperty, static_cast<int>(nValue)); }
+        void SetStartAddress(ra::ByteAddress nValue) { SetValue(StartAddressProperty, gsl::narrow_cast<int>(nValue)); }
 
         /// <summary>
         /// The <see cref="ModelProperty" /> for the end address of the predefined filter range.
@@ -72,12 +72,12 @@ public:
         /// <summary>
         /// Gets the end address of the predefined filter range.
         /// </summary>
-        const ra::ByteAddress GetEndAddress() const { return static_cast<ra::ByteAddress>(GetValue(EndAddressProperty)); }
+        const ra::ByteAddress GetEndAddress() const { return gsl::narrow_cast<ra::ByteAddress>(GetValue(EndAddressProperty)); }
 
         /// <summary>
         /// Sets the end address of the predefined filter range.
         /// </summary>
-        void SetEndAddress(ra::ByteAddress nValue) { SetValue(EndAddressProperty, static_cast<int>(nValue)); }
+        void SetEndAddress(ra::ByteAddress nValue) { SetValue(EndAddressProperty, gsl::narrow_cast<int>(nValue)); }
     };
 
     /// <summary>
@@ -384,6 +384,16 @@ public:
     /// Gets the scroll offset.
     /// </summary>
     unsigned int GetScrollOffset() const { return gsl::narrow_cast<unsigned int>(GetValue(ScrollOffsetProperty)); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the scroll maximum.
+    /// </summary>
+    static const IntModelProperty ScrollMaximumProperty;
+
+    /// <summary>
+    /// Gets the scroll maximum.
+    /// </summary>
+    unsigned int GetScrollMaximum() const { return gsl::narrow_cast<unsigned int>(GetValue(ScrollMaximumProperty)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the selected page description.

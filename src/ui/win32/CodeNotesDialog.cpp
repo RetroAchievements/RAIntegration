@@ -9,10 +9,6 @@
 
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
-#ifndef RA_UTEST
-#include "RA_Dlg_Memory.h"
-#endif
-
 using ra::ui::viewmodels::CodeNotesViewModel;
 using ra::ui::win32::bindings::GridColumnBinding;
 
@@ -70,10 +66,10 @@ public:
             const auto* pItem = pItems->GetItemAt(nIndex);
             if (pItem)
             {
-                g_MemoryDialog.GoToAddress(pItem->nAddress);
+                auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+                pWindowManager.MemoryInspector.SetCurrentAddress(pItem->nAddress);
 
                 auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
-                auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
                 pDesktop.CloseWindow(pWindowManager.CodeNotes);
             }
         }

@@ -17,7 +17,7 @@
 #define IDC_RA_RESULTS_BACK             1112
 #define IDC_RA_RESULTS_FORWARD          1113
 #define IDC_RA_RESULTS_REMOVE           1114
-#define IDC_RA_RESULTS_HIGHLIGHT        1115
+#define IDC_RA_SEARCHTYPE               1115
 #define IDC_RA_SYSTEMNAME               1116
 #define IDC_RA_LINK                     1117
 #define IDC_RA_GAMENAME                 1118
@@ -39,7 +39,29 @@
 #define IDC_RA_APPLY_FILTER             1134
 #define IDC_RA_RESET_FILTER             1135
 #define IDC_RA_RESULT_COUNT             1136
-#define IDC_RA_VIEW_CODENOTES           1137
+#define IDC_RA_NOTE_TEXT                1137
+#define IDC_RA_ADD_NOTE                 1138
+#define IDC_RA_DELETE_NOTE              1139
+#define IDC_RA_RESULTS                  1140
+#define IDC_RA_SEARCHRANGES             1141
+#define IDC_RA_SEARCHRANGE              1142
+#define IDC_RA_COMPARISON               1143
+#define IDC_RA_SPECIAL_FILTER           1144
+#define IDC_RA_CONTINUOUS_FILTER        1145
+#define IDC_RA_RESULT_FILTER            1146
+#define IDC_RA_ADDRESS                  1147
+#define IDC_RA_VIEW_CODENOTES           1148
+#define IDC_RA_MEMVIEW_8BIT             1149
+#define IDC_RA_MEMVIEW_16BIT            1150
+#define IDC_RA_MEMVIEW_32BIT            1151
+#define IDC_RA_MEMVIEWER                1152
+#define IDC_RA_MEMBITS                  1153
+#define IDC_RA_MEMBITS_TITLE            1154
+#define IDC_RA_RESULT_PAGE              1155
+#define IDC_RA_GBX_SEARCH               1156
+#define IDC_RA_GBX_FILTER               1157
+#define IDC_RA_GBX_RESULTS              1158
+#define IDC_RA_GBX_NOTES                1159
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -51,15 +73,9 @@
 #define IDD_RA_GAMELIBRARY              1509
 #define IDD_RA_ROMCHECKSUM              1510
 #define IDD_RA_OVERLAYSETTINGS          1511
-#define IDC_RA_TESTVAL                  1512
-#define IDC_RA_DOTEST                   1513
-#define IDC_RA_MEMSAVENOTE              1514
-#define IDC_RA_ADDNOTE                  1515
-#define IDC_RA_REMNOTE                  1516
 #define IDC_RA_UPLOAD_BADGE             1517
 #define IDC_RA_ADDBOOKMARK              1518
 #define IDC_RA_INFO_GG                  1519
-#define IDC_RA_MEM_LIST                 1520
 #define IDC_RA_HELP                     1521
 #define IDC_RA_CHEEVOPIC                1522
 #define IDC_RA_REVERTSELECTED           1523
@@ -93,15 +109,7 @@
 #define IDC_RA_DOWNLOAD_ACH             1550
 #define IDC_RA_COMMIT_ACH               1551
 #define IDC_RA_PROMOTE_ACH              1552
-#define IDC_RA_CBO_4BIT                 1553
-#define IDC_RA_CBO_8BIT                 1554
-#define IDC_RA_CBO_16BIT                1555
-#define IDC_RA_CBO_32BIT                1556
 #define IDC_RA_WATCH                    1557
-#define IDC_RA_WATCHING                 1558
-#define IDC_RA_CBO_CMPTYPE              1559
-#define IDC_RA_CBO_LASTKNOWNVAL         1560
-#define IDC_RA_CBO_GIVENVAL             1561
 #define IDC_RA_CHK_ACH_ACTIVE           1562
 #define IDC_RA_GAMETITLE                1563
 #define IDC_RA_BADGENAME                1564
@@ -113,12 +121,6 @@
 #define IDC_RA_ACH_DELGROUP             1576
 #define IDC_RA_ACH_ADDGROUP             1577
 #define IDC_RA_PROGRESSINDICATORS       1578
-#define IDC_RA_MEMVIEW8BIT              1579
-#define IDC_RA_MEMVIEW16BIT             1580
-#define IDC_RA_MEMVIEW32BIT             1581
-#define IDC_RA_MEMTEXTVIEWER            1582
-#define IDC_RA_MEMBITS                  1583
-#define IDC_RA_MEMBITS_TITLE            1584
 #define IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER 1585
 #define IDC_RA_REPORTBROKENACHIEVEMENTSLIST 1586
 #define IDC_RA_CHK_ACH_PAUSE_ON_RESET   1586
@@ -135,11 +137,6 @@
 #define IDC_RA_SCANNERFOUNDINFO         1597
 #define IDC_RA_ROMCHECKSUMTEXT          1598
 #define IDC_RA_COPYCHECKSUMCLIPBOARD    1599
-#define IDC_RA_CBO_SEARCHALL            1600
-#define IDC_RA_CBO_SEARCHCUSTOM         1601
-#define IDC_RA_CBO_SEARCHSYSTEMRAM      1602
-#define IDC_RA_CBO_SEARCHGAMERAM        1603
-#define IDC_RA_SEARCHRANGE              1604
 #define IDC_RA_MOVECONDDOWN             1605
 #define IDC_RA_ROMCHECKSUMHEADER        1606
 #define IDM_RA_MENUSTART                1700
@@ -169,7 +166,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        121
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1137
+#define _APS_NEXT_CONTROL_VALUE         1160
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

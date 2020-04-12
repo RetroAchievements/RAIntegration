@@ -85,6 +85,11 @@ public:
         return CDRF_DODEFAULT;
     }
 
+    /// <summary>
+    /// Calls Invalidate() or UpdateWindow() to cause the control to repaint
+    /// </summary>
+    static void ForceRepaint(HWND hWnd);
+
 protected:
     void DisableBinding() noexcept
     {

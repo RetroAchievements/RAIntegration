@@ -3,7 +3,7 @@
 #pragma once
 
 #ifndef RA_UTEST
-#define PERFORMANCE_COUNTERS
+//#define PERFORMANCE_COUNTERS
 #endif
 
 enum class PerformanceCheckpoint

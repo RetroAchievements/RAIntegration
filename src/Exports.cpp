@@ -412,7 +412,7 @@ static void UpdateUIForFrameChange()
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.MemoryBookmarks.DoFrame();
 
-    TALLY_PERFORMANCE(PerformanceCheckpoint::MemoryDialogInvalidate);
+    TALLY_PERFORMANCE(PerformanceCheckpoint::MemoryInspectorDoFrame);
     pWindowManager.MemoryInspector.DoFrame();
 }
 

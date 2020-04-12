@@ -19,7 +19,7 @@ static std::string GetLabel(PerformanceCheckpoint nCheckpoint)
         case PerformanceCheckpoint::RuntimeEvents: sCheckpoint = "Events"; break;
         case PerformanceCheckpoint::OverlayManagerAdvanceFrame: sCheckpoint = "Overlay"; break;
         case PerformanceCheckpoint::MemoryBookmarksDoFrame: sCheckpoint = "Bookmarks"; break;
-        case PerformanceCheckpoint::MemoryDialogInvalidate: sCheckpoint = "Inspector"; break;
+        case PerformanceCheckpoint::MemoryInspectorDoFrame: sCheckpoint = "Inspector"; break;
         default: sCheckpoint = std::to_string(ra::etoi(nCheckpoint)); break;
     }
 

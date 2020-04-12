@@ -12,7 +12,7 @@ enum class PerformanceCheckpoint
     RuntimeEvents,
     OverlayManagerAdvanceFrame,
     MemoryBookmarksDoFrame,
-    MemoryDialogInvalidate,
+    MemoryInspectorDoFrame,
 
     NUM_CHECKPOINTS
 };

@@ -17,16 +17,16 @@ namespace VisualStudio {
 namespace CppUnitTestFramework {
 
 template<>
-std::wstring ToString<ra::ui::viewmodels::MemorySearchViewModel::SearchType>(
-    const ra::ui::viewmodels::MemorySearchViewModel::SearchType& nSearchType)
+std::wstring ToString<ra::services::SearchType>(
+    const ra::services::SearchType& nSearchType)
 {
     switch (nSearchType)
     {
-        case ra::ui::viewmodels::MemorySearchViewModel::SearchType::FourBit:
+        case ra::services::SearchType::FourBit:
             return L"FourBit";
-        case ra::ui::viewmodels::MemorySearchViewModel::SearchType::EightBit:
+        case ra::services::SearchType::EightBit:
             return L"EightBit";
-        case ra::ui::viewmodels::MemorySearchViewModel::SearchType::SixteenBit:
+        case ra::services::SearchType::SixteenBit:
             return L"SixteenBit";
         default:
             return std::to_wstring(static_cast<int>(nSearchType));
@@ -34,14 +34,14 @@ std::wstring ToString<ra::ui::viewmodels::MemorySearchViewModel::SearchType>(
 }
 
 template<>
-std::wstring ToString<ra::ui::viewmodels::MemorySearchViewModel::ValueType>(
-    const ra::ui::viewmodels::MemorySearchViewModel::ValueType& nValueType)
+std::wstring ToString<ra::services::SearchFilterType>(
+    const ra::services::SearchFilterType& nValueType)
 {
     switch (nValueType)
     {
-        case ra::ui::viewmodels::MemorySearchViewModel::ValueType::Constant:
+        case ra::services::SearchFilterType::Constant:
             return L"Constant";
-        case ra::ui::viewmodels::MemorySearchViewModel::ValueType::LastKnownValue:
+        case ra::services::SearchFilterType::LastKnownValue:
             return L"LastKnownValue";
         default:
             return std::to_wstring(static_cast<int>(nValueType));
@@ -119,13 +119,13 @@ public:
         Assert::AreEqual(std::wstring(L""), search.GetFilterValue());
 
         Assert::AreEqual({ 3U }, search.SearchTypes().Count());
-        Assert::AreEqual((int)MemorySearchViewModel::SearchType::FourBit, search.SearchTypes().GetItemAt(0)->GetId());
+        Assert::AreEqual((int)ra::services::SearchType::FourBit, search.SearchTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"4-bit"), search.SearchTypes().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)MemorySearchViewModel::SearchType::EightBit, search.SearchTypes().GetItemAt(1)->GetId());
+        Assert::AreEqual((int)ra::services::SearchType::EightBit, search.SearchTypes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"8-bit"), search.SearchTypes().GetItemAt(1)->GetLabel());
-        Assert::AreEqual((int)MemorySearchViewModel::SearchType::SixteenBit, search.SearchTypes().GetItemAt(2)->GetId());
+        Assert::AreEqual((int)ra::services::SearchType::SixteenBit, search.SearchTypes().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"16-bit"), search.SearchTypes().GetItemAt(2)->GetLabel());
-        Assert::AreEqual(MemorySearchViewModel::SearchType::EightBit, search.GetSearchType());
+        Assert::AreEqual(ra::services::SearchType::EightBit, search.GetSearchType());
 
         Assert::AreEqual({ 6U }, search.ComparisonTypes().Count());
         Assert::AreEqual((int)ComparisonType::Equals, search.ComparisonTypes().GetItemAt(0)->GetId());
@@ -143,11 +143,11 @@ public:
         Assert::AreEqual(ComparisonType::Equals, search.GetComparisonType());
 
         Assert::AreEqual({ 2U }, search.ValueTypes().Count());
-        Assert::AreEqual((int)MemorySearchViewModel::ValueType::Constant, search.ValueTypes().GetItemAt(0)->GetId());
+        Assert::AreEqual((int)ra::services::SearchFilterType::Constant, search.ValueTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Constant"), search.ValueTypes().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)MemorySearchViewModel::ValueType::LastKnownValue, search.ValueTypes().GetItemAt(1)->GetId());
+        Assert::AreEqual((int)ra::services::SearchFilterType::LastKnownValue, search.ValueTypes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Last Known Value"), search.ValueTypes().GetItemAt(1)->GetLabel());
-        Assert::AreEqual(MemorySearchViewModel::ValueType::LastKnownValue, search.GetValueType());
+        Assert::AreEqual(ra::services::SearchFilterType::LastKnownValue, search.GetValueType());
 
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"0/0"), search.GetSelectedPage());
@@ -184,7 +184,7 @@ public:
     {
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
-        search.SetSearchType(MemorySearchViewModel::SearchType::SixteenBit);
+        search.SetSearchType(ra::services::SearchType::SixteenBit);
         Assert::IsFalse(search.CanFilter());
 
         search.BeginNewSearch();
@@ -203,7 +203,7 @@ public:
     {
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
-        search.SetSearchType(MemorySearchViewModel::SearchType::FourBit);
+        search.SetSearchType(ra::services::SearchType::FourBit);
         Assert::IsFalse(search.CanFilter());
 
         search.BeginNewSearch();
@@ -225,7 +225,7 @@ public:
         search.BeginNewSearch();
 
         search.SetComparisonType(ComparisonType::Equals);
-        search.SetValueType(MemorySearchViewModel::ValueType::Constant);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
         search.SetFilterValue(L"12");
 
         search.ApplyFilter();
@@ -246,7 +246,7 @@ public:
         search.BeginNewSearch();
 
         search.SetComparisonType(ComparisonType::Equals);
-        search.SetValueType(MemorySearchViewModel::ValueType::Constant);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
         search.SetFilterValue(L"0x0C");
 
         search.ApplyFilter();
@@ -267,7 +267,7 @@ public:
         search.BeginNewSearch();
 
         search.SetComparisonType(ComparisonType::Equals);
-        search.SetValueType(MemorySearchViewModel::ValueType::Constant);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
         Assert::IsTrue(search.CanEditFilterValue());
         search.SetFilterValue(L"banana");
 
@@ -298,7 +298,7 @@ public:
         search.BeginNewSearch();
 
         search.SetComparisonType(ComparisonType::NotEqualTo);
-        search.SetValueType(MemorySearchViewModel::ValueType::LastKnownValue);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
         Assert::IsFalse(search.CanEditFilterValue());
         search.memory.at(12) = 9;
 
@@ -336,7 +336,7 @@ public:
         search.BeginNewSearch();
 
         search.SetComparisonType(ComparisonType::NotEqualTo);
-        search.SetValueType(MemorySearchViewModel::ValueType::LastKnownValue);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
         search.memory.at(12) = 9;
 
         search.ApplyFilter();
@@ -368,7 +368,7 @@ public:
         search.InitializeMemory();
         search.BeginNewSearch();
         search.SetComparisonType(ComparisonType::Equals);
-        search.SetValueType(MemorySearchViewModel::ValueType::LastKnownValue);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
         search.ApplyFilter();
 
         search.memory.at(2) = 9;
@@ -389,10 +389,10 @@ public:
     {
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
-        search.SetSearchType(MemorySearchViewModel::SearchType::SixteenBit);
+        search.SetSearchType(ra::services::SearchType::SixteenBit);
         search.BeginNewSearch();
         search.SetComparisonType(ComparisonType::Equals);
-        search.SetValueType(MemorySearchViewModel::ValueType::LastKnownValue);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
         search.ApplyFilter();
 
         search.memory.at(2) = 9;
@@ -412,10 +412,10 @@ public:
     {
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
-        search.SetSearchType(MemorySearchViewModel::SearchType::FourBit);
+        search.SetSearchType(ra::services::SearchType::FourBit);
         search.BeginNewSearch();
         search.SetComparisonType(ComparisonType::Equals);
-        search.SetValueType(MemorySearchViewModel::ValueType::LastKnownValue);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
         search.ApplyFilter();
 
         search.memory.at(1) = 9;
@@ -438,7 +438,7 @@ public:
         search.BeginNewSearch();
 
         search.SetComparisonType(ComparisonType::LessThan);
-        search.SetValueType(MemorySearchViewModel::ValueType::Constant);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
         search.SetFilterValue(L"8");
         Assert::IsFalse(search.CanGoToPreviousPage());
         Assert::IsFalse(search.CanGoToNextPage());
@@ -621,7 +621,7 @@ public:
         search.BeginNewSearch();
 
         search.SetComparisonType(ComparisonType::LessThan);
-        search.SetValueType(MemorySearchViewModel::ValueType::Constant);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
         search.SetFilterValue(L"8");
         search.ApplyFilter();
         Assert::AreEqual({ 8U }, search.GetResultCount());
@@ -659,7 +659,7 @@ public:
         search.BeginNewSearch();
 
         search.SetComparisonType(ComparisonType::LessThan);
-        search.SetValueType(MemorySearchViewModel::ValueType::Constant);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
         search.SetFilterValue(L"5");
 
         search.ApplyFilter();
@@ -695,7 +695,7 @@ public:
         search.BeginNewSearch();
 
         search.SetComparisonType(ComparisonType::LessThan);
-        search.SetValueType(MemorySearchViewModel::ValueType::Constant);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
         search.SetFilterValue(L"5");
 
         search.ApplyFilter();
@@ -728,11 +728,11 @@ public:
     {
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
-        search.SetSearchType(MemorySearchViewModel::SearchType::FourBit);
+        search.SetSearchType(ra::services::SearchType::FourBit);
         search.BeginNewSearch();
 
         search.SetComparisonType(ComparisonType::GreaterThan);
-        search.SetValueType(MemorySearchViewModel::ValueType::Constant);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
         search.SetFilterValue(L"13");
 
         search.ApplyFilter();

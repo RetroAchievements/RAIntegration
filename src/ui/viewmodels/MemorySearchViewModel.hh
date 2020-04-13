@@ -118,13 +118,6 @@ public:
     /// </summary>
     void SetFilterRange(const std::wstring& sValue) { SetValue(FilterRangeProperty, sValue); }
 
-    enum class SearchType
-    {
-        FourBit,
-        EightBit,
-        SixteenBit,
-    };
-
     /// <summary>
     /// Gets the list of selectable search types.
     /// </summary>
@@ -141,12 +134,12 @@ public:
     /// <summary>
     /// Gets the selected search type.
     /// </summary>
-    SearchType GetSearchType() const { return ra::itoe<SearchType>(GetValue(SearchTypeProperty)); }
+    ra::services::SearchType GetSearchType() const { return ra::itoe<ra::services::SearchType>(GetValue(SearchTypeProperty)); }
 
     /// <summary>
     /// Sets the selected search type.
     /// </summary>
-    void SetSearchType(SearchType value) { SetValue(SearchTypeProperty, ra::etoi(value)); }
+    void SetSearchType(ra::services::SearchType value) { SetValue(SearchTypeProperty, ra::etoi(value)); }
 
     /// <summary>
     /// Gets the list of selectable comparison types.
@@ -171,12 +164,6 @@ public:
     /// </summary>
     void SetComparisonType(ComparisonType value) { SetValue(ComparisonTypeProperty, ra::etoi(value)); }
 
-    enum class ValueType
-    {
-        Constant,
-        LastKnownValue,
-    };
-
     /// <summary>
     /// Gets the list of selectable value types.
     /// </summary>
@@ -193,12 +180,12 @@ public:
     /// <summary>
     /// Gets the selected value type.
     /// </summary>
-    ValueType GetValueType() const { return ra::itoe<ValueType>(GetValue(ValueTypeProperty)); }
+    ra::services::SearchFilterType GetValueType() const { return ra::itoe<ra::services::SearchFilterType>(GetValue(ValueTypeProperty)); }
 
     /// <summary>
     /// Sets the selected value type.
     /// </summary>
-    void SetValueType(ValueType value) { SetValue(ValueTypeProperty, ra::etoi(value)); }
+    void SetValueType(ra::services::SearchFilterType value) { SetValue(ValueTypeProperty, ra::etoi(value)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the filter value.
@@ -485,9 +472,6 @@ private:
         std::set<unsigned int> vModifiedAddresses;
 
         std::wstring sSummary;
-        ValueType nValueType = ValueType::Constant;
-        ComparisonType nCompareType = ComparisonType::Equals;
-        unsigned int nValue = 0U;
     };
 
     size_t m_nSelectedSearchResult = 0U;

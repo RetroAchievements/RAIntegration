@@ -496,6 +496,11 @@ void GridBinding::BindRowColor(const IntModelProperty& pRowColorProperty) noexce
     m_pRowColorProperty = &pRowColorProperty;
 }
 
+void GridBinding::SetDoubleClickHandler(std::function<void(gsl::index)> pHandler)
+{
+    m_pDoubleClickHandler = pHandler;
+}
+
 void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty,
     std::function<void(gsl::index, gsl::index, bool)> pUpdateSelectedItems)
 {
@@ -923,7 +928,8 @@ void GridBinding::OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate)
             return;
     }
 
-    // TODO: row-level double-click handler
+    if (m_pDoubleClickHandler)
+        m_pDoubleClickHandler(gsl::narrow_cast<gsl::index>(pnmItemActivate->iItem));
 }
 
 GridColumnBinding::InPlaceEditorInfo* GridBinding::GetIPEInfo(HWND hwnd) noexcept

@@ -39,7 +39,7 @@ public:
 protected:
     BOOL OnInitDialog() override;
     BOOL OnCommand(WORD nCommand) override;
-    
+
 private:
     ra::ui::win32::bindings::MultiLineGridBinding m_bindNotes;
     ra::ui::win32::bindings::TextBoxBinding m_bindFilterValue;

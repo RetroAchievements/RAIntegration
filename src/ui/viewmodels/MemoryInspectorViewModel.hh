@@ -87,6 +87,18 @@ public:
     void OpenNotesList();
 
     /// <summary>
+    /// Sets the current address to the next address after the current address associated to a note.
+    /// <summary>
+    /// <returns><c>true</c> if the current address was changed, <c>false</c> if not.</returns>
+    bool NextNote();
+
+    /// <summary>
+    /// Sets the current address to the next address before the current address associated to a note.
+    /// <summary>
+    /// <returns><c>true</c> if the current address was changed, <c>false</c> if not.</returns>
+    bool PreviousNote();
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the current address's bit representation.
     /// </summary>
     static const StringModelProperty CurrentAddressBitsProperty;

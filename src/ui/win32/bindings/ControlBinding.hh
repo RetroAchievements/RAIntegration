@@ -15,10 +15,7 @@ class ControlBinding : protected BindingBase
 public:
     explicit ControlBinding(ViewModelBase& vmViewModel) noexcept : BindingBase(vmViewModel) {}
 
-    ~ControlBinding() noexcept
-    {
-        DisableBinding();
-    }
+    ~ControlBinding() noexcept;
 
     ControlBinding(const ControlBinding&) noexcept = delete;
     ControlBinding& operator=(const ControlBinding&) noexcept = delete;
@@ -90,6 +87,11 @@ public:
     /// </summary>
     static void ForceRepaint(HWND hWnd);
 
+    /// <summary>
+    /// DO NOT CALL! Must be public for WINAPI interop.
+    /// </summary>
+    _NODISCARD virtual INT_PTR CALLBACK WndProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM);
+
 protected:
     void DisableBinding() noexcept
     {
@@ -109,10 +111,13 @@ protected:
             m_pDialog->QueueFunction(fAction);
     }
 
+    void SubclassWndProc();
+
     HWND m_hWnd{};
 
 private:
     DialogBase* m_pDialog = nullptr;
+    WNDPROC m_pOriginalWndProc = nullptr;
 };
 
 } // namespace bindings

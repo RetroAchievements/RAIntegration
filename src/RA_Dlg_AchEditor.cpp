@@ -1947,7 +1947,34 @@ void Dlg_AchievementEditor::GetListViewTooltip()
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nAddr);
-    m_sTooltip = NativeStr(ra::StringPrintf(L"%s\r\n%s", ra::ByteAddressToString(nAddr), pNote ? *pNote : L""));
+    if (!pNote)
+    {
+        m_sTooltip = NativeStr(ra::StringPrintf(L"%s\r\n", ra::ByteAddressToString(nAddr)));
+    }
+    else
+    {
+        size_t nLines = 0;
+        size_t nIndex = 0;
+        do
+        {
+            nIndex = pNote->find('\n', nIndex);
+            if (nIndex == std::string::npos)
+                break;
+
+            ++nIndex;
+            ++nLines;
+        } while (nLines < 20);
+
+        if (nIndex != std::string::npos && pNote->find('\n', nIndex) != std::string::npos)
+        {
+            std::wstring sSubString(*pNote, 0, nIndex);
+            m_sTooltip = NativeStr(ra::StringPrintf(L"%s\r\n%s...", ra::ByteAddressToString(nAddr), sSubString));
+        }
+        else
+        {
+            m_sTooltip = NativeStr(ra::StringPrintf(L"%s\r\n%s", ra::ByteAddressToString(nAddr), *pNote));
+        }
+    }
 }
 
 GSL_SUPPRESS_CON4

@@ -130,6 +130,7 @@ BOOL CodeNotesDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
+        case IDOK: // this dialog doesn't have an OK button. if the user pressed Enter, apply the current filter
         case IDC_RA_APPLY_FILTER:
         {
             auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);

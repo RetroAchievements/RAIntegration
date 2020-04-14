@@ -65,6 +65,8 @@ private:
 
         void OnLvnItemChanged(const LPNMLISTVIEW pnmListView) override;
 
+        void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
     protected:
         void Invalidate() override;
     };

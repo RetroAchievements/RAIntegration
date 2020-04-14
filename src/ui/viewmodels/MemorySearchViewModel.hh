@@ -338,9 +338,14 @@ public:
     }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for the memory size of result items.
+    /// </summary>
+    static const IntModelProperty ResultMemSizeProperty;
+
+    /// <summary>
     /// Gets the memory size of the items in <see cref="Results"/>.
     /// </summary>
-    MemSize ResultMemSize() const;
+    MemSize ResultMemSize() const { return ra::itoe<MemSize>(GetValue(ResultMemSizeProperty)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the number of results found.

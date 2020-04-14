@@ -76,6 +76,30 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnLvnItemChanged(const LPN
     }
 }
 
+void MemoryInspectorDialog::SearchResultsGridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == MemorySearchViewModel::ResultMemSizeProperty)
+    {
+        int nWidth;
+        const auto& vmMemory = GetViewModel<MemorySearchViewModel>();
+        constexpr int nCharWidth = 6;
+        constexpr int nPadding = 6;
+        switch (vmMemory.ResultMemSize())
+        {
+            case MemSize::Nibble_Lower: nWidth = nCharWidth * (1 + 2) + nPadding * 2; break;
+            case MemSize::EightBit:     nWidth = nCharWidth * (2 + 2) + nPadding * 2; break;
+            default:
+            case MemSize::SixteenBit:   nWidth = nCharWidth * (4 + 2) + nPadding * 2; break;
+            case MemSize::ThirtyTwoBit: nWidth = nCharWidth * (8 + 2) + nPadding * 2; break;
+        }
+
+        m_vColumns.at(1)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
+        UpdateLayout();
+    }
+
+    GridBinding::OnViewModelIntValueChanged(args);
+}
+
 
 MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryInspector)
     : DialogBase(vmMemoryInspector),

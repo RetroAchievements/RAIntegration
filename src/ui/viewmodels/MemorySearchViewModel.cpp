@@ -31,6 +31,7 @@ const StringModelProperty MemorySearchViewModel::FilterValueProperty("MemorySear
 const StringModelProperty MemorySearchViewModel::FilterSummaryProperty("MemorySearchViewModel", "FilterSummary", L"");
 const IntModelProperty MemorySearchViewModel::ResultCountProperty("MemorySearchViewModel", "ResultCount", 0);
 const StringModelProperty MemorySearchViewModel::ResultCountTextProperty("MemorySearchViewModel", "ResultCountText", L"0");
+const IntModelProperty MemorySearchViewModel::ResultMemSizeProperty("MemorySearchViewModel", "ResultMemSize", ra::etoi(MemSize::EightBit));
 const IntModelProperty MemorySearchViewModel::ScrollOffsetProperty("MemorySearchViewModel", "ScrollOffset", 0);
 const IntModelProperty MemorySearchViewModel::ScrollMaximumProperty("MemorySearchViewModel", "ScrollMaximum", 0);
 const StringModelProperty MemorySearchViewModel::SelectedPageProperty("MemorySearchViewModel", "SelectedPageProperty", L"0/0");
@@ -90,6 +91,7 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::FourBit), L"4-bit");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::EightBit), L"8-bit");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::SixteenBit), L"16-bit");
+    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBit), L"32-bit");
 
     m_vComparisonTypes.Add(ra::etoi(ComparisonType::Equals), L"=");
     m_vComparisonTypes.Add(ra::etoi(ComparisonType::LessThan), L"<");
@@ -106,6 +108,10 @@ MemorySearchViewModel::MemorySearchViewModel()
 
     SetValue(CanBeginNewSearchProperty, false);
     SetValue(CanGoToPreviousPageProperty, false);
+
+    // explicitly set the MemSize to some non-selectable value so the first search will
+    // trigger a PropertyChanged event.
+    SetValue(ResultMemSizeProperty, ra::etoi(MemSize::Bit_0));
 }
 
 void MemorySearchViewModel::InitializeNotifyTargets()
@@ -303,28 +309,6 @@ void MemorySearchViewModel::OnFilterRangeChanged()
     SetPredefinedFilterRange(MEMORY_RANGE_CUSTOM);
 }
 
-static constexpr MemSize SearchTypeToMemSize(ra::services::SearchType nSearchType) 
-{
-    switch (nSearchType)
-    {
-        case ra::services::SearchType::FourBit:
-            return MemSize::Nibble_Lower;
-        default:
-        case ra::services::SearchType::EightBit:
-            return MemSize::EightBit;
-        case ra::services::SearchType::SixteenBit:
-            return MemSize::SixteenBit;
-    }
-}
-
-MemSize MemorySearchViewModel::ResultMemSize() const
-{
-    if (m_vSearchResults.empty())
-        return SearchTypeToMemSize(GetSearchType());
-
-    return m_vSearchResults.back().pResults.GetSize();
-}
-
 static constexpr const wchar_t* MemSizeFormat(MemSize nSize) 
 {
     switch (nSize)
@@ -337,6 +321,8 @@ static constexpr const wchar_t* MemSizeFormat(MemSize nSize)
             return L"0x%02x";
         case MemSize::SixteenBit:
             return L"0x%04x";
+        case MemSize::ThirtyTwoBit:
+            return L"0x%08x";
     }
 }
 
@@ -499,6 +485,7 @@ void MemorySearchViewModel::BeginNewSearch()
     SetValue(ScrollOffsetProperty, 0);
     SetValue(ScrollMaximumProperty, 0);
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(pResult.pResults.MatchingAddressCount()));
+    SetValue(ResultMemSizeProperty, ra::etoi(pResult.pResults.GetSize()));
 }
 
 void MemorySearchViewModel::AddNewPage()
@@ -875,7 +862,7 @@ void MemorySearchViewModel::BookmarkSelected()
     if (m_vSelectedAddresses.empty())
         return;
 
-    const MemSize nSize = SearchTypeToMemSize(GetSearchType());
+    const MemSize nSize = m_vSearchResults.back().pResults.GetSize();
     if (nSize == MemSize::Nibble_Lower)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"4-bit bookmarks are not supported");

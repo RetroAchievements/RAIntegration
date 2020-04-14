@@ -28,6 +28,8 @@ std::wstring ToString<ra::services::SearchType>(
             return L"EightBit";
         case ra::services::SearchType::SixteenBit:
             return L"SixteenBit";
+        case ra::services::SearchType::ThirtyTwoBit:
+            return L"ThirtyTwoBit";
         default:
             return std::to_wstring(static_cast<int>(nSearchType));
     }
@@ -112,19 +114,21 @@ public:
         MemorySearchViewModelHarness search;
 
         Assert::AreEqual({ 0U }, search.Results().Count());
-        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(MemSize::Bit_0, search.ResultMemSize());
         Assert::AreEqual({ 0U }, search.GetResultCount());
 
         Assert::AreEqual(std::wstring(L""), search.GetFilterRange());
         Assert::AreEqual(std::wstring(L""), search.GetFilterValue());
 
-        Assert::AreEqual({ 3U }, search.SearchTypes().Count());
+        Assert::AreEqual({ 4U }, search.SearchTypes().Count());
         Assert::AreEqual((int)ra::services::SearchType::FourBit, search.SearchTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"4-bit"), search.SearchTypes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)ra::services::SearchType::EightBit, search.SearchTypes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"8-bit"), search.SearchTypes().GetItemAt(1)->GetLabel());
         Assert::AreEqual((int)ra::services::SearchType::SixteenBit, search.SearchTypes().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"16-bit"), search.SearchTypes().GetItemAt(2)->GetLabel());
+        Assert::AreEqual((int)ra::services::SearchType::ThirtyTwoBit, search.SearchTypes().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"32-bit"), search.SearchTypes().GetItemAt(3)->GetLabel());
         Assert::AreEqual(ra::services::SearchType::EightBit, search.GetSearchType());
 
         Assert::AreEqual({ 6U }, search.ComparisonTypes().Count());

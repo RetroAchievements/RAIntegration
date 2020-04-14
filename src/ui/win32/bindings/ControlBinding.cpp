@@ -47,13 +47,14 @@ _NODISCARD static INT_PTR CALLBACK ControlBindingWndProc(HWND hControl, UINT uMs
     return 0;
 }
 
-void ControlBinding::SubclassWndProc()
+void ControlBinding::SubclassWndProc() noexcept
 {
     if (m_pOriginalWndProc != nullptr)
         return;
 
-    SetWindowLongPtr(m_hWnd, GWLP_USERDATA, (LONG_PTR)this);
-    m_pOriginalWndProc = (WNDPROC)SetWindowLongPtr(m_hWnd, GWLP_WNDPROC, (LONG_PTR)&ControlBindingWndProc);
+    GSL_SUPPRESS_TYPE1 SetWindowLongPtr(m_hWnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    GSL_SUPPRESS_TYPE1 m_pOriginalWndProc = reinterpret_cast<WNDPROC>(
+        SetWindowLongPtr(m_hWnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&ControlBindingWndProc)));
 }
 
 _Use_decl_annotations_

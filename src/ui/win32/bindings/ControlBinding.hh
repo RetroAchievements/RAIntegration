@@ -90,7 +90,7 @@ public:
     /// <summary>
     /// DO NOT CALL! Must be public for WINAPI interop.
     /// </summary>
-    _NODISCARD virtual INT_PTR CALLBACK WndProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM);
+    _NODISCARD virtual INT_PTR CALLBACK WndProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM) noexcept(false);
 
 protected:
     void DisableBinding() noexcept
@@ -111,7 +111,7 @@ protected:
             m_pDialog->QueueFunction(fAction);
     }
 
-    void SubclassWndProc();
+    void SubclassWndProc() noexcept;
 
     HWND m_hWnd{};
 

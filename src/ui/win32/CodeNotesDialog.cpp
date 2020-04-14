@@ -103,10 +103,10 @@ BOOL CodeNotesDialog::OnInitDialog()
     m_bindFilterValue.SetControl(*this, IDC_RA_FILTER_VALUE);
 
     auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
-    for (gsl::index nIndex = 0; nIndex < vmCodeNotes->Notes().Count(); ++nIndex)
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmCodeNotes->Notes().Count()); ++nIndex)
     {
         auto* pItem = vmCodeNotes->Notes().GetItemAt(nIndex);
-        if (pItem->IsSelected())
+        if (pItem && pItem->IsSelected())
         {
             m_bindNotes.EnsureVisible(nIndex);
             break;

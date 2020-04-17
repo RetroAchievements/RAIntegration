@@ -111,6 +111,9 @@ public:
 
         if (srResults.m_vMatchingAddresses.empty())
         {
+            if (srResults.m_vBlocks.empty())
+                return false;
+
             result.nAddress = GetFirstAddress(srResults) + gsl::narrow_cast<ra::ByteAddress>(nIndex);
         }
         else

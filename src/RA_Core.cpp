@@ -51,6 +51,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
             break;
 
         case DLL_PROCESS_DETACH:
+            _RA_Shutdown();
             IsolationAwareCleanup();
             break;
     }

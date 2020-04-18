@@ -49,39 +49,10 @@ void CodeNotesDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
 
 // ------------------------------------
 
-class GridAddressRangeColumnBinding : public ra::ui::win32::bindings::GridTextColumnBinding
-{
-public:
-    GridAddressRangeColumnBinding(const StringModelProperty& pBoundProperty) noexcept
-        : GridTextColumnBinding(pBoundProperty)
-    {
-    }
-
-    bool HandleDoubleClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override
-    {
-#ifndef RA_UTEST
-        const auto* pItems = dynamic_cast<const ra::ui::ViewModelCollection<CodeNotesViewModel::CodeNoteViewModel>*>(&vmItems);
-        if (pItems)
-        {
-            const auto* pItem = pItems->GetItemAt(nIndex);
-            if (pItem)
-            {
-                auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-                pWindowManager.MemoryInspector.SetCurrentAddress(pItem->nAddress);
-
-                auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
-                pDesktop.CloseWindow(pWindowManager.CodeNotes);
-            }
-        }
-#endif
-        return true;
-    }
-};
-
 CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
     : DialogBase(vmCodeNotes),
-      m_bindNotes(vmCodeNotes),
-      m_bindFilterValue(vmCodeNotes)
+    m_bindNotes(vmCodeNotes),
+    m_bindFilterValue(vmCodeNotes)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Code Notes");
 
@@ -89,7 +60,7 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
 
     m_bindWindow.BindLabel(IDC_RA_RESULT_COUNT, CodeNotesViewModel::ResultCountProperty);
 
-    auto pAddressColumn = std::make_unique<GridAddressRangeColumnBinding>(
+    auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         CodeNotesViewModel::CodeNoteViewModel::LabelProperty);
     pAddressColumn->SetHeader(L"Address");
     pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
@@ -104,6 +75,19 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
 
     m_bindNotes.BindItems(vmCodeNotes.Notes());
     m_bindNotes.BindIsSelected(CodeNotesViewModel::CodeNoteViewModel::IsSelectedProperty);
+    m_bindNotes.SetDoubleClickHandler([this](gsl::index nIndex)
+    {
+        const auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
+        const auto* pItem = vmCodeNotes->Notes().GetItemAt(nIndex);
+        if (pItem)
+        {
+            auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+            pWindowManager.MemoryInspector.SetCurrentAddress(pItem->nAddress);
+
+            auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+            pDesktop.CloseWindow(pWindowManager.CodeNotes);
+        }
+    });
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_FILTER_VALUE, Anchor::Top | Anchor::Left | Anchor::Right);
@@ -118,8 +102,20 @@ BOOL CodeNotesDialog::OnInitDialog()
     m_bindNotes.SetControl(*this, IDC_RA_LBX_ADDRESSES);
     m_bindFilterValue.SetControl(*this, IDC_RA_FILTER_VALUE);
 
+    auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmCodeNotes->Notes().Count()); ++nIndex)
+    {
+        auto* pItem = vmCodeNotes->Notes().GetItemAt(nIndex);
+        if (pItem && pItem->IsSelected())
+        {
+            m_bindNotes.EnsureVisible(nIndex);
+            break;
+        }
+    }
+
     return DialogBase::OnInitDialog();
 }
+
 
 BOOL CodeNotesDialog::OnCommand(WORD nCommand)
 {
@@ -134,6 +130,7 @@ BOOL CodeNotesDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
+        case IDOK: // this dialog doesn't have an OK button. if the user pressed Enter, apply the current filter
         case IDC_RA_APPLY_FILTER:
         {
             auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);

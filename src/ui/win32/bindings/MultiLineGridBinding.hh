@@ -26,6 +26,8 @@ public:
     void OnNmClick(const NMITEMACTIVATE* pnmItemActivate) override;
     void OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate) override;
 
+    void EnsureVisible(gsl::index nIndex);
+
 protected:
     void UpdateAllItems() override;
     void UpdateItems(gsl::index nColumn) override;

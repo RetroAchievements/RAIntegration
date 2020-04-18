@@ -387,6 +387,15 @@ void MultiLineGridBinding::OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate)
     GridBinding::OnNmDblClick(&nmItemActivate);
 }
 
+void MultiLineGridBinding::EnsureVisible(gsl::index nIndex)
+{
+    if (nIndex < gsl::narrow_cast<gsl::index>(m_vItemMetrics.size()))
+    {
+        const auto nLine = m_vItemMetrics.at(nIndex).nFirstLine;
+        ListView_EnsureVisible(m_hWnd, nLine, FALSE);
+    }
+}
+
 } // namespace bindings
 } // namespace win32
 } // namespace ui

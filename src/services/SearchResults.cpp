@@ -80,17 +80,19 @@ public:
                     {
                         const unsigned int nValue1 = BuildValue(&vMemory.at(i));
                         const unsigned int nAddress = block.GetAddress() + i;
-                        ApplyFilter(vMatches, srPrevious, nAddress, nFilterType, nValue1, nFilterValue, nCompareType);
+                        ApplyFilter(vMatches, srPrevious, nAddress, nFilterType, nFilterValue, nValue1, nFilterValue, nCompareType);
                     }
                     break;
 
                 case SearchFilterType::LastKnownValue:
+                case SearchFilterType::LastKnownValuePlus:
+                case SearchFilterType::LastKnownValueMinus:
                     for (unsigned int i = 0; i < nStop; ++i)
                     {
                         const unsigned int nValue1 = BuildValue(&vMemory.at(i));
                         const unsigned int nValue2 = BuildValue(block.GetBytes() + i);
                         const unsigned int nAddress = block.GetAddress() + i;
-                        ApplyFilter(vMatches, srPrevious, nAddress, nFilterType, nValue1, nValue2, nCompareType);
+                        ApplyFilter(vMatches, srPrevious, nAddress, nFilterType, nFilterValue, nValue1, nValue2, nCompareType);
                     }
                     break;
             }
@@ -170,8 +172,23 @@ protected:
     }
 
     virtual void ApplyFilter(std::vector<ra::ByteAddress>& vMatches, const SearchResults& srPrevious,
-        ra::ByteAddress nAddress, _UNUSED SearchFilterType nFilterType, unsigned int nValue1, unsigned int nValue2, ComparisonType nCompareType) const
+        ra::ByteAddress nAddress, _UNUSED SearchFilterType nFilterType, unsigned int nFilterValue,
+        unsigned int nValue1, unsigned int nValue2, ComparisonType nCompareType) const
     {
+        switch (nFilterType)
+        {
+            case SearchFilterType::LastKnownValuePlus:
+                nValue2 += nFilterValue;
+                break;
+
+            case SearchFilterType::LastKnownValueMinus:
+                nValue2 -= nFilterValue;
+                break;
+
+            default:
+                break;
+        }
+
         if (CompareValues(nValue1, nValue2, nCompareType))
             AddMatch(vMatches, srPrevious, nAddress);
     }
@@ -214,27 +231,38 @@ class FourBitSearchImpl : public SearchImpl
     }
 
     void ApplyFilter(std::vector<ra::ByteAddress>& vMatches, const SearchResults& srPrevious,
-        ra::ByteAddress nAddress, SearchFilterType nFilterType, unsigned int nValue1, unsigned int nValue2, ComparisonType nCompareType) const override
+        ra::ByteAddress nAddress, SearchFilterType nFilterType, unsigned int nFilterValue,
+        unsigned int nValue1, unsigned int nValue2, ComparisonType nCompareType) const override
     {
         const unsigned int nValue1a = (nValue1 & 0x0F);
         const unsigned int nValue1b = ((nValue1 >> 4) & 0x0F);
+        unsigned int nValue2a = (nValue2 & 0x0F);
+        unsigned int nValue2b = ((nValue2 >> 4) & 0x0F);
 
         switch (nFilterType)
         {
-            case SearchFilterType::LastKnownValue:
-                if (CompareValues(nValue1a, nValue2 & 0x0F, nCompareType))
-                    AddMatch(vMatches, srPrevious, nAddress << 1);
-                if (CompareValues(nValue1b, ((nValue2 >> 4) & 0x0F), nCompareType))
-                    AddMatch(vMatches, srPrevious, (nAddress << 1) | 1);
+            case SearchFilterType::LastKnownValuePlus:
+                nValue2a += nFilterValue;
+                nValue2b += nFilterValue;
+                break;
+
+            case SearchFilterType::LastKnownValueMinus:
+                nValue2a -= nFilterValue;
+                nValue2b -= nFilterValue;
+                break;
+
+            case SearchFilterType::Constant:
+                nValue2b = nValue2a;
                 break;
 
             default:
-                if (CompareValues(nValue1a, nValue2, nCompareType))
-                    AddMatch(vMatches, srPrevious, nAddress << 1);
-                if (CompareValues(nValue1b, nValue2, nCompareType))
-                    AddMatch(vMatches, srPrevious, (nAddress << 1) | 1);
                 break;
         }
+
+        if (CompareValues(nValue1a, nValue2a, nCompareType))
+            AddMatch(vMatches, srPrevious, nAddress << 1);
+        if (CompareValues(nValue1b, nValue2b, nCompareType))
+            AddMatch(vMatches, srPrevious, (nAddress << 1) | 1);
     }
 
     bool GetMatchingAddress(const SearchResults& srResults, gsl::index nIndex, _Out_ SearchResults::Result& result) const override

@@ -20,6 +20,8 @@ enum class SearchFilterType
     None,
     Constant,
     LastKnownValue,
+    LastKnownValuePlus,
+    LastKnownValueMinus,
 };
 
 namespace impl {

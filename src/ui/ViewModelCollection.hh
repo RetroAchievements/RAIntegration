@@ -219,7 +219,7 @@ public:
     {
         for (const auto& pItem : m_vItems)
         {
-            if (pItem.ViewModel().GetValue(pProperty) == nValue)
+            if (pItem.HasViewModel() && pItem.ViewModel().GetValue(pProperty) == nValue)
                 return pItem.Index();
         }
 

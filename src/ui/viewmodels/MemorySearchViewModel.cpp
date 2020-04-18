@@ -24,13 +24,14 @@ constexpr int MEMORY_RANGE_CUSTOM = 3;
 
 const IntModelProperty MemorySearchViewModel::PredefinedFilterRangeProperty("MemorySearchViewModel", "PredefinedFilterRange", MEMORY_RANGE_ALL);
 const StringModelProperty MemorySearchViewModel::FilterRangeProperty("MemorySearchViewModel", "FilterRange", L"");
-const IntModelProperty MemorySearchViewModel::SearchTypeProperty("MemorySearchViewModel", "SearchType", ra::etoi(MemorySearchViewModel::SearchType::EightBit));
+const IntModelProperty MemorySearchViewModel::SearchTypeProperty("MemorySearchViewModel", "SearchType", ra::etoi(ra::services::SearchType::EightBit));
 const IntModelProperty MemorySearchViewModel::ComparisonTypeProperty("MemorySearchViewModel", "ComparisonType", ra::etoi(ComparisonType::Equals));
-const IntModelProperty MemorySearchViewModel::ValueTypeProperty("MemorySearchViewModel", "ValueType", ra::etoi(MemorySearchViewModel::ValueType::LastKnownValue));
+const IntModelProperty MemorySearchViewModel::ValueTypeProperty("MemorySearchViewModel", "ValueType", ra::etoi(ra::services::SearchFilterType::LastKnownValue));
 const StringModelProperty MemorySearchViewModel::FilterValueProperty("MemorySearchViewModel", "FilterValue", L"");
 const StringModelProperty MemorySearchViewModel::FilterSummaryProperty("MemorySearchViewModel", "FilterSummary", L"");
 const IntModelProperty MemorySearchViewModel::ResultCountProperty("MemorySearchViewModel", "ResultCount", 0);
 const StringModelProperty MemorySearchViewModel::ResultCountTextProperty("MemorySearchViewModel", "ResultCountText", L"0");
+const IntModelProperty MemorySearchViewModel::ResultMemSizeProperty("MemorySearchViewModel", "ResultMemSize", ra::etoi(MemSize::EightBit));
 const IntModelProperty MemorySearchViewModel::ScrollOffsetProperty("MemorySearchViewModel", "ScrollOffset", 0);
 const IntModelProperty MemorySearchViewModel::ScrollMaximumProperty("MemorySearchViewModel", "ScrollMaximum", 0);
 const StringModelProperty MemorySearchViewModel::SelectedPageProperty("MemorySearchViewModel", "SelectedPageProperty", L"0/0");
@@ -87,9 +88,10 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vPredefinedFilterRanges.Add(MEMORY_RANGE_ALL, L"All");
     m_vPredefinedFilterRanges.Add(MEMORY_RANGE_CUSTOM, L"Custom");
 
-    m_vSearchTypes.Add(ra::etoi(SearchType::FourBit), L"4-bit");
-    m_vSearchTypes.Add(ra::etoi(SearchType::EightBit), L"8-bit");
-    m_vSearchTypes.Add(ra::etoi(SearchType::SixteenBit), L"16-bit");
+    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::FourBit), L"4-bit");
+    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::EightBit), L"8-bit");
+    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::SixteenBit), L"16-bit");
+    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBit), L"32-bit");
 
     m_vComparisonTypes.Add(ra::etoi(ComparisonType::Equals), L"=");
     m_vComparisonTypes.Add(ra::etoi(ComparisonType::LessThan), L"<");
@@ -98,14 +100,18 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vComparisonTypes.Add(ra::etoi(ComparisonType::GreaterThanOrEqual), L">=");
     m_vComparisonTypes.Add(ra::etoi(ComparisonType::NotEqualTo), L"!=");
 
-    m_vValueTypes.Add(ra::etoi(ValueType::Constant), L"Constant");
-    m_vValueTypes.Add(ra::etoi(ValueType::LastKnownValue), L"Last Known Value");
+    m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::Constant), L"Constant");
+    m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::LastKnownValue), L"Last Known Value");
 
     AddNotifyTarget(*this);
     m_vResults.AddNotifyTarget(*this);
 
     SetValue(CanBeginNewSearchProperty, false);
     SetValue(CanGoToPreviousPageProperty, false);
+
+    // explicitly set the MemSize to some non-selectable value so the first search will
+    // trigger a PropertyChanged event.
+    SetValue(ResultMemSizeProperty, ra::etoi(MemSize::Bit_0));
 }
 
 void MemorySearchViewModel::InitializeNotifyTargets()
@@ -303,28 +309,6 @@ void MemorySearchViewModel::OnFilterRangeChanged()
     SetPredefinedFilterRange(MEMORY_RANGE_CUSTOM);
 }
 
-static constexpr MemSize SearchTypeToMemSize(MemorySearchViewModel::SearchType nSearchType) 
-{
-    switch (nSearchType)
-    {
-        case MemorySearchViewModel::SearchType::FourBit:
-            return MemSize::Nibble_Lower;
-        default:
-        case MemorySearchViewModel::SearchType::EightBit:
-            return MemSize::EightBit;
-        case MemorySearchViewModel::SearchType::SixteenBit:
-            return MemSize::SixteenBit;
-    }
-}
-
-MemSize MemorySearchViewModel::ResultMemSize() const
-{
-    if (m_vSearchResults.empty())
-        return SearchTypeToMemSize(GetSearchType());
-
-    return m_vSearchResults.back().pResults.GetSize();
-}
-
 static constexpr const wchar_t* MemSizeFormat(MemSize nSize) 
 {
     switch (nSize)
@@ -337,6 +321,8 @@ static constexpr const wchar_t* MemSizeFormat(MemSize nSize)
             return L"0x%02x";
         case MemSize::SixteenBit:
             return L"0x%04x";
+        case MemSize::ThirtyTwoBit:
+            return L"0x%08x";
     }
 }
 
@@ -480,18 +466,13 @@ void MemorySearchViewModel::BeginNewSearch()
         return;
     }
 
-    const MemSize nMemSize = SearchTypeToMemSize(GetSearchType());
-
     m_vSelectedAddresses.clear();
 
     m_vSearchResults.clear();
     SearchResult& pResult = m_vSearchResults.emplace_back();
     m_nSelectedSearchResult = 0;
 
-    pResult.nCompareType = GetComparisonType();
-    pResult.nValueType = GetValueType();
-    pResult.nValue = 0;
-    pResult.pResults.Initialize(nStart, gsl::narrow<size_t>(nEnd) - nStart + 1, nMemSize);
+    pResult.pResults.Initialize(nStart, gsl::narrow<size_t>(nEnd) - nStart + 1, GetSearchType());
     pResult.sSummary = ra::StringPrintf(L"New %s Search", SearchTypes().GetLabelForId(ra::etoi(GetSearchType())));
 
     m_vResults.BeginUpdate();
@@ -504,6 +485,7 @@ void MemorySearchViewModel::BeginNewSearch()
     SetValue(ScrollOffsetProperty, 0);
     SetValue(ScrollMaximumProperty, 0);
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(pResult.pResults.MatchingAddressCount()));
+    SetValue(ResultMemSizeProperty, ra::etoi(pResult.pResults.GetSize()));
 }
 
 void MemorySearchViewModel::AddNewPage()
@@ -526,7 +508,7 @@ void MemorySearchViewModel::ApplyFilter()
         return;
 
     unsigned int nValue = 0U;
-    if (GetValueType() == ValueType::Constant)
+    if (GetValueType() == ra::services::SearchFilterType::Constant)
     {
         const auto& sValue = GetFilterValue();
         const wchar_t* pStart = sValue.c_str();
@@ -551,28 +533,21 @@ void MemorySearchViewModel::ApplyFilter()
 
     SearchResult const& pPreviousResult = *(m_vSearchResults.end() - 2);
     SearchResult& pResult = m_vSearchResults.back();
-
-    pResult.nCompareType = GetComparisonType();
-    pResult.nValueType = GetValueType();
-    pResult.nValue = nValue;
-
-    if (pResult.nValueType == ValueType::LastKnownValue)
-        pResult.pResults.Initialize(pPreviousResult.pResults, pResult.nCompareType);
-    else
-        pResult.pResults.Initialize(pPreviousResult.pResults, pResult.nCompareType, nValue);
+    pResult.pResults.Initialize(pPreviousResult.pResults, GetComparisonType(), GetValueType(), nValue);
 
     const auto nMatches = pResult.pResults.MatchingAddressCount();
     if (nMatches == pPreviousResult.pResults.MatchingAddressCount())
     {
         // same number of matches. if the same filter was applied, don't double up on the search history.
         // unless this is the first filter, then display it anyway.
-        if (pResult.nCompareType == pPreviousResult.nCompareType &&
-            pResult.nValueType == pPreviousResult.nValueType &&
-            pResult.nValue == pPreviousResult.nValue &&
+        if (pResult.pResults.GetFilterComparison() == pPreviousResult.pResults.GetFilterComparison() &&
+            pResult.pResults.GetFilterType() == pPreviousResult.pResults.GetFilterType() &&
+            pResult.pResults.GetFilterValue() == pPreviousResult.pResults.GetFilterValue() &&
             m_vSearchResults.size() > 2)
         {
             // comparing against last known value with not equals may result in different highlights, keep it.
-            if (pResult.nValueType == ValueType::LastKnownValue || pResult.nCompareType == ComparisonType::Equals)
+            if (pResult.pResults.GetFilterType() == ra::services::SearchFilterType::LastKnownValue ||
+                pResult.pResults.GetFilterComparison() == ComparisonType::Equals)
             {
                 m_vSearchResults.pop_back();
                 --m_nSelectedSearchResult;
@@ -593,11 +568,11 @@ void MemorySearchViewModel::ApplyFilter()
     builder.Append(L" ");
     switch (GetValueType())
     {
-        case ValueType::Constant:
+        case ra::services::SearchFilterType::Constant:
             builder.Append(GetFilterValue());
             break;
 
-        case ValueType::LastKnownValue:
+        case ra::services::SearchFilterType::LastKnownValue:
             builder.Append(L"Last Known Value");
             break;
     }
@@ -718,13 +693,13 @@ void MemorySearchViewModel::UpdateResults()
 
 bool MemorySearchViewModel::TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue) noexcept
 {
-    switch (pCurrentResults.nValueType)
+    switch (pCurrentResults.pResults.GetFilterType())
     {
-        case ValueType::Constant:
-            return pResult.Compare(pCurrentResults.nValue, pCurrentResults.nCompareType);
+        case ra::services::SearchFilterType::Constant:
+            return pResult.Compare(pCurrentResults.pResults.GetFilterValue(), pCurrentResults.pResults.GetFilterComparison());
 
-        case ValueType::LastKnownValue:
-            return pResult.Compare(nPreviousValue, pCurrentResults.nCompareType);
+        case ra::services::SearchFilterType::LastKnownValue:
+            return pResult.Compare(nPreviousValue, pCurrentResults.pResults.GetFilterComparison());
 
         default:
             return false;
@@ -736,7 +711,7 @@ void MemorySearchViewModel::OnViewModelBoolValueChanged(const BoolModelProperty:
     if (args.Property == CanFilterProperty)
     {
         if (args.tNewValue)
-            SetValue(CanEditFilterValueProperty, GetValueType() == ValueType::Constant);
+            SetValue(CanEditFilterValueProperty, GetValueType() == ra::services::SearchFilterType::Constant);
         else
             SetValue(CanEditFilterValueProperty, false);
     }
@@ -762,7 +737,7 @@ void MemorySearchViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
     }
     else if (args.Property == ValueTypeProperty)
     {
-        SetValue(CanEditFilterValueProperty, GetValueType() == ValueType::Constant && GetValue(CanFilterProperty));
+        SetValue(CanEditFilterValueProperty, GetValueType() == ra::services::SearchFilterType::Constant && GetValue(CanFilterProperty));
     }
     else if (args.Property == PredefinedFilterRangeProperty)
     {
@@ -887,7 +862,7 @@ void MemorySearchViewModel::BookmarkSelected()
     if (m_vSelectedAddresses.empty())
         return;
 
-    const MemSize nSize = SearchTypeToMemSize(GetSearchType());
+    const MemSize nSize = m_vSearchResults.back().pResults.GetSize();
     if (nSize == MemSize::Nibble_Lower)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"4-bit bookmarks are not supported");

@@ -186,6 +186,18 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
 
     // Code Notes
     m_bindAddress.BindText(MemoryInspectorViewModel::CurrentAddressTextProperty, ra::ui::win32::bindings::TextBoxBinding::UpdateMode::KeyPress);
+    m_bindAddress.BindKey(VK_UP, [this]()
+    {
+        auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
+        vmMemoryInspector->PreviousNote();
+        return true;
+    });
+    m_bindAddress.BindKey(VK_DOWN, [this]()
+    {
+        auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
+        vmMemoryInspector->NextNote();
+        return true;
+    });
     m_bindNoteText.BindText(MemoryInspectorViewModel::CurrentAddressNoteProperty);
     m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, MemoryInspectorViewModel::CanModifyNotesProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADD_NOTE, MemoryInspectorViewModel::CanModifyNotesProperty);

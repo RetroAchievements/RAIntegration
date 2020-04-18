@@ -20,6 +20,9 @@ public:
 
         if (m_pTextBoundProperty)
             SetWindowTextW(hControl, GetValue(*m_pTextBoundProperty).c_str());
+
+        if (!m_mKeyHandlers.empty())
+            SubclassWndProc();
     }
 
     enum class UpdateMode
@@ -49,11 +52,38 @@ public:
             UpdateSourceText();
     }
 
+    void BindKey(unsigned int nKey, std::function<bool()> pHandler)
+    {
+        if (m_mKeyHandlers.empty() && m_hWnd)
+            SubclassWndProc();
+
+        m_mKeyHandlers.insert_or_assign(nKey, pHandler);
+    }
+
 protected:
     void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override
     {
         if (m_pTextBoundProperty && *m_pTextBoundProperty == args.Property)
             UpdateBoundText();
+    }
+
+    INT_PTR CALLBACK WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam) override
+    {
+        switch (uMsg)
+        {
+            case WM_KEYDOWN:
+            {
+                const auto iter = m_mKeyHandlers.find(static_cast<unsigned int>(wParam));
+                if (iter != m_mKeyHandlers.end())
+                {
+                    if (iter->second())
+                        return 0;
+                }
+                break;
+            }
+        }
+
+        return ControlBinding::WndProc(hControl, uMsg, wParam, lParam);
     }
 
 private:
@@ -77,6 +107,8 @@ private:
 
     const StringModelProperty* m_pTextBoundProperty = nullptr;
     UpdateMode m_pTextUpdateMode = UpdateMode::None;
+
+    std::map<unsigned int, std::function<bool()>> m_mKeyHandlers;
 };
 
 } // namespace bindings

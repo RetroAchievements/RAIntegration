@@ -227,6 +227,54 @@ void MemoryInspectorViewModel::OpenNotesList()
     pWindowManager.CodeNotes.ShowModal(*this);
 }
 
+bool MemoryInspectorViewModel::NextNote()
+{
+    const auto nCurrentAddress = GetCurrentAddress();
+    ra::ByteAddress nNewAddress = nCurrentAddress;
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    pGameContext.EnumerateCodeNotes([this, nCurrentAddress, &nNewAddress](ra::ByteAddress nAddress)
+    {
+        if (nAddress > nCurrentAddress)
+        {
+            nNewAddress = nAddress;
+            return false;
+        }
+
+        return true;
+    });
+
+    if (nNewAddress != nCurrentAddress)
+    {
+        SetCurrentAddress(nNewAddress);
+        return true;
+    }
+
+    return false;
+}
+
+bool MemoryInspectorViewModel::PreviousNote()
+{
+    const auto nCurrentAddress = GetCurrentAddress();
+    ra::ByteAddress nNewAddress = nCurrentAddress;
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    pGameContext.EnumerateCodeNotes([this, nCurrentAddress, &nNewAddress](ra::ByteAddress nAddress)
+    {
+        if (nAddress >= nCurrentAddress)
+            return false;
+
+        nNewAddress = nAddress;
+        return true;
+    });
+
+    if (nNewAddress != nCurrentAddress)
+    {
+        SetCurrentAddress(nNewAddress);
+        return true;
+    }
+
+    return false;
+}
+
 void MemoryInspectorViewModel::ToggleBit(int nBit)
 {
     const auto nAddress = GetCurrentAddress();

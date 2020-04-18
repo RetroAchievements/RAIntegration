@@ -136,6 +136,54 @@ public:
         Assert::IsTrue(bWindowSeen);
     }
 
+    TEST_METHOD(TestNextNote)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetCodeNote({ 8 }, L"Eight");
+        inspector.mockGameContext.SetCodeNote({ 12 }, L"Twelve");
+        inspector.mockGameContext.SetCodeNote({ 16 }, L"Sixteen");
+        inspector.mockGameContext.SetCodeNote({ 20 }, L"Twenty");
+
+        inspector.SetCurrentAddress(14);
+        Assert::AreEqual(std::wstring(), inspector.GetCurrentAddressNote());
+
+        Assert::IsTrue(inspector.NextNote());
+        Assert::AreEqual({ 16 }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"Sixteen"), inspector.GetCurrentAddressNote());
+
+        Assert::IsTrue(inspector.NextNote());
+        Assert::AreEqual({ 20 }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"Twenty"), inspector.GetCurrentAddressNote());
+
+        Assert::IsFalse(inspector.NextNote());
+        Assert::AreEqual({ 20 }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"Twenty"), inspector.GetCurrentAddressNote());
+    }
+
+    TEST_METHOD(TestPreviousNote)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetCodeNote({ 8 }, L"Eight");
+        inspector.mockGameContext.SetCodeNote({ 12 }, L"Twelve");
+        inspector.mockGameContext.SetCodeNote({ 16 }, L"Sixteen");
+        inspector.mockGameContext.SetCodeNote({ 20 }, L"Twenty");
+
+        inspector.SetCurrentAddress(14);
+        Assert::AreEqual(std::wstring(), inspector.GetCurrentAddressNote());
+
+        Assert::IsTrue(inspector.PreviousNote());
+        Assert::AreEqual({ 12 }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"Twelve"), inspector.GetCurrentAddressNote());
+
+        Assert::IsTrue(inspector.PreviousNote());
+        Assert::AreEqual({ 8 }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"Eight"), inspector.GetCurrentAddressNote());
+
+        Assert::IsFalse(inspector.PreviousNote());
+        Assert::AreEqual({ 8 }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"Eight"), inspector.GetCurrentAddressNote());
+    }
+
     TEST_METHOD(TestSaveCurrentAddressNoteNew)
     {
         MemoryInspectorViewModelHarness inspector;

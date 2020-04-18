@@ -39,11 +39,18 @@ _NODISCARD static constexpr bool CompareValues(_In_ unsigned int nLeft, _In_ uns
 class SearchImpl
 {
 public:
+    SearchImpl() noexcept = default;
+    virtual ~SearchImpl() noexcept = default;
+    SearchImpl(const SearchImpl&) noexcept = delete;
+    SearchImpl& operator=(const SearchImpl&) noexcept = delete;
+    SearchImpl(SearchImpl&&) noexcept = delete;
+    SearchImpl& operator=(SearchImpl&&) noexcept = delete;
+
     // Gets the number of bytes after an address that are required to hold the data at the address
-    virtual unsigned int GetPadding() const { return 0U; }
+    virtual unsigned int GetPadding() const noexcept { return 0U; }
 
     // Gets the size of values handled by this implementation
-    virtual MemSize GetMemSize() const { return MemSize::EightBit; }
+    virtual MemSize GetMemSize() const noexcept { return MemSize::EightBit; }
 
     // Determines if the specified address exists in the collection of addresses.
     virtual bool ContainsAddress(const std::vector<ra::ByteAddress>& vAddresses, ra::ByteAddress nAddress) const
@@ -130,7 +137,7 @@ public:
     }
 
     // gets the value associated with the address and size in the search result structure
-    bool GetValue(const SearchResults& srResults, SearchResults::Result& result) const
+    bool GetValue(const SearchResults& srResults, SearchResults::Result& result) const noexcept
     {
         for (const auto& block : srResults.m_vBlocks)
         {
@@ -143,22 +150,22 @@ public:
     }
 
 protected:
-    static const std::vector<ra::ByteAddress>& GetMatchingAddresses(const SearchResults& srResults)
+    static const std::vector<ra::ByteAddress>& GetMatchingAddresses(const SearchResults& srResults) noexcept
     {
         return srResults.m_vMatchingAddresses;
     }
 
-    static ra::ByteAddress GetFirstAddress(const SearchResults& srResults)
+    static ra::ByteAddress GetFirstAddress(const SearchResults& srResults) noexcept
     {
         return srResults.m_vBlocks.front().GetAddress();
     }
 
-    virtual bool GetValue(const impl::MemBlock& block, SearchResults::Result& result) const
+    virtual bool GetValue(const impl::MemBlock& block, SearchResults::Result& result) const noexcept
     {
         if (result.nAddress < block.GetAddress())
             return false;
 
-        unsigned int nOffset = result.nAddress - block.GetAddress();
+        const unsigned int nOffset = result.nAddress - block.GetAddress();
         if (nOffset >= block.GetSize() - GetPadding())
             return false;
 
@@ -166,8 +173,9 @@ protected:
         return true;
     }
 
-    virtual unsigned int BuildValue(const unsigned char* ptr) const
+    virtual unsigned int BuildValue(const unsigned char* ptr) const noexcept
     {
+        GSL_SUPPRESS_F6 Expects(ptr != nullptr);
         return ptr[0];
     }
 
@@ -212,13 +220,13 @@ protected:
     {
         const unsigned int nBlockSize = vMatches.back() - vMatches.front() + GetPadding() + 1;
         MemBlock& block = AddBlock(srNew, vMatches.front(), nBlockSize);
-        memcpy((void*)block.GetBytes(), &vMemory.at(vMatches.front() - nFirstMemoryAddress), nBlockSize);
+        memcpy(block.GetBytes(), &vMemory.at(vMatches.front() - nFirstMemoryAddress), nBlockSize);
     }
 };
 
 class FourBitSearchImpl : public SearchImpl
 {
-    MemSize GetMemSize() const override { return MemSize::Nibble_Lower; }
+    MemSize GetMemSize() const noexcept override { return MemSize::Nibble_Lower; }
 
     bool ContainsAddress(const std::vector<ra::ByteAddress>& vAddresses, ra::ByteAddress nAddress) const override
     {
@@ -296,10 +304,10 @@ protected:
         const ra::ByteAddress nFirstAddress = (vMatches.front() >> 1);
         const unsigned int nBlockSize = (vMatches.back() >> 1) - nFirstAddress + 1;
         MemBlock& block = SearchImpl::AddBlock(srNew, nFirstAddress, nBlockSize);
-        memcpy((void*)block.GetBytes(), &vMemory.at(nFirstAddress - nFirstMemoryAddress), nBlockSize);
+        memcpy(block.GetBytes(), &vMemory.at(nFirstAddress - nFirstMemoryAddress), nBlockSize);
     }
 
-    bool GetValue(const impl::MemBlock& block, SearchResults::Result& result) const override
+    bool GetValue(const impl::MemBlock& block, SearchResults::Result& result) const noexcept override
     {
         if (!SearchImpl::GetValue(block, result))
             return false;
@@ -321,12 +329,13 @@ class EightBitSearchImpl : public SearchImpl
 class SixteenBitSearchImpl : public SearchImpl
 {
 public:
-    MemSize GetMemSize() const override { return MemSize::SixteenBit; }
+    MemSize GetMemSize() const noexcept override { return MemSize::SixteenBit; }
 
-    unsigned int GetPadding() const override { return 1U; }
+    unsigned int GetPadding() const noexcept override { return 1U; }
 
-    unsigned int BuildValue(const unsigned char* ptr) const override
+    unsigned int BuildValue(const unsigned char* ptr) const noexcept override
     {
+        GSL_SUPPRESS_F6 Expects(ptr != nullptr);
         return (ptr[1] << 8) | ptr[0];
     }
 };
@@ -334,12 +343,13 @@ public:
 class ThirtyTwoBitSearchImpl : public SearchImpl
 {
 public:
-    MemSize GetMemSize() const override { return MemSize::ThirtyTwoBit; }
+    MemSize GetMemSize() const noexcept override { return MemSize::ThirtyTwoBit; }
 
-    unsigned int GetPadding() const override { return 3U; }
+    unsigned int GetPadding() const noexcept override { return 3U; }
 
-    unsigned int BuildValue(const unsigned char* ptr) const override
+    unsigned int BuildValue(const unsigned char* ptr) const noexcept override
     {
+        GSL_SUPPRESS_F6 Expects(ptr != nullptr);
         return (ptr[3] << 24) | (ptr[2] << 16) | (ptr[1] << 8) | ptr[0];
     }
 };
@@ -417,6 +427,7 @@ bool SearchResults::ContainsAddress(ra::ByteAddress nAddress) const
     return false;
 }
 
+_Use_decl_annotations_
 void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCompareType,
     SearchFilterType nFilterType, unsigned int nFilterValue)
 {
@@ -463,12 +474,15 @@ void SearchResults::ExcludeMatchingAddress(gsl::index nIndex)
 bool SearchResults::GetMatchingAddress(gsl::index nIndex, _Out_ SearchResults::Result& result) const
 {
     if (m_pImpl == nullptr)
+    {
+        memset(&result, 0, sizeof(SearchResults::Result));
         return false;
+    }
 
     return m_pImpl->GetMatchingAddress(*this, nIndex, result);
 }
 
-bool SearchResults::GetValue(ra::ByteAddress nAddress, MemSize nSize, _Out_ unsigned int& nValue) const
+bool SearchResults::GetValue(ra::ByteAddress nAddress, MemSize nSize, _Out_ unsigned int& nValue) const noexcept
 {
     if (m_pImpl == nullptr)
     {

@@ -141,7 +141,7 @@ public:
     /// <summary>
     /// Gets the value at the specified address.
     /// </summary>
-    bool GetValue(ra::ByteAddress nAddress, MemSize nSize, _Out_ unsigned int& nValue) const;
+    bool GetValue(ra::ByteAddress nAddress, MemSize nSize, _Out_ unsigned int& nValue) const noexcept;
 
     /// <summary>
     /// Gets the type of search performed.

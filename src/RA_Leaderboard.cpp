@@ -53,7 +53,7 @@ void RA_Leaderboard::SetActive(bool bActive) noexcept
 
                     ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
                         ra::StringPrintf(L"Unable to activate leaderboard: %s", Title()),
-                        ra::StringPrintf(L"Parse error %d", nResult));
+                        ra::StringPrintf(L"Parse error %d\n%s", nResult, rc_error_str(nResult)));
                 }
             }
         }

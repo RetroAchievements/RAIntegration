@@ -33,8 +33,6 @@ public:
 
 protected:
     BOOL OnInitDialog() override;
-    void OnShown() override;
-    void OnDestroy() override;
 
 private:
     HFONT m_hFont = nullptr;

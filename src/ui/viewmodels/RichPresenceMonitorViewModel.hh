@@ -4,14 +4,20 @@
 
 #include "ui/WindowViewModelBase.hh"
 
+#include "data/GameContext.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class RichPresenceMonitorViewModel : public WindowViewModelBase
+class RichPresenceMonitorViewModel : public WindowViewModelBase, 
+    protected ViewModelBase::NotifyTarget,
+    protected ra::data::GameContext::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 RichPresenceMonitorViewModel() noexcept;
+
+    void InitializeNotifyTargets();
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the message.
@@ -23,6 +29,17 @@ public:
     /// </summary>
     const std::wstring& GetDisplayString() const { return GetValue(DisplayStringProperty); }
 
+protected:
+    /// <summary>
+    /// Refreshes the display string.
+    /// </summary>
+    void UpdateDisplayString();
+
+    /// <summary>
+    /// Sets the message to display.
+    /// </summary>
+    void SetDisplayString(const std::wstring& sValue) { SetValue(DisplayStringProperty, sValue); }
+
     /// <summary>
     /// Starts periodically updating the display string.
     /// </summary>
@@ -33,16 +50,11 @@ public:
     /// </summary>
     void StopMonitoring() noexcept;
 
-    /// <summary>
-    /// Refreshes the display string.
-    /// </summary>
-    void UpdateDisplayString();
+    // ViewModelBase::NotifyTarget
+    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
-protected:
-    /// <summary>
-    /// Sets the message to display.
-    /// </summary>
-    void SetDisplayString(const std::wstring& sValue) { SetValue(DisplayStringProperty, sValue); }
+    // GameContext::NotifyTarget
+    void OnActiveGameChanged() override;
 
 private:
     void ScheduleUpdateDisplayString();

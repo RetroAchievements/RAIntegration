@@ -58,22 +58,6 @@ BOOL RichPresenceDialog::OnInitDialog()
     return DialogBase::OnInitDialog();
 }
 
-void RichPresenceDialog::OnShown()
-{
-    auto& vmRichPresence = dynamic_cast<ra::ui::viewmodels::RichPresenceMonitorViewModel&>(m_vmWindow);
-    vmRichPresence.StartMonitoring();
-
-    DialogBase::OnShown();
-}
-
-void RichPresenceDialog::OnDestroy()
-{
-    auto& vmRichPresence = dynamic_cast<ra::ui::viewmodels::RichPresenceMonitorViewModel&>(m_vmWindow);
-    vmRichPresence.StopMonitoring();
-
-    DialogBase::OnDestroy();
-}
-
 } // namespace win32
 } // namespace ui
 } // namespace ra

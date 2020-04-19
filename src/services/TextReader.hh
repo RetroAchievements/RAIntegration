@@ -34,12 +34,22 @@ public:
     /// <param name="pBuffer">The buffer to read into.</param>
     /// <param name="nBytes">The number of bytes to read.</param>
     /// <returns>The number of bytes copied to the buffer.</returns>
-    virtual size_t GetBytes(_Inout_ char pBuffer[], _In_ size_t nBytes) = 0;
+    virtual size_t GetBytes(_Inout_ uint8_t pBuffer[], _In_ size_t nBytes) = 0;
 
     /// <summary>
     /// Gets the current read offset within the input.
     /// </summary>
     virtual std::streampos GetPosition() const = 0;
+
+    /// <summary>
+    /// Sets the current read offset within the input.
+    /// </summary>
+    virtual void SetPosition(std::streampos nNewPosition) = 0;
+
+    /// <summary>
+    /// Gets the size of the input.
+    /// </summary>
+    virtual size_t GetSize() const = 0;
 
 protected:
     TextReader() noexcept = default;

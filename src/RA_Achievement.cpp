@@ -244,8 +244,8 @@ static constexpr MemSize GetCompVariableSize(char nOperandSize) noexcept
             return MemSize::TwentyFourBit;
         case RC_MEMSIZE_32_BITS:
             return MemSize::ThirtyTwoBit;
-        case RC_MEMSIZE_8_BITS_BITCOUNT:
-            return MemSize::BitCount;
+//        case RC_MEMSIZE_BITCOUNT:
+//            return MemSize::BitCount;
         default:
             ASSERT(!"Unsupported operand size");
             return MemSize::EightBit;

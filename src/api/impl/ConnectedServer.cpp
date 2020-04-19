@@ -306,7 +306,7 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
     {
         const auto nLength = sPostData.length();
         sPostData.resize(gsl::narrow_cast<size_t>(nFileSize + nLength));
-        pFile->GetBytes(&sPostData.at(nLength), gsl::narrow_cast<size_t>(nFileSize));
+        pFile->GetBytes(reinterpret_cast<uint8_t*>(&sPostData.at(nLength)), gsl::narrow_cast<size_t>(nFileSize));
     }
 
     sPostData.append("\r\n");

@@ -339,6 +339,19 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
             return 0;
         }
 
+        case WM_GETMINMAXINFO:
+        {
+            LPMINMAXINFO pMinMaxInfo;
+            GSL_SUPPRESS_TYPE1{ pMinMaxInfo = reinterpret_cast<LPMINMAXINFO>(lParam); }
+
+            if (m_oMinimumSize.Width)
+                pMinMaxInfo->ptMinTrackSize.x = m_oMinimumSize.Width;
+            if (m_oMinimumSize.Height)
+                pMinMaxInfo->ptMinTrackSize.y = m_oMinimumSize.Height;
+
+            return 0;
+        }
+
         case WM_SIZE:
         {
             ra::ui::Size oSize{ LOWORD(lParam), HIWORD(lParam) };
@@ -473,6 +486,9 @@ void DialogBase::UpdateAnchoredControls()
     const int nWindowWidth = rcWindow.right - rcWindow.left;
     const int nWindowHeight = rcWindow.bottom - rcWindow.top;
 
+    // invalidate everything before notifying the controls so they can call ControlBinding::ForceRepaint when needed
+    ::InvalidateRect(m_hWnd, nullptr, TRUE);
+
     for (const auto& info : m_vControlAnchors)
     {
         auto hControl = ::GetDlgItem(m_hWnd, info.nIDDlgItem);
@@ -545,8 +561,6 @@ void DialogBase::UpdateAnchoredControls()
             }
         }
     }
-
-    ::InvalidateRect(m_hWnd, nullptr, TRUE);
 }
 
 } // namespace win32

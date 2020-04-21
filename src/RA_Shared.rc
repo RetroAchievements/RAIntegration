@@ -192,7 +192,7 @@ STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFR
 CAPTION "Report Achievement Problem"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "Which achievement(s) would you like to report?",IDC_RA_SELECT_ACHIEVEMENTS,4,4,152,8
+    LTEXT           "Which achievement(s) would you like to report?",IDC_RA_SELECT_ACHIEVEMENTS,4,4,331,8
     CONTROL         "",IDC_RA_REPORTBROKENACHIEVEMENTSLIST,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_BORDER | WS_TABSTOP,4,14,331,87
     LTEXT           "What problem are you having with the selected achievement(s)?",IDC_RA_PROBLEMHEADER,4,104,207,8
     CONTROL         "Triggered at wrong time",IDC_RA_PROBLEMTYPE1,"Button",BS_AUTORADIOBUTTON | WS_GROUP | WS_TABSTOP,4,114,93,10

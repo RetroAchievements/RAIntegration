@@ -795,6 +795,13 @@ void GridBinding::OnLostFocus() noexcept
         m_tFocusTime = {};
 }
 
+void GridBinding::OnSizeChanged(const ra::ui::Size&)
+{
+    UpdateLayout();
+
+    ControlBinding::ForceRepaint(m_hWnd);
+}
+
 LRESULT GridBinding::OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw)
 {
     LRESULT nResult = CDRF_DODEFAULT;

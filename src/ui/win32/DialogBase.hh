@@ -129,6 +129,12 @@ protected:
         m_vControlAnchors.emplace_back(AnchorInfo{ 0, 0, 0, 0, nIDDlgItem, nAnchor });
     }
 
+    void SetMinimumSize(int nMinimumWidth, int nMinimumHeight) noexcept
+    {
+        m_oMinimumSize.Width = nMinimumWidth;
+        m_oMinimumSize.Height = nMinimumHeight;
+    }
+
 private:
     // Allows access to `DialogProc` from static helper
     friend static INT_PTR CALLBACK StaticDialogProc(_In_ HWND hDlg,
@@ -142,6 +148,7 @@ private:
 
     HWND m_hWnd = nullptr;
     IDialogPresenter* m_pDialogPresenter = nullptr; // nullable reference, not allocated
+    ra::ui::Size m_oMinimumSize{};
     bool m_bModal = false;
 
     // allow ControlBinding to access AddControlBinding, RemoveControlBinding, and QueueFunction methods

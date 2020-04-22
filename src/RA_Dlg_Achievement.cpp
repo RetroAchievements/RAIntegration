@@ -784,7 +784,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                 ReloadLBXData(nSel);
 
                                 // reselect to update AchEditor
-                                g_AchievementEditorDialog.LoadAchievement(&Cheevo, FALSE);
+                                if (g_AchievementEditorDialog.ActiveAchievement() &&
+                                    g_AchievementEditorDialog.ActiveAchievement()->ID() == nID)
+                                {
+                                    g_AchievementEditorDialog.LoadAchievement(&Cheevo, FALSE);
+                                }
                             }
                             else
                             {

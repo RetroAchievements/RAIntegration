@@ -1102,18 +1102,9 @@ void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* restr
         EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_DEL_ACH),
                      m_nActiveCategory == Achievement::Category::Local);
 
-        if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
-        {
-            EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_COMMIT_ACH),
-                m_nActiveCategory == Achievement::Category::Local);
-            EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), FALSE);
-        }
-        else
-        {
-            EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_COMMIT_ACH),
-                m_nActiveCategory == Achievement::Category::Local ? TRUE : Cheevo->Modified());
-            EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), TRUE);
-        }
+        EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_COMMIT_ACH),
+            m_nActiveCategory == Achievement::Category::Local ? TRUE : Cheevo->Modified());
+        EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), TRUE);
 
         if (m_nActiveCategory != Achievement::Category::Core)
         {

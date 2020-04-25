@@ -299,7 +299,7 @@ void MemoryInspectorViewModel::OnActiveGameChanged()
     else if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
     {
         SetWindowTitle(L"Memory Inspector [compatibility mode]");
-        SetValue(CanModifyNotesProperty, false);
+        SetValue(CanModifyNotesProperty, true);
     }
     else
     {

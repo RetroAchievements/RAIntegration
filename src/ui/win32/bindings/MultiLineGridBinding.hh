@@ -39,8 +39,8 @@ protected:
 
 private:
     gsl::index GetIndexForLine(gsl::index nLine) const;
-    void UpdateLineBreaks(gsl::index nIndex, gsl::index nColumn, const ra::ui::win32::bindings::GridColumnBinding* pColumn, int nChars);
-    static void GetLineBreaks(const std::wstring& sText, int nChars, std::vector<unsigned int>& vLineBreaks);
+    void UpdateLineBreaks(gsl::index nIndex, gsl::index nColumn, const ra::ui::win32::bindings::GridColumnBinding* pColumn, size_t nChars);
+    static void GetLineBreaks(const std::wstring& sText, size_t nChars, std::vector<unsigned int>& vLineBreaks);
     void UpdateLineOffsets();
     int GetMaxCharsForColumn(gsl::index nColumn) const;
 

@@ -1308,7 +1308,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             //  Insert at new location
                             const size_t nConditionCount = pActiveAch->NumConditions(nSelectedConditionGroup);
                             const size_t nInsertIndex =
-                                (nSelectedIndex < nConditionCount) ? gsl::narrow_cast<size_t>(nSelectedIndex) + 1 : nConditionCount;
+                                (gsl::narrow_cast<size_t>(nSelectedIndex) < nConditionCount) ? gsl::narrow_cast<size_t>(nSelectedIndex) + 1 : nConditionCount;
                             const size_t nInsertCount = conditionsToMove.size();
 
                             for (size_t i = 0; i < nInsertCount; ++i)

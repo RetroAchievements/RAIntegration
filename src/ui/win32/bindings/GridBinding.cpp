@@ -768,7 +768,7 @@ void GridBinding::OnLvnColumnClick(const LPNMLISTVIEW pnmListView)
 void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
 {
     auto nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
-    if (m_pScrollOffsetProperty && (nIndex < 0 || nIndex > m_vmItems->Count()))
+    if (m_pScrollOffsetProperty && (nIndex < 0 || nIndex > gsl::narrow_cast<int>(m_vmItems->Count())))
     {
         UpdateScroll();
         nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
@@ -838,7 +838,7 @@ LRESULT GridBinding::OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw)
                 break;
 
             case CDDS_ITEMPREPAINT | CDDS_SUBITEM:
-                if (pCustomDraw->iSubItem >= 0 && pCustomDraw->iSubItem < m_vColumns.size())
+                if (pCustomDraw->iSubItem >= 0 && pCustomDraw->iSubItem < gsl::narrow_cast<int>(m_vColumns.size()))
                 {
                     const auto& pColumn = *m_vColumns.at(pCustomDraw->iSubItem);
                     if (pColumn.GetTextColorProperty() != nullptr)

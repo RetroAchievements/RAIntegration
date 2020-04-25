@@ -205,12 +205,10 @@
     <ClCompile Include="..\rcheevos\src\rcheevos\alloc.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\condition.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\condset.c" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\format.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\operand.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\runtime.c" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\term.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\value.c" />
     <ClCompile Include="..\rcheevos\src\rhash\md5.c" />

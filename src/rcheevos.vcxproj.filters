@@ -76,16 +76,10 @@
     <ClCompile Include="..\rcheevos\src\rcheevos\condset.c">
       <Filter>rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\expression.c">
-      <Filter>rcheevos</Filter>
-    </ClCompile>
     <ClCompile Include="..\rcheevos\src\rcheevos\format.c">
       <Filter>rcheevos</Filter>
     </ClCompile>
     <ClCompile Include="..\rcheevos\src\rcheevos\operand.c">
-      <Filter>rcheevos</Filter>
-    </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\term.c">
       <Filter>rcheevos</Filter>
     </ClCompile>
     <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c">

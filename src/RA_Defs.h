@@ -133,7 +133,7 @@ public:
         {
             case AlignType::Right:
                 xPos = width - nDistanceX - (bResize ? pLT.x : 0);
-                yPos = bResize ? (pRB.y - pLT.x) : pLT.y;
+                yPos = bResize ? (pRB.y - pLT.y) : pLT.y;
                 break;
             case AlignType::Bottom:
                 xPos = bResize ? (pRB.x - pLT.x) : pLT.x;

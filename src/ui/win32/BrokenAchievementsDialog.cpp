@@ -87,6 +87,8 @@ BrokenAchievementsDialog::BrokenAchievementsDialog(BrokenAchievementsViewModel& 
     SetAnchor(IDC_RA_BROKENACHIEVEMENTREPORTCOMMENT, Anchor::Left | Anchor::Bottom | Anchor::Right);
     SetAnchor(IDCANCEL, Anchor::Bottom | Anchor::Right);
     SetAnchor(IDOK, Anchor::Bottom | Anchor::Right);
+
+    SetMinimumSize(416, 322);
 }
 
 BOOL BrokenAchievementsDialog::OnInitDialog()

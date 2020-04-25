@@ -36,7 +36,7 @@ public:
 protected:
     BOOL OnInitDialog() override;
     BOOL OnCommand(WORD nCommand) override;
-    
+
 private:
     ra::ui::win32::bindings::GridBinding m_bindBookmarks;
 };

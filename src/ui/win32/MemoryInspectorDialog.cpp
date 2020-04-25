@@ -250,6 +250,8 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     SetAnchor(IDC_RA_MEMBITS, Anchor::Top | Anchor::Right);
 
     SetAnchor(IDC_RA_MEMVIEWER, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
+
+    SetMinimumSize(496, 458);
 }
 
 BOOL MemoryInspectorDialog::OnInitDialog()

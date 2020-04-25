@@ -101,7 +101,9 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vComparisonTypes.Add(ra::etoi(ComparisonType::NotEqualTo), L"!=");
 
     m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::Constant), L"Constant");
-    m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::LastKnownValue), L"Last Known Value");
+    m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::LastKnownValue), L"Last Value");
+    m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::LastKnownValuePlus), L"Last Value Plus");
+    m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::LastKnownValueMinus), L"Last Value Minus");
 
     AddNotifyTarget(*this);
     m_vResults.AddNotifyTarget(*this);
@@ -508,9 +510,15 @@ void MemorySearchViewModel::ApplyFilter()
         return;
 
     unsigned int nValue = 0U;
-    if (GetValueType() == ra::services::SearchFilterType::Constant)
+    if (GetValue(CanEditFilterValueProperty))
     {
         const auto& sValue = GetFilterValue();
+        if (sValue.empty())
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Invalid filter value");
+            return;
+        }
+
         const wchar_t* pStart = sValue.c_str();
 
         // try decimal first
@@ -545,21 +553,9 @@ void MemorySearchViewModel::ApplyFilter()
             pResult.pResults.GetFilterValue() == pPreviousResult.pResults.GetFilterValue() &&
             m_vSearchResults.size() > 2)
         {
-            // comparing against last known value with not equals may result in different highlights, keep it.
-            if (pResult.pResults.GetFilterType() == ra::services::SearchFilterType::LastKnownValue ||
-                pResult.pResults.GetFilterComparison() == ComparisonType::Equals)
-            {
-                m_vSearchResults.pop_back();
-                --m_nSelectedSearchResult;
-
-                // in case we removed some
-                SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult, m_vSearchResults.size() - 1));
-
-                // reset modification tracking
-                m_vSearchResults.back().vModifiedAddresses.clear();
-
-                return;
-            }
+            // reset the modification list as if a new filter was applied
+            m_vSearchResults.back().vModifiedAddresses.clear();
+            return;
         }
     }
 
@@ -573,7 +569,17 @@ void MemorySearchViewModel::ApplyFilter()
             break;
 
         case ra::services::SearchFilterType::LastKnownValue:
-            builder.Append(L"Last Known Value");
+            builder.Append(L"Last Known");
+            break;
+
+        case ra::services::SearchFilterType::LastKnownValuePlus:
+            builder.Append(L"Last +");
+            builder.Append(GetFilterValue());
+            break;
+
+        case ra::services::SearchFilterType::LastKnownValueMinus:
+            builder.Append(L"Last -");
+            builder.Append(GetFilterValue());
             break;
     }
     pResult.sSummary = builder.ToWString();
@@ -701,6 +707,26 @@ bool MemorySearchViewModel::TestFilter(const ra::services::SearchResults::Result
         case ra::services::SearchFilterType::LastKnownValue:
             return pResult.Compare(nPreviousValue, pCurrentResults.pResults.GetFilterComparison());
 
+        case ra::services::SearchFilterType::LastKnownValuePlus:
+            return pResult.Compare(nPreviousValue + pCurrentResults.pResults.GetFilterValue(), pCurrentResults.pResults.GetFilterComparison());
+
+        case ra::services::SearchFilterType::LastKnownValueMinus:
+            return pResult.Compare(nPreviousValue - pCurrentResults.pResults.GetFilterValue(), pCurrentResults.pResults.GetFilterComparison());
+
+        default:
+            return false;
+    }
+}
+
+static constexpr bool CanEditFilterValue(ra::services::SearchFilterType nFilterType)
+{
+    switch (nFilterType)
+    {
+        case ra::services::SearchFilterType::Constant:
+        case ra::services::SearchFilterType::LastKnownValuePlus:
+        case ra::services::SearchFilterType::LastKnownValueMinus:
+            return true;
+
         default:
             return false;
     }
@@ -710,8 +736,8 @@ void MemorySearchViewModel::OnViewModelBoolValueChanged(const BoolModelProperty:
 {
     if (args.Property == CanFilterProperty)
     {
-        if (args.tNewValue)
-            SetValue(CanEditFilterValueProperty, GetValueType() == ra::services::SearchFilterType::Constant);
+        if (CanEditFilterValue(GetValueType()))
+            SetValue(CanEditFilterValueProperty, args.tNewValue);
         else
             SetValue(CanEditFilterValueProperty, false);
     }
@@ -737,7 +763,7 @@ void MemorySearchViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
     }
     else if (args.Property == ValueTypeProperty)
     {
-        SetValue(CanEditFilterValueProperty, GetValueType() == ra::services::SearchFilterType::Constant && GetValue(CanFilterProperty));
+        SetValue(CanEditFilterValueProperty, CanEditFilterValue(GetValueType()) && GetValue(CanFilterProperty));
     }
     else if (args.Property == PredefinedFilterRangeProperty)
     {

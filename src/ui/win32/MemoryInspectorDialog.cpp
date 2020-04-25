@@ -80,7 +80,7 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnViewModelIntValueChanged
 {
     if (args.Property == MemorySearchViewModel::ResultMemSizeProperty)
     {
-        int nWidth;
+        int nWidth = 0;
         const auto& vmMemory = GetViewModel<MemorySearchViewModel>();
         constexpr int nCharWidth = 6;
         constexpr int nPadding = 6;

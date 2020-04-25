@@ -465,6 +465,103 @@ public:
         Assert::AreEqual(0x55U, result.nValue);
     }
 
+    TEST_METHOD(TestInitializeFromResultsEightBitEqualsPreviousPlusTwo)
+    {
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
+
+        memory.at(1) = 0x14;
+        memory.at(2) = 0x36;
+        SearchResults results;
+        results.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValuePlus, 2U);
+
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
+        Assert::IsFalse(results.ContainsAddress(0U));
+        Assert::IsTrue(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsFalse(results.ContainsAddress(3U));
+        Assert::IsFalse(results.ContainsAddress(4U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(1U, result.nAddress);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
+        Assert::AreEqual(0x14U, result.nValue);
+
+        Assert::IsTrue(results.GetMatchingAddress(1U, result));
+        Assert::AreEqual(2U, result.nAddress);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
+        Assert::AreEqual(0x36U, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromResultsEightBitEqualsPreviousMinusTwo)
+    {
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
+
+        memory.at(1) = 0x10;
+        memory.at(2) = 0x32;
+        SearchResults results;
+        results.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValueMinus, 2U);
+
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
+        Assert::IsFalse(results.ContainsAddress(0U));
+        Assert::IsTrue(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsFalse(results.ContainsAddress(3U));
+        Assert::IsFalse(results.ContainsAddress(4U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(1U, result.nAddress);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
+        Assert::AreEqual(0x10U, result.nValue);
+
+        Assert::IsTrue(results.GetMatchingAddress(1U, result));
+        Assert::AreEqual(2U, result.nAddress);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
+        Assert::AreEqual(0x32U, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromResultsEightBitGreaterThanPreviousPlusTwo)
+    {
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
+
+        memory.at(1) = 0x14;
+        memory.at(2) = 0x37;
+        SearchResults results;
+        results.Initialize(results1, ComparisonType::GreaterThan, ra::services::SearchFilterType::LastKnownValuePlus, 2U);
+
+        Assert::AreEqual({ 1U }, results.MatchingAddressCount());
+        Assert::IsFalse(results.ContainsAddress(0U));
+        Assert::IsFalse(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsFalse(results.ContainsAddress(3U));
+        Assert::IsFalse(results.ContainsAddress(4U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(2U, result.nAddress);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
+        Assert::AreEqual(0x37U, result.nValue);
+    }
+
     TEST_METHOD(TestInitializeFromResultsSixteenBitNotEqualPrevious)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};

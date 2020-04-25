@@ -2182,6 +2182,7 @@ void Dlg_AchievementEditor::LoadAchievement(Achievement* pCheevo, _UNUSED BOOL)
     else
     {
         // Same achievement still selected: what's changed?
+        pCheevo->GenerateConditions();
 
         const BOOL bTitleSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_TITLE));
         const BOOL bDescSelected = (GetFocus() == GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_DESC));

@@ -101,7 +101,7 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
     // if EmulatorContext->Initialize doesn't specify the ConsoleContext, initialize a default ConsoleContext
     if (!ra::services::ServiceLocator::Exists<ra::data::ConsoleContext>())
     {
-        auto pConsoleContext = ra::data::ConsoleContext::GetContext(ConsoleID::UnknownConsoleID);
+        auto pConsoleContext = std::make_unique<ra::data::ConsoleContext>(ConsoleID::UnknownConsoleID);
         ra::services::ServiceLocator::Provide<ra::data::ConsoleContext>(std::move(pConsoleContext));
     }
 

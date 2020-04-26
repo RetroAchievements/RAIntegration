@@ -100,6 +100,9 @@
     <ClCompile Include="..\rcheevos\src\rhash\md5.c">
       <Filter>md5</Filter>
     </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\consoleinfo.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\rcheevos\include\rcheevos.h">

@@ -179,6 +179,7 @@
     <ClInclude Include="..\rcheevos\src\rhash\md5.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\rcheevos\src\rcheevos\consoleinfo.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\memref.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\richpresence.c" />
     <ClCompile Include="..\lua\lapi.c" />

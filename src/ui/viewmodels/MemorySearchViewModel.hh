@@ -429,6 +429,10 @@ public:
     static const BoolModelProperty CanFilterProperty;
     static const BoolModelProperty CanEditFilterValueProperty;
 
+    void ToggleContinuousFilter();
+    static const BoolModelProperty CanContinuousFilterProperty;
+    static const StringModelProperty ContinuousFilterLabelProperty;
+
     /// <summary>
     /// Excludes the currently selected items from the search results.
     /// </summary>
@@ -456,6 +460,7 @@ protected:
 
 private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);
+    void ApplyContinuousFilter();
     void UpdateResults();
     void AddNewPage();
     void ChangePage(size_t nNewPage);
@@ -469,6 +474,7 @@ private:
     LookupItemViewModelCollection m_vValueTypes;
 
     ViewModelCollection<SearchResultViewModel> m_vResults;
+    bool m_bIsContinuousFiltering = false;
     bool m_bNeedsRedraw = false;
 
     struct SearchResult

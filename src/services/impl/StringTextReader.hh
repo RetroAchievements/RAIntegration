@@ -41,7 +41,9 @@ public:
     size_t GetBytes(_Inout_ uint8_t pBuffer[], _In_ size_t nBytes) override
     {
         const auto nPos = GetPosition();
-        m_iStream.read(reinterpret_cast<char*>(pBuffer), nBytes);
+        char* pCharBuffer;
+        GSL_SUPPRESS_TYPE1 pCharBuffer = reinterpret_cast<char*>(pBuffer);
+        m_iStream.read(pCharBuffer, nBytes);
         return gsl::narrow_cast<size_t>(GetPosition() - nPos);
     }
 

@@ -3,6 +3,7 @@
 #include "data\ConsoleContext.hh"
 #include "data\EmulatorContext.hh"
 
+#include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -613,7 +614,7 @@ void MemorySearchViewModel::ToggleContinuousFilter()
         ApplyFilter();
 
         m_bIsContinuousFiltering = true;
-        m_nOversizedContinuousFilterFrames = 0;
+        m_tLastContinuousFilter = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
 
         SetValue(CanFilterProperty, false);
         SetValue(ContinuousFilterLabelProperty, L"Stop Filtering");
@@ -623,13 +624,30 @@ void MemorySearchViewModel::ToggleContinuousFilter()
 void MemorySearchViewModel::ApplyContinuousFilter()
 {
     const SearchResult& pResult = m_vSearchResults.back();
-    SearchResult pNewResult;
+
+    // if there are more than 1000 results, only apply the filter periodically.
+    // formula is "number of results / 100" ms between filterings
+    // for 10000 results, only filter every 100ms
+    // for 50000 results, only filter every 500ms
+    // for 100000 results, only filter every second
+    const auto nResults = pResult.pResults.MatchingAddressCount();
+    if (nResults > 1000)
+    {
+        const auto tNow = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
+        const auto nElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tNow - m_tLastContinuousFilter);
+
+        if (gsl::narrow_cast<size_t>(nElapsed.count()) < nResults / 100)
+            return;
+
+        m_tLastContinuousFilter = tNow;
+    }
 
     // apply the current filter
+    SearchResult pNewResult;
     pNewResult.pResults.Initialize(pResult.pResults, pResult.pResults.GetFilterComparison(),
         pResult.pResults.GetFilterType(), pResult.pResults.GetFilterValue());
     pNewResult.sSummary = pResult.sSummary;
-    const auto nResults = pNewResult.pResults.MatchingAddressCount();
+    const auto nNewResults = pNewResult.pResults.MatchingAddressCount();
 
     // replace the last item with the new results
     m_vSearchResults.erase(m_vSearchResults.end() - 1);
@@ -637,21 +655,10 @@ void MemorySearchViewModel::ApplyContinuousFilter()
 
     ChangePage(m_nSelectedSearchResult);
 
-    if (nResults == 0)
+    if (nNewResults == 0)
     {
         // if no results are remaining, stop filtering
         ToggleContinuousFilter();
-    }
-    else if (nResults >= 10000)
-    {
-        // if continuous filtering doesn't drop the result count below 10000 in 60 frames, stop filtering
-        if (++m_nOversizedContinuousFilterFrames == 60)
-        {
-            ToggleContinuousFilter();
-
-            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Continuous filtering interrupted",
-                L"Continuous filtering with too many results has a negative performance impact on the emulator.");
-        }
     }
 }
 

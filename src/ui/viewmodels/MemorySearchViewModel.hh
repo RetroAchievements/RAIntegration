@@ -475,7 +475,7 @@ private:
 
     ViewModelCollection<SearchResultViewModel> m_vResults;
     bool m_bIsContinuousFiltering = false;
-    int m_nOversizedContinuousFilterFrames = 0;
+    std::chrono::steady_clock::time_point m_tLastContinuousFilter;
     bool m_bNeedsRedraw = false;
 
     struct SearchResult

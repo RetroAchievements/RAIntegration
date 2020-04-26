@@ -609,11 +609,14 @@ void MemorySearchViewModel::ToggleContinuousFilter()
     }
     else
     {
+        // apply the filter before disabling CanFilter or the filter value will be ignored
+        ApplyFilter();
+
         m_bIsContinuousFiltering = true;
+        m_nOversizedContinuousFilterFrames = 0;
+
         SetValue(CanFilterProperty, false);
         SetValue(ContinuousFilterLabelProperty, L"Stop Filtering");
-
-        ApplyFilter();
     }
 }
 
@@ -626,6 +629,7 @@ void MemorySearchViewModel::ApplyContinuousFilter()
     pNewResult.pResults.Initialize(pResult.pResults, pResult.pResults.GetFilterComparison(),
         pResult.pResults.GetFilterType(), pResult.pResults.GetFilterValue());
     pNewResult.sSummary = pResult.sSummary;
+    const auto nResults = pNewResult.pResults.MatchingAddressCount();
 
     // replace the last item with the new results
     m_vSearchResults.erase(m_vSearchResults.end() - 1);
@@ -633,9 +637,22 @@ void MemorySearchViewModel::ApplyContinuousFilter()
 
     ChangePage(m_nSelectedSearchResult);
 
-    // if no results are remaining, stop filtering
-    if (m_vSearchResults.back().pResults.MatchingAddressCount() == 0)
+    if (nResults == 0)
+    {
+        // if no results are remaining, stop filtering
         ToggleContinuousFilter();
+    }
+    else if (nResults >= 10000)
+    {
+        // if continuous filtering doesn't drop the result count below 10000 in 60 frames, stop filtering
+        if (++m_nOversizedContinuousFilterFrames == 60)
+        {
+            ToggleContinuousFilter();
+
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Continuous filtering interrupted",
+                L"Continuous filtering with too many results has a negative performance impact on the emulator.");
+        }
+    }
 }
 
 void MemorySearchViewModel::ChangePage(size_t nNewPage)
@@ -734,7 +751,8 @@ void MemorySearchViewModel::UpdateResults()
 
         pRow->SetSelected(m_vSelectedAddresses.find(pRow->nAddress) != m_vSelectedAddresses.end());
 
-        pRow->bMatchesFilter = !m_bIsContinuousFiltering || TestFilter(pResult, pCurrentResults, nPreviousValue);
+        // when continuous filtering values should always match - don't bother testing
+        pRow->bMatchesFilter = m_bIsContinuousFiltering || TestFilter(pResult, pCurrentResults, nPreviousValue);
         pRow->bHasBookmark = vmBookmarks.HasBookmark(pResult.nAddress);
         pRow->bHasBeenModified = (pCurrentResults.vModifiedAddresses.find(pRow->nAddress) != pCurrentResults.vModifiedAddresses.end());
         pRow->UpdateRowColor();

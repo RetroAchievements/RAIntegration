@@ -475,6 +475,7 @@ private:
 
     ViewModelCollection<SearchResultViewModel> m_vResults;
     bool m_bIsContinuousFiltering = false;
+    int m_nOversizedContinuousFilterFrames = 0;
     bool m_bNeedsRedraw = false;
 
     struct SearchResult

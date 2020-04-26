@@ -178,7 +178,7 @@ void Achievement::RebuildTrigger()
 
             ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
                 ra::StringPrintf(L"Unable to rebuild achievement: %s", Title()),
-                ra::StringPrintf(L"Parse error %d", nResult));
+                ra::StringPrintf(L"Parse error %d\n%s", nResult, rc_error_str(nResult)));
         }
 
         m_pTrigger = pRuntime.GetAchievementTrigger(ID());
@@ -244,8 +244,8 @@ static constexpr MemSize GetCompVariableSize(char nOperandSize) noexcept
             return MemSize::TwentyFourBit;
         case RC_MEMSIZE_32_BITS:
             return MemSize::ThirtyTwoBit;
-//        case RC_MEMSIZE_BITCOUNT:
-//            return MemSize::BitCount;
+        case RC_MEMSIZE_BITCOUNT:
+            return MemSize::BitCount;
         default:
             ASSERT(!"Unsupported operand size");
             return MemSize::EightBit;
@@ -408,7 +408,7 @@ void Achievement::GenerateConditions()
 
                 ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
                     ra::StringPrintf(L"Unable to activate achievement: %s", Title()),
-                    ra::StringPrintf(L"Parse error %d", nSize));
+                    ra::StringPrintf(L"Parse error %d\n%s", nSize, rc_error_str(nSize)));
 
                 return;
             }
@@ -515,7 +515,7 @@ void Achievement::SetActive(BOOL bActive) noexcept
 
                     ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
                         ra::StringPrintf(L"Unable to activate achievement: %s", Title()),
-                        ra::StringPrintf(L"Parse error %d", nResult));
+                        ra::StringPrintf(L"Parse error %d\n%s", nResult, rc_error_str(nResult)));
                 }
             }
         }

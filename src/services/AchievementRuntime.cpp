@@ -173,7 +173,7 @@ void AchievementRuntime::ActivateRichPresence(const std::string& sScript)
         const auto nResult = rc_runtime_activate_richpresence(&m_pRuntime, sScript.c_str(), nullptr, 0);
         if (nResult != RC_OK)
         {
-            const std::string sErrorRP = ra::StringPrintf("Parse error %d\n", nResult);
+            const std::string sErrorRP = ra::StringPrintf("Parse error %d: %s\n", nResult, rc_error_str(nResult));
             m_pRuntime.richpresence_display_buffer = _strdup(sErrorRP.c_str());
         }
     }

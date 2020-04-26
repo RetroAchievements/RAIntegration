@@ -35,14 +35,14 @@ void CodeNotesViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::Ch
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
         if (args.tNewValue)
         {
+            // don't subscribe until the first time the dialog is shown, but we have to keep
+            // the subscription while its closed to make sure the notes stay up-to-date
+            // call Remove before Add to ensure we're only subscribed once.
+            pGameContext.RemoveNotifyTarget(*this);
             pGameContext.AddNotifyTarget(*this);
 
             if (m_nGameId != pGameContext.GameId())
                 OnActiveGameChanged();
-        }
-        else
-        {
-            pGameContext.RemoveNotifyTarget(*this);
         }
     }
 }

@@ -310,6 +310,34 @@ public:
         AssertRow(notes, 2, 0x0030, L"0x0030", L"Item 1 Quantity");
     }
 
+    TEST_METHOD(TestUpdateNoteDialogNotVisible)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.PopulateNotes();
+        Assert::AreEqual({ 0U }, notes.Notes().Count());
+
+        // update before dialog is visible will be picked up when first made visible
+        notes.mockGameContext.SetCodeNote(0x0030, L"Item 1b");
+        Assert::AreEqual({ 0U }, notes.Notes().Count());
+
+        notes.SetIsVisible(true);
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+
+        notes.SetFilterValue(L"em");
+        notes.ApplyFilter();
+        Assert::AreEqual({ 6U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
+        AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1b");
+
+        notes.SetIsVisible(false);
+
+        // change should be picked up even if not visible
+        notes.mockGameContext.SetCodeNote(0x0030, L"Item 1s");
+        Assert::AreEqual({ 6U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
+        AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1s");
+    }
+
     TEST_METHOD(TestRemoveNoteUnfiltered)
     {
         CodeNotesViewModelHarness notes;

@@ -27,16 +27,16 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
     class RichPresenceMonitorViewModelHarness : public RichPresenceMonitorViewModel
     {
     public:
-        RichPresenceMonitorViewModelHarness()
+        RichPresenceMonitorViewModelHarness() noexcept
         {
-            InitializeNotifyTargets();
+            GSL_SUPPRESS_F6 InitializeNotifyTargets();
         }
 
         ra::data::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::services::mocks::MockThreadPool mockThreadPool;
 
-        void UpdateDisplayString() { RichPresenceMonitorViewModel::UpdateDisplayString(); }
+        GSL_SUPPRESS_C128 void UpdateDisplayString() { RichPresenceMonitorViewModel::UpdateDisplayString(); }
     };
 
     TEST_METHOD(TestInitialization)

@@ -784,7 +784,11 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                 ReloadLBXData(nSel);
 
                                 // reselect to update AchEditor
-                                g_AchievementEditorDialog.LoadAchievement(&Cheevo, FALSE);
+                                if (g_AchievementEditorDialog.ActiveAchievement() &&
+                                    g_AchievementEditorDialog.ActiveAchievement()->ID() == nID)
+                                {
+                                    g_AchievementEditorDialog.LoadAchievement(&Cheevo, FALSE);
+                                }
                             }
                             else
                             {
@@ -825,6 +829,13 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             {
                                 Cheevo.SetActive(true);
 
+                                // SetActive will only set the state to WAITING. We want it to be immediately active
+                                // (i.e. it should immediately trigger if all the conditions are true).
+                                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+                                auto* pTrigger = pRuntime.GetAchievementTrigger(Cheevo.ID());
+                                if (pTrigger->state == RC_TRIGGER_STATE_WAITING)
+                                    pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
+
                                 if (m_nActiveCategory == Achievement::Category::Core)
                                     OnEditData(nSel, Column::Achieved, "No");
                                 else
@@ -862,6 +873,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         const size_t nSel = ListView_GetNextItem(hList, -1, LVNI_SELECTED);
 
                         size_t nIndex = 0;
+                        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
                         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
                         for (auto nAchievementID : m_vAchievementIDs)
                         {
@@ -869,6 +881,12 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             if (!Cheevo.Active())
                             {
                                 Cheevo.SetActive(true);
+
+                                // SetActive will only set the state to WAITING. We want it to be immediately active
+                                // (i.e. it should immediately trigger if all the conditions are true).
+                                auto* pTrigger = pRuntime.GetAchievementTrigger(Cheevo.ID());
+                                if (pTrigger->state == RC_TRIGGER_STATE_WAITING)
+                                    pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
 
                                 if (m_nActiveCategory == Achievement::Category::Core)
                                     OnEditData(nIndex, Column::Achieved, "No");
@@ -1088,18 +1106,9 @@ void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* restr
         EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_DEL_ACH),
                      m_nActiveCategory == Achievement::Category::Local);
 
-        if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
-        {
-            EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_COMMIT_ACH),
-                m_nActiveCategory == Achievement::Category::Local);
-            EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), FALSE);
-        }
-        else
-        {
-            EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_COMMIT_ACH),
-                m_nActiveCategory == Achievement::Category::Local ? TRUE : Cheevo->Modified());
-            EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), TRUE);
-        }
+        EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_COMMIT_ACH),
+            m_nActiveCategory == Achievement::Category::Local ? TRUE : Cheevo->Modified());
+        EnableWindow(GetDlgItem(m_hAchievementsDlg, IDC_RA_PROMOTE_ACH), TRUE);
 
         if (m_nActiveCategory != Achievement::Category::Core)
         {

@@ -399,7 +399,7 @@ public:
         inspector.mockGameContext.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
         inspector.mockGameContext.NotifyActiveGameChanged();
         Assert::AreEqual(std::wstring(L"Memory Inspector [compatibility mode]"), inspector.GetWindowTitle());
-        Assert::IsFalse(inspector.CanModifyCodeNotes());
+        Assert::IsTrue(inspector.CanModifyCodeNotes());
     }
 
     TEST_METHOD(TestEndGameLoad)

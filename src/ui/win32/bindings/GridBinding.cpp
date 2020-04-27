@@ -355,7 +355,7 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
     }
 }
 
-void GridBinding::DeselectAll()
+void GridBinding::DeselectAll() noexcept
 {
     int nScan = - 1;
     while ((nScan = ListView_GetNextItem(m_hWnd, nScan, LVNI_SELECTED)) != -1)

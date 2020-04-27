@@ -462,7 +462,16 @@ size_t SearchResults::MatchingAddressCount() const noexcept
 void SearchResults::ExcludeAddress(ra::ByteAddress nAddress)
 {
     if (m_nFilterType != SearchFilterType::None)
-        m_vMatchingAddresses.erase(std::remove(m_vMatchingAddresses.begin(), m_vMatchingAddresses.end(), nAddress), m_vMatchingAddresses.end());
+    {
+        for (auto iter = m_vMatchingAddresses.begin(); iter != m_vMatchingAddresses.end(); ++iter)
+        {
+            if (*iter == nAddress)
+            {
+                m_vMatchingAddresses.erase(iter);
+                break;
+            }
+        }
+    }
 }
 
 void SearchResults::ExcludeMatchingAddress(gsl::index nIndex)

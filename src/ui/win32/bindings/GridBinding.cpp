@@ -268,7 +268,7 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
                 if (args.tNewValue < 1)
                     ListView_SetItemCount(m_hWnd, 0);
                 else
-                    ListView_SetItemCount(m_hWnd, gsl::narrow_cast<size_t>(args.tNewValue) - 1);
+                    ListView_SetItemCount(m_hWnd, gsl::narrow_cast<size_t>(args.tNewValue));
 
                 CheckForScrollBar();
             }
@@ -392,6 +392,7 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
     item.iSubItem = 0;
 
     const auto& pColumn = *m_vColumns.at(0);
+    nIndex -= m_nScrollOffset;
 
     sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
     item.pszText = sText.data();
@@ -460,7 +461,12 @@ void GridBinding::CheckForScrollBar()
 {
     int nItems = gsl::narrow_cast<int>(m_vmItems->Count());
     if (m_pScrollMaximumProperty)
+    {
         nItems = GetValue(*m_pScrollMaximumProperty);
+
+        // items may have been added or removed - enforce the specified maximum
+        ListView_SetItemCount(m_hWnd, gsl::narrow_cast<size_t>(nItems));
+    }
 
     SCROLLINFO info{};
     info.cbSize = sizeof(info);
@@ -549,24 +555,29 @@ void GridBinding::SetHWND(DialogBase& pDialog, HWND hControl)
 void GridBinding::UpdateScroll()
 {
     // attempting to access an out-of-range item. assume the user has scrolled and update m_nScrollOffset
-    const auto nMax = ra::to_unsigned(GetValue(*m_pScrollMaximumProperty) - ListView_GetCountPerPage(m_hWnd) - 1);
-    auto nOffset = ra::to_unsigned(ListView_GetTopIndex(m_hWnd));
-    if (nOffset > nMax)
-        nOffset = nMax;
+    const auto nScrollMax = GetValue(*m_pScrollMaximumProperty);
+    const auto nPerPage = ListView_GetCountPerPage(m_hWnd);
+    const auto nMaxOffset = nScrollMax - nPerPage;
+    auto nOffset = ListView_GetTopIndex(m_hWnd);
+    if (nOffset > nMaxOffset)
+        nOffset = nMaxOffset;
 
-    // SetValue detaches the change notification event, so we won't be notified.
-    // update the value manually. also, it's important to make sure that it's set
-    // before notifying other targets in case they call back into us.
-    m_nScrollOffset = nOffset;
-
-    SetValue(*m_pScrollOffsetProperty, nOffset);
-
-    if (m_pIsSelectedProperty)
+    if (m_nScrollOffset != nOffset)
     {
-        for (gsl::index nIndex = 0; nIndex < gsl::narrow<gsl::index>(m_vmItems->Count()); ++nIndex)
+        // SetValue detaches the change notification event, so we won't be notified.
+        // update the value manually. also, it's important to make sure that it's set
+        // before notifying other targets in case they call back into us.
+        m_nScrollOffset = nOffset;
+
+        SetValue(*m_pScrollOffsetProperty, nOffset);
+
+        if (m_pIsSelectedProperty)
         {
-            const bool bIsSelected = ListView_GetItemState(m_hWnd, nIndex + nOffset, LVIS_SELECTED) != 0;
-            m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, bIsSelected);
+            for (gsl::index nIndex = 0; nIndex < gsl::narrow<gsl::index>(m_vmItems->Count()); ++nIndex)
+            {
+                const bool bIsSelected = ListView_GetItemState(m_hWnd, nIndex + nOffset, LVIS_SELECTED) != 0;
+                m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, bIsSelected);
+            }
         }
     }
 }
@@ -783,7 +794,7 @@ void GridBinding::OnLvnColumnClick(const LPNMLISTVIEW pnmListView)
 void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
 {
     auto nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
-    if (m_pScrollOffsetProperty && (nIndex < 0 || nIndex > m_vmItems->Count()))
+    if (m_pScrollOffsetProperty && (nIndex < 0 || nIndex > ListView_GetCountPerPage(m_hWnd)))
     {
         UpdateScroll();
         nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;

@@ -253,6 +253,11 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
         if (*m_pScrollOffsetProperty == args.Property)
         {
             m_nScrollOffset = args.tNewValue;
+
+            const auto nTopIndex = ListView_GetTopIndex(m_hWnd);
+            const auto nSpacing = HIWORD(ListView_GetItemSpacing(m_hWnd, TRUE));
+            const int nDeltaY = (m_nScrollOffset - nTopIndex) * gsl::narrow_cast<int>(nSpacing);
+            ListView_Scroll(m_hWnd, 0, nDeltaY);
             return;
         }
 
@@ -348,6 +353,13 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
             ListView_SetItem(m_hWnd, &item);
         }
     }
+}
+
+void GridBinding::DeselectAll()
+{
+    int nScan = - 1;
+    while ((nScan = ListView_GetNextItem(m_hWnd, nScan, LVNI_SELECTED)) != -1)
+        ListView_SetItemState(m_hWnd, nScan, 0, LVIS_SELECTED);
 }
 
 int GridBinding::UpdateSelected(const IntModelProperty& pProperty, int nNewValue)
@@ -612,6 +624,7 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
         return;
     }
 
+    // when virtualizing, only the visible items have view models. adjust the index accordingly.
     const auto nIndex = pnmListView->iItem - m_nScrollOffset;
 
     if (m_pIsSelectedProperty)
@@ -655,6 +668,8 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 
 void GridBinding::OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateChanged)
 {
+    // when virtualizing, notify the view model of the entire change, then update the
+    // selected property on the visible items
     if (m_pUpdateSelectedItems &&
         (pnmStateChanged->uNewState ^ pnmStateChanged->uOldState) & LVIS_SELECTED)
     {

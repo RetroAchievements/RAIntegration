@@ -592,12 +592,17 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
 {
     m_nSelectedSearchResult = nNewPage;
     SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult, m_vSearchResults.size() - 1));
-    SetValue(ScrollOffsetProperty, 0);
 
     const auto nMatches = m_vSearchResults.at(nNewPage).pResults.MatchingAddressCount();
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(nMatches));
-    SetValue(ScrollMaximumProperty, gsl::narrow_cast<int>(nMatches));
     SetValue(FilterSummaryProperty, m_vSearchResults.at(nNewPage).sSummary);
+
+    // prevent scrolling from triggering a call to UpdateResults - we'll do that in a few lines.
+    RemoveNotifyTarget(*this);
+    // note: update maximum first - it can affect offset. then update offset to the value we want.
+    SetValue(ScrollMaximumProperty, gsl::narrow_cast<int>(nMatches));
+    SetValue(ScrollOffsetProperty, 0);
+    AddNotifyTarget(*this);
 
     m_vSelectedAddresses.clear();
 
@@ -880,7 +885,21 @@ void MemorySearchViewModel::ExcludeSelected()
     for (const auto nAddress : m_vSelectedAddresses)
         pResult.pResults.ExcludeAddress(nAddress);
 
+    // attempt to keep scroll offset after filtering.
+    // adjust for any items removed above the first visible address.
+    auto nScrollOffset = GetScrollOffset();
+    const auto nFirstVisibleAddress = m_vResults.GetItemAt(0)->nAddress;
+    for (const auto nAddress : m_vSelectedAddresses)
+    {
+        if (nAddress < nFirstVisibleAddress)
+            --nScrollOffset;
+        else
+            break;
+    }
+
     ChangePage(m_nSelectedSearchResult);
+
+    SetValue(ScrollOffsetProperty, nScrollOffset);
 }
 
 void MemorySearchViewModel::BookmarkSelected()

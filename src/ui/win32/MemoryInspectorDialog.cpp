@@ -335,7 +335,10 @@ BOOL MemoryInspectorDialog::OnCommand(WORD nCommand)
         {
             auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
             if (vmMemoryInspector)
+            {
                 vmMemoryInspector->Search().ExcludeSelected();
+                m_bindSearchResults.DeselectAll();
+            }
 
             return TRUE;
         }

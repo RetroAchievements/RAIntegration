@@ -436,6 +436,11 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
 
     UpdateRow(nIndex, false);
 
+    // enforce the maximum item count in virtualizing mode - we just added an item
+    // which will increase the item count. set it back to the right value.
+    if (m_pScrollMaximumProperty)
+        ListView_SetItemCount(m_hWnd, GetValue(*m_pScrollMaximumProperty));
+
     if (!m_vmItems->IsUpdating())
         CheckForScrollBar();
 }
@@ -445,6 +450,11 @@ void GridBinding::OnViewModelRemoved(gsl::index nIndex)
     if (m_hWnd)
     {
         ListView_DeleteItem(m_hWnd, nIndex);
+
+        // enforce the maximum item count in virtualizing mode - we just removed an item
+        // which will decrease the item count. set it back to the right value.
+        if (m_pScrollMaximumProperty)
+            ListView_SetItemCount(m_hWnd, GetValue(*m_pScrollMaximumProperty));
 
         if (!m_vmItems->IsUpdating())
             CheckForScrollBar();
@@ -461,12 +471,7 @@ void GridBinding::CheckForScrollBar()
 {
     int nItems = gsl::narrow_cast<int>(m_vmItems->Count());
     if (m_pScrollMaximumProperty)
-    {
         nItems = GetValue(*m_pScrollMaximumProperty);
-
-        // items may have been added or removed - enforce the specified maximum
-        ListView_SetItemCount(m_hWnd, gsl::narrow_cast<size_t>(nItems));
-    }
 
     SCROLLINFO info{};
     info.cbSize = sizeof(info);
@@ -794,7 +799,7 @@ void GridBinding::OnLvnColumnClick(const LPNMLISTVIEW pnmListView)
 void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
 {
     auto nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
-    if (m_pScrollOffsetProperty && (nIndex < 0 || nIndex > ListView_GetCountPerPage(m_hWnd)))
+    if (m_pScrollOffsetProperty && (nIndex < 0 || nIndex > gsl::narrow_cast<int>(m_vmItems->Count())))
     {
         UpdateScroll();
         nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;

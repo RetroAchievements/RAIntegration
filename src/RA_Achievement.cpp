@@ -610,6 +610,7 @@ void Achievement::CopyFrom(const Achievement& rRHS)
     SetCreatedDate(rRHS.m_nTimestampCreated);
 
     m_sTrigger = rRHS.m_sTrigger;
+    m_vConditions.Clear();
 
     SetDirtyFlag(DirtyFlags::All);
 }

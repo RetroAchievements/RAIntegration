@@ -438,6 +438,7 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
     // when an item is added, we can't assume the list is still sorted
     m_nSortIndex = -1;
 
+    // don't actually add/update items in virtual listview
     if (m_pUpdateSelectedItems)
         m_bForceRepaint = true;
     else
@@ -865,10 +866,13 @@ LRESULT GridBinding::OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw)
 
             case CDDS_ITEMPREPAINT:
             {
-                const auto nIndex = gsl::narrow_cast<gsl::index>(pCustomDraw->nmcd.dwItemSpec) - m_nScrollOffset;
-                const Color pColor(ra::to_unsigned(m_vmItems->GetItemValue(nIndex, *m_pRowColorProperty)));
-                if (pColor.Channel.A != 0)
-                    pCustomDraw->clrTextBk = RGB(pColor.Channel.R, pColor.Channel.G, pColor.Channel.B);
+                if (ListView_GetItemState(m_hWnd, pCustomDraw->nmcd.dwItemSpec, LVIS_SELECTED) == 0)
+                {
+                    const auto nIndex = gsl::narrow_cast<gsl::index>(pCustomDraw->nmcd.dwItemSpec) - m_nScrollOffset;
+                    const Color pColor(ra::to_unsigned(m_vmItems->GetItemValue(nIndex, *m_pRowColorProperty)));
+                    if (pColor.Channel.A != 0)
+                        pCustomDraw->clrTextBk = RGB(pColor.Channel.R, pColor.Channel.G, pColor.Channel.B);
+                }
                 break;
             }
         }

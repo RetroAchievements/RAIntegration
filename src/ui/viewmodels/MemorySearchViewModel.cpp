@@ -626,6 +626,7 @@ void MemorySearchViewModel::UpdateResults()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>();
 
+    m_vResults.RemoveNotifyTarget(*this);
     m_vResults.BeginUpdate();
 
     unsigned int nRow = 0;
@@ -700,6 +701,7 @@ void MemorySearchViewModel::UpdateResults()
         m_vResults.RemoveAt(m_vResults.Count() - 1);
 
     m_vResults.EndUpdate();
+    m_vResults.AddNotifyTarget(*this);
 }
 
 bool MemorySearchViewModel::TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue) noexcept
@@ -835,6 +837,9 @@ void MemorySearchViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool b
 
     ra::services::SearchResults::Result pResult;
 
+    // ignore IsSelectedProperty events - we'll update the lists directly
+    m_vResults.RemoveNotifyTarget(*this);
+
     if (pCurrentResults.GetSize() == MemSize::Nibble_Lower)
     {
         for (auto nIndex = nFrom; nIndex <= nTo; ++nIndex)
@@ -868,6 +873,10 @@ void MemorySearchViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool b
                 m_vSelectedAddresses.erase(pResult.nAddress);
         }
     }
+
+    m_vResults.AddNotifyTarget(*this);
+
+    SetValue(HasSelectionProperty, (m_vSelectedAddresses.size() > 0));
 }
 
 void MemorySearchViewModel::ExcludeSelected()
@@ -896,6 +905,9 @@ void MemorySearchViewModel::ExcludeSelected()
         else
             break;
     }
+
+    m_vSelectedAddresses.clear();
+    SetValue(HasSelectionProperty, false);
 
     ChangePage(m_nSelectedSearchResult);
 

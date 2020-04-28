@@ -266,9 +266,9 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
             if (m_hWnd)
             {
                 if (args.tNewValue < 1)
-                    ListView_SetItemCount(m_hWnd, 0);
+                    ListView_SetItemCountEx(m_hWnd, 0, 0);
                 else
-                    ListView_SetItemCount(m_hWnd, gsl::narrow_cast<size_t>(args.tNewValue));
+                    ListView_SetItemCountEx(m_hWnd, gsl::narrow_cast<size_t>(args.tNewValue), LVSICF_NOSCROLL);
 
                 CheckForScrollBar();
             }
@@ -384,6 +384,10 @@ int GridBinding::UpdateSelected(const IntModelProperty& pProperty, int nNewValue
 
 void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
 {
+    // virtualized listview does not support LVM_INSERTITEM or LVM_SETITEM
+    if (m_pUpdateSelectedItems)
+        return;
+
     std::string sText;
 
     LV_ITEM item{};
@@ -406,7 +410,7 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
     if (pCheckBoxColumn != nullptr)
     {
         const auto& pBoundProperty = pCheckBoxColumn->GetBoundProperty();
-        ListView_SetCheckState(m_hWnd, nIndex, m_vmItems->GetItemValue(nIndex, pBoundProperty));
+        ListView_SetCheckState(m_hWnd, item.iItem, m_vmItems->GetItemValue(nIndex, pBoundProperty));
     }
 
     for (gsl::index i = 1; ra::to_unsigned(i) < m_vColumns.size(); ++i)
@@ -422,7 +426,7 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
     {
         const bool bSelected = m_vmItems->GetItemValue(nIndex, *m_pIsSelectedProperty);
         if (bSelected || bExisting)
-            ListView_SetItemState(m_hWnd, nIndex, bSelected ? LVIS_SELECTED : 0, LVIS_SELECTED);
+            ListView_SetItemState(m_hWnd, item.iItem, bSelected ? LVIS_SELECTED : 0, LVIS_SELECTED);
     }
 }
 
@@ -434,12 +438,10 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
     // when an item is added, we can't assume the list is still sorted
     m_nSortIndex = -1;
 
-    UpdateRow(nIndex, false);
-
-    // enforce the maximum item count in virtualizing mode - we just added an item
-    // which will increase the item count. set it back to the right value.
-    if (m_pScrollMaximumProperty)
-        ListView_SetItemCount(m_hWnd, GetValue(*m_pScrollMaximumProperty));
+    if (m_pUpdateSelectedItems)
+        m_bForceRepaint = true;
+    else
+        UpdateRow(nIndex, false);
 
     if (!m_vmItems->IsUpdating())
         CheckForScrollBar();
@@ -449,12 +451,11 @@ void GridBinding::OnViewModelRemoved(gsl::index nIndex)
 {
     if (m_hWnd)
     {
-        ListView_DeleteItem(m_hWnd, nIndex);
-
-        // enforce the maximum item count in virtualizing mode - we just removed an item
-        // which will decrease the item count. set it back to the right value.
-        if (m_pScrollMaximumProperty)
-            ListView_SetItemCount(m_hWnd, GetValue(*m_pScrollMaximumProperty));
+        // don't actually delete items from virtual listview
+        if (m_pUpdateSelectedItems)
+            m_bForceRepaint = true;
+        else
+            ListView_DeleteItem(m_hWnd, nIndex);
 
         if (!m_vmItems->IsUpdating())
             CheckForScrollBar();
@@ -489,6 +490,8 @@ void GridBinding::CheckForScrollBar()
 
 void GridBinding::OnBeginViewModelCollectionUpdate() noexcept
 {
+    m_bForceRepaint = false;
+
     if (m_hWnd)
         SendMessage(m_hWnd, WM_SETREDRAW, FALSE, 0);
 }
@@ -500,7 +503,11 @@ void GridBinding::OnEndViewModelCollectionUpdate()
         CheckForScrollBar();
 
         SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
-        Invalidate();
+
+        if (m_bForceRepaint)
+            ControlBinding::ForceRepaint(m_hWnd);
+        else
+            Invalidate();
     }
 }
 
@@ -554,36 +561,6 @@ void GridBinding::SetHWND(DialogBase& pDialog, HWND hControl)
 
         if (m_vmItems)
             UpdateAllItems();
-    }
-}
-
-void GridBinding::UpdateScroll()
-{
-    // attempting to access an out-of-range item. assume the user has scrolled and update m_nScrollOffset
-    const auto nScrollMax = GetValue(*m_pScrollMaximumProperty);
-    const auto nPerPage = ListView_GetCountPerPage(m_hWnd);
-    const auto nMaxOffset = nScrollMax - nPerPage;
-    auto nOffset = ListView_GetTopIndex(m_hWnd);
-    if (nOffset > nMaxOffset)
-        nOffset = nMaxOffset;
-
-    if (m_nScrollOffset != nOffset)
-    {
-        // SetValue detaches the change notification event, so we won't be notified.
-        // update the value manually. also, it's important to make sure that it's set
-        // before notifying other targets in case they call back into us.
-        m_nScrollOffset = nOffset;
-
-        SetValue(*m_pScrollOffsetProperty, nOffset);
-
-        if (m_pIsSelectedProperty)
-        {
-            for (gsl::index nIndex = 0; nIndex < gsl::narrow<gsl::index>(m_vmItems->Count()); ++nIndex)
-            {
-                const bool bIsSelected = ListView_GetItemState(m_hWnd, nIndex + nOffset, LVIS_SELECTED) != 0;
-                m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, bIsSelected);
-            }
-        }
     }
 }
 
@@ -693,8 +670,10 @@ void GridBinding::OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateC
         gsl::index nFrom = pnmStateChanged->iFrom;
         gsl::index nTo = pnmStateChanged->iTo;
 
+        // notify the view model of all the changed items
         m_pUpdateSelectedItems(nFrom, nTo, bSelected);
 
+        // explicitly update the items in the virtualization window
         if (m_pIsSelectedProperty)
         {
             if (nFrom < m_nScrollOffset)
@@ -798,13 +777,52 @@ void GridBinding::OnLvnColumnClick(const LPNMLISTVIEW pnmListView)
 
 void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
 {
+    // if the item being requested is not visible, update the backing data by adjusting the scroll offset
+    const auto nItems = gsl::narrow_cast<int>(m_vmItems->Count());
     auto nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
-    if (m_pScrollOffsetProperty && (nIndex < 0 || nIndex > gsl::narrow_cast<int>(m_vmItems->Count())))
+    if (nIndex < 0 || nIndex >= nItems)
     {
-        UpdateScroll();
+        // if not virtualizing, cannot get to requested data
+        if (!m_pScrollOffsetProperty)
+            return;
+
+        // make sure there's backing data
+        if (nItems == 0)
+            return;
+
+        // quick check to make sure the item is valid
+        const auto nScrollMax = GetValue(*m_pScrollMaximumProperty);
+        if (pnmDispInfo.item.iItem >= nScrollMax)
+            return;
+
+        // calculate what the scroll offset should be
+        const auto nPerPage = ListView_GetCountPerPage(m_hWnd);
+        const auto nMaxOffset = nScrollMax - nPerPage;
+        auto nOffset = ListView_GetTopIndex(m_hWnd);
+        if (nOffset > nMaxOffset)
+            nOffset = nMaxOffset;
+
+        // if it's correct, the requested item is not available
+        if (m_nScrollOffset == nOffset)
+            return;
+
+        // update it
+        {
+            // SetValue detaches the change notification event, so we won't be notified.
+            // Update the value manually. also, it's important to make sure that it's set
+            // before notifying other targets in case they call back into us.
+            m_nScrollOffset = nOffset;
+
+            SetValue(*m_pScrollOffsetProperty, nOffset);
+        }
+
+        // adjust the index - if it's still not in the valid range, ignore it
         nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
+        if (nIndex < 0 || nIndex >= nItems)
+            return;
     }
 
+    // get the requested data
     m_sDispInfo = ra::Narrow(m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));
     GSL_SUPPRESS_TYPE3 pnmDispInfo.item.pszText = const_cast<LPSTR>(m_sDispInfo.c_str());
 }

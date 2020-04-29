@@ -498,7 +498,7 @@ void Achievement::SetActive(BOOL bActive) noexcept
         m_bActive = bActive;
         SetDirtyFlag(DirtyFlags::All);
 
-        if (!m_sTrigger.empty() && ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
         {
             auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
             if (!m_bActive)

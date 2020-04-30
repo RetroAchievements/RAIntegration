@@ -505,7 +505,7 @@ void GridBinding::OnEndViewModelCollectionUpdate()
 
         SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
 
-        if (m_bForceRepaint)
+        if (m_bForceRepaint && !m_bAdjustingScrollOffset)
             ControlBinding::ForceRepaint(m_hWnd);
         else
             Invalidate();
@@ -784,7 +784,7 @@ int GridBinding::GetVisibleItemIndex(int iItem)
 
     // make sure there's backing data
     const auto nItems = gsl::narrow_cast<int>(m_vmItems->Count());
-    if (nItems == 0)
+    if (nItems == 0 || m_vmItems->IsUpdating())
         return -1;
 
     // adjust for scroll offset
@@ -798,7 +798,7 @@ int GridBinding::GetVisibleItemIndex(int iItem)
         return -1;
 
     // calculate what the scroll offset should be
-    int nOffset;
+    int nOffset = 0;
     if (iAdjustedItem < 0)
     {
         nOffset = m_nScrollOffset + iAdjustedItem;
@@ -809,7 +809,7 @@ int GridBinding::GetVisibleItemIndex(int iItem)
     {
         const auto nPerPage = ListView_GetCountPerPage(m_hWnd);
         const auto nMaxOffset = nScrollMax - nPerPage;
-        nOffset = ListView_GetTopIndex(m_hWnd);
+        nOffset = m_nScrollOffset + iAdjustedItem - nPerPage;
         if (nOffset > nMaxOffset)
             nOffset = nMaxOffset;
     }
@@ -818,19 +818,27 @@ int GridBinding::GetVisibleItemIndex(int iItem)
     if (m_nScrollOffset == nOffset)
         return -1;
 
-    // update it
+    // update the scroll offset
     {
+        // changing the scroll offset can cause the list to repaint, which may try to
+        // adjust the scroll offset again. make sure it doesn't.
+        m_bAdjustingScrollOffset = true;
+
         // SetValue detaches the change notification event, so we won't be notified.
         // Update the value manually. also, it's important to make sure that it's set
         // before notifying other targets in case they call back into us.
         m_nScrollOffset = nOffset;
 
         SetValue(*m_pScrollOffsetProperty, nOffset);
+
+        m_bAdjustingScrollOffset = false;
+
+        Expects(m_nScrollOffset == nOffset);
     }
 
     // readjust with new scroll offset
     iItem -= m_nScrollOffset;
-    if (iItem > 0 && iItem < nItems)
+    if (iItem >= 0 && iItem < nItems)
         return iItem;
 
     return -1;
@@ -839,7 +847,7 @@ int GridBinding::GetVisibleItemIndex(int iItem)
 void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
 {
     // when virtualizing, only the visible items have view models. adjust the index accordingly.
-    auto nIndex = GetVisibleItemIndex(pnmDispInfo.item.iItem);
+    const auto nIndex = GetVisibleItemIndex(pnmDispInfo.item.iItem);
 
     // get the requested data
     m_sDispInfo = ra::Narrow(m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));

@@ -14,7 +14,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-constexpr size_t SEARCH_ROWS_DISPLAYED = 12;
+constexpr size_t SEARCH_ROWS_DISPLAYED = 9; // needs to be one higher than actual number displayed for scrolling
 constexpr size_t SEARCH_MAX_HISTORY = 50;
 
 constexpr int MEMORY_RANGE_ALL = 0;
@@ -910,6 +910,9 @@ void MemorySearchViewModel::ExcludeSelected()
     SetValue(HasSelectionProperty, false);
 
     ChangePage(m_nSelectedSearchResult);
+
+    if (pResult.pResults.MatchingAddressCount() < gsl::narrow_cast<size_t>(nScrollOffset) + SEARCH_ROWS_DISPLAYED)
+        nScrollOffset = 0;
 
     SetValue(ScrollOffsetProperty, nScrollOffset);
 }

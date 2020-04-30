@@ -67,6 +67,7 @@ protected:
     virtual void UpdateAllItems();
     virtual void UpdateItems(gsl::index nColumn);
     void CheckForScrollBar();
+    int GetVisibleItemIndex(int iItem);
     virtual void Invalidate() noexcept(false);
 
     // ViewModelBase::NotifyTarget
@@ -91,11 +92,11 @@ protected:
 
 private:
     void UpdateRow(gsl::index nIndex, bool bExisting);
-    int GetVisibleItemIndex(int iItem);
 
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;
     bool m_bForceRepaint = false;
+    bool m_bAdjustingScrollOffset = false;
 
     size_t m_nColumnsCreated = 0;
     bool m_bHasColoredColumns = false;

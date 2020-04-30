@@ -62,6 +62,7 @@
 #define IDC_RA_GBX_FILTER               1157
 #define IDC_RA_GBX_RESULTS              1158
 #define IDC_RA_GBX_NOTES                1159
+#define IDC_RA_FREEZE                   1163
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503

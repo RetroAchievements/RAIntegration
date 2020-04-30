@@ -619,7 +619,7 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
     }
 
     // when virtualizing, only the visible items have view models. adjust the index accordingly.
-    const auto nIndex = pnmListView->iItem - m_nScrollOffset;
+    const auto nIndex = GetVisibleItemIndex(pnmListView->iItem);
 
     if (m_pIsSelectedProperty)
     {
@@ -776,52 +776,70 @@ void GridBinding::OnLvnColumnClick(const LPNMLISTVIEW pnmListView)
     m_vmItems->EndUpdate();
 }
 
-void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
+int GridBinding::GetVisibleItemIndex(int iItem)
 {
-    // if the item being requested is not visible, update the backing data by adjusting the scroll offset
+    // if not virtualizing, the index doesn't need to be modified
+    if (!m_pScrollOffsetProperty)
+        return iItem;
+
+    // make sure there's backing data
     const auto nItems = gsl::narrow_cast<int>(m_vmItems->Count());
-    auto nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
-    if (nIndex < 0 || nIndex >= nItems)
+    if (nItems == 0)
+        return -1;
+
+    // adjust for scroll offset
+    const auto iAdjustedItem = iItem - m_nScrollOffset;
+    if (iAdjustedItem >= 0 && iAdjustedItem < nItems)
+        return iAdjustedItem;
+
+    // quick check to make sure the item is valid
+    const auto nScrollMax = GetValue(*m_pScrollMaximumProperty);
+    if (iItem >= nScrollMax)
+        return -1;
+
+    // calculate what the scroll offset should be
+    int nOffset;
+    if (iAdjustedItem < 0)
     {
-        // if not virtualizing, cannot get to requested data
-        if (!m_pScrollOffsetProperty)
-            return;
-
-        // make sure there's backing data
-        if (nItems == 0)
-            return;
-
-        // quick check to make sure the item is valid
-        const auto nScrollMax = GetValue(*m_pScrollMaximumProperty);
-        if (pnmDispInfo.item.iItem >= nScrollMax)
-            return;
-
-        // calculate what the scroll offset should be
+        nOffset = m_nScrollOffset + iAdjustedItem;
+        if (nOffset < 0)
+            nOffset = 0;
+    }
+    else
+    {
         const auto nPerPage = ListView_GetCountPerPage(m_hWnd);
         const auto nMaxOffset = nScrollMax - nPerPage;
-        auto nOffset = ListView_GetTopIndex(m_hWnd);
+        nOffset = ListView_GetTopIndex(m_hWnd);
         if (nOffset > nMaxOffset)
             nOffset = nMaxOffset;
-
-        // if it's correct, the requested item is not available
-        if (m_nScrollOffset == nOffset)
-            return;
-
-        // update it
-        {
-            // SetValue detaches the change notification event, so we won't be notified.
-            // Update the value manually. also, it's important to make sure that it's set
-            // before notifying other targets in case they call back into us.
-            m_nScrollOffset = nOffset;
-
-            SetValue(*m_pScrollOffsetProperty, nOffset);
-        }
-
-        // adjust the index - if it's still not in the valid range, ignore it
-        nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
-        if (nIndex < 0 || nIndex >= nItems)
-            return;
     }
+
+    // if it's correct, the requested item is not available
+    if (m_nScrollOffset == nOffset)
+        return -1;
+
+    // update it
+    {
+        // SetValue detaches the change notification event, so we won't be notified.
+        // Update the value manually. also, it's important to make sure that it's set
+        // before notifying other targets in case they call back into us.
+        m_nScrollOffset = nOffset;
+
+        SetValue(*m_pScrollOffsetProperty, nOffset);
+    }
+
+    // readjust with new scroll offset
+    iItem -= m_nScrollOffset;
+    if (iItem > 0 && iItem < nItems)
+        return iItem;
+
+    return -1;
+}
+
+void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
+{
+    // when virtualizing, only the visible items have view models. adjust the index accordingly.
+    auto nIndex = GetVisibleItemIndex(pnmDispInfo.item.iItem);
 
     // get the requested data
     m_sDispInfo = ra::Narrow(m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));

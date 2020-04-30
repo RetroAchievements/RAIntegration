@@ -91,6 +91,7 @@ protected:
 
 private:
     void UpdateRow(gsl::index nIndex, bool bExisting);
+    int GetVisibleItemIndex(int iItem);
 
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;

@@ -175,12 +175,13 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\rcheevos\include\rcheevos.h" />
+    <ClInclude Include="..\rcheevos\src\rcheevos\compat.h" />
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h" />
-    <ClInclude Include="..\rcheevos\src\rhash\md5.h" />
-  </ItemGroup>
-  <ItemGroup>
+    <ClCompile Include="..\rcheevos\src\rcheevos\consoleinfo.c" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\compat.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\memref.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\richpresence.c" />
+    <ClInclude Include="..\rcheevos\src\rhash\md5.h" />
     <ClCompile Include="..\lua\lapi.c" />
     <ClCompile Include="..\lua\lauxlib.c" />
     <ClCompile Include="..\lua\lcode.c" />
@@ -209,6 +210,7 @@
     <ClCompile Include="..\rcheevos\src\rcheevos\lboard.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\operand.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\runtime.c" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\runtime_progress.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\value.c" />
     <ClCompile Include="..\rcheevos\src\rhash\md5.c" />

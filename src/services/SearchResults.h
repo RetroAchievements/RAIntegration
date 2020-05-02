@@ -22,6 +22,7 @@ enum class SearchFilterType
     LastKnownValue,
     LastKnownValuePlus,
     LastKnownValueMinus,
+    InitialValue,
 };
 
 namespace impl {
@@ -108,7 +109,7 @@ public:
     void Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchType nType);
 
     /// <summary>
-    /// Initializes a result set by comparing against the another result set.
+    /// Initializes a result set by comparing against another result set.
     /// </summary>
     /// <param name="srSource">The result set to filter.</param>
     /// <param name="nCompareType">Type of comparison to apply.</param>
@@ -116,6 +117,17 @@ public:
     /// <param name="nFilterValue">Parameter for filter being applied.</param>
     void Initialize(_In_ const SearchResults& srSource, _In_ ComparisonType nCompareType,
         _In_ SearchFilterType nFilterType, _In_ unsigned int nFilterValue);
+
+    /// <summary>
+    /// Initializes a result set by comparing against another result set using the address filter from a third set.
+    /// </summary>
+    /// <param name="srSource">The result set to filter.</param>
+    /// <param name="srAddresses">The result set specifying which addresses to examine.</param>
+    /// <param name="nCompareType">Type of comparison to apply.</param>
+    /// <param name="nFilterType">Type of filter to apply.</param>
+    /// <param name="nFilterValue">Parameter for filter being applied.</param>
+    void Initialize(_In_ const SearchResults& srSource, _In_ const SearchResults& srAddresses,
+        _In_ ComparisonType nCompareType, _In_ SearchFilterType nFilterType, _In_ unsigned int nFilterValue);
 
     /// <summary>
     /// Gets the number of matching addresses.

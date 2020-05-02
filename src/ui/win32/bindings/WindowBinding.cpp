@@ -256,15 +256,20 @@ void WindowBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeA
     const auto pEnabledIter = m_mEnabledBindings.find(args.Property.GetKey());
     if (pEnabledIter != m_mEnabledBindings.end())
     {
+        bool bRepaint = false;
+
         for (const auto nDlgItemId : pEnabledIter->second)
         {
             auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
             if (hControl)
             {
                 EnableWindow(hControl, args.tNewValue ? TRUE : FALSE);
-                ControlBinding::ForceRepaint(hControl);
+                bRepaint = true;
             }
         }
+
+        if (bRepaint)
+            ControlBinding::ForceRepaint(m_hWnd);
     }
 }
 

@@ -439,10 +439,10 @@ public:
         auto pMemRef = runtime.GetMemRefs(); // 0xH1234
         pMemRef->value = 0x02;
         pMemRef->previous = 0x03;
-        pMemRef->prior = 0x04;
+        pMemRef->prior = 0x03;
         pMemRef = pMemRef->next; // 0xX1234
         pMemRef->value = 0x020000;
-        pMemRef->previous = 0x030000;
+        pMemRef->previous = 0x020000;
         pMemRef->prior = 0x040000;
 
         runtime.SaveProgress("test.sav");
@@ -468,10 +468,10 @@ public:
         pMemRef = runtime.GetMemRefs();
         Assert::AreEqual(0x02U, pMemRef->value);
         Assert::AreEqual(0x03U, pMemRef->previous);
-        Assert::AreEqual(0x04U, pMemRef->prior);
+        Assert::AreEqual(0x03U, pMemRef->prior);
         pMemRef = pMemRef->next;
         Assert::AreEqual(0x020000U, pMemRef->value);
-        Assert::AreEqual(0x030000U, pMemRef->previous);
+        Assert::AreEqual(0x020000U, pMemRef->previous);
         Assert::AreEqual(0x040000U, pMemRef->prior);
     }
 
@@ -516,10 +516,10 @@ public:
         auto pMemRef = runtime.GetMemRefs(); // 0xH1234
         pMemRef->value = 0x02;
         pMemRef->previous = 0x03;
-        pMemRef->prior = 0x04;
+        pMemRef->prior = 0x03;
         pMemRef = pMemRef->next; // 0xX1234
         pMemRef->value = 0x020000;
-        pMemRef->previous = 0x030000;
+        pMemRef->previous = 0x020000;
         pMemRef->prior = 0x040000;
 
         runtime.SaveProgress("test.sav");
@@ -545,10 +545,10 @@ public:
         pMemRef = runtime.GetMemRefs();
         Assert::AreEqual(0x02U, pMemRef->value);
         Assert::AreEqual(0x03U, pMemRef->previous);
-        Assert::AreEqual(0x04U, pMemRef->prior);
+        Assert::AreEqual(0x03U, pMemRef->prior);
         pMemRef = pMemRef->next;
         Assert::AreEqual(0x020000U, pMemRef->value);
-        Assert::AreEqual(0x030000U, pMemRef->previous);
+        Assert::AreEqual(0x020000U, pMemRef->previous);
         Assert::AreEqual(0x040000U, pMemRef->prior);
     }
 

@@ -632,7 +632,8 @@ bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename)
         return false;
 
     std::wstring sAchievementStateFile = ra::Widen(sLoadStateFilename) + L".rap";
-    auto pFile = ra::services::ServiceLocator::Get<ra::services::IFileSystem>().OpenTextFile(sAchievementStateFile);
+    const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    auto pFile = pFileSystem.OpenTextFile(sAchievementStateFile);
     if (pFile == nullptr)
         return false;
 
@@ -642,7 +643,17 @@ bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename)
 
     std::set<unsigned int> vProcessedAchievementIds;
 
-    if (sContents.length() > 1 && sContents.at(0) == 'v')
+    if (sContents == "RAP")
+    {
+        const auto nSize = pFile->GetSize();
+        std::vector<unsigned char> pBuffer;
+        pBuffer.resize(nSize);
+        pFile->SetPosition({ 0 });
+        pFile->GetBytes(&pBuffer.front(), nSize);
+
+        rc_runtime_deserialize_progress(&m_pRuntime, &pBuffer.front(), nullptr);
+    }
+    else if (sContents == "v2")
     {
         const auto nVersion = std::stoi(sContents.substr(1));
         switch (nVersion)
@@ -683,83 +694,11 @@ void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const
         return;
     }
 
-    pFile->WriteLine("v2");
-
-    if (!m_bInitialized)
-        return;
-
-    // write memory references
-    const auto* pMemoryReference = m_pRuntime.memrefs;
-    while (pMemoryReference != nullptr)
-    {
-        auto sLine = ra::StringPrintf("$%s%s:v=%d;d=%d;p=%d", ComparisonSizeToPrefix(pMemoryReference->memref.size),
-            ra::ByteAddressToString(pMemoryReference->memref.address), pMemoryReference->value, pMemoryReference->previous, pMemoryReference->prior);
-
-        const auto sLineMD5 = RAGenerateMD5(sLine);
-        sLine.push_back('#');
-        sLine.push_back(sLineMD5.at(0));
-        sLine.push_back(sLineMD5.at(31));
-        pFile->WriteLine(sLine);
-
-        pMemoryReference = pMemoryReference->next;
-    }
-
-    // write hitcounts
-    for (size_t i = 0; i < m_pRuntime.trigger_count; ++i)
-    {
-        const auto& pTrigger = m_pRuntime.triggers[i];
-        if (!pTrigger.trigger)
-            continue;
-
-        switch (pTrigger.trigger->state)
-        {
-            case RC_TRIGGER_STATE_ACTIVE:
-            case RC_TRIGGER_STATE_PAUSED:
-                break;
-
-            default:
-                continue;
-        }
-
-        auto sMemStringMD5 = RAFormatMD5(pTrigger.md5);
-        auto sLine = ra::StringPrintf("A%d:%s:", pTrigger.id, sMemStringMD5);
-
-        const rc_condition_t* pCondition = nullptr;
-        if (pTrigger.trigger->requirement)
-        {
-            pCondition = pTrigger.trigger->requirement->conditions;
-            while (pCondition)
-            {
-                sLine.append(std::to_string(pCondition->current_hits));
-                sLine.push_back(',');
-
-                pCondition = pCondition->next;
-            }
-        }
-
-        const rc_condset_t* pCondSet = pTrigger.trigger->alternative;
-        while (pCondSet)
-        {
-            pCondition = pCondSet->conditions;
-            while (pCondition)
-            {
-                sLine.append(std::to_string(pCondition->current_hits));
-                sLine.push_back(',');
-
-                pCondition = pCondition->next;
-            }
-
-            pCondSet = pCondSet->next;
-        }
-
-        sLine.pop_back();
-
-        const auto sLineMD5 = RAGenerateMD5(sLine);
-        sLine.push_back('#');
-        sLine.push_back(sLineMD5.at(0));
-        sLine.push_back(sLineMD5.at(31));
-        pFile->WriteLine(sLine);
-    }
+    const auto nSize = rc_runtime_progress_size(&m_pRuntime, nullptr);
+    std::string sSerialized;
+    sSerialized.resize(nSize);
+    rc_runtime_serialize_progress(sSerialized.data(), &m_pRuntime, nullptr);
+    pFile->Write(sSerialized);
 }
 
 } // namespace services

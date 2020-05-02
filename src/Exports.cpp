@@ -164,7 +164,7 @@ API const char* CCONV _RA_UserName()
 
 API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
 {
-    auto pContext = ra::data::ConsoleContext::GetContext(ra::itoe<ConsoleID>(nConsoleId));
+    auto pContext = std::make_unique<ra::data::ConsoleContext>(ra::itoe<ConsoleID>(nConsoleId));
     RA_LOG("Console set to %u (%s)", pContext->Id(), pContext->Name());
     ra::services::ServiceLocator::Provide<ra::data::ConsoleContext>(std::move(pContext));
 }

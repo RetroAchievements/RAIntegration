@@ -19,15 +19,14 @@ public:
     }
 
     MockConsoleContext(ConsoleID nId, std::wstring&& sName) noexcept
-        : ConsoleContext(nId, std::move(sName)), m_Override(this)
+        : ConsoleContext(nId), m_Override(this)
     {
+        m_sName = sName;
     }
 
     void SetId(ConsoleID nId) noexcept { m_nId = nId; }
 
     void SetName(std::wstring&& sName) noexcept { m_sName = std::move(sName); }
-
-    const std::vector<MemoryRegion>& MemoryRegions() const noexcept override { return m_vRegions; }
 
     void ResetMemoryRegions() noexcept { m_vRegions.clear(); }
 
@@ -41,8 +40,6 @@ public:
 
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::data::ConsoleContext> m_Override;
-
-    std::vector<MemoryRegion> m_vRegions;
 };
 
 } // namespace mocks

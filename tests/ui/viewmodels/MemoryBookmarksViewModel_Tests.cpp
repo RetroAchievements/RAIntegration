@@ -14,6 +14,31 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
+namespace Microsoft {
+namespace VisualStudio {
+namespace CppUnitTestFramework {
+
+template<>
+std::wstring ToString<ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior>(
+    const ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior& nBehavior)
+{
+    switch (nBehavior)
+    {
+        case ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::None:
+            return L"None";
+        case ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen:
+            return L"Fozen";
+        case ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange:
+            return L"PauseOnChange";
+        default:
+            return std::to_wstring(static_cast<int>(nBehavior));
+    }
+}
+
+} // namespace CppUnitTestFramework
+} // namespace VisualStudio
+} // namespace Microsoft
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -86,7 +111,7 @@ public:
         Assert::AreEqual(1234U, bookmark.GetAddress());
         Assert::AreEqual((int)MemSize::EightBit, (int)bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Dec, (int)bookmark.GetFormat());
-        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, (int)bookmark.GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
         Assert::AreEqual(0U, bookmark.GetCurrentValue());
         Assert::AreEqual(0U, bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
@@ -139,7 +164,7 @@ public:
         Assert::AreEqual(5555U, bookmark.GetAddress());
         Assert::AreEqual((int)MemSize::SixteenBit, (int)bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
-        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, (int)bookmark.GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
         Assert::AreEqual(0U, bookmark.GetCurrentValue());
         Assert::AreEqual(0U, bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
@@ -318,7 +343,7 @@ public:
         Assert::AreEqual(1234U, bookmark.GetAddress());
         Assert::AreEqual((int)MemSize::EightBit, (int)bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
-        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, (int)bookmark.GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
         Assert::AreEqual(0U, bookmark.GetCurrentValue());
         Assert::AreEqual(0U, bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
@@ -339,7 +364,7 @@ public:
         Assert::AreEqual(2345U, bookmark.GetAddress());
         Assert::AreEqual((int)MemSize::SixteenBit, (int)bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
-        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, (int)bookmark.GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
         Assert::AreEqual(0U, bookmark.GetCurrentValue());
         Assert::AreEqual(0U, bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
@@ -359,7 +384,7 @@ public:
         Assert::AreEqual(5678U, bookmark.GetAddress());
         Assert::AreEqual((int)MemSize::ThirtyTwoBit, (int)bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Dec, (int)bookmark.GetFormat());
-        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, (int)bookmark.GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
         Assert::AreEqual(0U, bookmark.GetCurrentValue());
         Assert::AreEqual(0U, bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
@@ -421,6 +446,51 @@ public:
         Assert::AreEqual(4567U, bookmarks.Bookmarks().GetItemAt(2)->GetAddress());
 
         Assert::IsFalse(bookmarks.IsModified());
+    }
+
+    TEST_METHOD(TestToggleFreezeSelected)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.AddBookmark(1234U, MemSize::EightBit);
+        bookmarks.AddBookmark(2345U, MemSize::EightBit);
+        bookmarks.AddBookmark(4567U, MemSize::EightBit);
+        bookmarks.AddBookmark(6789U, MemSize::EightBit);
+
+        // no selected items are frozen - freeze them all
+        bookmarks.Bookmarks().GetItemAt(1)->SetSelected(true);
+        bookmarks.Bookmarks().GetItemAt(3)->SetSelected(true);
+
+        bookmarks.ToggleFreezeSelected();
+
+        Assert::AreEqual({ 4U }, bookmarks.Bookmarks().Count());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(0)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Bookmarks().GetItemAt(1)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(2)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Bookmarks().GetItemAt(3)->GetBehavior());
+
+        // some selected items are frozen - freeze the rest
+        bookmarks.Bookmarks().GetItemAt(1)->SetSelected(false);
+        bookmarks.Bookmarks().GetItemAt(2)->SetSelected(true);
+
+        bookmarks.ToggleFreezeSelected();
+
+        Assert::AreEqual({ 4U }, bookmarks.Bookmarks().Count());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(0)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Bookmarks().GetItemAt(1)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Bookmarks().GetItemAt(2)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Bookmarks().GetItemAt(3)->GetBehavior());
+
+        // all selected items are frozen - unfreeze them
+        bookmarks.Bookmarks().GetItemAt(1)->SetSelected(true);
+        bookmarks.Bookmarks().GetItemAt(2)->SetSelected(false);
+
+        bookmarks.ToggleFreezeSelected();
+
+        Assert::AreEqual({ 4U }, bookmarks.Bookmarks().Count());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(0)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(1)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Bookmarks().GetItemAt(2)->GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(3)->GetBehavior());
     }
 
     TEST_METHOD(TestClearAllChanges)
@@ -594,23 +664,23 @@ public:
 
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
         auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
-        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, (int)bookmark.GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
         Assert::AreEqual(0U, bookmark.GetRowColor().ARGB);
 
         bookmark.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
-        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::Frozen, (int)bookmark.GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmark.GetBehavior());
         Assert::AreEqual(0xFFFFFFC0U, bookmark.GetRowColor().ARGB);
 
         bookmark.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
-        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange, (int)bookmark.GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange, bookmark.GetBehavior());
         Assert::AreEqual(0U, bookmark.GetRowColor().ARGB);
 
         bookmark.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
-        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::Frozen, (int)bookmark.GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmark.GetBehavior());
         Assert::AreEqual(0xFFFFFFC0U, bookmark.GetRowColor().ARGB);
 
         bookmark.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::None);
-        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, (int)bookmark.GetBehavior());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
         Assert::AreEqual(0U, bookmark.GetRowColor().ARGB);
     }
 

@@ -187,6 +187,8 @@ void Achievement::RebuildTrigger()
         // otherwise, attempt to copy over the hit counts.
         if (m_pTrigger != pOldTrigger)
         {
+            m_pTrigger->state = pOldTrigger->state;
+
             if (m_pTrigger->requirement && pOldTrigger->requirement)
                 MergeHits(*m_pTrigger->requirement, *pOldTrigger->requirement);
 

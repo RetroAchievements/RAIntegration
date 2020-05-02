@@ -23,14 +23,14 @@ gsl::index MultiLineGridBinding::GetIndexForLine(gsl::index nLine) const
     while (nIndex < ra::to_signed(m_vItemMetrics.size()))
     {
         const auto& pItemMetrics = m_vItemMetrics.at(nIndex);
-        if (pItemMetrics.nFirstLine > nLine)
+        if (pItemMetrics.nFirstLine > ra::to_unsigned(nLine))
         {
             if (nIndex == 0)
                 break;
             if (--nIndex == 0)
                 break;
         }
-        else if (gsl::narrow_cast<gsl::index>(pItemMetrics.nFirstLine) + pItemMetrics.nNumLines <= nLine)
+        else if (gsl::narrow_cast<gsl::index>(pItemMetrics.nFirstLine) + ra::to_signed(pItemMetrics.nNumLines) <= nLine)
         {
             ++nIndex;
         }
@@ -118,7 +118,7 @@ int MultiLineGridBinding::GetMaxCharsForColumn(gsl::index nColumn) const
     return std::max(m_vColumnWidths.at(nColumn) / 6, 32);
 }
 
-void MultiLineGridBinding::UpdateLineBreaks(gsl::index nIndex, gsl::index nColumn, const ra::ui::win32::bindings::GridColumnBinding* pColumn, int nChars)
+void MultiLineGridBinding::UpdateLineBreaks(gsl::index nIndex, gsl::index nColumn, const ra::ui::win32::bindings::GridColumnBinding* pColumn, size_t nChars)
 {
     std::vector<unsigned int> vLineBreaks;
     Expects(pColumn != nullptr);
@@ -137,7 +137,7 @@ void MultiLineGridBinding::UpdateLineBreaks(gsl::index nIndex, gsl::index nColum
     }
 }
 
-void MultiLineGridBinding::GetLineBreaks(const std::wstring& sText, int nChars, std::vector<unsigned int>& vLineBreaks)
+void MultiLineGridBinding::GetLineBreaks(const std::wstring& sText, size_t nChars, std::vector<unsigned int>& vLineBreaks)
 {
     const auto nNewLine = sText.find('\n');
     if (nNewLine == std::string::npos && sText.length() < nChars)
@@ -228,10 +228,10 @@ void MultiLineGridBinding::UpdateItems(gsl::index nColumn)
             const auto pIter = pItemMetrics.mColumnLineOffsets.find(gsl::narrow_cast<int>(nColumn));
             if (pIter != pItemMetrics.mColumnLineOffsets.end())
             {
-                gsl::index nStop = 0;
+                size_t nStop = 0;
                 for (auto nIndex : pIter->second)
                 {
-                    auto nIndex2 = nIndex - 1;
+                    auto nIndex2 = gsl::narrow_cast<size_t>(nIndex) - 1;
                     while (nIndex2 > nStop && isspace(sText.at(nIndex2 - 1)))
                         --nIndex2;
                     sText.at(nIndex2) = '\0';
@@ -270,7 +270,7 @@ void MultiLineGridBinding::UpdateItems(gsl::index nColumn)
         ++nLine;
     }
 
-    if (ra::to_unsigned(nItems) > nLine)
+    if (gsl::narrow_cast<gsl::index>(nItems) > nLine)
     {
         for (gsl::index i = gsl::narrow_cast<gsl::index>(nItems) - 1; i >= nLine; --i)
             ListView_DeleteItem(m_hWnd, i);

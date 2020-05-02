@@ -18,7 +18,7 @@ public:
     {
     }
 
-    MockConsoleContext(ConsoleID nId, std::wstring&& sName) noexcept
+    GSL_SUPPRESS_F6 MockConsoleContext(ConsoleID nId, std::wstring&& sName) noexcept
         : ConsoleContext(nId), m_Override(this)
     {
         m_sName = sName;

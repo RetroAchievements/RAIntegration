@@ -1087,7 +1087,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
     return TRUE;
 }
 
-void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* restrict Cheevo)
+void Dlg_Achievements::UpdateSelectedAchievementButtons(const Achievement* restrict Cheevo) noexcept
 {
     if (Cheevo == nullptr)
     {

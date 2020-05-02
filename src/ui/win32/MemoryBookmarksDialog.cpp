@@ -230,6 +230,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     SetAnchor(IDC_RA_CLEAR_CHANGE, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_LBX_ADDRESSES, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_DEL_BOOKMARK, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_FREEZE, Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_MOVE_BOOKMARK_UP, Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_MOVE_BOOKMARK_DOWN, Anchor::Bottom | Anchor::Right);
 
@@ -279,6 +280,15 @@ BOOL MemoryBookmarksDialog::OnCommand(WORD nCommand)
             const auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
             if (vmMemoryBookmarks)
                 vmMemoryBookmarks->SaveBookmarkFile();
+
+            return TRUE;
+        }
+
+        case IDC_RA_FREEZE:
+        {
+            auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
+            if (vmMemoryBookmarks)
+                vmMemoryBookmarks->ToggleFreezeSelected();
 
             return TRUE;
         }

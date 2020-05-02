@@ -66,6 +66,7 @@ private:
     int m_nTooltipLocation = 0;
     ra::tstring m_sTooltip;
     WNDPROC m_pListViewWndProc = nullptr;
+    bool m_bIgnoreTimer = false;
 
     std::vector<std::array<std::string, m_nNumCols>> m_lbxData{};
 

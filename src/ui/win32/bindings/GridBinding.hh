@@ -59,6 +59,7 @@ public:
     static LRESULT CloseIPE(HWND hwnd, GridColumnBinding::InPlaceEditorInfo* pInfo);
     static GridColumnBinding::InPlaceEditorInfo* GetIPEInfo(HWND hwnd) noexcept;
 
+    void DeselectAll() noexcept;
     int UpdateSelected(const IntModelProperty& pProperty, int nNewValue);
 
 protected:
@@ -66,7 +67,7 @@ protected:
     virtual void UpdateAllItems();
     virtual void UpdateItems(gsl::index nColumn);
     void CheckForScrollBar();
-    void UpdateScroll();
+    int GetVisibleItemIndex(int iItem);
     virtual void Invalidate() noexcept(false);
 
     // ViewModelBase::NotifyTarget
@@ -94,6 +95,8 @@ private:
 
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;
+    bool m_bForceRepaint = false;
+    bool m_bAdjustingScrollOffset = false;
 
     size_t m_nColumnsCreated = 0;
     bool m_bHasColoredColumns = false;

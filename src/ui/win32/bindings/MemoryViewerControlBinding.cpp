@@ -270,8 +270,13 @@ void MemoryViewerControlBinding::OnSizeChanged(const ra::ui::Size& pNewSize)
 
 void MemoryViewerControlBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept
 {
-    if (args.Property == ra::ui::viewmodels::MemoryViewerViewModel::AddressProperty)
+    if (args.Property == ra::ui::viewmodels::MemoryViewerViewModel::AddressProperty ||
+        args.Property == ra::ui::viewmodels::MemoryViewerViewModel::SizeProperty)
+    {
+        // these properties affect the rendered image, immediately invalidate in case the emulator
+        // is paused - in which case, the update from DoFrame will not occur
         PostMessage(m_hWnd, WM_USER_INVALIDATE, 0, 0);
+    }
 }
 
 void MemoryViewerControlBinding::Invalidate()

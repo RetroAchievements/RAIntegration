@@ -459,6 +459,43 @@ int MemoryBookmarksViewModel::RemoveSelectedBookmarks()
     return nRemoved;
 }
 
+void MemoryBookmarksViewModel::ToggleFreezeSelected()
+{
+    m_vBookmarks.BeginUpdate();
+
+    bool bFreeze = false;
+    for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
+    {
+        const auto* pItem = m_vBookmarks.GetItemAt(nIndex);
+        if (pItem && pItem->IsSelected() && pItem->GetBehavior() != BookmarkBehavior::Frozen)
+        {
+            bFreeze = true;
+            break;
+        }
+    }
+
+    if (bFreeze)
+    {
+        for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
+        {
+            auto* pItem = m_vBookmarks.GetItemAt(nIndex);
+            if (pItem && pItem->IsSelected())
+                pItem->SetBehavior(BookmarkBehavior::Frozen);
+        }
+    }
+    else
+    {
+        for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
+        {
+            auto* pItem = m_vBookmarks.GetItemAt(nIndex);
+            if (pItem && pItem->IsSelected() && pItem->GetBehavior() == BookmarkBehavior::Frozen)
+                pItem->SetBehavior(BookmarkBehavior::None);
+        }
+    }
+
+    m_vBookmarks.EndUpdate();
+}
+
 void MemoryBookmarksViewModel::MoveSelectedBookmarksUp()
 {
     m_vBookmarks.ShiftItemsUp(MemoryBookmarkViewModel::IsSelectedProperty);

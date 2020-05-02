@@ -260,6 +260,11 @@ public:
     int RemoveSelectedBookmarks();
 
     /// <summary>
+    /// Freezes the selected items. Or, if they're already all frozen, unfreezes them.
+    /// </summary>
+    void ToggleFreezeSelected();
+
+    /// <summary>
     /// Moves the selected bookmarks higher in the list.
     /// </summary>
     void MoveSelectedBookmarksUp();

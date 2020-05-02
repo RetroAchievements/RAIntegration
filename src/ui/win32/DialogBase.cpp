@@ -211,7 +211,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                         return TRUE;
                     }
 
-                    return FALSE;
+                    return 0;
                 }
 
                 case LVN_ITEMCHANGED:
@@ -225,6 +225,22 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                         LPNMLISTVIEW pnmListView;
                         GSL_SUPPRESS_TYPE1{ pnmListView = reinterpret_cast<LPNMLISTVIEW>(pnmHdr); }
                         pGridBinding->OnLvnItemChanged(pnmListView);
+                    }
+
+                    return 0;
+                }
+
+                case LVN_ODSTATECHANGED:
+                {
+                    ra::ui::win32::bindings::GridBinding* pGridBinding;
+                    GSL_SUPPRESS_TYPE1 pGridBinding = dynamic_cast<ra::ui::win32::bindings::GridBinding*>(
+                        FindControlBinding(pnmHdr->hwndFrom));
+
+                    if (pGridBinding)
+                    {
+                        LPNMLVODSTATECHANGE pnmStateChanged;
+                        GSL_SUPPRESS_TYPE1{ pnmStateChanged = reinterpret_cast<LPNMLVODSTATECHANGE>(pnmHdr); }
+                        pGridBinding->OnLvnOwnerDrawStateChanged(pnmStateChanged);
                     }
 
                     return 0;

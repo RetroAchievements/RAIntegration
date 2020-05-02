@@ -187,6 +187,8 @@ void Achievement::RebuildTrigger()
         // otherwise, attempt to copy over the hit counts.
         if (m_pTrigger != pOldTrigger)
         {
+            m_pTrigger->state = pOldTrigger->state;
+
             if (m_pTrigger->requirement && pOldTrigger->requirement)
                 MergeHits(*m_pTrigger->requirement, *pOldTrigger->requirement);
 
@@ -498,7 +500,7 @@ void Achievement::SetActive(BOOL bActive) noexcept
         m_bActive = bActive;
         SetDirtyFlag(DirtyFlags::All);
 
-        if (!m_sTrigger.empty() && ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
         {
             auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
             if (!m_bActive)
@@ -610,6 +612,7 @@ void Achievement::CopyFrom(const Achievement& rRHS)
     SetCreatedDate(rRHS.m_nTimestampCreated);
 
     m_sTrigger = rRHS.m_sTrigger;
+    m_vConditions.Clear();
 
     SetDirtyFlag(DirtyFlags::All);
 }

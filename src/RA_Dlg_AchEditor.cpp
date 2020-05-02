@@ -743,7 +743,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
         case WM_TIMER:
         {
             // Ignore if we are currently editing a box!
-            if (g_hIPEEdit != nullptr)
+            if (g_hIPEEdit != nullptr || m_bIgnoreTimer)
                 break;
 
             Achievement* pActiveAch = ActiveAchievement();
@@ -752,8 +752,10 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
             if (pActiveAch->IsDirty())
             {
+                m_bIgnoreTimer = true;
                 LoadAchievement(pActiveAch, TRUE);
                 pActiveAch->ClearDirtyFlag();
+                m_bIgnoreTimer = false;
             }
         }
         break;

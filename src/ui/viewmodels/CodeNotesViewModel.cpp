@@ -192,6 +192,9 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::
 void CodeNotesViewModel::BookmarkSelected() const
 {
     auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+    if (!vmBookmarks.IsVisible())
+        vmBookmarks.Show();
+
     vmBookmarks.Bookmarks().BeginUpdate();
 
     int nCount = 0;

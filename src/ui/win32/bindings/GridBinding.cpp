@@ -263,7 +263,7 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
                 if (args.tNewValue < 1)
                     ListView_SetItemCount(m_hWnd, 0);
                 else
-                    ListView_SetItemCount(m_hWnd, gsl::narrow_cast<size_t>(args.tNewValue) - 1);
+                    ListView_SetItemCount(m_hWnd, gsl::narrow_cast<size_t>(args.tNewValue));
 
                 CheckForScrollBar();
             }

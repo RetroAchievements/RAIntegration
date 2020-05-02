@@ -38,10 +38,12 @@ public:
         return true;
     }
 
-    size_t GetBytes(_Inout_ char pBuffer[], _In_ size_t nBytes) override
+    size_t GetBytes(_Inout_ uint8_t pBuffer[], _In_ size_t nBytes) override
     {
         const auto nPos = GetPosition();
-        m_iStream.read(pBuffer, nBytes);
+        char* pCharBuffer;
+        GSL_SUPPRESS_TYPE1 pCharBuffer = reinterpret_cast<char*>(pBuffer);
+        m_iStream.read(pCharBuffer, nBytes);
         return gsl::narrow_cast<size_t>(GetPosition() - nPos);
     }
 
@@ -58,6 +60,21 @@ public:
         }
 
         return m_iStream.tellg();
+    }
+
+    void SetPosition(std::streampos nNewPosition) override
+    {
+        Expects(nNewPosition >= 0);
+        m_iStream.seekg(nNewPosition);
+    }
+
+    size_t GetSize() const override
+    {
+        const auto nPos = GetPosition();
+        m_iStream.seekg(0, m_iStream.end);
+        const auto nSize = gsl::narrow_cast<size_t>(m_iStream.tellg());
+        m_iStream.seekg(nPos, m_iStream.beg);
+        return nSize;
     }
 
     std::string GetString() { return m_iStream.str(); }

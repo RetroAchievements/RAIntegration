@@ -40,22 +40,17 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
                                _In_ const ra::services::Http::Response& httpResponse,
                                _Inout_ ApiResponseBase& pResponse, _Out_ rapidjson::Document& pDocument)
 {
-    /*this function can throw std::bad_alloc (from the strings allocator) but very low chance*/
-    if (HandleHttpError(httpResponse, pResponse))
-    {
-        pDocument.SetArray();
-
-        RA_LOG_ERR("-- %s: %s", sApiName, pResponse.ErrorMessage.c_str());
-        return false;
-    }
-
     if (httpResponse.Content().empty())
     {
         pDocument.SetArray();
 
-        RA_LOG_ERR("-- %s: Empty JSON response", sApiName);
-        pResponse.Result = ApiResult::Failed;
-        pResponse.ErrorMessage = "Empty JSON response";
+        if (!HandleHttpError(httpResponse, pResponse))
+        {
+            pResponse.ErrorMessage = "Empty JSON response";
+            pResponse.Result = ApiResult::Failed;
+        }
+
+        RA_LOG_ERR("-- %s: %s", sApiName, pResponse.ErrorMessage.c_str());
         return false;
     }
 
@@ -64,6 +59,12 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
     pDocument.Parse(httpResponse.Content());
     if (pDocument.HasParseError())
     {
+        if (HandleHttpError(httpResponse, pResponse))
+        {
+            RA_LOG_ERR("-- %s: %s", sApiName, pResponse.ErrorMessage.c_str());
+            return false;
+        }
+
         RA_LOG_ERR("-- %s: JSON Parse Error encountered!", sApiName);
 
         pResponse.Result = ApiResult::Error;
@@ -111,6 +112,12 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
     {
         pResponse.Result = ApiResult::Failed;
         RA_LOG_ERR("-- %s Error: Success=false", sApiName);
+        return false;
+    }
+
+    if (HandleHttpError(httpResponse, pResponse))
+    {
+        RA_LOG_ERR("-- %s: %s", sApiName, pResponse.ErrorMessage.c_str());
         return false;
     }
 
@@ -306,7 +313,9 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
     {
         const auto nLength = sPostData.length();
         sPostData.resize(gsl::narrow_cast<size_t>(nFileSize + nLength));
-        pFile->GetBytes(&sPostData.at(nLength), gsl::narrow_cast<size_t>(nFileSize));
+        uint8_t* pBytes;
+        GSL_SUPPRESS_TYPE1 pBytes = reinterpret_cast<uint8_t*>(&sPostData.at(nLength));
+        pFile->GetBytes(pBytes, gsl::narrow_cast<size_t>(nFileSize));
     }
 
     sPostData.append("\r\n");

@@ -696,6 +696,45 @@ public:
         Assert::AreEqual(1U, result.nValue);
     }
 
+    TEST_METHOD(TestInitializeFromResultsWithAddressLimits)
+    {
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x04, 0x16, 0x08};
+        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(0U, 5U, ra::services::SearchType::EightBit);
+        Assert::AreEqual({ 5U }, results1.MatchingAddressCount());
+
+        SearchResults results2;
+        results2.Initialize(results1, ComparisonType::GreaterThan, ra::services::SearchFilterType::Constant, 0x10U);
+        Assert::AreEqual({ 2U }, results2.MatchingAddressCount());
+        Assert::IsFalse(results2.ContainsAddress(0U));
+        Assert::IsTrue(results2.ContainsAddress(1U));
+        Assert::IsFalse(results2.ContainsAddress(2U));
+        Assert::IsTrue(results2.ContainsAddress(3U));
+        Assert::IsFalse(results2.ContainsAddress(4U));
+
+        memory.at(1) = 1;
+        memory.at(2) = 2;
+        // Last Known Value would match indices 0, 3, and 4 as indices 1 and 2 were just changed
+        // results2 limits search to indices 1 and 3, so only 3 should be matched
+        SearchResults results3;
+        results3.Initialize(results1, results2, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValue, 0U);
+        Assert::AreEqual({ 1U }, results3.MatchingAddressCount());
+        Assert::IsFalse(results3.ContainsAddress(0U));
+        Assert::IsFalse(results3.ContainsAddress(1U));
+        Assert::IsFalse(results3.ContainsAddress(2U));
+        Assert::IsTrue(results3.ContainsAddress(3U));
+        Assert::IsFalse(results3.ContainsAddress(4U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results3.GetMatchingAddress(0U, result));
+        Assert::AreEqual(3U, result.nAddress);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
+        Assert::AreEqual(0x16U, result.nValue);
+    }
+
     TEST_METHOD(TestExcludeAddressEightBit)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};

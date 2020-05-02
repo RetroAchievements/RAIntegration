@@ -8,11 +8,13 @@
 #include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
+#include "tests\mocks\MockUserContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 using ra::api::impl::ConnectedServer;
 using ra::api::mocks::MockServer;
+using ra::data::mocks::MockUserContext;
 using ra::services::mocks::MockHttpRequester;
 using ra::services::mocks::MockThreadPool;
 using ra::services::Http;
@@ -166,6 +168,101 @@ public:
         Assert::AreEqual(std::string(""), response.ApiToken);
         Assert::AreEqual(0U, response.Score);
         Assert::AreEqual(0U, response.NumUnreadMessages);
+    }
+
+    TEST_METHOD(TestLoginFailed401)
+    {
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
+        {
+            return Http::Response(Http::StatusCode::Unauthorized, "");
+        });
+
+        ConnectedServer server("host.com");
+
+        Login::Request request;
+        request.Username = "User";
+        request.Password = "pa$$w0rd";
+
+        auto response = server.Login(request);
+
+        // "Success:false" without error message results in Failed call, not Error call
+        Assert::AreEqual(ApiResult::Error, response.Result);
+        Assert::AreEqual(std::string("HTTP error code: 401"), response.ErrorMessage);
+        Assert::AreEqual(std::string(""), response.Username);
+        Assert::AreEqual(std::string(""), response.ApiToken);
+        Assert::AreEqual(0U, response.Score);
+        Assert::AreEqual(0U, response.NumUnreadMessages);
+    }
+
+    TEST_METHOD(TestLoginFailed401WithMessage)
+    {
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
+        {
+            return Http::Response(Http::StatusCode::Unauthorized, "{\"Success\":false, \"Error\":\"Invalid User/Password combination. Please try again\"}");
+        });
+
+        ConnectedServer server("host.com");
+
+        Login::Request request;
+        request.Username = "User";
+        request.Password = "pa$$w0rd";
+
+        auto response = server.Login(request);
+
+        Assert::AreEqual(ApiResult::Error, response.Result);
+        Assert::AreEqual(std::string("Invalid User/Password combination. Please try again"), response.ErrorMessage);
+        Assert::AreEqual(std::string(""), response.Username);
+        Assert::AreEqual(std::string(""), response.ApiToken);
+        Assert::AreEqual(0U, response.Score);
+        Assert::AreEqual(0U, response.NumUnreadMessages);
+    }
+
+    TEST_METHOD(TestAwardAchievementFailed403)
+    {
+        MockUserContext mockUserContext;
+        mockUserContext.Initialize("Username", "ApiToken");
+
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
+        {
+            return Http::Response(Http::StatusCode::Forbidden, "");
+        });
+
+        ConnectedServer server("host.com");
+
+        AwardAchievement::Request request;
+        request.GameHash = "HASH";
+        request.AchievementId = 1234U;
+        request.Hardcore = true;
+
+        auto response = server.AwardAchievement(request);
+
+        // "Success:false" without error message results in Failed call, not Error call
+        Assert::AreEqual(ApiResult::Error, response.Result);
+        Assert::AreEqual(std::string("HTTP error code: 403"), response.ErrorMessage);
+    }
+
+    TEST_METHOD(TestAwardAchievementFailed403WithMessage)
+    {
+        MockUserContext mockUserContext;
+        mockUserContext.Initialize("Username", "ApiToken");
+
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
+        {
+            return Http::Response(Http::StatusCode::Forbidden, "{\"Success\":false, \"Error\":\"Invalid API token\"}");
+        });
+
+        ConnectedServer server("host.com");
+
+        AwardAchievement::Request request;
+        request.GameHash = "HASH";
+        request.AchievementId = 1234U;
+        request.Hardcore = true;
+
+        auto response = server.AwardAchievement(request);
+
+        // "Success:false" without error message results in Failed call, not Error call
+        Assert::AreEqual(ApiResult::Error, response.Result);
+        Assert::AreEqual(std::string("Invalid API token"), response.ErrorMessage);
     }
 
     TEST_METHOD(TestLoginUnknownServer)

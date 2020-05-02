@@ -2321,6 +2321,18 @@ void GenerateResizes(HWND hDlg)
     pDlgAchEditorMin.y = windowRect.Height();
 
     using AlignType = ResizeContent::AlignType;
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_LBL_POINTS), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ACH_POINTS), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_LBL_BADGENAME), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_BADGENAME), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_BADGE_SPIN), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_UPLOAD_BADGE), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_LBL_AUTHOR), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ACH_AUTHOR), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_CHEEVOPIC), AlignType::Right, false);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ACH_TITLE), AlignType::Right, true);
+    vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ACH_DESC), AlignType::Right, true);
+
     vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_LBX_CONDITIONS), AlignType::BottomRight, true);
     vDlgAchEditorResize.emplace_back(::GetDlgItem(hDlg, IDC_RA_ACH_GROUP), AlignType::Bottom, true);
 

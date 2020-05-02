@@ -3,6 +3,7 @@
 #include "data\ConsoleContext.hh"
 #include "data\EmulatorContext.hh"
 
+#include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -38,6 +39,8 @@ const StringModelProperty MemorySearchViewModel::SelectedPageProperty("MemorySea
 const BoolModelProperty MemorySearchViewModel::CanBeginNewSearchProperty("MemorySearchViewModel", "CanBeginNewSearch", true);
 const BoolModelProperty MemorySearchViewModel::CanFilterProperty("MemorySearchViewModel", "CanFilter", true);
 const BoolModelProperty MemorySearchViewModel::CanEditFilterValueProperty("MemorySearchViewModel", "CanEditFilterValue", true);
+const BoolModelProperty MemorySearchViewModel::CanContinuousFilterProperty("MemorySearchViewModel", "CanContinuousFilter", true);
+const StringModelProperty MemorySearchViewModel::ContinuousFilterLabelProperty("MemorySearchViewModel", "ContinuousFilterLabel", L"Continuous Filter");
 const BoolModelProperty MemorySearchViewModel::CanGoToPreviousPageProperty("MemorySearchViewModel", "CanGoToPreviousPage", true);
 const BoolModelProperty MemorySearchViewModel::CanGoToNextPageProperty("MemorySearchViewModel", "CanGoToNextPage", false);
 const BoolModelProperty MemorySearchViewModel::HasSelectionProperty("MemorySearchViewModel", "HasSelection", false);
@@ -104,6 +107,7 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::LastKnownValue), L"Last Value");
     m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::LastKnownValuePlus), L"Last Value Plus");
     m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::LastKnownValueMinus), L"Last Value Minus");
+    m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::InitialValue), L"Initial Value");
 
     AddNotifyTarget(*this);
     m_vResults.AddNotifyTarget(*this);
@@ -333,6 +337,12 @@ void MemorySearchViewModel::DoFrame()
     if (m_vSearchResults.size() < 2)
         return;
 
+    if (m_bIsContinuousFiltering)
+    {
+        ApplyContinuousFilter();
+        return;
+    }
+
     m_bNeedsRedraw = false;
     m_vResults.BeginUpdate();
 
@@ -468,6 +478,9 @@ void MemorySearchViewModel::BeginNewSearch()
         return;
     }
 
+    if (m_bIsContinuousFiltering)
+        ToggleContinuousFilter();
+
     m_vSelectedAddresses.clear();
 
     m_vSearchResults.clear();
@@ -541,21 +554,36 @@ void MemorySearchViewModel::ApplyFilter()
 
     SearchResult const& pPreviousResult = *(m_vSearchResults.end() - 2);
     SearchResult& pResult = m_vSearchResults.back();
-    pResult.pResults.Initialize(pPreviousResult.pResults, GetComparisonType(), GetValueType(), nValue);
 
-    const auto nMatches = pResult.pResults.MatchingAddressCount();
-    if (nMatches == pPreviousResult.pResults.MatchingAddressCount())
+    if (GetValueType() == ra::services::SearchFilterType::InitialValue)
     {
-        // same number of matches. if the same filter was applied, don't double up on the search history.
-        // unless this is the first filter, then display it anyway.
+        SearchResult const& pInitialResult = m_vSearchResults.front();
+        pResult.pResults.Initialize(pInitialResult.pResults, pPreviousResult.pResults,
+            GetComparisonType(), GetValueType(), nValue);
+    }
+    else
+    {
+        pResult.pResults.Initialize(pPreviousResult.pResults, GetComparisonType(), GetValueType(), nValue);
+    }
+
+    // if this isn't the first filter being applied, and the result count hasn't changed
+    const auto nMatches = pResult.pResults.MatchingAddressCount();
+    if (nMatches == pPreviousResult.pResults.MatchingAddressCount() && m_vSearchResults.size() > 2)
+    {
+        // check to see if the same filter was applied.
         if (pResult.pResults.GetFilterComparison() == pPreviousResult.pResults.GetFilterComparison() &&
             pResult.pResults.GetFilterType() == pPreviousResult.pResults.GetFilterType() &&
-            pResult.pResults.GetFilterValue() == pPreviousResult.pResults.GetFilterValue() &&
-            m_vSearchResults.size() > 2)
+            pResult.pResults.GetFilterValue() == pPreviousResult.pResults.GetFilterValue())
         {
-            // reset the modification list as if a new filter was applied
-            m_vSearchResults.back().vModifiedAddresses.clear();
-            return;
+            // same filter applied, result set didn't change, if applying an equality filter we know the memory
+            // didn't change, so don't generate a new result set. do clear the modified addresses list.
+            if (pResult.pResults.GetFilterComparison() == ComparisonType::Equals)
+            {
+                m_vSearchResults.pop_back();
+                m_vSearchResults.back().vModifiedAddresses.clear();
+                --m_nSelectedSearchResult;
+                return;
+            }
         }
     }
 
@@ -581,11 +609,77 @@ void MemorySearchViewModel::ApplyFilter()
             builder.Append(L"Last -");
             builder.Append(GetFilterValue());
             break;
+
+        case ra::services::SearchFilterType::InitialValue:
+            builder.Append(L"Initial");
+            break;
     }
     pResult.sSummary = builder.ToWString();
     SetValue(FilterSummaryProperty, pResult.sSummary);
 
     ChangePage(m_nSelectedSearchResult);
+}
+
+void MemorySearchViewModel::ToggleContinuousFilter()
+{
+    if (m_bIsContinuousFiltering)
+    {
+        m_bIsContinuousFiltering = false;
+        SetValue(CanFilterProperty, GetResultCount() > 0);
+        SetValue(ContinuousFilterLabelProperty, ContinuousFilterLabelProperty.GetDefaultValue());
+    }
+    else
+    {
+        // apply the filter before disabling CanFilter or the filter value will be ignored
+        ApplyFilter();
+
+        m_bIsContinuousFiltering = true;
+        m_tLastContinuousFilter = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
+
+        SetValue(CanFilterProperty, false);
+        SetValue(ContinuousFilterLabelProperty, L"Stop Filtering");
+    }
+}
+
+void MemorySearchViewModel::ApplyContinuousFilter()
+{
+    const SearchResult& pResult = m_vSearchResults.back();
+
+    // if there are more than 1000 results, only apply the filter periodically.
+    // formula is "number of results / 100" ms between filterings
+    // for 10000 results, only filter every 100ms
+    // for 50000 results, only filter every 500ms
+    // for 100000 results, only filter every second
+    const auto nResults = pResult.pResults.MatchingAddressCount();
+    if (nResults > 1000)
+    {
+        const auto tNow = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
+        const auto nElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tNow - m_tLastContinuousFilter);
+
+        if (gsl::narrow_cast<size_t>(nElapsed.count()) < nResults / 100)
+            return;
+
+        m_tLastContinuousFilter = tNow;
+    }
+
+    // apply the current filter
+    SearchResult pNewResult;
+    pNewResult.pResults.Initialize(pResult.pResults, pResult.pResults.GetFilterComparison(),
+        pResult.pResults.GetFilterType(), pResult.pResults.GetFilterValue());
+    pNewResult.sSummary = pResult.sSummary;
+    const auto nNewResults = pNewResult.pResults.MatchingAddressCount();
+
+    // replace the last item with the new results
+    m_vSearchResults.erase(m_vSearchResults.end() - 1);
+    m_vSearchResults.push_back(pNewResult);
+
+    ChangePage(m_nSelectedSearchResult);
+
+    if (nNewResults == 0)
+    {
+        // if no results are remaining, stop filtering
+        ToggleContinuousFilter();
+    }
 }
 
 void MemorySearchViewModel::ChangePage(size_t nNewPage)
@@ -660,8 +754,12 @@ void MemorySearchViewModel::UpdateResults()
         pRow->SetAddress(ra::Widen(sAddress));
         pRow->SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
 
-        unsigned int nPreviousValue;
-        pPreviousResults.pResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
+        unsigned int nPreviousValue = 0;
+        if (pCurrentResults.pResults.GetFilterType() == ra::services::SearchFilterType::InitialValue)
+            m_vSearchResults.front().pResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
+        else
+            pPreviousResults.pResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
+
         pRow->SetPreviousValue(ra::StringPrintf(sValueFormat, nPreviousValue));
 
         const auto pCodeNote = pGameContext.FindCodeNote(pResult.nAddress, pResult.nSize);
@@ -690,7 +788,8 @@ void MemorySearchViewModel::UpdateResults()
 
         pRow->SetSelected(m_vSelectedAddresses.find(pRow->nAddress) != m_vSelectedAddresses.end());
 
-        pRow->bMatchesFilter = TestFilter(pResult, pCurrentResults, nPreviousValue);
+        // when continuous filtering values should always match - don't bother testing
+        pRow->bMatchesFilter = m_bIsContinuousFiltering || TestFilter(pResult, pCurrentResults, nPreviousValue);
         pRow->bHasBookmark = vmBookmarks.HasBookmark(pResult.nAddress);
         pRow->bHasBeenModified = (pCurrentResults.vModifiedAddresses.find(pRow->nAddress) != pCurrentResults.vModifiedAddresses.end());
         pRow->UpdateRowColor();
@@ -711,6 +810,7 @@ bool MemorySearchViewModel::TestFilter(const ra::services::SearchResults::Result
         case ra::services::SearchFilterType::Constant:
             return pResult.Compare(pCurrentResults.pResults.GetFilterValue(), pCurrentResults.pResults.GetFilterComparison());
 
+        case ra::services::SearchFilterType::InitialValue:
         case ra::services::SearchFilterType::LastKnownValue:
             return pResult.Compare(nPreviousValue, pCurrentResults.pResults.GetFilterComparison());
 
@@ -751,9 +851,15 @@ void MemorySearchViewModel::OnViewModelBoolValueChanged(const BoolModelProperty:
     else if (args.Property == CanBeginNewSearchProperty)
     {
         if (args.tNewValue)
+        {
             SetValue(CanFilterProperty, GetResultCount() > 0);
+            SetValue(CanContinuousFilterProperty, GetResultCount() > 0);
+        }
         else
+        {
             SetValue(CanFilterProperty, false);
+            SetValue(CanContinuousFilterProperty, false);
+        }
     }
 }
 
@@ -766,7 +872,8 @@ void MemorySearchViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
     else if (args.Property == ResultCountProperty)
     {
         SetValue(ResultCountTextProperty, std::to_wstring(args.tNewValue));
-        SetValue(CanFilterProperty, args.tNewValue > 0);
+        SetValue(CanFilterProperty, !m_bIsContinuousFiltering && (args.tNewValue > 0));
+        SetValue(CanContinuousFilterProperty, args.tNewValue > 0);
     }
     else if (args.Property == ValueTypeProperty)
     {
@@ -820,7 +927,12 @@ void MemorySearchViewModel::PreviousPage()
 {
     // at least two pages (initialization and first filter) must be avaiable to go back to
     if (m_nSelectedSearchResult > 1)
+    {
+        if (m_bIsContinuousFiltering)
+            ToggleContinuousFilter();
+
         ChangePage(m_nSelectedSearchResult - 1);
+    }
 }
 
 void MemorySearchViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool bValue)

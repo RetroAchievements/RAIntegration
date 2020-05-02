@@ -146,7 +146,8 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     m_bindWindow.BindEnabled(IDC_RA_SPECIAL_FILTER, MemorySearchViewModel::CanFilterProperty);
     m_bindWindow.BindEnabled(IDC_RA_FILTER_VALUE, MemorySearchViewModel::CanEditFilterValueProperty);
     m_bindWindow.BindEnabled(IDC_RA_APPLY_FILTER, MemorySearchViewModel::CanFilterProperty);
-    m_bindWindow.BindEnabled(IDC_RA_CONTINUOUS_FILTER, MemorySearchViewModel::CanFilterProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CONTINUOUS_FILTER, MemorySearchViewModel::CanContinuousFilterProperty);
+    m_bindWindow.BindLabel(IDC_RA_CONTINUOUS_FILTER, MemorySearchViewModel::ContinuousFilterLabelProperty);
 
     // Results
     m_bindWindow.BindLabel(IDC_RA_RESULT_COUNT, MemorySearchViewModel::ResultCountTextProperty);
@@ -287,8 +288,6 @@ BOOL MemoryInspectorDialog::OnInitDialog()
     SetWindowFont(GetDlgItem(GetHWND(), IDC_RA_MEMBITS), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
     SetWindowFont(GetDlgItem(GetHWND(), IDC_RA_MEMBITS_TITLE), GetStockObject(SYSTEM_FIXED_FONT), TRUE);
 
-    ShowWindow(GetDlgItem(GetHWND(), IDC_RA_CONTINUOUS_FILTER), SW_HIDE);
-
     return DialogBase::OnInitDialog();
 }
 
@@ -310,6 +309,15 @@ BOOL MemoryInspectorDialog::OnCommand(WORD nCommand)
             auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
             if (vmMemoryInspector)
                 vmMemoryInspector->Search().ApplyFilter();
+
+            return TRUE;
+        }
+
+        case IDC_RA_CONTINUOUS_FILTER:
+        {
+            auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
+            if (vmMemoryInspector)
+                vmMemoryInspector->Search().ToggleContinuousFilter();
 
             return TRUE;
         }

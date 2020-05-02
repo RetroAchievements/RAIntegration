@@ -91,6 +91,7 @@ public:
                     }
                     break;
 
+                case SearchFilterType::InitialValue:
                 case SearchFilterType::LastKnownValue:
                 case SearchFilterType::LastKnownValuePlus:
                 case SearchFilterType::LastKnownValueMinus:
@@ -438,6 +439,60 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
     m_nFilterValue = nFilterValue;
 
     m_pImpl->ApplyFilter(*this, srSource, nCompareType, nFilterType, nFilterValue);
+}
+
+_Use_decl_annotations_
+void SearchResults::Initialize(const SearchResults& srMemory, const SearchResults& srAddresses,
+    ComparisonType nCompareType, SearchFilterType nFilterType, unsigned int nFilterValue)
+{
+    if (&srMemory == &srAddresses)
+    {
+        Initialize(srMemory, nCompareType, nFilterType, nFilterValue);
+        return;
+    }
+
+    // create a new merged SearchResults object that has the matching addresses from srAddresses,
+    // and the memory blocks from srMemory.
+    SearchResults srMerge;
+    srMerge.m_vMatchingAddresses = srAddresses.m_vMatchingAddresses;
+    srMerge.m_vBlocks.reserve(srAddresses.m_vBlocks.size());
+    srMerge.m_nType = srAddresses.m_nType;
+    srMerge.m_pImpl = srAddresses.m_pImpl;
+    srMerge.m_nCompareType = srAddresses.m_nCompareType;
+    srMerge.m_nFilterType = srAddresses.m_nFilterType;
+    srMerge.m_nFilterValue = srAddresses.m_nFilterValue;
+
+    for (const auto pSrcBlock : srAddresses.m_vBlocks)
+    {
+        unsigned int nSize = pSrcBlock.GetSize();
+        ra::ByteAddress nAddress = pSrcBlock.GetAddress();
+        auto& pNewBlock = srMerge.m_vBlocks.emplace_back(nAddress, nSize);
+        unsigned char* pWrite = pNewBlock.GetBytes();
+
+        for (const auto pMemBlock : srMemory.m_vBlocks)
+        {
+            if (nAddress >= pMemBlock.GetAddress() && nAddress < pMemBlock.GetAddress() + pMemBlock.GetSize())
+            {
+                const auto nOffset = nAddress - pMemBlock.GetAddress();
+                const auto nAvailable = pMemBlock.GetSize() - nOffset;
+                if (nAvailable >= nSize)
+                {
+                    memcpy(pWrite, pMemBlock.GetBytes() + nOffset, nSize);
+                    break;
+                }
+                else
+                {
+                    memcpy(pWrite, pMemBlock.GetBytes() + nOffset, nAvailable);
+                    nSize -= nAvailable;
+                    pWrite += nAvailable;
+                    nAddress += nAvailable;
+                }
+            }
+        }
+    }
+
+    // then do a standard comparison against the merged SearchResults
+    Initialize(srMerge, nCompareType, nFilterType, nFilterValue);
 }
 
 size_t SearchResults::MatchingAddressCount() const noexcept

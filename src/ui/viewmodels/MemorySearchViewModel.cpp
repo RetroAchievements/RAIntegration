@@ -104,6 +104,7 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::LastKnownValue), L"Last Value");
     m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::LastKnownValuePlus), L"Last Value Plus");
     m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::LastKnownValueMinus), L"Last Value Minus");
+    m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::InitialValue), L"Initial Value");
 
     AddNotifyTarget(*this);
     m_vResults.AddNotifyTarget(*this);
@@ -541,21 +542,36 @@ void MemorySearchViewModel::ApplyFilter()
 
     SearchResult const& pPreviousResult = *(m_vSearchResults.end() - 2);
     SearchResult& pResult = m_vSearchResults.back();
-    pResult.pResults.Initialize(pPreviousResult.pResults, GetComparisonType(), GetValueType(), nValue);
 
-    const auto nMatches = pResult.pResults.MatchingAddressCount();
-    if (nMatches == pPreviousResult.pResults.MatchingAddressCount())
+    if (GetValueType() == ra::services::SearchFilterType::InitialValue)
     {
-        // same number of matches. if the same filter was applied, don't double up on the search history.
-        // unless this is the first filter, then display it anyway.
+        SearchResult const& pInitialResult = m_vSearchResults.front();
+        pResult.pResults.Initialize(pInitialResult.pResults, pPreviousResult.pResults,
+            GetComparisonType(), GetValueType(), nValue);
+    }
+    else
+    {
+        pResult.pResults.Initialize(pPreviousResult.pResults, GetComparisonType(), GetValueType(), nValue);
+    }
+
+    // if this isn't the first filter being applied, and the result count hasn't changed
+    const auto nMatches = pResult.pResults.MatchingAddressCount();
+    if (nMatches == pPreviousResult.pResults.MatchingAddressCount() && m_vSearchResults.size() > 2)
+    {
+        // check to see if the same filter was applied.
         if (pResult.pResults.GetFilterComparison() == pPreviousResult.pResults.GetFilterComparison() &&
             pResult.pResults.GetFilterType() == pPreviousResult.pResults.GetFilterType() &&
-            pResult.pResults.GetFilterValue() == pPreviousResult.pResults.GetFilterValue() &&
-            m_vSearchResults.size() > 2)
+            pResult.pResults.GetFilterValue() == pPreviousResult.pResults.GetFilterValue())
         {
-            // reset the modification list as if a new filter was applied
-            m_vSearchResults.back().vModifiedAddresses.clear();
-            return;
+            // same filter applied, result set didn't change, if applying an equality filter we know the memory
+            // didn't change, so don't generate a new result set. do clear the modified addresses list.
+            if (pResult.pResults.GetFilterComparison() == ComparisonType::Equals)
+            {
+                m_vSearchResults.pop_back();
+                m_vSearchResults.back().vModifiedAddresses.clear();
+                --m_nSelectedSearchResult;
+                return;
+            }
         }
     }
 
@@ -580,6 +596,10 @@ void MemorySearchViewModel::ApplyFilter()
         case ra::services::SearchFilterType::LastKnownValueMinus:
             builder.Append(L"Last -");
             builder.Append(GetFilterValue());
+            break;
+
+        case ra::services::SearchFilterType::InitialValue:
+            builder.Append(L"Initial");
             break;
     }
     pResult.sSummary = builder.ToWString();
@@ -654,8 +674,12 @@ void MemorySearchViewModel::UpdateResults()
         pRow->SetAddress(ra::Widen(sAddress));
         pRow->SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
 
-        unsigned int nPreviousValue;
-        pPreviousResults.pResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
+        unsigned int nPreviousValue = 0;
+        if (pCurrentResults.pResults.GetFilterType() == ra::services::SearchFilterType::InitialValue)
+            m_vSearchResults.front().pResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
+        else
+            pPreviousResults.pResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
+
         pRow->SetPreviousValue(ra::StringPrintf(sValueFormat, nPreviousValue));
 
         const auto pCodeNote = pGameContext.FindCodeNote(pResult.nAddress, pResult.nSize);
@@ -704,6 +728,7 @@ bool MemorySearchViewModel::TestFilter(const ra::services::SearchResults::Result
         case ra::services::SearchFilterType::Constant:
             return pResult.Compare(pCurrentResults.pResults.GetFilterValue(), pCurrentResults.pResults.GetFilterComparison());
 
+        case ra::services::SearchFilterType::InitialValue:
         case ra::services::SearchFilterType::LastKnownValue:
             return pResult.Compare(nPreviousValue, pCurrentResults.pResults.GetFilterComparison());
 

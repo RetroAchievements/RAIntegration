@@ -100,6 +100,12 @@
     <ClCompile Include="..\rcheevos\src\rhash\md5.c">
       <Filter>md5</Filter>
     </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\runtime_progress.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\compat.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\rcheevos\include\rcheevos.h">
@@ -110,6 +116,9 @@
     </ClInclude>
     <ClInclude Include="..\rcheevos\src\rhash\md5.h">
       <Filter>md5</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rcheevos\src\rcheevos\compat.h">
+      <Filter>rcheevos</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

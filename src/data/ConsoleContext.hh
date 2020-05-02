@@ -14,7 +14,7 @@ namespace data {
 class ConsoleContext
 {
 public:
-    ConsoleContext(ConsoleID nId) noexcept;
+    GSL_SUPPRESS_F6 ConsoleContext(ConsoleID nId) noexcept;
     virtual ~ConsoleContext() noexcept = default;
     ConsoleContext(const ConsoleContext&) noexcept = delete;
     ConsoleContext& operator=(const ConsoleContext&) noexcept = delete;
@@ -24,7 +24,7 @@ public:
     /// <summary>
     /// Gets the unique identifier of the console.
     /// </summary>
-    ConsoleID Id() const noexcept { return m_nId; }
+    ConsoleID Id() const noexcept { GSL_SUPPRESS_ENUM3 return m_nId; }
 
     /// <summary>
     /// Gets a descriptive name for the console.

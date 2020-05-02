@@ -253,6 +253,11 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
         if (*m_pScrollOffsetProperty == args.Property)
         {
             m_nScrollOffset = args.tNewValue;
+
+            const auto nTopIndex = ListView_GetTopIndex(m_hWnd);
+            const auto nSpacing = HIWORD(ListView_GetItemSpacing(m_hWnd, TRUE));
+            const int nDeltaY = (m_nScrollOffset - nTopIndex) * gsl::narrow_cast<int>(nSpacing);
+            ListView_Scroll(m_hWnd, 0, nDeltaY);
             return;
         }
 
@@ -261,9 +266,9 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
             if (m_hWnd)
             {
                 if (args.tNewValue < 1)
-                    ListView_SetItemCount(m_hWnd, 0);
+                    ListView_SetItemCountEx(m_hWnd, 0, 0);
                 else
-                    ListView_SetItemCount(m_hWnd, gsl::narrow_cast<size_t>(args.tNewValue));
+                    ListView_SetItemCountEx(m_hWnd, gsl::narrow_cast<size_t>(args.tNewValue), LVSICF_NOSCROLL);
 
                 CheckForScrollBar();
             }
@@ -350,6 +355,13 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
     }
 }
 
+void GridBinding::DeselectAll() noexcept
+{
+    int nScan = - 1;
+    while ((nScan = ListView_GetNextItem(m_hWnd, nScan, LVNI_SELECTED)) != -1)
+        ListView_SetItemState(m_hWnd, nScan, 0, LVIS_SELECTED);
+}
+
 int GridBinding::UpdateSelected(const IntModelProperty& pProperty, int nNewValue)
 {
     if (m_pIsSelectedProperty == nullptr)
@@ -372,6 +384,10 @@ int GridBinding::UpdateSelected(const IntModelProperty& pProperty, int nNewValue
 
 void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
 {
+    // virtualized listview does not support LVM_INSERTITEM or LVM_SETITEM
+    if (m_pUpdateSelectedItems)
+        return;
+
     std::string sText;
 
     LV_ITEM item{};
@@ -380,6 +396,7 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
     item.iSubItem = 0;
 
     const auto& pColumn = *m_vColumns.at(0);
+    nIndex -= m_nScrollOffset;
 
     sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
     item.pszText = sText.data();
@@ -393,7 +410,7 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
     if (pCheckBoxColumn != nullptr)
     {
         const auto& pBoundProperty = pCheckBoxColumn->GetBoundProperty();
-        ListView_SetCheckState(m_hWnd, nIndex, m_vmItems->GetItemValue(nIndex, pBoundProperty));
+        ListView_SetCheckState(m_hWnd, item.iItem, m_vmItems->GetItemValue(nIndex, pBoundProperty));
     }
 
     for (gsl::index i = 1; ra::to_unsigned(i) < m_vColumns.size(); ++i)
@@ -409,7 +426,7 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
     {
         const bool bSelected = m_vmItems->GetItemValue(nIndex, *m_pIsSelectedProperty);
         if (bSelected || bExisting)
-            ListView_SetItemState(m_hWnd, nIndex, bSelected ? LVIS_SELECTED : 0, LVIS_SELECTED);
+            ListView_SetItemState(m_hWnd, item.iItem, bSelected ? LVIS_SELECTED : 0, LVIS_SELECTED);
     }
 }
 
@@ -421,7 +438,11 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
     // when an item is added, we can't assume the list is still sorted
     m_nSortIndex = -1;
 
-    UpdateRow(nIndex, false);
+    // don't actually add/update items in virtual listview
+    if (m_pUpdateSelectedItems)
+        m_bForceRepaint = true;
+    else
+        UpdateRow(nIndex, false);
 
     if (!m_vmItems->IsUpdating())
         CheckForScrollBar();
@@ -431,7 +452,11 @@ void GridBinding::OnViewModelRemoved(gsl::index nIndex)
 {
     if (m_hWnd)
     {
-        ListView_DeleteItem(m_hWnd, nIndex);
+        // don't actually delete items from virtual listview
+        if (m_pUpdateSelectedItems)
+            m_bForceRepaint = true;
+        else
+            ListView_DeleteItem(m_hWnd, nIndex);
 
         if (!m_vmItems->IsUpdating())
             CheckForScrollBar();
@@ -466,6 +491,8 @@ void GridBinding::CheckForScrollBar()
 
 void GridBinding::OnBeginViewModelCollectionUpdate() noexcept
 {
+    m_bForceRepaint = false;
+
     if (m_hWnd)
         SendMessage(m_hWnd, WM_SETREDRAW, FALSE, 0);
 }
@@ -477,7 +504,11 @@ void GridBinding::OnEndViewModelCollectionUpdate()
         CheckForScrollBar();
 
         SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
-        Invalidate();
+
+        if (m_bForceRepaint && !m_bAdjustingScrollOffset)
+            ControlBinding::ForceRepaint(m_hWnd);
+        else
+            Invalidate();
     }
 }
 
@@ -534,31 +565,6 @@ void GridBinding::SetHWND(DialogBase& pDialog, HWND hControl)
     }
 }
 
-void GridBinding::UpdateScroll()
-{
-    // attempting to access an out-of-range item. assume the user has scrolled and update m_nScrollOffset
-    const auto nMax = ra::to_unsigned(GetValue(*m_pScrollMaximumProperty) - ListView_GetCountPerPage(m_hWnd) - 1);
-    auto nOffset = ra::to_unsigned(ListView_GetTopIndex(m_hWnd));
-    if (nOffset > nMax)
-        nOffset = nMax;
-
-    // SetValue detaches the change notification event, so we won't be notified.
-    // update the value manually. also, it's important to make sure that it's set
-    // before notifying other targets in case they call back into us.
-    m_nScrollOffset = nOffset;
-
-    SetValue(*m_pScrollOffsetProperty, nOffset);
-
-    if (m_pIsSelectedProperty)
-    {
-        for (gsl::index nIndex = 0; nIndex < gsl::narrow<gsl::index>(m_vmItems->Count()); ++nIndex)
-        {
-            const bool bIsSelected = ListView_GetItemState(m_hWnd, nIndex + nOffset, LVIS_SELECTED) != 0;
-            m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, bIsSelected);
-        }
-    }
-}
-
 LRESULT GridBinding::OnLvnItemChanging(const LPNMLISTVIEW pnmListView)
 {
     // if an item is being unselected
@@ -612,7 +618,8 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
         return;
     }
 
-    const auto nIndex = pnmListView->iItem - m_nScrollOffset;
+    // when virtualizing, only the visible items have view models. adjust the index accordingly.
+    const auto nIndex = GetVisibleItemIndex(pnmListView->iItem);
 
     if (m_pIsSelectedProperty)
     {
@@ -655,6 +662,8 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 
 void GridBinding::OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateChanged)
 {
+    // when virtualizing, notify the view model of the entire change, then update the
+    // selected property on the visible items
     if (m_pUpdateSelectedItems &&
         (pnmStateChanged->uNewState ^ pnmStateChanged->uOldState) & LVIS_SELECTED)
     {
@@ -662,8 +671,10 @@ void GridBinding::OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateC
         gsl::index nFrom = pnmStateChanged->iFrom;
         gsl::index nTo = pnmStateChanged->iTo;
 
+        // notify the view model of all the changed items
         m_pUpdateSelectedItems(nFrom, nTo, bSelected);
 
+        // explicitly update the items in the virtualization window
         if (m_pIsSelectedProperty)
         {
             if (nFrom < m_nScrollOffset)
@@ -765,15 +776,80 @@ void GridBinding::OnLvnColumnClick(const LPNMLISTVIEW pnmListView)
     m_vmItems->EndUpdate();
 }
 
-void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
+int GridBinding::GetVisibleItemIndex(int iItem)
 {
-    auto nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
-    if (m_pScrollOffsetProperty && (nIndex < 0 || nIndex > m_vmItems->Count()))
+    // if not virtualizing, the index doesn't need to be modified
+    if (!m_pScrollOffsetProperty)
+        return iItem;
+
+    // make sure there's backing data
+    const auto nItems = gsl::narrow_cast<int>(m_vmItems->Count());
+    if (nItems == 0 || m_vmItems->IsUpdating())
+        return -1;
+
+    // adjust for scroll offset
+    const auto iAdjustedItem = iItem - m_nScrollOffset;
+    if (iAdjustedItem >= 0 && iAdjustedItem < nItems)
+        return iAdjustedItem;
+
+    // quick check to make sure the item is valid
+    const auto nScrollMax = GetValue(*m_pScrollMaximumProperty);
+    if (iItem >= nScrollMax)
+        return -1;
+
+    // calculate what the scroll offset should be
+    int nOffset = 0;
+    if (iAdjustedItem < 0)
     {
-        UpdateScroll();
-        nIndex = pnmDispInfo.item.iItem - m_nScrollOffset;
+        nOffset = m_nScrollOffset + iAdjustedItem;
+        if (nOffset < 0)
+            nOffset = 0;
+    }
+    else
+    {
+        const auto nPerPage = ListView_GetCountPerPage(m_hWnd);
+        const auto nMaxOffset = nScrollMax - nPerPage;
+        nOffset = m_nScrollOffset + iAdjustedItem - nPerPage;
+        if (nOffset > nMaxOffset)
+            nOffset = nMaxOffset;
     }
 
+    // if it's correct, the requested item is not available
+    if (m_nScrollOffset == nOffset)
+        return -1;
+
+    // update the scroll offset
+    {
+        // changing the scroll offset can cause the list to repaint, which may try to
+        // adjust the scroll offset again. make sure it doesn't.
+        m_bAdjustingScrollOffset = true;
+
+        // SetValue detaches the change notification event, so we won't be notified.
+        // Update the value manually. also, it's important to make sure that it's set
+        // before notifying other targets in case they call back into us.
+        m_nScrollOffset = nOffset;
+
+        SetValue(*m_pScrollOffsetProperty, nOffset);
+
+        m_bAdjustingScrollOffset = false;
+
+        Expects(m_nScrollOffset == nOffset);
+    }
+
+    // readjust with new scroll offset
+    iItem -= m_nScrollOffset;
+    if (iItem >= 0 && iItem < nItems)
+        return iItem;
+
+    return -1;
+}
+
+void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
+{
+    // when virtualizing, only the visible items have view models. adjust the index accordingly.
+    const auto nIndex = GetVisibleItemIndex(pnmDispInfo.item.iItem);
+
+    // get the requested data
     m_sDispInfo = ra::Narrow(m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));
     GSL_SUPPRESS_TYPE3 pnmDispInfo.item.pszText = const_cast<LPSTR>(m_sDispInfo.c_str());
 }
@@ -816,10 +892,13 @@ LRESULT GridBinding::OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw)
 
             case CDDS_ITEMPREPAINT:
             {
-                const auto nIndex = gsl::narrow_cast<gsl::index>(pCustomDraw->nmcd.dwItemSpec) - m_nScrollOffset;
-                const Color pColor(ra::to_unsigned(m_vmItems->GetItemValue(nIndex, *m_pRowColorProperty)));
-                if (pColor.Channel.A != 0)
-                    pCustomDraw->clrTextBk = RGB(pColor.Channel.R, pColor.Channel.G, pColor.Channel.B);
+                if (ListView_GetItemState(m_hWnd, pCustomDraw->nmcd.dwItemSpec, LVIS_SELECTED) == 0)
+                {
+                    const auto nIndex = gsl::narrow_cast<gsl::index>(pCustomDraw->nmcd.dwItemSpec) - m_nScrollOffset;
+                    const Color pColor(ra::to_unsigned(m_vmItems->GetItemValue(nIndex, *m_pRowColorProperty)));
+                    if (pColor.Channel.A != 0)
+                        pCustomDraw->clrTextBk = RGB(pColor.Channel.R, pColor.Channel.G, pColor.Channel.B);
+                }
                 break;
             }
         }

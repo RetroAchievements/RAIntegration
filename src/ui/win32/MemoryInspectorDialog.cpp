@@ -67,7 +67,8 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnLvnItemChanged(const LPN
         if (ListView_GetItemState(m_hWnd, pnmListView->iItem, LVIS_FOCUSED))
         {
             auto& vmMemory = GetViewModel<MemorySearchViewModel>();
-            const auto sValue = vmMemory.Results().GetItemValue(gsl::narrow_cast<gsl::index>(pnmListView->iItem) - m_nScrollOffset,
+            const auto nIndex = GetVisibleItemIndex(pnmListView->iItem);
+            const auto sValue = vmMemory.Results().GetItemValue(gsl::narrow_cast<gsl::index>(nIndex),
                 MemorySearchViewModel::SearchResultViewModel::AddressProperty);
             const auto nAddress = ra::ByteAddressFromString(ra::Narrow(sValue));
 
@@ -343,7 +344,10 @@ BOOL MemoryInspectorDialog::OnCommand(WORD nCommand)
         {
             auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
             if (vmMemoryInspector)
+            {
                 vmMemoryInspector->Search().ExcludeSelected();
+                m_bindSearchResults.DeselectAll();
+            }
 
             return TRUE;
         }

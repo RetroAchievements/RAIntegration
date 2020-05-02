@@ -14,8 +14,7 @@ namespace data {
 class ConsoleContext
 {
 public:
-    GSL_SUPPRESS_F6 GSL_SUPPRESS_ENUM3 
-        ConsoleContext(ConsoleID nId, std::wstring&& sName) noexcept : m_nId(nId), m_sName(std::move(sName)) {}
+    ConsoleContext(ConsoleID nId) noexcept;
     virtual ~ConsoleContext() noexcept = default;
     ConsoleContext(const ConsoleContext&) noexcept = delete;
     ConsoleContext& operator=(const ConsoleContext&) noexcept = delete;
@@ -68,6 +67,11 @@ public:
         /// Address space that maps to some segment of read only memory (typically ROM chips on the loaded cartridge)
         /// </summary>
         ReadOnlyMemory,
+
+        /// <summary>
+        /// Address space that doesn't actually map to memory.
+        /// </summary>
+        Unused,
     };
 
     struct MemoryRegion
@@ -81,7 +85,7 @@ public:
     /// <summary>
     /// Gets the list of memory regions mapped for the system.
     /// </summary>
-    virtual const std::vector<MemoryRegion>& MemoryRegions() const noexcept { return m_vEmptyRegions; }
+    const std::vector<MemoryRegion>& MemoryRegions() const noexcept { return m_vRegions; }
 
     /// <summary>
     /// Gets the memory region containing the specified address.
@@ -89,16 +93,11 @@ public:
     /// <returns>Matching <see cref="MemoryRegion"/>, <c>nullptr</c> if not found.
     const MemoryRegion* GetMemoryRegion(ra::ByteAddress nAddress) const;
 
-    /// <summary>
-    /// Gets a context object for the specified console.
-    /// </summary>
-    static std::unique_ptr<ConsoleContext> GetContext(ConsoleID nId);
-
 protected:
     ConsoleID m_nId{};
     std::wstring m_sName;
 
-    static const std::vector<MemoryRegion> m_vEmptyRegions;
+    std::vector<MemoryRegion> m_vRegions;
 };
 
 } // namespace data

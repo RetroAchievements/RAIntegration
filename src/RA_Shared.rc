@@ -160,7 +160,7 @@ EXSTYLE WS_EX_TOOLWINDOW
 CAPTION "Unknown Title"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "The provided game could not be identified.",IDC_STATIC,4,4,138,8
+    LTEXT           "The provided game could not be identified.",IDC_STATIC,4,4,241,8
     LTEXT           "Name:",IDC_STATIC,8,16,22,8
     LTEXT           "My Game (U)",IDC_RA_GAMENAME,48,16,197,8
     LTEXT           "System:",IDC_STATIC,8,24,27,8

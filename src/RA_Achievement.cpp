@@ -359,6 +359,9 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
             case RC_CONDITION_MEASURED:
                 cond.SetConditionType(Condition::Type::Measured);
                 break;
+            case RC_CONDITION_MEASURED_IF:
+                cond.SetConditionType(Condition::Type::MeasuredIf);
+                break;
             case RC_CONDITION_ADD_ADDRESS:
                 cond.SetConditionType(Condition::Type::AddAddress);
                 break;

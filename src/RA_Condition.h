@@ -87,11 +87,12 @@ public:
         AndNext,
         OrNext,
         Measured,
+        MeasuredIf,
         AddAddress
     };
 
-    inline static constexpr std::array<LPCTSTR, 10> TYPE_STR{
-        _T(""), _T("Pause If"), _T("Reset If"), _T("Add Source"), _T("Sub Source"), _T("Add Hits"), _T("And Next"), _T("Or Next"), _T("Measured"), _T("Add Address")};
+    inline static constexpr std::array<LPCTSTR, 11> TYPE_STR{
+        _T(""), _T("Pause If"), _T("Reset If"), _T("Add Source"), _T("Sub Source"), _T("Add Hits"), _T("And Next"), _T("Or Next"), _T("Measured"), _T("Measured If"), _T("Add Address")};
 
     void SerializeAppend(std::string& buffer) const;
 

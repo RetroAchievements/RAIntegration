@@ -290,7 +290,7 @@
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
-    <ClCompile Include="..\src\ui\OverlayTheme.cpp" />
+    <ClCompile Include="..\src\ui\Theme.cpp" />
     <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\CodeNotesViewModel.cpp" />

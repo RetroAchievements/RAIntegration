@@ -5,6 +5,7 @@
 #include "data\EmulatorContext.hh"
 #include "data\GameContext.hh"
 
+#include "ui\EditorTheme.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 namespace ra {
@@ -17,7 +18,7 @@ const IntModelProperty MemoryViewerViewModel::NumVisibleLinesProperty("MemoryVie
 const IntModelProperty MemoryViewerViewModel::SizeProperty("MemoryViewerViewModel", "Size", ra::etoi(MemSize::EightBit));
 
 constexpr uint8_t STALE_COLOR = 0x80;
-constexpr uint8_t HIGHLIGHTED_COLOR = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(MemoryViewerViewModel::TextColor::Red));
+constexpr uint8_t HIGHLIGHTED_COLOR = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(MemoryViewerViewModel::TextColor::Selected));
 constexpr int ADDRESS_COLUMN_WIDTH = 10;
 
 class MemoryViewerViewModel::MemoryBookmarkMonitor : protected ViewModelCollectionBase::NotifyTarget
@@ -141,15 +142,15 @@ static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
     if (pBookmarksViewModel.HasBookmark(nAddress))
     {
         if (pBookmarksViewModel.HasFrozenBookmark(nAddress))
-            return MemoryViewerViewModel::TextColor::Yellow;
+            return MemoryViewerViewModel::TextColor::Frozen;
 
-        return MemoryViewerViewModel::TextColor::Green;
+        return MemoryViewerViewModel::TextColor::HasBookmark;
     }
 
     if (pGameContext.FindCodeNote(nAddress) != nullptr)
-        return MemoryViewerViewModel::TextColor::Blue;
+        return MemoryViewerViewModel::TextColor::HasNote;
 
-    return MemoryViewerViewModel::TextColor::Black;
+    return MemoryViewerViewModel::TextColor::Default;
 }
 
 void MemoryViewerViewModel::UpdateColors()
@@ -577,7 +578,7 @@ void MemoryViewerViewModel::UpdateColor(ra::ByteAddress nAddress)
         const auto nColor = ra::itoe<TextColor>(m_pColor[nAddress - nFirstAddress] & 0x0F);
 
         // byte is selected, ignore
-        if (nColor == TextColor::Red)
+        if (nColor == TextColor::Selected)
             return;
 
         // byte is not selected, update
@@ -761,15 +762,17 @@ void MemoryViewerViewModel::BuildFontSurface()
     const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
     auto pSurface = pSurfaceFactory.CreateSurface(1, 1);
 
-    m_nFont = pSurface->LoadFont("Consolas", 17, ra::ui::FontStyles::Normal);
+    const auto& pEditorTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
+
+    m_nFont = pSurface->LoadFont(pEditorTheme.FontMemoryViewer(), pEditorTheme.FontSizeMemoryViewer(), ra::ui::FontStyles::Normal);
     m_szChar = pSurface->MeasureText(m_nFont, L"0");
     m_szChar.Height--; // don't need space for dangly bits
 
     m_pFontSurface = pSurfaceFactory.CreateSurface(m_szChar.Width * 16, m_szChar.Height * ra::etoi(TextColor::NumColors));
-    m_pFontSurface->FillRectangle(0, 0, m_pFontSurface->GetWidth(), m_pFontSurface->GetHeight(), ra::ui::Color(0xFFFFFFFF));
+    m_pFontSurface->FillRectangle(0, 0, m_pFontSurface->GetWidth(), m_pFontSurface->GetHeight(), pEditorTheme.ColorBackground());
 
-    m_pFontSurface->FillRectangle(0, m_szChar.Height * ra::etoi(TextColor::RedOnBlack),
-        m_pFontSurface->GetWidth(), m_szChar.Height, ra::ui::Color(0xFFC0C0C0));
+    m_pFontSurface->FillRectangle(0, m_szChar.Height * ra::etoi(TextColor::Cursor),
+        m_pFontSurface->GetWidth(), m_szChar.Height, pEditorTheme.ColorCursor());
 
     std::wstring sHexChar = L"0";
     ra::ui::Color nColor(0);
@@ -777,12 +780,12 @@ void MemoryViewerViewModel::BuildFontSurface()
     {
         switch (ra::itoe<TextColor>(i))
         {
-            case TextColor::Black:  nColor.ARGB = 0xFF000000; break;
-            case TextColor::Blue:   nColor.ARGB = 0xFF0000FF; break;
-            case TextColor::Green:  nColor.ARGB = 0xFF00A000; break;
-            case TextColor::RedOnBlack:
-            case TextColor::Red:    nColor.ARGB = 0xFFFF0000; break;
-            case TextColor::Yellow: nColor.ARGB = 0xFFFFC800; break;
+            case TextColor::Default:      nColor = pEditorTheme.ColorNormal(); break;
+            case TextColor::HasNote:      nColor = pEditorTheme.ColorHasNote(); break;
+            case TextColor::HasBookmark:  nColor = pEditorTheme.ColorHasBookmark(); break;
+            case TextColor::Cursor:
+            case TextColor::Selected:     nColor = pEditorTheme.ColorSelected(); break;
+            case TextColor::Frozen:       nColor = pEditorTheme.ColorFrozen(); break;
         }
 
         for (int j = 0; j < 16; ++j)
@@ -814,10 +817,11 @@ void MemoryViewerViewModel::UpdateRenderImage()
         m_pSurface = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>().CreateSurface(nWidth, nHeight);
 
         // background
-        m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), ra::ui::Color(0xFFFFFFFF));
+        const auto& pEditorTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
+        m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), pEditorTheme.ColorBackground());
 
         // separator
-        m_pSurface->FillRectangle(9 * m_szChar.Width, m_szChar.Height, 1, nHeight, ra::ui::Color(0xFFC0C0C0));
+        m_pSurface->FillRectangle(9 * m_szChar.Width, m_szChar.Height, 1, nHeight, pEditorTheme.ColorSeparator());
 
         nNeedsRedraw = REDRAW_ALL;
 
@@ -862,25 +866,25 @@ void MemoryViewerViewModel::RenderMemory()
             const int nByteOffset = ((nBytesPerWord - 1) - (i % nBytesPerWord));
             nX += (nByteOffset * 2) * m_szChar.Width;
 
-            if (nColorUpper == TextColor::Red && m_bHasFocus && !m_bReadOnly)
+            if (nColorUpper == TextColor::Selected && m_bHasFocus && !m_bReadOnly)
             {
                 if (m_nSelectedNibble / 2 == nByteOffset)
                 {
                     if ((m_nSelectedNibble & 1) == 0)
-                        nColorUpper = TextColor::RedOnBlack;
+                        nColorUpper = TextColor::Cursor;
                     else
-                        nColorLower = TextColor::RedOnBlack;
+                        nColorLower = TextColor::Cursor;
                 }
             }
         }
         else
         {
-            if (nColorUpper == TextColor::Red && m_bHasFocus && !m_bReadOnly)
+            if (nColorUpper == TextColor::Selected && m_bHasFocus && !m_bReadOnly)
             {
                 if (m_nSelectedNibble == 0)
-                    nColorUpper = TextColor::RedOnBlack;
+                    nColorUpper = TextColor::Cursor;
                 else
-                    nColorLower = TextColor::RedOnBlack;
+                    nColorLower = TextColor::Cursor;
             }
         }
 
@@ -904,14 +908,15 @@ void MemoryViewerViewModel::RenderAddresses()
     auto nFirstAddress = GetFirstAddress();
     int nY = m_szChar.Height - 1;
 
-    m_pSurface->FillRectangle(0, m_szChar.Height, m_szChar.Width * 8, nVisibleLines * m_szChar.Height, ra::ui::Color(0xFFFFFFFF));
+    const auto& pEditorTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
+    m_pSurface->FillRectangle(0, m_szChar.Height, m_szChar.Width * 8, nVisibleLines * m_szChar.Height, pEditorTheme.ColorBackground());
 
     if (nFirstAddress + nVisibleLines * 16 > m_nTotalMemorySize)
         nVisibleLines = (m_nTotalMemorySize - nFirstAddress) / 16;
 
     for (int i = 0; i < nVisibleLines; ++i)
     {
-        const auto nColor = (nCursorAddress == nFirstAddress) ? ra::ui::Color(0xFFFF8080) : ra::ui::Color(0xFF808080);
+        const auto nColor = (nCursorAddress == nFirstAddress) ? pEditorTheme.ColorHeaderSelected() : pEditorTheme.ColorHeader();
         const auto sAddress = ra::StringPrintf(L"0x%06x", nFirstAddress);
         nFirstAddress += 16;
 
@@ -924,14 +929,15 @@ void MemoryViewerViewModel::RenderHeader()
 {
     const auto nCursorAddress = ra::to_signed(GetAddress() & 0x0F);
 
+    const auto& pEditorTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
     auto nX = ADDRESS_COLUMN_WIDTH * m_szChar.Width;
-    m_pSurface->FillRectangle(nX, 0, 16 * 3 * m_szChar.Width, m_szChar.Height, ra::ui::Color(0xFFFFFFFF));
+    m_pSurface->FillRectangle(nX, 0, 16 * 3 * m_szChar.Width, m_szChar.Height, pEditorTheme.ColorBackground());
 
     const auto nNibblesPerWord = NibblesPerWord();
     std::wstring sValue(nNibblesPerWord, ' ');
     for (int i = 0; i < 16; i += nNibblesPerWord / 2)
     {
-        const auto nColor = (nCursorAddress == i) ? ra::ui::Color(0xFFFF8080) : ra::ui::Color(0xFF808080);
+        const auto nColor = (nCursorAddress == i) ? pEditorTheme.ColorHeaderSelected() : pEditorTheme.ColorHeader();
         sValue.at(gsl::narrow_cast<size_t>(nNibblesPerWord) - 1) = g_sHexChars.at(i);
         m_pSurface->WriteText(nX, -2, m_nFont, nColor, sValue);
         nX += m_szChar.Width * (nNibblesPerWord + 1);

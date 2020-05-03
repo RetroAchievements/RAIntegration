@@ -222,9 +222,6 @@
     <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
-    <ClCompile Include="ui\OverlayTheme.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="services\GameIdentifier.cpp">
       <Filter>Services</Filter>
     </ClCompile>
@@ -317,6 +314,9 @@
     </ClCompile>
     <ClCompile Include="services\PerformanceCounter.cpp">
       <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\Theme.cpp">
+      <Filter>UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -805,6 +805,9 @@
     </ClInclude>
     <ClInclude Include="services\PerformanceCounter.hh">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\EditorTheme.hh">
+      <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

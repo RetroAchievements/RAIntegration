@@ -1,0 +1,18 @@
+{
+  "MemoryViewer": {
+    "Font": "Consolas",
+    "FontSize": 17,
+    "Colors": {
+      "Background": "#121212",
+      "Separator": "#303030",
+      "Cursor": "#606080",
+      "Normal": "#C0C0C0",
+      "Selected": "#E0E0E0",
+      "HasNote": "#4040E0",
+      "HasBookmark": "#40A040",
+      "Frozen": "#E0C040",
+      "Header": "#606060",
+      "HeaderSelected": "#C0B0B0"
+    }
+  }
+}

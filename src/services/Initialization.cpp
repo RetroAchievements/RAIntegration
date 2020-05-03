@@ -22,6 +22,7 @@
 #include "services\impl\WindowsFileSystem.hh"
 #include "services\impl\WindowsHttpRequester.hh"
 
+#include "ui\EditorTheme.hh"
 #include "ui\OverlayTheme.hh"
 #include "ui\WindowViewModelBase.hh"
 #include "ui\drawing\gdi\GDIBitmapSurface.hh"
@@ -152,6 +153,10 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
     auto pOverlayTheme = std::make_unique<ra::ui::OverlayTheme>();
     pOverlayTheme->LoadFromFile();
     ra::services::ServiceLocator::Provide<ra::ui::OverlayTheme>(std::move(pOverlayTheme));
+
+    auto pEditorTheme = std::make_unique<ra::ui::EditorTheme>();
+    pEditorTheme->LoadFromFile();
+    ra::services::ServiceLocator::Provide<ra::ui::EditorTheme>(std::move(pEditorTheme));
 
     auto pWindowManager = std::make_unique<ra::ui::viewmodels::WindowManager>();
     ra::services::ServiceLocator::Provide<ra::ui::viewmodels::WindowManager>(std::move(pWindowManager));

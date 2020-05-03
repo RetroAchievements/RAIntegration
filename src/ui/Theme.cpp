@@ -1,3 +1,4 @@
+#include "EditorTheme.hh"
 #include "OverlayTheme.hh"
 
 #include "RA_Json.h"
@@ -140,6 +141,53 @@ void OverlayTheme::LoadFromFile()
     }
 
     ReadBool(m_bTransparent, document, "Transparent");
+}
+
+void EditorTheme::LoadFromFile()
+{
+    const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    std::wstring sFullPath = pFileSystem.BaseDirectory() + L"Overlay\\editor_theme.json";
+    if (pFileSystem.GetFileSize(sFullPath) == -1)
+        return;
+
+    auto pFile = pFileSystem.OpenTextFile(sFullPath);
+    if (!pFile)
+        return;
+
+    rapidjson::Document document;
+    if (!LoadDocument(document, *pFile))
+    {
+        RA_LOG_ERR("Unable to read Overlay\\editor_theme.json: %s (%zu)",
+            GetParseError_En(document.GetParseError()), document.GetErrorOffset());
+        return;
+    }
+
+    if (document.HasMember("MemoryViewer"))
+    {
+        const rapidjson::Value& memoryViewer = document["MemoryViewer"];
+
+        if (memoryViewer.HasMember("Font"))
+            m_sFontMemoryViewer = memoryViewer["Font"].GetString();
+
+        if (memoryViewer.HasMember("FontSize"))
+            ReadSize(m_nFontSizeMemoryViewer, memoryViewer, "FontSize");
+
+        if (memoryViewer.HasMember("Colors"))
+        {
+            const rapidjson::Value& colors = memoryViewer["Colors"];
+
+            ReadColor(m_colorBackground, colors, "Background");
+            ReadColor(m_colorSeparator, colors, "Separator");
+            ReadColor(m_colorCursor, colors, "Cursor");
+            ReadColor(m_colorNormal, colors, "Normal");
+            ReadColor(m_colorSelected, colors, "Selected");
+            ReadColor(m_colorHasNote, colors, "HasNote");
+            ReadColor(m_colorHasBookmark, colors, "HasBookmark");
+            ReadColor(m_colorFrozen, colors, "Frozen");
+            ReadColor(m_colorHeader, colors, "Header");
+            ReadColor(m_colorHeaderSelected, colors, "HeaderSelected");
+        }
+    }
 }
 
 } // namespace ui

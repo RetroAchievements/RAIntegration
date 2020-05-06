@@ -601,19 +601,39 @@ void MemoryViewerViewModel::OnClick(int nX, int nY)
     if (nRow == 0)
         return;
 
-    const int nColumn = nX / m_szChar.Width;
+    int nColumn = nX / m_szChar.Width;
     if (nColumn < ADDRESS_COLUMN_WIDTH)
-        return;
+    {
+        if (nColumn < ADDRESS_COLUMN_WIDTH - 1 || (nX % m_szChar.Width) < (m_szChar.Width / 2))
+            return;
+
+        ++nColumn;
+    }
 
     const auto nFirstAddress = GetFirstAddress();
     const auto nNibblesPerWord = NibblesPerWord();
     const auto nWordSpacing = nNibblesPerWord + 1;
     const auto nBytesPerWord = nNibblesPerWord / 2;
 
-    const auto nNewAddress = nFirstAddress + (nRow - 1) * 16 + ((nColumn - ADDRESS_COLUMN_WIDTH) / nWordSpacing) * nBytesPerWord;
+    auto nNewAddress = nFirstAddress + (nRow - 1) * 16 + ((nColumn - ADDRESS_COLUMN_WIDTH) / nWordSpacing) * nBytesPerWord;
+    auto nNewNibble = (nColumn - ADDRESS_COLUMN_WIDTH) % nWordSpacing;
+    if (nNewNibble == nNibblesPerWord)
+    {
+        // when clicking between data, adjust to the nearest data
+        const int nMargin = nX % m_szChar.Width;
+        if (nMargin < m_szChar.Width / 2)
+        {
+            nNewNibble--;
+        }
+        else if ((nNewAddress & 0x0F) < ra::to_unsigned(16 - nBytesPerWord))
+        {
+            nNewAddress += nBytesPerWord;
+            nNewNibble = 0;
+        }
+    }
+
     if (nNewAddress < m_nTotalMemorySize)
     {
-        const auto nNewNibble = (nColumn - ADDRESS_COLUMN_WIDTH) % nWordSpacing;
         if (nNewNibble != nNibblesPerWord)
         {
             SetAddress(nNewAddress);

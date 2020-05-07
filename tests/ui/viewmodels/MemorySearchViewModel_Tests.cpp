@@ -101,6 +101,8 @@ private:
         bool CanGoToNextPage() const { return GetValue(CanGoToNextPageProperty); }
         bool HasSelection() const { return GetValue(HasSelectionProperty); }
 
+        void SetScrollOffset(int nValue) { SetValue(ScrollOffsetProperty, nValue); }
+
         const std::wstring& ContinuousFilterLabel() const { return GetValue(ContinuousFilterLabelProperty); }
     };
 
@@ -1193,6 +1195,31 @@ public:
         Assert::IsFalse(search.CanFilter());
         Assert::IsFalse(search.CanContinuousFilter());
         Assert::AreEqual(std::wstring(L"Continuous Filter"), search.ContinuousFilterLabel());
+    }
+
+    TEST_METHOD(TestScrollDisplaysCurrentValue)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.BeginNewSearch();
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
+        search.ApplyFilter();
+
+        search.memory.at(2) = 9;
+        search.DoFrame();
+
+        Assert::IsTrue(search.Results().Count() > 3);
+        AssertRow(search, 0, 0U, L"0x0000", L"0x00", L"0x00");
+        AssertRow(search, 1, 1U, L"0x0001", L"0x01", L"0x01");
+        AssertRow(search, 2, 2U, L"0x0002", L"0x09", L"0x02");
+
+        search.SetScrollOffset(1U);
+
+        Assert::IsTrue(search.Results().Count() > 3);
+        AssertRow(search, 0, 1U, L"0x0001", L"0x01", L"0x01");
+        AssertRow(search, 1, 2U, L"0x0002", L"0x09", L"0x02");
+        AssertRow(search, 2, 3U, L"0x0003", L"0x03", L"0x03");
     }
 };
 

@@ -722,6 +722,7 @@ void MemorySearchViewModel::UpdateResults()
     const auto& vmBookmarks = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
 
     m_vResults.RemoveNotifyTarget(*this);
     m_vResults.BeginUpdate();
@@ -755,6 +756,8 @@ void MemorySearchViewModel::UpdateResults()
         }
 
         pRow->SetAddress(ra::Widen(sAddress));
+
+        pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, pResult.nSize);
         pRow->SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
 
         unsigned int nPreviousValue = 0;
@@ -806,9 +809,9 @@ void MemorySearchViewModel::UpdateResults()
     m_vResults.AddNotifyTarget(*this);
 }
 
-void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote)
+void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring&)
 {
-    for (gsl::index i = 0; i < m_vResults.Count(); ++i)
+    for (gsl::index i = 0; i < ra::to_signed(m_vResults.Count()); ++i)
     {
         auto* pRow = m_vResults.GetItemAt(i);
         if (pRow != nullptr && pRow->nAddress == nAddress)

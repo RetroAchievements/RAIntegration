@@ -303,6 +303,8 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
             sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
             item.pszText = sText.data();
             ListView_SetItem(m_hWnd, &item);
+
+            m_bForceRepaint = true;
         }
     }
 }
@@ -327,6 +329,8 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
             sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
             item.pszText = sText.data();
             ListView_SetItem(m_hWnd, &item);
+
+            m_bForceRepaint = true;
         }
     }
 }
@@ -351,6 +355,8 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
             sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
             item.pszText = sText.data();
             ListView_SetItem(m_hWnd, &item);
+
+            m_bForceRepaint = true;
         }
     }
 }

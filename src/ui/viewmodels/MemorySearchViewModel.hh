@@ -3,6 +3,7 @@
 #pragma once
 
 #include "data\EmulatorContext.hh"
+#include "data\GameContext.hh"
 #include "data\Types.hh"
 
 #include "services\SearchResults.h"
@@ -18,7 +19,8 @@ namespace viewmodels {
 class MemorySearchViewModel : public ViewModelBase,
     protected ViewModelBase::NotifyTarget,
     protected ViewModelCollectionBase::NotifyTarget,
-    protected data::EmulatorContext::NotifyTarget
+    protected data::EmulatorContext::NotifyTarget,
+    protected data::GameContext::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 MemorySearchViewModel();
@@ -457,6 +459,9 @@ protected:
 
     // EmulatorContext::NotifyTarget
     void OnTotalMemorySizeChanged() override;
+
+    // GameContext::NotifyTarget
+    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote) override;
 
 private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);

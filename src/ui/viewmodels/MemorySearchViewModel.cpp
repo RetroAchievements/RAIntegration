@@ -125,6 +125,9 @@ void MemorySearchViewModel::InitializeNotifyTargets()
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
     pEmulatorContext.AddNotifyTarget(*this);
     OnTotalMemorySizeChanged();
+
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    pGameContext.AddNotifyTarget(*this);
 }
 
 void MemorySearchViewModel::OnTotalMemorySizeChanged()
@@ -801,6 +804,19 @@ void MemorySearchViewModel::UpdateResults()
 
     m_vResults.EndUpdate();
     m_vResults.AddNotifyTarget(*this);
+}
+
+void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote)
+{
+    for (gsl::index i = 0; i < m_vResults.Count(); ++i)
+    {
+        auto* pRow = m_vResults.GetItemAt(i);
+        if (pRow != nullptr && pRow->nAddress == nAddress)
+        {
+            UpdateResults();
+            break;
+        }
+    }
 }
 
 bool MemorySearchViewModel::TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue) noexcept

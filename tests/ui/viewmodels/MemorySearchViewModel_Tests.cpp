@@ -1197,6 +1197,41 @@ public:
         Assert::AreEqual(std::wstring(L"Continuous Filter"), search.ContinuousFilterLabel());
     }
 
+    TEST_METHOD(TestOnCodeNoteChanged)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.mockConsoleContext.AddMemoryRegion({ 0U }, { 0xFFU }, ra::data::ConsoleContext::AddressType::SystemRAM, "System RAM");
+        search.BeginNewSearch();
+
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
+        search.SetFilterValue(L"12");
+
+        search.ApplyFilter();
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        auto* pRow = search.Results().GetItemAt(0);
+        Assert::IsNotNull(pRow);
+        Ensures(pRow != nullptr);
+
+        Assert::AreEqual({ 12U }, pRow->nAddress);
+        Assert::AreEqual(std::wstring(L"System RAM"), pRow->GetDescription());
+        Assert::IsFalse(pRow->bHasCodeNote);
+
+        search.mockGameContext.SetCodeNote({ 12U }, L"Note");
+        Assert::AreEqual(std::wstring(L"Note"), pRow->GetDescription());
+        Assert::IsTrue(pRow->bHasCodeNote);
+
+        search.mockGameContext.SetCodeNote({ 12U }, L"Note 2");
+        Assert::AreEqual(std::wstring(L"Note 2"), pRow->GetDescription());
+        Assert::IsTrue(pRow->bHasCodeNote);
+
+        search.mockGameContext.SetCodeNote({ 12U }, L"");
+        Assert::AreEqual(std::wstring(L"System RAM"), pRow->GetDescription());
+        Assert::IsFalse(pRow->bHasCodeNote);
+    }
+
     TEST_METHOD(TestScrollDisplaysCurrentValue)
     {
         MemorySearchViewModelHarness search;

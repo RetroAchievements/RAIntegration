@@ -30,12 +30,13 @@ public:
 
     void ResetMemoryRegions() noexcept { m_vRegions.clear(); }
 
-    void AddMemoryRegion(ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, AddressType nAddressType)
+    void AddMemoryRegion(ra::ByteAddress nStartAddress, ra::ByteAddress nEndAddress, AddressType nAddressType, const std::string& sDescription = "")
     { 
         auto& pRegion = m_vRegions.emplace_back();
         pRegion.StartAddress = nStartAddress;
         pRegion.EndAddress = nEndAddress;
         pRegion.Type = nAddressType;
+        pRegion.Description = sDescription;
     }
 
 private:

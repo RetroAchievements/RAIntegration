@@ -22,6 +22,9 @@ constexpr unsigned char COLOR_RED = gsl::narrow_cast<unsigned char>(ra::etoi(Mem
 constexpr unsigned char COLOR_BLACK = gsl::narrow_cast<unsigned char>(ra::etoi(MemoryViewerViewModel::TextColor::Default));
 constexpr unsigned char COLOR_REDRAW = 0x80;
 
+constexpr int CHAR_WIDTH = 8;
+constexpr int CHAR_HEIGHT = 12;
+
 TEST_CLASS(MemoryViewerViewModel_Tests)
 {
 private:
@@ -35,6 +38,9 @@ private:
         GSL_SUPPRESS_F6 MemoryViewerViewModelHarness() : MemoryViewerViewModel()
         {
             InitializeNotifyTargets();
+
+            m_szChar.Width = CHAR_WIDTH;
+            m_szChar.Height = CHAR_HEIGHT;
         }
 
         int GetSelectedNibble() const noexcept { return m_nSelectedNibble; }
@@ -1571,6 +1577,122 @@ public:
         viewer.mockEmulatorContext.ClearMemoryBlocks();
         Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
         Assert::AreEqual({ 0U }, viewer.GetAddress());
+    }
+
+    TEST_METHOD(TestOnClickEightBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256); // 16 rows of 16 bytes
+
+        Assert::AreEqual(MemSize::EightBit, viewer.GetSize());
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        // 14th character is second character of second byte
+        viewer.OnClick(14 * CHAR_WIDTH + 4, CHAR_HEIGHT * 2 + 4);
+        Assert::AreEqual({ 17U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+
+        // click in left margin should not change address
+        viewer.OnClick(4, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 17U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+
+        // click in top margin should not change address
+        viewer.OnClick(20 * CHAR_WIDTH + 4, 4);
+        Assert::AreEqual({ 17U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+
+        // click in right margin should not change address
+        viewer.OnClick(57 * CHAR_WIDTH + 4, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 17U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+
+        // more than half a char away from first valid column, ignore
+        viewer.OnClick(9 * CHAR_WIDTH + 3, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 17U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+
+        // less than half a char away from first valid column, select first column
+        viewer.OnClick(9 * CHAR_WIDTH + 4, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        // rightmost pixel of first valid column, keep selection
+        viewer.OnClick(11 * CHAR_WIDTH - 1, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        // leftmost pixel of second valid column, update nibble
+        viewer.OnClick(11 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+
+        // less than half a char into third column, keep selection
+        viewer.OnClick(12 * CHAR_WIDTH + 3, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+
+        // half a char into third column, move to next byte
+        viewer.OnClick(12 * CHAR_WIDTH + 4, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 1U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+    }
+
+    TEST_METHOD(TestOnClickSixteenBit)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256); // 16 rows of 16 bytes
+
+        viewer.SetSize(MemSize::SixteenBit);
+        Assert::AreEqual(MemSize::SixteenBit, viewer.GetSize());
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        // 17th character is third character of second word
+        viewer.OnClick(17 * CHAR_WIDTH + 4, CHAR_HEIGHT * 2 + 4);
+        Assert::AreEqual({ 18U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+
+        // click in right margin should not change address
+        viewer.OnClick(49 * CHAR_WIDTH + 4, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 18U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+
+        // more than half a char away from first valid column, ignore
+        viewer.OnClick(9 * CHAR_WIDTH + 3, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 18U }, viewer.GetAddress());
+        Assert::AreEqual({ 2U }, viewer.GetSelectedNibble());
+
+        // less than half a char away from first valid column, select first column
+        viewer.OnClick(9 * CHAR_WIDTH + 4, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        // rightmost pixel of first valid column, keep selection
+        viewer.OnClick(11 * CHAR_WIDTH - 1, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+
+        // leftmost pixel of second valid column, update nibble
+        viewer.OnClick(11 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+
+        // leftmost pixel of fourth valid column, update nibble
+        viewer.OnClick(13 * CHAR_WIDTH, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+
+        // less than half a char into fifth column, keep selection
+        viewer.OnClick(14 * CHAR_WIDTH + 3, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::AreEqual({ 3U }, viewer.GetSelectedNibble());
+
+        // half a char into fifth column, move to next byte
+        viewer.OnClick(14 * CHAR_WIDTH + 4, CHAR_HEIGHT + 4);
+        Assert::AreEqual({ 2U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
     }
 };
 

@@ -185,6 +185,7 @@ protected:
     uint8_t* m_pMemory;
     uint8_t* m_pColor;
 
+    ra::ui::Size m_szChar;
     int m_nSelectedNibble = 0;
     ra::ByteAddress m_nTotalMemorySize = 0;
     bool m_bReadOnly = true;
@@ -215,8 +216,6 @@ private:
     std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
     std::unique_ptr<ra::ui::drawing::ISurface> m_pFontSurface;
     std::unique_ptr<uint8_t[]> m_pBuffer;
-
-    ra::ui::Size m_szChar;
 
     int m_nFont = 0;
 

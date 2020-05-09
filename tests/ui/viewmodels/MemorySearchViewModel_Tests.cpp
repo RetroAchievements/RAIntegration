@@ -101,6 +101,8 @@ private:
         bool CanGoToNextPage() const { return GetValue(CanGoToNextPageProperty); }
         bool HasSelection() const { return GetValue(HasSelectionProperty); }
 
+        void SetScrollOffset(int nValue) { SetValue(ScrollOffsetProperty, nValue); }
+
         const std::wstring& ContinuousFilterLabel() const { return GetValue(ContinuousFilterLabelProperty); }
     };
 
@@ -1193,6 +1195,66 @@ public:
         Assert::IsFalse(search.CanFilter());
         Assert::IsFalse(search.CanContinuousFilter());
         Assert::AreEqual(std::wstring(L"Continuous Filter"), search.ContinuousFilterLabel());
+    }
+
+    TEST_METHOD(TestOnCodeNoteChanged)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.mockConsoleContext.AddMemoryRegion({ 0U }, { 0xFFU }, ra::data::ConsoleContext::AddressType::SystemRAM, "System RAM");
+        search.BeginNewSearch();
+
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
+        search.SetFilterValue(L"12");
+
+        search.ApplyFilter();
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        auto* pRow = search.Results().GetItemAt(0);
+        Assert::IsNotNull(pRow);
+        Ensures(pRow != nullptr);
+
+        Assert::AreEqual({ 12U }, pRow->nAddress);
+        Assert::AreEqual(std::wstring(L"System RAM"), pRow->GetDescription());
+        Assert::IsFalse(pRow->bHasCodeNote);
+
+        search.mockGameContext.SetCodeNote({ 12U }, L"Note");
+        Assert::AreEqual(std::wstring(L"Note"), pRow->GetDescription());
+        Assert::IsTrue(pRow->bHasCodeNote);
+
+        search.mockGameContext.SetCodeNote({ 12U }, L"Note 2");
+        Assert::AreEqual(std::wstring(L"Note 2"), pRow->GetDescription());
+        Assert::IsTrue(pRow->bHasCodeNote);
+
+        search.mockGameContext.SetCodeNote({ 12U }, L"");
+        Assert::AreEqual(std::wstring(L"System RAM"), pRow->GetDescription());
+        Assert::IsFalse(pRow->bHasCodeNote);
+    }
+
+    TEST_METHOD(TestScrollDisplaysCurrentValue)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.BeginNewSearch();
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
+        search.ApplyFilter();
+
+        search.memory.at(2) = 9;
+        search.DoFrame();
+
+        Assert::IsTrue(search.Results().Count() > 3);
+        AssertRow(search, 0, 0U, L"0x0000", L"0x00", L"0x00");
+        AssertRow(search, 1, 1U, L"0x0001", L"0x01", L"0x01");
+        AssertRow(search, 2, 2U, L"0x0002", L"0x09", L"0x02");
+
+        search.SetScrollOffset(1U);
+
+        Assert::IsTrue(search.Results().Count() > 3);
+        AssertRow(search, 0, 1U, L"0x0001", L"0x01", L"0x01");
+        AssertRow(search, 1, 2U, L"0x0002", L"0x09", L"0x02");
+        AssertRow(search, 2, 3U, L"0x0003", L"0x03", L"0x03");
     }
 };
 

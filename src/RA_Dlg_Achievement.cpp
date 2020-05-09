@@ -325,6 +325,12 @@ _Success_(return ) _NODISCARD BOOL
                         return FALSE;
                     }
 
+                    if (pCondition.GetConditionType() == Condition::Type::MeasuredIf)
+                    {
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Achievement contains pre-release logic.", L"* MeasuredIf");
+                        return FALSE;
+                    }
+
                     if (pCondition.CompSource().GetSize() == MemSize::BitCount ||
                         pCondition.CompTarget().GetSize() == MemSize::BitCount)
                     {

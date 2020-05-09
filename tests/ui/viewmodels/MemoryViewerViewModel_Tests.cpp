@@ -18,8 +18,8 @@ namespace ui {
 namespace viewmodels {
 namespace tests {
 
-constexpr unsigned char COLOR_RED = gsl::narrow_cast<unsigned char>(ra::etoi(MemoryViewerViewModel::TextColor::Red));
-constexpr unsigned char COLOR_BLACK = gsl::narrow_cast<unsigned char>(ra::etoi(MemoryViewerViewModel::TextColor::Black));
+constexpr unsigned char COLOR_RED = gsl::narrow_cast<unsigned char>(ra::etoi(MemoryViewerViewModel::TextColor::Selected));
+constexpr unsigned char COLOR_BLACK = gsl::narrow_cast<unsigned char>(ra::etoi(MemoryViewerViewModel::TextColor::Default));
 constexpr unsigned char COLOR_REDRAW = 0x80;
 
 TEST_CLASS(MemoryViewerViewModel_Tests)

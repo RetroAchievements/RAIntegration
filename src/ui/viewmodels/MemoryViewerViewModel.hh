@@ -69,12 +69,12 @@ public:
 
     enum class TextColor
     {
-        Black = 0,  // default
-        Red,        // selected
-        RedOnBlack, // selected and highlighted
-        Blue,       // has notes
-        Green,      // has bookmark
-        Yellow,     // has frozen bookmark
+        Default = 0,     // default
+        Selected,        // selected
+        Cursor,          // selected and highlighted
+        HasNote,         // has notes
+        HasBookmark,     // has bookmark
+        Frozen,          // has frozen bookmark
 
         NumColors
     };

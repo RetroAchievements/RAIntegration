@@ -3,6 +3,7 @@
 #include "ra_fwd.h"
 #include "ra_utility.h"
 
+#include "ui/EditorTheme.hh"
 #include "ui/drawing/gdi/GDISurface.hh"
 
 namespace ra {
@@ -296,28 +297,36 @@ void MemoryViewerControlBinding::RenderMemViewer()
     GetClientRect(m_hWnd, &rcClient);
 
     const auto& pRenderImage = m_pViewModel.GetRenderImage();
+    const auto& pEditorTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
+    HBRUSH hBackground = CreateSolidBrush(RGB(pEditorTheme.ColorBackground().Channel.R, pEditorTheme.ColorBackground().Channel.G, pEditorTheme.ColorBackground().Channel.B));
 
-    HBRUSH hBackground = GetStockBrush(WHITE_BRUSH);
-    RECT rcFill{ rcClient.left + 1, rcClient.top + 1, rcClient.left + MEMVIEW_MARGIN, rcClient.bottom - 2 };
+    // left margin
+    RECT rcFill{ rcClient.left, rcClient.top, rcClient.left + MEMVIEW_MARGIN, rcClient.bottom - 1 };
     FillRect(hDC, &rcFill, hBackground);
 
+    // right margin
     rcFill.left = rcClient.left + MEMVIEW_MARGIN + pRenderImage.GetWidth();
-    rcFill.right = rcClient.right - 2;
+    rcFill.right = rcClient.right - 1;
     FillRect(hDC, &rcFill, hBackground);
 
-    rcFill.left = rcClient.left + 1;
+    // top margin
+    rcFill.left = rcClient.left;
     rcFill.bottom = rcClient.top + MEMVIEW_MARGIN;
     FillRect(hDC, &rcFill, hBackground);
 
+    // bottom margin
     rcFill.top = rcClient.top + MEMVIEW_MARGIN + pRenderImage.GetHeight();
-    rcFill.bottom = rcClient.bottom - 2;
+    rcFill.bottom = rcClient.bottom - 1;
     FillRect(hDC, &rcFill, hBackground);
 
-    DrawEdge(hDC, &rcClient, EDGE_ETCHED, BF_RECT);
+    // frame
+    FrameRect(hDC, &rcClient, GetSysColorBrush(COLOR_3DSHADOW));
 
+    // content
     ra::ui::drawing::gdi::GDISurface pSurface(hDC, rcClient);
     pSurface.DrawSurface(MEMVIEW_MARGIN, MEMVIEW_MARGIN, pRenderImage);
 
+    DeleteObject(hBackground);
     EndPaint(m_hWnd, &ps);
 }
 

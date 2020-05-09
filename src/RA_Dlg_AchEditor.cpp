@@ -975,8 +975,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                             if (nSelectedIndex != -1)
                             {
                                 // Implicit updating:
-                                TCHAR buffer[1024];
-                                if (GetDlgItemText(hDlg, IDC_RA_ACH_TITLE, buffer, 1024))
+                                TCHAR buffer[1024] = _T("");
+                                HWND hTitle = GetDlgItem(hDlg, IDC_RA_ACH_TITLE);
+                                if (GetWindowTextLength(hTitle) == 0 || GetDlgItemText(hDlg, IDC_RA_ACH_TITLE, buffer, 1024))
                                 {
                                     pActiveAch->SetTitle(ra::Narrow(buffer));
 
@@ -1017,8 +1018,9 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
 
                             // Implicit updating:
                             // char* psDesc = g_AchievementsDialog.LbxDataAt( nSelectedIndex, (int)Dlg_Achievements:: );
-                            TCHAR buffer[128];
-                            if (GetDlgItemText(hDlg, IDC_RA_ACH_DESC, buffer, 128))
+                            TCHAR buffer[128] = _T("");
+                            HWND hDescription = GetDlgItem(hDlg, IDC_RA_ACH_DESC);
+                            if (GetWindowTextLength(hDescription) == 0 || GetDlgItemText(hDlg, IDC_RA_ACH_DESC, buffer, 128))
                                 pActiveAch->SetDescription(ra::Narrow(buffer));
                         }
                         break;

@@ -839,6 +839,15 @@ int GridBinding::GetVisibleItemIndex(int iItem)
 
         m_bAdjustingScrollOffset = false;
 
+        ControlBinding::InvokeOnUIThread([this]()
+        {
+            if (m_bForceRepaint)
+            {
+                m_bForceRepaint = false;
+                ControlBinding::ForceRepaint(m_hWnd);
+            }
+        });
+
         Expects(m_nScrollOffset == nOffset);
     }
 

@@ -444,7 +444,7 @@ public:
         pAchievement5->SetConditionHitCount(0, 0, 2);
 
         std::string sBuffer;
-        int nSize = runtime.SaveProgressToBuffer(NULL, 0);
+        int nSize = runtime.SaveProgressToBuffer(nullptr, 0);
         sBuffer.resize(nSize);
         runtime.SaveProgressToBuffer(sBuffer.data(), nSize);
 
@@ -461,7 +461,7 @@ public:
         runtime.GetAchievementTrigger(3U)->state = RC_TRIGGER_STATE_ACTIVE;
         pAchievement3->SetConditionHitCount(0, 0, 1);
         pAchievement5->SetConditionHitCount(0, 0, 1);
-        nSize = runtime.SaveProgressToBuffer(sBuffer.data(), sBuffer.size());
+        nSize = runtime.SaveProgressToBuffer(sBuffer.data(), nSize);
         if (nSize > sBuffer.size())
         {
             sBuffer.resize(nSize);
@@ -479,7 +479,7 @@ public:
         // both active, save and restore should reset both
         runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
         pAchievement5->SetConditionHitCount(0, 0, 1);
-        nSize = runtime.SaveProgressToBuffer(sBuffer.data(), sBuffer.size());
+        nSize = runtime.SaveProgressToBuffer(sBuffer.data(), nSize);
         if (nSize > sBuffer.size())
         {
             sBuffer.resize(nSize);

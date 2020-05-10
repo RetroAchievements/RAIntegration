@@ -689,7 +689,9 @@ bool AchievementRuntime::LoadProgressFromBuffer(const char* pBuffer)
     if (!pUserContext.IsLoggedIn())
         return false;
 
-    rc_runtime_deserialize_progress(&m_pRuntime, (unsigned char*)pBuffer, nullptr);
+    const unsigned char* pBytes;
+    GSL_SUPPRESS_TYPE1 pBytes = reinterpret_cast<const unsigned char*>(pBuffer);
+    rc_runtime_deserialize_progress(&m_pRuntime, pBytes, nullptr);
     return true;
 }
 

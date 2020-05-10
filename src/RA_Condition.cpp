@@ -6,7 +6,7 @@ _NODISCARD static _CONSTANT_FN ComparisonSizeToPrefix(_In_ MemSize nSize) noexce
 {
     switch (nSize)
     {
-        case MemSize::BitCount:     return "C";
+        case MemSize::BitCount:     return "K";
         case MemSize::Bit_0:        return "M";
         case MemSize::Bit_1:        return "N";
         case MemSize::Bit_2:        return "O";

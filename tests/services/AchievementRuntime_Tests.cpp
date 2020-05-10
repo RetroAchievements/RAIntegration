@@ -353,7 +353,7 @@ public:
         Assert::AreEqual(0U, pTrigger2->requirement->conditions->current_hits);
     }
 
-    TEST_METHOD(TestPersistProgress)
+    TEST_METHOD(TestPersistProgressFile)
     {
         AchievementRuntimeHarness runtime;
         auto& ach1 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
@@ -371,12 +371,12 @@ public:
         pAchievement3->SetConditionHitCount(0, 0, 2);
         pAchievement5->SetConditionHitCount(0, 0, 2);
 
-        runtime.SaveProgress("test.sav");
+        runtime.SaveProgressToFile("test.sav");
 
         // achievements weren't active, so they weren't persisted
         pAchievement3->SetConditionHitCount(0, 0, 1);
         pAchievement5->SetConditionHitCount(0, 0, 1);
-        runtime.LoadProgress("test.sav");
+        runtime.LoadProgressFromFile("test.sav");
         Assert::AreEqual(0U, pAchievement3->GetConditionHitCount(0, 0));
         Assert::AreEqual(0U, pAchievement5->GetConditionHitCount(0, 0));
 
@@ -386,24 +386,24 @@ public:
         runtime.GetAchievementTrigger(3U)->state = RC_TRIGGER_STATE_ACTIVE;
         pAchievement3->SetConditionHitCount(0, 0, 1);
         pAchievement5->SetConditionHitCount(0, 0, 1);
-        runtime.SaveProgress("test.sav");
+        runtime.SaveProgressToFile("test.sav");
         pAchievement5->SetActive(true);
         runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
 
         pAchievement3->SetConditionHitCount(0, 0, 2);
         pAchievement5->SetConditionHitCount(0, 0, 2);
-        runtime.LoadProgress("test.sav");
+        runtime.LoadProgressFromFile("test.sav");
         Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
         Assert::AreEqual(0U, pAchievement5->GetConditionHitCount(0, 0));
 
         // both active, save and restore should reset both
         runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
         pAchievement5->SetConditionHitCount(0, 0, 1);
-        runtime.SaveProgress("test.sav");
+        runtime.SaveProgressToFile("test.sav");
 
         pAchievement3->SetConditionHitCount(0, 0, 2);
         pAchievement5->SetConditionHitCount(0, 0, 2);
-        runtime.LoadProgress("test.sav");
+        runtime.LoadProgressFromFile("test.sav");
         Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
         Assert::AreEqual(1U, pAchievement5->GetConditionHitCount(0, 0));
 
@@ -411,7 +411,7 @@ public:
         pAchievement3->SetConditionHitCount(0, 0, 6);
         pAchievement5->SetConditionHitCount(0, 0, 6);
         pAchievement5->SetActive(false);
-        runtime.LoadProgress("test.sav");
+        runtime.LoadProgressFromFile("test.sav");
         Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
         Assert::AreEqual(6U, pAchievement5->GetConditionHitCount(0, 0));
 
@@ -421,7 +421,92 @@ public:
         pAchievement3->RebuildTrigger();
         pAchievement3->SetConditionHitCount(0, 0, 2);
         Assert::IsTrue(pAchievement3->Active());
-        runtime.LoadProgress("test.sav");
+        runtime.LoadProgressFromFile("test.sav");
+        Assert::AreEqual(0U, pAchievement3->GetConditionHitCount(0, 0));
+    }
+
+    TEST_METHOD(TestPersistProgressBuffer)
+    {
+        AchievementRuntimeHarness runtime;
+        auto& ach1 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
+        ach1.SetID(3U);
+        ach1.SetTrigger("1=1.10.");
+        auto& ach2 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
+        ach2.SetID(5U);
+        ach2.SetTrigger("1=1.2.");
+
+        const gsl::not_null<Achievement*> pAchievement3{
+            gsl::make_not_null(runtime.mockGameContext.FindAchievement(3U))};
+        const gsl::not_null<Achievement*> pAchievement5{
+            gsl::make_not_null(runtime.mockGameContext.FindAchievement(5U))};
+
+        pAchievement3->SetConditionHitCount(0, 0, 2);
+        pAchievement5->SetConditionHitCount(0, 0, 2);
+
+        std::string sBuffer;
+        int nSize = runtime.SaveProgressToBuffer(NULL, 0);
+        sBuffer.resize(nSize);
+        runtime.SaveProgressToBuffer(sBuffer.data(), nSize);
+
+        // achievements weren't active, so they weren't persisted
+        pAchievement3->SetConditionHitCount(0, 0, 1);
+        pAchievement5->SetConditionHitCount(0, 0, 1);
+        runtime.LoadProgressFromBuffer(sBuffer.data());
+        Assert::AreEqual(0U, pAchievement3->GetConditionHitCount(0, 0));
+        Assert::AreEqual(0U, pAchievement5->GetConditionHitCount(0, 0));
+
+        // activate one achievement, save, activate other, restore - only first should be restored,
+        // second should be reset because it wasn't captured.
+        pAchievement3->SetActive(true);
+        runtime.GetAchievementTrigger(3U)->state = RC_TRIGGER_STATE_ACTIVE;
+        pAchievement3->SetConditionHitCount(0, 0, 1);
+        pAchievement5->SetConditionHitCount(0, 0, 1);
+        nSize = runtime.SaveProgressToBuffer(sBuffer.data(), sBuffer.size());
+        if (nSize > sBuffer.size())
+        {
+            sBuffer.resize(nSize);
+            runtime.SaveProgressToBuffer(sBuffer.data(), nSize);
+        }
+        pAchievement5->SetActive(true);
+        runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
+
+        pAchievement3->SetConditionHitCount(0, 0, 2);
+        pAchievement5->SetConditionHitCount(0, 0, 2);
+        runtime.LoadProgressFromBuffer(sBuffer.data());
+        Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
+        Assert::AreEqual(0U, pAchievement5->GetConditionHitCount(0, 0));
+
+        // both active, save and restore should reset both
+        runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
+        pAchievement5->SetConditionHitCount(0, 0, 1);
+        nSize = runtime.SaveProgressToBuffer(sBuffer.data(), sBuffer.size());
+        if (nSize > sBuffer.size())
+        {
+            sBuffer.resize(nSize);
+            runtime.SaveProgressToBuffer(sBuffer.data(), nSize);
+        }
+
+        pAchievement3->SetConditionHitCount(0, 0, 2);
+        pAchievement5->SetConditionHitCount(0, 0, 2);
+        runtime.LoadProgressFromBuffer(sBuffer.data());
+        Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
+        Assert::AreEqual(1U, pAchievement5->GetConditionHitCount(0, 0));
+
+        // second no longer active, file contains data that should be ignored
+        pAchievement3->SetConditionHitCount(0, 0, 6);
+        pAchievement5->SetConditionHitCount(0, 0, 6);
+        pAchievement5->SetActive(false);
+        runtime.LoadProgressFromBuffer(sBuffer.data());
+        Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
+        Assert::AreEqual(6U, pAchievement5->GetConditionHitCount(0, 0));
+
+        // if the definition changes, the hits should be reset instead of remembered
+        pAchievement3->GenerateConditions();
+        pAchievement3->GetCondition(0, 0).CompSource().SetValue(2);
+        pAchievement3->RebuildTrigger();
+        pAchievement3->SetConditionHitCount(0, 0, 2);
+        Assert::IsTrue(pAchievement3->Active());
+        runtime.LoadProgressFromBuffer(sBuffer.data());
         Assert::AreEqual(0U, pAchievement3->GetConditionHitCount(0, 0));
     }
 
@@ -445,7 +530,7 @@ public:
         pMemRef->previous = 0x020000;
         pMemRef->prior = 0x040000;
 
-        runtime.SaveProgress("test.sav");
+        runtime.SaveProgressToFile("test.sav");
 
         // modify data so we can see if the persisted data is restored
         pMemRef = runtime.GetMemRefs();
@@ -460,7 +545,7 @@ public:
         ach.SetConditionHitCount(0, 1, 1);
 
         // restore persisted data
-        runtime.LoadProgress("test.sav");
+        runtime.LoadProgressFromFile("test.sav");
 
         Assert::AreEqual(2U, ach.GetConditionHitCount(0, 0));
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 1));
@@ -497,7 +582,7 @@ public:
 
         runtime.mockFileSystem.MockFile(L"test.sav.rap", "3:1:1:0:0:0:0:6e2301982f40d1a3f311cdb063f57e2f:4f52856e145d7cb05822e8a9675b086b:5:1:1:0:0:0:0:0e9aec1797ad6ba861a4b1e0c7f6d2ab:dd9e5fc6020e728b8c9231d5a5c904d5:");
 
-        runtime.LoadProgress("test.sav");
+        runtime.LoadProgressFromFile("test.sav");
         Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
         Assert::AreEqual(1U, pAchievement5->GetConditionHitCount(0, 0));
     }
@@ -522,7 +607,7 @@ public:
         pMemRef->previous = 0x020000;
         pMemRef->prior = 0x040000;
 
-        runtime.SaveProgress("test.sav");
+        runtime.SaveProgressToFile("test.sav");
 
         // modify data so we can see if the persisted data is restored
         pMemRef = runtime.GetMemRefs();
@@ -537,7 +622,7 @@ public:
         ach.SetConditionHitCount(1, 1, 1);
 
         // restore persisted data
-        runtime.LoadProgress("test.sav");
+        runtime.LoadProgressFromFile("test.sav");
 
         Assert::AreEqual(2U, ach.GetConditionHitCount(1, 0));
         Assert::AreEqual(0U, ach.GetConditionHitCount(1, 1));

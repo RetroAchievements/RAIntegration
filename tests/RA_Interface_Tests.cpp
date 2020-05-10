@@ -90,6 +90,8 @@ public:
         Assert::IsNotNull((const void*)_RA_SetPaused);
         Assert::IsNotNull((const void*)_RA_OnLoadState);
         Assert::IsNotNull((const void*)_RA_OnSaveState);
+        Assert::IsNotNull((const void*)_RA_CaptureState);
+        Assert::IsNotNull((const void*)_RA_RestoreState);
         Assert::IsNotNull((const void*)_RA_OnReset);
         Assert::IsNotNull((const void*)_RA_DoAchievementsFrame);
         Assert::IsNotNull((const void*)_RA_SetConsoleID);
@@ -124,6 +126,8 @@ public:
         Assert::IsNull((const void*)_RA_SetPaused);
         Assert::IsNull((const void*)_RA_OnLoadState);
         Assert::IsNull((const void*)_RA_OnSaveState);
+        Assert::IsNull((const void*)_RA_CaptureState);
+        Assert::IsNull((const void*)_RA_RestoreState);
         Assert::IsNull((const void*)_RA_OnReset);
         Assert::IsNull((const void*)_RA_DoAchievementsFrame);
         Assert::IsNull((const void*)_RA_SetConsoleID);

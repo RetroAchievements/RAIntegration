@@ -68,6 +68,14 @@ extern "C" {
     // Immediately after saving a new state.
     API void CCONV _RA_OnSaveState(const char* sFileName);
 
+    // Captures the current RetroAchievements state data.
+    //  returns the number of bytes written to pBuffer. if larger than nBufferSize, the
+    //  caller should allocate a larger buffer and call again.
+    API int CCONV _RA_CaptureState(char* pBuffer, int nBufferSize);
+
+    // Restores the RetroAchievements state from captured state data.
+    API void CCONV _RA_RestoreState(const char* pBuffer);
+
     // Immediately after resetting the system.
     API void CCONV _RA_OnReset();
 

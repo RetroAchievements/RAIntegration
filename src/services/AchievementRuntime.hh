@@ -151,13 +151,32 @@ public:
     /// </summary>
     /// <param name="sLoadStateFilename">The name of the save state file.</param>
     /// <returns><c>true</c> if the achievement HitCounts were modified, <c>false</c> if not.</returns>
-    bool LoadProgress(const char* sLoadStateFilename);
+    bool LoadProgressFromFile(const char* sLoadStateFilename);
+
+    /// <summary>
+    /// Loads HitCount data for active achievements from a buffer.
+    /// </summary>
+    /// <param name="pBuffer">The buffer to read from.</param>
+    /// <returns><c>true</c> if the achievement HitCounts were modified, <c>false</c> if not.</returns>
+    bool LoadProgressFromBuffer(const char* pBuffer);
 
     /// <summary>
     /// Writes HitCount data for active achievements to a save state file.
     /// </summary>
     /// <param name="sLoadStateFilename">The name of the save state file.</param>
-    void SaveProgress(const char* sSaveStateFilename) const;
+    void SaveProgressToFile(const char* sSaveStateFilename) const;
+
+    /// <summary>
+    /// Writes HitCount data for active achievements to a buffer.
+    /// </summary>
+    /// <param name="pBuffer">The buffer to write to.</param>
+    /// <param name="nBufferSize">The size of the buffer to write to.</param>
+    /// <returns>
+    /// The numberof bytes required to capture the HitCount data (may be larger than 
+    /// nBufferSize - in which case the caller should allocate the specified amount
+    /// and call again.
+    /// </returns>
+    int SaveProgressToBuffer(char* pBuffer, int nBufferSize) const;
 
     /// <summary>
     /// Gets whether achievement processing is temporarily suspended.

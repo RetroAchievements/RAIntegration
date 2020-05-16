@@ -18,6 +18,7 @@
 #include "services\Http.hh"
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
+#include "services\IFileSystem.hh"
 #include "services\PerformanceCounter.hh"
 #include "services\ServiceLocator.hh"
 
@@ -432,30 +433,56 @@ API void CCONV _RA_DoAchievementsFrame()
 
 API void CCONV _RA_OnSaveState(const char* sFilename)
 {
-    ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgress(sFilename);
+    ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgressToFile(sFilename);
+}
+
+API int CCONV _RA_CaptureState(char* pBuffer, int nBufferSize)
+{
+    return ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgressToBuffer(pBuffer, nBufferSize);
+}
+
+static bool CanRestoreState()
+{
+    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+        return false;
+
+    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+    {
+        // save state is being allowed by app (user should have been warned!)
+        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Disabling Hardcore mode.", L"Loading save states is not allowed in Hardcore mode.");
+        ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();
+    }
+
+    return true;
+}
+
+static void OnStateRestored()
+{
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
+
+#ifndef RA_UTEST
+    UpdateUIForFrameChange();
+
+    if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
+        g_AchievementEditorDialog.ActiveAchievement()->SetDirtyFlag(Achievement::DirtyFlags::Conditions);
+#endif
 }
 
 API void CCONV _RA_OnLoadState(const char* sFilename)
 {
-    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+    if (CanRestoreState())
     {
-        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
-        {
-            // save state is being allowed by app (user should have been warned!)
-            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Disabling Hardcore mode.", L"Loading save states is not allowed in Hardcore mode.");
-            ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();
-        }
+        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().LoadProgressFromFile(sFilename);
+        OnStateRestored();
+    }
+}
 
-        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().LoadProgress(sFilename);
-
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
-
-#ifndef RA_UTEST
-        UpdateUIForFrameChange();
-
-        if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
-            g_AchievementEditorDialog.ActiveAchievement()->SetDirtyFlag(Achievement::DirtyFlags::Conditions);
-#endif
+API void CCONV _RA_RestoreState(const char* pBuffer)
+{
+    if (CanRestoreState())
+    {
+        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().LoadProgressFromBuffer(pBuffer);
+        OnStateRestored();
     }
 }

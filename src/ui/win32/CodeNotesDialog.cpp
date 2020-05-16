@@ -57,6 +57,21 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Code Notes");
 
     m_bindFilterValue.BindText(CodeNotesViewModel::FilterValueProperty);
+    m_bindFilterValue.BindKey(VK_RETURN, [this]()
+    {
+        m_bindFilterValue.UpdateSourceText();
+
+        auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
+        vmCodeNotes->ApplyFilter();
+        return true;
+    });
+    m_bindFilterValue.BindKey(VK_ESCAPE, [this]()
+    {
+        auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
+        vmCodeNotes->SetFilterValue(L"");
+        vmCodeNotes->ResetFilter();
+        return true;
+    });
 
     m_bindWindow.BindLabel(IDC_RA_RESULT_COUNT, CodeNotesViewModel::ResultCountProperty);
 
@@ -83,9 +98,6 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
         {
             auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
             pWindowManager.MemoryInspector.SetCurrentAddress(pItem->nAddress);
-
-            auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
-            pDesktop.CloseWindow(pWindowManager.CodeNotes);
         }
     });
 

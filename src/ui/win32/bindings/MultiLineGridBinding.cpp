@@ -65,7 +65,10 @@ void MultiLineGridBinding::OnViewModelRemoved(gsl::index nIndex)
     m_vItemMetrics.erase(m_vItemMetrics.begin() + nIndex);
 
     if (!m_vmItems->IsUpdating())
+    {
         UpdateLineOffsets();
+        GridBinding::UpdateAllItems();
+    }
 }
 
 void MultiLineGridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)

@@ -57,7 +57,7 @@ void MultiLineGridBinding::OnViewModelAdded(gsl::index nIndex)
     }
 
     if (!m_vmItems->IsUpdating())
-        UpdateLineOffsets();
+        OnEndViewModelCollectionUpdate();
 }
 
 void MultiLineGridBinding::OnViewModelRemoved(gsl::index nIndex)
@@ -65,10 +65,7 @@ void MultiLineGridBinding::OnViewModelRemoved(gsl::index nIndex)
     m_vItemMetrics.erase(m_vItemMetrics.begin() + nIndex);
 
     if (!m_vmItems->IsUpdating())
-    {
-        UpdateLineOffsets();
-        GridBinding::UpdateAllItems();
-    }
+        OnEndViewModelCollectionUpdate();
 }
 
 void MultiLineGridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
@@ -98,10 +95,12 @@ void MultiLineGridBinding::OnViewModelStringValueChanged(gsl::index nIndex, cons
             pItemMetrics.nNumLines = 0;
             for (const auto& pPair : pItemMetrics.mColumnLineOffsets)
             {
-                if (pPair.second.size() > pItemMetrics.nNumLines)
-                    pItemMetrics.nNumLines = gsl::narrow_cast<unsigned int>(pPair.second.size());
+                if (pPair.second.size() + 1 > pItemMetrics.nNumLines)
+                    pItemMetrics.nNumLines = gsl::narrow_cast<unsigned int>(pPair.second.size()) + 1;
             }
-            ++pItemMetrics.nNumLines;
+
+            if (!m_vmItems->IsUpdating())
+                OnEndViewModelCollectionUpdate();
         }
     }
 }

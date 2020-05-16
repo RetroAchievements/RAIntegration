@@ -224,7 +224,7 @@ void MemoryInspectorViewModel::DeleteCurrentAddressNote()
 void MemoryInspectorViewModel::OpenNotesList()
 {
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-    pWindowManager.CodeNotes.ShowModal(*this);
+    pWindowManager.CodeNotes.Show();
 }
 
 bool MemoryInspectorViewModel::NextNote()

@@ -216,6 +216,9 @@ bool EmulatorContext::ValidateClientVersion()
                    m_sLatestVersion,
                    m_sVersion);
         }
+
+        if (m_nEmulatorId == EmulatorID::RA_Gens)
+            ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"RAGens is being retired", L"With the next major release of the toolkit, you will no longer be able to play games using RAGens. Please switch over to RALibretro or RetroArch.");
     }
 
     if (m_sLatestVersion == "Unknown")

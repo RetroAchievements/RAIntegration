@@ -616,7 +616,7 @@ bool AchievementRuntime::LoadProgressV2(ra::services::TextReader& pFile, std::se
     return true;
 }
 
-bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename)
+bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
 {
     if (!m_bInitialized)
         return true;
@@ -677,7 +677,25 @@ bool AchievementRuntime::LoadProgress(const char* sLoadStateFilename)
     return true;
 }
 
-void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const
+bool AchievementRuntime::LoadProgressFromBuffer(const char* pBuffer)
+{
+    if (!m_bInitialized)
+        return true;
+
+    // reset the runtime state, then apply state from file
+    rc_runtime_reset(&m_pRuntime);
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    if (!pUserContext.IsLoggedIn())
+        return false;
+
+    const unsigned char* pBytes;
+    GSL_SUPPRESS_TYPE1 pBytes = reinterpret_cast<const unsigned char*>(pBuffer);
+    rc_runtime_deserialize_progress(&m_pRuntime, pBytes, nullptr);
+    return true;
+}
+
+void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) const
 {
     if (sSaveStateFilename == nullptr)
         return;
@@ -699,6 +717,19 @@ void AchievementRuntime::SaveProgress(const char* sSaveStateFilename) const
     sSerialized.resize(nSize);
     rc_runtime_serialize_progress(sSerialized.data(), &m_pRuntime, nullptr);
     pFile->Write(sSerialized);
+}
+
+int AchievementRuntime::SaveProgressToBuffer(char* pBuffer, int nBufferSize) const
+{
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    if (!pUserContext.IsLoggedIn())
+        return 0;
+
+    const auto nSize = rc_runtime_progress_size(&m_pRuntime, nullptr);
+    if (nSize <= nBufferSize)
+        rc_runtime_serialize_progress(pBuffer, &m_pRuntime, nullptr);
+
+    return nSize;
 }
 
 } // namespace services

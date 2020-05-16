@@ -60,6 +60,18 @@ public:
         m_mKeyHandlers.insert_or_assign(nKey, pHandler);
     }
 
+    void UpdateSourceText()
+    {
+        const int nLength = GetWindowTextLengthW(m_hWnd);
+
+        std::wstring sBuffer;
+        sBuffer.resize(gsl::narrow_cast<size_t>(nLength) + 1);
+        GetWindowTextW(m_hWnd, sBuffer.data(), gsl::narrow_cast<int>(sBuffer.capacity()));
+        sBuffer.resize(nLength);
+
+        SetValue(*m_pTextBoundProperty, sBuffer);
+    }
+
 protected:
     void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override
     {
@@ -87,18 +99,6 @@ protected:
     }
 
 private:
-    void UpdateSourceText()
-    {
-        const int nLength = GetWindowTextLengthW(m_hWnd);
-
-        std::wstring sBuffer;
-        sBuffer.resize(gsl::narrow_cast<size_t>(nLength) + 1);
-        GetWindowTextW(m_hWnd, sBuffer.data(), gsl::narrow_cast<int>(sBuffer.capacity()));
-        sBuffer.resize(nLength);
-
-        SetValue(*m_pTextBoundProperty, sBuffer);
-    }
-
     void UpdateBoundText()
     {
         if (m_hWnd && m_pTextBoundProperty)

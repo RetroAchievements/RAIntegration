@@ -178,7 +178,9 @@
     <ClInclude Include="..\rcheevos\src\rcheevos\compat.h" />
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h" />
     <ClCompile Include="..\rcheevos\src\rcheevos\consoleinfo.c" />
-    <ClCompile Include="..\rcheevos\src\rcheevos\compat.c" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\compat.c">
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <ClCompile Include="..\rcheevos\src\rcheevos\memref.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\richpresence.c" />
     <ClInclude Include="..\rcheevos\src\rhash\md5.h" />

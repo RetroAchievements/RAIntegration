@@ -126,6 +126,11 @@ protected:
         ComboBox_InsertString(m_hWnd, nIndex, NativeStr(pLabel).c_str());
     }
 
+    void OnViewModelRemoved(gsl::index nIndex) noexcept override
+    {
+        ComboBox_DeleteString(m_hWnd, nIndex);
+    }
+
 private:
     void PopulateComboBox()
     {

@@ -217,10 +217,13 @@ public:
     /// <returns>Index of the first matching item, <c>-1</c> if not found.</returns>
     gsl::index FindItemIndex(const IntModelProperty& pProperty, int nValue) const
     {
+        gsl::index nIndex = 0;
         for (const auto& pItem : m_vItems)
         {
             if (pItem.HasViewModel() && pItem.ViewModel().GetValue(pProperty) == nValue)
-                return pItem.Index();
+                return nIndex;
+
+            ++nIndex;
         }
 
         return -1;

@@ -451,6 +451,36 @@ public:
         oNotify.AssertItemReplaced(0);
     }
 
+    TEST_METHOD(TestFindItemIndexAfterRemovedWhileUpdateSuspended)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        vmCollection.Add(1, L"Test1");
+        vmCollection.Add(2, L"Test2");
+        vmCollection.Add(3, L"Test3");
+        vmCollection.Add(4, L"Test4");
+
+        vmCollection.BeginUpdate();
+
+        Assert::AreEqual({ 0 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 1));
+        Assert::AreEqual({ 1 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 2));
+        Assert::AreEqual({ 2 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 3));
+        Assert::AreEqual({ 3 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 4));
+
+        vmCollection.RemoveAt(1);
+
+        Assert::AreEqual({ 0 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 1));
+        Assert::AreEqual({ -1 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 2));
+        Assert::AreEqual({ 1 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 3));
+        Assert::AreEqual({ 2 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 4));
+
+        vmCollection.EndUpdate();
+
+        Assert::AreEqual({ 0 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 1));
+        Assert::AreEqual({ -1 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 2));
+        Assert::AreEqual({ 1 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 3));
+        Assert::AreEqual({ 2 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 4));
+    }
+
     TEST_METHOD(TestMovePropertyNotification)
     {
         ViewModelCollection<TestViewModel> vmCollection;

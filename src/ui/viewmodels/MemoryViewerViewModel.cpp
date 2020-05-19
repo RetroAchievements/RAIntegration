@@ -543,7 +543,8 @@ void MemoryViewerViewModel::OnTotalMemorySizeChanged()
             SetFirstAddress(nMaxFirstAddress);
     }
 
-    m_nNeedsRedraw |= REDRAW_ADDRESSES | REDRAW_MEMORY;
+    m_pSurface.reset();
+    m_nNeedsRedraw = REDRAW_ALL;
 }
 
 void MemoryViewerViewModel::OnByteWritten(ra::ByteAddress nAddress, uint8_t nValue)

@@ -160,18 +160,18 @@ public:
 
         friendsPage.Refresh();
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
-        Assert::AreEqual({ 3U }, friendsPage.GetItemCount()); // refresh should not have occured
+        Assert::AreEqual({ 3U }, friendsPage.GetItemCount()); // refresh should not have occurred
 
         friendsPage.mockClock.AdvanceTime(std::chrono::minutes(1));
         friendsPage.Refresh();
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
-        Assert::AreEqual({ 3U }, friendsPage.GetItemCount()); // refresh should not have occured
+        Assert::AreEqual({ 3U }, friendsPage.GetItemCount()); // refresh should not have occurred
 
 
         friendsPage.mockClock.AdvanceTime(std::chrono::minutes(1));
         friendsPage.Refresh();
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
-        Assert::AreEqual({ 4U }, friendsPage.GetItemCount()); // refresh should have occured
+        Assert::AreEqual({ 4U }, friendsPage.GetItemCount()); // refresh should have occurred
 
         const auto* pFriend1 = friendsPage.GetItem(0);
         Assert::IsNotNull(pFriend1);

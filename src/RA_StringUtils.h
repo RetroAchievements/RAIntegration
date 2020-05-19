@@ -633,8 +633,8 @@ public:
     }
 
     /// <summary>
-    /// Advances the cursor to the next occurrence of the specified charater, or the end of the string if no
-    /// occurances are found.
+    /// Advances the cursor to the next occurrence of the specified character, or the end of the string if no
+    /// occurrences are found.
     /// </summary>
     void AdvanceTo(char cStop)
     {
@@ -643,8 +643,8 @@ public:
     }
 
     /// <summary>
-    /// Advances the cursor to the next occurrance of the specified charater, or the end of the string if no
-    /// occurances are found and returns a string containing all of the characters advanced over.
+    /// Advances the cursor to the next occurrence of the specified character, or the end of the string if no
+    /// occurrences are found and returns a string containing all of the characters advanced over.
     /// </summary>
     _NODISCARD std::string ReadTo(char cStop)
     {

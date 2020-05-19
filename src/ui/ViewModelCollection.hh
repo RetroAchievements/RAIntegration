@@ -87,7 +87,7 @@ public:
     bool IsFrozen() const noexcept { return m_bFrozen; }
 
     /// <summary>
-    /// Indicates that the collection will not change in the future, so change events don't have to be propogated.
+    /// Indicates that the collection will not change in the future, so change events don't have to be propagated.
     /// </summary>
     void Freeze() noexcept
     {

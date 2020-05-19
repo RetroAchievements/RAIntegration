@@ -368,7 +368,7 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
         return false;
     }
 
-    // The user is on the latest verion
+    // The user is on the latest version
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     if (pGameContext.GameId() != 0 && bShowWarning)
     {

@@ -790,7 +790,7 @@ int GridBinding::GetVisibleItemIndex(int iItem)
 
     // make sure there's backing data
     const auto nItems = gsl::narrow_cast<int>(m_vmItems->Count());
-    if (nItems == 0 || m_vmItems->IsUpdating())
+    if (nItems == 0)
         return -1;
 
     // adjust for scroll offset

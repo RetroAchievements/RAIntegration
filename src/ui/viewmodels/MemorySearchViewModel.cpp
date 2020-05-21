@@ -944,7 +944,7 @@ void MemorySearchViewModel::NextPage()
 
 void MemorySearchViewModel::PreviousPage()
 {
-    // at least two pages (initialization and first filter) must be avaiable to go back to
+    // at least two pages (initialization and first filter) must be available to go back to
     if (m_nSelectedSearchResult > 1)
     {
         if (m_bIsContinuousFiltering)

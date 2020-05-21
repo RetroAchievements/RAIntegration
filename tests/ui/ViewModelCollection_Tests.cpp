@@ -493,7 +493,7 @@ public:
         NotifyTargetHarness oNotify;
         vmCollection.AddNotifyTarget(oNotify);
 
-        // move item in slot 1 into slot 3, moving slots 2 and 3 back one to accomodate
+        // move item in slot 1 into slot 3, moving slots 2 and 3 back one to accommodate
         vmCollection.MoveItem(1, 3);
 
         oNotify.AssertItemNotChanged(0);
@@ -523,7 +523,7 @@ public:
 
         vmCollection.BeginUpdate();
 
-        // move item in slot 1 into slot 3, moving slots 2 and 3 back one to accomodate
+        // move item in slot 1 into slot 3, moving slots 2 and 3 back one to accommodate
         vmCollection.MoveItem(1, 3);
 
         oNotify.AssertItemNotChanged(0);
@@ -532,7 +532,7 @@ public:
         oNotify.AssertItemNotChanged(3);
         oNotify.AssertItemNotChanged(4);
 
-        // move item in slot 3 into slot 2, moving slot 2 forward one to accomodate
+        // move item in slot 3 into slot 2, moving slot 2 forward one to accommodate
         vmCollection.MoveItem(3, 2);
 
         oNotify.AssertItemNotChanged(0);

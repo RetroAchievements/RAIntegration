@@ -227,6 +227,7 @@ void MultiLineGridBinding::UpdateItems(gsl::index nColumn)
         const auto& pItemMetrics = m_vItemMetrics.at(i);
         if (pItemMetrics.nNumLines > 1)
         {
+            unsigned int nItemLine = 1;
             const auto pIter = pItemMetrics.mColumnLineOffsets.find(gsl::narrow_cast<int>(nColumn));
             if (pIter != pItemMetrics.mColumnLineOffsets.end())
             {
@@ -245,22 +246,22 @@ void MultiLineGridBinding::UpdateItems(gsl::index nColumn)
 
                     item.pszText = nIndex < sText.length() ? &sText.at(nIndex) : &sText.at(nIndex2);
                     item.iItem = gsl::narrow_cast<int>(++nLine);
+                    ++nItemLine;
 
                     nStop = nIndex;
                 }
             }
-            else
-            {
-                for (unsigned int nIndex = 1; nIndex < pItemMetrics.nNumLines; ++nIndex)
-                {
-                    if (nLine < nItems)
-                        ListView_SetItem(m_hWnd, &item);
-                    else
-                        ListView_InsertItem(m_hWnd, &item);
 
-                    sText.at(0) = '\0';
-                    item.iItem = gsl::narrow_cast<int>(++nLine);
-                }
+            for (unsigned int nIndex = nItemLine; nIndex < pItemMetrics.nNumLines; ++nIndex)
+            {
+                if (nLine < nItems)
+                    ListView_SetItem(m_hWnd, &item);
+                else
+                    ListView_InsertItem(m_hWnd, &item);
+
+                sText.at(0) = '\0';
+                item.pszText = sText.data();
+                item.iItem = gsl::narrow_cast<int>(++nLine);
             }
         }
 

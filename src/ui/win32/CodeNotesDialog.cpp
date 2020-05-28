@@ -78,8 +78,7 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
     auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         CodeNotesViewModel::CodeNoteViewModel::LabelProperty);
     pAddressColumn->SetHeader(L"Address");
-    pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
-    pAddressColumn->SetAlignment(ra::ui::RelativePosition::Far);
+    pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 64);
     m_bindNotes.BindColumn(0, std::move(pAddressColumn));
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(

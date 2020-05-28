@@ -96,7 +96,7 @@ private:
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;
     bool m_bForceRepaint = false;
-    bool m_bAdjustingScrollOffset = false;
+    int m_nAdjustingScrollOffset = 0;
 
     size_t m_nColumnsCreated = 0;
     bool m_bHasColoredColumns = false;

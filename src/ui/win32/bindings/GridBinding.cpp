@@ -281,7 +281,8 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
 {
     if (m_pRowColorProperty && *m_pRowColorProperty == args.Property)
     {
-        ListView_RedrawItems(m_hWnd, nIndex, nIndex);
+        if (m_nAdjustingScrollOffset == 0)
+            ListView_RedrawItems(m_hWnd, nIndex, nIndex);
         return;
     }
 
@@ -511,7 +512,7 @@ void GridBinding::OnEndViewModelCollectionUpdate()
 
         SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
 
-        if (m_bForceRepaint && !m_bAdjustingScrollOffset)
+        if (m_bForceRepaint && m_nAdjustingScrollOffset == 0)
             ControlBinding::ForceRepaint(m_hWnd);
         else
             Invalidate();
@@ -828,7 +829,7 @@ int GridBinding::GetVisibleItemIndex(int iItem)
     {
         // changing the scroll offset can cause the list to repaint, which may try to
         // adjust the scroll offset again. make sure it doesn't.
-        m_bAdjustingScrollOffset = true;
+        ++m_nAdjustingScrollOffset;
 
         // SetValue detaches the change notification event, so we won't be notified.
         // Update the value manually. also, it's important to make sure that it's set
@@ -837,7 +838,7 @@ int GridBinding::GetVisibleItemIndex(int iItem)
 
         SetValue(*m_pScrollOffsetProperty, nOffset);
 
-        m_bAdjustingScrollOffset = false;
+        --m_nAdjustingScrollOffset;
 
         ControlBinding::InvokeOnUIThread([this]()
         {
@@ -848,7 +849,9 @@ int GridBinding::GetVisibleItemIndex(int iItem)
             }
         });
 
-        Expects(m_nScrollOffset == nOffset);
+        // attempt to scroll failed
+        if (m_nScrollOffset != nOffset)
+            return -1;
     }
 
     // readjust with new scroll offset

@@ -92,7 +92,7 @@ void MultiLineGridBinding::OnViewModelStringValueChanged(gsl::index nIndex, cons
                 pColumnLineBreaks.swap(vLineBreaks);
             }
 
-            pItemMetrics.nNumLines = 0;
+            pItemMetrics.nNumLines = 1;
             for (const auto& pPair : pItemMetrics.mColumnLineOffsets)
             {
                 if (pPair.second.size() + 1 > pItemMetrics.nNumLines)

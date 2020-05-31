@@ -321,6 +321,56 @@ public:
         Assert::AreEqual(std::string("1=1"), pAch2->GetTrigger());
     }
 
+    TEST_METHOD(TestLoadGameInvalidAchievementFlags)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            auto& ach1 = response.Achievements.emplace_back();
+            ach1.Id = 5;
+            ach1.Title = "Ach1";
+            ach1.Description = "Desc1";
+            ach1.Author = "Auth1";
+            ach1.BadgeName = "12345";
+            ach1.CategoryId = 0; // not a valid category
+            ach1.Created = 1234567890;
+            ach1.Updated = 1234599999;
+            ach1.Definition = "1=1";
+            ach1.Points = 5;
+
+            auto& ach2 = response.Achievements.emplace_back();
+            ach2.Id = 7;
+            ach2.Title = "Ach2";
+            ach2.Description = "Desc2";
+            ach2.Author = "Auth2";
+            ach2.BadgeName = "12345";
+            ach2.CategoryId = 5;
+            ach2.Created = 1234567890;
+            ach2.Updated = 1234599999;
+            ach2.Definition = "1=1";
+            ach2.Points = 15;
+            return true;
+        });
+
+        game.LoadGame(1U);
+
+        const auto* pAch1 = game.FindAchievement(5U);
+        Assert::IsNull(pAch1);
+
+        const auto* pAch2 = game.FindAchievement(7U);
+        Assert::IsNotNull(pAch2);
+        Ensures(pAch2 != nullptr);
+        Assert::AreEqual(std::string("Ach2"), pAch2->Title());
+        Assert::AreEqual(std::string("Desc2"), pAch2->Description());
+        Assert::AreEqual(std::string("Auth2"), pAch2->Author());
+        Assert::AreEqual(std::string("12345"), pAch2->BadgeImageURI());
+        Assert::AreEqual(Achievement::Category::Unofficial, pAch2->GetCategory());
+        Assert::AreEqual(1234567890, (int)pAch2->CreatedDate());
+        Assert::AreEqual(1234599999, (int)pAch2->ModifiedDate());
+        Assert::AreEqual(15U, pAch2->Points());
+        Assert::AreEqual(std::string("1=1"), pAch2->GetTrigger());
+    }
+
     TEST_METHOD(TestLoadGameMergeLocalAchievements)
     {
         GameContextHarness game;

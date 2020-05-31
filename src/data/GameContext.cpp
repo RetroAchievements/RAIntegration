@@ -130,7 +130,12 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     unsigned int nTotalCoreAchievementPoints = 0;
     for (const auto& pAchievementData : response.Achievements)
     {
-        auto& pAchievement = NewAchievement(ra::itoe<Achievement::Category>(pAchievementData.CategoryId));
+        // if the server has provided an unexpected category (usually 0), ignore it.
+        const auto nCategory = ra::itoe<Achievement::Category>(pAchievementData.CategoryId);
+        if (nCategory != Achievement::Category::Core && nCategory != Achievement::Category::Unofficial)
+            continue;
+
+        auto& pAchievement = NewAchievement(nCategory);
         pAchievement.SetID(pAchievementData.Id);
         CopyAchievementData(pAchievement, pAchievementData);
 

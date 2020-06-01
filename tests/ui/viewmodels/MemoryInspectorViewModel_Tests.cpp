@@ -121,6 +121,34 @@ public:
         Assert::AreEqual(std::wstring(L"0 1 0 0 0 0 0 1"), inspector.GetCurrentAddressBits());
     }
 
+    TEST_METHOD(TestToggleBitWhileFrozen)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.Viewer().SetAddress({ 3U });
+
+        inspector.mockWindowManager.MemoryBookmarks.AddBookmark(3, MemSize::EightBit);
+        auto* pNote = inspector.mockWindowManager.MemoryBookmarks.Bookmarks().GetItemAt(0);
+        Expects(pNote != nullptr);
+        Assert::AreEqual(3U, pNote->GetCurrentValue());
+        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::None, (int)pNote->GetBehavior());
+
+        Assert::AreEqual({ 0x03 }, inspector.memory.at(3));
+        Assert::AreEqual(std::wstring(L"0 0 0 0 0 0 1 1"), inspector.GetCurrentAddressBits());
+
+        inspector.ToggleBit(6);
+        Assert::AreEqual({ 0x43 }, inspector.memory.at(3));
+        Assert::AreEqual(std::wstring(L"0 1 0 0 0 0 1 1"), inspector.GetCurrentAddressBits());
+        Assert::AreEqual(0x43U, pNote->GetCurrentValue());
+
+        pNote->SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+        Assert::AreEqual((int)MemoryBookmarksViewModel::BookmarkBehavior::Frozen, (int)pNote->GetBehavior());
+
+        inspector.ToggleBit(1);
+        Assert::AreEqual({ 0x41 }, inspector.memory.at(3));
+        Assert::AreEqual(std::wstring(L"0 1 0 0 0 0 0 1"), inspector.GetCurrentAddressBits());
+        Assert::AreEqual(0x41U, pNote->GetCurrentValue());
+    }
+
     TEST_METHOD(TestOpenNotesList)
     {
         MemoryInspectorViewModelHarness inspector;

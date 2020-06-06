@@ -159,7 +159,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
     // merge local achievements
     m_nNextLocalId = GameContext::FirstLocalId;
-    MergeLocalAchievements();
+    MergeLocalAchievements(0);
 
 #ifndef RA_UTEST
     g_AchievementsDialog.UpdateAchievementList();
@@ -314,12 +314,12 @@ void GameContext::EnumerateFilteredAchievements(std::function<bool(const Achieve
 #endif
 }
 
-void GameContext::MergeLocalAchievements()
+bool GameContext::MergeLocalAchievements(ra::AchievementID nAchievementId)
 {
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(m_nGameId));
     if (pData == nullptr)
-        return;
+        return false;
 
     std::string sLine;
     pData->GetLine(sLine); // version used to create the file
@@ -335,6 +335,9 @@ void GameContext::MergeLocalAchievements()
         ra::Tokenizer pTokenizer(sLine);
         const auto nId = pTokenizer.ReadNumber();
         if (!pTokenizer.Consume(':'))
+            continue;
+
+        if (nAchievementId != 0 && nId != nAchievementId)
             continue;
 
         bool bIsNew = false;
@@ -481,6 +484,10 @@ void GameContext::MergeLocalAchievements()
                 pAchievement->SetTrigger(sTrigger);
                 pAchievement->SetModified(true);
             }
+
+            // updated singular achievement, we're done
+            if (nAchievementId != 0)
+                return true;
         }
     }
 
@@ -490,6 +497,8 @@ void GameContext::MergeLocalAchievements()
         if (pAchievement->ID() == 0)
             pAchievement->SetID(m_nNextLocalId++);
     }
+
+    return (nAchievementId == 0);
 }
 
 static void WriteEscaped(ra::services::TextWriter& pData, const std::string& sText)
@@ -836,7 +845,7 @@ void GameContext::ReloadAchievements(Achievement::Category nCategory)
                 ++pIter;
         }
 
-        MergeLocalAchievements();
+        MergeLocalAchievements(0);
     }
     else
     {
@@ -858,7 +867,6 @@ bool GameContext::ReloadAchievement(ra::AchievementID nAchievementId)
             if (ReloadAchievement(*pIter->get()))
                 return true;
 
-            m_vAchievements.erase(pIter);
             break;
         }
 
@@ -872,7 +880,7 @@ bool GameContext::ReloadAchievement(Achievement& pAchievement)
 {
     if (pAchievement.GetCategory() == Achievement::Category::Local)
     {
-        // TODO
+        return MergeLocalAchievements(pAchievement.ID());
     }
     else
     {

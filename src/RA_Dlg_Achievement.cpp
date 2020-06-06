@@ -787,7 +787,9 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
                             if (pGameContext.ReloadAchievement(nID))
                             {
-                                ReloadLBXData(nSel);
+                                Cheevo.SetModified(FALSE);
+
+                                ReloadLBXData(nID);
 
                                 // reselect to update AchEditor
                                 if (g_AchievementEditorDialog.ActiveAchievement() &&
@@ -798,7 +800,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             }
                             else
                             {
-                                MessageBox(hDlg, TEXT("Couldn't find this achievement!"), TEXT("Error!"), MB_OK);
+                                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Revert failed.", L"Could not find the selected achievement in the local file.");
                             }
                         }
                     }

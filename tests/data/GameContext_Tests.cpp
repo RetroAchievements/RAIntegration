@@ -535,6 +535,62 @@ public:
         Assert::AreEqual(999000004U, pAch2.ID());
     }
 
+    TEST_METHOD(TestReloadAchievementLocal)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
+        {
+            return true;
+        });
+
+        game.mockStorage.MockStoredData(ra::services::StorageItemType::UserAchievements, L"1",
+            "Version\n"
+            "Game\n"
+            "7:1=2:Ach2b:Desc2b::::Auth2b:25:1234554321:1234555555:::54321\n"
+            "999000001:1=1:Ach3:Desc3::::Auth3:20:1234511111:1234500000:::555\n"
+            "999000003:1=1:Ach4:Desc4::::Auth4:10:1234511111:1234500000:::556\n"
+        );
+
+        game.LoadGame(1U);
+
+        // 7 is not a known ID for this game, it should be loaded into a local achievement, so it can be reloaded from the file
+        auto* pAch = game.FindAchievement(7U);
+        Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
+        Assert::AreEqual(std::string("Ach2b"), pAch->Title());
+
+        pAch->SetTitle("Ach2c");
+        Assert::AreEqual(std::string("Ach2c"), pAch->Title());
+        Assert::IsTrue(game.ReloadAchievement(7U));
+        Assert::AreEqual(std::string("Ach2b"), pAch->Title());
+
+        // explicit local ID should be reloaded successfully
+        pAch = game.FindAchievement(999000003U);
+        Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
+        Assert::AreEqual(std::string("Desc4"), pAch->Description());
+
+        pAch->SetDescription("Desc4b");
+        Assert::AreEqual(std::string("Desc4b"), pAch->Description());
+        Assert::IsTrue(game.ReloadAchievement(999000003U));
+        Assert::AreEqual(std::string("Desc4"), pAch->Description());
+
+        // unknown ID cannot be found in file - achievement should not be updated or eliminated
+        pAch = game.FindAchievement(999000001U);
+        Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
+        Assert::AreEqual(std::string("Desc3"), pAch->Description());
+        pAch->SetID(1234U);
+
+        pAch->SetDescription("Desc3b");
+        Assert::AreEqual(std::string("Desc3b"), pAch->Description());
+        Assert::IsFalse(game.ReloadAchievement(pAch->ID()));
+        Assert::AreEqual(std::string("Desc3b"), pAch->Description());
+
+        pAch = game.FindAchievement(1234U);
+        Assert::IsNotNull(pAch);
+    }
+
     TEST_METHOD(TestLoadGameLeaderboards)
     {
         GameContextHarness game;

@@ -309,7 +309,7 @@ private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
 
 protected:
-    void MergeLocalAchievements();
+    bool MergeLocalAchievements(ra::AchievementID nAchievementId);
     bool ReloadAchievement(Achievement& pAchievement);
     void RefreshUnlocks(bool bUnpause, int nPopup);
     void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup);

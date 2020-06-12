@@ -457,7 +457,10 @@ INT_PTR CALLBACK MemoryInspectorDialog::DialogProc(HWND hDlg, UINT uMsg, WPARAM 
                 {
                     const auto nBit = nChars >> 1;
                     if (nBit < 8)
+                    {
                         vmMemoryInspector->ToggleBit(nBit);
+                        m_bindViewer.Invalidate();
+                    }
                 }
             }
             break;

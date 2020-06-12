@@ -100,6 +100,15 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnViewModelIntValueChanged
         }
 
         m_vColumns.at(1)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
+
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+        nWidth = (pEmulatorContext.TotalMemorySize() > 0x10000) ? 8 : 6; // 0x123456 or 0x1234
+        if (vmMemory.ResultMemSize() == MemSize::Nibble_Lower)
+            ++nWidth; // 0x1234L
+        nWidth *= nCharWidth;
+        nWidth += nPadding * 2;
+        m_vColumns.at(0)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
+
         UpdateLayout();
     }
 

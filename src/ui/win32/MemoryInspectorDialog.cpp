@@ -68,8 +68,13 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnLvnItemChanged(const LPN
         {
             auto& vmMemory = GetViewModel<MemorySearchViewModel>();
             const auto nIndex = GetVisibleItemIndex(pnmListView->iItem);
-            const auto sValue = vmMemory.Results().GetItemValue(gsl::narrow_cast<gsl::index>(nIndex),
+            auto sValue = vmMemory.Results().GetItemValue(gsl::narrow_cast<gsl::index>(nIndex),
                 MemorySearchViewModel::SearchResultViewModel::AddressProperty);
+
+            // in 4-bit mode, remove the "L" or "U"
+            if (vmMemory.ResultMemSize() == MemSize::Nibble_Lower)
+                sValue.pop_back();
+
             const auto nAddress = ra::ByteAddressFromString(ra::Narrow(sValue));
 
             ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector.SetCurrentAddress(nAddress);

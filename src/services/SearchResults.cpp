@@ -121,7 +121,7 @@ public:
 
         if (srResults.m_vMatchingAddresses.empty())
         {
-            if (srResults.m_vBlocks.empty())
+            if (!HasFirstAddress(srResults))
                 return false;
 
             result.nAddress = GetFirstAddress(srResults) + gsl::narrow_cast<ra::ByteAddress>(nIndex);
@@ -154,6 +154,11 @@ protected:
     static const std::vector<ra::ByteAddress>& GetMatchingAddresses(const SearchResults& srResults) noexcept
     {
         return srResults.m_vMatchingAddresses;
+    }
+
+    static bool HasFirstAddress(const SearchResults& srResults) noexcept
+    {
+        return !srResults.m_vBlocks.empty();
     }
 
     static ra::ByteAddress GetFirstAddress(const SearchResults& srResults) noexcept
@@ -281,6 +286,9 @@ class FourBitSearchImpl : public SearchImpl
         const auto& vMatchingAddresses = GetMatchingAddresses(srResults);
         if (vMatchingAddresses.empty())
         {
+            if (!HasFirstAddress(srResults))
+                return false;
+
             result.nAddress = (GetFirstAddress(srResults) << 1) + gsl::narrow_cast<ra::ByteAddress>(nIndex);
         }
         else

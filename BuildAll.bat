@@ -73,6 +73,7 @@ rem === Initialize Visual Studio environment ===
 echo Initializing Visual Studio environment
 if "%VSINSTALLDIR%"=="" set VSINSTALLDIR=%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\
 if not exist "%VSINSTALLDIR%" set VSINSTALLDIR="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\"  
+if not exist "%VSINSTALLDIR%" set VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\
 if not exist "%VSINSTALLDIR%" (
     echo Could not determine VSINSTALLDIR
     exit /B 1

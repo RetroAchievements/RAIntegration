@@ -1,4 +1,4 @@
-rem @echo off
+@echo off
 setlocal
 
 rem === Globals ===
@@ -71,8 +71,6 @@ if %ERRORLEVEL% equ 1 echo %BUILD_HASH% > %BUILDLOG%
 rem === Initialize Visual Studio environment ===
 
 echo Initializing Visual Studio environment
-dir "C:\Program Files (x86)\Microsoft Visual Studio\2017"
-
 if "%VSINSTALLDIR%"=="" set VSINSTALLDIR=%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\
 if not exist "%VSINSTALLDIR%" set VSINSTALLDIR=%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\
 if not exist "%VSINSTALLDIR%" set VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\

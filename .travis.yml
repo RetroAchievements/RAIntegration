@@ -12,24 +12,24 @@ jobs:
   include:
     - name: "Win32 DLL"
       os: windows
-      script: BuildAll.bat Release x86
+      script: ./BuildAll.bat Release x86
 
-    - name: "Win64 DLL"
-      os: windows
-      script: BuildAll.bat Release x64
+#    - name: "Win64 DLL"
+#      os: windows
+#      script: BuildAll.bat Release x64
     
-    - name: "Win32 Tests"
-      os: windows
-      script: BuildAll.bat Tests x86 
+#    - name: "Win32 Tests"
+#      os: windows
+#      script: BuildAll.bat Tests x86 
 
-    - name: "Win64 Tests"
-      os: windows
-      script: BuildAll.bat Tests x64 
+#    - name: "Win64 Tests"
+#      os: windows
+#      script: BuildAll.bat Tests x64 
 
-    - name: "Win32 Analysis"
-      os: windows
-      script: BuildAll.bat Analysis x86 
+#    - name: "Win32 Analysis"
+#      os: windows
+#      script: BuildAll.bat Analysis x86 
 
-    - name: "Win64 Analysis"
-      os: windows
-      script: BuildAll.bat Analysis x64 
+#    - name: "Win64 Analysis"
+#      os: windows
+#      script: BuildAll.bat Analysis x64 

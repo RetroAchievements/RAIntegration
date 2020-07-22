@@ -24,6 +24,7 @@ jobs:
       os: windows
       install:
         - choco install visualstudio2019community
+        - choco install visualstudio2019buildtools
         - choco install visualstudio2019-workload-vctools
       # builds with visualstudio2019buildtools - does not support v141_xp target - uses v142 instead
       script: ./BuildAll.bat Tests x86

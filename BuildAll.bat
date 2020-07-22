@@ -87,8 +87,6 @@ set VSCMD_SKIP_SENDTELEMETRY=1
 echo calling "%VSDEVCMD%"
 call "%VSDEVCMD%"
 
-@echo on
-
 rem === Build each project ===
 
 if %BUILDCLEAN% equ 1 (

@@ -34,6 +34,18 @@ std::wstring ToString<std::chrono::milliseconds>(const std::chrono::milliseconds
     return std::to_wstring(t.count()) + L"ms";
 }
 
+#ifndef RA_ANALYSIS
+// this has to be defined when compiling against v141_xp, but not when compiling against v142.
+// since it's impractical to detect the selected platform toolset, just key off the fact that
+// the Analysis builds have to use the newer toolset.
+
+template<>
+std::wstring ToString<__int64>(const __int64& t)
+{
+    RETURN_WIDE_STRING(t);
+}
+#endif
+
 template<>
 std::wstring ToString<MemSize>(const MemSize& t)
 {

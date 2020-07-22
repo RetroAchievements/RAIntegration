@@ -36,7 +36,6 @@
 
 /* C Stuff */
 #include <cctype>
-#undef BUFSIZ // make it constexpr in RA_Defs
 
 /* STL Stuff */
 #include <array> // algorithm, iterator, tuple

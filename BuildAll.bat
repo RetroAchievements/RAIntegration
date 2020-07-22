@@ -117,7 +117,7 @@ if %BUILDCLEAN% equ 1 (
     )
 )
 
-exit /B 0
+exit /B %ERRORLEVEL%
 
 rem === Build subroutine ===
 
@@ -129,7 +129,7 @@ set CONFIG=%~2
 if %W32% equ 1 call :build2 %PROJECT% %CONFIG% Win32
 if %W64% equ 1 call :build2 %PROJECT% %CONFIG% x64
 
-exit /B 0
+exit /B %ERRORLEVEL%
 
 :build2
 
@@ -206,4 +206,4 @@ echo %PROJECTKEY% >> %BUILDLOG%
 rem === For termination from within function ===
 
 :eof
-exit /B 0
+exit /B %ERRORLEVEL%

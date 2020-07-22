@@ -20,6 +20,9 @@ jobs:
     
     - name: "Win32 Tests"
       os: windows
+      install:
+        - choco install visualstudio2019community
+        - choco install visualstudio2019-workload-vctools
       script: ./BuildAll.bat Tests x86
 
     - name: "Win64 Tests"
@@ -28,6 +31,9 @@ jobs:
 
     - name: "Win32 Analysis"
       os: windows
+      install:
+        - choco install visualstudio2019buildtools
+        - choco install visualstudio2019-workload-vctools
       script: ./BuildAll.bat Analysis x86
 
     - name: "Win64 Analysis"

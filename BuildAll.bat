@@ -1,4 +1,4 @@
-@echo off
+rem @echo off
 setlocal
 
 rem === Globals ===
@@ -72,6 +72,7 @@ rem === Initialize Visual Studio environment ===
 
 echo Initializing Visual Studio environment
 if "%VSINSTALLDIR%"=="" set VSINSTALLDIR=%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\
+if not exist "%VSINSTALLDIR%" set VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\
 if not exist "%VSINSTALLDIR%" set VSINSTALLDIR=%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\
 if not exist "%VSINSTALLDIR%" set VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\
 if not exist "%VSINSTALLDIR%" (
@@ -80,7 +81,16 @@ if not exist "%VSINSTALLDIR%" (
 )
 echo using VSINSTALLDIR=%VSINSTALLDIR%
 
-call "%VSINSTALLDIR%VC\Auxiliary\Build\vcvars32.bat"
+if "%VSDEVCMD%"=="" set VSDEVCMD=%VSINSTALLDIR%Common7\Tools\VsDevCmd.bat
+if not exist "%VSDEVCMD%" set VSDEVCMD=%VSINSTALLDIR%VC\Auxiliary\Build\vcvars32.bat
+set VSCMD_SKIP_SENDTELEMETRY=1
+echo calling "%VSDEVCMD%"
+call "%VSDEVCMD%"
+
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\"
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\"
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\"
+dir "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\"
 
 rem === Build each project ===
 
@@ -171,7 +181,7 @@ set RESULT=%ERRORLEVEL%
 rem === If build failed, bail ===
 
 if not %RESULT% equ 0 (
-    echo %~1 %~2 failed: %RESULT%
+    echo %~1 %~2 %~3 failed: %RESULT%
     exit /B %RESULT%
 )
 
@@ -179,12 +189,12 @@ rem === If test project, run tests ===
 
 if "%ESCAPEDKEY:~-6%" neq "_Tests" goto not_tests
 
-set DLL_PATH=bin\%~2\tests\%~1.dll
-if not exist %DLL_PATH% set DLL_PATH=bin\%~2\tests\%ESCAPEDKEY:~0,-6%\%~1.dll
+set DLL_PATH=bin\%~3\%~2\tests\%~1.dll
+if not exist %DLL_PATH% set DLL_PATH=bin\%~3\%~2\tests\%ESCAPEDKEY:~0,-6%\%~1.dll
 
 if not exist %DLL_PATH% (
-    echo Could not locate %~1.dll
-    goto eof
+    echo Could not locate %~1.dll (%~2 %~3)
+    exit /B 1
 )
 
 rem -- the default VsTest.Console.exe (in CommonExtensions) does not return ERRORLEVEL, use one in Extensions instead

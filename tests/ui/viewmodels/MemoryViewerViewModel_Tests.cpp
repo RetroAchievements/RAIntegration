@@ -43,6 +43,12 @@ private:
             m_szChar.Height = CHAR_HEIGHT;
         }
 
+        ~MemoryViewerViewModelHarness()
+        {
+            // ensure we stop monitoring the MemoryBookmarksViewModel before the MockWindowManager is destroyed
+            DetachNotifyTargets();
+        }
+
         int GetSelectedNibble() const noexcept { return m_nSelectedNibble; }
 
         size_t GetTotalMemorySize() const noexcept { return m_nTotalMemorySize; }

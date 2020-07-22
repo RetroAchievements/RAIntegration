@@ -43,8 +43,13 @@ private:
             for (size_t i = 0; i < memory.size(); ++i)
                 memory.at(i) = gsl::narrow_cast<unsigned char>(i);
 
-            Viewer().InitializeNotifyTargets();
             mockEmulatorContext.MockMemory(memory);
+        }
+
+        ~MemoryInspectorViewModelHarness()
+        {
+            // ensure we stop monitoring the MemoryBookmarksViewModel before the MockWindowManager is destroyed
+            Viewer().DetachNotifyTargets();
         }
 
         bool CanModifyCodeNotes() const { return GetValue(CanModifyNotesProperty); }

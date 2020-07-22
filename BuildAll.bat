@@ -48,6 +48,12 @@ if %W32% equ 0 if %W64% equ 0 (
     set W64=1
 )
 
+rem === If building tests, make sure the DLL exists for the Integration test ===
+if %TESTS% equ 1 if %RELEASE% equ 0 (
+    if %W32% equ 1 if not exist bin\Win32\Release\RA_Integration.dll set RELEASE=1
+    if %W64% equ 1 if not exist bin\x64\Release\RA_Integration.dll set RELEASE=1
+)
+
 rem === Get hash for current code state ===
 
 git log --oneline -1 > Temp.txt
@@ -200,11 +206,20 @@ dir "%VSTEST_PATH%" > nul || set VSTEST_PATH=VsTest.Console.exe
 
 echo.
 echo "calling %VSTEST_PATH%"
-@echo on
 
-"%VSTEST_PATH%" %DLL_PATH%
+"%VSTEST_PATH%" /Blame %DLL_PATH%
 
 set RESULT=%ERRORLEVEL%
+
+rem -- report any errors captured by /Blame --
+rem if exist TestResults (
+rem     cd TestResults
+rem     for /R %%f in (*.xml) do (
+rem         type "%%f"
+rem     )
+rem     cd ..
+rem )
+
 if not %RESULT% equ 0 exit /B %RESULT%
 
 :not_tests

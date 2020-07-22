@@ -12,51 +12,48 @@ jobs:
   include:
     - name: "Win32 DLL"
       os: windows
-      # builds with visualstudio2017buildtools - supports v141_xp target
+      # builds with visualstudio2017buildtools - implicitly supports v141_xp target
       script: ./BuildAll.bat Release x86
 
     - name: "Win64 DLL"
       os: windows
-      # builds with visualstudio2017buildtools - supports v141_xp target
+      # builds with visualstudio2017buildtools - implicitly supports v141_xp target
       script: ./BuildAll.bat Release x64
     
     - name: "Win32 Tests"
       os: windows
       install:
-        # CppUnitTestFramework
-        - choco install visualstudio2019community --package-parameters "--add Microsoft.VisualStudio.Component.WinXP"
+        # CppUnitTestFramework, v141_xp, afxres.h
+        - choco install visualstudio2019community --package-parameters "--add Microsoft.VisualStudio.Component.WinXP --add Microsoft.VisualStudio.Component.VC.ATLMFC"
         # atlbase.h
         - choco install visualstudio2019-workload-nativedesktop    
-      # builds with visualstudio2019buildtools - does not support v141_xp target - uses v142 instead
       script: ./BuildAll.bat Tests x86
 
     - name: "Win64 Tests"
       os: windows
       install:
-        # CppUnitTestFramework
-        - choco install visualstudio2019community --package-parameters "--add Microsoft.VisualStudio.Component.WinXP"
+        # CppUnitTestFramework, v141_xp, afxres.h
+        - choco install visualstudio2019community --package-parameters "--add Microsoft.VisualStudio.Component.WinXP --add Microsoft.VisualStudio.Component.VC.ATLMFC"
         # atlbase.h
-        - choco install visualstudio2019-workload-nativedesktop    
-      # builds with visualstudio2019buildtools - does not support v141_xp target - uses v142 instead
+        - choco install visualstudio2019-workload-nativedesktop
       script: ./BuildAll.bat Tests x64
 
     - name: "Win32 Analysis"
       os: windows
       install:
-        # CppUnitTestFramework, atlbase.h
+        # CppUnitTestFramework, atlbase.h, afxres.h
         - choco install visualstudio2019community --package-parameters "--add Microsoft.VisualStudio.Component.VC.ATLMFC"
-        #- choco install visualstudio2019buildtools
-        #- choco install visualstudio2019-workload-vctools
-        #- choco install visualstudio2019-workload-nativedesktop    # atlbase.h
-      # builds with visualstudio2019buildtools - does not support v141_xp target - uses v142 instead
+        # Microsoft.Cpp.Default.props
+        - choco install visualstudio2019-workload-vctools
+        # atlbase.h
+        - choco install visualstudio2019-workload-nativedesktop
       script: ./BuildAll.bat Analysis x86
 
     - name: "Win64 Analysis"
       os: windows
-      script: ./BuildAll.bat Analysis x64
       install:
-        # CppUnitTestFramework, atlbase.h
+        # CppUnitTestFramework, atlbase.h, afxres.h
         - choco install visualstudio2019community --package-parameters "--add Microsoft.VisualStudio.Component.VC.ATLMFC"
-        #- choco install visualstudio2019buildtools
-        #- choco install visualstudio2019-workload-vctools
-        - choco install visualstudio2019-workload-nativedesktop    # atlbase.h
+        # Microsoft.Cpp.Default.props, atlbase.h
+        - choco install visualstudio2019-workload-nativedesktop
+      script: ./BuildAll.bat Analysis x64

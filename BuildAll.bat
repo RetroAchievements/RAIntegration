@@ -173,8 +173,6 @@ for /f "tokens=1* delims=." %%i in ("%ESCAPEDKEY%") do (
 msbuild.exe RA_Integration.sln -t:%ESCAPEDKEY% -p:Configuration=%~2 -p:Platform=%~3 /warnaserror /nowarn:MSB8051,C5045
 set RESULT=%ERRORLEVEL%
 
-echo "msbuild returned %RESULT%"
-
 rem === If build failed, bail ===
 
 if not %RESULT% equ 0 (
@@ -199,6 +197,11 @@ rem -- see https://github.com/Microsoft/vstest/issues/1113
 rem -- also, cannot use exists on path with spaces, so use dir and check result
 set VSTEST_PATH=%VSINSTALLDIR%Common7\IDE\Extensions\TestPlatform\VsTest.Console.exe
 dir "%VSTEST_PATH%" > nul || set VSTEST_PATH=VsTest.Console.exe
+
+echo.
+echo "calling %VSTEST_PATH%"
+@echo on
+
 "%VSTEST_PATH%" %DLL_PATH%
 
 set RESULT=%ERRORLEVEL%

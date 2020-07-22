@@ -45,12 +45,18 @@ jobs:
       install:
         # CppUnitTestFramework, atlbase.h
         - choco install visualstudio2019community --package-parameters "--add Microsoft.VisualStudio.Component.VC.ATLMFC"
-        - choco install visualstudio2019buildtools
-        - choco install visualstudio2019-workload-vctools
-        - choco install visualstudio2019-workload-nativedesktop    # atlbase.h
+        #- choco install visualstudio2019buildtools
+        #- choco install visualstudio2019-workload-vctools
+        #- choco install visualstudio2019-workload-nativedesktop    # atlbase.h
       # builds with visualstudio2019buildtools - does not support v141_xp target - uses v142 instead
       script: ./BuildAll.bat Analysis x86
 
     - name: "Win64 Analysis"
       os: windows
       script: ./BuildAll.bat Analysis x64
+      install:
+        # CppUnitTestFramework, atlbase.h
+        - choco install visualstudio2019community --package-parameters "--add Microsoft.VisualStudio.Component.VC.ATLMFC"
+        #- choco install visualstudio2019buildtools
+        #- choco install visualstudio2019-workload-vctools
+        - choco install visualstudio2019-workload-nativedesktop    # atlbase.h

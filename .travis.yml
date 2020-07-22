@@ -32,11 +32,17 @@ jobs:
 
     - name: "Win64 Tests"
       os: windows
+      install:
+        - choco install visualstudio2019community                  # CppUnitTestFramework
+        - choco install visualstudio2019buildtools
+        - choco install visualstudio2019-workload-nativedesktop    # atlbase.h
+      # builds with visualstudio2019buildtools - does not support v141_xp target - uses v142 instead
       script: ./BuildAll.bat Tests x64
 
     - name: "Win32 Analysis"
       os: windows
       install:
+        - choco install visualstudio2019community                  # CppUnitTestFramework, atlbase.h
         - choco install visualstudio2019buildtools
         - choco install visualstudio2019-workload-vctools
         - choco install visualstudio2019-workload-nativedesktop    # atlbase.h

@@ -116,6 +116,9 @@
       <GenerateDebugInformation>DebugFull</GenerateDebugInformation>
       <AdditionalDependencies>kernel32.lib;user32.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>if not exist "$(SolutionDir)src\RA_BuildVer.h" "$(SolutionDir)RAInterface\MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -154,6 +157,9 @@
       <SubSystem>Windows</SubSystem>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PreBuildEvent>
+      <Command>if not exist "$(SolutionDir)src\RA_BuildVer.h" "$(SolutionDir)RAInterface\MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -178,6 +184,9 @@
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>kernel32.lib;user32.lib;Winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
+    <PreBuildEvent>
+      <Command>if not exist "$(SolutionDir)src\RA_BuildVer.h" "$(SolutionDir)RAInterface\MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -222,6 +231,9 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalLibraryDirectories>$(VCInstallDir)UnitTest\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
+    <PreBuildEvent>
+      <Command>if not exist "$(SolutionDir)src\RA_BuildVer.h" "$(SolutionDir)RAInterface\MakeBuildVer.bat" "$(SolutionDir)src\RA_BuildVer.h" RAIntegration RA_INTEGRATION</Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="RA_Interface_Tests.cpp" />

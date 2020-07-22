@@ -192,7 +192,7 @@ set DLL_PATH=bin\%~3\%~2\tests\%~1.dll
 if not exist %DLL_PATH% set DLL_PATH=bin\%~3\%~2\tests\%ESCAPEDKEY:~0,-6%\%~1.dll
 
 if not exist %DLL_PATH% (
-    echo Could not locate %~1.dll (%~2 %~3)
+    echo "Could not locate %~1.dll (%~2 %~3)"
     exit /B 1
 )
 

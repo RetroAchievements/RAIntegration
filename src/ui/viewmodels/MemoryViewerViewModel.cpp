@@ -114,7 +114,7 @@ void MemoryViewerViewModel::InitializeNotifyTargets()
     m_pBookmarkMonitor.reset(new MemoryBookmarkMonitor(*this));
 }
 
-void MemoryViewerViewModel::DetachNotifyTargets()
+void MemoryViewerViewModel::DetachNotifyTargets() noexcept
 {
     m_pBookmarkMonitor.reset();
 }

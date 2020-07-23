@@ -17,6 +17,7 @@ set W64=0
 for %%A in (%*) do (
     if /I "%%A" == "Clean" (
         set BUILDCLEAN=1
+        del %BUILDLOG%
     ) else if /I "%%A" == "Debug" (
         set DEBUG=1
         set BUILDALL=0

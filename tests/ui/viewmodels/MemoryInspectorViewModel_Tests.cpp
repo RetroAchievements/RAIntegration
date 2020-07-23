@@ -52,6 +52,11 @@ private:
             Viewer().DetachNotifyTargets();
         }
 
+        MemoryInspectorViewModelHarness(const MemoryInspectorViewModelHarness&) noexcept = delete;
+        MemoryInspectorViewModelHarness& operator=(const MemoryInspectorViewModelHarness&) noexcept = delete;
+        MemoryInspectorViewModelHarness(MemoryInspectorViewModelHarness&&) noexcept = delete;
+        MemoryInspectorViewModelHarness& operator=(MemoryInspectorViewModelHarness&&) noexcept = delete;
+
         bool CanModifyCodeNotes() const { return GetValue(CanModifyNotesProperty); }
     };
 

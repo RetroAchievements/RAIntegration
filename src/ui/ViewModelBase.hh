@@ -45,9 +45,9 @@ public:
     void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
 
 #ifdef RA_UTEST
-    void RemoveNotifyTarget(NotifyTarget& pTarget)
+    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept
     {
-        Expects(!m_bDestructed);
+        GSL_SUPPRESS_F6 Expects(!m_bDestructed);
         GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget);
     }
 #else

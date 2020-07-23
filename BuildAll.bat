@@ -205,7 +205,7 @@ set VSTEST_PATH=%VSINSTALLDIR%Common7\IDE\Extensions\TestPlatform\VsTest.Console
 dir "%VSTEST_PATH%" > nul || set VSTEST_PATH=VsTest.Console.exe
 
 echo.
-echo "calling %VSTEST_PATH%"
+echo Calling %VSTEST_PATH% %DLL_PATH%
 
 "%VSTEST_PATH%" /Blame %DLL_PATH%
 

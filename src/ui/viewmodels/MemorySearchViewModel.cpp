@@ -109,7 +109,6 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::LastKnownValueMinus), L"Last Value Minus");
     m_vValueTypes.Add(ra::etoi(ra::services::SearchFilterType::InitialValue), L"Initial Value");
 
-    AddNotifyTarget(*this);
     m_vResults.AddNotifyTarget(*this);
 
     SetValue(CanBeginNewSearchProperty, false);
@@ -267,9 +266,9 @@ void MemorySearchViewModel::OnPredefinedFilterRangeChanged()
     const auto nValue = GetPredefinedFilterRange();
     if (nValue == MEMORY_RANGE_ALL)
     {
-        RemoveNotifyTarget(*this);
+        m_bSelectingFilter = true;
         SetFilterRange(L"");
-        AddNotifyTarget(*this);
+        m_bSelectingFilter = false;
         return;
     }
 
@@ -280,10 +279,10 @@ void MemorySearchViewModel::OnPredefinedFilterRangeChanged()
     const auto* pEntry = m_vPredefinedFilterRanges.GetItemAt(nIndex);
     Ensures(pEntry != nullptr);
 
-    RemoveNotifyTarget(*this);
+    m_bSelectingFilter = true;
     SetFilterRange(ra::StringPrintf(L"%s-%s",
         ra::ByteAddressToString(pEntry->GetStartAddress()), ra::ByteAddressToString(pEntry->GetEndAddress())));
-    AddNotifyTarget(*this);
+    m_bSelectingFilter = false;
 }
 
 void MemorySearchViewModel::OnFilterRangeChanged()
@@ -695,11 +694,11 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
     SetValue(FilterSummaryProperty, m_vSearchResults.at(nNewPage).sSummary);
 
     // prevent scrolling from triggering a call to UpdateResults - we'll do that in a few lines.
-    RemoveNotifyTarget(*this);
+    m_bScrolling = true;
     // note: update maximum first - it can affect offset. then update offset to the value we want.
     SetValue(ScrollMaximumProperty, gsl::narrow_cast<int>(nMatches));
     SetValue(ScrollOffsetProperty, 0);
-    AddNotifyTarget(*this);
+    m_bScrolling = false;
 
     m_vSelectedAddresses.clear();
 
@@ -858,7 +857,7 @@ static constexpr bool CanEditFilterValue(ra::services::SearchFilterType nFilterT
     }
 }
 
-void MemorySearchViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
+void MemorySearchViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == CanFilterProperty)
     {
@@ -880,13 +879,16 @@ void MemorySearchViewModel::OnViewModelBoolValueChanged(const BoolModelProperty:
             SetValue(CanContinuousFilterProperty, false);
         }
     }
+
+    ViewModelBase::OnValueChanged(args);
 }
 
-void MemorySearchViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+void MemorySearchViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == ScrollOffsetProperty)
     {
-        UpdateResults();
+        if (!m_bScrolling)
+            UpdateResults();
     }
     else if (args.Property == ResultCountProperty)
     {
@@ -902,12 +904,16 @@ void MemorySearchViewModel::OnViewModelIntValueChanged(const IntModelProperty::C
     {
         OnPredefinedFilterRangeChanged();
     }
+
+    ViewModelBase::OnValueChanged(args);
 }
 
-void MemorySearchViewModel::OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args)
+void MemorySearchViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    if (args.Property == FilterRangeProperty)
+    if (args.Property == FilterRangeProperty && !m_bSelectingFilter)
         OnFilterRangeChanged();
+
+    ViewModelBase::OnValueChanged(args);
 }
 
 void MemorySearchViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)

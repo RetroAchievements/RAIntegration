@@ -24,11 +24,9 @@ const BoolModelProperty CodeNotesViewModel::CodeNoteViewModel::IsSelectedPropert
 CodeNotesViewModel::CodeNotesViewModel() noexcept
 {
     SetWindowTitle(L"Code Notes");
-
-    AddNotifyTarget(*this);
 }
 
-void CodeNotesViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
+void CodeNotesViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == IsVisibleProperty)
     {
@@ -45,6 +43,8 @@ void CodeNotesViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::Ch
                 OnActiveGameChanged();
         }
     }
+
+    WindowViewModelBase::OnValueChanged(args);
 }
 
 void CodeNotesViewModel::OnActiveGameChanged()

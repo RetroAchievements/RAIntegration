@@ -11,7 +11,6 @@ namespace ui {
 namespace viewmodels {
 
 class RichPresenceMonitorViewModel : public WindowViewModelBase, 
-    protected ViewModelBase::NotifyTarget,
     protected ra::data::GameContext::NotifyTarget
 {
 public:
@@ -50,8 +49,7 @@ protected:
     /// </summary>
     void StopMonitoring() noexcept;
 
-    // ViewModelBase::NotifyTarget
-    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;

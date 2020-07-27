@@ -17,7 +17,6 @@ namespace ui {
 namespace viewmodels {
 
 class MemoryViewerViewModel : public ViewModelBase,
-                              protected ViewModelBase::NotifyTarget,
                               protected ra::data::GameContext::NotifyTarget,
                               protected ra::data::EmulatorContext::NotifyTarget
 {
@@ -173,7 +172,7 @@ public:
     void RetreatCursorPage();
 
 protected:
-    void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;

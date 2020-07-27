@@ -111,9 +111,11 @@ public:
     void ToggleBit(int nBit);
 
 protected:
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
+
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
-    void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
 
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
@@ -125,6 +127,7 @@ private:
 
     MemorySearchViewModel m_pSearch;
     MemoryViewerViewModel m_pViewer;
+    bool m_bTyping = false;
 };
 
 } // namespace viewmodels

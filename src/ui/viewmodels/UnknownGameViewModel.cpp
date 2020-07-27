@@ -25,8 +25,6 @@ const BoolModelProperty UnknownGameViewModel::TestModeProperty("UnknownGameViewM
 UnknownGameViewModel::UnknownGameViewModel() noexcept
 {
     SetWindowTitle(L"Unknown Title");
-
-    AddNotifyTarget(*this); // so we can synchronize NewGameName and SelectedGameId in one direction only
 }
 
 void UnknownGameViewModel::InitializeGameTitles()
@@ -132,25 +130,29 @@ bool UnknownGameViewModel::BeginTest()
     return true;
 }
 
-void UnknownGameViewModel::OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args)
+void UnknownGameViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    if (args.Property == NewGameNameProperty)
+    if (args.Property == NewGameNameProperty && !m_bSelectingGame)
     {
         // user is entering a custom name, make sure <New Game> is selected
         SetSelectedGameId(0);
     }
+
+    WindowViewModelBase::OnValueChanged(args);
 }
 
-void UnknownGameViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+void UnknownGameViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == SelectedGameIdProperty && args.tNewValue != 0)
     {
         // copy the selected game name into the new game name field
         // disable the notifications so we don't reset the selection to <New Game>
-        RemoveNotifyTarget(*this);
+        m_bSelectingGame = true;
         SetNewGameName(m_vGameTitles.GetLabelForId(args.tNewValue));
-        AddNotifyTarget(*this);
+        m_bSelectingGame = false;
     }
+
+    WindowViewModelBase::OnValueChanged(args);
 }
 
 void UnknownGameViewModel::CopyChecksumToClipboard() const

@@ -123,6 +123,7 @@
     <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp" />
     <ClCompile Include="ui\ModelProperty.cpp" />
     <ClCompile Include="ui\Theme.cpp" />
+    <ClCompile Include="ui\TransactionalViewModelBase.cpp" />
     <ClCompile Include="ui\ViewModelBase.cpp" />
     <ClCompile Include="ui\ViewModelCollection.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel.cpp" />
@@ -276,6 +277,7 @@
     <ClInclude Include="ui\ImageReference.hh" />
     <ClInclude Include="ui\ModelProperty.hh" />
     <ClInclude Include="ui\OverlayTheme.hh" />
+    <ClInclude Include="ui\TransactionalViewModelBase.hh" />
     <ClInclude Include="ui\Types.hh" />
     <ClInclude Include="ui\ViewModelBase.hh" />
     <ClInclude Include="ui\ViewModelCollection.hh" />

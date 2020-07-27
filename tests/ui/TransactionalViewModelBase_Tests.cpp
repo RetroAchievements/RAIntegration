@@ -62,7 +62,7 @@ TEST_CLASS(TransactionalViewModelBase_Tests)
 
         void AssertBoolChanged(const BoolModelProperty& pProperty, bool bOldValue, bool bNewValue)
         {
-            for(const auto& args : m_vChangedBools)
+            for (const auto& args : m_vChangedBools)
             {
                 if (args.Property == pProperty)
                 {
@@ -74,7 +74,7 @@ TEST_CLASS(TransactionalViewModelBase_Tests)
 
             Assert::Fail(L"Property did not change");
         }
-        
+
         void AssertNotChanged(const BoolModelProperty& pProperty)
         {
             for (const auto& args : m_vChangedBools)
@@ -91,7 +91,7 @@ TEST_CLASS(TransactionalViewModelBase_Tests)
 
         void AssertStringChanged(const StringModelProperty& pProperty, const std::wstring& sOldValue, const std::wstring& sNewValue)
         {
-            for(const auto& args : m_vChangedStrings)
+            for (const auto& args : m_vChangedStrings)
             {
                 if (args.Property == pProperty)
                 {
@@ -120,7 +120,7 @@ TEST_CLASS(TransactionalViewModelBase_Tests)
 
         void AssertIntChanged(const IntModelProperty& pProperty, int nOldValue, int nNewValue)
         {
-            for(const auto& args : m_vChangedInts)
+            for (const auto& args : m_vChangedInts)
             {
                 if (args.Property == pProperty)
                 {

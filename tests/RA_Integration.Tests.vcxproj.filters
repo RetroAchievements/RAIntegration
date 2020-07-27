@@ -339,6 +339,15 @@
     <ClCompile Include="..\src\ui\TransactionalViewModelBase.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\AssetViewModelBase_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\AssetViewModelBase.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\AssetListViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

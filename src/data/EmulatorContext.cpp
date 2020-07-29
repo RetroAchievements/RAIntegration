@@ -180,9 +180,29 @@ static unsigned long long ParseVersion(const char* sVersion)
 
 bool EmulatorContext::ValidateClientVersion()
 {
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    const bool bWasHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+    bool bHardcore = bWasHardcore;
+    if (!ValidateClientVersion(bHardcore))
+        return false;
+
+    // ValidateClientVersion can set bHardcore to false if it was true and the user chose not to upgrade
+    if (bWasHardcore && !bHardcore)
+        DisableHardcoreMode();
+
+    return true;
+}
+
+/// <summary>
+/// Returns <c>true</c> if the player is allowed to play using the current client.
+/// </summary>
+bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
+{
+    // client not specified - assume pre-release of new client
     if (m_nEmulatorId == EmulatorID::UnknownEmulator)
         return true;
 
+    // fetch the latest version
     unsigned long long nMinimumVersion = 0;
     if (m_sLatestVersion.empty())
     {
@@ -221,12 +241,13 @@ bool EmulatorContext::ValidateClientVersion()
             ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"RAGens is being retired", L"With the next major release of the toolkit, you will no longer be able to play games using RAGens. Please switch over to RALibretro or RetroArch.");
     }
 
+    // if we failed to fetch the latest version, abort
     if (m_sLatestVersion == "Unknown")
     {
         const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
         std::wstring sError;
-        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+        if (bHardcore)
         {
             sError = L"The latest client is required for hardcore mode.";
             auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
@@ -255,6 +276,7 @@ bool EmulatorContext::ValidateClientVersion()
         return false;
     }
 
+    // determine if current version is valid
     const unsigned long long nServerVersion = ParseVersion(m_sLatestVersion.c_str());
     const unsigned long long nLocalVersion = ParseVersion(m_sVersion.c_str());
 
@@ -279,8 +301,9 @@ bool EmulatorContext::ValidateClientVersion()
 
     std::wstring sMessage;
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (nLocalVersion < nMinimumVersion && pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+    if (nLocalVersion < nMinimumVersion && bHardcore)
     {
+        // enforce minimum version required for hardcore
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetHeader(L"A newer client is required for hardcore mode.");
         vmMessageBox.SetMessage(ra::StringPrintf(
@@ -295,7 +318,7 @@ bool EmulatorContext::ValidateClientVersion()
 
         if (vmMessageBox.ShowModal() == ra::ui::DialogResult::Cancel)
         {
-            DisableHardcoreMode();
+            bHardcore = false;
         }
         else
         {
@@ -305,6 +328,7 @@ bool EmulatorContext::ValidateClientVersion()
     }
     else
     {
+        // allow any version in non-hardcore, but inform the user a new version is available
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetHeader(L"Would you like to update?");
         vmMessageBox.SetMessage(ra::StringPrintf(
@@ -348,27 +372,23 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
         return true;
 
-    // Enable the hardcore flag before calling ValidateClientVersion so it does the hardcore validation
-    // correctly.
-    pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-    if (!ValidateClientVersion())
+    // pass true to ValidateClientVersion so it behaves as if hardcore is already enabled
+    bool bHardcore = true;
+    if (!ValidateClientVersion(bHardcore))
     {
         // The version could not be validated, or the user has chosen to update. Log them out.
         auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
         pUserContext.Logout();
-
-        // hardcore is still enabled, which is okay. if the user isn't logged in, they'll have to log in again,
-        // at which point they'll go through the version validation logic again.
-        return true; 
-    }
-
-    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
-    {
-        // The user has chosen to abort the switch to hardcore mode.
         return false;
     }
 
-    // The user is on the latest version
+    if (!bHardcore)
+    {
+        // The user has chosen to continue playing without upgrading their client. Abort the switch to hardcore
+        return false;
+    }
+
+    // The user is on the latest version. If a game is loaded, inform them that the emulator must be reset
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
     if (pGameContext.GameId() != 0 && bShowWarning)
     {
@@ -381,11 +401,11 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
 
         if (vmMessageBox.ShowModal() == ra::ui::DialogResult::No)
-        {
-            pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
             return false;
-        }
     }
+
+    // User has agreed to reset the emulator, or no game is loaded. Enabled hardcore!
+    pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
     RebuildMenu();
 

@@ -114,6 +114,11 @@ void MemoryViewerViewModel::InitializeNotifyTargets()
     m_pBookmarkMonitor.reset(new MemoryBookmarkMonitor(*this));
 }
 
+void MemoryViewerViewModel::DetachNotifyTargets() noexcept
+{
+    m_pBookmarkMonitor.reset();
+}
+
 MemoryViewerViewModel::~MemoryViewerViewModel()
 {
     // empty function definition required to generate destroy for forward-declared MemoryBookmarkMonitor

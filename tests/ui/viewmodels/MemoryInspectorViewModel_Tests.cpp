@@ -43,9 +43,19 @@ private:
             for (size_t i = 0; i < memory.size(); ++i)
                 memory.at(i) = gsl::narrow_cast<unsigned char>(i);
 
-            Viewer().InitializeNotifyTargets();
             mockEmulatorContext.MockMemory(memory);
         }
+
+        ~MemoryInspectorViewModelHarness()
+        {
+            // ensure we stop monitoring the MemoryBookmarksViewModel before the MockWindowManager is destroyed
+            Viewer().DetachNotifyTargets();
+        }
+
+        MemoryInspectorViewModelHarness(const MemoryInspectorViewModelHarness&) noexcept = delete;
+        MemoryInspectorViewModelHarness& operator=(const MemoryInspectorViewModelHarness&) noexcept = delete;
+        MemoryInspectorViewModelHarness(MemoryInspectorViewModelHarness&&) noexcept = delete;
+        MemoryInspectorViewModelHarness& operator=(MemoryInspectorViewModelHarness&&) noexcept = delete;
 
         bool CanModifyCodeNotes() const { return GetValue(CanModifyNotesProperty); }
     };

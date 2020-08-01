@@ -31,6 +31,7 @@ public:
     MemoryViewerViewModel& operator=(MemoryViewerViewModel&&) noexcept = delete;
 
     void InitializeNotifyTargets();
+    void DetachNotifyTargets() noexcept;
 
     void DoFrame();
 

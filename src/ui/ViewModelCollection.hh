@@ -17,6 +17,10 @@ protected:
 public:
     virtual ~ViewModelCollectionBase() noexcept
     {
+#ifdef RA_UTEST
+        m_bDisposed = true;
+#endif
+
         if (!m_bFrozen)
             StopWatching();
     }
@@ -72,6 +76,10 @@ public:
 
     void RemoveNotifyTarget(NotifyTarget& pTarget)
     {
+#ifdef RA_UTEST
+        Expects(!m_bDisposed);
+#endif
+
         if (!m_vNotifyTargets.empty())
         {
             m_vNotifyTargets.erase(&pTarget);
@@ -379,6 +387,10 @@ private:
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args);
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args);
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args);
+
+#ifdef RA_UTEST
+    bool m_bDisposed = false;
+#endif
 
     bool m_bFrozen = false;
     unsigned int m_nUpdateCount = 0;

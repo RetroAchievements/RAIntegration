@@ -12,7 +12,16 @@ namespace ui {
 class ViewModelBase
 {
 public:
+#ifdef RA_UTEST
+    virtual ~ViewModelBase() noexcept {
+        m_bDestructed = true;
+    }
+
+    bool m_bDestructed = false;
+#else
     virtual ~ViewModelBase() noexcept = default;
+#endif
+
     ViewModelBase(const ViewModelBase&) = delete;
     ViewModelBase& operator=(const ViewModelBase&) = delete;
     GSL_SUPPRESS_F6 ViewModelBase(ViewModelBase&&) = default;
@@ -34,7 +43,16 @@ public:
     };
 
     void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
+
+#ifdef RA_UTEST
+    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept
+    {
+        GSL_SUPPRESS_F6 Expects(!m_bDestructed);
+        GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget);
+    }
+#else
     void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget); }
+#endif
 
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;

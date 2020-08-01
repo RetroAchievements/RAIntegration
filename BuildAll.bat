@@ -17,6 +17,7 @@ set W64=0
 for %%A in (%*) do (
     if /I "%%A" == "Clean" (
         set BUILDCLEAN=1
+        del %BUILDLOG%
     ) else if /I "%%A" == "Debug" (
         set DEBUG=1
         set BUILDALL=0
@@ -48,6 +49,12 @@ if %W32% equ 0 if %W64% equ 0 (
     set W64=1
 )
 
+rem === If building tests, make sure the DLL exists for the Integration test ===
+if %TESTS% equ 1 if %RELEASE% equ 0 (
+    if %W32% equ 1 if not exist bin\Win32\Release\RA_Integration.dll set RELEASE=1
+    if %W64% equ 1 if not exist bin\x64\Release\RA_Integration.dll set RELEASE=1
+)
+
 rem === Get hash for current code state ===
 
 git log --oneline -1 > Temp.txt
@@ -72,14 +79,20 @@ rem === Initialize Visual Studio environment ===
 
 echo Initializing Visual Studio environment
 if "%VSINSTALLDIR%"=="" set VSINSTALLDIR=%ProgramFiles(x86)%\Microsoft Visual Studio\2019\Community\
-if not exist "%VSINSTALLDIR%" set VSINSTALLDIR="%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\"  
+if not exist "%VSINSTALLDIR%" set VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\
+if not exist "%VSINSTALLDIR%" set VSINSTALLDIR=%ProgramFiles(x86)%\Microsoft Visual Studio\2017\Community\
+if not exist "%VSINSTALLDIR%" set VSINSTALLDIR=C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\
 if not exist "%VSINSTALLDIR%" (
     echo Could not determine VSINSTALLDIR
     exit /B 1
 )
 echo using VSINSTALLDIR=%VSINSTALLDIR%
 
-call "%VSINSTALLDIR%VC\Auxiliary\Build\vcvars32.bat"
+if "%VSDEVCMD%"=="" set VSDEVCMD=%VSINSTALLDIR%Common7\Tools\VsDevCmd.bat
+if not exist "%VSDEVCMD%" set VSDEVCMD=%VSINSTALLDIR%VC\Auxiliary\Build\vcvars32.bat
+set VSCMD_SKIP_SENDTELEMETRY=1
+echo calling "%VSDEVCMD%"
+call "%VSDEVCMD%"
 
 rem === Build each project ===
 
@@ -116,7 +129,7 @@ if %BUILDCLEAN% equ 1 (
     )
 )
 
-exit /B 0
+exit /B %ERRORLEVEL%
 
 rem === Build subroutine ===
 
@@ -128,7 +141,7 @@ set CONFIG=%~2
 if %W32% equ 1 call :build2 %PROJECT% %CONFIG% Win32
 if %W64% equ 1 call :build2 %PROJECT% %CONFIG% x64
 
-exit /B 0
+exit /B %ERRORLEVEL%
 
 :build2
 
@@ -170,7 +183,7 @@ set RESULT=%ERRORLEVEL%
 rem === If build failed, bail ===
 
 if not %RESULT% equ 0 (
-    echo %~1 %~2 failed: %RESULT%
+    echo %~1 %~2 %~3 failed: %RESULT%
     exit /B %RESULT%
 )
 
@@ -178,12 +191,12 @@ rem === If test project, run tests ===
 
 if "%ESCAPEDKEY:~-6%" neq "_Tests" goto not_tests
 
-set DLL_PATH=bin\%~2\tests\%~1.dll
-if not exist %DLL_PATH% set DLL_PATH=bin\%~2\tests\%ESCAPEDKEY:~0,-6%\%~1.dll
+set DLL_PATH=bin\%~3\%~2\tests\%~1.dll
+if not exist %DLL_PATH% set DLL_PATH=bin\%~3\%~2\tests\%ESCAPEDKEY:~0,-6%\%~1.dll
 
 if not exist %DLL_PATH% (
-    echo Could not locate %~1.dll
-    goto eof
+    echo "Could not locate %~1.dll (%~2 %~3)"
+    exit /B 1
 )
 
 rem -- the default VsTest.Console.exe (in CommonExtensions) does not return ERRORLEVEL, use one in Extensions instead
@@ -191,9 +204,23 @@ rem -- see https://github.com/Microsoft/vstest/issues/1113
 rem -- also, cannot use exists on path with spaces, so use dir and check result
 set VSTEST_PATH=%VSINSTALLDIR%Common7\IDE\Extensions\TestPlatform\VsTest.Console.exe
 dir "%VSTEST_PATH%" > nul || set VSTEST_PATH=VsTest.Console.exe
-"%VSTEST_PATH%" %DLL_PATH%
+
+echo.
+echo Calling %VSTEST_PATH% %DLL_PATH%
+
+"%VSTEST_PATH%" /Blame %DLL_PATH%
 
 set RESULT=%ERRORLEVEL%
+
+rem -- report any errors captured by /Blame --
+rem if exist TestResults (
+rem     cd TestResults
+rem     for /R %%f in (*.xml) do (
+rem         type "%%f"
+rem     )
+rem     cd ..
+rem )
+
 if not %RESULT% equ 0 exit /B %RESULT%
 
 :not_tests
@@ -205,4 +232,4 @@ echo %PROJECTKEY% >> %BUILDLOG%
 rem === For termination from within function ===
 
 :eof
-exit /B 0
+exit /B %ERRORLEVEL%

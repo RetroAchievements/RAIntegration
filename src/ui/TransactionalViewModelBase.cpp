@@ -5,33 +5,26 @@ namespace ui {
 
 const BoolModelProperty TransactionalViewModelBase::IsModifiedProperty("TransactionalViewModelBase", "IsModified", false);
 
-void TransactionalViewModelBase::SetTransactionalValue(const BoolModelProperty& pProperty, bool bValue)
+void TransactionalViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
-    if (m_pTransaction != nullptr)
+    if (m_pTransaction != nullptr && IsTransactional(args.Property))
     {
-        const bool bCurrentValue = GetValue(pProperty);
-        if (bValue != bCurrentValue)
-        {
-            m_pTransaction->SetValue(pProperty, bValue, bCurrentValue);
-            SetValue(pProperty, bValue);
-            SetValue(IsModifiedProperty, m_pTransaction->IsModified());
-        }
+        m_pTransaction->ValueChanged(args);
+        SetValue(IsModifiedProperty, m_pTransaction->IsModified());
     }
-    else
-    {
-        SetValue(pProperty, bValue);
-    }
+
+    ViewModelBase::OnValueChanged(args);
 }
 
-void TransactionalViewModelBase::Transaction::SetValue(const BoolModelProperty& pProperty, bool bValue, bool bCurrentValue)
+void TransactionalViewModelBase::Transaction::ValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
-    const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(pProperty.GetKey());
+    const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(args.Property.GetKey());
     if (iter == m_mOriginalIntValues.end())
     {
-        m_mOriginalIntValues.insert_or_assign(pProperty.GetKey(), static_cast<int>(bCurrentValue));
+        m_mOriginalIntValues.insert_or_assign(args.Property.GetKey(), static_cast<int>(args.tOldValue));
 
 #ifdef _DEBUG
-        m_mDebugOriginalValues.insert_or_assign(pProperty.GetPropertyName(), bCurrentValue ? L"true" : L"false");
+        m_mDebugOriginalValues.insert_or_assign(args.Property.GetPropertyName(), args.tOldValue ? L"true" : L"false");
 #endif
     }
     else
@@ -40,83 +33,69 @@ void TransactionalViewModelBase::Transaction::SetValue(const BoolModelProperty& 
     }
 
     if (m_pNext != nullptr)
-        m_pNext->SetValue(pProperty, bValue, bCurrentValue);
+        m_pNext->ValueChanged(args);
 }
 
-void TransactionalViewModelBase::SetTransactionalValue(const StringModelProperty& pProperty, const std::wstring& sValue)
+void TransactionalViewModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    if (m_pTransaction != nullptr)
+    if (m_pTransaction != nullptr && IsTransactional(args.Property))
     {
-        const std::wstring& sCurrentValue = GetValue(pProperty);
-        if (sValue != sCurrentValue)
-        {
-            m_pTransaction->SetValue(pProperty, sValue, sCurrentValue);
-            SetValue(pProperty, sValue);
-            SetValue(IsModifiedProperty, m_pTransaction->IsModified());
-        }
+        m_pTransaction->ValueChanged(args);
+        SetValue(IsModifiedProperty, m_pTransaction->IsModified());
     }
-    else
-    {
-        SetValue(pProperty, sValue);
-    }
+
+    ViewModelBase::OnValueChanged(args);
 }
 
-void TransactionalViewModelBase::Transaction::SetValue(const StringModelProperty& pProperty, const std::wstring& sValue, const std::wstring& sCurrentValue)
+void TransactionalViewModelBase::Transaction::ValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    const StringModelProperty::ValueMap::const_iterator iter = m_mOriginalStringValues.find(pProperty.GetKey());
+    const StringModelProperty::ValueMap::const_iterator iter = m_mOriginalStringValues.find(args.Property.GetKey());
     if (iter == m_mOriginalStringValues.end())
     {
-        m_mOriginalStringValues.insert_or_assign(pProperty.GetKey(), sCurrentValue);
+        m_mOriginalStringValues.insert_or_assign(args.Property.GetKey(), args.tOldValue);
 
 #ifdef _DEBUG
-        m_mDebugOriginalValues.insert_or_assign(pProperty.GetPropertyName(), sCurrentValue);
+        m_mDebugOriginalValues.insert_or_assign(args.Property.GetPropertyName(), args.tOldValue);
 #endif
     }
-    else if (sValue == iter->second)
+    else if (args.tNewValue == iter->second)
     {
         m_mOriginalStringValues.erase(iter);
     }
 
     if (m_pNext != nullptr)
-        m_pNext->SetValue(pProperty, sValue, sCurrentValue);
+        m_pNext->ValueChanged(args);
 }
 
-void TransactionalViewModelBase::SetTransactionalValue(const IntModelProperty& pProperty, int nValue)
+void TransactionalViewModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (m_pTransaction != nullptr)
+    if (m_pTransaction != nullptr && IsTransactional(args.Property))
     {
-        const int nCurrentValue = GetValue(pProperty);
-        if (nValue != nCurrentValue)
-        {
-            m_pTransaction->SetValue(pProperty, nValue, nCurrentValue);
-            SetValue(pProperty, nValue);
-            SetValue(IsModifiedProperty, m_pTransaction->IsModified());
-        }
+        m_pTransaction->ValueChanged(args);
+        SetValue(IsModifiedProperty, m_pTransaction->IsModified());
     }
-    else
-    {
-        SetValue(pProperty, nValue);
-    }
+
+    ViewModelBase::OnValueChanged(args);
 }
 
-void TransactionalViewModelBase::Transaction::SetValue(const IntModelProperty& pProperty, int nValue, int nCurrentValue)
+void TransactionalViewModelBase::Transaction::ValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(pProperty.GetKey());
+    const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(args.Property.GetKey());
     if (iter == m_mOriginalIntValues.end())
     {
-        m_mOriginalIntValues.insert_or_assign(pProperty.GetKey(), nCurrentValue);
+        m_mOriginalIntValues.insert_or_assign(args.Property.GetKey(), args.tOldValue);
 
 #ifdef _DEBUG
-        m_mDebugOriginalValues.insert_or_assign(pProperty.GetPropertyName(), std::to_wstring(nCurrentValue));
+        m_mDebugOriginalValues.insert_or_assign(args.Property.GetPropertyName(), std::to_wstring(args.tOldValue));
 #endif
     }
-    else if (nValue == iter->second)
+    else if (args.tNewValue == iter->second)
     {
         m_mOriginalIntValues.erase(iter);
     }
 
     if (m_pNext != nullptr)
-        m_pNext->SetValue(pProperty, nValue, nCurrentValue);
+        m_pNext->ValueChanged(args);
 }
 
 void TransactionalViewModelBase::BeginTransaction()
@@ -149,9 +128,10 @@ void TransactionalViewModelBase::RevertTransaction()
 {
     if (m_pTransaction != nullptr)
     {
-        m_pTransaction->Revert(*this);
-
+        std::shared_ptr<Transaction> pTransaction = m_pTransaction;
         DiscardTransaction();
+
+        pTransaction->Revert(*this);
     }
 }
 
@@ -163,9 +143,6 @@ void TransactionalViewModelBase::Transaction::Revert(TransactionalViewModelBase&
         const IntModelProperty* pIntProperty = dynamic_cast<const IntModelProperty*>(pProperty);
         if (pIntProperty != nullptr)
         {
-            if (m_pNext)
-                m_pNext->SetValue(*pIntProperty, pPair.second, vmViewModel.GetValue(*pIntProperty));
-
             vmViewModel.SetValue(*pIntProperty, pPair.second);
         }
         else
@@ -173,9 +150,6 @@ void TransactionalViewModelBase::Transaction::Revert(TransactionalViewModelBase&
             const BoolModelProperty* pBoolProperty = dynamic_cast<const BoolModelProperty*>(pProperty);
             if (pBoolProperty != nullptr)
             {
-                if (m_pNext)
-                    m_pNext->SetValue(*pBoolProperty, pPair.second, vmViewModel.GetValue(*pBoolProperty));
-
                 vmViewModel.SetValue(*pBoolProperty, pPair.second);
             }
         }
@@ -187,9 +161,6 @@ void TransactionalViewModelBase::Transaction::Revert(TransactionalViewModelBase&
         const StringModelProperty* pStringProperty = dynamic_cast<const StringModelProperty*>(pProperty);
         if (pStringProperty != nullptr)
         {
-            if (m_pNext)
-                m_pNext->SetValue(*pStringProperty, pPair.second, vmViewModel.GetValue(*pStringProperty));
-
             vmViewModel.SetValue(*pStringProperty, pPair.second);
         }
     }

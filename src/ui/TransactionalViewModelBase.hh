@@ -72,52 +72,52 @@ public:
 
 protected:
     /// <summary>
-    /// Sets the specified boolean property to the specified value.
+    /// Indicates the specified property should be monitored in transactions.
     /// </summary>
-    /// <param name="pProperty">The property to set.</param>
-    /// <param name="bValue">The value to set.</param>
-    void SetTransactionalValue(const BoolModelProperty& pProperty, bool bValue);
+    /// <param name="pProperty">The property to monitor.</param>
+    void SetTransactional(const BoolModelProperty& pProperty)
+    {
+        m_vTransactionalProperties.insert(pProperty.GetKey());
+    }
 
     /// <summary>
-    /// Sets the specified string property to the specified value.
+    /// Indicates the specified property should be monitored in transactions.
     /// </summary>
-    /// <param name="pProperty">The property to set.</param>
-    /// <param name="sValue">The value to set.</param>
-    void SetTransactionalValue(const StringModelProperty& pProperty, const std::wstring& sValue);
+    /// <param name="pProperty">The property to monitor.</param>
+    void SetTransactional(const StringModelProperty& pProperty)
+    {
+        m_vTransactionalProperties.insert(pProperty.GetKey());
+    }
 
     /// <summary>
-    /// Sets the specified integer property to the specified value.
+    /// Indicates the specified property should be monitored in transactions.
     /// </summary>
-    /// <param name="pProperty">The property to set.</param>
-    /// <param name="nValue">The value to set.</param>
-    void SetTransactionalValue(const IntModelProperty& pProperty, int nValue);
+    /// <param name="pProperty">The property to monitor.</param>
+    void SetTransactional(const IntModelProperty& pProperty)
+    {
+        m_vTransactionalProperties.insert(pProperty.GetKey());
+    }
 
     class Transaction
     {
     public:
         /// <summary>
-        /// Sets the specified boolean property to the specified value.
+        /// Updates the transaction with the new value for a property.
         /// </summary>
-        /// <param name="pProperty">The property to set.</param>
-        /// <param name="bValue">The value to set.</param>
-        /// <param name="bCurrentValue">The value being replaced.</param>
-        void SetValue(const BoolModelProperty& pProperty, bool bValue, bool bCurrentValue);
+        /// <param name="args">Information about the change.</param>
+        void ValueChanged(const BoolModelProperty::ChangeArgs& args);
 
         /// <summary>
-        /// Sets the specified string property to the specified value.
+        /// Updates the transaction with the new value for a property.
         /// </summary>
-        /// <param name="pProperty">The property to set.</param>
-        /// <param name="sValue">The value to set.</param>
-        /// <param name="sCurrentValue">The value being replaced.</param>
-        void SetValue(const StringModelProperty& pProperty, const std::wstring& sValue, const std::wstring& sCurrentValue);
+        /// <param name="args">Information about the change.</param>
+        void ValueChanged(const StringModelProperty::ChangeArgs& args);
 
         /// <summary>
-        /// Sets the specified integer property to the specified value.
+        /// Updates the transaction with the new value for a property.
         /// </summary>
-        /// <param name="pProperty">The property to set.</param>
-        /// <param name="nValue">The value to set.</param>
-        /// <param name="nCurrentValue">The value being replaced.</param>
-        void SetValue(const IntModelProperty& pProperty, int nValue, int nCurrentValue);
+        /// <param name="args">Information about the change.</param>
+        void ValueChanged(const IntModelProperty::ChangeArgs& args);
 
         /// <summary>
         /// Determines if any property has been modified.
@@ -176,10 +176,31 @@ protected:
 #endif
     };
 
+    void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
     std::shared_ptr<Transaction> m_pTransaction;
 
 private:
     void DiscardTransaction();
+
+    bool IsTransactional(const BoolModelProperty& pProperty)
+    {
+        return (m_vTransactionalProperties.find(pProperty.GetKey()) != m_vTransactionalProperties.end());
+    }
+
+    bool IsTransactional(const StringModelProperty& pProperty)
+    {
+        return (m_vTransactionalProperties.find(pProperty.GetKey()) != m_vTransactionalProperties.end());
+    }
+
+    bool IsTransactional(const IntModelProperty& pProperty)
+    {
+        return (m_vTransactionalProperties.find(pProperty.GetKey()) != m_vTransactionalProperties.end());
+    }
+
+    std::set<int> m_vTransactionalProperties;
 };
 
 } // namespace ui

@@ -79,6 +79,12 @@ protected:
     void SetValue(const BoolModelProperty& pProperty, bool bValue);
 
     /// <summary>
+    /// Called when a boolean value changes.
+    /// </summary>
+    /// <param name="args">Information about the change.</param>
+    virtual void OnValueChanged(const BoolModelProperty::ChangeArgs& args);
+
+    /// <summary>
     /// Gets the value associated to the requested string property.
     /// </summary>
     /// <param name="pProperty">The property to query.</param>
@@ -97,6 +103,12 @@ protected:
     void SetValue(const StringModelProperty& pProperty, const std::wstring& sValue);
 
     /// <summary>
+    /// Called when a string value changes.
+    /// </summary>
+    /// <param name="args">Information about the change.</param>
+    virtual void OnValueChanged(const StringModelProperty::ChangeArgs& args);
+
+    /// <summary>
     /// Gets the value associated to the requested integer property.
     /// </summary>
     /// <param name="pProperty">The property to query.</param>
@@ -113,6 +125,12 @@ protected:
     /// <param name="pProperty">The property to set.</param>
     /// <param name="nValue">The value to set.</param>
     void SetValue(const IntModelProperty& pProperty, int nValue);
+
+    /// <summary>
+    /// Called when a integer value changes.
+    /// </summary>
+    /// <param name="args">Information about the change.</param>
+    virtual void OnValueChanged(const IntModelProperty::ChangeArgs& args);
 
     // allow BindingBase to call GetValue(Property) and SetValue(Property) directly.
     friend class BindingBase;

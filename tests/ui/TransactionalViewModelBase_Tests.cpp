@@ -13,7 +13,12 @@ TEST_CLASS(TransactionalViewModelBase_Tests)
     class ViewModelHarness : public TransactionalViewModelBase
     {
     public:
-        ViewModelHarness() noexcept(std::is_nothrow_default_constructible_v<ViewModelBase>) = default;
+        ViewModelHarness()
+        {
+            SetTransactional(TransactionalBoolProperty);
+            SetTransactional(TransactionalStringProperty);
+            SetTransactional(TransactionalIntProperty);
+        }
 
         static const StringModelProperty StringProperty;
         const std::wstring& GetString() const { return GetValue(StringProperty); }
@@ -29,15 +34,15 @@ TEST_CLASS(TransactionalViewModelBase_Tests)
 
         static const StringModelProperty TransactionalStringProperty;
         const std::wstring& GetTransactionalString() const { return GetValue(TransactionalStringProperty); }
-        void SetTransactionalString(const std::wstring& sValue) { SetTransactionalValue(TransactionalStringProperty, sValue); }
+        void SetTransactionalString(const std::wstring& sValue) { SetValue(TransactionalStringProperty, sValue); }
 
         static const IntModelProperty TransactionalIntProperty;
         int GetTransactionalInt() const { return GetValue(TransactionalIntProperty); }
-        void SetTransactionalInt(int nValue) { SetTransactionalValue(TransactionalIntProperty, nValue); }
+        void SetTransactionalInt(int nValue) { SetValue(TransactionalIntProperty, nValue); }
 
         static const BoolModelProperty TransactionalBoolProperty;
         bool GetTransactionalBool() const { return GetValue(TransactionalBoolProperty); }
-        void SetTransactionalBool(bool bValue) { SetTransactionalValue(TransactionalBoolProperty, bValue); }
+        void SetTransactionalBool(bool bValue) { SetValue(TransactionalBoolProperty, bValue); }
     };
 
     class NotifyTargetHarness : public ViewModelBase::NotifyTarget

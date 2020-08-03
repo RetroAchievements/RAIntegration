@@ -13,7 +13,7 @@ TEST_CLASS(TransactionalViewModelBase_Tests)
     class ViewModelHarness : public TransactionalViewModelBase
     {
     public:
-        ViewModelHarness()
+        ViewModelHarness() noexcept
         {
             SetTransactional(TransactionalBoolProperty);
             SetTransactional(TransactionalStringProperty);
@@ -48,14 +48,14 @@ TEST_CLASS(TransactionalViewModelBase_Tests)
     class NotifyTargetHarness : public ViewModelBase::NotifyTarget
     {
     public:
-        void Reset()
+        void Reset() noexcept
         {
             m_vChangedBools.clear();
             m_vChangedStrings.clear();
             m_vChangedInts.clear();
         }
 
-        void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override
+        void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override
         {
             m_vChangedBools.push_back({ args.Property, args.tOldValue, args.tNewValue });
         }
@@ -84,7 +84,7 @@ TEST_CLASS(TransactionalViewModelBase_Tests)
             }
         }
 
-        void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override
+        void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override
         {
             m_vChangedStrings.push_back({ args.Property, args.tOldValue, args.tNewValue });
         }
@@ -113,7 +113,7 @@ TEST_CLASS(TransactionalViewModelBase_Tests)
             }
         }
 
-        void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override
+        void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override
         {
             m_vChangedInts.push_back({ args.Property, args.tOldValue, args.tNewValue });
         }

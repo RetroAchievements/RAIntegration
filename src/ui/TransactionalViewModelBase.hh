@@ -75,27 +75,27 @@ protected:
     /// Indicates the specified property should be monitored in transactions.
     /// </summary>
     /// <param name="pProperty">The property to monitor.</param>
-    void SetTransactional(const BoolModelProperty& pProperty)
+    void SetTransactional(const BoolModelProperty& pProperty) noexcept
     {
-        m_vTransactionalProperties.insert(pProperty.GetKey());
+        GSL_SUPPRESS_F6 m_vTransactionalProperties.insert(pProperty.GetKey());
     }
 
     /// <summary>
     /// Indicates the specified property should be monitored in transactions.
     /// </summary>
     /// <param name="pProperty">The property to monitor.</param>
-    void SetTransactional(const StringModelProperty& pProperty)
+    void SetTransactional(const StringModelProperty& pProperty) noexcept
     {
-        m_vTransactionalProperties.insert(pProperty.GetKey());
+        GSL_SUPPRESS_F6 m_vTransactionalProperties.insert(pProperty.GetKey());
     }
 
     /// <summary>
     /// Indicates the specified property should be monitored in transactions.
     /// </summary>
     /// <param name="pProperty">The property to monitor.</param>
-    void SetTransactional(const IntModelProperty& pProperty)
+    void SetTransactional(const IntModelProperty& pProperty) noexcept
     {
-        m_vTransactionalProperties.insert(pProperty.GetKey());
+        GSL_SUPPRESS_F6 m_vTransactionalProperties.insert(pProperty.GetKey());
     }
 
     class Transaction
@@ -122,7 +122,7 @@ protected:
         /// <summary>
         /// Determines if any property has been modified.
         /// </summary>
-        bool IsModified() const
+        bool IsModified() const noexcept
         {
             return (!m_mOriginalIntValues.empty() || !m_mOriginalStringValues.empty());
         }

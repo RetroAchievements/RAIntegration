@@ -162,7 +162,7 @@ protected:
 
         void Revert(TransactionalViewModelBase& vmViewModel);
 
-        std::shared_ptr<Transaction> m_pNext;
+        std::unique_ptr<Transaction> m_pNext;
 
     private:
         StringModelProperty::ValueMap m_mOriginalStringValues;
@@ -180,7 +180,7 @@ protected:
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
-    std::shared_ptr<Transaction> m_pTransaction;
+    std::unique_ptr<Transaction> m_pTransaction;
 
 private:
     void DiscardTransaction();

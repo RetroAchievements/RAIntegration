@@ -100,8 +100,8 @@ void TransactionalViewModelBase::Transaction::ValueChanged(const IntModelPropert
 
 void TransactionalViewModelBase::BeginTransaction()
 {
-    auto pTransaction = std::make_shared<Transaction>();
-    pTransaction->m_pNext = m_pTransaction;
+    auto pTransaction = std::make_unique<Transaction>();
+    pTransaction->m_pNext = std::move(m_pTransaction);
     m_pTransaction = std::move(pTransaction);
 
     SetValue(IsModifiedProperty, false);
@@ -117,21 +117,29 @@ void TransactionalViewModelBase::CommitTransaction()
 
 void TransactionalViewModelBase::DiscardTransaction()
 {
-    m_pTransaction = std::move(m_pTransaction->m_pNext);
-    if (m_pTransaction == nullptr)
-        SetValue(IsModifiedProperty, false);
-    else
-        SetValue(IsModifiedProperty, m_pTransaction->IsModified());
+    if (m_pTransaction != nullptr)
+    {
+        m_pTransaction = std::move(m_pTransaction->m_pNext);
+        if (m_pTransaction == nullptr)
+            SetValue(IsModifiedProperty, false);
+        else
+            SetValue(IsModifiedProperty, m_pTransaction->IsModified());
+    }
 }
 
 void TransactionalViewModelBase::RevertTransaction()
 {
     if (m_pTransaction != nullptr)
     {
-        std::shared_ptr<Transaction> pTransaction = m_pTransaction;
-        DiscardTransaction();
+        std::unique_ptr<Transaction> pTransaction = std::move(m_pTransaction);
+        m_pTransaction = std::move(pTransaction->m_pNext);
 
         pTransaction->Revert(*this);
+
+        if (m_pTransaction == nullptr)
+            SetValue(IsModifiedProperty, false);
+        else
+            SetValue(IsModifiedProperty, m_pTransaction->IsModified());
     }
 }
 

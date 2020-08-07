@@ -44,7 +44,7 @@ public:
     const std::wstring& GetScreenshotDirectory() const noexcept override { return m_sScreenshotDirectory; }
     void SetScreenshotDirectory(const std::wstring& sValue) override { m_sScreenshotDirectory = sValue; }
 
-    ra::ui::Position GetWindowPosition([[maybe_unused]] const std::string& /*sPositionKey*/) const override
+    ra::ui::Position GetWindowPosition([[maybe_unused]] const std::string& /*sPositionKey*/) const noexcept override
     {
         assert(!"Not implemented");
         return ra::ui::Position();

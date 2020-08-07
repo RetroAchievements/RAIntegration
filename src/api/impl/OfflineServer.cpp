@@ -20,7 +20,7 @@ Login::Response OfflineServer::Login(const Login::Request& request)
     return std::move(response);
 }
 
-Logout::Response OfflineServer::Logout(const Logout::Request&)
+Logout::Response OfflineServer::Logout(const Logout::Request&) noexcept
 {
     Logout::Response response;
     response.Result = ApiResult::Success;

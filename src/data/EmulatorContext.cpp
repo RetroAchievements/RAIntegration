@@ -530,13 +530,14 @@ void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], si
 
         switch (nToRead) // partial Duff's device to read remaining bytes
         {
-            case 7: *pBuffer++ = pBlock.read(nAddress++);
-            case 6: *pBuffer++ = pBlock.read(nAddress++);
-            case 5: *pBuffer++ = pBlock.read(nAddress++);
-            case 4: *pBuffer++ = pBlock.read(nAddress++);
-            case 3: *pBuffer++ = pBlock.read(nAddress++);
-            case 2: *pBuffer++ = pBlock.read(nAddress++);
-            case 1: *pBuffer++ = pBlock.read(nAddress++);
+            case 7: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+            case 6: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+            case 5: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+            case 4: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+            case 3: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+            case 2: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+            case 1: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+            default: break;
         }
 
         if (nCount == 0)

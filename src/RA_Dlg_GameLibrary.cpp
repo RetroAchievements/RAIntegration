@@ -231,13 +231,16 @@ void Dlg_GameLibrary::AddTitle(const std::string& sTitle, const std::string& sFi
     item.iItem = ListView_InsertItem(hList, &item);
 
     item.iSubItem = 1;
-    ListView_SetItemText(hList, item.iItem, 1, NativeStr(sTitle).data());
+    auto sNativeStr = NativeStr(sTitle);
+    ListView_SetItemText(hList, item.iItem, 1, sNativeStr.data());
 
     item.iSubItem = 2;
-    ListView_SetItemText(hList, item.iItem, 2, NativeStr(m_ProgressLibrary[nGameID]).data());
+    sNativeStr = NativeStr(m_ProgressLibrary[nGameID]);
+    ListView_SetItemText(hList, item.iItem, 2, sNativeStr.data());
 
     item.iSubItem = 3;
-    ListView_SetItemText(hList, item.iItem, 3, NativeStr(sFilename).data());
+    sNativeStr = NativeStr(sFilename);
+    ListView_SetItemText(hList, item.iItem, 3, sNativeStr.data());
 
     // NB: Perfect forwarding seems to cause an access violation here, so it's using an rvalue instead
     m_vGameEntries.emplace_back(GameEntry(sTitle, sFilename, nGameID));

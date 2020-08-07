@@ -1705,6 +1705,47 @@ public:
         Assert::AreEqual({ 2U }, viewer.GetAddress());
         Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
     }
+
+    TEST_METHOD(TestScrollCursorOffscreen)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256); // 16 rows of 16 bytes
+
+        viewer.SetFirstAddress(0x40U);
+
+        // set cursor to last character of second line
+        viewer.SetAddress(0x5FU);
+
+        // simulates scroll wheel down - advance two lines
+        viewer.SetFirstAddress(0x60U);
+
+        // selected address is offscreen, but should not have changed
+        // this also validates an edge case that was causing an index out of range exception
+        Assert::AreEqual({ 0x5FU }, viewer.GetAddress());
+
+        // reset and try again in 16-bit mode
+        viewer.SetFirstAddress(0x40U);
+        viewer.SetSize(MemSize::SixteenBit);
+        viewer.SetFirstAddress(0x60U);
+        Assert::AreEqual({ 0x5FU }, viewer.GetAddress());
+
+        viewer.SetFirstAddress(0x40U);
+        viewer.SetAddress(0x5EU);
+        viewer.SetFirstAddress(0x60U);
+        Assert::AreEqual({ 0x5EU }, viewer.GetAddress());
+
+        // reset and try again in 32-bit mode
+        viewer.SetFirstAddress(0x40U);
+        viewer.SetAddress(0x5FU);
+        viewer.SetSize(MemSize::ThirtyTwoBit);
+        viewer.SetFirstAddress(0x60U);
+        Assert::AreEqual({ 0x5FU }, viewer.GetAddress());
+
+        viewer.SetFirstAddress(0x40U);
+        viewer.SetAddress(0x5CU);
+        viewer.SetFirstAddress(0x60U);
+        Assert::AreEqual({ 0x5CU }, viewer.GetAddress());
+    }
 };
 
 } // namespace tests

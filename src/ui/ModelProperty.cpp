@@ -36,10 +36,12 @@ const ModelPropertyBase* ModelPropertyBase::GetPropertyForKey(int nKey)
 {
     ModelPropertyBase search(nKey);
     auto iter = std::lower_bound(s_vProperties.begin(), s_vProperties.end(), &search,
-                                 [](const ModelPropertyBase* restrict left,
-                                    const ModelPropertyBase* restrict right)
+        [](const ModelPropertyBase* restrict left, const ModelPropertyBase* restrict right)
     {
-        Expects((left != nullptr) && (right != nullptr));
+        if (left == nullptr)
+            return (right != nullptr);
+        if (right == nullptr)
+            return false;
         return left->GetKey() < right->GetKey();
     });
 

@@ -588,8 +588,9 @@ public:
         emulator.MockVersions("0.57", "0.57");
         emulator.mockGameContext.SetGameId(1U);
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
+            Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
             Assert::AreEqual(std::wstring(L"Enable hardcore mode?"), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"Enabling hardcore mode will reset the emulator. You will lose any progress that has not been saved through the game."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::Yes;
@@ -635,8 +636,9 @@ public:
         EmulatorContextHarness emulator;
         emulator.MockVersions("0.57", "0.57");
         emulator.mockGameContext.SetGameId(1U);
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
+            Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
             Assert::AreEqual(std::wstring(L"Enable hardcore mode?"), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"Enabling hardcore mode will reset the emulator. You will lose any progress that has not been saved through the game."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::No;
@@ -657,8 +659,9 @@ public:
         EmulatorContextHarness emulator;
         emulator.MockVersions("0.58", "0.57");
         emulator.mockGameContext.SetGameId(1U);
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
+            Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
             Assert::AreEqual(std::wstring(L"Enable hardcore mode?"), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"Enabling hardcore mode will reset the emulator. You will lose any progress that has not been saved through the game."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::Yes;
@@ -681,8 +684,9 @@ public:
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.mockGameContext.SetGameId(1U);
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
+            Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
             Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
@@ -691,9 +695,9 @@ public:
         bool bWasReset = false;
         emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
-        Assert::IsTrue(emulator.EnableHardcoreMode());
+        Assert::IsFalse(emulator.EnableHardcoreMode());
 
-        Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
         Assert::AreEqual(std::string("http://host/download.php"), emulator.mockDesktop.LastOpenedUrl());
 
@@ -710,8 +714,9 @@ public:
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.mockGameContext.SetGameId(1U);
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
+            Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
             Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::Cancel;
@@ -779,8 +784,9 @@ public:
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.mockGameContext.SetGameId(1U);
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
+            Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
             Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 0.57\n- New version: 0.58\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
@@ -789,9 +795,9 @@ public:
         bool bWasReset = false;
         emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
-        Assert::IsTrue(emulator.EnableHardcoreMode(false));
+        Assert::IsFalse(emulator.EnableHardcoreMode(false));
 
-        Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
         Assert::AreEqual(std::string("http://host/download.php"), emulator.mockDesktop.LastOpenedUrl());
 

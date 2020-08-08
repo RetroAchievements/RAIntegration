@@ -180,7 +180,7 @@ void MemoryViewerViewModel::UpdateHighlight(ra::ByteAddress nAddress, int nNewLe
         return;
 
     const auto nFirstAddress = GetFirstAddress();
-    if (nAddress < nFirstAddress && nAddress + nNewLength < nFirstAddress && nAddress + nOldLength < nFirstAddress)
+    if (nAddress < nFirstAddress && nAddress + nNewLength <= nFirstAddress && nAddress + nOldLength <= nFirstAddress)
         return;
 
     const auto nVisibleLines = GetNumVisibleLines();
@@ -192,7 +192,9 @@ void MemoryViewerViewModel::UpdateHighlight(ra::ByteAddress nAddress, int nNewLe
 
     for (int i = 0; i < nNewLength; ++i)
     {
-        m_pColor[nAddress - nFirstAddress] = HIGHLIGHTED_COLOR;
+        if (nAddress >= nFirstAddress)
+            m_pColor[nAddress - nFirstAddress] = HIGHLIGHTED_COLOR;
+
         if (++nAddress == nMaxAddress)
             return;
     }
@@ -204,7 +206,9 @@ void MemoryViewerViewModel::UpdateHighlight(ra::ByteAddress nAddress, int nNewLe
 
         while (nOldLength > nNewLength)
         {
-            m_pColor[nAddress - nFirstAddress] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nAddress, pBookmarksViewModel, pGameContext)));
+            if (nAddress >= nFirstAddress)
+                m_pColor[nAddress - nFirstAddress] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nAddress, pBookmarksViewModel, pGameContext)));
+
             if (++nAddress == nMaxAddress)
                 return;
 

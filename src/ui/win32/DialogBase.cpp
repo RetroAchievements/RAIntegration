@@ -346,6 +346,8 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                     return 0;
                 }
             }
+
+            return 0;
         }
 
         case WM_MOVE:
@@ -385,6 +387,8 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                 if (!m_qActions.empty())
                     PostMessage(m_hWnd, WM_QUEUED_ACTION, NULL, NULL);
             }
+
+            return 0;
         }
 
         default:

@@ -12,7 +12,7 @@ public:
     const char* Name() const noexcept override { return "offline client"; }
 
     Login::Response Login(const Login::Request& request) override;
-    Logout::Response Logout(const Logout::Request&) override;
+    Logout::Response Logout(const Logout::Request&) noexcept override;
 
     FetchGameData::Response FetchGameData(const FetchGameData::Request& request) override;
     FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override;

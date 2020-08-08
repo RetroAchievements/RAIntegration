@@ -116,7 +116,7 @@ public:
         m_mFileModifiedTimes.insert_or_assign(sPath, tLastModified);
     }
 
-    bool DeleteFile(const std::wstring& sPath) const override
+    bool DeleteFile(const std::wstring& sPath) const noexcept override
     {
         m_mFileSizes.erase(sPath);
         m_mFileModifiedTimes.erase(sPath);

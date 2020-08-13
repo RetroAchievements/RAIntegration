@@ -321,6 +321,9 @@
     <ClCompile Include="ui\TransactionalViewModelBase.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\TriggerConditionViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -814,6 +817,9 @@
     </ClInclude>
     <ClInclude Include="ui\TransactionalViewModelBase.hh">
       <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\TriggerConditionViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

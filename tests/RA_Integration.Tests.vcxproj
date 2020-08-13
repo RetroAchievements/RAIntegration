@@ -332,6 +332,7 @@
     <ClCompile Include="..\src\ui\viewmodels\PopupViewModelBase.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\ScoreboardViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\ScoreTrackerViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\TriggerConditionViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="api\ConnectedServer_Tests.cpp" />
     <ClCompile Include="api\DisconnectedServer_Tests.cpp" />
@@ -383,6 +384,7 @@
     <ClCompile Include="ui\viewmodels\OverlayRecentGamesPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlaySettingsViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\TriggerConditionViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel_Tests.cpp" />
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
     <ClInclude Include="..\src\pch.h" />

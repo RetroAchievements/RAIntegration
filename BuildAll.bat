@@ -13,6 +13,7 @@ set TESTS=0
 set ANALYSIS=0
 set W32=0
 set W64=0
+set RESULT=0
 
 for %%A in (%*) do (
     if /I "%%A" == "Clean" (
@@ -73,7 +74,7 @@ rem === If the buildlog doesn't exist or the hash has changed, start a new build
 
 if not exist %BUILDLOG% echo %BUILD_HASH% > %BUILDLOG%
 find /c "%BUILD_HASH%" %BUILDLOG% >nul 2>&1
-if %ERRORLEVEL% equ 1 echo %BUILD_HASH% > %BUILDLOG%
+if ERRORLEVEL 1 echo %BUILD_HASH% > %BUILDLOG%
 
 rem === Initialize Visual Studio environment ===
 
@@ -125,11 +126,13 @@ if %BUILDCLEAN% equ 1 (
     )
 
     if %ANALYSIS% equ 1 (
+        del /s *.lastcodeanalysissucceeded
         call :build RA_Integration Analysis || goto eof
+        call :build RA_Integration.Tests Analysis || goto eof
     )
 )
 
-exit /B %ERRORLEVEL%
+exit /B
 
 rem === Build subroutine ===
 
@@ -141,7 +144,7 @@ set CONFIG=%~2
 if %W32% equ 1 call :build2 %PROJECT% %CONFIG% Win32
 if %W64% equ 1 call :build2 %PROJECT% %CONFIG% x64
 
-exit /B %ERRORLEVEL%
+exit /B
 
 :build2
 
@@ -149,7 +152,7 @@ rem === If the project was already successfully built for this hash, ignore it =
 
 set PROJECTKEY=%~1-%~2-%~3
 find /c "%PROJECTKEY%" %BUILDLOG% >nul 2>&1 
-if %ERRORLEVEL% equ 0 (
+if not ERRORLEVEL 1 (
     if not "%~1" equ "Clean" (
         echo.
         echo %~1 %~2 %~3 up-to-date!
@@ -177,8 +180,8 @@ for /f "tokens=1* delims=." %%i in ("%ESCAPEDKEY%") do (
    )
 )
 
-msbuild.exe RA_Integration.sln -t:%ESCAPEDKEY% -p:Configuration=%~2 -p:Platform=%~3 /warnaserror /nowarn:MSB8051,C5045
-set RESULT=%ERRORLEVEL%
+set RESULT=0
+msbuild.exe RA_Integration.sln -t:%ESCAPEDKEY% -p:Configuration=%~2 -p:Platform=%~3 /warnaserror /nowarn:MSB8051,C5045 || set RESULT=1234
 
 rem === If build failed, bail ===
 
@@ -190,6 +193,7 @@ if not %RESULT% equ 0 (
 rem === If test project, run tests ===
 
 if "%ESCAPEDKEY:~-6%" neq "_Tests" goto not_tests
+if "%~2%" equ "Analysis" goto not_tests
 
 set DLL_PATH=bin\%~3\%~2\tests\%~1.dll
 if not exist %DLL_PATH% set DLL_PATH=bin\%~3\%~2\tests\%ESCAPEDKEY:~0,-6%\%~1.dll
@@ -208,9 +212,8 @@ dir "%VSTEST_PATH%" > nul || set VSTEST_PATH=VsTest.Console.exe
 echo.
 echo Calling %VSTEST_PATH% %DLL_PATH%
 
-"%VSTEST_PATH%" /Blame %DLL_PATH%
-
-set RESULT=%ERRORLEVEL%
+set RESULT=0
+"%VSTEST_PATH%" /Blame %DLL_PATH% || set RESULT=1235
 
 rem -- report any errors captured by /Blame --
 rem if exist TestResults (
@@ -232,4 +235,5 @@ echo %PROJECTKEY% >> %BUILDLOG%
 rem === For termination from within function ===
 
 :eof
-exit /B %ERRORLEVEL%
+echo BuildAll returning exit code %RESULT%
+exit /B %RESULT%

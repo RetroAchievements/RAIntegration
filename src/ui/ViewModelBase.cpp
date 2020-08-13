@@ -26,10 +26,14 @@ void ViewModelBase::SetValue(const BoolModelProperty& pProperty, bool bValue)
     m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), bValue ? L"true" : L"false");
 #endif
 
+    BoolModelProperty::ChangeArgs args{ pProperty, !bValue, bValue };
+    OnValueChanged(args);
+}
+
+void ViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
+{
     if (!m_vNotifyTargets.empty())
     {
-        BoolModelProperty::ChangeArgs args{pProperty, !bValue, bValue};
-
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
         for (NotifyTarget* target : vNotifyTargets)
@@ -82,9 +86,14 @@ void ViewModelBase::SetValue(const StringModelProperty& pProperty, const std::ws
     m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), sValue);
 #endif
 
+    StringModelProperty::ChangeArgs args{ pProperty, *pOldValue, sValue };
+    OnValueChanged(args);
+}
+
+void ViewModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
+{
     if (!m_vNotifyTargets.empty())
     {
-        StringModelProperty::ChangeArgs args{pProperty, *pOldValue, sValue};
 
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
@@ -133,9 +142,14 @@ void ViewModelBase::SetValue(const IntModelProperty& pProperty, int nValue)
     m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), std::to_wstring(nValue));
 #endif
 
+    IntModelProperty::ChangeArgs args{ pProperty, nOldValue, nValue };
+    OnValueChanged(args);
+}
+
+void ViewModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
+{
     if (!m_vNotifyTargets.empty())
     {
-        IntModelProperty::ChangeArgs args{pProperty, nOldValue, nValue};
 
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);

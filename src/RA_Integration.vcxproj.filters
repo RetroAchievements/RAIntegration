@@ -318,6 +318,9 @@
     <ClCompile Include="ui\Theme.cpp">
       <Filter>UI</Filter>
     </ClCompile>
+    <ClCompile Include="ui\TransactionalViewModelBase.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -807,6 +810,9 @@
       <Filter>Services</Filter>
     </ClInclude>
     <ClInclude Include="ui\EditorTheme.hh">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\TransactionalViewModelBase.hh">
       <Filter>UI</Filter>
     </ClInclude>
   </ItemGroup>

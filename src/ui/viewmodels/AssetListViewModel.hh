@@ -64,7 +64,7 @@ public:
 
     static const StringModelProperty ActivateButtonTextProperty;
     const std::wstring& GetActivateButtonText() const { return GetValue(ActivateButtonTextProperty); }
-    void ActivateSelected();
+    void ActivateSelected() noexcept;
 
     static const StringModelProperty SaveButtonTextProperty;
     const std::wstring& GetSaveButtonText() const { return GetValue(SaveButtonTextProperty); }
@@ -86,17 +86,17 @@ public:
 
     static const StringModelProperty RevertButtonTextProperty;
     const std::wstring& GetRevertButtonText() const { return GetValue(RevertButtonTextProperty); }
-    void RevertSelected();
+    void RevertSelected() noexcept;
 
-    void CreateNew();
+    void CreateNew() noexcept;
 
     static const BoolModelProperty CanCloneProperty;
     bool CanClone() const { return GetValue(CanCloneProperty); }
     void CloneSelected();
 
 
-    ViewModelCollection<AssetViewModelBase>& Assets() { return m_vAssets; }
-    const ViewModelCollection<AssetViewModelBase>& Assets() const { return m_vAssets; }
+    ViewModelCollection<AssetViewModelBase>& Assets() noexcept { return m_vAssets; }
+    const ViewModelCollection<AssetViewModelBase>& Assets() const noexcept { return m_vAssets; }
 
 private:
     bool HasSelection(AssetType nAssetType) const;

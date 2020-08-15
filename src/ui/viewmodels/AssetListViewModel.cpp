@@ -42,7 +42,7 @@ bool AssetListViewModel::HasSelection(AssetType nAssetType) const
     return false;
 }
 
-void AssetListViewModel::ActivateSelected()
+void AssetListViewModel::ActivateSelected() noexcept
 {
 
 }
@@ -52,7 +52,7 @@ void AssetListViewModel::SaveSelected()
     if (!CanSave())
         return;
 
-    bool bHasSelection = HasSelection(AssetType::Achievement);
+    const bool bHasSelection = HasSelection(AssetType::Achievement);
 
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(GetGameId()));
@@ -102,12 +102,12 @@ void AssetListViewModel::RefreshSelected()
         return;
 }
 
-void AssetListViewModel::RevertSelected()
+void AssetListViewModel::RevertSelected() noexcept
 {
 
 }
 
-void AssetListViewModel::CreateNew()
+void AssetListViewModel::CreateNew() noexcept
 {
 
 }

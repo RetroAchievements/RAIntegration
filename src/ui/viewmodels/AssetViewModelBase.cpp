@@ -19,7 +19,7 @@ AssetViewModelBase::AssetViewModelBase() noexcept
 }
 
 template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
-static size_t CharactersNeedingEscaped(const std::basic_string<CharT>& sText)
+static size_t CharactersNeedingEscaped(const std::basic_string<CharT>& sText) noexcept
 {
     size_t nToEscape = 0;
     for (auto c : sText)

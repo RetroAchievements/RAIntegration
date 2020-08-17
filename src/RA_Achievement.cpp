@@ -174,7 +174,7 @@ void Achievement::RebuildTrigger()
         if (nResult != RC_OK)
         {
             // parse error occurred
-            RA_LOG("rc_parse_trigger returned %d for achievement %u", nResult, ID());
+            RA_LOG_WARN("rc_parse_trigger returned %d for achievement %u", nResult, ID());
 
             ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
                 ra::StringPrintf(L"Unable to rebuild achievement: %s", Title()),
@@ -409,7 +409,7 @@ void Achievement::GenerateConditions()
             if (nSize < 0)
             {
                 // parse error occurred
-                RA_LOG("rc_parse_trigger returned %d for achievement %u", nSize, ID());
+                RA_LOG_WARN("rc_parse_trigger returned %d for achievement %u", nSize, ID());
 
                 ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
                     ra::StringPrintf(L"Unable to activate achievement: %s", Title()),
@@ -516,7 +516,7 @@ void Achievement::SetActive(BOOL bActive) noexcept
                 if (nResult != RC_OK)
                 {
                     // parse error occurred
-                    RA_LOG("rc_parse_trigger returned %d for achievement %u", nResult, ID());
+                    RA_LOG_WARN("rc_parse_trigger returned %d for achievement %u", nResult, ID());
 
                     ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
                         ra::StringPrintf(L"Unable to activate achievement: %s", Title()),

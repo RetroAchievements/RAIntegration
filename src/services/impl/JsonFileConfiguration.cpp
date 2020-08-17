@@ -32,7 +32,7 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
         (1 << static_cast<int>(Feature::LeaderboardCounters)) |
         (1 << static_cast<int>(Feature::LeaderboardScoreboards));
 
-    RA_LOG("Loading preferences...");
+    RA_LOG_INFO("Loading preferences...");
 
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     auto pReader = pFileSystem.OpenTextFile(m_sFilename);
@@ -109,11 +109,11 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
 
 void JsonFileConfiguration::Save() const
 {
-    RA_LOG("Saving preferences...");
+    RA_LOG_INFO("Saving preferences...");
 
     if (m_sFilename.empty())
     {
-        RA_LOG(" - Aborting save, we don't know where to write...");
+        RA_LOG_WARN(" - Aborting save, we don't know where to write...");
         return;
     }
 

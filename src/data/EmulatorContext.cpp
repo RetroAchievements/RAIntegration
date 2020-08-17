@@ -149,7 +149,7 @@ void EmulatorContext::UpdateUserAgent()
         sUserAgent.append(m_sClientUserAgentDetail);
     }
 
-    RA_LOG("User-Agent: %s", sUserAgent.c_str());
+    RA_LOG_INFO("User-Agent: %s", sUserAgent.c_str());
 
     ra::services::ServiceLocator::GetMutable<ra::services::IHttpRequester>().SetUserAgent(sUserAgent);
 }
@@ -231,7 +231,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
 
             const unsigned long long nServerVersion = ParseVersion(m_sLatestVersion.c_str());
             const unsigned long long nLocalVersion = ParseVersion(m_sVersion.c_str());
-            RA_LOG("Client %s date: server %s, current %s",
+            RA_LOG_INFO("Client %s date: server %s, current %s",
                    (nLocalVersion >= nServerVersion) ? "up to" : "out of",
                    m_sLatestVersion,
                    m_sVersion);

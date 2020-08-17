@@ -167,7 +167,7 @@ std::unique_ptr<TextReader> WindowsFileSystem::OpenTextFile(const std::wstring& 
     auto pReader = std::make_unique<FileTextReader>(sAbsolutePath);
     if (!pReader->GetFStream().is_open())
     {
-        RA_LOG("Failed to open \"%s\": %d", ra::Narrow(sPath).c_str(), errno);
+        RA_LOG_INFO("Failed to open \"%s\": %d", ra::Narrow(sPath).c_str(), errno);
         return std::unique_ptr<TextReader>();
     }
 
@@ -182,7 +182,7 @@ std::unique_ptr<TextWriter> WindowsFileSystem::CreateTextFile(const std::wstring
     auto pWriter = std::make_unique<FileTextWriter>(sAbsolutePath);
     if (!pWriter->GetFStream().is_open())
     {
-        RA_LOG("Failed to create \"%s\": %d", ra::Narrow(sPath).c_str(), errno);
+        RA_LOG_WARN("Failed to create \"%s\": %d", ra::Narrow(sPath).c_str(), errno);
         return std::unique_ptr<TextWriter>();
     }
 
@@ -214,7 +214,7 @@ std::unique_ptr<TextWriter> WindowsFileSystem::AppendTextFile(const std::wstring
             // create failed
             if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
             {
-                RA_LOG("Failed to open \"%s\" for append: %d", ra::Narrow(sPath).c_str(), errno);
+                RA_LOG_WARN("Failed to open \"%s\" for append: %d", ra::Narrow(sPath).c_str(), errno);
             }
 
             return std::unique_ptr<TextWriter>();

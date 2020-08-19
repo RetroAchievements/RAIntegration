@@ -253,6 +253,7 @@ void AssetViewModelBase::CommitTransaction()
         for (auto pAsset : m_vAssetDefinitions)
         {
             Expects(pAsset != nullptr);
+
             const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
             if (nState == AssetChanges::Unpublished)
             {
@@ -273,6 +274,7 @@ void AssetViewModelBase::CommitTransaction()
         for (auto pAsset : m_vAssetDefinitions)
         {
             Expects(pAsset != nullptr);
+
             const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
             if (nState == AssetChanges::Modified)
             {
@@ -306,6 +308,7 @@ void AssetViewModelBase::RevertTransaction()
     for (auto pAsset : m_vAssetDefinitions)
     {
         Expects(pAsset != nullptr);
+
         const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
         switch (nState)
         {

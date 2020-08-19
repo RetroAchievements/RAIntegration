@@ -128,6 +128,24 @@ private:
         }
     };
 
+    class AssetDefinitionViewModelHarness : public AssetViewModelBase
+    {
+    public:
+        AssetDefinitionViewModelHarness() noexcept
+        {
+            AddAssetDefinition(m_pDefinition, DefinitionProperty);
+        }
+
+        const std::string& GetDefinition() const noexcept { return GetAssetDefinition(m_pDefinition); }
+        void SetDefinition(const std::string& sValue) { SetAssetDefinition(m_pDefinition, sValue); }
+
+        void Serialize(ra::services::TextWriter&) const override {}
+
+    protected:
+        static const IntModelProperty DefinitionProperty;
+        AssetDefinition m_pDefinition;
+    };
+
 public:
     TEST_METHOD(TestInitialValues)
     {
@@ -136,6 +154,7 @@ public:
         Assert::AreEqual(AssetType::Achievement, asset.GetType());
         Assert::AreEqual(0U, asset.GetID());
         Assert::AreEqual(std::wstring(L""), asset.GetName());
+        Assert::AreEqual(std::wstring(L""), asset.GetDescription());
         Assert::AreEqual(AssetCategory::Core, asset.GetCategory());
         Assert::AreEqual(AssetState::Inactive, asset.GetState());
         Assert::AreEqual(AssetChanges::None, asset.GetChanges());
@@ -250,10 +269,62 @@ public:
         Assert::AreEqual(ra::ui::viewmodels::AssetChanges::None, asset.GetChanges());
         Assert::AreEqual(std::wstring(L"ServerName"), asset.GetName());
     }
+
+    TEST_METHOD(TestUpdateDefinitionCheckpoint)
+    {
+        AssetDefinitionViewModelHarness asset;
+        asset.SetDefinition("ServerDefinition");
+        asset.CreateServerCheckpoint();
+        asset.CreateLocalCheckpoint();
+
+        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::None, asset.GetChanges());
+        Assert::AreEqual(std::string("ServerDefinition"), asset.GetDefinition());
+
+        asset.SetDefinition("LocalDefinition");
+        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Modified, asset.GetChanges());
+        Assert::AreEqual(std::string("LocalDefinition"), asset.GetDefinition());
+
+        asset.UpdateLocalCheckpoint();
+        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Unpublished, asset.GetChanges());
+        Assert::AreEqual(std::string("LocalDefinition"), asset.GetDefinition());
+
+        asset.UpdateServerCheckpoint();
+        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::None, asset.GetChanges());
+        Assert::AreEqual(std::string("LocalDefinition"), asset.GetDefinition());
+    }
+
+    TEST_METHOD(TestRestoreDefinitionCheckpoint)
+    {
+        AssetDefinitionViewModelHarness asset;
+        asset.SetDefinition("ServerDefinition");
+        asset.CreateServerCheckpoint();
+        asset.SetDefinition("LocalDefinition");
+        asset.CreateLocalCheckpoint();
+
+        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Unpublished, asset.GetChanges());
+        Assert::AreEqual(std::string("LocalDefinition"), asset.GetDefinition());
+
+        asset.SetDefinition("ModifiedDefinition");
+        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Modified, asset.GetChanges());
+        Assert::AreEqual(std::string("ModifiedDefinition"), asset.GetDefinition());
+
+        asset.RestoreLocalCheckpoint();
+        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Unpublished, asset.GetChanges());
+        Assert::AreEqual(std::string("LocalDefinition"), asset.GetDefinition());
+
+        asset.SetDefinition("ModifiedDefinition");
+        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Modified, asset.GetChanges());
+        Assert::AreEqual(std::string("ModifiedDefinition"), asset.GetDefinition());
+
+        asset.RestoreServerCheckpoint();
+        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::None, asset.GetChanges());
+        Assert::AreEqual(std::string("ServerDefinition"), asset.GetDefinition());
+    }
 };
 
 const StringModelProperty AssetViewModelBase_Tests::AssetViewModelHarness::StringProperty("AssetViewModelHarness", "String", L"");
 const IntModelProperty AssetViewModelBase_Tests::AssetViewModelHarness::IntProperty("AssetViewModelHarness", "Int", 0);
+const IntModelProperty AssetViewModelBase_Tests::AssetDefinitionViewModelHarness::DefinitionProperty("AssetDefinitionViewModelHarness", "Int", ra::etoi(AssetChanges::None));
 
 } // namespace tests
 } // namespace viewmodels

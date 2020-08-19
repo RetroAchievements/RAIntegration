@@ -183,6 +183,146 @@ void AssetViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& arg
     }
 }
 
+const std::string& AssetViewModelBase::GetAssetDefinition(const AssetDefinition& pAsset) const
+{
+    const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset.m_pProperty));
+    switch (nState)
+    {
+        case AssetChanges::None:
+            return pAsset.m_sCoreDefinition;
+
+        case AssetChanges::Unpublished:
+            return pAsset.m_sLocalDefinition;
+
+        default:
+            return pAsset.m_sCurrentDefinition;
+    }
+}
+
+void AssetViewModelBase::SetAssetDefinition(AssetDefinition& pAsset, const std::string& sValue)
+{
+    if (m_pTransaction == nullptr)
+    {
+        // before core checkpoint
+        pAsset.m_sCoreDefinition = sValue;
+    }
+    else if (m_pTransaction->m_pNext == nullptr)
+    {
+        // before local checkpoint
+        if (sValue == pAsset.m_sCoreDefinition)
+        {
+            pAsset.m_sLocalDefinition.clear();
+            SetValue(*pAsset.m_pProperty, ra::etoi(AssetChanges::None));
+            pAsset.m_bLocalModified = false;
+        }
+        else
+        {
+            pAsset.m_sLocalDefinition = sValue;
+            SetValue(*pAsset.m_pProperty, ra::etoi(AssetChanges::Unpublished));
+            pAsset.m_bLocalModified = true;
+        }
+    }
+    else
+    {
+        // after local checkpoint
+        if (pAsset.m_bLocalModified && sValue == pAsset.m_sLocalDefinition)
+        {
+            pAsset.m_sCurrentDefinition.clear();
+            SetValue(*pAsset.m_pProperty, ra::etoi(AssetChanges::Unpublished));
+        }
+        else if (!pAsset.m_bLocalModified && sValue == pAsset.m_sCoreDefinition)
+        {
+            pAsset.m_sCurrentDefinition.clear();
+            SetValue(*pAsset.m_pProperty, ra::etoi(AssetChanges::None));
+        }
+        else
+        {
+            pAsset.m_sCurrentDefinition = sValue;
+            SetValue(*pAsset.m_pProperty, ra::etoi(AssetChanges::Modified));
+        }
+    }
+}
+
+void AssetViewModelBase::CommitTransaction()
+{
+    Expects(m_pTransaction != nullptr);
+
+    if (m_pTransaction->m_pNext == nullptr)
+    {
+        // commit local to core
+        for (auto pAsset : m_vAssetDefinitions)
+        {
+            const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
+            if (nState == AssetChanges::Unpublished)
+            {
+                if (pAsset->m_bLocalModified)
+                {
+                    pAsset->m_sCoreDefinition.swap(pAsset->m_sLocalDefinition);
+                    pAsset->m_sLocalDefinition.clear();
+                    pAsset->m_bLocalModified = false;
+                }
+
+                SetValue(*pAsset->m_pProperty, ra::etoi(AssetChanges::None));
+            }
+        }
+    }
+    else
+    {
+        // commit modifications to local
+        for (auto pAsset : m_vAssetDefinitions)
+        {
+            const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
+            if (nState == AssetChanges::Modified)
+            {
+                if (pAsset->m_sCurrentDefinition == pAsset->m_sCoreDefinition)
+                {
+                    pAsset->m_sCurrentDefinition.clear();
+                    pAsset->m_sLocalDefinition.clear();
+                    pAsset->m_bLocalModified = false;
+                    SetValue(*pAsset->m_pProperty, ra::etoi(AssetChanges::None));
+                }
+                else
+                {
+                    pAsset->m_sLocalDefinition.swap(pAsset->m_sCurrentDefinition);
+                    pAsset->m_sCurrentDefinition.clear();
+                    pAsset->m_bLocalModified = true;
+                    SetValue(*pAsset->m_pProperty, ra::etoi(AssetChanges::Unpublished));
+                }
+            }
+        }
+    }
+
+    // call after updating so TrackingProperties are also committed
+    TransactionalViewModelBase::CommitTransaction();
+}
+
+void AssetViewModelBase::RevertTransaction()
+{
+    // call before updating so TrackingProperties are reverted first
+    TransactionalViewModelBase::RevertTransaction();
+
+    for (auto pAsset : m_vAssetDefinitions)
+    {
+        const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
+        switch (nState)
+        {
+            case AssetChanges::None:
+                pAsset->m_sCurrentDefinition.clear();
+                pAsset->m_sLocalDefinition.clear();
+                pAsset->m_bLocalModified = false;
+                break;
+
+            case AssetChanges::Unpublished:
+                pAsset->m_sCurrentDefinition.clear();
+                pAsset->m_bLocalModified = (pAsset->m_sLocalDefinition != pAsset->m_sCoreDefinition);
+                break;
+
+            default:
+                Expects(!"Unexpected state after revert");
+                break;
+        }
+    }
+}
 
 } // namespace viewmodels
 } // namespace ui

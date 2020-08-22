@@ -12,7 +12,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class UnknownGameViewModel : public WindowViewModelBase, protected ViewModelBase::NotifyTarget, protected ra::data::AsyncObject
+class UnknownGameViewModel : public WindowViewModelBase, protected ra::data::AsyncObject
 {
 public:
     GSL_SUPPRESS_F6 UnknownGameViewModel() noexcept;
@@ -150,10 +150,11 @@ public:
     bool BeginTest();
 
 protected:
-    void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
-    void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     LookupItemViewModelCollection m_vGameTitles;
+    bool m_bSelectingGame = false;
 };
 
 } // namespace viewmodels

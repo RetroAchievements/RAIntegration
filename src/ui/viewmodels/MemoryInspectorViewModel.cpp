@@ -26,7 +26,6 @@ MemoryInspectorViewModel::MemoryInspectorViewModel()
 {
     SetWindowTitle(L"Memory Inspector [no game loaded]");
 
-    AddNotifyTarget(*this);
     m_pViewer.AddNotifyTarget(*this);
 
     SetValue(CanModifyNotesProperty, false);
@@ -52,7 +51,7 @@ void MemoryInspectorViewModel::DoFrame()
     SetValue(CurrentAddressValueProperty, nValue);
 }
 
-void MemoryInspectorViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+void MemoryInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == CurrentAddressValueProperty)
     {
@@ -69,32 +68,38 @@ void MemoryInspectorViewModel::OnViewModelIntValueChanged(const IntModelProperty
                 (args.tNewValue & 0x01)));
         }
     }
-    else if (args.Property == CurrentAddressProperty)
+    else if (args.Property == CurrentAddressProperty && !m_bTyping)
     {
         const auto nAddress = static_cast<ra::ByteAddress>(args.tNewValue);
         SetValue(CurrentAddressTextProperty, ra::Widen(ra::ByteAddressToString(nAddress)));
 
         OnCurrentAddressChanged(nAddress);
     }
-    else if (args.Property == MemoryViewerViewModel::AddressProperty)
-    {
-        SetValue(CurrentAddressProperty, args.tNewValue);
-    }
+
+    WindowViewModelBase::OnValueChanged(args);
 }
 
-void MemoryInspectorViewModel::OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args)
+void MemoryInspectorViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == MemoryViewerViewModel::AddressProperty)
+        SetValue(CurrentAddressProperty, args.tNewValue);
+}
+
+void MemoryInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
     if (args.Property == CurrentAddressTextProperty)
     {
         const auto nAddress = ra::ByteAddressFromString(ra::Narrow(args.tNewValue));
 
         // ignore change event for current address so text field is not modified
-        RemoveNotifyTarget(*this);
+        m_bTyping = true;
         SetCurrentAddress(nAddress);
-        AddNotifyTarget(*this);
+        m_bTyping = false;
 
         OnCurrentAddressChanged(nAddress);
     }
+
+    WindowViewModelBase::OnValueChanged(args);
 }
 
 void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddress)

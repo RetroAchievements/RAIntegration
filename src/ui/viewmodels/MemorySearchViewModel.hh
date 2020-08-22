@@ -17,7 +17,6 @@ namespace ui {
 namespace viewmodels {
 
 class MemorySearchViewModel : public ViewModelBase,
-    protected ViewModelBase::NotifyTarget,
     protected ViewModelCollectionBase::NotifyTarget,
     protected data::EmulatorContext::NotifyTarget,
     protected data::GameContext::NotifyTarget
@@ -447,10 +446,9 @@ public:
     void BookmarkSelected();
 
 protected:
-    // ViewModelBase::NotifyTarget
-    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
-    void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
-    void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
 
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
@@ -482,6 +480,8 @@ private:
     bool m_bIsContinuousFiltering = false;
     std::chrono::steady_clock::time_point m_tLastContinuousFilter;
     bool m_bNeedsRedraw = false;
+    bool m_bScrolling = false;
+    bool m_bSelectingFilter = false;
 
     struct SearchResult
     {
@@ -496,6 +496,8 @@ private:
     std::set<unsigned int> m_vSelectedAddresses;
 
     static bool TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue) noexcept;
+    void ApplyFilter(SearchResult& pResult, const SearchResult& pPreviousResult, 
+        ComparisonType nComparisonType, ra::services::SearchFilterType nValueType, unsigned int nValue);
 };
 
 } // namespace viewmodels

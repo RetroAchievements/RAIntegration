@@ -22,6 +22,17 @@ _Use_decl_annotations_ ModelPropertyBase::ModelPropertyBase(const char* const sT
     // ASSERT: The vector is implicitly sorted as new items are allocated higher keys and added to the end of the
     // vector.
     m_nKey = s_nNextKey++;
+
+    if (s_vProperties.empty())
+    {
+        s_vProperties.reserve(128);
+
+        // If you encounter this exception, make sure ModelProperty.cpp appears before any files that use it in the
+        // vsproj file. The linker will initialize static objects in the order that they're linked, so any
+        // ModelProperty that gets initialized before the ModelPropertyBase class is initialized may be lost.
+        Expects(m_nKey == 1);
+    }
+
     s_vProperties.push_back(this);
 }
 

@@ -308,9 +308,12 @@
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
+    <ClCompile Include="..\src\ui\ModelProperty.cpp" />
     <ClCompile Include="..\src\ui\Theme.cpp" />
     <ClCompile Include="..\src\ui\TransactionalViewModelBase.cpp" />
     <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\AssetListViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\AssetViewModelBase.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\CodeNotesViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\FileDialogViewModel.cpp" />
@@ -341,7 +344,6 @@
     <ClInclude Include="..\src\RA_Achievement.h" />
     <ClInclude Include="..\src\RA_Defs.h" />
     <ClInclude Include="..\src\RA_Leaderboard.h" />
-    <ClCompile Include="..\src\ui\ModelProperty.cpp" />
     <ClCompile Include="..\src\ui\ViewModelBase.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\MessageBoxViewModel.cpp" />
@@ -366,6 +368,7 @@
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\AssetViewModelBase_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\CodeNotesViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />

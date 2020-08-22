@@ -496,6 +496,8 @@ private:
     std::set<unsigned int> m_vSelectedAddresses;
 
     static bool TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue) noexcept;
+    void ApplyFilter(SearchResult& pResult, const SearchResult& pPreviousResult, 
+        ComparisonType nComparisonType, ra::services::SearchFilterType nValueType, unsigned int nValue);
 };
 
 } // namespace viewmodels

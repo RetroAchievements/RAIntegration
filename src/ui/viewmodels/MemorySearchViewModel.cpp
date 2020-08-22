@@ -558,16 +558,7 @@ void MemorySearchViewModel::ApplyFilter()
     SearchResult const& pPreviousResult = *(m_vSearchResults.end() - 2);
     SearchResult& pResult = m_vSearchResults.back();
 
-    if (GetValueType() == ra::services::SearchFilterType::InitialValue)
-    {
-        SearchResult const& pInitialResult = m_vSearchResults.front();
-        pResult.pResults.Initialize(pInitialResult.pResults, pPreviousResult.pResults,
-            GetComparisonType(), GetValueType(), nValue);
-    }
-    else
-    {
-        pResult.pResults.Initialize(pPreviousResult.pResults, GetComparisonType(), GetValueType(), nValue);
-    }
+    ApplyFilter(pResult, pPreviousResult, GetComparisonType(), GetValueType(), nValue);
 
     // if this isn't the first filter being applied, and the result count hasn't changed
     const auto nMatches = pResult.pResults.MatchingAddressCount();
@@ -623,6 +614,21 @@ void MemorySearchViewModel::ApplyFilter()
     ChangePage(m_nSelectedSearchResult);
 }
 
+void MemorySearchViewModel::ApplyFilter(SearchResult& pResult, const SearchResult& pPreviousResult,
+    ComparisonType nComparisonType, ra::services::SearchFilterType nValueType, unsigned int nValue)
+{
+    if (nValueType == ra::services::SearchFilterType::InitialValue)
+    {
+        SearchResult const& pInitialResult = m_vSearchResults.front();
+        pResult.pResults.Initialize(pInitialResult.pResults, pPreviousResult.pResults,
+            nComparisonType, nValueType, nValue);
+    }
+    else
+    {
+        pResult.pResults.Initialize(pPreviousResult.pResults, nComparisonType, nValueType, nValue);
+    }
+}
+
 void MemorySearchViewModel::ToggleContinuousFilter()
 {
     if (m_bIsContinuousFiltering)
@@ -667,7 +673,7 @@ void MemorySearchViewModel::ApplyContinuousFilter()
 
     // apply the current filter
     SearchResult pNewResult;
-    pNewResult.pResults.Initialize(pResult.pResults, pResult.pResults.GetFilterComparison(),
+    ApplyFilter(pNewResult, pResult, pResult.pResults.GetFilterComparison(),
         pResult.pResults.GetFilterType(), pResult.pResults.GetFilterValue());
     pNewResult.sSummary = pResult.sSummary;
     const auto nNewResults = pNewResult.pResults.MatchingAddressCount();

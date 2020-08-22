@@ -252,6 +252,7 @@ void AssetViewModelBase::CommitTransaction()
         // commit local to core
         for (auto pAsset : m_vAssetDefinitions)
         {
+            Expects(pAsset != nullptr);
             const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
             if (nState == AssetChanges::Unpublished)
             {
@@ -271,6 +272,7 @@ void AssetViewModelBase::CommitTransaction()
         // commit modifications to local
         for (auto pAsset : m_vAssetDefinitions)
         {
+            Expects(pAsset != nullptr);
             const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
             if (nState == AssetChanges::Modified)
             {
@@ -303,6 +305,7 @@ void AssetViewModelBase::RevertTransaction()
 
     for (auto pAsset : m_vAssetDefinitions)
     {
+        Expects(pAsset != nullptr);
         const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
         switch (nState)
         {

@@ -17,7 +17,7 @@ AchievementViewModel::AchievementViewModel() noexcept
     SetTransactional(PointsProperty);
     SetTransactional(BadgeProperty);
 
-    AddAssetDefinition(m_pTrigger, TriggerProperty);
+    GSL_SUPPRESS_F6 AddAssetDefinition(m_pTrigger, TriggerProperty);
 }
 
 void AchievementViewModel::SelectBadgeFile()

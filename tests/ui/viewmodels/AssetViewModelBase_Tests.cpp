@@ -133,13 +133,13 @@ private:
     public:
         AssetDefinitionViewModelHarness() noexcept
         {
-            AddAssetDefinition(m_pDefinition, DefinitionProperty);
+            GSL_SUPPRESS_F6 AddAssetDefinition(m_pDefinition, DefinitionProperty);
         }
 
-        const std::string& GetDefinition() const noexcept { return GetAssetDefinition(m_pDefinition); }
+        const std::string& GetDefinition() const { return GetAssetDefinition(m_pDefinition); }
         void SetDefinition(const std::string& sValue) { SetAssetDefinition(m_pDefinition, sValue); }
 
-        void Serialize(ra::services::TextWriter&) const override {}
+        void Serialize(ra::services::TextWriter&) const noexcept override {}
 
     protected:
         static const IntModelProperty DefinitionProperty;

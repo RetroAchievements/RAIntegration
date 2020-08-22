@@ -86,7 +86,7 @@ public:
     /// <summary>
     /// Gets the trigger definition.
     /// </summary>
-    const std::string& GetTrigger() const noexcept { return GetAssetDefinition(m_pTrigger); }
+    const std::string& GetTrigger() const { return GetAssetDefinition(m_pTrigger); }
     
     /// <summary>
     /// Sets the trigger definition.

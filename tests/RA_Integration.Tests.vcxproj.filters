@@ -339,6 +339,12 @@
     <ClCompile Include="..\src\ui\TransactionalViewModelBase.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\TriggerConditionViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\TriggerConditionViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
     <ClCompile Include="ui\viewmodels\AssetViewModelBase_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>

@@ -18,7 +18,6 @@ namespace viewmodels {
 
 class MemoryBookmarksViewModel : public WindowViewModelBase,
     protected ra::data::GameContext::NotifyTarget,
-    protected ViewModelBase::NotifyTarget,
     protected ViewModelCollectionBase::NotifyTarget
 {
 public:
@@ -293,8 +292,7 @@ protected:
     void LoadBookmarks(ra::services::TextReader& sBookmarksFile);
     void SaveBookmarks(ra::services::TextWriter& sBookmarksFile) const;
 
-    // ViewModelBase::NotifyTarget
-    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;

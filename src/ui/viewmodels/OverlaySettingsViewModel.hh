@@ -8,7 +8,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class OverlaySettingsViewModel : public WindowViewModelBase, ViewModelBase::NotifyTarget
+class OverlaySettingsViewModel : public WindowViewModelBase
 {
 public:
     GSL_SUPPRESS_F6 OverlaySettingsViewModel() noexcept;
@@ -164,7 +164,7 @@ public:
     void BrowseLocation();
 
 protected:
-    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 };
 
 } // namespace viewmodels

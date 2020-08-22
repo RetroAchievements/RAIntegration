@@ -22,8 +22,6 @@ const StringModelProperty OverlaySettingsViewModel::ScreenshotLocationProperty("
 OverlaySettingsViewModel::OverlaySettingsViewModel() noexcept
 {
     SetWindowTitle(L"Overlay Settings");
-
-    AddNotifyTarget(*this);
 }
 
 void OverlaySettingsViewModel::Initialize()
@@ -63,7 +61,7 @@ void OverlaySettingsViewModel::Commit()
     pConfiguration.Save();
 }
 
-void OverlaySettingsViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
+void OverlaySettingsViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == DisplayAchievementTriggerProperty && !args.tNewValue)
         SetScreenshotAchievementTrigger(false);
@@ -73,6 +71,8 @@ void OverlaySettingsViewModel::OnViewModelBoolValueChanged(const BoolModelProper
         SetScreenshotMastery(false);
     else if (args.Property == ScreenshotMasteryProperty && args.tNewValue)
         SetDisplayMastery(true);
+
+    WindowViewModelBase::OnValueChanged(args);
 }
 
 void OverlaySettingsViewModel::BrowseLocation()

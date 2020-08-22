@@ -45,11 +45,10 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
     m_vBehaviors.Add(ra::etoi(BookmarkBehavior::Frozen), L"Frozen");
     m_vBehaviors.Add(ra::etoi(BookmarkBehavior::PauseOnChange), L"Pause");
 
-    AddNotifyTarget(*this);
     m_vBookmarks.AddNotifyTarget(*this);
 }
 
-void MemoryBookmarksViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
+void MemoryBookmarksViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == IsVisibleProperty)
     {
@@ -64,6 +63,8 @@ void MemoryBookmarksViewModel::OnViewModelBoolValueChanged(const BoolModelProper
             pGameContext.RemoveNotifyTarget(*this);
         }
     }
+
+    WindowViewModelBase::OnValueChanged(args);
 }
 
 GSL_SUPPRESS_F6

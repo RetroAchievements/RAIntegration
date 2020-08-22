@@ -13,7 +13,6 @@ namespace ui {
 namespace viewmodels {
 
 class CodeNotesViewModel : public WindowViewModelBase,
-    protected ViewModelBase::NotifyTarget,
     protected ra::data::GameContext::NotifyTarget
 {
 public:
@@ -139,8 +138,7 @@ public:
     void BookmarkSelected() const;
 
 protected:
-    // ViewModelBase::NotifyTarget
-    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
     // ra::data::GameContext::NotifyTarget
     void OnActiveGameChanged() override;

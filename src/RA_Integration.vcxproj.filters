@@ -826,7 +826,7 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\TriggerConditionViewModel.hh">
       <Filter>UI\ViewModels</Filter>
-    </ClCompile>
+    </ClInclude>
     <ClInclude Include="ui\viewmodels\AssetViewModelBase.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>

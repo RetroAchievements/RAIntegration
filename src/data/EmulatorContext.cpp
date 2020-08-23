@@ -18,10 +18,13 @@
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
+#include "RAInterface\RA_Consoles.h"
+#include "RAInterface\RA_Emulators.h"
+
 namespace ra {
 namespace data {
 
-void EmulatorContext::Initialize(EmulatorID nEmulatorId)
+void EmulatorContext::Initialize(EmulatorID nEmulatorId, const char* sClientName)
 {
     m_nEmulatorId = nEmulatorId;
 
@@ -90,20 +93,20 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId)
             _RA_SetConsoleID(ConsoleID::Oric);
             break;
 
-        case RA_MelonDS:
-            m_sClientName = "RAMelonDS";
-            _RA_SetConsoleID(ConsoleID::DS);
-            break;
-
         default:
-        {
-            const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
-            const auto sFileName = pDesktop.GetRunningExecutable();
-            const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
-            m_sClientName = pFileSystem.RemoveExtension(pFileSystem.GetFileName(sFileName));
+            if (sClientName != nullptr && *sClientName)
+            {
+                m_sClientName = sClientName;
+            }
+            else
+            {
+                const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+                const auto sFileName = pDesktop.GetRunningExecutable();
+                const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+                m_sClientName = pFileSystem.RemoveExtension(pFileSystem.GetFileName(sFileName));
+            }
             m_nEmulatorId = EmulatorID::UnknownEmulator;
             break;
-        }
     }
 }
 

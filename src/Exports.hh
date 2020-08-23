@@ -27,6 +27,12 @@ extern "C" {
     // Initialize all data related to RA Engine for offline mode. Call as early as possible.
     API int CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVersion);
 
+    // Initialize all data related to RA Engine. Call as early as possible.
+    API int CCONV _RA_InitClient(HWND hMainHWND, const char* sClientName, const char* sClientVersion);
+
+    // Initialize all data related to RA Engine for offline mode. Call as early as possible.
+    API int CCONV _RA_InitClientOffline(HWND hMainHWND, const char* sClientName, const char* sClientVersion);
+
     // Specifies additional information to include in the UserAgent string
     API void CCONV _RA_SetUserAgentDetail(const char* sDetail);
 

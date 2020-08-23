@@ -2,7 +2,7 @@
 
 #include "GDIBitmapSurface.hh"
 
-#include "RA_Core.h"
+#include "RA_Defs.h"
 
 #include "services\Http.hh"
 #include "services\IConfiguration.hh"
@@ -78,7 +78,8 @@ ImageRepository::~ImageRepository() noexcept
 
 std::wstring ImageRepository::GetFilename(ImageType nType, const std::string& sName)
 {
-    std::wstring sFilename = g_sHomeDir;
+    auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    std::wstring sFilename = pFileSystem.BaseDirectory();
 
     switch (nType)
     {

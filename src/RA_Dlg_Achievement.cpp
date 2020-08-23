@@ -2,10 +2,14 @@
 
 #include "RA_Achievement.h"
 #include "RA_Core.h"
+#include "RA_Defs.h"
 #include "RA_Dlg_AchEditor.h"
 #include "RA_Resource.h"
 #include "RA_md5factory.h"
 #include "RA_BuildVer.h"
+#include "RA_StringUtils.h"
+
+#include "Exports.hh"
 
 #include "api\UpdateAchievement.hh"
 

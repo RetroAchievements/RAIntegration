@@ -136,6 +136,14 @@ IDialogPresenter* Desktop::GetDialogPresenter(const WindowViewModelBase& oViewMo
     return nullptr;
 }
 
+HWND Desktop::GetMainHWnd() const noexcept
+{
+    if (m_pWindowBinding != nullptr)
+        return m_pWindowBinding->GetHWnd();
+
+    return 0;
+}
+
 void Desktop::SetMainHWnd(HWND hWnd)
 {
     if (m_pWindowBinding == nullptr)
@@ -145,6 +153,8 @@ void Desktop::SetMainHWnd(HWND hWnd)
     }
 
     m_pWindowBinding->SetHWND(hWnd);
+
+    g_RAMainWnd = hWnd;
 }
 
 std::string Desktop::GetRunningExecutable() const

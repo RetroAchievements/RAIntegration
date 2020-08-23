@@ -19,6 +19,7 @@
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
+#include "services\Initialization.hh"
 #include "services\PerformanceCounter.hh"
 #include "services\ServiceLocator.hh"
 
@@ -27,6 +28,10 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
+#include "ui\win32\Desktop.hh"
+#include "ui\win32\OverlayWindow.hh"
+
+#include "RAInterface\RA_Emulators.h"
 
 #ifndef RA_UTEST
 #include "RA_Dlg_Achievement.h"
@@ -54,6 +59,68 @@ API int CCONV _RA_HardcoreModeIsActive()
     return pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
 }
 
+#ifndef RA_UTEST
+API void CCONV _RA_UpdateHWnd(HWND hMainHWND)
+{
+    auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
+    if (hMainHWND != pDesktop.GetMainHWnd())
+    {
+        pDesktop.SetMainHWnd(hMainHWND);
+
+        auto& pOverlayWindow = ra::services::ServiceLocator::GetMutable<ra::ui::win32::OverlayWindow>();
+        pOverlayWindow.CreateOverlayWindow(hMainHWND);
+    }
+}
+#endif
+
+static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEmulatorID,
+    [[maybe_unused]] const char* sClientName, const char* sClientVer, bool bOffline)
+{
+#ifndef RA_UTEST
+    ra::services::Initialization::RegisterServices(ra::itoe<EmulatorID>(nEmulatorID), sClientName);
+
+    _RA_UpdateHWnd(hMainHWND);
+#endif
+
+    if (bOffline)
+    {
+        ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().DisableLogin();
+    }
+    else
+    {
+        // Set the client version and User-Agent string
+        ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().SetClientVersion(sClientVer);
+
+        // validate version (async call)
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]
+        {
+            if (!ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().ValidateClientVersion())
+                ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().Logout();
+        });
+    }
+
+    return TRUE;
+}
+
+API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
+{
+    return InitCommon(hMainHWND, nEmulatorID, nullptr, sClientVer, true);
+}
+
+API BOOL CCONV _RA_InitClientOffline(HWND hMainHWND, const char* sClientName, const char* sClientVer)
+{
+    return InitCommon(hMainHWND, EmulatorID::UnknownEmulator, sClientName, sClientVer, true);
+}
+
+API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
+{
+    return InitCommon(hMainHWND, nEmulatorID, nullptr, sClientVer, false);
+}
+
+API BOOL CCONV _RA_InitClient(HWND hMainHWND, const char* sClientName, const char* sClientVer)
+{
+    return InitCommon(hMainHWND, EmulatorID::UnknownEmulator, sClientName, sClientVer, false);
+}
 
 API void CCONV _RA_InstallSharedFunctions(bool(*)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void),
                                           void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*))
@@ -230,27 +297,6 @@ API void _RA_NavigateOverlay(const ControllerInput* pInput)
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Update(*pInput);
 }
-
-_Use_decl_annotations_
-API int _RA_UpdateOverlay(const ControllerInput* pInput, float, bool, bool)
-{
-    _RA_NavigateOverlay(pInput);
-    return true; // was return state = closing - does anything check this?
-}
-
-#ifndef RA_UTEST
-_Use_decl_annotations_
-API void _RA_RenderOverlay(HDC hDC, const RECT* rcSize)
-{
-    switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
-    {
-        case EmulatorID::RA_Gens:
-            ra::ui::drawing::gdi::GDISurface pSurface(hDC, *rcSize);
-            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Render(pSurface, true);
-            break;
-    }
-}
-#endif
 
 static void ProcessAchievements()
 {

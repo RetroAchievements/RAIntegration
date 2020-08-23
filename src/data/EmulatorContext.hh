@@ -2,7 +2,7 @@
 #define RA_DATA_EMULATORCONTEXT_HH
 #pragma once
 
-#include "RA_Interface.h"
+#include "RAInterface\RA_Emulators.h"
 
 #include "Types.hh"
 #include "ra_fwd.h"
@@ -25,7 +25,7 @@ public:
     /// <summary>
     /// Initializes the emulator context.
     /// </summary>
-    void Initialize(EmulatorID nEmulatorId);
+    void Initialize(EmulatorID nEmulatorId, const char* sClientName);
 
     /// <summary>
     /// Sets the client version.

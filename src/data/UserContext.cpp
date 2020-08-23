@@ -1,6 +1,7 @@
 #include "UserContext.hh"
 
-#include "RA_Core.h"
+#include "Exports.hh"
+#include "RA_StringUtils.h"
 
 #include "api\Logout.hh"
 

@@ -42,7 +42,7 @@ enum class AssetChanges
     Unpublished, // local data differs from server data
 };
 
-class AssetViewModelBase : protected TransactionalViewModelBase
+class AssetViewModelBase : public TransactionalViewModelBase
 {
 public:
     AssetViewModelBase() noexcept;
@@ -68,6 +68,11 @@ public:
     uint32_t GetID() const { return ra::to_unsigned(GetValue(IDProperty)); }
 
     /// <summary>
+    /// Sets the asset id.
+    /// </summary>
+    void SetID(uint32_t nValue) { SetValue(IDProperty, nValue); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the name.
     /// </summary>
     static const StringModelProperty NameProperty;
@@ -90,12 +95,12 @@ public:
     /// <summary>
     /// Gets the description of the asset.
     /// </summary>
-    const std::wstring& GetDescription() const { return GetValue(NameProperty); }
+    const std::wstring& GetDescription() const { return GetValue(DescriptionProperty); }
 
     /// <summary>
     /// Sets the description of the asset.
     /// </summary>
-    void SetDescription(const std::wstring& sValue) { SetValue(NameProperty, sValue); }
+    void SetDescription(const std::wstring& sValue) { SetValue(DescriptionProperty, sValue); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the asset category.
@@ -211,6 +216,11 @@ protected:
     static void WritePossiblyQuoted(ra::services::TextWriter& pWriter, const std::wstring& sText);
 
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+
+    // Hide the public members of TransactionalViewModelBase that we're redefining
+    using TransactionalViewModelBase::BeginTransaction;
+    using TransactionalViewModelBase::CommitTransaction;
+    using TransactionalViewModelBase::RevertTransaction;
 
     void CommitTransaction() override;
     void RevertTransaction() override;

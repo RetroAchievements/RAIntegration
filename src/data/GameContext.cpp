@@ -30,9 +30,11 @@
 
 #include "ui\ImageReference.hh"
 
+#include "ui\viewmodels\AchievementViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\ScoreboardViewModel.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 namespace ra {
 namespace data {
@@ -126,6 +128,8 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     const bool bWasPaused = pRuntime.IsPaused();
     pRuntime.SetPaused(true);
 
+    auto& vmAssets = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
+
     unsigned int nNumCoreAchievements = 0;
     unsigned int nTotalCoreAchievementPoints = 0;
     for (const auto& pAchievementData : response.Achievements)
@@ -138,6 +142,17 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         auto& pAchievement = NewAchievement(nCategory);
         pAchievement.SetID(pAchievementData.Id);
         CopyAchievementData(pAchievement, pAchievementData);
+
+        auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(pAchievementData.Id);
+        vmAchievement->SetName(ra::Widen(pAchievementData.Title));
+        vmAchievement->SetDescription(ra::Widen(pAchievementData.Description));
+        vmAchievement->SetCategory(ra::itoe<ra::ui::viewmodels::AssetCategory>(pAchievementData.CategoryId));
+        vmAchievement->SetPoints(pAchievementData.Points);
+        vmAchievement->SetBadge(ra::Widen(pAchievementData.BadgeName));
+        vmAchievement->SetTrigger(pAchievementData.Definition);
+        vmAchievement->CreateServerCheckpoint();
+        vmAssets.Assets().Append(std::move(vmAchievement));
 
 #ifndef RA_UTEST
         // prefetch the achievement image

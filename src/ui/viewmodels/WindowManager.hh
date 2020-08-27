@@ -1,6 +1,7 @@
 #ifndef RA_UI_WINDOW_MANAGER
 #define RA_UI_WINDOW_MANAGER
 
+#include "AssetListViewModel.hh"
 #include "CodeNotesViewModel.hh"
 #include "EmulatorViewModel.hh"
 #include "MemoryBookmarksViewModel.hh"
@@ -15,6 +16,7 @@ class WindowManager {
 public:
     EmulatorViewModel Emulator;
     RichPresenceMonitorViewModel RichPresenceMonitor;
+    AssetListViewModel AssetList;
     MemoryBookmarksViewModel MemoryBookmarks;
     MemoryInspectorViewModel MemoryInspector;
     CodeNotesViewModel CodeNotes;

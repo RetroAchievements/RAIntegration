@@ -29,61 +29,6 @@ std::wstring ToString<ra::ui::viewmodels::AssetType>(
     }
 }
 
-template<>
-std::wstring ToString<ra::ui::viewmodels::AssetCategory>(
-    const ra::ui::viewmodels::AssetCategory& nAssetCategory)
-{
-    switch (nAssetCategory)
-    {
-        case ra::ui::viewmodels::AssetCategory::Local:
-            return L"Local";
-        case ra::ui::viewmodels::AssetCategory::Core:
-            return L"Core";
-        case ra::ui::viewmodels::AssetCategory::Unofficial:
-            return L"Unofficial";
-        default:
-            return std::to_wstring(static_cast<int>(nAssetCategory));
-    }
-}
-
-template<>
-std::wstring ToString<ra::ui::viewmodels::AssetState>(
-    const ra::ui::viewmodels::AssetState& nAssetState)
-{
-    switch (nAssetState)
-    {
-        case ra::ui::viewmodels::AssetState::Inactive:
-            return L"Inactive";
-        case ra::ui::viewmodels::AssetState::Active:
-            return L"Active";
-        case ra::ui::viewmodels::AssetState::Triggered:
-            return L"Triggered";
-        case ra::ui::viewmodels::AssetState::Waiting:
-            return L"Waiting";
-        case ra::ui::viewmodels::AssetState::Paused:
-            return L"Paused";
-        default:
-            return std::to_wstring(static_cast<int>(nAssetState));
-    }
-}
-
-template<>
-std::wstring ToString<ra::ui::viewmodels::AssetChanges>(
-    const ra::ui::viewmodels::AssetChanges& nAssetChanges)
-{
-    switch (nAssetChanges)
-    {
-        case ra::ui::viewmodels::AssetChanges::None:
-            return L"None";
-        case ra::ui::viewmodels::AssetChanges::Modified:
-            return L"Modified";
-        case ra::ui::viewmodels::AssetChanges::Unpublished:
-            return L"Unpublished";
-        default:
-            return std::to_wstring(static_cast<int>(nAssetChanges));
-    }
-}
-
 } // namespace CppUnitTestFramework
 } // namespace VisualStudio
 } // namespace Microsoft

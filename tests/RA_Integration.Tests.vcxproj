@@ -312,6 +312,7 @@
     <ClCompile Include="..\src\ui\Theme.cpp" />
     <ClCompile Include="..\src\ui\TransactionalViewModelBase.cpp" />
     <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\AchievementViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\AssetListViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\AssetViewModelBase.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp" />

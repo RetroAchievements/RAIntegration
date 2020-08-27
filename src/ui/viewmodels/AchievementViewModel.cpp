@@ -14,6 +14,8 @@ const IntModelProperty AchievementViewModel::TriggerProperty("AchievementViewMod
 
 AchievementViewModel::AchievementViewModel() noexcept
 {
+    SetValue(TypeProperty, ra::etoi(AssetType::Achievement));
+
     SetTransactional(PointsProperty);
     SetTransactional(BadgeProperty);
 
@@ -23,6 +25,11 @@ AchievementViewModel::AchievementViewModel() noexcept
 void AchievementViewModel::SelectBadgeFile()
 {
     ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Not implemented");
+}
+
+void AchievementViewModel::Serialize(ra::services::TextWriter& pWriter) const
+{
+
 }
 
 } // namespace viewmodels

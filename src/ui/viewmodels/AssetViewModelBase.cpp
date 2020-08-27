@@ -7,6 +7,7 @@ namespace viewmodels {
 const IntModelProperty AssetViewModelBase::TypeProperty("AssetViewModelBase", "Type", ra::etoi(AssetType::Achievement));
 const IntModelProperty AssetViewModelBase::IDProperty("AssetViewModelBase", "ID", 0);
 const StringModelProperty AssetViewModelBase::NameProperty("AssetViewModelBase", "Name", L"");
+const StringModelProperty AssetViewModelBase::DescriptionProperty("AssetViewModelBase", "Description", L"");
 const IntModelProperty AssetViewModelBase::CategoryProperty("AssetViewModelBase", "Category", ra::etoi(AssetCategory::Core));
 const IntModelProperty AssetViewModelBase::StateProperty("AssetViewModelBase", "State", ra::etoi(AssetState::Inactive));
 const IntModelProperty AssetViewModelBase::ChangesProperty("AssetViewModelBase", "Changes", ra::etoi(AssetChanges::None));

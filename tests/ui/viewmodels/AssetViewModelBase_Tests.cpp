@@ -71,6 +71,32 @@ private:
             WriteQuoted(pWriter, Utf8QuotedString);
             WritePossiblyQuoted(pWriter, Utf8String);
         }
+
+        bool Deserialize(ra::Tokenizer& pTokenizer) noexcept
+        {
+            std::wstring sName;
+            if (!ReadQuoted(pTokenizer, sName))
+                return false;
+            SetName(sName);
+
+            std::wstring sString;
+            if (!ReadPossiblyQuoted(pTokenizer, sString))
+                return false;
+            SetString(sString);
+
+            uint32_t nNumber;
+            if (!ReadNumber(pTokenizer, nNumber))
+                return false;
+            SetInt(nNumber);
+
+            if (!ReadQuoted(pTokenizer, Utf8QuotedString))
+                return false;
+
+            if (!ReadPossiblyQuoted(pTokenizer, Utf8String))
+                return false;
+
+            return true;
+        }
     };
 
     class AssetDefinitionViewModelHarness : public AssetViewModelBase
@@ -85,6 +111,7 @@ private:
         void SetDefinition(const std::string& sValue) { SetAssetDefinition(m_pDefinition, sValue); }
 
         void Serialize(ra::services::TextWriter&) const noexcept override {}
+        bool Deserialize(ra::Tokenizer&) noexcept override { return false; }
 
     protected:
         static const IntModelProperty DefinitionProperty;
@@ -165,6 +192,134 @@ public:
 
         asset.Serialize(asset.textWriter);
         Assert::AreEqual(std::string(":\"A\\\\B\":\"A\\\\B\":0:\"A\\\\B\":\"A\\\\B\""), asset.textWriter.GetString());
+    }
+
+    TEST_METHOD(TestDeserializeSimpleValues)
+    {
+        AssetViewModelHarness asset;
+
+        std::string sSerialized = ":\"Name\":String:99:\"UTF-8-Quoted\":UTF-8";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Advance(); // skip leading colon
+        Assert::IsTrue(asset.Deserialize(pTokenizer));
+
+        Assert::AreEqual(std::wstring(L"Name"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"String"), asset.GetString());
+        Assert::AreEqual(99U, asset.GetInt());
+        Assert::AreEqual(std::string("UTF-8-Quoted"), asset.Utf8QuotedString);
+        Assert::AreEqual(std::string("UTF-8"), asset.Utf8String);
+    }
+
+    TEST_METHOD(TestDeserializeColon)
+    {
+        AssetViewModelHarness asset;
+
+        std::string sSerialized = ":\"Mission: Impossible\":\"Mission: Impossible\":0:\"Mission: Impossible\":\"Mission: Impossible\"";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Advance(); // skip leading colon
+        Assert::IsTrue(asset.Deserialize(pTokenizer));
+
+        Assert::AreEqual(std::wstring(L"Mission: Impossible"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"Mission: Impossible"), asset.GetString());
+        Assert::AreEqual(0U, asset.GetInt());
+        Assert::AreEqual(std::string("Mission: Impossible"), asset.Utf8QuotedString);
+        Assert::AreEqual(std::string("Mission: Impossible"), asset.Utf8String);
+    }
+
+    TEST_METHOD(TestDeserializeQuotes)
+    {
+        AssetViewModelHarness asset;
+
+        std::string sSerialized = ":\"A \\\"Test\\\" B\":\"A \\\"Test\\\" B\":0:\"A \\\"Test\\\" B\":\"A \\\"Test\\\" B\"";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Advance(); // skip leading colon
+        Assert::IsTrue(asset.Deserialize(pTokenizer));
+
+        Assert::AreEqual(std::wstring(L"A \"Test\" B"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"A \"Test\" B"), asset.GetString());
+        Assert::AreEqual(0U, asset.GetInt());
+        Assert::AreEqual(std::string("A \"Test\" B"), asset.Utf8QuotedString);
+        Assert::AreEqual(std::string("A \"Test\" B"), asset.Utf8String);
+    }
+
+    TEST_METHOD(TestDeserializeBackslash)
+    {
+        AssetViewModelHarness asset;
+
+        std::string sSerialized = ":\"A\\\\B\":\"A\\\\B\":0:\"A\\\\B\":\"A\\\\B\"";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Advance(); // skip leading colon
+        Assert::IsTrue(asset.Deserialize(pTokenizer));
+
+        Assert::AreEqual(std::wstring(L"A\\B"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"A\\B"), asset.GetString());
+        Assert::AreEqual(0U, asset.GetInt());
+        Assert::AreEqual(std::string("A\\B"), asset.Utf8QuotedString);
+        Assert::AreEqual(std::string("A\\B"), asset.Utf8String);
+    }
+
+    TEST_METHOD(TestDeserializeInvalidNumber)
+    {
+        AssetViewModelHarness asset;
+
+        std::string sSerialized = ":\"A\":B:C:\"D\":E";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Advance(); // skip leading colon
+        Assert::IsFalse(asset.Deserialize(pTokenizer));
+
+        Assert::AreEqual(std::wstring(L"A"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"B"), asset.GetString());
+        Assert::AreEqual(0U, asset.GetInt());
+        Assert::AreEqual(std::string(), asset.Utf8QuotedString);
+        Assert::AreEqual(std::string(), asset.Utf8String);
+    }
+
+    TEST_METHOD(TestDeserializeMissingField)
+    {
+        AssetViewModelHarness asset;
+
+        std::string sSerialized = ":\"A\":B:5:\"D\"";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Advance(); // skip leading colon
+        Assert::IsFalse(asset.Deserialize(pTokenizer));
+
+        Assert::AreEqual(std::wstring(L"A"), asset.GetName());
+        Assert::AreEqual(std::wstring(L"B"), asset.GetString());
+        Assert::AreEqual(5U, asset.GetInt());
+        Assert::AreEqual(std::string("D"), asset.Utf8QuotedString);
+        Assert::AreEqual(std::string(), asset.Utf8String);
+    }
+
+    TEST_METHOD(TestDeserializeNotQuoted)
+    {
+        AssetViewModelHarness asset;
+
+        std::string sSerialized = ":A:B:5:D:E";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Advance(); // skip leading colon
+        Assert::IsFalse(asset.Deserialize(pTokenizer));
+
+        Assert::AreEqual(std::wstring(), asset.GetName());
+        Assert::AreEqual(std::wstring(), asset.GetString());
+        Assert::AreEqual(0U, asset.GetInt());
+        Assert::AreEqual(std::string(), asset.Utf8QuotedString);
+        Assert::AreEqual(std::string(), asset.Utf8String);
+    }
+
+    TEST_METHOD(TestDeserializeBadlyQuoted)
+    {
+        AssetViewModelHarness asset;
+
+        std::string sSerialized = ":\"A\":\"B\"C:5:\"D\":E";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Advance(); // skip leading colon
+        Assert::IsFalse(asset.Deserialize(pTokenizer));
+
+        Assert::AreEqual(std::wstring(L"A"), asset.GetName());
+        Assert::AreEqual(std::wstring(), asset.GetString());
+        Assert::AreEqual(0U, asset.GetInt());
+        Assert::AreEqual(std::string(), asset.Utf8QuotedString);
+        Assert::AreEqual(std::string(), asset.Utf8String);
     }
 
     TEST_METHOD(TestUpdateCheckpoint)

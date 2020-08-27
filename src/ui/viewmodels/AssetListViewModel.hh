@@ -7,6 +7,8 @@
 
 #include "AssetViewModelBase.hh"
 
+#include "AchievementViewModel.hh"
+
 #include "data\Types.hh"
 
 namespace ra {
@@ -98,7 +100,19 @@ public:
     ViewModelCollection<AssetViewModelBase>& Assets() noexcept { return m_vAssets; }
     const ViewModelCollection<AssetViewModelBase>& Assets() const noexcept { return m_vAssets; }
 
+    AchievementViewModel* FindAchievement(ra::AchievementID nId)
+    {
+        return dynamic_cast<AchievementViewModel*>(FindAsset(AssetType::Achievement, nId));
+    }
+    const AchievementViewModel* FindAchievement(ra::AchievementID nId) const
+    {
+        return dynamic_cast<const AchievementViewModel*>(FindAsset(AssetType::Achievement, nId));
+    }
+
 private:
+    AssetViewModelBase* FindAsset(AssetType nType, ra::AchievementID nId);
+    const AssetViewModelBase* FindAsset(AssetType nType, ra::AchievementID nId) const;
+
     bool HasSelection(AssetType nAssetType) const;
 
     ViewModelCollection<AssetViewModelBase> m_vAssets;

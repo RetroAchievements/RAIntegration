@@ -94,6 +94,7 @@ public:
     void SetTrigger(const std::string& sTrigger) { SetAssetDefinition(m_pTrigger, sTrigger); }
 
     void Serialize(ra::services::TextWriter& pWriter) const override;
+    bool Deserialize(ra::Tokenizer& pTokenizer) override;
 
 private:
     AssetDefinition m_pTrigger;

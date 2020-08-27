@@ -102,6 +102,59 @@ void AssetViewModelBase::WriteNumber(ra::services::TextWriter& pWriter, const ui
     pWriter.Write(std::to_string(nValue));
 }
 
+bool AssetViewModelBase::ReadNumber(ra::Tokenizer& pTokenizer, uint32_t& nValue)
+{
+    if (pTokenizer.EndOfString())
+        return false;
+
+    nValue = pTokenizer.ReadNumber();
+    return pTokenizer.Consume(':') || pTokenizer.EndOfString();
+}
+
+bool AssetViewModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::string& sText)
+{
+    if (pTokenizer.EndOfString())
+        return false;
+
+    sText = pTokenizer.ReadQuotedString();
+    return pTokenizer.Consume(':') || pTokenizer.EndOfString();
+}
+
+bool AssetViewModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText)
+{
+    if (pTokenizer.EndOfString())
+        return false;
+
+    sText = ra::Widen(pTokenizer.ReadQuotedString());
+    return pTokenizer.Consume(':') || pTokenizer.EndOfString();
+}
+
+bool AssetViewModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::string& sText)
+{
+    if (pTokenizer.EndOfString())
+        return false;
+
+    if (pTokenizer.PeekChar() == '"')
+        return ReadQuoted(pTokenizer, sText);
+
+    sText = pTokenizer.ReadTo(':');
+    pTokenizer.Consume(':');
+    return true;
+}
+
+bool AssetViewModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText)
+{
+    if (pTokenizer.EndOfString())
+        return false;
+
+    if (pTokenizer.PeekChar() == '"')
+        return ReadQuoted(pTokenizer, sText);
+
+    sText = ra::Widen(pTokenizer.ReadTo(':'));
+    pTokenizer.Consume(':');
+    return true;
+}
+
 void AssetViewModelBase::CreateServerCheckpoint()
 {
     Expects(m_pTransaction == nullptr);

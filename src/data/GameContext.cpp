@@ -181,6 +181,13 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     m_nNextLocalId = GameContext::FirstLocalId;
     MergeLocalAchievements(0);
 
+    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(vmAssets.Assets().Count()); ++i)
+    {
+        auto* pItem = vmAssets.Assets().GetItemAt(i);
+        Expects(pItem != nullptr);
+        pItem->CreateLocalCheckpoint();
+    }
+
 #ifndef RA_UTEST
     g_AchievementsDialog.UpdateAchievementList();
 #endif
@@ -341,6 +348,8 @@ bool GameContext::MergeLocalAchievements(ra::AchievementID nAchievementId)
     if (pData == nullptr)
         return false;
 
+    auto& vmAssets = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
+
     std::string sLine;
     pData->GetLine(sLine); // version used to create the file
     pData->GetLine(sLine); // game title
@@ -362,8 +371,12 @@ bool GameContext::MergeLocalAchievements(ra::AchievementID nAchievementId)
 
         bool bIsNew = false;
         Achievement* pAchievement = nullptr;
+        ra::ui::viewmodels::AchievementViewModel* vmAchievement = nullptr;
         if (nId != 0)
+        {
             pAchievement = FindAchievement(nId);
+            vmAchievement = vmAssets.FindAchievement(nId);
+        }
         if (!pAchievement)
         {
             bIsNew = true;
@@ -377,6 +390,21 @@ bool GameContext::MergeLocalAchievements(ra::AchievementID nAchievementId)
             pAchievement->SetCategory(Achievement::Category::Local);
             pAchievement->SetID(nId);
         }
+
+        if (!vmAchievement)
+        {
+            auto pAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+            pAchievement->SetID(nId);
+            pAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Local);
+            pAchievement->CreateServerCheckpoint();
+
+            auto* vmAsset = &vmAssets.Assets().Append(std::move(pAchievement));
+            vmAchievement = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(vmAsset);
+        }
+
+        ra::Tokenizer pTokenizer2(sLine);
+        pTokenizer2.Advance(pTokenizer.CurrentPosition());
+        vmAchievement->Deserialize(pTokenizer2);
 
         // field 2: trigger
         std::string sTrigger;
@@ -516,6 +544,14 @@ bool GameContext::MergeLocalAchievements(ra::AchievementID nAchievementId)
     {
         if (pAchievement->ID() == 0)
             pAchievement->SetID(m_nNextLocalId++);
+    }
+
+    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(vmAssets.Assets().Count()); ++i)
+    {
+        auto* pItem = vmAssets.Assets().GetItemAt(i);
+        Expects(pItem != nullptr);
+        if (pItem->GetID() == 0)
+            pItem->SetID(m_nNextLocalId++);
     }
 
     return (nAchievementId == 0);

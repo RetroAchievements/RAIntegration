@@ -6,6 +6,7 @@
 
 #include "ui\TransactionalViewModelBase.hh"
 
+#include "RA_StringUtils.h"
 #include "ra_utility.h"
 
 namespace ra {
@@ -153,6 +154,7 @@ public:
     void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
 
     virtual void Serialize(ra::services::TextWriter& pWriter) const = 0;
+    virtual bool Deserialize(ra::Tokenizer& pTokenizer) = 0;
 
     /// <summary>
     /// Captures the current state of the asset as a reflection of the state on the server.
@@ -214,6 +216,12 @@ protected:
     static void WriteQuoted(ra::services::TextWriter& pWriter, const std::wstring& sText);
     static void WritePossiblyQuoted(ra::services::TextWriter& pWriter, const std::string& sText);
     static void WritePossiblyQuoted(ra::services::TextWriter& pWriter, const std::wstring& sText);
+
+    static bool ReadNumber(ra::Tokenizer& pTokenizer, uint32_t& nValue);
+    static bool ReadQuoted(ra::Tokenizer& pTokenizer, std::string& sText);
+    static bool ReadQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText);
+    static bool ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::string& sText);
+    static bool ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText);
 
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 

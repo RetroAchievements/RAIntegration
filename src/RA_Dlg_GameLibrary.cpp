@@ -78,7 +78,7 @@ inline static void LogErrno() noexcept
     std::array<char, 2048> buf{};
     strerror_s(buf.data(), sizeof(buf), errno);
     // TODO: Make StringPrintf support std::array
-    GSL_SUPPRESS_F6 RA_LOG("Error: %s", buf.data());
+    GSL_SUPPRESS_F6 RA_LOG_ERR("Error: %s", buf.data());
 }
 
 } /* namespace ra */
@@ -325,7 +325,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
             }
             else if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
             {
-                RA_LOG("Directory found: %s\n", ffd.cFileName);
+                RA_LOG_INFO("Directory found: %s", ffd.cFileName);
                 std::string sRecurseDir = sBaseDir + "\\" + sFilename.c_str();
                 ScanAndAddRomsRecursive(sRecurseDir);
             }
@@ -337,12 +337,12 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                 if (filesize.QuadPart < 2048 || filesize.QuadPart > ROM_MAX_SIZE)
                 {
                     //	Ignore: wrong size
-                    RA_LOG("Ignoring %s, wrong size\n", sFilename.c_str());
+                    RA_LOG_INFO("Ignoring %s, wrong size", sFilename.c_str());
                 }
                 else
                 {
                     //	Parse as ROM!
-                    RA_LOG("%s looks good: parsing!\n", sFilename.c_str());
+                    RA_LOG_INFO("%s looks good: parsing!", sFilename.c_str());
 
                     char sAbsFileDir[2048];
                     sprintf_s(sAbsFileDir, 2048, "%s\\%s", sBaseDir.c_str(), sFilename.c_str());
@@ -365,7 +365,7 @@ void Dlg_GameLibrary::ScanAndAddRomsRecursive(const std::string& sBaseDir)
                         if (m_GameHashLibrary.find(sHashOut) != m_GameHashLibrary.end())
                         {
                             const unsigned int nGameID = m_GameHashLibrary[std::string(sHashOut)];
-                            RA_LOG("Found one! Game ID %u (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
+                            RA_LOG_INFO("Found one! Game ID %u (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
 
                             const std::string& sGameTitle = m_GameTitlesLibrary[nGameID];
                             AddTitle(sGameTitle, sAbsFileDir, nGameID);
@@ -425,7 +425,7 @@ void Dlg_GameLibrary::RefreshList()
             {
                 //	Found in our hash library!
                 const auto nGameID = m_GameHashLibrary[md5];
-                RA_LOG("Found one! Game ID %u (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
+                RA_LOG_INFO("Found one! Game ID %u (%s)", nGameID, m_GameTitlesLibrary[nGameID].c_str());
 
                 const std::string& sGameTitle = m_GameTitlesLibrary[nGameID];
                 AddTitle(sGameTitle, filepath, nGameID);
@@ -612,7 +612,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
                     return FALSE;
 
                 default:
-                    RA_LOG("%08x, %08x\n", wParam, lParam);
+                    RA_LOG_WARN("%08x, %08x", wParam, lParam);
                     return FALSE;
             }
 
@@ -646,7 +646,7 @@ INT_PTR CALLBACK Dlg_GameLibrary::GameLibraryProc(HWND hDlg, UINT uMsg, WPARAM w
                     {
                         auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
                         pConfiguration.SetRomDirectory(vmFileDialog.GetFileName());
-                        RA_LOG("Selected Folder: %s\n", vmFileDialog.GetFileName().c_str());
+                        RA_LOG_INFO("Selected Folder: %s", vmFileDialog.GetFileName().c_str());
                         SetDlgItemText(hDlg, IDC_RA_ROMDIR, NativeStr(vmFileDialog.GetFileName()).c_str());
                     }
                     return FALSE;
@@ -695,7 +695,7 @@ void Dlg_GameLibrary::KillThread()
     Dlg_GameLibrary::ThreadProcessingAllowed = false;
     while (Dlg_GameLibrary::ThreadProcessingActive)
     {
-        RA_LOG("Waiting for background scanner...");
+        RA_LOG_INFO("Waiting for background scanner...");
         Sleep(200);
     }
 }

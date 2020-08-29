@@ -49,7 +49,7 @@ void RA_Leaderboard::SetActive(bool bActive) noexcept
                 if (nResult < 0)
                 {
                     // parse error occurred
-                    RA_LOG("rc_parse_trigger returned %d for achievement %u", nResult, ID());
+                    RA_LOG_WARN("rc_parse_trigger returned %d for achievement %u", nResult, ID());
 
                     ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(
                         ra::StringPrintf(L"Unable to activate leaderboard: %s", Title()),

@@ -333,6 +333,9 @@
     <ClCompile Include="ui\viewmodels\TriggerViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\AchievementViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -829,7 +832,7 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\TriggerConditionViewModel.hh">
       <Filter>UI\ViewModels</Filter>
-    </ClCompile>
+    </ClInclude>
     <ClInclude Include="ui\viewmodels\AssetViewModelBase.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
@@ -837,6 +840,9 @@
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\TriggerViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\AchievementViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>

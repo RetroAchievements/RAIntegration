@@ -22,17 +22,6 @@
         __pLogger.LogMessage(lvl, ra::StringPrintf(__VA_ARGS__)); \
 }
 
-// legacy log message writes at Info level and may need trailing newline removed
-#define RA_LOG(...) \
-{ \
-    const auto& __pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>(); \
-    if (__pLogger.IsEnabled(ra::services::LogLevel::Info)) \
-    { \
-        std::string __sFormatted = ra::StringPrintf(__VA_ARGS__); \
-        __pLogger.LogMessage(ra::services::LogLevel::Info, ra::TrimLineEnding(__sFormatted)); \
-    } \
-}
-
 #endif
 
 #define RA_LOG_INFO(...) RA_LOG_LEVEL(ra::services::LogLevel::Info, __VA_ARGS__)

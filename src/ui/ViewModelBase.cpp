@@ -94,7 +94,6 @@ void ViewModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
     if (!m_vNotifyTargets.empty())
     {
-
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
         for (NotifyTarget* target : vNotifyTargets)
@@ -150,7 +149,6 @@ void ViewModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (!m_vNotifyTargets.empty())
     {
-
         // create a copy of the list of pointers in case it's modified by one of the callbacks
         NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
         for (NotifyTarget* target : vNotifyTargets)

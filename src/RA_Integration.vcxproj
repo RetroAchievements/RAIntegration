@@ -154,6 +154,7 @@
     <ClCompile Include="ui\viewmodels\ScoreboardViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\ScoreTrackerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\TriggerConditionViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\TriggerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="ui\win32\bindings\ControlBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\GridAddressColumnBinding.cpp" />
@@ -314,6 +315,7 @@
     <ClInclude Include="ui\viewmodels\ScoreboardViewModel.hh" />
     <ClInclude Include="ui\viewmodels\ScoreTrackerViewModel.hh" />
     <ClInclude Include="ui\viewmodels\TriggerConditionViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\TriggerViewModel.hh" />
     <ClInclude Include="ui\viewmodels\UnknownGameViewModel.hh" />
     <ClInclude Include="ui\viewmodels\WindowManager.hh" />
     <ClInclude Include="ui\win32\bindings\CheckBoxBinding.hh" />

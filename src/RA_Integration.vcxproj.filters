@@ -330,6 +330,9 @@
     <ClCompile Include="ui\viewmodels\AssetListViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\TriggerViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
     <ClCompile Include="ui\viewmodels\AchievementViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -834,6 +837,9 @@
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\AssetListViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\TriggerViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\AchievementViewModel.hh">

@@ -141,7 +141,7 @@ HWND Desktop::GetMainHWnd() const noexcept
     if (m_pWindowBinding != nullptr)
         return m_pWindowBinding->GetHWnd();
 
-    return 0;
+    return nullptr;
 }
 
 void Desktop::SetMainHWnd(HWND hWnd)

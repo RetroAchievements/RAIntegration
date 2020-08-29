@@ -71,7 +71,7 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
         nGameId = response.GameId;
         if (nGameId == 0) // Unknown
         {
-            RA_LOG("Could not identify game with MD5 %s", sMD5);
+            RA_LOG_INFO("Could not identify game with MD5 %s", sMD5);
 
             auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle();
 
@@ -92,7 +92,7 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
         }
         else
         {
-            RA_LOG("Successfully looked up game with ID %u", nGameId);
+            RA_LOG_INFO("Successfully looked up game with ID %u", nGameId);
         }
     }
     else
@@ -134,7 +134,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
             return;
         }
 
-        RA_LOG("Loading game %u", nGameId);
+        RA_LOG_INFO("Loading game %u", nGameId);
 
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         pOverlayManager.ClearPopups();
@@ -187,7 +187,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
     }
     else
     {
-        RA_LOG("Unloading current game");
+        RA_LOG_INFO("Unloading current game");
 
         ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
 

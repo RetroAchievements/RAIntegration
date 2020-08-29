@@ -58,7 +58,7 @@ void AssetListViewModel::SaveSelected()
     auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(GetGameId()));
     if (pData == nullptr)
     {
-        RA_LOG("Failed to create user assets file");
+        RA_LOG_ERR("Failed to create user assets file");
         return;
     }
 
@@ -87,7 +87,7 @@ void AssetListViewModel::SaveSelected()
         pItem->UpdateLocalCheckpoint();
     }
 
-    RA_LOG("Wrote user assets file");
+    RA_LOG_INFO("Wrote user assets file");
 }
 
 void AssetListViewModel::PublishSelected()

@@ -83,6 +83,21 @@ public:
     void SetName(const std::wstring& sValue) { SetValue(NameProperty, sValue); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for the description of the asset.
+    /// </summary>
+    static const StringModelProperty DescriptionProperty;
+
+    /// <summary>
+    /// Gets the description of the asset.
+    /// </summary>
+    const std::wstring& GetDescription() const { return GetValue(NameProperty); }
+
+    /// <summary>
+    /// Sets the description of the asset.
+    /// </summary>
+    void SetDescription(const std::wstring& sValue) { SetValue(NameProperty, sValue); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the asset category.
     /// </summary>
     static const IntModelProperty CategoryProperty;
@@ -165,6 +180,30 @@ public:
     void RestoreServerCheckpoint();
 
 protected:
+    /// <summary>
+    /// Helper class for versioned ASCII strings to avoid overhead of UNICODE characters
+    /// </summary>
+    struct AssetDefinition
+    {
+        const IntModelProperty* m_pProperty = nullptr;
+        std::string m_sCoreDefinition;
+        std::string m_sLocalDefinition;
+        std::string m_sCurrentDefinition;
+        bool m_bLocalModified = false;
+    };
+
+    std::vector<AssetDefinition*> m_vAssetDefinitions;
+
+    void AddAssetDefinition(AssetDefinition& pAsset, const IntModelProperty& pProperty)
+    {
+        pAsset.m_pProperty = &pProperty;
+        m_vAssetDefinitions.push_back(&pAsset);
+        SetTransactional(pProperty);
+    }
+
+    const std::string& GetAssetDefinition(const AssetDefinition& pAsset) const;
+    void SetAssetDefinition(AssetDefinition& pAsset, const std::string& sValue);
+
     static void WriteNumber(ra::services::TextWriter& pWriter, const uint32_t nValue);
     static void WriteQuoted(ra::services::TextWriter& pWriter, const std::string& sText);
     static void WriteQuoted(ra::services::TextWriter& pWriter, const std::wstring& sText);
@@ -172,6 +211,9 @@ protected:
     static void WritePossiblyQuoted(ra::services::TextWriter& pWriter, const std::wstring& sText);
 
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+
+    void CommitTransaction() override;
+    void RevertTransaction() override;
 };
 
 } // namespace viewmodels

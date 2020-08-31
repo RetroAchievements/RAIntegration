@@ -14,7 +14,7 @@ const IntModelProperty AchievementViewModel::TriggerProperty("AchievementViewMod
 
 AchievementViewModel::AchievementViewModel() noexcept
 {
-    SetValue(TypeProperty, ra::etoi(AssetType::Achievement));
+    GSL_SUPPRESS_F6 SetValue(TypeProperty, ra::etoi(AssetType::Achievement));
 
     SetTransactional(PointsProperty);
     SetTransactional(BadgeProperty);

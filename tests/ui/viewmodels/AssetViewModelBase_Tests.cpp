@@ -72,7 +72,7 @@ private:
             WritePossiblyQuoted(pWriter, Utf8String);
         }
 
-        bool Deserialize(ra::Tokenizer& pTokenizer) noexcept
+        bool Deserialize(ra::Tokenizer& pTokenizer) override
         {
             std::wstring sName;
             if (!ReadQuoted(pTokenizer, sName))

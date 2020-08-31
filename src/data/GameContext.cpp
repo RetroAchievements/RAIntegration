@@ -393,12 +393,12 @@ bool GameContext::MergeLocalAchievements(ra::AchievementID nAchievementId)
 
         if (!vmAchievement)
         {
-            auto pAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
-            pAchievement->SetID(nId);
-            pAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Local);
-            pAchievement->CreateServerCheckpoint();
+            auto uvmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+            uvmAchievement->SetID(nId);
+            uvmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Local);
+            uvmAchievement->CreateServerCheckpoint();
 
-            auto* vmAsset = &vmAssets.Assets().Append(std::move(pAchievement));
+            auto* vmAsset = &vmAssets.Assets().Append(std::move(uvmAchievement));
             vmAchievement = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(vmAsset);
         }
 

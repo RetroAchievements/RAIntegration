@@ -2,8 +2,9 @@
 #define RA_UI_ASSETLIST_VIEW_MODEL_H
 #pragma once
 
-#include "ui\ViewModelBase.hh"
+#include "ui\WindowViewModelBase.hh"
 #include "ui\ViewModelCollection.hh"
+#include "ui\viewmodels\LookupItemViewModel.hh"
 
 #include "AssetViewModelBase.hh"
 
@@ -15,9 +16,18 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class AssetListViewModel : public ViewModelBase
+class AssetListViewModel : public WindowViewModelBase,
+    protected ViewModelCollectionBase::NotifyTarget
 {
 public:
+    GSL_SUPPRESS_F6 AssetListViewModel() noexcept;
+    ~AssetListViewModel() = default;
+
+    AssetListViewModel(const AssetListViewModel&) noexcept = delete;
+    AssetListViewModel& operator=(const AssetListViewModel&) noexcept = delete;
+    AssetListViewModel(AssetListViewModel&&) noexcept = delete;
+    AssetListViewModel& operator=(AssetListViewModel&&) noexcept = delete;
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the game ID.
     /// </summary>
@@ -26,25 +36,30 @@ public:
     /// <summary>
     /// Gets the game ID.
     /// </summary>
-    int GetGameId() const { return GetValue(GameIdProperty); }
+    unsigned GetGameId() const { return ra::to_unsigned(GetValue(GameIdProperty)); }
+
+    /// <summary>
+    /// Sets the game ID.
+    /// </summary>
+    void SetGameId(unsigned nValue) { SetValue(GameIdProperty, ra::to_signed(nValue)); }
 
     // <summary>
-    /// The <see cref="ModelProperty" /> for the achievement count.
+    /// The <see cref="ModelProperty" /> for the core achievement count.
     /// </summary>
     static const IntModelProperty AchievementCountProperty;
 
     /// <summary>
-    /// Gets the total number of filtered achievements.
+    /// Gets the total number of core achievements.
     /// </summary>
     int GetAchievementCount() const { return GetValue(AchievementCountProperty); }
 
     // <summary>
-    /// The <see cref="ModelProperty" /> for the total achievement points.
+    /// The <see cref="ModelProperty" /> for the total core achievement points.
     /// </summary>
     static const IntModelProperty TotalPointsProperty;
 
     /// <summary>
-    /// Gets the total number of points associated to filtered achievements.
+    /// Gets the total number of points associated to core achievements.
     /// </summary>
     int GetTotalPoints() const { return GetValue(TotalPointsProperty); }
 
@@ -63,6 +78,29 @@ public:
     /// </summary>
     void SetProcessingActive(bool bValue) { SetValue(IsProcessingActiveProperty, bValue); }
 
+    /// <summary>
+    /// Gets the list of asset states.
+    /// </summary>
+    const LookupItemViewModelCollection& States() const noexcept
+    {
+        return m_vStates;
+    }
+
+    /// <summary>
+    /// Gets the list of asset categories.
+    /// </summary>
+    const LookupItemViewModelCollection& Categories() const noexcept
+    {
+        return m_vCategories;
+    }
+
+    /// <summary>
+    /// Gets the list of asset modification states.
+    /// </summary>
+    const LookupItemViewModelCollection& Changes() const noexcept
+    {
+        return m_vChanges;
+    }
 
     static const StringModelProperty ActivateButtonTextProperty;
     const std::wstring& GetActivateButtonText() const { return GetValue(ActivateButtonTextProperty); }
@@ -110,12 +148,25 @@ public:
     }
 
 private:
+    // ViewModelCollectionBase::NotifyTarget
+    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
+    void OnViewModelAdded(gsl::index nIndex) override;
+    void OnViewModelRemoved(gsl::index nIndex) override;
+    void OnViewModelChanged(gsl::index nIndex) override;
+    void OnEndViewModelCollectionUpdate() override;
+
     AssetViewModelBase* FindAsset(AssetType nType, ra::AchievementID nId);
     const AssetViewModelBase* FindAsset(AssetType nType, ra::AchievementID nId) const;
 
     bool HasSelection(AssetType nAssetType) const;
 
+    void UpdateTotals();
+
     ViewModelCollection<AssetViewModelBase> m_vAssets;
+    
+    LookupItemViewModelCollection m_vStates;
+    LookupItemViewModelCollection m_vCategories;
+    LookupItemViewModelCollection m_vChanges;
 };
 
 } // namespace viewmodels

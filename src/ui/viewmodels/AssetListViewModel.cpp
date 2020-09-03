@@ -26,6 +26,88 @@ const BoolModelProperty AssetListViewModel::CanPublishProperty("AssetListViewMod
 const BoolModelProperty AssetListViewModel::CanRefreshProperty("AssetListViewModel", "CanRefresh", true);
 const BoolModelProperty AssetListViewModel::CanCloneProperty("AssetListViewModel", "CanClone", true);
 
+AssetListViewModel::AssetListViewModel() noexcept
+{
+    SetWindowTitle(L"Assets List");
+
+    m_vStates.Add(ra::etoi(AssetState::Inactive), L"Inactive");
+    m_vStates.Add(ra::etoi(AssetState::Waiting), L"Waiting");
+    m_vStates.Add(ra::etoi(AssetState::Active), L"Active");
+    m_vStates.Add(ra::etoi(AssetState::Paused), L"Paused");
+    m_vStates.Add(ra::etoi(AssetState::Triggered), L"Triggered");
+
+    m_vCategories.Add(ra::etoi(AssetCategory::Core), L"Core");
+    m_vCategories.Add(ra::etoi(AssetCategory::Unofficial), L"Unofficial");
+    m_vCategories.Add(ra::etoi(AssetCategory::Local), L"Local");
+
+    m_vChanges.Add(ra::etoi(AssetChanges::None), L"");
+    m_vChanges.Add(ra::etoi(AssetChanges::Modified), L"Modified");
+    m_vChanges.Add(ra::etoi(AssetChanges::Unpublished), L"Unpublished");
+
+    m_vAssets.AddNotifyTarget(*this);
+}
+
+static bool IsTalliedAchievement(const AchievementViewModel& pAchievement)
+{
+    return (pAchievement.GetCategory() == AssetCategory::Core);
+}
+
+void AssetListViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == AchievementViewModel::PointsProperty)
+    {
+        auto* pAchievement = dynamic_cast<const AchievementViewModel*>(m_vAssets.GetItemAt(nIndex));
+        if (pAchievement != nullptr && IsTalliedAchievement(*pAchievement))
+        {
+            auto nPoints = GetTotalPoints();
+            nPoints += args.tNewValue - args.tOldValue;
+            SetValue(TotalPointsProperty, nPoints);
+        }
+    }
+}
+
+void AssetListViewModel::OnViewModelAdded(_UNUSED gsl::index nIndex)
+{
+    if (!m_vAssets.IsUpdating())
+        UpdateTotals();
+}
+
+void AssetListViewModel::OnViewModelRemoved(_UNUSED gsl::index nIndex)
+{
+    if (!m_vAssets.IsUpdating())
+        UpdateTotals();
+}
+
+void AssetListViewModel::OnViewModelChanged(_UNUSED gsl::index nIndex)
+{
+    if (!m_vAssets.IsUpdating())
+        UpdateTotals();
+}
+
+void AssetListViewModel::OnEndViewModelCollectionUpdate()
+{
+    UpdateTotals();
+}
+
+void AssetListViewModel::UpdateTotals()
+{
+    int nAchievementCount = 0;
+    int nTotalPoints = 0;
+
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+    {
+        auto* pAchievement = dynamic_cast<const AchievementViewModel*>(m_vAssets.GetItemAt(nIndex));
+        if (pAchievement != nullptr && IsTalliedAchievement(*pAchievement))
+        {
+            ++nAchievementCount;
+            nTotalPoints += pAchievement->GetPoints();
+        }
+    }
+
+    SetValue(AchievementCountProperty, nAchievementCount);
+    SetValue(TotalPointsProperty, nTotalPoints);
+}
+
 
 AssetViewModelBase* AssetListViewModel::FindAsset(AssetType nType, ra::AchievementID nId)
 {

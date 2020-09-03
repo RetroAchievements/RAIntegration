@@ -27,9 +27,24 @@ void WindowBinding::SetHWND(HWND hWnd)
 
         for (auto& pIter : m_mLabelBindings)
         {
-            auto* pProperty = dynamic_cast<const StringModelProperty*>(ModelPropertyBase::GetPropertyForKey(pIter.first));
-            if (pProperty != nullptr)
-                SetDlgItemTextW(m_hWnd, pIter.second, GetValueFromAny(*pProperty).c_str());
+            auto* pProperty = ModelPropertyBase::GetPropertyForKey(pIter.first);
+            if (pProperty == nullptr)
+                continue;
+
+            auto* pStringProperty = dynamic_cast<const StringModelProperty*>(pProperty);
+            if (pStringProperty != nullptr)
+            {
+                SetDlgItemTextW(m_hWnd, pIter.second, GetValueFromAny(*pStringProperty).c_str());
+            }
+            else
+            {
+                auto* pIntProperty = dynamic_cast<const IntModelProperty*>(pProperty);
+                if (pIntProperty != nullptr)
+                {
+                    const auto sText = std::to_wstring(GetValueFromAny(*pIntProperty));
+                    SetDlgItemTextW(m_hWnd, pIter.second, sText.c_str());
+                }
+            }
         }
 
         for (auto& pIter : m_mEnabledBindings)
@@ -251,6 +266,28 @@ void WindowBinding::BindLabel(int nDlgItemId, const StringModelProperty& pSource
     }
 }
 
+void WindowBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept
+{
+    const auto pIter = m_mLabelBindings.find(args.Property.GetKey());
+    if (pIter != m_mLabelBindings.end())
+    {
+        const auto sText = std::to_wstring(args.tNewValue);
+        SetDlgItemTextW(m_hWnd, pIter->second, sText.c_str());
+    }
+}
+
+void WindowBinding::BindLabel(int nDlgItemId, const IntModelProperty& pSourceProperty)
+{
+    m_mLabelBindings.insert_or_assign(pSourceProperty.GetKey(), nDlgItemId);
+
+    if (m_hWnd)
+    {
+        // immediately push values from the viewmodel to the UI
+        const auto sText = std::to_wstring(GetValueFromAny(pSourceProperty));
+        SetDlgItemTextW(m_hWnd, nDlgItemId, sText.c_str());
+    }
+}
+
 void WindowBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept
 {
     const auto pEnabledIter = m_mEnabledBindings.find(args.Property.GetKey());
@@ -300,6 +337,22 @@ const std::wstring& WindowBinding::GetValueFromAny(const StringModelProperty& pP
     }
 
     return sValue;
+}
+
+int WindowBinding::GetValueFromAny(const IntModelProperty& pProperty) const
+{
+    int nValue = GetValue(pProperty);
+    if (nValue == pProperty.GetDefaultValue())
+    {
+        for (const auto& pChild : m_vChildViewModels)
+        {
+            nValue = pChild->GetValue(pProperty);
+            if (nValue != pProperty.GetDefaultValue())
+                break;
+        }
+    }
+
+    return nValue;
 }
 
 bool WindowBinding::GetValueFromAny(const BoolModelProperty& pProperty) const

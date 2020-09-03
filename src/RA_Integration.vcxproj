@@ -156,6 +156,7 @@
     <ClCompile Include="ui\viewmodels\TriggerConditionViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\TriggerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel.cpp" />
+    <ClCompile Include="ui\win32\AssetListDialog.cpp" />
     <ClCompile Include="ui\win32\bindings\ControlBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\GridAddressColumnBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\GridBinding.cpp" />
@@ -320,6 +321,7 @@
     <ClInclude Include="ui\viewmodels\TriggerViewModel.hh" />
     <ClInclude Include="ui\viewmodels\UnknownGameViewModel.hh" />
     <ClInclude Include="ui\viewmodels\WindowManager.hh" />
+    <ClInclude Include="ui\win32\AssetListDialog.hh" />
     <ClInclude Include="ui\win32\bindings\CheckBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\ComboBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\ControlBinding.hh" />

@@ -325,6 +325,8 @@ public:
         Assert::AreEqual(std::string("1=1"), pAch2->GetTrigger());
 
         Assert::AreEqual({ 2U }, game.mockWindowManager.AssetList.Assets().Count());
+        Assert::AreEqual({ 1U }, game.mockWindowManager.AssetList.GetAchievementCount());
+        Assert::AreEqual({ 5U }, game.mockWindowManager.AssetList.GetTotalPoints());
 
         const auto* vmAch1 = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
         Assert::IsNotNull(vmAch1);
@@ -401,6 +403,8 @@ public:
         Assert::AreEqual(std::string("1=1"), pAch2->GetTrigger());
 
         Assert::AreEqual({ 1U }, game.mockWindowManager.AssetList.Assets().Count());
+        Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetAchievementCount());
+        Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetTotalPoints());
 
         const auto* vmAch2 = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
         Assert::IsNotNull(vmAch2);
@@ -511,6 +515,8 @@ public:
 
 
         Assert::AreEqual({ 4U }, game.mockWindowManager.AssetList.Assets().Count());
+        Assert::AreEqual({ 1U }, game.mockWindowManager.AssetList.GetAchievementCount());
+        Assert::AreEqual({ 5U }, game.mockWindowManager.AssetList.GetTotalPoints());
 
         // server only achievement
         const auto* vmAch = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
@@ -637,6 +643,8 @@ public:
 
 
         Assert::AreEqual({ 3U }, game.mockWindowManager.AssetList.Assets().Count());
+        Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetAchievementCount());
+        Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetTotalPoints());
 
         // 7 is not a known ID for this game, it should be loaded into a local achievement
         const auto* vmAch = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));

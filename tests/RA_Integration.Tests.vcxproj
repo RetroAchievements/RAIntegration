@@ -371,6 +371,7 @@
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\AssetViewModelBase_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\CodeNotesViewModel_Tests.cpp" />

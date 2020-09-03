@@ -91,6 +91,9 @@ public:
 
     std::string GetOSVersionString() const override { return "UnitTests"; }
 
+    bool IsDebuggerPresent() const override { return m_bDebuggerPresent; }
+    void SetDebuggerPresent(bool bValue) { m_bDebuggerPresent = bValue; }
+
 private:
     ra::ui::DialogResult Handle(WindowViewModelBase& vmViewModel) const
     {
@@ -109,6 +112,7 @@ private:
     mutable bool m_bDialogShown = false;
     mutable std::string m_sLastOpenedUrl;
     std::string m_sExecutable;
+    bool m_bDebuggerPresent = false;
 };
 
 } // namespace mocks

@@ -12,6 +12,7 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
+#include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
@@ -53,6 +54,7 @@ public:
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
+        ra::ui::mocks::MockDesktop mockDesktop;
         ra::data::mocks::MockEmulatorContext mockEmulator;
         ra::data::mocks::MockSessionTracker mockSessionTracker;
         ra::data::mocks::MockUserContext mockUser;
@@ -1284,6 +1286,65 @@ public:
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Error: RAM tampered with"), pPopup->GetDetail());
         Assert::IsTrue(pPopup->IsDetailError());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
+    TEST_METHOD(TestAwardAchievementDebuggerPresentHardcore)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+
+        game.MockAchievement();
+        game.mockDesktop.SetDebuggerPresent(true);
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Error: RAM insecure"), pPopup->GetDetail());
+        Assert::IsTrue(pPopup->IsDetailError());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
+    TEST_METHOD(TestAwardAchievementDebuggerPresentNonHardcore)
+    {
+        GameContextHarness game;
+        game.SetGameHash("hash");
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
+        {
+            Assert::AreEqual(1U, request.AchievementId);
+            Assert::AreEqual(false, request.Hardcore);
+            Assert::AreEqual(std::string("hash"), request.GameHash);
+
+            response.NewPlayerScore = 125U;
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.MockAchievement();
+        game.mockDesktop.SetDebuggerPresent(true);
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         // AwardAchievement API call is async, try to execute it - expect no tasks queued

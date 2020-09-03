@@ -227,6 +227,26 @@ std::unique_ptr<ra::ui::drawing::ISurface> Desktop::CaptureClientArea(const Wind
     return pSurface;
 }
 
+bool Desktop::IsDebuggerPresent() const
+{
+#ifdef NDEBUG // allow debugger-limited functionality when using a DEBUG build
+    if (::IsDebuggerPresent())
+    {
+        RA_LOG_WARN("Debugger detected");
+        return true;
+    }
+
+    BOOL bDebuggerPresent;
+    if (::CheckRemoteDebuggerPresent(GetCurrentProcess(), &bDebuggerPresent) && bDebuggerPresent)
+    {
+        RA_LOG_WARN("Remote debugger detected");
+        return true;
+    }
+#endif
+
+    return false;
+}
+
 
 void Desktop::Shutdown() noexcept
 {

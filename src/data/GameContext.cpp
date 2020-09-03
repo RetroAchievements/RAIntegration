@@ -28,6 +28,7 @@
 #include "services\impl\FileTextWriter.hh"
 #include "services\impl\StringTextReader.hh"
 
+#include "ui\IDesktop.hh"
 #include "ui\ImageReference.hh"
 
 #include "ui\viewmodels\AchievementViewModel.hh"
@@ -782,6 +783,19 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
 
         bIsError = true;
         bSubmit = false;
+    }
+
+    if (bSubmit && _RA_HardcoreModeIsActive())
+    {
+        const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+        if (pDesktop.IsDebuggerPresent())
+        {
+            vmPopup->SetTitle(L"Achievement NOT Unlocked");
+            vmPopup->SetErrorDetail(L"Error: RAM insecure");
+
+            bIsError = true;
+            bSubmit = false;
+        }
     }
 
     int nPopupId = -1;

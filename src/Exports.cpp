@@ -99,6 +99,22 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
         });
     }
 
+    if (_RA_HardcoreModeIsActive())
+    {
+        auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
+        if (pDesktop.IsDebuggerPresent())
+        {
+            if (ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Disable Hardcore mode?",
+                L"A debugger or similar tool has been detected. If you do not disable hardcore mode, RetroAchievements functionality will be disabled.",
+                ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo) == ra::ui::DialogResult::No)
+            {
+                return FALSE;
+            }
+
+            ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();
+        }
+    }
+
     return TRUE;
 }
 

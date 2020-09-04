@@ -2010,6 +2010,33 @@ public:
         Assert::IsTrue(pPopup->IsDetailError());
     }
 
+    TEST_METHOD(TestSubmitLeaderboardEntryDebuggerPresent)
+    {
+        GameContextHarness game;
+        game.SetGameHash("hash");
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+
+        game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
+
+        game.MockLeaderboard();
+        game.mockDesktop.SetDebuggerPresent(true);
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        // SubmitLeaderboardEntry API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        // error message should be reported
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Leaderboard NOT Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Error: RAM insecure"), pPopup->GetDetail());
+        Assert::IsTrue(pPopup->IsDetailError());
+    }
+
     TEST_METHOD(TestLoadCodeNotes)
     {
         GameContextNotifyTarget notifyTarget;

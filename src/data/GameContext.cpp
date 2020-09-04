@@ -1040,6 +1040,19 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
         return;
     }
 
+    const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+    if (pDesktop.IsDebuggerPresent())
+    {
+        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
+        vmPopup->SetTitle(L"Leaderboard NOT Submitted");
+        vmPopup->SetDescription(ra::Widen(pLeaderboard->Title()));
+        vmPopup->SetErrorDetail(L"Error: RAM insecure");
+
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
+        return;
+    }
+
     ra::api::SubmitLeaderboardEntry::Request request;
     request.LeaderboardId = pLeaderboard->ID();
     request.Score = nScore;

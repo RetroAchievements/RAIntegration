@@ -54,7 +54,6 @@ public:
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
-        ra::ui::mocks::MockDesktop mockDesktop;
         ra::data::mocks::MockEmulatorContext mockEmulator;
         ra::data::mocks::MockSessionTracker mockSessionTracker;
         ra::data::mocks::MockUserContext mockUser;
@@ -1292,7 +1291,7 @@ public:
         game.mockThreadPool.ExecuteNextTask();
     }
 
-    TEST_METHOD(TestAwardAchievementDebuggerPresentHardcore)
+    TEST_METHOD(TestAwardAchievementMemoryInsecureHardcore)
     {
         GameContextHarness game;
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
@@ -1300,7 +1299,7 @@ public:
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
         game.MockAchievement();
-        game.mockDesktop.SetDebuggerPresent(true);
+        game.mockEmulator.MockMemoryInsecure(true);
         game.AwardAchievement(1U);
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
@@ -1317,7 +1316,7 @@ public:
         game.mockThreadPool.ExecuteNextTask();
     }
 
-    TEST_METHOD(TestAwardAchievementDebuggerPresentNonHardcore)
+    TEST_METHOD(TestAwardAchievementMemoryInsecureNonHardcore)
     {
         GameContextHarness game;
         game.SetGameHash("hash");
@@ -1335,7 +1334,7 @@ public:
         });
 
         game.MockAchievement();
-        game.mockDesktop.SetDebuggerPresent(true);
+        game.mockEmulator.MockMemoryInsecure(true);
         game.AwardAchievement(1U);
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
@@ -2010,7 +2009,7 @@ public:
         Assert::IsTrue(pPopup->IsDetailError());
     }
 
-    TEST_METHOD(TestSubmitLeaderboardEntryDebuggerPresent)
+    TEST_METHOD(TestSubmitLeaderboardEntryMemoryInsecure)
     {
         GameContextHarness game;
         game.SetGameHash("hash");
@@ -2019,7 +2018,7 @@ public:
         game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
 
         game.MockLeaderboard();
-        game.mockDesktop.SetDebuggerPresent(true);
+        game.mockEmulator.MockMemoryInsecure(true);
         game.SubmitLeaderboardEntry(1U, 1234U);
 
         // SubmitLeaderboardEntry API call is async, try to execute it - expect no tasks queued

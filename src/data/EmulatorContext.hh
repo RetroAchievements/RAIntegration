@@ -222,7 +222,12 @@ public:
     /// <summary>
     /// Resets the memory modified flag.
     /// </summary>
-    void ResetMemoryModified() noexcept { m_bMemoryModified = false; }
+    void ResetMemoryModified();
+
+    /// <summary>
+    /// Determines if the memory is considered secure.
+    /// </summary>
+    virtual bool IsMemoryInsecure() const;
 
     class NotifyTarget
     {
@@ -275,6 +280,8 @@ protected:
     std::vector<MemoryBlock> m_vMemoryBlocks;
     size_t m_nTotalMemorySize = 0U;
     mutable bool m_bMemoryModified = false;
+    mutable bool m_bMemoryInsecure = false;
+    mutable std::chrono::steady_clock::time_point m_tLastInsecureCheck{};
 };
 
 } // namespace data

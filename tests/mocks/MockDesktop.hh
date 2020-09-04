@@ -91,8 +91,8 @@ public:
 
     std::string GetOSVersionString() const override { return "UnitTests"; }
 
-    bool IsDebuggerPresent() const override { return m_bDebuggerPresent; }
-    void SetDebuggerPresent(bool bValue) { m_bDebuggerPresent = bValue; }
+    bool IsDebuggerPresent() const noexcept override { return m_bDebuggerPresent; }
+    void SetDebuggerPresent(bool bValue) noexcept { m_bDebuggerPresent = bValue; }
 
 private:
     ra::ui::DialogResult Handle(WindowViewModelBase& vmViewModel) const

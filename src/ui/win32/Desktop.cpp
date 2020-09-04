@@ -231,17 +231,7 @@ std::unique_ptr<ra::ui::drawing::ISurface> Desktop::CaptureClientArea(const Wind
 
 static bool IsSuspiciousProcessRunning()
 {
-    // limit checks to once every 10 seconds
-    static std::chrono::steady_clock::time_point tLastCheck{};
-    static bool bFound = false;
-
-    const auto tNow = std::chrono::steady_clock::now();
-    const auto tElapsed = tNow - tLastCheck;
-    if (tElapsed < std::chrono::seconds(10))
-        return bFound;
-
-    // check for suspicious applications
-    bFound = false;
+    bool bFound = false;
 
     const HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnapshot)

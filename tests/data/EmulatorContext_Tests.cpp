@@ -4,6 +4,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockFileSystem.hh"
@@ -29,6 +30,7 @@ private:
         ra::api::mocks::MockServer mockServer;
         ra::data::mocks::MockGameContext mockGameContext;
         ra::data::mocks::MockUserContext mockUserContext;
+        ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockFileSystem mockFileSystem;
         ra::services::mocks::MockHttpRequester mockHttpRequester;
@@ -1184,6 +1186,50 @@ public:
         Assert::AreEqual((uint8_t)0x0F, memory.at(4));
         emulator.WriteMemory(4U, MemSize::Nibble_Upper, 0x0F);
         Assert::AreEqual((uint8_t)0xFF, memory.at(4));
+    }
+
+    TEST_METHOD(TestIsMemoryInsecureCached)
+    {
+        EmulatorContextHarness emulator;
+        Assert::IsFalse(emulator.IsMemoryInsecure());
+
+        emulator.mockDesktop.SetDebuggerPresent(true);
+        Assert::IsFalse(emulator.IsMemoryInsecure());
+
+        emulator.mockClock.AdvanceTime(std::chrono::seconds(5));
+        Assert::IsFalse(emulator.IsMemoryInsecure());
+
+        emulator.mockClock.AdvanceTime(std::chrono::seconds(6));
+        Assert::IsTrue(emulator.IsMemoryInsecure());
+    }
+
+    TEST_METHOD(TestIsMemoryInsecureRememberedUntilReset)
+    {
+        EmulatorContextHarness emulator;
+        emulator.mockDesktop.SetDebuggerPresent(true);
+        Assert::IsTrue(emulator.IsMemoryInsecure());
+
+        emulator.mockDesktop.SetDebuggerPresent(false);
+        Assert::IsTrue(emulator.IsMemoryInsecure());
+
+        emulator.mockClock.AdvanceTime(std::chrono::seconds(100));
+        Assert::IsTrue(emulator.IsMemoryInsecure());
+
+        emulator.ResetMemoryModified();
+        Assert::IsFalse(emulator.IsMemoryInsecure());
+    }
+
+    TEST_METHOD(TestIsMemoryInsecureRecheckedWhenReset)
+    {
+        EmulatorContextHarness emulator;
+        emulator.mockDesktop.SetDebuggerPresent(true);
+        Assert::IsTrue(emulator.IsMemoryInsecure());
+
+        emulator.mockClock.AdvanceTime(std::chrono::seconds(100));
+        Assert::IsTrue(emulator.IsMemoryInsecure());
+
+        emulator.ResetMemoryModified();
+        Assert::IsTrue(emulator.IsMemoryInsecure());
     }
 };
 

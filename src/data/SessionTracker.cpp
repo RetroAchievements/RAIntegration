@@ -12,6 +12,7 @@
 #include "data\GameContext.hh"
 
 #include "services\IClock.hh"
+#include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
@@ -168,6 +169,14 @@ void SessionTracker::UpdateSession(time_t tSessionStart)
     // schedule next ping
     auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
     pThreadPool.ScheduleAsync(std::chrono::seconds(SERVER_PING_FREQUENCY), [this, tSessionStart]() { UpdateSession(tSessionStart); });
+
+    // check memory security
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+    {
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+        pEmulatorContext.IsMemoryInsecure();
+    }
 }
 
 std::streampos SessionTracker::WriteSessionStats(std::chrono::seconds tSessionDuration) const

@@ -10,6 +10,7 @@
 #include "data\GameContext.hh"
 #include "data\UserContext.hh"
 
+#include "services\IClock.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\IHttpRequester.hh"
@@ -716,6 +717,41 @@ void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint3
 
     WriteMemoryByte(nAddress, nNewValue);
 }
+
+void EmulatorContext::ResetMemoryModified()
+{
+    m_bMemoryModified = false;
+
+    if (m_bMemoryInsecure)
+    {
+        // memory was insecure, immediately do a check
+        const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+        m_bMemoryInsecure = pDesktop.IsDebuggerPresent();
+
+        const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
+        m_tLastInsecureCheck = pClock.UpTime();
+    }
+}
+
+bool EmulatorContext::IsMemoryInsecure() const
+{
+    if (m_bMemoryInsecure)
+        return true;
+
+    // limit checks to once every 10 seconds
+    const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
+    const auto tNow = pClock.UpTime();
+    const auto tElapsed = tNow - m_tLastInsecureCheck;
+    if (tElapsed > std::chrono::seconds(10))
+    {
+        const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+        m_bMemoryInsecure = pDesktop.IsDebuggerPresent();
+        m_tLastInsecureCheck = tNow;
+    }
+
+    return m_bMemoryInsecure;
+}
+
 
 } // namespace data
 } // namespace ra

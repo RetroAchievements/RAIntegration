@@ -28,7 +28,6 @@
 #include "services\impl\FileTextWriter.hh"
 #include "services\impl\StringTextReader.hh"
 
-#include "ui\IDesktop.hh"
 #include "ui\ImageReference.hh"
 
 #include "ui\viewmodels\AchievementViewModel.hh"
@@ -785,17 +784,13 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
         bSubmit = false;
     }
 
-    if (bSubmit && _RA_HardcoreModeIsActive())
+    if (bSubmit && _RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
     {
-        const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
-        if (pDesktop.IsDebuggerPresent())
-        {
-            vmPopup->SetTitle(L"Achievement NOT Unlocked");
-            vmPopup->SetErrorDetail(L"Error: RAM insecure");
+        vmPopup->SetTitle(L"Achievement NOT Unlocked");
+        vmPopup->SetErrorDetail(L"Error: RAM insecure");
 
-            bIsError = true;
-            bSubmit = false;
-        }
+        bIsError = true;
+        bSubmit = false;
     }
 
     int nPopupId = -1;
@@ -1040,8 +1035,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
         return;
     }
 
-    const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
-    if (pDesktop.IsDebuggerPresent())
+    if (pEmulatorContext.IsMemoryInsecure())
     {
         std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
         vmPopup->SetTitle(L"Leaderboard NOT Submitted");

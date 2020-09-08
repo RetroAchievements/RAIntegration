@@ -157,7 +157,7 @@ public:
     /// <summary>
     /// Submit a new score for the specified leaderboard.
     /// </summary>
-    void SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsigned int nScore) const;
+    void SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int nScore) const;
 
     /// <summary>
     /// Updates the set of unlocked achievements from the server.

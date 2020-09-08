@@ -506,6 +506,35 @@ public:
         Assert::AreEqual(std::string("host.com"), pDisconnectedServer->Host());
     }
 
+    // ====================================================
+    // SubmitLeaderboardEntry
+
+    TEST_METHOD(TestSubmitLeaderboardEntrySigned)
+    {
+        MockUserContext mockUserContext;
+        mockUserContext.Initialize("Username", "ApiToken");
+
+        MockHttpRequester mockHttp([](const Http::Request& request)
+        {
+            Assert::AreEqual(std::string("host.com/dorequest.php"), request.GetUrl());
+            Assert::AreEqual(std::string("u=Username&r=submitlbentry&i=234&s=-55667788&v=82e403f7ff0395469330977dbe46f2a3&t=ApiToken"), request.GetPostData());
+            return Http::Response(Http::StatusCode::OK,
+                "{\"Success\":true,\"Response\":{\"Score\":1234,\"BestScore\":2345,"
+                "\"TopEntries\":[{\"User\":\"Player1\",\"Score\":8765,\"Rank\":1},{\"User\":\"Player2\",\"Score\":7654,\"Rank\":2}],"
+                "\"RankInfo\":{\"Rank\":5,\"NumEntries\":\"17\"}}}");
+        });
+
+        ra::services::ServiceLocator::ServiceOverride<ra::api::IServer> serviceOverride(new ConnectedServer("host.com"), true);
+        auto& server = ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
+
+        SubmitLeaderboardEntry::Request request;
+        request.LeaderboardId = 234;
+        request.Score = -55667788;
+        auto response = server.SubmitLeaderboardEntry(request);
+
+        Assert::AreEqual(ApiResult::Success, response.Result);
+        Assert::AreEqual(std::string(), response.ErrorMessage);
+    }
 };
 
 } // namespace tests

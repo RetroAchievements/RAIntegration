@@ -982,7 +982,7 @@ void GameContext::ActivateLeaderboards()
     }
 }
 
-void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsigned int nScore) const
+void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int nScore) const
 {
     const auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
     if (pLeaderboard == nullptr)

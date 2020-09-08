@@ -60,7 +60,7 @@ void RA_Leaderboard::SetActive(bool bActive) noexcept
     }
 }
 
-std::string RA_Leaderboard::FormatScore(unsigned int nValue) const
+std::string RA_Leaderboard::FormatScore(int nValue) const
 {
     char buffer[32];
     rc_format_value(buffer, sizeof(buffer), nValue, m_nFormat);

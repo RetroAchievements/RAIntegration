@@ -1664,7 +1664,7 @@ public:
             (const ra::api::SubmitLeaderboardEntry::Request& request, ra::api::SubmitLeaderboardEntry::Response& response)
         {
             Assert::AreEqual(1U, request.LeaderboardId);
-            Assert::AreEqual(1234U, request.Score);
+            Assert::AreEqual(1234, request.Score);
             Assert::AreEqual(std::string("hash"), request.GameHash);
             nNewScore = request.Score;
 
@@ -1886,7 +1886,7 @@ public:
         (const ra::api::SubmitLeaderboardEntry::Request & request, ra::api::SubmitLeaderboardEntry::Response & response)
         {
             Assert::AreEqual(1U, request.LeaderboardId);
-            Assert::AreEqual(1234U, request.Score);
+            Assert::AreEqual(1234, request.Score);
             Assert::AreEqual(std::string("hash"), request.GameHash);
             nNewScore = request.Score;
 

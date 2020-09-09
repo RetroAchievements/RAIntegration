@@ -1,7 +1,10 @@
 #include "RA_Core.h"
 
+#include "Exports.hh"
+
 #include "RA_BuildVer.h"
 #include "RA_ImageFactory.h"
+#include "RA_Log.h"
 #include "RA_Resource.h"
 #include "RA_md5factory.h"
 
@@ -23,6 +26,7 @@
 #include "services\Initialization.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\IDesktop.hh"
 #include "ui\ImageReference.hh"
 #include "ui\viewmodels\BrokenAchievementsViewModel.hh"
 #include "ui\viewmodels\GameChecksumViewModel.hh"
@@ -31,14 +35,12 @@
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\OverlaySettingsViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
-#include "ui\win32\Desktop.hh"
-#include "ui\win32\OverlayWindow.hh"
 
-std::wstring g_sHomeDir;
+#include "RAInterface\RA_Emulators.h"
+
 std::string g_sROMDirLocation;
 
 HMODULE g_hThisDLLInst = nullptr;
-HINSTANCE g_hRAKeysDLL = nullptr;
 HWND g_RAMainWnd = nullptr;
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD dwReason, _UNUSED LPVOID)
@@ -114,56 +116,6 @@ void __gsl_contract_handler(const char* const file, unsigned int line, const cha
     _wassert(ra::Widen(error).c_str(), ra::Widen(filename).c_str(), line);
 }
 #endif
-
-API void CCONV _RA_UpdateHWnd(HWND hMainHWND)
-{
-    if (hMainHWND != g_RAMainWnd)
-    {
-        auto& pDesktop = dynamic_cast<ra::ui::win32::Desktop&>(ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>());
-        pDesktop.SetMainHWnd(hMainHWND);
-        g_RAMainWnd = hMainHWND;
-
-        auto& pOverlayWindow = ra::services::ServiceLocator::GetMutable<ra::ui::win32::OverlayWindow>();
-        pOverlayWindow.CreateOverlayWindow(hMainHWND);
-    }
-}
-
-static void InitCommon(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID)
-{
-    ra::services::Initialization::RegisterServices(ra::itoe<EmulatorID>(nEmulatorID));
-
-    // initialize global state
-    _RA_UpdateHWnd(hMainHWND);
-
-    auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
-    g_sHomeDir = pFileSystem.BaseDirectory();
-}
-
-API BOOL CCONV _RA_InitOffline(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* /*sClientVer*/)
-{
-    InitCommon(hMainHWND, nEmulatorID);
-
-    ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().DisableLogin();
-
-    return TRUE;
-}
-
-API BOOL CCONV _RA_InitI(HWND hMainHWND, /*enum EmulatorID*/int nEmulatorID, const char* sClientVer)
-{
-    InitCommon(hMainHWND, nEmulatorID);
-
-    // Set the client version and User-Agent string
-    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().SetClientVersion(sClientVer);
-
-    // validate version (async call)
-    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]
-    {
-        if (!ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().ValidateClientVersion())
-            ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().Logout();
-    });
-
-    return TRUE;
-}
 
 API int CCONV _RA_Shutdown()
 {
@@ -281,14 +233,18 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
     if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
         return true;
 
-    // prompt. if user doesn't consent, return failure - caller should not continue
-    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-    vmMessageBox.SetHeader(L"Disable Hardcore mode?");
-    vmMessageBox.SetMessage(L"You cannot " + ra::Widen(sActivity) + L" while Hardcore mode is active.");
-    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
-    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
-    if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
-        return false;
+    // if no activity specified, just proceed to disabling without prompting
+    if (sActivity && *sActivity)
+    {
+        // prompt. if user doesn't consent, return failure - caller should not continue
+        ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+        vmMessageBox.SetHeader(L"Disable Hardcore mode?");
+        vmMessageBox.SetMessage(L"You cannot " + ra::Widen(sActivity) + L" while Hardcore mode is active.");
+        vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+        vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+        if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
+            return false;
+    }
 
     // user consented, switch to non-hardcore mode
     ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();

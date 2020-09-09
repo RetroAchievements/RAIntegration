@@ -845,6 +845,12 @@
     <ClInclude Include="ui\viewmodels\AchievementViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
+    <ClInclude Include="..\RAInterface\RA_Consoles.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="..\RAInterface\RA_Emulators.h">
+      <Filter>Interface</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

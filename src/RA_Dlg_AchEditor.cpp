@@ -2,6 +2,7 @@
 
 #include "RA_Achievement.h"
 #include "RA_Core.h"
+#include "RA_Defs.h"
 #include "RA_Dlg_Achievement.h"
 #include "RA_ImageFactory.h"
 #include "RA_Resource.h"

@@ -2,10 +2,12 @@
 
 #include "RA_Achievement.h"
 #include "RA_Core.h"
+#include "RA_Defs.h"
 #include "RA_Resource.h"
 #include "RA_md5factory.h"
 
 #include "services\IConfiguration.hh"
+#include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\FileDialogViewModel.hh"
@@ -85,7 +87,9 @@ inline static void LogErrno() noexcept
 
 void ParseGameHashLibraryFromFile(std::map<std::string, unsigned int>& GameHashLibraryOut)
 {
-    std::wstring sGameHashFile{g_sHomeDir};
+    auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+
+    std::wstring sGameHashFile = pFileSystem.BaseDirectory();
     sGameHashFile += RA_GAME_HASH_FILENAME;
     std::ifstream ifile{sGameHashFile};
     if (!ifile.is_open())
@@ -113,7 +117,8 @@ void ParseGameHashLibraryFromFile(std::map<std::string, unsigned int>& GameHashL
 
 void ParseGameTitlesFromFile(std::map<unsigned int, std::string>& GameTitlesListOut)
 {
-    std::wstring sTitlesFile{g_sHomeDir};
+    auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    std::wstring sTitlesFile = pFileSystem.BaseDirectory();
     sTitlesFile += RA_TITLES_FILENAME;
     std::ifstream ifile{sTitlesFile};
     if (!ifile.is_open())
@@ -142,7 +147,8 @@ void ParseGameTitlesFromFile(std::map<unsigned int, std::string>& GameTitlesList
 
 void ParseMyProgressFromFile(std::map<unsigned int, std::string>& GameProgressOut)
 {
-    std::wstring sProgressFile{g_sHomeDir};
+    auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    std::wstring sProgressFile = pFileSystem.BaseDirectory();
     sProgressFile += RA_TITLES_FILENAME;
 
     std::ifstream ifile{sProgressFile, std::ios::binary};
@@ -461,7 +467,8 @@ BOOL Dlg_GameLibrary::LaunchSelected()
 
 void Dlg_GameLibrary::LoadAll()
 {
-    const auto sMyGameLibraryFile = ra::StringPrintf(L"%s%s", g_sHomeDir, RA_MY_GAME_LIBRARY_FILENAME);
+    auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    std::wstring sMyGameLibraryFile = pFileSystem.BaseDirectory() + RA_MY_GAME_LIBRARY_FILENAME;
     {
         std::scoped_lock lock{mtx};
         std::ifstream ifile{sMyGameLibraryFile, std::ios::binary};
@@ -501,7 +508,8 @@ void Dlg_GameLibrary::LoadAll()
 
 void Dlg_GameLibrary::SaveAll()
 {
-    std::wstring sMyGameLibraryFile = g_sHomeDir + RA_MY_GAME_LIBRARY_FILENAME;
+    auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    std::wstring sMyGameLibraryFile = pFileSystem.BaseDirectory() + RA_MY_GAME_LIBRARY_FILENAME;
 
     mtx.lock();
     FILE* pf = nullptr;

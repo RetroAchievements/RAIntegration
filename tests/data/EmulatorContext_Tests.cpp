@@ -64,47 +64,50 @@ public:
     {
         EmulatorContextHarness emulator;
 
-        emulator.Initialize(EmulatorID::RA_FCEUX);
+        emulator.Initialize(EmulatorID::RA_FCEUX, nullptr);
         Assert::AreEqual(std::string("RANes"), emulator.GetClientName());
 
-        emulator.Initialize(EmulatorID::RA_Gens);
+        emulator.Initialize(EmulatorID::RA_Gens, nullptr);
         Assert::AreEqual(std::string("RAGens_REWiND"), emulator.GetClientName());
 
-        emulator.Initialize(EmulatorID::RA_Libretro);
+        emulator.Initialize(EmulatorID::RA_Libretro, nullptr);
         Assert::AreEqual(std::string("RALibRetro"), emulator.GetClientName());
 
-        emulator.Initialize(EmulatorID::RA_Meka);
+        emulator.Initialize(EmulatorID::RA_Meka, nullptr);
         Assert::AreEqual(std::string("RAMeka"), emulator.GetClientName());
 
-        emulator.Initialize(EmulatorID::RA_Nester);
+        emulator.Initialize(EmulatorID::RA_Nester, nullptr);
         Assert::AreEqual(std::string("RANes"), emulator.GetClientName());
 
-        emulator.Initialize(EmulatorID::RA_PCE);
+        emulator.Initialize(EmulatorID::RA_PCE, nullptr);
         Assert::AreEqual(std::string("RAPCE"), emulator.GetClientName());
 
-        emulator.Initialize(EmulatorID::RA_Project64);
+        emulator.Initialize(EmulatorID::RA_Project64, nullptr);
         Assert::AreEqual(std::string("RAP64"), emulator.GetClientName());
 
-        emulator.Initialize(EmulatorID::RA_QUASI88);
+        emulator.Initialize(EmulatorID::RA_QUASI88, nullptr);
         Assert::AreEqual(std::string("RAQUASI88"), emulator.GetClientName());
 
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         Assert::AreEqual(std::string("RASnes9X"), emulator.GetClientName());
 
-        emulator.Initialize(EmulatorID::RA_VisualboyAdvance);
+        emulator.Initialize(EmulatorID::RA_VisualboyAdvance, nullptr);
         Assert::AreEqual(std::string("RAVisualBoyAdvance"), emulator.GetClientName());
 
-        emulator.Initialize(EmulatorID::RA_AppleWin);
+        emulator.Initialize(EmulatorID::RA_AppleWin, nullptr);
         Assert::AreEqual(std::string("RAppleWin"), emulator.GetClientName());
 
-        emulator.Initialize(EmulatorID::RA_Oricutron);
+        emulator.Initialize(EmulatorID::RA_Oricutron, nullptr);
         Assert::AreEqual(std::string("RAOricutron"), emulator.GetClientName());
+
+        emulator.Initialize(EmulatorID::UnknownEmulator, "CustomName");
+        Assert::AreEqual(std::string("CustomName"), emulator.GetClientName());
     }
 
     TEST_METHOD(TestValidateClientVersionCurrent)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("0.56");
         emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request& request, ra::api::LatestClient::Response& response)
         {
@@ -121,7 +124,7 @@ public:
     TEST_METHOD(TestValidateClientVersionNewer)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.MockVersions("0.57", "0.56");
 
         Assert::IsTrue(emulator.ValidateClientVersion());
@@ -131,7 +134,7 @@ public:
     TEST_METHOD(TestValidateClientVersionApiErrorNonHardcore)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("0.57");
         emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
         {
@@ -153,7 +156,7 @@ public:
     TEST_METHOD(TestValidateClientVersionApiErrorNonHardcoreLoggedIn)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("0.57");
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
@@ -177,7 +180,7 @@ public:
     TEST_METHOD(TestValidateClientVersionApiErrorHardcore)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("0.57");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.mockConfiguration.SetApiToken("Token");
@@ -201,7 +204,7 @@ public:
     TEST_METHOD(TestValidateClientVersionApiErrorHardcoreLoginDisabled)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("0.57");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.mockUserContext.DisableLogin();
@@ -225,7 +228,7 @@ public:
     TEST_METHOD(TestValidateClientVersionApiErrorHardcoreLoggedIn)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("0.57");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.mockUserContext.Initialize("User", "Token");
@@ -250,7 +253,7 @@ public:
     TEST_METHOD(TestValidateClientVersionOlderNonHardcoreIgnore)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -268,7 +271,7 @@ public:
     TEST_METHOD(TestValidateClientVersionOlderNonHardcoreAcknowledge)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -286,7 +289,7 @@ public:
     TEST_METHOD(TestValidateClientVersionOlderHardcoreProceed)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
@@ -306,7 +309,7 @@ public:
     TEST_METHOD(TestValidateClientVersionOlderHardcoreAcknowledge)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
@@ -326,7 +329,7 @@ public:
     TEST_METHOD(TestValidateClientVersionAboveMinimumHardcoreProceed)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.MockVersions("0.57.0.0", "0.58.0.0", "0.56.0.0");
@@ -346,7 +349,7 @@ public:
     TEST_METHOD(TestValidateClientVersionAboveMinimumHardcoreAcknowledge)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.MockVersions("0.57.0.0", "0.58.0.0", "0.56.0.0");
@@ -366,7 +369,7 @@ public:
     TEST_METHOD(TestValidateClientVersionAtMinimumHardcoreProceed)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.MockVersions("0.57.0.0", "0.58.0.0", "0.57.0.0");
@@ -387,7 +390,7 @@ public:
     TEST_METHOD(TestValidateClientVersionBelowMinimumHardcoreAcknowledge)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.MockVersions("0.56.0.0", "0.58.0.0", "0.57.0.0");
@@ -407,7 +410,7 @@ public:
     TEST_METHOD(TestValidateClientVersionCurrentAboveMinimum)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.MockVersions("0.56", "0.56", "0.55");
 
         Assert::IsTrue(emulator.ValidateClientVersion());
@@ -418,7 +421,7 @@ public:
     {
         // ensures "1.0" doesn't get trimmed to "1"
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.MockVersions("0.57.0.0", "1.0.0.0");
@@ -437,7 +440,7 @@ public:
     {
         // ensures "1.0" doesn't get trimmed to "1"
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         emulator.MockVersions("1.0.0.0", "1.0.1.0");
@@ -455,7 +458,7 @@ public:
     TEST_METHOD(TestValidateClientVersionUnknownClient)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("1.0");
         emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
         {
@@ -487,25 +490,32 @@ public:
     TEST_METHOD(TestUserAgent)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("1.0");
 
         std::string sVersion = emulator.mockHttpRequester.GetUserAgent();
         ReplaceIntegrationVersion(sVersion);
         Assert::AreEqual(std::string("RASnes9X/1.0 (UnitTests) Integration/VERSION"), sVersion);
 
-        emulator.Initialize(EmulatorID::RA_AppleWin);
+        emulator.Initialize(EmulatorID::RA_AppleWin, nullptr);
         emulator.SetClientVersion("1.1.1");
 
         sVersion = emulator.mockHttpRequester.GetUserAgent();
         ReplaceIntegrationVersion(sVersion);
         Assert::AreEqual(std::string("RAppleWin/1.1.1 (UnitTests) Integration/VERSION"), sVersion);
+
+        emulator.Initialize(EmulatorID::UnknownEmulator, "CustomName");
+        emulator.SetClientVersion("3.1a");
+
+        sVersion = emulator.mockHttpRequester.GetUserAgent();
+        ReplaceIntegrationVersion(sVersion);
+        Assert::AreEqual(std::string("CustomName/3.1a (UnitTests) Integration/VERSION"), sVersion);
     }
 
     TEST_METHOD(TestUserAgentClientDetail)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Libretro);
+        emulator.Initialize(EmulatorID::RA_Libretro, nullptr);
         emulator.SetClientVersion("1.0.15");
         emulator.SetClientUserAgentDetail("fceumm_libretro/(SVN)_0a0fdb8");
 
@@ -679,7 +689,7 @@ public:
     TEST_METHOD(TestEnableHardcoreModeVersionOlderGameLoadedAccept)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.mockGameContext.SetGameId(1U);
@@ -709,7 +719,7 @@ public:
     TEST_METHOD(TestEnableHardcoreModeVersionOlderGameLoadedCancel)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.mockGameContext.SetGameId(1U);
@@ -779,7 +789,7 @@ public:
     TEST_METHOD(TestEnableHardcoreModeVersionOlderGameLoadedNoPrompt)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.mockGameContext.SetGameId(1U);
@@ -811,7 +821,7 @@ public:
         EmulatorContextHarness emulator;
         Assert::AreEqual(std::wstring(L" -  []"), emulator.GetAppTitle(""));
 
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.SetClientVersion("0.57.0.0");
         emulator.mockConfiguration.SetHostName("retroachievements.org");
         Assert::AreEqual(std::wstring(L"RASnes9X - 0.57"), emulator.GetAppTitle(""));
@@ -820,7 +830,7 @@ public:
     TEST_METHOD(TestGetAppTitleVersion)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("retroachievements.org");
 
         emulator.SetClientVersion("0.57.1.1");
@@ -836,7 +846,7 @@ public:
     TEST_METHOD(TestGetAppTitleUserName)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("retroachievements.org");
         emulator.SetClientVersion("0.57");
 
@@ -852,7 +862,7 @@ public:
     TEST_METHOD(TestGetAppTitleCustomMessage)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("retroachievements.org");
         emulator.SetClientVersion("0.57");
         Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 - Test"), emulator.GetAppTitle("Test"));
@@ -861,7 +871,7 @@ public:
     TEST_METHOD(TestGetAppTitleCustomHost)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("localhost");
         emulator.SetClientVersion("0.57");
         Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 [localhost]"), emulator.GetAppTitle(""));
@@ -870,7 +880,7 @@ public:
     TEST_METHOD(TestGetAppTitleEverything)
     {
         EmulatorContextHarness emulator;
-        emulator.Initialize(EmulatorID::RA_Snes9x);
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("localhost");
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.SetClientVersion("0.57");
@@ -881,7 +891,7 @@ public:
     {
         EmulatorContextHarness emulator;
         emulator.mockDesktop.SetRunningExecutable("C:\\Games\\Emulator\\RATest.exe");
-        emulator.Initialize(ra::itoe<EmulatorID>(9999));
+        emulator.Initialize(ra::itoe<EmulatorID>(9999), nullptr);
         Assert::AreEqual(ra::etoi(EmulatorID::UnknownEmulator), ra::etoi(emulator.GetEmulatorId()));
         Assert::AreEqual(std::string("RATest"), emulator.GetClientName());
     }

@@ -2,7 +2,7 @@
 #define RA_SERVICES_INITIALIZATION_HH
 #pragma once
 
-#include "RA_Interface.h"
+#include "RAInterface\RA_Emulators.h"
 
 namespace ra {
 namespace services {
@@ -12,7 +12,7 @@ class Initialization
 public:
     static void RegisterCoreServices();
 
-    static void RegisterServices(EmulatorID nEmulatorId);
+    static void RegisterServices(EmulatorID nEmulatorId, const char* sClientName);
 
     static void Shutdown();
 

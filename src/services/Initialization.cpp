@@ -32,6 +32,9 @@
 #include "ui\win32\Desktop.hh"
 #include "ui\win32\OverlayWindow.hh"
 
+#include "RAInterface\RA_Consoles.h"
+#include "RAInterface\RA_Emulators.h"
+
 // this, in combination with the "#define ISOLATION_AWARE_ENABLED 1" in pch.h, allows our
 // UI to use visual styles introduced in ComCtl32 v6, even if the emulator does not enable them.
 // see https://docs.microsoft.com/en-us/windows/desktop/controls/cookbook-overview
@@ -83,7 +86,7 @@ void Initialization::RegisterCoreServices()
     ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(std::move(pConfiguration));
 }
 
-void Initialization::RegisterServices(EmulatorID nEmulatorId)
+void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClientName)
 {
     RegisterCoreServices();
 
@@ -95,8 +98,8 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId)
     ra::services::ServiceLocator::Provide<ra::ui::IDesktop>(std::move(pDesktop));
 
     auto pEmulatorContext = std::make_unique<ra::data::EmulatorContext>();
-    pEmulatorContext->Initialize(nEmulatorId);
-    const auto& sClientName = pEmulatorContext->GetClientName();
+    pEmulatorContext->Initialize(nEmulatorId, sClientName);
+    sClientName = pEmulatorContext->GetClientName().c_str();
     ra::services::ServiceLocator::Provide<ra::data::EmulatorContext>(std::move(pEmulatorContext));
 
     // if EmulatorContext->Initialize doesn't specify the ConsoleContext, initialize a default ConsoleContext

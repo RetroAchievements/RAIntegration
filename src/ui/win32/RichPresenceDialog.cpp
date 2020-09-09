@@ -1,6 +1,6 @@
 #include "RichPresenceDialog.hh"
 
-#include "RA_Core.h"
+#include "RA_Log.h"
 #include "RA_Resource.h"
 
 namespace ra {

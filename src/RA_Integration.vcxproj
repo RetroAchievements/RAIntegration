@@ -182,6 +182,8 @@
     <ClCompile Include="ui\WindowViewModelBase.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\RAInterface\RA_Consoles.h" />
+    <ClInclude Include="..\RAInterface\RA_Emulators.h" />
     <ClInclude Include="..\RAInterface\RA_Interface.h" />
     <ClInclude Include="api\ApiCall.hh" />
     <ClInclude Include="api\AwardAchievement.hh" />

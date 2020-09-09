@@ -27,6 +27,30 @@ const BoolModelProperty AssetListViewModel::CanRefreshProperty("AssetListViewMod
 const BoolModelProperty AssetListViewModel::CanCloneProperty("AssetListViewModel", "CanClone", true);
 
 
+AssetViewModelBase* AssetListViewModel::FindAsset(AssetType nType, ra::AchievementID nId)
+{
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+    {
+        auto* pItem = m_vAssets.GetItemAt(nIndex);
+        if (pItem != nullptr && pItem->GetID() == nId && pItem->GetType() == nType)
+            return pItem;
+    }
+
+    return nullptr;
+}
+
+const AssetViewModelBase* AssetListViewModel::FindAsset(AssetType nType, ra::AchievementID nId) const
+{
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+    {
+        auto* pItem = m_vAssets.GetItemAt(nIndex);
+        if (pItem != nullptr && pItem->GetID() == nId && pItem->GetType() == nType)
+            return pItem;
+    }
+
+    return nullptr;
+}
+
 bool AssetListViewModel::HasSelection(AssetType nAssetType) const
 {
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)

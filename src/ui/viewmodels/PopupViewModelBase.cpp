@@ -19,7 +19,7 @@ int PopupViewModelBase::GetFadeOffset(double fAnimationProgress, double fTotalAn
     {
         // fading in
         const auto fPercentage = (fInOutTime - fAnimationProgress) / fInOutTime;
-        Expects(nTargetOffset > nInitialOffset);
+        Expects(nTargetOffset >= nInitialOffset);
         const auto nOffset = to_unsigned(nTargetOffset - nInitialOffset) * (fPercentage * fPercentage);
         nNewOffset = ftol(nTargetOffset - nOffset);
     }
@@ -32,7 +32,7 @@ int PopupViewModelBase::GetFadeOffset(double fAnimationProgress, double fTotalAn
     {
         // fading out
         const auto fPercentage = (fTotalAnimationTime - fInOutTime - fAnimationProgress) / fInOutTime;
-        Expects(nTargetOffset > nInitialOffset);
+        Expects(nTargetOffset >= nInitialOffset);
         const auto nOffset = to_unsigned(nTargetOffset - nInitialOffset) * (fPercentage * fPercentage);
         nNewOffset = ftoi(nTargetOffset - nOffset);
     }

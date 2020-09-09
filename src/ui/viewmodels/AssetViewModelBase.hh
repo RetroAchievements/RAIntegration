@@ -6,6 +6,7 @@
 
 #include "ui\TransactionalViewModelBase.hh"
 
+#include "RA_StringUtils.h"
 #include "ra_utility.h"
 
 namespace ra {
@@ -42,7 +43,7 @@ enum class AssetChanges
     Unpublished, // local data differs from server data
 };
 
-class AssetViewModelBase : protected TransactionalViewModelBase
+class AssetViewModelBase : public TransactionalViewModelBase
 {
 public:
     AssetViewModelBase() noexcept;
@@ -68,6 +69,11 @@ public:
     uint32_t GetID() const { return ra::to_unsigned(GetValue(IDProperty)); }
 
     /// <summary>
+    /// Sets the asset id.
+    /// </summary>
+    void SetID(uint32_t nValue) { SetValue(IDProperty, nValue); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the name.
     /// </summary>
     static const StringModelProperty NameProperty;
@@ -90,12 +96,12 @@ public:
     /// <summary>
     /// Gets the description of the asset.
     /// </summary>
-    const std::wstring& GetDescription() const { return GetValue(NameProperty); }
+    const std::wstring& GetDescription() const { return GetValue(DescriptionProperty); }
 
     /// <summary>
     /// Sets the description of the asset.
     /// </summary>
-    void SetDescription(const std::wstring& sValue) { SetValue(NameProperty, sValue); }
+    void SetDescription(const std::wstring& sValue) { SetValue(DescriptionProperty, sValue); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the asset category.
@@ -148,6 +154,7 @@ public:
     void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
 
     virtual void Serialize(ra::services::TextWriter& pWriter) const = 0;
+    virtual bool Deserialize(ra::Tokenizer& pTokenizer) = 0;
 
     /// <summary>
     /// Captures the current state of the asset as a reflection of the state on the server.
@@ -210,7 +217,18 @@ protected:
     static void WritePossiblyQuoted(ra::services::TextWriter& pWriter, const std::string& sText);
     static void WritePossiblyQuoted(ra::services::TextWriter& pWriter, const std::wstring& sText);
 
+    static bool ReadNumber(ra::Tokenizer& pTokenizer, uint32_t& nValue);
+    static bool ReadQuoted(ra::Tokenizer& pTokenizer, std::string& sText);
+    static bool ReadQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText);
+    static bool ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::string& sText);
+    static bool ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText);
+
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+
+    // Hide the public members of TransactionalViewModelBase that we're redefining
+    using TransactionalViewModelBase::BeginTransaction;
+    using TransactionalViewModelBase::CommitTransaction;
+    using TransactionalViewModelBase::RevertTransaction;
 
     void CommitTransaction() override;
     void RevertTransaction() override;

@@ -7,6 +7,7 @@ namespace viewmodels {
 const IntModelProperty AssetViewModelBase::TypeProperty("AssetViewModelBase", "Type", ra::etoi(AssetType::Achievement));
 const IntModelProperty AssetViewModelBase::IDProperty("AssetViewModelBase", "ID", 0);
 const StringModelProperty AssetViewModelBase::NameProperty("AssetViewModelBase", "Name", L"");
+const StringModelProperty AssetViewModelBase::DescriptionProperty("AssetViewModelBase", "Description", L"");
 const IntModelProperty AssetViewModelBase::CategoryProperty("AssetViewModelBase", "Category", ra::etoi(AssetCategory::Core));
 const IntModelProperty AssetViewModelBase::StateProperty("AssetViewModelBase", "State", ra::etoi(AssetState::Inactive));
 const IntModelProperty AssetViewModelBase::ChangesProperty("AssetViewModelBase", "Changes", ra::etoi(AssetChanges::None));
@@ -99,6 +100,59 @@ void AssetViewModelBase::WriteNumber(ra::services::TextWriter& pWriter, const ui
 {
     pWriter.Write(":");
     pWriter.Write(std::to_string(nValue));
+}
+
+bool AssetViewModelBase::ReadNumber(ra::Tokenizer& pTokenizer, uint32_t& nValue)
+{
+    if (pTokenizer.EndOfString())
+        return false;
+
+    nValue = pTokenizer.ReadNumber();
+    return pTokenizer.Consume(':') || pTokenizer.EndOfString();
+}
+
+bool AssetViewModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::string& sText)
+{
+    if (pTokenizer.EndOfString())
+        return false;
+
+    sText = pTokenizer.ReadQuotedString();
+    return pTokenizer.Consume(':') || pTokenizer.EndOfString();
+}
+
+bool AssetViewModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText)
+{
+    if (pTokenizer.EndOfString())
+        return false;
+
+    sText = ra::Widen(pTokenizer.ReadQuotedString());
+    return pTokenizer.Consume(':') || pTokenizer.EndOfString();
+}
+
+bool AssetViewModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::string& sText)
+{
+    if (pTokenizer.EndOfString())
+        return false;
+
+    if (pTokenizer.PeekChar() == '"')
+        return ReadQuoted(pTokenizer, sText);
+
+    sText = pTokenizer.ReadTo(':');
+    pTokenizer.Consume(':');
+    return true;
+}
+
+bool AssetViewModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText)
+{
+    if (pTokenizer.EndOfString())
+        return false;
+
+    if (pTokenizer.PeekChar() == '"')
+        return ReadQuoted(pTokenizer, sText);
+
+    sText = ra::Widen(pTokenizer.ReadTo(':'));
+    pTokenizer.Consume(':');
+    return true;
 }
 
 void AssetViewModelBase::CreateServerCheckpoint()
@@ -253,6 +307,7 @@ void AssetViewModelBase::CommitTransaction()
         for (auto pAsset : m_vAssetDefinitions)
         {
             Expects(pAsset != nullptr);
+
             const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
             if (nState == AssetChanges::Unpublished)
             {
@@ -273,6 +328,7 @@ void AssetViewModelBase::CommitTransaction()
         for (auto pAsset : m_vAssetDefinitions)
         {
             Expects(pAsset != nullptr);
+
             const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
             if (nState == AssetChanges::Modified)
             {
@@ -306,6 +362,7 @@ void AssetViewModelBase::RevertTransaction()
     for (auto pAsset : m_vAssetDefinitions)
     {
         Expects(pAsset != nullptr);
+
         const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
         switch (nState)
         {

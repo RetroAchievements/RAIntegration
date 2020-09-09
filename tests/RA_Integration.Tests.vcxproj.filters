@@ -360,6 +360,9 @@
     <ClCompile Include="ui\viewmodels\TriggerViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\AchievementViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

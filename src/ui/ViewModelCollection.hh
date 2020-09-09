@@ -424,6 +424,17 @@ public:
     }
 
     /// <summary>
+    /// Adds an item to the end of the collection.
+    /// </summary>
+    /// <remarks>
+    /// This function is called Append instead of Add to prevent confusion with the templated parameters.
+    /// </summary>
+    T& Append(std::unique_ptr<T> pItem)
+    {
+        return dynamic_cast<T&>(ViewModelCollectionBase::AddItem(std::move(pItem)));
+    }
+
+    /// <summary>
     /// Gets the item at the specified index.
     /// </summary>
     T* GetItemAt(gsl::index nIndex) { return dynamic_cast<T*>(GetViewModelAt(nIndex)); }

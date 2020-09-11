@@ -7,9 +7,10 @@ ViewModelBase& ViewModelCollectionBase::AddItem(std::unique_ptr<ViewModelBase> v
 {
     assert(!IsFrozen());
 
-    // add the item to the end of the array with a temporary index so we know to notify in UpdateIndices
+    // insert the new item at the end of the array (but before any deleted items)
+    // add the item with a temporary index so we know to notify in UpdateIndices
     // note that we don't StartWatching here, no sense until the NotifyTarget has been notified that the item exists
-    auto& pItem = m_vItems.emplace_back(*this, -1, std::move(vmViewModel));
+    auto& pItem = *m_vItems.emplace(m_vItems.begin() + m_nSize, *this, -1, std::move(vmViewModel));
     ++m_nSize;
 
     if (m_nUpdateCount == 0)

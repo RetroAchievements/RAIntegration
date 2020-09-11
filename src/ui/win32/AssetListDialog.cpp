@@ -51,13 +51,16 @@ void AssetListDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
 AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     : DialogBase(vmAssetList),
       m_bindAssets(vmAssetList),
-      m_bindProcessingActive(vmAssetList)
+      m_bindProcessingActive(vmAssetList),
+      m_bindCoreAchievements(vmAssetList),
+      m_bindUnofficialAchievements(vmAssetList),
+      m_bindLocalAchievements(vmAssetList)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Achievements");
-    m_bindAssets.BindIsSelected(AssetViewModelBase::IsSelectedProperty);
+    m_bindAssets.BindIsSelected(AssetListViewModel::AssetSummaryViewModel::IsSelectedProperty);
 
     auto pNameColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
-        AssetViewModelBase::NameProperty);
+        AssetListViewModel::AssetSummaryViewModel::LabelProperty);
     pNameColumn->SetHeader(L"Name");
     pNameColumn->SetWidth(GridColumnBinding::WidthType::Fill, 100);
     m_bindAssets.BindColumn(0, std::move(pNameColumn));
@@ -88,7 +91,11 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
     m_bindAssets.BindColumn(4, std::move(pChangesColumn));
 
-    m_bindAssets.BindItems(vmAssetList.Assets());
+    m_bindAssets.BindItems(vmAssetList.FilteredAssets());
+
+    m_bindCoreAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::ui::viewmodels::AssetCategory::Core));
+    m_bindUnofficialAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::ui::viewmodels::AssetCategory::Unofficial));
+    m_bindLocalAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::ui::viewmodels::AssetCategory::Local));
 
     m_bindWindow.BindLabel(IDC_RA_GAMEHASH, AssetListViewModel::GameIdProperty);
     m_bindWindow.BindLabel(IDC_RA_NUMACH, AssetListViewModel::AchievementCountProperty);
@@ -106,6 +113,10 @@ BOOL AssetListDialog::OnInitDialog()
 {
     m_bindAssets.SetControl(*this, IDC_RA_LISTACHIEVEMENTS);
     m_bindProcessingActive.SetControl(*this, IDC_RA_CHKACHPROCESSINGACTIVE);
+
+    m_bindCoreAchievements.SetControl(*this, IDC_RA_ACTIVE_CORE);
+    m_bindUnofficialAchievements.SetControl(*this, IDC_RA_ACTIVE_UNOFFICIAL);
+    m_bindLocalAchievements.SetControl(*this, IDC_RA_ACTIVE_LOCAL);
 
     return DialogBase::OnInitDialog();
 }

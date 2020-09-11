@@ -25,6 +25,7 @@ const BoolModelProperty AssetListViewModel::CanSaveProperty("AssetListViewModel"
 const BoolModelProperty AssetListViewModel::CanPublishProperty("AssetListViewModel", "CanPublish", true);
 const BoolModelProperty AssetListViewModel::CanRefreshProperty("AssetListViewModel", "CanRefresh", true);
 const BoolModelProperty AssetListViewModel::CanCloneProperty("AssetListViewModel", "CanClone", true);
+const IntModelProperty AssetListViewModel::FilterCategoryProperty("AssetListViewModel", "FilterCategory", ra::etoi(AssetCategory::Core));
 
 AssetListViewModel::AssetListViewModel() noexcept
 {
@@ -64,29 +65,68 @@ void AssetListViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const Int
             SetValue(TotalPointsProperty, nPoints);
         }
     }
+    else if (args.Property == AssetViewModelBase::CategoryProperty)
+    {
+        UpdateTotals();
+
+        auto* pItem = m_vAssets.GetItemAt(nIndex);
+        if (pItem != nullptr)
+            AddOrRemoveFilteredItem(*pItem);
+    }
 }
 
 void AssetListViewModel::OnViewModelAdded(_UNUSED gsl::index nIndex)
 {
     if (!m_vAssets.IsUpdating())
+    {
         UpdateTotals();
+
+        auto* pItem = m_vAssets.GetItemAt(nIndex);
+        if (pItem != nullptr)
+            AddOrRemoveFilteredItem(*pItem);
+    }
 }
 
 void AssetListViewModel::OnViewModelRemoved(_UNUSED gsl::index nIndex)
 {
     if (!m_vAssets.IsUpdating())
+    {
         UpdateTotals();
+
+        // the item has already been removed from the vAssets collection, and all we know about it
+        // is the index where it was located. scan through the vFilteredAssets collection and remove 
+        // any that no longer exist in the vAssets collection.
+        for (gsl::index nFilteredIndex = 0; nFilteredIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nFilteredIndex)
+        {
+            auto* pItem = m_vFilteredAssets.GetItemAt(nIndex);
+            if (pItem != nullptr)
+            {
+                if (!FindAsset(pItem->GetType(), pItem->GetId()))
+                {
+                    m_vFilteredAssets.RemoveAt(nIndex);
+                    break;
+                }
+            }
+        }
+    }
 }
 
 void AssetListViewModel::OnViewModelChanged(_UNUSED gsl::index nIndex)
 {
     if (!m_vAssets.IsUpdating())
+    {
         UpdateTotals();
+
+        auto* pItem = m_vAssets.GetItemAt(nIndex);
+        if (pItem != nullptr)
+            AddOrRemoveFilteredItem(*pItem);
+    }
 }
 
 void AssetListViewModel::OnEndViewModelCollectionUpdate()
 {
     UpdateTotals();
+    ApplyFilter();
 }
 
 void AssetListViewModel::UpdateTotals()
@@ -108,6 +148,89 @@ void AssetListViewModel::UpdateTotals()
     SetValue(TotalPointsProperty, nTotalPoints);
 }
 
+void AssetListViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == FilterCategoryProperty)
+        ApplyFilter();
+}
+
+void AssetListViewModel::ApplyFilter()
+{
+    m_vFilteredAssets.BeginUpdate();
+
+    // first pass: remove any filtered items no longer in the source collection
+    for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()) -1; nIndex >= 0; --nIndex)
+    {
+        auto* pItem = m_vFilteredAssets.GetItemAt(nIndex);
+        if (pItem != nullptr)
+        {
+            if (!FindAsset(pItem->GetType(), pItem->GetId()))
+                m_vFilteredAssets.RemoveAt(nIndex);
+        }
+    }
+
+    // second pass: update visibility of each item in the source collection
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+    {
+        auto* pItem = m_vAssets.GetItemAt(nIndex);
+        if (pItem != nullptr)
+            AddOrRemoveFilteredItem(*pItem);
+    }
+
+    m_vFilteredAssets.EndUpdate();
+}
+
+bool AssetListViewModel::MatchesFilter(const AssetViewModelBase& pAsset)
+{
+    if (pAsset.GetCategory() != GetFilterCategory())
+        return false;
+
+    return true;
+}
+
+void AssetListViewModel::AddOrRemoveFilteredItem(const AssetViewModelBase& pAsset)
+{
+    const auto nIndex = GetFilteredAssetIndex(pAsset);
+
+    if (MatchesFilter(pAsset))
+    {
+        if (nIndex < 0)
+        {
+            auto pSummary = std::make_unique<AssetSummaryViewModel>();
+            pSummary->SetId(ra::to_signed(pAsset.GetID()));
+            pSummary->SetLabel(pAsset.GetName());
+            pSummary->SetType(pAsset.GetType());
+            pSummary->SetCategory(pAsset.GetCategory());
+            pSummary->SetChanges(pAsset.GetChanges());
+
+            const auto* pAchievement = dynamic_cast<const AchievementViewModel*>(&pAsset);
+            if (pAchievement != nullptr)
+                pSummary->SetPoints(pAchievement->GetPoints());
+
+            m_vFilteredAssets.Append(std::move(pSummary));
+        }
+    }
+    else
+    {
+        if (nIndex >= 0)
+            m_vFilteredAssets.RemoveAt(nIndex);
+    }
+}
+
+gsl::index AssetListViewModel::GetFilteredAssetIndex(const AssetViewModelBase& pAsset) const
+{
+    const auto nId = ra::to_signed(pAsset.GetID());
+    const auto nType = pAsset.GetType();
+
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nIndex)
+    {
+        auto* pItem = m_vFilteredAssets.GetItemAt(nIndex);
+        if (pItem != nullptr && pItem->GetId() == nId && pItem->GetType() == nType)
+            return nIndex;
+    }
+
+    return -1;
+}
 
 AssetViewModelBase* AssetListViewModel::FindAsset(AssetType nType, ra::AchievementID nId)
 {
@@ -135,9 +258,9 @@ const AssetViewModelBase* AssetListViewModel::FindAsset(AssetType nType, ra::Ach
 
 bool AssetListViewModel::HasSelection(AssetType nAssetType) const
 {
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nIndex)
     {
-        const auto* pItem = m_vAssets.GetItemAt(nIndex);
+        const auto* pItem = m_vFilteredAssets.GetItemAt(nIndex);
         if (pItem != nullptr && pItem->IsSelected())
         {
             if (nAssetType == AssetType::None || nAssetType == pItem->GetType())
@@ -181,8 +304,16 @@ void AssetListViewModel::SaveSelected()
         if (pItem->GetChanges() == AssetChanges::None)
             continue;
 
-        if (bHasSelection && !pItem->IsSelected())
-            continue;
+        if (bHasSelection)
+        {
+            const auto nFilteredIndex = GetFilteredAssetIndex(*pItem);
+            if (nFilteredIndex >= 0 && !m_vFilteredAssets.GetItemAt(nFilteredIndex)->IsSelected())
+            {
+                // TODO: still need to write local version even if it's not selected,
+                // even if it hasn't been modified
+                continue;
+            }
+        }
 
         // serialize the item
         pData->Write(std::to_string(pItem->GetID()));

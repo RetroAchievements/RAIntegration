@@ -6,6 +6,7 @@
 
 #include "ui/win32/bindings/CheckBoxBinding.hh"
 #include "ui/win32/bindings/GridBinding.hh"
+#include "ui/win32/bindings/RadioButtonBinding.hh"
 
 #include "ui/win32/DialogBase.hh"
 #include "ui/win32/IDialogPresenter.hh"
@@ -43,6 +44,10 @@ protected:
 private:
     ra::ui::win32::bindings::GridBinding m_bindAssets;
     ra::ui::win32::bindings::CheckBoxBinding m_bindProcessingActive;
+
+    ra::ui::win32::bindings::RadioButtonBinding m_bindCoreAchievements;
+    ra::ui::win32::bindings::RadioButtonBinding m_bindUnofficialAchievements;
+    ra::ui::win32::bindings::RadioButtonBinding m_bindLocalAchievements;
 };
 
 } // namespace win32

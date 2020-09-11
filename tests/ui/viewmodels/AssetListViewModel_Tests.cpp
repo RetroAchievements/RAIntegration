@@ -239,6 +239,249 @@ public:
         Assert::AreEqual(1, vmAssetList.GetAchievementCount());
         Assert::AreEqual(50, vmAssetList.GetTotalPoints());
     }
+
+    TEST_METHOD(TestAddItemWithFilter)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetCategory::Core);
+
+        auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(1U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        vmAchievement->SetPoints(5);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        Assert::AreEqual({ 1U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(5, vmAssetList.GetTotalPoints());
+
+        vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(2U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Unofficial);
+        vmAchievement->SetPoints(10);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        Assert::AreEqual({ 2U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(5, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(1, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+
+        vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(3U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        vmAchievement->SetPoints(15);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(20, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(1, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+        Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(1)->GetId());
+    }
+
+    TEST_METHOD(TestAddItemWithFilterUpdateSuspended)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetCategory::Core);
+        vmAssetList.Assets().BeginUpdate();
+
+        auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(1U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        vmAchievement->SetPoints(5);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        Assert::AreEqual({ 1U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(0, vmAssetList.GetTotalPoints());
+
+        vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(2U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Unofficial);
+        vmAchievement->SetPoints(10);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        Assert::AreEqual({ 2U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(0, vmAssetList.GetTotalPoints());
+
+        vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(3U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        vmAchievement->SetPoints(15);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(0, vmAssetList.GetTotalPoints());
+
+        vmAssetList.Assets().EndUpdate();
+
+        Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(20, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(1, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+        Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(1)->GetId());
+    }
+
+    TEST_METHOD(TestRemoveItemWithFilter)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetCategory::Core);
+
+        auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(1U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        vmAchievement->SetPoints(5);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(2U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Unofficial);
+        vmAchievement->SetPoints(10);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(3U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        vmAchievement->SetPoints(15);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(20, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(1, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+        Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(1)->GetId());
+
+        vmAssetList.Assets().RemoveAt(0);
+
+        Assert::AreEqual({ 2U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(15, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+
+        vmAssetList.Assets().RemoveAt(0);
+
+        Assert::AreEqual({ 1U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(15, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+
+        vmAssetList.Assets().RemoveAt(0);
+
+        Assert::AreEqual({ 0U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(0, vmAssetList.GetTotalPoints());
+    }
+
+    TEST_METHOD(TestRemoveItemWithFilterUpdateSuspended)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetCategory::Core);
+
+        auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(1U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        vmAchievement->SetPoints(5);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(2U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Unofficial);
+        vmAchievement->SetPoints(10);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(3U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        vmAchievement->SetPoints(15);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(20, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(1, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+        Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(1)->GetId());
+
+        vmAssetList.Assets().BeginUpdate();
+        vmAssetList.Assets().RemoveAt(0);
+
+        Assert::AreEqual({ 2U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(20, vmAssetList.GetTotalPoints());
+
+        vmAssetList.Assets().RemoveAt(0);
+
+        Assert::AreEqual({ 1U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(20, vmAssetList.GetTotalPoints());
+
+        vmAssetList.Assets().RemoveAt(0);
+
+        Assert::AreEqual({ 0U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(20, vmAssetList.GetTotalPoints());
+
+        vmAssetList.Assets().EndUpdate();
+
+        Assert::AreEqual({ 0U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(0, vmAssetList.GetTotalPoints());
+    }
+
+    TEST_METHOD(TestChangeItemForFilter)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetCategory::Core);
+
+        auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(1U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        vmAchievement->SetPoints(5);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(2U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Unofficial);
+        vmAchievement->SetPoints(10);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(3U);
+        vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        vmAchievement->SetPoints(15);
+        vmAssetList.Assets().Append(std::move(vmAchievement));
+
+        Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(20, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(1, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+        Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(1)->GetId());
+
+        vmAssetList.Assets().GetItemAt(0)->SetCategory(ra::ui::viewmodels::AssetCategory::Unofficial);
+
+        Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(15, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+
+        vmAssetList.Assets().GetItemAt(1)->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+
+        Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(25, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+        Assert::AreEqual(2, vmAssetList.FilteredAssets().GetItemAt(1)->GetId()); // item changed to match filter appears at end of list
+
+        vmAssetList.Assets().GetItemAt(0)->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+
+        Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 3U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(30, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+        Assert::AreEqual(2, vmAssetList.FilteredAssets().GetItemAt(1)->GetId());
+        Assert::AreEqual(1, vmAssetList.FilteredAssets().GetItemAt(2)->GetId()); // item changed to match filter appears at end of list
+    }
 };
 
 } // namespace tests

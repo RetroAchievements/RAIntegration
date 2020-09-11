@@ -265,7 +265,7 @@ protected:
 
     ViewModelBase* GetViewModelAt(gsl::index nIndex)
     {
-        if (nIndex >= 0 && ra::to_unsigned(nIndex) < m_vItems.size())
+        if (nIndex >= 0 && ra::to_unsigned(nIndex) < m_nSize)
             return &m_vItems.at(nIndex).ViewModel();
 
         return nullptr;
@@ -273,7 +273,7 @@ protected:
 
     const ViewModelBase* GetViewModelAt(gsl::index nIndex) const
     {
-        if (nIndex >= 0 && ra::to_unsigned(nIndex) < m_vItems.size())
+        if (nIndex >= 0 && ra::to_unsigned(nIndex) < m_nSize)
             return &m_vItems.at(nIndex).ViewModel();
 
         return nullptr;

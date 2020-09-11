@@ -11,7 +11,6 @@ const StringModelProperty AssetViewModelBase::DescriptionProperty("AssetViewMode
 const IntModelProperty AssetViewModelBase::CategoryProperty("AssetViewModelBase", "Category", ra::etoi(AssetCategory::Core));
 const IntModelProperty AssetViewModelBase::StateProperty("AssetViewModelBase", "State", ra::etoi(AssetState::Inactive));
 const IntModelProperty AssetViewModelBase::ChangesProperty("AssetViewModelBase", "Changes", ra::etoi(AssetChanges::None));
-const BoolModelProperty AssetViewModelBase::IsSelectedProperty("AssetViewModelBase", "IsSelected", false);
 
 AssetViewModelBase::AssetViewModelBase() noexcept
 {

@@ -13,6 +13,7 @@ enum class SearchType
     EightBit,
     SixteenBit,
     ThirtyTwoBit,
+    ThirtyTwoBitAligned,
 };
 
 enum class SearchFilterType

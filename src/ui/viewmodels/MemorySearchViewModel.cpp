@@ -95,6 +95,7 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::EightBit), L"8-bit");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::SixteenBit), L"16-bit");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBit), L"32-bit");
+    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBitAligned), L"32-bit (aligned)");
 
     m_vComparisonTypes.Add(ra::etoi(ComparisonType::Equals), L"=");
     m_vComparisonTypes.Add(ra::etoi(ComparisonType::LessThan), L"<");

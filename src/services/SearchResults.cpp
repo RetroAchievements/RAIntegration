@@ -58,6 +58,16 @@ public:
         return std::binary_search(vAddresses.begin(), vAddresses.end(), nAddress);
     }
 
+    virtual bool IsAddressValid(_UNUSED ra::ByteAddress nAddress) const
+    {
+        return true;
+    }
+
+    virtual size_t AdjustInitialAddressCount(size_t nBytes) const
+    {
+        return nBytes;
+    }
+
     // populates a vector of addresses that match the specified filter when applied to a previous search result
     void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious,
         ComparisonType nCompareType, SearchFilterType nFilterType, unsigned int nFilterValue) const
@@ -244,6 +254,11 @@ class FourBitSearchImpl : public SearchImpl
         return (*iter == nAddress || *iter == (nAddress | 1));
     }
 
+    size_t AdjustInitialAddressCount(size_t nCount) const override
+    {
+        return nCount * 2;
+    }
+
     void ApplyFilter(std::vector<ra::ByteAddress>& vMatches, const SearchResults& srPrevious,
         ra::ByteAddress nAddress, SearchFilterType nFilterType, unsigned int nFilterValue,
         unsigned int nValue1, unsigned int nValue2, ComparisonType nCompareType) const override
@@ -363,10 +378,52 @@ public:
     }
 };
 
+class ThirtyTwoBitAlignedSearchImpl : public ThirtyTwoBitSearchImpl
+{
+public:
+    bool IsAddressValid(ra::ByteAddress nAddress) const override
+    {
+        return ((nAddress & 3) == 0);
+    }
+
+    size_t AdjustInitialAddressCount(size_t nCount) const override
+    {
+        return (nCount + GetPadding()) / 4; 
+    }
+
+    bool GetMatchingAddress(const SearchResults& srResults, gsl::index nIndex, _Out_ SearchResults::Result& result) const override
+    {
+        result.nSize = GetMemSize();
+
+        if (srResults.GetFilterType() == SearchFilterType::None)
+        {
+            if (!HasFirstAddress(srResults))
+                return false;
+
+            result.nAddress = ((GetFirstAddress(srResults) + 3) & ~3) + gsl::narrow_cast<ra::ByteAddress>(nIndex * 4);
+            return GetValue(srResults, result);
+        }
+
+        return ThirtyTwoBitSearchImpl::GetMatchingAddress(srResults, nIndex, result);
+    }
+
+    void ApplyFilter(std::vector<ra::ByteAddress>& vMatches, const SearchResults& srPrevious,
+        ra::ByteAddress nAddress, SearchFilterType nFilterType, unsigned int nFilterValue,
+        unsigned int nValue1, unsigned int nValue2, ComparisonType nCompareType) const override
+    {
+        if (IsAddressValid(nAddress))
+        {
+            ThirtyTwoBitSearchImpl::ApplyFilter(vMatches, srPrevious, nAddress,
+                nFilterType, nFilterValue, nValue1, nValue2, nCompareType);
+        }
+    }
+};
+
 static FourBitSearchImpl s_pFourBitSearchImpl;
 static EightBitSearchImpl s_pEightBitSearchImpl;
 static SixteenBitSearchImpl s_pSixteenBitSearchImpl;
 static ThirtyTwoBitSearchImpl s_pThirtyTwoBitSearchImpl;
+static ThirtyTwoBitAlignedSearchImpl s_pThirtyTwoBitAlignedSearchImpl;
 
 } // namespace impl
 
@@ -394,6 +451,9 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
             break;
         case SearchType::ThirtyTwoBit:
             m_pImpl = &ra::services::impl::s_pThirtyTwoBitSearchImpl;
+            break;
+        case SearchType::ThirtyTwoBitAligned:
+            m_pImpl = &ra::services::impl::s_pThirtyTwoBitAlignedSearchImpl;
             break;
     }
 
@@ -423,6 +483,9 @@ bool SearchResults::ContainsAddress(ra::ByteAddress nAddress) const
 {
     if (m_nFilterType != SearchFilterType::None)
         return m_pImpl->ContainsAddress(m_vMatchingAddresses, nAddress);
+
+    if (!m_pImpl->IsAddressValid(nAddress))
+        return false;
 
     const unsigned int nPadding = m_pImpl->GetPadding();
     for (const auto& block : m_vBlocks)
@@ -516,10 +579,7 @@ size_t SearchResults::MatchingAddressCount() const noexcept
     for (auto& block : m_vBlocks)
         nCount += gsl::narrow_cast<size_t>(block.GetSize()) - nPadding;
 
-    if (m_nType == SearchType::FourBit)
-        nCount *= 2;
-
-    return nCount;
+    return m_pImpl->AdjustInitialAddressCount(nCount);
 }
 
 void SearchResults::ExcludeAddress(ra::ByteAddress nAddress)

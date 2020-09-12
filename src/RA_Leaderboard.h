@@ -25,7 +25,7 @@ public:
     const std::string& Description() const noexcept { return m_sDescription; }
     void SetDescription(const std::string& sValue) { m_sDescription = sValue; }
 
-    std::string FormatScore(unsigned int nValue) const;
+    std::string FormatScore(int nValue) const;
 
     struct Entry
     {

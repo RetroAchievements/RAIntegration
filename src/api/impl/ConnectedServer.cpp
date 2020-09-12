@@ -204,6 +204,27 @@ static void GetRequiredJsonField(_Out_ unsigned int& nValue, _In_ const rapidjso
     }
 }
 
+static void GetRequiredJsonField(_Out_ int& nValue, _In_ const rapidjson::Value& pDocument,
+    _In_ const char* const sField, _Inout_ ApiResponseBase& response)
+{
+    if (!pDocument.HasMember(sField))
+    {
+        nValue = 0;
+
+        response.Result = ApiResult::Error;
+        if (response.ErrorMessage.empty())
+            response.ErrorMessage = ra::StringPrintf("%s not found in response", sField);
+    }
+    else
+    {
+        auto& pField = pDocument[sField];
+        if (pField.IsInt())
+            nValue = pField.GetInt();
+        else
+            nValue = 0;
+    }
+}
+
 static void GetOptionalJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Value& pDocument,
                                  _In_ const char* sField, _In_ unsigned int nDefaultValue = 0)
 {

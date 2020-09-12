@@ -784,6 +784,15 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
         bSubmit = false;
     }
 
+    if (bSubmit && _RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
+    {
+        vmPopup->SetTitle(L"Achievement NOT Unlocked");
+        vmPopup->SetErrorDetail(L"Error: RAM insecure");
+
+        bIsError = true;
+        bSubmit = false;
+    }
+
     int nPopupId = -1;
 
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications))
@@ -1020,6 +1029,18 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, unsig
         vmPopup->SetTitle(L"Leaderboard NOT Submitted");
         vmPopup->SetDescription(ra::Widen(pLeaderboard->Title()));
         vmPopup->SetDetail(L"Leaderboards are not submitted in test mode.");
+
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
+        return;
+    }
+
+    if (pEmulatorContext.IsMemoryInsecure())
+    {
+        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
+        vmPopup->SetTitle(L"Leaderboard NOT Submitted");
+        vmPopup->SetDescription(ra::Widen(pLeaderboard->Title()));
+        vmPopup->SetErrorDetail(L"Error: RAM insecure");
 
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);

@@ -33,6 +33,8 @@ public:
 
     std::unique_ptr<ra::ui::drawing::ISurface> CaptureClientArea(const WindowViewModelBase& vmViewModel) const override;
 
+    bool IsDebuggerPresent() const override;
+
 private:
     _Success_(return != nullptr)
     _NODISCARD IDialogPresenter* GetDialogPresenter(_In_ const WindowViewModelBase& oViewModel) const;

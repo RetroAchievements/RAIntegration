@@ -72,6 +72,9 @@ public:
         OnTotalMemorySizeChanged();
     }
 
+    void MockMemoryInsecure(bool bValue) noexcept { m_bMemoryInsecure = bValue; }
+    bool IsMemoryInsecure() const noexcept override { return m_bMemoryInsecure; }
+
 private:
     static uint8_t ReadMemoryHelper(uint32_t nAddress) noexcept
     {

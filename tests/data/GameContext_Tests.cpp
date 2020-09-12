@@ -12,6 +12,7 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
+#include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
@@ -1290,6 +1291,65 @@ public:
         game.mockThreadPool.ExecuteNextTask();
     }
 
+    TEST_METHOD(TestAwardAchievementMemoryInsecureHardcore)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+
+        game.MockAchievement();
+        game.mockEmulator.MockMemoryInsecure(true);
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Error: RAM insecure"), pPopup->GetDetail());
+        Assert::IsTrue(pPopup->IsDetailError());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
+    TEST_METHOD(TestAwardAchievementMemoryInsecureNonHardcore)
+    {
+        GameContextHarness game;
+        game.SetGameHash("hash");
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
+        {
+            Assert::AreEqual(1U, request.AchievementId);
+            Assert::AreEqual(false, request.Hardcore);
+            Assert::AreEqual(std::string("hash"), request.GameHash);
+
+            response.NewPlayerScore = 125U;
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.MockAchievement();
+        game.mockEmulator.MockMemoryInsecure(true);
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
     TEST_METHOD(TestAwardAchievementDuplicate)
     {
         GameContextHarness game;
@@ -1946,6 +2006,33 @@ public:
         Assert::AreEqual(std::wstring(L"Leaderboard NOT Submitted"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Error: RAM tampered with"), pPopup->GetDetail());
+        Assert::IsTrue(pPopup->IsDetailError());
+    }
+
+    TEST_METHOD(TestSubmitLeaderboardEntryMemoryInsecure)
+    {
+        GameContextHarness game;
+        game.SetGameHash("hash");
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+
+        game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
+
+        game.MockLeaderboard();
+        game.mockEmulator.MockMemoryInsecure(true);
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        // SubmitLeaderboardEntry API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        // error message should be reported
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Leaderboard NOT Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Error: RAM insecure"), pPopup->GetDetail());
         Assert::IsTrue(pPopup->IsDetailError());
     }
 

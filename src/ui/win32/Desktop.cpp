@@ -22,6 +22,8 @@
 
 #include "RA_Log.h"
 
+#include <TlHelp32.h>
+
 namespace ra {
 namespace ui {
 namespace win32 {
@@ -225,6 +227,68 @@ std::unique_ptr<ra::ui::drawing::ISurface> Desktop::CaptureClientArea(const Wind
     }
 
     return pSurface;
+}
+
+static bool IsSuspiciousProcessRunning()
+{
+    bool bFound = false;
+
+    const HANDLE hSnapshot = ::CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    if (hSnapshot)
+    {
+        PROCESSENTRY32 pe32;
+        pe32.dwSize = sizeof(PROCESSENTRY32);
+        if (Process32First(hSnapshot, &pe32))
+        {
+            do
+            {
+                if (strlen(pe32.szExeFile) >= 15)
+                {
+                    std::string sFilename = pe32.szExeFile;
+                    std::transform(sFilename.begin(), sFilename.end(), sFilename.begin(), [](char c) noexcept
+                    {
+                        return gsl::narrow_cast<char>(std::tolower(c));
+                    });
+
+                    // cannot reliably detect injection without ObRegisterCallbacks, which requires Vista,
+                    // instead just look for the default process names (it's better than nothing)
+                    // [Cheat Engine.exe, cheatengine-i386.exe, cheatengine-x86_64.exe]
+                    if (sFilename.find("cheat") != std::string::npos &&
+                        sFilename.find("engine") != std::string::npos)
+                    {
+                        RA_LOG_WARN("Cheat Engine detected");
+                        bFound = true;
+                        break;
+                    }
+                }
+            } while (Process32Next(hSnapshot, &pe32));
+        }
+        CloseHandle(hSnapshot);
+    }
+
+    return bFound;
+}
+
+bool Desktop::IsDebuggerPresent() const
+{
+#ifdef NDEBUG // allow debugger-limited functionality when using a DEBUG build
+    if (::IsDebuggerPresent())
+    {
+        RA_LOG_WARN("Debugger detected");
+        return true;
+    }
+
+    BOOL bDebuggerPresent;
+    if (::CheckRemoteDebuggerPresent(GetCurrentProcess(), &bDebuggerPresent) && bDebuggerPresent)
+    {
+        RA_LOG_WARN("Remote debugger detected");
+        return true;
+    }
+#endif
+
+    // real cheating tools don't register as debuggers (or intercept and override the call)
+    // also check for known bad agents and assume that the player is using them to cheat
+    return IsSuspiciousProcessRunning();
 }
 
 

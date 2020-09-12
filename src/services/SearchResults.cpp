@@ -58,12 +58,12 @@ public:
         return std::binary_search(vAddresses.begin(), vAddresses.end(), nAddress);
     }
 
-    virtual bool IsAddressValid(_UNUSED ra::ByteAddress nAddress) const
+    virtual bool IsAddressValid(_UNUSED ra::ByteAddress nAddress) const noexcept
     {
         return true;
     }
 
-    virtual size_t AdjustInitialAddressCount(size_t nBytes) const
+    virtual size_t AdjustInitialAddressCount(size_t nBytes) const noexcept
     {
         return nBytes;
     }
@@ -254,7 +254,7 @@ class FourBitSearchImpl : public SearchImpl
         return (*iter == nAddress || *iter == (nAddress | 1));
     }
 
-    size_t AdjustInitialAddressCount(size_t nCount) const override
+    size_t AdjustInitialAddressCount(size_t nCount) const noexcept override
     {
         return nCount * 2;
     }
@@ -381,12 +381,12 @@ public:
 class ThirtyTwoBitAlignedSearchImpl : public ThirtyTwoBitSearchImpl
 {
 public:
-    bool IsAddressValid(ra::ByteAddress nAddress) const override
+    bool IsAddressValid(ra::ByteAddress nAddress) const noexcept override
     {
         return ((nAddress & 3) == 0);
     }
 
-    size_t AdjustInitialAddressCount(size_t nCount) const override
+    size_t AdjustInitialAddressCount(size_t nCount) const noexcept override
     {
         return (nCount + GetPadding()) / 4; 
     }
@@ -419,10 +419,52 @@ public:
     }
 };
 
+class SixteenBitAlignedSearchImpl : public SixteenBitSearchImpl
+{
+public:
+    bool IsAddressValid(ra::ByteAddress nAddress) const noexcept override
+    {
+        return ((nAddress & 1) == 0);
+    }
+
+    size_t AdjustInitialAddressCount(size_t nCount) const noexcept override
+    {
+        return (nCount + GetPadding()) / 2;
+    }
+
+    bool GetMatchingAddress(const SearchResults& srResults, gsl::index nIndex, _Out_ SearchResults::Result& result) const override
+    {
+        result.nSize = GetMemSize();
+
+        if (srResults.GetFilterType() == SearchFilterType::None)
+        {
+            if (!HasFirstAddress(srResults))
+                return false;
+
+            result.nAddress = ((GetFirstAddress(srResults) + 1) & ~1) + gsl::narrow_cast<ra::ByteAddress>(nIndex * 2);
+            return GetValue(srResults, result);
+        }
+
+        return SixteenBitSearchImpl::GetMatchingAddress(srResults, nIndex, result);
+    }
+
+    void ApplyFilter(std::vector<ra::ByteAddress>& vMatches, const SearchResults& srPrevious,
+        ra::ByteAddress nAddress, SearchFilterType nFilterType, unsigned int nFilterValue,
+        unsigned int nValue1, unsigned int nValue2, ComparisonType nCompareType) const override
+    {
+        if (IsAddressValid(nAddress))
+        {
+            SixteenBitSearchImpl::ApplyFilter(vMatches, srPrevious, nAddress,
+                nFilterType, nFilterValue, nValue1, nValue2, nCompareType);
+        }
+    }
+};
+
 static FourBitSearchImpl s_pFourBitSearchImpl;
 static EightBitSearchImpl s_pEightBitSearchImpl;
 static SixteenBitSearchImpl s_pSixteenBitSearchImpl;
 static ThirtyTwoBitSearchImpl s_pThirtyTwoBitSearchImpl;
+static SixteenBitAlignedSearchImpl s_pSixteenBitAlignedSearchImpl;
 static ThirtyTwoBitAlignedSearchImpl s_pThirtyTwoBitAlignedSearchImpl;
 
 } // namespace impl
@@ -451,6 +493,9 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
             break;
         case SearchType::ThirtyTwoBit:
             m_pImpl = &ra::services::impl::s_pThirtyTwoBitSearchImpl;
+            break;
+        case SearchType::SixteenBitAligned:
+            m_pImpl = &ra::services::impl::s_pSixteenBitAlignedSearchImpl;
             break;
         case SearchType::ThirtyTwoBitAligned:
             m_pImpl = &ra::services::impl::s_pThirtyTwoBitAlignedSearchImpl;

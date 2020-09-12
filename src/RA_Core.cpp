@@ -38,6 +38,8 @@
 
 #include "RAInterface\RA_Emulators.h"
 
+//#define USE_ASSET_LIST
+
 std::string g_sROMDirLocation;
 
 HMODULE g_hThisDLLInst = nullptr;
@@ -165,6 +167,9 @@ API int CCONV _RA_Shutdown()
 
         if (pWindowManager.MemoryBookmarks.IsVisible())
             pDesktop.CloseWindow(pWindowManager.MemoryBookmarks);
+
+        if (pWindowManager.AssetList.IsVisible())
+            pDesktop.CloseWindow(pWindowManager.AssetList);
 
         if (pWindowManager.CodeNotes.IsVisible())
             pDesktop.CloseWindow(pWindowManager.CodeNotes);
@@ -405,10 +410,14 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
     switch (nID)
     {
         case IDM_RA_FILES_ACHIEVEMENTS:
+#ifdef USE_ASSET_LIST
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList.Show();
+#else
             if (g_AchievementsDialog.GetHWND() == nullptr)
                 g_AchievementsDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc));
             if (g_AchievementsDialog.GetHWND() != nullptr)
                 ShowWindow(g_AchievementsDialog.GetHWND(), SW_SHOW);
+#endif
             break;
 
         case IDM_RA_FILES_ACHIEVEMENTEDITOR:

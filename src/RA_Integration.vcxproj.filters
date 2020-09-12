@@ -336,6 +336,9 @@
     <ClCompile Include="ui\viewmodels\AchievementViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\AssetListDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -850,6 +853,9 @@
     </ClInclude>
     <ClInclude Include="..\RAInterface\RA_Emulators.h">
       <Filter>Interface</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\AssetListDialog.hh">
+      <Filter>UI\Win32</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

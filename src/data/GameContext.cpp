@@ -129,6 +129,8 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     pRuntime.SetPaused(true);
 
     auto& vmAssets = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
+    vmAssets.SetGameId(m_nGameId);
+    vmAssets.Assets().BeginUpdate();
 
     unsigned int nNumCoreAchievements = 0;
     unsigned int nTotalCoreAchievementPoints = 0;
@@ -201,6 +203,8 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
     // get user unlocks asynchronously
     RefreshUnlocks(!bWasPaused, nPopup);
+
+    vmAssets.Assets().EndUpdate();
 
     EndLoad();
     OnActiveGameChanged();

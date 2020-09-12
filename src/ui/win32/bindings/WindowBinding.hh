@@ -89,6 +89,13 @@ public:
     void BindLabel(int nDlgItemId, const StringModelProperty& pSourceProperty);
 
     /// <summary>
+    /// Binds the a label to a property of the viewmodel.
+    /// </summary>
+    /// <param name="nDlgItemId">The unique identifier of the label in the dialog.</param>
+    /// <param name="pSourceProperty">The property to bind to.</param>
+    void BindLabel(int nDlgItemId, const IntModelProperty& pSourceProperty);
+
+    /// <summary>
     /// Binds the a enabledness of a control to a property of the viewmodel.
     /// </summary>
     /// <param name="nDlgItemId">The unique identifier of the control in the dialog.</param>
@@ -110,6 +117,7 @@ public:
 protected:
     // ViewModelBase::NotifyTarget
     GSL_SUPPRESS_F6 void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override;
+    GSL_SUPPRESS_F6 void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override;
     GSL_SUPPRESS_F6 void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override;
 
     void RestoreSizeAndPosition();
@@ -126,22 +134,18 @@ private:
         {
         }
 
-        GSL_SUPPRESS_C128 /* intentionally hiding base implementation to change scope*/
-        const std::wstring& GetValue(const StringModelProperty& pProperty) const
-        {
-            return BindingBase::GetValue(pProperty);
-        }
-
-        GSL_SUPPRESS_C128 /* intentionally hiding base implementation to change scope*/
-        bool GetValue(const BoolModelProperty& pProperty) const
-        {
-            return BindingBase::GetValue(pProperty);
-        }
+        /* expost protected functions */
+        using BindingBase::GetValue;
 
     protected:
         void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override
         {
             m_pOwner.OnViewModelStringValueChanged(args);
+        }
+
+        void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) noexcept override
+        {
+            m_pOwner.OnViewModelIntValueChanged(args);
         }
 
         void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override
@@ -155,6 +159,7 @@ private:
     std::vector<std::unique_ptr<ChildBinding>> m_vChildViewModels;
 
     const std::wstring& GetValueFromAny(const StringModelProperty& pProperty) const;
+    int GetValueFromAny(const IntModelProperty& pProperty) const;
     bool GetValueFromAny(const BoolModelProperty& pProperty) const;
 
     std::string m_sSizeAndPositionKey;

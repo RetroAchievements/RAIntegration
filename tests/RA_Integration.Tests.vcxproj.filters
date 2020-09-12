@@ -363,6 +363,9 @@
     <ClCompile Include="..\src\ui\viewmodels\AchievementViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

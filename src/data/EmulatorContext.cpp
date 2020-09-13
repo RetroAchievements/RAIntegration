@@ -18,6 +18,7 @@
 #include "ui\IDesktop.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 #include "RAInterface\RA_Consoles.h"
 #include "RAInterface\RA_Emulators.h"
@@ -421,6 +422,14 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     // emulator reset code will normally call back into _RA_OnReset, but call it explicitly just in case.
     _RA_OnReset();
 #endif
+
+    auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+    for (gsl::index nIndex = 0; nIndex < ra::to_signed(vmBookmarks.Bookmarks().Count()); ++nIndex)
+    {
+        auto* pBookmark = vmBookmarks.Bookmarks().GetItemAt(nIndex);
+        if (pBookmark)
+            pBookmark->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::None);
+    }
 
     pGameContext.ActivateLeaderboards();
     pGameContext.RefreshUnlocks();

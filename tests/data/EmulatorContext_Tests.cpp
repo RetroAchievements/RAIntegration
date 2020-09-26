@@ -14,6 +14,7 @@
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
+#include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -37,6 +38,7 @@ private:
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
+        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
         GSL_SUPPRESS_F6 EmulatorContextHarness() noexcept
             : mockHttpRequester([](const ra::services::Http::Request&) { return ra::services::Http::Response(ra::services::Http::StatusCode::OK, ""); })
@@ -1230,6 +1232,32 @@ public:
 
         emulator.ResetMemoryModified();
         Assert::IsTrue(emulator.IsMemoryInsecure());
+    }
+
+    TEST_METHOD(TestEnableHardcoreModeUnfreezesBookmarks)
+    {
+        EmulatorContextHarness emulator;
+        emulator.MockVersions("0.57", "0.57");
+        emulator.mockGameContext.SetGameId(1U);
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            return ra::ui::DialogResult::Yes;
+        });
+
+        constexpr int nBookmarks = 10;
+        auto& pBookmarks = emulator.mockWindowManager.MemoryBookmarks;
+        for (int i = 0; i < nBookmarks; ++i)
+            pBookmarks.Bookmarks().Add();
+
+        pBookmarks.Bookmarks().GetItemAt(3)->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+        pBookmarks.Bookmarks().GetItemAt(5)->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
+        pBookmarks.Bookmarks().GetItemAt(8)->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
+
+        Assert::IsTrue(emulator.EnableHardcoreMode());
+
+        for (int i = 0; i < nBookmarks; ++i)
+            Assert::IsTrue(pBookmarks.Bookmarks().GetItemAt(i)->GetBehavior() == ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::None);
     }
 };
 

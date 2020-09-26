@@ -66,8 +66,17 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     m_vAchievements.clear();
     m_vLeaderboards.clear();
 
+    auto& vmAssets = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
+    vmAssets.SetGameId(nGameId);
+    vmAssets.Assets().BeginUpdate();
+
+    for (gsl::index nIndex = vmAssets.Assets().Count() - 1; nIndex >= 0; --nIndex)
+        vmAssets.Assets().RemoveAt(nIndex);
+
     if (nGameId == 0)
     {
+        vmAssets.Assets().EndUpdate();
+
         m_sGameHash.clear();
 
         if (m_nGameId != 0)
@@ -87,6 +96,8 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     const auto response = request.Call();
     if (response.Failed())
     {
+        vmAssets.Assets().EndUpdate();
+
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download game data",
                                                                   ra::Widen(response.ErrorMessage));
         EndLoad();
@@ -127,10 +138,6 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // achievements
     const bool bWasPaused = pRuntime.IsPaused();
     pRuntime.SetPaused(true);
-
-    auto& vmAssets = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
-    vmAssets.SetGameId(m_nGameId);
-    vmAssets.Assets().BeginUpdate();
 
     unsigned int nNumCoreAchievements = 0;
     unsigned int nTotalCoreAchievementPoints = 0;

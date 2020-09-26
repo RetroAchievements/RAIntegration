@@ -138,21 +138,6 @@ public:
     /// </summary>
     AssetChanges GetChanges() const { return ra::itoe<AssetChanges>(GetValue(ChangesProperty)); }
 
-    /// <summary>
-    /// The <see cref="ModelProperty" /> for the whether the bookmark is selected.
-    /// </summary>
-    static const BoolModelProperty IsSelectedProperty;
-
-    /// <summary>
-    /// Gets whether the bookmark is selected.
-    /// </summary>
-    bool IsSelected() const { return GetValue(IsSelectedProperty); }
-
-    /// <summary>
-    /// Sets whether the bookmark is selected.
-    /// </summary>
-    void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
-
     virtual void Serialize(ra::services::TextWriter& pWriter) const = 0;
     virtual bool Deserialize(ra::Tokenizer& pTokenizer) = 0;
 

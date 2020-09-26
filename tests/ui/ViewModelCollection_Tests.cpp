@@ -481,6 +481,37 @@ public:
         Assert::AreEqual({ 2 }, vmCollection.FindItemIndex(TestViewModel::IntProperty, 4));
     }
 
+    TEST_METHOD(TestGetItemWhileUpdateSuspended)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        vmCollection.Add(1, L"Test1");
+
+        vmCollection.BeginUpdate();
+
+        Assert::AreEqual({ 1 }, vmCollection.Count());
+        Assert::AreEqual(1, vmCollection.GetItemAt(0)->GetInt());
+
+        vmCollection.Add(2, L"Test2");
+        Assert::AreEqual({ 2 }, vmCollection.Count());
+        Assert::AreEqual(1, vmCollection.GetItemAt(0)->GetInt());
+        Assert::AreEqual(2, vmCollection.GetItemAt(1)->GetInt());
+
+        vmCollection.RemoveAt(0);
+        Assert::AreEqual({ 1 }, vmCollection.Count());
+        Assert::AreEqual(2, vmCollection.GetItemAt(0)->GetInt());
+        Assert::IsNull(vmCollection.GetItemAt(1));
+
+        vmCollection.Add(3, L"Test3");
+        Assert::AreEqual({ 2 }, vmCollection.Count());
+        Assert::AreEqual(2, vmCollection.GetItemAt(0)->GetInt());
+        Assert::AreEqual(3, vmCollection.GetItemAt(1)->GetInt());
+
+        vmCollection.EndUpdate();
+        Assert::AreEqual({ 2 }, vmCollection.Count());
+        Assert::AreEqual(2, vmCollection.GetItemAt(0)->GetInt());
+        Assert::AreEqual(3, vmCollection.GetItemAt(1)->GetInt());
+    }
+
     TEST_METHOD(TestMovePropertyNotification)
     {
         ViewModelCollection<TestViewModel> vmCollection;

@@ -130,7 +130,6 @@ public:
         Assert::AreEqual(AssetCategory::Core, asset.GetCategory());
         Assert::AreEqual(AssetState::Inactive, asset.GetState());
         Assert::AreEqual(AssetChanges::None, asset.GetChanges());
-        Assert::IsFalse(asset.IsSelected());
     }
 
     TEST_METHOD(TestSerializeDefaults)

@@ -147,6 +147,44 @@ public:
         return dynamic_cast<const AchievementViewModel*>(FindAsset(AssetType::Achievement, nId));
     }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the filter category.
+    /// </summary>
+    static const IntModelProperty FilterCategoryProperty;
+
+    /// <summary>
+    /// Gets the filter category.
+    /// </summary>
+    AssetCategory GetFilterCategory() const { return ra::itoe<AssetCategory>(GetValue(FilterCategoryProperty)); }
+
+    /// <summary>
+    /// Sets the filter category.
+    /// </summary>
+    void SetFilterCategory(AssetCategory nValue) { SetValue(FilterCategoryProperty, ra::etoi(nValue)); }
+
+    class AssetSummaryViewModel : public LookupItemViewModel
+    {
+    public:
+        AssetType GetType() const { return ra::itoe<AssetType>(GetValue(AssetViewModelBase::TypeProperty)); }
+        void SetType(AssetType nValue) { SetValue(AssetViewModelBase::TypeProperty, ra::etoi(nValue)); }
+
+        AssetCategory GetCategory() const { return ra::itoe<AssetCategory>(GetValue(AssetViewModelBase::CategoryProperty)); }
+        void SetCategory(AssetCategory nValue) { SetValue(AssetViewModelBase::CategoryProperty, ra::etoi(nValue)); }
+
+        int GetPoints() const { return GetValue(AchievementViewModel::PointsProperty); }
+        void SetPoints(int nValue) { SetValue(AchievementViewModel::PointsProperty, nValue); }
+
+        AssetState GetState() const { return ra::itoe<AssetState>(GetValue(AssetViewModelBase::StateProperty)); }
+        void GetState(AssetState nValue) { SetValue(AssetViewModelBase::StateProperty, ra::etoi(nValue)); }
+
+        AssetChanges GetChanges() const { return ra::itoe<AssetChanges>(GetValue(AssetViewModelBase::ChangesProperty)); }
+        void SetChanges(AssetChanges nValue) { SetValue(AssetViewModelBase::ChangesProperty, ra::etoi(nValue)); }
+    };
+
+    ViewModelCollection<AssetSummaryViewModel>& FilteredAssets() noexcept { return m_vFilteredAssets; }
+    const ViewModelCollection<AssetSummaryViewModel>& FilteredAssets() const noexcept { return m_vFilteredAssets; }
+
+
 private:
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
@@ -155,6 +193,8 @@ private:
     void OnViewModelChanged(gsl::index nIndex) override;
     void OnEndViewModelCollectionUpdate() override;
 
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
     AssetViewModelBase* FindAsset(AssetType nType, ra::AchievementID nId);
     const AssetViewModelBase* FindAsset(AssetType nType, ra::AchievementID nId) const;
 
@@ -162,8 +202,14 @@ private:
 
     void UpdateTotals();
 
+    bool MatchesFilter(const AssetViewModelBase& pAsset);
+    void AddOrRemoveFilteredItem(const AssetViewModelBase& pAsset);
+    gsl::index GetFilteredAssetIndex(const AssetViewModelBase& pAsset) const;
+    void ApplyFilter();
+
     ViewModelCollection<AssetViewModelBase> m_vAssets;
-    
+    ViewModelCollection<AssetSummaryViewModel> m_vFilteredAssets;
+
     LookupItemViewModelCollection m_vStates;
     LookupItemViewModelCollection m_vCategories;
     LookupItemViewModelCollection m_vChanges;

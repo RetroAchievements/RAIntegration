@@ -131,7 +131,7 @@ public:
         Assert::AreEqual(std::wstring(L""), search.GetFilterRange());
         Assert::AreEqual(std::wstring(L""), search.GetFilterValue());
 
-        Assert::AreEqual({ 6U }, search.SearchTypes().Count());
+        Assert::AreEqual({ 7U }, search.SearchTypes().Count());
         Assert::AreEqual((int)ra::services::SearchType::FourBit, search.SearchTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"4-bit"), search.SearchTypes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)ra::services::SearchType::EightBit, search.SearchTypes().GetItemAt(1)->GetId());
@@ -144,6 +144,8 @@ public:
         Assert::AreEqual(std::wstring(L"16-bit (aligned)"), search.SearchTypes().GetItemAt(4)->GetLabel());
         Assert::AreEqual((int)ra::services::SearchType::ThirtyTwoBitAligned, search.SearchTypes().GetItemAt(5)->GetId());
         Assert::AreEqual(std::wstring(L"32-bit (aligned)"), search.SearchTypes().GetItemAt(5)->GetLabel());
+        Assert::AreEqual((int)ra::services::SearchType::AsciiText, search.SearchTypes().GetItemAt(6)->GetId());
+        Assert::AreEqual(std::wstring(L"ASCII Text"), search.SearchTypes().GetItemAt(6)->GetLabel());
         Assert::AreEqual(ra::services::SearchType::EightBit, search.GetSearchType());
 
         Assert::AreEqual({ 6U }, search.ComparisonTypes().Count());

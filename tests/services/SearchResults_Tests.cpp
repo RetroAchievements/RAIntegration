@@ -1052,6 +1052,162 @@ public:
         Assert::AreEqual({ 0U }, results.MatchingAddressCount());
     }
 
+    TEST_METHOD(TestInitializeFromMemoryAsciiText)
+    {
+        std::array<unsigned char, 36> memory {
+            'S', 'h', 'e', ' ', 's', 'e', 'l', 'l', 's', ' ', 's', 'e', 'a', 's', 'h', 'e',
+            'l', 'l', 's', ' ', 'b', 'y', ' ', 't', 'h', 'e', ' ', 's', 'e', 'a', 's', 'h',
+            'o', 'r', 'e', '.'
+        };
+        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::AsciiText);
+
+        Assert::AreEqual(memory.size(), results.MatchingAddressCount());
+
+        Assert::IsTrue(results.ContainsAddress(0U));
+        Assert::IsTrue(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsTrue(results.ContainsAddress(35U));
+        Assert::IsFalse(results.ContainsAddress(36U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(0U, result.nAddress);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
+        Assert::AreEqual({ 'S' }, result.nValue);
+
+        Assert::IsTrue(results.GetMatchingAddress(35U, result));
+        Assert::AreEqual(35U, result.nAddress);
+        Assert::AreEqual(MemSize::EightBit, result.nSize);
+        Assert::AreEqual({ '.' }, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromResultsAsciiText)
+    {
+        std::array<unsigned char, 36> memory{
+            'S', 'h', 'e', ' ', 's', 'e', 'l', 'l', 's', ' ', 's', 'e', 'a', 's', 'h', 'e',
+            'l', 'l', 's', ' ', 'b', 'y', ' ', 't', 'h', 'e', ' ', 's', 'e', 'a', 's', 'h',
+            'o', 'r', 'e', '.'
+        };
+        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(0U, memory.size(), ra::services::SearchType::AsciiText);
+        Assert::AreEqual(memory.size(), results1.MatchingAddressCount());
+
+        SearchResults results2;
+        results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"he");
+        Assert::AreEqual({ 3U }, results2.MatchingAddressCount());
+        Assert::IsFalse(results2.ContainsAddress(0U));
+        Assert::IsTrue(results2.ContainsAddress(1U));
+        Assert::IsFalse(results2.ContainsAddress(2U));
+        Assert::IsTrue(results2.ContainsAddress(14U));
+        Assert::IsTrue(results2.ContainsAddress(24U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results2.GetMatchingAddress(0U, result));
+        Assert::AreEqual(1U, result.nAddress);
+
+        Assert::IsTrue(results2.GetMatchingAddress(1U, result));
+        Assert::AreEqual(14U, result.nAddress);
+
+        Assert::IsTrue(results2.GetMatchingAddress(2U, result));
+        Assert::AreEqual(24U, result.nAddress);
+
+        memory.at(15U) = 'i';
+        SearchResults results3;
+        results3.Initialize(results2, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValue, results2.GetFilterString());
+        Assert::AreEqual({ 2U }, results3.MatchingAddressCount());
+        Assert::IsTrue(results3.ContainsAddress(1U));
+        Assert::IsFalse(results3.ContainsAddress(14U));
+        Assert::IsTrue(results3.ContainsAddress(24U));
+
+        Assert::IsTrue(results3.GetMatchingAddress(0U, result));
+        Assert::AreEqual(1U, result.nAddress);
+
+        Assert::IsTrue(results3.GetMatchingAddress(1U, result));
+        Assert::AreEqual(24U, result.nAddress);
+    }
+
+    TEST_METHOD(TestInitializeFromResultsAsciiTextComparison)
+    {
+        std::array<unsigned char, 36> memory{
+            'S', 'h', 'e', ' ', 's', 'e', 'l', 'l', 's', ' ', 's', 'e', 'a', 's', 'h', 'e',
+            'l', 'l', 's', ' ', 'b', 'y', ' ', 't', 'h', 'e', ' ', 's', 'e', 'a', 's', 'h',
+            'o', 'r', 'e', '.'
+        };
+        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(0U, memory.size(), ra::services::SearchType::AsciiText);
+        Assert::AreEqual(memory.size(), results1.MatchingAddressCount());
+
+        SearchResults results2;
+        results2.Initialize(results1, ComparisonType::GreaterThanOrEqual, ra::services::SearchFilterType::Constant, L"se");
+        Assert::AreEqual({ 7U }, results2.MatchingAddressCount());
+
+        SearchResults::Result result;
+        Assert::IsTrue(results2.GetMatchingAddress(0U, result));
+        Assert::AreEqual(4U, result.nAddress); // sells
+
+        Assert::IsTrue(results2.GetMatchingAddress(1U, result));
+        Assert::AreEqual(10U, result.nAddress); // seashells
+
+        Assert::IsTrue(results2.GetMatchingAddress(2U, result));
+        Assert::AreEqual(13U, result.nAddress); // shells
+
+        Assert::IsTrue(results2.GetMatchingAddress(3U, result));
+        Assert::AreEqual(21U, result.nAddress); // y the
+
+        Assert::IsTrue(results2.GetMatchingAddress(4U, result));
+        Assert::AreEqual(23U, result.nAddress); // the
+
+        Assert::IsTrue(results2.GetMatchingAddress(5U, result));
+        Assert::AreEqual(27U, result.nAddress); // seashore
+
+        Assert::IsTrue(results2.GetMatchingAddress(6U, result));
+        Assert::AreEqual(30U, result.nAddress); // shore
+
+        // should filter out "y the" and "the"
+        SearchResults results3;
+        results3.Initialize(results2, ComparisonType::LessThan, ra::services::SearchFilterType::Constant, L"the");
+        Assert::AreEqual({ 5U }, results3.MatchingAddressCount());
+
+        Assert::IsTrue(results3.GetMatchingAddress(0U, result));
+        Assert::AreEqual(4U, result.nAddress); // sells
+
+        Assert::IsTrue(results3.GetMatchingAddress(1U, result));
+        Assert::AreEqual(10U, result.nAddress); // seashells
+
+        Assert::IsTrue(results3.GetMatchingAddress(2U, result));
+        Assert::AreEqual(13U, result.nAddress); // shells
+
+        Assert::IsTrue(results3.GetMatchingAddress(3U, result));
+        Assert::AreEqual(27U, result.nAddress); // seashore
+
+        Assert::IsTrue(results3.GetMatchingAddress(4U, result));
+        Assert::AreEqual(30U, result.nAddress); // shore
+
+        // should filter out "seashells", "seashore"
+        SearchResults results4;
+        results4.Initialize(results3, ComparisonType::NotEqualTo, ra::services::SearchFilterType::Constant, L"sea");
+        Assert::AreEqual({ 3U }, results4.MatchingAddressCount());
+
+        Assert::IsTrue(results4.GetMatchingAddress(0U, result));
+        Assert::AreEqual(4U, result.nAddress); // sells
+
+        Assert::IsTrue(results4.GetMatchingAddress(1U, result));
+        Assert::AreEqual(13U, result.nAddress); // shells
+
+        Assert::IsTrue(results4.GetMatchingAddress(2U, result));
+        Assert::AreEqual(30U, result.nAddress); // shore
+    }
+
     TEST_METHOD(TestCopyConstructor)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};

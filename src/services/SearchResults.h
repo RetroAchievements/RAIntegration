@@ -15,6 +15,7 @@ enum class SearchType
     ThirtyTwoBit,
     SixteenBitAligned,
     ThirtyTwoBitAligned,
+    AsciiText,
 };
 
 enum class SearchFilterType
@@ -132,6 +133,27 @@ public:
         _In_ ComparisonType nCompareType, _In_ SearchFilterType nFilterType, _In_ unsigned int nFilterValue);
 
     /// <summary>
+    /// Initializes a result set by comparing against another result set.
+    /// </summary>
+    /// <param name="srSource">The result set to filter.</param>
+    /// <param name="nCompareType">Type of comparison to apply.</param>
+    /// <param name="nFilterType">Type of filter to apply.</param>
+    /// <param name="sFilterValue">Parameter for filter being applied.</param>
+    void Initialize(_In_ const SearchResults& srSource, _In_ ComparisonType nCompareType,
+        _In_ SearchFilterType nFilterType, _In_ const std::wstring& sFilterValue);
+
+    /// <summary>
+    /// Initializes a result set by comparing against another result set using the address filter from a third set.
+    /// </summary>
+    /// <param name="srSource">The result set to filter.</param>
+    /// <param name="srAddresses">The result set specifying which addresses to examine.</param>
+    /// <param name="nCompareType">Type of comparison to apply.</param>
+    /// <param name="nFilterType">Type of filter to apply.</param>
+    /// <param name="sFilterValue">Parameter for filter being applied.</param>
+    void Initialize(_In_ const SearchResults& srSource, _In_ const SearchResults& srAddresses,
+        _In_ ComparisonType nCompareType, _In_ SearchFilterType nFilterType, _In_ const std::wstring& sFilterValue);
+
+    /// <summary>
     /// Gets the number of matching addresses.
     /// </summary>
     size_t MatchingAddressCount() const noexcept;
@@ -178,6 +200,11 @@ public:
     unsigned int GetFilterValue() const noexcept { return m_nFilterValue; }
 
     /// <summary>
+    /// Gets the filter parameter that was applied to generate this search result.
+    /// </summary>
+    const std::wstring& GetFilterString() const noexcept { return m_sFilterValue; }
+
+    /// <summary>
     /// Gets the filter comparison that was applied to generate this search result.
     /// </summary>
     ComparisonType GetFilterComparison() const noexcept { return m_nCompareType; }
@@ -203,6 +230,8 @@ public:
     void ExcludeMatchingAddress(gsl::index nIndex);
 
 private:
+    void MergeSearchResults(const SearchResults& srMemory, const SearchResults& srAddresses);
+
     std::vector<impl::MemBlock> m_vBlocks;
     SearchType m_nType = SearchType::EightBit;
 
@@ -213,6 +242,7 @@ private:
     ComparisonType m_nCompareType = ComparisonType::Equals;
     SearchFilterType m_nFilterType = SearchFilterType::None;
     unsigned int m_nFilterValue = 0U;
+    std::wstring m_sFilterValue;
 };
 
 } // namespace services

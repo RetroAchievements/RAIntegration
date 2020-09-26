@@ -838,8 +838,8 @@ void MemorySearchViewModel::UpdateResult(SearchResultViewModel& pRow, ra::servic
             pEmulatorContext.ReadMemory(pResult.nAddress, &pBuffer.at(0), pBuffer.size());
 
             std::string sText;
-            for (size_t i = 0; i < pBuffer.size() && pBuffer[i]; ++i)
-                sText.push_back(static_cast<char>(pBuffer[i]));
+            for (size_t i = 0; i < pBuffer.size() && pBuffer.at(i); ++i)
+                sText.push_back(static_cast<char>(pBuffer.at(i)));
 
             pRow.SetCurrentValue(ra::Widen(sText));
 
@@ -847,8 +847,8 @@ void MemorySearchViewModel::UpdateResult(SearchResultViewModel& pRow, ra::servic
             {
                 pCompareResults.GetBytes(pResult.nAddress, &pBuffer.at(0), pBuffer.size());
                 sText.clear();
-                for (size_t i = 0; i < pBuffer.size() && pBuffer[i]; ++i)
-                    sText.push_back(static_cast<char>(pBuffer[i]));
+                for (size_t i = 0; i < pBuffer.size() && pBuffer.at(i); ++i)
+                    sText.push_back(static_cast<char>(pBuffer.at(i)));
 
                 pRow.SetPreviousValue(ra::Widen(sText));
             }

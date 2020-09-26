@@ -180,7 +180,7 @@ protected:
         return srResults.m_vBlocks.front().GetAddress();
     }
 
-    static const std::vector<impl::MemBlock>& GetBlocks(const SearchResults& srResults)
+    static const std::vector<impl::MemBlock>& GetBlocks(const SearchResults& srResults) noexcept
     {
         return srResults.m_vBlocks;
     }
@@ -555,6 +555,9 @@ public:
     virtual bool CompareMemory(const unsigned char* pLeft,
         const unsigned char* pRight, size_t nCount, ComparisonType nCompareType) const
     {
+        Expects(pLeft != nullptr);
+        Expects(pRight != nullptr);
+
         do
         {
             // not exact match, compare the current character normally

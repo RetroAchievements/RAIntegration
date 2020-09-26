@@ -1076,12 +1076,12 @@ public:
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
-        Assert::AreEqual(MemSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::Text, result.nSize);
         Assert::AreEqual({ 'S' }, result.nValue);
 
         Assert::IsTrue(results.GetMatchingAddress(35U, result));
         Assert::AreEqual(35U, result.nAddress);
-        Assert::AreEqual(MemSize::EightBit, result.nSize);
+        Assert::AreEqual(MemSize::Text, result.nSize);
         Assert::AreEqual({ '.' }, result.nValue);
     }
 

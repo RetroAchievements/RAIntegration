@@ -472,6 +472,9 @@ public:
 class AsciiTextSearchImpl : public SearchImpl
 {
 public:
+    // indicate that search results can be very wide
+    MemSize GetMemSize() const noexcept override { return MemSize::Text; }
+
     // populates a vector of addresses that match the specified filter when applied to a previous search result
     void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious) const override
     {
@@ -826,6 +829,37 @@ bool SearchResults::GetValue(ra::ByteAddress nAddress, MemSize nSize, _Out_ unsi
     const auto ret = m_pImpl->GetValue(*this, result);
     nValue = result.nValue;
     return ret;
+}
+
+bool SearchResults::GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, size_t nCount) const noexcept
+{
+    if (m_pImpl != nullptr)
+    {
+        const unsigned int nPadding = m_pImpl->GetPadding();
+        for (auto& block : m_vBlocks)
+        {
+            if (block.GetAddress() > nAddress)
+                break;
+
+            const int nRemaining = ra::to_signed(block.GetAddress() + block.GetSize() - nAddress);
+            if (nRemaining < 0)
+                continue;
+
+            if (ra::to_unsigned(nRemaining) >= nCount)
+            {
+                memcpy(pBuffer, block.GetBytes() + (nAddress - block.GetAddress()), nCount);
+                return true;
+            }
+
+            memcpy(pBuffer, block.GetBytes() + (nAddress - block.GetAddress()), nRemaining);
+            nCount -= nRemaining;
+            pBuffer += nRemaining;
+            nAddress += nRemaining;
+        }
+    }
+
+    memset(pBuffer, gsl::narrow_cast<int>(nCount), 0);
+    return false;
 }
 
 MemSize SearchResults::GetSize() const noexcept

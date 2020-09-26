@@ -465,6 +465,9 @@ private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);
     void ApplyContinuousFilter();
     void UpdateResults();
+    void UpdateResult(SearchResultViewModel& pRow, ra::services::SearchResults::Result& pResult, 
+        const ra::data::EmulatorContext& pEmulatorContext, bool bCapturePrevious);
+
     void AddNewPage();
     void ChangePage(size_t nNewPage);
 
@@ -496,8 +499,8 @@ private:
     std::set<unsigned int> m_vSelectedAddresses;
 
     static bool TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue) noexcept;
-    void ApplyFilter(SearchResult& pResult, const SearchResult& pPreviousResult, 
-        ComparisonType nComparisonType, ra::services::SearchFilterType nValueType, unsigned int nValue);
+    void ApplyFilter(SearchResult& pResult, const SearchResult& pPreviousResult,
+        ComparisonType nComparisonType, ra::services::SearchFilterType nValueType, unsigned int nValue, const std::wstring& sValue);
 };
 
 } // namespace viewmodels

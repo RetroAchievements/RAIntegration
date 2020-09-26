@@ -18,7 +18,8 @@ enum class MemSize : uint8_t
     SixteenBit,
     TwentyFourBit,
     ThirtyTwoBit,
-    BitCount
+    BitCount,
+    Text
 };
 
 namespace ra {

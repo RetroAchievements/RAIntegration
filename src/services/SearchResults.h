@@ -165,6 +165,7 @@ public:
         MemSize nSize{};
 
         bool Compare(unsigned int nPreviousValue, ComparisonType nCompareType) const noexcept;
+        bool Compare(const std::wstring& sPreviousValue, ComparisonType nCompareType) const noexcept;
     };
 
     /// <summary>
@@ -178,6 +179,11 @@ public:
     /// Gets the value at the specified address.
     /// </summary>
     bool GetValue(ra::ByteAddress nAddress, MemSize nSize, _Out_ unsigned int& nValue) const noexcept;
+
+    /// <summary>
+    /// Gets the raw bytes at the specified address.
+    /// </summary>
+    bool GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, size_t nCount) const noexcept;
 
     /// <summary>
     /// Gets the type of search performed.

@@ -27,6 +27,27 @@ void AchievementViewModel::SelectBadgeFile()
     ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Not implemented");
 }
 
+void AchievementViewModel::Activate()
+{
+    if (IsActive())
+        return;
+
+    SetState(AssetState::Waiting);
+    // TODO: activate in runtime
+}
+
+void AchievementViewModel::Deactivate()
+{
+    const bool bWasActive = IsActive();
+
+    SetState(AssetState::Inactive);
+
+    if (bWasActive)
+    {
+        // TODO: deactivate in runtime
+    }
+}
+
 void AchievementViewModel::Serialize(ra::services::TextWriter& pWriter) const
 {
     WriteQuoted(pWriter, GetTrigger());

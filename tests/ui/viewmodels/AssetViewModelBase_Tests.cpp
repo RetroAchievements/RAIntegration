@@ -132,6 +132,26 @@ public:
         Assert::AreEqual(AssetChanges::None, asset.GetChanges());
     }
 
+    TEST_METHOD(TestIsActive)
+    {
+        AssetViewModelHarness asset;
+
+        asset.SetState(AssetState::Active);
+        Assert::IsTrue(asset.IsActive());
+
+        asset.SetState(AssetState::Inactive);
+        Assert::IsFalse(asset.IsActive());
+
+        asset.SetState(AssetState::Paused);
+        Assert::IsTrue(asset.IsActive());
+
+        asset.SetState(AssetState::Triggered);
+        Assert::IsFalse(asset.IsActive());
+
+        asset.SetState(AssetState::Waiting);
+        Assert::IsTrue(asset.IsActive());
+    }
+
     TEST_METHOD(TestSerializeDefaults)
     {
         AssetViewModelHarness asset;

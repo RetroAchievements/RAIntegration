@@ -383,6 +383,18 @@ void AssetViewModelBase::RevertTransaction()
     }
 }
 
+bool AssetViewModelBase::IsActive() const
+{
+    switch (GetState())
+    {
+        case AssetState::Inactive:
+        case AssetState::Triggered:
+            return false;
+        default:
+            return true;
+    }
+}
+
 } // namespace viewmodels
 } // namespace ui
 } // namespace ra

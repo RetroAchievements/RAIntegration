@@ -305,7 +305,40 @@ public:
         Assert::IsFalse(editor.IsPauseOnTrigger());
         Assert::IsFalse(achievement.IsPauseOnTrigger());
     }
-};
+
+    TEST_METHOD(TestSyncOneRecordAtATime)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementViewModel achievement1;
+        achievement1.SetName(L"Achievement1");
+        AchievementViewModel achievement2;
+        achievement2.SetName(L"Achievement2");
+
+        editor.LoadAsset(&achievement1);
+        Assert::AreEqual(std::wstring(L"Achievement1"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement1"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetName());
+
+        editor.SetName(L"New Name");
+        Assert::AreEqual(std::wstring(L"New Name"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetName());
+
+        editor.LoadAsset(&achievement2);
+        Assert::AreEqual(std::wstring(L"Achievement2"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"Achievement2"), achievement2.GetName());
+
+        editor.SetName(L"New Name 2");
+        Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"New Name"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetName());
+
+        achievement1.SetName(L"New Name 3");
+        Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"New Name 3"), achievement1.GetName());
+        Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetName());
+    }};
 
 } // namespace tests
 } // namespace viewmodels

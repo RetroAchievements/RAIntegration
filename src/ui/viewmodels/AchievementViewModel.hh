@@ -44,11 +44,6 @@ public:
     void SetBadge(const std::wstring& sValue) { SetValue(BadgeProperty, sValue); }
 
     /// <summary>
-    /// Opens the file chooser to select a new badge image.
-    /// </summary>
-    void SelectBadgeFile();
-
-    /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the emulator should be paused when the trigger is reset.
     /// </summary>
     static const BoolModelProperty PauseOnResetProperty;

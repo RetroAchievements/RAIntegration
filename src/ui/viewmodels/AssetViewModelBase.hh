@@ -129,6 +129,11 @@ public:
     AssetState GetState() const { return ra::itoe<AssetState>(GetValue(StateProperty)); }
 
     /// <summary>
+    /// Sets the asset state.
+    /// </summary>
+    void SetState(AssetState nValue) { SetValue(StateProperty, ra::etoi(nValue)); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the asset state.
     /// </summary>
     static const IntModelProperty ChangesProperty;

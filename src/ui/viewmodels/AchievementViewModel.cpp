@@ -1,7 +1,5 @@
 #include "AchievementViewModel.hh"
 
-#include "ui\viewmodels\MessageBoxViewModel.hh"
-
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -20,11 +18,6 @@ AchievementViewModel::AchievementViewModel() noexcept
     SetTransactional(BadgeProperty);
 
     GSL_SUPPRESS_F6 AddAssetDefinition(m_pTrigger, TriggerProperty);
-}
-
-void AchievementViewModel::SelectBadgeFile()
-{
-    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Not implemented");
 }
 
 void AchievementViewModel::Serialize(ra::services::TextWriter& pWriter) const

@@ -339,6 +339,9 @@
     <ClCompile Include="ui\win32\AssetListDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\AssetEditorViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -856,6 +859,9 @@
     </ClInclude>
     <ClInclude Include="ui\win32\AssetListDialog.hh">
       <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\AssetEditorViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -97,6 +97,7 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnViewModelIntValueChanged
             default:
             case MemSize::SixteenBit:   nWidth = nCharWidth * (4 + 2) + nPadding * 2; break;
             case MemSize::ThirtyTwoBit: nWidth = nCharWidth * (8 + 2) + nPadding * 2; break;
+            case MemSize::Text:         nWidth = nCharWidth * (16 + 2) + nPadding * 2; break;
         }
 
         m_vColumns.at(1)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);

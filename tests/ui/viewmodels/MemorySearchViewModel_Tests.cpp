@@ -31,6 +31,12 @@ std::wstring ToString<ra::services::SearchType>(
             return L"SixteenBit";
         case ra::services::SearchType::ThirtyTwoBit:
             return L"ThirtyTwoBit";
+        case ra::services::SearchType::SixteenBitAligned:
+            return L"SixteenBitAligned";
+        case ra::services::SearchType::ThirtyTwoBitAligned:
+            return L"ThirtyTwoBitAligned";
+        case ra::services::SearchType::AsciiText:
+            return L"AsciiText";
         default:
             return std::to_wstring(static_cast<int>(nSearchType));
     }
@@ -93,6 +99,19 @@ private:
             mockEmulatorContext.MockMemory(memory);
         }
 
+        void InitializeAsciiMemory()
+        {
+            std::array<unsigned char, 36> text {
+                'S', 'h', 'e', ' ', 's', 'e', 'l', 'l', 's', ' ', 's', 'e', 'a', 's', 'h', 'e',
+                'l', 'l', 's', ' ', 'b', 'y', ' ', 't', 'h', 'e', ' ', 's', 'e', 'a', 's', 'h',
+                'o', 'r', 'e', '.'
+            };
+            for (size_t i = 0; i < memory.size(); ++i)
+                memory.at(i) = text.at(i);
+
+            mockEmulatorContext.MockMemory(memory);
+        }
+
         bool CanBeginNewSearch() const { return GetValue(CanBeginNewSearchProperty); }
         bool CanFilter() const { return GetValue(CanFilterProperty); }
         bool CanContinuousFilter() const { return GetValue(CanContinuousFilterProperty); }
@@ -131,7 +150,7 @@ public:
         Assert::AreEqual(std::wstring(L""), search.GetFilterRange());
         Assert::AreEqual(std::wstring(L""), search.GetFilterValue());
 
-        Assert::AreEqual({ 6U }, search.SearchTypes().Count());
+        Assert::AreEqual({ 7U }, search.SearchTypes().Count());
         Assert::AreEqual((int)ra::services::SearchType::FourBit, search.SearchTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"4-bit"), search.SearchTypes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)ra::services::SearchType::EightBit, search.SearchTypes().GetItemAt(1)->GetId());
@@ -144,6 +163,8 @@ public:
         Assert::AreEqual(std::wstring(L"16-bit (aligned)"), search.SearchTypes().GetItemAt(4)->GetLabel());
         Assert::AreEqual((int)ra::services::SearchType::ThirtyTwoBitAligned, search.SearchTypes().GetItemAt(5)->GetId());
         Assert::AreEqual(std::wstring(L"32-bit (aligned)"), search.SearchTypes().GetItemAt(5)->GetLabel());
+        Assert::AreEqual((int)ra::services::SearchType::AsciiText, search.SearchTypes().GetItemAt(6)->GetId());
+        Assert::AreEqual(std::wstring(L"ASCII Text"), search.SearchTypes().GetItemAt(6)->GetLabel());
         Assert::AreEqual(ra::services::SearchType::EightBit, search.GetSearchType());
 
         Assert::AreEqual({ 6U }, search.ComparisonTypes().Count());
@@ -501,6 +522,29 @@ public:
         search.ApplyFilter();
         Assert::AreEqual({ 1U }, search.Results().Count());
         AssertRow(search, 0, 20U, L"0x0014", L"0x1e", L"0x14");
+    }
+
+    TEST_METHOD(TestApplyFilterAsciiTextConstant)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeAsciiMemory();
+        search.SetSearchType(ra::services::SearchType::AsciiText);
+        search.BeginNewSearch();
+
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
+        search.SetFilterValue(L"sea");
+
+        search.ApplyFilter();
+        Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
+        Assert::AreEqual({ 2U }, search.GetResultCount());
+        Assert::AreEqual(MemSize::Text, search.ResultMemSize());
+        Assert::AreEqual(std::wstring(L"= sea"), search.GetFilterSummary());
+
+        Assert::AreEqual({ 2U }, search.Results().Count());
+        AssertRow(search, 0, 10U, L"0x000a", L"seashells by the", L"seashells by the");
+        AssertRow(search, 1, 27U, L"0x001b", L"seash", L"seash");
     }
 
     TEST_METHOD(TestDoFrameEightBit)

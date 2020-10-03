@@ -50,7 +50,16 @@ std::wstring ToString<__int64>(const __int64& t)
 template<>
 std::wstring ToString<MemSize>(const MemSize& t)
 {
-    return MEMSIZE_STR.at(ra::etoi(t));
+    switch (t)
+    {
+        case MemSize::Text:
+            return L"Text";
+        default:
+            if (ra::etoi(t) < MEMSIZE_STR.size())
+                return MEMSIZE_STR.at(ra::etoi(t));
+            return std::to_wstring(ra::etoi(t));
+    }
+
 }
 
 template<>

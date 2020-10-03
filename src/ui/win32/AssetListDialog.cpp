@@ -56,7 +56,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
       m_bindUnofficialAchievements(vmAssetList),
       m_bindLocalAchievements(vmAssetList)
 {
-    m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Achievements");
+    m_bindWindow.SetInitialPosition(RelativePosition::Near, RelativePosition::After, "Achievements");
     m_bindAssets.BindIsSelected(AssetListViewModel::AssetSummaryViewModel::IsSelectedProperty);
 
     auto pNameColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
@@ -90,6 +90,13 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
     m_bindAssets.BindColumn(4, std::move(pChangesColumn));
 
+    m_bindAssets.SetDoubleClickHandler([this](gsl::index nIndex)
+    {
+        auto* vmAssets = dynamic_cast<AssetListViewModel*>(&m_vmWindow);
+        const auto* pSummary = vmAssets->FilteredAssets().GetItemAt(nIndex);
+        if (pSummary)
+            vmAssets->OpenEditor(pSummary);
+    });
     m_bindAssets.BindItems(vmAssetList.FilteredAssets());
 
     m_bindCoreAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::ui::viewmodels::AssetCategory::Core));

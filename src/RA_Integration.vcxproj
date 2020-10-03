@@ -157,6 +157,7 @@
     <ClCompile Include="ui\viewmodels\TriggerConditionViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\TriggerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel.cpp" />
+    <ClCompile Include="ui\win32\AssetEditorDialog.cpp" />
     <ClCompile Include="ui\win32\AssetListDialog.cpp" />
     <ClCompile Include="ui\win32\bindings\ControlBinding.cpp" />
     <ClCompile Include="ui\win32\bindings\GridAddressColumnBinding.cpp" />
@@ -323,6 +324,7 @@
     <ClInclude Include="ui\viewmodels\TriggerViewModel.hh" />
     <ClInclude Include="ui\viewmodels\UnknownGameViewModel.hh" />
     <ClInclude Include="ui\viewmodels\WindowManager.hh" />
+    <ClInclude Include="ui\win32\AssetEditorDialog.hh" />
     <ClInclude Include="ui\win32\AssetListDialog.hh" />
     <ClInclude Include="ui\win32\bindings\CheckBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\ComboBoxBinding.hh" />
@@ -337,6 +339,7 @@
     <ClInclude Include="ui\win32\bindings\GridTextColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\MemoryViewerControlBinding.hh" />
     <ClInclude Include="ui\win32\bindings\MultiLineGridBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\NumericTextBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh" />
     <ClInclude Include="ui\win32\bindings\TextBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\WindowBinding.hh" />

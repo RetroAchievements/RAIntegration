@@ -18,8 +18,7 @@ public:
     {
         ControlBinding::SetHWND(pDialog, hControl);
 
-        if (m_pTextBoundProperty)
-            SetWindowTextW(hControl, GetValue(*m_pTextBoundProperty).c_str());
+        UpdateBoundText();
 
         if (!m_mKeyHandlers.empty())
             SubclassWndProc();
@@ -43,13 +42,13 @@ public:
     void OnLostFocus() override
     {
         if (m_pTextUpdateMode == UpdateMode::LostFocus)
-            UpdateSourceText();
+            UpdateSource();
     }
 
     void OnValueChanged() override
     {
         if (m_pTextUpdateMode == UpdateMode::KeyPress)
-            UpdateSourceText();
+            UpdateSource();
     }
 
     void BindKey(unsigned int nKey, std::function<bool()> pHandler)
@@ -60,7 +59,7 @@ public:
         m_mKeyHandlers.insert_or_assign(nKey, pHandler);
     }
 
-    void UpdateSourceText()
+    void UpdateSource()
     {
         const int nLength = GetWindowTextLengthW(m_hWnd);
 
@@ -69,7 +68,7 @@ public:
         GetWindowTextW(m_hWnd, sBuffer.data(), gsl::narrow_cast<int>(sBuffer.capacity()));
         sBuffer.resize(nLength);
 
-        SetValue(*m_pTextBoundProperty, sBuffer);
+        UpdateSourceFromText(sBuffer);
     }
 
 protected:
@@ -98,16 +97,21 @@ protected:
         return ControlBinding::WndProc(hControl, uMsg, wParam, lParam);
     }
 
-private:
-    void UpdateBoundText()
+    virtual void UpdateBoundText()
     {
         if (m_hWnd && m_pTextBoundProperty)
             SetWindowTextW(m_hWnd, GetValue(*m_pTextBoundProperty).c_str());
     }
 
-    const StringModelProperty* m_pTextBoundProperty = nullptr;
+    virtual void UpdateSourceFromText(const std::wstring& sText)
+    {
+        SetValue(*m_pTextBoundProperty, sText);
+    }
+
     UpdateMode m_pTextUpdateMode = UpdateMode::None;
 
+private:
+    const StringModelProperty* m_pTextBoundProperty = nullptr;
     std::map<unsigned int, std::function<bool()>> m_mKeyHandlers;
 };
 

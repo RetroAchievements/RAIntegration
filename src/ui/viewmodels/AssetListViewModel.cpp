@@ -6,6 +6,8 @@
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\WindowManager.hh"
+
 #include "Exports.hh"
 #include "RA_Log.h"
 
@@ -305,6 +307,20 @@ const AssetViewModelBase* AssetListViewModel::FindAsset(AssetType nType, ra::Ach
     }
 
     return nullptr;
+}
+
+void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
+{
+    AssetViewModelBase* vmAsset = nullptr;
+
+    if (pAsset)
+        vmAsset = FindAsset(pAsset->GetType(), pAsset->GetId());
+
+    auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+    pWindowManager.AssetEditor.LoadAsset(vmAsset);
+
+    if (!pWindowManager.AssetEditor.IsVisible())
+        pWindowManager.AssetEditor.Show();
 }
 
 bool AssetListViewModel::HasSelection(AssetType nAssetType) const

@@ -127,6 +127,7 @@
     <ClCompile Include="ui\ViewModelBase.cpp" />
     <ClCompile Include="ui\ViewModelCollection.cpp" />
     <ClCompile Include="ui\viewmodels\AchievementViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\AssetEditorViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\AssetListViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\AssetViewModelBase.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel.cpp" />
@@ -290,6 +291,7 @@
     <ClInclude Include="ui\ViewModelBase.hh" />
     <ClInclude Include="ui\ViewModelCollection.hh" />
     <ClInclude Include="ui\viewmodels\AchievementViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\AssetEditorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\AssetListViewModel.hh" />
     <ClInclude Include="ui\viewmodels\AssetViewModelBase.hh" />
     <ClInclude Include="ui\viewmodels\BrokenAchievementsViewModel.hh" />

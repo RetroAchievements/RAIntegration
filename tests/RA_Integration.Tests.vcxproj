@@ -313,6 +313,7 @@
     <ClCompile Include="..\src\ui\TransactionalViewModelBase.cpp" />
     <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\AchievementViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\AssetEditorViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\AssetListViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\AssetViewModelBase.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp" />
@@ -371,6 +372,7 @@
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\AssetEditorViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\AssetViewModelBase_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp" />

@@ -134,7 +134,7 @@ public:
     void SetState(AssetState nValue) { SetValue(StateProperty, ra::etoi(nValue)); }
 
     /// <summary>
-    /// Gets whether or not tha asset is in an active state.
+    /// Gets whether or not the asset is in an active state.
     /// </summary>
     bool IsActive() const;
 

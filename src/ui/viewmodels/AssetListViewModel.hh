@@ -104,7 +104,7 @@ public:
 
     static const StringModelProperty ActivateButtonTextProperty;
     const std::wstring& GetActivateButtonText() const { return GetValue(ActivateButtonTextProperty); }
-    void ActivateSelected() noexcept;
+    void ActivateSelected();
 
     static const StringModelProperty SaveButtonTextProperty;
     const std::wstring& GetSaveButtonText() const { return GetValue(SaveButtonTextProperty); }
@@ -126,7 +126,9 @@ public:
 
     static const StringModelProperty RevertButtonTextProperty;
     const std::wstring& GetRevertButtonText() const { return GetValue(RevertButtonTextProperty); }
-    void RevertSelected() noexcept;
+    static const BoolModelProperty CanRevertProperty;
+    bool CanRevert() const { return GetValue(CanRevertProperty); }
+    void RevertSelected();
 
     void CreateNew() noexcept;
 
@@ -175,7 +177,7 @@ public:
         void SetPoints(int nValue) { SetValue(AchievementViewModel::PointsProperty, nValue); }
 
         AssetState GetState() const { return ra::itoe<AssetState>(GetValue(AssetViewModelBase::StateProperty)); }
-        void GetState(AssetState nValue) { SetValue(AssetViewModelBase::StateProperty, ra::etoi(nValue)); }
+        void SetState(AssetState nValue) { SetValue(AssetViewModelBase::StateProperty, ra::etoi(nValue)); }
 
         AssetChanges GetChanges() const { return ra::itoe<AssetChanges>(GetValue(AssetViewModelBase::ChangesProperty)); }
         void SetChanges(AssetChanges nValue) { SetValue(AssetViewModelBase::ChangesProperty, ra::etoi(nValue)); }
@@ -188,6 +190,7 @@ public:
 private:
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
+    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
     void OnViewModelAdded(gsl::index nIndex) override;
     void OnViewModelRemoved(gsl::index nIndex) override;
     void OnViewModelChanged(gsl::index nIndex) override;
@@ -195,12 +198,25 @@ private:
 
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
+    class FilteredListMonitor : public ViewModelCollectionBase::NotifyTarget
+    {
+    public:
+        AssetListViewModel *m_pOwner = nullptr;
+
+        void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
+    };
+    FilteredListMonitor m_pFilteredListMonitor;
+
     AssetViewModelBase* FindAsset(AssetType nType, ra::AchievementID nId);
     const AssetViewModelBase* FindAsset(AssetType nType, ra::AchievementID nId) const;
 
     bool HasSelection(AssetType nAssetType) const;
+    void GetSelectedAssets(std::vector<AssetViewModelBase*>& vSelectedAssets);
 
     void UpdateTotals();
+    void UpdateButtons();
+    void DoUpdateButtons();
+    std::atomic_bool m_bNeedToUpdateButtons = false;
 
     bool MatchesFilter(const AssetViewModelBase& pAsset);
     void AddOrRemoveFilteredItem(const AssetViewModelBase& pAsset);

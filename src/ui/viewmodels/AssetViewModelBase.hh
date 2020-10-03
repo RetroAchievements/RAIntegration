@@ -134,6 +134,21 @@ public:
     void SetState(AssetState nValue) { SetValue(StateProperty, ra::etoi(nValue)); }
 
     /// <summary>
+    /// Gets whether or not the asset is in an active state.
+    /// </summary>
+    bool IsActive() const;
+
+    /// <summary>
+    /// Activates the asset.
+    /// </summary>
+    virtual void Activate() noexcept(false) { }
+
+    /// <summary>
+    /// Activates the asset.
+    /// </summary>
+    virtual void Deactivate() noexcept(false) { }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the asset state.
     /// </summary>
     static const IntModelProperty ChangesProperty;

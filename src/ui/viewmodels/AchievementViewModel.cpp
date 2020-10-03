@@ -20,6 +20,27 @@ AchievementViewModel::AchievementViewModel() noexcept
     GSL_SUPPRESS_F6 AddAssetDefinition(m_pTrigger, TriggerProperty);
 }
 
+void AchievementViewModel::Activate()
+{
+    if (IsActive())
+        return;
+
+    SetState(AssetState::Waiting);
+    // TODO: activate in runtime
+}
+
+void AchievementViewModel::Deactivate()
+{
+    const bool bWasActive = IsActive();
+
+    SetState(AssetState::Inactive);
+
+    if (bWasActive)
+    {
+        // TODO: deactivate in runtime
+    }
+}
+
 void AchievementViewModel::Serialize(ra::services::TextWriter& pWriter) const
 {
     WriteQuoted(pWriter, GetTrigger());

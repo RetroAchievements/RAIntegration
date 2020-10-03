@@ -88,6 +88,9 @@ public:
     /// </summary>
     void SetTrigger(const std::string& sTrigger) { SetAssetDefinition(m_pTrigger, sTrigger); }
 
+    void Activate() override;
+    void Deactivate() override;
+
     void Serialize(ra::services::TextWriter& pWriter) const override;
     bool Deserialize(ra::Tokenizer& pTokenizer) override;
 

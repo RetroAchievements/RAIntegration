@@ -76,7 +76,6 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
         AssetViewModelBase::StateProperty, vmAssetList.States());
     pStateColumn->SetHeader(L"State");
     pStateColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
-    pStateColumn->SetReadOnly(false);
     m_bindAssets.BindColumn(2, std::move(pStateColumn));
 
     auto pCategoryColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
@@ -100,6 +99,17 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindWindow.BindLabel(IDC_RA_GAMEHASH, AssetListViewModel::GameIdProperty);
     m_bindWindow.BindLabel(IDC_RA_NUMACH, AssetListViewModel::AchievementCountProperty);
     m_bindWindow.BindLabel(IDC_RA_POINT_TOTAL, AssetListViewModel::TotalPointsProperty);
+
+    m_bindWindow.BindLabel(IDC_RA_RESET_ACH, AssetListViewModel::ActivateButtonTextProperty);
+    m_bindWindow.BindLabel(IDC_RA_COMMIT_ACH, AssetListViewModel::SaveButtonTextProperty);
+    m_bindWindow.BindEnabled(IDC_RA_COMMIT_ACH, AssetListViewModel::CanSaveProperty);
+    m_bindWindow.BindLabel(IDC_RA_PROMOTE_ACH, AssetListViewModel::PublishButtonTextProperty);
+    m_bindWindow.BindEnabled(IDC_RA_PROMOTE_ACH, AssetListViewModel::CanPublishProperty);
+    m_bindWindow.BindLabel(IDC_RA_DOWNLOAD_ACH, AssetListViewModel::RefreshButtonTextProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DOWNLOAD_ACH, AssetListViewModel::CanRefreshProperty);
+    m_bindWindow.BindLabel(IDC_RA_REVERTSELECTED, AssetListViewModel::RevertButtonTextProperty);
+    m_bindWindow.BindEnabled(IDC_RA_REVERTSELECTED, AssetListViewModel::CanRevertProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CLONE_ACH, AssetListViewModel::CanCloneProperty);
 
     m_bindProcessingActive.BindCheck(AssetListViewModel::IsProcessingActiveProperty);
 
@@ -125,11 +135,65 @@ BOOL AssetListDialog::OnCommand(WORD nCommand)
 {
     switch (nCommand)
     {
+        case IDC_RA_RESET_ACH:
+        {
+            auto* vmAssets = dynamic_cast<AssetListViewModel*>(&m_vmWindow);
+            if (vmAssets)
+                vmAssets->ActivateSelected();
+
+            return TRUE;
+        }
+
+        case IDC_RA_COMMIT_ACH:
+        {
+            auto* vmAssets = dynamic_cast<AssetListViewModel*>(&m_vmWindow);
+            if (vmAssets)
+                vmAssets->SaveSelected();
+
+            return TRUE;
+        }
+
+        case IDC_RA_PROMOTE_ACH:
+        {
+            auto* vmAssets = dynamic_cast<AssetListViewModel*>(&m_vmWindow);
+            if (vmAssets)
+                vmAssets->PublishSelected();
+
+            return TRUE;
+        }
+
+        case IDC_RA_DOWNLOAD_ACH:
+        {
+            auto* vmAssets = dynamic_cast<AssetListViewModel*>(&m_vmWindow);
+            if (vmAssets)
+                vmAssets->RefreshSelected();
+
+            return TRUE;
+        }
+
+        case IDC_RA_REVERTSELECTED:
+        {
+            auto* vmAssets = dynamic_cast<AssetListViewModel*>(&m_vmWindow);
+            if (vmAssets)
+                vmAssets->RevertSelected();
+
+            return TRUE;
+        }
+
         case IDC_RA_ADD_ACH:
         {
             auto* vmAssets = dynamic_cast<AssetListViewModel*>(&m_vmWindow);
             if (vmAssets)
                 vmAssets->CreateNew();
+
+            return TRUE;
+        }
+
+        case IDC_RA_CLONE_ACH:
+        {
+            auto* vmAssets = dynamic_cast<AssetListViewModel*>(&m_vmWindow);
+            if (vmAssets)
+                vmAssets->CloneSelected();
 
             return TRUE;
         }

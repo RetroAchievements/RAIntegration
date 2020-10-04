@@ -547,6 +547,93 @@ public:
         AssertRow(search, 1, 27U, L"0x001b", L"seash", L"seash");
     }
 
+    TEST_METHOD(TestApplyFilterMaxPages)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.BeginNewSearch();
+
+        search.SetComparisonType(ComparisonType::NotEqualTo);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
+        Assert::IsFalse(search.CanEditFilterValue());
+
+        for (int i = 0; i < 100; ++i)
+        {
+            search.memory.at(12)++;
+            search.ApplyFilter();
+        }
+
+        Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual(std::wstring(L"50/50"), search.GetSelectedPage());
+        Assert::AreEqual({ 1U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
+        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        AssertRow(search, 0, 12U, L"0x000c", L"0x70", L"0x6f");
+
+        // test initial value == 62 to check first buffered result
+        search.SetValueType(ra::services::SearchFilterType::InitialValue);
+        search.SetComparisonType(ComparisonType::Equals);
+        search.memory.at(12) = 62;
+        search.ApplyFilter();
+
+        Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual(std::wstring(L"50/50"), search.GetSelectedPage());
+        Assert::AreEqual({ 1U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
+        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(std::wstring(L"= Initial"), search.GetFilterSummary());
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        AssertRow(search, 0, 12U, L"0x000c", L"0x3e", L"0x3e");
+    }
+
+    TEST_METHOD(TestApplyFilterMaxPagesInitialValue)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.BeginNewSearch();
+
+        search.SetComparisonType(ComparisonType::NotEqualTo);
+        search.SetValueType(ra::services::SearchFilterType::InitialValue);
+        Assert::IsFalse(search.CanEditFilterValue());
+
+        for (int i = 0; i < 100; ++i)
+        {
+            search.memory.at(12)++;
+            search.ApplyFilter();
+        }
+
+        Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual(std::wstring(L"50/50"), search.GetSelectedPage());
+        Assert::AreEqual({ 1U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
+        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(std::wstring(L"!= Initial"), search.GetFilterSummary());
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        AssertRow(search, 0, 12U, L"0x000c", L"0x70", L"0x0c");
+
+        // test initial value == 12 to check first buffered result. since every step along
+        // the way was an initial value check, should still be the original initial value
+        search.SetValueType(ra::services::SearchFilterType::InitialValue);
+        search.SetComparisonType(ComparisonType::Equals);
+        search.memory.at(12) = 12;
+        search.ApplyFilter();
+
+        Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual(std::wstring(L"50/50"), search.GetSelectedPage());
+        Assert::AreEqual({ 1U }, search.GetResultCount());
+        Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
+        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+        Assert::AreEqual(std::wstring(L"= Initial"), search.GetFilterSummary());
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        AssertRow(search, 0, 12U, L"0x000c", L"0x0c", L"0x0c");
+    }
+
     TEST_METHOD(TestDoFrameEightBit)
     {
         MemorySearchViewModelHarness search;

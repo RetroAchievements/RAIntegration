@@ -506,13 +506,13 @@ void MemorySearchViewModel::AddNewPage()
     m_vSearchResults.emplace_back();
     if (m_vSearchResults.size() > SEARCH_MAX_HISTORY + 1)
     {
-        if (GetValueType() == ra::services::SearchFilterType::InitialValue)
-            m_vSearchResults.erase(m_vSearchResults.begin() + 1);
-        else
-            m_vSearchResults.erase(m_vSearchResults.begin());
+        // always discard the second search result in case the user wants to do an initial search later
+        m_vSearchResults.erase(m_vSearchResults.begin() + 1);
     }
     else
+    {
         ++m_nSelectedSearchResult;
+    }
 }
 
 void MemorySearchViewModel::ApplyFilter()

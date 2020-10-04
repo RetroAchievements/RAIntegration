@@ -573,10 +573,11 @@ public:
         Assert::AreEqual({ 1U }, search.Results().Count());
         AssertRow(search, 0, 12U, L"0x000c", L"0x70", L"0x6f");
 
-        // test initial value == 62 to check first buffered result
+        // test initial value == 12 to check first buffered result
+        // which should still be the initial capture, even if the history had to be cycled
         search.SetValueType(ra::services::SearchFilterType::InitialValue);
         search.SetComparisonType(ComparisonType::Equals);
-        search.memory.at(12) = 62;
+        search.memory.at(12) = 12;
         search.ApplyFilter();
 
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
@@ -587,7 +588,7 @@ public:
         Assert::AreEqual(std::wstring(L"= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x000c", L"0x3e", L"0x3e");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x0c", L"0x0c");
     }
 
     TEST_METHOD(TestApplyFilterMaxPagesInitialValue)

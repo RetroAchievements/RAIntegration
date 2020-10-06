@@ -31,9 +31,6 @@ void TransactionalViewModelBase::Transaction::ValueChanged(const BoolModelProper
     {
         m_mOriginalIntValues.erase(iter);
     }
-
-    if (m_pNext != nullptr)
-        m_pNext->ValueChanged(args);
 }
 
 void TransactionalViewModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
@@ -62,9 +59,6 @@ void TransactionalViewModelBase::Transaction::ValueChanged(const StringModelProp
     {
         m_mOriginalStringValues.erase(iter);
     }
-
-    if (m_pNext != nullptr)
-        m_pNext->ValueChanged(args);
 }
 
 void TransactionalViewModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
@@ -93,9 +87,6 @@ void TransactionalViewModelBase::Transaction::ValueChanged(const IntModelPropert
     {
         m_mOriginalIntValues.erase(iter);
     }
-
-    if (m_pNext != nullptr)
-        m_pNext->ValueChanged(args);
 }
 
 void TransactionalViewModelBase::BeginTransaction()
@@ -109,10 +100,12 @@ void TransactionalViewModelBase::BeginTransaction()
 
 void TransactionalViewModelBase::CommitTransaction()
 {
-    // ASSERT: Transaction::SetValue propogates the change up the chain, so the parent
-    // transaction already has the value.
     if (m_pTransaction != nullptr)
+    {
+        m_pTransaction->Commit(*this);
+
         DiscardTransaction();
+    }
 }
 
 void TransactionalViewModelBase::DiscardTransaction()
@@ -170,6 +163,65 @@ void TransactionalViewModelBase::Transaction::Revert(TransactionalViewModelBase&
         if (pStringProperty != nullptr)
         {
             vmViewModel.SetValue(*pStringProperty, pPair.second);
+        }
+    }
+}
+
+void TransactionalViewModelBase::Transaction::Commit(TransactionalViewModelBase& vmViewModel)
+{
+    if (!m_pNext)
+        return;
+
+    for (const auto& pPair : m_mOriginalIntValues)
+    {
+        auto pScan = m_pNext->m_mOriginalIntValues.find(pPair.first);
+        if (pScan == m_pNext->m_mOriginalIntValues.end())
+        {
+            // field was not modified in parent, move the original value into the parent
+            m_pNext->m_mOriginalIntValues.insert_or_assign(pPair.first, pPair.second);
+        }
+        else
+        {
+            // field was modified in parent - if it's been modified back, remove the modification tracker
+            // otherwise, leave the previous original value in place.
+            const ModelPropertyBase* pProperty = ModelPropertyBase::GetPropertyForKey(pPair.first);
+            const IntModelProperty* pIntProperty = dynamic_cast<const IntModelProperty*>(pProperty);
+            if (pIntProperty != nullptr)
+            {
+                if (vmViewModel.GetValue(*pIntProperty) == pScan->second)
+                    m_pNext->m_mOriginalIntValues.erase(pScan);
+            }
+            else
+            {
+                const BoolModelProperty* pBoolProperty = dynamic_cast<const BoolModelProperty*>(pProperty);
+                if (pBoolProperty != nullptr)
+                {
+                    if (vmViewModel.GetValue(*pBoolProperty) == static_cast<bool>(pScan->second))
+                        m_pNext->m_mOriginalIntValues.erase(pScan);
+                }
+            }
+        }
+    }
+
+    for (const auto& pPair : m_mOriginalStringValues)
+    {
+        auto pScan = m_pNext->m_mOriginalStringValues.find(pPair.first);
+        if (pScan == m_pNext->m_mOriginalStringValues.end())
+        {
+            // field was not modified in parent, move the original value into the parent
+            m_pNext->m_mOriginalStringValues.insert_or_assign(pPair.first, pPair.second);
+        }
+        else
+        {
+            // field was modified in parent - if it's been modified back, remove the modification tracker
+            // otherwise, leave the previous original value in place.
+            const ModelPropertyBase* pProperty = ModelPropertyBase::GetPropertyForKey(pPair.first);
+            const StringModelProperty* pStringProperty = dynamic_cast<const StringModelProperty*>(pProperty);
+            if (pStringProperty != nullptr)
+            {
+                if (vmViewModel.GetValue(*pStringProperty) == pScan->second)
+                    m_pNext->m_mOriginalStringValues.erase(pScan);
+            }
         }
     }
 }

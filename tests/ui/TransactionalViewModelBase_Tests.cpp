@@ -35,14 +35,19 @@ TEST_CLASS(TransactionalViewModelBase_Tests)
         static const StringModelProperty TransactionalStringProperty;
         const std::wstring& GetTransactionalString() const { return GetValue(TransactionalStringProperty); }
         void SetTransactionalString(const std::wstring& sValue) { SetValue(TransactionalStringProperty, sValue); }
+        const std::wstring* GetPreviousTransactonalString() const { return m_pTransaction->GetPreviousValue(TransactionalStringProperty); }
 
         static const IntModelProperty TransactionalIntProperty;
         int GetTransactionalInt() const { return GetValue(TransactionalIntProperty); }
         void SetTransactionalInt(int nValue) { SetValue(TransactionalIntProperty, nValue); }
+        const int* GetPreviousTransactonalInt() const { return m_pTransaction->GetPreviousValue(TransactionalIntProperty); }
 
         static const BoolModelProperty TransactionalBoolProperty;
         bool GetTransactionalBool() const { return GetValue(TransactionalBoolProperty); }
         void SetTransactionalBool(bool bValue) { SetValue(TransactionalBoolProperty, bValue); }
+        const bool* GetPreviousTransactonalBool() const { return m_pTransaction->GetPreviousValue(TransactionalBoolProperty); }
+
+        bool TransactionIsModified() const { return m_pTransaction->IsModified(); }
     };
 
     class NotifyTargetHarness : public ViewModelBase::NotifyTarget
@@ -711,6 +716,71 @@ public:
         Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
         Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
         Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+    }
+
+    TEST_METHOD(TestPreviousValues)
+    {
+        ViewModelHarness vmViewModel;
+        vmViewModel.BeginTransaction();
+
+        // no previous value captured
+        Assert::IsNull(vmViewModel.GetPreviousTransactonalBool());
+        Assert::IsNull(vmViewModel.GetPreviousTransactonalInt());
+        Assert::IsNull(vmViewModel.GetPreviousTransactonalString());
+
+        vmViewModel.BeginTransaction();
+        vmViewModel.SetTransactionalBool(true);
+        vmViewModel.SetTransactionalInt(50);
+        vmViewModel.SetTransactionalString(L"Test2");
+
+        // original values captured
+        Assert::AreEqual(false, *vmViewModel.GetPreviousTransactonalBool());
+        Assert::AreEqual(0, *vmViewModel.GetPreviousTransactonalInt());
+        Assert::AreEqual(std::wstring(), *vmViewModel.GetPreviousTransactonalString());
+
+        vmViewModel.BeginTransaction();
+
+        // no previous values captured for this transaction
+        Assert::IsNull(vmViewModel.GetPreviousTransactonalBool());
+        Assert::IsNull(vmViewModel.GetPreviousTransactonalInt());
+        Assert::IsNull(vmViewModel.GetPreviousTransactonalString());
+
+        vmViewModel.SetTransactionalBool(false);
+        vmViewModel.SetTransactionalInt(100);
+        vmViewModel.SetTransactionalString(L"Test3");
+
+        // previous values captured
+        Assert::AreEqual(true, *vmViewModel.GetPreviousTransactonalBool());
+        Assert::AreEqual(50, *vmViewModel.GetPreviousTransactonalInt());
+        Assert::AreEqual(std::wstring(L"Test2"), *vmViewModel.GetPreviousTransactonalString());
+
+        vmViewModel.CommitTransaction();
+
+        // previous values updated from commit - since the boolean matches the original value
+        // it returns null. the other older original values are maintained
+        Assert::IsNull(vmViewModel.GetPreviousTransactonalBool());
+        Assert::AreEqual(0, *vmViewModel.GetPreviousTransactonalInt());
+        Assert::AreEqual(std::wstring(), *vmViewModel.GetPreviousTransactonalString());
+    }
+
+    TEST_METHOD(TestIsModified)
+    {
+        ViewModelHarness vmViewModel;
+        vmViewModel.BeginTransaction();
+
+        Assert::IsFalse(vmViewModel.TransactionIsModified());
+
+        vmViewModel.BeginTransaction();
+        vmViewModel.SetTransactionalBool(true);
+        vmViewModel.SetTransactionalInt(50);
+        vmViewModel.SetTransactionalString(L"Test2");
+        Assert::IsTrue(vmViewModel.TransactionIsModified());
+
+        vmViewModel.BeginTransaction();
+        Assert::IsFalse(vmViewModel.TransactionIsModified());
+
+        vmViewModel.SetTransactionalBool(false);
+        Assert::IsTrue(vmViewModel.TransactionIsModified());
     }
 };
 

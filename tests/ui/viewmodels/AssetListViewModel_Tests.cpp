@@ -6,6 +6,8 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockThreadPool.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -22,6 +24,8 @@ private:
     {
     public:
         ra::services::mocks::MockThreadPool mockThreadPool;
+        ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::data::mocks::MockGameContext mockGameContext;
 
         void AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle)
         {
@@ -31,6 +35,38 @@ private:
             vmAchievement->SetPoints(nPoints);
             vmAchievement->SetName(sTitle);
             vmAchievement->CreateServerCheckpoint();
+            vmAchievement->CreateLocalCheckpoint();
+            Assets().Append(std::move(vmAchievement));
+        }
+
+        void AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle,
+            const std::wstring& sDescription, const std::wstring& sBadge, const std::string& sTrigger)
+        {
+            auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+            vmAchievement->SetID(gsl::narrow_cast<unsigned int>(Assets().Count() + 1));
+            vmAchievement->SetCategory(nCategory);
+            vmAchievement->SetPoints(nPoints);
+            vmAchievement->SetName(sTitle);
+            vmAchievement->SetDescription(sDescription);
+            vmAchievement->SetBadge(sBadge);
+            vmAchievement->SetTrigger(sTrigger);
+            vmAchievement->CreateServerCheckpoint();
+            vmAchievement->CreateLocalCheckpoint();
+            Assets().Append(std::move(vmAchievement));
+        }
+
+        void AddNewAchievement(unsigned nPoints, const std::wstring& sTitle,
+            const std::wstring& sDescription, const std::wstring& sBadge, const std::string& sTrigger)
+        {
+            auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+            vmAchievement->CreateServerCheckpoint();
+            vmAchievement->SetID(gsl::narrow_cast<unsigned int>(Assets().Count() + 1));
+            vmAchievement->SetCategory(AssetCategory::Local);
+            vmAchievement->SetPoints(nPoints);
+            vmAchievement->SetName(sTitle);
+            vmAchievement->SetDescription(sDescription);
+            vmAchievement->SetBadge(sBadge);
+            vmAchievement->SetTrigger(sTrigger);
             vmAchievement->CreateLocalCheckpoint();
             Assets().Append(std::move(vmAchievement));
         }
@@ -45,6 +81,11 @@ private:
         void ForceUpdateButtons()
         {
             mockThreadPool.AdvanceTime(std::chrono::milliseconds(500));
+        }
+
+        const std::string& GetUserFile(const std::wstring& sGameId)
+        {
+            return mockLocalStorage.GetStoredData(ra::services::StorageItemType::UserAchievements, sGameId);
         }
     };
 
@@ -1018,8 +1059,156 @@ public:
         Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
     }
 
-    // TODO: activate selected
-    // TODO: deactivate selected
+    TEST_METHOD(TestSaveSelectedLocalUnmodified)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockGameContext.SetGameId(22U);
+        vmAssetList.AddNewAchievement(5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+
+        vmAssetList.SaveSelected();
+
+        const auto& sText = vmAssetList.GetUserFile(L"22");
+        AssertContains(sText, "1:\"0xH1234=1\":Test1:Desc1:::::5:::::12345");
+    }
+
+    TEST_METHOD(TestSaveSelectedLocalModified)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetCategory::Local);
+        vmAssetList.mockGameContext.SetGameId(22U);
+        vmAssetList.AddNewAchievement(5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddNewAchievement(7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        auto* pItem = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        pItem->SetPoints(10);
+        pItem->SetName(L"Test1b");
+        pItem->SetDescription(L"Desc1b");
+        pItem->SetBadge(L"54321");
+        pItem->SetTrigger("0xH1234=2");
+
+        // when an item is selected, non-selected modified items should be written using their unmodified state
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+
+        vmAssetList.SaveSelected();
+        const auto& sText = vmAssetList.GetUserFile(L"22");
+        AssertContains(sText, "1:\"0xH1234=1\":Test1:Desc1:::::5:::::12345");
+        AssertContains(sText, "2:\"0xH1111=1\":Test2:Desc2:::::7:::::11111");
+
+        Assert::AreEqual(AssetChanges::Modified, pItem->GetChanges());
+
+        // when no items are selected, all items should be committed and written
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(false);
+
+        vmAssetList.SaveSelected();
+        const auto& sText2 = vmAssetList.GetUserFile(L"22");
+        AssertContains(sText2, "1:\"0xH1234=2\":Test1b:Desc1b:::::10:::::54321");
+        AssertContains(sText2, "2:\"0xH1111=1\":Test2:Desc2:::::7:::::11111");
+
+        Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
+
+        // when an item is selected, non-selected modified items should be written using their unmodified state
+        pItem->SetName(L"Test1c");
+        auto* pItem2 = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(1));
+        pItem2->SetName(L"Test2b");
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+
+        vmAssetList.SaveSelected();
+        const auto& sText3 = vmAssetList.GetUserFile(L"22");
+        AssertContains(sText3, "1:\"0xH1234=2\":Test1c:Desc1b:::::10:::::54321");
+        AssertContains(sText3, "2:\"0xH1111=1\":Test2:Desc2:::::7:::::11111");
+    }
+
+    TEST_METHOD(TestSaveSelectedUnofficialUnmodified)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockGameContext.SetGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+
+        vmAssetList.SaveSelected();
+
+        const auto& sText = vmAssetList.GetUserFile(L"22");
+        AssertDoesNotContain(sText, "1:\"0xH1234=1\":");
+    }
+
+    TEST_METHOD(TestSaveSelectedUnofficialModified)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetCategory::Unofficial);
+        vmAssetList.mockGameContext.SetGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        auto* pItem = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        pItem->SetPoints(10);
+        pItem->SetName(L"Test1b");
+        pItem->SetDescription(L"Desc1b");
+        pItem->SetBadge(L"54321");
+        pItem->SetTrigger("0xH1234=2");
+
+        // when an item is selected, non-selected modified items should be written using their unmodified state
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+
+        vmAssetList.SaveSelected();
+        const auto& sText = vmAssetList.GetUserFile(L"22");
+        AssertDoesNotContain(sText, "1:\"0xH1234=1\":");
+        AssertDoesNotContain(sText, "2:\"0xH1111=1\":");
+
+        Assert::AreEqual(AssetChanges::Modified, pItem->GetChanges());
+
+        // when no items are selected, all items should be committed and written
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(false);
+
+        vmAssetList.SaveSelected();
+        const auto& sText2 = vmAssetList.GetUserFile(L"22");
+        AssertContains(sText2, "1:\"0xH1234=2\":Test1b:Desc1b:::::10:::::54321");
+        AssertDoesNotContain(sText, "2:\"0xH1111=1\":");
+
+        Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
+
+        // when an item is selected, non-selected modified items should be written using their unmodified state
+        pItem->SetName(L"Test1c");
+        auto* pItem2 = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(1));
+        pItem2->SetName(L"Test2b");
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+
+        vmAssetList.SaveSelected();
+        const auto& sText3 = vmAssetList.GetUserFile(L"22");
+        AssertContains(sText3, "1:\"0xH1234=2\":Test1c:Desc1b:::::10:::::54321");
+        AssertDoesNotContain(sText, "2:\"0xH1111=1\":");
+    }
+
+    TEST_METHOD(TestSaveSelectedDiscardCoreChanges)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockGameContext.SetGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        auto* pItem = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        pItem->SetName(L"Test1b");
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+
+        vmAssetList.SaveSelected();
+        const auto& sText = vmAssetList.GetUserFile(L"22");
+        AssertContains(sText, "1:\"0xH1234=1\":Test1b:Desc1:::::5:::::12345");
+        AssertDoesNotContain(sText, "2:\"0xH1111=1\":");
+
+        Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
+
+        // change the value back to match the server checkpoint, should no longer appear in local file
+        pItem->SetName(L"Test1");
+        vmAssetList.SaveSelected();
+        const auto& sText2 = vmAssetList.GetUserFile(L"22");
+        AssertDoesNotContain(sText2, "1:\"0xH1234=1\":");
+        AssertDoesNotContain(sText2, "2:\"0xH1111=1\":");
+
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+    }
 };
 
 } // namespace tests

@@ -33,3 +33,12 @@ void AssertContains(const std::string& sHaystack, const std::string& sNeedle)
         Assert::Fail(sError.c_str());
     }
 }
+
+void AssertDoesNotContain(const std::string& sHaystack, const std::string& sNeedle)
+{
+    if (sHaystack.find(sNeedle) != std::string::npos)
+    {
+        const auto sError = ra::StringPrintf(L"\"%s\" found in \"%s\"", ra::Widen(sNeedle), ra::Widen(sHaystack));
+        Assert::Fail(sError.c_str());
+    }
+}

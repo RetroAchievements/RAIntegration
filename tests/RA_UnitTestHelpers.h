@@ -275,5 +275,6 @@ std::wstring ToString<ra::ui::viewmodels::AssetChanges>(
 } // namespace Microsoft
 
 void AssertContains(const std::string& sHaystack, const std::string& sNeedle);
+void AssertDoesNotContain(const std::string& sHaystack, const std::string& sNeedle);
 
 #endif /* !RA_UNITTESTHELPERS_H */

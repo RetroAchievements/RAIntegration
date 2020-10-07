@@ -167,14 +167,14 @@ void TransactionalViewModelBase::Transaction::Revert(TransactionalViewModelBase&
     }
 }
 
-void TransactionalViewModelBase::Transaction::Commit(TransactionalViewModelBase& vmViewModel)
+void TransactionalViewModelBase::Transaction::Commit(const TransactionalViewModelBase& vmViewModel)
 {
     if (!m_pNext)
         return;
 
     for (const auto& pPair : m_mOriginalIntValues)
     {
-        auto pScan = m_pNext->m_mOriginalIntValues.find(pPair.first);
+        const auto pScan = m_pNext->m_mOriginalIntValues.find(pPair.first);
         if (pScan == m_pNext->m_mOriginalIntValues.end())
         {
             // field was not modified in parent, move the original value into the parent
@@ -196,7 +196,7 @@ void TransactionalViewModelBase::Transaction::Commit(TransactionalViewModelBase&
                 const BoolModelProperty* pBoolProperty = dynamic_cast<const BoolModelProperty*>(pProperty);
                 if (pBoolProperty != nullptr)
                 {
-                    if (vmViewModel.GetValue(*pBoolProperty) == static_cast<bool>(pScan->second))
+                    if (vmViewModel.GetValue(*pBoolProperty) == gsl::narrow_cast<bool>(pScan->second))
                         m_pNext->m_mOriginalIntValues.erase(pScan);
                 }
             }
@@ -205,7 +205,7 @@ void TransactionalViewModelBase::Transaction::Commit(TransactionalViewModelBase&
 
     for (const auto& pPair : m_mOriginalStringValues)
     {
-        auto pScan = m_pNext->m_mOriginalStringValues.find(pPair.first);
+        const auto pScan = m_pNext->m_mOriginalStringValues.find(pPair.first);
         if (pScan == m_pNext->m_mOriginalStringValues.end())
         {
             // field was not modified in parent, move the original value into the parent

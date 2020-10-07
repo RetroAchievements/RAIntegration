@@ -107,7 +107,7 @@ protected:
         const bool* GetPreviousValue(const BoolModelProperty& pProperty) const
         {
             const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(pProperty.GetKey());
-            return (iter != m_mOriginalIntValues.end()) ? reinterpret_cast<const bool*>(&iter->second) : nullptr;
+            GSL_SUPPRESS_TYPE1 return (iter != m_mOriginalIntValues.end()) ? reinterpret_cast<const bool*>(&iter->second) : nullptr;
         }
 
         /// <summary>
@@ -190,7 +190,7 @@ protected:
         }
 
         void Revert(TransactionalViewModelBase& vmViewModel);
-        void Commit(TransactionalViewModelBase& vmViewModel);
+        void Commit(const TransactionalViewModelBase& vmViewModel);
 
         std::unique_ptr<Transaction> m_pNext;
 

@@ -219,7 +219,7 @@ void AssetViewModelBase::RestoreServerCheckpoint()
     SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
 }
 
-bool AssetViewModelBase::HasUnpublishedChanges() const
+bool AssetViewModelBase::HasUnpublishedChanges() const noexcept
 {
     return (m_pTransaction && m_pTransaction->m_pNext && m_pTransaction->m_pNext->IsModified());
 }
@@ -303,7 +303,7 @@ const std::string& AssetViewModelBase::GetAssetDefinition(const AssetDefinition&
     }
 }
 
-const std::string& AssetViewModelBase::GetLocalAssetDefinition(const AssetDefinition& pAsset) const
+const std::string& AssetViewModelBase::GetLocalAssetDefinition(const AssetDefinition& pAsset) const noexcept
 {
     if (pAsset.m_bLocalModified)
         return pAsset.m_sLocalDefinition;

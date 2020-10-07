@@ -1110,6 +1110,7 @@ public:
         // when an item is selected, non-selected modified items should be written using their unmodified state
         pItem->SetName(L"Test1c");
         auto* pItem2 = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(1));
+        Expects(pItem2 != nullptr);
         pItem2->SetName(L"Test2b");
 
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
@@ -1171,6 +1172,7 @@ public:
         // when an item is selected, non-selected modified items should be written using their unmodified state
         pItem->SetName(L"Test1c");
         auto* pItem2 = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(1));
+        Expects(pItem2 != nullptr);
         pItem2->SetName(L"Test2b");
 
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);

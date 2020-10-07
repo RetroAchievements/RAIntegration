@@ -162,7 +162,7 @@ public:
     /// Determines if the local checkpoint differs from the server checkpoint. Ignores any changes
     /// made after the local checkpoint - use GetChanges() for overall modification state.
     /// </summary>
-    bool HasUnpublishedChanges() const;
+    bool HasUnpublishedChanges() const noexcept;
 
     virtual void Serialize(ra::services::TextWriter& pWriter) const = 0;
     virtual bool Deserialize(ra::Tokenizer& pTokenizer) = 0;
@@ -221,7 +221,7 @@ protected:
 
     const std::string& GetAssetDefinition(const AssetDefinition& pAsset) const;
     void SetAssetDefinition(AssetDefinition& pAsset, const std::string& sValue);
-    const std::string& GetLocalAssetDefinition(const AssetDefinition& pAsset) const;
+    const std::string& GetLocalAssetDefinition(const AssetDefinition& pAsset) const noexcept;
 
     bool GetLocalValue(const BoolModelProperty& pProperty) const;
     const std::wstring& GetLocalValue(const StringModelProperty& pProperty) const;

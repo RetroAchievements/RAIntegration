@@ -47,7 +47,7 @@ TEST_CLASS(TransactionalViewModelBase_Tests)
         void SetTransactionalBool(bool bValue) { SetValue(TransactionalBoolProperty, bValue); }
         const bool* GetPreviousTransactonalBool() const { return m_pTransaction->GetPreviousValue(TransactionalBoolProperty); }
 
-        bool TransactionIsModified() const { return m_pTransaction->IsModified(); }
+        bool TransactionIsModified() const noexcept { return m_pTransaction->IsModified(); }
     };
 
     class NotifyTargetHarness : public ViewModelBase::NotifyTarget

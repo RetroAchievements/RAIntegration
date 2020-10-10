@@ -15,6 +15,7 @@ const IntModelProperty AssetViewModelBase::ChangesProperty("AssetViewModelBase",
 AssetViewModelBase::AssetViewModelBase() noexcept
 {
     SetTransactional(NameProperty);
+    SetTransactional(DescriptionProperty);
     SetTransactional(CategoryProperty);
 }
 
@@ -218,6 +219,11 @@ void AssetViewModelBase::RestoreServerCheckpoint()
     SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
 }
 
+bool AssetViewModelBase::HasUnpublishedChanges() const noexcept
+{
+    return (m_pTransaction && m_pTransaction->m_pNext && m_pTransaction->m_pNext->IsModified());
+}
+
 void AssetViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == IsModifiedProperty)
@@ -236,6 +242,51 @@ void AssetViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& arg
     }
 }
 
+bool AssetViewModelBase::GetLocalValue(const BoolModelProperty& pProperty) const
+{
+    // make sure we have a local checkpoint
+    if (m_pTransaction != nullptr && m_pTransaction->m_pNext != nullptr)
+    {
+        // then return the previous value if it has been modified
+        const auto* pValue = m_pTransaction->GetPreviousValue(pProperty);
+        if (pValue)
+            return *pValue;
+    }
+
+    // return the current value
+    return GetValue(pProperty);
+}
+
+const std::wstring& AssetViewModelBase::GetLocalValue(const StringModelProperty& pProperty) const
+{
+    // make sure we have a local checkpoint
+    if (m_pTransaction != nullptr && m_pTransaction->m_pNext != nullptr)
+    {
+        // then return the previous value if it has been modified
+        const auto* pValue = m_pTransaction->GetPreviousValue(pProperty);
+        if (pValue)
+            return *pValue;
+    }
+
+    // return the current value
+    return GetValue(pProperty);
+}
+
+int AssetViewModelBase::GetLocalValue(const IntModelProperty& pProperty) const
+{
+    // make sure we have a local checkpoint
+    if (m_pTransaction != nullptr && m_pTransaction->m_pNext != nullptr)
+    {
+        // then return the previous value if it has been modified
+        const auto* pValue = m_pTransaction->GetPreviousValue(pProperty);
+        if (pValue)
+            return *pValue;
+    }
+
+    // return the current value
+    return GetValue(pProperty);
+}
+
 const std::string& AssetViewModelBase::GetAssetDefinition(const AssetDefinition& pAsset) const
 {
     const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset.m_pProperty));
@@ -250,6 +301,14 @@ const std::string& AssetViewModelBase::GetAssetDefinition(const AssetDefinition&
         default:
             return pAsset.m_sCurrentDefinition;
     }
+}
+
+const std::string& AssetViewModelBase::GetLocalAssetDefinition(const AssetDefinition& pAsset) const noexcept
+{
+    if (pAsset.m_bLocalModified)
+        return pAsset.m_sLocalDefinition;
+
+    return pAsset.m_sCoreDefinition;
 }
 
 void AssetViewModelBase::SetAssetDefinition(AssetDefinition& pAsset, const std::string& sValue)

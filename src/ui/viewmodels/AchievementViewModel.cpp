@@ -43,13 +43,13 @@ void AchievementViewModel::Deactivate()
 
 void AchievementViewModel::Serialize(ra::services::TextWriter& pWriter) const
 {
-    WriteQuoted(pWriter, GetTrigger());
-    WritePossiblyQuoted(pWriter, GetName());
-    WritePossiblyQuoted(pWriter, GetDescription());
+    WriteQuoted(pWriter, GetLocalAssetDefinition(m_pTrigger));
+    WritePossiblyQuoted(pWriter, GetLocalValue(NameProperty));
+    WritePossiblyQuoted(pWriter, GetLocalValue(DescriptionProperty));
     pWriter.Write("::::"); // progress/max/format/author
-    WriteNumber(pWriter, GetPoints());
+    WriteNumber(pWriter, GetLocalValue(PointsProperty));
     pWriter.Write("::::"); // created/modified/upvotes/downvotes
-    WritePossiblyQuoted(pWriter, GetBadge());
+    WritePossiblyQuoted(pWriter, GetLocalValue(BadgeProperty));
 }
 
 bool AchievementViewModel::Deserialize(ra::Tokenizer& pTokenizer)

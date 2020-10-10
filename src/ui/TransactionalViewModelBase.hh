@@ -102,6 +102,35 @@ protected:
     {
     public:
         /// <summary>
+        /// Gets the value of the property prior to any changes made in the current transaction
+        /// </summary>
+        const bool* GetPreviousValue(const BoolModelProperty& pProperty) const
+        {
+            const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(pProperty.GetKey());
+            GSL_SUPPRESS_TYPE1 return (iter != m_mOriginalIntValues.end()) ? reinterpret_cast<const bool*>(&iter->second) : nullptr;
+        }
+
+        /// <summary>
+        /// Gets the previous value for the property if it has been modified, or the default value if
+        /// if has not been modified. Use <see cref="IsModified"/> to determined if if was modified.
+        /// </summary>
+        const std::wstring* GetPreviousValue(const StringModelProperty& pProperty) const
+        {
+            const StringModelProperty::ValueMap::const_iterator iter = m_mOriginalStringValues.find(pProperty.GetKey());
+            return (iter != m_mOriginalStringValues.end()) ? &iter->second : nullptr;
+        }
+
+        /// <summary>
+        /// Gets the previous value for the property if it has been modified, or the default value if
+        /// if has not been modified. Use <see cref="IsModified"/> to determined if if was modified.
+        /// </summary>
+        const int* GetPreviousValue(const IntModelProperty& pProperty) const
+        {
+            const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(pProperty.GetKey());
+            return (iter != m_mOriginalIntValues.end()) ? &iter->second : nullptr;
+        }
+
+        /// <summary>
         /// Updates the transaction with the new value for a property.
         /// </summary>
         /// <param name="args">Information about the change.</param>
@@ -161,6 +190,7 @@ protected:
         }
 
         void Revert(TransactionalViewModelBase& vmViewModel);
+        void Commit(const TransactionalViewModelBase& vmViewModel);
 
         std::unique_ptr<Transaction> m_pNext;
 

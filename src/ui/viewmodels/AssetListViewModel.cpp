@@ -563,20 +563,17 @@ void AssetListViewModel::ActivateSelected()
 
 void AssetListViewModel::SaveSelected()
 {
-    if (!CanSave())
-        return;
-
     const bool bHasSelection = HasSelection(AssetType::Achievement);
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
 
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(GetGameId()));
+    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.GameId()));
     if (pData == nullptr)
     {
         RA_LOG_ERR("Failed to create user assets file");
         return;
     }
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
     pData->WriteLine(_RA_IntegrationVersion()); // version used to create the file
     pData->WriteLine(pGameContext.GameTitle());
 
@@ -586,27 +583,49 @@ void AssetListViewModel::SaveSelected()
         if (pItem == nullptr)
             continue;
 
-        if (pItem->GetChanges() == AssetChanges::None)
-            continue;
-
-        if (bHasSelection)
+        switch (pItem->GetChanges())
         {
-            const auto nFilteredIndex = GetFilteredAssetIndex(*pItem);
-            if (nFilteredIndex >= 0 && !m_vFilteredAssets.GetItemAt(nFilteredIndex)->IsSelected())
-            {
-                // TODO: still need to write local version even if it's not selected,
-                // even if it hasn't been modified
+            case AssetChanges::None:
+                // non-modified committed items don't need to be serialized
+                // ASSERT: unmodified local items should report as Unpublished
                 continue;
-            }
+
+            case AssetChanges::Unpublished:
+                // always write unpublished changes
+                break;
+
+            default:
+                // if the item is modified, check to see if it's selected
+                bool bSelected = !bHasSelection;
+                if (bHasSelection)
+                {
+                    const auto nFilteredIndex = GetFilteredAssetIndex(*pItem);
+                    if (nFilteredIndex >= 0 && m_vFilteredAssets.GetItemAt(nFilteredIndex)->IsSelected())
+                        bSelected = true;
+                }
+
+                // if it's selected, commit the changes before flushing
+                if (bSelected)
+                {
+                    pItem->UpdateLocalCheckpoint();
+
+                    // reverted back to committed state, no need to serialize
+                    if (pItem->GetChanges() == AssetChanges::None)
+                        continue;
+                }
+                else if (pItem->GetCategory() != AssetCategory::Local)
+                {
+                    // if there's no unpublished changes and the item is not selected, ignore it
+                    if (!pItem->HasUnpublishedChanges())
+                        continue;
+                }
+                break;
         }
 
         // serialize the item
         pData->Write(std::to_string(pItem->GetID()));
         pItem->Serialize(*pData);
         pData->WriteLine();
-
-        // reset the modified state
-        pItem->UpdateLocalCheckpoint();
     }
 
     RA_LOG_INFO("Wrote user assets file");

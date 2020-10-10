@@ -47,6 +47,30 @@ void ViewModelCollectionBase::RemoveAt(gsl::index nIndex)
     }
 }
 
+void ViewModelCollectionBase::Clear()
+{
+    assert(!IsFrozen());
+
+    if (m_nSize == 0)
+        return;
+
+    BeginUpdate();
+
+    const bool bIsWatching = IsWatching();
+    for (size_t nIndex = 0; nIndex < m_nSize; ++nIndex)
+    {
+        auto& pItem = m_vItems.at(nIndex);
+        if (bIsWatching)
+            pItem.StopWatching();
+
+        pItem.AttachViewModel(nullptr);
+    }
+
+    m_nSize = 0;
+
+    EndUpdate();
+}
+
 void ViewModelCollectionBase::MoveItem(gsl::index nIndex, gsl::index nNewIndex)
 {
     // nothing to do

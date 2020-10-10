@@ -51,6 +51,9 @@ private:
 
     ra::ui::win32::bindings::CheckBoxBinding m_bindPauseOnReset;
     ra::ui::win32::bindings::CheckBoxBinding m_bindPauseOnTrigger;
+
+    ra::ui::win32::bindings::GridBinding m_bindGroups;
+    ra::ui::win32::bindings::GridBinding m_bindTrigger;
 };
 
 } // namespace win32

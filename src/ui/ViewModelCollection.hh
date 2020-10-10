@@ -119,6 +119,11 @@ public:
     void RemoveAt(gsl::index nIndex);
 
     /// <summary>
+    /// Removes all items from the collection.
+    /// </summary>
+    void Clear();
+
+    /// <summary>
     /// Moves an item from one index to another.
     /// </summary>
     void MoveItem(gsl::index nIndex, gsl::index nNewIndex);

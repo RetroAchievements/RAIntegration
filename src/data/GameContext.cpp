@@ -66,12 +66,14 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     m_vAchievements.clear();
     m_vLeaderboards.clear();
 
-    auto& vmAssets = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
+    auto& vmWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+    vmWindowManager.AssetEditor.LoadAsset(nullptr);
+
+    auto& vmAssets = vmWindowManager.AssetList;
     vmAssets.SetGameId(nGameId);
     vmAssets.Assets().BeginUpdate();
 
-    for (gsl::index nIndex = vmAssets.Assets().Count() - 1; nIndex >= 0; --nIndex)
-        vmAssets.Assets().RemoveAt(nIndex);
+    vmAssets.Assets().Clear();
 
     if (nGameId == 0)
     {

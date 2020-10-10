@@ -21,7 +21,7 @@ class AssetListViewModel : public WindowViewModelBase,
 {
 public:
     GSL_SUPPRESS_F6 AssetListViewModel() noexcept;
-    ~AssetListViewModel() = default;
+    ~AssetListViewModel();
 
     AssetListViewModel(const AssetListViewModel&) noexcept = delete;
     AssetListViewModel& operator=(const AssetListViewModel&) noexcept = delete;

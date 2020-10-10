@@ -134,10 +134,6 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
             sBuffer.push_back('b');
             break;
 
-        case TriggerOperandType::Inverted:
-            sBuffer.push_back('~');
-            break;
-
         default:
             assert(!"Unknown operand type");
             break;
@@ -212,7 +208,6 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
         case TriggerOperandType::Delta:
         case TriggerOperandType::Prior:
         case TriggerOperandType::BCD:
-        case TriggerOperandType::Inverted:
         {
             const auto nSize = MapMemSize(operand.size);
             SetValue(pSizeProperty, ra::etoi(nSize));

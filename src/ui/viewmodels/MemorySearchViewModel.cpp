@@ -504,10 +504,15 @@ void MemorySearchViewModel::AddNewPage()
 
     // add a new search history entry
     m_vSearchResults.emplace_back();
-    if (m_vSearchResults.size() > SEARCH_MAX_HISTORY)
-        m_vSearchResults.erase(m_vSearchResults.begin());
+    if (m_vSearchResults.size() > SEARCH_MAX_HISTORY + 1)
+    {
+        // always discard the second search result in case the user wants to do an initial search later
+        m_vSearchResults.erase(m_vSearchResults.begin() + 1);
+    }
     else
+    {
         ++m_nSelectedSearchResult;
+    }
 }
 
 void MemorySearchViewModel::ApplyFilter()

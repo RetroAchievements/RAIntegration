@@ -59,6 +59,51 @@ void AssetEditorDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
 
 // ------------------------------------
 
+class SizeColumnBinding : public ra::ui::win32::bindings::GridLookupColumnBinding
+{
+public:
+    SizeColumnBinding(const IntModelProperty& pBoundProperty, const IntModelProperty& pTypeProperty, const ra::ui::viewmodels::LookupItemViewModelCollection& vmItems) noexcept
+        : ra::ui::win32::bindings::GridLookupColumnBinding(pBoundProperty, vmItems), m_pTypeProperty(&pTypeProperty)
+    {
+    }
+
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        if (IsValueHidden(vmItems, nIndex))
+            return L"";
+
+        return GridLookupColumnBinding::GetText(vmItems, nIndex);
+    }
+
+    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
+    {
+        if (pProperty == *m_pTypeProperty)
+            return true;
+
+        return GridLookupColumnBinding::DependsOn(pProperty);
+    }
+
+    HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override
+    {
+        auto* pGridBinding = static_cast<ra::ui::win32::bindings::GridBinding*>(pInfo.pGridBinding);
+        Expects(pGridBinding != nullptr);
+
+        if (IsValueHidden(pGridBinding->GetItems(), pInfo.nItemIndex))
+            return nullptr;
+
+        return GridLookupColumnBinding::CreateInPlaceEditor(hParent, pInfo);
+    }
+
+protected:
+    bool IsValueHidden(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
+    {
+        const auto nOperandType = ra::itoe<ra::ui::viewmodels::TriggerOperandType>(vmItems.GetItemValue(nIndex, *m_pTypeProperty));
+        return (nOperandType == ra::ui::viewmodels::TriggerOperandType::Value);
+    }
+
+    const IntModelProperty* m_pTypeProperty = nullptr;
+};
+
 AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     : DialogBase(vmAssetList),
       m_bindID(vmAssetList),
@@ -102,54 +147,63 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
         TriggerConditionViewModel::TypeProperty, vmAssetList.Trigger().ConditionTypes());
     pFlagColumn->SetHeader(L"Flag");
     pFlagColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_FLAG);
+    pFlagColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(1, std::move(pFlagColumn));
 
     auto pSourceTypeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         TriggerConditionViewModel::SourceTypeProperty, vmAssetList.Trigger().OperandTypes());
     pSourceTypeColumn->SetHeader(L"Type");
     pSourceTypeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_TYPE);
+    pSourceTypeColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(2, std::move(pSourceTypeColumn));
 
-    auto pSourceSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        TriggerConditionViewModel::SourceSizeProperty, vmAssetList.Trigger().OperandSizes());
+    auto pSourceSizeColumn = std::make_unique<SizeColumnBinding>(TriggerConditionViewModel::SourceSizeProperty,
+        TriggerConditionViewModel::SourceTypeProperty, vmAssetList.Trigger().OperandSizes());
     pSourceSizeColumn->SetHeader(L"Size");
     pSourceSizeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_SIZE);
+    pSourceSizeColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(3, std::move(pSourceSizeColumn));
 
     auto pSourceValueColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(
         TriggerConditionViewModel::SourceValueProperty);
     pSourceValueColumn->SetHeader(L"Memory");
     pSourceValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_VALUE);
+    pSourceValueColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(4, std::move(pSourceValueColumn));
 
     auto pOperatorColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         TriggerConditionViewModel::OperatorProperty, vmAssetList.Trigger().OperatorTypes());
     pOperatorColumn->SetHeader(L"Oper");
     pOperatorColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_OPERATOR);
+    pOperatorColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(5, std::move(pOperatorColumn));
 
     auto pTargetTypeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         TriggerConditionViewModel::TargetTypeProperty, vmAssetList.Trigger().OperandTypes());
     pTargetTypeColumn->SetHeader(L"Type");
     pTargetTypeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_TYPE);
+    pTargetTypeColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(6, std::move(pTargetTypeColumn));
 
-    auto pTargetSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        TriggerConditionViewModel::TargetSizeProperty, vmAssetList.Trigger().OperandSizes());
+    auto pTargetSizeColumn = std::make_unique<SizeColumnBinding>(TriggerConditionViewModel::TargetSizeProperty,
+        TriggerConditionViewModel::TargetTypeProperty, vmAssetList.Trigger().OperandSizes());
     pTargetSizeColumn->SetHeader(L"Size");
     pTargetSizeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_SIZE);
+    pTargetSizeColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(7, std::move(pTargetSizeColumn));
 
     auto pTargetValueColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(
         TriggerConditionViewModel::TargetValueProperty);
     pTargetValueColumn->SetHeader(L"Mem/Val");
     pTargetValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_VALUE);
+    pTargetValueColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(8, std::move(pTargetValueColumn));
 
     auto pHitsColumn = std::make_unique<ra::ui::win32::bindings::GridNumberColumnBinding>(
         TriggerConditionViewModel::RequiredHitsProperty);
     pHitsColumn->SetHeader(L"Hits");
     pHitsColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Fill, COLUMN_WIDTH_HITS);
+    pHitsColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(9, std::move(pHitsColumn));
 
     m_bindTrigger.BindItems(vmAssetList.Trigger().Conditions());

@@ -128,6 +128,8 @@ void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& a
         else if (args.Property == PauseOnTriggerProperty)
             pAchievement->SetPauseOnTrigger(args.tNewValue);
     }
+
+    WindowViewModelBase::OnValueChanged(args);
 }
 
 void AssetEditorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
@@ -152,6 +154,8 @@ void AssetEditorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs&
             }
         }
     }
+
+    WindowViewModelBase::OnValueChanged(args);
 }
 
 void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
@@ -176,6 +180,8 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
             }
         }
     }
+
+    WindowViewModelBase::OnValueChanged(args);
 }
 
 } // namespace viewmodels

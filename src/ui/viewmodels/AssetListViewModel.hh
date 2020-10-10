@@ -186,6 +186,7 @@ public:
     ViewModelCollection<AssetSummaryViewModel>& FilteredAssets() noexcept { return m_vFilteredAssets; }
     const ViewModelCollection<AssetSummaryViewModel>& FilteredAssets() const noexcept { return m_vFilteredAssets; }
 
+    void OpenEditor(const AssetSummaryViewModel* pAsset);
 
 private:
     // ViewModelCollectionBase::NotifyTarget

@@ -59,7 +59,7 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
     m_bindFilterValue.BindText(CodeNotesViewModel::FilterValueProperty);
     m_bindFilterValue.BindKey(VK_RETURN, [this]()
     {
-        m_bindFilterValue.UpdateSourceText();
+        m_bindFilterValue.UpdateSource();
 
         auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
         vmCodeNotes->ApplyFilter();

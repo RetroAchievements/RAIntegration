@@ -4,6 +4,8 @@
 
 #include "data\EmulatorContext.hh"
 
+#include "services\IConfiguration.hh"
+
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
@@ -104,6 +106,66 @@ protected:
     const IntModelProperty* m_pTypeProperty = nullptr;
 };
 
+class ValueColumnBinding : public ra::ui::win32::bindings::GridNumberColumnBinding
+{
+public:
+    ValueColumnBinding(const IntModelProperty& pBoundProperty, const IntModelProperty& pTypeProperty) noexcept
+        : ra::ui::win32::bindings::GridNumberColumnBinding(pBoundProperty), m_pTypeProperty(&pTypeProperty)
+    {
+    }
+
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+
+        if (IsAddressType(vmItems, nIndex))
+            return ra::Widen(ra::ByteAddressToString(nValue));
+
+        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+            return std::to_wstring(nValue);
+
+        return ra::StringPrintf(L"0x%02x", nValue);
+    }
+
+    bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) override
+    {
+        if (ra::StringStartsWith(sValue, L"0x"))
+        {
+            std::wstring sError;
+            unsigned int nValue = 0U;
+
+            if (!ParseHex(sValue, nValue, sError))
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
+                return false;
+            }
+
+            vmItems.SetItemValue(nIndex, *m_pBoundProperty, ra::to_signed(nValue));
+            return true;
+        }
+
+        return GridNumberColumnBinding::SetText(vmItems, nIndex, sValue);
+    }
+
+    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
+    {
+        if (pProperty == *m_pTypeProperty)
+            return true;
+
+        return GridNumberColumnBinding::DependsOn(pProperty);
+    }
+
+protected:
+    bool IsAddressType(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
+    {
+        const auto nOperandType = ra::itoe<ra::ui::viewmodels::TriggerOperandType>(vmItems.GetItemValue(nIndex, *m_pTypeProperty));
+        return (nOperandType != ra::ui::viewmodels::TriggerOperandType::Value);
+    }
+
+    const IntModelProperty* m_pTypeProperty = nullptr;
+};
+
 AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     : DialogBase(vmAssetList),
       m_bindID(vmAssetList),
@@ -164,8 +226,8 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     pSourceSizeColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(3, std::move(pSourceSizeColumn));
 
-    auto pSourceValueColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(
-        TriggerConditionViewModel::SourceValueProperty);
+    auto pSourceValueColumn = std::make_unique<ValueColumnBinding>(
+        TriggerConditionViewModel::SourceValueProperty, TriggerConditionViewModel::SourceTypeProperty);
     pSourceValueColumn->SetHeader(L"Memory");
     pSourceValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_VALUE);
     pSourceValueColumn->SetReadOnly(false);
@@ -192,8 +254,8 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     pTargetSizeColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(7, std::move(pTargetSizeColumn));
 
-    auto pTargetValueColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(
-        TriggerConditionViewModel::TargetValueProperty);
+    auto pTargetValueColumn = std::make_unique<ValueColumnBinding>(
+        TriggerConditionViewModel::TargetValueProperty, TriggerConditionViewModel::TargetTypeProperty);
     pTargetValueColumn->SetHeader(L"Mem/Val");
     pTargetValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_VALUE);
     pTargetValueColumn->SetReadOnly(false);

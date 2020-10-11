@@ -191,7 +191,7 @@ void TriggerViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelPr
         {
             if (m_vGroups.GetItemAt(i)->IsSelected())
             {
-                SetSelectedGroupIndex(i);
+                SetSelectedGroupIndex(gsl::narrow_cast<int>(i));
                 return;
             }
         }

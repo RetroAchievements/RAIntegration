@@ -166,6 +166,31 @@ protected:
     const IntModelProperty* m_pTypeProperty = nullptr;
 };
 
+class HitsColumnBinding : public ra::ui::win32::bindings::GridNumberColumnBinding
+{
+public:
+    HitsColumnBinding(const IntModelProperty& pBoundProperty) noexcept
+        : ra::ui::win32::bindings::GridNumberColumnBinding(pBoundProperty)
+    {
+    }
+
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto nCurrentHits = vmItems.GetItemValue(nIndex, TriggerConditionViewModel::CurrentHitsProperty);
+        const auto nRequiredHits = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+
+        return ra::StringPrintf(L"%d (%d)", nRequiredHits, nCurrentHits);
+    }
+
+    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
+    {
+        if (pProperty == TriggerConditionViewModel::CurrentHitsProperty)
+            return true;
+
+        return GridNumberColumnBinding::DependsOn(pProperty);
+    }
+};
+
 AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     : DialogBase(vmAssetList),
       m_bindID(vmAssetList),
@@ -261,8 +286,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     pTargetValueColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(8, std::move(pTargetValueColumn));
 
-    auto pHitsColumn = std::make_unique<ra::ui::win32::bindings::GridNumberColumnBinding>(
-        TriggerConditionViewModel::RequiredHitsProperty);
+    auto pHitsColumn = std::make_unique<HitsColumnBinding>(TriggerConditionViewModel::RequiredHitsProperty);
     pHitsColumn->SetHeader(L"Hits");
     pHitsColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Fill, COLUMN_WIDTH_HITS);
     pHitsColumn->SetReadOnly(false);

@@ -108,6 +108,7 @@ protected:
 
 private:
     void UpdateVersion();
+    void UpdateConditions(const GroupViewModel* pGroup);
 
     ViewModelCollection<GroupViewModel> m_vGroups;
     ViewModelCollection<TriggerConditionViewModel> m_vConditions;

@@ -137,6 +137,9 @@ void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
     m_vGroups.RemoveNotifyTarget(*this);
     m_vGroups.BeginUpdate();
 
+    // this will not update the conditions collection because OnValueChange ignores it when m_vGroups.IsUpdating
+    SetSelectedGroupIndex(0);
+
     m_vGroups.Clear();
 
     auto& vmCoreGroup = m_vGroups.Add();
@@ -158,6 +161,9 @@ void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
 
     m_vGroups.EndUpdate();
     m_vGroups.AddNotifyTarget(*this);
+
+    // forcibly update the conditions from the core group that was selected earlier
+    UpdateConditions(&vmCoreGroup);
 }
 
 void TriggerViewModel::InitializeFrom(const std::string& sTrigger)
@@ -228,43 +234,52 @@ void TriggerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == SelectedGroupIndexProperty)
     {
-        // disable notifications while updating the selected group to prevent re-entrancy
-        m_vGroups.RemoveNotifyTarget(*this);
-
-        auto* pGroup = m_vGroups.GetItemAt(args.tNewValue);
-        if (pGroup != nullptr) // may be null if out of range (i.e. -1)
-            pGroup->SetSelected(true);
-
-        if (args.tOldValue != -1)
+        // ignore change caused in InitializeFrom
+        if (!m_vGroups.IsUpdating())
         {
-            auto* pOldGroup = m_vGroups.GetItemAt(args.tOldValue);
-            Expects(pOldGroup != nullptr);
-            pOldGroup->SetSelected(false);
-        }
+            // disable notifications while updating the selected group to prevent re-entrancy
+            m_vGroups.RemoveNotifyTarget(*this);
 
-        m_vGroups.AddNotifyTarget(*this);
+            auto* pGroup = m_vGroups.GetItemAt(args.tNewValue);
+            if (pGroup != nullptr) // may be null if out of range (i.e. -1)
+                pGroup->SetSelected(true);
 
-        m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
-        m_vConditions.BeginUpdate();
-
-        m_vConditions.Clear();
-
-        if (pGroup != nullptr && pGroup->m_pConditionSet)
-        {
-            rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
-            for (; pCondition != nullptr; pCondition = pCondition->next)
+            if (args.tOldValue != -1)
             {
-                auto& vmCondition = m_vConditions.Add();
-                vmCondition.SetIndex(gsl::narrow_cast<int>(m_vConditions.Count()));
-                vmCondition.InitializeFrom(*pCondition);
+                auto* pOldGroup = m_vGroups.GetItemAt(args.tOldValue);
+                Expects(pOldGroup != nullptr);
+                pOldGroup->SetSelected(false);
             }
-        }
 
-        m_vConditions.EndUpdate();
-        m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
+            m_vGroups.AddNotifyTarget(*this);
+
+            UpdateConditions(pGroup);
+        }
     }
 
     ViewModelBase::OnValueChanged(args);
+}
+
+void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
+{
+    m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
+    m_vConditions.BeginUpdate();
+
+    m_vConditions.Clear();
+
+    if (pGroup != nullptr && pGroup->m_pConditionSet)
+    {
+        rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
+        for (; pCondition != nullptr; pCondition = pCondition->next)
+        {
+            auto& vmCondition = m_vConditions.Add();
+            vmCondition.SetIndex(gsl::narrow_cast<int>(m_vConditions.Count()));
+            vmCondition.InitializeFrom(*pCondition);
+        }
+    }
+
+    m_vConditions.EndUpdate();
+    m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
 }
 
 } // namespace viewmodels

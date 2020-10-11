@@ -142,6 +142,7 @@ void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
     auto& vmCoreGroup = m_vGroups.Add();
     vmCoreGroup.SetId(0);
     vmCoreGroup.SetLabel(L"Core");
+    vmCoreGroup.SetSelected(true);
     if (pTrigger.requirement)
         vmCoreGroup.m_pConditionSet = pTrigger.requirement;
 
@@ -157,8 +158,6 @@ void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
 
     m_vGroups.EndUpdate();
     m_vGroups.AddNotifyTarget(*this);
-
-    SetSelectedGroupIndex(0);
 }
 
 void TriggerViewModel::InitializeFrom(const std::string& sTrigger)

@@ -235,7 +235,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
 
     auto pOperatorColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         TriggerConditionViewModel::OperatorProperty, vmAssetList.Trigger().OperatorTypes());
-    pOperatorColumn->SetHeader(L"Oper");
+    pOperatorColumn->SetHeader(L"Cmp");
     pOperatorColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_OPERATOR);
     pOperatorColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(5, std::move(pOperatorColumn));

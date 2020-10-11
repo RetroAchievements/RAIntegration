@@ -2343,7 +2343,7 @@ void Dlg_AchievementEditor::SetSelectedConditionGroup(size_t nGrp) const noexcep
 {
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_GROUP);
     const int nItems = ListView_GetItemCount(hList);
-    for (size_t i = 0; i < nItems; ++i)
+    for (size_t i = 0; i < gsl::narrow_cast<size_t>(nItems); ++i)
         ListView_SetItemState(hList, i, (i == nGrp) ? LVIS_SELECTED : 0, LVIS_SELECTED);
 }
 

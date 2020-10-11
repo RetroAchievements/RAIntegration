@@ -187,7 +187,7 @@ void TriggerViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelPr
 {
     if (args.Property == GroupViewModel::IsSelectedProperty)
     {
-        for (int i = 0; i < m_vGroups.Count(); ++i)
+        for (size_t i = 0; i < m_vGroups.Count(); ++i)
         {
             if (m_vGroups.GetItemAt(i)->IsSelected())
             {

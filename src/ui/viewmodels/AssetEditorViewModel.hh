@@ -180,8 +180,8 @@ public:
 
     void LoadAsset(AssetViewModelBase* pAsset);
 
-    TriggerViewModel& Trigger() { return m_vmTrigger; }
-    const TriggerViewModel& Trigger() const { return m_vmTrigger; }
+    TriggerViewModel& Trigger() noexcept { return m_vmTrigger; }
+    const TriggerViewModel& Trigger() const noexcept { return m_vmTrigger; }
 
 protected:
     // ViewModelBase::NotifyTarget
@@ -193,7 +193,7 @@ protected:
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
-    void OnTriggerChanged();
+    void OnTriggerChanged() noexcept;
 
     TriggerViewModel m_vmTrigger;
 

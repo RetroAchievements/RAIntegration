@@ -118,7 +118,6 @@ private:
     public:
         ConditionsMonitor(TriggerViewModel& vmTrigger) noexcept
         {
-            vmTrigger.m_vConditions.AddNotifyTarget(*this);
             m_vmTrigger = &vmTrigger;
         }
 

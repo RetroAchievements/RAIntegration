@@ -201,7 +201,7 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
     WindowViewModelBase::OnValueChanged(args);
 }
 
-void AssetEditorViewModel::OnTriggerChanged()
+void AssetEditorViewModel::OnTriggerChanged() noexcept
 {
     // TODO: update asset / runtime
 }

@@ -1036,6 +1036,37 @@ void GridBinding::OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate)
         m_pDoubleClickHandler(gsl::narrow_cast<gsl::index>(pnmItemActivate->iItem));
 }
 
+void GridBinding::OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown) noexcept
+{
+    // only interested in Ctrl key events
+    const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
+    if (!bControlHeld)
+        return;
+
+    // ignore Ctrl+Alt
+    const bool bAltHeld = (GetKeyState(VK_MENU) < 0);
+    if (bAltHeld)
+        return;
+
+    // ignore Ctrl+Shift
+    const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
+    if (bShiftHeld)
+        return;
+
+    switch (pnmKeyDown->wVKey)
+    {
+        case 'A': // Ctrl+A = select all
+            if ((GetWindowLong(m_hWnd, GWL_STYLE) & LVS_SINGLESEL) == 0)
+                ListView_SetItemState(m_hWnd, -1, LVIS_SELECTED, LVIS_SELECTED);
+            break;
+
+        case 'D': // Ctrl+D = deselect all
+            ListView_SetItemState(m_hWnd, -1, 0, LVIS_SELECTED);
+            break;
+    }
+
+}
+
 GridColumnBinding::InPlaceEditorInfo* GridBinding::GetIPEInfo(HWND hwnd) noexcept
 {
     GridColumnBinding::InPlaceEditorInfo* pInfo;

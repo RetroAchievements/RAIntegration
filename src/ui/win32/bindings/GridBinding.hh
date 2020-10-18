@@ -42,6 +42,7 @@ public:
     GSL_SUPPRESS_CON3 virtual void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 void OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateChanged);
     GSL_SUPPRESS_CON3 void OnLvnColumnClick(const LPNMLISTVIEW pnmListView);
+    GSL_SUPPRESS_CON3 void OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown) noexcept;
     void OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo);
     virtual void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
     virtual void OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate);

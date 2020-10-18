@@ -2,13 +2,13 @@
 #define RA_UI_ASSETEDITOR_VIEW_MODEL_H
 #pragma once
 
-#include "ui\WindowViewModelBase.hh"
-
 #include "AssetViewModelBase.hh"
-
 #include "AchievementViewModel.hh"
+#include "TriggerViewModel.hh"
 
 #include "data\Types.hh"
+
+#include "ui\WindowViewModelBase.hh"
 
 namespace ra {
 namespace ui {
@@ -180,6 +180,9 @@ public:
 
     void LoadAsset(AssetViewModelBase* pAsset);
 
+    TriggerViewModel& Trigger() noexcept { return m_vmTrigger; }
+    const TriggerViewModel& Trigger() const noexcept { return m_vmTrigger; }
+
 protected:
     // ViewModelBase::NotifyTarget
     void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
@@ -189,6 +192,10 @@ protected:
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
+    void OnTriggerChanged() noexcept;
+
+    TriggerViewModel m_vmTrigger;
 
     AssetViewModelBase* m_pAsset = nullptr;
 };

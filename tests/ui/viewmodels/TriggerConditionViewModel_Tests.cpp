@@ -62,8 +62,6 @@ std::wstring ToString<ra::ui::viewmodels::TriggerOperandType>(
             return L"Prior";
         case ra::ui::viewmodels::TriggerOperandType::BCD:
             return L"BCD";
-        case ra::ui::viewmodels::TriggerOperandType::Inverted:
-            return L"Inverted";
         default:
             return std::to_wstring(static_cast<int>(nOperandType));
     }
@@ -171,7 +169,6 @@ public:
         ParseAndRegenerate("0xH1234=d0xH1234"); // delta
         ParseAndRegenerate("0xH1234=p0xH1234"); // prior
         ParseAndRegenerate("0xH1234=b0xH1234"); // bcd
-        ParseAndRegenerate("0xH1234=~0xH1234"); // inverted
         ParseAndRegenerate("0xH1234=1234"); // value
     }
 

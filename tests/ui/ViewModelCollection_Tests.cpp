@@ -427,6 +427,27 @@ public:
         oNotify.AssertItemRemoved(1);
     }
 
+    TEST_METHOD(TestClearWhileUpdateSuspendedPropertyNotification)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        vmCollection.Add(1, L"Test1");
+        vmCollection.Add(2, L"Test2");
+
+        NotifyTargetHarness oNotify;
+        vmCollection.AddNotifyTarget(oNotify);
+        vmCollection.BeginUpdate();
+
+        vmCollection.Clear();
+        oNotify.AssertItemNotChanged(0);
+        oNotify.AssertItemNotChanged(1);
+
+        vmCollection.EndUpdate();
+        oNotify.AssertItemRemoved(0);
+        oNotify.AssertItemRemoved(1);
+
+        Assert::AreEqual({ 0U }, vmCollection.Count());
+    }
+
     TEST_METHOD(TestReplaceWhileUpdateSuspendedPropertyNotification)
     {
         ViewModelCollection<TestViewModel> vmCollection;

@@ -37,7 +37,6 @@ enum class TriggerOperandType : uint8_t
     Value = RC_OPERAND_CONST,           // a 32 bit unsigned integer
     Prior = RC_OPERAND_PRIOR,           // the last differing value at this address.
     BCD = RC_OPERAND_BCD,               // Address, but decoded from binary-coded-decimal
-    Inverted = RC_OPERAND_INVERTED      // Address, but two-compliment applied (~Address)
 };
 
 enum class TriggerOperatorType : uint8_t

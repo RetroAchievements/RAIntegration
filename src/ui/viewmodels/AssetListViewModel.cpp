@@ -57,6 +57,11 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vFilteredAssets.AddNotifyTarget(m_pFilteredListMonitor);
 }
 
+AssetListViewModel::~AssetListViewModel()
+{
+    m_bNeedToUpdateButtons.store(false);
+}
+
 static bool IsTalliedAchievement(const AchievementViewModel& pAchievement)
 {
     return (pAchievement.GetCategory() == AssetCategory::Core);

@@ -512,6 +512,15 @@ void GridBinding::OnEndViewModelCollectionUpdate()
 
         SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
 
+        if (m_pIsSelectedProperty && !m_pUpdateSelectedItems)
+        {
+            for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vmItems->Count()); ++nIndex)
+            {
+                const bool bSelected = m_vmItems->GetItemValue(nIndex, *m_pIsSelectedProperty);
+                ListView_SetItemState(m_hWnd, nIndex, bSelected ? LVIS_SELECTED : 0, LVIS_SELECTED);
+            }
+        }
+
         if (m_bForceRepaint && m_nAdjustingScrollOffset == 0)
             ControlBinding::ForceRepaint(m_hWnd);
         else
@@ -630,10 +639,15 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 
     if (m_pIsSelectedProperty)
     {
-        if (pnmListView->uNewState & LVIS_SELECTED)
-            m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, true);
-        else if (pnmListView->uOldState & LVIS_SELECTED)
-            m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, false);
+        // don't update the property on the view model while the list is being updated. assume items are
+        // being added/removed/moved and we'll reset the state correctly in OnEndViewModelCollectionUpdate.
+        if (!m_vmItems->IsUpdating())
+        {
+            if (pnmListView->uNewState & LVIS_SELECTED)
+                m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, true);
+            else if (pnmListView->uOldState & LVIS_SELECTED)
+                m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, false);
+        }
     }
 
     switch (pnmListView->uNewState & 0x3000)

@@ -168,6 +168,9 @@ API int CCONV _RA_Shutdown()
         if (pWindowManager.MemoryBookmarks.IsVisible())
             pDesktop.CloseWindow(pWindowManager.MemoryBookmarks);
 
+        if (pWindowManager.AssetEditor.IsVisible())
+            pDesktop.CloseWindow(pWindowManager.AssetEditor);
+
         if (pWindowManager.AssetList.IsVisible())
             pDesktop.CloseWindow(pWindowManager.AssetList);
 

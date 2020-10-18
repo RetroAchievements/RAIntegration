@@ -1,5 +1,8 @@
 #include "AssetEditorViewModel.hh"
 
+#include "services\AchievementRuntime.hh"
+#include "services\ServiceLocator.hh"
+
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 namespace ra {
@@ -20,6 +23,8 @@ const BoolModelProperty AssetEditorViewModel::AssetLoadedProperty("AssetEditorVi
 AssetEditorViewModel::AssetEditorViewModel() noexcept
 {
     SetWindowTitle(L"Asset Editor");
+
+    m_vmTrigger.AddNotifyTarget(*this);
 }
 
 AssetEditorViewModel::~AssetEditorViewModel()
@@ -67,6 +72,8 @@ void AssetEditorViewModel::LoadAsset(AssetViewModelBase* pAsset)
             SetPauseOnReset(pAchievement->IsPauseOnReset());
             SetPauseOnTrigger(pAchievement->IsPauseOnTrigger());
             SetWindowTitle(L"Achievement Editor");
+
+            Trigger().InitializeFrom(pAchievement->GetTrigger());
         }
 
         SetValue(AssetLoadedProperty, true);
@@ -108,7 +115,9 @@ void AssetEditorViewModel::OnViewModelStringValueChanged(const StringModelProper
 
 void AssetEditorViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == AssetViewModelBase::StateProperty)
+    if (args.Property == TriggerViewModel::VersionProperty)
+        OnTriggerChanged();
+    else if (args.Property == AssetViewModelBase::StateProperty)
         SetState(ra::itoe<AssetState>(args.tNewValue));
     else if (args.Property == AssetViewModelBase::CategoryProperty)
         SetCategory(ra::itoe<AssetCategory>(args.tNewValue));
@@ -160,7 +169,15 @@ void AssetEditorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs&
 
 void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (m_pAsset != nullptr)
+    if (args.Property == DialogResultProperty)
+    {
+        if (m_pAsset)
+        {
+            m_pAsset->RemoveNotifyTarget(*this);
+            m_pAsset = nullptr;
+        }
+    }
+    else if (m_pAsset != nullptr)
     {
         if (args.Property == StateProperty)
         {
@@ -182,6 +199,11 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
     }
 
     WindowViewModelBase::OnValueChanged(args);
+}
+
+void AssetEditorViewModel::OnTriggerChanged() noexcept
+{
+    // TODO: update asset / runtime
 }
 
 } // namespace viewmodels

@@ -811,6 +811,12 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 m_pListViewWndProc = SubclassWindow(hList, ListViewWndProc);
             }
 
+            LV_COLUMN col{};
+            col.mask = LVCF_WIDTH | LVCF_FMT;
+            col.fmt = LVCFMT_FIXED_WIDTH | LVCFMT_LEFT;
+            col.cx = 50;
+            ListView_InsertColumn(GetDlgItem(hDlg, IDC_RA_ACH_GROUP), 0, &col);
+
             RestoreWindowPosition(hDlg, "Achievement Editor", true, true);
         }
             return TRUE;
@@ -1421,8 +1427,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     if (pActiveAchievement == nullptr)
                         break;
 
-                    const HWND hGroupList = GetDlgItem(m_hAchievementEditorDlg, IDC_RA_ACH_GROUP);
-                    const auto nSel = ListBox_GetCurSel(hGroupList);
+                    auto nSel = GetSelectedConditionGroup();
 
                     if (nSel == 0)
                     {
@@ -1442,7 +1447,11 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     }
 
                     pActiveAchievement->RemoveAltGroup(gsl::narrow_cast<gsl::index>(nSel) - 1);
-                    ListBox_SetCurSel(hGroupList, nSel == ra::to_signed(pActiveAchievement->NumConditionGroups()) ? nSel - 1 : nSel);
+
+                    if (nSel == pActiveAchievement->NumConditionGroups())
+                        --nSel;
+
+                    SetSelectedConditionGroup(nSel);
 
                     RepopulateGroupList(pActiveAchievement);
                     pActiveAchievement->RebuildTrigger();
@@ -1450,14 +1459,6 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                     g_AchievementsDialog.OnEditAchievement(*pActiveAchievement);
                 }
                 break;
-                case IDC_RA_ACH_GROUP:
-                    switch (HIWORD(wParam))
-                    {
-                        case LBN_SELCHANGE:
-                            PopulateConditions(ActiveAchievement());
-                            break;
-                    }
-                    break;
             }
 
             // Switch also on the highword:
@@ -1764,6 +1765,15 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 }
                 break;
 
+                case LVN_ITEMCHANGED:
+                {
+                    LPNMLISTVIEW pnmListView;
+                    GSL_SUPPRESS_TYPE1{ pnmListView = reinterpret_cast<LPNMLISTVIEW>(lParam); }
+                    if (pnmListView->uNewState & LVIS_SELECTED)
+                        PopulateConditions(ActiveAchievement());
+                }
+                break;
+
                 case TTN_GETDISPINFO:
                 {
                     LPNMTTDISPINFO lpDispInfo{};
@@ -2047,33 +2057,49 @@ _Use_decl_annotations_ void
     if (hGroupList == nullptr)
         return;
 
-    const int nSel = ListBox_GetCurSel(hGroupList);
+    int nItems = ListView_GetItemCount(hGroupList);
 
-    int nItems = ListBox_GetCount(hGroupList);
+    int nSel = -1;
+    for (int i = 0; i < nItems; ++i)
+    {
+        if (ListView_GetItemState(hGroupList, i, LVIS_SELECTED) == LVIS_SELECTED)
+        {
+            nSel = i;
+            break;
+        }
+    }
+
     const int nGroups = pCheevo ? gsl::narrow_cast<int>(pCheevo->NumConditionGroups()) : 0;
 
     while (nItems > nGroups)
-        ListBox_DeleteString(hGroupList, --nItems);
+        ListView_DeleteItem(hGroupList, --nItems);
 
     if (nItems < nGroups)
     {
+        LV_ITEM item{};
+        item.mask = LVIF_TEXT;
+        item.iSubItem = 0;
+
         if (nItems == 0)
         {
-            ListBox_AddString(hGroupList, _T("Core"));
+            std::string sCore = "Core";
+            item.pszText = sCore.data();
+            item.iItem = 0;
+            ListView_InsertItem(hGroupList, &item);
             ++nItems;
         }
 
         while (nItems < nGroups)
         {
-            const auto sAltGroup = ra::StringPrintf("Alt %02d", nItems++);
-            ListBox_AddString(hGroupList, NativeStr(sAltGroup).c_str());
+            auto sAltGroup = ra::StringPrintf("Alt %02d", nItems);
+            item.pszText = sAltGroup.data();
+            item.iItem = nItems++;
+            ListView_InsertItem(hGroupList, &item);
         }
     }
 
-    if (nSel < 0)
-        ListBox_SetCurSel(hGroupList, 0);
-    else if (nSel >= nGroups)
-        ListBox_SetCurSel(hGroupList, static_cast<size_t>(nGroups) - 1);
+    for (int i = 0; i < nItems; ++i)
+        ListView_SetItemState(hGroupList, i, (i == nSel) ? LVIS_SELECTED : 0, LVIS_SELECTED);
 }
 
 _Use_decl_annotations_ void Dlg_AchievementEditor::PopulateConditions(const Achievement* const restrict pCheevo)
@@ -2302,20 +2328,23 @@ void Dlg_AchievementEditor::OnLoad_NewRom()
 size_t Dlg_AchievementEditor::GetSelectedConditionGroup() const noexcept
 {
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_GROUP);
-    const int nSel = ListBox_GetCurSel(hList);
-    if (nSel == LB_ERR)
+    const int nItems = ListView_GetItemCount(hList);
+    for (int i = 0; i < nItems; ++i)
     {
-        OutputDebugString(TEXT("ListBox_GetCurSel returning LB_ERR\n"));
-        return 0;
+        if (ListView_GetItemState(hList, i, LVIS_SELECTED) == LVIS_SELECTED)
+            return ra::to_unsigned(i);
     }
 
-    return ra::to_unsigned(nSel);
+    OutputDebugString(TEXT("ListBox_GetCurSel returning LB_ERR\n"));
+    return 0;
 }
 
 void Dlg_AchievementEditor::SetSelectedConditionGroup(size_t nGrp) const noexcept
 {
     HWND hList = GetDlgItem(g_AchievementEditorDialog.GetHWND(), IDC_RA_ACH_GROUP);
-    ListBox_SetCurSel(hList, ra::to_signed(nGrp));
+    const int nItems = ListView_GetItemCount(hList);
+    for (size_t i = 0; i < gsl::narrow_cast<size_t>(nItems); ++i)
+        ListView_SetItemState(hList, i, (i == nGrp) ? LVIS_SELECTED : 0, LVIS_SELECTED);
 }
 
 void GenerateResizes(HWND hDlg)

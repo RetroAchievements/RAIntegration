@@ -477,6 +477,12 @@ static void UpdateUIForFrameChange()
 
     TALLY_PERFORMANCE(PerformanceCheckpoint::MemoryInspectorDoFrame);
     pWindowManager.MemoryInspector.DoFrame();
+
+    TALLY_PERFORMANCE(PerformanceCheckpoint::AssetListDoFrame);
+    pWindowManager.AssetList.DoFrame();
+
+    TALLY_PERFORMANCE(PerformanceCheckpoint::AssetEditorDoFrame);
+    pWindowManager.AssetEditor.DoFrame();
 }
 
 #endif

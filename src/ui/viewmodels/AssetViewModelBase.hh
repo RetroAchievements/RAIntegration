@@ -136,7 +136,7 @@ public:
     /// <summary>
     /// Gets whether or not the asset is in an active state.
     /// </summary>
-    bool IsActive() const;
+    bool IsActive() const { return IsActive(GetState()); }
 
     /// <summary>
     /// Activates the asset.
@@ -147,6 +147,11 @@ public:
     /// Activates the asset.
     /// </summary>
     virtual void Deactivate() noexcept(false) { }
+
+    /// <summary>
+    /// Updates the asset for the current frame.
+    /// </summary>
+    virtual void DoFrame() noexcept(false) { }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the asset state.
@@ -239,6 +244,7 @@ protected:
     static bool ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::string& sText);
     static bool ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText);
 
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
     // Hide the public members of TransactionalViewModelBase that we're redefining
@@ -248,6 +254,8 @@ protected:
 
     void CommitTransaction() override;
     void RevertTransaction() override;
+
+    static bool IsActive(AssetState nState);
 };
 
 } // namespace viewmodels

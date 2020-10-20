@@ -1,5 +1,8 @@
 #include "AchievementViewModel.hh"
 
+#include "services\AchievementRuntime.hh"
+#include "services\ServiceLocator.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -22,22 +25,67 @@ AchievementViewModel::AchievementViewModel() noexcept
 
 void AchievementViewModel::Activate()
 {
-    if (IsActive())
-        return;
-
-    SetState(AssetState::Waiting);
-    // TODO: activate in runtime
+    if (!IsActive())
+        SetState(AssetState::Waiting);
 }
 
 void AchievementViewModel::Deactivate()
 {
-    const bool bWasActive = IsActive();
-
     SetState(AssetState::Inactive);
+}
 
-    if (bWasActive)
+void AchievementViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == StateProperty)
     {
-        // TODO: deactivate in runtime
+        const bool bWasActive = IsActive(ra::itoe<AssetState>(args.tOldValue));
+        const bool bIsActive = IsActive(ra::itoe<AssetState>(args.tNewValue));
+        if (bWasActive != bIsActive)
+        {
+            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+            const bool bRuntimeActive = (pRuntime.GetAchievementTrigger(GetID()) != nullptr);
+            if (bRuntimeActive != bIsActive)
+            {
+                if (bIsActive)
+                    pRuntime.ActivateAchievement(GetID(), GetTrigger());
+                else
+                    pRuntime.DeactivateAchievement(GetID());
+            }
+        }
+    }
+
+    AssetViewModelBase::OnValueChanged(args);
+}
+
+void AchievementViewModel::DoFrame()
+{
+    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+    const auto* pTrigger = pRuntime.GetAchievementTrigger(GetID());
+    if (pTrigger == nullptr)
+    {
+        if (GetState() != AssetState::Triggered)
+            SetState(AssetState::Inactive);
+    }
+    else
+    {
+        switch (pTrigger->state)
+        {
+            case RC_TRIGGER_STATE_ACTIVE:
+                SetState(AssetState::Active);
+                break;
+            case RC_TRIGGER_STATE_INACTIVE:
+                SetState(AssetState::Inactive);
+                break;
+            case RC_TRIGGER_STATE_PAUSED:
+                SetState(AssetState::Paused);
+                break;
+            case RC_TRIGGER_STATE_TRIGGERED:
+                SetState(AssetState::Triggered);
+                break;
+            case RC_TRIGGER_STATE_WAITING:
+                SetState(AssetState::Waiting);
+                break;
+        }
     }
 }
 

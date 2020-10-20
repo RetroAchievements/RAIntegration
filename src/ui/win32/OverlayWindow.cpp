@@ -7,6 +7,7 @@
 #include "ui\OverlayTheme.hh"
 #include "ui\drawing\gdi\GDISurface.hh"
 #include "ui\viewmodels\OverlayManager.hh"
+#include "ui\win32\bindings\ControlBinding.hh"
 
 namespace ra {
 namespace ui {
@@ -183,7 +184,7 @@ void OverlayWindow::CreateOverlayWindow()
 
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
     pOverlayManager.SetRenderRequestHandler([this]() noexcept {
-        InvalidateRect(m_hOverlayWnd, nullptr, FALSE);
+        ra::ui::win32::bindings::ControlBinding::ForceRepaint(m_hOverlayWnd);
     });
 
     pOverlayManager.SetShowRequestHandler([this]() noexcept {

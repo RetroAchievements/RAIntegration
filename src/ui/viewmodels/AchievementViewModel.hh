@@ -91,8 +91,13 @@ public:
     void Activate() override;
     void Deactivate() override;
 
+    void DoFrame() override;
+
     void Serialize(ra::services::TextWriter& pWriter) const override;
     bool Deserialize(ra::Tokenizer& pTokenizer) override;
+
+protected:
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
 private:
     AssetDefinition m_pTrigger;

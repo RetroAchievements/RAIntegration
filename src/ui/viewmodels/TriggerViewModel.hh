@@ -66,6 +66,8 @@ public:
 
     void InitializeFrom(const rc_trigger_t& pTrigger);
     void InitializeFrom(const std::string& sTrigger);
+    void UpdateFrom(const rc_trigger_t& pTrigger);
+    void UpdateFrom(const std::string& sTrigger);
 
     /// <summary>
     /// Gets the list of condition types.
@@ -99,6 +101,7 @@ public:
         return m_vOperatorTypes;
     }
 
+    void DoFrame();
 
 protected:
     // ViewModelCollectionBase::NotifyTarget

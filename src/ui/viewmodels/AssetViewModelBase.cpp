@@ -224,6 +224,11 @@ bool AssetViewModelBase::HasUnpublishedChanges() const noexcept
     return (m_pTransaction && m_pTransaction->m_pNext && m_pTransaction->m_pNext->IsModified());
 }
 
+void AssetViewModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    TransactionalViewModelBase::OnValueChanged(args);
+}
+
 void AssetViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == IsModifiedProperty)
@@ -240,6 +245,8 @@ void AssetViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& arg
                 SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
         }
     }
+
+    TransactionalViewModelBase::OnValueChanged(args);
 }
 
 bool AssetViewModelBase::GetLocalValue(const BoolModelProperty& pProperty) const
@@ -442,9 +449,9 @@ void AssetViewModelBase::RevertTransaction()
     }
 }
 
-bool AssetViewModelBase::IsActive() const
+bool AssetViewModelBase::IsActive(AssetState nState)
 {
-    switch (GetState())
+    switch (nState)
     {
         case AssetState::Inactive:
         case AssetState::Triggered:

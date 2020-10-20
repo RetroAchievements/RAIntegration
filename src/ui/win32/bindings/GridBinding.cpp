@@ -522,9 +522,15 @@ void GridBinding::OnEndViewModelCollectionUpdate()
         }
 
         if (m_bForceRepaint && m_nAdjustingScrollOffset == 0)
+        {
+            m_bForceRepaint = false;
+
             ControlBinding::ForceRepaint(m_hWnd);
+        }
         else
+        {
             Invalidate();
+        }
     }
 }
 

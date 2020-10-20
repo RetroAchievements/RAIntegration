@@ -3,6 +3,7 @@
 #include "ui\viewmodels\AssetEditorViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\mocks\MockAchievementRuntime.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -29,6 +30,8 @@ private:
         AssetEditorViewModelHarness& operator=(const AssetEditorViewModelHarness&) noexcept = delete;
         AssetEditorViewModelHarness(AssetEditorViewModelHarness&&) noexcept = delete;
         AssetEditorViewModelHarness& operator=(AssetEditorViewModelHarness&&) noexcept = delete;
+
+        ra::services::mocks::MockAchievementRuntime mockRuntime;
     };
 
 
@@ -338,7 +341,128 @@ public:
         Assert::AreEqual(std::wstring(L"New Name 2"), editor.GetName());
         Assert::AreEqual(std::wstring(L"New Name 3"), achievement1.GetName());
         Assert::AreEqual(std::wstring(L"New Name 2"), achievement2.GetName());
-    }};
+    }
+
+    TEST_METHOD(TestUpdateActiveTrigger)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementViewModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("0xH1234=1");
+        achievement.Activate();
+
+        editor.LoadAsset(&achievement);
+
+        // make sure the record got loaded into the runtime
+        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+        Assert::AreEqual(1U, pTrigger->requirement->conditions->operand2.value.num);
+
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual(0x1234U, pCondition->GetSourceValue());
+        Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
+        Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
+        Assert::AreEqual(1U, pCondition->GetTargetValue());
+
+        pCondition->SetTargetValue(2U);
+
+        // make sure the trigger definition got updated
+        Assert::AreEqual(std::string("0xH1234=2"), achievement.GetTrigger());
+
+        // make sure the runtime record got updated
+        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+        Assert::AreEqual(2U, pTrigger->requirement->conditions->operand2.value.num);
+
+        // make sure the UI kept the updated value
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual(0x1234U, pCondition->GetSourceValue());
+        Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
+        Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
+        Assert::AreEqual(2U, pCondition->GetTargetValue());
+    }
+
+    TEST_METHOD(TestUpdateInactiveTrigger)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementViewModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("0xH1234=1");
+        achievement.Deactivate();
+
+        editor.LoadAsset(&achievement);
+
+        // make sure the record did not get loaded into the runtime
+        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Assert::IsNull(pTrigger);
+
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual(0x1234U, pCondition->GetSourceValue());
+        Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
+        Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
+        Assert::AreEqual(1U, pCondition->GetTargetValue());
+
+        pCondition->SetTargetValue(2U);
+
+        // make sure the trigger definition got updated
+        Assert::AreEqual(std::string("0xH1234=2"), achievement.GetTrigger());
+
+        // make sure the record did not get loaded into the runtime
+        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Assert::IsNull(pTrigger);
+
+        // make sure the UI kept the updated value
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual(0x1234U, pCondition->GetSourceValue());
+        Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
+        Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
+        Assert::AreEqual(2U, pCondition->GetTargetValue());
+    }
+
+    TEST_METHOD(TestDoFrameUpdatesHitsFromActiveAchievement)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementViewModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("0xH1234=1");
+        achievement.Activate();
+
+        editor.LoadAsset(&achievement);
+
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(0U, pCondition->GetCurrentHits());
+
+        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+        pTrigger->requirement->conditions->current_hits = 6U;
+        Assert::AreEqual(0U, pCondition->GetCurrentHits());
+
+        editor.DoFrame();
+        Assert::AreEqual(6U, pCondition->GetCurrentHits());
+    }
+};
 
 } // namespace tests
 } // namespace viewmodels

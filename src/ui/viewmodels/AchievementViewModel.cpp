@@ -1,6 +1,7 @@
 #include "AchievementViewModel.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
 
 namespace ra {
@@ -51,6 +52,12 @@ void AchievementViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
                 else
                     pRuntime.DeactivateAchievement(GetID());
             }
+        }
+
+        if (ra::itoe<AssetState>(args.tNewValue) == AssetState::Triggered)
+        {
+            const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
+            m_tUnlock = pClock.Now();
         }
     }
 

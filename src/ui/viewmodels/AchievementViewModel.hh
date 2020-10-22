@@ -88,6 +88,11 @@ public:
     /// </summary>
     void SetTrigger(const std::string& sTrigger) { SetAssetDefinition(m_pTrigger, sTrigger); }
 
+    /// <summary>
+    /// Gets when the achievement was unlocked.
+    /// </summary>
+    std::chrono::system_clock::time_point GetUnlockTime() const noexcept { return m_tUnlock; }
+
     void Activate() override;
     void Deactivate() override;
 
@@ -101,6 +106,7 @@ protected:
 
 private:
     AssetDefinition m_pTrigger;
+    std::chrono::system_clock::time_point m_tUnlock;
 };
 
 } // namespace viewmodels

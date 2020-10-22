@@ -6,6 +6,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockAchievementRuntime.hh"
+#include "tests\mocks\MockClock.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -22,6 +23,7 @@ private:
     public:
         ra::services::impl::StringTextWriter textWriter;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
+        ra::services::mocks::MockClock mockClock;
     };
 
 public:
@@ -116,6 +118,7 @@ public:
         Assert::AreEqual(AssetState::Inactive, achievement.GetState());
         pTrigger = achievement.mockRuntime.GetAchievementTrigger(1U);
         Assert::IsNull(pTrigger);
+        Assert::AreEqual(std::chrono::system_clock::duration::zero().count(), achievement.GetUnlockTime().time_since_epoch().count());
     }
 
     TEST_METHOD(TestActivateDeactivateTriggered)
@@ -135,6 +138,7 @@ public:
         Assert::AreEqual(AssetState::Triggered, achievement.GetState());
         pTrigger = achievement.mockRuntime.GetAchievementTrigger(1U);
         Assert::IsNull(pTrigger);
+        Assert::AreNotEqual(std::chrono::system_clock::duration::zero().count(), achievement.GetUnlockTime().time_since_epoch().count());
 
         // second DoFrame won't be able to find the trigger, but should not modify the State
         achievement.DoFrame();
@@ -142,12 +146,13 @@ public:
         pTrigger = achievement.mockRuntime.GetAchievementTrigger(1U);
         Assert::IsNull(pTrigger);
 
-        // reactivating the achievement will set it back to waiting
+        // reactivating the achievement will set it back to waiting, but not reset the unlock time
         achievement.Activate();
         Assert::AreEqual(AssetState::Waiting, achievement.GetState());
         pTrigger = achievement.mockRuntime.GetAchievementTrigger(1U);
         Assert::IsNotNull(pTrigger);
         Assert::AreEqual((int)RC_TRIGGER_STATE_WAITING, (int)pTrigger->state);
+        Assert::AreNotEqual(std::chrono::system_clock::duration::zero().count(), achievement.GetUnlockTime().time_since_epoch().count());
     }
 };
 

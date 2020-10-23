@@ -34,6 +34,7 @@ public:
         std::function<void(gsl::index, gsl::index, bool)> pUpdateSelectedItems);
 
     void BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept;
+    void BindEnsureVisible(const IntModelProperty& pEnsureVisibleProperty) noexcept;
     void BindRowColor(const IntModelProperty& pRowColorProperty) noexcept;
 
     void SetDoubleClickHandler(std::function<void(gsl::index)> pHandler);
@@ -63,6 +64,8 @@ public:
     void DeselectAll() noexcept;
     int UpdateSelected(const IntModelProperty& pProperty, int nNewValue);
 
+    virtual void EnsureVisible(gsl::index nIndex) noexcept(false);
+
 protected:
     void UpdateLayout();
     virtual void UpdateAllItems();
@@ -88,6 +91,7 @@ protected:
     std::vector<int> m_vColumnWidths;
     ViewModelCollectionBase* m_vmItems = nullptr;
     const BoolModelProperty* m_pIsSelectedProperty = nullptr;
+    const IntModelProperty* m_pEnsureVisibleProperty = nullptr;
 
     int m_nScrollOffset = 0;
 

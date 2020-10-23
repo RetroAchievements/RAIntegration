@@ -392,7 +392,7 @@ void MultiLineGridBinding::OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate)
 
 void MultiLineGridBinding::EnsureVisible(gsl::index nIndex)
 {
-    if (nIndex < gsl::narrow_cast<gsl::index>(m_vItemMetrics.size()))
+    if (nIndex >= 0 && nIndex < gsl::narrow_cast<gsl::index>(m_vItemMetrics.size()))
     {
         const auto nLine = m_vItemMetrics.at(nIndex).nFirstLine;
         ListView_EnsureVisible(m_hWnd, nLine, FALSE);

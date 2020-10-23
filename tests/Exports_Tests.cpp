@@ -384,6 +384,7 @@ private:
         MockEmulatorContext mockEmulatorContext;
         MockSurfaceFactory mockSurfaceFactory;
         MockOverlayTheme mockTheme;
+        MockWindowManager mockWindowManager;
 
         DoAchievementsFrameHarness() noexcept
         {

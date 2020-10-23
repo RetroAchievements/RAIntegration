@@ -225,6 +225,8 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     m_bindViewer16Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(MemSize::SixteenBit));
     m_bindViewer32Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(MemSize::ThirtyTwoBit));
     m_bindWindow.BindLabel(IDC_RA_MEMBITS, MemoryInspectorViewModel::CurrentAddressBitsProperty);
+    m_bindWindow.BindVisible(IDC_RA_MEMBITS_TITLE, MemoryInspectorViewModel::CurrentBitsVisibleProperty);
+    m_bindWindow.BindVisible(IDC_RA_MEMBITS, MemoryInspectorViewModel::CurrentBitsVisibleProperty);
 
     // Resize behavior
     using namespace ra::bitwise_ops;

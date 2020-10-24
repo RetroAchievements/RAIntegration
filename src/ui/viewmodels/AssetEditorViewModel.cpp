@@ -215,7 +215,7 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
     WindowViewModelBase::OnValueChanged(args);
 }
 
-void AssetEditorViewModel::OnTriggerChanged() noexcept
+void AssetEditorViewModel::OnTriggerChanged()
 {
     auto* pAchievement = dynamic_cast<AchievementViewModel*>(m_pAsset);
     if (pAchievement != nullptr)

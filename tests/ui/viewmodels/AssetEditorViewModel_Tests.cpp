@@ -3,6 +3,7 @@
 #include "ui\viewmodels\AssetEditorViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -32,6 +33,7 @@ private:
         AssetEditorViewModelHarness& operator=(AssetEditorViewModelHarness&&) noexcept = delete;
 
         ra::services::mocks::MockAchievementRuntime mockRuntime;
+        ra::services::mocks::MockClock mockClock;
     };
 
 

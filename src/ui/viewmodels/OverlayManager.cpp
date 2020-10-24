@@ -152,7 +152,7 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
     auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
     const auto tNow = pClock.UpTime();
     const auto tElapsed = std::chrono::duration_cast<std::chrono::microseconds>(tNow - m_tLastRender);
-    double fElapsed = tElapsed.count() / 1000000.0;
+    const double fElapsed = tElapsed.count() / 1000000.0;
 
     bool bRequestRender = false;
 

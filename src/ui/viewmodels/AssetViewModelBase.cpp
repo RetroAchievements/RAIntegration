@@ -449,7 +449,7 @@ void AssetViewModelBase::RevertTransaction()
     }
 }
 
-bool AssetViewModelBase::IsActive(AssetState nState)
+bool AssetViewModelBase::IsActive(AssetState nState) noexcept
 {
     switch (nState)
     {

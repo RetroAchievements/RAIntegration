@@ -183,7 +183,7 @@ void OverlayWindow::CreateOverlayWindow()
     UpdateOverlayPosition();
 
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-    pOverlayManager.SetRenderRequestHandler([this]() noexcept {
+    pOverlayManager.SetRenderRequestHandler([this]() {
         ra::ui::win32::bindings::ControlBinding::ForceRepaint(m_hOverlayWnd);
     });
 

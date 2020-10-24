@@ -196,7 +196,7 @@ protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     void UpdateTriggerBinding();
-    void OnTriggerChanged() noexcept;
+    void OnTriggerChanged();
 
     TriggerViewModel m_vmTrigger;
 

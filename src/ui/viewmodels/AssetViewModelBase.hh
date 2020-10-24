@@ -255,7 +255,7 @@ protected:
     void CommitTransaction() override;
     void RevertTransaction() override;
 
-    static bool IsActive(AssetState nState);
+    static bool IsActive(AssetState nState) noexcept;
 };
 
 } // namespace viewmodels

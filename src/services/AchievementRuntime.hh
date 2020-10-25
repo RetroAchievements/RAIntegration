@@ -114,7 +114,7 @@ public:
         if (!m_bInitialized)
             return false;
 
-        return (m_pRuntime.richpresence_display_buffer != nullptr);
+        return (m_pRuntime.richpresence != nullptr && m_pRuntime.richpresence->richpresence != nullptr);
     }
 
     /// <summary>
@@ -208,6 +208,7 @@ private:
     void EnsureInitialized() noexcept;
 
     std::map<unsigned int, std::string> m_vQueuedAchievements;
+    int m_nRichPresenceParseResult = RC_OK;
     bool m_bInitialized = false;
 };
 

@@ -75,14 +75,14 @@ static void MergeHits(rc_condset_t& pGroup, rc_condset_t& pOldGroup) noexcept
                 case RC_OPERAND_ADDRESS:
                 case RC_OPERAND_DELTA:
                 case RC_OPERAND_PRIOR:
-                    if (pOldCondition->operand1.value.memref->memref.address != pCondition->operand1.value.memref->memref.address ||
+                    if (pOldCondition->operand1.value.memref->address != pCondition->operand1.value.memref->address ||
                         pOldCondition->operand1.size != pCondition->operand1.size)
                     {
                         continue;
                     }
 
-                    pCondition->operand1.value.memref->previous = pOldCondition->operand1.value.memref->previous;
-                    pCondition->operand1.value.memref->prior = pOldCondition->operand1.value.memref->prior;
+                    pCondition->operand1.value.memref->value.changed = pOldCondition->operand1.value.memref->value.changed;
+                    pCondition->operand1.value.memref->value.prior = pOldCondition->operand1.value.memref->value.prior;
                     break;
 
                 default:
@@ -261,15 +261,15 @@ inline static constexpr void SetOperand(CompVariable& var, const rc_operand_t& o
     switch (operand.type)
     {
         case RC_OPERAND_ADDRESS:
-            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::Address, operand.value.memref->memref.address);
+            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::Address, operand.value.memref->address);
             break;
 
         case RC_OPERAND_DELTA:
-            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::DeltaMem, operand.value.memref->memref.address);
+            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::DeltaMem, operand.value.memref->address);
             break;
 
         case RC_OPERAND_PRIOR:
-            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::PriorMem, operand.value.memref->memref.address);
+            var.Set(GetCompVariableSize(operand.size), CompVariable::Type::PriorMem, operand.value.memref->address);
             break;
 
         case RC_OPERAND_CONST:

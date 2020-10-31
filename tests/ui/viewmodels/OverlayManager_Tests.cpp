@@ -161,8 +161,9 @@ public:
         ra::ui::drawing::mocks::MockSurface mockSurface(800, 600);
         overlay.Render(mockSurface, false);
         Assert::AreEqual(pPopup->GetRenderLocationY(), 0);
-        // no time has elapsed since the popup was queued, we're still waiting for the first render
-        Assert::IsFalse(overlay.WasRenderRequested());
+        // a queued popup still requests a render even if it's not visible. this ensures the Render
+        // callback will be called to animate the popup
+        Assert::IsTrue(overlay.WasRenderRequested());
         Assert::IsFalse(overlay.WasShowRequested());
         Assert::IsFalse(overlay.WasHideRequested());
 

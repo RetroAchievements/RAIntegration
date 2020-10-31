@@ -13,6 +13,8 @@ enum class PerformanceCheckpoint
     OverlayManagerAdvanceFrame,
     MemoryBookmarksDoFrame,
     MemoryInspectorDoFrame,
+    AssetListDoFrame,
+    AssetEditorDoFrame,
 
     NUM_CHECKPOINTS
 };

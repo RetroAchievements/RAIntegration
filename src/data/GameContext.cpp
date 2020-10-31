@@ -201,6 +201,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
 #ifndef RA_UTEST
     g_AchievementsDialog.UpdateAchievementList();
+    vmAssets.DoFrame();
 #endif
 
     // show "game loaded" popup

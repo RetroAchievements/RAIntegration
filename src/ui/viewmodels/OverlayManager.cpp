@@ -92,13 +92,19 @@ void OverlayManager::RequestRender()
     if (!m_fHandleRenderRequest)
         return;
 
+    auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
+    const auto tNow = pClock.UpTime();
+    const auto tTimeSinceLastRequest = tNow - m_tLastRequestRender;
+    m_tLastRequestRender = tNow;
+
     const bool bNeedsRender = NeedsRender();
     if (m_bIsRendering != bNeedsRender)
     {
         if (bNeedsRender)
         {
-            auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
-            m_tLastRender = pClock.UpTime();
+            // when the overlay first becomes visible, capture the current time for
+            // elapsed calculations in Render
+            m_tLastRender = tNow;
 
             if (m_fHandleShowRequest)
                 m_fHandleShowRequest();
@@ -118,12 +124,12 @@ void OverlayManager::RequestRender()
     {
         m_bRenderRequestPending = true;
 
-        auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
-        const auto tNow = pClock.UpTime();
+#ifndef RA_UTEST
+        // make sure not to call RenderRequest more than once every 10ms
         const auto tPacing = std::chrono::milliseconds(10);
-        if (tNow - m_tLastRender < tPacing)
+        if (tTimeSinceLastRequest < tPacing)
         {
-            const auto nDelay = tPacing - (tNow - m_tLastRender);
+            const auto nDelay = tPacing - tTimeSinceLastRequest;
             ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(
                 std::chrono::duration_cast<std::chrono::milliseconds>(nDelay), [this]()
             {
@@ -131,6 +137,7 @@ void OverlayManager::RequestRender()
             });
         }
         else
+#endif
         {
             m_fHandleRenderRequest();
         }
@@ -194,6 +201,10 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
             bRequestRender = true;
     }
 
+    // update state now, in case handlers cause recursion
+    m_tLastRender = tNow;
+    m_bRedrawAll = false;
+
     if (bRequestRender)
     {
         // something changed, render is explicit
@@ -210,9 +221,6 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
                 m_fHandleHideRequest();
         }
     }
-
-    m_tLastRender = tNow;
-    m_bRedrawAll = false;
 }
 
 ScoreTrackerViewModel& OverlayManager::AddScoreTracker(ra::LeaderboardID nLeaderboardId)

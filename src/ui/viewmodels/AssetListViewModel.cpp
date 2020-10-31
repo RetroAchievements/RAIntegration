@@ -665,6 +665,16 @@ void AssetListViewModel::CloneSelected()
         return;
 }
 
+void AssetListViewModel::DoFrame()
+{
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+    {
+        auto* pItem = m_vAssets.GetItemAt(nIndex);
+        if (pItem != nullptr)
+            pItem->DoFrame();
+    }
+}
+
 } // namespace viewmodels
 } // namespace ui
 } // namespace ra

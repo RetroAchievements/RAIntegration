@@ -49,7 +49,9 @@ void AssetEditorViewModel::LoadAsset(AssetViewModelBase* pAsset)
     if (m_pAsset)
         m_pAsset->RemoveNotifyTarget(*this);
 
-    m_pAsset = pAsset;
+    // null out internal pointer while binding to prevent change triggers
+    m_pAsset = nullptr;
+
     if (pAsset)
     {
         pAsset->AddNotifyTarget(*this);
@@ -73,9 +75,18 @@ void AssetEditorViewModel::LoadAsset(AssetViewModelBase* pAsset)
             SetPauseOnTrigger(pAchievement->IsPauseOnTrigger());
             SetWindowTitle(L"Achievement Editor");
 
-            Trigger().InitializeFrom(pAchievement->GetTrigger());
+            const auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAsset->GetID());
+            if (pTrigger != nullptr)
+                Trigger().InitializeFrom(*pTrigger);
+            else
+                Trigger().InitializeFrom(pAchievement->GetTrigger());
+        }
+        else
+        {
+            Trigger().InitializeFrom("");
         }
 
+        m_pAsset = pAsset;
         SetValue(AssetLoadedProperty, true);
     }
     else
@@ -92,6 +103,8 @@ void AssetEditorViewModel::LoadAsset(AssetViewModelBase* pAsset)
         SetPauseOnReset(PauseOnResetProperty.GetDefaultValue());
         SetPauseOnTrigger(PauseOnTriggerProperty.GetDefaultValue());
         SetWindowTitle(L"Asset Editor");
+
+        Trigger().InitializeFrom("");
     }
 }
 
@@ -182,6 +195,7 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
         if (args.Property == StateProperty)
         {
             m_pAsset->SetState(ra::itoe<AssetState>(args.tNewValue));
+            UpdateTriggerBinding();
         }
         else if (args.Property == CategoryProperty)
         {
@@ -201,9 +215,42 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
     WindowViewModelBase::OnValueChanged(args);
 }
 
-void AssetEditorViewModel::OnTriggerChanged() noexcept
+void AssetEditorViewModel::OnTriggerChanged()
 {
-    // TODO: update asset / runtime
+    auto* pAchievement = dynamic_cast<AchievementViewModel*>(m_pAsset);
+    if (pAchievement != nullptr)
+    {
+        const std::string& sTrigger = Trigger().Serialize();
+        pAchievement->SetTrigger(sTrigger);
+
+        if (m_pAsset->IsActive())
+        {
+            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+            pRuntime.ActivateAchievement(GetID(), sTrigger);
+            UpdateTriggerBinding();
+        }
+    }
+}
+
+void AssetEditorViewModel::UpdateTriggerBinding()
+{
+    const auto* pAchievement = dynamic_cast<AchievementViewModel*>(m_pAsset);
+    if (pAchievement != nullptr)
+    {
+        const auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
+        if (pTrigger != nullptr)
+            Trigger().UpdateFrom(*pTrigger);
+        else
+            Trigger().UpdateFrom(pAchievement->GetTrigger());
+    }
+}
+
+void AssetEditorViewModel::DoFrame()
+{
+    if (m_pAsset == nullptr || !m_pAsset->IsActive())
+        return;
+
+    m_vmTrigger.DoFrame();
 }
 
 } // namespace viewmodels

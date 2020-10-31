@@ -392,7 +392,7 @@ static void ProcessAchievements()
                 if (vmAchievement && vmAchievement->IsPauseOnTrigger())
                 {
                     auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnReset(vmAchievement->GetName());
+                    pFrameEventQueue.QueuePauseOnTrigger(vmAchievement->GetName());
                 }
 
                 break;

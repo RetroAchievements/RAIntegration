@@ -37,7 +37,7 @@ public:
 protected:
     struct MemChange
     {
-        MemChange(ra::ByteAddress nAddress, MemSize nSize)
+        MemChange(ra::ByteAddress nAddress, MemSize nSize) noexcept
             : nAddress(nAddress), nSize(nSize)
         {
         }

@@ -26,7 +26,7 @@ void FrameEventQueue::DoFrame()
 
     if (!m_vTriggeredTriggers.empty())
     {
-        sPauseMessage.append(L"The following triggers have fired:");
+        sPauseMessage.append(L"The following triggers have triggered:");
         for (const auto& pTriggerName : m_vTriggeredTriggers)
             sPauseMessage.append(ra::StringPrintf(L"\n* %s", pTriggerName));
 

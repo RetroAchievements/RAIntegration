@@ -378,6 +378,9 @@
     <ClCompile Include="..\src\services\FrameEventQueue.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="services\FrameEventQueue_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />
@@ -447,6 +450,9 @@
       <Filter>Mocks</Filter>
     </ClInclude>
     <ClInclude Include="mocks\MockAchievementRuntime.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockFrameEventQueue.hh">
       <Filter>Mocks</Filter>
     </ClInclude>
   </ItemGroup>

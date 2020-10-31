@@ -8,6 +8,7 @@
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFileSystem.hh"
+#include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
@@ -54,6 +55,7 @@ private:
         ra::data::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockFileSystem mockFileSystem;
+        ra::services::mocks::MockFrameEventQueue mockFrameEventQueue;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
@@ -692,73 +694,42 @@ public:
         bookmarks.AddBookmark(5U, MemSize::EightBit);
         auto& bookmark2 = *bookmarks.Bookmarks().GetItemAt(1);
 
-        bool bPaused = false;
-        bookmarks.mockEmulatorContext.SetPauseFunction([&bPaused]() { bPaused = true; });
-
         std::array<uint8_t, 64> memory = {};
         for (uint8_t i = 0; i < memory.size(); ++i)
             memory.at(i) = i;
         bookmarks.mockEmulatorContext.MockMemory(memory);
 
         bookmarks.DoFrame(); // initialize current and previous values
-        Assert::IsFalse(bPaused);
+        Assert::AreEqual({ 0U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
 
         bookmark1.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
         bookmark2.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
 
-        bool bSawDialog = false;
-        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bSawDialog](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            bSawDialog = true;
-
-            Assert::AreEqual(std::wstring(L"The emulator has been paused."), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"The following bookmarks have changed:\n*  8-bit 0x0004"), vmMessageBox.GetMessage());
-
-            return ra::ui::DialogResult::OK;
-        });
-
         // no change, dialog should not be shown
         bookmarks.DoFrame();
-        Assert::IsFalse(bSawDialog);
-        Assert::IsFalse(bPaused);
+        Assert::AreEqual({ 0U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
 
         // change, dialog should be shown and emulator should be paused
         memory.at(4) = 9;
         bookmarks.DoFrame();
-        Assert::IsTrue(bSawDialog);
-        Assert::IsTrue(bPaused);
+        Assert::AreEqual({ 1U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+        bookmarks.mockFrameEventQueue.Reset();
 
         // only row that caused the pause should be highlighted
         Assert::AreEqual(0xFFFFC0C0U, bookmark1.GetRowColor().ARGB);
         Assert::AreEqual(0U, bookmark2.GetRowColor().ARGB);
 
         // unpause, dialog should not show, emulator should not pause, row should unhighlight
-        bSawDialog = false;
-        bPaused = false;
         bookmarks.DoFrame();
-        Assert::IsFalse(bSawDialog);
-        Assert::IsFalse(bPaused);
+        Assert::AreEqual({ 0U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
         Assert::AreEqual(0U, bookmark1.GetRowColor().ARGB);
         Assert::AreEqual(0U, bookmark2.GetRowColor().ARGB);
 
         // both change in one frame, expect a single dialog
-        bool bSawDialog2 = false;
-        bookmarks.mockDesktop.ResetExpectedWindows();
-        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bSawDialog2](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            bSawDialog2 = true;
-
-            Assert::AreEqual(std::wstring(L"The emulator has been paused."), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"The following bookmarks have changed:\n*  8-bit 0x0004\n*  8-bit 0x0005"), vmMessageBox.GetMessage());
-
-            return ra::ui::DialogResult::OK;
-        });
-
         memory.at(4) = 77;
         memory.at(5) = 77;
         bookmarks.DoFrame();
-        Assert::IsTrue(bSawDialog2);
-        Assert::IsTrue(bPaused);
+        Assert::AreEqual({ 2U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
 
         // both rows that caused the pause should be highlighted
         Assert::AreEqual(0xFFFFC0C0U, bookmark1.GetRowColor().ARGB);

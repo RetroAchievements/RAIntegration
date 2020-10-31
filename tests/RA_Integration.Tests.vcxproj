@@ -357,6 +357,7 @@
     <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="services\AchievementRuntime_Tests.cpp" />
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />
+    <ClCompile Include="services\FrameEventQueue_Tests.cpp" />
     <ClCompile Include="services\GameIdentifier_Tests.cpp" />
     <ClCompile Include="services\Http_Tests.cpp" />
     <ClCompile Include="ui\ModelProperty_Tests.cpp" />
@@ -408,6 +409,7 @@
     <ClInclude Include="mocks\MockDesktop.hh" />
     <ClInclude Include="mocks\MockEmulatorContext.hh" />
     <ClInclude Include="mocks\MockFileSystem.hh" />
+    <ClInclude Include="mocks\MockFrameEventQueue.hh" />
     <ClInclude Include="mocks\MockGameContext.hh" />
     <ClInclude Include="mocks\MockHttpRequester.hh" />
     <ClInclude Include="mocks\MockImageRepository.hh" />

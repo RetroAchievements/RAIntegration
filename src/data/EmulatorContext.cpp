@@ -203,6 +203,8 @@ bool EmulatorContext::ValidateClientVersion()
 /// </summary>
 bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
 {
+    std::string sMinimumVersion;
+
     // client not specified - assume pre-release of new client
     if (m_nEmulatorId == EmulatorID::UnknownEmulator)
         return true;
@@ -232,6 +234,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         else
         {
             m_sLatestVersion = response.LatestVersion;
+            sMinimumVersion = response.MinimumVersion;
             nMinimumVersion = ParseVersion(response.MinimumVersion.c_str());
 
             const unsigned long long nServerVersion = ParseVersion(m_sLatestVersion.c_str());
@@ -323,6 +326,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
 
         if (vmMessageBox.ShowModal() == ra::ui::DialogResult::Cancel)
         {
+            RA_LOG_INFO("Hardcore disabled by version check %s < %s", m_sVersion, sMinimumVersion);
             bHardcore = false;
         }
         else
@@ -408,6 +412,8 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
         if (vmMessageBox.ShowModal() == ra::ui::DialogResult::No)
             return false;
     }
+
+    RA_LOG_INFO("Hardcore enabled");
 
     // User has agreed to reset the emulator, or no game is loaded. Enabled hardcore!
     pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);

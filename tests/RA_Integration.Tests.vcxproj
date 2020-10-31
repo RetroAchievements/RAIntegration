@@ -303,6 +303,7 @@
     <ClCompile Include="..\src\RA_md5factory.cpp" />
     <ClCompile Include="..\src\RA_StringUtils.cpp" />
     <ClCompile Include="..\src\services\AchievementRuntime.cpp" />
+    <ClCompile Include="..\src\services\FrameEventQueue.cpp" />
     <ClCompile Include="..\src\services\GameIdentifier.cpp" />
     <ClCompile Include="..\src\services\Http.cpp" />
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp" />

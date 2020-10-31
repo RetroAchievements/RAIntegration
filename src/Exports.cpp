@@ -14,6 +14,7 @@
 #include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\FrameEventQueue.hh"
 #include "services\GameIdentifier.hh"
 #include "services\Http.hh"
 #include "services\IAudioSystem.hh"
@@ -484,6 +485,9 @@ static void UpdateUIForFrameChange()
 
     TALLY_PERFORMANCE(PerformanceCheckpoint::AssetEditorDoFrame);
     pWindowManager.AssetEditor.DoFrame();
+
+    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+    pFrameEventQueue.DoFrame();
 }
 
 #endif

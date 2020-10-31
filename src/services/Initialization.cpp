@@ -9,6 +9,7 @@
 #include "data\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\FrameEventQueue.hh"
 #include "services\GameIdentifier.hh"
 #include "services\PerformanceCounter.hh"
 #include "services\ServiceLocator.hh"
@@ -149,6 +150,9 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
 
     auto pClipboard = std::make_unique<ra::services::impl::WindowsClipboard>();
     ra::services::ServiceLocator::Provide<ra::services::IClipboard>(std::move(pClipboard));
+
+    auto pFrameEventQueue = std::make_unique<ra::services::FrameEventQueue>();
+    ra::services::ServiceLocator::Provide<ra::services::FrameEventQueue>(std::move(pFrameEventQueue));
 
     auto pSurfaceFactory = std::make_unique<ra::ui::drawing::gdi::GDISurfaceFactory>();
     ra::services::ServiceLocator::Provide<ra::ui::drawing::ISurfaceFactory>(std::move(pSurfaceFactory));

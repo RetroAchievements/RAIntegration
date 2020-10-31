@@ -345,6 +345,9 @@
     <ClCompile Include="ui\win32\AssetEditorDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="services\FrameEventQueue.cpp">
+      <Filter>Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -871,6 +874,9 @@
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\NumericTextBoxBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="services\FrameEventQueue.hh">
+      <Filter>Services</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -375,6 +375,9 @@
     <ClCompile Include="ui\viewmodels\AchievementViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\services\FrameEventQueue.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

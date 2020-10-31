@@ -61,6 +61,20 @@ void WindowBinding::SetHWND(HWND hWnd)
             }
         }
 
+        for (auto& pIter : m_mVisibilityBindings)
+        {
+            auto* pProperty = dynamic_cast<const BoolModelProperty*>(ModelPropertyBase::GetPropertyForKey(pIter.first));
+            if (pProperty != nullptr)
+            {
+                for (const auto nDlgItemId : pIter.second)
+                {
+                    auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
+                    if (hControl)
+                        ShowWindow(hControl, GetValueFromAny(*pProperty) ? SW_SHOW : SW_HIDE);
+                }
+            }
+        }
+
         RestoreSizeAndPosition();
     }
 }
@@ -290,11 +304,11 @@ void WindowBinding::BindLabel(int nDlgItemId, const IntModelProperty& pSourcePro
 
 void WindowBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept
 {
+    bool bRepaint = false;
+
     const auto pEnabledIter = m_mEnabledBindings.find(args.Property.GetKey());
     if (pEnabledIter != m_mEnabledBindings.end())
     {
-        bool bRepaint = false;
-
         for (const auto nDlgItemId : pEnabledIter->second)
         {
             auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
@@ -304,10 +318,24 @@ void WindowBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeA
                 bRepaint = true;
             }
         }
-
-        if (bRepaint)
-            ControlBinding::ForceRepaint(m_hWnd);
     }
+
+    const auto pVisibilityIter = m_mVisibilityBindings.find(args.Property.GetKey());
+    if (pVisibilityIter != m_mVisibilityBindings.end())
+    {
+        for (const auto nDlgItemId : pVisibilityIter->second)
+        {
+            auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
+            if (hControl)
+            {
+                ShowWindow(hControl, args.tNewValue ? SW_SHOW : SW_HIDE);
+                bRepaint = true;
+            }
+        }
+    }
+
+    if (bRepaint)
+        ControlBinding::ForceRepaint(m_hWnd);
 }
 
 void WindowBinding::BindEnabled(int nDlgItemId, const BoolModelProperty& pSourceProperty)
@@ -320,6 +348,19 @@ void WindowBinding::BindEnabled(int nDlgItemId, const BoolModelProperty& pSource
         auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
         if (hControl)
             EnableWindow(hControl, GetValueFromAny(pSourceProperty) ? TRUE : FALSE);
+    }
+}
+
+void WindowBinding::BindVisible(int nDlgItemId, const BoolModelProperty& pSourceProperty)
+{
+    m_mVisibilityBindings[pSourceProperty.GetKey()].insert(nDlgItemId);
+
+    if (m_hWnd)
+    {
+        // immediately push values from the viewmodel to the UI
+        auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
+        if (hControl)
+            ShowWindow(hControl, GetValueFromAny(pSourceProperty) ? SW_SHOW : SW_HIDE);
     }
 }
 

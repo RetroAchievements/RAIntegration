@@ -58,6 +58,7 @@ private:
         MemoryInspectorViewModelHarness& operator=(MemoryInspectorViewModelHarness&&) noexcept = delete;
 
         bool CanModifyCodeNotes() const { return GetValue(CanModifyNotesProperty); }
+        bool CurrentBitsVisible() const { return GetValue(CurrentBitsVisibleProperty); }
     };
 
 
@@ -157,6 +158,23 @@ public:
         Assert::AreEqual({ 0x41 }, inspector.memory.at(3));
         Assert::AreEqual(std::wstring(L"0 1 0 0 0 0 0 1"), inspector.GetCurrentAddressBits());
         Assert::AreEqual(0x41U, pNote->GetCurrentValue());
+    }
+
+    TEST_METHOD(TestCurrentBitsVisible)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.Viewer().SetAddress({ 3U });
+        Assert::AreEqual(MemSize::EightBit, inspector.Viewer().GetSize());
+        Assert::IsTrue(inspector.CurrentBitsVisible());
+
+        inspector.Viewer().SetSize(MemSize::SixteenBit);
+        Assert::IsFalse(inspector.CurrentBitsVisible());
+
+        inspector.Viewer().SetSize(MemSize::ThirtyTwoBit);
+        Assert::IsFalse(inspector.CurrentBitsVisible());
+
+        inspector.Viewer().SetSize(MemSize::EightBit);
+        Assert::IsTrue(inspector.CurrentBitsVisible());
     }
 
     TEST_METHOD(TestOpenNotesList)

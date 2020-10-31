@@ -103,6 +103,13 @@ public:
     void BindEnabled(int nDlgItemId, const BoolModelProperty& pSourceProperty);
 
     /// <summary>
+    /// Binds the a visibility of a control to a property of the viewmodel.
+    /// </summary>
+    /// <param name="nDlgItemId">The unique identifier of the control in the dialog.</param>
+    /// <param name="pSourceProperty">The property to bind to.</param>
+    void BindVisible(int nDlgItemId, const BoolModelProperty& pSourceProperty);
+
+    /// <summary>
     /// Called when the window's size changes.
     /// </summary>
     /// <param name="oSize">The new size.</param>
@@ -125,6 +132,7 @@ protected:
 private:
     std::unordered_map<int, int> m_mLabelBindings;
     std::unordered_map<int, std::set<int>> m_mEnabledBindings;
+    std::unordered_map<int, std::set<int>> m_mVisibilityBindings;
 
     class ChildBinding : public BindingBase
     {

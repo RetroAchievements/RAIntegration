@@ -16,6 +16,7 @@
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
+#include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -75,6 +76,7 @@ public:
     ra::services::mocks::MockConfiguration mockConfiguration;
     ra::ui::mocks::MockDesktop mockDesktop;
     ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
+    ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
 private:
     ra::services::mocks::MockAudioSystem mockAudioSystem;

@@ -97,6 +97,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
         if (pSummary)
             vmAssets->OpenEditor(pSummary);
     });
+    m_bindAssets.BindEnsureVisible(AssetListViewModel::EnsureVisibleAssetIndexProperty);
     m_bindAssets.BindItems(vmAssetList.FilteredAssets());
 
     m_bindCoreAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::ui::viewmodels::AssetCategory::Core));
@@ -107,7 +108,9 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindWindow.BindLabel(IDC_RA_NUMACH, AssetListViewModel::AchievementCountProperty);
     m_bindWindow.BindLabel(IDC_RA_POINT_TOTAL, AssetListViewModel::TotalPointsProperty);
 
+    m_bindWindow.BindEnabled(IDC_RA_RESET_ACH, AssetListViewModel::CanActivateProperty);
     m_bindWindow.BindLabel(IDC_RA_RESET_ACH, AssetListViewModel::ActivateButtonTextProperty);
+    m_bindWindow.BindEnabled(IDC_RA_ADD_ACH, AssetListViewModel::CanCreateProperty);
     m_bindWindow.BindLabel(IDC_RA_COMMIT_ACH, AssetListViewModel::SaveButtonTextProperty);
     m_bindWindow.BindEnabled(IDC_RA_COMMIT_ACH, AssetListViewModel::CanSaveProperty);
     m_bindWindow.BindLabel(IDC_RA_PROMOTE_ACH, AssetListViewModel::PublishButtonTextProperty);
@@ -116,6 +119,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindWindow.BindEnabled(IDC_RA_DOWNLOAD_ACH, AssetListViewModel::CanRefreshProperty);
     m_bindWindow.BindLabel(IDC_RA_REVERTSELECTED, AssetListViewModel::RevertButtonTextProperty);
     m_bindWindow.BindEnabled(IDC_RA_REVERTSELECTED, AssetListViewModel::CanRevertProperty);
+    m_bindWindow.BindEnabled(IDC_RA_ADD_ACH, AssetListViewModel::CanCreateProperty);
     m_bindWindow.BindEnabled(IDC_RA_CLONE_ACH, AssetListViewModel::CanCloneProperty);
 
     m_bindProcessingActive.BindCheck(AssetListViewModel::IsProcessingActiveProperty);

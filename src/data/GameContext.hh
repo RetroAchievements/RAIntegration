@@ -331,7 +331,7 @@ protected:
     std::string m_sServerRichPresenceMD5;
     bool m_bRichPresenceFromFile = false;
 
-    ra::AchievementID m_nNextLocalId = 0;
+    ra::AchievementID m_nNextLocalId = FirstLocalId;
     static const ra::AchievementID FirstLocalId = 111000001;
 
     std::vector<std::unique_ptr<Achievement>> m_vAchievements;

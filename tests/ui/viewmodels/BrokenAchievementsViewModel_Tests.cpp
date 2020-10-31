@@ -6,6 +6,8 @@
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockServer.hh"
+#include "tests\mocks\MockThreadPool.hh"
+#include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -24,7 +26,9 @@ private:
     public:
         ra::api::mocks::MockServer mockServer;
         ra::data::mocks::MockGameContext mockGameContext;
+        ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
+        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
         void MockAchievements()
         {

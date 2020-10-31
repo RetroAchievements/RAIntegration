@@ -150,7 +150,8 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         if (nCategory != Achievement::Category::Core && nCategory != Achievement::Category::Unofficial)
             continue;
 
-        auto& pAchievement = NewAchievement(nCategory);
+        auto& pAchievement = *m_vAchievements.emplace_back(std::make_unique<Achievement>());
+        pAchievement.SetCategory(nCategory);
         pAchievement.SetID(pAchievementData.Id);
         CopyAchievementData(pAchievement, pAchievementData);
 
@@ -657,6 +658,17 @@ Achievement& GameContext::NewAchievement(Achievement::Category nType)
     Achievement& pAchievement = *m_vAchievements.emplace_back(std::make_unique<Achievement>());
     pAchievement.SetCategory(nType);
     pAchievement.SetID(m_nNextLocalId++);
+
+    auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+    vmAchievement->SetID(pAchievement.ID());
+    vmAchievement->SetCategory(ra::itoe<ra::ui::viewmodels::AssetCategory>(ra::etoi(nType)));
+    vmAchievement->SetPoints(0);
+    vmAchievement->CreateServerCheckpoint();
+    vmAchievement->CreateLocalCheckpoint();
+
+    auto& vmAssets = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
+    vmAssets.Assets().Append(std::move(vmAchievement));
+
     return pAchievement;
 }
 

@@ -4,7 +4,9 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
+#include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -49,6 +51,8 @@ public:
     ra::data::mocks::MockGameContext mockGameContext;
     ra::data::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockFileSystem mockFileSystem;
+    ra::services::mocks::MockThreadPool mockThreadPool;
+    ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
     rc_memref_value_t* GetMemRefs() noexcept
     {

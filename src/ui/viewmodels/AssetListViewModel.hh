@@ -104,6 +104,8 @@ public:
 
     static const StringModelProperty ActivateButtonTextProperty;
     const std::wstring& GetActivateButtonText() const { return GetValue(ActivateButtonTextProperty); }
+    static const BoolModelProperty CanActivateProperty;
+    bool CanActivate() const { return GetValue(CanActivateProperty); }
     void ActivateSelected();
 
     static const StringModelProperty SaveButtonTextProperty;
@@ -130,7 +132,9 @@ public:
     bool CanRevert() const { return GetValue(CanRevertProperty); }
     void RevertSelected();
 
-    void CreateNew() noexcept;
+    static const BoolModelProperty CanCreateProperty;
+    bool CanCreate() const { return GetValue(CanCreateProperty); }
+    void CreateNew();
 
     static const BoolModelProperty CanCloneProperty;
     bool CanClone() const { return GetValue(CanCloneProperty); }
@@ -189,6 +193,11 @@ public:
 
     void OpenEditor(const AssetSummaryViewModel* pAsset);
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the index of the asset that should be made visible.
+    /// </summary>
+    static const IntModelProperty EnsureVisibleAssetIndexProperty;
+
 private:
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
@@ -204,8 +213,11 @@ private:
     {
     public:
         AssetListViewModel *m_pOwner = nullptr;
+        bool m_bUpdateButtonsPending = false;
 
         void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
+        void OnBeginViewModelCollectionUpdate() noexcept override;
+        void OnEndViewModelCollectionUpdate() override;
     };
     FilteredListMonitor m_pFilteredListMonitor;
 

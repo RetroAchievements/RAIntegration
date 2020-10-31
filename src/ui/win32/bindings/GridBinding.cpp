@@ -275,6 +275,14 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
             return;
         }
     }
+    else if (m_pEnsureVisibleProperty && *m_pEnsureVisibleProperty == args.Property)
+    {
+        if (args.tNewValue >= 0)
+        {
+            EnsureVisible(gsl::narrow_cast<gsl::index>(args.tNewValue));
+            SetValue(*m_pEnsureVisibleProperty, -1);
+        }
+    }
 }
 
 void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
@@ -360,6 +368,12 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
             m_bForceRepaint = true;
         }
     }
+}
+
+void GridBinding::EnsureVisible(gsl::index nIndex)
+{
+    if (nIndex >= 0 && nIndex < gsl::narrow_cast<gsl::index>(m_vmItems->Count()))
+        ListView_EnsureVisible(m_hWnd, gsl::narrow_cast<int>(nIndex), FALSE);
 }
 
 void GridBinding::DeselectAll() noexcept
@@ -508,9 +522,10 @@ void GridBinding::OnEndViewModelCollectionUpdate()
 {
     if (m_hWnd)
     {
-        CheckForScrollBar();
-
+        // enable redraw before calling CheckForScrollBar to ensure metrics are updated
         SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
+
+        CheckForScrollBar();
 
         if (m_pIsSelectedProperty && !m_pUpdateSelectedItems)
         {
@@ -542,6 +557,11 @@ void GridBinding::Invalidate()
 void GridBinding::BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept
 {
     m_pIsSelectedProperty = &pIsSelectedProperty;
+}
+
+void GridBinding::BindEnsureVisible(const IntModelProperty& pEnsureVisibleProperty) noexcept
+{
+    m_pEnsureVisibleProperty = &pEnsureVisibleProperty;
 }
 
 void GridBinding::BindRowColor(const IntModelProperty& pRowColorProperty) noexcept

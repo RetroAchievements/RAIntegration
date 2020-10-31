@@ -22,6 +22,16 @@ public:
 
     void QueuePauseOnChange(MemSize nSize, ra::ByteAddress nAddress);
 
+    void QueuePauseOnReset(const std::wstring& sTriggerName)
+    {
+        m_vResetTriggers.push_back(sTriggerName);
+    }
+
+    void QueuePauseOnTrigger(const std::wstring& sTriggerName)
+    {
+        m_vTriggeredTriggers.push_back(sTriggerName);
+    }
+
     void DoFrame();
 
 protected:
@@ -37,6 +47,8 @@ protected:
     };
 
     std::vector<MemChange> m_vMemChanges;
+    std::vector<std::wstring> m_vResetTriggers;
+    std::vector<std::wstring> m_vTriggeredTriggers;
 };
 
 } // namespace services

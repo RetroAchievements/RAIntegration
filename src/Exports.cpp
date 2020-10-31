@@ -331,6 +331,7 @@ static void ProcessAchievements()
 #endif
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& vmAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
 
     TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeProcess);
     std::vector<ra::services::AchievementRuntime::Change> vChanges;
@@ -346,11 +347,17 @@ static void ProcessAchievements()
                 const auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
                 if (pAchievement && pAchievement->GetPauseOnReset())
                 {
-                    ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Pause();
-
-                    std::wstring sMessage = ra::StringPrintf(L"Pause on Reset: %s", pAchievement->Title());
-                    ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
+                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+                    pFrameEventQueue.QueuePauseOnReset(ra::Widen(pAchievement->Title()));
                 }
+
+                const auto* vmAchievement = vmAssetList.FindAchievement(pChange.nId);
+                if (vmAchievement && vmAchievement->IsPauseOnReset())
+                {
+                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+                    pFrameEventQueue.QueuePauseOnReset(vmAchievement->GetName());
+                }
+
                 break;
             }
 
@@ -362,24 +369,30 @@ static void ProcessAchievements()
 #pragma warning(disable : 26462)
                 auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
 #pragma warning(pop)
-                if (!pAchievement)
-                    break;
-
-                if (pGameContext.HasRichPresence() && !pGameContext.IsRichPresenceFromFile())
-                    pAchievement->SetUnlockRichPresence(pGameContext.GetRichPresenceDisplayString());
+                if (pAchievement)
+                {
+                    if (pGameContext.HasRichPresence() && !pGameContext.IsRichPresenceFromFile())
+                        pAchievement->SetUnlockRichPresence(pGameContext.GetRichPresenceDisplayString());
 
 #ifndef RA_UTEST
-                g_AchievementsDialog.ReloadLBXData(pAchievement->ID());
+                    g_AchievementsDialog.ReloadLBXData(pAchievement->ID());
 
-                if (g_AchievementEditorDialog.ActiveAchievement() == pAchievement)
-                    g_AchievementEditorDialog.LoadAchievement(pAchievement, TRUE);
+                    if (g_AchievementEditorDialog.ActiveAchievement() == pAchievement)
+                        g_AchievementEditorDialog.LoadAchievement(pAchievement, TRUE);
 #endif
 
-                if (pAchievement->GetPauseOnTrigger())
+                    if (pAchievement->GetPauseOnTrigger())
+                    {
+                        auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+                        pFrameEventQueue.QueuePauseOnTrigger(ra::Widen(pAchievement->Title()));
+                    }
+                }
+
+                const auto* vmAchievement = vmAssetList.FindAchievement(pChange.nId);
+                if (vmAchievement && vmAchievement->IsPauseOnTrigger())
                 {
-                    ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Pause();
-                    std::wstring sMessage = ra::StringPrintf(L"Pause on Trigger: %s", pAchievement->Title());
-                    ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
+                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+                    pFrameEventQueue.QueuePauseOnReset(vmAchievement->GetName());
                 }
 
                 break;

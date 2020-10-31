@@ -24,8 +24,32 @@ void FrameEventQueue::DoFrame()
 {
     std::wstring sPauseMessage;
 
+    if (!m_vTriggeredTriggers.empty())
+    {
+        sPauseMessage.append(L"The following triggers have fired:");
+        for (const auto& pTriggerName : m_vTriggeredTriggers)
+            sPauseMessage.append(ra::StringPrintf(L"\n* %s", pTriggerName));
+
+        m_vTriggeredTriggers.clear();
+    }
+
+    if (!m_vResetTriggers.empty())
+    {
+        if (!sPauseMessage.empty())
+            sPauseMessage.append(L"\n");
+
+        sPauseMessage.append(L"The following triggers have been reset:");
+        for (const auto& pTriggerName : m_vResetTriggers)
+            sPauseMessage.append(ra::StringPrintf(L"\n* %s", pTriggerName));
+
+        m_vResetTriggers.clear();
+    }
+
     if (!m_vMemChanges.empty())
     {
+        if (!sPauseMessage.empty())
+            sPauseMessage.append(L"\n");
+
         sPauseMessage.append(L"The following bookmarks have changed:");
 
         const auto& pAssetEditor = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetEditor;

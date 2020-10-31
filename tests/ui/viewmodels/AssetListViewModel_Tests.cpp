@@ -6,6 +6,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
@@ -25,6 +26,7 @@ private:
     class AssetListViewModelHarness : public AssetListViewModel
     {
     public:
+        ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::data::mocks::MockGameContext mockGameContext;
@@ -1326,6 +1328,27 @@ public:
         AssertDoesNotContain(sText2, "2:\"0xH1111=1\":");
 
         Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+    }
+
+    TEST_METHOD(TestDoFrameUpdatesAssets)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockGameContext.SetGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        auto* pAchievement = vmAssetList.FindAchievement(1U);
+        Expects(pAchievement != nullptr);
+        pAchievement->Activate();
+        Assert::AreEqual(AssetState::Waiting, pAchievement->GetState());
+
+        auto* pTrigger = vmAssetList.mockRuntime.GetAchievementTrigger(1U);
+        Expects(pTrigger != nullptr);
+        pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
+        Assert::AreEqual(AssetState::Waiting, pAchievement->GetState());
+
+        vmAssetList.DoFrame();
+        Assert::AreEqual(AssetState::Active, pAchievement->GetState());
     }
 
     TEST_METHOD(TestCreateNew)

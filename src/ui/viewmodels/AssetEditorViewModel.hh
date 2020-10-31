@@ -180,6 +180,8 @@ public:
 
     void LoadAsset(AssetViewModelBase* pAsset);
 
+    void DoFrame();
+
     TriggerViewModel& Trigger() noexcept { return m_vmTrigger; }
     const TriggerViewModel& Trigger() const noexcept { return m_vmTrigger; }
 
@@ -193,7 +195,8 @@ protected:
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
-    void OnTriggerChanged() noexcept;
+    void UpdateTriggerBinding();
+    void OnTriggerChanged();
 
     TriggerViewModel m_vmTrigger;
 

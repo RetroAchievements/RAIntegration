@@ -108,6 +108,11 @@ public:
     /// </summary>
     const std::wstring& GetCurrentAddressBits() const { return GetValue(CurrentAddressBitsProperty); }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the CurrentBits should be visible.
+    /// </summary>
+    static const BoolModelProperty CurrentBitsVisibleProperty;
+
     void ToggleBit(int nBit);
 
 protected:

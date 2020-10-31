@@ -3,6 +3,9 @@
 #include "data\EmulatorContext.hh"
 
 #include "services\ServiceLocator.hh"
+#include "services\IClock.hh"
+
+#include "ui\win32\Desktop.hh"
 
 namespace ra {
 namespace ui {

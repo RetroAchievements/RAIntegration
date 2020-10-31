@@ -111,6 +111,7 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
                 return FALSE;
             }
 
+            RA_LOG_INFO("Hardcore disabled by external tool");
             ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();
         }
     }
@@ -477,6 +478,12 @@ static void UpdateUIForFrameChange()
 
     TALLY_PERFORMANCE(PerformanceCheckpoint::MemoryInspectorDoFrame);
     pWindowManager.MemoryInspector.DoFrame();
+
+    TALLY_PERFORMANCE(PerformanceCheckpoint::AssetListDoFrame);
+    pWindowManager.AssetList.DoFrame();
+
+    TALLY_PERFORMANCE(PerformanceCheckpoint::AssetEditorDoFrame);
+    pWindowManager.AssetEditor.DoFrame();
 }
 
 #endif
@@ -513,6 +520,8 @@ static bool CanRestoreState()
     {
         // save state is being allowed by app (user should have been warned!)
         ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Disabling Hardcore mode.", L"Loading save states is not allowed in Hardcore mode.");
+
+        RA_LOG_INFO("Hardcore disabled by loading state");
         ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();
     }
 

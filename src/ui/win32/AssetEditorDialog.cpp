@@ -179,6 +179,12 @@ public:
         const auto nCurrentHits = vmItems.GetItemValue(nIndex, TriggerConditionViewModel::CurrentHitsProperty);
         const auto nRequiredHits = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
 
+        if (m_nEditingItemIndex == nIndex)
+        {
+            m_nEditingItemIndex = -1;
+            return std::to_wstring(nRequiredHits);
+        }
+
         return ra::StringPrintf(L"%d (%d)", nRequiredHits, nCurrentHits);
     }
 
@@ -189,6 +195,15 @@ public:
 
         return GridNumberColumnBinding::DependsOn(pProperty);
     }
+
+    HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override
+    {
+        m_nEditingItemIndex = pInfo.nItemIndex;
+        return GridNumberColumnBinding::CreateInPlaceEditor(hParent, pInfo);
+    }
+
+private:
+    mutable gsl::index m_nEditingItemIndex = -1;
 };
 
 AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
@@ -211,6 +226,11 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     m_bindDescription.BindText(AssetEditorViewModel::DescriptionProperty);
     m_bindBadge.BindText(AssetEditorViewModel::BadgeProperty);
     m_bindPoints.BindValue(AssetEditorViewModel::PointsProperty);
+
+    m_bindWindow.BindEnabled(IDC_RA_ACH_TITLE, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_ACH_DESC, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_ACH_PAUSE_ON_RESET, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER, AssetEditorViewModel::AssetLoadedProperty);
 
     m_bindPauseOnReset.BindCheck(AssetEditorViewModel::PauseOnResetProperty);
     m_bindPauseOnTrigger.BindCheck(AssetEditorViewModel::PauseOnTriggerProperty);
@@ -311,6 +331,9 @@ BOOL AssetEditorDialog::OnInitDialog()
 
     m_bindGroups.SetControl(*this, IDC_RA_ACH_GROUP);
     m_bindTrigger.SetControl(*this, IDC_RA_LBX_CONDITIONS);
+
+    m_bindPauseOnReset.SetControl(*this, IDC_RA_CHK_ACH_PAUSE_ON_RESET);
+    m_bindPauseOnTrigger.SetControl(*this, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER);
 
     return DialogBase::OnInitDialog();
 }

@@ -21,6 +21,7 @@ const StringModelProperty MemoryInspectorViewModel::CurrentAddressNoteProperty("
 const StringModelProperty MemoryInspectorViewModel::CurrentAddressBitsProperty("MemoryInspectorViewModel", "CurrentAddressBits", L"0 0 0 0 0 0 0 0");
 const IntModelProperty MemoryInspectorViewModel::CurrentAddressValueProperty("MemoryInspectorViewModel", "CurrentAddressValue", 0);
 const BoolModelProperty MemoryInspectorViewModel::CanModifyNotesProperty("MemoryInspectorViewModel", "CanModifyNotes", true);
+const BoolModelProperty MemoryInspectorViewModel::CurrentBitsVisibleProperty("MemoryInspectorViewModel", "CurrentBitsVisibleProperty", true);
 
 MemoryInspectorViewModel::MemoryInspectorViewModel()
 {
@@ -83,6 +84,8 @@ void MemoryInspectorViewModel::OnViewModelIntValueChanged(const IntModelProperty
 {
     if (args.Property == MemoryViewerViewModel::AddressProperty)
         SetValue(CurrentAddressProperty, args.tNewValue);
+    else if (args.Property == MemoryViewerViewModel::SizeProperty)
+        SetValue(CurrentBitsVisibleProperty, ra::itoe<MemSize>(args.tNewValue) == MemSize::EightBit);
 }
 
 void MemoryInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)

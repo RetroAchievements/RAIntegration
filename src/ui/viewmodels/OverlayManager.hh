@@ -281,6 +281,7 @@ private:
 
     bool m_bRedrawAll = false;
     std::chrono::steady_clock::time_point m_tLastRender{};
+    std::chrono::steady_clock::time_point m_tLastRequestRender{};
     std::function<void()> m_fHandleRenderRequest;
     std::function<void()> m_fHandleShowRequest;
     std::function<void()> m_fHandleHideRequest;

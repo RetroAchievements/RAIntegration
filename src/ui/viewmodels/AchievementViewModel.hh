@@ -88,14 +88,25 @@ public:
     /// </summary>
     void SetTrigger(const std::string& sTrigger) { SetAssetDefinition(m_pTrigger, sTrigger); }
 
+    /// <summary>
+    /// Gets when the achievement was unlocked.
+    /// </summary>
+    std::chrono::system_clock::time_point GetUnlockTime() const noexcept { return m_tUnlock; }
+
     void Activate() override;
     void Deactivate() override;
+
+    void DoFrame() override;
 
     void Serialize(ra::services::TextWriter& pWriter) const override;
     bool Deserialize(ra::Tokenizer& pTokenizer) override;
 
+protected:
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
 private:
     AssetDefinition m_pTrigger;
+    std::chrono::system_clock::time_point m_tUnlock;
 };
 
 } // namespace viewmodels

@@ -140,6 +140,7 @@ public:
     bool CanClone() const { return GetValue(CanCloneProperty); }
     void CloneSelected();
 
+    void DoFrame();
 
     ViewModelCollection<AssetViewModelBase>& Assets() noexcept { return m_vAssets; }
     const ViewModelCollection<AssetViewModelBase>& Assets() const noexcept { return m_vAssets; }

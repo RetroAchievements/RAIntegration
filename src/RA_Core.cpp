@@ -254,6 +254,8 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
             return false;
     }
 
+    RA_LOG_INFO("User chose to disable hardcore to %s", sActivity);
+
     // user consented, switch to non-hardcore mode
     ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();
 
@@ -466,6 +468,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
             if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
             {
+                RA_LOG_INFO("Hardcore disabled by menu option");
                 pEmulatorContext.DisableHardcoreMode();
             }
             else

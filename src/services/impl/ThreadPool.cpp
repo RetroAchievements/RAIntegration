@@ -45,7 +45,8 @@ void ThreadPool::RunThread()
             // do work
             try
             {
-                pNext();
+                if (!m_bShutdownInitiated)
+                    pNext();
             }
             catch (const std::exception& ex)
             {

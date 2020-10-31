@@ -132,6 +132,15 @@ void TriggerViewModel::SerializeAppend(std::string& sBuffer) const
     }
 }
 
+static void AddAltGroup(ViewModelCollection<TriggerViewModel::GroupViewModel>& vGroups,
+    int nId, rc_condset_t* pConditionSet)
+{
+    auto& vmAltGroup = vGroups.Add();
+    vmAltGroup.SetId(++nId);
+    vmAltGroup.SetLabel(ra::StringPrintf(L"Alt %d", nId));
+    vmAltGroup.m_pConditionSet = pConditionSet;
+}
+
 void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
 {
     m_vGroups.RemoveNotifyTarget(*this);
@@ -152,17 +161,12 @@ void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
     int nId = 0;
     rc_condset_t* pConditionSet = pTrigger.alternative;
     for (; pConditionSet != nullptr; pConditionSet = pConditionSet->next)
-    {
-        auto& vmAltGroup = m_vGroups.Add();
-        vmAltGroup.SetId(++nId);
-        vmAltGroup.SetLabel(ra::StringPrintf(L"Alt %d", nId));
-        vmAltGroup.m_pConditionSet = pConditionSet;
-    }
+        AddAltGroup(m_vGroups, ++nId, pConditionSet);
 
     m_vGroups.EndUpdate();
     m_vGroups.AddNotifyTarget(*this);
 
-    // forcibly update the conditions from the core group that was selected earlier
+    // forcibly update the conditions from the group that was selected earlier
     UpdateConditions(&vmCoreGroup);
 }
 
@@ -183,6 +187,59 @@ void TriggerViewModel::InitializeFrom(const std::string& sTrigger)
     }
 }
 
+void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
+{
+    const int nSelectedIndex = GetSelectedGroupIndex();
+
+    m_vGroups.RemoveNotifyTarget(*this);
+    m_vGroups.BeginUpdate();
+
+    // update core group
+    auto* vmCoreGroup = m_vGroups.GetItemAt(0);
+    Expects(vmCoreGroup != nullptr);
+    vmCoreGroup->m_pConditionSet = pTrigger.requirement;
+
+    // update alt groups (add any new alt groups)
+    gsl::index nIndex = 0;
+    rc_condset_t* pConditionSet = pTrigger.alternative;
+    for (; pConditionSet != nullptr; pConditionSet = pConditionSet->next)
+    {
+        auto* vmAltGroup = m_vGroups.GetItemAt(++nIndex);
+        if (vmAltGroup != nullptr)
+            vmAltGroup->m_pConditionSet = pConditionSet;
+        else
+            AddAltGroup(m_vGroups, gsl::narrow_cast<int>(nIndex), pConditionSet);
+    }
+
+    // remove any extra alt groups
+    ++nIndex;
+    while (m_vGroups.Count() > ra::to_unsigned(nIndex))
+        m_vGroups.RemoveAt(m_vGroups.Count() - 1);
+
+    m_vGroups.EndUpdate();
+    m_vGroups.AddNotifyTarget(*this);
+
+    // forcibly update the conditions from the selected group
+    UpdateConditions(m_vGroups.GetItemAt(nSelectedIndex));
+}
+
+void TriggerViewModel::UpdateFrom(const std::string& sTrigger)
+{
+    const auto nSize = rc_trigger_size(sTrigger.c_str());
+    if (nSize > 0)
+    {
+        m_sTriggerBuffer.resize(nSize);
+        m_pTrigger = rc_parse_trigger(m_sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
+        UpdateFrom(*m_pTrigger);
+    }
+    else
+    {
+        rc_trigger_t pTrigger;
+        memset(&pTrigger, 0, sizeof(pTrigger));
+        UpdateFrom(pTrigger);
+    }
+}
+
 void TriggerViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == GroupViewModel::IsSelectedProperty)
@@ -200,9 +257,10 @@ void TriggerViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelPr
     }
 }
 
-void TriggerViewModel::ConditionsMonitor::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs&)
+void TriggerViewModel::ConditionsMonitor::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs& args)
 {
-    UpdateCurrentGroup();
+    if (args.Property != TriggerConditionViewModel::CurrentHitsProperty)
+        UpdateCurrentGroup();
 }
 
 void TriggerViewModel::ConditionsMonitor::OnViewModelAdded(gsl::index)
@@ -280,6 +338,27 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
 
     m_vConditions.EndUpdate();
     m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
+}
+
+void TriggerViewModel::DoFrame()
+{
+    auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+    if (pGroup != nullptr)
+    {
+        m_vConditions.BeginUpdate();
+
+        gsl::index nConditionIndex = 0;
+        rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
+        for (; pCondition != nullptr; pCondition = pCondition->next)
+        {
+            auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex++);
+            Expects(vmCondition != nullptr);
+
+            vmCondition->SetCurrentHits(pCondition->current_hits);
+        }
+
+        m_vConditions.EndUpdate();
+    }
 }
 
 } // namespace viewmodels

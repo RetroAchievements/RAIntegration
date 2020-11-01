@@ -27,6 +27,8 @@ const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel
 
 OverlayListPageViewModel::ItemViewModel& OverlayAchievementsPageViewModel::GetNextItem(size_t* nIndex)
 {
+    Expects(nIndex != nullptr);
+
     ItemViewModel* pvmAchievement = m_vItems.GetItemAt((*nIndex)++);
     if (pvmAchievement == nullptr)
     {
@@ -93,12 +95,14 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, cons
 
 static bool AppearsInFilter(const ra::ui::viewmodels::AchievementViewModel* vmAchievement)
 {
+    Expects(vmAchievement != nullptr);
+
     const auto nId = ra::to_signed(vmAchievement->GetID());
     const auto& vFilteredAssets = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList.FilteredAssets();
     for (gsl::index nIndex = 0; nIndex < ra::to_signed(vFilteredAssets.Count()); ++nIndex)
     {
         const auto* pAsset = vFilteredAssets.GetItemAt(nIndex);
-        if (pAsset->GetId() == nId && pAsset->GetType() == AssetType::Achievement)
+        if (pAsset && pAsset->GetId() == nId && pAsset->GetType() == AssetType::Achievement)
             return true;
     }
 

@@ -189,7 +189,7 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
                 vmItem = m_vItems.GetItemAt(++nSelectedItemIndex);
 
             if (!vmItem)
-                return true;
+                return false;
                 
             SetSelectedItemIndex(nSelectedItemIndex);
 
@@ -217,7 +217,7 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
                 m_nScrollOffset = std::max(nSelectedItemIndex, 0);
 
             if (!vmItem)
-                return true;
+                return false;
 
             SetSelectedItemIndex(nSelectedItemIndex);
 

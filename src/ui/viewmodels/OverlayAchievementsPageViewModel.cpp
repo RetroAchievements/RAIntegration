@@ -51,13 +51,23 @@ static void SetHeader(OverlayListPageViewModel::ItemViewModel& vmItem, const std
 static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, const ra::ui::viewmodels::AchievementViewModel& vmAchievement)
 {
     vmItem.SetId(vmAchievement.GetID());
-    vmItem.SetLabel(ra::StringPrintf(L"%s (%s points)", vmAchievement.GetName(), vmAchievement.GetPoints()));
+    vmItem.SetLabel(ra::StringPrintf(L"%s (%s %s)", vmAchievement.GetName(),
+        vmAchievement.GetPoints(), (vmAchievement.GetPoints() == 1) ? "point" : "points"));
     vmItem.SetDetail(vmAchievement.GetDescription());
 
     if (vmAchievement.IsActive())
     {
-        vmItem.Image.ChangeReference(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement.GetBadge()) + "_lock");
-        vmItem.SetDisabled(true);
+        if (vmAchievement.GetCategory() == AssetCategory::Local)
+        {
+            // local achievements never appear disabled
+            vmItem.Image.ChangeReference(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement.GetBadge()));
+            vmItem.SetDisabled(false);
+        }
+        else
+        {
+            vmItem.Image.ChangeReference(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement.GetBadge()) + "_lock");
+            vmItem.SetDisabled(true);
+        }
 
         const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
         const auto* pTrigger = pRuntime.GetAchievementTrigger(vmAchievement.GetID());
@@ -116,7 +126,7 @@ void OverlayAchievementsPageViewModel::Refresh()
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
     const auto tNow = ra::services::ServiceLocator::Get<ra::services::IClock>().Now();
 
-    const auto& vmAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
+    auto& vmAssetList = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
     for (gsl::index nIndex = 0; nIndex < ra::to_signed(vmAssetList.Assets().Count()); ++nIndex)
     {
         const auto* pAsset = vmAssetList.Assets().GetItemAt(nIndex);
@@ -234,8 +244,11 @@ void OverlayAchievementsPageViewModel::Refresh()
 
     if (!vLocalAchievements.empty())
     {
-        auto& pvmHeader = GetNextItem(&nIndex);
-        SetHeader(pvmHeader, L"Local");
+        if (nIndex > 0 || !vUnofficialAchievements.empty() || !vLockedCoreAchievements.empty() || !vUnlockedCoreAchievements.empty())
+        {
+            auto& pvmHeader = GetNextItem(&nIndex);
+            SetHeader(pvmHeader, L"Local");
+        }
 
         for (const auto* vmAchievement : vLocalAchievements)
         {
@@ -249,8 +262,11 @@ void OverlayAchievementsPageViewModel::Refresh()
 
     if (!vUnofficialAchievements.empty())
     {
-        auto& pvmHeader = GetNextItem(&nIndex);
-        SetHeader(pvmHeader, L"Local");
+        if (nIndex > 0 || !vLockedCoreAchievements.empty() || !vUnlockedCoreAchievements.empty())
+        {
+            auto& pvmHeader = GetNextItem(&nIndex);
+            SetHeader(pvmHeader, L"Unofficial");
+        }
 
         for (const auto* vmAchievement : vUnofficialAchievements)
         {
@@ -264,8 +280,11 @@ void OverlayAchievementsPageViewModel::Refresh()
 
     if (!vLockedCoreAchievements.empty())
     {
-        auto& pvmHeader = GetNextItem(&nIndex);
-        SetHeader(pvmHeader, L"Unearned");
+        if (nIndex > 0)
+        {
+            auto& pvmHeader = GetNextItem(&nIndex);
+            SetHeader(pvmHeader, L"Unearned");
+        }
 
         for (const auto* vmAchievement : vLockedCoreAchievements)
         {
@@ -280,8 +299,11 @@ void OverlayAchievementsPageViewModel::Refresh()
 
     if (vUnlockedCoreAchievements.size() > 0)
     {
-        auto& pvmHeader = GetNextItem(&nIndex);
-        SetHeader(pvmHeader, L"Earned");
+        if (nIndex > 0)
+        {
+            auto& pvmHeader = GetNextItem(&nIndex);
+            SetHeader(pvmHeader, L"Earned");
+        }
 
         for (const auto* vmAchievement : vUnlockedCoreAchievements)
         {

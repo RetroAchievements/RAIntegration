@@ -126,6 +126,28 @@ void AssetListViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const Int
             }
         }
     }
+    else if (args.Property == AssetViewModelBase::IDProperty)
+    {
+        auto* pAsset = m_vAssets.GetItemAt(nIndex);
+        if (pAsset != nullptr)
+        {
+            gsl::index nFilteredIndex = -1;
+            const auto nType = pAsset->GetType();
+
+            for (gsl::index nScanIndex = 0; nScanIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nScanIndex)
+            {
+                auto* pItem = m_vFilteredAssets.GetItemAt(nScanIndex);
+                if (pItem != nullptr && pItem->GetId() == args.tOldValue && pItem->GetType() == nType)
+                {
+                    nFilteredIndex = nScanIndex;
+                    break;
+                }
+            }
+
+            if (nFilteredIndex != -1)
+                m_vFilteredAssets.SetItemValue(nFilteredIndex, AssetSummaryViewModel::IdProperty, args.tNewValue);
+        }
+    }
 }
 
 void AssetListViewModel::OnViewModelAdded(_UNUSED gsl::index nIndex)

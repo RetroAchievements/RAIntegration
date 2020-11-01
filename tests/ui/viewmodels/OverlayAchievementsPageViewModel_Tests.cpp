@@ -198,7 +198,7 @@ public:
         pItem = achievementsPage.GetItem(2);
         Expects(pItem != nullptr);
         Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Earned"), pItem->GetLabel());
+        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
         Assert::IsFalse(pItem->IsDisabled());
 
         pItem = achievementsPage.GetItem(3);
@@ -247,7 +247,7 @@ public:
         pItem = achievementsPage.GetItem(1);
         Expects(pItem != nullptr);
         Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Earned"), pItem->GetLabel());
+        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
         Assert::IsFalse(pItem->IsDisabled());
 
         pItem = achievementsPage.GetItem(2);
@@ -326,7 +326,7 @@ public:
         pItem = achievementsPage.GetItem(2);
         Expects(pItem != nullptr);
         Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Earned"), pItem->GetLabel());
+        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
         Assert::IsFalse(pItem->IsDisabled());
 
         pItem = achievementsPage.GetItem(3);
@@ -387,7 +387,7 @@ public:
         pItem = achievementsPage.GetItem(2);
         Expects(pItem != nullptr);
         Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Unearned"), pItem->GetLabel());
+        Assert::AreEqual(std::wstring(L"Locked"), pItem->GetLabel());
         Assert::IsFalse(pItem->IsDisabled());
 
         pItem = achievementsPage.GetItem(3);
@@ -399,7 +399,7 @@ public:
         pItem = achievementsPage.GetItem(4);
         Expects(pItem != nullptr);
         Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Earned"), pItem->GetLabel());
+        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
         Assert::IsFalse(pItem->IsDisabled());
 
         pItem = achievementsPage.GetItem(5);

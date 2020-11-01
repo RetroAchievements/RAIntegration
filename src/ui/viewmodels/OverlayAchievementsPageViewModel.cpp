@@ -207,7 +207,7 @@ void OverlayAchievementsPageViewModel::Refresh()
     if (!vRecentAchievements.empty())
     {
         auto& pvmHeader = GetNextItem(&nIndex);
-        SetHeader(pvmHeader, L"Recently Earned");
+        SetHeader(pvmHeader, L"Recently Unlocked");
 
         for (const auto* vmAchievement : vRecentAchievements)
         {
@@ -287,7 +287,7 @@ void OverlayAchievementsPageViewModel::Refresh()
         if (nIndex > 0)
         {
             auto& pvmHeader = GetNextItem(&nIndex);
-            SetHeader(pvmHeader, L"Unearned");
+            SetHeader(pvmHeader, L"Locked");
         }
 
         for (const auto* vmAchievement : vLockedCoreAchievements)
@@ -306,7 +306,7 @@ void OverlayAchievementsPageViewModel::Refresh()
         if (nIndex > 0)
         {
             auto& pvmHeader = GetNextItem(&nIndex);
-            SetHeader(pvmHeader, L"Earned");
+            SetHeader(pvmHeader, L"Unlocked");
         }
 
         for (const auto* vmAchievement : vUnlockedCoreAchievements)
@@ -365,7 +365,7 @@ void OverlayAchievementsPageViewModel::Refresh()
             vmItem = m_vItems.GetItemAt(++nSelectedIndex);
     }
 
-    if (nSelectedIndex < m_vItems.Count())
+    if (nSelectedIndex < ra::to_signed(m_vItems.Count()))
         SetSelectedItemIndex(nSelectedIndex);
 }
 

@@ -21,6 +21,11 @@ public:
     /// </summary>
     virtual void SetText(const std::wstring& sValue) const = 0;
 
+    /// <summary>
+    /// Gets text from the clipboard.
+    /// </summary>
+    virtual std::wstring GetText() const = 0;
+
 protected:
     IClipboard() noexcept = default;
 };

@@ -38,6 +38,42 @@ public:
             }
         }
     }
+
+    std::wstring GetText() const override
+    {
+        std::wstring sText;
+
+        if (OpenClipboard(nullptr))
+        {
+            HANDLE hData = GetClipboardData(CF_UNICODETEXT);
+            if (hData != nullptr)
+            {
+                const auto* pszText = static_cast<wchar_t*>(GlobalLock(hData));
+                if (pszText != nullptr)
+                {
+                    sText = pszText;
+                    GlobalUnlock(hData);
+                }
+            }
+            else
+            {
+                hData = GetClipboardData(CF_TEXT);
+                if (hData != nullptr)
+                {
+                    const auto* pszText = static_cast<char*>(GlobalLock(hData));
+                    if (pszText != nullptr)
+                    {
+                        sText = ra::Widen(pszText);
+                        GlobalUnlock(hData);
+                    }
+                }
+            }
+
+            CloseClipboard();
+        }
+
+        return sText;
+    }
 };
 
 } // namespace impl

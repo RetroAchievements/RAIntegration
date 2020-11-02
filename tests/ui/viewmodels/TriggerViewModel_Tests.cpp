@@ -4,6 +4,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockClipboard.hh"
+#include "tests\mocks\MockDesktop.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -19,6 +20,7 @@ private:
     {
     public:
         ra::services::mocks::MockClipboard mockClipboard;
+        ra::ui::mocks::MockDesktop mockDesktop;
     };
 
     void Parse(TriggerViewModel& vmTrigger, const std::string& sInput)
@@ -264,6 +266,98 @@ public:
         Assert::AreEqual(std::wstring(L"0xH1234=16_0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.mockClipboard.GetText());
     }
 
+    TEST_METHOD(TestPasteFromClipboardEmpty)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16");
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogShown = true;
+
+            Assert::AreEqual(std::wstring(L"Paste failed."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Clipboard did not contain any text."), vmMessageBox.GetMessage());
+
+            return DialogResult::OK;
+        });
+
+        vmTrigger.mockClipboard.SetText(L"");
+        vmTrigger.PasteFromClipboard();
+
+        Assert::IsTrue(bDialogShown);
+    }
+
+    TEST_METHOD(TestPasteFromClipboardNonTrigger)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16");
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogShown = true;
+
+            Assert::AreEqual(std::wstring(L"Paste failed."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Clipboard did not contain valid trigger conditions."), vmMessageBox.GetMessage());
+
+            return DialogResult::OK;
+        });
+
+        vmTrigger.mockClipboard.SetText(L"Hello, world!");
+        vmTrigger.PasteFromClipboard();
+
+        Assert::IsTrue(bDialogShown);
+    }
+
+    TEST_METHOD(TestPasteFromClipboardMultipleGroups)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16");
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogShown = true;
+
+            Assert::AreEqual(std::wstring(L"Paste failed."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Clipboard contained multiple groups."), vmMessageBox.GetMessage());
+
+            return DialogResult::OK;
+        });
+
+        vmTrigger.mockClipboard.SetText(L"0xL65FF=11S0xT3333=1");
+        vmTrigger.PasteFromClipboard();
+
+        Assert::IsTrue(bDialogShown);
+    }
+
+    TEST_METHOD(TestPasteFromClipboard)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16");
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+        vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
+
+        vmTrigger.mockClipboard.SetText(L"0xL65FF=11.1._R:0xT3333=1");
+        vmTrigger.PasteFromClipboard();
+
+        Assert::IsFalse(vmTrigger.mockDesktop.WasDialogShown());
+        Assert::AreEqual({ 3U }, vmTrigger.Conditions().Count());
+
+        // newly pasted conditions should be selected, any previously selected items should be deselected
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(2)->IsSelected());
+
+        Assert::AreEqual(std::string("0xH1234=16_0xL65ff=11.1._R:0xT3333=1"), vmTrigger.Serialize());
+    }
 };
 
 } // namespace tests

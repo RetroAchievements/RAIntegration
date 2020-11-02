@@ -6,6 +6,8 @@
 #include "services\IClipboard.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -163,6 +165,49 @@ void TriggerViewModel::CopySelectedConditionsToClipboard()
     }
 
     ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sSerialized));
+}
+
+void TriggerViewModel::PasteFromClipboard()
+{
+    const std::wstring sClipboardText = ra::services::ServiceLocator::Get<ra::services::IClipboard>().GetText();
+    if (sClipboardText.empty())
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Paste failed.", L"Clipboard did not contain any text.");
+        return;
+    }
+
+    std::string sTrigger = ra::Narrow(sClipboardText);
+    const auto nSize = rc_trigger_size(sTrigger.c_str());
+    if (nSize < 0)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Paste failed.", L"Clipboard did not contain valid trigger conditions.");
+        return;
+    }
+
+    std::string sTriggerBuffer;
+    sTriggerBuffer.resize(nSize);
+    const rc_trigger_t* pTrigger = rc_parse_trigger(sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
+    if (pTrigger->alternative)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Paste failed.", L"Clipboard contained multiple groups.");
+        return;
+    }
+
+    m_vConditions.BeginUpdate();
+
+    for (gsl::index nIndex = 0; nIndex < m_vConditions.Count(); ++nIndex)
+        m_vConditions.SetItemValue(nIndex, TriggerConditionViewModel::IsSelectedProperty, false);
+
+    for (const rc_condition_t* pCondition = pTrigger->requirement->conditions;
+        pCondition != nullptr; pCondition = pCondition->next)
+    {
+        auto& vmCondition = m_vConditions.Add();
+        vmCondition.InitializeFrom(*pCondition);
+        vmCondition.SetSelected(true);
+        vmCondition.SetIndex(m_vConditions.Count());
+    }
+
+    m_vConditions.EndUpdate();
 }
 
 static void AddAltGroup(ViewModelCollection<TriggerViewModel::GroupViewModel>& vGroups,

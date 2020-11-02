@@ -70,6 +70,7 @@ public:
     void UpdateFrom(const std::string& sTrigger);
 
     void CopySelectedConditionsToClipboard();
+    void PasteFromClipboard();
 
     /// <summary>
     /// Gets the list of condition types.

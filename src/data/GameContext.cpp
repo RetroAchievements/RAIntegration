@@ -665,6 +665,7 @@ Achievement& GameContext::NewAchievement(Achievement::Category nType)
     vmAchievement->SetPoints(0);
     vmAchievement->CreateServerCheckpoint();
     vmAchievement->CreateLocalCheckpoint();
+    vmAchievement->SetNew();
 
     auto& vmAssets = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
     vmAssets.Assets().Append(std::move(vmAchievement));

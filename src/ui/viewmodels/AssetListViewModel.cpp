@@ -22,12 +22,10 @@ const IntModelProperty AssetListViewModel::TotalPointsProperty("AssetListViewMod
 const BoolModelProperty AssetListViewModel::IsProcessingActiveProperty("AssetListViewModel", "IsProcessingActive", true);
 const StringModelProperty AssetListViewModel::ActivateButtonTextProperty("AssetListViewModel", "ActivateButtonText", L"&Activate All");
 const StringModelProperty AssetListViewModel::SaveButtonTextProperty("AssetListViewModel", "SaveButtonText", L"&Save All");
-const StringModelProperty AssetListViewModel::PublishButtonTextProperty("AssetListViewModel", "SaveButtonText", L"&Publish All");
 const StringModelProperty AssetListViewModel::RefreshButtonTextProperty("AssetListViewModel", "SaveButtonText", L"&Refresh All");
 const StringModelProperty AssetListViewModel::RevertButtonTextProperty("AssetListViewModel", "SaveButtonText", L"Re&vert All");
 const BoolModelProperty AssetListViewModel::CanActivateProperty("AssetListViewModel", "CanActivate", false);
 const BoolModelProperty AssetListViewModel::CanSaveProperty("AssetListViewModel", "CanSave", false);
-const BoolModelProperty AssetListViewModel::CanPublishProperty("AssetListViewModel", "CanPublish", false);
 const BoolModelProperty AssetListViewModel::CanRefreshProperty("AssetListViewModel", "CanRefresh", false);
 const BoolModelProperty AssetListViewModel::CanRevertProperty("AssetListViewModel", "CanRevert", false);
 const BoolModelProperty AssetListViewModel::CanCreateProperty("AssetListViewModel", "CanCreate", false);
@@ -52,6 +50,7 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vChanges.Add(ra::etoi(AssetChanges::None), L"");
     m_vChanges.Add(ra::etoi(AssetChanges::Modified), L"Modified");
     m_vChanges.Add(ra::etoi(AssetChanges::Unpublished), L"Unpublished");
+    m_vChanges.Add(ra::etoi(AssetChanges::New), L"New");
 
     m_vAssets.AddNotifyTarget(*this);
 
@@ -403,57 +402,78 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasModified = false;
     bool bHasUnpublished = false;
 
-    if (GetGameId() == 0)
+    const bool bGameLoaded = (GetGameId() != 0);
+    if (!bGameLoaded)
     {
         SetValue(CanCreateProperty, false);
         SetValue(CanActivateProperty, false);
+        SetValue(ActivateButtonTextProperty, ActivateButtonTextProperty.GetDefaultValue());
     }
     else
     {
         SetValue(CanCreateProperty, true);
-        SetValue(CanActivateProperty, true);
+        SetValue(CanActivateProperty, m_vFilteredAssets.Count() > 0);
 
         for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
         {
             const auto* pItem = m_vFilteredAssets.GetItemAt(i);
-            if (pItem != nullptr && pItem->IsSelected())
+            if (pItem != nullptr)
             {
-                switch (pItem->GetCategory())
-                {
-                    case AssetCategory::Core:
-                        bHasCoreSelection = true;
-                        break;
-                    case AssetCategory::Unofficial:
-                        bHasUnofficialSelection = true;
-                        break;
-                    case AssetCategory::Local:
-                        bHasLocalSelection = true;
-                        break;
-                    default:
-                        break;
-                }
-
-                switch (pItem->GetState())
-                {
-                    case AssetState::Inactive:
-                    case AssetState::Triggered:
-                        bHasInactiveSelection = true;
-                        break;
-                    default:
-                        bHasActiveSelection = true;
-                        break;
-                }
-
                 switch (pItem->GetChanges())
                 {
                     case AssetChanges::Modified:
-                        bHasModifiedSelection = true;
+                    case AssetChanges::New:
+                        bHasModified = true;
                         break;
                     case AssetChanges::Unpublished:
-                        bHasUnpublishedSelection = true;
+                        bHasUnpublished = true;
                         break;
                     default:
                         break;
+                }
+
+                if (pItem->IsSelected())
+                {
+                    bHasSelection = true;
+
+                    switch (pItem->GetCategory())
+                    {
+                        case AssetCategory::Core:
+                            bHasCoreSelection = true;
+                            break;
+                        case AssetCategory::Unofficial:
+                            bHasUnofficialSelection = true;
+                            break;
+                        case AssetCategory::Local:
+                            bHasLocalSelection = true;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    switch (pItem->GetState())
+                    {
+                        case AssetState::Inactive:
+                        case AssetState::Triggered:
+                            bHasInactiveSelection = true;
+                            break;
+                        default:
+                            bHasActiveSelection = true;
+                            break;
+                    }
+
+                    switch (pItem->GetChanges())
+                    {
+                        case AssetChanges::Modified:
+                        case AssetChanges::New:
+                            bHasModifiedSelection = true;
+                            break;
+                        case AssetChanges::Unpublished:
+                            bHasUnpublishedSelection = true;
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         }
@@ -463,16 +483,15 @@ void AssetListViewModel::DoUpdateButtons()
     {
         SetValue(ActivateButtonTextProperty, L"&Activate");
         SetValue(CanCloneProperty, true);
-        bHasSelection = true;
     }
     else if (bHasActiveSelection)
     {
         SetValue(ActivateButtonTextProperty, L"De&activate");
         SetValue(CanCloneProperty, true);
-        bHasSelection = true;
     }
     else
     {
+        Expects(!bHasSelection); // a selected item should be tallied as either active or inactive
         SetValue(ActivateButtonTextProperty, ActivateButtonTextProperty.GetDefaultValue());
         SetValue(CanCloneProperty, false);
     }
@@ -481,47 +500,34 @@ void AssetListViewModel::DoUpdateButtons()
     {
         SetValue(SaveButtonTextProperty, L"&Save");
         SetValue(CanSaveProperty, true);
-        bHasModified = true;
     }
-    else
+    else if (bHasUnpublishedSelection)
     {
-        for (size_t i = 0; i < m_vAssets.Count(); ++i)
-        {
-            const auto* pItem = m_vAssets.GetItemAt(i);
-            if (pItem != nullptr && pItem->GetChanges() == AssetChanges::Modified)
-            {
-                bHasModified = true;
-                break;
-            }
-        }
-
+        SetValue(SaveButtonTextProperty, L"Publi&sh");
+        SetValue(CanSaveProperty, true);
+    }
+    else if (bHasSelection)
+    {
+        SetValue(SaveButtonTextProperty, L"&Save");
+        SetValue(CanSaveProperty, false);
+    }
+    else if (bHasModified)
+    {
         SetValue(SaveButtonTextProperty, SaveButtonTextProperty.GetDefaultValue());
-        SetValue(CanSaveProperty, bHasModified);
+        SetValue(CanSaveProperty, true);
     }
-
-    if (bHasUnpublishedSelection)
+    else if (bHasUnpublished)
     {
-        SetValue(PublishButtonTextProperty, L"&Publish");
-        SetValue(CanPublishProperty, true);
-        bHasUnpublished = true;
+        SetValue(SaveButtonTextProperty, L"&Publish All");
+        SetValue(CanSaveProperty, true);
     }
     else
     {
-        for (size_t i = 0; i < m_vAssets.Count(); ++i)
-        {
-            const auto* pItem = m_vAssets.GetItemAt(i);
-            if (pItem != nullptr && pItem->GetChanges() == AssetChanges::Unpublished)
-            {
-                bHasUnpublished = true;
-                break;
-            }
-        }
-
-        SetValue(PublishButtonTextProperty, PublishButtonTextProperty.GetDefaultValue());
-        SetValue(CanPublishProperty, bHasUnpublished);
+        SetValue(SaveButtonTextProperty, SaveButtonTextProperty.GetDefaultValue());
+        SetValue(CanSaveProperty, false);
     }
 
-    if (m_vAssets.Count() > 0)
+    if (bGameLoaded)
     {
         if (bHasSelection)
             SetValue(RefreshButtonTextProperty, L"&Refresh");
@@ -536,10 +542,12 @@ void AssetListViewModel::DoUpdateButtons()
         SetValue(CanRefreshProperty, false);
     }
 
-    if (m_vAssets.Count() > 0)
+    if (bGameLoaded)
     {
         if (bHasCoreSelection || bHasUnofficialSelection)
             SetValue(RevertButtonTextProperty, L"Re&vert");
+        else if (bHasLocalSelection)
+            SetValue(RevertButtonTextProperty, L"&Delete");
         else
             SetValue(RevertButtonTextProperty, RevertButtonTextProperty.GetDefaultValue());
 
@@ -662,6 +670,11 @@ void AssetListViewModel::SaveSelected()
                     if (!pItem->HasUnpublishedChanges())
                         continue;
                 }
+                else if (pItem->GetChanges() == AssetChanges::New)
+                {
+                    // unselected new item has no local state to maintain
+                    continue;
+                }
                 break;
         }
 
@@ -672,12 +685,6 @@ void AssetListViewModel::SaveSelected()
     }
 
     RA_LOG_INFO("Wrote user assets file");
-}
-
-void AssetListViewModel::PublishSelected()
-{
-    if (!CanPublish())
-        return;
 }
 
 void AssetListViewModel::RefreshSelected()

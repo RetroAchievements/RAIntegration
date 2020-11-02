@@ -23,6 +23,51 @@ namespace tests {
 TEST_CLASS(AssetListViewModel_Tests)
 {
 private:
+    enum class ActivateButtonState
+    {
+        Activate,
+        Deactivate,
+        ActivateAll,
+        Disabled
+    };
+
+    enum class SaveButtonState
+    {
+        Save,
+        Publish,
+        SaveDisabled,
+        SaveAll,
+        PublishAll,
+        SaveAllDisabled
+    };
+
+    enum class RefreshButtonState
+    {
+        Refresh,
+        RefreshAll,
+        Disabled
+    };
+
+    enum class RevertButtonState
+    {
+        Revert,
+        RevertAll,
+        Delete,
+        Disabled
+    };
+
+    enum class CreateButtonState
+    {
+        Enabled,
+        Disabled
+    };
+
+    enum class CloneButtonState
+    {
+        Enabled,
+        Disabled
+    };
+
     class AssetListViewModelHarness : public AssetListViewModel
     {
     public:
@@ -32,6 +77,156 @@ private:
         ra::data::mocks::MockGameContext mockGameContext;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
+
+        void AssertButtonState(ActivateButtonState nActivateButtonState)
+        {
+            switch (nActivateButtonState)
+            {
+                case ActivateButtonState::Activate:
+                    SetValue(ActivateButtonTextProperty, L"&Activate");
+                    Assert::IsTrue(CanActivate());
+                    break;
+
+                case ActivateButtonState::Deactivate:
+                    SetValue(ActivateButtonTextProperty, L"De&activate");
+                    Assert::IsTrue(CanActivate());
+                    break;
+
+                case ActivateButtonState::ActivateAll:
+                    SetValue(ActivateButtonTextProperty, L"&Activate All");
+                    Assert::IsTrue(CanActivate());
+                    break;
+
+                case ActivateButtonState::Disabled:
+                    SetValue(ActivateButtonTextProperty, L"&Activate All");
+                    Assert::IsFalse(CanActivate());
+                    break;
+            }
+        }
+
+        void AssertButtonState(SaveButtonState nSaveButtonState)
+        {
+            switch (nSaveButtonState)
+            {
+                case SaveButtonState::Save:
+                    SetValue(ActivateButtonTextProperty, L"&Save");
+                    Assert::IsTrue(CanSave());
+                    break;
+
+                case SaveButtonState::Publish:
+                    SetValue(ActivateButtonTextProperty, L"Publi&sh");
+                    Assert::IsTrue(CanSave());
+                    break;
+
+                case SaveButtonState::SaveDisabled:
+                    SetValue(ActivateButtonTextProperty, L"&Save");
+                    Assert::IsFalse(CanSave());
+                    break;
+
+                case SaveButtonState::SaveAll:
+                    SetValue(ActivateButtonTextProperty, L"&Save All");
+                    Assert::IsTrue(CanSave());
+                    break;
+
+                case SaveButtonState::PublishAll:
+                    SetValue(ActivateButtonTextProperty, L"Publi&sh All");
+                    Assert::IsTrue(CanSave());
+                    break;
+
+                case SaveButtonState::SaveAllDisabled:
+                    SetValue(ActivateButtonTextProperty, L"&Save All");
+                    Assert::IsFalse(CanSave());
+                    break;
+            }
+        }
+
+        void AssertButtonState(RefreshButtonState nRefreshButtonState)
+        {
+            switch (nRefreshButtonState)
+            {
+                case RefreshButtonState::Refresh:
+                    SetValue(ActivateButtonTextProperty, L"&Refresh");
+                    Assert::IsTrue(CanRefresh());
+                    break;
+
+                case RefreshButtonState::RefreshAll:
+                    SetValue(ActivateButtonTextProperty, L"&Refresh All");
+                    Assert::IsTrue(CanRefresh());
+                    break;
+
+                case RefreshButtonState::Disabled:
+                    SetValue(ActivateButtonTextProperty, L"&Refresh All");
+                    Assert::IsFalse(CanRefresh());
+                    break;
+            }
+        }
+
+        void AssertButtonState(RevertButtonState nRevertButtonState)
+        {
+            switch (nRevertButtonState)
+            {
+                case RevertButtonState::Revert:
+                    SetValue(ActivateButtonTextProperty, L"Re&vert");
+                    Assert::IsTrue(CanRevert());
+                    break;
+
+                case RevertButtonState::RevertAll:
+                    SetValue(ActivateButtonTextProperty, L"Re&vert All");
+                    Assert::IsTrue(CanRevert());
+                    break;
+
+                case RevertButtonState::Delete:
+                    SetValue(ActivateButtonTextProperty, L"&Delete");
+                    Assert::IsTrue(CanRevert());
+                    break;
+
+                case RevertButtonState::Disabled:
+                    SetValue(ActivateButtonTextProperty, L"Re&vert All");
+                    Assert::IsFalse(CanRevert());
+                    break;
+            }
+        }
+
+        void AssertButtonState(CreateButtonState nCreateButtonState)
+        {
+            switch (nCreateButtonState)
+            {
+                case CreateButtonState::Enabled:
+                    Assert::IsTrue(CanCreate());
+                    break;
+
+                case CreateButtonState::Disabled:
+                    Assert::IsFalse(CanCreate());
+                    break;
+            }
+        }
+
+        void AssertButtonState(CloneButtonState nCloneButtonState)
+        {
+            switch (nCloneButtonState)
+            {
+                case CloneButtonState::Enabled:
+                    Assert::IsTrue(CanClone());
+                    break;
+
+                case CloneButtonState::Disabled:
+                    Assert::IsFalse(CanClone());
+                    break;
+            }
+        }
+
+        void AssertButtonState(ActivateButtonState nActivateButtonState,
+            SaveButtonState nSaveButtonState, RefreshButtonState nRefreshButtonState,
+            RevertButtonState nRevertButtonState, CreateButtonState nCreateButtonState,
+            CloneButtonState nCloneButtonState)
+        {
+            AssertButtonState(nActivateButtonState);
+            AssertButtonState(nSaveButtonState);
+            AssertButtonState(nRefreshButtonState);
+            AssertButtonState(nRevertButtonState);
+            AssertButtonState(nCreateButtonState);
+            AssertButtonState(nCloneButtonState);
+        }
 
         void AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle)
         {
@@ -74,6 +269,7 @@ private:
             vmAchievement->SetBadge(sBadge);
             vmAchievement->SetTrigger(sTrigger);
             vmAchievement->CreateLocalCheckpoint();
+            vmAchievement->SetNew();
             Assets().Append(std::move(vmAchievement));
         }
 
@@ -126,13 +322,15 @@ public:
         Assert::AreEqual((int)AssetCategory::Local, vmAssetList.Categories().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"Local"), vmAssetList.Categories().GetItemAt(2)->GetLabel());
 
-        Assert::AreEqual({ 3U }, vmAssetList.Changes().Count());
+        Assert::AreEqual({ 4U }, vmAssetList.Changes().Count());
         Assert::AreEqual((int)AssetChanges::None, vmAssetList.Changes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L""), vmAssetList.Changes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)AssetChanges::Modified, vmAssetList.Changes().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Modified"), vmAssetList.Changes().GetItemAt(1)->GetLabel());
         Assert::AreEqual((int)AssetChanges::Unpublished, vmAssetList.Changes().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"Unpublished"), vmAssetList.Changes().GetItemAt(2)->GetLabel());
+        Assert::AreEqual((int)AssetChanges::New, vmAssetList.Changes().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"New"), vmAssetList.Changes().GetItemAt(3)->GetLabel());
     }
 
     TEST_METHOD(TestAddRemoveCoreAchievement)
@@ -490,36 +688,22 @@ public:
         Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate All"), vmAssetList.GetActivateButtonText());
-        Assert::IsFalse(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh All"), vmAssetList.GetRefreshButtonText());
-        Assert::IsFalse(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert All"), vmAssetList.GetRevertButtonText());
-        Assert::IsFalse(vmAssetList.CanRevert());
-        Assert::IsFalse(vmAssetList.CanClone());
-        Assert::IsFalse(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Disabled, RevertButtonState::Disabled,
+            CreateButtonState::Disabled, CloneButtonState::Disabled
+        );
 
         vmAssetList.SetGameId(1U);
         vmAssetList.ForceUpdateButtons();
         vmAssetList.SetGameId(0U);
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate All"), vmAssetList.GetActivateButtonText());
-        Assert::IsFalse(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh All"), vmAssetList.GetRefreshButtonText());
-        Assert::IsFalse(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert All"), vmAssetList.GetRevertButtonText());
-        Assert::IsFalse(vmAssetList.CanRevert());
-        Assert::IsFalse(vmAssetList.CanClone());
-        Assert::IsFalse(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Disabled, RevertButtonState::Disabled,
+            CreateButtonState::Disabled, CloneButtonState::Disabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsNoAssets)
@@ -531,18 +715,11 @@ public:
         Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate All"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh All"), vmAssetList.GetRefreshButtonText());
-        Assert::IsFalse(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert All"), vmAssetList.GetRevertButtonText());
-        Assert::IsFalse(vmAssetList.CanRevert());
-        Assert::IsFalse(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            CreateButtonState::Enabled, CloneButtonState::Disabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsNoSelection)
@@ -557,18 +734,11 @@ public:
         Assert::IsFalse(vmAssetList.FilteredAssets().GetItemAt(1)->IsSelected());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate All"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh All"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert All"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsFalse(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            CreateButtonState::Enabled, CloneButtonState::Disabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsInactiveSingleSelection)
@@ -585,18 +755,11 @@ public:
         Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsActiveSingleSelection)
@@ -614,18 +777,11 @@ public:
         Assert::AreEqual(AssetState::Active, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"De&activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Deactivate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsActiveAndInactiveSelection)
@@ -645,18 +801,11 @@ public:
         Assert::AreEqual(AssetState::Active, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsChangeSelectionUpdatesButtons)
@@ -674,82 +823,47 @@ public:
         Assert::AreEqual(AssetState::Active, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate All"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh All"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert All"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsFalse(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            CreateButtonState::Enabled, CloneButtonState::Disabled
+        );
 
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true); // active
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"De&activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Deactivate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
 
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true); // inactive (both selected)
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
 
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(false); // active (only inactive selected)
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
 
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(false); // inactive (nothing selected)
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate All"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh All"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert All"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsFalse(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            CreateButtonState::Enabled, CloneButtonState::Disabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsRemoveItems)
@@ -768,69 +882,41 @@ public:
         Assert::AreEqual(AssetState::Active, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"De&activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Deactivate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
 
         vmAssetList.Assets().RemoveAt(2); // remove selected item (which was active), nothing selected
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate All"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh All"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert All"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsFalse(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            CreateButtonState::Enabled, CloneButtonState::Disabled
+        );
 
         vmAssetList.Assets().RemoveAt(0); // remove unselected item (which was inactive), nothing remaining
         Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate All"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh All"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh()); // still has non-visible items
-        Assert::AreEqual(std::wstring(L"Re&vert All"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert()); // still has non-visible items
-        Assert::IsFalse(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            CreateButtonState::Enabled, CloneButtonState::Disabled
+        );
 
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1"); // add back one achievement (inactive, unselected)
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate All"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh All"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert All"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsFalse(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            CreateButtonState::Enabled, CloneButtonState::Disabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsChangeFilter)
@@ -848,36 +934,22 @@ public:
         Assert::AreEqual(AssetState::Active, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"De&activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Deactivate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
 
         vmAssetList.SetFilterCategory(AssetCategory::Unofficial);
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
         Assert::IsFalse(vmAssetList.FilteredAssets().GetItemAt(0)->IsSelected());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate All"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh All"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert All"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsFalse(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            CreateButtonState::Enabled, CloneButtonState::Disabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsModifiedSelection)
@@ -895,18 +967,11 @@ public:
         Assert::AreEqual(AssetChanges::Modified, vmAssetList.FilteredAssets().GetItemAt(1)->GetChanges());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save"), vmAssetList.GetSaveButtonText());
-        Assert::IsTrue(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::Save,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsModifiedUnselected)
@@ -924,18 +989,12 @@ public:
         Assert::AreEqual(AssetChanges::Modified, vmAssetList.FilteredAssets().GetItemAt(0)->GetChanges());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsTrue(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        // single unmodified selected record, show save button instead of save all, but disable it
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsModifiedChanges)
@@ -951,50 +1010,51 @@ public:
         Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(1)->IsSelected());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
 
         vmAssetList.Assets().GetItemAt(2)->SetName(L"Modified");
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save"), vmAssetList.GetSaveButtonText());
-        Assert::IsTrue(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::Save,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
 
         vmAssetList.Assets().GetItemAt(2)->SetName(L"Ach3");
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
+    }
+
+    TEST_METHOD(TestUpdateButtonsNewSelection)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetCategory::Local);
+        vmAssetList.AddNewAchievement(5, L"Ach1", L"Test1", L"12345", "0xH1234=1");
+        vmAssetList.AddNewAchievement(10, L"Ach2", L"Test2", L"12345", "0xH1234=2");
+
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        Assert::IsFalse(vmAssetList.FilteredAssets().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(1)->IsSelected());
+        Assert::AreEqual(AssetChanges::New, vmAssetList.FilteredAssets().GetItemAt(1)->GetChanges());
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::Save,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsUnpublishedSelection)
@@ -1013,18 +1073,11 @@ public:
         Assert::AreEqual(AssetChanges::Unpublished, vmAssetList.FilteredAssets().GetItemAt(1)->GetChanges());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish"), vmAssetList.GetPublishButtonText());
-        Assert::IsTrue(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::Publish,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsUnpublishedUnselected)
@@ -1043,18 +1096,11 @@ public:
         Assert::AreEqual(AssetChanges::Unpublished, vmAssetList.FilteredAssets().GetItemAt(0)->GetChanges());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsTrue(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
     }
 
     TEST_METHOD(TestUpdateButtonsUnpublishedChanges)
@@ -1070,52 +1116,31 @@ public:
         Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(1)->IsSelected());
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
 
         vmAssetList.Assets().GetItemAt(2)->SetName(L"Modified");
         vmAssetList.Assets().GetItemAt(2)->UpdateLocalCheckpoint();
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish"), vmAssetList.GetPublishButtonText());
-        Assert::IsTrue(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::Publish,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
 
         vmAssetList.Assets().GetItemAt(2)->SetName(L"Ach3");
         vmAssetList.Assets().GetItemAt(2)->UpdateLocalCheckpoint();
         vmAssetList.ForceUpdateButtons();
 
-        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
-        Assert::IsTrue(vmAssetList.CanActivate());
-        Assert::AreEqual(std::wstring(L"&Save All"), vmAssetList.GetSaveButtonText());
-        Assert::IsFalse(vmAssetList.CanSave());
-        Assert::AreEqual(std::wstring(L"&Publish All"), vmAssetList.GetPublishButtonText());
-        Assert::IsFalse(vmAssetList.CanPublish());
-        Assert::AreEqual(std::wstring(L"&Refresh"), vmAssetList.GetRefreshButtonText());
-        Assert::IsTrue(vmAssetList.CanRefresh());
-        Assert::AreEqual(std::wstring(L"Re&vert"), vmAssetList.GetRevertButtonText());
-        Assert::IsTrue(vmAssetList.CanRevert());
-        Assert::IsTrue(vmAssetList.CanClone());
-        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
     }
 
     TEST_METHOD(TestActivateSelectedSingle)
@@ -1205,17 +1230,22 @@ public:
         pItem->SetBadge(L"54321");
         pItem->SetTrigger("0xH1234=2");
 
+        auto* pItem2 = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(1));
+        Expects(pItem2 != nullptr);
+
         // when an item is selected, non-selected modified items should be written using their unmodified state
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
 
         vmAssetList.SaveSelected();
         const auto& sText = vmAssetList.GetUserFile(L"22");
-        AssertContains(sText, "1:\"0xH1234=1\":Test1:Desc1:::::5:::::12345");
+        AssertDoesNotContain(sText, "Test1");
         AssertContains(sText, "2:\"0xH1111=1\":Test2:Desc2:::::7:::::11111");
 
-        Assert::AreEqual(AssetChanges::Modified, pItem->GetChanges());
+        // item 2 was saved, but item 1 should still be new
+        Assert::AreEqual(AssetChanges::New, pItem->GetChanges());
+        Assert::AreEqual(AssetChanges::Unpublished, pItem2->GetChanges());
 
-        // when no items are selected, all items should be committed and written
+        // deselect all. when no items are selected, all items should be committed and written
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(false);
 
         vmAssetList.SaveSelected();
@@ -1224,11 +1254,10 @@ public:
         AssertContains(sText2, "2:\"0xH1111=1\":Test2:Desc2:::::7:::::11111");
 
         Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
+        Assert::AreEqual(AssetChanges::Unpublished, pItem2->GetChanges());
 
         // when an item is selected, non-selected modified items should be written using their unmodified state
         pItem->SetName(L"Test1c");
-        auto* pItem2 = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(1));
-        Expects(pItem2 != nullptr);
         pItem2->SetName(L"Test2b");
 
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);

@@ -114,12 +114,6 @@ public:
     bool CanSave() const { return GetValue(CanSaveProperty); }
     void SaveSelected();
 
-    static const StringModelProperty PublishButtonTextProperty;
-    const std::wstring& GetPublishButtonText() const { return GetValue(PublishButtonTextProperty); }
-    static const BoolModelProperty CanPublishProperty;
-    bool CanPublish() const { return GetValue(CanPublishProperty); }
-    void PublishSelected();
-
     static const StringModelProperty RefreshButtonTextProperty;
     const std::wstring& GetRefreshButtonText() const { return GetValue(RefreshButtonTextProperty); }
     static const BoolModelProperty CanRefreshProperty;

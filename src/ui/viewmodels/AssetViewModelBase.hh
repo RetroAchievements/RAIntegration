@@ -41,6 +41,7 @@ enum class AssetChanges
     None = 0,
     Modified,    // differs from local data
     Unpublished, // local data differs from server data
+    New,         // asset not in local or server data
 };
 
 class AssetViewModelBase : public TransactionalViewModelBase
@@ -162,6 +163,11 @@ public:
     /// Gets the asset state.
     /// </summary>
     AssetChanges GetChanges() const { return ra::itoe<AssetChanges>(GetValue(ChangesProperty)); }
+
+    /// <summary>
+    /// Marks the asset as not existing in local or on the server.
+    /// </summary>
+    void SetNew();
 
     /// <summary>
     /// Determines if the local checkpoint differs from the server checkpoint. Ignores any changes

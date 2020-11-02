@@ -1086,7 +1086,7 @@ void GridBinding::OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate)
         m_pDoubleClickHandler(gsl::narrow_cast<gsl::index>(pnmItemActivate->iItem));
 }
 
-void GridBinding::OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown) noexcept
+void GridBinding::OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown)
 {
     // only interested in Ctrl key events
     const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);

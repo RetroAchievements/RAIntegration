@@ -77,6 +77,7 @@ public:
     void UpdateFrom(const rc_trigger_t& pTrigger);
     void UpdateFrom(const std::string& sTrigger);
 
+    void RemoveSelectedConditions();
     void CopySelectedConditionsToClipboard();
     void PasteFromClipboard();
 

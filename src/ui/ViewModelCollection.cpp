@@ -230,6 +230,14 @@ void ViewModelCollectionBase::StopWatching() noexcept
 void ViewModelCollectionBase::OnViewModelBoolValueChanged(gsl::index nIndex,
                                                           const BoolModelProperty::ChangeArgs& args)
 {
+    // ignore events for items added while updates are suspended
+    if (nIndex < 0)
+        return;
+
+    // Updating property values after inserting or removing items while updates are suspended causes synchronization
+    // errors in the GridBinding. This exception serves as a reminder until the problem can be resolved.
+    Expects(nIndex == m_vItems.at(gsl::narrow_cast<size_t>(nIndex)).Index());
+
     // create a copy of the list of pointers in case it's modified by one of the callbacks
     NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
     for (NotifyTarget* target : vNotifyTargets)
@@ -242,6 +250,14 @@ void ViewModelCollectionBase::OnViewModelBoolValueChanged(gsl::index nIndex,
 void ViewModelCollectionBase::OnViewModelStringValueChanged(gsl::index nIndex,
                                                             const StringModelProperty::ChangeArgs& args)
 {
+    // ignore events for items added while updates are suspended
+    if (nIndex < 0)
+        return;
+
+    // Updating property values after inserting or removing items while updates are suspended causes synchronization
+    // errors in the GridBinding. This exception serves as a reminder until the problem can be resolved.
+    Expects(nIndex == m_vItems.at(gsl::narrow_cast<size_t>(nIndex)).Index());
+
     // create a copy of the list of pointers in case it's modified by one of the callbacks
     NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
     for (NotifyTarget* target : vNotifyTargets)
@@ -254,6 +270,14 @@ void ViewModelCollectionBase::OnViewModelStringValueChanged(gsl::index nIndex,
 void ViewModelCollectionBase::OnViewModelIntValueChanged(gsl::index nIndex,
                                                          const IntModelProperty::ChangeArgs& args)
 {
+    // ignore events for items added while updates are suspended
+    if (nIndex < 0)
+        return;
+
+    // Updating property values after inserting or removing items while updates are suspended causes synchronization
+    // errors in the GridBinding. This exception serves as a reminder until the problem can be resolved.
+    Expects(nIndex == m_vItems.at(gsl::narrow_cast<size_t>(nIndex)).Index());
+
     // create a copy of the list of pointers in case it's modified by one of the callbacks
     NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
     for (NotifyTarget* target : vNotifyTargets)

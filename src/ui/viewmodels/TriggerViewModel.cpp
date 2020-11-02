@@ -210,7 +210,50 @@ void TriggerViewModel::PasteFromClipboard()
 
     m_vConditions.EndUpdate();
 
-    SetValue(EnsureVisibleConditionIndexProperty, m_vConditions.Count() - 1);
+    SetValue(EnsureVisibleConditionIndexProperty, gsl::narrow_cast<int>(m_vConditions.Count()) - 1);
+}
+
+void TriggerViewModel::RemoveSelectedConditions()
+{
+    int nSelected = 0;
+
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nIndex)
+    {
+        const auto* vmCondition = m_vConditions.GetItemAt(nIndex);
+        if (vmCondition != nullptr && vmCondition->IsSelected())
+            ++nSelected;
+    }
+
+    if (nSelected == 0)
+        return;
+
+    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+    vmMessageBox.SetMessage(ra::StringPrintf(L"Are you sure that you want to delete %d %s?",
+        nSelected, (nSelected == 1) ? "condition" : "conditions"));
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+
+    if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
+        return;
+
+    m_vConditions.BeginUpdate();
+
+    for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vConditions.Count()) - 1; nIndex >= 0; --nIndex)
+    {
+        const auto* vmCondition = m_vConditions.GetItemAt(nIndex);
+        if (vmCondition != nullptr && vmCondition->IsSelected())
+            m_vConditions.RemoveAt(nIndex);
+    }
+
+    m_vConditions.EndUpdate();
+
+    // update indices after EndUpdate to address a synchronization issue with the GridBinding
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nIndex)
+    {
+        auto* vmCondition = m_vConditions.GetItemAt(nIndex);
+        if (vmCondition != nullptr)
+            vmCondition->SetIndex(gsl::narrow_cast<int>(nIndex) + 1);
+    }
 }
 
 static void AddAltGroup(ViewModelCollection<TriggerViewModel::GroupViewModel>& vGroups,

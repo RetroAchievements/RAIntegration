@@ -358,6 +358,98 @@ public:
 
         Assert::AreEqual(std::string("0xH1234=16_0xL65ff=11.1._R:0xT3333=1"), vmTrigger.Serialize());
     }
+
+    TEST_METHOD(TestRemoveSelectedConditions)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1._R:0xT3333=1_0xW5555=16");
+
+        Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
+        vmTrigger.Conditions().GetItemAt(1)->SetSelected(true);
+        vmTrigger.Conditions().GetItemAt(2)->SetSelected(true);
+
+        // two items selected
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogShown = true;
+
+            Assert::AreEqual(std::wstring(L"Are you sure that you want to delete 2 conditions?"), vmMessageBox.GetMessage());
+
+            return DialogResult::Yes;
+        });
+
+        vmTrigger.RemoveSelectedConditions();
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=16_0xW5555=16"), vmTrigger.Serialize());
+        Assert::AreEqual(1, vmTrigger.Conditions().GetItemAt(0)->GetIndex());
+        Assert::AreEqual(2, vmTrigger.Conditions().GetItemAt(1)->GetIndex());
+
+        // one item selected
+        bDialogShown = false;
+        vmTrigger.mockDesktop.ResetExpectedWindows();
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogShown = true;
+
+            Assert::AreEqual(std::wstring(L"Are you sure that you want to delete 1 condition?"), vmMessageBox.GetMessage());
+
+            return DialogResult::Yes;
+        });
+
+        vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
+        vmTrigger.RemoveSelectedConditions();
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xW5555=16"), vmTrigger.Serialize());
+        Assert::AreEqual(1, vmTrigger.Conditions().GetItemAt(0)->GetIndex());
+
+        // no selection
+        bDialogShown = false;
+        vmTrigger.mockDesktop.ResetExpectedWindows();
+        vmTrigger.RemoveSelectedConditions();
+        Assert::IsFalse(bDialogShown);
+        Assert::IsFalse(vmTrigger.mockDesktop.WasDialogShown());
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xW5555=16"), vmTrigger.Serialize());
+        Assert::AreEqual(1, vmTrigger.Conditions().GetItemAt(0)->GetIndex());
+    }
+
+    TEST_METHOD(TestRemoveSelectedConditionsCancel)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1._R:0xT3333=1_0xW5555=16");
+
+        Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
+        vmTrigger.Conditions().GetItemAt(1)->SetSelected(true);
+        vmTrigger.Conditions().GetItemAt(2)->SetSelected(true);
+
+        // two items selected
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogShown = true;
+
+            Assert::AreEqual(std::wstring(L"Are you sure that you want to delete 2 conditions?"), vmMessageBox.GetMessage());
+
+            return DialogResult::No;
+        });
+
+        vmTrigger.RemoveSelectedConditions();
+        Assert::IsTrue(bDialogShown);
+
+        Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(2)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(3)->IsSelected());
+
+        Assert::AreEqual(std::string("0xH1234=16_0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.Serialize());
+    }
 };
 
 } // namespace tests

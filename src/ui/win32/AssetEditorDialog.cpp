@@ -363,6 +363,15 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
 
             return TRUE;
         }
+
+        case IDC_RA_DELETECOND:
+        {
+            auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+            if (vmAssetEditor)
+                vmAssetEditor->Trigger().RemoveSelectedConditions();
+
+            return TRUE;
+        }
     }
 
     return DialogBase::OnCommand(nCommand);

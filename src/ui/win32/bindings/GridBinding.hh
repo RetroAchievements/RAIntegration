@@ -38,6 +38,8 @@ public:
     void BindRowColor(const IntModelProperty& pRowColorProperty) noexcept;
 
     void SetDoubleClickHandler(std::function<void(gsl::index)> pHandler);
+    void SetCopyHandler(std::function<void()> pHandler);
+    void SetPasteHandler(std::function<void()> pHandler);
 
     GSL_SUPPRESS_CON3 virtual LRESULT OnLvnItemChanging(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 virtual void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
@@ -116,6 +118,8 @@ private:
     HWND m_hInPlaceEditor = nullptr;
 
     std::function<void(gsl::index)> m_pDoubleClickHandler = nullptr;
+    std::function<void()> m_pCopyHandler = nullptr;
+    std::function<void()> m_pPasteHandler = nullptr;
 
     gsl::index m_nSortIndex = -1;
 

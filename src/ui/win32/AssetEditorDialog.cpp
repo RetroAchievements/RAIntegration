@@ -216,7 +216,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
       m_bindPauseOnReset(vmAssetList),
       m_bindPauseOnTrigger(vmAssetList),
       m_bindGroups(vmAssetList),
-      m_bindConditions(vmAssetList)
+      m_bindConditions(vmAssetList.Trigger())
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::After, "Achievement Editor");
     m_bindWindow.AddChildViewModel(vmAssetList.Trigger());
@@ -315,6 +315,9 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     m_bindConditions.BindIsSelected(TriggerConditionViewModel::IsSelectedProperty);
     m_bindConditions.BindItems(vmAssetList.Trigger().Conditions());
 
+    m_bindConditions.SetCopyHandler([&vmAssetList]() { vmAssetList.Trigger().CopySelectedConditionsToClipboard(); });
+    m_bindConditions.SetPasteHandler([&vmAssetList]() { vmAssetList.Trigger().PasteFromClipboard(); });
+    m_bindConditions.BindEnsureVisible(TriggerViewModel::EnsureVisibleConditionIndexProperty);
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_LISTACHIEVEMENTS, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);

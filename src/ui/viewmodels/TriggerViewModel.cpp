@@ -16,6 +16,7 @@ const IntModelProperty TriggerViewModel::SelectedGroupIndexProperty("TriggerView
 const BoolModelProperty TriggerViewModel::PauseOnResetProperty("TriggerViewModel", "PauseOnReset", false);
 const BoolModelProperty TriggerViewModel::PauseOnTriggerProperty("TriggerViewModel", "PauseOnTrigger", false);
 const IntModelProperty TriggerViewModel::VersionProperty("TriggerViewModel", "Version", 0);
+const IntModelProperty TriggerViewModel::EnsureVisibleConditionIndexProperty("TriggerViewModel", "EnsureVisibleConditionIndex", -1);
 
 TriggerViewModel::TriggerViewModel() noexcept
     : m_pConditionsMonitor(*this)
@@ -195,7 +196,7 @@ void TriggerViewModel::PasteFromClipboard()
 
     m_vConditions.BeginUpdate();
 
-    for (gsl::index nIndex = 0; nIndex < m_vConditions.Count(); ++nIndex)
+    for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vConditions.Count()); ++nIndex)
         m_vConditions.SetItemValue(nIndex, TriggerConditionViewModel::IsSelectedProperty, false);
 
     for (const rc_condition_t* pCondition = pTrigger->requirement->conditions;
@@ -204,10 +205,12 @@ void TriggerViewModel::PasteFromClipboard()
         auto& vmCondition = m_vConditions.Add();
         vmCondition.InitializeFrom(*pCondition);
         vmCondition.SetSelected(true);
-        vmCondition.SetIndex(m_vConditions.Count());
+        vmCondition.SetIndex(gsl::narrow_cast<int>(m_vConditions.Count()));
     }
 
     m_vConditions.EndUpdate();
+
+    SetValue(EnsureVisibleConditionIndexProperty, m_vConditions.Count() - 1);
 }
 
 static void AddAltGroup(ViewModelCollection<TriggerViewModel::GroupViewModel>& vGroups,

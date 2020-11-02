@@ -69,6 +69,8 @@ public:
     void UpdateFrom(const rc_trigger_t& pTrigger);
     void UpdateFrom(const std::string& sTrigger);
 
+    void CopySelectedConditionsToClipboard();
+
     /// <summary>
     /// Gets the list of condition types.
     /// </summary>

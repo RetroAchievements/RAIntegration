@@ -3,6 +3,7 @@
 #include "ui\viewmodels\TriggerViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\mocks\MockClipboard.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -14,6 +15,12 @@ namespace tests {
 TEST_CLASS(TriggerViewModel_Tests)
 {
 private:
+    class TriggerViewModelHarness : public TriggerViewModel
+    {
+    public:
+        ra::services::mocks::MockClipboard mockClipboard;
+    };
+
     void Parse(TriggerViewModel& vmTrigger, const std::string& sInput)
     {
         vmTrigger.InitializeFrom(sInput);
@@ -216,6 +223,47 @@ public:
         vmTrigger.Conditions().GetItemAt(1)->SetSourceValue(1234U);
         Assert::AreEqual(std::string("0xH1234=0xH2345_0xH04d2=0S0xX5555=1"), pMonitor.sNewTrigger);
     }
+
+    TEST_METHOD(TestCopySelectedConditionsToClipboard)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1._R:0xT3333=1_0xW5555=16");
+
+        Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
+        vmTrigger.Conditions().GetItemAt(1)->SetSelected(true);
+        vmTrigger.Conditions().GetItemAt(2)->SetSelected(true);
+
+        vmTrigger.CopySelectedConditionsToClipboard();
+        Assert::AreEqual(std::wstring(L"0xL65ff=11.1._R:0xT3333=1"), vmTrigger.mockClipboard.GetText());
+
+        vmTrigger.Conditions().GetItemAt(3)->SetSelected(true);
+        vmTrigger.CopySelectedConditionsToClipboard();
+        Assert::AreEqual(std::wstring(L"0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.mockClipboard.GetText());
+
+        vmTrigger.Conditions().GetItemAt(2)->SetSelected(false);
+        vmTrigger.CopySelectedConditionsToClipboard();
+        Assert::AreEqual(std::wstring(L"0xL65ff=11.1._0xW5555=16"), vmTrigger.mockClipboard.GetText());
+    }
+
+    TEST_METHOD(TestCopySelectedConditionsToClipboardNoSelection)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1._R:0xT3333=1_0xW5555=16");
+
+        Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
+
+        vmTrigger.CopySelectedConditionsToClipboard();
+        Assert::AreEqual(std::wstring(L"0xH1234=16_0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.mockClipboard.GetText());
+
+        vmTrigger.Conditions().GetItemAt(2)->SetSelected(true);
+        vmTrigger.CopySelectedConditionsToClipboard();
+        Assert::AreEqual(std::wstring(L"R:0xT3333=1"), vmTrigger.mockClipboard.GetText());
+
+        vmTrigger.Conditions().GetItemAt(2)->SetSelected(false);
+        vmTrigger.CopySelectedConditionsToClipboard();
+        Assert::AreEqual(std::wstring(L"0xH1234=16_0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.mockClipboard.GetText());
+    }
+
 };
 
 } // namespace tests

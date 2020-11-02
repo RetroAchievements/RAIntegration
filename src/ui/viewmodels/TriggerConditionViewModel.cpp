@@ -18,6 +18,7 @@ const IntModelProperty TriggerConditionViewModel::TargetSizeProperty("TriggerCon
 const IntModelProperty TriggerConditionViewModel::TargetValueProperty("TriggerConditionViewModel", "TargetValue", 0);
 const IntModelProperty TriggerConditionViewModel::CurrentHitsProperty("TriggerConditionViewModel", "CurrentHits", 0);
 const IntModelProperty TriggerConditionViewModel::RequiredHitsProperty("TriggerConditionViewModel", "RequiredHits", 0);
+const BoolModelProperty TriggerConditionViewModel::IsSelectedProperty("TriggerConditionViewModel", "IsSelected", false);
 
 std::string TriggerConditionViewModel::Serialize() const
 {

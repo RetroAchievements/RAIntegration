@@ -3,6 +3,9 @@
 #include "rcheevos.h"
 #include "RA_StringUtils.h"
 
+#include "services\IClipboard.hh"
+#include "services\ServiceLocator.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -130,6 +133,36 @@ void TriggerViewModel::SerializeAppend(std::string& sBuffer) const
             sBuffer.append(vmGroup->GetSerialized());
         }
     }
+}
+
+void TriggerViewModel::CopySelectedConditionsToClipboard()
+{
+    std::string sSerialized;
+
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nIndex)
+    {
+        const auto* vmCondition = m_vConditions.GetItemAt(nIndex);
+        if (vmCondition != nullptr && vmCondition->IsSelected())
+        {
+            vmCondition->SerializeAppend(sSerialized);
+            sSerialized.push_back('_');
+        }
+    }
+
+    if (sSerialized.empty())
+    {
+        // no selection, get the whole group
+        const auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+        if (pGroup != nullptr)
+            sSerialized = pGroup->GetSerialized();
+    }
+    else if (sSerialized.back() == '_')
+    {
+        // remove trailing joiner
+        sSerialized.pop_back();
+    }
+
+    ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sSerialized));
 }
 
 static void AddAltGroup(ViewModelCollection<TriggerViewModel::GroupViewModel>& vGroups,

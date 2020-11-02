@@ -312,6 +312,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     pHitsColumn->SetReadOnly(false);
     m_bindTrigger.BindColumn(9, std::move(pHitsColumn));
 
+    m_bindTrigger.BindIsSelected(TriggerConditionViewModel::IsSelectedProperty);
     m_bindTrigger.BindItems(vmAssetList.Trigger().Conditions());
 
 

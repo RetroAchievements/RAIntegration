@@ -659,17 +659,6 @@ Achievement& GameContext::NewAchievement(Achievement::Category nType)
     pAchievement.SetCategory(nType);
     pAchievement.SetID(m_nNextLocalId++);
 
-    auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
-    vmAchievement->SetID(pAchievement.ID());
-    vmAchievement->SetCategory(ra::itoe<ra::ui::viewmodels::AssetCategory>(ra::etoi(nType)));
-    vmAchievement->SetPoints(0);
-    vmAchievement->CreateServerCheckpoint();
-    vmAchievement->CreateLocalCheckpoint();
-    vmAchievement->SetNew();
-
-    auto& vmAssets = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
-    vmAssets.Assets().Append(std::move(vmAchievement));
-
     return pAchievement;
 }
 

@@ -1411,7 +1411,7 @@ public:
         Assert::AreEqual(std::wstring(), pAsset->GetLabel());
         Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
         Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
-        Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
+        Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
         Assert::AreEqual({ 111000001U }, pAsset->GetId());
         Assert::AreEqual(0, pAsset->GetPoints());
 
@@ -1434,6 +1434,135 @@ public:
         pAsset = vmAssetList.FilteredAssets().GetItemAt(1);
         Expects(pAsset != nullptr);
         Assert::IsTrue(pAsset->IsSelected());
+    }
+
+    TEST_METHOD(TestCloneSingle)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        Assert::AreEqual({ 2U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetCategory::Core, vmAssetList.GetFilterCategory());
+
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
+        {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        vmAssetList.CloneSelected();
+
+        // new Local achievement should be created and focused
+        Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetCategory::Local, vmAssetList.GetFilterCategory());
+
+        const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+        Assert::AreEqual(std::wstring(L"Test2 (copy)"), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
+        Assert::AreEqual({ 111000001U }, pAsset->GetId());
+        Assert::AreEqual(7, pAsset->GetPoints());
+
+        const auto* pAchievement = vmAssetList.FindAchievement(pAsset->GetId());
+        Expects(pAchievement != nullptr);
+        Assert::AreEqual(std::wstring(L"Desc2"), pAchievement->GetDescription());
+        Assert::AreEqual(std::wstring(L"11111"), pAchievement->GetBadge());
+        Assert::AreEqual(std::string("0xH1111=1"), pAchievement->GetTrigger());
+
+        // and loaded in the editor, which should be shown (local achievement will always have ID 0)
+        Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsAssetLoaded());
+        Assert::IsTrue(bEditorShown);
+        bEditorShown = false;
+
+        // copying the copy should create another copy, deselecting the first
+        vmAssetList.CloneSelected();
+        Assert::AreEqual({ 4U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetCategory::Local, vmAssetList.GetFilterCategory());
+
+        pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsFalse(pAsset->IsSelected());
+
+        pAsset = vmAssetList.FilteredAssets().GetItemAt(1);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+    }
+
+    TEST_METHOD(TestCloneMultiple)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 9, L"Test3", L"Desc3", L"12321", "0xH5342=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 11, L"Test4", L"Desc4", L"55555", "0xHface=1");
+
+        Assert::AreEqual({ 4U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 4U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetCategory::Core, vmAssetList.GetFilterCategory());
+
+        vmAssetList.FilteredAssets().GetItemAt(3)->SetSelected(true);
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.CloneSelected();
+
+        // new Local achievements should be created and focused
+        Assert::AreEqual({ 6U }, vmAssetList.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetCategory::Local, vmAssetList.GetFilterCategory());
+
+        auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+        Assert::AreEqual(std::wstring(L"Test2 (copy)"), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
+        Assert::AreEqual({ 111000001U }, pAsset->GetId());
+        Assert::AreEqual(7, pAsset->GetPoints());
+
+        auto* pAchievement = vmAssetList.FindAchievement(pAsset->GetId());
+        Expects(pAchievement != nullptr);
+        Assert::AreEqual(std::wstring(L"Desc2"), pAchievement->GetDescription());
+        Assert::AreEqual(std::wstring(L"11111"), pAchievement->GetBadge());
+        Assert::AreEqual(std::string("0xH1111=1"), pAchievement->GetTrigger());
+
+        pAsset = vmAssetList.FilteredAssets().GetItemAt(1);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+        Assert::AreEqual(std::wstring(L"Test4 (copy)"), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
+        Assert::AreEqual({ 111000002U }, pAsset->GetId());
+        Assert::AreEqual(11, pAsset->GetPoints());
+
+        pAchievement = vmAssetList.FindAchievement(pAsset->GetId());
+        Expects(pAchievement != nullptr);
+        Assert::AreEqual(std::wstring(L"Desc4"), pAchievement->GetDescription());
+        Assert::AreEqual(std::wstring(L"55555"), pAchievement->GetBadge());
+        Assert::AreEqual(std::string("0xHface=1"), pAchievement->GetTrigger());
+
+        // editor is not shown when multiple assets are cloned
+        Assert::IsFalse(vmAssetList.mockDesktop.WasDialogShown());
+
+        // both items should be selected
+        Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(1)->IsSelected());
     }
 };
 

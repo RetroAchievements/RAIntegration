@@ -701,31 +701,24 @@ void AssetListViewModel::RevertSelected()
 
 void AssetListViewModel::CreateNew()
 {
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    const auto& pAchievement = pGameContext.NewAchievement(Achievement::Category::Local);
+
+    auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+    vmAchievement->SetID(pAchievement.ID());
+    vmAchievement->SetCategory(AssetCategory::Local);
+    vmAchievement->SetPoints(0);
+    vmAchievement->CreateServerCheckpoint();
+    vmAchievement->CreateLocalCheckpoint();
+    vmAchievement->SetNew();
+
+    const auto nId = ra::to_signed(vmAchievement->GetID());
+
     FilteredAssets().BeginUpdate();
 
     SetFilterCategory(AssetCategory::Local);
 
-    // this creates the viewmodel too
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
-    const auto& pAchievement = pGameContext.NewAchievement(Achievement::Category::Local);
-
-#ifdef RA_UTEST
-    {
-        // in unit tests, copy the view model from the MockWindowManager to the harness
-        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-        const auto* vmNewAchievement = dynamic_cast<AchievementViewModel*>(pWindowManager.AssetList.Assets().GetItemAt(pWindowManager.AssetList.Assets().Count() - 1));
-        Expects(vmNewAchievement != nullptr);
-
-        auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
-        vmAchievement->SetID(vmNewAchievement->GetID());
-        vmAchievement->SetCategory(vmNewAchievement->GetCategory());
-        vmAchievement->SetPoints(vmNewAchievement->GetPoints());
-        vmAchievement->CreateServerCheckpoint();
-        vmAchievement->CreateLocalCheckpoint();
-
-        Assets().Append(std::move(vmAchievement));
-    }
-#endif
+    Assets().Append(std::move(vmAchievement));
 
     // select the new viewmodel, and deselect everything else
     gsl::index nIndex = -1;
@@ -734,7 +727,7 @@ void AssetListViewModel::CreateNew()
         auto* pItem = m_vFilteredAssets.GetItemAt(i);
         if (pItem != nullptr)
         {
-            if (pItem->GetId() == ra::to_signed(pAchievement.ID()) && pItem->GetType() == AssetType::Achievement)
+            if (pItem->GetId() == nId && pItem->GetType() == AssetType::Achievement)
             {
                 pItem->SetSelected(true);
                 nIndex = i;
@@ -748,7 +741,7 @@ void AssetListViewModel::CreateNew()
 
     FilteredAssets().EndUpdate();
 
-    // assert: only Core achievements are tallied, so we shouldn't need to call UpdateTotals
+    // assert: only Core assets are tallied, so we shouldn't need to call UpdateTotals
 
     SetValue(EnsureVisibleAssetIndexProperty, gsl::narrow_cast<int>(nIndex));
 
@@ -761,6 +754,75 @@ void AssetListViewModel::CloneSelected()
 {
     if (!CanClone())
         return;
+
+    std::vector<AssetViewModelBase*> vSelectedAssets;
+    GetSelectedAssets(vSelectedAssets);
+    if (vSelectedAssets.empty())
+        return;
+
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+
+    FilteredAssets().BeginUpdate();
+
+    SetFilterCategory(AssetCategory::Local);
+
+    // add the cloned items
+    std::vector<int> vNewIDs;
+    for (const auto* pAsset : vSelectedAssets)
+    {
+        const auto& pSourceAchievement = dynamic_cast<const AchievementViewModel*>(pAsset);
+
+        const auto& pAchievement = pGameContext.NewAchievement(Achievement::Category::Local);
+        vNewIDs.push_back(gsl::narrow_cast<int>(pAchievement.ID()));
+
+        auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(pAchievement.ID());
+        vmAchievement->SetCategory(AssetCategory::Local);
+        vmAchievement->SetName(pSourceAchievement->GetName() + L" (copy)");
+        vmAchievement->SetDescription(pSourceAchievement->GetDescription());
+        vmAchievement->SetBadge(pSourceAchievement->GetBadge());
+        vmAchievement->SetPoints(pSourceAchievement->GetPoints());
+        vmAchievement->SetTrigger(pSourceAchievement->GetTrigger());
+        vmAchievement->CreateServerCheckpoint();
+        vmAchievement->CreateLocalCheckpoint();
+        vmAchievement->SetNew();
+
+        Assets().Append(std::move(vmAchievement));
+    }
+
+    // select the new items and deselect everything else
+    gsl::index nIndex = -1;
+    for (gsl::index i = 0; i < ra::to_signed(m_vFilteredAssets.Count()); ++i)
+    {
+        auto* pItem = m_vFilteredAssets.GetItemAt(i);
+        if (pItem != nullptr)
+        {
+            if (std::find(vNewIDs.begin(), vNewIDs.end(), pItem->GetId()) != vNewIDs.end() &&
+                pItem->GetType() == AssetType::Achievement)
+            {
+                nIndex = i;
+                pItem->SetSelected(true);
+            }
+            else
+            {
+                pItem->SetSelected(false);
+            }
+        }
+    }
+
+    FilteredAssets().EndUpdate();
+
+    // assert: only Core assets are tallied, so we shouldn't need to call UpdateTotals
+
+    SetValue(EnsureVisibleAssetIndexProperty, gsl::narrow_cast<int>(m_vFilteredAssets.Count()) - 1);
+
+    // if only a single item was cloned, open it
+    if (vNewIDs.size() == 1)
+    {
+        auto* vmAsset = m_vFilteredAssets.GetItemAt(nIndex);
+        if (vmAsset)
+            OpenEditor(vmAsset);
+    }
 }
 
 void AssetListViewModel::DoFrame()

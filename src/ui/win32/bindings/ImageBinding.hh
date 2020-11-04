@@ -38,13 +38,15 @@ protected:
             UpdateImageReference(m_pImageReference.Type());
     }
 
-    void OnImageChanged(ImageType nType, const std::string& sName) 
+    void OnImageChanged(ImageType nType, const std::string& sName) override
     {
         if (nType == m_pImageReference.Type() && sName == m_pImageReference.Name())
         {
             auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
             pImageRepository.RemoveNotifyTarget(*this);
 
+            // if the download failed, this will set the image to either a default image or blank
+            // depending on what the ImageRepository returns when an image is not available
             UpdateImage();
         }
     }
@@ -79,10 +81,14 @@ private:
 
     void UpdateImage()
     {
-        //GSL_SUPPRESS_CON4 // inline suppression for this currently not working
-        const auto hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_pImageReference);
+        GSL_SUPPRESS_CON4 // inline suppression for this currently not working
+        {
+            const auto hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_pImageReference);
 
-        SendMessage(m_hWnd, STM_SETIMAGE, ra::to_unsigned(IMAGE_BITMAP), reinterpret_cast<LPARAM>(hBitmap));
+            GSL_SUPPRESS_TYPE1
+            SendMessage(m_hWnd, STM_SETIMAGE, ra::to_unsigned(IMAGE_BITMAP), reinterpret_cast<LPARAM>(hBitmap));
+        }
+
         ControlBinding::ForceRepaint(m_hWnd);
     }
 

@@ -47,7 +47,8 @@ private:
     class BadgeNameBinding : public ra::ui::win32::bindings::TextBoxBinding
     {
     public:
-        BadgeNameBinding(ViewModelBase& vmViewModel) : ra::ui::win32::bindings::TextBoxBinding(vmViewModel) {}
+        BadgeNameBinding(ViewModelBase& vmViewModel) noexcept
+            : ra::ui::win32::bindings::TextBoxBinding(vmViewModel) {}
 
     protected:
         void UpdateSourceFromText(const std::wstring& sText) override;

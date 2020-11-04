@@ -337,6 +337,7 @@
     <ClInclude Include="ui\win32\bindings\GridLookupColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridNumberColumnBinding.hh" />
     <ClInclude Include="ui\win32\bindings\GridTextColumnBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\ImageBinding.hh" />
     <ClInclude Include="ui\win32\bindings\MemoryViewerControlBinding.hh" />
     <ClInclude Include="ui\win32\bindings\MultiLineGridBinding.hh" />
     <ClInclude Include="ui\win32\bindings\NumericTextBoxBinding.hh" />

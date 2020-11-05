@@ -331,7 +331,7 @@ static void ProcessAchievements()
 #endif
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    const auto& vmAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
+    auto& vmAssetList = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
 
     TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeProcess);
     std::vector<ra::services::AchievementRuntime::Change> vChanges;
@@ -363,6 +363,12 @@ static void ProcessAchievements()
 
             case ra::services::AchievementRuntime::ChangeType::AchievementTriggered:
             {
+                // AwardAchievement may detach the trigger, which would result in the state changing to Inactive.
+                // explicitly call DoFrame now to set the state to Triggered before the trigger gets detached.
+                auto* vmAchievement = vmAssetList.FindAchievement(pChange.nId);
+                if (vmAchievement)
+                    vmAchievement->DoFrame();
+
                 pGameContext.AwardAchievement(pChange.nId);
 
 #pragma warning(push)
@@ -388,7 +394,6 @@ static void ProcessAchievements()
                     }
                 }
 
-                const auto* vmAchievement = vmAssetList.FindAchievement(pChange.nId);
                 if (vmAchievement && vmAchievement->IsPauseOnTrigger())
                 {
                     auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();

@@ -104,12 +104,37 @@ public:
     /// <summary>
     /// Queues a popup message.
     /// </summary>
+    int QueueMessage(ra::ui::viewmodels::Popup nPopup, const std::wstring& sTitle, const std::wstring& sDescription)
+    {
+        std::unique_ptr<PopupMessageViewModel> vmMessage(new PopupMessageViewModel);
+        vmMessage->SetTitle(sTitle);
+        vmMessage->SetDescription(sDescription);
+        vmMessage->SetPopupType(nPopup);
+        return QueueMessage(vmMessage);
+    }
+
+    /// <summary>
+    /// Queues a popup message.
+    /// </summary>
     int QueueMessage(const std::wstring& sTitle, const std::wstring& sDescription, const std::wstring& sDetail)
     {
         std::unique_ptr<PopupMessageViewModel> vmMessage(new PopupMessageViewModel);
         vmMessage->SetTitle(sTitle);
         vmMessage->SetDescription(sDescription);
         vmMessage->SetDetail(sDetail);
+        return QueueMessage(vmMessage);
+    }
+
+    /// <summary>
+    /// Queues a popup message.
+    /// </summary>
+    int QueueMessage(ra::ui::viewmodels::Popup nPopup, const std::wstring& sTitle, const std::wstring& sDescription, const std::wstring& sDetail)
+    {
+        std::unique_ptr<PopupMessageViewModel> vmMessage(new PopupMessageViewModel);
+        vmMessage->SetTitle(sTitle);
+        vmMessage->SetDescription(sDescription);
+        vmMessage->SetDetail(sDetail);
+        vmMessage->SetPopupType(nPopup);
         return QueueMessage(vmMessage);
     }
 
@@ -281,6 +306,7 @@ private:
 
     static ra::ui::Position GetRenderLocation(const ra::ui::viewmodels::PopupViewModelBase& vmPopup,
         int nX, int nY, const ra::ui::drawing::ISurface& pSurface, const PopupLocations& pPopupLocations);
+    static void AdjustLocationForPopup(PopupLocations& pPopupLocations, const ra::ui::viewmodels::PopupViewModelBase& vmPopup);
 
     void UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
     void UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);

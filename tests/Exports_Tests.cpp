@@ -537,7 +537,7 @@ public:
     TEST_METHOD(TestDoAchievementsFrameLeaderboardStart)
     {
         DoAchievementsFrameHarness harness;
-        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications, true);
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted, ra::ui::viewmodels::PopupLocation::BottomLeft);
         auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
         pLeaderboard.SetTitle("Title");
         pLeaderboard.SetDescription("Description");
@@ -562,7 +562,7 @@ public:
     TEST_METHOD(TestDoAchievementsFrameLeaderboardStartPopupDisabled)
     {
         DoAchievementsFrameHarness harness;
-        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications, false);
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted, ra::ui::viewmodels::PopupLocation::None);
         harness.mockGameContext.NewLeaderboard(1U);
 
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 1U, 1234U);
@@ -580,7 +580,7 @@ public:
     TEST_METHOD(TestDoAchievementsFrameLeaderboardCanceled)
     {
         DoAchievementsFrameHarness harness;
-        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications, true);
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled, ra::ui::viewmodels::PopupLocation::BottomLeft);
         auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
         pLeaderboard.SetTitle("Title");
         pLeaderboard.SetDescription("Description");
@@ -602,7 +602,7 @@ public:
     TEST_METHOD(TestDoAchievementsFrameLeaderboardCaneledPopupDisabled)
     {
         DoAchievementsFrameHarness harness;
-        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications, false);
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled, ra::ui::viewmodels::PopupLocation::None);
         auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
         pLeaderboard.SetTitle("Title");
         pLeaderboard.SetDescription("Description");

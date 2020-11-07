@@ -11,6 +11,14 @@ namespace viewmodels {
 
 const StringModelProperty ScoreTrackerViewModel::DisplayTextProperty("ScoreTrackerViewModel", "DisplayText", L"0");
 
+ScoreTrackerViewModel::ScoreTrackerViewModel() noexcept
+{
+    SetPopupType(ra::ui::viewmodels::Popup::LeaderboardTracker);
+
+    SetHorizontalOffset(10);
+    SetVerticalOffset(10);
+}
+
 void ScoreTrackerViewModel::SetDisplayText(const std::wstring& sValue)
 {
     if (sValue != GetDisplayText())
@@ -25,16 +33,7 @@ void ScoreTrackerViewModel::SetDisplayText(const std::wstring& sValue)
 bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
 {
     if (m_pSurface && !m_bSurfaceStale)
-    {
-        const auto nOffset = GetVerticalOffset() + ra::to_signed(GetRenderImage().GetHeight());
-        if (m_nOffset != nOffset)
-        {
-            SetVerticalOffset(m_nOffset + GetRenderImage().GetHeight());
-            return true;
-        }
-
         return false;
-    }
 
     const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
     const auto nShadowOffset = pTheme.ShadowOffset();
@@ -61,11 +60,6 @@ bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
 
     // text
     m_pSurface->WriteText(4, 0, nFontText, pTheme.ColorLeaderboardEntry(), sScoreSoFar);
-
-    // set location
-    SetHorizontalOffset(10);
-
-    SetVerticalOffset(m_nOffset + m_pSurface->GetHeight());
 
     m_bSurfaceStale = false;
     return true;

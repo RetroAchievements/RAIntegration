@@ -27,6 +27,11 @@ static int CalculateScoreboardWidth(const ra::ui::OverlayTheme& pTheme) noexcept
     return 4 + std::max(pTheme.FontSizePopupLeaderboardEntry() * 15, pTheme.FontSizePopupLeaderboardTitle() * 10) + 4;
 }
 
+ScoreboardViewModel::ScoreboardViewModel() noexcept
+{
+    SetPopupType(ra::ui::viewmodels::Popup::LeaderboardScoreboard);
+}
+
 void ScoreboardViewModel::BeginAnimation()
 {
     m_fAnimationProgress = 0.0;
@@ -36,11 +41,11 @@ void ScoreboardViewModel::BeginAnimation()
     const auto nWidth = CalculateScoreboardWidth(pTheme);
 
     // bottom margin 10px
-    SetVerticalOffset(10 + nHeight);
+    SetVerticalOffset(10);
 
     // animate to right margin 10px.
-    m_nInitialX = 0;
-    m_nTargetX = 10 + nWidth;
+    m_nInitialX = -nWidth;
+    m_nTargetX = 10;
     SetHorizontalOffset(m_nInitialX);
 }
 

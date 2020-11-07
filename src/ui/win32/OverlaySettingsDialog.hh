@@ -38,12 +38,13 @@ protected:
 private:
     ra::ui::win32::bindings::ComboBoxBinding m_bindAchievementTriggerLocation;
     ra::ui::win32::bindings::CheckBoxBinding m_bindScreenshotAchievementTrigger;
-    ra::ui::win32::bindings::CheckBoxBinding m_bindDisplayMastery;
+    ra::ui::win32::bindings::ComboBoxBinding m_bindDisplayMastery;
     ra::ui::win32::bindings::CheckBoxBinding m_bindScreenshotMastery;
-    ra::ui::win32::bindings::CheckBoxBinding m_bindDisplayLeaderboardStarted;
-    ra::ui::win32::bindings::CheckBoxBinding m_bindDisplayLeaderboardCanceled;
-    ra::ui::win32::bindings::CheckBoxBinding m_bindDisplayLeaderboardValue;
-    ra::ui::win32::bindings::CheckBoxBinding m_bindDisplayLeaderboardScoreboards;
+    ra::ui::win32::bindings::ComboBoxBinding m_bindDisplayLeaderboardStarted;
+    ra::ui::win32::bindings::ComboBoxBinding m_bindDisplayLeaderboardCanceled;
+    ra::ui::win32::bindings::ComboBoxBinding m_bindDisplayLeaderboardValue;
+    ra::ui::win32::bindings::ComboBoxBinding m_bindDisplayLeaderboardScoreboards;
+    ra::ui::win32::bindings::ComboBoxBinding m_bindInformationLocation;
     ra::ui::win32::bindings::TextBoxBinding m_bindScreenshotLocation;
 };
 

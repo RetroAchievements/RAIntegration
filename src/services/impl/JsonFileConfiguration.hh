@@ -53,7 +53,7 @@ private:
 
     int m_vEnabledFeatures = 0;
 
-    std::array<ra::ui::viewmodels::PopupLocation, ra::etoi(ra::ui::viewmodels::Popup::NumPopups)> m_vPopupLocations;
+    std::array<ra::ui::viewmodels::PopupLocation, ra::etoi(ra::ui::viewmodels::Popup::NumPopups)> m_vPopupLocations = {};
 
     unsigned int m_nBackgroundThreads = 8;
     std::wstring m_sRomDirectory;

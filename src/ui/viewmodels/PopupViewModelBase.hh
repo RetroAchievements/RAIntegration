@@ -14,6 +14,11 @@ enum class Popup
     None = 0,
     Message,
     AchievementTriggered,
+    Mastery,
+    LeaderboardStarted,
+    LeaderboardCanceled,
+    LeaderboardTracker,
+    LeaderboardScoreboard,
     NumPopups
 };
 

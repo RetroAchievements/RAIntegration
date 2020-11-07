@@ -86,21 +86,6 @@ public:
     }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for whether or not the popup should use the Mastery style.
-    /// </summary>
-    static const BoolModelProperty IsMasteryProperty;
-
-    /// <summary>
-    /// Gets whether the popup should use the Mastery style.
-    /// </summary>
-    bool IsMastery() const { return GetValue(IsMasteryProperty); }
-
-    /// <summary>
-    /// Sets whether  the popup should use the Mastery style.
-    /// </summary>
-    void SetIsMastery(bool bValue) { SetValue(IsMasteryProperty, bValue); }
-
-    /// <summary>
     /// Gets the image to display.
     /// </summary>
     const ra::ui::ImageReference& GetImage() const noexcept { return m_hImage; }

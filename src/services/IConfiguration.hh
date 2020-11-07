@@ -13,14 +13,9 @@ enum class Feature
     None = 0,
     Hardcore,
     Leaderboards,
-    LeaderboardNotifications,
-    LeaderboardCancelNotifications,
-    LeaderboardCounters,
-    LeaderboardScoreboards,
     PreferDecimal,
     NonHardcoreWarning,
     AchievementTriggeredScreenshot,
-    MasteryNotification,
     MasteryNotificationScreenshot,
 };
 

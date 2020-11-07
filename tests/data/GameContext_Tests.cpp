@@ -1691,7 +1691,7 @@ public:
     {
         GameContextHarness game;
         game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotification, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery, ra::ui::viewmodels::PopupLocation::TopMiddle);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         game.SetGameId(1U);
         game.SetGameHash("hash");
@@ -1757,7 +1757,7 @@ public:
     {
         GameContextHarness game;
         game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotification, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery, ra::ui::viewmodels::PopupLocation::TopMiddle);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         game.SetGameId(1U);
         game.SetGameHash("hash");
@@ -1823,7 +1823,7 @@ public:
     {
         GameContextHarness game;
         game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotification, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery, ra::ui::viewmodels::PopupLocation::TopMiddle);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         game.SetGameHash("hash");
         game.SetGameTitle(L"GameName");
@@ -1893,7 +1893,7 @@ public:
     {
         GameContextHarness game;
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
         game.mockUser.Initialize("Player", "ApiToken");
         game.SetGameHash("hash");
 
@@ -1967,7 +1967,7 @@ public:
     {
         GameContextHarness game;
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards, false);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::None);
         game.mockUser.Initialize("Player", "ApiToken");
         game.SetGameHash("hash");
 
@@ -2052,7 +2052,7 @@ public:
     {
         GameContextHarness game;
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
         game.mockUser.Initialize("Player", "ApiToken");
         game.SetGameHash("hash");
 
@@ -2115,7 +2115,7 @@ public:
     {
         GameContextHarness game;
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
         game.mockUser.Initialize("Player", "ApiToken");
         game.SetGameHash("hash");
 

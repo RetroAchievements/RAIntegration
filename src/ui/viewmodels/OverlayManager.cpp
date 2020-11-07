@@ -143,7 +143,17 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
         PopupLocations pPopupLocations;
         memset(&pPopupLocations, 0, sizeof(pPopupLocations));
 
-        // update the visible popups - if any are updated, m_bRedrawAll will be set
+        // layout pass - stack items in desired order
+
+        if (!m_vPopupMessages.empty())
+        {
+            UpdateActiveMessage(pSurface, pPopupLocations, fElapsed);
+
+            // a visible popup may not set m_bRedrawAll if it's in the pause portion of its animation loop
+            // make sure we keep the render cycle going so it'll eventually handle when the pause ends
+            bRequestRender = true;
+        }
+
         if (!m_vScoreboards.empty())
         {
             UpdateActiveScoreboard(pSurface, pPopupLocations, fElapsed);
@@ -156,20 +166,10 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
         if (!m_vScoreTrackers.empty())
             UpdateScoreTrackers(pSurface, pPopupLocations, fElapsed);
 
-        if (!m_vPopupMessages.empty())
-        {
-            UpdateActiveMessage(pSurface, pPopupLocations, fElapsed);
-
-            // a visible popup may not set m_bRedrawAll if it's in the pause portion of its animation loop
-            // make sure we keep the render cycle going so it'll eventually handle when the pause ends
-            bRequestRender = true;
-        }
-
         // if anything changed, or caller requested a repaint, do so now
         if (m_bRedrawAll)
         {
-            memset(&pPopupLocations, 0, sizeof(pPopupLocations));
-
+            // render pass - items that should appear over other items should be drawn last
             if (!m_vScoreboards.empty())
                 RenderPopup(pSurface, m_vScoreboards.front());
             for (const auto& pScoreTracker : m_vScoreTrackers)
@@ -333,11 +333,20 @@ ra::ui::Position OverlayManager::GetRenderLocation(const ra::ui::viewmodels::Pop
 
 void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup)
 {
+    constexpr int nFudge = 4;
+    unsigned nOldWidth, nOldHeight;
+
     if (!vmPopup.IsAnimationStarted())
     {
         vmPopup.BeginAnimation();
-        vmPopup.UpdateRenderImage(0.0);
         fElapsed = 0.0;
+        nOldWidth = nOldHeight = 0;
+    }
+    else
+    {
+        const auto& pImage = vmPopup.GetRenderImage();
+        nOldWidth = pImage.GetWidth();
+        nOldHeight = pImage.GetHeight();
     }
 
     const auto nOldX = vmPopup.GetRenderLocationX();
@@ -345,41 +354,85 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, PopupLocat
 
     if (vmPopup.IsDestroyPending())
     {
-        const auto& pImage = vmPopup.GetRenderImage();
-        pSurface.FillRectangle(nOldX, nOldY, pImage.GetWidth(), pImage.GetHeight(), ra::ui::Color::Transparent);
+        pSurface.FillRectangle(nOldX, nOldY, nOldWidth, nOldHeight, ra::ui::Color::Transparent);
         m_bRedrawAll = true;
         return;
     }
 
-    const bool bUpdated = vmPopup.UpdateRenderImage(fElapsed);
+    m_bRedrawAll |= vmPopup.UpdateRenderImage(fElapsed);
 
-    if (bUpdated)
+    const auto& pNewImage = vmPopup.GetRenderImage();
+
+    const auto nNewPos = GetRenderLocation(vmPopup, vmPopup.GetHorizontalOffset(),
+        vmPopup.GetVerticalOffset(), pSurface, pPopupLocations);
+
+    // eliminate any excess to the left or right of the popup
+    if (nOldX != nNewPos.X || nOldWidth != pNewImage.GetWidth())
     {
-        const auto nNewPos = GetRenderLocation(vmPopup, vmPopup.GetHorizontalOffset(),
-            vmPopup.GetVerticalOffset(), pSurface, pPopupLocations);
+        vmPopup.SetRenderLocationX(nNewPos.X);
 
-        // if the image moved, we have to blank out the area it previously covered
-        if (nOldY != nNewPos.Y || nOldX != nNewPos.X)
+        if (nOldWidth != 0)
         {
-            vmPopup.SetRenderLocationX(nNewPos.X);
-            vmPopup.SetRenderLocationY(nNewPos.Y);
-
-            const auto& pImage = vmPopup.GetRenderImage();
-            const int nWidth = pImage.GetWidth() + std::abs(nNewPos.X - nOldX);
-            const int nHeight = pImage.GetHeight() + std::abs(nNewPos.Y - nOldY);
-
+            const int nHeight = pNewImage.GetHeight() + std::abs(nNewPos.Y - nOldY);
             if (nNewPos.X > nOldX)
-                pSurface.FillRectangle(nOldX, nOldY, nNewPos.X - nOldX, nHeight, ra::ui::Color::Transparent);
-            else if (nNewPos.X < nOldX)
-                pSurface.FillRectangle(nNewPos.X + pImage.GetWidth() - 1, nOldY, nOldX - nNewPos.X + 1, nHeight, ra::ui::Color::Transparent);
+                pSurface.FillRectangle(nOldX - nFudge, nOldY, nNewPos.X - nOldX + nFudge, nHeight, ra::ui::Color::Transparent);
 
-            if (nNewPos.Y > nOldY)
-                pSurface.FillRectangle(nOldX, nOldY, nWidth, nNewPos.Y - nOldY, ra::ui::Color::Transparent);
-            else if (nNewPos.Y < nOldY)
-                pSurface.FillRectangle(nOldX, nNewPos.Y + pImage.GetHeight() - 1, nWidth, nOldY - nNewPos.Y + 1, ra::ui::Color::Transparent);
+            const int nOldRightBound = nOldX + nOldWidth;
+            const int nNewRightBound = nNewPos.X + pNewImage.GetWidth();
+            if (nNewRightBound < nOldRightBound)
+                pSurface.FillRectangle(nNewRightBound, nOldY, nOldRightBound - nNewRightBound + nFudge, nHeight, ra::ui::Color::Transparent);
         }
 
         m_bRedrawAll = true;
+    }
+
+    // eliminate any excess above or below the popup
+    if (nOldY != nNewPos.Y || nOldHeight != pNewImage.GetHeight())
+    {
+        vmPopup.SetRenderLocationY(nNewPos.Y);
+
+        if (nOldHeight != 0)
+        {
+            if (nNewPos.Y > nOldY)
+                pSurface.FillRectangle(nNewPos.X, nOldY - nFudge, pNewImage.GetWidth(), nNewPos.Y - nOldY + nFudge, ra::ui::Color::Transparent);
+
+            const int nOldLowerBound = nOldY + nOldHeight;
+            const int nNewLowerBound = nNewPos.Y + pNewImage.GetHeight();
+            if (nNewLowerBound < nOldLowerBound)
+                pSurface.FillRectangle(nNewPos.X, nNewLowerBound, pNewImage.GetWidth(), nOldLowerBound - nNewLowerBound + nFudge, ra::ui::Color::Transparent);
+        }
+
+        m_bRedrawAll = true;
+    }
+}
+
+void OverlayManager::AdjustLocationForPopup(PopupLocations& pPopupLocations, const ra::ui::viewmodels::PopupViewModelBase& vmPopup)
+{
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    const auto nPopupLocation = pConfiguration.GetPopupLocation(vmPopup.GetPopupType());
+    const auto nHeight = vmPopup.GetRenderImage().GetHeight();
+    const auto nOffset = vmPopup.GetVerticalOffset() + nHeight;
+
+    switch (nPopupLocation)
+    {
+        case PopupLocation::TopLeft:
+            pPopupLocations.nTopLeftY += nOffset;
+            break;
+        case PopupLocation::TopMiddle:
+            pPopupLocations.nTopMiddleY += nOffset;
+            break;
+        case PopupLocation::TopRight:
+            pPopupLocations.nTopRightY += nOffset;
+            break;
+        case PopupLocation::BottomLeft:
+            pPopupLocations.nBottomLeftY += nOffset;
+            break;
+        case PopupLocation::BottomMiddle:
+            pPopupLocations.nBottomMiddleY += nOffset;
+            break;
+        case PopupLocation::BottomRight:
+            pPopupLocations.nBottomRightY += nOffset;
+            break;
     }
 }
 
@@ -399,9 +452,11 @@ void OverlayManager::UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, Po
 
         pActiveMessage = m_vPopupMessages.front().get();
         Expects(pActiveMessage != nullptr);
-        pActiveMessage->BeginAnimation();
-        pActiveMessage->UpdateRenderImage(0.0);
+        UpdatePopup(pSurface, pPopupLocations, fElapsed, *pActiveMessage);
     }
+
+    if (!m_vPopupMessages.empty())
+        AdjustLocationForPopup(pPopupLocations, *m_vPopupMessages.front());
 }
 
 void OverlayManager::UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed)
@@ -421,6 +476,9 @@ void OverlayManager::UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface,
         pActiveScoreboard->BeginAnimation();
         pActiveScoreboard->UpdateRenderImage(0.0);
     }
+
+    if (!m_vScoreboards.empty())
+        AdjustLocationForPopup(pPopupLocations, m_vScoreboards.front());
 }
 
 void OverlayManager::UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed)
@@ -428,7 +486,7 @@ void OverlayManager::UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, Po
     assert(!m_vScoreTrackers.empty());
 
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters))
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker) == ra::ui::viewmodels::PopupLocation::None)
     {
         auto pIter = m_vScoreTrackers.begin();
         while (pIter != m_vScoreTrackers.end())
@@ -442,38 +500,21 @@ void OverlayManager::UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, Po
         return;
     }
 
-    int nOffset = 10;
-    if (!m_vScoreboards.empty())
-        nOffset += m_vScoreboards.front().GetRenderImage().GetHeight() + 10;
-
-    bool bPopupMoved = false;
     auto pIter = m_vScoreTrackers.begin();
     while (pIter != m_vScoreTrackers.end())
     {
         auto& vmTracker = **pIter;
+        UpdatePopup(pSurface, pPopupLocations, fElapsed, vmTracker);
+
         if (vmTracker.IsDestroyPending())
         {
-            bPopupMoved = true;
-            UpdatePopup(pSurface, pPopupLocations, fElapsed, vmTracker);
             pIter = m_vScoreTrackers.erase(pIter);
         }
         else
         {
-            bPopupMoved |= vmTracker.SetOffset(nOffset);
-            UpdatePopup(pSurface, pPopupLocations, fElapsed, vmTracker);
-            nOffset += vmTracker.GetRenderImage().GetHeight() + 10;
+            AdjustLocationForPopup(pPopupLocations, vmTracker);
             ++pIter;
         }
-    }
-
-    // if one or more of the popups moved, we will have drawn a transparent square where the popup used to be. redraw all the popups to make sure we didn't erase one
-    if (bPopupMoved)
-    {
-        for (auto& vmTracker : m_vScoreTrackers)
-            RenderPopup(pSurface, *vmTracker);
-
-        if (!m_vScoreboards.empty())
-            RenderPopup(pSurface, m_vScoreboards.front());
     }
 }
 

@@ -219,6 +219,11 @@ void AssetViewModelBase::RestoreServerCheckpoint()
     SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
 }
 
+void AssetViewModelBase::SetNew()
+{
+    SetValue(ChangesProperty, ra::etoi(AssetChanges::New));
+}
+
 bool AssetViewModelBase::HasUnpublishedChanges() const noexcept
 {
     return (m_pTransaction && m_pTransaction->m_pNext && m_pTransaction->m_pNext->IsModified());
@@ -238,11 +243,19 @@ void AssetViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& arg
         if (m_pTransaction && m_pTransaction->m_pNext)
         {
             if (args.tNewValue)
-                SetValue(ChangesProperty, ra::etoi(AssetChanges::Modified));
+            {
+                const auto nChanges = GetChanges();
+                if (nChanges != AssetChanges::Modified && nChanges != AssetChanges::New)
+                    SetValue(ChangesProperty, ra::etoi(AssetChanges::Modified));
+            }
             else if (m_pTransaction->m_pNext->IsModified())
+            {
                 SetValue(ChangesProperty, ra::etoi(AssetChanges::Unpublished));
+            }
             else
+            {
                 SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
+            }
         }
     }
 
@@ -390,6 +403,9 @@ void AssetViewModelBase::CommitTransaction()
     else
     {
         // commit modifications to local
+        if (GetChanges() == AssetChanges::New)
+            SetValue(ChangesProperty, ra::etoi(AssetChanges::Modified));
+
         for (auto pAsset : m_vAssetDefinitions)
         {
             Expects(pAsset != nullptr);

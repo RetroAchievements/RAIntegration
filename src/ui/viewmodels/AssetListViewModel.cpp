@@ -22,12 +22,10 @@ const IntModelProperty AssetListViewModel::TotalPointsProperty("AssetListViewMod
 const BoolModelProperty AssetListViewModel::IsProcessingActiveProperty("AssetListViewModel", "IsProcessingActive", true);
 const StringModelProperty AssetListViewModel::ActivateButtonTextProperty("AssetListViewModel", "ActivateButtonText", L"&Activate All");
 const StringModelProperty AssetListViewModel::SaveButtonTextProperty("AssetListViewModel", "SaveButtonText", L"&Save All");
-const StringModelProperty AssetListViewModel::PublishButtonTextProperty("AssetListViewModel", "SaveButtonText", L"&Publish All");
 const StringModelProperty AssetListViewModel::RefreshButtonTextProperty("AssetListViewModel", "SaveButtonText", L"&Refresh All");
 const StringModelProperty AssetListViewModel::RevertButtonTextProperty("AssetListViewModel", "SaveButtonText", L"Re&vert All");
 const BoolModelProperty AssetListViewModel::CanActivateProperty("AssetListViewModel", "CanActivate", false);
 const BoolModelProperty AssetListViewModel::CanSaveProperty("AssetListViewModel", "CanSave", false);
-const BoolModelProperty AssetListViewModel::CanPublishProperty("AssetListViewModel", "CanPublish", false);
 const BoolModelProperty AssetListViewModel::CanRefreshProperty("AssetListViewModel", "CanRefresh", false);
 const BoolModelProperty AssetListViewModel::CanRevertProperty("AssetListViewModel", "CanRevert", false);
 const BoolModelProperty AssetListViewModel::CanCreateProperty("AssetListViewModel", "CanCreate", false);
@@ -52,6 +50,7 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vChanges.Add(ra::etoi(AssetChanges::None), L"");
     m_vChanges.Add(ra::etoi(AssetChanges::Modified), L"Modified");
     m_vChanges.Add(ra::etoi(AssetChanges::Unpublished), L"Unpublished");
+    m_vChanges.Add(ra::etoi(AssetChanges::New), L"New");
 
     m_vAssets.AddNotifyTarget(*this);
 
@@ -124,6 +123,28 @@ void AssetListViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const Int
                 if (m_vFilteredAssets.GetItemValue(nFilteredIndex, AssetSummaryViewModel::IsSelectedProperty))
                     UpdateButtons();
             }
+        }
+    }
+    else if (args.Property == AssetViewModelBase::IDProperty)
+    {
+        auto* pAsset = m_vAssets.GetItemAt(nIndex);
+        if (pAsset != nullptr)
+        {
+            gsl::index nFilteredIndex = -1;
+            const auto nType = pAsset->GetType();
+
+            for (gsl::index nScanIndex = 0; nScanIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nScanIndex)
+            {
+                auto* pItem = m_vFilteredAssets.GetItemAt(nScanIndex);
+                if (pItem != nullptr && pItem->GetId() == args.tOldValue && pItem->GetType() == nType)
+                {
+                    nFilteredIndex = nScanIndex;
+                    break;
+                }
+            }
+
+            if (nFilteredIndex != -1)
+                m_vFilteredAssets.SetItemValue(nFilteredIndex, AssetSummaryViewModel::IdProperty, args.tNewValue);
         }
     }
 }
@@ -403,57 +424,78 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasModified = false;
     bool bHasUnpublished = false;
 
-    if (GetGameId() == 0)
+    const bool bGameLoaded = (GetGameId() != 0);
+    if (!bGameLoaded)
     {
         SetValue(CanCreateProperty, false);
         SetValue(CanActivateProperty, false);
+        SetValue(ActivateButtonTextProperty, ActivateButtonTextProperty.GetDefaultValue());
     }
     else
     {
         SetValue(CanCreateProperty, true);
-        SetValue(CanActivateProperty, true);
+        SetValue(CanActivateProperty, m_vFilteredAssets.Count() > 0);
 
         for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
         {
             const auto* pItem = m_vFilteredAssets.GetItemAt(i);
-            if (pItem != nullptr && pItem->IsSelected())
+            if (pItem != nullptr)
             {
-                switch (pItem->GetCategory())
-                {
-                    case AssetCategory::Core:
-                        bHasCoreSelection = true;
-                        break;
-                    case AssetCategory::Unofficial:
-                        bHasUnofficialSelection = true;
-                        break;
-                    case AssetCategory::Local:
-                        bHasLocalSelection = true;
-                        break;
-                    default:
-                        break;
-                }
-
-                switch (pItem->GetState())
-                {
-                    case AssetState::Inactive:
-                    case AssetState::Triggered:
-                        bHasInactiveSelection = true;
-                        break;
-                    default:
-                        bHasActiveSelection = true;
-                        break;
-                }
-
                 switch (pItem->GetChanges())
                 {
                     case AssetChanges::Modified:
-                        bHasModifiedSelection = true;
+                    case AssetChanges::New:
+                        bHasModified = true;
                         break;
                     case AssetChanges::Unpublished:
-                        bHasUnpublishedSelection = true;
+                        bHasUnpublished = true;
                         break;
                     default:
                         break;
+                }
+
+                if (pItem->IsSelected())
+                {
+                    bHasSelection = true;
+
+                    switch (pItem->GetCategory())
+                    {
+                        case AssetCategory::Core:
+                            bHasCoreSelection = true;
+                            break;
+                        case AssetCategory::Unofficial:
+                            bHasUnofficialSelection = true;
+                            break;
+                        case AssetCategory::Local:
+                            bHasLocalSelection = true;
+                            break;
+                        default:
+                            break;
+                    }
+
+                    switch (pItem->GetState())
+                    {
+                        case AssetState::Inactive:
+                        case AssetState::Triggered:
+                            bHasInactiveSelection = true;
+                            break;
+                        default:
+                            bHasActiveSelection = true;
+                            break;
+                    }
+
+                    switch (pItem->GetChanges())
+                    {
+                        case AssetChanges::Modified:
+                        case AssetChanges::New:
+                            bHasModifiedSelection = true;
+                            break;
+                        case AssetChanges::Unpublished:
+                            bHasUnpublishedSelection = true;
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
         }
@@ -463,16 +505,15 @@ void AssetListViewModel::DoUpdateButtons()
     {
         SetValue(ActivateButtonTextProperty, L"&Activate");
         SetValue(CanCloneProperty, true);
-        bHasSelection = true;
     }
     else if (bHasActiveSelection)
     {
         SetValue(ActivateButtonTextProperty, L"De&activate");
         SetValue(CanCloneProperty, true);
-        bHasSelection = true;
     }
     else
     {
+        Expects(!bHasSelection); // a selected item should be tallied as either active or inactive
         SetValue(ActivateButtonTextProperty, ActivateButtonTextProperty.GetDefaultValue());
         SetValue(CanCloneProperty, false);
     }
@@ -481,47 +522,34 @@ void AssetListViewModel::DoUpdateButtons()
     {
         SetValue(SaveButtonTextProperty, L"&Save");
         SetValue(CanSaveProperty, true);
-        bHasModified = true;
     }
-    else
+    else if (bHasUnpublishedSelection)
     {
-        for (size_t i = 0; i < m_vAssets.Count(); ++i)
-        {
-            const auto* pItem = m_vAssets.GetItemAt(i);
-            if (pItem != nullptr && pItem->GetChanges() == AssetChanges::Modified)
-            {
-                bHasModified = true;
-                break;
-            }
-        }
-
+        SetValue(SaveButtonTextProperty, L"Publi&sh");
+        SetValue(CanSaveProperty, true);
+    }
+    else if (bHasSelection)
+    {
+        SetValue(SaveButtonTextProperty, L"&Save");
+        SetValue(CanSaveProperty, false);
+    }
+    else if (bHasModified)
+    {
         SetValue(SaveButtonTextProperty, SaveButtonTextProperty.GetDefaultValue());
-        SetValue(CanSaveProperty, bHasModified);
+        SetValue(CanSaveProperty, true);
     }
-
-    if (bHasUnpublishedSelection)
+    else if (bHasUnpublished)
     {
-        SetValue(PublishButtonTextProperty, L"&Publish");
-        SetValue(CanPublishProperty, true);
-        bHasUnpublished = true;
+        SetValue(SaveButtonTextProperty, L"&Publish All");
+        SetValue(CanSaveProperty, true);
     }
     else
     {
-        for (size_t i = 0; i < m_vAssets.Count(); ++i)
-        {
-            const auto* pItem = m_vAssets.GetItemAt(i);
-            if (pItem != nullptr && pItem->GetChanges() == AssetChanges::Unpublished)
-            {
-                bHasUnpublished = true;
-                break;
-            }
-        }
-
-        SetValue(PublishButtonTextProperty, PublishButtonTextProperty.GetDefaultValue());
-        SetValue(CanPublishProperty, bHasUnpublished);
+        SetValue(SaveButtonTextProperty, SaveButtonTextProperty.GetDefaultValue());
+        SetValue(CanSaveProperty, false);
     }
 
-    if (m_vAssets.Count() > 0)
+    if (bGameLoaded)
     {
         if (bHasSelection)
             SetValue(RefreshButtonTextProperty, L"&Refresh");
@@ -536,10 +564,12 @@ void AssetListViewModel::DoUpdateButtons()
         SetValue(CanRefreshProperty, false);
     }
 
-    if (m_vAssets.Count() > 0)
+    if (bGameLoaded)
     {
         if (bHasCoreSelection || bHasUnofficialSelection)
             SetValue(RevertButtonTextProperty, L"Re&vert");
+        else if (bHasLocalSelection)
+            SetValue(RevertButtonTextProperty, L"&Delete");
         else
             SetValue(RevertButtonTextProperty, RevertButtonTextProperty.GetDefaultValue());
 
@@ -662,6 +692,11 @@ void AssetListViewModel::SaveSelected()
                     if (!pItem->HasUnpublishedChanges())
                         continue;
                 }
+                else if (pItem->GetChanges() == AssetChanges::New)
+                {
+                    // unselected new item has no local state to maintain
+                    continue;
+                }
                 break;
         }
 
@@ -672,12 +707,6 @@ void AssetListViewModel::SaveSelected()
     }
 
     RA_LOG_INFO("Wrote user assets file");
-}
-
-void AssetListViewModel::PublishSelected()
-{
-    if (!CanPublish())
-        return;
 }
 
 void AssetListViewModel::RefreshSelected()
@@ -694,31 +723,24 @@ void AssetListViewModel::RevertSelected()
 
 void AssetListViewModel::CreateNew()
 {
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    const auto& pAchievement = pGameContext.NewAchievement(Achievement::Category::Local);
+
+    auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+    vmAchievement->SetID(pAchievement.ID());
+    vmAchievement->SetCategory(AssetCategory::Local);
+    vmAchievement->SetPoints(0);
+    vmAchievement->CreateServerCheckpoint();
+    vmAchievement->CreateLocalCheckpoint();
+    vmAchievement->SetNew();
+
+    const auto nId = ra::to_signed(vmAchievement->GetID());
+
     FilteredAssets().BeginUpdate();
 
     SetFilterCategory(AssetCategory::Local);
 
-    // this creates the viewmodel too
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
-    const auto& pAchievement = pGameContext.NewAchievement(Achievement::Category::Local);
-
-#ifdef RA_UTEST
-    {
-        // in unit tests, copy the view model from the MockWindowManager to the harness
-        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-        const auto* vmNewAchievement = dynamic_cast<AchievementViewModel*>(pWindowManager.AssetList.Assets().GetItemAt(pWindowManager.AssetList.Assets().Count() - 1));
-        Expects(vmNewAchievement != nullptr);
-
-        auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
-        vmAchievement->SetID(vmNewAchievement->GetID());
-        vmAchievement->SetCategory(vmNewAchievement->GetCategory());
-        vmAchievement->SetPoints(vmNewAchievement->GetPoints());
-        vmAchievement->CreateServerCheckpoint();
-        vmAchievement->CreateLocalCheckpoint();
-
-        Assets().Append(std::move(vmAchievement));
-    }
-#endif
+    Assets().Append(std::move(vmAchievement));
 
     // select the new viewmodel, and deselect everything else
     gsl::index nIndex = -1;
@@ -727,7 +749,7 @@ void AssetListViewModel::CreateNew()
         auto* pItem = m_vFilteredAssets.GetItemAt(i);
         if (pItem != nullptr)
         {
-            if (pItem->GetId() == ra::to_signed(pAchievement.ID()) && pItem->GetType() == AssetType::Achievement)
+            if (pItem->GetId() == nId && pItem->GetType() == AssetType::Achievement)
             {
                 pItem->SetSelected(true);
                 nIndex = i;
@@ -741,7 +763,7 @@ void AssetListViewModel::CreateNew()
 
     FilteredAssets().EndUpdate();
 
-    // assert: only Core achievements are tallied, so we shouldn't need to call UpdateTotals
+    // assert: only Core assets are tallied, so we shouldn't need to call UpdateTotals
 
     SetValue(EnsureVisibleAssetIndexProperty, gsl::narrow_cast<int>(nIndex));
 
@@ -754,6 +776,75 @@ void AssetListViewModel::CloneSelected()
 {
     if (!CanClone())
         return;
+
+    std::vector<AssetViewModelBase*> vSelectedAssets;
+    GetSelectedAssets(vSelectedAssets);
+    if (vSelectedAssets.empty())
+        return;
+
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+
+    FilteredAssets().BeginUpdate();
+
+    SetFilterCategory(AssetCategory::Local);
+
+    // add the cloned items
+    std::vector<int> vNewIDs;
+    for (const auto* pAsset : vSelectedAssets)
+    {
+        const auto& pSourceAchievement = dynamic_cast<const AchievementViewModel*>(pAsset);
+
+        const auto& pAchievement = pGameContext.NewAchievement(Achievement::Category::Local);
+        vNewIDs.push_back(gsl::narrow_cast<int>(pAchievement.ID()));
+
+        auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        vmAchievement->SetID(pAchievement.ID());
+        vmAchievement->SetCategory(AssetCategory::Local);
+        vmAchievement->SetName(pSourceAchievement->GetName() + L" (copy)");
+        vmAchievement->SetDescription(pSourceAchievement->GetDescription());
+        vmAchievement->SetBadge(pSourceAchievement->GetBadge());
+        vmAchievement->SetPoints(pSourceAchievement->GetPoints());
+        vmAchievement->SetTrigger(pSourceAchievement->GetTrigger());
+        vmAchievement->CreateServerCheckpoint();
+        vmAchievement->CreateLocalCheckpoint();
+        vmAchievement->SetNew();
+
+        Assets().Append(std::move(vmAchievement));
+    }
+
+    // select the new items and deselect everything else
+    gsl::index nIndex = -1;
+    for (gsl::index i = 0; i < ra::to_signed(m_vFilteredAssets.Count()); ++i)
+    {
+        auto* pItem = m_vFilteredAssets.GetItemAt(i);
+        if (pItem != nullptr)
+        {
+            if (std::find(vNewIDs.begin(), vNewIDs.end(), pItem->GetId()) != vNewIDs.end() &&
+                pItem->GetType() == AssetType::Achievement)
+            {
+                nIndex = i;
+                pItem->SetSelected(true);
+            }
+            else
+            {
+                pItem->SetSelected(false);
+            }
+        }
+    }
+
+    FilteredAssets().EndUpdate();
+
+    // assert: only Core assets are tallied, so we shouldn't need to call UpdateTotals
+
+    SetValue(EnsureVisibleAssetIndexProperty, gsl::narrow_cast<int>(m_vFilteredAssets.Count()) - 1);
+
+    // if only a single item was cloned, open it
+    if (vNewIDs.size() == 1)
+    {
+        auto* vmAsset = m_vFilteredAssets.GetItemAt(nIndex);
+        if (vmAsset)
+            OpenEditor(vmAsset);
+    }
 }
 
 void AssetListViewModel::DoFrame()

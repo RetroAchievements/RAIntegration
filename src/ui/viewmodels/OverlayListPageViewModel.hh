@@ -127,6 +127,11 @@ public:
         /// Sets the current progress bar value.
         /// </summary>
         void SetProgressValue(unsigned int nValue) { SetValue(ProgressValueProperty, ra::to_signed(nValue)); }
+
+        /// <summary>
+        /// Gets whether the current item is a header item.
+        /// </summary>
+        bool IsHeader() const { return GetId() == 0; }
     };
 
 protected:

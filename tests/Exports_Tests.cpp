@@ -8,6 +8,7 @@
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
@@ -34,6 +35,7 @@ using ra::data::mocks::MockSessionTracker;
 using ra::data::mocks::MockUserContext;
 using ra::services::mocks::MockAudioSystem;
 using ra::services::mocks::MockConfiguration;
+using ra::services::mocks::MockFrameEventQueue;
 using ra::services::mocks::MockThreadPool;
 using ra::ui::mocks::MockDesktop;
 using ra::ui::mocks::MockOverlayTheme;
@@ -384,6 +386,7 @@ private:
         MockEmulatorContext mockEmulatorContext;
         MockSurfaceFactory mockSurfaceFactory;
         MockOverlayTheme mockTheme;
+        MockFrameEventQueue mockFrameEventQueue;
         MockWindowManager mockWindowManager;
 
         DoAchievementsFrameHarness() noexcept
@@ -494,11 +497,12 @@ public:
         harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             bMessageSeen = true;
-            Assert::AreEqual(std::wstring(L"Pause on Trigger: AchievementTitle"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"The following triggers have triggered:\n* AchievementTitle"), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 
         _RA_DoAchievementsFrame();
+        harness.mockFrameEventQueue.DoFrame(); // UpdateUIForFrameChange isn't called in the unit test build
 
         Assert::IsTrue(harness.WasUnlocked(1U));
         Assert::IsTrue(bMessageSeen);
@@ -519,11 +523,12 @@ public:
         harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             bMessageSeen = true;
-            Assert::AreEqual(std::wstring(L"Pause on Reset: AchievementTitle"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"The following triggers have been reset:\n* AchievementTitle"), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 
         _RA_DoAchievementsFrame();
+        harness.mockFrameEventQueue.DoFrame(); // UpdateUIForFrameChange isn't called in the unit test build
 
         Assert::IsTrue(bMessageSeen);
         Assert::IsTrue(bWasPaused);

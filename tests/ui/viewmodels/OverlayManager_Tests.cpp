@@ -4,6 +4,7 @@
 
 #include "ui\OverlayTheme.hh"
 
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -34,6 +35,7 @@ private:
         ra::data::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::mocks::MockGameContext mockGameContext;
         ra::data::mocks::MockUserContext mockUserContext;
+        ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockThreadPool mockThreadPool;

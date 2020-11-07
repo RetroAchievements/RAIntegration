@@ -574,6 +574,16 @@ void GridBinding::SetDoubleClickHandler(std::function<void(gsl::index)> pHandler
     m_pDoubleClickHandler = pHandler;
 }
 
+void GridBinding::SetCopyHandler(std::function<void()> pHandler)
+{
+    m_pCopyHandler = pHandler;
+}
+
+void GridBinding::SetPasteHandler(std::function<void()> pHandler)
+{
+    m_pPasteHandler = pHandler;
+}
+
 void GridBinding::Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty,
     std::function<void(gsl::index, gsl::index, bool)> pUpdateSelectedItems)
 {
@@ -1076,7 +1086,7 @@ void GridBinding::OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate)
         m_pDoubleClickHandler(gsl::narrow_cast<gsl::index>(pnmItemActivate->iItem));
 }
 
-void GridBinding::OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown) noexcept
+void GridBinding::OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown)
 {
     // only interested in Ctrl key events
     const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
@@ -1102,6 +1112,16 @@ void GridBinding::OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown) noexcept
 
         case 'D': // Ctrl+D = deselect all
             ListView_SetItemState(m_hWnd, -1, 0, LVIS_SELECTED);
+            break;
+
+        case 'C': // Ctrl+C = copy
+            if (m_pCopyHandler)
+                m_pCopyHandler();
+            break;
+
+        case 'V': // Ctrl+V = paste
+            if (m_pPasteHandler)
+                m_pPasteHandler();
             break;
     }
 

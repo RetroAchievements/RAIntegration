@@ -263,6 +263,8 @@ std::wstring ToString<ra::ui::viewmodels::AssetChanges>(
             return L"Modified";
         case ra::ui::viewmodels::AssetChanges::Unpublished:
             return L"Unpublished";
+        case ra::ui::viewmodels::AssetChanges::New:
+            return L"New";
         default:
             return std::to_wstring(static_cast<int>(nAssetChanges));
     }

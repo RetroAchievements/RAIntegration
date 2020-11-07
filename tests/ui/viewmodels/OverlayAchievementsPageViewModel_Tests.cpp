@@ -3,6 +3,7 @@
 #include "ui\viewmodels\OverlayAchievementsPageViewModel.hh"
 
 #include "tests\mocks\MockAchievementRuntime.hh"
+#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
@@ -31,6 +32,7 @@ private:
         ra::data::mocks::MockSessionTracker mockSessionTracker;
         ra::data::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
+        ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
@@ -52,6 +54,25 @@ private:
                 return &pIter->second;
 
             return nullptr;
+        }
+
+        ra::ui::viewmodels::AchievementViewModel& NewAchievement(AssetCategory nCategory)
+        {
+            const auto& pAchievement = mockGameContext.NewAchievement(ra::itoe<Achievement::Category>(ra::etoi(nCategory)));
+
+            auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+            vmAchievement->SetID(pAchievement.ID());
+            vmAchievement->SetCategory(nCategory);
+            vmAchievement->CreateServerCheckpoint();
+            vmAchievement->CreateLocalCheckpoint();
+
+            auto& pAssets = mockWindowManager.AssetList.Assets();
+            pAssets.Append(std::move(vmAchievement));
+
+            auto* pAsset = pAssets.GetItemAt(pAssets.Count() - 1);
+            auto* pAchievementViewModel = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(pAsset);
+            Expects(pAchievementViewModel != nullptr);
+            return *pAchievementViewModel;
         }
 
         void SetProgress(ra::AchievementID nId, int nValue, int nMax)
@@ -81,12 +102,12 @@ public:
     TEST_METHOD(TestRefreshInactiveAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
         pAch1.SetID(1);
-        pAch1.SetTitle("AchievementTitle");
-        pAch1.SetDescription("Trigger this");
+        pAch1.SetName(L"AchievementTitle");
+        pAch1.SetDescription(L"Trigger this");
         pAch1.SetPoints(5U);
-        pAch1.SetBadgeImage("BADGE_URI");
+        pAch1.SetBadge(L"BADGE_URI");
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -104,13 +125,13 @@ public:
     TEST_METHOD(TestRefreshActiveAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
         pAch1.SetID(1);
-        pAch1.SetTitle("AchievementTitle");
-        pAch1.SetDescription("Trigger this");
+        pAch1.SetName(L"AchievementTitle");
+        pAch1.SetDescription(L"Trigger this");
         pAch1.SetPoints(5U);
-        pAch1.SetBadgeImage("BADGE_URI");
-        pAch1.SetActive(true);
+        pAch1.SetBadge(L"BADGE_URI");
+        pAch1.SetState(AssetState::Active);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -125,25 +146,50 @@ public:
         Assert::AreEqual(std::string("BADGE_URI_lock"), pItem->Image.Name());
     }
 
+    TEST_METHOD(TestRefreshOnePointAchievement)
+    {
+        OverlayAchievementsPageViewModelHarness achievementsPage;
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch1.SetID(1);
+        pAch1.SetName(L"AchievementTitle");
+        pAch1.SetDescription(L"Trigger this");
+        pAch1.SetPoints(1U); // should say "1 point" instead of "1 points"
+        pAch1.SetBadge(L"BADGE_URI");
+        pAch1.SetState(AssetState::Active);
+        achievementsPage.Refresh();
+
+        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"0 of 1 won (0/1)"), achievementsPage.GetSummary());
+
+        auto const* pItem = achievementsPage.GetItem(0);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(1, pItem->GetId());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (1 point)"), pItem->GetLabel());
+        Assert::AreEqual(std::wstring(L"Trigger this"), pItem->GetDetail());
+        Assert::IsTrue(pItem->IsDisabled());
+        Assert::AreEqual(std::string("BADGE_URI_lock"), pItem->Image.Name());
+    }
+
     TEST_METHOD(TestRefreshActiveAndInactiveAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
         pAch1.SetID(1);
         pAch1.SetPoints(1U);
-        pAch1.SetActive(true);
-        auto& pAch2 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        pAch1.SetState(AssetState::Waiting);
+        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
         pAch2.SetID(2);
         pAch2.SetPoints(2U);
-        pAch2.SetActive(false);
-        auto& pAch3 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        pAch2.SetState(AssetState::Inactive);
+        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
         pAch3.SetID(3);
         pAch3.SetPoints(3U);
-        pAch3.SetActive(true);
-        auto& pAch4 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        pAch3.SetState(AssetState::Active);
+        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
         pAch4.SetID(4);
         pAch4.SetPoints(4U);
-        pAch4.SetActive(false);
+        pAch4.SetState(AssetState::Triggered);
+        achievementsPage.mockClock.AdvanceTime(std::chrono::hours(1));
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -156,60 +202,21 @@ public:
 
         pItem = achievementsPage.GetItem(1);
         Expects(pItem != nullptr);
-        Assert::AreEqual(2, pItem->GetId());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(2);
-        Expects(pItem != nullptr);
         Assert::AreEqual(3, pItem->GetId());
         Assert::IsTrue(pItem->IsDisabled());
 
-        pItem = achievementsPage.GetItem(3);
+        pItem = achievementsPage.GetItem(2);
         Expects(pItem != nullptr);
-        Assert::AreEqual(4, pItem->GetId());
+        Assert::IsTrue(pItem->IsHeader());
+        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
         Assert::IsFalse(pItem->IsDisabled());
-    }
 
-    TEST_METHOD(TestRefreshCategoryFilter)
-    {
-        OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
-        pAch1.SetID(1);
-        pAch1.SetPoints(1U);
-        pAch1.SetActive(true);
-        auto& pAch2 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Unofficial);
-        pAch2.SetID(2);
-        pAch2.SetPoints(2U);
-        pAch2.SetActive(false);
-        auto& pAch3 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Local);
-        pAch3.SetID(3);
-        pAch3.SetPoints(3U);
-        pAch3.SetActive(true);
-        auto& pAch4 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
-        pAch4.SetID(4);
-        pAch4.SetPoints(4U);
-        pAch4.SetActive(false);
-        achievementsPage.Refresh();
-
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"1 of 2 won (4/5)"), achievementsPage.GetSummary());
-
-        auto* pItem = achievementsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::IsTrue(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(1);
+        pItem = achievementsPage.GetItem(3);
         Expects(pItem != nullptr);
         Assert::AreEqual(2, pItem->GetId());
         Assert::IsFalse(pItem->IsDisabled());
 
-        pItem = achievementsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(3);
+        pItem = achievementsPage.GetItem(4);
         Expects(pItem != nullptr);
         Assert::AreEqual(4, pItem->GetId());
         Assert::IsFalse(pItem->IsDisabled());
@@ -217,16 +224,61 @@ public:
         Assert::IsNull(achievementsPage.GetItem(5));
     }
 
+    TEST_METHOD(TestRefreshCategoryFilter)
+    {
+        OverlayAchievementsPageViewModelHarness achievementsPage;
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch1.SetID(1);
+        pAch1.SetPoints(1U);
+        pAch1.SetState(AssetState::Active);
+        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Unofficial);
+        pAch2.SetID(2);
+        pAch2.SetPoints(2U);
+        pAch2.SetState(AssetState::Inactive);
+        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Local);
+        pAch3.SetID(3);
+        pAch3.SetPoints(3U);
+        pAch3.SetState(AssetState::Active);
+        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch4.SetID(4);
+        pAch4.SetPoints(4U);
+        pAch4.SetState(AssetState::Inactive);
+        achievementsPage.Refresh();
+
+        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"1 of 2 won (4/5)"), achievementsPage.GetSummary());
+
+        // only 1 and 4 will be visible - 2 and 3 are not core, and filtered out by asset list
+        auto* pItem = achievementsPage.GetItem(0);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(1, pItem->GetId());
+        Assert::IsTrue(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(1);
+        Expects(pItem != nullptr);
+        Assert::IsTrue(pItem->IsHeader());
+        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(2);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(4, pItem->GetId());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        Assert::IsNull(achievementsPage.GetItem(3));
+    }
+
     TEST_METHOD(TestRefreshLocalAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Local);
+        achievementsPage.mockWindowManager.AssetList.SetFilterCategory(AssetCategory::Local);
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Local);
         pAch1.SetID(1);
-        pAch1.SetTitle("AchievementTitle");
-        pAch1.SetDescription("Trigger this");
+        pAch1.SetName(L"AchievementTitle");
+        pAch1.SetDescription(L"Trigger this");
         pAch1.SetPoints(5U);
-        pAch1.SetBadgeImage("BADGE_URI");
-        pAch1.SetActive(true);
+        pAch1.SetBadge(L"BADGE_URI");
+        pAch1.SetState(AssetState::Active);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -244,25 +296,25 @@ public:
     TEST_METHOD(TestRefreshProgressAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
         pAch1.SetID(1);
         pAch1.SetPoints(1U);
-        pAch1.SetActive(true);
+        pAch1.SetState(AssetState::Active);
         achievementsPage.SetProgress(1U, 1, 10);
-        auto& pAch2 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
         pAch2.SetID(2);
         pAch2.SetPoints(2U);
-        pAch2.SetActive(false);
+        pAch2.SetState(AssetState::Inactive);
         achievementsPage.SetProgress(2U, 1, 10);
-        auto& pAch3 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
         pAch3.SetID(3);
         pAch3.SetPoints(3U);
-        pAch3.SetActive(true);
+        pAch3.SetState(AssetState::Active);
         achievementsPage.SetProgress(3U, 0, 0);
-        auto& pAch4 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
         pAch4.SetID(4);
         pAch4.SetPoints(4U);
-        pAch4.SetActive(false);
+        pAch4.SetState(AssetState::Inactive);
         achievementsPage.SetProgress(4U, 0, 0);
 
         achievementsPage.Refresh();
@@ -271,23 +323,108 @@ public:
 
         auto const* pItem = achievementsPage.GetItem(0);
         Expects(pItem != nullptr);
+        Assert::AreEqual(1, pItem->GetId());
         Assert::AreEqual(10U, pItem->GetProgressMaximum()); // active item with progress
         Assert::AreEqual(1U, pItem->GetProgressValue());
 
         pItem = achievementsPage.GetItem(1);
         Expects(pItem != nullptr);
-        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // inactive item with progress should not display it
+        Assert::AreEqual(3, pItem->GetId());
+        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // active item without progress
         Assert::AreEqual(0U, pItem->GetProgressValue());
 
         pItem = achievementsPage.GetItem(2);
         Expects(pItem != nullptr);
-        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // active item without progress
-        Assert::AreEqual(0U, pItem->GetProgressValue());
+        Assert::IsTrue(pItem->IsHeader());
+        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
+        Assert::IsFalse(pItem->IsDisabled());
 
         pItem = achievementsPage.GetItem(3);
         Expects(pItem != nullptr);
+        Assert::AreEqual(2, pItem->GetId());
+        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // inactive item with progress should not display it
+        Assert::AreEqual(0U, pItem->GetProgressValue());
+
+        pItem = achievementsPage.GetItem(4);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(4, pItem->GetId());
         Assert::AreEqual(0U, pItem->GetProgressMaximum()); // inactive item without progress
         Assert::AreEqual(0U, pItem->GetProgressValue());
+
+        Assert::IsNull(achievementsPage.GetItem(5));
+    }
+
+    TEST_METHOD(TestRefreshAlmostThereAchievements)
+    {
+        OverlayAchievementsPageViewModelHarness achievementsPage;
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch1.SetID(1);
+        pAch1.SetPoints(1U);
+        pAch1.SetState(AssetState::Active);
+        achievementsPage.SetProgress(1U, 1, 10);
+        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch2.SetID(2);
+        pAch2.SetPoints(2U);
+        pAch2.SetState(AssetState::Inactive);
+        achievementsPage.SetProgress(2U, 1, 10);
+        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch3.SetID(3);
+        pAch3.SetPoints(3U);
+        pAch3.SetState(AssetState::Active);
+        achievementsPage.SetProgress(3U, 9, 10);
+        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch4.SetID(4);
+        pAch4.SetPoints(4U);
+        pAch4.SetState(AssetState::Inactive);
+        achievementsPage.SetProgress(4U, 0, 0);
+
+        achievementsPage.Refresh();
+        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"2 of 4 won (6/10)"), achievementsPage.GetSummary());
+
+        auto const* pItem = achievementsPage.GetItem(0);
+        Expects(pItem != nullptr);
+        Assert::IsTrue(pItem->IsHeader());
+        Assert::AreEqual(std::wstring(L"Almost There"), pItem->GetLabel());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(1);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(3, pItem->GetId());
+        Assert::AreEqual(10U, pItem->GetProgressMaximum()); // active item with >= 80% progress
+        Assert::AreEqual(9U, pItem->GetProgressValue());
+
+        pItem = achievementsPage.GetItem(2);
+        Expects(pItem != nullptr);
+        Assert::IsTrue(pItem->IsHeader());
+        Assert::AreEqual(std::wstring(L"Locked"), pItem->GetLabel());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(3);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(1, pItem->GetId());
+        Assert::AreEqual(10U, pItem->GetProgressMaximum()); // active item with < 80% progress
+        Assert::AreEqual(1U, pItem->GetProgressValue());
+
+        pItem = achievementsPage.GetItem(4);
+        Expects(pItem != nullptr);
+        Assert::IsTrue(pItem->IsHeader());
+        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(5);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(2, pItem->GetId());
+        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // inactive item with progress should not display it
+        Assert::AreEqual(0U, pItem->GetProgressValue());
+
+        pItem = achievementsPage.GetItem(6);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(4, pItem->GetId());
+        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // inactive item without progress
+        Assert::AreEqual(0U, pItem->GetProgressValue());
+
+        Assert::IsNull(achievementsPage.GetItem(7));
     }
 
     TEST_METHOD(TestRefreshSession)
@@ -296,7 +433,7 @@ public:
         achievementsPage.mockGameContext.SetGameId(1U);
         achievementsPage.mockSessionTracker.MockSession(1U, 1234567879, std::chrono::minutes(347));
 
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
         pAch1.SetID(1);
         pAch1.SetPoints(5U);
         achievementsPage.Refresh();
@@ -311,7 +448,7 @@ public:
         achievementsPage.mockGameContext.SetGameId(1U);
         achievementsPage.mockSessionTracker.MockSession(1U, 1234567879, std::chrono::seconds(17 * 60 + 12));
 
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
         pAch1.SetID(1);
         pAch1.SetPoints(5U);
         achievementsPage.Refresh();
@@ -334,13 +471,15 @@ public:
     TEST_METHOD(TestFetchItemDetailLocal)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Local);
+        achievementsPage.mockWindowManager.AssetList.SetFilterCategory(AssetCategory::Local);
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Local);
+        achievementsPage.mockGameContext.FindAchievement(pAch1.GetID())->SetID(1);
         pAch1.SetID(1);
-        pAch1.SetTitle("AchievementTitle");
-        pAch1.SetDescription("Trigger this");
+        pAch1.SetName(L"AchievementTitle");
+        pAch1.SetDescription(L"Trigger this");
         pAch1.SetPoints(5U);
-        pAch1.SetBadgeImage("BADGE_URI");
-        pAch1.SetActive(true);
+        pAch1.SetBadge(L"BADGE_URI");
+        pAch1.SetState(AssetState::Active);
 
         achievementsPage.mockServer.ExpectUncalled<ra::api::FetchAchievementInfo>();
 
@@ -357,13 +496,14 @@ public:
     TEST_METHOD(TestFetchItemDetail)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.mockGameContext.NewAchievement(Achievement::Category::Core);
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
+        achievementsPage.mockGameContext.FindAchievement(pAch1.GetID())->SetID(1);
         pAch1.SetID(1);
-        pAch1.SetTitle("AchievementTitle");
-        pAch1.SetDescription("Trigger this");
+        pAch1.SetName(L"AchievementTitle");
+        pAch1.SetDescription(L"Trigger this");
         pAch1.SetPoints(5U);
-        pAch1.SetBadgeImage("BADGE_URI");
-        pAch1.SetActive(true);
+        pAch1.SetBadge(L"BADGE_URI");
+        pAch1.SetState(AssetState::Active);
 
         achievementsPage.mockUserContext.Initialize("User2", "ApiToken");
         achievementsPage.mockServer.HandleRequest<ra::api::FetchAchievementInfo>([](const ra::api::FetchAchievementInfo::Request& request, ra::api::FetchAchievementInfo::Response& response)

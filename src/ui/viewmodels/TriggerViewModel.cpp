@@ -3,6 +3,11 @@
 #include "rcheevos.h"
 #include "RA_StringUtils.h"
 
+#include "services\IClipboard.hh"
+#include "services\ServiceLocator.hh"
+
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -11,6 +16,7 @@ const IntModelProperty TriggerViewModel::SelectedGroupIndexProperty("TriggerView
 const BoolModelProperty TriggerViewModel::PauseOnResetProperty("TriggerViewModel", "PauseOnReset", false);
 const BoolModelProperty TriggerViewModel::PauseOnTriggerProperty("TriggerViewModel", "PauseOnTrigger", false);
 const IntModelProperty TriggerViewModel::VersionProperty("TriggerViewModel", "Version", 0);
+const IntModelProperty TriggerViewModel::EnsureVisibleConditionIndexProperty("TriggerViewModel", "EnsureVisibleConditionIndex", -1);
 
 TriggerViewModel::TriggerViewModel() noexcept
     : m_pConditionsMonitor(*this)
@@ -129,6 +135,124 @@ void TriggerViewModel::SerializeAppend(std::string& sBuffer) const
 
             sBuffer.append(vmGroup->GetSerialized());
         }
+    }
+}
+
+void TriggerViewModel::CopySelectedConditionsToClipboard()
+{
+    std::string sSerialized;
+
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nIndex)
+    {
+        const auto* vmCondition = m_vConditions.GetItemAt(nIndex);
+        if (vmCondition != nullptr && vmCondition->IsSelected())
+        {
+            vmCondition->SerializeAppend(sSerialized);
+            sSerialized.push_back('_');
+        }
+    }
+
+    if (sSerialized.empty())
+    {
+        // no selection, get the whole group
+        const auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+        if (pGroup != nullptr)
+            sSerialized = pGroup->GetSerialized();
+    }
+    else if (sSerialized.back() == '_')
+    {
+        // remove trailing joiner
+        sSerialized.pop_back();
+    }
+
+    ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sSerialized));
+}
+
+void TriggerViewModel::PasteFromClipboard()
+{
+    const std::wstring sClipboardText = ra::services::ServiceLocator::Get<ra::services::IClipboard>().GetText();
+    if (sClipboardText.empty())
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Paste failed.", L"Clipboard did not contain any text.");
+        return;
+    }
+
+    std::string sTrigger = ra::Narrow(sClipboardText);
+    const auto nSize = rc_trigger_size(sTrigger.c_str());
+    if (nSize < 0)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Paste failed.", L"Clipboard did not contain valid trigger conditions.");
+        return;
+    }
+
+    std::string sTriggerBuffer;
+    sTriggerBuffer.resize(nSize);
+    const rc_trigger_t* pTrigger = rc_parse_trigger(sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
+    if (pTrigger->alternative)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Paste failed.", L"Clipboard contained multiple groups.");
+        return;
+    }
+
+    m_vConditions.BeginUpdate();
+
+    for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vConditions.Count()); ++nIndex)
+        m_vConditions.SetItemValue(nIndex, TriggerConditionViewModel::IsSelectedProperty, false);
+
+    for (const rc_condition_t* pCondition = pTrigger->requirement->conditions;
+        pCondition != nullptr; pCondition = pCondition->next)
+    {
+        auto& vmCondition = m_vConditions.Add();
+        vmCondition.InitializeFrom(*pCondition);
+        vmCondition.SetSelected(true);
+        vmCondition.SetIndex(gsl::narrow_cast<int>(m_vConditions.Count()));
+    }
+
+    m_vConditions.EndUpdate();
+
+    SetValue(EnsureVisibleConditionIndexProperty, gsl::narrow_cast<int>(m_vConditions.Count()) - 1);
+}
+
+void TriggerViewModel::RemoveSelectedConditions()
+{
+    int nSelected = 0;
+
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nIndex)
+    {
+        const auto* vmCondition = m_vConditions.GetItemAt(nIndex);
+        if (vmCondition != nullptr && vmCondition->IsSelected())
+            ++nSelected;
+    }
+
+    if (nSelected == 0)
+        return;
+
+    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+    vmMessageBox.SetMessage(ra::StringPrintf(L"Are you sure that you want to delete %d %s?",
+        nSelected, (nSelected == 1) ? "condition" : "conditions"));
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+
+    if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
+        return;
+
+    m_vConditions.BeginUpdate();
+
+    for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vConditions.Count()) - 1; nIndex >= 0; --nIndex)
+    {
+        const auto* vmCondition = m_vConditions.GetItemAt(nIndex);
+        if (vmCondition != nullptr && vmCondition->IsSelected())
+            m_vConditions.RemoveAt(nIndex);
+    }
+
+    m_vConditions.EndUpdate();
+
+    // update indices after EndUpdate to address a synchronization issue with the GridBinding
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nIndex)
+    {
+        auto* vmCondition = m_vConditions.GetItemAt(nIndex);
+        if (vmCondition != nullptr)
+            vmCondition->SetIndex(gsl::narrow_cast<int>(nIndex) + 1);
     }
 }
 

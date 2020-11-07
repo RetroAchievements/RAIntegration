@@ -216,7 +216,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
       m_bindPauseOnReset(vmAssetList),
       m_bindPauseOnTrigger(vmAssetList),
       m_bindGroups(vmAssetList),
-      m_bindTrigger(vmAssetList)
+      m_bindConditions(vmAssetList.Trigger())
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::After, "Achievement Editor");
     m_bindWindow.AddChildViewModel(vmAssetList.Trigger());
@@ -248,72 +248,76 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
         TriggerConditionViewModel::IndexProperty);
     pIdColumn->SetHeader(L"ID");
     pIdColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_ID);
-    m_bindTrigger.BindColumn(0, std::move(pIdColumn));
+    m_bindConditions.BindColumn(0, std::move(pIdColumn));
 
     auto pFlagColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         TriggerConditionViewModel::TypeProperty, vmAssetList.Trigger().ConditionTypes());
     pFlagColumn->SetHeader(L"Flag");
     pFlagColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_FLAG);
     pFlagColumn->SetReadOnly(false);
-    m_bindTrigger.BindColumn(1, std::move(pFlagColumn));
+    m_bindConditions.BindColumn(1, std::move(pFlagColumn));
 
     auto pSourceTypeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         TriggerConditionViewModel::SourceTypeProperty, vmAssetList.Trigger().OperandTypes());
     pSourceTypeColumn->SetHeader(L"Type");
     pSourceTypeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_TYPE);
     pSourceTypeColumn->SetReadOnly(false);
-    m_bindTrigger.BindColumn(2, std::move(pSourceTypeColumn));
+    m_bindConditions.BindColumn(2, std::move(pSourceTypeColumn));
 
     auto pSourceSizeColumn = std::make_unique<SizeColumnBinding>(TriggerConditionViewModel::SourceSizeProperty,
         TriggerConditionViewModel::SourceTypeProperty, vmAssetList.Trigger().OperandSizes());
     pSourceSizeColumn->SetHeader(L"Size");
     pSourceSizeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_SIZE);
     pSourceSizeColumn->SetReadOnly(false);
-    m_bindTrigger.BindColumn(3, std::move(pSourceSizeColumn));
+    m_bindConditions.BindColumn(3, std::move(pSourceSizeColumn));
 
     auto pSourceValueColumn = std::make_unique<ValueColumnBinding>(
         TriggerConditionViewModel::SourceValueProperty, TriggerConditionViewModel::SourceTypeProperty);
     pSourceValueColumn->SetHeader(L"Memory");
     pSourceValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_VALUE);
     pSourceValueColumn->SetReadOnly(false);
-    m_bindTrigger.BindColumn(4, std::move(pSourceValueColumn));
+    m_bindConditions.BindColumn(4, std::move(pSourceValueColumn));
 
     auto pOperatorColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         TriggerConditionViewModel::OperatorProperty, vmAssetList.Trigger().OperatorTypes());
     pOperatorColumn->SetHeader(L"Cmp");
     pOperatorColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_OPERATOR);
     pOperatorColumn->SetReadOnly(false);
-    m_bindTrigger.BindColumn(5, std::move(pOperatorColumn));
+    m_bindConditions.BindColumn(5, std::move(pOperatorColumn));
 
     auto pTargetTypeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         TriggerConditionViewModel::TargetTypeProperty, vmAssetList.Trigger().OperandTypes());
     pTargetTypeColumn->SetHeader(L"Type");
     pTargetTypeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_TYPE);
     pTargetTypeColumn->SetReadOnly(false);
-    m_bindTrigger.BindColumn(6, std::move(pTargetTypeColumn));
+    m_bindConditions.BindColumn(6, std::move(pTargetTypeColumn));
 
     auto pTargetSizeColumn = std::make_unique<SizeColumnBinding>(TriggerConditionViewModel::TargetSizeProperty,
         TriggerConditionViewModel::TargetTypeProperty, vmAssetList.Trigger().OperandSizes());
     pTargetSizeColumn->SetHeader(L"Size");
     pTargetSizeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_SIZE);
     pTargetSizeColumn->SetReadOnly(false);
-    m_bindTrigger.BindColumn(7, std::move(pTargetSizeColumn));
+    m_bindConditions.BindColumn(7, std::move(pTargetSizeColumn));
 
     auto pTargetValueColumn = std::make_unique<ValueColumnBinding>(
         TriggerConditionViewModel::TargetValueProperty, TriggerConditionViewModel::TargetTypeProperty);
     pTargetValueColumn->SetHeader(L"Mem/Val");
     pTargetValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_VALUE);
     pTargetValueColumn->SetReadOnly(false);
-    m_bindTrigger.BindColumn(8, std::move(pTargetValueColumn));
+    m_bindConditions.BindColumn(8, std::move(pTargetValueColumn));
 
     auto pHitsColumn = std::make_unique<HitsColumnBinding>(TriggerConditionViewModel::RequiredHitsProperty);
     pHitsColumn->SetHeader(L"Hits");
     pHitsColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Fill, COLUMN_WIDTH_HITS);
     pHitsColumn->SetReadOnly(false);
-    m_bindTrigger.BindColumn(9, std::move(pHitsColumn));
+    m_bindConditions.BindColumn(9, std::move(pHitsColumn));
 
-    m_bindTrigger.BindItems(vmAssetList.Trigger().Conditions());
+    m_bindConditions.BindIsSelected(TriggerConditionViewModel::IsSelectedProperty);
+    m_bindConditions.BindItems(vmAssetList.Trigger().Conditions());
 
+    m_bindConditions.SetCopyHandler([&vmAssetList]() { vmAssetList.Trigger().CopySelectedConditionsToClipboard(); });
+    m_bindConditions.SetPasteHandler([&vmAssetList]() { vmAssetList.Trigger().PasteFromClipboard(); });
+    m_bindConditions.BindEnsureVisible(TriggerViewModel::EnsureVisibleConditionIndexProperty);
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_LISTACHIEVEMENTS, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
@@ -330,7 +334,7 @@ BOOL AssetEditorDialog::OnInitDialog()
     m_bindPoints.SetControl(*this, IDC_RA_ACH_POINTS);
 
     m_bindGroups.SetControl(*this, IDC_RA_ACH_GROUP);
-    m_bindTrigger.SetControl(*this, IDC_RA_LBX_CONDITIONS);
+    m_bindConditions.SetControl(*this, IDC_RA_LBX_CONDITIONS);
 
     m_bindPauseOnReset.SetControl(*this, IDC_RA_CHK_ACH_PAUSE_ON_RESET);
     m_bindPauseOnTrigger.SetControl(*this, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER);
@@ -340,6 +344,36 @@ BOOL AssetEditorDialog::OnInitDialog()
 
 BOOL AssetEditorDialog::OnCommand(WORD nCommand)
 {
+    switch (nCommand)
+    {
+        case IDC_RA_COPYCOND:
+        {
+            auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+            if (vmAssetEditor)
+                vmAssetEditor->Trigger().CopySelectedConditionsToClipboard();
+
+            return TRUE;
+        }
+
+        case IDC_RA_PASTECOND:
+        {
+            auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+            if (vmAssetEditor)
+                vmAssetEditor->Trigger().PasteFromClipboard();
+
+            return TRUE;
+        }
+
+        case IDC_RA_DELETECOND:
+        {
+            auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+            if (vmAssetEditor)
+                vmAssetEditor->Trigger().RemoveSelectedConditions();
+
+            return TRUE;
+        }
+    }
+
     return DialogBase::OnCommand(nCommand);
 }
 

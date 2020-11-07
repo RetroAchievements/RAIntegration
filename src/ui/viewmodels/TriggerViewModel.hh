@@ -59,6 +59,14 @@ public:
     ViewModelCollection<TriggerConditionViewModel>& Conditions() noexcept { return m_vConditions; }
     const ViewModelCollection<TriggerConditionViewModel>& Conditions() const noexcept { return m_vConditions; }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the index of the condition that should be made visible.
+    /// </summary>
+    static const IntModelProperty EnsureVisibleConditionIndexProperty;
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the number of changes that have been made to the trigger.
+    /// </summary>
     static const IntModelProperty VersionProperty;
 
     std::string Serialize() const;
@@ -68,6 +76,10 @@ public:
     void InitializeFrom(const std::string& sTrigger);
     void UpdateFrom(const rc_trigger_t& pTrigger);
     void UpdateFrom(const std::string& sTrigger);
+
+    void RemoveSelectedConditions();
+    void CopySelectedConditionsToClipboard();
+    void PasteFromClipboard();
 
     /// <summary>
     /// Gets the list of condition types.

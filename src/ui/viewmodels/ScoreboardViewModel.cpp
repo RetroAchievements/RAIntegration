@@ -36,19 +36,17 @@ void ScoreboardViewModel::BeginAnimation()
     const auto nWidth = CalculateScoreboardWidth(pTheme);
 
     // bottom margin 10px
-    SetRenderLocationY(10 + nHeight);
-    SetRenderLocationYRelativePosition(RelativePosition::Far);
+    SetVerticalOffset(10 + nHeight);
 
     // animate to right margin 10px.
     m_nInitialX = 0;
     m_nTargetX = 10 + nWidth;
-    SetRenderLocationX(m_nInitialX);
-    SetRenderLocationXRelativePosition(RelativePosition::Far);
+    SetHorizontalOffset(m_nInitialX);
 }
 
 bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
 {
-    const int nOldX = GetRenderLocationX();
+    const int nOldX = GetHorizontalOffset();
 
     m_fAnimationProgress += fElapsed;
     const int nNewX = GetFadeOffset(m_fAnimationProgress, TOTAL_ANIMATION_TIME, INOUT_TIME, m_nInitialX, m_nTargetX);
@@ -56,7 +54,7 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
     bool bUpdated = false;
     if (nNewX != nOldX)
     {
-        SetRenderLocationX(nNewX);
+        SetHorizontalOffset(nNewX);
         bUpdated = true;
     }
 

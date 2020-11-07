@@ -249,16 +249,6 @@ public:
     /// </summary>
     bool NeedsRender() const noexcept;
 
-    struct PopupLocations
-    {
-        int nTopLeftY;
-        int nTopMiddleY;
-        int nTopRightY;
-        int nBottomLeftY;
-        int nBottomMiddleY;
-        int nBottomRightY;
-    };
-
 protected:
     ra::ui::viewmodels::OverlayViewModel m_vmOverlay;
     std::deque<std::unique_ptr<PopupMessageViewModel>> m_vPopupMessages;
@@ -279,10 +269,23 @@ protected:
     }
 
 private:
-    void UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, double fElapsed);
-    void UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface, double fElapsed);
-    void UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, double fElapsed);
-    void UpdatePopup(ra::ui::drawing::ISurface& pSurface, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup);
+    struct PopupLocations
+    {
+        int nTopLeftY;
+        int nTopMiddleY;
+        int nTopRightY;
+        int nBottomLeftY;
+        int nBottomMiddleY;
+        int nBottomRightY;
+    };
+
+    static ra::ui::Position GetRenderLocation(const ra::ui::viewmodels::PopupViewModelBase& vmPopup,
+        int nX, int nY, const ra::ui::drawing::ISurface& pSurface, const PopupLocations& pPopupLocations);
+
+    void UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
+    void UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
+    void UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
+    void UpdatePopup(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup);
 
     void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);
 

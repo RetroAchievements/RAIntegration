@@ -12,23 +12,27 @@ const StringModelProperty PopupMessageViewModel::DetailProperty("PopupMessageVie
 const BoolModelProperty PopupMessageViewModel::IsDetailErrorProperty("PopupMessageViewModel", "IsDetailError", false);
 const BoolModelProperty PopupMessageViewModel::IsMasteryProperty("PopupMessageViewModel", "IsMastery", false);
 
+PopupMessageViewModel::PopupMessageViewModel()
+{
+    SetPopupType(Popup::Message);
+}
+
 void PopupMessageViewModel::BeginAnimation()
 {
     m_fAnimationProgress = 0.0;
 
     // left margin 10px
-    SetRenderLocationX(10);
+    SetHorizontalOffset(10);
 
     // animate to bottom margin 10px. assume height = 64+6
-    m_nInitialY = 0;
-    m_nTargetY = 10 + 64 + 6;
-    SetRenderLocationY(m_nInitialY);
-    SetRenderLocationYRelativePosition(RelativePosition::Far);
+    m_nInitialY = -(64 + 6);
+    m_nTargetY = 10;
+    SetVerticalOffset(m_nInitialY);
 }
 
 bool PopupMessageViewModel::UpdateRenderImage(double fElapsed)
 {
-    const int nOldY = GetRenderLocationY();
+    const int nOldY = GetVerticalOffset();
 
     m_fAnimationProgress += fElapsed;
     const int nNewY = GetFadeOffset(m_fAnimationProgress, TOTAL_ANIMATION_TIME, INOUT_TIME, m_nInitialY, m_nTargetY);
@@ -36,7 +40,7 @@ bool PopupMessageViewModel::UpdateRenderImage(double fElapsed)
     bool bUpdated = false;
     if (nNewY != nOldY)
     {
-        SetRenderLocationY(nNewY);
+        SetVerticalOffset(nNewY);
         bUpdated = true;
     }
 

@@ -11,6 +11,8 @@ namespace viewmodels {
 class PopupMessageViewModel : public PopupViewModelBase
 {
 public:
+    PopupMessageViewModel();
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the title message.
     /// </summary>
@@ -137,7 +139,7 @@ public:
     /// <summary>
     /// Gets the final Y location to render the popup at.
     /// </summary>
-    int GetRenderTargetY() const noexcept { return m_nTargetY; }
+    int GetTargetVerticalOffset() const noexcept { return m_nTargetY; }
 
     class RenderImageLock
     {

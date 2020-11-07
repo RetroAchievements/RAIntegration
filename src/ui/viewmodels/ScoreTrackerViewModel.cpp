@@ -26,10 +26,10 @@ bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
 {
     if (m_pSurface && !m_bSurfaceStale)
     {
-        const auto nOffset = GetRenderLocationY() + ra::to_signed(GetRenderImage().GetHeight());
+        const auto nOffset = GetVerticalOffset() + ra::to_signed(GetRenderImage().GetHeight());
         if (m_nOffset != nOffset)
         {
-            SetRenderLocationY(m_nOffset + GetRenderImage().GetHeight());
+            SetVerticalOffset(m_nOffset + GetRenderImage().GetHeight());
             return true;
         }
 
@@ -63,11 +63,9 @@ bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
     m_pSurface->WriteText(4, 0, nFontText, pTheme.ColorLeaderboardEntry(), sScoreSoFar);
 
     // set location
-    SetRenderLocationX(10 + m_pSurface->GetWidth());
-    SetRenderLocationXRelativePosition(RelativePosition::Far);
+    SetHorizontalOffset(10);
 
-    SetRenderLocationY(m_nOffset + m_pSurface->GetHeight());
-    SetRenderLocationYRelativePosition(RelativePosition::Far);
+    SetVerticalOffset(m_nOffset + m_pSurface->GetHeight());
 
     m_bSurfaceStale = false;
     return true;

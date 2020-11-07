@@ -74,6 +74,7 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
         (1 << static_cast<int>(Feature::LeaderboardCancelNotifications)) |
         (1 << static_cast<int>(Feature::LeaderboardCounters)) |
         (1 << static_cast<int>(Feature::LeaderboardScoreboards));
+    SetPopupLocation(ra::ui::viewmodels::Popup::Message, ra::ui::viewmodels::PopupLocation::BottomLeft);
 
     RA_LOG_INFO("Loading preferences...");
 

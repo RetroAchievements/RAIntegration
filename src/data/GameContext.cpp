@@ -811,7 +811,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
 
     int nPopupId = -1;
 
-    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications))
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered) != ra::ui::viewmodels::PopupLocation::None)
     {
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
             bIsError ? L"Overlay\\acherror.wav" : L"Overlay\\unlock.wav");

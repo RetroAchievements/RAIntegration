@@ -21,6 +21,9 @@ public:
     bool IsFeatureEnabled(Feature nFeature) const noexcept override;
     void SetFeatureEnabled(Feature nFeature, bool bEnabled) noexcept override;
 
+    ra::ui::viewmodels::PopupLocation GetPopupLocation(ra::ui::viewmodels::Popup nPopup) const override;
+    void SetPopupLocation(ra::ui::viewmodels::Popup nPopup, ra::ui::viewmodels::PopupLocation nPopupLocation) override;
+
     unsigned int GetNumBackgroundThreads() const noexcept override { return m_nBackgroundThreads; }
 
     const std::wstring& GetRomDirectory() const noexcept override { return m_sRomDirectory; }
@@ -49,6 +52,8 @@ private:
     std::string m_sApiToken;
 
     int m_vEnabledFeatures = 0;
+
+    std::array<ra::ui::viewmodels::PopupLocation, ra::etoi(ra::ui::viewmodels::Popup::NumPopups)> m_vPopupLocations;
 
     unsigned int m_nBackgroundThreads = 8;
     std::wstring m_sRomDirectory;

@@ -9,6 +9,24 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
+enum class Popup
+{
+    None = 0,
+    AchievementTriggered,
+    NumPopups
+};
+
+enum class PopupLocation
+{
+    None,
+    TopLeft,
+    TopMiddle,
+    TopRight,
+    BottomLeft,
+    BottomMiddle,
+    BottomRight
+};
+
 class PopupViewModelBase : public ViewModelBase
 {
 public:

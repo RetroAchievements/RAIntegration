@@ -1253,7 +1253,7 @@ public:
     TEST_METHOD(TestAwardAchievementNonExistant)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
         game.AwardAchievement(1U);
@@ -1269,7 +1269,7 @@ public:
     TEST_METHOD(TestAwardAchievement)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.SetGameHash("hash");
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
         {
@@ -1302,7 +1302,7 @@ public:
     {
         GameContextHarness game;
         game.SetGameHash("hash");
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
         {
@@ -1334,7 +1334,7 @@ public:
     TEST_METHOD(TestAwardAchievementLocal)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
         game.MockAchievement().SetCategory(Achievement::Category::Local);
@@ -1356,7 +1356,7 @@ public:
     TEST_METHOD(TestAwardAchievementUnofficial)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
         game.MockAchievement().SetCategory(Achievement::Category::Unofficial);
@@ -1378,7 +1378,7 @@ public:
     TEST_METHOD(TestAwardAchievementModified)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
         game.MockAchievement().SetModified(true);
@@ -1400,7 +1400,7 @@ public:
     TEST_METHOD(TestAwardAchievementModifiedLocal)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
         auto& pAch = game.MockAchievement();
@@ -1424,7 +1424,7 @@ public:
     TEST_METHOD(TestAwardAchievementModifiedUnofficial)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
         auto& pAch = game.MockAchievement();
@@ -1448,7 +1448,7 @@ public:
     TEST_METHOD(TestAwardAchievementMemoryModified)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
         game.MockAchievement();
@@ -1472,7 +1472,7 @@ public:
     TEST_METHOD(TestAwardAchievementMemoryInsecureHardcore)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
 
@@ -1498,7 +1498,7 @@ public:
     {
         GameContextHarness game;
         game.SetGameHash("hash");
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
         {
@@ -1531,7 +1531,7 @@ public:
     TEST_METHOD(TestAwardAchievementDuplicate)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
         {
             response.ErrorMessage = "User already has this achievement awarded.";
@@ -1562,7 +1562,7 @@ public:
     TEST_METHOD(TestAwardAchievementDuplicateHardcore)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
         {
@@ -1594,7 +1594,7 @@ public:
     TEST_METHOD(TestAwardAchievementError)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
         {
@@ -1628,7 +1628,7 @@ public:
     TEST_METHOD(TestAwardAchievementErrorAfterPopupDismissed)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
         {
@@ -1667,7 +1667,7 @@ public:
     TEST_METHOD(TestAwardAchievementCompatibilityMode)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
         game.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
 
@@ -1690,7 +1690,7 @@ public:
     TEST_METHOD(TestAwardAchievementMasteryHardcore)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotification, true);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         game.SetGameId(1U);
@@ -1756,7 +1756,7 @@ public:
     TEST_METHOD(TestAwardAchievementMasteryNonHardcore)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotification, true);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         game.SetGameId(1U);
@@ -1822,7 +1822,7 @@ public:
     TEST_METHOD(TestAwardAchievementMasteryIncomplete)
     {
         GameContextHarness game;
-        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotification, true);
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         game.SetGameHash("hash");

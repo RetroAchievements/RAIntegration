@@ -9,7 +9,7 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-const BoolModelProperty OverlaySettingsViewModel::DisplayAchievementTriggerProperty("OverlaySettingsViewModel", "DisplayAchievementTrigger", true);
+const IntModelProperty OverlaySettingsViewModel::AchievementTriggerLocationProperty("OverlaySettingsViewModel", "AchievementTriggerLocation", ra::etoi(PopupLocation::BottomLeft));
 const BoolModelProperty OverlaySettingsViewModel::ScreenshotAchievementTriggerProperty("OverlaySettingsViewModel", "ScreenshotAchievementTrigger", false);
 const BoolModelProperty OverlaySettingsViewModel::DisplayMasteryProperty("OverlaySettingsViewModel", "DisplayMastery", true);
 const BoolModelProperty OverlaySettingsViewModel::ScreenshotMasteryProperty("OverlaySettingsViewModel", "ScreenshotMastery", false);
@@ -22,12 +22,20 @@ const StringModelProperty OverlaySettingsViewModel::ScreenshotLocationProperty("
 OverlaySettingsViewModel::OverlaySettingsViewModel() noexcept
 {
     SetWindowTitle(L"Overlay Settings");
+
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::None), L"None");
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::TopLeft), L"Top Left");
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::TopMiddle), L"Top Middle");
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::TopRight), L"Top Right");
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::BottomLeft), L"Bottom Left");
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::BottomMiddle), L"Bottom Middle");
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::BottomRight), L"Bottom Right");
 }
 
 void OverlaySettingsViewModel::Initialize()
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    SetDisplayAchievementTrigger(pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications));
+    SetAchievementTriggerLocation(pConfiguration.GetPopupLocation(Popup::AchievementTriggered));
     SetScreenshotAchievementTrigger(pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot));
     SetDisplayMastery(pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotification));
     SetScreenshotMastery(pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot));
@@ -43,7 +51,7 @@ void OverlaySettingsViewModel::Commit()
 {
     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
 
-    pConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, DisplayAchievementTrigger());
+    pConfiguration.SetPopupLocation(Popup::AchievementTriggered, GetAchievementTriggerLocation());
     pConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot, ScreenshotAchievementTrigger());
     pConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotification, DisplayMastery());
     pConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot, ScreenshotMastery());
@@ -63,14 +71,23 @@ void OverlaySettingsViewModel::Commit()
 
 void OverlaySettingsViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
-    if (args.Property == DisplayAchievementTriggerProperty && !args.tNewValue)
-        SetScreenshotAchievementTrigger(false);
-    else if (args.Property == ScreenshotAchievementTriggerProperty && args.tNewValue)
-        SetDisplayAchievementTrigger(true);
+    if (args.Property == ScreenshotAchievementTriggerProperty && args.tNewValue)
+    {
+        if (GetAchievementTriggerLocation() == PopupLocation::None)
+            SetAchievementTriggerLocation(PopupLocation::BottomLeft);
+    }
     else if (args.Property == DisplayMasteryProperty && !args.tNewValue)
         SetScreenshotMastery(false);
     else if (args.Property == ScreenshotMasteryProperty && args.tNewValue)
         SetDisplayMastery(true);
+
+    WindowViewModelBase::OnValueChanged(args);
+}
+
+void OverlaySettingsViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == AchievementTriggerLocationProperty && ra::itoe<PopupLocation>(args.tNewValue) == PopupLocation::None)
+        SetScreenshotAchievementTrigger(false);
 
     WindowViewModelBase::OnValueChanged(args);
 }

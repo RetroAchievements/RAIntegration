@@ -3,6 +3,8 @@
 #pragma once
 
 #include "ui/WindowViewModelBase.hh"
+#include "ui/viewmodels/LookupItemViewModel.hh"
+#include "ui/viewmodels/PopupViewModelBase.hh"
 
 namespace ra {
 namespace ui {
@@ -26,17 +28,17 @@ public:
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the achievement triggered notification should be displayed.
     /// </summary>
-    static const BoolModelProperty DisplayAchievementTriggerProperty;
+    static const IntModelProperty AchievementTriggerLocationProperty;
 
     /// <summary>
-    /// Gets whether or not the achievement triggered notification should be displayed.
+    /// Gets the location where achievement triggered notification popups should be displayed.
     /// </summary>
-    bool DisplayAchievementTrigger() const { return GetValue(DisplayAchievementTriggerProperty); }
+    PopupLocation GetAchievementTriggerLocation() const { return ra::itoe<PopupLocation>(GetValue(AchievementTriggerLocationProperty)); }
 
     /// <summary>
-    /// Sets whether or not the achievement triggered notification should be displayed.
+    /// Sets the location where achievement triggered notification popups should be displayed.
     /// </summary>
-    void SetDisplayAchievementTrigger(bool bValue) { SetValue(DisplayAchievementTriggerProperty, bValue); }
+    void SetAchievementTriggerLocation(PopupLocation nValue) { SetValue(AchievementTriggerLocationProperty, ra::etoi(nValue)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the achievement triggered notification should be screenshoted.
@@ -163,8 +165,20 @@ public:
     /// </summary>
     void BrowseLocation();
 
+    /// <summary>
+    /// Gets the list of popup locations.
+    /// </summary>
+    const LookupItemViewModelCollection& PopupLocations() const noexcept
+    {
+        return m_vPopupLocations;
+    }
+
 protected:
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
+private:
+    LookupItemViewModelCollection m_vPopupLocations;
 };
 
 } // namespace viewmodels

@@ -29,7 +29,7 @@ void OverlaySettingsDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& o
 
 OverlaySettingsDialog::OverlaySettingsDialog(ra::ui::viewmodels::OverlaySettingsViewModel& vmSettings)
     : DialogBase(vmSettings),
-      m_bindDisplayAchievementTrigger(vmSettings),
+      m_bindAchievementTriggerLocation(vmSettings),
       m_bindScreenshotAchievementTrigger(vmSettings),
       m_bindDisplayMastery(vmSettings),
       m_bindScreenshotMastery(vmSettings),
@@ -41,7 +41,9 @@ OverlaySettingsDialog::OverlaySettingsDialog(ra::ui::viewmodels::OverlaySettings
 {
     m_bindWindow.SetInitialPosition(RelativePosition::Center, RelativePosition::Center);
 
-    m_bindDisplayAchievementTrigger.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayAchievementTriggerProperty);
+    m_bindAchievementTriggerLocation.BindItems(vmSettings.PopupLocations());
+    m_bindAchievementTriggerLocation.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::AchievementTriggerLocationProperty);
+
     m_bindScreenshotAchievementTrigger.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::ScreenshotAchievementTriggerProperty);
     m_bindDisplayMastery.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayMasteryProperty);
     m_bindScreenshotMastery.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::ScreenshotMasteryProperty);
@@ -55,7 +57,7 @@ OverlaySettingsDialog::OverlaySettingsDialog(ra::ui::viewmodels::OverlaySettings
 
 BOOL OverlaySettingsDialog::OnInitDialog()
 {
-    m_bindDisplayAchievementTrigger.SetControl(*this, IDC_RA_DISPLAY_TRIGGER);
+    m_bindAchievementTriggerLocation.SetControl(*this, IDC_RA_DISPLAY_TRIGGER);
     m_bindScreenshotAchievementTrigger.SetControl(*this, IDC_RA_SCREENSHOT_TRIGGER);
     m_bindDisplayMastery.SetControl(*this, IDC_RA_DISPLAY_MASTERY);
     m_bindScreenshotMastery.SetControl(*this, IDC_RA_SCREENSHOT_MASTERY);

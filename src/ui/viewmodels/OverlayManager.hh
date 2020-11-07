@@ -249,6 +249,16 @@ public:
     /// </summary>
     bool NeedsRender() const noexcept;
 
+    struct PopupLocations
+    {
+        int nTopLeftY;
+        int nTopMiddleY;
+        int nTopRightY;
+        int nBottomLeftY;
+        int nBottomMiddleY;
+        int nBottomRightY;
+    };
+
 protected:
     ra::ui::viewmodels::OverlayViewModel m_vmOverlay;
     std::deque<std::unique_ptr<PopupMessageViewModel>> m_vPopupMessages;

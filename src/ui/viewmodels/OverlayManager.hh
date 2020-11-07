@@ -311,7 +311,7 @@ private:
     void UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
     void UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
     void UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
-    void UpdatePopup(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup);
+    void UpdatePopup(ra::ui::drawing::ISurface& pSurface, const PopupLocations& pPopupLocations, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup);
 
     void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);
 

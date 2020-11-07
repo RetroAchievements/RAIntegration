@@ -111,7 +111,7 @@ private:
     unsigned int m_nBackgroundThreads = 0;
 
     std::set<Feature> m_vEnabledFeatures;
-    std::array<ra::ui::viewmodels::PopupLocation, ra::etoi(ra::ui::viewmodels::Popup::NumPopups)> m_vPopupLocations;
+    std::array<ra::ui::viewmodels::PopupLocation, ra::etoi(ra::ui::viewmodels::Popup::NumPopups)> m_vPopupLocations = {};
 };
 
 } // namespace mocks

@@ -746,7 +746,6 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
     bool bIsError = false;
 
     std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-    vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);
     vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()));
     vmPopup->SetDetail(ra::Widen(pAchievement->Description()));
     vmPopup->SetImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());

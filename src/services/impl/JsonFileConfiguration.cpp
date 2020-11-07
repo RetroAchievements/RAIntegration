@@ -12,7 +12,7 @@ namespace ra {
 namespace services {
 namespace impl {
 
-static void ReadPopupLocation(JsonFileConfiguration* pConfiguration, ra::ui::viewmodels::Popup nPopup,
+static void ReadPopupLocation(JsonFileConfiguration& pConfiguration, ra::ui::viewmodels::Popup nPopup,
     const rapidjson::Document& doc, const char* sFieldName, ra::ui::viewmodels::PopupLocation nDefaultLocation, bool bAllowCenter)
 {
     ra::ui::viewmodels::PopupLocation nLocation = nDefaultLocation;
@@ -28,6 +28,7 @@ static void ReadPopupLocation(JsonFileConfiguration* pConfiguration, ra::ui::vie
         else if (pField.IsString())
         {
             const char* pValue = pField.GetString();
+            Expects(pValue != nullptr);
             if (*pValue == 'T')
             {
                 if (strcmp(pValue, "TopLeft") == 0)
@@ -53,7 +54,7 @@ static void ReadPopupLocation(JsonFileConfiguration* pConfiguration, ra::ui::vie
         }
     }
 
-    pConfiguration->SetPopupLocation(nPopup, nLocation);
+    pConfiguration.SetPopupLocation(nPopup, nLocation);
 }
 
 bool JsonFileConfiguration::Load(const std::wstring& sFilename)
@@ -97,10 +98,10 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     if (doc.HasMember("Non Hardcore Warning"))
         SetFeatureEnabled(Feature::NonHardcoreWarning, doc["Non Hardcore Warning"].GetBool());
 
-    ReadPopupLocation(this, ra::ui::viewmodels::Popup::AchievementTriggered, doc, "Achievement Triggered Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::AchievementTriggered, doc, "Achievement Triggered Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
     if (doc.HasMember("Achievement Triggered Screenshot"))
         SetFeatureEnabled(Feature::AchievementTriggeredScreenshot, doc["Achievement Triggered Screenshot"].GetBool());
-    ReadPopupLocation(this, ra::ui::viewmodels::Popup::Mastery, doc, "Mastery Notification Display", ra::ui::viewmodels::PopupLocation::TopMiddle, true);
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::Mastery, doc, "Mastery Notification Display", ra::ui::viewmodels::PopupLocation::TopMiddle, true);
     if (doc.HasMember("Mastery Screenshot"))
         SetFeatureEnabled(Feature::MasteryNotificationScreenshot, doc["Mastery Screenshot"].GetBool());
     if (doc.HasMember("Screenshot Directory"))
@@ -108,12 +109,12 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
 
     if (doc.HasMember("Leaderboards Active"))
         SetFeatureEnabled(Feature::Leaderboards, doc["Leaderboards Active"].GetBool());
-    ReadPopupLocation(this, ra::ui::viewmodels::Popup::LeaderboardStarted, doc, "Leaderboard Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
-    ReadPopupLocation(this, ra::ui::viewmodels::Popup::LeaderboardCanceled, doc, "Leaderboard Cancel Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
-    ReadPopupLocation(this, ra::ui::viewmodels::Popup::LeaderboardTracker, doc, "Leaderboard Counter Display", ra::ui::viewmodels::PopupLocation::BottomRight, true);
-    ReadPopupLocation(this, ra::ui::viewmodels::Popup::LeaderboardScoreboard, doc, "Leaderboard Scoreboard Display", ra::ui::viewmodels::PopupLocation::BottomRight, false);
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardStarted, doc, "Leaderboard Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardCanceled, doc, "Leaderboard Cancel Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardTracker, doc, "Leaderboard Counter Display", ra::ui::viewmodels::PopupLocation::BottomRight, true);
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardScoreboard, doc, "Leaderboard Scoreboard Display", ra::ui::viewmodels::PopupLocation::BottomRight, false);
 
-    ReadPopupLocation(this, ra::ui::viewmodels::Popup::Message, doc, "Informational Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::Message, doc, "Informational Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
 
     if (doc.HasMember("Prefer Decimal"))
         SetFeatureEnabled(Feature::PreferDecimal, doc["Prefer Decimal"].GetBool());

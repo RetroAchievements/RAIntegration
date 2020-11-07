@@ -331,10 +331,10 @@ ra::ui::Position OverlayManager::GetRenderLocation(const ra::ui::viewmodels::Pop
     return nPos;
 }
 
-void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup)
+void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, const PopupLocations& pPopupLocations, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup)
 {
     constexpr int nFudge = 4;
-    unsigned nOldWidth, nOldHeight;
+    unsigned nOldWidth = 0, nOldHeight = 0;
 
     if (!vmPopup.IsAnimationStarted())
     {

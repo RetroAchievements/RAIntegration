@@ -29,7 +29,7 @@ static int CalculateScoreboardWidth(const ra::ui::OverlayTheme& pTheme) noexcept
 
 ScoreboardViewModel::ScoreboardViewModel() noexcept
 {
-    SetPopupType(ra::ui::viewmodels::Popup::LeaderboardScoreboard);
+    GSL_SUPPRESS_F6 SetPopupType(ra::ui::viewmodels::Popup::LeaderboardScoreboard);
 }
 
 void ScoreboardViewModel::BeginAnimation()

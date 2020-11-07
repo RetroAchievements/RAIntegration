@@ -13,10 +13,10 @@ const StringModelProperty ScoreTrackerViewModel::DisplayTextProperty("ScoreTrack
 
 ScoreTrackerViewModel::ScoreTrackerViewModel() noexcept
 {
-    SetPopupType(ra::ui::viewmodels::Popup::LeaderboardTracker);
+    GSL_SUPPRESS_F6 SetPopupType(ra::ui::viewmodels::Popup::LeaderboardTracker);
 
-    SetHorizontalOffset(10);
-    SetVerticalOffset(10);
+    GSL_SUPPRESS_F6 SetHorizontalOffset(10);
+    GSL_SUPPRESS_F6 SetVerticalOffset(10);
 }
 
 void ScoreTrackerViewModel::SetDisplayText(const std::wstring& sValue)

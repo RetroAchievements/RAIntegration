@@ -11,7 +11,7 @@ namespace viewmodels {
 class PopupMessageViewModel : public PopupViewModelBase
 {
 public:
-    PopupMessageViewModel();
+    PopupMessageViewModel() noexcept;
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the title message.

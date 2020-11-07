@@ -11,9 +11,9 @@ const StringModelProperty PopupMessageViewModel::DescriptionProperty("PopupMessa
 const StringModelProperty PopupMessageViewModel::DetailProperty("PopupMessageViewModel", "Detail", L"");
 const BoolModelProperty PopupMessageViewModel::IsDetailErrorProperty("PopupMessageViewModel", "IsDetailError", false);
 
-PopupMessageViewModel::PopupMessageViewModel()
+PopupMessageViewModel::PopupMessageViewModel() noexcept
 {
-    SetPopupType(Popup::Message);
+    GSL_SUPPRESS_F6 SetPopupType(Popup::Message);
 }
 
 void PopupMessageViewModel::BeginAnimation()

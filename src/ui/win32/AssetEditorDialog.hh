@@ -6,6 +6,7 @@
 
 #include "ui/win32/bindings/CheckBoxBinding.hh"
 #include "ui/win32/bindings/GridBinding.hh"
+#include "ui/win32/bindings/ImageBinding.hh"
 #include "ui/win32/bindings/NumericTextBoxBinding.hh"
 #include "ui/win32/bindings/TextBoxBinding.hh"
 
@@ -43,10 +44,21 @@ protected:
     BOOL OnCommand(WORD nCommand) override;
 
 private:
+    class BadgeNameBinding : public ra::ui::win32::bindings::TextBoxBinding
+    {
+    public:
+        BadgeNameBinding(ViewModelBase& vmViewModel) noexcept
+            : ra::ui::win32::bindings::TextBoxBinding(vmViewModel) {}
+
+    protected:
+        void UpdateSourceFromText(const std::wstring& sText) override;
+    };
+
     ra::ui::win32::bindings::NumericTextBoxBinding m_bindID;
     ra::ui::win32::bindings::TextBoxBinding m_bindName;
     ra::ui::win32::bindings::TextBoxBinding m_bindDescription;
-    ra::ui::win32::bindings::TextBoxBinding m_bindBadge;
+    BadgeNameBinding m_bindBadge;
+    ra::ui::win32::bindings::ImageBinding m_bindBadgeImage;
     ra::ui::win32::bindings::NumericTextBoxBinding m_bindPoints;
 
     ra::ui::win32::bindings::CheckBoxBinding m_bindPauseOnReset;

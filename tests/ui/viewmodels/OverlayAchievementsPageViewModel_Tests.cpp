@@ -58,11 +58,21 @@ private:
 
         ra::ui::viewmodels::AchievementViewModel& NewAchievement(AssetCategory nCategory)
         {
-            mockGameContext.NewAchievement(ra::itoe<Achievement::Category>(ra::etoi(nCategory)));
+            const auto& pAchievement = mockGameContext.NewAchievement(ra::itoe<Achievement::Category>(ra::etoi(nCategory)));
+
+            auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+            vmAchievement->SetID(pAchievement.ID());
+            vmAchievement->SetCategory(nCategory);
+            vmAchievement->CreateServerCheckpoint();
+            vmAchievement->CreateLocalCheckpoint();
+
             auto& pAssets = mockWindowManager.AssetList.Assets();
+            pAssets.Append(std::move(vmAchievement));
+
             auto* pAsset = pAssets.GetItemAt(pAssets.Count() - 1);
-            auto* pAchievement = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(pAsset);
-            return *pAchievement;
+            auto* pAchievementViewModel = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(pAsset);
+            Expects(pAchievementViewModel != nullptr);
+            return *pAchievementViewModel;
         }
 
         void SetProgress(ra::AchievementID nId, int nValue, int nMax)

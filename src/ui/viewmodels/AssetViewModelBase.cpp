@@ -234,6 +234,11 @@ void AssetViewModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args
     TransactionalViewModelBase::OnValueChanged(args);
 }
 
+void AssetViewModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
+{
+    TransactionalViewModelBase::OnValueChanged(args);
+}
+
 void AssetViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == IsModifiedProperty)

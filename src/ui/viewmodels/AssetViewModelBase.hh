@@ -251,6 +251,7 @@ protected:
     static bool ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText);
 
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
     // Hide the public members of TransactionalViewModelBase that we're redefining

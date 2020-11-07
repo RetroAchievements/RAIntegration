@@ -206,25 +206,46 @@ private:
     mutable gsl::index m_nEditingItemIndex = -1;
 };
 
-AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
-    : DialogBase(vmAssetList),
-      m_bindID(vmAssetList),
-      m_bindName(vmAssetList),
-      m_bindDescription(vmAssetList),
-      m_bindBadge(vmAssetList),
-      m_bindPoints(vmAssetList),
-      m_bindPauseOnReset(vmAssetList),
-      m_bindPauseOnTrigger(vmAssetList),
-      m_bindGroups(vmAssetList),
-      m_bindConditions(vmAssetList.Trigger())
+void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstring& sText)
+{
+    if (sText.length() < 5)
+    {
+        std::wstring sBadge;
+        for (int i = gsl::narrow_cast<int>(sText.length()); i < 5; ++i)
+            sBadge.push_back('0');
+        sBadge.append(sText);
+
+        SetWindowTextW(m_hWnd, sBadge.c_str());
+
+        TextBoxBinding::UpdateSourceFromText(sBadge);
+    }
+    else
+    {
+        TextBoxBinding::UpdateSourceFromText(sText);
+    }
+}
+
+AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
+    : DialogBase(vmAssetEditor),
+      m_bindID(vmAssetEditor),
+      m_bindName(vmAssetEditor),
+      m_bindDescription(vmAssetEditor),
+      m_bindBadge(vmAssetEditor),
+      m_bindBadgeImage(vmAssetEditor),
+      m_bindPoints(vmAssetEditor),
+      m_bindPauseOnReset(vmAssetEditor),
+      m_bindPauseOnTrigger(vmAssetEditor),
+      m_bindGroups(vmAssetEditor),
+      m_bindConditions(vmAssetEditor.Trigger())
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::After, "Achievement Editor");
-    m_bindWindow.AddChildViewModel(vmAssetList.Trigger());
+    m_bindWindow.AddChildViewModel(vmAssetEditor.Trigger());
 
     m_bindID.BindValue(AssetEditorViewModel::IDProperty);
     m_bindName.BindText(AssetEditorViewModel::NameProperty);
     m_bindDescription.BindText(AssetEditorViewModel::DescriptionProperty);
     m_bindBadge.BindText(AssetEditorViewModel::BadgeProperty);
+    m_bindBadgeImage.BindImage(AssetEditorViewModel::BadgeProperty, ra::ui::ImageType::Badge);
     m_bindPoints.BindValue(AssetEditorViewModel::PointsProperty);
 
     m_bindWindow.BindEnabled(IDC_RA_ACH_TITLE, AssetEditorViewModel::AssetLoadedProperty);
@@ -242,7 +263,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     m_bindGroups.BindColumn(0, std::move(pGroupColumn));
 
     m_bindGroups.BindIsSelected(TriggerViewModel::GroupViewModel::IsSelectedProperty);
-    m_bindGroups.BindItems(vmAssetList.Trigger().Groups());
+    m_bindGroups.BindItems(vmAssetEditor.Trigger().Groups());
 
     auto pIdColumn = std::make_unique<ra::ui::win32::bindings::GridNumberColumnBinding>(
         TriggerConditionViewModel::IndexProperty);
@@ -251,21 +272,21 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     m_bindConditions.BindColumn(0, std::move(pIdColumn));
 
     auto pFlagColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        TriggerConditionViewModel::TypeProperty, vmAssetList.Trigger().ConditionTypes());
+        TriggerConditionViewModel::TypeProperty, vmAssetEditor.Trigger().ConditionTypes());
     pFlagColumn->SetHeader(L"Flag");
     pFlagColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_FLAG);
     pFlagColumn->SetReadOnly(false);
     m_bindConditions.BindColumn(1, std::move(pFlagColumn));
 
     auto pSourceTypeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        TriggerConditionViewModel::SourceTypeProperty, vmAssetList.Trigger().OperandTypes());
+        TriggerConditionViewModel::SourceTypeProperty, vmAssetEditor.Trigger().OperandTypes());
     pSourceTypeColumn->SetHeader(L"Type");
     pSourceTypeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_TYPE);
     pSourceTypeColumn->SetReadOnly(false);
     m_bindConditions.BindColumn(2, std::move(pSourceTypeColumn));
 
     auto pSourceSizeColumn = std::make_unique<SizeColumnBinding>(TriggerConditionViewModel::SourceSizeProperty,
-        TriggerConditionViewModel::SourceTypeProperty, vmAssetList.Trigger().OperandSizes());
+        TriggerConditionViewModel::SourceTypeProperty, vmAssetEditor.Trigger().OperandSizes());
     pSourceSizeColumn->SetHeader(L"Size");
     pSourceSizeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_SIZE);
     pSourceSizeColumn->SetReadOnly(false);
@@ -279,21 +300,21 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     m_bindConditions.BindColumn(4, std::move(pSourceValueColumn));
 
     auto pOperatorColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        TriggerConditionViewModel::OperatorProperty, vmAssetList.Trigger().OperatorTypes());
+        TriggerConditionViewModel::OperatorProperty, vmAssetEditor.Trigger().OperatorTypes());
     pOperatorColumn->SetHeader(L"Cmp");
     pOperatorColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_OPERATOR);
     pOperatorColumn->SetReadOnly(false);
     m_bindConditions.BindColumn(5, std::move(pOperatorColumn));
 
     auto pTargetTypeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        TriggerConditionViewModel::TargetTypeProperty, vmAssetList.Trigger().OperandTypes());
+        TriggerConditionViewModel::TargetTypeProperty, vmAssetEditor.Trigger().OperandTypes());
     pTargetTypeColumn->SetHeader(L"Type");
     pTargetTypeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_TYPE);
     pTargetTypeColumn->SetReadOnly(false);
     m_bindConditions.BindColumn(6, std::move(pTargetTypeColumn));
 
     auto pTargetSizeColumn = std::make_unique<SizeColumnBinding>(TriggerConditionViewModel::TargetSizeProperty,
-        TriggerConditionViewModel::TargetTypeProperty, vmAssetList.Trigger().OperandSizes());
+        TriggerConditionViewModel::TargetTypeProperty, vmAssetEditor.Trigger().OperandSizes());
     pTargetSizeColumn->SetHeader(L"Size");
     pTargetSizeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_SIZE);
     pTargetSizeColumn->SetReadOnly(false);
@@ -313,10 +334,10 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetList)
     m_bindConditions.BindColumn(9, std::move(pHitsColumn));
 
     m_bindConditions.BindIsSelected(TriggerConditionViewModel::IsSelectedProperty);
-    m_bindConditions.BindItems(vmAssetList.Trigger().Conditions());
+    m_bindConditions.BindItems(vmAssetEditor.Trigger().Conditions());
 
-    m_bindConditions.SetCopyHandler([&vmAssetList]() { vmAssetList.Trigger().CopySelectedConditionsToClipboard(); });
-    m_bindConditions.SetPasteHandler([&vmAssetList]() { vmAssetList.Trigger().PasteFromClipboard(); });
+    m_bindConditions.SetCopyHandler([&vmAssetEditor]() { vmAssetEditor.Trigger().CopySelectedConditionsToClipboard(); });
+    m_bindConditions.SetPasteHandler([&vmAssetEditor]() { vmAssetEditor.Trigger().PasteFromClipboard(); });
     m_bindConditions.BindEnsureVisible(TriggerViewModel::EnsureVisibleConditionIndexProperty);
 
     using namespace ra::bitwise_ops;
@@ -331,6 +352,7 @@ BOOL AssetEditorDialog::OnInitDialog()
     m_bindName.SetControl(*this, IDC_RA_ACH_TITLE);
     m_bindDescription.SetControl(*this, IDC_RA_ACH_DESC);
     m_bindBadge.SetControl(*this, IDC_RA_BADGENAME);
+    m_bindBadgeImage.SetControl(*this, IDC_RA_CHEEVOPIC);
     m_bindPoints.SetControl(*this, IDC_RA_ACH_POINTS);
 
     m_bindGroups.SetControl(*this, IDC_RA_ACH_GROUP);

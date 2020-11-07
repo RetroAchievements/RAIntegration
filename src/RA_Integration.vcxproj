@@ -108,6 +108,7 @@
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="data\GameContext.cpp" />
     <ClCompile Include="services\AchievementRuntime.cpp" />
+    <ClCompile Include="services\FrameEventQueue.cpp" />
     <ClCompile Include="services\GameIdentifier.cpp" />
     <ClCompile Include="services\Http.cpp" />
     <ClCompile Include="services\impl\FileLocalStorage.cpp" />
@@ -245,6 +246,7 @@
     <ClInclude Include="RA_Resource.h" />
     <ClInclude Include="RA_StringUtils.h" />
     <ClInclude Include="services\AchievementRuntime.hh" />
+    <ClInclude Include="services\FrameEventQueue.hh" />
     <ClInclude Include="services\GameIdentifier.hh" />
     <ClInclude Include="services\Http.hh" />
     <ClInclude Include="services\IAudioSystem.hh" />

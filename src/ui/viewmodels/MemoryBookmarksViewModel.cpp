@@ -6,6 +6,7 @@
 
 #include "data\EmulatorContext.hh"
 
+#include "services\FrameEventQueue.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\ILocalStorage.hh"
@@ -298,7 +299,6 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
 void MemoryBookmarksViewModel::DoFrame()
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    std::wstring sPauseOnChangeAddresses;
 
     for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
     {
@@ -319,9 +319,8 @@ void MemoryBookmarksViewModel::DoFrame()
                 {
                     pBookmark.SetRowColor(ra::ui::Color(0xFFFFC0C0));
 
-                    sPauseOnChangeAddresses.append(ra::StringPrintf(L"\n* %s %s",
-                        m_vSizes.GetLabelForId(ra::etoi(pBookmark.GetSize())),
-                        ra::ByteAddressToString(pBookmark.GetAddress())));
+                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+                    pFrameEventQueue.QueuePauseOnChange(pBookmark.GetSize(), pBookmark.GetAddress());
                 }
 
                 m_bIgnoreValueChanged = true;
@@ -335,14 +334,6 @@ void MemoryBookmarksViewModel::DoFrame()
         {
             pBookmark.SetRowColor(ra::ui::Color(ra::to_unsigned(MemoryBookmarkViewModel::RowColorProperty.GetDefaultValue())));
         }
-    }
-
-    if (!sPauseOnChangeAddresses.empty())
-    {
-        pEmulatorContext.Pause();
-
-        sPauseOnChangeAddresses = L"The following bookmarks have changed:" + sPauseOnChangeAddresses;
-        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"The emulator has been paused.", sPauseOnChangeAddresses);
     }
 }
 

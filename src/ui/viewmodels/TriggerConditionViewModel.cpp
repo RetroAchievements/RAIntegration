@@ -3,6 +3,10 @@
 #include "RA_Defs.h"
 #include "RA_StringUtils.h"
 
+#include "data\GameContext.hh"
+
+#include "services\ServiceLocator.hh"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -233,6 +237,46 @@ void TriggerConditionViewModel::InitializeFrom(const rc_condition_t& pCondition)
 
     SetCurrentHits(pCondition.current_hits);
     SetRequiredHits(pCondition.required_hits);
+}
+
+std::wstring TriggerConditionViewModel::GetTooltip(const IntModelProperty& nProperty) const
+{
+    if (nProperty == SourceValueProperty && GetSourceType() != TriggerOperandType::Value)
+        return GetAddressTooltip(GetSourceValue());
+
+    if (nProperty == TargetValueProperty && GetTargetType() != TriggerOperandType::Value)
+        return GetAddressTooltip(GetTargetValue());
+
+    return L"";
+}
+
+std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned nAddress) const
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto* pNote = pGameContext.FindCodeNote(nAddress);
+    if (!pNote)
+        return ra::StringPrintf(L"%s\r\n[No code note]", ra::ByteAddressToString(nAddress));
+
+    // limit the tooltip to the first 20 lines of the code note
+    size_t nLines = 0;
+    size_t nIndex = 0;
+    do
+    {
+        nIndex = pNote->find('\n', nIndex);
+        if (nIndex == std::string::npos)
+            break;
+
+        ++nIndex;
+        ++nLines;
+    } while (nLines < 20);
+
+    if (nIndex != std::string::npos && pNote->find('\n', nIndex) != std::string::npos)
+    {
+        std::wstring sSubString(*pNote, 0, nIndex);
+        return ra::StringPrintf(L"%s\r\n%s...", ra::ByteAddressToString(nAddress), sSubString);
+    }
+
+    return ra::StringPrintf(L"%s\r\n%s", ra::ByteAddressToString(nAddress), *pNote);
 }
 
 } // namespace viewmodels

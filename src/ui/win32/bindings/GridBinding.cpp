@@ -16,6 +16,12 @@ GridBinding::~GridBinding()
 {
     if (m_vmItems != nullptr)
         m_vmItems->RemoveNotifyTarget(*this);
+
+    if (m_hTooltip)
+    {
+        RemoveSecondaryControlBinding(m_hTooltip);
+        DestroyWindow(m_hTooltip);
+    }
 }
 
 void GridBinding::BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBinding> pColumnBinding)
@@ -617,6 +623,76 @@ void GridBinding::SetHWND(DialogBase& pDialog, HWND hControl)
     }
 }
 
+INT_PTR CALLBACK GridBinding::WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+        case WM_MOUSEMOVE:
+            LVHITTESTINFO lvHitTestInfo;
+            GetCursorPos(&lvHitTestInfo.pt);
+            ScreenToClient(m_hWnd, &lvHitTestInfo.pt);
+
+            int nTooltipLocation = -1;
+            if (ListView_SubItemHitTest(m_hWnd, &lvHitTestInfo) != -1)
+                nTooltipLocation = lvHitTestInfo.iItem * 256 + lvHitTestInfo.iSubItem;
+
+            // if the mouse has moved to a new grid cell, hide the toolip
+            if (nTooltipLocation != m_nTooltipLocation)
+            {
+                m_nTooltipLocation = nTooltipLocation;
+                m_sTooltip.clear();
+
+                if (IsWindowVisible(m_hTooltip))
+                {
+                    // tooltip is visible, just hide it
+                    SendMessage(m_hTooltip, TTM_POP, 0, 0);
+                }
+                else
+                {
+                    // tooltip is not visible. if we told the tooltip to not display in the TTM_GETDISPINFO handler by
+                    // setting lpszText to empty string, it won't try to display again unless we tell it to, so do so now
+                    SendMessage(m_hTooltip, TTM_POPUP, 0, 0);
+
+                    // but we don't want the tooltip to immediately display when entering a new cell, so immediately
+                    // hide it. the normal hover behavior will make it display as expected after a normal hover wait time.
+                    SendMessage(m_hTooltip, TTM_POP, 0, 0);
+                }
+            }
+            break;
+    }
+
+    return ControlBinding::WndProc(hControl, uMsg, wParam, lParam);
+}
+
+void GridBinding::InitializeTooltips(std::chrono::milliseconds nDisplayTime) noexcept
+{
+    m_hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
+        WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        GetDialogHwnd(), nullptr, GetModuleHandle(nullptr), nullptr);
+
+    if (m_hTooltip)
+    {
+        TOOLINFO toolInfo;
+        memset(&toolInfo, 0, sizeof(toolInfo));
+        GSL_SUPPRESS_ES47 toolInfo.cbSize = TTTOOLINFO_V1_SIZE;
+        toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+        toolInfo.hwnd = GetDialogHwnd();
+        GSL_SUPPRESS_TYPE1 toolInfo.uId = reinterpret_cast<UINT_PTR>(m_hWnd);
+        toolInfo.lpszText = LPSTR_TEXTCALLBACK;
+        GSL_SUPPRESS_TYPE1 SendMessage(m_hTooltip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo));
+        SendMessage(m_hTooltip, TTM_ACTIVATE, TRUE, 0);
+        SendMessage(m_hTooltip, TTM_SETMAXTIPWIDTH, 0, 320);
+        SendMessage(m_hTooltip, TTM_SETDELAYTIME, TTDT_AUTOPOP, nDisplayTime.count());
+
+        // install a mouse hook so we can show different tooltips per cell within the list view
+        SubclassWndProc();
+
+        // TTN_GETDISPINFO is raised against m_hTooltip, need to register this GridBinding against m_hTooltip
+        AddSecondaryControlBinding(m_hTooltip);
+    }
+}
+
 LRESULT GridBinding::OnLvnItemChanging(const LPNMLISTVIEW pnmListView)
 {
     // if an item is being unselected
@@ -920,6 +996,20 @@ void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
     // get the requested data
     m_sDispInfo = ra::Narrow(m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));
     GSL_SUPPRESS_TYPE3 pnmDispInfo.item.pszText = const_cast<LPSTR>(m_sDispInfo.c_str());
+}
+
+void GridBinding::OnTooltipGetDispInfo(NMTTDISPINFO& pnmTtDispInfo)
+{
+    const auto nIndex = GetVisibleItemIndex(m_nTooltipLocation / 256);
+    if (nIndex < 0 || nIndex >= m_vmItems->Count())
+        return;
+
+    const auto iSubItem = m_nTooltipLocation % 256;
+    if (iSubItem < 0 || iSubItem >= m_vColumns.size())
+        return;
+
+    m_sTooltip = ra::Narrow(m_vColumns.at(iSubItem)->GetTooltip(*m_vmItems, nIndex));
+    GSL_SUPPRESS_TYPE3 pnmTtDispInfo.lpszText = const_cast<LPSTR>(m_sTooltip.c_str());
 }
 
 void GridBinding::OnGotFocus()

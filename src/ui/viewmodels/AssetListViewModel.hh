@@ -192,6 +192,9 @@ public:
     /// </summary>
     static const IntModelProperty EnsureVisibleAssetIndexProperty;
 
+    void MergeLocalAssets();
+    static const ra::AchievementID FirstLocalId = 111000001;
+
 private:
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
@@ -221,6 +224,8 @@ private:
     bool HasSelection(AssetType nAssetType) const;
     void GetSelectedAssets(std::vector<AssetViewModelBase*>& vSelectedAssets);
 
+    void MergeLocalAssets(std::vector<AssetViewModelBase*>& vAssetsToMerge, bool bFullMerge);
+
     void UpdateTotals();
     void UpdateButtons();
     void DoUpdateButtons();
@@ -233,6 +238,8 @@ private:
 
     ViewModelCollection<AssetViewModelBase> m_vAssets;
     ViewModelCollection<AssetSummaryViewModel> m_vFilteredAssets;
+
+    ra::AchievementID m_nNextLocalId = FirstLocalId;
 
     LookupItemViewModelCollection m_vStates;
     LookupItemViewModelCollection m_vCategories;

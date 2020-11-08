@@ -114,11 +114,11 @@ public:
     bool CanSave() const { return GetValue(CanSaveProperty); }
     void SaveSelected();
 
-    static const StringModelProperty RefreshButtonTextProperty;
-    const std::wstring& GetRefreshButtonText() const { return GetValue(RefreshButtonTextProperty); }
-    static const BoolModelProperty CanRefreshProperty;
-    bool CanRefresh() const { return GetValue(CanRefreshProperty); }
-    void RefreshSelected();
+    static const StringModelProperty ResetButtonTextProperty;
+    const std::wstring& GetResetButtonText() const { return GetValue(ResetButtonTextProperty); }
+    static const BoolModelProperty CanResetProperty;
+    bool CanReset() const { return GetValue(CanResetProperty); }
+    void ResetSelected();
 
     static const StringModelProperty RevertButtonTextProperty;
     const std::wstring& GetRevertButtonText() const { return GetValue(RevertButtonTextProperty); }

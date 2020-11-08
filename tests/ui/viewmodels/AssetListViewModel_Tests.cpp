@@ -41,10 +41,10 @@ private:
         SaveAllDisabled
     };
 
-    enum class RefreshButtonState
+    enum class ResetButtonState
     {
-        Refresh,
-        RefreshAll,
+        Reset,
+        ResetAll,
         Disabled
     };
 
@@ -140,23 +140,23 @@ private:
             }
         }
 
-        void AssertButtonState(RefreshButtonState nRefreshButtonState)
+        void AssertButtonState(ResetButtonState nResetButtonState)
         {
-            switch (nRefreshButtonState)
+            switch (nResetButtonState)
             {
-                case RefreshButtonState::Refresh:
-                    SetValue(ActivateButtonTextProperty, L"&Refresh");
-                    Assert::IsTrue(CanRefresh());
+                case ResetButtonState::Reset:
+                    SetValue(ActivateButtonTextProperty, L"&Reset");
+                    Assert::IsTrue(CanReset());
                     break;
 
-                case RefreshButtonState::RefreshAll:
-                    SetValue(ActivateButtonTextProperty, L"&Refresh All");
-                    Assert::IsTrue(CanRefresh());
+                case ResetButtonState::ResetAll:
+                    SetValue(ActivateButtonTextProperty, L"&Reset All");
+                    Assert::IsTrue(CanReset());
                     break;
 
-                case RefreshButtonState::Disabled:
-                    SetValue(ActivateButtonTextProperty, L"&Refresh All");
-                    Assert::IsFalse(CanRefresh());
+                case ResetButtonState::Disabled:
+                    SetValue(ActivateButtonTextProperty, L"&Reset All");
+                    Assert::IsFalse(CanReset());
                     break;
             }
         }
@@ -216,13 +216,13 @@ private:
         }
 
         void AssertButtonState(ActivateButtonState nActivateButtonState,
-            SaveButtonState nSaveButtonState, RefreshButtonState nRefreshButtonState,
+            SaveButtonState nSaveButtonState, ResetButtonState nResetButtonState,
             RevertButtonState nRevertButtonState, CreateButtonState nCreateButtonState,
             CloneButtonState nCloneButtonState)
         {
             AssertButtonState(nActivateButtonState);
             AssertButtonState(nSaveButtonState);
-            AssertButtonState(nRefreshButtonState);
+            AssertButtonState(nResetButtonState);
             AssertButtonState(nRevertButtonState);
             AssertButtonState(nCreateButtonState);
             AssertButtonState(nCloneButtonState);
@@ -690,7 +690,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Disabled, RevertButtonState::Disabled,
+            ResetButtonState::Disabled, RevertButtonState::Disabled,
             CreateButtonState::Disabled, CloneButtonState::Disabled
         );
 
@@ -701,7 +701,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Disabled, RevertButtonState::Disabled,
+            ResetButtonState::Disabled, RevertButtonState::Disabled,
             CreateButtonState::Disabled, CloneButtonState::Disabled
         );
     }
@@ -717,7 +717,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -736,7 +736,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -757,7 +757,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -779,7 +779,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Deactivate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -803,7 +803,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -825,7 +825,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
 
@@ -834,7 +834,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Deactivate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -843,7 +843,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -852,7 +852,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -861,7 +861,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -884,7 +884,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Deactivate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -894,7 +894,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
 
@@ -904,7 +904,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
 
@@ -914,7 +914,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -936,7 +936,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Deactivate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -947,7 +947,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::RefreshAll, RevertButtonState::RevertAll,
+            ResetButtonState::ResetAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
     }
@@ -969,7 +969,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Save,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -992,7 +992,7 @@ public:
         // single unmodified selected record, show save button instead of save all, but disable it
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1012,7 +1012,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1021,7 +1021,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Save,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1030,7 +1030,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1052,7 +1052,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Save,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1075,7 +1075,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Publish,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1098,7 +1098,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1118,7 +1118,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1128,7 +1128,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Publish,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
 
@@ -1138,7 +1138,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
-            RefreshButtonState::Refresh, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }

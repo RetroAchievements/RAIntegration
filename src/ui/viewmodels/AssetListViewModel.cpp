@@ -22,11 +22,11 @@ const IntModelProperty AssetListViewModel::TotalPointsProperty("AssetListViewMod
 const BoolModelProperty AssetListViewModel::IsProcessingActiveProperty("AssetListViewModel", "IsProcessingActive", true);
 const StringModelProperty AssetListViewModel::ActivateButtonTextProperty("AssetListViewModel", "ActivateButtonText", L"&Activate All");
 const StringModelProperty AssetListViewModel::SaveButtonTextProperty("AssetListViewModel", "SaveButtonText", L"&Save All");
-const StringModelProperty AssetListViewModel::RefreshButtonTextProperty("AssetListViewModel", "SaveButtonText", L"&Refresh All");
-const StringModelProperty AssetListViewModel::RevertButtonTextProperty("AssetListViewModel", "SaveButtonText", L"Re&vert All");
+const StringModelProperty AssetListViewModel::ResetButtonTextProperty("AssetListViewModel", "ResetButtonText", L"&Reset All");
+const StringModelProperty AssetListViewModel::RevertButtonTextProperty("AssetListViewModel", "RevertButtonText", L"Re&vert All");
 const BoolModelProperty AssetListViewModel::CanActivateProperty("AssetListViewModel", "CanActivate", false);
 const BoolModelProperty AssetListViewModel::CanSaveProperty("AssetListViewModel", "CanSave", false);
-const BoolModelProperty AssetListViewModel::CanRefreshProperty("AssetListViewModel", "CanRefresh", false);
+const BoolModelProperty AssetListViewModel::CanResetProperty("AssetListViewModel", "CanReset", false);
 const BoolModelProperty AssetListViewModel::CanRevertProperty("AssetListViewModel", "CanRevert", false);
 const BoolModelProperty AssetListViewModel::CanCreateProperty("AssetListViewModel", "CanCreate", false);
 const BoolModelProperty AssetListViewModel::CanCloneProperty("AssetListViewModel", "CanClone", false);
@@ -552,16 +552,16 @@ void AssetListViewModel::DoUpdateButtons()
     if (bGameLoaded)
     {
         if (bHasSelection)
-            SetValue(RefreshButtonTextProperty, L"&Refresh");
+            SetValue(ResetButtonTextProperty, L"&Reset");
         else
-            SetValue(RefreshButtonTextProperty, RefreshButtonTextProperty.GetDefaultValue());
+            SetValue(ResetButtonTextProperty, ResetButtonTextProperty.GetDefaultValue());
 
-        SetValue(CanRefreshProperty, true);
+        SetValue(CanResetProperty, true);
     }
     else
     {
-        SetValue(RefreshButtonTextProperty, RefreshButtonTextProperty.GetDefaultValue());
-        SetValue(CanRefreshProperty, false);
+        SetValue(ResetButtonTextProperty, ResetButtonTextProperty.GetDefaultValue());
+        SetValue(CanResetProperty, false);
     }
 
     if (bGameLoaded)
@@ -709,9 +709,9 @@ void AssetListViewModel::SaveSelected()
     RA_LOG_INFO("Wrote user assets file");
 }
 
-void AssetListViewModel::RefreshSelected()
+void AssetListViewModel::ResetSelected()
 {
-    if (!CanRefresh())
+    if (!CanReset())
         return;
 }
 

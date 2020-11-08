@@ -683,7 +683,7 @@ void GridBinding::InitializeTooltips(std::chrono::milliseconds nDisplayTime) noe
         GSL_SUPPRESS_TYPE1 SendMessage(m_hTooltip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo));
         SendMessage(m_hTooltip, TTM_ACTIVATE, TRUE, 0);
         SendMessage(m_hTooltip, TTM_SETMAXTIPWIDTH, 0, 320);
-        SendMessage(m_hTooltip, TTM_SETDELAYTIME, TTDT_AUTOPOP, nDisplayTime.count());
+        SendMessage(m_hTooltip, TTM_SETDELAYTIME, TTDT_AUTOPOP, gsl::narrow_cast<LPARAM>(nDisplayTime.count()));
 
         // install a mouse hook so we can show different tooltips per cell within the list view
         SubclassWndProc();
@@ -1001,11 +1001,11 @@ void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
 void GridBinding::OnTooltipGetDispInfo(NMTTDISPINFO& pnmTtDispInfo)
 {
     const auto nIndex = GetVisibleItemIndex(m_nTooltipLocation / 256);
-    if (nIndex < 0 || nIndex >= m_vmItems->Count())
+    if (nIndex < 0 || nIndex >= gsl::narrow_cast<int>(m_vmItems->Count()))
         return;
 
     const auto iSubItem = m_nTooltipLocation % 256;
-    if (iSubItem < 0 || iSubItem >= m_vColumns.size())
+    if (iSubItem < 0 || iSubItem >= gsl::narrow_cast<int>(m_vColumns.size()))
         return;
 
     m_sTooltip = ra::Narrow(m_vColumns.at(iSubItem)->GetTooltip(*m_vmItems, nIndex));

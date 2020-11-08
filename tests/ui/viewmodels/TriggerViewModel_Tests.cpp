@@ -5,6 +5,9 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -19,8 +22,18 @@ private:
     class TriggerViewModelHarness : public TriggerViewModel
     {
     public:
+        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::data::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockClipboard mockClipboard;
         ra::ui::mocks::MockDesktop mockDesktop;
+        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
+
+        void InitializeMemory(uint8_t* pMemory, size_t nMemorySize)
+        {
+            // make sure to hook up the memory inspector first or we won't be able to set an address
+            mockWindowManager.MemoryInspector.Viewer().InitializeNotifyTargets();
+            mockEmulatorContext.MockMemory(pMemory, nMemorySize);
+        }
     };
 
     void Parse(TriggerViewModel& vmTrigger, const std::string& sInput)
@@ -449,6 +462,75 @@ public:
         Assert::IsFalse(vmTrigger.Conditions().GetItemAt(3)->IsSelected());
 
         Assert::AreEqual(std::string("0xH1234=16_0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.Serialize());
+    }
+
+    TEST_METHOD(TestNewCondition)
+    {
+        std::array<uint8_t, 10> pMemory = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16");
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+        vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
+
+        vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.NewCondition();
+
+        Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
+
+        // new condition should be selected, any previously selected items should be deselected
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
+
+        Assert::AreEqual(std::string("0xH1234=16_0xH0008=8"), vmTrigger.Serialize());
+    }
+
+    TEST_METHOD(TestNewConditionViewerSize)
+    {
+        std::array<uint8_t, 10> pMemory = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16");
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+
+        vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::SixteenBit);
+        vmTrigger.NewCondition();
+
+        Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312"), vmTrigger.Serialize());
+
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(4);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::ThirtyTwoBit);
+        vmTrigger.NewCondition();
+
+        Assert::AreEqual({ 3U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312_0xX0004=117835012"), vmTrigger.Serialize());
+    }
+
+    TEST_METHOD(TestNewConditionCodeNoteSize)
+    {
+        std::array<uint8_t, 10> pMemory = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16");
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+        vmTrigger.mockGameContext.SetCodeNote({ 8U }, L"[16-bit] test");
+        vmTrigger.mockGameContext.SetCodeNote({ 4U }, L"[4 byte] test");
+
+        vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.NewCondition();
+
+        Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312"), vmTrigger.Serialize());
+
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(4);
+        vmTrigger.NewCondition();
+
+        Assert::AreEqual({ 3U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312_0xX0004=117835012"), vmTrigger.Serialize());
     }
 };
 

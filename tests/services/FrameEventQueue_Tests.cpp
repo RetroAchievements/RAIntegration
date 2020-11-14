@@ -17,7 +17,7 @@ private:
     class FrameEventQueueHarness : public FrameEventQueue
     {
     public:
-        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::ui::mocks::MockDesktop mockDesktop;
 
         size_t NumTriggeredTriggers() const noexcept { return m_vTriggeredTriggers.size(); }

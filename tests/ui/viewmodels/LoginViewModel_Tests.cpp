@@ -12,9 +12,9 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using ra::api::mocks::MockServer;
-using ra::data::mocks::MockEmulatorContext;
-using ra::data::mocks::MockSessionTracker;
-using ra::data::mocks::MockUserContext;
+using ra::data::context::mocks::MockEmulatorContext;
+using ra::data::context::mocks::MockSessionTracker;
+using ra::data::context::mocks::MockUserContext;
 using ra::services::mocks::MockConfiguration;
 using ra::ui::mocks::MockDesktop;
 

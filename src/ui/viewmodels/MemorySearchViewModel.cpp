@@ -1,7 +1,7 @@
 #include "MemorySearchViewModel.hh"
 
-#include "data\ConsoleContext.hh"
-#include "data\EmulatorContext.hh"
+#include "data\context\ConsoleContext.hh"
+#include "data\context\EmulatorContext.hh"
 
 #include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
@@ -124,11 +124,11 @@ MemorySearchViewModel::MemorySearchViewModel()
 
 void MemorySearchViewModel::InitializeNotifyTargets()
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
     pEmulatorContext.AddNotifyTarget(*this);
     OnTotalMemorySizeChanged();
 
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);
 }
 
@@ -139,9 +139,9 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
     ra::ByteAddress nSystemRamStart = 0U;
     ra::ByteAddress nSystemRamEnd = 0U;
 
-    for (const auto& pRegion : ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().MemoryRegions())
+    for (const auto& pRegion : ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().MemoryRegions())
     {
-        if (pRegion.Type == ra::data::ConsoleContext::AddressType::SystemRAM)
+        if (pRegion.Type == ra::data::context::ConsoleContext::AddressType::SystemRAM)
         {
             if (nSystemRamEnd == 0U)
             {
@@ -153,7 +153,7 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
                 nSystemRamEnd = pRegion.EndAddress;
             }
         }
-        else if (pRegion.Type == ra::data::ConsoleContext::AddressType::SaveRAM)
+        else if (pRegion.Type == ra::data::context::ConsoleContext::AddressType::SaveRAM)
         {
             if (nGameRamEnd == 0U)
             {
@@ -169,7 +169,7 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
 
     m_vPredefinedFilterRanges.BeginUpdate();
 
-    const auto nTotalBankSize = gsl::narrow_cast<ra::ByteAddress>(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize());
+    const auto nTotalBankSize = gsl::narrow_cast<ra::ByteAddress>(ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().TotalMemorySize());
     if (nGameRamEnd >= nTotalBankSize)
     {
         if (nTotalBankSize == 0U)
@@ -351,7 +351,7 @@ void MemorySearchViewModel::DoFrame()
     m_bNeedsRedraw = false;
     m_vResults.BeginUpdate();
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
 
     // only process the visible items
@@ -422,7 +422,7 @@ inline static constexpr auto ParseAddress(const wchar_t* ptr, ra::ByteAddress& a
 
 bool MemorySearchViewModel::ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd)
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto nMax = gsl::narrow_cast<ra::ByteAddress>(pEmulatorContext.TotalMemorySize()) - 1;
 
     const std::wstring& sRange = GetFilterRange();
@@ -751,9 +751,9 @@ void MemorySearchViewModel::UpdateResults()
     const auto nIndex = gsl::narrow_cast<gsl::index>(GetScrollOffset());
 
     const auto& vmBookmarks = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>();
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
 
     m_vResults.RemoveNotifyTarget(*this);
     m_vResults.BeginUpdate();
@@ -829,7 +829,7 @@ void MemorySearchViewModel::UpdateResults()
 }
 
 void MemorySearchViewModel::UpdateResult(SearchResultViewModel& pRow, ra::services::SearchResults::Result& pResult,
-    const ra::data::EmulatorContext& pEmulatorContext, bool bCapturePrevious)
+    const ra::data::context::EmulatorContext& pEmulatorContext, bool bCapturePrevious)
 {
     auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
     const auto& pCompareResults = (pCurrentResults.pResults.GetFilterType() == ra::services::SearchFilterType::InitialValue) ?

@@ -2,7 +2,7 @@
 #define RA_UI_CODENOTESVIEWMODEL_H
 #pragma once
 
-#include "data\GameContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "ui\WindowViewModelBase.hh"
 
@@ -13,7 +13,7 @@ namespace ui {
 namespace viewmodels {
 
 class CodeNotesViewModel : public WindowViewModelBase,
-    protected ra::data::GameContext::NotifyTarget
+    protected ra::data::context::GameContext::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 CodeNotesViewModel() noexcept;
@@ -140,7 +140,7 @@ public:
 protected:
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
-    // ra::data::GameContext::NotifyTarget
+    // ra::data::context::GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;

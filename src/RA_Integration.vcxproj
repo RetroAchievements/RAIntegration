@@ -71,10 +71,11 @@
     <ClCompile Include="api\impl\ConnectedServer.cpp" />
     <ClCompile Include="api\impl\DisconnectedServer.cpp" />
     <ClCompile Include="api\impl\OfflineServer.cpp" />
-    <ClCompile Include="data\ConsoleContext.cpp" />
-    <ClCompile Include="data\EmulatorContext.cpp" />
-    <ClCompile Include="data\SessionTracker.cpp" />
-    <ClCompile Include="data\UserContext.cpp" />
+    <ClCompile Include="data\context\ConsoleContext.cpp" />
+    <ClCompile Include="data\context\EmulatorContext.cpp" />
+    <ClCompile Include="data\context\GameContext.cpp" />
+    <ClCompile Include="data\context\SessionTracker.cpp" />
+    <ClCompile Include="data\context\UserContext.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|x64'">Create</PrecompiledHeader>
@@ -106,7 +107,6 @@
     <ClCompile Include="RA_Leaderboard.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
-    <ClCompile Include="data\GameContext.cpp" />
     <ClCompile Include="services\AchievementRuntime.cpp" />
     <ClCompile Include="services\FrameEventQueue.cpp" />
     <ClCompile Include="services\GameIdentifier.cpp" />
@@ -218,12 +218,12 @@
     <ClInclude Include="api\UpdateCodeNote.hh" />
     <ClInclude Include="api\UploadBadge.hh" />
     <ClInclude Include="data\AsyncObject.hh" />
-    <ClInclude Include="data\ConsoleContext.hh" />
-    <ClInclude Include="data\EmulatorContext.hh" />
-    <ClInclude Include="data\GameContext.hh" />
-    <ClInclude Include="data\SessionTracker.hh" />
+    <ClInclude Include="data\context\ConsoleContext.hh" />
+    <ClInclude Include="data\context\EmulatorContext.hh" />
+    <ClInclude Include="data\context\GameContext.hh" />
+    <ClInclude Include="data\context\SessionTracker.hh" />
+    <ClInclude Include="data\context\UserContext.hh" />
     <ClInclude Include="data\Types.hh" />
-    <ClInclude Include="data\UserContext.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="pch_cppcorecheck_suppressions.h" />

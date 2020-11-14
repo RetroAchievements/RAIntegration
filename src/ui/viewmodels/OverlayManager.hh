@@ -8,8 +8,8 @@
 #include "ScoreboardViewModel.hh"
 #include "ScoreTrackerViewModel.hh"
 
-#include "data\GameContext.hh"
 #include "data\Types.hh"
+#include "data\context\GameContext.hh"
 
 #include "ui\ImageReference.hh"
 
@@ -19,7 +19,7 @@ namespace viewmodels {
 
 class OverlayManager : 
     protected ra::ui::IImageRepository::NotifyTarget,
-    protected ra::data::GameContext::NotifyTarget
+    protected ra::data::context::GameContext::NotifyTarget
 {
 public:    
     GSL_SUPPRESS_F6 OverlayManager() = default;

@@ -2,7 +2,7 @@
 
 #include "RA_StringUtils.h"
 
-#include "data\GameContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\IClipboard.hh"
 #include "services\ServiceLocator.hh"
@@ -15,7 +15,7 @@ const StringModelProperty GameChecksumViewModel::ChecksumProperty("GameChecksumV
 
 GameChecksumViewModel::GameChecksumViewModel() noexcept
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto& sGameHash = pGameContext.GameHash();
     if (!sGameHash.empty())
         SetChecksum(ra::Widen(pGameContext.GameHash()));

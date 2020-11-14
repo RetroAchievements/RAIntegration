@@ -2,11 +2,11 @@
 
 #include "api\impl\DisconnectedServer.hh"
 
-#include "data\ConsoleContext.hh"
-#include "data\EmulatorContext.hh"
-#include "data\GameContext.hh"
-#include "data\SessionTracker.hh"
-#include "data\UserContext.hh"
+#include "data\context\ConsoleContext.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\GameContext.hh"
+#include "data\context\SessionTracker.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\FrameEventQueue.hh"
@@ -98,16 +98,16 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
     auto pDesktop = std::make_unique<ra::ui::win32::Desktop>();
     ra::services::ServiceLocator::Provide<ra::ui::IDesktop>(std::move(pDesktop));
 
-    auto pEmulatorContext = std::make_unique<ra::data::EmulatorContext>();
+    auto pEmulatorContext = std::make_unique<ra::data::context::EmulatorContext>();
     pEmulatorContext->Initialize(nEmulatorId, sClientName);
     sClientName = pEmulatorContext->GetClientName().c_str();
-    ra::services::ServiceLocator::Provide<ra::data::EmulatorContext>(std::move(pEmulatorContext));
+    ra::services::ServiceLocator::Provide<ra::data::context::EmulatorContext>(std::move(pEmulatorContext));
 
     // if EmulatorContext->Initialize doesn't specify the ConsoleContext, initialize a default ConsoleContext
-    if (!ra::services::ServiceLocator::Exists<ra::data::ConsoleContext>())
+    if (!ra::services::ServiceLocator::Exists<ra::data::context::ConsoleContext>())
     {
-        auto pConsoleContext = std::make_unique<ra::data::ConsoleContext>(ConsoleID::UnknownConsoleID);
-        ra::services::ServiceLocator::Provide<ra::data::ConsoleContext>(std::move(pConsoleContext));
+        auto pConsoleContext = std::make_unique<ra::data::context::ConsoleContext>(ConsoleID::UnknownConsoleID);
+        ra::services::ServiceLocator::Provide<ra::data::context::ConsoleContext>(std::move(pConsoleContext));
     }
 
     auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(
@@ -130,14 +130,14 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
     ra::services::ServiceLocator::Provide<ra::services::PerformanceCounter>(std::move(pPerformanceCounter));
 #endif
 
-    auto pUserContext = std::make_unique<ra::data::UserContext>();
-    ra::services::ServiceLocator::Provide<ra::data::UserContext>(std::move(pUserContext));
+    auto pUserContext = std::make_unique<ra::data::context::UserContext>();
+    ra::services::ServiceLocator::Provide<ra::data::context::UserContext>(std::move(pUserContext));
 
-    auto pGameContext = std::make_unique<ra::data::GameContext>();
-    ra::services::ServiceLocator::Provide<ra::data::GameContext>(std::move(pGameContext));
+    auto pGameContext = std::make_unique<ra::data::context::GameContext>();
+    ra::services::ServiceLocator::Provide<ra::data::context::GameContext>(std::move(pGameContext));
 
-    auto pSessionTracker = std::make_unique<ra::data::SessionTracker>();
-    ra::services::ServiceLocator::Provide<ra::data::SessionTracker>(std::move(pSessionTracker));
+    auto pSessionTracker = std::make_unique<ra::data::context::SessionTracker>();
+    ra::services::ServiceLocator::Provide<ra::data::context::SessionTracker>(std::move(pSessionTracker));
 
     auto pAchievementRuntime = std::make_unique<ra::services::AchievementRuntime>();
     ra::services::ServiceLocator::Provide<ra::services::AchievementRuntime>(std::move(pAchievementRuntime));

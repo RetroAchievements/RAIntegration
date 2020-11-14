@@ -13,7 +13,7 @@
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-using ra::data::mocks::MockGameContext;
+using ra::data::context::mocks::MockGameContext;
 using ra::services::mocks::MockLocalStorage;
 using ra::services::mocks::MockThreadPool;
 
@@ -32,7 +32,7 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
             GSL_SUPPRESS_F6 InitializeNotifyTargets();
         }
 
-        ra::data::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::services::mocks::MockThreadPool mockThreadPool;
 

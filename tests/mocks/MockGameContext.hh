@@ -2,12 +2,13 @@
 #define RA_DATA_MOCK_GAMECONTEXT_HH
 #pragma once
 
-#include "data\GameContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\ServiceLocator.hh"
 
 namespace ra {
 namespace data {
+namespace context {
 namespace mocks {
 
 class MockGameContext : public GameContext
@@ -18,7 +19,7 @@ public:
     {
     }
 
-    void LoadGame(unsigned int nGameId, ra::data::GameContext::Mode nMode) noexcept override
+    void LoadGame(unsigned int nGameId, ra::data::context::GameContext::Mode nMode) noexcept override
     {
         m_nGameId = nGameId;
         m_nMode = nMode;
@@ -69,7 +70,7 @@ public:
     }
 
 private:
-    ra::services::ServiceLocator::ServiceOverride<ra::data::GameContext> m_Override;
+    ra::services::ServiceLocator::ServiceOverride<ra::data::context::GameContext> m_Override;
 
     std::wstring m_sRichPresenceDisplayString;
     bool m_bHasActiveAchievements{ false };
@@ -77,6 +78,7 @@ private:
 };
 
 } // namespace mocks
+} // namespace context
 } // namespace data
 } // namespace ra
 

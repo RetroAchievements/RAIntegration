@@ -24,9 +24,9 @@ private:
     class MemoryInspectorViewModelHarness : public MemoryInspectorViewModel
     {
     public:
-        ra::data::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
-        ra::data::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::ui::mocks::MockDesktop mockDesktop;
@@ -452,7 +452,7 @@ public:
         Assert::IsFalse(inspector.CanModifyCodeNotes());
 
         inspector.mockGameContext.SetGameId({ 5 });
-        inspector.mockGameContext.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
+        inspector.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
         inspector.mockGameContext.NotifyActiveGameChanged();
         Assert::AreEqual(std::wstring(L"Memory Inspector [compatibility mode]"), inspector.GetWindowTitle());
         Assert::IsTrue(inspector.CanModifyCodeNotes());

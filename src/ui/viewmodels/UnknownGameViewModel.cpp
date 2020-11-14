@@ -5,7 +5,7 @@
 #include "api\FetchGamesList.hh"
 #include "api\SubmitNewTitle.hh"
 
-#include "data\ConsoleContext.hh"
+#include "data\context\ConsoleContext.hh"
 
 #include "services\IClipboard.hh"
 
@@ -29,7 +29,7 @@ UnknownGameViewModel::UnknownGameViewModel() noexcept
 
 void UnknownGameViewModel::InitializeGameTitles()
 {
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
 
     m_vGameTitles.Add(0U, L"<New Title>");
 
@@ -93,7 +93,7 @@ bool UnknownGameViewModel::Associate()
             return false;
     }
 
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::ConsoleContext>();
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
     request.ConsoleId = pConsoleContext.Id();
     request.Hash = ra::Narrow(GetChecksum());
     request.Description = GetEstimatedGameName();

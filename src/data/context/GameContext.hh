@@ -10,6 +10,7 @@
 
 namespace ra {
 namespace data {
+namespace context {
 
 class GameContext
 {
@@ -367,6 +368,7 @@ private:
     std::atomic<int> m_nLoadCount = 0;
 };
 
+} // namespace context
 } // namespace data
 } // namespace ra
 

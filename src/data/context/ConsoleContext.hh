@@ -10,6 +10,7 @@
 
 namespace ra {
 namespace data {
+namespace context {
 
 class ConsoleContext
 {
@@ -100,6 +101,7 @@ protected:
     std::vector<MemoryRegion> m_vRegions;
 };
 
+} // namespace context
 } // namespace data
 } // namespace ra
 

@@ -24,7 +24,7 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
-        ra::data::mocks::MockSessionTracker mockSessions;
+        ra::data::context::mocks::MockSessionTracker mockSessions;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::services::mocks::MockThreadPool mockTheadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;

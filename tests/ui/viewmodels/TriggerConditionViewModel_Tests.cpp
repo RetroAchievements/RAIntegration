@@ -114,7 +114,7 @@ private:
     class TriggerConditionViewModelHarness : public TriggerConditionViewModel
     {
     public:
-        ra::data::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
 
         void Parse(const std::string& sInput)
         {

@@ -74,7 +74,7 @@ private:
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
-        ra::data::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 

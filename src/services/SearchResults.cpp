@@ -4,9 +4,9 @@
 
 #include "ra_utility.h"
 
-#include "data/EmulatorContext.hh"
+#include "data\context\EmulatorContext.hh"
 
-#include "services/ServiceLocator.hh"
+#include "services\ServiceLocator.hh"
 
 #include <algorithm>
 
@@ -80,7 +80,7 @@ public:
 
         std::vector<unsigned char> vMemory(nLargestBlock);
         std::vector<ra::ByteAddress> vMatches;
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
 
         for (auto& block : srPrevious.m_vBlocks)
         {
@@ -494,7 +494,7 @@ public:
 
         std::vector<unsigned char> vMemory(nLargestBlock);
         std::vector<ra::ByteAddress> vMatches;
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
 
         for (auto& block : GetBlocks(srPrevious))
         {
@@ -596,7 +596,7 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
 {
     m_nType = nType;
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     if (nBytes + nAddress > pEmulatorContext.TotalMemorySize())
         nBytes = pEmulatorContext.TotalMemorySize() - nAddress;
 

@@ -1,6 +1,6 @@
 #include "CppUnitTest.h"
 
-#include "data\EmulatorContext.hh"
+#include "data\context\EmulatorContext.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
 
@@ -20,6 +20,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
 namespace data {
+namespace context {
 namespace tests {
 
 TEST_CLASS(EmulatorContext_Tests)
@@ -29,8 +30,8 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
-        ra::data::mocks::MockGameContext mockGameContext;
-        ra::data::mocks::MockUserContext mockUserContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockFileSystem mockFileSystem;
@@ -1264,5 +1265,6 @@ public:
 std::array<uint8_t, 64> EmulatorContext_Tests::memory;
 
 } // namespace tests
+} // namespace context
 } // namespace data
 } // namespace ra

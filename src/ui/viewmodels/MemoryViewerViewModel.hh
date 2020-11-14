@@ -2,9 +2,9 @@
 #define RA_UI_MEMORYVIEWERVIEWMODEL_H
 #pragma once
 
-#include "data\EmulatorContext.hh"
-#include "data\GameContext.hh"
 #include "data\Types.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "ui\WindowViewModelBase.hh"
 
@@ -17,8 +17,8 @@ namespace ui {
 namespace viewmodels {
 
 class MemoryViewerViewModel : public ViewModelBase,
-                              protected ra::data::GameContext::NotifyTarget,
-                              protected ra::data::EmulatorContext::NotifyTarget
+                              protected ra::data::context::GameContext::NotifyTarget,
+                              protected ra::data::context::EmulatorContext::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 MemoryViewerViewModel();

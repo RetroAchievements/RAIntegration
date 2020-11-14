@@ -25,7 +25,7 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
-        ra::data::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
@@ -110,7 +110,7 @@ public:
     {
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         vmBrokenAchievements.mockGameContext.SetGameId(1U);
-        vmBrokenAchievements.mockGameContext.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
+        vmBrokenAchievements.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
 
         bool bDialogSeen = false;
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)

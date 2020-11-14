@@ -46,6 +46,9 @@
     <Filter Include="UI\Drawing\GDI">
       <UniqueIdentifier>{14c5d511-d3e0-450c-961b-e9d2706807fe}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Data\Context">
+      <UniqueIdentifier>{d29ae560-83b6-496b-b1ba-bc0b0c5978af}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Achievement.cpp">
@@ -144,9 +147,6 @@
     <ClCompile Include="ui\win32\GameChecksumDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
-    <ClCompile Include="data\GameContext.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>PCH</Filter>
     </ClCompile>
@@ -174,9 +174,6 @@
     <ClCompile Include="ui\drawing\gdi\GDIBitmapSurface.cpp">
       <Filter>UI\Drawing\GDI</Filter>
     </ClCompile>
-    <ClCompile Include="data\SessionTracker.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\OverlayManager.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -192,20 +189,11 @@
     <ClCompile Include="ui\win32\LoginDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
-    <ClCompile Include="data\EmulatorContext.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
-    <ClCompile Include="data\UserContext.cpp">
-      <Filter>Data</Filter>
-    </ClCompile>
     <ClCompile Include="ui\ViewModelCollection.cpp">
       <Filter>UI</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
-    </ClCompile>
-    <ClCompile Include="data\ConsoleContext.cpp">
-      <Filter>Data</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\ScoreTrackerViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
@@ -347,6 +335,21 @@
     </ClCompile>
     <ClCompile Include="services\FrameEventQueue.cpp">
       <Filter>Services</Filter>
+    </ClCompile>
+    <ClCompile Include="data\context\ConsoleContext.cpp">
+      <Filter>Data\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="data\context\EmulatorContext.cpp">
+      <Filter>Data\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="data\context\GameContext.cpp">
+      <Filter>Data\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="data\context\SessionTracker.cpp">
+      <Filter>Data\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="data\context\UserContext.cpp">
+      <Filter>Data\Context</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -527,9 +530,6 @@
     <ClInclude Include="services\impl\WindowsClipboard.hh">
       <Filter>Services\Impl</Filter>
     </ClInclude>
-    <ClInclude Include="data\GameContext.hh">
-      <Filter>Data</Filter>
-    </ClInclude>
     <ClInclude Include="windows_nodefines.h">
       <Filter>PCH</Filter>
     </ClInclude>
@@ -593,17 +593,11 @@
     <ClInclude Include="ui\drawing\gdi\GDIBitmapSurface.hh">
       <Filter>UI\Drawing\GDI</Filter>
     </ClInclude>
-    <ClInclude Include="data\SessionTracker.hh">
-      <Filter>Data</Filter>
-    </ClInclude>
     <ClInclude Include="api\StartSession.hh">
       <Filter>API</Filter>
     </ClInclude>
     <ClInclude Include="api\Ping.hh">
       <Filter>API</Filter>
-    </ClInclude>
-    <ClInclude Include="data\UserContext.hh">
-      <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh">
       <Filter>UI\ViewModels</Filter>
@@ -644,9 +638,6 @@
     <ClInclude Include="api\LatestClient.hh">
       <Filter>API</Filter>
     </ClInclude>
-    <ClInclude Include="data\EmulatorContext.hh">
-      <Filter>Data</Filter>
-    </ClInclude>
     <ClInclude Include="api\FetchGameData.hh">
       <Filter>API</Filter>
     </ClInclude>
@@ -667,9 +658,6 @@
     </ClInclude>
     <ClInclude Include="api\SubmitNewTitle.hh">
       <Filter>API</Filter>
-    </ClInclude>
-    <ClInclude Include="data\ConsoleContext.hh">
-      <Filter>Data</Filter>
     </ClInclude>
     <ClInclude Include="api\SubmitLeaderboardEntry.hh">
       <Filter>API</Filter>
@@ -880,6 +868,21 @@
     </ClInclude>
     <ClInclude Include="services\FrameEventQueue.hh">
       <Filter>Services</Filter>
+    </ClInclude>
+    <ClInclude Include="data\context\ConsoleContext.hh">
+      <Filter>Data\Context</Filter>
+    </ClInclude>
+    <ClInclude Include="data\context\EmulatorContext.hh">
+      <Filter>Data\Context</Filter>
+    </ClInclude>
+    <ClInclude Include="data\context\GameContext.hh">
+      <Filter>Data\Context</Filter>
+    </ClInclude>
+    <ClInclude Include="data\context\SessionTracker.hh">
+      <Filter>Data\Context</Filter>
+    </ClInclude>
+    <ClInclude Include="data\context\UserContext.hh">
+      <Filter>Data\Context</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

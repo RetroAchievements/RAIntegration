@@ -5,7 +5,7 @@
 
 #include "RA_md5factory.h"
 
-#include "data\UserContext.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\Http.hh"
 #include "services\IFileSystem.hh"
@@ -257,7 +257,7 @@ static bool DoRequest(const std::string& sHost, const char* restrict sApiName, c
 {
     std::string sPostData;
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     AppendUrlParam(sPostData, "u", pUserContext.GetUsername());
     AppendUrlParam(sPostData, "r", sRequestName);
     if (!sInputParams.empty())
@@ -299,7 +299,7 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
         });
     }
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     RA_LOG_INFO("%s Request: file=%s (%zu bytes)", sApiName, sFilePath, nFileSize);
 
     const char* sBoundary = "---------------------------41184676334";
@@ -496,7 +496,7 @@ SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const S
     AppendUrlParam(sPostData, "i", std::to_string(request.LeaderboardId));
     AppendUrlParam(sPostData, "s", std::to_string(request.Score));
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     std::string sValidationSignature = ra::StringPrintf("%u%s%u", request.LeaderboardId, pUserContext.GetUsername(), request.LeaderboardId);
     AppendUrlParam(sPostData, "v", RAGenerateMD5(sValidationSignature));
 
@@ -807,7 +807,7 @@ UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchie
     AppendUrlParam(sPostData, "f", std::to_string(request.Category));
     AppendUrlParam(sPostData, "b", request.Badge);
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     const std::string sPostCode = ra::StringPrintf("%sSECRET%uSEC%s%uRE2%u",
         pUserContext.GetUsername(), request.AchievementId, request.Trigger, request.Points, request.Points * 3);
     const std::string sPostCodeHash = RAGenerateMD5(sPostCode);

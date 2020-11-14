@@ -5,8 +5,8 @@
 #include "api\FetchGameData.hh"
 #include "api\impl\OfflineServer.hh"
 
-#include "data\GameContext.hh"
-#include "data\SessionTracker.hh"
+#include "data\context\GameContext.hh"
+#include "data\context\SessionTracker.hh"
 
 #include "services\IThreadPool.hh"
 
@@ -24,7 +24,7 @@ void OverlayRecentGamesPageViewModel::Refresh()
 
     std::vector<unsigned int> vPendingGames;
 
-    const auto& pSessionTracker = ra::services::ServiceLocator::Get<ra::data::SessionTracker>();
+    const auto& pSessionTracker = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>();
     for (const auto& pGameStats : pSessionTracker.SessionData())
     {
         ItemViewModel& pvmItem = m_vItems.Add();
@@ -89,7 +89,7 @@ void OverlayRecentGamesPageViewModel::UpdateGameEntry(unsigned int nGameId, cons
         auto* pvmItem = m_vItems.GetItemAt(nIndex);
         if (pvmItem)
         {
-            const auto& pSessionTracker = ra::services::ServiceLocator::Get<ra::data::SessionTracker>();
+            const auto& pSessionTracker = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>();
             const auto nPlayTimeSeconds = pSessionTracker.GetTotalPlaytime(nGameId);
             UpdateGameEntry(*pvmItem, sGameName, sGameBadge, nPlayTimeSeconds);
 

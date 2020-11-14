@@ -6,6 +6,7 @@
 
 namespace ra {
 namespace data {
+namespace context {
 
 class UserContext
 {
@@ -74,6 +75,7 @@ protected:
     bool m_bDisableLogin{ false };
 };
 
+} // namespace context
 } // namespace data
 } // namespace ra
 

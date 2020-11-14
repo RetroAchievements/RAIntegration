@@ -6,9 +6,9 @@
 
 #include "api\Login.hh"
 
-#include "data\EmulatorContext.hh"
-#include "data\SessionTracker.hh"
-#include "data\UserContext.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\SessionTracker.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\IConfiguration.hh"
 
@@ -67,18 +67,18 @@ bool LoginViewModel::Login() const
     pConfiguration.Save();
 
     // initialize the user context
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
+    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
     pUserContext.Initialize(response.Username, response.ApiToken);
     pUserContext.SetScore(response.Score);
 
     // load the session information
-    auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>();
+    auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
     pSessionTracker.Initialize(response.Username);
 
     ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(
         std::wstring(L"Successfully logged in as ") + ra::Widen(response.Username));
 
-    ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
+    ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
 #ifndef RA_UTEST
     _RA_UpdateAppTitle();
 #endif

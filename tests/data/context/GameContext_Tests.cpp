@@ -1,6 +1,6 @@
 #include "CppUnitTest.h"
 
-#include "data\GameContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\AchievementRuntime.hh"
 
@@ -27,6 +27,7 @@ using ra::services::StorageItemType;
 
 namespace ra {
 namespace data {
+namespace context {
 namespace tests {
 
 TEST_CLASS(GameContext_Tests)
@@ -54,9 +55,9 @@ public:
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
-        ra::data::mocks::MockEmulatorContext mockEmulator;
-        ra::data::mocks::MockSessionTracker mockSessionTracker;
-        ra::data::mocks::MockUserContext mockUser;
+        ra::data::context::mocks::MockEmulatorContext mockEmulator;
+        ra::data::context::mocks::MockSessionTracker mockSessionTracker;
+        ra::data::context::mocks::MockUserContext mockUser;
         ra::services::AchievementRuntime runtime;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
@@ -144,7 +145,7 @@ public:
         game.LoadGame(1U);
 
         Assert::AreEqual(1U, game.GameId());
-        Assert::AreEqual(ra::data::GameContext::Mode::Normal, game.GetMode());
+        Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, game.GetMode());
         Assert::AreEqual(std::wstring(L"Game"), game.GameTitle());
     }
 
@@ -1040,7 +1041,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U, ra::data::GameContext::Mode::CompatibilityTest);
+        game.LoadGame(1U, ra::data::context::GameContext::Mode::CompatibilityTest);
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
         game.mockThreadPool.ExecuteNextTask();
 
@@ -1583,7 +1584,7 @@ public:
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
 
         // if error occurs after original popup is gone, a new one should be created to display the error
-        ra::services::ServiceLocator::ServiceOverride<ra::data::GameContext> contextOverride(&game, false);
+        ra::services::ServiceLocator::ServiceOverride<ra::data::context::GameContext> contextOverride(&game, false);
         game.mockOverlayManager.ClearPopups();
         game.mockThreadPool.ExecuteNextTask();
 
@@ -1602,7 +1603,7 @@ public:
         GameContextHarness game;
         game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
         game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
-        game.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
+        game.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
 
         game.MockAchievement();
         game.AwardAchievement(1U);
@@ -1958,7 +1959,7 @@ public:
     {
         GameContextHarness game;
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        game.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
+        game.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
         game.SetGameHash("hash");
 
         game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
@@ -2484,5 +2485,6 @@ public:
 };
 
 } // namespace tests
+} // namespace context
 } // namespace data
 } // namespace ra

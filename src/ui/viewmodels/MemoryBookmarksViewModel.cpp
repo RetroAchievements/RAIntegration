@@ -4,7 +4,7 @@
 #include "RA_Json.h"
 #include "RA_StringUtils.h"
 
-#include "data\EmulatorContext.hh"
+#include "data\context\EmulatorContext.hh"
 
 #include "services\FrameEventQueue.hh"
 #include "services\IConfiguration.hh"
@@ -53,7 +53,7 @@ void MemoryBookmarksViewModel::OnValueChanged(const BoolModelProperty::ChangeArg
 {
     if (args.Property == IsVisibleProperty)
     {
-        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         if (args.tNewValue)
         {
             pGameContext.AddNotifyTarget(*this);
@@ -125,7 +125,7 @@ void MemoryBookmarksViewModel::OnViewModelStringValueChanged(gsl::index nIndex, 
         auto* vmBookmark = m_vBookmarks.GetItemAt(nIndex);
         Expects(vmBookmark != nullptr);
 
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto* pNote = pGameContext.FindCodeNote(vmBookmark->GetAddress());
 
         bool bIsCustomDescription = false;
@@ -144,7 +144,7 @@ void MemoryBookmarksViewModel::OnViewModelStringValueChanged(gsl::index nIndex, 
 
 void MemoryBookmarksViewModel::OnActiveGameChanged()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (m_nLoadedGameId != pGameContext.GameId())
     {
         if (m_bModified && m_nLoadedGameId != 0)
@@ -194,8 +194,8 @@ void MemoryBookmarksViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const
 
 void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmarksFile)
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     gsl::index nIndex = 0;
 
     m_vBookmarks.BeginUpdate();
@@ -298,7 +298,7 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
 
 void MemoryBookmarksViewModel::DoFrame()
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
 
     for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
     {
@@ -357,7 +357,7 @@ bool MemoryBookmarksViewModel::HasFrozenBookmark(ra::ByteAddress nAddress) const
 void MemoryBookmarksViewModel::OnEditMemory(ra::ByteAddress nAddress)
 {
     // this function is very similar to DoFrame, but does not trigger behaviors.
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
 
     for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
     {
@@ -414,12 +414,12 @@ void MemoryBookmarksViewModel::AddBookmark(ra::ByteAddress nAddress, MemSize nSi
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     vmBookmark.SetFormat(pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal) ? MemFormat::Dec : MemFormat::Hex);
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nAddress);
     if (pNote)
         vmBookmark.SetDescription(*pNote);
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto nValue = pEmulatorContext.ReadMemory(nAddress, nSize);
 
     m_bIgnoreValueChanged = true;
@@ -512,7 +512,7 @@ void MemoryBookmarksViewModel::LoadBookmarkFile()
     vmFileDialog.AddFileType(L"Text File", L"*.txt");
     vmFileDialog.SetDefaultExtension(L"json");
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     vmFileDialog.SetFileName(ra::StringPrintf(L"%u-Bookmarks.json", pGameContext.GameId()));
 
     if (vmFileDialog.ShowOpenFileDialog() == ra::ui::DialogResult::OK)
@@ -537,7 +537,7 @@ void MemoryBookmarksViewModel::SaveBookmarkFile() const
     vmFileDialog.AddFileType(L"JSON File", L"*.json");
     vmFileDialog.SetDefaultExtension(L"json");
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     vmFileDialog.SetFileName(ra::StringPrintf(L"%u-Bookmarks.json", pGameContext.GameId()));
 
     if (vmFileDialog.ShowSaveFileDialog() == ra::ui::DialogResult::OK)

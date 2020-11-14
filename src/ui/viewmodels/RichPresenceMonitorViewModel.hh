@@ -2,16 +2,16 @@
 #define RA_UI_RICHPRESENCEMONITORVIEWMODEL_H
 #pragma once
 
-#include "ui/WindowViewModelBase.hh"
+#include "ui\WindowViewModelBase.hh"
 
-#include "data/GameContext.hh"
+#include "data\context\GameContext.hh"
 
 namespace ra {
 namespace ui {
 namespace viewmodels {
 
 class RichPresenceMonitorViewModel : public WindowViewModelBase, 
-    protected ra::data::GameContext::NotifyTarget
+    protected ra::data::context::GameContext::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 RichPresenceMonitorViewModel() noexcept;

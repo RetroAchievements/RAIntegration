@@ -9,7 +9,7 @@
 #include "api\Ping.hh"
 #include "api\StartSession.hh"
 
-#include "data\GameContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\IClock.hh"
 #include "services\IConfiguration.hh"
@@ -21,6 +21,7 @@
 
 namespace ra {
 namespace data {
+namespace context {
 
 constexpr int SERVER_PING_FREQUENCY = 2 * 60; // seconds between server pings
 
@@ -174,7 +175,7 @@ void SessionTracker::UpdateSession(time_t tSessionStart)
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         pEmulatorContext.IsMemoryInsecure();
     }
 }
@@ -240,7 +241,7 @@ bool SessionTracker::IsInspectingMemory() const
     return false;
 }
 
-static bool HasCoreAchievements(const ra::data::GameContext& pGameContext)
+static bool HasCoreAchievements(const ra::data::context::GameContext& pGameContext)
 {
     bool bResult = false;
     pGameContext.EnumerateAchievements([&bResult](const Achievement& pAchievement) noexcept
@@ -264,14 +265,14 @@ static bool HasCoreAchievements(const ra::data::GameContext& pGameContext)
 
 std::wstring SessionTracker::GetCurrentActivity() const
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
 
     if (IsInspectingMemory())
     {
         if (!HasCoreAchievements(pGameContext))
             return L"Developing Achievements";
 
-        if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
+        if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
             return L"Testing Compatibility";
 
         if (_RA_HardcoreModeIsActive())
@@ -290,5 +291,6 @@ std::wstring SessionTracker::GetCurrentActivity() const
     return L"Playing " + pGameContext.GameTitle();
 }
 
+} // namespace context
 } // namespace data
 } // namespace ra

@@ -2,12 +2,13 @@
 #define RA_DATA_MOCK_USERCONTEXT_HH
 #pragma once
 
-#include "data\UserContext.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\ServiceLocator.hh"
 
 namespace ra {
 namespace data {
+namespace context {
 namespace mocks {
 
 class MockUserContext : public UserContext
@@ -26,11 +27,12 @@ public:
     }
 
 private:
-    ra::services::ServiceLocator::ServiceOverride<ra::data::UserContext> m_Override;
+    ra::services::ServiceLocator::ServiceOverride<ra::data::context::UserContext> m_Override;
 };
 
 } // namespace mocks
 } // namespace data
+} // namespace context
 } // namespace ra
 
 #endif // !RA_DATA_MOCK_USERCONTEXT_HH

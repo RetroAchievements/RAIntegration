@@ -3,8 +3,8 @@
 #include "ra_math.h"
 #include "RA_StringUtils.h"
 
-#include "data\EmulatorContext.hh"
-#include "data\UserContext.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\IClock.hh"
 #include "services\IConfiguration.hh"
@@ -98,7 +98,7 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
                 {
                     m_nState = State::Hidden;
                     m_fAnimationProgress = -1.0;
-                    ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().Unpause();
+                    ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().Unpause();
                     return true;
                 }
             }
@@ -151,7 +151,7 @@ void OverlayViewModel::CreateRenderImage()
     const auto nFont =
         m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayHeader(), ra::ui::FontStyles::Normal);
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     const auto sUserName = ra::Widen(pUserContext.GetUsername());
     const auto szUsername = m_pSurface->MeasureText(nFont, sUserName);
 
@@ -202,7 +202,7 @@ void OverlayViewModel::CreateRenderImage()
                         nHeight - nMargin * 2 - nUserFrameHeight);
 
     // navigation controls
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto sBack = ra::StringPrintf(L"%s: Back", pEmulatorContext.GetCancelButtonText());
     const auto sSelect = ra::StringPrintf(L"%s: Select", pEmulatorContext.GetAcceptButtonText());
     const auto sNext = std::wstring(L"\u2BC8: Next");

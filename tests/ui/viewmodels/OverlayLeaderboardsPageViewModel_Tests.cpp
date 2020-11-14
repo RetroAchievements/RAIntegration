@@ -24,8 +24,8 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
-        ra::data::mocks::MockGameContext mockGameContext;
-        ra::data::mocks::MockUserContext mockUserContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;

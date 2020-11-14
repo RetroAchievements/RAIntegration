@@ -2,7 +2,7 @@
 
 #include "RA_Resource.h"
 
-#include "data\EmulatorContext.hh"
+#include "data\context\EmulatorContext.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 

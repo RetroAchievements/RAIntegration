@@ -4,13 +4,14 @@
 
 #include "RAInterface\RA_Emulators.h"
 
-#include "Types.hh"
+#include "data\Types.hh"
 #include "ra_fwd.h"
 
 #include <string>
 
 namespace ra {
 namespace data {
+namespace context {
 
 class EmulatorContext
 {
@@ -284,6 +285,7 @@ protected:
     mutable std::chrono::steady_clock::time_point m_tLastInsecureCheck{};
 };
 
+} // namespace context
 } // namespace data
 } // namespace ra
 

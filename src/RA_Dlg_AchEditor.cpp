@@ -10,8 +10,8 @@
 #include "api\FetchBadgeIds.hh"
 #include "api\UploadBadge.hh"
 
-#include "data\EmulatorContext.hh"
-#include "data\GameContext.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
@@ -783,7 +783,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                 LoadAchievement(pAchievement, false);
             }
 
-            if (!ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().CanPause())
+            if (!ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().CanPause())
             {
                 ShowWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER), SW_HIDE);
                 ShowWindow(GetDlgItem(m_hAchievementEditorDlg, IDC_RA_CHK_ACH_PAUSE_ON_RESET), SW_HIDE);
@@ -1099,7 +1099,7 @@ INT_PTR Dlg_AchievementEditor::AchievementEditorProc(HWND hDlg, UINT uMsg, WPARA
                         NewCondition.CompSource().SetSize(nSize);
                         NewCondition.CompSource().SetValue(nAddress);
 
-                        const auto nVal = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().ReadMemory(nAddress, nSize);
+                        const auto nVal = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().ReadMemory(nAddress, nSize);
                         NewCondition.CompTarget().SetSize(nSize);
                         NewCondition.CompTarget().SetValue(nVal);
                     }
@@ -1861,7 +1861,7 @@ unsigned int Dlg_AchievementEditor::ParseValue(const std::string& sData, CompVar
     }
     else
     {
-        nMax = gsl::narrow_cast<unsigned int>(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().TotalMemorySize()) - 1;
+        nMax = gsl::narrow_cast<unsigned int>(ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().TotalMemorySize()) - 1;
     }
 
     bool bTooLarge = false;
@@ -1960,7 +1960,7 @@ void Dlg_AchievementEditor::GetListViewTooltip()
             return;
     }
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nAddr);
     if (!pNote)
     {

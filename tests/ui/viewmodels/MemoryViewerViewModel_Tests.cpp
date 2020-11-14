@@ -31,8 +31,8 @@ private:
     class MemoryViewerViewModelHarness : public MemoryViewerViewModel
     {
     public:
-        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
-        ra::data::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
         GSL_SUPPRESS_F6 MemoryViewerViewModelHarness() : MemoryViewerViewModel()

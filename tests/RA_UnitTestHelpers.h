@@ -9,7 +9,7 @@
 
 #include "api\ApiCall.hh"
 
-#include "data\GameContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\Http.hh"
 
@@ -184,13 +184,13 @@ template<> std::wstring ToString<ra::ui::ImageType>(const ra::ui::ImageType& typ
 }
 
 template<>
-std::wstring ToString<ra::data::GameContext::Mode>(const ra::data::GameContext::Mode& nMode)
+std::wstring ToString<ra::data::context::GameContext::Mode>(const ra::data::context::GameContext::Mode& nMode)
 {
     switch (nMode)
     {
-        case ra::data::GameContext::Mode::Normal:
+        case ra::data::context::GameContext::Mode::Normal:
             return L"Normal";
-        case ra::data::GameContext::Mode::CompatibilityTest:
+        case ra::data::context::GameContext::Mode::CompatibilityTest:
             return L"CompatibilityTest";
         default:
             return std::to_wstring(static_cast<int>(nMode));

@@ -7,7 +7,7 @@
 #include "tests\mocks\MockGameContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
-using ra::data::mocks::MockGameContext;
+using ra::data::context::mocks::MockGameContext;
 using ra::services::mocks::MockClipboard;
 
 namespace ra {

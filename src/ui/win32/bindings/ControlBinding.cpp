@@ -1,6 +1,6 @@
 #include "ControlBinding.hh"
 
-#include "data\EmulatorContext.hh"
+#include "data\context\EmulatorContext.hh"
 
 #include "services\ServiceLocator.hh"
 #include "services\IClock.hh"
@@ -30,7 +30,7 @@ void ControlBinding::ForceRepaint(HWND hWnd)
     // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
     // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
     // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
-    switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+    switch (ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetEmulatorId())
     {
         case RA_Libretro:
         case RA_Oricutron:

@@ -4,7 +4,7 @@
 
 #include "api\FetchUserFriends.hh"
 
-#include "data\UserContext.hh"
+#include "data\context\UserContext.hh"
 
 namespace ra {
 namespace ui {

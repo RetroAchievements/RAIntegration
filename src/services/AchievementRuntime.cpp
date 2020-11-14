@@ -6,9 +6,9 @@
 
 #include "RA_md5factory.h"
 
-#include "data\EmulatorContext.hh"
-#include "data\GameContext.hh"
-#include "data\UserContext.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\GameContext.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
@@ -429,8 +429,8 @@ static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigg
 
 bool AchievementRuntime::LoadProgressV1(const std::string& sProgress, std::set<unsigned int>& vProcessedAchievementIds)
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
 
     Tokenizer pTokenizer(sProgress);
 
@@ -627,7 +627,7 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
     if (sLoadStateFilename == nullptr)
         return false;
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     if (!pUserContext.IsLoggedIn())
         return false;
 
@@ -685,7 +685,7 @@ bool AchievementRuntime::LoadProgressFromBuffer(const char* pBuffer)
     // reset the runtime state, then apply state from file
     rc_runtime_reset(&m_pRuntime);
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     if (!pUserContext.IsLoggedIn())
         return false;
 
@@ -700,7 +700,7 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
     if (sSaveStateFilename == nullptr)
         return;
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     if (!pUserContext.IsLoggedIn())
         return;
 
@@ -721,7 +721,7 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
 
 int AchievementRuntime::SaveProgressToBuffer(char* pBuffer, int nBufferSize) const
 {
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     if (!pUserContext.IsLoggedIn())
         return 0;
 
@@ -737,7 +737,7 @@ int AchievementRuntime::SaveProgressToBuffer(char* pBuffer, int nBufferSize) con
 
 extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBytes, _UNUSED void* pData)
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     switch (nBytes)
     {
         case 1:

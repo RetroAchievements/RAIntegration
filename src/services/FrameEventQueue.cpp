@@ -65,7 +65,7 @@ void FrameEventQueue::DoFrame()
 
     if (!sPauseMessage.empty())
     {
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         pEmulatorContext.Pause();
 
         ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"The emulator has been paused.", sPauseMessage);

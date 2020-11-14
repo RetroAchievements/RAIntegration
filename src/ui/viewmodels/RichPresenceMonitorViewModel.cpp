@@ -2,7 +2,7 @@
 
 #include "RA_StringUtils.h"
 
-#include "data\GameContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
@@ -21,13 +21,13 @@ RichPresenceMonitorViewModel::RichPresenceMonitorViewModel() noexcept
 
 void RichPresenceMonitorViewModel::InitializeNotifyTargets()
 {
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);
 }
 
 static time_t GetRichPresenceModified()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     const auto tLastModified = pLocalStorage.GetLastModified(ra::services::StorageItemType::RichPresence,
                                                              std::to_wstring(pGameContext.GameId()));
@@ -106,7 +106,7 @@ void RichPresenceMonitorViewModel::ScheduleUpdateDisplayString()
             const time_t tRichPresenceFileTime = GetRichPresenceModified();
             if (tRichPresenceFileTime != m_tRichPresenceFileTime)
             {
-                ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();
+                ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().ReloadRichPresenceScript();
                 m_tRichPresenceFileTime = tRichPresenceFileTime;
             }
 
@@ -118,7 +118,7 @@ void RichPresenceMonitorViewModel::ScheduleUpdateDisplayString()
 
 void RichPresenceMonitorViewModel::UpdateDisplayString()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (pGameContext.GameId() == 0)
     {
         SetDisplayString(L"No game loaded.");

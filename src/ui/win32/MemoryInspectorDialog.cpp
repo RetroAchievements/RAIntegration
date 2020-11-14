@@ -102,7 +102,7 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnViewModelIntValueChanged
 
         m_vColumns.at(1)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
 
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         nWidth = (pEmulatorContext.TotalMemorySize() > 0x10000) ? 8 : 6; // 0x123456 or 0x1234
         if (vmMemory.ResultMemSize() == MemSize::Nibble_Lower)
             ++nWidth; // 0x1234L
@@ -429,7 +429,7 @@ INT_PTR CALLBACK MemoryInspectorDialog::DialogProc(HWND hDlg, UINT uMsg, WPARAM 
                 break;
 
             // ignore if memory not avaialble
-            const auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+            const auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
             if (pEmulatorContext.TotalMemorySize() == 0)
                 break;
 

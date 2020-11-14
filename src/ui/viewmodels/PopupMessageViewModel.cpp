@@ -10,25 +10,33 @@ const StringModelProperty PopupMessageViewModel::TitleProperty("PopupMessageView
 const StringModelProperty PopupMessageViewModel::DescriptionProperty("PopupMessageViewModel", "Description", L"");
 const StringModelProperty PopupMessageViewModel::DetailProperty("PopupMessageViewModel", "Detail", L"");
 const BoolModelProperty PopupMessageViewModel::IsDetailErrorProperty("PopupMessageViewModel", "IsDetailError", false);
-const BoolModelProperty PopupMessageViewModel::IsMasteryProperty("PopupMessageViewModel", "IsMastery", false);
+
+PopupMessageViewModel::PopupMessageViewModel() noexcept
+{
+    GSL_SUPPRESS_F6 SetPopupType(Popup::Message);
+}
 
 void PopupMessageViewModel::BeginAnimation()
 {
     m_fAnimationProgress = 0.0;
 
     // left margin 10px
-    SetRenderLocationX(10);
+    SetHorizontalOffset(10);
 
-    // animate to bottom margin 10px. assume height = 64+6
-    m_nInitialY = 0;
-    m_nTargetY = 10 + 64 + 6;
-    SetRenderLocationY(m_nInitialY);
-    SetRenderLocationYRelativePosition(RelativePosition::Far);
+    // animate to bottom margin 10px.
+    m_nTargetY = 10;
+
+    const auto& pOverlayTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+    const auto nShadowOffset = pOverlayTheme.ShadowOffset();
+    constexpr int nImageSize = 64;
+    const int nHeight = 4 + nImageSize + 4 + nShadowOffset;
+    m_nInitialY = -nHeight;
+    SetVerticalOffset(m_nInitialY);
 }
 
 bool PopupMessageViewModel::UpdateRenderImage(double fElapsed)
 {
-    const int nOldY = GetRenderLocationY();
+    const int nOldY = GetVerticalOffset();
 
     m_fAnimationProgress += fElapsed;
     const int nNewY = GetFadeOffset(m_fAnimationProgress, TOTAL_ANIMATION_TIME, INOUT_TIME, m_nInitialY, m_nTargetY);
@@ -36,7 +44,7 @@ bool PopupMessageViewModel::UpdateRenderImage(double fElapsed)
     bool bUpdated = false;
     if (nNewY != nOldY)
     {
-        SetRenderLocationY(nNewY);
+        SetVerticalOffset(nNewY);
         bUpdated = true;
     }
 
@@ -103,7 +111,7 @@ void PopupMessageViewModel::CreateRenderImage()
     pSurface->FillRectangle(nShadowOffset, nShadowOffset, nWidth - nShadowOffset, nHeight - nShadowOffset, pOverlayTheme.ColorShadow());
 
     // frame
-    const auto nColorBackground = IsMastery() ? pOverlayTheme.ColorMasteryBackground() : pOverlayTheme.ColorBackground();
+    const auto nColorBackground = (GetPopupType() == Popup::Mastery) ? pOverlayTheme.ColorMasteryBackground() : pOverlayTheme.ColorBackground();
     pSurface->FillRectangle(0, 0, nWidth - nShadowOffset, nHeight - nShadowOffset, nColorBackground);
     pSurface->FillRectangle(1, 1, nWidth - nShadowOffset - 2, nHeight - nShadowOffset - 2, pOverlayTheme.ColorBorder());
     pSurface->FillRectangle(2, 2, nWidth - nShadowOffset - 4, nHeight - nShadowOffset - 4, nColorBackground);

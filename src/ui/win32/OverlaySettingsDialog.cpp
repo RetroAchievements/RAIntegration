@@ -29,7 +29,7 @@ void OverlaySettingsDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& o
 
 OverlaySettingsDialog::OverlaySettingsDialog(ra::ui::viewmodels::OverlaySettingsViewModel& vmSettings)
     : DialogBase(vmSettings),
-      m_bindDisplayAchievementTrigger(vmSettings),
+      m_bindAchievementTriggerLocation(vmSettings),
       m_bindScreenshotAchievementTrigger(vmSettings),
       m_bindDisplayMastery(vmSettings),
       m_bindScreenshotMastery(vmSettings),
@@ -37,25 +37,38 @@ OverlaySettingsDialog::OverlaySettingsDialog(ra::ui::viewmodels::OverlaySettings
       m_bindDisplayLeaderboardCanceled(vmSettings),
       m_bindDisplayLeaderboardValue(vmSettings),
       m_bindDisplayLeaderboardScoreboards(vmSettings),
-      m_bindScreenshotLocation(vmSettings)
+      m_bindScreenshotLocation(vmSettings),
+      m_bindInformationLocation(vmSettings)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::Center, RelativePosition::Center);
 
-    m_bindDisplayAchievementTrigger.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayAchievementTriggerProperty);
+    m_bindAchievementTriggerLocation.BindItems(vmSettings.PopupLocations());
+    m_bindAchievementTriggerLocation.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::AchievementTriggerLocationProperty);
+
     m_bindScreenshotAchievementTrigger.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::ScreenshotAchievementTriggerProperty);
-    m_bindDisplayMastery.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayMasteryProperty);
+
+    m_bindDisplayMastery.BindItems(vmSettings.PopupLocations());
+    m_bindDisplayMastery.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::MasteryLocationProperty);
     m_bindScreenshotMastery.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::ScreenshotMasteryProperty);
-    m_bindDisplayLeaderboardStarted.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayLeaderboardStartedProperty);
-    m_bindDisplayLeaderboardCanceled.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayLeaderboardCanceledProperty);
-    m_bindDisplayLeaderboardValue.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayLeaderboardValueProperty);
-    m_bindDisplayLeaderboardScoreboards.BindCheck(ra::ui::viewmodels::OverlaySettingsViewModel::DisplayLeaderboardScoreboardProperty);
+
+    m_bindDisplayLeaderboardStarted.BindItems(vmSettings.PopupLocations());
+    m_bindDisplayLeaderboardStarted.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::LeaderboardStartedLocationProperty);
+    m_bindDisplayLeaderboardCanceled.BindItems(vmSettings.PopupLocations());
+    m_bindDisplayLeaderboardCanceled.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::LeaderboardCanceledLocationProperty);
+    m_bindDisplayLeaderboardValue.BindItems(vmSettings.PopupLocations());
+    m_bindDisplayLeaderboardValue.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::LeaderboardTrackerLocationProperty);
+    m_bindDisplayLeaderboardScoreboards.BindItems(vmSettings.PopupLocationsNoMiddle());
+    m_bindDisplayLeaderboardScoreboards.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::LeaderboardScoreboardLocationProperty);
+
+    m_bindInformationLocation.BindItems(vmSettings.PopupLocations());
+    m_bindInformationLocation.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::MessageLocationProperty);
 
     m_bindScreenshotLocation.BindText(ra::ui::viewmodels::OverlaySettingsViewModel::ScreenshotLocationProperty);
 }
 
 BOOL OverlaySettingsDialog::OnInitDialog()
 {
-    m_bindDisplayAchievementTrigger.SetControl(*this, IDC_RA_DISPLAY_TRIGGER);
+    m_bindAchievementTriggerLocation.SetControl(*this, IDC_RA_DISPLAY_TRIGGER);
     m_bindScreenshotAchievementTrigger.SetControl(*this, IDC_RA_SCREENSHOT_TRIGGER);
     m_bindDisplayMastery.SetControl(*this, IDC_RA_DISPLAY_MASTERY);
     m_bindScreenshotMastery.SetControl(*this, IDC_RA_SCREENSHOT_MASTERY);
@@ -63,6 +76,7 @@ BOOL OverlaySettingsDialog::OnInitDialog()
     m_bindDisplayLeaderboardCanceled.SetControl(*this, IDC_RA_DISPLAY_LBOARD_CANCEL);
     m_bindDisplayLeaderboardValue.SetControl(*this, IDC_RA_DISPLAY_LBOARD_VALUE);
     m_bindDisplayLeaderboardScoreboards.SetControl(*this, IDC_RA_DISPLAY_LBOARD_SCOREBOARD);
+    m_bindInformationLocation.SetControl(*this, IDC_RA_DISPLAY_INFORMATION);
 
     m_bindScreenshotLocation.SetControl(*this, IDC_RA_SCREENSHOT_LOCATION);
 

@@ -66,6 +66,7 @@
 #define IDC_RA_LBL_AUTHOR               1161
 #define IDC_RA_LBL_POINTS               1162
 #define IDC_RA_FREEZE                   1163
+#define IDC_RA_DISPLAY_INFORMATION      1164
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -170,7 +171,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        121
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1164
+#define _APS_NEXT_CONTROL_VALUE         1165
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

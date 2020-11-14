@@ -13,6 +13,8 @@ namespace viewmodels {
 class ScoreboardViewModel : public PopupViewModelBase
 {
 public:
+    ScoreboardViewModel() noexcept;
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the header text.
     /// </summary>

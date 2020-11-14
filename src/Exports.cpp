@@ -409,10 +409,11 @@ static void ProcessAchievements()
                 if (pLeaderboard)
                 {
                     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications))
+                    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted) != ra::ui::viewmodels::PopupLocation::None)
                     {
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
-                        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                        const int nPopup = pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardStarted,
                             L"Leaderboard Attempt Started", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
                     }
 
@@ -448,10 +449,12 @@ static void ProcessAchievements()
                 if (pLeaderboard)
                 {
                     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications))
+                    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled) != ra::ui::viewmodels::PopupLocation::None)
                     {
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lbcancel.wav");
-                        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+
+                        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                        const int nPopup = pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardCanceled,
                             L"Leaderboard Attempt Canceled", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
                     }
 

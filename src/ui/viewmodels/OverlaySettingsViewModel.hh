@@ -3,6 +3,8 @@
 #pragma once
 
 #include "ui/WindowViewModelBase.hh"
+#include "ui/viewmodels/LookupItemViewModel.hh"
+#include "ui/viewmodels/PopupViewModelBase.hh"
 
 namespace ra {
 namespace ui {
@@ -24,19 +26,34 @@ public:
     void Commit();
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for whether or not the achievement triggered notification should be displayed.
+    /// The <see cref="ModelProperty" /> for where the message notification should be displayed.
     /// </summary>
-    static const BoolModelProperty DisplayAchievementTriggerProperty;
+    static const IntModelProperty MessageLocationProperty;
 
     /// <summary>
-    /// Gets whether or not the achievement triggered notification should be displayed.
+    /// Gets the location where message notification popups should be displayed.
     /// </summary>
-    bool DisplayAchievementTrigger() const { return GetValue(DisplayAchievementTriggerProperty); }
+    PopupLocation GetMessageLocation() const { return ra::itoe<PopupLocation>(GetValue(MessageLocationProperty)); }
 
     /// <summary>
-    /// Sets whether or not the achievement triggered notification should be displayed.
+    /// Sets the location where message notification popups should be displayed.
     /// </summary>
-    void SetDisplayAchievementTrigger(bool bValue) { SetValue(DisplayAchievementTriggerProperty, bValue); }
+    void SetMessageLocation(PopupLocation nValue) { SetValue(MessageLocationProperty, ra::etoi(nValue)); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for where the achievement triggered notification should be displayed.
+    /// </summary>
+    static const IntModelProperty AchievementTriggerLocationProperty;
+
+    /// <summary>
+    /// Gets the location where achievement triggered notification popups should be displayed.
+    /// </summary>
+    PopupLocation GetAchievementTriggerLocation() const { return ra::itoe<PopupLocation>(GetValue(AchievementTriggerLocationProperty)); }
+
+    /// <summary>
+    /// Sets the location where achievement triggered notification popups should be displayed.
+    /// </summary>
+    void SetAchievementTriggerLocation(PopupLocation nValue) { SetValue(AchievementTriggerLocationProperty, ra::etoi(nValue)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the achievement triggered notification should be screenshoted.
@@ -54,19 +71,19 @@ public:
     void SetScreenshotAchievementTrigger(bool bValue) { SetValue(ScreenshotAchievementTriggerProperty, bValue); }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for whether or not the game mastery notification should be displayed.
+    /// The <see cref="ModelProperty" /> for where the mastery notification should be displayed.
     /// </summary>
-    static const BoolModelProperty DisplayMasteryProperty;
+    static const IntModelProperty MasteryLocationProperty;
 
     /// <summary>
-    /// Gets whether or not the game mastery notification should be displayed.
+    /// Gets the location where mastery notification popups should be displayed.
     /// </summary>
-    bool DisplayMastery() const { return GetValue(DisplayMasteryProperty); }
+    PopupLocation GetMasteryLocation() const { return ra::itoe<PopupLocation>(GetValue(MasteryLocationProperty)); }
 
     /// <summary>
-    /// Sets whether or not the game mastery  notification should be displayed.
+    /// Sets the location where mastery notification popups should be displayed.
     /// </summary>
-    void SetDisplayMastery(bool bValue) { SetValue(DisplayMasteryProperty, bValue); }
+    void SetMasteryLocation(PopupLocation nValue) { SetValue(MasteryLocationProperty, ra::etoi(nValue)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the game mastery notification should be screenshoted.
@@ -84,64 +101,64 @@ public:
     void SetScreenshotMastery(bool bValue) { SetValue(ScreenshotMasteryProperty, bValue); }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for whether or not the leaderboard started notification should be displayed.
+    /// The <see cref="ModelProperty" /> for where the leaderboard started notification should be displayed.
     /// </summary>
-    static const BoolModelProperty DisplayLeaderboardStartedProperty;
+    static const IntModelProperty LeaderboardStartedLocationProperty;
 
     /// <summary>
-    /// Gets whether or not the leaderboard started notification should be displayed.
+    /// Gets the location where leaderboard started notification popups should be displayed.
     /// </summary>
-    bool DisplayLeaderboardStarted() const { return GetValue(DisplayLeaderboardStartedProperty); }
+    PopupLocation GetLeaderboardStartedLocation() const { return ra::itoe<PopupLocation>(GetValue(LeaderboardStartedLocationProperty)); }
 
     /// <summary>
-    /// Sets whether or not the leaderboard started notification should be displayed.
+    /// Sets the location where leaderboard started notification popups should be displayed.
     /// </summary>
-    void SetDisplayLeaderboardStarted(bool bValue) { SetValue(DisplayLeaderboardStartedProperty, bValue); }
+    void SetLeaderboardStartedLocation(PopupLocation nValue) { SetValue(LeaderboardStartedLocationProperty, ra::etoi(nValue)); }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for whether or not the leaderboard canceled notification should be displayed.
+    /// The <see cref="ModelProperty" /> for where the leaderboard canceled notification should be displayed.
     /// </summary>
-    static const BoolModelProperty DisplayLeaderboardCanceledProperty;
+    static const IntModelProperty LeaderboardCanceledLocationProperty;
 
     /// <summary>
-    /// Gets whether or not the leaderboard canceled notification should be displayed.
+    /// Gets the location where leaderboard canceled notification popups should be displayed.
     /// </summary>
-    bool DisplayLeaderboardCanceled() const { return GetValue(DisplayLeaderboardCanceledProperty); }
+    PopupLocation GetLeaderboardCanceledLocation() const { return ra::itoe<PopupLocation>(GetValue(LeaderboardCanceledLocationProperty)); }
 
     /// <summary>
-    /// Sets whether or not the leaderboard canceled notification should be displayed.
+    /// Sets the location where leaderboard canceled notification popups should be displayed.
     /// </summary>
-    void SetDisplayLeaderboardCanceled(bool bValue) { SetValue(DisplayLeaderboardCanceledProperty, bValue); }
+    void SetLeaderboardCanceledLocation(PopupLocation nValue) { SetValue(LeaderboardCanceledLocationProperty, ra::etoi(nValue)); }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for whether or not the value for an active leaderboard should be displayed.
+    /// The <see cref="ModelProperty" /> for where the leaderboard tracker should be displayed.
     /// </summary>
-    static const BoolModelProperty DisplayLeaderboardValueProperty;
+    static const IntModelProperty LeaderboardTrackerLocationProperty;
 
     /// <summary>
-    /// Gets whether or not the value for an active leaderboard should be displayed.
+    /// Gets the location where leaderboard tracker popups should be displayed.
     /// </summary>
-    bool DisplayLeaderboardValue() const { return GetValue(DisplayLeaderboardValueProperty); }
+    PopupLocation GetLeaderboardTrackerLocation() const { return ra::itoe<PopupLocation>(GetValue(LeaderboardTrackerLocationProperty)); }
 
     /// <summary>
-    /// Sets whether or not the value for an active leaderboard should be displayed.
+    /// Sets the location where leaderboard tracker popups should be displayed.
     /// </summary>
-    void SetDisplayLeaderboardValue(bool bValue) { SetValue(DisplayLeaderboardValueProperty, bValue); }
+    void SetLeaderboardTrackerLocation(PopupLocation nValue) { SetValue(LeaderboardTrackerLocationProperty, ra::etoi(nValue)); }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for whether or not the leaderboard scoreboard should be displayed after submitting a leaderboard entry.
+    /// The <see cref="ModelProperty" /> for where the leaderboard scoreboard should be displayed.
     /// </summary>
-    static const BoolModelProperty DisplayLeaderboardScoreboardProperty;
+    static const IntModelProperty LeaderboardScoreboardLocationProperty;
 
     /// <summary>
-    /// Gets whether or not the leaderboard scoreboard should be displayed after submitting a leaderboard entry.
+    /// Gets the location where leaderboard scoreboard popups should be displayed.
     /// </summary>
-    bool DisplayLeaderboardScoreboard() const { return GetValue(DisplayLeaderboardScoreboardProperty); }
+    PopupLocation GetLeaderboardScoreboardLocation() const { return ra::itoe<PopupLocation>(GetValue(LeaderboardScoreboardLocationProperty)); }
 
     /// <summary>
-    /// Sets whether or not the leaderboard scoreboard should be displayed after submitting a leaderboard entry.
+    /// Sets the location where leaderboard scoreboard popups should be displayed.
     /// </summary>
-    void SetDisplayLeaderboardScoreboard(bool bValue) { SetValue(DisplayLeaderboardScoreboardProperty, bValue); }
+    void SetLeaderboardScoreboardLocation(PopupLocation nValue) { SetValue(LeaderboardScoreboardLocationProperty, ra::etoi(nValue)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the location to write screenshots.
@@ -163,8 +180,29 @@ public:
     /// </summary>
     void BrowseLocation();
 
+    /// <summary>
+    /// Gets the list of popup locations.
+    /// </summary>
+    const LookupItemViewModelCollection& PopupLocations() const noexcept
+    {
+        return m_vPopupLocations;
+    }
+
+    /// <summary>
+    /// Gets the list of popup locations without middle options.
+    /// </summary>
+    const LookupItemViewModelCollection& PopupLocationsNoMiddle() const noexcept
+    {
+        return m_vPopupLocationsNoMiddle;
+    }
+
 protected:
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
+private:
+    LookupItemViewModelCollection m_vPopupLocations;
+    LookupItemViewModelCollection m_vPopupLocationsNoMiddle;
 };
 
 } // namespace viewmodels

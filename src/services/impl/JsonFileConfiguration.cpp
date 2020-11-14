@@ -12,6 +12,51 @@ namespace ra {
 namespace services {
 namespace impl {
 
+static void ReadPopupLocation(JsonFileConfiguration& pConfiguration, ra::ui::viewmodels::Popup nPopup,
+    const rapidjson::Document& doc, const char* sFieldName, ra::ui::viewmodels::PopupLocation nDefaultLocation, bool bAllowCenter)
+{
+    ra::ui::viewmodels::PopupLocation nLocation = nDefaultLocation;
+
+    if (doc.HasMember(sFieldName))
+    {
+        const auto& pField = doc[sFieldName];
+        if (pField.IsBool())
+        {
+            if (!pField.GetBool())
+                nLocation = ra::ui::viewmodels::PopupLocation::None;
+        }
+        else if (pField.IsString())
+        {
+            const char* pValue = pField.GetString();
+            Expects(pValue != nullptr);
+            if (*pValue == 'T')
+            {
+                if (strcmp(pValue, "TopLeft") == 0)
+                    nLocation = ra::ui::viewmodels::PopupLocation::TopLeft;
+                else if (strcmp(pValue, "TopRight") == 0)
+                    nLocation = ra::ui::viewmodels::PopupLocation::TopRight;
+                else if (bAllowCenter && strcmp(pValue, "TopMiddle") == 0)
+                    nLocation = ra::ui::viewmodels::PopupLocation::TopMiddle;
+            }
+            else if (*pValue == 'B')
+            {
+                if (strcmp(pValue, "BottomLeft") == 0)
+                    nLocation = ra::ui::viewmodels::PopupLocation::BottomLeft;
+                else if (strcmp(pValue, "BottomRight") == 0)
+                    nLocation = ra::ui::viewmodels::PopupLocation::BottomRight;
+                else if (bAllowCenter && strcmp(pValue, "BottomMiddle") == 0)
+                    nLocation = ra::ui::viewmodels::PopupLocation::BottomMiddle;
+            }
+            else if (strcmp(pValue, "None") == 0)
+            {
+                nLocation = ra::ui::viewmodels::PopupLocation::None;
+            }
+        }
+    }
+
+    pConfiguration.SetPopupLocation(nPopup, nLocation);
+}
+
 bool JsonFileConfiguration::Load(const std::wstring& sFilename)
 {
     m_sFilename = sFilename;
@@ -24,13 +69,14 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     m_nBackgroundThreads = 8;
     m_vEnabledFeatures =
         (1 << static_cast<int>(Feature::Hardcore)) |
-        (1 << static_cast<int>(Feature::AchievementTriggeredNotifications)) |
-        (1 << static_cast<int>(Feature::MasteryNotification)) |
-        (1 << static_cast<int>(Feature::Leaderboards)) |
-        (1 << static_cast<int>(Feature::LeaderboardNotifications)) |
-        (1 << static_cast<int>(Feature::LeaderboardCancelNotifications)) |
-        (1 << static_cast<int>(Feature::LeaderboardCounters)) |
-        (1 << static_cast<int>(Feature::LeaderboardScoreboards));
+        (1 << static_cast<int>(Feature::Leaderboards));
+    SetPopupLocation(ra::ui::viewmodels::Popup::Message, ra::ui::viewmodels::PopupLocation::BottomLeft);
+    SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
+    SetPopupLocation(ra::ui::viewmodels::Popup::Mastery, ra::ui::viewmodels::PopupLocation::TopMiddle);
+    SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted, ra::ui::viewmodels::PopupLocation::BottomLeft);
+    SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled, ra::ui::viewmodels::PopupLocation::BottomLeft);
+    SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
+    SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
 
     RA_LOG_INFO("Loading preferences...");
 
@@ -52,12 +98,10 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     if (doc.HasMember("Non Hardcore Warning"))
         SetFeatureEnabled(Feature::NonHardcoreWarning, doc["Non Hardcore Warning"].GetBool());
 
-    if (doc.HasMember("Achievement Triggered Notification Display"))
-        SetFeatureEnabled(Feature::AchievementTriggeredNotifications, doc["Achievement Triggered Notification Display"].GetBool());
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::AchievementTriggered, doc, "Achievement Triggered Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
     if (doc.HasMember("Achievement Triggered Screenshot"))
         SetFeatureEnabled(Feature::AchievementTriggeredScreenshot, doc["Achievement Triggered Screenshot"].GetBool());
-    if (doc.HasMember("Mastery Notification Display"))
-        SetFeatureEnabled(Feature::MasteryNotification, doc["Mastery Notification Display"].GetBool());
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::Mastery, doc, "Mastery Notification Display", ra::ui::viewmodels::PopupLocation::TopMiddle, true);
     if (doc.HasMember("Mastery Screenshot"))
         SetFeatureEnabled(Feature::MasteryNotificationScreenshot, doc["Mastery Screenshot"].GetBool());
     if (doc.HasMember("Screenshot Directory"))
@@ -65,14 +109,12 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
 
     if (doc.HasMember("Leaderboards Active"))
         SetFeatureEnabled(Feature::Leaderboards, doc["Leaderboards Active"].GetBool());
-    if (doc.HasMember("Leaderboard Notification Display"))
-        SetFeatureEnabled(Feature::LeaderboardNotifications, doc["Leaderboard Notification Display"].GetBool());
-    if (doc.HasMember("Leaderboard Cancel Display"))
-        SetFeatureEnabled(Feature::LeaderboardCancelNotifications, doc["Leaderboard Cancel Display"].GetBool());
-    if (doc.HasMember("Leaderboard Counter Display"))
-        SetFeatureEnabled(Feature::LeaderboardCounters, doc["Leaderboard Counter Display"].GetBool());
-    if (doc.HasMember("Leaderboard Scoreboard Display"))
-        SetFeatureEnabled(Feature::LeaderboardScoreboards, doc["Leaderboard Scoreboard Display"].GetBool());
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardStarted, doc, "Leaderboard Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardCanceled, doc, "Leaderboard Cancel Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardTracker, doc, "Leaderboard Counter Display", ra::ui::viewmodels::PopupLocation::BottomRight, true);
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardScoreboard, doc, "Leaderboard Scoreboard Display", ra::ui::viewmodels::PopupLocation::BottomRight, false);
+
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::Message, doc, "Informational Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
 
     if (doc.HasMember("Prefer Decimal"))
         SetFeatureEnabled(Feature::PreferDecimal, doc["Prefer Decimal"].GetBool());
@@ -107,6 +149,35 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     return true;
 }
 
+static void WritePopupLocation(rapidjson::Document& doc, rapidjson::Document::AllocatorType& a,
+    const char* sFieldName, ra::ui::viewmodels::PopupLocation nPopupLocation)
+{
+    switch (nPopupLocation)
+    {
+        case ra::ui::viewmodels::PopupLocation::None:
+            doc.AddMember(rapidjson::StringRef(sFieldName), rapidjson::StringRef("None"), a);
+            break;
+        case ra::ui::viewmodels::PopupLocation::TopLeft:
+            doc.AddMember(rapidjson::StringRef(sFieldName), rapidjson::StringRef("TopLeft"), a);
+            break;
+        case ra::ui::viewmodels::PopupLocation::TopMiddle:
+            doc.AddMember(rapidjson::StringRef(sFieldName), rapidjson::StringRef("TopMiddle"), a);
+            break;
+        case ra::ui::viewmodels::PopupLocation::TopRight:
+            doc.AddMember(rapidjson::StringRef(sFieldName), rapidjson::StringRef("TopRight"), a);
+            break;
+        case ra::ui::viewmodels::PopupLocation::BottomLeft:
+            doc.AddMember(rapidjson::StringRef(sFieldName), rapidjson::StringRef("BottomLeft"), a);
+            break;
+        case ra::ui::viewmodels::PopupLocation::BottomMiddle:
+            doc.AddMember(rapidjson::StringRef(sFieldName), rapidjson::StringRef("BottomMiddle"), a);
+            break;
+        case ra::ui::viewmodels::PopupLocation::BottomRight:
+            doc.AddMember(rapidjson::StringRef(sFieldName), rapidjson::StringRef("BottomRight"), a);
+            break;
+    }
+}
+
 void JsonFileConfiguration::Save() const
 {
     RA_LOG_INFO("Saving preferences...");
@@ -125,15 +196,16 @@ void JsonFileConfiguration::Save() const
     doc.AddMember("Token", rapidjson::StringRef(m_sApiToken), a);
     doc.AddMember("Hardcore Active", IsFeatureEnabled(Feature::Hardcore), a);
     doc.AddMember("Non Hardcore Warning", IsFeatureEnabled(Feature::NonHardcoreWarning), a);
-    doc.AddMember("Achievement Triggered Notification Display", IsFeatureEnabled(Feature::AchievementTriggeredNotifications), a);
+    WritePopupLocation(doc, a, "Achievement Triggered Notification Display", GetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered));
     doc.AddMember("Achievement Triggered Screenshot", IsFeatureEnabled(Feature::AchievementTriggeredScreenshot), a);
-    doc.AddMember("Mastery Notification Display", IsFeatureEnabled(Feature::MasteryNotification), a);
+    WritePopupLocation(doc, a, "Mastery Notification Display", GetPopupLocation(ra::ui::viewmodels::Popup::Mastery));
     doc.AddMember("Mastery Screenshot", IsFeatureEnabled(Feature::MasteryNotificationScreenshot), a);
     doc.AddMember("Leaderboards Active", IsFeatureEnabled(Feature::Leaderboards), a);
-    doc.AddMember("Leaderboard Notification Display", IsFeatureEnabled(Feature::LeaderboardNotifications), a);
-    doc.AddMember("Leaderboard Cancel Display", IsFeatureEnabled(Feature::LeaderboardCancelNotifications), a);
-    doc.AddMember("Leaderboard Counter Display", IsFeatureEnabled(Feature::LeaderboardCounters), a);
-    doc.AddMember("Leaderboard Scoreboard Display", IsFeatureEnabled(Feature::LeaderboardScoreboards), a);
+    WritePopupLocation(doc, a, "Leaderboard Notification Display", GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted));
+    WritePopupLocation(doc, a, "Leaderboard Cancel Display", GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled));
+    WritePopupLocation(doc, a, "Leaderboard Counter Display", GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker));
+    WritePopupLocation(doc, a, "Leaderboard Scoreboard Display", GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard));
+    WritePopupLocation(doc, a, "Informational Notification Display", GetPopupLocation(ra::ui::viewmodels::Popup::Message));
     doc.AddMember("Prefer Decimal", IsFeatureEnabled(Feature::PreferDecimal), a);
     doc.AddMember("Num Background Threads", m_nBackgroundThreads, a);
 
@@ -182,6 +254,16 @@ void JsonFileConfiguration::SetFeatureEnabled(Feature nFeature, bool bEnabled) n
         m_vEnabledFeatures |= bit;
     else
         m_vEnabledFeatures &= ~bit;
+}
+
+ra::ui::viewmodels::PopupLocation JsonFileConfiguration::GetPopupLocation(ra::ui::viewmodels::Popup nPopup) const
+{
+    return m_vPopupLocations.at(ra::etoi(nPopup));
+}
+
+void JsonFileConfiguration::SetPopupLocation(ra::ui::viewmodels::Popup nPopup, ra::ui::viewmodels::PopupLocation nPopupLocation)
+{
+    m_vPopupLocations.at(ra::etoi(nPopup)) = nPopupLocation;
 }
 
 ra::ui::Position JsonFileConfiguration::GetWindowPosition(const std::string& sPositionKey) const

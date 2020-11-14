@@ -9,9 +9,78 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
+enum class Popup
+{
+    None = 0,
+    Message,
+    AchievementTriggered,
+    Mastery,
+    LeaderboardStarted,
+    LeaderboardCanceled,
+    LeaderboardTracker,
+    LeaderboardScoreboard,
+    NumPopups
+};
+
+enum class PopupLocation
+{
+    None,
+    TopLeft,
+    TopMiddle,
+    TopRight,
+    BottomLeft,
+    BottomMiddle,
+    BottomRight
+};
+
 class PopupViewModelBase : public ViewModelBase
 {
 public:
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the classification of the popup.
+    /// </summary>
+    static const IntModelProperty PopupTypeProperty;
+
+    /// <summary>
+    /// Gets the classification of the popup.
+    /// </summary>
+    Popup GetPopupType() const { return ra::itoe<Popup>(GetValue(PopupTypeProperty)); }
+
+    /// <summary>
+    /// Sets the classification of the popup.
+    /// </summary>
+    void SetPopupType(Popup nType) { SetValue(PopupTypeProperty, ra::etoi(nType)); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the X location to render the popup at.
+    /// </summary>
+    static const IntModelProperty HorizontalOffsetProperty;
+
+    /// <summary>
+    /// Gets the X location to render the popup at.
+    /// </summary>
+    int GetHorizontalOffset() const { return GetValue(HorizontalOffsetProperty); }
+
+    /// <summary>
+    /// Sets the X location to render the popup at.
+    /// </summary>
+    void SetHorizontalOffset(int nValue) { SetValue(HorizontalOffsetProperty, nValue); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the Y location to render the popup at.
+    /// </summary>
+    static const IntModelProperty VerticalOffsetProperty;
+
+    /// <summary>
+    /// Gets the Y location to render the popup at.
+    /// </summary>
+    int GetVerticalOffset() const { return GetValue(VerticalOffsetProperty); }
+
+    /// <summary>
+    /// Sets the Y location to render the popup at.
+    /// </summary>
+    void SetVerticalOffset(int nValue) { SetValue(VerticalOffsetProperty, nValue); }
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the X location to render the popup at.
     /// </summary>
@@ -28,33 +97,12 @@ public:
     void SetRenderLocationX(int nValue) { SetValue(RenderLocationXProperty, nValue); }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the parent relative X location to render the popup at.
-    /// </summary>
-    static const IntModelProperty RenderLocationXRelativePositionProperty;
-
-    /// <summary>
-    /// Gets the parent relative X location to render the popup at.
-    /// </summary>
-    RelativePosition GetRenderLocationXRelativePosition() const
-    {
-        return ra::itoe<RelativePosition>(GetValue(RenderLocationXRelativePositionProperty));
-    }
-
-    /// <summary>
-    /// Sets the parent relative X location to render the popup at.
-    /// </summary>
-    void SetRenderLocationXRelativePosition(RelativePosition nValue)
-    {
-        SetValue(RenderLocationXRelativePositionProperty, ra::etoi(nValue));
-    }
-
-    /// <summary>
-    /// The <see cref="ModelProperty" /> for the Y location to render the popup at.
+    /// The <see cref="ModelProperty" /> for the X location to render the popup at.
     /// </summary>
     static const IntModelProperty RenderLocationYProperty;
 
     /// <summary>
-    /// Gets the Y location to render the popup at.
+    /// Gets the X location to render the popup at.
     /// </summary>
     int GetRenderLocationY() const { return GetValue(RenderLocationYProperty); }
 
@@ -62,27 +110,6 @@ public:
     /// Sets the Y location to render the popup at.
     /// </summary>
     void SetRenderLocationY(int nValue) { SetValue(RenderLocationYProperty, nValue); }
-
-    /// <summary>
-    /// The <see cref="ModelProperty" /> for the parent relative Y location to render the popup at.
-    /// </summary>
-    static const IntModelProperty RenderLocationYRelativePositionProperty;
-
-    /// <summary>
-    /// Gets the parent relative Y location to render the popup at.
-    /// </summary>
-    RelativePosition GetRenderLocationYRelativePosition() const
-    {
-        return ra::itoe<RelativePosition>(GetValue(RenderLocationYRelativePositionProperty));
-    }
-
-    /// <summary>
-    /// Sets the parent relative Y location to render the popup at.
-    /// </summary>
-    void SetRenderLocationYRelativePosition(RelativePosition nValue)
-    {
-        SetValue(RenderLocationYRelativePositionProperty, ra::etoi(nValue));
-    }
 
     /// <summary>
     /// Begins the animation cycle.

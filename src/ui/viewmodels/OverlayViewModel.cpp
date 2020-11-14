@@ -33,8 +33,8 @@ void OverlayViewModel::BeginAnimation()
 
     Resize(szEmulator.Width, szEmulator.Height);
 
-    SetRenderLocationX(-szEmulator.Width);
-    SetRenderLocationY(0);
+    SetHorizontalOffset(-szEmulator.Width);
+    SetVerticalOffset(0);
 }
 
 void OverlayViewModel::Resize(int nWidth, int nHeight)
@@ -56,7 +56,7 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
     if (m_nState != State::Visible)
     {
         const int nWidth = m_pSurface->GetWidth();
-        const int nOldX = GetRenderLocationX();
+        const int nOldX = GetHorizontalOffset();
 
         m_fAnimationProgress += fElapsed;
 
@@ -72,7 +72,7 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
             const int nNewX = ftol(-nOffset);
             if (nNewX != nOldX)
             {
-                SetRenderLocationX(nNewX);
+                SetHorizontalOffset(nNewX);
                 bUpdated = true;
 
                 if (nNewX == 0)
@@ -91,7 +91,7 @@ bool OverlayViewModel::UpdateRenderImage(double fElapsed)
             const int nNewX = ftol(-nOffset);
             if (nNewX != nOldX)
             {
-                SetRenderLocationX(nNewX);
+                SetHorizontalOffset(nNewX);
                 bUpdated = true;
 
                 if (nNewX == -nWidth)
@@ -352,7 +352,7 @@ void OverlayViewModel::Deactivate()
         case State::FadeIn:
             m_nState = State::FadeOut;
             m_fAnimationProgress = INOUT_TIME - m_fAnimationProgress;
-            SetRenderLocationX(GetRenderImage().GetWidth() - GetRenderLocationX());
+            SetHorizontalOffset(GetRenderImage().GetWidth() - GetHorizontalOffset());
             break;
     }
 }

@@ -723,7 +723,7 @@ void GameContext::AwardMastery() const
 
             auto* pPopup = pOverlayManager.GetMessage(nPopup);
             if (pPopup != nullptr)
-                pPopup->SetIsMastery(true);
+                pPopup->SetPopupType(ra::ui::viewmodels::Popup::Mastery);
 
             if (pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot))
             {
@@ -749,6 +749,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
     vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()));
     vmPopup->SetDetail(ra::Widen(pAchievement->Description()));
     vmPopup->SetImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
+    vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);
 
     switch (pAchievement->GetCategory())
     {
@@ -811,7 +812,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
 
     int nPopupId = -1;
 
-    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications))
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered) != ra::ui::viewmodels::PopupLocation::None)
     {
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
             bIsError ? L"Overlay\\acherror.wav" : L"Overlay\\unlock.wav");
@@ -866,6 +867,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
                 vmPopup->SetTitle(L"Achievement NOT Unlocked");
                 vmPopup->SetErrorDetail(response.ErrorMessage.empty() ?
                     L"Error submitting unlock" : ra::Widen(response.ErrorMessage));
+                vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);
 
                 const auto& pGameContext = ra::services::ServiceLocator::Get<GameContext>();
                 const auto* pAchievement = pGameContext.FindAchievement(nAchievementId);
@@ -885,7 +887,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
         }
     });
 
-    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotification))
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Mastery) != ra::ui::viewmodels::PopupLocation::None)
     {
         bool bHasCoreAchievement = false;
         bool bActiveCoreAchievement = false;
@@ -1083,7 +1085,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
         else if (pLeaderboard)
         {
             auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards))
+            if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) != ra::ui::viewmodels::PopupLocation::None)
             {
                 ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
                 vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->Title()));

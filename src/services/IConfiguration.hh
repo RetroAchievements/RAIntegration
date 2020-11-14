@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ui\Types.hh"
+#include "ui\viewmodels\PopupViewModelBase.hh"
 
 namespace ra {
 namespace services {
@@ -12,17 +13,12 @@ enum class Feature
     None = 0,
     Hardcore,
     Leaderboards,
-    LeaderboardNotifications,
-    LeaderboardCancelNotifications,
-    LeaderboardCounters,
-    LeaderboardScoreboards,
     PreferDecimal,
     NonHardcoreWarning,
     AchievementTriggeredScreenshot,
-    AchievementTriggeredNotifications,
-    MasteryNotification,
     MasteryNotificationScreenshot,
 };
+
 
 class IConfiguration
 {
@@ -62,6 +58,16 @@ public:
     /// Sets whether the specified feature is enabled.
     /// </summary>
     virtual void SetFeatureEnabled(Feature nFeature, bool bEnabled) = 0;
+
+    /// <summary>
+    /// Gets where the specified popup should be displayed.
+    /// </summary>
+    virtual ra::ui::viewmodels::PopupLocation GetPopupLocation(ra::ui::viewmodels::Popup nPopup) const = 0;
+
+    /// <summary>
+    /// Sets where the specified popup should be displayed.
+    /// </summary>
+    virtual void SetPopupLocation(ra::ui::viewmodels::Popup nPopup, ra::ui::viewmodels::PopupLocation nPopupLocation) = 0;
 
     /// <summary>
     /// Gets the number of background threads to spawn.

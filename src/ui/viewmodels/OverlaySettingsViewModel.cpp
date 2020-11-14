@@ -9,32 +9,48 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-const BoolModelProperty OverlaySettingsViewModel::DisplayAchievementTriggerProperty("OverlaySettingsViewModel", "DisplayAchievementTrigger", true);
+const IntModelProperty OverlaySettingsViewModel::MessageLocationProperty("OverlaySettingsViewModel", "MessageLocation", ra::etoi(PopupLocation::BottomLeft));
+const IntModelProperty OverlaySettingsViewModel::AchievementTriggerLocationProperty("OverlaySettingsViewModel", "AchievementTriggerLocation", ra::etoi(PopupLocation::BottomLeft));
 const BoolModelProperty OverlaySettingsViewModel::ScreenshotAchievementTriggerProperty("OverlaySettingsViewModel", "ScreenshotAchievementTrigger", false);
-const BoolModelProperty OverlaySettingsViewModel::DisplayMasteryProperty("OverlaySettingsViewModel", "DisplayMastery", true);
+const IntModelProperty OverlaySettingsViewModel::MasteryLocationProperty("OverlaySettingsViewModel", "MasteryLocation", ra::etoi(PopupLocation::TopMiddle));
 const BoolModelProperty OverlaySettingsViewModel::ScreenshotMasteryProperty("OverlaySettingsViewModel", "ScreenshotMastery", false);
-const BoolModelProperty OverlaySettingsViewModel::DisplayLeaderboardStartedProperty("OverlaySettingsViewModel", "DisplayLeaderboardStarted", true);
-const BoolModelProperty OverlaySettingsViewModel::DisplayLeaderboardCanceledProperty("OverlaySettingsViewModel", "DisplayLeaderboardCanceled", true);
-const BoolModelProperty OverlaySettingsViewModel::DisplayLeaderboardValueProperty("OverlaySettingsViewModel", "DisplayLeaderboardValue", true);
-const BoolModelProperty OverlaySettingsViewModel::DisplayLeaderboardScoreboardProperty("OverlaySettingsViewModel", "DisplayLeaderboardScoreboard", true);
+const IntModelProperty OverlaySettingsViewModel::LeaderboardStartedLocationProperty("OverlaySettingsViewModel", "LeaderboardStartedLocation", ra::etoi(PopupLocation::BottomLeft));
+const IntModelProperty OverlaySettingsViewModel::LeaderboardCanceledLocationProperty("OverlaySettingsViewModel", "LeaderboardCanceledLocation", ra::etoi(PopupLocation::BottomLeft));
+const IntModelProperty OverlaySettingsViewModel::LeaderboardTrackerLocationProperty("OverlaySettingsViewModel", "LeaderboardTrackerLocation", ra::etoi(PopupLocation::BottomRight));
+const IntModelProperty OverlaySettingsViewModel::LeaderboardScoreboardLocationProperty("OverlaySettingsViewModel", "LeaderboardScoreboardLocation", ra::etoi(PopupLocation::BottomRight));
 const StringModelProperty OverlaySettingsViewModel::ScreenshotLocationProperty("OverlaySettingsViewModel", "ScreenshotLocation", L"");
 
 OverlaySettingsViewModel::OverlaySettingsViewModel() noexcept
 {
     SetWindowTitle(L"Overlay Settings");
+
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::None), L"None");
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::TopLeft), L"Top Left");
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::TopMiddle), L"Top Middle");
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::TopRight), L"Top Right");
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::BottomLeft), L"Bottom Left");
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::BottomMiddle), L"Bottom Middle");
+    m_vPopupLocations.Add(ra::etoi(PopupLocation::BottomRight), L"Bottom Right");
+
+    m_vPopupLocationsNoMiddle.Add(ra::etoi(PopupLocation::None), L"None");
+    m_vPopupLocationsNoMiddle.Add(ra::etoi(PopupLocation::TopLeft), L"Top Left");
+    m_vPopupLocationsNoMiddle.Add(ra::etoi(PopupLocation::TopRight), L"Top Right");
+    m_vPopupLocationsNoMiddle.Add(ra::etoi(PopupLocation::BottomLeft), L"Bottom Left");
+    m_vPopupLocationsNoMiddle.Add(ra::etoi(PopupLocation::BottomRight), L"Bottom Right");
 }
 
 void OverlaySettingsViewModel::Initialize()
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    SetDisplayAchievementTrigger(pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications));
+    SetMessageLocation(pConfiguration.GetPopupLocation(Popup::Message));
+    SetAchievementTriggerLocation(pConfiguration.GetPopupLocation(Popup::AchievementTriggered));
     SetScreenshotAchievementTrigger(pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot));
-    SetDisplayMastery(pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotification));
+    SetMasteryLocation(pConfiguration.GetPopupLocation(Popup::Mastery));
     SetScreenshotMastery(pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot));
-    SetDisplayLeaderboardStarted(pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardNotifications));
-    SetDisplayLeaderboardCanceled(pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications));
-    SetDisplayLeaderboardValue(pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardCounters));
-    SetDisplayLeaderboardScoreboard(pConfiguration.IsFeatureEnabled(ra::services::Feature::LeaderboardScoreboards));
+    SetLeaderboardStartedLocation(pConfiguration.GetPopupLocation(Popup::LeaderboardStarted));
+    SetLeaderboardCanceledLocation(pConfiguration.GetPopupLocation(Popup::LeaderboardCanceled));
+    SetLeaderboardTrackerLocation(pConfiguration.GetPopupLocation(Popup::LeaderboardTracker));
+    SetLeaderboardScoreboardLocation(pConfiguration.GetPopupLocation(Popup::LeaderboardScoreboard));
 
     SetScreenshotLocation(pConfiguration.GetScreenshotDirectory());
 }
@@ -43,14 +59,15 @@ void OverlaySettingsViewModel::Commit()
 {
     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
 
-    pConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredNotifications, DisplayAchievementTrigger());
+    pConfiguration.SetPopupLocation(Popup::Message, GetMessageLocation());
+    pConfiguration.SetPopupLocation(Popup::AchievementTriggered, GetAchievementTriggerLocation());
     pConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot, ScreenshotAchievementTrigger());
-    pConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotification, DisplayMastery());
+    pConfiguration.SetPopupLocation(Popup::Mastery, GetMasteryLocation());
     pConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot, ScreenshotMastery());
-    pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardNotifications, DisplayLeaderboardStarted());
-    pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCancelNotifications, DisplayLeaderboardCanceled());
-    pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardCounters, DisplayLeaderboardValue());
-    pConfiguration.SetFeatureEnabled(ra::services::Feature::LeaderboardScoreboards, DisplayLeaderboardScoreboard());
+    pConfiguration.SetPopupLocation(Popup::LeaderboardStarted, GetLeaderboardStartedLocation());
+    pConfiguration.SetPopupLocation(Popup::LeaderboardCanceled, GetLeaderboardCanceledLocation());
+    pConfiguration.SetPopupLocation(Popup::LeaderboardTracker, GetLeaderboardTrackerLocation());
+    pConfiguration.SetPopupLocation(Popup::LeaderboardScoreboard, GetLeaderboardScoreboardLocation());
 
     std::wstring sLocation = ScreenshotLocation();
     if (!sLocation.empty() && sLocation.back() != '\\')
@@ -63,14 +80,26 @@ void OverlaySettingsViewModel::Commit()
 
 void OverlaySettingsViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
-    if (args.Property == DisplayAchievementTriggerProperty && !args.tNewValue)
-        SetScreenshotAchievementTrigger(false);
-    else if (args.Property == ScreenshotAchievementTriggerProperty && args.tNewValue)
-        SetDisplayAchievementTrigger(true);
-    else if (args.Property == DisplayMasteryProperty && !args.tNewValue)
-        SetScreenshotMastery(false);
+    if (args.Property == ScreenshotAchievementTriggerProperty && args.tNewValue)
+    {
+        if (GetAchievementTriggerLocation() == PopupLocation::None)
+            SetAchievementTriggerLocation(ra::itoe<PopupLocation>(AchievementTriggerLocationProperty.GetDefaultValue()));
+    }
     else if (args.Property == ScreenshotMasteryProperty && args.tNewValue)
-        SetDisplayMastery(true);
+    {
+        if (GetMasteryLocation() == PopupLocation::None)
+            SetMasteryLocation(ra::itoe<PopupLocation>(MasteryLocationProperty.GetDefaultValue()));
+    }
+
+    WindowViewModelBase::OnValueChanged(args);
+}
+
+void OverlaySettingsViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == AchievementTriggerLocationProperty && ra::itoe<PopupLocation>(args.tNewValue) == PopupLocation::None)
+        SetScreenshotAchievementTrigger(false);
+    else if (args.Property == MasteryLocationProperty && ra::itoe<PopupLocation>(args.tNewValue) == PopupLocation::None)
+        SetScreenshotMastery(false);
 
     WindowViewModelBase::OnValueChanged(args);
 }

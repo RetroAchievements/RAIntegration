@@ -36,6 +36,16 @@ public:
             m_vEnabledFeatures.erase(nFeature);
     }
 
+    ra::ui::viewmodels::PopupLocation GetPopupLocation(ra::ui::viewmodels::Popup nPopup) const override
+    {
+        return m_vPopupLocations.at(ra::etoi(nPopup));
+    }
+
+    void SetPopupLocation(ra::ui::viewmodels::Popup nPopup, ra::ui::viewmodels::PopupLocation nPopupLocation) override
+    {
+        m_vPopupLocations.at(ra::etoi(nPopup)) = nPopupLocation;
+    }
+
     unsigned int GetNumBackgroundThreads() const noexcept override { return m_nBackgroundThreads; }
 
     const std::wstring& GetRomDirectory() const noexcept override { return m_sRomDirectory; }
@@ -101,6 +111,7 @@ private:
     unsigned int m_nBackgroundThreads = 0;
 
     std::set<Feature> m_vEnabledFeatures;
+    std::array<ra::ui::viewmodels::PopupLocation, ra::etoi(ra::ui::viewmodels::Popup::NumPopups)> m_vPopupLocations = {};
 };
 
 } // namespace mocks

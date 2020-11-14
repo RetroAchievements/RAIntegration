@@ -11,6 +11,8 @@ namespace viewmodels {
 class PopupMessageViewModel : public PopupViewModelBase
 {
 public:
+    PopupMessageViewModel() noexcept;
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the title message.
     /// </summary>
@@ -84,21 +86,6 @@ public:
     }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for whether or not the popup should use the Mastery style.
-    /// </summary>
-    static const BoolModelProperty IsMasteryProperty;
-
-    /// <summary>
-    /// Gets whether the popup should use the Mastery style.
-    /// </summary>
-    bool IsMastery() const { return GetValue(IsMasteryProperty); }
-
-    /// <summary>
-    /// Sets whether  the popup should use the Mastery style.
-    /// </summary>
-    void SetIsMastery(bool bValue) { SetValue(IsMasteryProperty, bValue); }
-
-    /// <summary>
     /// Gets the image to display.
     /// </summary>
     const ra::ui::ImageReference& GetImage() const noexcept { return m_hImage; }
@@ -137,7 +124,7 @@ public:
     /// <summary>
     /// Gets the final Y location to render the popup at.
     /// </summary>
-    int GetRenderTargetY() const noexcept { return m_nTargetY; }
+    int GetTargetVerticalOffset() const noexcept { return m_nTargetY; }
 
     class RenderImageLock
     {

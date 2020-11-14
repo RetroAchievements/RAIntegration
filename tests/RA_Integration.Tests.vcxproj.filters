@@ -54,9 +54,6 @@
     <ClCompile Include="..\src\RA_md5factory.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ui\ModelProperty.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui\ViewModelBase.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -95,9 +92,6 @@
     </ClCompile>
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="ui\ModelProperty_Tests.cpp">
-      <Filter>Tests\UI</Filter>
     </ClCompile>
     <ClCompile Include="ui\ViewModelBase_Tests.cpp">
       <Filter>Tests\UI</Filter>
@@ -383,6 +377,18 @@
     </ClCompile>
     <ClCompile Include="data\context\GameContext_Tests.cpp">
       <Filter>Tests\Data\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="data\ModelProperty_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\ModelPropertyContainer_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\ModelPropertyContainer.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\ModelProperty.cpp">
+      <Filter>Code</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

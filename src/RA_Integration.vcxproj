@@ -76,6 +76,8 @@
     <ClCompile Include="data\context\GameContext.cpp" />
     <ClCompile Include="data\context\SessionTracker.cpp" />
     <ClCompile Include="data\context\UserContext.cpp" />
+    <ClCompile Include="data\ModelProperty.cpp" />
+    <ClCompile Include="data\ModelPropertyContainer.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|x64'">Create</PrecompiledHeader>
@@ -122,7 +124,6 @@
     <ClCompile Include="ui\drawing\gdi\GDIBitmapSurface.cpp" />
     <ClCompile Include="ui\drawing\gdi\GDISurface.cpp" />
     <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp" />
-    <ClCompile Include="ui\ModelProperty.cpp" />
     <ClCompile Include="ui\Theme.cpp" />
     <ClCompile Include="ui\TransactionalViewModelBase.cpp" />
     <ClCompile Include="ui\ViewModelBase.cpp" />
@@ -223,6 +224,8 @@
     <ClInclude Include="data\context\GameContext.hh" />
     <ClInclude Include="data\context\SessionTracker.hh" />
     <ClInclude Include="data\context\UserContext.hh" />
+    <ClInclude Include="data\ModelProperty.hh" />
+    <ClInclude Include="data\ModelPropertyContainer.hh" />
     <ClInclude Include="data\Types.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="pch.h" />
@@ -287,7 +290,6 @@
     <ClInclude Include="ui\EditorTheme.hh" />
     <ClInclude Include="ui\IDesktop.hh" />
     <ClInclude Include="ui\ImageReference.hh" />
-    <ClInclude Include="ui\ModelProperty.hh" />
     <ClInclude Include="ui\OverlayTheme.hh" />
     <ClInclude Include="ui\TransactionalViewModelBase.hh" />
     <ClInclude Include="ui\Types.hh" />

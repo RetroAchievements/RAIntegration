@@ -1,5 +1,7 @@
 #include "TransactionalViewModelBase.hh"
 
+#include "data\ModelProperty.hh"
+
 namespace ra {
 namespace ui {
 
@@ -146,7 +148,7 @@ void TransactionalViewModelBase::Transaction::Revert(TransactionalViewModelBase&
     mOriginalIntValues.swap(m_mOriginalIntValues);
     for (const auto& pPair : mOriginalIntValues)
     {
-        const ModelPropertyBase* pProperty = ModelPropertyBase::GetPropertyForKey(pPair.first);
+        const auto* pProperty = ra::data::ModelPropertyBase::GetPropertyForKey(pPair.first);
         const IntModelProperty* pIntProperty = dynamic_cast<const IntModelProperty*>(pProperty);
         if (pIntProperty != nullptr)
         {
@@ -166,7 +168,7 @@ void TransactionalViewModelBase::Transaction::Revert(TransactionalViewModelBase&
     mOriginalStringValues.swap(m_mOriginalStringValues);
     for (const auto& pPair : mOriginalStringValues)
     {
-        const ModelPropertyBase* pProperty = ModelPropertyBase::GetPropertyForKey(pPair.first);
+        const auto* pProperty = ra::data::ModelPropertyBase::GetPropertyForKey(pPair.first);
         const StringModelProperty* pStringProperty = dynamic_cast<const StringModelProperty*>(pProperty);
         if (pStringProperty != nullptr)
         {
@@ -192,7 +194,7 @@ void TransactionalViewModelBase::Transaction::Commit(const TransactionalViewMode
         {
             // field was modified in parent - if it's been modified back, remove the modification tracker
             // otherwise, leave the previous original value in place.
-            const ModelPropertyBase* pProperty = ModelPropertyBase::GetPropertyForKey(pPair.first);
+            const auto* pProperty = ra::data::ModelPropertyBase::GetPropertyForKey(pPair.first);
             const IntModelProperty* pIntProperty = dynamic_cast<const IntModelProperty*>(pProperty);
             if (pIntProperty != nullptr)
             {
@@ -223,7 +225,7 @@ void TransactionalViewModelBase::Transaction::Commit(const TransactionalViewMode
         {
             // field was modified in parent - if it's been modified back, remove the modification tracker
             // otherwise, leave the previous original value in place.
-            const ModelPropertyBase* pProperty = ModelPropertyBase::GetPropertyForKey(pPair.first);
+            const auto* pProperty = ra::data::ModelPropertyBase::GetPropertyForKey(pPair.first);
             const StringModelProperty* pStringProperty = dynamic_cast<const StringModelProperty*>(pProperty);
             if (pStringProperty != nullptr)
             {

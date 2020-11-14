@@ -102,9 +102,6 @@
     <ClCompile Include="ui\ViewModelBase.cpp">
       <Filter>UI</Filter>
     </ClCompile>
-    <ClCompile Include="ui\ModelProperty.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="ui\win32\Desktop.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
@@ -351,6 +348,12 @@
     <ClCompile Include="data\context\UserContext.cpp">
       <Filter>Data\Context</Filter>
     </ClCompile>
+    <ClCompile Include="data\ModelProperty.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\ModelPropertyContainer.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -468,9 +471,6 @@
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
     <ClInclude Include="ui\ViewModelBase.hh">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="ui\ModelProperty.hh">
       <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="ui\IDesktop.hh">
@@ -883,6 +883,12 @@
     </ClInclude>
     <ClInclude Include="data\context\UserContext.hh">
       <Filter>Data\Context</Filter>
+    </ClInclude>
+    <ClInclude Include="data\ModelPropertyContainer.hh">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\ModelProperty.hh">
+      <Filter>Data</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -1,9 +1,9 @@
-#include "ui\ModelProperty.hh"
+#include "data\ModelProperty.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
-namespace ui {
+namespace data {
 namespace tests {
 
 TEST_CLASS(ModelProperty_Tests)

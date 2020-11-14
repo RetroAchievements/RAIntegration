@@ -3,7 +3,7 @@
 #include "ra_fwd.h"
 
 namespace ra {
-namespace ui {
+namespace data {
 
 // NOTE: These static variables are not guarded by a mutex. All ModelProperties are expected to be defined statically,
 // and therefore initialized in a sequential manner when the DLL is loaded. s_vProperties is a vector of _references_,
@@ -59,5 +59,5 @@ const ModelPropertyBase* ModelPropertyBase::GetPropertyForKey(int nKey)
     return (iter == s_vProperties.end() ? nullptr : *iter);
 }
 
-} // namespace ui
+} // namespace data
 } // namespace ra

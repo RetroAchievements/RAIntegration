@@ -3,9 +3,8 @@
 #pragma once
 
 #include "GridColumnBinding.hh"
-#include "ui/ModelProperty.hh"
 
-#include "ui/viewmodels/LookupItemViewModel.hh"
+#include "ui\viewmodels\LookupItemViewModel.hh"
 
 namespace ra {
 namespace ui {

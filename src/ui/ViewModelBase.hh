@@ -4,29 +4,18 @@
 
 #include "ra_fwd.h"
 
-#include "ModelProperty.hh"
+#include "data\ModelPropertyContainer.hh"
 
 namespace ra {
 namespace ui {
 
-class ViewModelBase
+using BoolModelProperty = ra::data::BoolModelProperty;
+using StringModelProperty = ra::data::StringModelProperty;
+using IntModelProperty = ra::data::IntModelProperty;
+
+class ViewModelBase : protected ra::data::ModelPropertyContainer
 {
 public:
-#ifdef RA_UTEST
-    virtual ~ViewModelBase() noexcept {
-        m_bDestructed = true;
-    }
-
-    bool m_bDestructed = false;
-#else
-    virtual ~ViewModelBase() noexcept = default;
-#endif
-
-    ViewModelBase(const ViewModelBase&) = delete;
-    ViewModelBase& operator=(const ViewModelBase&) = delete;
-    GSL_SUPPRESS_F6 ViewModelBase(ViewModelBase&&) = default;
-    GSL_SUPPRESS_F6 ViewModelBase& operator=(ViewModelBase&&) = default;
-
     class NotifyTarget
     {
     public:
@@ -44,15 +33,13 @@ public:
 
     void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
 
-#ifdef RA_UTEST
     void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept
     {
+#ifdef RA_UTEST
         GSL_SUPPRESS_F6 Expects(!m_bDestructed);
+#endif
         GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget);
     }
-#else
-    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget); }
-#endif
 
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
@@ -61,76 +48,22 @@ protected:
     GSL_SUPPRESS_F6 ViewModelBase() = default;
 
     /// <summary>
-    /// Gets the value associated to the requested boolean property.
-    /// </summary>
-    /// <param name="pProperty">The property to query.</param>
-    /// <returns>The current value of the property for this object.</returns>
-    bool GetValue(const BoolModelProperty& pProperty) const
-    {
-        const IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
-        return gsl::narrow_cast<bool>(iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
-    }
-
-    /// <summary>
-    /// Sets the specified boolean property to the specified value.
-    /// </summary>
-    /// <param name="pProperty">The property to set.</param>
-    /// <param name="bValue">The value to set.</param>
-    void SetValue(const BoolModelProperty& pProperty, bool bValue);
-
-    /// <summary>
     /// Called when a boolean value changes.
     /// </summary>
     /// <param name="args">Information about the change.</param>
-    virtual void OnValueChanged(const BoolModelProperty::ChangeArgs& args);
-
-    /// <summary>
-    /// Gets the value associated to the requested string property.
-    /// </summary>
-    /// <param name="pProperty">The property to query.</param>
-    /// <returns>The current value of the property for this object.</returns>
-    const std::wstring& GetValue(const StringModelProperty& pProperty) const
-    {
-        const StringModelProperty::ValueMap::const_iterator iter = m_mStringValues.find(pProperty.GetKey());
-        return (iter != m_mStringValues.end() ? iter->second : pProperty.GetDefaultValue());
-    }
-
-    /// <summary>
-    /// Sets the specified string property to the specified value.
-    /// </summary>
-    /// <param name="pProperty">The property to set.</param>
-    /// <param name="sValue">The value to set.</param>
-    void SetValue(const StringModelProperty& pProperty, const std::wstring& sValue);
+    void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
     /// <summary>
     /// Called when a string value changes.
     /// </summary>
     /// <param name="args">Information about the change.</param>
-    virtual void OnValueChanged(const StringModelProperty::ChangeArgs& args);
-
-    /// <summary>
-    /// Gets the value associated to the requested integer property.
-    /// </summary>
-    /// <param name="pProperty">The property to query.</param>
-    /// <returns>The current value of the property for this object.</returns>
-    int GetValue(const IntModelProperty& pProperty) const
-    {
-        const IntModelProperty::ValueMap::const_iterator iter = m_mIntValues.find(pProperty.GetKey());
-        return (iter != m_mIntValues.end() ? iter->second : pProperty.GetDefaultValue());
-    }
-
-    /// <summary>
-    /// Sets the specified integer property to the specified value.
-    /// </summary>
-    /// <param name="pProperty">The property to set.</param>
-    /// <param name="nValue">The value to set.</param>
-    void SetValue(const IntModelProperty& pProperty, int nValue);
+    void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
 
     /// <summary>
     /// Called when a integer value changes.
     /// </summary>
     /// <param name="args">Information about the change.</param>
-    virtual void OnValueChanged(const IntModelProperty::ChangeArgs& args);
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     // allow BindingBase to call GetValue(Property) and SetValue(Property) directly.
     friend class BindingBase;
@@ -139,16 +72,6 @@ protected:
     friend class ViewModelCollectionBase;
 
 private:
-    StringModelProperty::ValueMap m_mStringValues;
-    IntModelProperty::ValueMap m_mIntValues;
-
-#ifdef _DEBUG
-    /// <summary>
-    /// Complete list of values as strings for viewing in the debugger
-    /// </summary>
-    std::map<std::string, std::wstring> m_mDebugValues;
-#endif
-
     /// <summary>
     /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's
     /// impossible to create a set of <c>NotifyTarget</c> references.

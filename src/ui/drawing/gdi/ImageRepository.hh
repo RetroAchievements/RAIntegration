@@ -40,6 +40,7 @@ public:
     bool IsImageAvailable(ImageType nType, const std::string& sName) const override;
 
     void FetchImage(ImageType nType, const std::string& sName) override;
+    std::string StoreImage(ImageType nType, const std::wstring& sPath) override;
 
     void AddReference(const ImageReference& pImage) override;
     GSL_SUPPRESS_F6 void ReleaseReference(ImageReference& pImage) noexcept override;

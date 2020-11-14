@@ -100,7 +100,12 @@ protected:
     virtual void UpdateBoundText()
     {
         if (m_hWnd && m_pTextBoundProperty)
-            SetWindowTextW(m_hWnd, GetValue(*m_pTextBoundProperty).c_str());
+            UpdateTextFromSource(GetValue(*m_pTextBoundProperty));
+    }
+
+    virtual void UpdateTextFromSource(const std::wstring& sText)
+    {
+        SetWindowTextW(m_hWnd, sText.c_str());
     }
 
     virtual void UpdateSourceFromText(const std::wstring& sText)

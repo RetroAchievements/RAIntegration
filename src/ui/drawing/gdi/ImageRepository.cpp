@@ -3,6 +3,9 @@
 #include "GDIBitmapSurface.hh"
 
 #include "RA_Defs.h"
+#include "RA_md5factory.h"
+
+#include "data\context\GameContext.hh"
 
 #include "services\Http.hh"
 #include "services\IConfiguration.hh"
@@ -196,6 +199,48 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
 
         OnImageChanged(nType, sName);
     });
+}
+
+std::string ImageRepository::StoreImage(ImageType nType, const std::wstring& sPath)
+{
+    auto sFileMD5 = RAGenerateFileMD5(sPath);
+    if (sFileMD5.empty())
+        return "";
+
+    const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    const auto sDirectory = pFileSystem.BaseDirectory() + RA_DIR_BADGE + L"local\\";
+    if (!pFileSystem.DirectoryExists(sDirectory))
+        pFileSystem.CreateDirectory(sDirectory);
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    sFileMD5 = ra::StringPrintf("local\\%u-%s", pGameContext.GameId(), sFileMD5);
+
+    std::wstring sFilename = GetFilename(nType, sFileMD5);
+
+    // sFilename will always be a .png - switch to correct extension
+    const auto nIndex = sPath.rfind('.');
+    auto sExtension = sPath.substr(nIndex);
+    std::transform(sExtension.begin(), sExtension.end(), sExtension.begin(), [](wchar_t c) noexcept
+    {
+        return gsl::narrow_cast<wchar_t>(std::tolower(c));
+    });
+    if (sExtension != L".png")
+    {
+        sFilename.pop_back();
+        sFilename.pop_back();
+        sFilename.pop_back();
+        sFilename.pop_back();
+        sFilename.append(sExtension);
+        sFileMD5.append(ra::Narrow(sExtension));
+    }
+
+    if (pFileSystem.GetFileSize(sFilename) < 0)
+    {
+        if (!pFileSystem.CopyFile(sPath, sFilename))
+            return "";
+    }
+
+    return sFileMD5;
 }
 
 HBITMAP ImageRepository::GetDefaultImage(ImageType nType)
@@ -412,6 +457,35 @@ ImageRepository::HBitmapMap* ImageRepository::GetBitmapMap(ImageType nType) noex
     }
 }
 
+static void RemoveRedundantFileExtension(std::wstring& sFilename, const std::string& sName)
+{
+    const auto nIndex = sName.rfind('.');
+    if (nIndex == std::string::npos)
+        return;
+
+    auto sExtension = sName.substr(nIndex);
+    std::transform(sExtension.begin(), sExtension.end(), sExtension.begin(), [](wchar_t c) noexcept
+    {
+        return gsl::narrow_cast<char>(std::tolower(c));
+    });
+
+    if (sExtension == ".jpg" || sExtension == ".gif")
+    {
+        sFilename.pop_back();
+        sFilename.pop_back();
+        sFilename.pop_back();
+        sFilename.pop_back();
+    }
+    else if (sExtension == ".jpeg")
+    {
+        sFilename.pop_back();
+        sFilename.pop_back();
+        sFilename.pop_back();
+        sFilename.pop_back();
+        sFilename.pop_back();
+    }
+}
+
 HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
 {
     if (sName.empty())
@@ -430,6 +504,9 @@ HBITMAP ImageRepository::GetImage(ImageType nType, const std::string& sName)
     }
 
     std::wstring sFilename = GetFilename(nType, sName);
+
+    // GetFilename automatically appends a ".png". if sName contains a supported file format extension, remove the ".png"
+    RemoveRedundantFileExtension(sFilename, sName);
 
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     if (pFileSystem.GetFileSize(sFilename) <= 0)

@@ -42,6 +42,11 @@ public:
 
     }
 
+    std::string StoreImage(_UNUSED ImageType nType, _UNUSED const std::wstring& sPath) noexcept override
+    {
+        return ra::Narrow(sPath);
+    }
+
     void AddReference(_UNUSED const ImageReference& pImage) noexcept override
     {
 

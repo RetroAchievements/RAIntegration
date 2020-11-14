@@ -236,6 +236,14 @@ void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstrin
     }
 }
 
+void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstring& sText)
+{
+    if (ra::StringStartsWith(sText, L"local\\"))
+        SetWindowTextW(m_hWnd, L"[local]");
+    else
+        SetWindowTextW(m_hWnd, sText.c_str());
+}
+
 void AssetEditorDialog::DecimalPreferredBinding::OnValueChanged()
 {
     m_pOwner->m_bindConditions.RefreshColumn(4); // source value
@@ -439,6 +447,15 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
             auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
             if (vmAssetEditor)
                 vmAssetEditor->Trigger().MoveSelectedConditionsDown();
+
+            return TRUE;
+        }
+
+        case IDC_RA_UPLOAD_BADGE:
+        {
+            auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+            if (vmAssetEditor)
+                vmAssetEditor->SelectBadgeFile();
 
             return TRUE;
         }

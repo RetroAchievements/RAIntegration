@@ -49,6 +49,14 @@ public:
     /// <param name="sName">Name of the image.</param>
     virtual void FetchImage(ImageType nType, const std::string& sName) = 0;
 
+    /// <summary>
+    /// Store an image locally.
+    /// </summary>
+    /// <param name="nType">Type of the image.</param>
+    /// <param name="sName">Path to image.</param>
+    /// <returns>Generated name for referencing the image.</param>
+    virtual std::string StoreImage(ImageType nType, const std::wstring& sPath) = 0;
+
     /// <summary>Adds a reference to an image.</summary>
     virtual void AddReference(const ImageReference& pImage) = 0;
 

@@ -52,6 +52,7 @@ private:
 
     protected:
         void UpdateSourceFromText(const std::wstring& sText) override;
+        void UpdateTextFromSource(const std::wstring& sText) override;
     };
 
     class DecimalPreferredBinding : public ra::ui::win32::bindings::CheckBoxBinding

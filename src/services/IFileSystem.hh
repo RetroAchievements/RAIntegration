@@ -5,8 +5,11 @@
 #include "services/TextReader.hh"
 #include "services/TextWriter.hh"
 
+#undef CreateDirectory
 #undef DeleteFile
 #undef MoveFile
+#undef CopyFile
+
 namespace ra {
 namespace services {
 
@@ -67,6 +70,12 @@ public:
     /// <remarks>Can be used to rename a file if the path to the file is the same.</remarks>
     /// <returns><c>true</c> if successful, <c>false</c> if not.</returns>
     virtual bool MoveFile(const std::wstring& sOldPath, const std::wstring& sNewPath) const = 0;
+
+    /// <summary>
+    /// Copies a file from one location to another.
+    /// </summary>
+    /// <returns><c>true</c> if successful, <c>false</c> if not.</returns>
+    virtual bool CopyFile(const std::wstring& sSourcePath, const std::wstring& sNewPath) const = 0;
 
     /// <summary>
     /// Opens the specified file.

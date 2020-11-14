@@ -124,10 +124,12 @@ void TransactionalViewModelBase::RevertTransaction()
 {
     if (m_pTransaction != nullptr)
     {
+        // revert first so any captured changes are in the transaction we're about to discard
+        m_pTransaction->Revert(*this);
+
+        // discard the current transaction
         std::unique_ptr<Transaction> pTransaction = std::move(m_pTransaction);
         m_pTransaction = std::move(pTransaction->m_pNext);
-
-        pTransaction->Revert(*this);
 
         if (m_pTransaction == nullptr)
             SetValue(IsModifiedProperty, false);
@@ -138,7 +140,11 @@ void TransactionalViewModelBase::RevertTransaction()
 
 void TransactionalViewModelBase::Transaction::Revert(TransactionalViewModelBase& vmViewModel)
 {
-    for (const auto& pPair : m_mOriginalIntValues)
+    // swap out the map while we process it to prevent re-entrant calls to ValueChanged from
+    // modifying it while we're iterating
+    IntModelProperty::ValueMap mOriginalIntValues;
+    mOriginalIntValues.swap(m_mOriginalIntValues);
+    for (const auto& pPair : mOriginalIntValues)
     {
         const ModelPropertyBase* pProperty = ModelPropertyBase::GetPropertyForKey(pPair.first);
         const IntModelProperty* pIntProperty = dynamic_cast<const IntModelProperty*>(pProperty);
@@ -156,7 +162,9 @@ void TransactionalViewModelBase::Transaction::Revert(TransactionalViewModelBase&
         }
     }
 
-    for (const auto& pPair : m_mOriginalStringValues)
+    StringModelProperty::ValueMap mOriginalStringValues;
+    mOriginalStringValues.swap(m_mOriginalStringValues);
+    for (const auto& pPair : mOriginalStringValues)
     {
         const ModelPropertyBase* pProperty = ModelPropertyBase::GetPropertyForKey(pPair.first);
         const StringModelProperty* pStringProperty = dynamic_cast<const StringModelProperty*>(pProperty);

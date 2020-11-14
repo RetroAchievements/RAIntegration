@@ -113,8 +113,8 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindWindow.BindEnabled(IDC_RA_ADD_ACH, AssetListViewModel::CanCreateProperty);
     m_bindWindow.BindLabel(IDC_RA_COMMIT_ACH, AssetListViewModel::SaveButtonTextProperty);
     m_bindWindow.BindEnabled(IDC_RA_COMMIT_ACH, AssetListViewModel::CanSaveProperty);
-    m_bindWindow.BindLabel(IDC_RA_DOWNLOAD_ACH, AssetListViewModel::RefreshButtonTextProperty);
-    m_bindWindow.BindEnabled(IDC_RA_DOWNLOAD_ACH, AssetListViewModel::CanRefreshProperty);
+    m_bindWindow.BindLabel(IDC_RA_DOWNLOAD_ACH, AssetListViewModel::ResetButtonTextProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DOWNLOAD_ACH, AssetListViewModel::CanResetProperty);
     m_bindWindow.BindLabel(IDC_RA_REVERTSELECTED, AssetListViewModel::RevertButtonTextProperty);
     m_bindWindow.BindEnabled(IDC_RA_REVERTSELECTED, AssetListViewModel::CanRevertProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADD_ACH, AssetListViewModel::CanCreateProperty);
@@ -166,7 +166,7 @@ BOOL AssetListDialog::OnCommand(WORD nCommand)
         {
             auto* vmAssets = dynamic_cast<AssetListViewModel*>(&m_vmWindow);
             if (vmAssets)
-                vmAssets->RefreshSelected();
+                vmAssets->ResetSelected();
 
             return TRUE;
         }

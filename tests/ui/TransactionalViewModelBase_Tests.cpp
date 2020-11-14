@@ -462,6 +462,28 @@ public:
         Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
     }
 
+    TEST_METHOD(TestRevertTransactionRepeated)
+    {
+        ViewModelHarness vmViewModel;
+        NotifyTargetHarness oNotify;
+        vmViewModel.AddNotifyTarget(oNotify);
+
+        Assert::AreEqual(0, vmViewModel.GetTransactionalInt());
+
+        vmViewModel.BeginTransaction();
+        vmViewModel.BeginTransaction();
+        vmViewModel.SetTransactionalInt(99);
+        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
+
+        vmViewModel.RevertTransaction();
+        Assert::AreEqual(0, vmViewModel.GetTransactionalInt());
+        Assert::IsFalse(vmViewModel.IsModified());
+
+        vmViewModel.RevertTransaction();
+        Assert::AreEqual(0, vmViewModel.GetTransactionalInt());
+        Assert::IsFalse(vmViewModel.IsModified());
+    }
+
     TEST_METHOD(TestRevertTransactionMultipleChanges)
     {
         ViewModelHarness vmViewModel;

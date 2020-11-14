@@ -22,11 +22,11 @@ const IntModelProperty AssetListViewModel::TotalPointsProperty("AssetListViewMod
 const BoolModelProperty AssetListViewModel::IsProcessingActiveProperty("AssetListViewModel", "IsProcessingActive", true);
 const StringModelProperty AssetListViewModel::ActivateButtonTextProperty("AssetListViewModel", "ActivateButtonText", L"&Activate All");
 const StringModelProperty AssetListViewModel::SaveButtonTextProperty("AssetListViewModel", "SaveButtonText", L"&Save All");
-const StringModelProperty AssetListViewModel::RefreshButtonTextProperty("AssetListViewModel", "SaveButtonText", L"&Refresh All");
-const StringModelProperty AssetListViewModel::RevertButtonTextProperty("AssetListViewModel", "SaveButtonText", L"Re&vert All");
+const StringModelProperty AssetListViewModel::ResetButtonTextProperty("AssetListViewModel", "ResetButtonText", L"&Reset All");
+const StringModelProperty AssetListViewModel::RevertButtonTextProperty("AssetListViewModel", "RevertButtonText", L"Re&vert All");
 const BoolModelProperty AssetListViewModel::CanActivateProperty("AssetListViewModel", "CanActivate", false);
 const BoolModelProperty AssetListViewModel::CanSaveProperty("AssetListViewModel", "CanSave", false);
-const BoolModelProperty AssetListViewModel::CanRefreshProperty("AssetListViewModel", "CanRefresh", false);
+const BoolModelProperty AssetListViewModel::CanResetProperty("AssetListViewModel", "CanReset", false);
 const BoolModelProperty AssetListViewModel::CanRevertProperty("AssetListViewModel", "CanRevert", false);
 const BoolModelProperty AssetListViewModel::CanCreateProperty("AssetListViewModel", "CanCreate", false);
 const BoolModelProperty AssetListViewModel::CanCloneProperty("AssetListViewModel", "CanClone", false);
@@ -552,16 +552,16 @@ void AssetListViewModel::DoUpdateButtons()
     if (bGameLoaded)
     {
         if (bHasSelection)
-            SetValue(RefreshButtonTextProperty, L"&Refresh");
+            SetValue(ResetButtonTextProperty, L"&Reset");
         else
-            SetValue(RefreshButtonTextProperty, RefreshButtonTextProperty.GetDefaultValue());
+            SetValue(ResetButtonTextProperty, ResetButtonTextProperty.GetDefaultValue());
 
-        SetValue(CanRefreshProperty, true);
+        SetValue(CanResetProperty, true);
     }
     else
     {
-        SetValue(RefreshButtonTextProperty, RefreshButtonTextProperty.GetDefaultValue());
-        SetValue(CanRefreshProperty, false);
+        SetValue(ResetButtonTextProperty, ResetButtonTextProperty.GetDefaultValue());
+        SetValue(CanResetProperty, false);
     }
 
     if (bGameLoaded)
@@ -709,10 +709,202 @@ void AssetListViewModel::SaveSelected()
     RA_LOG_INFO("Wrote user assets file");
 }
 
-void AssetListViewModel::RefreshSelected()
+void AssetListViewModel::ResetSelected()
 {
-    if (!CanRefresh())
+    if (!CanReset())
         return;
+
+    std::vector<const AssetSummaryViewModel*> vSelectedAssets;
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nIndex)
+    {
+        const auto* pItem = m_vFilteredAssets.GetItemAt(nIndex);
+        if (pItem != nullptr && pItem->IsSelected())
+            vSelectedAssets.push_back(pItem);
+    }
+
+    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+    vmMessageBox.SetHeader(L"Reload from disk?");
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
+    if (vSelectedAssets.empty())
+        vmMessageBox.SetMessage(L"This will discard all unsaved changes and reset the assets to the last locally saved state.");
+    else
+        vmMessageBox.SetMessage(L"This will discard any changes to the selected assets and reset them to the last locally saved state.");
+
+    if (vmMessageBox.ShowModal() == DialogResult::No)
+        return;
+
+    m_vAssets.BeginUpdate();
+
+    std::vector<AssetViewModelBase*> vAssetsToReset;
+    if (vSelectedAssets.empty())
+    {
+        // reset all - first remove any "new" items
+        for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vAssets.Count()) - 1; nIndex >= 0; --nIndex)
+        {
+            auto* pAsset = m_vAssets.GetItemAt(nIndex);
+            if (pAsset != nullptr && pAsset->GetChanges() == AssetChanges::New)
+                m_vAssets.RemoveAt(nIndex);
+        }
+
+        // when resetting all, always read the file to pick up new items
+        MergeLocalAssets(vAssetsToReset, true);
+    }
+    else
+    {
+        // reset selection, remove any "new" items and get the AssetViewModel for the others
+        for (auto* pItem : vSelectedAssets)
+        {
+            const auto nType = pItem->GetType();
+            const auto nId = ra::to_unsigned(pItem->GetId());
+            for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vAssets.Count()) - 1; nIndex >= 0; --nIndex)
+            {
+                auto* pAsset = m_vAssets.GetItemAt(nIndex);
+                if (pAsset->GetID() == nId && pAsset->GetType() == nType)
+                {
+                    if (pAsset->GetChanges() == AssetChanges::New)
+                        m_vAssets.RemoveAt(nIndex);
+                    else
+                        vAssetsToReset.push_back(pAsset);
+                    break;
+                }
+            }
+        }
+
+        // if there were any non-new items, reload them from disk
+        if (!vAssetsToReset.empty())
+            MergeLocalAssets(vAssetsToReset, false);
+    }
+
+    m_vAssets.EndUpdate();
+}
+
+// NOTE: destroys vAssetsToMerge as it processes the file
+void AssetListViewModel::MergeLocalAssets(std::vector<AssetViewModelBase*>& vAssetsToMerge, bool bFullMerge)
+{
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(GetGameId()));
+    if (pData == nullptr)
+        return;
+
+    std::string sLine;
+    pData->GetLine(sLine); // version used to create the file
+    pData->GetLine(sLine); // game title
+
+    m_vAssets.BeginUpdate();
+
+    std::vector<AssetViewModelBase*> vUnnumberedAssets;
+    while (pData->GetLine(sLine))
+    {
+        AssetType nType = AssetType::None;
+        unsigned nId = 0;
+
+        ra::Tokenizer pTokenizer(sLine);
+        switch (pTokenizer.PeekChar())
+        {
+            case '0': case '1': case '2': case '3': case '4':
+            case '5': case '6': case '7': case '8': case '9':
+                // achievements start with a number (no prefix)
+                nType = AssetType::Achievement;
+                nId = pTokenizer.ReadNumber();
+                break;
+        }
+
+        if (nType == AssetType::None)
+            continue;
+        if (!pTokenizer.Consume(':'))
+            continue;
+
+        // find the asset to merge
+        AssetViewModelBase* pAsset = nullptr;
+        if (nId != 0)
+        {
+            if (nId >= m_nNextLocalId)
+                m_nNextLocalId = nId + 1;
+
+            for (auto pIter = vAssetsToMerge.begin(); pIter != vAssetsToMerge.end(); ++pIter)
+            {
+                auto* pAssetToReset = *pIter;
+                if (pAssetToReset->GetID() == nId && pAssetToReset->GetType() == nType)
+                {
+                    pAsset = pAssetToReset;
+                    vAssetsToMerge.erase(pIter);
+                    pAsset->RestoreServerCheckpoint();
+                    break;
+                }
+            }
+
+            if (!pAsset && bFullMerge && nId < FirstLocalId)
+                pAsset = FindAsset(nType, nId);
+        }
+
+        if (pAsset)
+        {
+            // merge the data from the file
+            pAsset->Deserialize(pTokenizer);
+            pAsset->UpdateLocalCheckpoint();
+        }
+        else if (bFullMerge)
+        {
+            // non-existant item, only process it if nothing was selected
+            switch (nType)
+            {
+                case AssetType::Achievement:
+                {
+                    auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+                    vmAchievement->SetID(nId);
+                    vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Local);
+                    vmAchievement->CreateServerCheckpoint();
+
+                    pAsset = &m_vAssets.Append(std::move(vmAchievement));
+                    break;
+                }
+            }
+
+            if (pAsset)
+            {
+                pAsset->Deserialize(pTokenizer);
+                pAsset->CreateLocalCheckpoint();
+
+                if (nId == 0)
+                    vUnnumberedAssets.push_back(pAsset);
+            }
+        }
+    }
+
+    // assign IDs for any assets where one was not available
+    for (auto* pAsset : vUnnumberedAssets)
+        pAsset->SetID(m_nNextLocalId++);
+
+    // any items still in the source list no longer exist in the file. if the item is on the server,
+    // just reset to the server state. otherwise, delete the item.
+    for (auto* pAsset : vAssetsToMerge)
+    {
+        if (pAsset->GetCategory() == AssetCategory::Local)
+        {
+            for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vAssets.Count()) - 1; nIndex >= 0; --nIndex)
+            {
+                if (m_vAssets.GetItemAt(nIndex) == pAsset)
+                {
+                    m_vAssets.RemoveAt(nIndex);
+                    break;
+                }
+            }
+        }
+        else
+        {
+            pAsset->RestoreServerCheckpoint();
+        }
+    }
+
+    m_vAssets.EndUpdate();
+}
+
+void AssetListViewModel::MergeLocalAssets()
+{
+    std::vector<AssetViewModelBase*> vAssetsToMerge;
+    MergeLocalAssets(vAssetsToMerge, true);
 }
 
 void AssetListViewModel::RevertSelected()

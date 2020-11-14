@@ -10,6 +10,7 @@
 
 namespace ra {
 namespace data {
+namespace context {
 
 class GameContext
 {
@@ -112,7 +113,7 @@ public:
 
     Achievement& NewAchievement(Achievement::Category nType);
 
-    bool RemoveAchievement(ra::AchievementID nAchievementId);
+    bool RemoveAchievement(ra::AchievementID nAchievementId) noexcept;
 
     /// <summary>
     /// Shows the popup for earning an achievement and notifies the server if legitimate.
@@ -367,6 +368,7 @@ private:
     std::atomic<int> m_nLoadCount = 0;
 };
 
+} // namespace context
 } // namespace data
 } // namespace ra
 

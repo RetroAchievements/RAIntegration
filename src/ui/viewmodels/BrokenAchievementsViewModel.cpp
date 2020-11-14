@@ -8,7 +8,7 @@
 
 #include "api\SubmitTicket.hh"
 
-#include "data\GameContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\ServiceLocator.hh"
 
@@ -26,14 +26,14 @@ const BoolModelProperty BrokenAchievementsViewModel::BrokenAchievementViewModel:
 
 bool BrokenAchievementsViewModel::InitializeAchievements()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (pGameContext.GameId() == 0)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You must load a game before you can report achievement problems.");
         return false;
     }
 
-    if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
+    if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"You cannot report achievement problems in compatibility test mode.");
         return false;
@@ -74,7 +74,7 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
     return true;
 }
 
-static std::wstring GetRichPresence(const ra::data::GameContext& pGameContext, const std::set<unsigned int> vAchievementIds)
+static std::wstring GetRichPresence(const ra::data::context::GameContext& pGameContext, const std::set<unsigned int> vAchievementIds)
 {
     bool bMultipleRichPresence = false;
     std::wstring sRichPresence;
@@ -147,7 +147,7 @@ bool BrokenAchievementsViewModel::Submit()
 
     sBuggedIDs.pop_back(); // remove last comma
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
 
     const char* sProblemType = "";
     request.Problem = ra::itoe<ra::api::SubmitTicket::ProblemType>(GetSelectedProblemId());

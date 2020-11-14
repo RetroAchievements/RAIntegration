@@ -2,8 +2,8 @@
 #define RA_UI_MEMORYBOOKMARKSVIEWMODEL_H
 #pragma once
 
-#include "data\GameContext.hh"
 #include "data\Types.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\TextReader.hh"
 #include "services\TextWriter.hh"
@@ -17,7 +17,7 @@ namespace ui {
 namespace viewmodels {
 
 class MemoryBookmarksViewModel : public WindowViewModelBase,
-    protected ra::data::GameContext::NotifyTarget,
+    protected ra::data::context::GameContext::NotifyTarget,
     protected ViewModelCollectionBase::NotifyTarget
 {
 public:
@@ -298,7 +298,7 @@ protected:
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
 
-    // ra::data::GameContext::NotifyTarget
+    // ra::data::context::GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
 

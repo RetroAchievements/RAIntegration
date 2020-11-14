@@ -1,6 +1,6 @@
 #include "CppUnitTest.h"
 
-#include "data\SessionTracker.hh"
+#include "data\context\SessionTracker.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
 
@@ -18,6 +18,7 @@ using ra::services::StorageItemType;
 
 namespace ra {
 namespace data {
+namespace context {
 namespace tests {
 
 TEST_CLASS(SessionTracker_Tests)
@@ -33,7 +34,7 @@ public:
 
 
         ra::api::mocks::MockServer mockServer;
-        ra::data::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockStorage;
@@ -183,8 +184,8 @@ public:
     TEST_METHOD(TestNonEmptyFileMultipleGames)
     {
         std::string sInitialValue("1234:1534000000:1732:f5\n"
-                                  "9999:1534100000:963:4e\n"
-                                  "1234:1534200000:591:0b\n");
+            "9999:1534100000:963:4e\n"
+            "1234:1534200000:591:0b\n");
         SessionTrackerHarness tracker;
         tracker.MockStoredData(sInitialValue);
         tracker.mockGameContext.SetGameId(1234U);
@@ -357,7 +358,7 @@ public:
     TEST_METHOD(TestCurrentActivityRichPresenceCompatibilityMode)
     {
         SessionTrackerHarness tracker;
-        tracker.mockGameContext.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
+        tracker.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
         tracker.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
         Assert::AreEqual(std::wstring(L"Level 10"), tracker.GetActivity());
     }
@@ -390,7 +391,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.mockGameContext.NewAchievement(Achievement::Category::Core);
-        tracker.mockGameContext.SetMode(ra::data::GameContext::Mode::CompatibilityTest);
+        tracker.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
         tracker.MockInspectingMemory(true);
         Assert::AreEqual(std::wstring(L"Testing Compatibility"), tracker.GetActivity());
     }
@@ -424,5 +425,6 @@ public:
 };
 
 } // namespace tests
+} // namespace context
 } // namespace data
 } // namespace ra

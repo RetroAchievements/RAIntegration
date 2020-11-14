@@ -2,7 +2,7 @@
 
 #include "RA_Resource.h"
 
-#include "data\EmulatorContext.hh"
+#include "data\context\EmulatorContext.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
@@ -143,7 +143,7 @@ public:
         if (ra::to_unsigned(nCurrentValue) != nValue)
         {
             const auto nAddress = vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty);
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().WriteMemory(nAddress, nSize, nValue);
+            ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().WriteMemory(nAddress, nSize, nValue);
 
             vmItems.SetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::PreviousValueProperty, nCurrentValue);
             vmItems.SetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::CurrentValueProperty, nValue);

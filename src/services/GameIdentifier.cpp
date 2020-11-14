@@ -6,11 +6,11 @@
 
 #include "api\ResolveHash.hh"
 
-#include "data\ConsoleContext.hh"
-#include "data\EmulatorContext.hh"
-#include "data\GameContext.hh"
-#include "data\UserContext.hh"
-#include "data\SessionTracker.hh"
+#include "data\context\ConsoleContext.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\GameContext.hh"
+#include "data\context\UserContext.hh"
+#include "data\context\SessionTracker.hh"
 
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
@@ -31,9 +31,9 @@ namespace services {
 
 unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
 {
-    m_nPendingMode = ra::data::GameContext::Mode::Normal;
+    m_nPendingMode = ra::data::context::GameContext::Mode::Normal;
 
-    if (ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Id() == 0U)
+    if (ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().Id() == 0U)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot identify game for unknown console.");
         return 0U;
@@ -52,7 +52,7 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
 
 unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
 {
-    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+    if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot load achievements",
             L"You must be logged in to load achievements. Please reload the game after logging in.");
@@ -60,7 +60,7 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
     }
 
     unsigned int nGameId = 0U;
-    m_nPendingMode = ra::data::GameContext::Mode::Normal;
+    m_nPendingMode = ra::data::context::GameContext::Mode::Normal;
 
     ra::api::ResolveHash::Request request;
     request.Hash = sMD5;
@@ -73,11 +73,11 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
         {
             RA_LOG_INFO("Could not identify game with MD5 %s", sMD5);
 
-            auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle();
+            auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetGameTitle();
 
             ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
             vmUnknownGame.InitializeGameTitles();
-            vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::ConsoleContext>().Name());
+            vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().Name());
             vmUnknownGame.SetChecksum(ra::Widen(sMD5));
             vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
             vmUnknownGame.SetNewGameName(vmUnknownGame.GetEstimatedGameName());
@@ -87,7 +87,7 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
                 nGameId = vmUnknownGame.GetSelectedGameId();
 
                 if (vmUnknownGame.GetTestMode())
-                    m_nPendingMode = ra::data::GameContext::Mode::CompatibilityTest;
+                    m_nPendingMode = ra::data::context::GameContext::Mode::CompatibilityTest;
             }
         }
         else
@@ -111,7 +111,7 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
     m_sPendingMD5 = sMD5;
     m_nPendingGameId = nGameId;
 
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     if (nGameId != 0 && nGameId == pGameContext.GameId())
     {
         // same as currently loaded rom. assume user is switching disks and _RA_ActivateGame won't be called.
@@ -127,7 +127,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
 {
     if (nGameId != 0)
     {
-        if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+        if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot load achievements",
                 L"You must be logged in to load achievements. Please reload the game after logging in.");
@@ -139,11 +139,11 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         pOverlayManager.ClearPopups();
 
-        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.LoadGame(nGameId, m_nPendingMode);
         pGameContext.SetGameHash((nGameId == m_nPendingGameId) ? m_sPendingMD5 : "");
 
-        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().BeginSession(nGameId);
+        ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>().BeginSession(nGameId);
 
         auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
         if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
@@ -172,7 +172,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
                 vmWarning.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
 
                 if (vmWarning.ShowModal() == ra::ui::DialogResult::Yes)
-                    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().EnableHardcoreMode(false);
+                    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().EnableHardcoreMode(false);
             }
             else
             {
@@ -189,14 +189,14 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
     {
         RA_LOG_INFO("Unloading current game");
 
-        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
+        ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>().EndSession();
 
-        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.LoadGame(0U, m_nPendingMode);
         pGameContext.SetGameHash((m_nPendingGameId == 0) ? m_sPendingMD5 : "");
     }
 
-    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().ResetMemoryModified();
+    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().ResetMemoryModified();
 
 #ifndef RA_UTEST
     g_AchievementsDialog.OnLoad_NewRom(nGameId);
@@ -212,11 +212,11 @@ void GameIdentifier::IdentifyAndActivateGame(const BYTE* pROM, size_t nROMSize)
     if (nGameId == 0 && pROM && nROMSize)
     {
         // game did not resolve, but still want to display "Playing GAMENAME" in Rich Presence
-        auto sEstimatedGameTitle = ra::Widen(ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetGameTitle());
+        auto sEstimatedGameTitle = ra::Widen(ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetGameTitle());
         if (sEstimatedGameTitle.empty())
             sEstimatedGameTitle = L"Unknown";
 
-        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.SetGameTitle(sEstimatedGameTitle);
     }
 }

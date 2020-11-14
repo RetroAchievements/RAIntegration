@@ -2,12 +2,13 @@
 #define RA_SERVICES_MOCK_SESSION_TRACKER_HH
 #pragma once
 
-#include "data\SessionTracker.hh"
+#include "data\context\SessionTracker.hh"
 
 #include "services\ServiceLocator.hh"
 
 namespace ra {
 namespace data {
+namespace context {
 namespace mocks {
 
 class MockSessionTracker : public SessionTracker
@@ -32,11 +33,12 @@ public:
     unsigned int CurrentSessionGameId() const noexcept { return m_nCurrentGameId; }
 
 private:
-    ra::services::ServiceLocator::ServiceOverride<ra::data::SessionTracker> m_Override;
+    ra::services::ServiceLocator::ServiceOverride<ra::data::context::SessionTracker> m_Override;
 };
 
 } // namespace mocks
 } // namespace services
+} // namespace context
 } // namespace ra
 
 #endif // !RA_SERVICES_MOCK_SESSION_TRACKER_HH

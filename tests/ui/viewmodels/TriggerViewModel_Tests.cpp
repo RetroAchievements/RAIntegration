@@ -22,8 +22,8 @@ private:
     class TriggerViewModelHarness : public TriggerViewModel
     {
     public:
-        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
-        ra::data::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockClipboard mockClipboard;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;

@@ -3,7 +3,7 @@
 #include "RA_Defs.h"
 #include "RA_StringUtils.h"
 
-#include "data\GameContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\ServiceLocator.hh"
 
@@ -252,7 +252,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const IntModelProperty& nProp
 
 std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned nAddress) const
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nAddress);
     if (!pNote)
         return ra::StringPrintf(L"%s\r\n[No code note]", ra::ByteAddressToString(nAddress));

@@ -13,9 +13,9 @@
 
 #include "api\UpdateAchievement.hh"
 
-#include "data\EmulatorContext.hh"
-#include "data\GameContext.hh"
-#include "data\UserContext.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\GameContext.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
@@ -162,7 +162,7 @@ void Dlg_Achievements::UpdateAchievementCounters()
     sprintf_s(buffer, 16, " %zu", m_vAchievementIDs.size());
     SetDlgItemText(m_hAchievementsDlg, IDC_RA_NUMACH, NativeStr(buffer).c_str());
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     int nTotalPoints = 0;
     for (const auto& pAchievementId : m_vAchievementIDs)
     {
@@ -227,7 +227,7 @@ void Dlg_Achievements::AddAchievementRow(const Achievement& Ach)
 
 void Dlg_Achievements::UpdateAchievementList()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     std::vector<ra::AchievementID> vAchievementIDs;
 
     pGameContext.EnumerateAchievements([&vAchievementIDs, nActiveCategory = m_nActiveCategory](const Achievement& pAchievement)
@@ -359,7 +359,7 @@ INT_PTR CALLBACK Dlg_Achievements::s_AchievementsProc(HWND hDlg, UINT nMsg, WPAR
 
 static ra::AchievementID AttemptUploadAchievementBlocking(const Achievement& Ach, unsigned int nFlags)
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const unsigned int nId = Ach.GetCategory() == Achievement::Category::Local ? 0 : Ach.ID();
 
     ra::api::UpdateAchievement::Request request;
@@ -437,7 +437,7 @@ void Dlg_Achievements::OnClickAchievementSet(Achievement::Category nAchievementS
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
     CheckDlgButton(m_hAchievementsDlg, IDC_RA_CHKACHPROCESSINGACTIVE, !pRuntime.IsPaused());
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     OnLoad_NewRom(pGameContext.GameId()); // assert: calls UpdateSelectedAchievementButtons
 
     g_AchievementEditorDialog.OnLoad_NewRom();
@@ -474,7 +474,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
             SetupColumns(GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS));
 
             //  Continue as if a new rom had been loaded
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
             OnLoad_NewRom(pGameContext.GameId());
 
             const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
@@ -508,7 +508,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_PROMOTE_ACH:
                     //  Replace with background upload?
-                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
+                    if (ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId() == 0U)
                     {
                         MessageBox(hDlg, TEXT("ROM not loaded: please load a ROM first!"), TEXT("Error!"), MB_OK);
                     }
@@ -570,7 +570,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     break;
                 case IDC_RA_DOWNLOAD_ACH:
                 {
-                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
+                    if (ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId() == 0U)
                         break;
 
                     if (m_nActiveCategory == Achievement::Category::Local)
@@ -581,7 +581,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                                        TEXT("Refresh from Disk"),
                                        MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+                            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
                             const auto nGameID = pGameContext.GameId();
                             if (nGameID != 0)
                             {
@@ -605,7 +605,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         if (MessageBox(hDlg, NativeStr(oss.str()).c_str(), TEXT("Refresh from Server"),
                                        MB_YESNO | MB_ICONWARNING) == IDYES)
                         {
-                            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+                            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
                             const auto nGameID = pGameContext.GameId();
                             if (nGameID != 0)
                             {
@@ -624,16 +624,16 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_ADD_ACH:
                 {
-                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
+                    if (ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId() == 0U)
                     {
                         MessageBox(hDlg, TEXT("ROM not loaded: please load a ROM first!"), TEXT("Error!"), MB_OK);
                         break;
                     }
 
                     //  Add a new achievement with default params
-                    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+                    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
                     Achievement& Cheevo = pGameContext.NewAchievement(Achievement::Category::Local);
-                    Cheevo.SetAuthor(ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername());
+                    Cheevo.SetAuthor(ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername());
                     Cheevo.SetBadgeImage("00000");
 
                     HWND hList = GetDlgItem(hDlg, IDC_RA_LISTACHIEVEMENTS);
@@ -652,7 +652,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_CLONE_ACH:
                 {
-                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
+                    if (ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId() == 0U)
                     {
                         MessageBox(hDlg, TEXT("ROM not loaded: please load a ROM first!"), TEXT("Error!"), MB_OK);
                         break;
@@ -664,14 +664,14 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         return FALSE;
 
                     //  switch to LocalAchievements
-                    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+                    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
                     Achievement& NewClone = pGameContext.NewAchievement(Achievement::Category::Local);
 
                     //  Clone TO the user achievements
                     const Achievement& Ach = *g_AchievementsDialog.GetAchievementAt(nSel);
 
                     NewClone.CopyFrom(Ach);
-                    NewClone.SetAuthor(ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername());
+                    NewClone.SetAuthor(ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername());
                     NewClone.SetTitle(ra::StringPrintf("%s (copy)", Ach.Title()));
 
                     OnClickAchievementSet(Achievement::Category::Local);
@@ -689,7 +689,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                 break;
                 case IDC_RA_DEL_ACH:
                 {
-                    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+                    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
                     if (pGameContext.GameId() == 0U)
                     {
                         MessageBox(hDlg, TEXT("ROM not loaded: please load a ROM first!"), TEXT("Error!"), MB_OK);
@@ -732,10 +732,10 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_COMMIT_ACH:
                 {
-                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
+                    if (ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId() == 0U)
                         break;
 
-                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
                     if (m_nActiveCategory == Achievement::Category::Local)
                     {
                         // Local save is to disk
@@ -767,7 +767,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_REVERTSELECTED:
                 {
-                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
+                    if (ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId() == 0U)
                         break;
 
                     //  Attempt to remove from list, but if it has an Id > 0,
@@ -788,7 +788,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                             // Find Achievement with Ach.Id()
                             const ra::AchievementID nID = Cheevo.ID();
 
-                            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+                            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
                             if (pGameContext.ReloadAchievement(nID))
                             {
                                 Cheevo.SetModified(FALSE);
@@ -815,14 +815,14 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                 {
                     auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
                     pRuntime.SetPaused(IsDlgButtonChecked(hDlg, IDC_RA_CHKACHPROCESSINGACTIVE) == FALSE);
-                    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+                    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
                     pEmulatorContext.SetMemoryModified();
                     return TRUE;
                 }
 
                 case IDC_RA_RESET_ACH:
                 {
-                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
+                    if (ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId() == 0U)
                         break;
 
                     // this could fuck up in so, so many ways. But fuck it, just reset achieved status.
@@ -875,7 +875,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                 case IDC_RA_ACTIVATE_ALL_ACH:
                 {
-                    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U || m_vAchievementIDs.empty())
+                    if (ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId() == 0U || m_vAchievementIDs.empty())
                         break;
 
                     if (MessageBox(hDlg, TEXT("Activate all achievements?"), TEXT("Activate Achievements"), MB_YESNO) ==
@@ -886,7 +886,7 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
 
                         size_t nIndex = 0;
                         auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-                        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
                         for (auto nAchievementID : m_vAchievementIDs)
                         {
                             Achievement& Cheevo = *pGameContext.FindAchievement(nAchievementID);
@@ -1012,7 +1012,7 @@ INT_PTR Dlg_Achievements::CommitAchievements(HWND hDlg)
     if (LocalValidateAchievementsBeforeCommit(nLbxItemsChecked) == FALSE)
         return FALSE;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     std::string title;
 
     ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
@@ -1206,7 +1206,7 @@ void Dlg_Achievements::ReloadLBXData(ra::AchievementID nID)
     if (nOffset == m_vAchievementIDs.size())
         return;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const Achievement* pAchievement = pGameContext.FindAchievement(nID);
     if (pAchievement == nullptr)
         return;
@@ -1232,7 +1232,7 @@ void Dlg_Achievements::ReloadLBXData(ra::AchievementID nID)
 
 void Dlg_Achievements::UpdateActiveAchievements()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     for (size_t nIndex = 0; nIndex < m_vAchievementIDs.size(); ++nIndex)
     {
         const Achievement* pAchievement = pGameContext.FindAchievement(m_vAchievementIDs.at(nIndex));
@@ -1287,7 +1287,7 @@ Achievement* Dlg_Achievements::GetAchievementAt(gsl::index nIndex) const
 {
     if (ra::to_unsigned(nIndex) < m_vAchievementIDs.size())
     {
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         return pGameContext.FindAchievement(m_vAchievementIDs.at(nIndex));
     }
 

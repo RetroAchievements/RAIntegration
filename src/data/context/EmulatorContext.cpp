@@ -7,8 +7,8 @@
 
 #include "api\LatestClient.hh"
 
-#include "data\GameContext.hh"
-#include "data\UserContext.hh"
+#include "data\context\GameContext.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\IClock.hh"
 #include "services\IConfiguration.hh"
@@ -25,6 +25,7 @@
 
 namespace ra {
 namespace data {
+namespace context {
 
 void EmulatorContext::Initialize(EmulatorID nEmulatorId, const char* sClientName)
 {
@@ -258,7 +259,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         if (bHardcore)
         {
             sError = L"The latest client is required for hardcore mode.";
-            auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
+            auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
             if (pUserContext.IsLoggedIn())
             {
                 sError += L" You will be logged out.";
@@ -370,7 +371,7 @@ void EmulatorContext::DisableHardcoreMode()
 
         RebuildMenu();
 
-        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.RefreshUnlocks();
     }
 }
@@ -386,7 +387,7 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     if (!ValidateClientVersion(bHardcore))
     {
         // The version could not be validated, or the user has chosen to update. Log them out.
-        auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
+        auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
         pUserContext.Logout();
         return false;
     }
@@ -398,7 +399,7 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     }
 
     // The user is on the latest version. If a game is loaded, inform them that the emulator must be reset
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     if (pGameContext.GameId() != 0 && bShowWarning)
     {
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
@@ -466,7 +467,7 @@ std::wstring EmulatorContext::GetAppTitle(const std::string& sMessage) const
         builder.Append(sMessage);
     }
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     if (pUserContext.IsLoggedIn())
     {
         builder.Append(" - ");
@@ -767,6 +768,6 @@ bool EmulatorContext::IsMemoryInsecure() const
     return m_bMemoryInsecure;
 }
 
-
+} // namespace context
 } // namespace data
 } // namespace ra

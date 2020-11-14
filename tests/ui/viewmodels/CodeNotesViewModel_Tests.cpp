@@ -22,8 +22,8 @@ private:
     class CodeNotesViewModelHarness : public CodeNotesViewModel
     {
     public:
-        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
-        ra::data::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;

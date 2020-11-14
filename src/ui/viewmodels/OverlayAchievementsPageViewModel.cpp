@@ -4,9 +4,9 @@
 
 #include "api\FetchAchievementInfo.hh"
 
-#include "data\GameContext.hh"
-#include "data\SessionTracker.hh"
-#include "data\UserContext.hh"
+#include "data\context\GameContext.hh"
+#include "data\context\SessionTracker.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
@@ -116,7 +116,7 @@ void OverlayAchievementsPageViewModel::Refresh()
     OverlayListPageViewModel::Refresh();
 
     // title
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     SetListTitle(pGameContext.GameTitle());
 
     // achievement list
@@ -345,7 +345,7 @@ void OverlayAchievementsPageViewModel::Refresh()
     }
     else
     {
-        const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::SessionTracker>().GetTotalPlaytime(pGameContext.GameId());
+        const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(pGameContext.GameId());
         const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
         SetSummary(ra::StringPrintf(L"%s - %dh%02dm", m_sSummary, nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
         m_fElapsed = static_cast<double>(nPlayTimeSeconds.count() % 60);
@@ -376,8 +376,8 @@ bool OverlayAchievementsPageViewModel::Update(double fElapsed)
     if (m_fElapsed < 60.0)
         return bUpdated;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
-    const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::SessionTracker>().GetTotalPlaytime(pGameContext.GameId());
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(pGameContext.GameId());
     const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
     SetSummary(ra::StringPrintf(L"%s - %dh%02dm", m_sSummary, nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
 
@@ -443,7 +443,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     if (m_vAchievementDetails.find(vmItem.GetId()) != m_vAchievementDetails.end()) // already populated
         return;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pAchievement = pGameContext.FindAchievement(vmItem.GetId());
     if (pAchievement == nullptr)
         return;
@@ -478,7 +478,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         vmAchievement.SetWonBy(ra::StringPrintf(L"Won by %u of %u (%1.0f%%)", response.EarnedBy, response.NumPlayers,
             (static_cast<double>(response.EarnedBy) * 100) / response.NumPlayers));
 
-        const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+        const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
         for (const auto& pWinner : response.Entries)
         {
             auto& vmWinner = vmAchievement.RecentWinners.Add();

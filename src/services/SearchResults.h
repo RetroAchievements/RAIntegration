@@ -227,13 +227,13 @@ public:
     /// Removes an address from the matching address list.
     /// </summary>
     /// <param name="nAddress">The address to remove.</param>
-    void ExcludeAddress(ra::ByteAddress nAddress);
+    void ExcludeAddress(ra::ByteAddress nAddress) noexcept;
 
     /// <summary>
     /// Removes an address from the matching address list.
     /// </summary>
     /// <param name="nAddress">The index of the address to remove.</param>
-    void ExcludeMatchingAddress(gsl::index nIndex);
+    void ExcludeMatchingAddress(gsl::index nIndex) noexcept;
 
 private:
     void MergeSearchResults(const SearchResults& srMemory, const SearchResults& srAddresses);

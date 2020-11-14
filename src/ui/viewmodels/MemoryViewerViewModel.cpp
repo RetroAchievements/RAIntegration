@@ -2,8 +2,8 @@
 
 #include "RA_Defs.h"
 
-#include "data\EmulatorContext.hh"
-#include "data\GameContext.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "ui\EditorTheme.hh"
 #include "ui\viewmodels\WindowManager.hh"
@@ -99,12 +99,12 @@ MemoryViewerViewModel::MemoryViewerViewModel()
 
 void MemoryViewerViewModel::InitializeNotifyTargets()
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
     pEmulatorContext.AddNotifyTarget(*this);
 
     m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);
 
     m_bReadOnly = (pGameContext.GameId() == 0);
@@ -140,7 +140,7 @@ int MemoryViewerViewModel::NibblesPerWord() const
 
 static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
     const ra::ui::viewmodels::MemoryBookmarksViewModel& pBookmarksViewModel,
-    const ra::data::GameContext& pGameContext)
+    const ra::data::context::GameContext& pGameContext)
 {
     if (pBookmarksViewModel.HasBookmark(nAddress))
     {
@@ -159,7 +159,7 @@ static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
 void MemoryViewerViewModel::UpdateColors()
 {
     const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
 
     const auto nVisibleLines = GetNumVisibleLines();
     const auto nFirstAddress = GetFirstAddress();
@@ -200,7 +200,7 @@ void MemoryViewerViewModel::UpdateHighlight(ra::ByteAddress nAddress, int nNewLe
     if (nOldLength > nNewLength)
     {
         const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
 
         while (nOldLength > nNewLength)
         {
@@ -282,7 +282,7 @@ void MemoryViewerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
     {
         m_nNeedsRedraw |= REDRAW_ADDRESSES;
 
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         pEmulatorContext.ReadMemory(args.tNewValue, m_pMemory, gsl::narrow_cast<size_t>(GetNumVisibleLines()) * 16);
 
         UpdateColors();
@@ -302,7 +302,7 @@ void MemoryViewerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
         {
             const auto nFirstAddress = GetFirstAddress();
 
-            const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+            const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
             pEmulatorContext.ReadMemory(nFirstAddress, m_pMemory, gsl::narrow_cast<size_t>(args.tNewValue) * 16);
 
             UpdateColors();
@@ -503,7 +503,7 @@ void MemoryViewerViewModel::OnActiveGameChanged()
 
     UpdateColors();
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     m_bReadOnly = (pGameContext.GameId() == 0);
 }
 
@@ -519,7 +519,7 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
         return;
 
     const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto nNewColor = (nAddress == GetAddress()) ? ra::itoe<TextColor>(HIGHLIGHTED_COLOR & 0x0F) :
         GetColor(nAddress, pBookmarksViewModel, pGameContext);
 
@@ -532,7 +532,7 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
 
 void MemoryViewerViewModel::OnTotalMemorySizeChanged()
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
     if (GetAddress() >= m_nTotalMemorySize)
@@ -593,7 +593,7 @@ void MemoryViewerViewModel::UpdateColor(ra::ByteAddress nAddress)
 
         // byte is not selected, update
         const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
 
         const auto nNewColor = GetColor(nAddress, pBookmarksViewModel, pGameContext);
         if (nNewColor != nColor)
@@ -723,7 +723,7 @@ bool MemoryViewerViewModel::OnChar(char c)
     const auto nAddress = GetFirstAddress() + nIndex;
 
     // push the updated value to the emulator
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
     pEmulatorContext.WriteMemoryByte(nAddress, nByte);
 
     // if a bookmark exists for the modified address, update the current value
@@ -759,7 +759,7 @@ void MemoryViewerViewModel::DoFrame()
     const auto nVisibleLines = GetNumVisibleLines();
     Expects(nVisibleLines < MaxLines);
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     pEmulatorContext.ReadMemory(nAddress, pMemory, gsl::narrow_cast<size_t>(nVisibleLines) * 16);
 
     for (auto nIndex = 0; nIndex < nVisibleLines * 16; ++nIndex)

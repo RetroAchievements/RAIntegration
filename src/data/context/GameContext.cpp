@@ -16,9 +16,9 @@
 #include "api\SubmitLeaderboardEntry.hh"
 #include "api\UpdateCodeNote.hh"
 
-#include "data\EmulatorContext.hh"
-#include "data\SessionTracker.hh"
-#include "data\UserContext.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\SessionTracker.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IAudioSystem.hh"
@@ -38,6 +38,7 @@
 
 namespace ra {
 namespace data {
+namespace context {
 
 static void CopyAchievementData(Achievement& pAchievement,
                                 const ra::api::FetchGameData::Response::Achievement& pAchievementData)
@@ -630,7 +631,7 @@ Achievement& GameContext::NewAchievement(Achievement::Category nType)
     return pAchievement;
 }
 
-bool GameContext::RemoveAchievement(ra::AchievementID nAchievementId)
+bool GameContext::RemoveAchievement(ra::AchievementID nAchievementId) noexcept
 {
     for (auto pIter = m_vAchievements.begin(); pIter != m_vAchievements.end(); ++pIter)
     {
@@ -679,7 +680,7 @@ void GameContext::AwardMastery() const
 
             ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
 
-            const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::SessionTracker>().GetTotalPlaytime(m_nGameId);
+            const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(m_nGameId);
             const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
 
             auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -759,7 +760,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
         bTakeScreenshot = false;
     }
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     if (bSubmit && pEmulatorContext.WasMemoryModified())
     {
         vmPopup->SetTitle(L"Achievement NOT Unlocked");
@@ -809,7 +810,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
         if (response.Succeeded())
         {
             // success! update the player's score
-            ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().SetScore(response.NewPlayerScore);
+            ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().SetScore(response.NewPlayerScore);
         }
         else if (ra::StringStartsWith(response.ErrorMessage, "User already has "))
         {
@@ -983,7 +984,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
     if (pLeaderboard == nullptr)
         return;
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     if (pEmulatorContext.WasMemoryModified())
     {
         std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
@@ -1058,7 +1059,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
                 ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
                 vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->Title()));
 
-                const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+                const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
                 constexpr int nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
 
                 for (const auto& pEntry : response.TopEntries)
@@ -1327,7 +1328,7 @@ bool GameContext::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNot
         auto response = request.Call();
         if (response.Succeeded())
         {
-            const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+            const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
             AddCodeNote(nAddress, pUserContext.GetUsername(), sNote);
             return true;
         }
@@ -1378,5 +1379,6 @@ bool GameContext::DeleteCodeNote(ra::ByteAddress nAddress)
     return false;
 }
 
+} // namespace context
 } // namespace data
 } // namespace ra

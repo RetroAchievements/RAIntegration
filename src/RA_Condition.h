@@ -140,7 +140,7 @@ public:
     _NODISCARD auto& GetAt(size_t nPos) { return m_Conditions.at(nPos); }
     _NODISCARD auto& GetAt(size_t nPos) const { return m_Conditions.at(nPos); }
     auto Clear() noexcept { m_Conditions.clear(); }
-    void RemoveAt(size_t i);
+    void RemoveAt(size_t i) noexcept;
 
 protected:
     std::vector<Condition> m_Conditions;
@@ -156,7 +156,7 @@ public:
     _NODISCARD auto EmptyGroup() const noexcept { return m_vConditionGroups.empty(); }
     // TODO: Put in a type_trait for nothrow EmplaceConstructible to give a nothrow guarantee
     void AddGroup() noexcept { GSL_SUPPRESS_F6 m_vConditionGroups.emplace_back(); }
-    void RemoveAltGroup(gsl::index nIndex)
+    void RemoveAltGroup(gsl::index nIndex) noexcept
     {
         ++nIndex;
         if (nIndex < ra::to_signed(m_vConditionGroups.size()))

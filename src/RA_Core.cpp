@@ -12,11 +12,11 @@
 #include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_GameLibrary.h"
 
-#include "data\ConsoleContext.hh"
-#include "data\EmulatorContext.hh"
-#include "data\GameContext.hh"
-#include "data\SessionTracker.hh"
-#include "data\UserContext.hh"
+#include "data\context\ConsoleContext.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\GameContext.hh"
+#include "data\context\SessionTracker.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
@@ -129,9 +129,9 @@ API int CCONV _RA_Shutdown()
 
         ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 
-        ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>().EndSession();
+        ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>().EndSession();
 
-        ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().LoadGame(0U);
+        ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().LoadGame(0U);
     }
 
     if (g_AchievementsDialog.GetHWND() != nullptr)
@@ -194,7 +194,7 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     bool bUnofficialModified = false;
     bool bLocalModified = false;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     pGameContext.EnumerateAchievements([&bCoreModified, &bUnofficialModified, &bLocalModified](const Achievement& pAchievement) noexcept
     {
         if (pAchievement.Modified())
@@ -257,7 +257,7 @@ API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
     RA_LOG_INFO("User chose to disable hardcore to %s", sActivity);
 
     // user consented, switch to non-hardcore mode
-    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();
+    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().DisableHardcoreMode();
 
     // return success
     return true;
@@ -267,7 +267,7 @@ API void CCONV _RA_OnReset()
 {
     // if there's no game loaded, there shouldn't be any active achievements or popups to clear - except maybe the
     // logging in messages, which we don't want to clear.
-    if (ra::services::ServiceLocator::Get<ra::data::GameContext>().GameId() == 0U)
+    if (ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId() == 0U)
         return;
 
     // Temporarily disable achievements while the system is resetting. They will automatically re-enable when
@@ -282,7 +282,7 @@ API void CCONV _RA_OnReset()
 API HMENU CCONV _RA_CreatePopupMenu()
 {
     HMENU hRA = CreatePopupMenu();
-    if (ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+    if (ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
     {
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_LOGOUT, TEXT("Log&out"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
@@ -445,7 +445,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
             if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
             {
-                auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+                auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
                 if (!pEmulatorContext.ValidateClientVersion())
                 {
                     // The version could not be validated, or the user has chosen to update. Don't login.
@@ -459,12 +459,12 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
         }
 
         case IDM_RA_FILES_LOGOUT:
-            ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().Logout();
+            ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().Logout();
             break;
 
         case IDM_RA_HARDCORE_MODE:
         {
-            auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+            auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
             const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
             if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
             {
@@ -485,7 +485,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             pConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning,
                 !pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning));
 
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
+            ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
         }
         break;
 
@@ -506,7 +506,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_OPENUSERPAGE:
         {
-            const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+            const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
             if (pUserContext.IsLoggedIn())
             {
                 const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -520,7 +520,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 
         case IDM_RA_OPENGAMEPAGE:
         {
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
             if (pGameContext.GameId() != 0)
             {
                 const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -560,7 +560,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
 */
         case IDM_RA_PARSERICHPRESENCE:
         {
-            ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().ReloadRichPresenceScript();
+            ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().ReloadRichPresenceScript();
 
             auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
             pWindowManager.RichPresenceMonitor.Show();
@@ -576,18 +576,18 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
             if (!bLeaderboardsActive)
             {
                 ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Leaderboards are now disabled.");
-                ra::services::ServiceLocator::GetMutable<ra::data::GameContext>().DeactivateLeaderboards();
+                ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().DeactivateLeaderboards();
             }
             else
             {
-                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
                 std::wstring sMessage = L"Leaderboards are now enabled.";
                 if (pGameContext.GameId() != 0)
                     sMessage += L"\nYou may need to reload the game to activate them.";
                 ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(sMessage);
             }
 
-            ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
+            ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
         }
         break;
 

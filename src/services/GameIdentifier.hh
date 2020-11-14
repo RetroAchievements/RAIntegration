@@ -2,7 +2,7 @@
 #define RA_SERVICES_GAMEIDENTIFIER_HH
 #pragma once
 
-#include "data\GameContext.hh"
+#include "data\context\GameContext.hh"
 
 namespace ra {
 namespace services {
@@ -39,7 +39,7 @@ public:
 private:
     std::string m_sPendingMD5;
     unsigned int m_nPendingGameId{};
-    ra::data::GameContext::Mode m_nPendingMode{};
+    ra::data::context::GameContext::Mode m_nPendingMode{};
 };
 
 } // namespace services

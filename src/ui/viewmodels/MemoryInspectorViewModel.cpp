@@ -2,8 +2,8 @@
 
 #include "RA_Defs.h"
 
-#include "data\EmulatorContext.hh"
-#include "data\GameContext.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\IAudioSystem.hh"
 #include "services\ServiceLocator.hh"
@@ -34,7 +34,7 @@ MemoryInspectorViewModel::MemoryInspectorViewModel()
 
 void MemoryInspectorViewModel::InitializeNotifyTargets()
 {
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.AddNotifyTarget(*this);
 
     m_pSearch.InitializeNotifyTargets();
@@ -47,7 +47,7 @@ void MemoryInspectorViewModel::DoFrame()
     m_pViewer.DoFrame();
 
     const auto nAddress = GetCurrentAddress();
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto nValue = pEmulatorContext.ReadMemoryByte(nAddress);
     SetValue(CurrentAddressValueProperty, nValue);
 }
@@ -107,11 +107,11 @@ void MemoryInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeA
 
 void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddress)
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nNewAddress);
     SetCurrentAddressNote(pNote ? *pNote : std::wstring());
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto nValue = pEmulatorContext.ReadMemoryByte(nNewAddress);
     SetValue(CurrentAddressValueProperty, nValue);
 
@@ -138,7 +138,7 @@ void MemoryInspectorViewModel::SaveCurrentAddressNote()
     const auto nAddress = GetCurrentAddress();
 
     std::string sAuthor;
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nAddress, sAuthor);
     bool bUpdated = false;
 
@@ -203,7 +203,7 @@ void MemoryInspectorViewModel::DeleteCurrentAddressNote()
     const auto nAddress = GetCurrentAddress();
 
     std::string sAuthor;
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nAddress, sAuthor);
 
     if (pNote == nullptr)
@@ -239,7 +239,7 @@ bool MemoryInspectorViewModel::NextNote()
 {
     const auto nCurrentAddress = GetCurrentAddress();
     ra::ByteAddress nNewAddress = nCurrentAddress;
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.EnumerateCodeNotes([this, nCurrentAddress, &nNewAddress](ra::ByteAddress nAddress)
     {
         if (nAddress > nCurrentAddress)
@@ -264,7 +264,7 @@ bool MemoryInspectorViewModel::PreviousNote()
 {
     const auto nCurrentAddress = GetCurrentAddress();
     ra::ByteAddress nNewAddress = nCurrentAddress;
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.EnumerateCodeNotes([this, nCurrentAddress, &nNewAddress](ra::ByteAddress nAddress)
     {
         if (nAddress >= nCurrentAddress)
@@ -288,7 +288,7 @@ void MemoryInspectorViewModel::ToggleBit(int nBit)
     const auto nAddress = GetCurrentAddress();
 
     // push the updated value to the emulator
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     auto nValue = pEmulatorContext.ReadMemoryByte(nAddress);
     nValue ^= (1 << nBit);
     pEmulatorContext.WriteMemoryByte(nAddress, nValue);
@@ -303,13 +303,13 @@ void MemoryInspectorViewModel::ToggleBit(int nBit)
 
 void MemoryInspectorViewModel::OnActiveGameChanged()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (pGameContext.GameId() == 0)
     {
         SetWindowTitle(L"Memory Inspector [no game loaded]");
         SetValue(CanModifyNotesProperty, false);
     }
-    else if (pGameContext.GetMode() == ra::data::GameContext::Mode::CompatibilityTest)
+    else if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
     {
         SetWindowTitle(L"Memory Inspector [compatibility mode]");
         SetValue(CanModifyNotesProperty, true);
@@ -324,7 +324,7 @@ void MemoryInspectorViewModel::OnActiveGameChanged()
 void MemoryInspectorViewModel::OnEndGameLoad()
 {
     ra::ByteAddress nFirstAddress = 0U;
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     pGameContext.EnumerateCodeNotes([&nFirstAddress](ra::ByteAddress nAddress)
     {
         nFirstAddress = nAddress;

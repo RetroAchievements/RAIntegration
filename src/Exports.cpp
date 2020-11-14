@@ -7,11 +7,11 @@
 
 #include "api\Login.hh"
 
-#include "data\ConsoleContext.hh"
-#include "data\EmulatorContext.hh"
-#include "data\GameContext.hh"
-#include "data\SessionTracker.hh"
-#include "data\UserContext.hh"
+#include "data\context\ConsoleContext.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\GameContext.hh"
+#include "data\context\SessionTracker.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\FrameEventQueue.hh"
@@ -85,18 +85,18 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
 
     if (bOffline)
     {
-        ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().DisableLogin();
+        ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().DisableLogin();
     }
     else
     {
         // Set the client version and User-Agent string
-        ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().SetClientVersion(sClientVer);
+        ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().SetClientVersion(sClientVer);
 
         // validate version (async call)
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]
         {
-            if (!ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().ValidateClientVersion())
-                ra::services::ServiceLocator::GetMutable<ra::data::UserContext>().Logout();
+            if (!ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().ValidateClientVersion())
+                ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().Logout();
         });
     }
 
@@ -113,7 +113,7 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
             }
 
             RA_LOG_INFO("Hardcore disabled by external tool");
-            ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();
+            ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().DisableHardcoreMode();
         }
     }
 
@@ -149,7 +149,7 @@ API void CCONV _RA_InstallSharedFunctions(bool(*)(void), void(*fpCauseUnpause)(v
 API void CCONV _RA_InstallSharedFunctionsExt(bool(*)(void), void(*fpCauseUnpause)(void), void(*fpCausePause)(void), void(*fpRebuildMenu)(void),
                                              void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), [[maybe_unused]] void(*fpLoadROM)(const char*))
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
     pEmulatorContext.SetResetFunction(fpResetEmulation);
     pEmulatorContext.SetPauseFunction(fpCausePause);
     pEmulatorContext.SetUnpauseFunction(fpCauseUnpause);
@@ -163,7 +163,7 @@ API void CCONV _RA_InstallSharedFunctionsExt(bool(*)(void), void(*fpCauseUnpause
 
 static void HandleLoginResponse(const ra::api::Login::Response& response)
 {
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
+    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
     if (pUserContext.IsLoginDisabled())
         return;
 
@@ -174,7 +174,7 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
         pUserContext.SetScore(response.Score);
 
         // load the session information
-        auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::SessionTracker>();
+        auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
         pSessionTracker.Initialize(response.Username);
 
         // show the welcome message
@@ -191,7 +191,7 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmMessage);
 
         // notify the client to update the RetroAchievements menu
-        ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
+        ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
 
         // update the client title-bar to include the user name
         _RA_UpdateAppTitle();
@@ -208,7 +208,7 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
 
 API void CCONV _RA_AttemptLogin(bool bBlocking)
 {
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::UserContext>();
+    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
     if (pUserContext.IsLoginDisabled())
         return;
 
@@ -244,33 +244,33 @@ API void CCONV _RA_AttemptLogin(bool bBlocking)
 
 API const char* CCONV _RA_UserName()
 {
-    auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::UserContext>();
+    auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     return pUserContext.GetUsername().c_str();
 }
 
 API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)
 {
-    auto pContext = std::make_unique<ra::data::ConsoleContext>(ra::itoe<ConsoleID>(nConsoleId));
+    auto pContext = std::make_unique<ra::data::context::ConsoleContext>(ra::itoe<ConsoleID>(nConsoleId));
     RA_LOG_INFO("Console set to %u (%s)", pContext->Id(), pContext->Name());
-    ra::services::ServiceLocator::Provide<ra::data::ConsoleContext>(std::move(pContext));
+    ra::services::ServiceLocator::Provide<ra::data::context::ConsoleContext>(std::move(pContext));
 }
 
 API void CCONV _RA_SetUserAgentDetail(const char* sDetail)
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>();
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
     pEmulatorContext.SetClientUserAgentDetail(sDetail);
 }
 
 API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize)
 {
-    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().AddMemoryBlock(nBankID, nBankSize,
-        static_cast<ra::data::EmulatorContext::MemoryReadFunction*>(pReader),
-        static_cast<ra::data::EmulatorContext::MemoryWriteFunction*>(pWriter));
+    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().AddMemoryBlock(nBankID, nBankSize,
+        static_cast<ra::data::context::EmulatorContext::MemoryReadFunction*>(pReader),
+        static_cast<ra::data::context::EmulatorContext::MemoryWriteFunction*>(pWriter));
 }
 
 API void CCONV _RA_ClearMemoryBanks()
 {
-    ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().ClearMemoryBlocks();
+    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().ClearMemoryBlocks();
 }
 
 API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROM, unsigned int nROMSize)
@@ -296,7 +296,7 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
 API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 {
-    auto sTitle = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetAppTitle(sMessage ? sMessage : "");
+    auto sTitle = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetAppTitle(sMessage ? sMessage : "");
     auto& vmEmulator = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator;
     vmEmulator.SetWindowTitle(sTitle);
 }
@@ -330,7 +330,7 @@ static void ProcessAchievements()
     }
 #endif
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     auto& vmAssetList = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
 
     TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeProcess);
@@ -537,7 +537,7 @@ API int CCONV _RA_CaptureState(char* pBuffer, int nBufferSize)
 
 static bool CanRestoreState()
 {
-    if (!ra::services::ServiceLocator::Get<ra::data::UserContext>().IsLoggedIn())
+    if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
         return false;
 
     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
@@ -547,7 +547,7 @@ static bool CanRestoreState()
         ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Disabling Hardcore mode.", L"Loading save states is not allowed in Hardcore mode.");
 
         RA_LOG_INFO("Hardcore disabled by loading state");
-        ra::services::ServiceLocator::GetMutable<ra::data::EmulatorContext>().DisableHardcoreMode();
+        ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().DisableHardcoreMode();
     }
 
     return true;

@@ -2,9 +2,9 @@
 #define RA_UI_MEMORYSEARCHVIEWMODEL_H
 #pragma once
 
-#include "data\EmulatorContext.hh"
-#include "data\GameContext.hh"
 #include "data\Types.hh"
+#include "data\context\EmulatorContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\SearchResults.h"
 
@@ -18,8 +18,8 @@ namespace viewmodels {
 
 class MemorySearchViewModel : public ViewModelBase,
     protected ViewModelCollectionBase::NotifyTarget,
-    protected data::EmulatorContext::NotifyTarget,
-    protected data::GameContext::NotifyTarget
+    protected ra::data::context::EmulatorContext::NotifyTarget,
+    protected ra::data::context::GameContext::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 MemorySearchViewModel();
@@ -466,7 +466,7 @@ private:
     void ApplyContinuousFilter();
     void UpdateResults();
     void UpdateResult(SearchResultViewModel& pRow, ra::services::SearchResults::Result& pResult, 
-        const ra::data::EmulatorContext& pEmulatorContext, bool bCapturePrevious);
+        const ra::data::context::EmulatorContext& pEmulatorContext, bool bCapturePrevious);
 
     void AddNewPage();
     void ChangePage(size_t nNewPage);

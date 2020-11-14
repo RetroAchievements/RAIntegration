@@ -1,6 +1,6 @@
 #include "OverlayWindow.hh"
 
-#include "data\EmulatorContext.hh"
+#include "data\context\EmulatorContext.hh"
 
 #include "services\IClock.hh"
 
@@ -49,7 +49,7 @@ static DWORD WINAPI OverlayWindowThreadStart(LPVOID)
 
 void OverlayWindow::CreateOverlayWindow(HWND hWnd)
 {
-    switch (ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().GetEmulatorId())
+    switch (ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetEmulatorId())
     {
         case EmulatorID::RA_Gens:
             return;

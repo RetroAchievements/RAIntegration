@@ -1,6 +1,6 @@
 #include "AssetListViewModel.hh"
 
-#include "data\GameContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
@@ -637,7 +637,7 @@ void AssetListViewModel::ActivateSelected()
 void AssetListViewModel::SaveSelected()
 {
     const bool bHasSelection = HasSelection(AssetType::Achievement);
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
 
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.GameId()));
@@ -915,7 +915,7 @@ void AssetListViewModel::RevertSelected()
 
 void AssetListViewModel::CreateNew()
 {
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     const auto& pAchievement = pGameContext.NewAchievement(Achievement::Category::Local);
 
     auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
@@ -974,7 +974,7 @@ void AssetListViewModel::CloneSelected()
     if (vSelectedAssets.empty())
         return;
 
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
 
     FilteredAssets().BeginUpdate();
 

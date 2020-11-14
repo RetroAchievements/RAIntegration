@@ -68,11 +68,11 @@ public:
     }
 
     ra::api::mocks::MockServer mockServer;
-    ra::data::mocks::MockConsoleContext mockConsoleContext;
-    ra::data::mocks::MockEmulatorContext mockEmulatorContext;
-    ra::data::mocks::MockGameContext mockGameContext;
-    ra::data::mocks::MockSessionTracker mockSessionTracker;
-    ra::data::mocks::MockUserContext mockUserContext;
+    ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+    ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+    ra::data::context::mocks::MockGameContext mockGameContext;
+    ra::data::context::mocks::MockSessionTracker mockSessionTracker;
+    ra::data::context::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockConfiguration mockConfiguration;
     ra::ui::mocks::MockDesktop mockDesktop;
     ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
@@ -205,7 +205,7 @@ public:
         identifier.mockUserContext.Initialize("User", "ApiToken");
 
         Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
-        Assert::AreEqual(ra::data::GameContext::Mode::Normal, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, identifier.mockGameContext.GetMode());
         Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
     }
 
@@ -220,7 +220,7 @@ public:
         identifier.mockUserContext.Initialize("User", "ApiToken");
 
         Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
-        Assert::AreEqual(ra::data::GameContext::Mode::CompatibilityTest, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(ra::data::context::GameContext::Mode::CompatibilityTest, identifier.mockGameContext.GetMode());
         Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
     }
 
@@ -278,7 +278,7 @@ public:
 
         Assert::AreEqual(23U, identifier.mockGameContext.GameId());
         Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
-        Assert::AreEqual(ra::data::GameContext::Mode::Normal, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, identifier.mockGameContext.GetMode());
         Assert::AreEqual(23U, identifier.mockSessionTracker.CurrentSessionGameId());
         Assert::IsNull(identifier.mockOverlayManager.GetMessage(1U));
         Assert::IsTrue(identifier.mockGameContext.WasLoaded());
@@ -296,7 +296,7 @@ public:
 
         Assert::AreEqual(23U, identifier.mockGameContext.GameId());
         Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
-        Assert::AreEqual(ra::data::GameContext::Mode::CompatibilityTest, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(ra::data::context::GameContext::Mode::CompatibilityTest, identifier.mockGameContext.GetMode());
         Assert::AreEqual(23U, identifier.mockSessionTracker.CurrentSessionGameId());
         Assert::IsNull(identifier.mockOverlayManager.GetMessage(1U));
         Assert::IsTrue(identifier.mockGameContext.WasLoaded());
@@ -437,7 +437,7 @@ public:
 
         Assert::AreEqual(23U, identifier.mockGameContext.GameId());
         Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
-        Assert::AreEqual(ra::data::GameContext::Mode::CompatibilityTest, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(ra::data::context::GameContext::Mode::CompatibilityTest, identifier.mockGameContext.GetMode());
         Assert::AreEqual(23U, identifier.mockSessionTracker.CurrentSessionGameId());
         Assert::IsNull(identifier.mockOverlayManager.GetMessage(1U));
         Assert::IsTrue(identifier.mockGameContext.WasLoaded());
@@ -448,7 +448,7 @@ public:
 
         Assert::AreEqual(22U, identifier.mockGameContext.GameId());
         Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
-        Assert::AreEqual(ra::data::GameContext::Mode::Normal, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, identifier.mockGameContext.GetMode());
         Assert::AreEqual(22U, identifier.mockSessionTracker.CurrentSessionGameId());
         Assert::IsNull(identifier.mockOverlayManager.GetMessage(1U));
         Assert::IsTrue(identifier.mockGameContext.WasLoaded());

@@ -17,11 +17,13 @@ const std::wstring MockAudioSystem::BEEP = L"BEEP";
 
 namespace ra {
 namespace data {
+namespace context {
 namespace mocks {
 
-gsl::span<uint8_t> MockEmulatorContext::s_pMemory;
+gsl::span<uint8_t> ra::data::context::mocks::MockEmulatorContext::s_pMemory;
 
 } // namespace mocks
+} // namespace context
 } // namespace data
 } // namespace ra
 

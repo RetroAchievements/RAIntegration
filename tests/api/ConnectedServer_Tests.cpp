@@ -14,7 +14,7 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 using ra::api::impl::ConnectedServer;
 using ra::api::mocks::MockServer;
-using ra::data::mocks::MockUserContext;
+using ra::data::context::mocks::MockUserContext;
 using ra::services::mocks::MockHttpRequester;
 using ra::services::mocks::MockThreadPool;
 using ra::services::Http;

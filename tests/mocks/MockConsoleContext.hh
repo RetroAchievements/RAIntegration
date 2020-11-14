@@ -2,12 +2,13 @@
 #define RA_DATA_MOCK_CONSOLECONTEXT_HH
 #pragma once
 
-#include "data\ConsoleContext.hh"
+#include "data\context\ConsoleContext.hh"
 
 #include "services\ServiceLocator.hh"
 
 namespace ra {
 namespace data {
+namespace context {
 namespace mocks {
 
 class MockConsoleContext : public ConsoleContext
@@ -40,10 +41,11 @@ public:
     }
 
 private:
-    ra::services::ServiceLocator::ServiceOverride<ra::data::ConsoleContext> m_Override;
+    ra::services::ServiceLocator::ServiceOverride<ra::data::context::ConsoleContext> m_Override;
 };
 
 } // namespace mocks
+} // namespace context
 } // namespace data
 } // namespace ra
 

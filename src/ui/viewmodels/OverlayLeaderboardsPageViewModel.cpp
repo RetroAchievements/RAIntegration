@@ -4,8 +4,8 @@
 
 #include "api\FetchLeaderboardInfo.hh"
 
-#include "data\GameContext.hh"
-#include "data\UserContext.hh"
+#include "data\context\GameContext.hh"
+#include "data\context\UserContext.hh"
 
 #include "ui\OverlayTheme.hh"
 
@@ -19,7 +19,7 @@ void OverlayLeaderboardsPageViewModel::Refresh()
     m_sDetailTitle = L"Leaderboard Info";
     OverlayListPageViewModel::Refresh();
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
 
     // title
     SetListTitle(pGameContext.GameTitle());
@@ -93,7 +93,7 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     if (m_vLeaderboardRanks.find(vmItem.GetId()) != m_vLeaderboardRanks.end()) // already populated
         return;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pLeaderboard = pGameContext.FindLeaderboard(vmItem.GetId());
     if (pLeaderboard == nullptr)
         return;
@@ -110,12 +110,12 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         if (pIter == m_vLeaderboardRanks.end())
             return;
 
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const RA_Leaderboard* pLeaderboard = pGameContext.FindLeaderboard(nId);
         if (!pLeaderboard)
             return;
 
-        const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::UserContext>().GetUsername();
+        const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
         auto& vmLeaderboard = pIter->second;
         for (const auto& pEntry : response.Entries)
         {

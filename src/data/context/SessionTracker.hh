@@ -6,6 +6,7 @@
 
 namespace ra {
 namespace data {
+namespace context {
 
 class SessionTracker
 {
@@ -78,6 +79,7 @@ private:
     std::streamoff m_nFileWritePosition{};
 };
 
+} // namespace context
 } // namespace data
 } // namespace ra
 

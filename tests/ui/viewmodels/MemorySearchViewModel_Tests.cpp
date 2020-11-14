@@ -81,9 +81,9 @@ private:
             InitializeNotifyTargets();
         }
 
-        ra::data::mocks::MockConsoleContext mockConsoleContext;
-        ra::data::mocks::MockEmulatorContext mockEmulatorContext;
-        ra::data::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::ui::mocks::MockDesktop mockDesktop;
@@ -1116,7 +1116,7 @@ public:
         Assert::AreEqual(std::wstring(L"Custom"), search.PredefinedFilterRanges().GetItemAt(1)->GetLabel());
 
         // only system range defined
-        search.mockConsoleContext.AddMemoryRegion(0U, 0xFFFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0xFFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
         search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
 
         Assert::AreEqual({ 3U }, search.PredefinedFilterRanges().Count());
@@ -1129,8 +1129,8 @@ public:
 
         // system and game ranges defined
         search.mockConsoleContext.ResetMemoryRegions();
-        search.mockConsoleContext.AddMemoryRegion(0U, 0xBFFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0xBFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
         search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
 
         Assert::AreEqual({ 4U }, search.PredefinedFilterRanges().Count());
@@ -1145,10 +1145,10 @@ public:
 
         // multiple system and game ranges defined
         search.mockConsoleContext.ResetMemoryRegions();
-        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0xBFFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xF000U, 0xFFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0x8000U, 0xBFFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xE000U, 0xEFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xF000U, 0xFFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
         search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
 
         Assert::AreEqual({ 4U }, search.PredefinedFilterRanges().Count());
@@ -1165,8 +1165,8 @@ public:
     TEST_METHOD(TestPredefinedFilterRangeAll)
     {
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
         search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
         search.SetFilterRange(L"0x0000-0x1FFF");
 
@@ -1177,8 +1177,8 @@ public:
     TEST_METHOD(TestPredefinedFilterRangeSystem)
     {
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
         search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
         search.SetFilterRange(L"0x0000-0x1FFF");
 
@@ -1189,8 +1189,8 @@ public:
     TEST_METHOD(TestPredefinedFilterRangeGame)
     {
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
         search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
         search.SetFilterRange(L"0x0000-0x1FFF");
 
@@ -1201,8 +1201,8 @@ public:
     TEST_METHOD(TestPredefinedFilterRangeCustom)
     {
         MemorySearchViewModelHarness search;
-        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::ConsoleContext::AddressType::SystemRAM);
-        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::ConsoleContext::AddressType::SaveRAM);
+        search.mockConsoleContext.AddMemoryRegion(0U, 0x7FFFU, ra::data::context::ConsoleContext::AddressType::SystemRAM);
+        search.mockConsoleContext.AddMemoryRegion(0xC000U, 0xCFFFU, ra::data::context::ConsoleContext::AddressType::SaveRAM);
         search.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000U);
         search.SetFilterRange(L"0x0000-0x1FFF");
 
@@ -1430,7 +1430,7 @@ public:
     {
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
-        search.mockConsoleContext.AddMemoryRegion({ 0U }, { 0xFFU }, ra::data::ConsoleContext::AddressType::SystemRAM, "System RAM");
+        search.mockConsoleContext.AddMemoryRegion({ 0U }, { 0xFFU }, ra::data::context::ConsoleContext::AddressType::SystemRAM, "System RAM");
         search.BeginNewSearch();
 
         search.SetComparisonType(ComparisonType::Equals);

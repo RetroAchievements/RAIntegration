@@ -25,7 +25,7 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
-        ra::data::mocks::MockConsoleContext mockConsoleContext;
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
 

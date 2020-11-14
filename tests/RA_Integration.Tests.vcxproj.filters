@@ -28,6 +28,9 @@
     <Filter Include="Mocks">
       <UniqueIdentifier>{59d95c41-4fb8-4dd8-815a-edcb53e962b6}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tests\Data\Context">
+      <UniqueIdentifier>{da241f86-5f80-4b36-b3d8-f8a0ecc1a4ee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\RA_Condition.cpp">
@@ -123,9 +126,6 @@
     <ClCompile Include="..\src\ui\viewmodels\RichPresenceMonitorViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\data\GameContext.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="api\DisconnectedServer_Tests.cpp">
       <Filter>Tests\API</Filter>
     </ClCompile>
@@ -142,12 +142,6 @@
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\api\impl\DisconnectedServer.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\SessionTracker_Tests.cpp">
-      <Filter>Tests\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\SessionTracker.cpp">
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\OverlayManager.cpp">
@@ -167,18 +161,6 @@
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\EmulatorContext_Tests.cpp">
-      <Filter>Tests\Data</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\EmulatorContext.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\UserContext.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="data\GameContext_Tests.cpp">
-      <Filter>Tests\Data</Filter>
     </ClCompile>
     <ClCompile Include="..\src\RA_Achievement.cpp">
       <Filter>Code</Filter>
@@ -208,9 +190,6 @@
       <Filter>Tests\UI</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\ViewModelCollection.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\data\ConsoleContext.cpp">
       <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\ScoreTrackerViewModel.cpp">
@@ -380,6 +359,30 @@
     </ClCompile>
     <ClCompile Include="services\FrameEventQueue_Tests.cpp">
       <Filter>Tests\Services</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\context\UserContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\context\ConsoleContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\context\EmulatorContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\context\GameContext.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\context\SessionTracker.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\context\SessionTracker_Tests.cpp">
+      <Filter>Tests\Data\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="data\context\EmulatorContext_Tests.cpp">
+      <Filter>Tests\Data\Context</Filter>
+    </ClCompile>
+    <ClCompile Include="data\context\GameContext_Tests.cpp">
+      <Filter>Tests\Data\Context</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

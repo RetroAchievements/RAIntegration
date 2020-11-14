@@ -2,7 +2,7 @@
 #define RA_DATA_MOCK_EMULATORCONTEXT_HH
 #pragma once
 
-#include "data\EmulatorContext.hh"
+#include "data\context\EmulatorContext.hh"
 
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
@@ -11,6 +11,7 @@
 
 namespace ra {
 namespace data {
+namespace context {
 namespace mocks {
 
 class MockEmulatorContext : public EmulatorContext
@@ -86,11 +87,12 @@ private:
         s_pMemory.at(nAddress) = nValue;
     }
 
-    ra::services::ServiceLocator::ServiceOverride<ra::data::EmulatorContext> m_Override;
+    ra::services::ServiceLocator::ServiceOverride<ra::data::context::EmulatorContext> m_Override;
     static gsl::span<uint8_t> s_pMemory;
 };
 
 } // namespace mocks
+} // namespace context
 } // namespace data
 } // namespace ra
 

@@ -5,7 +5,7 @@
 
 #include "api\Logout.hh"
 
-#include "data\EmulatorContext.hh"
+#include "data\context\EmulatorContext.hh"
 
 #include "services\IConfiguration.hh"
 
@@ -14,6 +14,7 @@
 
 namespace ra {
 namespace data {
+namespace context {
 
 void UserContext::Logout()
 {
@@ -36,7 +37,7 @@ void UserContext::Logout()
 #ifndef RA_UTEST
         _RA_UpdateAppTitle();
 #endif
-        ra::services::ServiceLocator::Get<ra::data::EmulatorContext>().RebuildMenu();
+        ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
 
         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"You are now logged out.");
     }
@@ -46,5 +47,6 @@ void UserContext::Logout()
     }
 }
 
+} // namespace context
 } // namespace data
 } // namespace ra

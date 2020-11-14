@@ -28,9 +28,9 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
-        ra::data::mocks::MockGameContext mockGameContext;
-        ra::data::mocks::MockSessionTracker mockSessionTracker;
-        ra::data::mocks::MockUserContext mockUserContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockSessionTracker mockSessionTracker;
+        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockThreadPool mockThreadPool;

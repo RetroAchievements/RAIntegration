@@ -277,7 +277,7 @@ void TriggerViewModel::NewCondition()
     MemSize nSize = MemSize::EightBit;
 
     // if the code note specifies an explicit size, use it. otherwise, use the selected viewer mode size.
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     switch (pGameContext.FindCodeNoteSize(nAddress))
     {
         default: // no code note, or code note doesn't specify a size
@@ -304,7 +304,7 @@ void TriggerViewModel::NewCondition()
     // assume the user wants to compare to the current value of the watched memory address
     vmCondition.SetOperator(TriggerOperatorType::Equals);
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     vmCondition.SetTargetSize(nSize);
     vmCondition.SetTargetType(TriggerOperandType::Value);
     vmCondition.SetTargetValue(pEmulatorContext.ReadMemory(nAddress, nSize));

@@ -3,7 +3,7 @@
 #include "RA_Defs.h"
 #include "RA_StringUtils.h"
 
-#include "data\GameContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\ServiceLocator.hh"
 
@@ -30,7 +30,7 @@ void CodeNotesViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& arg
 {
     if (args.Property == IsVisibleProperty)
     {
-        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::GameContext>();
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         if (args.tNewValue)
         {
             // don't subscribe until the first time the dialog is shown, but we have to keep
@@ -49,7 +49,7 @@ void CodeNotesViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& arg
 
 void CodeNotesViewModel::OnActiveGameChanged()
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     m_nGameId = pGameContext.GameId();
 
     SetFilterValue(L"");
@@ -69,7 +69,7 @@ void CodeNotesViewModel::ResetFilter()
 
     gsl::index nIndex = 0;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     pGameContext.EnumerateCodeNotes([this, &nIndex](ra::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)
     {
         std::wstring sAddress;
@@ -132,7 +132,7 @@ void CodeNotesViewModel::ApplyFilter()
 
 void CodeNotesViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
 {
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (pGameContext.IsGameLoading())
         return;
 

@@ -194,7 +194,7 @@ bool MemoryViewerControlBinding::OnKeyDown(UINT nChar)
         case VK_END:
             if (bControlHeld)
             {
-                const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+                const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
                 const auto nTotalBytes = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
                 m_pViewModel.SetFirstAddress(nTotalBytes & ~0x0F);

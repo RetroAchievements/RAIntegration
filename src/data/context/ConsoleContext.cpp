@@ -7,6 +7,7 @@
 
 namespace ra {
 namespace data {
+namespace context {
 
 ConsoleContext::ConsoleContext(ConsoleID nId) noexcept
 {
@@ -76,5 +77,6 @@ const ConsoleContext::MemoryRegion* ConsoleContext::GetMemoryRegion(ra::ByteAddr
     return nullptr;
 }
 
+} // namespace context
 } // namespace data
 } // namespace ra

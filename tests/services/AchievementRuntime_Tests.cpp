@@ -47,9 +47,9 @@ public:
         mockUserContext.Initialize("User", "ApiToken");
     }
 
-    ra::data::mocks::MockEmulatorContext mockEmulatorContext;
-    ra::data::mocks::MockGameContext mockGameContext;
-    ra::data::mocks::MockUserContext mockUserContext;
+    ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+    ra::data::context::mocks::MockGameContext mockGameContext;
+    ra::data::context::mocks::MockUserContext mockUserContext;
     ra::services::mocks::MockFileSystem mockFileSystem;
     ra::services::mocks::MockThreadPool mockThreadPool;
     ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;

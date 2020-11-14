@@ -156,6 +156,17 @@ public:
         return GridNumberColumnBinding::DependsOn(pProperty);
     }
 
+    std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto* vmConditions = dynamic_cast<const ViewModelCollection<TriggerConditionViewModel>*>(&vmItems);
+        Expects(vmConditions != nullptr);
+        const auto* vmCondition = vmConditions->GetItemAt(nIndex);
+        if (vmCondition != nullptr)
+            return vmCondition->GetTooltip(*m_pBoundProperty);
+
+        return L"";
+    }
+
 protected:
     bool IsAddressType(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
     {
@@ -357,6 +368,7 @@ BOOL AssetEditorDialog::OnInitDialog()
 
     m_bindGroups.SetControl(*this, IDC_RA_ACH_GROUP);
     m_bindConditions.SetControl(*this, IDC_RA_LBX_CONDITIONS);
+    m_bindConditions.InitializeTooltips(std::chrono::seconds(30));
 
     m_bindPauseOnReset.SetControl(*this, IDC_RA_CHK_ACH_PAUSE_ON_RESET);
     m_bindPauseOnTrigger.SetControl(*this, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER);

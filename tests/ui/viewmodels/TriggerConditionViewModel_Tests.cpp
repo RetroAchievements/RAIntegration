@@ -3,6 +3,7 @@
 #include "ui\viewmodels\TriggerConditionViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\mocks\MockGameContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -110,6 +111,27 @@ namespace tests {
 TEST_CLASS(TriggerConditionViewModel_Tests)
 {
 private:
+    class TriggerConditionViewModelHarness : public TriggerConditionViewModel
+    {
+    public:
+        ra::data::mocks::MockGameContext mockGameContext;
+
+        void Parse(const std::string& sInput)
+        {
+            const auto nSize = rc_trigger_size(sInput.c_str());
+            sBuffer.resize(nSize);
+
+            const rc_trigger_t* pTrigger = rc_parse_trigger(sBuffer.data(), sInput.c_str(), nullptr, 0);
+            Assert::IsNotNull(pTrigger);
+            Ensures(pTrigger != nullptr);
+
+            TriggerConditionViewModel::InitializeFrom(*pTrigger->requirement->conditions);
+        }
+
+    private:
+        std::string sBuffer;
+    };
+
     void ParseAndRegenerate(const std::string& sInput)
     {
         unsigned char pBuffer[512] = {0};
@@ -205,6 +227,46 @@ public:
     {
         ParseAndRegenerate("0xH1234=5"); // none
         ParseAndRegenerate("R:0xH1234=5.100."); // 100
+    }
+
+    TEST_METHOD(TestTooltipAddress)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetCodeNote({ 8U }, L"This is a note.");
+        condition.Parse("0xH0008=3");
+
+        Assert::AreEqual(std::wstring(L"0x0008\r\nThis is a note."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipAddressNoCodeNote)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.Parse("0xH0008=3");
+
+        Assert::AreEqual(std::wstring(L"0x0008\r\n[No code note]"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipAddressLongCodeNote)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetCodeNote({ 8U }, L"A\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nO\nP\nQ\nR\nS\nT\nU\nV\nW\nX\nY\nZ");
+        condition.Parse("0xH0008=3");
+
+        Assert::AreEqual(std::wstring(L"0x0008\r\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nO\nP\nQ\nR\nS\nT\nU\n..."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipAddressMultiNote)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetCodeNote({ 8U }, L"This is a note.");
+        condition.mockGameContext.SetCodeNote({ 9U }, L"This is another note.");
+        condition.Parse("0xH0008>d0xH0009");
+
+        Assert::AreEqual(std::wstring(L"0x0008\r\nThis is a note."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0009\r\nThis is another note."), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
 };
 

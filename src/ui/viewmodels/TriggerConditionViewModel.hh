@@ -109,8 +109,12 @@ public:
 
     void InitializeFrom(const struct rc_condition_t& pCondition);
 
+    std::wstring GetTooltip(const IntModelProperty& nProperty) const;
+
 private:
     void SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, unsigned int nValue) const;
+
+    std::wstring GetAddressTooltip(unsigned nAddress) const;
 
     void SetOperand(const IntModelProperty& pTypeProperty, const IntModelProperty& pSizeProperty,
         const IntModelProperty& pValueProperty, const rc_operand_t& operand);

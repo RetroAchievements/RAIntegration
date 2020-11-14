@@ -46,6 +46,8 @@ public:
         return GetText(vmItems, nIndex);
     }
 
+    virtual std::wstring GetTooltip(_UNUSED const ra::ui::ViewModelCollectionBase& vmItems, _UNUSED gsl::index nIndex) const { return L""; }
+
     virtual bool DependsOn(const ra::ui::BoolModelProperty&) const noexcept(false) { return false; }
     virtual bool DependsOn(const ra::ui::IntModelProperty&) const noexcept(false) { return false; }
     virtual bool DependsOn(const ra::ui::StringModelProperty&) const noexcept(false) { return false; }

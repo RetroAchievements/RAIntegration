@@ -111,7 +111,21 @@ protected:
             m_pDialog->QueueFunction(fAction);
     }
 
+    HWND GetDialogHwnd() const noexcept { return m_pDialog->m_hWnd; }
+
     void SubclassWndProc() noexcept;
+
+    void AddSecondaryControlBinding(HWND hWnd) noexcept
+    {
+        if (hWnd && m_pDialog)
+            m_pDialog->AddControlBinding(hWnd, *this);
+    }
+
+    void RemoveSecondaryControlBinding(HWND hWnd) noexcept
+    {
+        if (hWnd && m_pDialog)
+            m_pDialog->RemoveControlBinding(hWnd);
+    }
 
     HWND m_hWnd{};
 

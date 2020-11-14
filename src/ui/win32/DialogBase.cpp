@@ -362,6 +362,23 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 
                     return 0;
                 }
+
+                case TTN_GETDISPINFO:
+                {
+                    ra::ui::win32::bindings::GridBinding* pGridBinding;
+                    GSL_SUPPRESS_TYPE1 pGridBinding = dynamic_cast<ra::ui::win32::bindings::GridBinding*>(
+                        FindControlBinding(pnmHdr->hwndFrom));
+
+                    if (pGridBinding)
+                    {
+                        NMTTDISPINFO* pnmTtDispInfo;
+                        GSL_SUPPRESS_TYPE1{ pnmTtDispInfo = reinterpret_cast<NMTTDISPINFO*>(lParam); }
+                        Expects(pnmTtDispInfo != nullptr);
+                        pGridBinding->OnTooltipGetDispInfo(*pnmTtDispInfo);
+                    }
+
+                    return 0;
+                }
             }
 
             return 0;

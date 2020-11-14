@@ -41,12 +41,15 @@ public:
     void SetCopyHandler(std::function<void()> pHandler);
     void SetPasteHandler(std::function<void()> pHandler);
 
+    void InitializeTooltips(std::chrono::milliseconds nDisplayTime) noexcept;
+
     GSL_SUPPRESS_CON3 virtual LRESULT OnLvnItemChanging(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 virtual void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 void OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateChanged);
     GSL_SUPPRESS_CON3 void OnLvnColumnClick(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 void OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown);
     void OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo);
+    void OnTooltipGetDispInfo(NMTTDISPINFO& pnmTtDispInfo);
     virtual void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
     virtual void OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate);
     LRESULT OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw) override;
@@ -75,6 +78,8 @@ protected:
     void CheckForScrollBar();
     int GetVisibleItemIndex(int iItem);
     virtual void Invalidate() noexcept(false);
+
+    INT_PTR CALLBACK WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
@@ -107,6 +112,10 @@ private:
 
     size_t m_nColumnsCreated = 0;
     bool m_bHasColoredColumns = false;
+
+    HWND m_hTooltip = nullptr;
+    int m_nTooltipLocation = 0;
+    std::string m_sTooltip;
 
     const IntModelProperty* m_pRowColorProperty = nullptr;
 

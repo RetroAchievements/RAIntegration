@@ -30,27 +30,27 @@ const BoolModelProperty AssetListViewModel::CanResetProperty("AssetListViewModel
 const BoolModelProperty AssetListViewModel::CanRevertProperty("AssetListViewModel", "CanRevert", false);
 const BoolModelProperty AssetListViewModel::CanCreateProperty("AssetListViewModel", "CanCreate", false);
 const BoolModelProperty AssetListViewModel::CanCloneProperty("AssetListViewModel", "CanClone", false);
-const IntModelProperty AssetListViewModel::FilterCategoryProperty("AssetListViewModel", "FilterCategory", ra::etoi(AssetCategory::Core));
+const IntModelProperty AssetListViewModel::FilterCategoryProperty("AssetListViewModel", "FilterCategory", ra::etoi(ra::data::models::AssetCategory::Core));
 const IntModelProperty AssetListViewModel::EnsureVisibleAssetIndexProperty("AssetListViewModel", "EnsureVisibleAssetIndex", -1);
 
 AssetListViewModel::AssetListViewModel() noexcept
 {
     SetWindowTitle(L"Assets List");
 
-    m_vStates.Add(ra::etoi(AssetState::Inactive), L"Inactive");
-    m_vStates.Add(ra::etoi(AssetState::Waiting), L"Waiting");
-    m_vStates.Add(ra::etoi(AssetState::Active), L"Active");
-    m_vStates.Add(ra::etoi(AssetState::Paused), L"Paused");
-    m_vStates.Add(ra::etoi(AssetState::Triggered), L"Triggered");
+    m_vStates.Add(ra::etoi(ra::data::models::AssetState::Inactive), L"Inactive");
+    m_vStates.Add(ra::etoi(ra::data::models::AssetState::Waiting), L"Waiting");
+    m_vStates.Add(ra::etoi(ra::data::models::AssetState::Active), L"Active");
+    m_vStates.Add(ra::etoi(ra::data::models::AssetState::Paused), L"Paused");
+    m_vStates.Add(ra::etoi(ra::data::models::AssetState::Triggered), L"Triggered");
 
-    m_vCategories.Add(ra::etoi(AssetCategory::Core), L"Core");
-    m_vCategories.Add(ra::etoi(AssetCategory::Unofficial), L"Unofficial");
-    m_vCategories.Add(ra::etoi(AssetCategory::Local), L"Local");
+    m_vCategories.Add(ra::etoi(ra::data::models::AssetCategory::Core), L"Core");
+    m_vCategories.Add(ra::etoi(ra::data::models::AssetCategory::Unofficial), L"Unofficial");
+    m_vCategories.Add(ra::etoi(ra::data::models::AssetCategory::Local), L"Local");
 
-    m_vChanges.Add(ra::etoi(AssetChanges::None), L"");
-    m_vChanges.Add(ra::etoi(AssetChanges::Modified), L"Modified");
-    m_vChanges.Add(ra::etoi(AssetChanges::Unpublished), L"Unpublished");
-    m_vChanges.Add(ra::etoi(AssetChanges::New), L"New");
+    m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::None), L"");
+    m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::Modified), L"Modified");
+    m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::Unpublished), L"Unpublished");
+    m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::New), L"New");
 
     m_vAssets.AddNotifyTarget(*this);
 
@@ -65,15 +65,15 @@ AssetListViewModel::~AssetListViewModel()
     m_bNeedToUpdateButtons.store(false);
 }
 
-static bool IsTalliedAchievement(const AchievementViewModel& pAchievement)
+static bool IsTalliedAchievement(const ra::data::models::AchievementModel& pAchievement)
 {
-    return (pAchievement.GetCategory() == AssetCategory::Core);
+    return (pAchievement.GetCategory() == ra::data::models::AssetCategory::Core);
 }
 
-void AssetListViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
+void AssetListViewModel::OnDataModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
 {
     // sync this property through to the summary view model
-    if (args.Property == AssetViewModelBase::NameProperty)
+    if (args.Property == ra::data::models::AssetModelBase::NameProperty)
     {
         auto* pItem = m_vAssets.GetItemAt(nIndex);
         if (pItem != nullptr)
@@ -85,11 +85,11 @@ void AssetListViewModel::OnViewModelStringValueChanged(gsl::index nIndex, const 
     }
 }
 
-void AssetListViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
+void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == AchievementViewModel::PointsProperty)
+    if (args.Property == ra::data::models::AchievementModel::PointsProperty)
     {
-        auto* pAchievement = dynamic_cast<const AchievementViewModel*>(m_vAssets.GetItemAt(nIndex));
+        auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(m_vAssets.GetItemAt(nIndex));
         if (pAchievement != nullptr && IsTalliedAchievement(*pAchievement))
         {
             auto nPoints = GetTotalPoints();
@@ -97,7 +97,7 @@ void AssetListViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const Int
             SetValue(TotalPointsProperty, nPoints);
         }
     }
-    else if (args.Property == AssetViewModelBase::CategoryProperty)
+    else if (args.Property == ra::data::models::AssetModelBase::CategoryProperty)
     {
         UpdateTotals();
 
@@ -107,10 +107,10 @@ void AssetListViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const Int
     }
 
     // sync these properties through to the summary view model
-    if (args.Property == AssetViewModelBase::ChangesProperty ||
-        args.Property == AchievementViewModel::PointsProperty ||
-        args.Property == AssetViewModelBase::StateProperty ||
-        args.Property == AssetViewModelBase::CategoryProperty)
+    if (args.Property == ra::data::models::AssetModelBase::ChangesProperty ||
+        args.Property == ra::data::models::AchievementModel::PointsProperty ||
+        args.Property == ra::data::models::AssetModelBase::StateProperty ||
+        args.Property == ra::data::models::AssetModelBase::CategoryProperty)
     {
         auto* pItem = m_vAssets.GetItemAt(nIndex);
         if (pItem != nullptr)
@@ -125,7 +125,7 @@ void AssetListViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const Int
             }
         }
     }
-    else if (args.Property == AssetViewModelBase::IDProperty)
+    else if (args.Property == ra::data::models::AssetModelBase::IDProperty)
     {
         auto* pAsset = m_vAssets.GetItemAt(nIndex);
         if (pAsset != nullptr)
@@ -149,7 +149,7 @@ void AssetListViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const Int
     }
 }
 
-void AssetListViewModel::OnViewModelAdded(_UNUSED gsl::index nIndex)
+void AssetListViewModel::OnDataModelAdded(_UNUSED gsl::index nIndex)
 {
     if (!m_vAssets.IsUpdating())
     {
@@ -161,7 +161,7 @@ void AssetListViewModel::OnViewModelAdded(_UNUSED gsl::index nIndex)
     }
 }
 
-void AssetListViewModel::OnViewModelRemoved(_UNUSED gsl::index nIndex)
+void AssetListViewModel::OnDataModelRemoved(_UNUSED gsl::index nIndex)
 {
     if (!m_vAssets.IsUpdating())
     {
@@ -186,7 +186,7 @@ void AssetListViewModel::OnViewModelRemoved(_UNUSED gsl::index nIndex)
     }
 }
 
-void AssetListViewModel::OnViewModelChanged(_UNUSED gsl::index nIndex)
+void AssetListViewModel::OnDataModelChanged(_UNUSED gsl::index nIndex)
 {
     if (!m_vAssets.IsUpdating())
     {
@@ -198,7 +198,7 @@ void AssetListViewModel::OnViewModelChanged(_UNUSED gsl::index nIndex)
     }
 }
 
-void AssetListViewModel::OnEndViewModelCollectionUpdate()
+void AssetListViewModel::OnEndDataModelCollectionUpdate()
 {
     UpdateTotals();
     ApplyFilter();
@@ -211,7 +211,7 @@ void AssetListViewModel::UpdateTotals()
 
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
     {
-        auto* pAchievement = dynamic_cast<const AchievementViewModel*>(m_vAssets.GetItemAt(nIndex));
+        auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(m_vAssets.GetItemAt(nIndex));
         if (pAchievement != nullptr && IsTalliedAchievement(*pAchievement))
         {
             ++nAchievementCount;
@@ -261,7 +261,7 @@ void AssetListViewModel::ApplyFilter()
     UpdateButtons();
 }
 
-bool AssetListViewModel::MatchesFilter(const AssetViewModelBase& pAsset)
+bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& pAsset)
 {
     if (pAsset.GetCategory() != GetFilterCategory())
         return false;
@@ -269,7 +269,7 @@ bool AssetListViewModel::MatchesFilter(const AssetViewModelBase& pAsset)
     return true;
 }
 
-void AssetListViewModel::AddOrRemoveFilteredItem(const AssetViewModelBase& pAsset)
+void AssetListViewModel::AddOrRemoveFilteredItem(const ra::data::models::AssetModelBase& pAsset)
 {
     const auto nIndex = GetFilteredAssetIndex(pAsset);
 
@@ -284,7 +284,7 @@ void AssetListViewModel::AddOrRemoveFilteredItem(const AssetViewModelBase& pAsse
             pSummary->SetCategory(pAsset.GetCategory());
             pSummary->SetChanges(pAsset.GetChanges());
 
-            const auto* pAchievement = dynamic_cast<const AchievementViewModel*>(&pAsset);
+            const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pAsset);
             if (pAchievement != nullptr)
                 pSummary->SetPoints(pAchievement->GetPoints());
 
@@ -304,7 +304,7 @@ void AssetListViewModel::AddOrRemoveFilteredItem(const AssetViewModelBase& pAsse
     }
 }
 
-gsl::index AssetListViewModel::GetFilteredAssetIndex(const AssetViewModelBase& pAsset) const
+gsl::index AssetListViewModel::GetFilteredAssetIndex(const ra::data::models::AssetModelBase& pAsset) const
 {
     const auto nId = ra::to_signed(pAsset.GetID());
     const auto nType = pAsset.GetType();
@@ -319,7 +319,7 @@ gsl::index AssetListViewModel::GetFilteredAssetIndex(const AssetViewModelBase& p
     return -1;
 }
 
-AssetViewModelBase* AssetListViewModel::FindAsset(AssetType nType, ra::AchievementID nId)
+ra::data::models::AssetModelBase* AssetListViewModel::FindAsset(ra::data::models::AssetType nType, ra::AchievementID nId)
 {
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
     {
@@ -331,7 +331,7 @@ AssetViewModelBase* AssetListViewModel::FindAsset(AssetType nType, ra::Achieveme
     return nullptr;
 }
 
-const AssetViewModelBase* AssetListViewModel::FindAsset(AssetType nType, ra::AchievementID nId) const
+const ra::data::models::AssetModelBase* AssetListViewModel::FindAsset(ra::data::models::AssetType nType, ra::AchievementID nId) const
 {
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
     {
@@ -345,7 +345,7 @@ const AssetViewModelBase* AssetListViewModel::FindAsset(AssetType nType, ra::Ach
 
 void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
 {
-    AssetViewModelBase* vmAsset = nullptr;
+    ra::data::models::AssetModelBase* vmAsset = nullptr;
 
     if (pAsset)
         vmAsset = FindAsset(pAsset->GetType(), pAsset->GetId());
@@ -357,14 +357,14 @@ void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
         pWindowManager.AssetEditor.Show();
 }
 
-bool AssetListViewModel::HasSelection(AssetType nAssetType) const
+bool AssetListViewModel::HasSelection(ra::data::models::AssetType nAssetType) const
 {
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nIndex)
     {
         const auto* pItem = m_vFilteredAssets.GetItemAt(nIndex);
         if (pItem != nullptr && pItem->IsSelected())
         {
-            if (nAssetType == AssetType::None || nAssetType == pItem->GetType())
+            if (nAssetType == ra::data::models::AssetType::None || nAssetType == pItem->GetType())
                 return true;
         }
     }
@@ -443,11 +443,11 @@ void AssetListViewModel::DoUpdateButtons()
             {
                 switch (pItem->GetChanges())
                 {
-                    case AssetChanges::Modified:
-                    case AssetChanges::New:
+                    case ra::data::models::AssetChanges::Modified:
+                    case ra::data::models::AssetChanges::New:
                         bHasModified = true;
                         break;
-                    case AssetChanges::Unpublished:
+                    case ra::data::models::AssetChanges::Unpublished:
                         bHasUnpublished = true;
                         break;
                     default:
@@ -460,13 +460,13 @@ void AssetListViewModel::DoUpdateButtons()
 
                     switch (pItem->GetCategory())
                     {
-                        case AssetCategory::Core:
+                        case ra::data::models::AssetCategory::Core:
                             bHasCoreSelection = true;
                             break;
-                        case AssetCategory::Unofficial:
+                        case ra::data::models::AssetCategory::Unofficial:
                             bHasUnofficialSelection = true;
                             break;
-                        case AssetCategory::Local:
+                        case ra::data::models::AssetCategory::Local:
                             bHasLocalSelection = true;
                             break;
                         default:
@@ -475,8 +475,8 @@ void AssetListViewModel::DoUpdateButtons()
 
                     switch (pItem->GetState())
                     {
-                        case AssetState::Inactive:
-                        case AssetState::Triggered:
+                        case ra::data::models::AssetState::Inactive:
+                        case ra::data::models::AssetState::Triggered:
                             bHasInactiveSelection = true;
                             break;
                         default:
@@ -486,11 +486,11 @@ void AssetListViewModel::DoUpdateButtons()
 
                     switch (pItem->GetChanges())
                     {
-                        case AssetChanges::Modified:
-                        case AssetChanges::New:
+                        case ra::data::models::AssetChanges::Modified:
+                        case ra::data::models::AssetChanges::New:
                             bHasModifiedSelection = true;
                             break;
-                        case AssetChanges::Unpublished:
+                        case ra::data::models::AssetChanges::Unpublished:
                             bHasUnpublishedSelection = true;
                             break;
                         default:
@@ -582,7 +582,7 @@ void AssetListViewModel::DoUpdateButtons()
     }
 }
 
-void AssetListViewModel::GetSelectedAssets(std::vector<AssetViewModelBase*>& vSelectedAssets)
+void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets)
 {
     for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
     {
@@ -613,7 +613,7 @@ void AssetListViewModel::GetSelectedAssets(std::vector<AssetViewModelBase*>& vSe
 
 void AssetListViewModel::ActivateSelected()
 {
-    std::vector<AssetViewModelBase*> vSelectedAssets;
+    std::vector<ra::data::models::AssetModelBase*> vSelectedAssets;
     GetSelectedAssets(vSelectedAssets);
 
     if (GetActivateButtonText().at(0) == 'D') // Deactivate
@@ -636,7 +636,7 @@ void AssetListViewModel::ActivateSelected()
 
 void AssetListViewModel::SaveSelected()
 {
-    const bool bHasSelection = HasSelection(AssetType::Achievement);
+    const bool bHasSelection = HasSelection(ra::data::models::AssetType::Achievement);
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
 
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
@@ -658,12 +658,12 @@ void AssetListViewModel::SaveSelected()
 
         switch (pItem->GetChanges())
         {
-            case AssetChanges::None:
+            case ra::data::models::AssetChanges::None:
                 // non-modified committed items don't need to be serialized
                 // ASSERT: unmodified local items should report as Unpublished
                 continue;
 
-            case AssetChanges::Unpublished:
+            case ra::data::models::AssetChanges::Unpublished:
                 // always write unpublished changes
                 break;
 
@@ -683,16 +683,16 @@ void AssetListViewModel::SaveSelected()
                     pItem->UpdateLocalCheckpoint();
 
                     // reverted back to committed state, no need to serialize
-                    if (pItem->GetChanges() == AssetChanges::None)
+                    if (pItem->GetChanges() == ra::data::models::AssetChanges::None)
                         continue;
                 }
-                else if (pItem->GetCategory() != AssetCategory::Local)
+                else if (pItem->GetCategory() != ra::data::models::AssetCategory::Local)
                 {
                     // if there's no unpublished changes and the item is not selected, ignore it
                     if (!pItem->HasUnpublishedChanges())
                         continue;
                 }
-                else if (pItem->GetChanges() == AssetChanges::New)
+                else if (pItem->GetChanges() == ra::data::models::AssetChanges::New)
                 {
                     // unselected new item has no local state to maintain
                     continue;
@@ -737,14 +737,14 @@ void AssetListViewModel::ResetSelected()
 
     m_vAssets.BeginUpdate();
 
-    std::vector<AssetViewModelBase*> vAssetsToReset;
+    std::vector<ra::data::models::AssetModelBase*> vAssetsToReset;
     if (vSelectedAssets.empty())
     {
         // reset all - first remove any "new" items
         for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vAssets.Count()) - 1; nIndex >= 0; --nIndex)
         {
             auto* pAsset = m_vAssets.GetItemAt(nIndex);
-            if (pAsset != nullptr && pAsset->GetChanges() == AssetChanges::New)
+            if (pAsset != nullptr && pAsset->GetChanges() == ra::data::models::AssetChanges::New)
                 m_vAssets.RemoveAt(nIndex);
         }
 
@@ -763,7 +763,7 @@ void AssetListViewModel::ResetSelected()
                 auto* pAsset = m_vAssets.GetItemAt(nIndex);
                 if (pAsset->GetID() == nId && pAsset->GetType() == nType)
                 {
-                    if (pAsset->GetChanges() == AssetChanges::New)
+                    if (pAsset->GetChanges() == ra::data::models::AssetChanges::New)
                         m_vAssets.RemoveAt(nIndex);
                     else
                         vAssetsToReset.push_back(pAsset);
@@ -781,7 +781,7 @@ void AssetListViewModel::ResetSelected()
 }
 
 // NOTE: destroys vAssetsToMerge as it processes the file
-void AssetListViewModel::MergeLocalAssets(std::vector<AssetViewModelBase*>& vAssetsToMerge, bool bFullMerge)
+void AssetListViewModel::MergeLocalAssets(std::vector<ra::data::models::AssetModelBase*>& vAssetsToMerge, bool bFullMerge)
 {
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(GetGameId()));
@@ -794,10 +794,10 @@ void AssetListViewModel::MergeLocalAssets(std::vector<AssetViewModelBase*>& vAss
 
     m_vAssets.BeginUpdate();
 
-    std::vector<AssetViewModelBase*> vUnnumberedAssets;
+    std::vector<ra::data::models::AssetModelBase*> vUnnumberedAssets;
     while (pData->GetLine(sLine))
     {
-        AssetType nType = AssetType::None;
+        ra::data::models::AssetType nType = ra::data::models::AssetType::None;
         unsigned nId = 0;
 
         ra::Tokenizer pTokenizer(sLine);
@@ -806,18 +806,18 @@ void AssetListViewModel::MergeLocalAssets(std::vector<AssetViewModelBase*>& vAss
             case '0': case '1': case '2': case '3': case '4':
             case '5': case '6': case '7': case '8': case '9':
                 // achievements start with a number (no prefix)
-                nType = AssetType::Achievement;
+                nType = ra::data::models::AssetType::Achievement;
                 nId = pTokenizer.ReadNumber();
                 break;
         }
 
-        if (nType == AssetType::None)
+        if (nType == ra::data::models::AssetType::None)
             continue;
         if (!pTokenizer.Consume(':'))
             continue;
 
         // find the asset to merge
-        AssetViewModelBase* pAsset = nullptr;
+        ra::data::models::AssetModelBase* pAsset = nullptr;
         if (nId != 0)
         {
             if (nId >= m_nNextLocalId)
@@ -850,11 +850,11 @@ void AssetListViewModel::MergeLocalAssets(std::vector<AssetViewModelBase*>& vAss
             // non-existant item, only process it if nothing was selected
             switch (nType)
             {
-                case AssetType::Achievement:
+                case ra::data::models::AssetType::Achievement:
                 {
-                    auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+                    auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
                     vmAchievement->SetID(nId);
-                    vmAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Local);
+                    vmAchievement->SetCategory(ra::data::models::AssetCategory::Local);
                     vmAchievement->CreateServerCheckpoint();
 
                     pAsset = &m_vAssets.Append(std::move(vmAchievement));
@@ -881,7 +881,7 @@ void AssetListViewModel::MergeLocalAssets(std::vector<AssetViewModelBase*>& vAss
     // just reset to the server state. otherwise, delete the item.
     for (auto* pAsset : vAssetsToMerge)
     {
-        if (pAsset->GetCategory() == AssetCategory::Local)
+        if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
         {
             for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vAssets.Count()) - 1; nIndex >= 0; --nIndex)
             {
@@ -903,7 +903,7 @@ void AssetListViewModel::MergeLocalAssets(std::vector<AssetViewModelBase*>& vAss
 
 void AssetListViewModel::MergeLocalAssets()
 {
-    std::vector<AssetViewModelBase*> vAssetsToMerge;
+    std::vector<ra::data::models::AssetModelBase*> vAssetsToMerge;
     MergeLocalAssets(vAssetsToMerge, true);
 }
 
@@ -918,9 +918,9 @@ void AssetListViewModel::CreateNew()
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     const auto& pAchievement = pGameContext.NewAchievement(Achievement::Category::Local);
 
-    auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+    auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
     vmAchievement->SetID(pAchievement.ID());
-    vmAchievement->SetCategory(AssetCategory::Local);
+    vmAchievement->SetCategory(ra::data::models::AssetCategory::Local);
     vmAchievement->SetPoints(0);
     vmAchievement->CreateServerCheckpoint();
     vmAchievement->CreateLocalCheckpoint();
@@ -930,7 +930,7 @@ void AssetListViewModel::CreateNew()
 
     FilteredAssets().BeginUpdate();
 
-    SetFilterCategory(AssetCategory::Local);
+    SetFilterCategory(ra::data::models::AssetCategory::Local);
 
     Assets().Append(std::move(vmAchievement));
 
@@ -941,7 +941,7 @@ void AssetListViewModel::CreateNew()
         auto* pItem = m_vFilteredAssets.GetItemAt(i);
         if (pItem != nullptr)
         {
-            if (pItem->GetId() == nId && pItem->GetType() == AssetType::Achievement)
+            if (pItem->GetId() == nId && pItem->GetType() == ra::data::models::AssetType::Achievement)
             {
                 pItem->SetSelected(true);
                 nIndex = i;
@@ -969,7 +969,7 @@ void AssetListViewModel::CloneSelected()
     if (!CanClone())
         return;
 
-    std::vector<AssetViewModelBase*> vSelectedAssets;
+    std::vector<ra::data::models::AssetModelBase*> vSelectedAssets;
     GetSelectedAssets(vSelectedAssets);
     if (vSelectedAssets.empty())
         return;
@@ -978,20 +978,20 @@ void AssetListViewModel::CloneSelected()
 
     FilteredAssets().BeginUpdate();
 
-    SetFilterCategory(AssetCategory::Local);
+    SetFilterCategory(ra::data::models::AssetCategory::Local);
 
     // add the cloned items
     std::vector<int> vNewIDs;
     for (const auto* pAsset : vSelectedAssets)
     {
-        const auto& pSourceAchievement = dynamic_cast<const AchievementViewModel*>(pAsset);
+        const auto& pSourceAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
 
         const auto& pAchievement = pGameContext.NewAchievement(Achievement::Category::Local);
         vNewIDs.push_back(gsl::narrow_cast<int>(pAchievement.ID()));
 
-        auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
         vmAchievement->SetID(pAchievement.ID());
-        vmAchievement->SetCategory(AssetCategory::Local);
+        vmAchievement->SetCategory(ra::data::models::AssetCategory::Local);
         vmAchievement->SetName(pSourceAchievement->GetName() + L" (copy)");
         vmAchievement->SetDescription(pSourceAchievement->GetDescription());
         vmAchievement->SetBadge(pSourceAchievement->GetBadge());
@@ -1012,7 +1012,7 @@ void AssetListViewModel::CloneSelected()
         if (pItem != nullptr)
         {
             if (std::find(vNewIDs.begin(), vNewIDs.end(), pItem->GetId()) != vNewIDs.end() &&
-                pItem->GetType() == AssetType::Achievement)
+                pItem->GetType() == ra::data::models::AssetType::Achievement)
             {
                 nIndex = i;
                 pItem->SetSelected(true);

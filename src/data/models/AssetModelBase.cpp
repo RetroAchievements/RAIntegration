@@ -1,18 +1,18 @@
-#include "AssetViewModelBase.hh"
+#include "AssetModelBase.hh"
 
 namespace ra {
-namespace ui {
-namespace viewmodels {
+namespace data {
+namespace models {
 
-const IntModelProperty AssetViewModelBase::TypeProperty("AssetViewModelBase", "Type", ra::etoi(AssetType::Achievement));
-const IntModelProperty AssetViewModelBase::IDProperty("AssetViewModelBase", "ID", 0);
-const StringModelProperty AssetViewModelBase::NameProperty("AssetViewModelBase", "Name", L"");
-const StringModelProperty AssetViewModelBase::DescriptionProperty("AssetViewModelBase", "Description", L"");
-const IntModelProperty AssetViewModelBase::CategoryProperty("AssetViewModelBase", "Category", ra::etoi(AssetCategory::Core));
-const IntModelProperty AssetViewModelBase::StateProperty("AssetViewModelBase", "State", ra::etoi(AssetState::Inactive));
-const IntModelProperty AssetViewModelBase::ChangesProperty("AssetViewModelBase", "Changes", ra::etoi(AssetChanges::None));
+const IntModelProperty AssetModelBase::TypeProperty("AssetModelBase", "Type", ra::etoi(AssetType::Achievement));
+const IntModelProperty AssetModelBase::IDProperty("AssetModelBase", "ID", 0);
+const StringModelProperty AssetModelBase::NameProperty("AssetModelBase", "Name", L"");
+const StringModelProperty AssetModelBase::DescriptionProperty("AssetModelBase", "Description", L"");
+const IntModelProperty AssetModelBase::CategoryProperty("AssetModelBase", "Category", ra::etoi(AssetCategory::Core));
+const IntModelProperty AssetModelBase::StateProperty("AssetModelBase", "State", ra::etoi(AssetState::Inactive));
+const IntModelProperty AssetModelBase::ChangesProperty("AssetModelBase", "Changes", ra::etoi(AssetChanges::None));
 
-AssetViewModelBase::AssetViewModelBase() noexcept
+AssetModelBase::AssetModelBase() noexcept
 {
     SetTransactional(NameProperty);
     SetTransactional(DescriptionProperty);
@@ -59,12 +59,12 @@ static void WritePossiblyQuotedString(ra::services::TextWriter& pWriter, const s
         WriteEscapedString(pWriter, sText, nToEscape);
 }
 
-void AssetViewModelBase::WritePossiblyQuoted(ra::services::TextWriter& pWriter, const std::string& sText)
+void AssetModelBase::WritePossiblyQuoted(ra::services::TextWriter& pWriter, const std::string& sText)
 {
     WritePossiblyQuotedString(pWriter, sText);
 }
 
-void AssetViewModelBase::WritePossiblyQuoted(ra::services::TextWriter& pWriter, const std::wstring& sText)
+void AssetModelBase::WritePossiblyQuoted(ra::services::TextWriter& pWriter, const std::wstring& sText)
 {
     WritePossiblyQuotedString(pWriter, sText);
 }
@@ -86,23 +86,23 @@ static void WriteQuotedString(ra::services::TextWriter& pWriter, const std::basi
     }
 }
 
-void AssetViewModelBase::WriteQuoted(ra::services::TextWriter& pWriter, const std::string& sText)
+void AssetModelBase::WriteQuoted(ra::services::TextWriter& pWriter, const std::string& sText)
 {
     WriteQuotedString(pWriter, sText);
 }
 
-void AssetViewModelBase::WriteQuoted(ra::services::TextWriter& pWriter, const std::wstring& sText)
+void AssetModelBase::WriteQuoted(ra::services::TextWriter& pWriter, const std::wstring& sText)
 {
     WriteQuotedString(pWriter, sText);
 }
 
-void AssetViewModelBase::WriteNumber(ra::services::TextWriter& pWriter, const uint32_t nValue)
+void AssetModelBase::WriteNumber(ra::services::TextWriter& pWriter, const uint32_t nValue)
 {
     pWriter.Write(":");
     pWriter.Write(std::to_string(nValue));
 }
 
-bool AssetViewModelBase::ReadNumber(ra::Tokenizer& pTokenizer, uint32_t& nValue)
+bool AssetModelBase::ReadNumber(ra::Tokenizer& pTokenizer, uint32_t& nValue)
 {
     if (pTokenizer.EndOfString())
         return false;
@@ -111,7 +111,7 @@ bool AssetViewModelBase::ReadNumber(ra::Tokenizer& pTokenizer, uint32_t& nValue)
     return pTokenizer.Consume(':') || pTokenizer.EndOfString();
 }
 
-bool AssetViewModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::string& sText)
+bool AssetModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::string& sText)
 {
     if (pTokenizer.EndOfString())
         return false;
@@ -120,7 +120,7 @@ bool AssetViewModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::string& sTex
     return pTokenizer.Consume(':') || pTokenizer.EndOfString();
 }
 
-bool AssetViewModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText)
+bool AssetModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText)
 {
     if (pTokenizer.EndOfString())
         return false;
@@ -129,7 +129,7 @@ bool AssetViewModelBase::ReadQuoted(ra::Tokenizer& pTokenizer, std::wstring& sTe
     return pTokenizer.Consume(':') || pTokenizer.EndOfString();
 }
 
-bool AssetViewModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::string& sText)
+bool AssetModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::string& sText)
 {
     if (pTokenizer.EndOfString())
         return false;
@@ -142,7 +142,7 @@ bool AssetViewModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::stri
     return true;
 }
 
-bool AssetViewModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText)
+bool AssetModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText)
 {
     if (pTokenizer.EndOfString())
         return false;
@@ -155,7 +155,7 @@ bool AssetViewModelBase::ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstr
     return true;
 }
 
-void AssetViewModelBase::CreateServerCheckpoint()
+void AssetModelBase::CreateServerCheckpoint()
 {
     Expects(m_pTransaction == nullptr);
     BeginTransaction();
@@ -163,7 +163,7 @@ void AssetViewModelBase::CreateServerCheckpoint()
     SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
 }
 
-void AssetViewModelBase::CreateLocalCheckpoint()
+void AssetModelBase::CreateLocalCheckpoint()
 {
     Expects(m_pTransaction != nullptr);
     Expects(m_pTransaction->m_pNext == nullptr);
@@ -173,7 +173,7 @@ void AssetViewModelBase::CreateLocalCheckpoint()
     SetValue(ChangesProperty, bModified ? ra::etoi(AssetChanges::Unpublished) : ra::etoi(AssetChanges::None));
 }
 
-void AssetViewModelBase::UpdateLocalCheckpoint()
+void AssetModelBase::UpdateLocalCheckpoint()
 {
     Expects(m_pTransaction != nullptr);
     Expects(m_pTransaction->m_pNext != nullptr);
@@ -184,7 +184,7 @@ void AssetViewModelBase::UpdateLocalCheckpoint()
     SetValue(ChangesProperty, bModified ? ra::etoi(AssetChanges::Unpublished) : ra::etoi(AssetChanges::None));
 }
 
-void AssetViewModelBase::UpdateServerCheckpoint()
+void AssetModelBase::UpdateServerCheckpoint()
 {
     Expects(m_pTransaction != nullptr);
     Expects(m_pTransaction->m_pNext != nullptr);
@@ -196,7 +196,7 @@ void AssetViewModelBase::UpdateServerCheckpoint()
     SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
 }
 
-void AssetViewModelBase::RestoreLocalCheckpoint()
+void AssetModelBase::RestoreLocalCheckpoint()
 {
     Expects(m_pTransaction != nullptr);
     Expects(m_pTransaction->m_pNext != nullptr);
@@ -207,7 +207,7 @@ void AssetViewModelBase::RestoreLocalCheckpoint()
     SetValue(ChangesProperty, bModified ? ra::etoi(AssetChanges::Unpublished) : ra::etoi(AssetChanges::None));
 }
 
-void AssetViewModelBase::RestoreServerCheckpoint()
+void AssetModelBase::RestoreServerCheckpoint()
 {
     Expects(m_pTransaction != nullptr);
     Expects(m_pTransaction->m_pNext != nullptr);
@@ -219,27 +219,27 @@ void AssetViewModelBase::RestoreServerCheckpoint()
     SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
 }
 
-void AssetViewModelBase::SetNew()
+void AssetModelBase::SetNew()
 {
     SetValue(ChangesProperty, ra::etoi(AssetChanges::New));
 }
 
-bool AssetViewModelBase::HasUnpublishedChanges() const noexcept
+bool AssetModelBase::HasUnpublishedChanges() const noexcept
 {
     return (m_pTransaction && m_pTransaction->m_pNext && m_pTransaction->m_pNext->IsModified());
 }
 
-void AssetViewModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
+void AssetModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    TransactionalViewModelBase::OnValueChanged(args);
+    DataModelBase::OnValueChanged(args);
 }
 
-void AssetViewModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
+void AssetModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    TransactionalViewModelBase::OnValueChanged(args);
+    DataModelBase::OnValueChanged(args);
 }
 
-void AssetViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
+void AssetModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == IsModifiedProperty)
     {
@@ -264,10 +264,10 @@ void AssetViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& arg
         }
     }
 
-    TransactionalViewModelBase::OnValueChanged(args);
+    DataModelBase::OnValueChanged(args);
 }
 
-bool AssetViewModelBase::GetLocalValue(const BoolModelProperty& pProperty) const
+bool AssetModelBase::GetLocalValue(const BoolModelProperty& pProperty) const
 {
     // make sure we have a local checkpoint
     if (m_pTransaction != nullptr && m_pTransaction->m_pNext != nullptr)
@@ -282,7 +282,7 @@ bool AssetViewModelBase::GetLocalValue(const BoolModelProperty& pProperty) const
     return GetValue(pProperty);
 }
 
-const std::wstring& AssetViewModelBase::GetLocalValue(const StringModelProperty& pProperty) const
+const std::wstring& AssetModelBase::GetLocalValue(const StringModelProperty& pProperty) const
 {
     // make sure we have a local checkpoint
     if (m_pTransaction != nullptr && m_pTransaction->m_pNext != nullptr)
@@ -297,7 +297,7 @@ const std::wstring& AssetViewModelBase::GetLocalValue(const StringModelProperty&
     return GetValue(pProperty);
 }
 
-int AssetViewModelBase::GetLocalValue(const IntModelProperty& pProperty) const
+int AssetModelBase::GetLocalValue(const IntModelProperty& pProperty) const
 {
     // make sure we have a local checkpoint
     if (m_pTransaction != nullptr && m_pTransaction->m_pNext != nullptr)
@@ -312,7 +312,7 @@ int AssetViewModelBase::GetLocalValue(const IntModelProperty& pProperty) const
     return GetValue(pProperty);
 }
 
-const std::string& AssetViewModelBase::GetAssetDefinition(const AssetDefinition& pAsset) const
+const std::string& AssetModelBase::GetAssetDefinition(const AssetDefinition& pAsset) const
 {
     const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset.m_pProperty));
     switch (nState)
@@ -328,7 +328,7 @@ const std::string& AssetViewModelBase::GetAssetDefinition(const AssetDefinition&
     }
 }
 
-const std::string& AssetViewModelBase::GetLocalAssetDefinition(const AssetDefinition& pAsset) const noexcept
+const std::string& AssetModelBase::GetLocalAssetDefinition(const AssetDefinition& pAsset) const noexcept
 {
     if (pAsset.m_bLocalModified)
         return pAsset.m_sLocalDefinition;
@@ -336,7 +336,7 @@ const std::string& AssetViewModelBase::GetLocalAssetDefinition(const AssetDefini
     return pAsset.m_sCoreDefinition;
 }
 
-void AssetViewModelBase::SetAssetDefinition(AssetDefinition& pAsset, const std::string& sValue)
+void AssetModelBase::SetAssetDefinition(AssetDefinition& pAsset, const std::string& sValue)
 {
     if (m_pTransaction == nullptr)
     {
@@ -380,7 +380,7 @@ void AssetViewModelBase::SetAssetDefinition(AssetDefinition& pAsset, const std::
     }
 }
 
-void AssetViewModelBase::CommitTransaction()
+void AssetModelBase::CommitTransaction()
 {
     Expects(m_pTransaction != nullptr);
 
@@ -437,13 +437,13 @@ void AssetViewModelBase::CommitTransaction()
     }
 
     // call after updating so TrackingProperties are also committed
-    TransactionalViewModelBase::CommitTransaction();
+    DataModelBase::CommitTransaction();
 }
 
-void AssetViewModelBase::RevertTransaction()
+void AssetModelBase::RevertTransaction()
 {
     // call before updating so TrackingProperties are reverted first
-    TransactionalViewModelBase::RevertTransaction();
+    DataModelBase::RevertTransaction();
 
     for (auto pAsset : m_vAssetDefinitions)
     {
@@ -470,7 +470,7 @@ void AssetViewModelBase::RevertTransaction()
     }
 }
 
-bool AssetViewModelBase::IsActive(AssetState nState) noexcept
+bool AssetModelBase::IsActive(AssetState nState) noexcept
 {
     switch (nState)
     {
@@ -482,6 +482,6 @@ bool AssetViewModelBase::IsActive(AssetState nState) noexcept
     }
 }
 
-} // namespace viewmodels
-} // namespace ui
+} // namespace models
+} // namespace data
 } // namespace ra

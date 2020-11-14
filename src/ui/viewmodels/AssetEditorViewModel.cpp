@@ -12,8 +12,8 @@ namespace viewmodels {
 const IntModelProperty AssetEditorViewModel::IDProperty("AssetEditorViewModel", "ID", 0);
 const StringModelProperty AssetEditorViewModel::NameProperty("AssetEditorViewModel", "Name", L"[No Asset Loaded]");
 const StringModelProperty AssetEditorViewModel::DescriptionProperty("AssetEditorViewModel", "Description", L"Open an asset from the Assets List");
-const IntModelProperty AssetEditorViewModel::CategoryProperty("AssetEditorViewModel", "Category", ra::etoi(AssetCategory::Core));
-const IntModelProperty AssetEditorViewModel::StateProperty("AssetEditorViewModel", "State", ra::etoi(AssetState::Inactive));
+const IntModelProperty AssetEditorViewModel::CategoryProperty("AssetEditorViewModel", "Category", ra::etoi(ra::data::models::AssetCategory::Core));
+const IntModelProperty AssetEditorViewModel::StateProperty("AssetEditorViewModel", "State", ra::etoi(ra::data::models::AssetState::Inactive));
 const IntModelProperty AssetEditorViewModel::PointsProperty("AssetEditorViewModel", "Points", 0);
 const StringModelProperty AssetEditorViewModel::BadgeProperty("AssetEditorViewModel", "Badge", L"00000");
 const BoolModelProperty AssetEditorViewModel::PauseOnResetProperty("AssetEditorViewModel", "PauseOnReset", false);
@@ -41,7 +41,7 @@ void AssetEditorViewModel::SelectBadgeFile()
     ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Not implemented");
 }
 
-void AssetEditorViewModel::LoadAsset(AssetViewModelBase* pAsset)
+void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
 {
     if (m_pAsset == pAsset)
         return;
@@ -61,12 +61,12 @@ void AssetEditorViewModel::LoadAsset(AssetViewModelBase* pAsset)
         SetState(pAsset->GetState());
         SetCategory(pAsset->GetCategory());
 
-        if (pAsset->GetCategory() == AssetCategory::Local)
+        if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
             SetValue(IDProperty, 0);
         else
             SetValue(IDProperty, pAsset->GetID());
 
-        const auto* pAchievement = dynamic_cast<AchievementViewModel*>(pAsset);
+        const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pAsset);
         if (pAchievement != nullptr)
         {
             SetPoints(pAchievement->GetPoints());
@@ -95,9 +95,9 @@ void AssetEditorViewModel::LoadAsset(AssetViewModelBase* pAsset)
 
         SetName(NameProperty.GetDefaultValue());
         SetValue(IDProperty, IDProperty.GetDefaultValue());
-        SetState(ra::itoe<AssetState>(StateProperty.GetDefaultValue()));
+        SetState(ra::itoe<ra::data::models::AssetState>(StateProperty.GetDefaultValue()));
         SetDescription(DescriptionProperty.GetDefaultValue());
-        SetCategory(ra::itoe<AssetCategory>(CategoryProperty.GetDefaultValue()));
+        SetCategory(ra::itoe<ra::data::models::AssetCategory>(CategoryProperty.GetDefaultValue()));
         SetPoints(PointsProperty.GetDefaultValue());
         SetBadge(BadgeProperty.GetDefaultValue());
         SetPauseOnReset(PauseOnResetProperty.GetDefaultValue());
@@ -108,41 +108,47 @@ void AssetEditorViewModel::LoadAsset(AssetViewModelBase* pAsset)
     }
 }
 
-void AssetEditorViewModel::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
+void AssetEditorViewModel::OnDataModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
-    if (args.Property == AchievementViewModel::PauseOnResetProperty)
+    if (args.Property == ra::data::models::AchievementModel::PauseOnResetProperty)
         SetPauseOnReset(args.tNewValue);
-    else if (args.Property == AchievementViewModel::PauseOnTriggerProperty)
+    else if (args.Property == ra::data::models::AchievementModel::PauseOnTriggerProperty)
         SetPauseOnTrigger(args.tNewValue);
 }
 
-void AssetEditorViewModel::OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args)
+void AssetEditorViewModel::OnDataModelStringValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    if (args.Property == AssetViewModelBase::DescriptionProperty)
+    if (args.Property == ra::data::models::AssetModelBase::DescriptionProperty)
         SetDescription(args.tNewValue);
-    else if (args.Property == AssetViewModelBase::NameProperty)
+    else if (args.Property == ra::data::models::AssetModelBase::NameProperty)
         SetName(args.tNewValue);
-    else if (args.Property == AchievementViewModel::BadgeProperty)
+    else if (args.Property == ra::data::models::AchievementModel::BadgeProperty)
         SetBadge(args.tNewValue);
+}
+
+void AssetEditorViewModel::OnDataModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == TriggerViewModel::VersionProperty)
+        OnTriggerChanged();
+    else if (args.Property == ra::data::models::AssetModelBase::StateProperty)
+        SetState(ra::itoe<ra::data::models::AssetState>(args.tNewValue));
+    else if (args.Property == ra::data::models::AssetModelBase::CategoryProperty)
+        SetCategory(ra::itoe<ra::data::models::AssetCategory>(args.tNewValue));
+    else if (args.Property == ra::data::models::AchievementModel::PointsProperty)
+        SetPoints(args.tNewValue);
+    else if (args.Property == ra::data::models::AssetModelBase::IDProperty)
+        SetValue(IDProperty, args.tNewValue);
 }
 
 void AssetEditorViewModel::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == TriggerViewModel::VersionProperty)
         OnTriggerChanged();
-    else if (args.Property == AssetViewModelBase::StateProperty)
-        SetState(ra::itoe<AssetState>(args.tNewValue));
-    else if (args.Property == AssetViewModelBase::CategoryProperty)
-        SetCategory(ra::itoe<AssetCategory>(args.tNewValue));
-    else if (args.Property == AchievementViewModel::PointsProperty)
-        SetPoints(args.tNewValue);
-    else if (args.Property == AssetViewModelBase::IDProperty)
-        SetValue(IDProperty, args.tNewValue);
 }
 
 void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
-    auto* pAchievement = dynamic_cast<AchievementViewModel*>(m_pAsset);
+    auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
     if (pAchievement != nullptr)
     {
         if (args.Property == PauseOnResetProperty)
@@ -168,7 +174,7 @@ void AssetEditorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs&
         }
         else
         {
-            auto* pAchievement = dynamic_cast<AchievementViewModel*>(m_pAsset);
+            auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
             if (pAchievement != nullptr)
             {
                 if (args.Property == BadgeProperty)
@@ -194,16 +200,16 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
     {
         if (args.Property == StateProperty)
         {
-            m_pAsset->SetState(ra::itoe<AssetState>(args.tNewValue));
+            m_pAsset->SetState(ra::itoe<ra::data::models::AssetState>(args.tNewValue));
             UpdateTriggerBinding();
         }
         else if (args.Property == CategoryProperty)
         {
-            m_pAsset->SetCategory(ra::itoe<AssetCategory>(args.tNewValue));
+            m_pAsset->SetCategory(ra::itoe<ra::data::models::AssetCategory>(args.tNewValue));
         }
         else
         {
-            auto* pAchievement = dynamic_cast<AchievementViewModel*>(m_pAsset);
+            auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
             if (pAchievement != nullptr)
             {
                 if (args.Property == PointsProperty)
@@ -217,7 +223,7 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
 
 void AssetEditorViewModel::OnTriggerChanged()
 {
-    auto* pAchievement = dynamic_cast<AchievementViewModel*>(m_pAsset);
+    auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
     if (pAchievement != nullptr)
     {
         const std::string& sTrigger = Trigger().Serialize();
@@ -234,7 +240,7 @@ void AssetEditorViewModel::OnTriggerChanged()
 
 void AssetEditorViewModel::UpdateTriggerBinding()
 {
-    const auto* pAchievement = dynamic_cast<AchievementViewModel*>(m_pAsset);
+    const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
     if (pAchievement != nullptr)
     {
         const auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());

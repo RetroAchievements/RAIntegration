@@ -9,7 +9,8 @@
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
-#include "tests\RA_UnitTestHelpers.h"
+
+#include "tests\ui\UIAsserts.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

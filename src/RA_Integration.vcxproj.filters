@@ -49,6 +49,9 @@
     <Filter Include="Data\Context">
       <UniqueIdentifier>{d29ae560-83b6-496b-b1ba-bc0b0c5978af}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Data\Models">
+      <UniqueIdentifier>{c9c038f9-c4bb-436c-8416-12f91df44904}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RA_Achievement.cpp">
@@ -309,16 +312,10 @@
     <ClCompile Include="ui\viewmodels\TriggerConditionViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
-    <ClCompile Include="ui\viewmodels\AssetViewModelBase.cpp">
-      <Filter>UI\ViewModels</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\AssetListViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
     <ClCompile Include="ui\viewmodels\TriggerViewModel.cpp">
-      <Filter>UI\ViewModels</Filter>
-    </ClCompile>
-    <ClCompile Include="ui\viewmodels\AchievementViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
     <ClCompile Include="ui\win32\AssetListDialog.cpp">
@@ -353,6 +350,24 @@
     </ClCompile>
     <ClCompile Include="data\ModelPropertyContainer.cpp">
       <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\DataModelBase.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\ModelCollectionBase.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\ModelBase.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\DataModelCollection.cpp">
+      <Filter>Data</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\AssetModelBase.cpp">
+      <Filter>Data\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\AchievementModel.cpp">
+      <Filter>Data\Models</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -833,16 +848,10 @@
     <ClInclude Include="ui\viewmodels\TriggerConditionViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
-    <ClInclude Include="ui\viewmodels\AssetViewModelBase.hh">
-      <Filter>UI\ViewModels</Filter>
-    </ClInclude>
     <ClInclude Include="ui\viewmodels\AssetListViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\TriggerViewModel.hh">
-      <Filter>UI\ViewModels</Filter>
-    </ClInclude>
-    <ClInclude Include="ui\viewmodels\AchievementViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
     <ClInclude Include="..\RAInterface\RA_Consoles.h">
@@ -889,6 +898,24 @@
     </ClInclude>
     <ClInclude Include="data\ModelProperty.hh">
       <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\DataModelBase.hh">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\DataModelCollection.hh">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\ModelCollectionBase.hh">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\ModelBase.hh">
+      <Filter>Data</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\AssetModelBase.hh">
+      <Filter>Data\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\AchievementModel.hh">
+      <Filter>Data\Models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

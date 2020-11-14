@@ -5,6 +5,8 @@
 #include "services\impl\StringTextWriter.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\data\DataAsserts.hh"
+#include "tests\ui\UIAsserts.hh"
 
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -14,6 +16,12 @@
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+
+using ra::data::models::AssetType;
+using ra::data::models::AssetCategory;
+using ra::data::models::AssetState;
+using ra::data::models::AssetChanges;
+using ra::ui::viewmodels::MessageBoxViewModel;
 
 namespace ra {
 namespace ui {
@@ -76,7 +84,7 @@ private:
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::ui::mocks::MockDesktop mockDesktop;
-        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
+        mocks::MockWindowManager mockWindowManager;
 
         void AssertButtonState(ActivateButtonState nActivateButtonState)
         {
@@ -230,7 +238,7 @@ private:
 
         void AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle)
         {
-            auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+            auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
             vmAchievement->SetID(gsl::narrow_cast<unsigned int>(Assets().Count() + 1));
             vmAchievement->SetCategory(nCategory);
             vmAchievement->SetPoints(nPoints);
@@ -243,7 +251,7 @@ private:
         void AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle,
             const std::wstring& sDescription, const std::wstring& sBadge, const std::string& sTrigger)
         {
-            auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+            auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
             vmAchievement->SetID(gsl::narrow_cast<unsigned int>(Assets().Count() + 1));
             vmAchievement->SetCategory(nCategory);
             vmAchievement->SetPoints(nPoints);
@@ -259,7 +267,7 @@ private:
         void AddNewAchievement(unsigned nPoints, const std::wstring& sTitle,
             const std::wstring& sDescription, const std::wstring& sBadge, const std::string& sTrigger)
         {
-            auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+            auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->SetID(gsl::narrow_cast<unsigned int>(Assets().Count() + 1));
             vmAchievement->SetCategory(AssetCategory::Local);
@@ -459,7 +467,7 @@ public:
         Assert::AreEqual(1, vmAssetList.GetAchievementCount());
         Assert::AreEqual(5, vmAssetList.GetTotalPoints());
 
-        auto ach = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(vmAssetList.Assets().GetItemAt(0));
+        auto ach = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.Assets().GetItemAt(0));
         Assert::IsNotNull(ach);
         Ensures(ach != nullptr);
         ach->SetPoints(50);
@@ -467,7 +475,7 @@ public:
         Assert::AreEqual(1, vmAssetList.GetAchievementCount());
         Assert::AreEqual(50, vmAssetList.GetTotalPoints());
 
-        ach = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(vmAssetList.Assets().GetItemAt(1));
+        ach = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.Assets().GetItemAt(1));
         Assert::IsNotNull(ach);
         Ensures(ach != nullptr);
         ach->SetPoints(40);
@@ -475,7 +483,7 @@ public:
         Assert::AreEqual(1, vmAssetList.GetAchievementCount());
         Assert::AreEqual(50, vmAssetList.GetTotalPoints());
 
-        ach = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(vmAssetList.Assets().GetItemAt(2));
+        ach = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.Assets().GetItemAt(2));
         Assert::IsNotNull(ach);
         Ensures(ach != nullptr);
         ach->SetPoints(30);
@@ -627,14 +635,14 @@ public:
         Assert::AreEqual(1, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
         Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(1)->GetId());
 
-        vmAssetList.Assets().GetItemAt(0)->SetCategory(ra::ui::viewmodels::AssetCategory::Unofficial);
+        vmAssetList.Assets().GetItemAt(0)->SetCategory(AssetCategory::Unofficial);
 
         Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
         Assert::AreEqual(15, vmAssetList.GetTotalPoints());
         Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
 
-        vmAssetList.Assets().GetItemAt(1)->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        vmAssetList.Assets().GetItemAt(1)->SetCategory(AssetCategory::Core);
 
         Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -642,7 +650,7 @@ public:
         Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
         Assert::AreEqual(2, vmAssetList.FilteredAssets().GetItemAt(1)->GetId()); // item changed to match filter appears at end of list
 
-        vmAssetList.Assets().GetItemAt(0)->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        vmAssetList.Assets().GetItemAt(0)->SetCategory(AssetCategory::Core);
 
         Assert::AreEqual({ 3U }, vmAssetList.Assets().Count());
         Assert::AreEqual({ 3U }, vmAssetList.FilteredAssets().Count());
@@ -657,15 +665,15 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetFilterCategory(AssetCategory::Core);
 
-        auto pAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        auto pAchievement = std::make_unique<ra::data::models::AchievementModel>();
         pAchievement->SetID(1U);
-        pAchievement->SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        pAchievement->SetCategory(AssetCategory::Core);
         pAchievement->SetPoints(5);
         pAchievement->SetName(L"Title");
-        pAchievement->SetState(ra::ui::viewmodels::AssetState::Inactive);
+        pAchievement->SetState(AssetState::Inactive);
         pAchievement->CreateServerCheckpoint();
         pAchievement->CreateLocalCheckpoint();
-        auto& vmAchievement = dynamic_cast<ra::ui::viewmodels::AchievementViewModel&>(vmAssetList.Assets().Append(std::move(pAchievement)));
+        auto& vmAchievement = dynamic_cast<ra::data::models::AchievementModel&>(vmAssetList.Assets().Append(std::move(pAchievement)));
 
         Assert::AreEqual({ 1U }, vmAssetList.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
@@ -673,21 +681,21 @@ public:
         Expects(pItem != nullptr);
 
         Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(ra::ui::viewmodels::AssetCategory::Core, pItem->GetCategory());
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::None, pItem->GetChanges());
+        Assert::AreEqual(AssetCategory::Core, pItem->GetCategory());
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
         Assert::AreEqual(std::wstring(L"Title"), pItem->GetLabel());
         Assert::AreEqual(5, pItem->GetPoints());
-        Assert::AreEqual(ra::ui::viewmodels::AssetState::Inactive, pItem->GetState());
+        Assert::AreEqual(AssetState::Inactive, pItem->GetState());
 
         vmAchievement.SetName(L"New Title");
         Assert::AreEqual(std::wstring(L"New Title"), pItem->GetLabel());
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Modified, pItem->GetChanges());
+        Assert::AreEqual(AssetChanges::Modified, pItem->GetChanges());
 
         vmAchievement.SetPoints(10);
         Assert::AreEqual(10, pItem->GetPoints());
 
-        vmAchievement.SetState(ra::ui::viewmodels::AssetState::Active);
-        Assert::AreEqual(ra::ui::viewmodels::AssetState::Active, pItem->GetState());
+        vmAchievement.SetState(AssetState::Active);
+        Assert::AreEqual(AssetState::Active, pItem->GetState());
     }
 
     TEST_METHOD(TestUpdateButtonsNoGame)
@@ -1232,7 +1240,7 @@ public:
         vmAssetList.AddNewAchievement(5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddNewAchievement(7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
 
-        auto* pItem = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(0));
+        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.Assets().GetItemAt(0));
         Expects(pItem != nullptr);
         pItem->SetPoints(10);
         pItem->SetName(L"Test1b");
@@ -1240,7 +1248,7 @@ public:
         pItem->SetBadge(L"54321");
         pItem->SetTrigger("0xH1234=2");
 
-        auto* pItem2 = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(1));
+        auto* pItem2 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.Assets().GetItemAt(1));
         Expects(pItem2 != nullptr);
 
         // when an item is selected, non-selected modified items should be written using their unmodified state
@@ -1298,7 +1306,7 @@ public:
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
 
-        auto* pItem = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(0));
+        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.Assets().GetItemAt(0));
         Expects(pItem != nullptr);
         pItem->SetPoints(10);
         pItem->SetName(L"Test1b");
@@ -1328,7 +1336,7 @@ public:
 
         // when an item is selected, non-selected modified items should be written using their unmodified state
         pItem->SetName(L"Test1c");
-        auto* pItem2 = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(1));
+        auto* pItem2 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.Assets().GetItemAt(1));
         Expects(pItem2 != nullptr);
         pItem2->SetName(L"Test2b");
 
@@ -1347,7 +1355,7 @@ public:
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
 
-        auto* pItem = dynamic_cast<AchievementViewModel*>(vmAssetList.Assets().GetItemAt(0));
+        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.Assets().GetItemAt(0));
         Expects(pItem != nullptr);
         pItem->SetName(L"Test1b");
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
@@ -1739,7 +1747,7 @@ public:
         vmAssetList.AssertButtonState(ResetButtonState::Reset);
 
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"This will discard all unsaved changes and reset the assets to the last locally saved state."), vmMessageBox.GetMessage());
 
@@ -1768,7 +1776,7 @@ public:
         vmAssetList.AssertButtonState(ResetButtonState::Reset);
 
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"This will discard any changes to the selected assets and reset them to the last locally saved state."), vmMessageBox.GetMessage());
 
@@ -1799,7 +1807,7 @@ public:
         vmAssetList.MockUserFileContents("1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n");
 
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
         {
             bDialogShown = true;
             return DialogResult::Yes;
@@ -1835,7 +1843,7 @@ public:
         vmAssetList.MockUserFileContents("1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n");
 
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
         {
             bDialogShown = true;
             return DialogResult::Yes;
@@ -1868,7 +1876,7 @@ public:
         vmAssetList.MockUserFileContents("1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n");
 
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
         {
             bDialogShown = true;
             return DialogResult::No;
@@ -1899,7 +1907,7 @@ public:
         pAsset->SetNew();
 
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
         {
             bDialogShown = true;
             return DialogResult::Yes;
@@ -1928,7 +1936,7 @@ public:
             "3:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
 
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
         {
             bDialogShown = true;
             return DialogResult::Yes;
@@ -1974,7 +1982,7 @@ public:
         vmAssetList.MockUserFileContents("1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n");
 
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
         {
             bDialogShown = true;
             return DialogResult::Yes;
@@ -2008,7 +2016,7 @@ public:
         vmAssetList.MockUserFileContents("3:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n");
 
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
         {
             bDialogShown = true;
             return DialogResult::Yes;
@@ -2038,7 +2046,7 @@ public:
         vmAssetList.MockUserFileContents("111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
 
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
         {
             bDialogShown = true;
             return DialogResult::Yes;
@@ -2068,7 +2076,7 @@ public:
         vmAssetList.MockUserFileContents("111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
 
         bool bDialogShown = false;
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&)
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
         {
             bDialogShown = true;
             return DialogResult::Yes;

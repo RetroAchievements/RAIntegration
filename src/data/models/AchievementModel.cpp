@@ -1,20 +1,20 @@
-#include "AchievementViewModel.hh"
+#include "AchievementModel.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
 
 namespace ra {
-namespace ui {
-namespace viewmodels {
+namespace data {
+namespace models {
 
-const IntModelProperty AchievementViewModel::PointsProperty("AchievementViewModel", "Points", 5);
-const StringModelProperty AchievementViewModel::BadgeProperty("AchievementViewModel", "Badge", L"00000");
-const BoolModelProperty AchievementViewModel::PauseOnResetProperty("AchievementViewModel", "PauseOnReset", false);
-const BoolModelProperty AchievementViewModel::PauseOnTriggerProperty("AchievementViewModel", "PauseOnTrigger", false);
-const IntModelProperty AchievementViewModel::TriggerProperty("AchievementViewModel", "Trigger", ra::etoi(AssetChanges::None));
+const IntModelProperty AchievementModel::PointsProperty("AchievementModel", "Points", 5);
+const StringModelProperty AchievementModel::BadgeProperty("AchievementModel", "Badge", L"00000");
+const BoolModelProperty AchievementModel::PauseOnResetProperty("AchievementModel", "PauseOnReset", false);
+const BoolModelProperty AchievementModel::PauseOnTriggerProperty("AchievementModel", "PauseOnTrigger", false);
+const IntModelProperty AchievementModel::TriggerProperty("AchievementModel", "Trigger", ra::etoi(AssetChanges::None));
 
-AchievementViewModel::AchievementViewModel() noexcept
+AchievementModel::AchievementModel() noexcept
 {
     GSL_SUPPRESS_F6 SetValue(TypeProperty, ra::etoi(AssetType::Achievement));
 
@@ -24,18 +24,18 @@ AchievementViewModel::AchievementViewModel() noexcept
     GSL_SUPPRESS_F6 AddAssetDefinition(m_pTrigger, TriggerProperty);
 }
 
-void AchievementViewModel::Activate()
+void AchievementModel::Activate()
 {
     if (!IsActive())
         SetState(AssetState::Waiting);
 }
 
-void AchievementViewModel::Deactivate()
+void AchievementModel::Deactivate()
 {
     SetState(AssetState::Inactive);
 }
 
-void AchievementViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
+void AchievementModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == StateProperty)
     {
@@ -61,10 +61,10 @@ void AchievementViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
         }
     }
 
-    AssetViewModelBase::OnValueChanged(args);
+    AssetModelBase::OnValueChanged(args);
 }
 
-void AchievementViewModel::DoFrame()
+void AchievementModel::DoFrame()
 {
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
     const auto* pTrigger = pRuntime.GetAchievementTrigger(GetID());
@@ -96,7 +96,7 @@ void AchievementViewModel::DoFrame()
     }
 }
 
-void AchievementViewModel::Serialize(ra::services::TextWriter& pWriter) const
+void AchievementModel::Serialize(ra::services::TextWriter& pWriter) const
 {
     WriteQuoted(pWriter, GetLocalAssetDefinition(m_pTrigger));
     WritePossiblyQuoted(pWriter, GetLocalValue(NameProperty));
@@ -107,7 +107,7 @@ void AchievementViewModel::Serialize(ra::services::TextWriter& pWriter) const
     WritePossiblyQuoted(pWriter, GetLocalValue(BadgeProperty));
 }
 
-bool AchievementViewModel::Deserialize(ra::Tokenizer& pTokenizer)
+bool AchievementModel::Deserialize(ra::Tokenizer& pTokenizer)
 {
     // field 2: trigger
     std::string sTrigger;
@@ -202,6 +202,6 @@ bool AchievementViewModel::Deserialize(ra::Tokenizer& pTokenizer)
     return true;
 }
 
-} // namespace viewmodels
-} // namespace ui
+} // namespace models
+} // namespace data
 } // namespace ra

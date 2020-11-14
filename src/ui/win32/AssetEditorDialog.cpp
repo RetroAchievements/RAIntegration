@@ -13,9 +13,9 @@
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
+using ra::data::models::AssetModelBase;
+using ra::data::models::AchievementModel;
 using ra::ui::viewmodels::AssetEditorViewModel;
-using ra::ui::viewmodels::AssetViewModelBase;
-using ra::ui::viewmodels::AchievementViewModel;
 using ra::ui::viewmodels::TriggerViewModel;
 using ra::ui::viewmodels::TriggerConditionViewModel;
 using ra::ui::win32::bindings::GridColumnBinding;

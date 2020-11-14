@@ -31,6 +31,9 @@
     <Filter Include="Tests\Data\Context">
       <UniqueIdentifier>{da241f86-5f80-4b36-b3d8-f8a0ecc1a4ee}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tests\Data\Models">
+      <UniqueIdentifier>{a0f14c97-e5dd-4827-9864-ca54f0c9177e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\RA_Condition.cpp">
@@ -306,9 +309,6 @@
     <ClCompile Include="..\src\ui\Theme.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="ui\TransactionalViewModelBase_Tests.cpp">
-      <Filter>Tests\UI</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\ui\TransactionalViewModelBase.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -317,12 +317,6 @@
     </ClCompile>
     <ClCompile Include="ui\viewmodels\TriggerConditionViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
-    </ClCompile>
-    <ClCompile Include="ui\viewmodels\AssetViewModelBase_Tests.cpp">
-      <Filter>Tests\UI\ViewModels</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\ui\viewmodels\AssetViewModelBase.cpp">
-      <Filter>Code</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\AssetListViewModel.cpp">
       <Filter>Code</Filter>
@@ -333,20 +327,11 @@
     <ClCompile Include="ui\viewmodels\TriggerViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\ui\viewmodels\AchievementViewModel.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp">
-      <Filter>Tests\UI\ViewModels</Filter>
-    </ClCompile>
     <ClCompile Include="ui\viewmodels\AssetEditorViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\AssetEditorViewModel.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="ui\viewmodels\AchievementViewModel_Tests.cpp">
-      <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
     <ClCompile Include="..\src\services\FrameEventQueue.cpp">
       <Filter>Code</Filter>
@@ -389,6 +374,36 @@
     </ClCompile>
     <ClCompile Include="..\src\data\ModelProperty.cpp">
       <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\DataModelBase_Tests.cpp">
+      <Filter>Tests\Data</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\DataModelBase.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\DataModelCollection.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\ModelBase.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\ModelCollectionBase.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\models\AchievementModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\models\AssetModelBase.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\AchievementModel_Tests.cpp">
+      <Filter>Tests\Data\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\AssetModelBase_Tests.cpp">
+      <Filter>Tests\Data\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -463,6 +478,18 @@
     </ClInclude>
     <ClInclude Include="mocks\MockFrameEventQueue.hh">
       <Filter>Mocks</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_UnitTestUIHelpers.h">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_UnitTestDataHelpers.h">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_UnitTestApiHelpers.h">
+      <Filter>Tests</Filter>
+    </ClInclude>
+    <ClInclude Include="RA_UnitTestServicesHelpers.h">
+      <Filter>Tests</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

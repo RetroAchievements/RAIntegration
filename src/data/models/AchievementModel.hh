@@ -1,17 +1,17 @@
-#ifndef RA_UI_ACHIEVEMENT_VIEWMODEL_H
-#define RA_UI_ACHIEVEMENT_VIEWMODEL_H
+#ifndef RA_DATA_ACHIEVEMENT_MODEL_H
+#define RA_DATA_ACHIEVEMENT_MODEL_H
 #pragma once
 
-#include "AssetViewModelBase.hh"
+#include "AssetModelBase.hh"
 
 namespace ra {
-namespace ui {
-namespace viewmodels {
+namespace data {
+namespace models {
 
-class AchievementViewModel : public AssetViewModelBase
+class AchievementModel : public AssetModelBase
 {
 public:
-    AchievementViewModel() noexcept;
+    AchievementModel() noexcept;
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the achievement points.
@@ -109,8 +109,8 @@ private:
     std::chrono::system_clock::time_point m_tUnlock;
 };
 
-} // namespace viewmodels
-} // namespace ui
+} // namespace models
+} // namespace data
 } // namespace ra
 
-#endif RA_UI_ACHIEVEMENT_VIEWMODEL_H
+#endif RA_DATA_ACHIEVEMENT_MODEL_H

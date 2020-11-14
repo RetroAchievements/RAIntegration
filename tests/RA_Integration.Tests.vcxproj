@@ -280,6 +280,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\data\ModelProperty.cpp" />
     <ClCompile Include="..\src\api\ApiCall.cpp" />
     <ClCompile Include="..\src\api\impl\ConnectedServer.cpp" />
     <ClCompile Include="..\src\api\impl\DisconnectedServer.cpp" />
@@ -289,8 +290,13 @@
     <ClCompile Include="..\src\data\context\GameContext.cpp" />
     <ClCompile Include="..\src\data\context\SessionTracker.cpp" />
     <ClCompile Include="..\src\data\context\UserContext.cpp" />
-    <ClCompile Include="..\src\data\ModelProperty.cpp" />
+    <ClCompile Include="..\src\data\DataModelCollection.cpp" />
+    <ClCompile Include="..\src\data\ModelBase.cpp" />
+    <ClCompile Include="..\src\data\ModelCollectionBase.cpp" />
     <ClCompile Include="..\src\data\ModelPropertyContainer.cpp" />
+    <ClCompile Include="..\src\data\DataModelBase.cpp" />
+    <ClCompile Include="..\src\data\models\AchievementModel.cpp" />
+    <ClCompile Include="..\src\data\models\AssetModelBase.cpp" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -314,10 +320,8 @@
     <ClCompile Include="..\src\ui\Theme.cpp" />
     <ClCompile Include="..\src\ui\TransactionalViewModelBase.cpp" />
     <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
-    <ClCompile Include="..\src\ui\viewmodels\AchievementViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\AssetEditorViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\AssetListViewModel.cpp" />
-    <ClCompile Include="..\src\ui\viewmodels\AssetViewModelBase.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\CodeNotesViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\FileDialogViewModel.cpp" />
@@ -355,8 +359,11 @@
     <ClCompile Include="data\context\EmulatorContext_Tests.cpp" />
     <ClCompile Include="data\context\GameContext_Tests.cpp" />
     <ClCompile Include="data\context\SessionTracker_Tests.cpp" />
+    <ClCompile Include="data\DataModelBase_Tests.cpp" />
     <ClCompile Include="data\ModelPropertyContainer_Tests.cpp" />
     <ClCompile Include="data\ModelProperty_Tests.cpp" />
+    <ClCompile Include="data\models\AchievementModel_Tests.cpp" />
+    <ClCompile Include="data\models\AssetModelBase_Tests.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="services\AchievementRuntime_Tests.cpp" />
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />
@@ -364,7 +371,6 @@
     <ClCompile Include="services\GameIdentifier_Tests.cpp" />
     <ClCompile Include="services\Http_Tests.cpp" />
     <ClCompile Include="ui\OverlayTheme_Tests.cpp" />
-    <ClCompile Include="ui\TransactionalViewModelBase_Tests.cpp" />
     <ClCompile Include="ui\ViewModelBase_Tests.cpp" />
     <ClCompile Include="RA_StringUtils_Tests.cpp" />
     <ClCompile Include="services\FileLogger_Tests.cpp" />
@@ -376,10 +382,8 @@
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
-    <ClCompile Include="ui\viewmodels\AchievementViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\AssetEditorViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp" />
-    <ClCompile Include="ui\viewmodels\AssetViewModelBase_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\CodeNotesViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />
@@ -424,9 +428,13 @@
     <ClInclude Include="mocks\MockThreadPool.hh" />
     <ClInclude Include="mocks\MockUserContext.hh" />
     <ClInclude Include="mocks\MockWindowManager.hh" />
+    <ClInclude Include="RA_UnitTestApiHelpers.h" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="RA_Condition_Tests.cpp" />
     <ClCompile Include="RA_UnitTestHelpers.cpp" />
+    <ClInclude Include="RA_UnitTestDataHelpers.h" />
+    <ClInclude Include="RA_UnitTestServicesHelpers.h" />
+    <ClInclude Include="RA_UnitTestUIHelpers.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -4,7 +4,7 @@
 
 #include "ra_fwd.h"
 
-#include "data\ModelPropertyContainer.hh"
+#include "data\ModelBase.hh"
 
 namespace ra {
 namespace ui {
@@ -13,7 +13,7 @@ using BoolModelProperty = ra::data::BoolModelProperty;
 using StringModelProperty = ra::data::StringModelProperty;
 using IntModelProperty = ra::data::IntModelProperty;
 
-class ViewModelBase : protected ra::data::ModelPropertyContainer
+class ViewModelBase : public ra::data::ModelBase
 {
 public:
     class NotifyTarget

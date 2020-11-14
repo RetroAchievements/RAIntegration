@@ -16,7 +16,7 @@ void ViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
         }
     }
 
-    ModelPropertyContainer::OnValueChanged(args);
+    ModelBase::OnValueChanged(args);
 }
 
 void ViewModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
@@ -32,7 +32,7 @@ void ViewModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
         }
     }
 
-    ModelPropertyContainer::OnValueChanged(args);
+    ModelBase::OnValueChanged(args);
 }
 
 void ViewModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
@@ -48,7 +48,7 @@ void ViewModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
         }
     }
 
-    ModelPropertyContainer::OnValueChanged(args);
+    ModelBase::OnValueChanged(args);
 }
 
 } // namespace ui

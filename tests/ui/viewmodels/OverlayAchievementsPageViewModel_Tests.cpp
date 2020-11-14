@@ -12,9 +12,12 @@
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
-#include "tests\RA_UnitTestHelpers.h"
+#include "tests\data\DataAsserts.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
+
+using ra::data::models::AssetCategory;
+using ra::data::models::AssetState;
 
 namespace ra {
 namespace ui {
@@ -56,11 +59,11 @@ private:
             return nullptr;
         }
 
-        ra::ui::viewmodels::AchievementViewModel& NewAchievement(AssetCategory nCategory)
+        ra::data::models::AchievementModel& NewAchievement(AssetCategory nCategory)
         {
             const auto& pAchievement = mockGameContext.NewAchievement(ra::itoe<Achievement::Category>(ra::etoi(nCategory)));
 
-            auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+            auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
             vmAchievement->SetID(pAchievement.ID());
             vmAchievement->SetCategory(nCategory);
             vmAchievement->CreateServerCheckpoint();
@@ -70,7 +73,7 @@ private:
             pAssets.Append(std::move(vmAchievement));
 
             auto* pAsset = pAssets.GetItemAt(pAssets.Count() - 1);
-            auto* pAchievementViewModel = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(pAsset);
+            auto* pAchievementViewModel = dynamic_cast<ra::data::models::AchievementModel*>(pAsset);
             Expects(pAchievementViewModel != nullptr);
             return *pAchievementViewModel;
         }

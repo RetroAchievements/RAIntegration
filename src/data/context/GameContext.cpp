@@ -20,6 +20,8 @@
 #include "data\context\SessionTracker.hh"
 #include "data\context\UserContext.hh"
 
+#include "data\models\AchievementModel.hh"
+
 #include "services\AchievementRuntime.hh"
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
@@ -30,7 +32,6 @@
 
 #include "ui\ImageReference.hh"
 
-#include "ui\viewmodels\AchievementViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\ScoreboardViewModel.hh"
@@ -156,11 +157,11 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         pAchievement.SetID(pAchievementData.Id);
         CopyAchievementData(pAchievement, pAchievementData);
 
-        auto vmAchievement = std::make_unique<ra::ui::viewmodels::AchievementViewModel>();
+        auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
         vmAchievement->SetID(pAchievementData.Id);
         vmAchievement->SetName(ra::Widen(pAchievementData.Title));
         vmAchievement->SetDescription(ra::Widen(pAchievementData.Description));
-        vmAchievement->SetCategory(ra::itoe<ra::ui::viewmodels::AssetCategory>(pAchievementData.CategoryId));
+        vmAchievement->SetCategory(ra::itoe<ra::data::models::AssetCategory>(pAchievementData.CategoryId));
         vmAchievement->SetPoints(pAchievementData.Points);
         vmAchievement->SetBadge(ra::Widen(pAchievementData.BadgeName));
         vmAchievement->SetTrigger(pAchievementData.Definition);

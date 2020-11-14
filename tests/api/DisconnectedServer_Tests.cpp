@@ -4,7 +4,7 @@
 
 #include "api\impl\ConnectedServer.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
+#include "tests\api\ApiAsserts.hh"
 #include "tests\mocks\MockHttpRequester.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;

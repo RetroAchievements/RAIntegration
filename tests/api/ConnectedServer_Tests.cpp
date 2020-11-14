@@ -5,6 +5,7 @@
 #include "api\impl\DisconnectedServer.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\api\ApiAsserts.hh"
 #include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"

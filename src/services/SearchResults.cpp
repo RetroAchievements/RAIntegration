@@ -788,7 +788,7 @@ size_t SearchResults::MatchingAddressCount() const noexcept
     return m_pImpl->AdjustInitialAddressCount(nCount);
 }
 
-void SearchResults::ExcludeAddress(ra::ByteAddress nAddress)
+void SearchResults::ExcludeAddress(ra::ByteAddress nAddress) noexcept
 {
     if (m_nFilterType != SearchFilterType::None)
     {
@@ -803,7 +803,7 @@ void SearchResults::ExcludeAddress(ra::ByteAddress nAddress)
     }
 }
 
-void SearchResults::ExcludeMatchingAddress(gsl::index nIndex)
+void SearchResults::ExcludeMatchingAddress(gsl::index nIndex) noexcept
 {
     if (m_nFilterType != SearchFilterType::None)
         m_vMatchingAddresses.erase(m_vMatchingAddresses.begin() + nIndex);

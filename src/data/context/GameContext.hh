@@ -113,7 +113,7 @@ public:
 
     Achievement& NewAchievement(Achievement::Category nType);
 
-    bool RemoveAchievement(ra::AchievementID nAchievementId);
+    bool RemoveAchievement(ra::AchievementID nAchievementId) noexcept;
 
     /// <summary>
     /// Shows the popup for earning an achievement and notifies the server if legitimate.

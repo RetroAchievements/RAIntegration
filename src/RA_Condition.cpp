@@ -117,7 +117,7 @@ void CompVariable::SerializeAppend(std::string& buffer) const
     buffer.append(ra::ByteAddressToString(m_nVal), 2);
 }
 
-void ConditionGroup::RemoveAt(size_t nID)
+void ConditionGroup::RemoveAt(size_t nID) noexcept
 {
     size_t nCount = 0;
     std::vector<Condition>::iterator iter = m_Conditions.begin();

@@ -488,7 +488,7 @@ void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned in
 }
 
 void Achievement::AddAltGroup() noexcept { m_vConditions.AddGroup(); }
-void Achievement::RemoveAltGroup(gsl::index nIndex) { m_vConditions.RemoveAltGroup(nIndex); }
+void Achievement::RemoveAltGroup(gsl::index nIndex) noexcept { m_vConditions.RemoveAltGroup(nIndex); }
 
 void Achievement::SetID(ra::AchievementID nID) noexcept
 {

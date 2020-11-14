@@ -168,7 +168,7 @@ public:
     /// </summary>
     /// <param name="nId">The unique identifier of the popup.</param>
     /// <returns>Requested popup view model, <c>nullptr</c> if not found.</returns>
-    PopupMessageViewModel* GetMessage(int nId)
+    PopupMessageViewModel* GetMessage(int nId) noexcept
     {
         for (auto& pMessage : m_vPopupMessages)
         {
@@ -226,7 +226,7 @@ public:
     /// </summary>
     /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the scoreboard.</param>
     /// <returns>Requested scoreboard view model, <c>nullptr</c> if not found.</returns>
-    ScoreboardViewModel* GetScoreboard(ra::LeaderboardID nLeaderboardId)
+    ScoreboardViewModel* GetScoreboard(ra::LeaderboardID nLeaderboardId) noexcept
     {
         for (auto& pScoreboard : m_vScoreboards)
         {

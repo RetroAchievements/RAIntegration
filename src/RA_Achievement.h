@@ -85,7 +85,7 @@ public:
     void SetModifiedDate(time_t nTimeModified) noexcept { m_nTimestampModified = nTimeModified; }
 
     void AddAltGroup() noexcept;
-    void RemoveAltGroup(gsl::index nIndex);
+    void RemoveAltGroup(gsl::index nIndex) noexcept;
 
     inline size_t NumConditionGroups() const noexcept { return m_vConditions.GroupCount(); }
     inline size_t NumConditions(size_t nGroup) const

@@ -631,7 +631,7 @@ Achievement& GameContext::NewAchievement(Achievement::Category nType)
     return pAchievement;
 }
 
-bool GameContext::RemoveAchievement(ra::AchievementID nAchievementId)
+bool GameContext::RemoveAchievement(ra::AchievementID nAchievementId) noexcept
 {
     for (auto pIter = m_vAchievements.begin(); pIter != m_vAchievements.end(); ++pIter)
     {

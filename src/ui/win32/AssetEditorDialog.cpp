@@ -368,6 +368,15 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
 {
     switch (nCommand)
     {
+        case IDC_RA_ADDCOND:
+        {
+            auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+            if (vmAssetEditor)
+                vmAssetEditor->Trigger().NewCondition();
+
+            return TRUE;
+        }
+
         case IDC_RA_COPYCOND:
         {
             auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);

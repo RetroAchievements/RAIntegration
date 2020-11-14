@@ -237,6 +237,18 @@ public:
     }
 
     /// <summary>
+    /// Returns the number of bytes associated to the code note at the specified address.
+    /// </summary>
+    /// <param name="nAddress">Address to query.</param>
+    /// <returns>Number of bytes associated to the code note, or 0 if no note exists at the address.</returns>
+    /// <remarks>Only works for the first byte of a multi-byte address.</remarks>
+    unsigned FindCodeNoteSize(ra::ByteAddress nAddress) const
+    {
+        const auto pIter = m_mCodeNotes.find(nAddress);
+        return (pIter == m_mCodeNotes.end()) ? 0 : pIter->second.Bytes;
+    }
+
+    /// <summary>
     /// Enumerates the code notes
     /// </summary>
     /// <remarks>

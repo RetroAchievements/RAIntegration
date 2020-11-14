@@ -7,6 +7,7 @@
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 namespace ra {
 namespace ui {
@@ -168,6 +169,12 @@ void TriggerViewModel::CopySelectedConditionsToClipboard()
     ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sSerialized));
 }
 
+void TriggerViewModel::DeselectAllConditions()
+{
+    for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vConditions.Count()); ++nIndex)
+        m_vConditions.SetItemValue(nIndex, TriggerConditionViewModel::IsSelectedProperty, false);
+}
+
 void TriggerViewModel::PasteFromClipboard()
 {
     const std::wstring sClipboardText = ra::services::ServiceLocator::Get<ra::services::IClipboard>().GetText();
@@ -196,8 +203,7 @@ void TriggerViewModel::PasteFromClipboard()
 
     m_vConditions.BeginUpdate();
 
-    for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vConditions.Count()); ++nIndex)
-        m_vConditions.SetItemValue(nIndex, TriggerConditionViewModel::IsSelectedProperty, false);
+    DeselectAllConditions();
 
     for (const rc_condition_t* pCondition = pTrigger->requirement->conditions;
         pCondition != nullptr; pCondition = pCondition->next)
@@ -254,6 +260,60 @@ void TriggerViewModel::RemoveSelectedConditions()
         if (vmCondition != nullptr)
             vmCondition->SetIndex(gsl::narrow_cast<int>(nIndex) + 1);
     }
+}
+
+void TriggerViewModel::NewCondition()
+{
+    m_vConditions.BeginUpdate();
+
+    DeselectAllConditions();
+
+    auto& vmCondition = m_vConditions.Add();
+    vmCondition.SetIndex(gsl::narrow_cast<int>(m_vConditions.Count()));
+
+    // assume the user wants to create a condition for the currently watched memory address.
+    const auto& pMemoryInspector = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryInspector;
+    const auto nAddress = pMemoryInspector.Viewer().GetAddress();
+    MemSize nSize = MemSize::EightBit;
+
+    // if the code note specifies an explicit size, use it. otherwise, use the selected viewer mode size.
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::GameContext>();
+    switch (pGameContext.FindCodeNoteSize(nAddress))
+    {
+        default: // no code note, or code note doesn't specify a size
+            nSize = pMemoryInspector.Viewer().GetSize();
+            break;
+
+        case 2:
+            nSize = MemSize::SixteenBit;
+            break;
+
+        case 3:
+            nSize = MemSize::TwentyFourBit;
+            break;
+
+        case 4:
+            nSize = MemSize::ThirtyTwoBit;
+            break;
+    }
+
+    vmCondition.SetSourceType(TriggerOperandType::Address);
+    vmCondition.SetSourceSize(nSize);
+    vmCondition.SetSourceValue(nAddress);
+
+    // assume the user wants to compare to the current value of the watched memory address
+    vmCondition.SetOperator(TriggerOperatorType::Equals);
+
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::EmulatorContext>();
+    vmCondition.SetTargetSize(nSize);
+    vmCondition.SetTargetType(TriggerOperandType::Value);
+    vmCondition.SetTargetValue(pEmulatorContext.ReadMemory(nAddress, nSize));
+
+    vmCondition.SetSelected(true);
+
+    m_vConditions.EndUpdate();
+
+    SetValue(EnsureVisibleConditionIndexProperty, gsl::narrow_cast<int>(m_vConditions.Count()) - 1);
 }
 
 static void AddAltGroup(ViewModelCollection<TriggerViewModel::GroupViewModel>& vGroups,

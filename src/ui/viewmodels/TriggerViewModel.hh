@@ -81,6 +81,8 @@ public:
     void CopySelectedConditionsToClipboard();
     void PasteFromClipboard();
 
+    void NewCondition();
+
     /// <summary>
     /// Gets the list of condition types.
     /// </summary>
@@ -124,6 +126,8 @@ protected:
 private:
     void UpdateVersion();
     void UpdateConditions(const GroupViewModel* pGroup);
+
+    void DeselectAllConditions();
 
     ViewModelCollection<GroupViewModel> m_vGroups;
     ViewModelCollection<TriggerConditionViewModel> m_vConditions;

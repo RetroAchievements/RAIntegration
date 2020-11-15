@@ -187,7 +187,7 @@ public:
 
         // "Success:false" without error message results in Failed call, not Error call
         Assert::AreEqual(ApiResult::Error, response.Result);
-        Assert::AreEqual(std::string("HTTP error code: 401"), response.ErrorMessage);
+        Assert::AreEqual(std::string("HTTP error code: 401 (err401)"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
         Assert::AreEqual(0U, response.Score);
@@ -238,7 +238,7 @@ public:
 
         // "Success:false" without error message results in Failed call, not Error call
         Assert::AreEqual(ApiResult::Error, response.Result);
-        Assert::AreEqual(std::string("HTTP error code: 403"), response.ErrorMessage);
+        Assert::AreEqual(std::string("HTTP error code: 403 (err403)"), response.ErrorMessage);
     }
 
     TEST_METHOD(TestAwardAchievementFailed403WithMessage)
@@ -281,7 +281,7 @@ public:
         auto response = server.Login(request);
 
         Assert::AreEqual(ApiResult::Error, response.Result);
-        Assert::AreEqual(std::string("HTTP error code: 404"), response.ErrorMessage);
+        Assert::AreEqual(std::string("HTTP error code: 404 (err404)"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
         Assert::AreEqual(0U, response.Score);

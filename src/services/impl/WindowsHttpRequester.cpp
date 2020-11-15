@@ -228,7 +228,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
     return nStatusCode;
 }
 
-// these defines are in <wininet.h>
+// these defines are in <wininet.h>, though <winhttp.h> does redefine *some* of them
 // cannot include <wininet.h> and <winhttp.h> in the same file
 #define INTERNET_ERROR_BASE                     12000
 #define ERROR_INTERNET_TIMEOUT                  (INTERNET_ERROR_BASE + 2)
@@ -265,6 +265,54 @@ bool WindowsHttpRequester::IsRetryable(unsigned int nStatusCode) const noexcept
         default:
             return false;
     }
+}
+
+std::string WindowsHttpRequester::GetStatusCodeText(unsigned int nStatusCode) const
+{
+    std::string message;
+
+    // winhttp.h only defines *some* of the wininet errors. do a simple sanity check to check that they're the same
+    static_assert(ERROR_WINHTTP_TIMEOUT == ERROR_INTERNET_TIMEOUT);
+
+    if (nStatusCode >= WINHTTP_ERROR_BASE && nStatusCode <= WINHTTP_ERROR_LAST)
+    {
+        GSL_SUPPRESS_CON4 TCHAR szMessageBuffer[256] = TEXT("");
+        const DWORD nResult = ::FormatMessage(FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_IGNORE_INSERTS,
+            ::GetModuleHandle(TEXT("winhttp.dll")),
+            nStatusCode, 0, (LPTSTR)szMessageBuffer,
+            sizeof(szMessageBuffer)/sizeof(szMessageBuffer[0]), NULL);
+
+        if (nResult > 0)
+        {
+            message = ra::Narrow(szMessageBuffer);
+
+            // trim trailing whitespace
+            while (isspace(message.back()))
+                message.pop_back();
+        }
+    }
+    else
+    {
+        switch (nStatusCode)
+        {
+            case HTTP_STATUS_NO_CONTENT: message = "No Content"; break;
+            case HTTP_STATUS_MOVED: message = "Moved Permanently"; break;
+            case HTTP_STATUS_REDIRECT: message = "Moved Temporarily"; break;
+            case HTTP_STATUS_BAD_REQUEST: message = "Bad Request"; break;
+            case HTTP_STATUS_DENIED: message = "Unauthorized"; break;
+            case HTTP_STATUS_FORBIDDEN: message = "Forbidden"; break;
+            case HTTP_STATUS_NOT_FOUND: message = "Not Found"; break;
+            case HTTP_STATUS_REQUEST_TIMEOUT: message = "Request Time-out"; break;
+            case HTTP_STATUS_REQUEST_TOO_LARGE: message = "Request Entity Too Large"; break;
+            case HTTP_STATUS_URI_TOO_LONG: message = "Request-URI Too Large"; break;
+            case HTTP_STATUS_SERVER_ERROR: message = "Internal Server Error"; break;
+            case HTTP_STATUS_NOT_SUPPORTED: message = "Not Implemented"; break;
+            case HTTP_STATUS_BAD_GATEWAY: message = "Bad Gateway"; break;
+            case HTTP_STATUS_SERVICE_UNAVAIL: message = "Service Unavailable"; break;
+        }
+    }
+
+    return message;
 }
 
 

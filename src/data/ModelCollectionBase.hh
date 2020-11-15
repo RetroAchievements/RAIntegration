@@ -38,7 +38,7 @@ public:
     /// <summary>
     /// Indicates that the collection will not change in the future, so change events don't have to be propagated.
     /// </summary>
-    void Freeze() noexcept
+    void Freeze()
     {
         if (!m_bFrozen)
         {
@@ -196,15 +196,15 @@ public:
     bool IsUpdating() const noexcept { return (m_nUpdateCount > 0); }
 
 protected:
-    virtual void OnFrozen() {}
-    virtual void OnBeginUpdate() {}
-    virtual void OnEndUpdate() {}
-    virtual void OnItemsRemoved(_UNUSED const std::vector<gsl::index>& vDeletedIndices) {}
-    virtual void OnItemsAdded(_UNUSED const std::vector<gsl::index>& vNewIndices) {}
-    virtual void OnItemsChanged(_UNUSED const std::vector<gsl::index>& vChangedIndices) {}
-    virtual void OnModelValueChanged(_UNUSED gsl::index nIndex, _UNUSED const BoolModelProperty::ChangeArgs& args) {}
-    virtual void OnModelValueChanged(_UNUSED gsl::index nIndex, _UNUSED const StringModelProperty::ChangeArgs& args) {}
-    virtual void OnModelValueChanged(_UNUSED gsl::index nIndex, _UNUSED const IntModelProperty::ChangeArgs& args) {}
+    virtual void OnFrozen() noexcept(false) {}
+    virtual void OnBeginUpdate() noexcept(false) {}
+    virtual void OnEndUpdate() noexcept(false) {}
+    virtual void OnItemsRemoved(_UNUSED const std::vector<gsl::index>& vDeletedIndices) noexcept(false) {}
+    virtual void OnItemsAdded(_UNUSED const std::vector<gsl::index>& vNewIndices) noexcept(false) {}
+    virtual void OnItemsChanged(_UNUSED const std::vector<gsl::index>& vChangedIndices) noexcept(false) {}
+    virtual void OnModelValueChanged(_UNUSED gsl::index nIndex, _UNUSED const BoolModelProperty::ChangeArgs& args) noexcept(false) {}
+    virtual void OnModelValueChanged(_UNUSED gsl::index nIndex, _UNUSED const StringModelProperty::ChangeArgs& args) noexcept(false) {}
+    virtual void OnModelValueChanged(_UNUSED gsl::index nIndex, _UNUSED const IntModelProperty::ChangeArgs& args) noexcept(false) {}
 
     ModelBase& AddItem(std::unique_ptr<ModelBase> vmModel);
     void MoveItemInternal(gsl::index nIndex, gsl::index nNewIndex);
@@ -235,8 +235,8 @@ protected:
 
 private:
     void UpdateIndices();
-    void StartWatching(ModelBase& pModel, gsl::index nIndex);
-    void StopWatching(ModelBase& pModel);
+    void StartWatching(ModelBase& pModel, gsl::index nIndex) noexcept;
+    void StopWatching(ModelBase& pModel) noexcept;
 
     // allow ModelBase to call NotifyModelValueChanged
     friend class ModelBase;

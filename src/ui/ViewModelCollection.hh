@@ -84,7 +84,7 @@ protected:
         return !IsFrozen() && !m_vNotifyTargets.empty();
     }
 
-    void OnFrozen() override;
+    void OnFrozen() noexcept override;
     void OnBeginUpdate() override;
     void OnEndUpdate() override;
 

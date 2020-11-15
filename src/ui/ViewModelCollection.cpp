@@ -3,7 +3,7 @@
 namespace ra {
 namespace ui {
 
-void ViewModelCollectionBase::OnFrozen()
+void ViewModelCollectionBase::OnFrozen() noexcept
 {
     m_vNotifyTargets.clear();
 }

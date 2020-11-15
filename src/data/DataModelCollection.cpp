@@ -3,7 +3,7 @@
 namespace ra {
 namespace data {
 
-void DataModelCollectionBase::OnFrozen()
+void DataModelCollectionBase::OnFrozen() noexcept
 {
     m_vNotifyTargets.clear();
 }

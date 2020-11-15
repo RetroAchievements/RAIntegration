@@ -195,7 +195,7 @@ void ModelCollectionBase::StartWatching() noexcept
         StartWatching(*pItem, nIndex++);
 }
 
-void ModelCollectionBase::StartWatching(ModelBase& pModel, gsl::index nIndex)
+void ModelCollectionBase::StartWatching(ModelBase& pModel, gsl::index nIndex) noexcept
 {
     pModel.m_nCollectionIndex = nIndex;
     pModel.m_pCollection = this;
@@ -207,7 +207,7 @@ void ModelCollectionBase::StopWatching() noexcept
         StopWatching(*pItem);
 }
 
-void ModelCollectionBase::StopWatching(ModelBase& pModel)
+void ModelCollectionBase::StopWatching(ModelBase& pModel) noexcept
 {
     pModel.m_pCollection = nullptr;
 }

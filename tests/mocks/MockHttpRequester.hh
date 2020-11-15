@@ -32,7 +32,7 @@ public:
         return false;
     }
 
-    std::string GetStatusCodeText(unsigned int nStatusCode) const noexcept override
+    std::string GetStatusCodeText(unsigned int nStatusCode) const override
     {
         return ra::StringPrintf("err%u", nStatusCode);
     }

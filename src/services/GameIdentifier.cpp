@@ -71,7 +71,7 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
         nGameId = response.GameId;
         if (nGameId == 0) // Unknown
         {
-            RA_LOG_INFO("Could not identify game with MD5 %s", sMD5);
+            RA_LOG_INFO("Could not identify game with hash %s", sMD5);
 
             auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetGameTitle();
 

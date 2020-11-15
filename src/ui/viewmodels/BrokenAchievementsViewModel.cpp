@@ -208,7 +208,7 @@ bool BrokenAchievementsViewModel::Submit()
 
     vmConfirm.SetMessage(ra::StringPrintf(L""
         "Achievement ID%s: %s\n"
-        "Game Checksum: %s\n"
+        "RetroAchievements Hash: %s\n"
         "Comment: %s",
         request.AchievementIds.size() == 1 ? "" : "s",
         sBuggedIDs, pGameContext.GameHash(), GetComment()

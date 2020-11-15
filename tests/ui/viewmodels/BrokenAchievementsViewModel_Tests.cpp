@@ -322,7 +322,7 @@ public:
             bDialogSeen = true;
 
             Assert::AreEqual(std::wstring(L"Are you sure that you want to create a triggered at the wrong time ticket for Title3?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Achievement ID: 3\nGame Checksum: HASH\nComment: I tried."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Achievement ID: 3\nRetroAchievements Hash: HASH\nComment: I tried."), vmMessageBox.GetMessage());
 
             return ra::ui::DialogResult::No;
         });
@@ -348,7 +348,7 @@ public:
             bDialogSeen = true;
 
             Assert::AreEqual(std::wstring(L"Are you sure that you want to create 2 did not trigger tickets for GAME?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Achievement IDs: 3,5\nGame Checksum: HASH\nComment: I tried."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Achievement IDs: 3,5\nRetroAchievements Hash: HASH\nComment: I tried."), vmMessageBox.GetMessage());
 
             return ra::ui::DialogResult::No;
         });

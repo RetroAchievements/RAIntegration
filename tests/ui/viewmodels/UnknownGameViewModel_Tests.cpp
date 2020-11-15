@@ -158,7 +158,7 @@ public:
 
         vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Are you sure you want to add a new checksum to 'Game 40'?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Are you sure you want to add a new hash to 'Game 40'?"), vmMessageBox.GetHeader());
             return ra::ui::DialogResult::Yes;
         });
 

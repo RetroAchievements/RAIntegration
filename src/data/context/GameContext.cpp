@@ -41,17 +41,17 @@ namespace ra {
 namespace data {
 namespace context {
 
-static void CopyAchievementData(Achievement& pAchievement,
-                                const ra::api::FetchGameData::Response::Achievement& pAchievementData)
+static void CopyAchievementData(Achievement& pAchievement, ra::data::models::AchievementModel& pAsset)
 {
-    pAchievement.SetTitle(pAchievementData.Title);
-    pAchievement.SetDescription(pAchievementData.Description);
-    pAchievement.SetPoints(pAchievementData.Points);
-    pAchievement.SetAuthor(pAchievementData.Author);
-    pAchievement.SetCreatedDate(pAchievementData.Created);
-    pAchievement.SetModifiedDate(pAchievementData.Updated);
-    pAchievement.SetBadgeImage(pAchievementData.BadgeName);
-    pAchievement.SetTrigger(pAchievementData.Definition);
+    pAchievement.m_pAchievementModel = &pAsset;
+    pAchievement.SetCategory(ra::itoe<Achievement::Category>(ra::etoi(pAsset.GetCategory())));
+    pAchievement.SetID(pAsset.GetID());
+    pAchievement.SetTitle(ra::Narrow(pAsset.GetName()));
+    pAchievement.SetDescription(ra::Narrow(pAsset.GetDescription()));
+    pAchievement.SetPoints(pAsset.GetPoints());
+    pAchievement.SetBadgeImage(ra::Narrow(pAsset.GetBadge()));
+    pAchievement.SetTrigger(pAsset.GetTrigger());
+    pAchievement.SetAuthor(ra::Narrow(pAsset.GetAuthor()));
 }
 
 void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
@@ -63,7 +63,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     m_sGameTitle.clear();
     m_bRichPresenceFromFile = false;
     m_mCodeNotes.clear();
-    m_nNextLocalId = GameContext::FirstLocalId;
+    m_vAssets.ResetLocalId();
 
     m_vAchievements.clear();
     m_vLeaderboards.clear();
@@ -73,13 +73,13 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
     auto& vmAssets = vmWindowManager.AssetList;
     vmAssets.SetGameId(nGameId);
-    vmAssets.Assets().BeginUpdate();
+    m_vAssets.BeginUpdate();
 
-    vmAssets.Assets().Clear();
+    m_vAssets.Clear();
 
     if (nGameId == 0)
     {
-        vmAssets.Assets().EndUpdate();
+        m_vAssets.EndUpdate();
 
         m_sGameHash.clear();
 
@@ -100,7 +100,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     const auto response = request.Call();
     if (response.Failed())
     {
-        vmAssets.Assets().EndUpdate();
+        m_vAssets.EndUpdate();
 
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download game data",
                                                                   ra::Widen(response.ErrorMessage));
@@ -152,22 +152,18 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         if (nCategory != Achievement::Category::Core && nCategory != Achievement::Category::Unofficial)
             continue;
 
-        auto& pAchievement = *m_vAchievements.emplace_back(std::make_unique<Achievement>());
-        pAchievement.SetCategory(nCategory);
-        pAchievement.SetID(pAchievementData.Id);
-        CopyAchievementData(pAchievement, pAchievementData);
-
         auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
         vmAchievement->SetID(pAchievementData.Id);
         vmAchievement->SetName(ra::Widen(pAchievementData.Title));
         vmAchievement->SetDescription(ra::Widen(pAchievementData.Description));
         vmAchievement->SetCategory(ra::itoe<ra::data::models::AssetCategory>(pAchievementData.CategoryId));
         vmAchievement->SetPoints(pAchievementData.Points);
+        vmAchievement->SetAuthor(ra::Widen(pAchievementData.Author));
         vmAchievement->SetBadge(ra::Widen(pAchievementData.BadgeName));
         vmAchievement->SetTrigger(pAchievementData.Definition);
         vmAchievement->CreateServerCheckpoint();
         vmAchievement->CreateLocalCheckpoint();
-        vmAssets.Assets().Append(std::move(vmAchievement));
+        m_vAssets.Append(std::move(vmAchievement));
 
 #ifndef RA_UTEST
         // prefetch the achievement image
@@ -193,13 +189,23 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     ActivateLeaderboards();
 
     // merge local achievements
-    m_nNextLocalId = GameContext::FirstLocalId;
-    MergeLocalAchievements(0);
-    vmAssets.MergeLocalAssets();
+    std::vector<ra::data::models::AssetModelBase*> vEmptyAssetsList;
+    m_vAssets.ReloadAssets(vEmptyAssetsList);
+
+    // create legacy containers
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+    {
+        auto* pAsset = dynamic_cast<ra::data::models::AchievementModel*>(m_vAssets.GetItemAt(nIndex));
+        if (!pAsset)
+            continue;
+
+        auto& pAchievement = *m_vAchievements.emplace_back(std::make_unique<Achievement>());
+        CopyAchievementData(pAchievement, *pAsset);
+    }
 
 #ifndef RA_UTEST
     g_AchievementsDialog.UpdateAchievementList();
-    vmAssets.DoFrame();
+    DoFrame();
 #endif
 
     // show "game loaded" popup
@@ -212,7 +218,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // get user unlocks asynchronously
     RefreshUnlocks(!bWasPaused, nPopup);
 
-    vmAssets.Assets().EndUpdate();
+    m_vAssets.EndUpdate();
 
     EndLoad();
     OnActiveGameChanged();
@@ -339,6 +345,16 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
     }
 }
 
+void GameContext::DoFrame()
+{
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+    {
+        auto* pItem = m_vAssets.GetItemAt(nIndex);
+        if (pItem != nullptr)
+            pItem->DoFrame();
+    }
+}
+
 void GameContext::EnumerateFilteredAchievements(std::function<bool(const Achievement&)> callback) const
 {
 #ifdef RA_UTEST
@@ -353,281 +369,13 @@ void GameContext::EnumerateFilteredAchievements(std::function<bool(const Achieve
 #endif
 }
 
-bool GameContext::MergeLocalAchievements(ra::AchievementID nAchievementId)
-{
-    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(m_nGameId));
-    if (pData == nullptr)
-        return false;
-
-    std::string sLine;
-    pData->GetLine(sLine); // version used to create the file
-    pData->GetLine(sLine); // game title
-
-    while (pData->GetLine(sLine))
-    {
-        // achievement lines start with the achievement id
-        if (sLine.empty() || !isdigit(sLine.front()))
-            continue;
-
-        // field 1: ID
-        ra::Tokenizer pTokenizer(sLine);
-        const auto nId = pTokenizer.ReadNumber();
-        if (!pTokenizer.Consume(':'))
-            continue;
-
-        if (nAchievementId != 0 && nId != nAchievementId)
-            continue;
-
-        bool bIsNew = false;
-        Achievement* pAchievement = nullptr;
-        if (nId != 0)
-        {
-            pAchievement = FindAchievement(nId);
-        }
-        if (!pAchievement)
-        {
-            bIsNew = true;
-
-            if (nId >= m_nNextLocalId)
-                m_nNextLocalId = nId + 1;
-
-            // append new local achievement to collection
-            pAchievement = m_vAchievements.emplace_back(std::make_unique<Achievement>()).get();
-            Ensures(pAchievement != nullptr);
-            pAchievement->SetCategory(Achievement::Category::Local);
-            pAchievement->SetID(nId);
-        }
-
-        // field 2: trigger
-        std::string sTrigger;
-        if (pTokenizer.PeekChar() == '"')
-        {
-            sTrigger = pTokenizer.ReadQuotedString();
-        }
-        else
-        {
-            // unquoted trigger requires special parsing because flags also use colons
-            const char* pTrigger = pTokenizer.GetPointer(pTokenizer.CurrentPosition());
-            const char* pScan = pTrigger;
-            while (*pScan && (*pScan != ':' || strchr("ABCMNOPRTabcmnoprt", pScan[-1]) != nullptr))
-                pScan++;
-
-            sTrigger.assign(pTrigger, pScan - pTrigger);
-            pTokenizer.Advance(sTrigger.length());
-        }
-
-        if (!pTokenizer.Consume(':'))
-            continue;
-
-        // field 3: title
-        std::string sTitle;
-        if (pTokenizer.PeekChar() == '"')
-            sTitle = pTokenizer.ReadQuotedString();
-        else
-            sTitle = pTokenizer.ReadTo(':');
-        if (!pTokenizer.Consume(':'))
-            continue;
-        if (pAchievement->Title() != sTitle)
-        {
-            pAchievement->SetTitle(sTitle);
-            pAchievement->SetModified(true);
-        }
-
-        // field 4: description
-        std::string sDescription;
-        if (pTokenizer.PeekChar() == '"')
-            sDescription = pTokenizer.ReadQuotedString();
-        else
-            sDescription = pTokenizer.ReadTo(':');
-        if (!pTokenizer.Consume(':'))
-            continue;
-        if (pAchievement->Description() != sDescription)
-        {
-            pAchievement->SetDescription(sDescription);
-            pAchievement->SetModified(true);
-        }
-
-        // field 5: progress (unused)
-        pTokenizer.AdvanceTo(':');
-        if (!pTokenizer.Consume(':'))
-            continue;
-
-        // field 6: progress max (unused)
-        pTokenizer.AdvanceTo(':');
-        if (!pTokenizer.Consume(':'))
-            continue;
-
-        // field 7: progress format (unused)
-        pTokenizer.AdvanceTo(':');
-        if (!pTokenizer.Consume(':'))
-            continue;
-
-        // field 8: author
-        const std::string sAuthor = pTokenizer.ReadTo(':');
-        if (bIsNew)
-            pAchievement->SetAuthor(sAuthor);
-        if (!pTokenizer.Consume(':'))
-            continue;
-
-        // field 9: points
-        const auto nPoints = pTokenizer.ReadNumber();
-        if (!pTokenizer.Consume(':'))
-            continue;
-        if (pAchievement->Points() != nPoints)
-        {
-            pAchievement->SetPoints(nPoints);
-            pAchievement->SetModified(true);
-        }
-
-        // field 10: created date
-        const auto nCreated = pTokenizer.ReadNumber();
-        if (bIsNew)
-            pAchievement->SetCreatedDate(nCreated);
-        if (!pTokenizer.Consume(':'))
-            continue;
-
-        // field 11: modified date
-        const auto nModified = pTokenizer.ReadNumber();
-        pAchievement->SetModifiedDate(nModified);
-        if (!pTokenizer.Consume(':'))
-            continue;
-
-        // field 12: up votes (unused)
-        pTokenizer.AdvanceTo(':');
-        if (!pTokenizer.Consume(':'))
-            continue;
-
-        // field 13: down votes (unused)
-        pTokenizer.AdvanceTo(':');
-        if (!pTokenizer.Consume(':'))
-            continue;
-
-        // field 14: badge
-        const auto sBadge = pTokenizer.ReadTo(':');
-        if (pAchievement->BadgeImageURI() != sBadge)
-        {
-            pAchievement->SetBadgeImage(sBadge);
-            pAchievement->SetModified(true);
-        }
-
-        // line is valid, parse the trigger
-        if (bIsNew)
-        {
-            pAchievement->SetTrigger(sTrigger);
-            pAchievement->SetModified(false);
-        }
-        else
-        {
-            auto sExistingTrigger = pAchievement->CreateMemString();
-            if (sExistingTrigger != sTrigger)
-            {
-                pAchievement->SetTrigger(sTrigger);
-                pAchievement->SetModified(true);
-            }
-
-            // updated singular achievement, we're done
-            if (nAchievementId != 0)
-                return true;
-        }
-    }
-
-    // assign unique ids to any new achievements without one
-    for (auto& pAchievement : m_vAchievements)
-    {
-        if (pAchievement->ID() == 0)
-            pAchievement->SetID(m_nNextLocalId++);
-    }
-
-    return (nAchievementId == 0);
-}
-
-static void WriteEscaped(ra::services::TextWriter& pData, const std::string& sText)
-{
-    size_t nToEscape = 0;
-    for (auto c : sText)
-    {
-        if (c == ':' || c == '"' || c == '\\')
-            ++nToEscape;
-    }
-
-    if (nToEscape == 0)
-    {
-        pData.Write(sText);
-        return;
-    }
-
-    std::string sEscaped;
-    sEscaped.reserve(sText.length() + nToEscape + 2);
-    sEscaped.push_back('"');
-    for (auto c : sText)
-    {
-        if (c == '"' || c == '\\')
-            sEscaped.push_back('\\');
-        sEscaped.push_back(c);
-    }
-    sEscaped.push_back('"');
-    pData.Write(sEscaped);
-}
-
-bool GameContext::SaveLocal() const
-{
-    // Commits local achievements to the file
-    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(GameId()));
-    if (pData == nullptr)
-        return false;
-
-    pData->WriteLine(_RA_IntegrationVersion()); // version used to create the file
-    pData->WriteLine(GameTitle());
-
-    for (const auto& pAchievement : m_vAchievements)
-    {
-        if (!pAchievement || pAchievement->GetCategory() != Achievement::Category::Local)
-            continue;
-
-        // field 1: ID
-        pData->Write(std::to_string(pAchievement->ID()));
-        // field 2: trigger
-        pData->Write(":\"");
-        pData->Write(pAchievement->GetTrigger());
-        pData->Write("\":");
-        // field 3: title
-        WriteEscaped(*pData, pAchievement->Title());
-        pData->Write(":");
-        // field 4: description
-        WriteEscaped(*pData, pAchievement->Description());
-        // field 5: progress
-        // field 6: progress max
-        // field 7: progress format
-        pData->Write("::::");
-        // field 8: author
-        pData->Write(pAchievement->Author());
-        pData->Write(":");
-        // field 9: points
-        pData->Write(std::to_string(pAchievement->Points()));
-        pData->Write(":");
-        // field 10: created date
-        pData->Write(std::to_string(pAchievement->CreatedDate()));
-        pData->Write(":");
-        // field 11: modified date
-        pData->Write(std::to_string(pAchievement->ModifiedDate()));
-        // field 12: up votes
-        // field 13: down votes
-        pData->Write(":::");
-        // field 14: badge
-        pData->Write(pAchievement->BadgeImageURI());
-        pData->WriteLine();
-    }
-
-    return true;
-}
-
 Achievement& GameContext::NewAchievement(Achievement::Category nType)
 {
+    auto& pAsset = m_vAssets.NewAchievement();
+    pAsset.SetCategory(ra::itoe<ra::data::models::AssetCategory>(ra::etoi(nType)));
+
     Achievement& pAchievement = *m_vAchievements.emplace_back(std::make_unique<Achievement>());
-    pAchievement.SetCategory(nType);
-    pAchievement.SetID(m_nNextLocalId++);
+    CopyAchievementData(pAchievement, pAsset);
 
     return pAchievement;
 }
@@ -840,11 +588,11 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
                 vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);
 
                 const auto& pGameContext = ra::services::ServiceLocator::Get<GameContext>();
-                const auto* pAchievement = pGameContext.FindAchievement(nAchievementId);
+                const auto* pAchievement = pGameContext.Assets().FindAchievement(nAchievementId);
                 if (pAchievement != nullptr)
                 {
-                    vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()));
-                    vmPopup->SetImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
+                    vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->GetName(), pAchievement->GetPoints()));
+                    vmPopup->SetImage(ra::ui::ImageType::Badge, ra::Narrow(pAchievement->GetBadge()));
                 }
                 else
                 {
@@ -898,7 +646,8 @@ void GameContext::ReloadAchievements(Achievement::Category nCategory)
                 ++pIter;
         }
 
-        MergeLocalAchievements(0);
+        std::vector<ra::data::models::AssetModelBase*> vEmptyList;
+        m_vAssets.ReloadAssets(vEmptyList);
     }
     else
     {
@@ -933,7 +682,22 @@ bool GameContext::ReloadAchievement(Achievement& pAchievement)
 {
     if (pAchievement.GetCategory() == Achievement::Category::Local)
     {
-        return MergeLocalAchievements(pAchievement.ID());
+        auto* pAsset = m_vAssets.FindAchievement(pAchievement.ID());
+        if (pAsset)
+        {
+            std::vector<ra::data::models::AssetModelBase*> vAssetsToReload;
+            vAssetsToReload.push_back(pAsset);
+            m_vAssets.ReloadAssets(vAssetsToReload);
+
+            // make sure the item still exists
+            pAsset = m_vAssets.FindAchievement(pAchievement.ID());
+            if (pAsset)
+            {
+                CopyAchievementData(pAchievement, *pAsset);
+                return true;
+            }
+        }
+        return false;
     }
     else
     {
@@ -953,7 +717,7 @@ bool GameContext::ReloadAchievement(Achievement& pAchievement)
             if (pAchievementData.Id != pAchievement.ID())
                 continue;
 
-            CopyAchievementData(pAchievement, pAchievementData);
+            //CopyAchievementData(pAchievement, pAchievementData);
             pAchievement.SetDirtyFlag(Achievement::DirtyFlags::All);
             pAchievement.SetModified(false);
             return true;

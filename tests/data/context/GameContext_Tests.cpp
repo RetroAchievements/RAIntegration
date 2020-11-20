@@ -47,7 +47,11 @@ public:
     class GameContextHarness : public GameContext
     {
     public:
-        GameContextHarness() noexcept : m_OverrideRuntime(&runtime) {}
+        GameContextHarness() noexcept :
+            m_OverrideGameContext(this),
+            m_OverrideRuntime(&runtime)
+        {
+        }
 
         ra::api::mocks::MockServer mockServer;
         ra::services::mocks::MockClock mockClock;
@@ -61,8 +65,6 @@ public:
         ra::data::context::mocks::MockUserContext mockUser;
         ra::services::AchievementRuntime runtime;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
-
-        static const unsigned int FirstLocalId = GameContext::FirstLocalId;
 
         void SetGameId(unsigned int nGameId) noexcept { m_nGameId = nGameId; }
 
@@ -98,6 +100,7 @@ public:
         }
 
     private:
+        ra::services::ServiceLocator::ServiceOverride<ra::data::context::GameContext> m_OverrideGameContext;
         ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_OverrideRuntime;
     };
 
@@ -309,8 +312,6 @@ public:
         Assert::AreEqual(std::string("Auth1"), pAch1->Author());
         Assert::AreEqual(std::string("12345"), pAch1->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Core, pAch1->GetCategory());
-        Assert::AreEqual(1234567890, (int)pAch1->CreatedDate());
-        Assert::AreEqual(1234599999, (int)pAch1->ModifiedDate());
         Assert::AreEqual(5U, pAch1->Points());
         Assert::AreEqual(std::string("1=1"), pAch1->GetTrigger());
 
@@ -322,33 +323,31 @@ public:
         Assert::AreEqual(std::string("Auth2"), pAch2->Author());
         Assert::AreEqual(std::string("12345"), pAch2->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Unofficial, pAch2->GetCategory());
-        Assert::AreEqual(1234567890, (int)pAch2->CreatedDate());
-        Assert::AreEqual(1234599999, (int)pAch2->ModifiedDate());
         Assert::AreEqual(15U, pAch2->Points());
         Assert::AreEqual(std::string("1=1"), pAch2->GetTrigger());
 
-        Assert::AreEqual({ 2U }, game.mockWindowManager.AssetList.Assets().Count());
-        Assert::AreEqual({ 1U }, game.mockWindowManager.AssetList.GetAchievementCount());
-        Assert::AreEqual({ 5U }, game.mockWindowManager.AssetList.GetTotalPoints());
+        Assert::AreEqual({ 2U }, game.Assets().Count());
 
-        const auto* vmAch1 = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
+        const auto* vmAch1 = dynamic_cast<ra::data::models::AchievementModel*>(game.Assets().GetItemAt(0));
         Assert::IsNotNull(vmAch1);
         Ensures(vmAch1 != nullptr);
         Assert::AreEqual(5U, vmAch1->GetID());
         Assert::AreEqual(std::wstring(L"Ach1"), vmAch1->GetName());
         Assert::AreEqual(std::wstring(L"Desc1"), vmAch1->GetDescription());
+        Assert::AreEqual(std::wstring(L"Auth1"), vmAch1->GetAuthor());
         Assert::AreEqual(ra::data::models::AssetCategory::Core, vmAch1->GetCategory());
         Assert::AreEqual(5, vmAch1->GetPoints());
         Assert::AreEqual(std::wstring(L"12345"), vmAch1->GetBadge());
         Assert::AreEqual(std::string("1=1"), vmAch1->GetTrigger());
         Assert::IsFalse(vmAch1->IsModified());
 
-        const auto* vmAch2 = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(1));
+        const auto* vmAch2 = dynamic_cast<ra::data::models::AchievementModel*>(game.Assets().GetItemAt(1));
         Assert::IsNotNull(vmAch2);
         Ensures(vmAch2 != nullptr);
         Assert::AreEqual(7U, vmAch2->GetID());
         Assert::AreEqual(std::wstring(L"Ach2"), vmAch2->GetName());
         Assert::AreEqual(std::wstring(L"Desc2"), vmAch2->GetDescription());
+        Assert::AreEqual(std::wstring(L"Auth2"), vmAch2->GetAuthor());
         Assert::AreEqual(ra::data::models::AssetCategory::Unofficial, vmAch2->GetCategory());
         Assert::AreEqual(15, vmAch2->GetPoints());
         Assert::AreEqual(std::wstring(L"12345"), vmAch2->GetBadge());
@@ -400,16 +399,12 @@ public:
         Assert::AreEqual(std::string("Auth2"), pAch2->Author());
         Assert::AreEqual(std::string("12345"), pAch2->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Unofficial, pAch2->GetCategory());
-        Assert::AreEqual(1234567890, (int)pAch2->CreatedDate());
-        Assert::AreEqual(1234599999, (int)pAch2->ModifiedDate());
         Assert::AreEqual(15U, pAch2->Points());
         Assert::AreEqual(std::string("1=1"), pAch2->GetTrigger());
 
-        Assert::AreEqual({ 1U }, game.mockWindowManager.AssetList.Assets().Count());
-        Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetAchievementCount());
-        Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetTotalPoints());
+        Assert::AreEqual({ 1U }, game.Assets().Count());
 
-        const auto* vmAch2 = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
+        const auto* vmAch2 = dynamic_cast<ra::data::models::AchievementModel*>(game.Assets().GetItemAt(0));
         Assert::IsNotNull(vmAch2);
         Ensures(vmAch2 != nullptr);
         Assert::AreEqual(7U, vmAch2->GetID());
@@ -471,8 +466,6 @@ public:
         Assert::AreEqual(std::string("Auth1"), pAch->Author());
         Assert::AreEqual(std::string("12345"), pAch->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Core, pAch->GetCategory());
-        Assert::AreEqual(1234567890, (int)pAch->CreatedDate());
-        Assert::AreEqual(1234599999, (int)pAch->ModifiedDate());
         Assert::AreEqual(5U, pAch->Points());
         Assert::AreEqual(std::string("1=1"), pAch->GetTrigger());
 
@@ -484,34 +477,28 @@ public:
         Assert::AreEqual(std::string("Auth2"), pAch->Author()); // author not merged
         Assert::AreEqual(std::string("54321"), pAch->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Unofficial, pAch->GetCategory()); // category not merged
-        Assert::AreEqual(1234567890, (int)pAch->CreatedDate()); // created date not merged
-        Assert::AreEqual(1234555555, (int)pAch->ModifiedDate());
         Assert::AreEqual(25U, pAch->Points());
         Assert::AreEqual(std::string("1=2"), pAch->GetTrigger());
 
         // no server achievement, assign FirstLocalId
-        pAch = game.FindAchievement(GameContextHarness::FirstLocalId);
+        pAch = game.FindAchievement(GameAssets::FirstLocalId);
         Assert::IsNotNull(pAch);
         Assert::AreEqual(std::string("Ach3"), pAch->Title());
         Assert::AreEqual(std::string("Desc3"), pAch->Description());
         Assert::AreEqual(std::string("Auth3"), pAch->Author());
         Assert::AreEqual(std::string("00555"), pAch->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
-        Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
-        Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(20U, pAch->Points());
         Assert::AreEqual(std::string("1=1"), pAch->GetTrigger());
 
         // no server achievement, assign next local id
-        pAch = game.FindAchievement(GameContextHarness::FirstLocalId + 1);
+        pAch = game.FindAchievement(GameAssets::FirstLocalId + 1);
         Assert::IsNotNull(pAch);
         Assert::AreEqual(std::string("Ach4"), pAch->Title());
         Assert::AreEqual(std::string("Desc4"), pAch->Description());
         Assert::AreEqual(std::string("Auth4"), pAch->Author());
         Assert::AreEqual(std::string("00556"), pAch->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
-        Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
-        Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(10U, pAch->Points());
         Assert::AreEqual(std::string("R:1=1"), pAch->GetTrigger());
     }
@@ -543,8 +530,6 @@ public:
         Assert::AreEqual(std::string("Auth2b"), pAch->Author());
         Assert::AreEqual(std::string("54321"), pAch->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
-        Assert::AreEqual(1234554321, (int)pAch->CreatedDate());
-        Assert::AreEqual(1234555555, (int)pAch->ModifiedDate());
         Assert::AreEqual(25U, pAch->Points());
         Assert::AreEqual(std::string("1=2"), pAch->GetTrigger());
 
@@ -557,8 +542,6 @@ public:
         Assert::AreEqual(std::string("Auth3"), pAch->Author());
         Assert::AreEqual(std::string("00555"), pAch->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
-        Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
-        Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(20U, pAch->Points());
         Assert::AreEqual(std::string("1=1"), pAch->GetTrigger());
 
@@ -571,19 +554,15 @@ public:
         Assert::AreEqual(std::string("Auth4"), pAch->Author());
         Assert::AreEqual(std::string("00556"), pAch->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Local, pAch->GetCategory());
-        Assert::AreEqual(1234511111, (int)pAch->CreatedDate());
-        Assert::AreEqual(1234500000, (int)pAch->ModifiedDate());
         Assert::AreEqual(10U, pAch->Points());
         Assert::AreEqual(std::string("1=1"), pAch->GetTrigger());
 
 
 
-        Assert::AreEqual({ 3U }, game.mockWindowManager.AssetList.Assets().Count());
-        Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetAchievementCount());
-        Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetTotalPoints());
+        Assert::AreEqual({ 3U }, game.Assets().Count());
 
         // 7 is not a known ID for this game, it should be loaded into a local achievement
-        const auto* vmAch = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
+        const auto* vmAch = dynamic_cast<ra::data::models::AchievementModel*>(game.Assets().GetItemAt(0));
         Assert::IsNotNull(vmAch);
         Ensures(vmAch != nullptr);
         Assert::AreEqual(7U, vmAch->GetID());
@@ -597,7 +576,7 @@ public:
         Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, vmAch->GetChanges());
 
         // explicit ID should be honored
-        vmAch = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(1));
+        vmAch = dynamic_cast<ra::data::models::AchievementModel*>(game.Assets().GetItemAt(1));
         Assert::IsNotNull(vmAch);
         Ensures(vmAch != nullptr);
         Assert::AreEqual(999000001U, vmAch->GetID()); // non-vms get first id and first id + 1
@@ -611,7 +590,7 @@ public:
         Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, vmAch->GetChanges());
 
         // explicit ID should be honored
-        vmAch = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(2));
+        vmAch = dynamic_cast<ra::data::models::AchievementModel*>(game.Assets().GetItemAt(2));
         Assert::IsNotNull(vmAch);
         Ensures(vmAch != nullptr);
         Assert::AreEqual(999000003U, vmAch->GetID()); // non-vms get first id and first id + 1
@@ -798,8 +777,6 @@ public:
         Assert::AreEqual(std::string("Auth9"), pAch1->Author());
         Assert::AreEqual(std::string("12345"), pAch1->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Core, pAch1->GetCategory());
-        Assert::AreEqual(1234567890, (int)pAch1->CreatedDate());
-        Assert::AreEqual(1234599999, (int)pAch1->ModifiedDate());
         Assert::AreEqual(9U, pAch1->Points());
         Assert::AreEqual(std::string("1=1"), pAch1->GetTrigger());
 
@@ -811,17 +788,13 @@ public:
         Assert::AreEqual(std::string("Auth11"), pAch2->Author());
         Assert::AreEqual(std::string("12345"), pAch2->BadgeImageURI());
         Assert::AreEqual(Achievement::Category::Unofficial, pAch2->GetCategory());
-        Assert::AreEqual(1234567890, (int)pAch2->CreatedDate());
-        Assert::AreEqual(1234599999, (int)pAch2->ModifiedDate());
         Assert::AreEqual(11U, pAch2->Points());
         Assert::AreEqual(std::string("1=1"), pAch2->GetTrigger());
 
-        Assert::AreEqual({ 2U }, game.mockWindowManager.AssetList.Assets().Count());
-        Assert::IsFalse(game.mockWindowManager.AssetList.Assets().IsUpdating());
-        Assert::AreEqual({ 1U }, game.mockWindowManager.AssetList.GetAchievementCount());
-        Assert::AreEqual({ 9U }, game.mockWindowManager.AssetList.GetTotalPoints());
+        Assert::AreEqual({ 2U }, game.Assets().Count());
+        Assert::IsFalse(game.Assets().IsUpdating());
 
-        const auto* vmAch1 = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
+        const auto* vmAch1 = dynamic_cast<ra::data::models::AchievementModel*>(game.Assets().GetItemAt(0));
         Assert::IsNotNull(vmAch1);
         Ensures(vmAch1 != nullptr);
         Assert::AreEqual(9U, vmAch1->GetID());
@@ -833,7 +806,7 @@ public:
         Assert::AreEqual(std::string("1=1"), vmAch1->GetTrigger());
         Assert::IsFalse(vmAch1->IsModified());
 
-        const auto* vmAch2 = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(1));
+        const auto* vmAch2 = dynamic_cast<ra::data::models::AchievementModel*>(game.Assets().GetItemAt(1));
         Assert::IsNotNull(vmAch2);
         Ensures(vmAch2 != nullptr);
         Assert::AreEqual(11U, vmAch2->GetID());
@@ -879,101 +852,15 @@ public:
 
         game.LoadGame(1U);
 
-        Assert::AreEqual({ 2U }, game.mockWindowManager.AssetList.Assets().Count());
-        Assert::AreEqual({ 1U }, game.mockWindowManager.AssetList.GetAchievementCount());
-        Assert::AreEqual({ 5U }, game.mockWindowManager.AssetList.GetTotalPoints());
+        Assert::AreEqual({ 2U }, game.Assets().Count());
 
         game.LoadGame(0U);
 
         Assert::IsNull(game.FindAchievement(5U));
         Assert::IsNull(game.FindAchievement(7U));
 
-        Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.Assets().Count());
-        Assert::IsFalse(game.mockWindowManager.AssetList.Assets().IsUpdating());
-        Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetAchievementCount());
-        Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetTotalPoints());
-    }
-
-    TEST_METHOD(TestSaveLocalEmpty)
-    {
-        GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.Title = L"GameTitle";
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
-        game.LoadGame(1U);
-        Assert::IsTrue(game.SaveLocal());
-        auto sContents = game.mockStorage.GetStoredData(ra::services::StorageItemType::UserAchievements, L"1");
-        RemoveFirstLine(sContents);
-        Assert::AreEqual(std::string("GameTitle\n"), sContents);
-    }
-
-    TEST_METHOD(TestSaveLocalOnlyLocal)
-    {
-        GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            auto& ach1 = response.Achievements.emplace_back();
-            ach1.Id = 5;
-            ach1.Title = "Ach1";
-            ach1.Description = "Desc1";
-            ach1.Author = "Auth1";
-            ach1.BadgeName = "12345";
-            ach1.CategoryId = 3;
-            ach1.Created = 1234567890;
-            ach1.Updated = 1234599999;
-            ach1.Definition = "1=1";
-            ach1.Points = 5;
-
-            response.Title = L"GameTitle";
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
-        game.LoadGame(1U);
-
-        auto& ach2 = game.NewAchievement(Achievement::Category::Local);
-        ach2.SetTitle("Ach2");
-        ach2.SetDescription("Desc2");
-        ach2.SetAuthor("Auth2");
-        ach2.SetBadgeImage("54321");
-        ach2.SetCreatedDate(1234567891);
-        ach2.SetModifiedDate(1234599998);
-        ach2.SetTrigger("2=2");
-        ach2.SetPoints(15);
-
-        Assert::IsTrue(game.SaveLocal());
-        auto sContents = game.mockStorage.GetStoredData(ra::services::StorageItemType::UserAchievements, L"1");
-        RemoveFirstLine(sContents);
-        Assert::AreEqual(ra::StringPrintf("GameTitle\n%u:\"2=2\":Ach2:Desc2::::Auth2:15:1234567891:1234599998:::54321\n", game.FirstLocalId), sContents);
-    }
-
-    TEST_METHOD(TestSaveLocalEscaped)
-    {
-        GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.Title = L"GameTitle";
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
-        game.LoadGame(1U);
-
-        auto& ach2 = game.NewAchievement(Achievement::Category::Local);
-        ach2.SetTitle("Ach:2");
-        ach2.SetDescription("Desc \"2\"");
-        ach2.SetAuthor("Auth2");
-        ach2.SetBadgeImage("54321");
-        ach2.SetCreatedDate(1234567891);
-        ach2.SetModifiedDate(1234599998);
-        ach2.SetTrigger("2=2");
-        ach2.SetPoints(15);
-
-        Assert::IsTrue(game.SaveLocal());
-        auto sContents = game.mockStorage.GetStoredData(ra::services::StorageItemType::UserAchievements, L"1");
-        RemoveFirstLine(sContents);
-        Assert::AreEqual(ra::StringPrintf("GameTitle\n%u:\"2=2\":\"Ach:2\":\"Desc \\\"2\\\"\"::::Auth2:15:1234567891:1234599998:::54321\n", game.FirstLocalId), sContents);
+        Assert::AreEqual({ 0U }, game.Assets().Count());
+        Assert::IsFalse(game.Assets().IsUpdating());
     }
 
     TEST_METHOD(TestLoadGameUserUnlocks)

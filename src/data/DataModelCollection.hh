@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ModelCollectionBase.hh"
+#include "DataModelBase.hh"
 
 namespace ra {
 namespace data {

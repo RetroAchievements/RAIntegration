@@ -67,6 +67,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="data\context\GameAssets.cpp" />
     <ClCompile Include="data\ModelProperty.cpp" />
     <ClCompile Include="api\ApiCall.cpp" />
     <ClCompile Include="api\impl\ConnectedServer.cpp" />
@@ -225,6 +226,7 @@
     <ClInclude Include="data\AsyncObject.hh" />
     <ClInclude Include="data\context\ConsoleContext.hh" />
     <ClInclude Include="data\context\EmulatorContext.hh" />
+    <ClInclude Include="data\context\GameAssets.hh" />
     <ClInclude Include="data\context\GameContext.hh" />
     <ClInclude Include="data\context\SessionTracker.hh" />
     <ClInclude Include="data\context\UserContext.hh" />

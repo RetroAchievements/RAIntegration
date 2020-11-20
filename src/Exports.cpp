@@ -330,9 +330,8 @@ static void ProcessAchievements()
     }
 #endif
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    auto& vmAssetList = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
-
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    
     TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeProcess);
     std::vector<ra::services::AchievementRuntime::Change> vChanges;
     pRuntime.Process(vChanges);
@@ -344,18 +343,11 @@ static void ProcessAchievements()
         {
             case ra::services::AchievementRuntime::ChangeType::AchievementReset:
             {
-                const auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
-                if (pAchievement && pAchievement->GetPauseOnReset())
+                const auto* pAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
+                if (pAchievement && pAchievement->IsPauseOnReset())
                 {
                     auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnReset(ra::Widen(pAchievement->Title()));
-                }
-
-                const auto* vmAchievement = vmAssetList.FindAchievement(pChange.nId);
-                if (vmAchievement && vmAchievement->IsPauseOnReset())
-                {
-                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnReset(vmAchievement->GetName());
+                    pFrameEventQueue.QueuePauseOnReset(pAchievement->GetName());
                 }
 
                 break;
@@ -365,7 +357,7 @@ static void ProcessAchievements()
             {
                 // AwardAchievement may detach the trigger, which would result in the state changing to Inactive.
                 // explicitly call DoFrame now to set the state to Triggered before the trigger gets detached.
-                auto* vmAchievement = vmAssetList.FindAchievement(pChange.nId);
+                auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
                 if (vmAchievement)
                     vmAchievement->DoFrame();
 
@@ -386,12 +378,6 @@ static void ProcessAchievements()
                     if (g_AchievementEditorDialog.ActiveAchievement() == pAchievement)
                         g_AchievementEditorDialog.LoadAchievement(pAchievement, TRUE);
 #endif
-
-                    if (pAchievement->GetPauseOnTrigger())
-                    {
-                        auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                        pFrameEventQueue.QueuePauseOnTrigger(ra::Widen(pAchievement->Title()));
-                    }
                 }
 
                 if (vmAchievement && vmAchievement->IsPauseOnTrigger())
@@ -502,7 +488,8 @@ static void UpdateUIForFrameChange()
     pWindowManager.MemoryInspector.DoFrame();
 
     TALLY_PERFORMANCE(PerformanceCheckpoint::AssetListDoFrame);
-    pWindowManager.AssetList.DoFrame();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    pGameContext.DoFrame();
 
     TALLY_PERFORMANCE(PerformanceCheckpoint::AssetEditorDoFrame);
     pWindowManager.AssetEditor.DoFrame();

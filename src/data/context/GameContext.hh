@@ -5,6 +5,8 @@
 #include "RA_Achievement.h"
 #include "RA_Leaderboard.h"
 
+#include "GameAssets.hh"
+
 #include <string>
 #include <atomic>
 
@@ -72,6 +74,12 @@ public:
     /// Sets the game play mode.
     /// </summary>
     void SetMode(Mode nMode) noexcept { m_nMode = nMode; }
+
+    /// <summary>
+    /// Gets the assets for the current game.
+    /// </summary>
+    GameAssets& Assets() noexcept { return m_vAssets; }
+    const GameAssets& Assets() const noexcept { return m_vAssets; }
 
     /// <summary>
     /// Enumerates the achievement collection.
@@ -198,11 +206,6 @@ public:
     bool ReloadAchievement(ra::AchievementID nAchievementId);
 
     /// <summary>
-    /// Saves local achievement data to local storage.
-    /// </summary>
-    bool SaveLocal() const;
-
-    /// <summary>
     /// Returns the note associated with the specified address.
     /// </summary>    
     /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
@@ -318,11 +321,12 @@ public:
     void AddNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.insert(&pTarget); }
     void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept { GSL_SUPPRESS_F6 m_vNotifyTargets.erase(&pTarget); }
 
+    void DoFrame();
+
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
 
 protected:
-    bool MergeLocalAchievements(ra::AchievementID nAchievementId);
     bool ReloadAchievement(Achievement& pAchievement);
     void RefreshUnlocks(bool bUnpause, int nPopup);
     void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup);
@@ -344,9 +348,6 @@ protected:
     std::string m_sServerRichPresenceMD5;
     bool m_bRichPresenceFromFile = false;
 
-    ra::AchievementID m_nNextLocalId = FirstLocalId;
-    static const ra::AchievementID FirstLocalId = 111000001;
-
     std::vector<std::unique_ptr<Achievement>> m_vAchievements;
     std::vector<std::unique_ptr<RA_Leaderboard>> m_vLeaderboards;
 
@@ -364,6 +365,8 @@ private:
     /// impossible to create a set of <c>NotifyTarget</c> references.
     /// </summary>
     NotifyTargetSet m_vNotifyTargets;
+
+    GameAssets m_vAssets;
 
     std::atomic<int> m_nLoadCount = 0;
 };

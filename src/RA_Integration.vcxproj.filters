@@ -369,6 +369,9 @@
     <ClCompile Include="data\models\AchievementModel.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
+    <ClCompile Include="data\context\GameAssets.cpp">
+      <Filter>Data\Context</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -916,6 +919,9 @@
     </ClInclude>
     <ClInclude Include="data\models\AchievementModel.hh">
       <Filter>Data\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="data\context\GameAssets.hh">
+      <Filter>Data\Context</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

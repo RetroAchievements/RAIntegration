@@ -41,9 +41,9 @@ private:
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-        OverlayAchievementsPageViewModelHarness()
+        OverlayAchievementsPageViewModelHarness() noexcept
         {
-            mockWindowManager.AssetList.InitializeNotifyTargets();
+            GSL_SUPPRESS_F6 mockWindowManager.AssetList.InitializeNotifyTargets();
         }
 
         ItemViewModel* GetItem(gsl::index nIndex) { return m_vItems.GetItemAt(nIndex); }

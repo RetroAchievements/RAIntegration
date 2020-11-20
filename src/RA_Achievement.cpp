@@ -493,7 +493,7 @@ void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned in
 void Achievement::AddAltGroup() noexcept { m_vConditions.AddGroup(); }
 void Achievement::RemoveAltGroup(gsl::index nIndex) noexcept { m_vConditions.RemoveAltGroup(nIndex); }
 
-void Achievement::SetID(ra::AchievementID nID) noexcept
+void Achievement::SetID(ra::AchievementID nID)
 {
     m_pAchievementModel->SetID(nID);
     m_nAchievementID = nID;

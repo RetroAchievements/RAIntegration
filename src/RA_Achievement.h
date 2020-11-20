@@ -61,20 +61,20 @@ public:
     void SetModified(BOOL bModified) noexcept;
 
     inline BOOL GetPauseOnTrigger() const noexcept { return m_bPauseOnTrigger; }
-    void SetPauseOnTrigger(BOOL bPause) noexcept
+    void SetPauseOnTrigger(BOOL bPause)
     {
         m_pAchievementModel->SetPauseOnTrigger(bPause);
         m_bPauseOnTrigger = bPause;
     }
 
     inline BOOL GetPauseOnReset() const noexcept { return m_bPauseOnReset; }
-    void SetPauseOnReset(BOOL bPause) noexcept
+    void SetPauseOnReset(BOOL bPause)
     {
         m_pAchievementModel->SetPauseOnReset(bPause);
         m_bPauseOnReset = bPause;
     }
 
-    void SetID(ra::AchievementID nID) noexcept;
+    void SetID(ra::AchievementID nID);
     inline ra::AchievementID ID() const noexcept { return m_nAchievementID; }
 
     void SetCategory(Category nCategory) noexcept { m_nCategory = nCategory; }
@@ -102,7 +102,7 @@ public:
     }
 
     inline unsigned int Points() const noexcept { return m_nPointValue; }
-    void SetPoints(unsigned int nPoints) noexcept
+    void SetPoints(unsigned int nPoints)
     {
         m_pAchievementModel->SetPoints(nPoints);
         m_nPointValue = nPoints;

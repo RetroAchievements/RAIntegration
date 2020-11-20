@@ -88,9 +88,9 @@ private:
         ra::ui::mocks::MockDesktop mockDesktop;
         mocks::MockWindowManager mockWindowManager;
 
-        AssetListViewModelHarness()
+        AssetListViewModelHarness() noexcept
         {
-            InitializeNotifyTargets();
+            GSL_SUPPRESS_F6 InitializeNotifyTargets();
         }
 
         void AssertButtonState(ActivateButtonState nActivateButtonState)

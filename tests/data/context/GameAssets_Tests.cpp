@@ -29,9 +29,9 @@ public:
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
 
-        GameAssetsHarness()
+        GameAssetsHarness() noexcept
         {
-            mockGameContext.SetGameTitle(L"GameName");
+            GSL_SUPPRESS_F6 mockGameContext.SetGameTitle(L"GameName");
         }
 
         void SaveAllAssets()

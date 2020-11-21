@@ -6,6 +6,7 @@
 #include "tests\data\DataAsserts.hh"
 
 #include "tests\mocks\MockClock.hh"
+#include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -41,6 +42,7 @@ private:
 
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockClock mockClock;
+        ra::services::mocks::MockConfiguration mockConfiguration;
     };
 
 
@@ -59,6 +61,7 @@ public:
         Assert::AreEqual(std::wstring(L"00000"), editor.GetBadge());
         Assert::IsFalse(editor.IsPauseOnReset());
         Assert::IsFalse(editor.IsPauseOnTrigger());
+        Assert::IsFalse(editor.IsDecimalPreferred());
         Assert::IsFalse(editor.IsAssetLoaded());
     }
 
@@ -470,6 +473,42 @@ public:
 
         editor.DoFrame();
         Assert::AreEqual(6U, pCondition->GetCurrentHits());
+    }
+
+    TEST_METHOD(TestDecimalPreferredOnVisible)
+    {
+        AssetEditorViewModelHarness editor;
+        Assert::IsFalse(editor.IsDecimalPreferred());
+
+        editor.SetIsVisible(true);
+        Assert::IsFalse(editor.IsDecimalPreferred());
+
+        editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        Assert::IsFalse(editor.IsDecimalPreferred());
+
+        editor.SetIsVisible(false);
+        Assert::IsFalse(editor.IsDecimalPreferred());
+
+        editor.SetIsVisible(true);
+        Assert::IsTrue(editor.IsDecimalPreferred());
+
+        editor.SetIsVisible(false);
+        Assert::IsTrue(editor.IsDecimalPreferred());
+    }
+
+    TEST_METHOD(TestDecimalPreferredUpdatesConfiguration)
+    {
+        AssetEditorViewModelHarness editor;
+        Assert::IsFalse(editor.IsDecimalPreferred());
+        Assert::IsFalse(editor.mockConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
+
+        editor.SetDecimalPreferred(true);
+        Assert::IsTrue(editor.IsDecimalPreferred());
+        Assert::IsTrue(editor.mockConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
+
+        editor.SetDecimalPreferred(false);
+        Assert::IsFalse(editor.IsDecimalPreferred());
+        Assert::IsFalse(editor.mockConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
     }
 };
 

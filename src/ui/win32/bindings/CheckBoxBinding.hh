@@ -36,14 +36,18 @@ public:
         {
             const auto nState = Button_GetCheck(m_hWnd);
             SetValue(*m_pIsCheckedProperty, (nState == BST_CHECKED));
+            OnValueChanged();
         }
     }
 
 protected:
-    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override
+    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override
     {
         if (m_pIsCheckedProperty && *m_pIsCheckedProperty == args.Property)
+        {
             Button_SetCheck(m_hWnd, args.tNewValue ? BST_CHECKED : BST_UNCHECKED);
+            OnValueChanged();
+        }
     }
 
 private:

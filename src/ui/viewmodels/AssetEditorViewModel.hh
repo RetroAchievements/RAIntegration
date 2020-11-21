@@ -178,6 +178,21 @@ public:
     /// </summary>
     void SetPauseOnTrigger(bool nValue) { SetValue(PauseOnTriggerProperty, nValue); }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the condition values should be shown in decimal.
+    /// </summary>
+    static const BoolModelProperty DecimalPreferredProperty;
+
+    /// <summary>
+    /// Gets whether or not the condition values should be shown in decimal.
+    /// </summary>
+    bool IsDecimalPreferred() const { return GetValue(DecimalPreferredProperty); }
+
+    /// <summary>
+    /// Sets whether or not the condition values should be shown in decimal.
+    /// </summary>
+    void SetDecimalPreferred(bool nValue) { SetValue(DecimalPreferredProperty, nValue); }
+
     // ===== Functions =====
 
     void LoadAsset(ra::data::models::AssetModelBase* pAsset);

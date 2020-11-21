@@ -26,6 +26,7 @@ public:
     void SetHWND(DialogBase& pDialog, HWND hControl) override;
 
     void BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBinding> pColumnBinding);
+    void RefreshColumn(gsl::index nColumn);
 
     void BindItems(ViewModelCollectionBase& vmItems);
     ViewModelCollectionBase& GetItems() noexcept { return *m_vmItems; }

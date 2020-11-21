@@ -32,6 +32,11 @@ public:
         return false;
     }
 
+    std::string GetStatusCodeText(unsigned int nStatusCode) const override
+    {
+        return ra::StringPrintf("err%u", nStatusCode);
+    }
+
 private:
     ServiceLocator::ServiceOverride<IHttpRequester> m_Override;
     std::string m_sUserAgent;

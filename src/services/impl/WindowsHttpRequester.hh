@@ -21,6 +21,8 @@ public:
 
     bool IsRetryable(unsigned int nStatusCode) const noexcept override;
 
+    std::string GetStatusCodeText(unsigned int nStatusCode) const override;
+
 private:
     std::wstring m_sUserAgent;
 };

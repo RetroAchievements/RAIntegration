@@ -30,6 +30,11 @@ _NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::Response& 
         const bool bRetry = pHttpRequester.IsRetryable(ra::etoi(httpResponse.StatusCode()));
         pResponse.Result = bRetry ? ApiResult::Incomplete : ApiResult::Error;
         pResponse.ErrorMessage = ra::BuildString("HTTP error code: ", ra::etoi(httpResponse.StatusCode()));
+
+        const auto& pStatusCodeText = pHttpRequester.GetStatusCodeText(ra::etoi(httpResponse.StatusCode()));
+        if (!pStatusCodeText.empty())
+            pResponse.ErrorMessage = ra::StringPrintf("%s (%s)", pResponse.ErrorMessage, pStatusCodeText);
+
         return true;
     }
 

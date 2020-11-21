@@ -35,6 +35,12 @@ public:
     /// </summary>
     _NODISCARD virtual bool IsRetryable(unsigned int nStatusCode) const noexcept = 0;
 
+    /// <summary>
+    /// Gets a friendly summary to display for the specified status code.
+    /// </summary>
+    /// <returns>A summary description of the error code, or empty string if unknown.</returns>
+    virtual std::string GetStatusCodeText(unsigned int nStatusCode) const = 0;
+
 protected:
     IHttpRequester() noexcept = default;
 };

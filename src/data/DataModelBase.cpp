@@ -1,13 +1,11 @@
-#include "TransactionalViewModelBase.hh"
-
-#include "data\ModelProperty.hh"
+#include "DataModelBase.hh"
 
 namespace ra {
-namespace ui {
+namespace data {
 
-const BoolModelProperty TransactionalViewModelBase::IsModifiedProperty("TransactionalViewModelBase", "IsModified", false);
+const BoolModelProperty DataModelBase::IsModifiedProperty("DataModelBase", "IsModified", false);
 
-void TransactionalViewModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
+void DataModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (m_pTransaction != nullptr && IsTransactional(args.Property))
     {
@@ -15,10 +13,21 @@ void TransactionalViewModelBase::OnValueChanged(const BoolModelProperty::ChangeA
         SetValue(IsModifiedProperty, m_pTransaction->IsModified());
     }
 
-    ViewModelBase::OnValueChanged(args);
+    if (!m_vNotifyTargets.empty())
+    {
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
+            target->OnDataModelBoolValueChanged(args);
+        }
+    }
+
+    ModelBase::OnValueChanged(args);
 }
 
-void TransactionalViewModelBase::Transaction::ValueChanged(const BoolModelProperty::ChangeArgs& args)
+void DataModelBase::Transaction::ValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(args.Property.GetKey());
     if (iter == m_mOriginalIntValues.end())
@@ -35,7 +44,7 @@ void TransactionalViewModelBase::Transaction::ValueChanged(const BoolModelProper
     }
 }
 
-void TransactionalViewModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
+void DataModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
     if (m_pTransaction != nullptr && IsTransactional(args.Property))
     {
@@ -43,10 +52,21 @@ void TransactionalViewModelBase::OnValueChanged(const StringModelProperty::Chang
         SetValue(IsModifiedProperty, m_pTransaction->IsModified());
     }
 
-    ViewModelBase::OnValueChanged(args);
+    if (!m_vNotifyTargets.empty())
+    {
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
+            target->OnDataModelStringValueChanged(args);
+        }
+    }
+
+    ModelBase::OnValueChanged(args);
 }
 
-void TransactionalViewModelBase::Transaction::ValueChanged(const StringModelProperty::ChangeArgs& args)
+void DataModelBase::Transaction::ValueChanged(const StringModelProperty::ChangeArgs& args)
 {
     const StringModelProperty::ValueMap::const_iterator iter = m_mOriginalStringValues.find(args.Property.GetKey());
     if (iter == m_mOriginalStringValues.end())
@@ -63,7 +83,7 @@ void TransactionalViewModelBase::Transaction::ValueChanged(const StringModelProp
     }
 }
 
-void TransactionalViewModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
+void DataModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (m_pTransaction != nullptr && IsTransactional(args.Property))
     {
@@ -71,10 +91,21 @@ void TransactionalViewModelBase::OnValueChanged(const IntModelProperty::ChangeAr
         SetValue(IsModifiedProperty, m_pTransaction->IsModified());
     }
 
-    ViewModelBase::OnValueChanged(args);
+    if (!m_vNotifyTargets.empty())
+    {
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (NotifyTarget* target : vNotifyTargets)
+        {
+            Expects(target != nullptr);
+            target->OnDataModelIntValueChanged(args);
+        }
+    }
+
+    ModelBase::OnValueChanged(args);
 }
 
-void TransactionalViewModelBase::Transaction::ValueChanged(const IntModelProperty::ChangeArgs& args)
+void DataModelBase::Transaction::ValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     const IntModelProperty::ValueMap::const_iterator iter = m_mOriginalIntValues.find(args.Property.GetKey());
     if (iter == m_mOriginalIntValues.end())
@@ -91,7 +122,7 @@ void TransactionalViewModelBase::Transaction::ValueChanged(const IntModelPropert
     }
 }
 
-void TransactionalViewModelBase::BeginTransaction()
+void DataModelBase::BeginTransaction()
 {
     auto pTransaction = std::make_unique<Transaction>();
     pTransaction->m_pNext = std::move(m_pTransaction);
@@ -100,7 +131,7 @@ void TransactionalViewModelBase::BeginTransaction()
     SetValue(IsModifiedProperty, false);
 }
 
-void TransactionalViewModelBase::CommitTransaction()
+void DataModelBase::CommitTransaction()
 {
     if (m_pTransaction != nullptr)
     {
@@ -110,7 +141,7 @@ void TransactionalViewModelBase::CommitTransaction()
     }
 }
 
-void TransactionalViewModelBase::DiscardTransaction()
+void DataModelBase::DiscardTransaction()
 {
     if (m_pTransaction != nullptr)
     {
@@ -122,7 +153,7 @@ void TransactionalViewModelBase::DiscardTransaction()
     }
 }
 
-void TransactionalViewModelBase::RevertTransaction()
+void DataModelBase::RevertTransaction()
 {
     if (m_pTransaction != nullptr)
     {
@@ -140,7 +171,7 @@ void TransactionalViewModelBase::RevertTransaction()
     }
 }
 
-void TransactionalViewModelBase::Transaction::Revert(TransactionalViewModelBase& vmViewModel)
+void DataModelBase::Transaction::Revert(DataModelBase& vmViewModel)
 {
     // swap out the map while we process it to prevent re-entrant calls to ValueChanged from
     // modifying it while we're iterating
@@ -177,7 +208,7 @@ void TransactionalViewModelBase::Transaction::Revert(TransactionalViewModelBase&
     }
 }
 
-void TransactionalViewModelBase::Transaction::Commit(const TransactionalViewModelBase& vmViewModel)
+void DataModelBase::Transaction::Commit(const DataModelBase& vmViewModel)
 {
     if (!m_pNext)
         return;

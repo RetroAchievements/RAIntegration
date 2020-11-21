@@ -1,24 +1,26 @@
 #include "CppUnitTest.h"
 
-#include "ui\viewmodels\AchievementViewModel.hh"
+#include "data\models\AchievementModel.hh"
 
 #include "services\impl\StringTextWriter.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\data\DataAsserts.hh"
+
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClock.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
-namespace ui {
-namespace viewmodels {
+namespace data {
+namespace models {
 namespace tests {
 
-TEST_CLASS(AchievementViewModel_Tests)
+TEST_CLASS(AchievementModel_Tests)
 {
 private:
-    class AchievementViewModelHarness : public AchievementViewModel
+    class AchievementModelHarness : public AchievementModel
     {
     public:
         ra::services::impl::StringTextWriter textWriter;
@@ -29,9 +31,9 @@ private:
 public:
     TEST_METHOD(TestInitialValues)
     {
-        AchievementViewModelHarness achievement;
+        AchievementModelHarness achievement;
 
-        Assert::AreEqual((int)AssetType::Achievement, (int)achievement.GetType());
+        Assert::AreEqual(AssetType::Achievement, achievement.GetType());
         Assert::AreEqual(0U, achievement.GetID());
         Assert::AreEqual(std::wstring(L""), achievement.GetName());
         Assert::AreEqual(std::wstring(L""), achievement.GetDescription());
@@ -47,7 +49,7 @@ public:
 
     TEST_METHOD(TestActivateDeactivate)
     {
-        AchievementViewModelHarness achievement;
+        AchievementModelHarness achievement;
         achievement.SetID(1U);
         achievement.SetTrigger("0xH1234=1");
 
@@ -70,7 +72,7 @@ public:
 
     TEST_METHOD(TestActivateDeactivateActive)
     {
-        AchievementViewModelHarness achievement;
+        AchievementModelHarness achievement;
         achievement.SetID(1U);
         achievement.SetTrigger("0xH1234=1");
         achievement.Activate();
@@ -96,7 +98,7 @@ public:
 
     TEST_METHOD(TestActivateDeactivatePaused)
     {
-        AchievementViewModelHarness achievement;
+        AchievementModelHarness achievement;
         achievement.SetID(1U);
         achievement.SetTrigger("0xH1234=1");
         achievement.Activate();
@@ -123,7 +125,7 @@ public:
 
     TEST_METHOD(TestActivateDeactivateTriggered)
     {
-        AchievementViewModelHarness achievement;
+        AchievementModelHarness achievement;
         achievement.SetID(1U);
         achievement.SetTrigger("0xH1234=1");
         achievement.Activate();
@@ -158,6 +160,6 @@ public:
 
 
 } // namespace tests
-} // namespace viewmodels
-} // namespace ui
+} // namespace models
+} // namespace data
 } // namespace ra

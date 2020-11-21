@@ -2,7 +2,7 @@
 
 #include "ui\viewmodels\BrokenAchievementsViewModel.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
+#include "tests\ui\UIAsserts.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockServer.hh"

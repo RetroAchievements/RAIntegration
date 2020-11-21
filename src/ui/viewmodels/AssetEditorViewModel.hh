@@ -2,11 +2,11 @@
 #define RA_UI_ASSETEDITOR_VIEW_MODEL_H
 #pragma once
 
-#include "AssetViewModelBase.hh"
-#include "AchievementViewModel.hh"
 #include "TriggerViewModel.hh"
 
 #include "data\Types.hh"
+#include "data\models\AchievementModel.hh"
+#include "data\models\AssetModelBase.hh"
 
 #include "ui\WindowViewModelBase.hh"
 
@@ -14,7 +14,9 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-class AssetEditorViewModel : public WindowViewModelBase, protected ViewModelBase::NotifyTarget
+class AssetEditorViewModel : public WindowViewModelBase, 
+    protected ViewModelBase::NotifyTarget,
+    protected ra::data::DataModelBase::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 AssetEditorViewModel() noexcept;
@@ -85,12 +87,12 @@ public:
     /// <summary>
     /// Gets the asset category.
     /// </summary>
-    AssetCategory GetCategory() const { return ra::itoe<AssetCategory>(GetValue(CategoryProperty)); }
+    ra::data::models::AssetCategory GetCategory() const { return ra::itoe<ra::data::models::AssetCategory>(GetValue(CategoryProperty)); }
 
     /// <summary>
     /// Sets the asset category.
     /// </summary>
-    void SetCategory(AssetCategory nValue) { SetValue(CategoryProperty, ra::etoi(nValue)); }
+    void SetCategory(ra::data::models::AssetCategory nValue) { SetValue(CategoryProperty, ra::etoi(nValue)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the asset state.
@@ -100,12 +102,12 @@ public:
     /// <summary>
     /// Gets the asset state.
     /// </summary>
-    AssetState GetState() const { return ra::itoe<AssetState>(GetValue(StateProperty)); }
+    ra::data::models::AssetState GetState() const { return ra::itoe<ra::data::models::AssetState>(GetValue(StateProperty)); }
 
     /// <summary>
     /// Sets the asset state.
     /// </summary>
-    void SetState(AssetState nValue) { SetValue(StateProperty, ra::etoi(nValue)); }
+    void SetState(ra::data::models::AssetState nValue) { SetValue(StateProperty, ra::etoi(nValue)); }
 
     // ===== Achievement Specific =====
 
@@ -178,7 +180,7 @@ public:
 
     // ===== Functions =====
 
-    void LoadAsset(AssetViewModelBase* pAsset);
+    void LoadAsset(ra::data::models::AssetModelBase* pAsset);
 
     void DoFrame();
 
@@ -187,9 +189,12 @@ public:
 
 protected:
     // ViewModelBase::NotifyTarget
-    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
-    void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
+    // DataModelBase::NotifyTarget
+    void OnDataModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+    void OnDataModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
+    void OnDataModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
@@ -200,7 +205,7 @@ protected:
 
     TriggerViewModel m_vmTrigger;
 
-    AssetViewModelBase* m_pAsset = nullptr;
+    ra::data::models::AssetModelBase* m_pAsset = nullptr;
 };
 
 } // namespace viewmodels

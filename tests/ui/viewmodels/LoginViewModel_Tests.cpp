@@ -2,7 +2,7 @@
 
 #include "ui\viewmodels\LoginViewModel.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
+#include "tests\ui\UIAsserts.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"

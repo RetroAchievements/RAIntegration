@@ -3,11 +3,18 @@
 #include "ui\viewmodels\AssetEditorViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\data\DataAsserts.hh"
+
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
+using ra::data::models::AchievementModel;
+using ra::data::models::AssetCategory;
+using ra::data::models::AssetChanges;
+using ra::data::models::AssetState;
+using ra::data::models::AssetType;
 
 namespace ra {
 namespace ui {
@@ -58,7 +65,7 @@ public:
     TEST_METHOD(TestLoadAchievement)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetName(L"Test Achievement");
         achievement.SetID(1234U);
         achievement.SetState(AssetState::Active);
@@ -99,7 +106,7 @@ public:
     TEST_METHOD(TestSyncId)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetID(1234U);
 
         editor.LoadAsset(&achievement);
@@ -114,7 +121,7 @@ public:
     TEST_METHOD(TestLocalIdIgnored)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetCategory(AssetCategory::Local);
         achievement.SetID(11100002U);
 
@@ -130,7 +137,7 @@ public:
     TEST_METHOD(TestSyncName)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetName(L"Test Achievement");
 
         editor.LoadAsset(&achievement);
@@ -153,7 +160,7 @@ public:
     TEST_METHOD(TestSyncDescription)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetDescription(L"Do something cool");
 
         editor.LoadAsset(&achievement);
@@ -176,7 +183,7 @@ public:
     TEST_METHOD(TestSyncState)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetState(AssetState::Active);
 
         editor.LoadAsset(&achievement);
@@ -199,7 +206,7 @@ public:
     TEST_METHOD(TestSyncCategory)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetCategory(AssetCategory::Unofficial);
 
         editor.LoadAsset(&achievement);
@@ -222,7 +229,7 @@ public:
     TEST_METHOD(TestSyncPoints)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetPoints(10);
 
         editor.LoadAsset(&achievement);
@@ -245,7 +252,7 @@ public:
     TEST_METHOD(TestSyncBadge)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetBadge(L"58329");
 
         editor.LoadAsset(&achievement);
@@ -268,7 +275,7 @@ public:
     TEST_METHOD(TestSyncPauseOnReset)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetPauseOnReset(true);
 
         editor.LoadAsset(&achievement);
@@ -291,7 +298,7 @@ public:
     TEST_METHOD(TestSyncPauseOnTrigger)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetPauseOnTrigger(true);
 
         editor.LoadAsset(&achievement);
@@ -314,9 +321,9 @@ public:
     TEST_METHOD(TestSyncOneRecordAtATime)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement1;
+        AchievementModel achievement1;
         achievement1.SetName(L"Achievement1");
-        AchievementViewModel achievement2;
+        AchievementModel achievement2;
         achievement2.SetName(L"Achievement2");
 
         editor.LoadAsset(&achievement1);
@@ -348,7 +355,7 @@ public:
     TEST_METHOD(TestUpdateActiveTrigger)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetID(1234U);
         achievement.SetTrigger("0xH1234=1");
         achievement.Activate();
@@ -397,7 +404,7 @@ public:
     TEST_METHOD(TestUpdateInactiveTrigger)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetID(1234U);
         achievement.SetTrigger("0xH1234=1");
         achievement.Deactivate();
@@ -444,7 +451,7 @@ public:
     TEST_METHOD(TestDoFrameUpdatesHitsFromActiveAchievement)
     {
         AssetEditorViewModelHarness editor;
-        AchievementViewModel achievement;
+        AchievementModel achievement;
         achievement.SetID(1234U);
         achievement.SetTrigger("0xH1234=1");
         achievement.Activate();

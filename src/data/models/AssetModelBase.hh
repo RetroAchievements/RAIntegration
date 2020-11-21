@@ -1,17 +1,17 @@
-#ifndef RA_UI_ASSET_VIEW_MODEL_BASE_H
-#define RA_UI_ASSET_VIEW_MODEL_BASE_H
+#ifndef RA_DATA_ASSET_MODEL_BASE_H
+#define RA_DATA_ASSET_MODEL_BASE_H
 #pragma once
 
 #include "services\TextWriter.hh"
 
-#include "ui\TransactionalViewModelBase.hh"
+#include "data\DataModelBase.hh"
 
 #include "RA_StringUtils.h"
 #include "ra_utility.h"
 
 namespace ra {
-namespace ui {
-namespace viewmodels {
+namespace data {
+namespace models {
 
 enum class AssetType
 {
@@ -44,10 +44,10 @@ enum class AssetChanges
     New,         // asset not in local or server data
 };
 
-class AssetViewModelBase : public TransactionalViewModelBase
+class AssetModelBase : public DataModelBase
 {
 public:
-    AssetViewModelBase() noexcept;
+    AssetModelBase() noexcept;
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the asset type.
@@ -254,10 +254,10 @@ protected:
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
-    // Hide the public members of TransactionalViewModelBase that we're redefining
-    using TransactionalViewModelBase::BeginTransaction;
-    using TransactionalViewModelBase::CommitTransaction;
-    using TransactionalViewModelBase::RevertTransaction;
+    // Hide the public members of DataModelBase that we're redefining
+    using DataModelBase::BeginTransaction;
+    using DataModelBase::CommitTransaction;
+    using DataModelBase::RevertTransaction;
 
     void CommitTransaction() override;
     void RevertTransaction() override;
@@ -265,8 +265,8 @@ protected:
     static bool IsActive(AssetState nState) noexcept;
 };
 
-} // namespace viewmodels
-} // namespace ui
+} // namespace models
+} // namespace data
 } // namespace ra
 
-#endif RA_UI_ASSET_VIEW_MODEL_BASE_H
+#endif RA_DATA_ASSET_MODEL_BASE_H

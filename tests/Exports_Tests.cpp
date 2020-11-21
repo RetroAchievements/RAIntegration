@@ -18,7 +18,7 @@
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
-#include "tests\RA_UnitTestHelpers.h"
+#include "tests\ui\UIAsserts.hh"
 
 #include "services\AchievementRuntime.hh"
 

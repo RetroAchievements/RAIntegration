@@ -50,7 +50,7 @@ static void SetHeader(OverlayListPageViewModel::ItemViewModel& vmItem, const std
     vmItem.SetProgressMaximum(0U);
 }
 
-static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, const ra::ui::viewmodels::AchievementViewModel& vmAchievement)
+static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, const ra::data::models::AchievementModel& vmAchievement)
 {
     vmItem.SetId(vmAchievement.GetID());
     vmItem.SetLabel(ra::StringPrintf(L"%s (%s %s)", vmAchievement.GetName(),
@@ -59,7 +59,7 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, cons
 
     if (vmAchievement.IsActive())
     {
-        if (vmAchievement.GetCategory() == AssetCategory::Local)
+        if (vmAchievement.GetCategory() == ra::data::models::AssetCategory::Local)
         {
             // local achievements never appear disabled
             vmItem.Image.ChangeReference(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement.GetBadge()));
@@ -93,7 +93,7 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, cons
     }
 }
 
-static bool AppearsInFilter(const ra::ui::viewmodels::AchievementViewModel* vmAchievement)
+static bool AppearsInFilter(const ra::data::models::AchievementModel* vmAchievement)
 {
     Expects(vmAchievement != nullptr);
 
@@ -102,7 +102,7 @@ static bool AppearsInFilter(const ra::ui::viewmodels::AchievementViewModel* vmAc
     for (gsl::index nIndex = 0; nIndex < ra::to_signed(vFilteredAssets.Count()); ++nIndex)
     {
         const auto* pAsset = vFilteredAssets.GetItemAt(nIndex);
-        if (pAsset && pAsset->GetId() == nId && pAsset->GetType() == AssetType::Achievement)
+        if (pAsset && pAsset->GetId() == nId && pAsset->GetType() == ra::data::models::AssetType::Achievement)
             return true;
     }
 
@@ -120,12 +120,12 @@ void OverlayAchievementsPageViewModel::Refresh()
     SetListTitle(pGameContext.GameTitle());
 
     // achievement list
-    std::vector<const ra::ui::viewmodels::AchievementViewModel*> vRecentAchievements;
-    std::vector<const ra::ui::viewmodels::AchievementViewModel*> vAlmostThereAchievements;
-    std::vector<const ra::ui::viewmodels::AchievementViewModel*> vUnofficialAchievements;
-    std::vector<const ra::ui::viewmodels::AchievementViewModel*> vLocalAchievements;
-    std::vector<const ra::ui::viewmodels::AchievementViewModel*> vLockedCoreAchievements;
-    std::vector<const ra::ui::viewmodels::AchievementViewModel*> vUnlockedCoreAchievements;
+    std::vector<const ra::data::models::AchievementModel*> vRecentAchievements;
+    std::vector<const ra::data::models::AchievementModel*> vAlmostThereAchievements;
+    std::vector<const ra::data::models::AchievementModel*> vUnofficialAchievements;
+    std::vector<const ra::data::models::AchievementModel*> vLocalAchievements;
+    std::vector<const ra::data::models::AchievementModel*> vLockedCoreAchievements;
+    std::vector<const ra::data::models::AchievementModel*> vUnlockedCoreAchievements;
 
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
     const auto tNow = ra::services::ServiceLocator::Get<ra::services::IClock>().Now();
@@ -134,16 +134,16 @@ void OverlayAchievementsPageViewModel::Refresh()
     for (gsl::index nIndex = 0; nIndex < ra::to_signed(vmAssetList.Assets().Count()); ++nIndex)
     {
         const auto* pAsset = vmAssetList.Assets().GetItemAt(nIndex);
-        if (!pAsset || pAsset->GetType() != AssetType::Achievement)
+        if (!pAsset || pAsset->GetType() != ra::data::models::AssetType::Achievement)
             continue;
 
-        const auto* vmAchievement = dynamic_cast<const ra::ui::viewmodels::AchievementViewModel*>(pAsset);
+        const auto* vmAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
         switch (vmAchievement->GetState())
         {
-            case AssetState::Inactive:
+            case ra::data::models::AssetState::Inactive:
                 break;
 
-            case AssetState::Triggered:
+            case ra::data::models::AssetState::Triggered:
             {
                 const auto tUnlock = vmAchievement->GetUnlockTime();
                 const auto tElapsed = tNow - tUnlock;
@@ -176,12 +176,12 @@ void OverlayAchievementsPageViewModel::Refresh()
 
         switch (vmAchievement->GetCategory())
         {
-            case AssetCategory::Local:
+            case ra::data::models::AssetCategory::Local:
                 if (AppearsInFilter(vmAchievement))
                     vLocalAchievements.push_back(vmAchievement);
                 break;
 
-            case AssetCategory::Unofficial:
+            case ra::data::models::AssetCategory::Unofficial:
                 if (AppearsInFilter(vmAchievement))
                     vUnofficialAchievements.push_back(vmAchievement);
                 break;
@@ -217,7 +217,7 @@ void OverlayAchievementsPageViewModel::Refresh()
             const auto nPoints = vmAchievement->GetPoints();
             nMaxPts += nPoints;
 
-            if (vmAchievement->GetCategory() == AssetCategory::Core)
+            if (vmAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
             {
                 nUserPts += nPoints;
                 ++nUserCompleted;
@@ -239,7 +239,7 @@ void OverlayAchievementsPageViewModel::Refresh()
             SetAchievement(pvmAchievement, *vmAchievement);
             nMaxPts += vmAchievement->GetPoints();
 
-            if (vmAchievement->GetCategory() == AssetCategory::Core)
+            if (vmAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
                 ++nNumberOfCoreAchievements;
         }
 

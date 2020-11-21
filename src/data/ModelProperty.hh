@@ -1,11 +1,11 @@
-#ifndef RA_UI_MODEL_PROPERTY_H
-#define RA_UI_MODEL_PROPERTY_H
+#ifndef RA_DATA_MODEL_PROPERTY_H
+#define RA_DATA_MODEL_PROPERTY_H
 #pragma once
 
 #include "ra_fwd.h"
 
 namespace ra {
-namespace ui {
+namespace data {
 
 class ModelPropertyBase
 {
@@ -115,7 +115,7 @@ using BoolModelProperty = ModelProperty<bool>;
 using StringModelProperty = ModelProperty<std::wstring>;
 using IntModelProperty = ModelProperty<int>;
 
-} // namespace ui
+} // namespace data
 } // namespace ra
 
-#endif RA_UI_MODEL_PROPERTY_H
+#endif RA_DATA_MODEL_PROPERTY_H

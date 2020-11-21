@@ -3,6 +3,8 @@
 #include "ui\viewmodels\MemorySearchViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\ui\UIAsserts.hh"
+
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"

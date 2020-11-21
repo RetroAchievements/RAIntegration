@@ -2,7 +2,7 @@
 
 #include "data\context\EmulatorContext.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
+#include "tests\ui\UIAsserts.hh"
 
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"

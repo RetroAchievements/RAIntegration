@@ -6,7 +6,8 @@
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockThreadPool.hh"
-#include "tests\RA_UnitTestHelpers.h"
+
+#include "tests\services\ServicesAsserts.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 

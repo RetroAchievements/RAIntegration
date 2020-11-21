@@ -67,6 +67,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="data\ModelProperty.cpp" />
     <ClCompile Include="api\ApiCall.cpp" />
     <ClCompile Include="api\impl\ConnectedServer.cpp" />
     <ClCompile Include="api\impl\DisconnectedServer.cpp" />
@@ -76,6 +77,13 @@
     <ClCompile Include="data\context\GameContext.cpp" />
     <ClCompile Include="data\context\SessionTracker.cpp" />
     <ClCompile Include="data\context\UserContext.cpp" />
+    <ClCompile Include="data\DataModelBase.cpp" />
+    <ClCompile Include="data\DataModelCollection.cpp" />
+    <ClCompile Include="data\ModelBase.cpp" />
+    <ClCompile Include="data\ModelCollectionBase.cpp" />
+    <ClCompile Include="data\ModelPropertyContainer.cpp" />
+    <ClCompile Include="data\models\AchievementModel.cpp" />
+    <ClCompile Include="data\models\AssetModelBase.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|x64'">Create</PrecompiledHeader>
@@ -122,15 +130,12 @@
     <ClCompile Include="ui\drawing\gdi\GDIBitmapSurface.cpp" />
     <ClCompile Include="ui\drawing\gdi\GDISurface.cpp" />
     <ClCompile Include="ui\drawing\gdi\ImageRepository.cpp" />
-    <ClCompile Include="ui\ModelProperty.cpp" />
     <ClCompile Include="ui\Theme.cpp" />
     <ClCompile Include="ui\TransactionalViewModelBase.cpp" />
     <ClCompile Include="ui\ViewModelBase.cpp" />
     <ClCompile Include="ui\ViewModelCollection.cpp" />
-    <ClCompile Include="ui\viewmodels\AchievementViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\AssetEditorViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\AssetListViewModel.cpp" />
-    <ClCompile Include="ui\viewmodels\AssetViewModelBase.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\CodeNotesViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\FileDialogViewModel.cpp" />
@@ -223,6 +228,14 @@
     <ClInclude Include="data\context\GameContext.hh" />
     <ClInclude Include="data\context\SessionTracker.hh" />
     <ClInclude Include="data\context\UserContext.hh" />
+    <ClInclude Include="data\DataModelBase.hh" />
+    <ClInclude Include="data\DataModelCollection.hh" />
+    <ClInclude Include="data\ModelBase.hh" />
+    <ClInclude Include="data\ModelCollectionBase.hh" />
+    <ClInclude Include="data\ModelProperty.hh" />
+    <ClInclude Include="data\ModelPropertyContainer.hh" />
+    <ClInclude Include="data\models\AchievementModel.hh" />
+    <ClInclude Include="data\models\AssetModelBase.hh" />
     <ClInclude Include="data\Types.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="pch.h" />
@@ -287,16 +300,13 @@
     <ClInclude Include="ui\EditorTheme.hh" />
     <ClInclude Include="ui\IDesktop.hh" />
     <ClInclude Include="ui\ImageReference.hh" />
-    <ClInclude Include="ui\ModelProperty.hh" />
     <ClInclude Include="ui\OverlayTheme.hh" />
     <ClInclude Include="ui\TransactionalViewModelBase.hh" />
     <ClInclude Include="ui\Types.hh" />
     <ClInclude Include="ui\ViewModelBase.hh" />
     <ClInclude Include="ui\ViewModelCollection.hh" />
-    <ClInclude Include="ui\viewmodels\AchievementViewModel.hh" />
     <ClInclude Include="ui\viewmodels\AssetEditorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\AssetListViewModel.hh" />
-    <ClInclude Include="ui\viewmodels\AssetViewModelBase.hh" />
     <ClInclude Include="ui\viewmodels\BrokenAchievementsViewModel.hh" />
     <ClInclude Include="ui\viewmodels\CodeNotesViewModel.hh" />
     <ClInclude Include="ui\viewmodels\EmulatorViewModel.hh" />

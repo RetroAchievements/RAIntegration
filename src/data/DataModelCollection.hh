@@ -1,15 +1,13 @@
-#ifndef RA_UI_VIEW_MODEL_COLLECTION_H
-#define RA_UI_VIEW_MODEL_COLLECTION_H
+#ifndef RA_DATA_MODEL_COLLECTION_H
+#define RA_DATA_MODEL_COLLECTION_H
 #pragma once
 
-#include "ViewModelBase.hh"
-
-#include "data\ModelCollectionBase.hh"
+#include "ModelCollectionBase.hh"
 
 namespace ra {
-namespace ui {
+namespace data {
 
-class ViewModelCollectionBase : public ra::data::ModelCollectionBase
+class DataModelCollectionBase : public ModelCollectionBase
 {
 public:
     class NotifyTarget
@@ -23,29 +21,29 @@ public:
         NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
         virtual void
-            OnViewModelBoolValueChanged([[maybe_unused]] gsl::index nIndex,
+            OnDataModelBoolValueChanged([[maybe_unused]] gsl::index nIndex,
                 [[maybe_unused]] const BoolModelProperty::ChangeArgs& args) noexcept(false)
         {
         }
 
         virtual void
-            OnViewModelStringValueChanged([[maybe_unused]] gsl::index nIndex,
+            OnDataModelStringValueChanged([[maybe_unused]] gsl::index nIndex,
                 [[maybe_unused]] const StringModelProperty::ChangeArgs& args) noexcept(false)
         {
         }
 
         virtual void
-            OnViewModelIntValueChanged([[maybe_unused]] gsl::index nIndex,
+            OnDataModelIntValueChanged([[maybe_unused]] gsl::index nIndex,
                 [[maybe_unused]] const IntModelProperty::ChangeArgs& args) noexcept(false)
         {
         }
 
-        virtual void OnViewModelAdded([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
-        virtual void OnViewModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
-        virtual void OnViewModelChanged([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
+        virtual void OnDataModelAdded([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
+        virtual void OnDataModelRemoved([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
+        virtual void OnDataModelChanged([[maybe_unused]] gsl::index nIndex) noexcept(false) {}
 
-        virtual void OnBeginViewModelCollectionUpdate() noexcept(false) {}
-        virtual void OnEndViewModelCollectionUpdate() noexcept(false) {}
+        virtual void OnBeginDataModelCollectionUpdate() noexcept(false) {}
+        virtual void OnEndDataModelCollectionUpdate() noexcept(false) {}
     };
 
     void AddNotifyTarget(NotifyTarget& pTarget)
@@ -79,9 +77,9 @@ protected:
     void OnModelValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
     void OnModelValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
 
-    bool IsWatching() const noexcept override
-    {
-        return !IsFrozen() && !m_vNotifyTargets.empty();
+    bool IsWatching() const noexcept override 
+    { 
+        return !IsFrozen() && !m_vNotifyTargets.empty(); 
     }
 
     void OnFrozen() noexcept override;
@@ -103,9 +101,9 @@ private:
 };
 
 template<class T>
-class ViewModelCollection : public ViewModelCollectionBase
+class DataModelCollection : public DataModelCollectionBase
 {
-    static_assert(std::is_base_of<ViewModelBase, T>{}, "T must be a subclass of ViewModelBase");
+    static_assert(std::is_base_of<DataModelBase, T>{}, "T must be a subclass of DataModelBase");
 
 public:
     /// <summary>
@@ -140,7 +138,7 @@ public:
     const T* GetItemAt(gsl::index nIndex) const { return dynamic_cast<const T*>(GetModelAt(nIndex)); }
 };
 
-} // namespace ui
+} // namespace data
 } // namespace ra
 
-#endif RA_UI_VIEW_MODEL_COLLECTION_H
+#endif RA_DATA_MODEL_COLLECTION_H

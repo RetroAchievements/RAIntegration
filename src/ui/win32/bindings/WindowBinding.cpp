@@ -2,6 +2,8 @@
 
 #include "RA_Core.h"
 
+#include "data\ModelProperty.hh"
+
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
@@ -27,7 +29,7 @@ void WindowBinding::SetHWND(HWND hWnd)
 
         for (auto& pIter : m_mLabelBindings)
         {
-            auto* pProperty = ModelPropertyBase::GetPropertyForKey(pIter.first);
+            auto* pProperty = ra::data::ModelPropertyBase::GetPropertyForKey(pIter.first);
             if (pProperty == nullptr)
                 continue;
 
@@ -49,7 +51,7 @@ void WindowBinding::SetHWND(HWND hWnd)
 
         for (auto& pIter : m_mEnabledBindings)
         {
-            auto* pProperty = dynamic_cast<const BoolModelProperty*>(ModelPropertyBase::GetPropertyForKey(pIter.first));
+            auto* pProperty = dynamic_cast<const BoolModelProperty*>(ra::data::ModelPropertyBase::GetPropertyForKey(pIter.first));
             if (pProperty != nullptr)
             {
                 for (const auto nDlgItemId : pIter.second)
@@ -63,7 +65,7 @@ void WindowBinding::SetHWND(HWND hWnd)
 
         for (auto& pIter : m_mVisibilityBindings)
         {
-            auto* pProperty = dynamic_cast<const BoolModelProperty*>(ModelPropertyBase::GetPropertyForKey(pIter.first));
+            auto* pProperty = dynamic_cast<const BoolModelProperty*>(ra::data::ModelPropertyBase::GetPropertyForKey(pIter.first));
             if (pProperty != nullptr)
             {
                 for (const auto nDlgItemId : pIter.second)

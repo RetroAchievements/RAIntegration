@@ -6,18 +6,17 @@
 #include "ui\ViewModelCollection.hh"
 #include "ui\viewmodels\LookupItemViewModel.hh"
 
-#include "AssetViewModelBase.hh"
-
-#include "AchievementViewModel.hh"
-
+#include "data\DataModelCollection.hh"
 #include "data\Types.hh"
+#include "data\models\AchievementModel.hh"
+#include "data\models\AssetModelBase.hh"
 
 namespace ra {
 namespace ui {
 namespace viewmodels {
 
 class AssetListViewModel : public WindowViewModelBase,
-    protected ViewModelCollectionBase::NotifyTarget
+    protected ra::data::DataModelCollectionBase::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 AssetListViewModel() noexcept;
@@ -136,16 +135,16 @@ public:
 
     void DoFrame();
 
-    ViewModelCollection<AssetViewModelBase>& Assets() noexcept { return m_vAssets; }
-    const ViewModelCollection<AssetViewModelBase>& Assets() const noexcept { return m_vAssets; }
+    ra::data::DataModelCollection<ra::data::models::AssetModelBase>& Assets() noexcept { return m_vAssets; }
+    const ra::data::DataModelCollection<ra::data::models::AssetModelBase>& Assets() const noexcept { return m_vAssets; }
 
-    AchievementViewModel* FindAchievement(ra::AchievementID nId)
+    ra::data::models::AchievementModel* FindAchievement(ra::AchievementID nId)
     {
-        return dynamic_cast<AchievementViewModel*>(FindAsset(AssetType::Achievement, nId));
+        return dynamic_cast<ra::data::models::AchievementModel*>(FindAsset(ra::data::models::AssetType::Achievement, nId));
     }
-    const AchievementViewModel* FindAchievement(ra::AchievementID nId) const
+    const ra::data::models::AchievementModel* FindAchievement(ra::AchievementID nId) const
     {
-        return dynamic_cast<const AchievementViewModel*>(FindAsset(AssetType::Achievement, nId));
+        return dynamic_cast<const ra::data::models::AchievementModel*>(FindAsset(ra::data::models::AssetType::Achievement, nId));
     }
 
     /// <summary>
@@ -156,30 +155,30 @@ public:
     /// <summary>
     /// Gets the filter category.
     /// </summary>
-    AssetCategory GetFilterCategory() const { return ra::itoe<AssetCategory>(GetValue(FilterCategoryProperty)); }
+    ra::data::models::AssetCategory GetFilterCategory() const { return ra::itoe<ra::data::models::AssetCategory>(GetValue(FilterCategoryProperty)); }
 
     /// <summary>
     /// Sets the filter category.
     /// </summary>
-    void SetFilterCategory(AssetCategory nValue) { SetValue(FilterCategoryProperty, ra::etoi(nValue)); }
+    void SetFilterCategory(ra::data::models::AssetCategory nValue) { SetValue(FilterCategoryProperty, ra::etoi(nValue)); }
 
     class AssetSummaryViewModel : public LookupItemViewModel
     {
     public:
-        AssetType GetType() const { return ra::itoe<AssetType>(GetValue(AssetViewModelBase::TypeProperty)); }
-        void SetType(AssetType nValue) { SetValue(AssetViewModelBase::TypeProperty, ra::etoi(nValue)); }
+        ra::data::models::AssetType GetType() const { return ra::itoe<ra::data::models::AssetType>(GetValue(ra::data::models::AssetModelBase::TypeProperty)); }
+        void SetType(ra::data::models::AssetType nValue) { SetValue(ra::data::models::AssetModelBase::TypeProperty, ra::etoi(nValue)); }
 
-        AssetCategory GetCategory() const { return ra::itoe<AssetCategory>(GetValue(AssetViewModelBase::CategoryProperty)); }
-        void SetCategory(AssetCategory nValue) { SetValue(AssetViewModelBase::CategoryProperty, ra::etoi(nValue)); }
+        ra::data::models::AssetCategory GetCategory() const { return ra::itoe<ra::data::models::AssetCategory>(GetValue(ra::data::models::AssetModelBase::CategoryProperty)); }
+        void SetCategory(ra::data::models::AssetCategory nValue) { SetValue(ra::data::models::AssetModelBase::CategoryProperty, ra::etoi(nValue)); }
 
-        int GetPoints() const { return GetValue(AchievementViewModel::PointsProperty); }
-        void SetPoints(int nValue) { SetValue(AchievementViewModel::PointsProperty, nValue); }
+        int GetPoints() const { return GetValue(ra::data::models::AchievementModel::PointsProperty); }
+        void SetPoints(int nValue) { SetValue(ra::data::models::AchievementModel::PointsProperty, nValue); }
 
-        AssetState GetState() const { return ra::itoe<AssetState>(GetValue(AssetViewModelBase::StateProperty)); }
-        void SetState(AssetState nValue) { SetValue(AssetViewModelBase::StateProperty, ra::etoi(nValue)); }
+        ra::data::models::AssetState GetState() const { return ra::itoe<ra::data::models::AssetState>(GetValue(ra::data::models::AssetModelBase::StateProperty)); }
+        void SetState(ra::data::models::AssetState nValue) { SetValue(ra::data::models::AssetModelBase::StateProperty, ra::etoi(nValue)); }
 
-        AssetChanges GetChanges() const { return ra::itoe<AssetChanges>(GetValue(AssetViewModelBase::ChangesProperty)); }
-        void SetChanges(AssetChanges nValue) { SetValue(AssetViewModelBase::ChangesProperty, ra::etoi(nValue)); }
+        ra::data::models::AssetChanges GetChanges() const { return ra::itoe<ra::data::models::AssetChanges>(GetValue(ra::data::models::AssetModelBase::ChangesProperty)); }
+        void SetChanges(ra::data::models::AssetChanges nValue) { SetValue(ra::data::models::AssetModelBase::ChangesProperty, ra::etoi(nValue)); }
     };
 
     ViewModelCollection<AssetSummaryViewModel>& FilteredAssets() noexcept { return m_vFilteredAssets; }
@@ -196,13 +195,13 @@ public:
     static const ra::AchievementID FirstLocalId = 111000001;
 
 private:
-    // ViewModelCollectionBase::NotifyTarget
-    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
-    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
-    void OnViewModelAdded(gsl::index nIndex) override;
-    void OnViewModelRemoved(gsl::index nIndex) override;
-    void OnViewModelChanged(gsl::index nIndex) override;
-    void OnEndViewModelCollectionUpdate() override;
+    // DataModelCollectionBase::NotifyTarget
+    void OnDataModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
+    void OnDataModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
+    void OnDataModelAdded(gsl::index nIndex) override;
+    void OnDataModelRemoved(gsl::index nIndex) override;
+    void OnDataModelChanged(gsl::index nIndex) override;
+    void OnEndDataModelCollectionUpdate() override;
 
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
@@ -218,25 +217,25 @@ private:
     };
     FilteredListMonitor m_pFilteredListMonitor;
 
-    AssetViewModelBase* FindAsset(AssetType nType, ra::AchievementID nId);
-    const AssetViewModelBase* FindAsset(AssetType nType, ra::AchievementID nId) const;
+    ra::data::models::AssetModelBase* FindAsset(ra::data::models::AssetType nType, ra::AchievementID nId);
+    const ra::data::models::AssetModelBase* FindAsset(ra::data::models::AssetType nType, ra::AchievementID nId) const;
 
-    bool HasSelection(AssetType nAssetType) const;
-    void GetSelectedAssets(std::vector<AssetViewModelBase*>& vSelectedAssets);
+    bool HasSelection(ra::data::models::AssetType nAssetType) const;
+    void GetSelectedAssets(std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets);
 
-    void MergeLocalAssets(std::vector<AssetViewModelBase*>& vAssetsToMerge, bool bFullMerge);
+    void MergeLocalAssets(std::vector<ra::data::models::AssetModelBase*>& vAssetsToMerge, bool bFullMerge);
 
     void UpdateTotals();
     void UpdateButtons();
     void DoUpdateButtons();
     std::atomic_bool m_bNeedToUpdateButtons = false;
 
-    bool MatchesFilter(const AssetViewModelBase& pAsset);
-    void AddOrRemoveFilteredItem(const AssetViewModelBase& pAsset);
-    gsl::index GetFilteredAssetIndex(const AssetViewModelBase& pAsset) const;
+    bool MatchesFilter(const ra::data::models::AssetModelBase& pAsset);
+    void AddOrRemoveFilteredItem(const ra::data::models::AssetModelBase& pAsset);
+    gsl::index GetFilteredAssetIndex(const ra::data::models::AssetModelBase& pAsset) const;
     void ApplyFilter();
 
-    ViewModelCollection<AssetViewModelBase> m_vAssets;
+    ra::data::DataModelCollection<ra::data::models::AssetModelBase> m_vAssets;
     ViewModelCollection<AssetSummaryViewModel> m_vFilteredAssets;
 
     ra::AchievementID m_nNextLocalId = FirstLocalId;

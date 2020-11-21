@@ -4,9 +4,10 @@
 
 #include "services\AchievementRuntime.hh"
 
-#include "ui\viewmodels\AchievementViewModel.hh"
+#include "data\models\AchievementModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\data\DataAsserts.hh"
 
 #include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
@@ -330,25 +331,25 @@ public:
         Assert::AreEqual({ 1U }, game.mockWindowManager.AssetList.GetAchievementCount());
         Assert::AreEqual({ 5U }, game.mockWindowManager.AssetList.GetTotalPoints());
 
-        const auto* vmAch1 = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
+        const auto* vmAch1 = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
         Assert::IsNotNull(vmAch1);
         Ensures(vmAch1 != nullptr);
         Assert::AreEqual(5U, vmAch1->GetID());
         Assert::AreEqual(std::wstring(L"Ach1"), vmAch1->GetName());
         Assert::AreEqual(std::wstring(L"Desc1"), vmAch1->GetDescription());
-        Assert::AreEqual(ra::ui::viewmodels::AssetCategory::Core, vmAch1->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetCategory::Core, vmAch1->GetCategory());
         Assert::AreEqual(5, vmAch1->GetPoints());
         Assert::AreEqual(std::wstring(L"12345"), vmAch1->GetBadge());
         Assert::AreEqual(std::string("1=1"), vmAch1->GetTrigger());
         Assert::IsFalse(vmAch1->IsModified());
 
-        const auto* vmAch2 = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(1));
+        const auto* vmAch2 = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(1));
         Assert::IsNotNull(vmAch2);
         Ensures(vmAch2 != nullptr);
         Assert::AreEqual(7U, vmAch2->GetID());
         Assert::AreEqual(std::wstring(L"Ach2"), vmAch2->GetName());
         Assert::AreEqual(std::wstring(L"Desc2"), vmAch2->GetDescription());
-        Assert::AreEqual(ra::ui::viewmodels::AssetCategory::Unofficial, vmAch2->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetCategory::Unofficial, vmAch2->GetCategory());
         Assert::AreEqual(15, vmAch2->GetPoints());
         Assert::AreEqual(std::wstring(L"12345"), vmAch2->GetBadge());
         Assert::AreEqual(std::string("1=1"), vmAch2->GetTrigger());
@@ -408,13 +409,13 @@ public:
         Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetAchievementCount());
         Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetTotalPoints());
 
-        const auto* vmAch2 = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
+        const auto* vmAch2 = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
         Assert::IsNotNull(vmAch2);
         Ensures(vmAch2 != nullptr);
         Assert::AreEqual(7U, vmAch2->GetID());
         Assert::AreEqual(std::wstring(L"Ach2"), vmAch2->GetName());
         Assert::AreEqual(std::wstring(L"Desc2"), vmAch2->GetDescription());
-        Assert::AreEqual(ra::ui::viewmodels::AssetCategory::Unofficial, vmAch2->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetCategory::Unofficial, vmAch2->GetCategory());
         Assert::AreEqual(15, vmAch2->GetPoints());
         Assert::AreEqual(std::wstring(L"12345"), vmAch2->GetBadge());
         Assert::AreEqual(std::string("1=1"), vmAch2->GetTrigger());
@@ -582,46 +583,46 @@ public:
         Assert::AreEqual({ 0U }, game.mockWindowManager.AssetList.GetTotalPoints());
 
         // 7 is not a known ID for this game, it should be loaded into a local achievement
-        const auto* vmAch = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
+        const auto* vmAch = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
         Assert::IsNotNull(vmAch);
         Ensures(vmAch != nullptr);
         Assert::AreEqual(7U, vmAch->GetID());
         Assert::AreEqual(std::wstring(L"Ach2b"), vmAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc2b"), vmAch->GetDescription());
-        Assert::AreEqual(ra::ui::viewmodels::AssetCategory::Local, vmAch->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetCategory::Local, vmAch->GetCategory());
         Assert::AreEqual(25, vmAch->GetPoints());
         Assert::AreEqual(std::wstring(L"54321"), vmAch->GetBadge());
         Assert::AreEqual(std::string("1=2"), vmAch->GetTrigger());
         Assert::IsFalse(vmAch->IsModified());
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Unpublished, vmAch->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, vmAch->GetChanges());
 
         // explicit ID should be honored
-        vmAch = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(1));
+        vmAch = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(1));
         Assert::IsNotNull(vmAch);
         Ensures(vmAch != nullptr);
         Assert::AreEqual(999000001U, vmAch->GetID()); // non-vms get first id and first id + 1
         Assert::AreEqual(std::wstring(L"Ach3"), vmAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc3"), vmAch->GetDescription());
-        Assert::AreEqual(ra::ui::viewmodels::AssetCategory::Local, vmAch->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetCategory::Local, vmAch->GetCategory());
         Assert::AreEqual(20, vmAch->GetPoints());
         Assert::AreEqual(std::wstring(L"00555"), vmAch->GetBadge());
         Assert::AreEqual(std::string("1=1"), vmAch->GetTrigger());
         Assert::IsFalse(vmAch->IsModified());
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Unpublished, vmAch->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, vmAch->GetChanges());
 
         // explicit ID should be honored
-        vmAch = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(2));
+        vmAch = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(2));
         Assert::IsNotNull(vmAch);
         Ensures(vmAch != nullptr);
         Assert::AreEqual(999000003U, vmAch->GetID()); // non-vms get first id and first id + 1
         Assert::AreEqual(std::wstring(L"Ach4"), vmAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc4"), vmAch->GetDescription());
-        Assert::AreEqual(ra::ui::viewmodels::AssetCategory::Local, vmAch->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetCategory::Local, vmAch->GetCategory());
         Assert::AreEqual(10, vmAch->GetPoints());
         Assert::AreEqual(std::wstring(L"00556"), vmAch->GetBadge());
         Assert::AreEqual(std::string("1=1"), vmAch->GetTrigger());
         Assert::IsFalse(vmAch->IsModified());
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Unpublished, vmAch->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, vmAch->GetChanges());
 
 
         // new achievement should be allocated an ID higher than the largest existing local
@@ -820,25 +821,25 @@ public:
         Assert::AreEqual({ 1U }, game.mockWindowManager.AssetList.GetAchievementCount());
         Assert::AreEqual({ 9U }, game.mockWindowManager.AssetList.GetTotalPoints());
 
-        const auto* vmAch1 = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
+        const auto* vmAch1 = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(0));
         Assert::IsNotNull(vmAch1);
         Ensures(vmAch1 != nullptr);
         Assert::AreEqual(9U, vmAch1->GetID());
         Assert::AreEqual(std::wstring(L"Ach9"), vmAch1->GetName());
         Assert::AreEqual(std::wstring(L"Desc9"), vmAch1->GetDescription());
-        Assert::AreEqual(ra::ui::viewmodels::AssetCategory::Core, vmAch1->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetCategory::Core, vmAch1->GetCategory());
         Assert::AreEqual(9, vmAch1->GetPoints());
         Assert::AreEqual(std::wstring(L"12345"), vmAch1->GetBadge());
         Assert::AreEqual(std::string("1=1"), vmAch1->GetTrigger());
         Assert::IsFalse(vmAch1->IsModified());
 
-        const auto* vmAch2 = dynamic_cast<ra::ui::viewmodels::AchievementViewModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(1));
+        const auto* vmAch2 = dynamic_cast<ra::data::models::AchievementModel*>(game.mockWindowManager.AssetList.Assets().GetItemAt(1));
         Assert::IsNotNull(vmAch2);
         Ensures(vmAch2 != nullptr);
         Assert::AreEqual(11U, vmAch2->GetID());
         Assert::AreEqual(std::wstring(L"Ach11"), vmAch2->GetName());
         Assert::AreEqual(std::wstring(L"Desc11"), vmAch2->GetDescription());
-        Assert::AreEqual(ra::ui::viewmodels::AssetCategory::Unofficial, vmAch2->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetCategory::Unofficial, vmAch2->GetCategory());
         Assert::AreEqual(11, vmAch2->GetPoints());
         Assert::AreEqual(std::wstring(L"12345"), vmAch2->GetBadge());
         Assert::AreEqual(std::string("1=1"), vmAch2->GetTrigger());

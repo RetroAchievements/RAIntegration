@@ -2,7 +2,7 @@
 
 #include "ui\viewmodels\TriggerViewModel.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
+#include "tests\ui\UIAsserts.hh"
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"

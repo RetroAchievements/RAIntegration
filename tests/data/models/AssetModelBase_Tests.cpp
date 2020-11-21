@@ -1,47 +1,22 @@
 #include "CppUnitTest.h"
 
-#include "ui\viewmodels\AssetViewModelBase.hh"
+#include "data\models\AssetModelBase.hh"
 
 #include "services\impl\StringTextWriter.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
+#include "tests\data\DataAsserts.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
-namespace Microsoft {
-namespace VisualStudio {
-namespace CppUnitTestFramework {
-
-template<>
-std::wstring ToString<ra::ui::viewmodels::AssetType>(
-    const ra::ui::viewmodels::AssetType& nAssetType)
-{
-    switch (nAssetType)
-    {
-        case ra::ui::viewmodels::AssetType::None:
-            return L"None";
-        case ra::ui::viewmodels::AssetType::Achievement:
-            return L"Achievement";
-        case ra::ui::viewmodels::AssetType::Leaderboard:
-            return L"Leaderboard";
-        default:
-            return std::to_wstring(static_cast<int>(nAssetType));
-    }
-}
-
-} // namespace CppUnitTestFramework
-} // namespace VisualStudio
-} // namespace Microsoft
-
 namespace ra {
-namespace ui {
-namespace viewmodels {
+namespace data {
+namespace models {
 namespace tests {
 
 TEST_CLASS(AssetViewModelBase_Tests)
 {
 private:
-    class AssetViewModelHarness : public AssetViewModelBase
+    class AssetViewModelHarness : public AssetModelBase
     {
     public:
         AssetViewModelHarness() noexcept
@@ -99,7 +74,7 @@ private:
         }
     };
 
-    class AssetDefinitionViewModelHarness : public AssetViewModelBase
+    class AssetDefinitionViewModelHarness : public AssetModelBase
     {
     public:
         AssetDefinitionViewModelHarness() noexcept
@@ -345,21 +320,21 @@ public:
     {
         AssetViewModelHarness asset;
         asset.SetName(L"ServerName");
-        asset.SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        asset.SetCategory(AssetCategory::Core);
         asset.CreateServerCheckpoint();
         asset.CreateLocalCheckpoint();
 
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::None, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::None, asset.GetChanges());
 
         asset.SetName(L"LocalName");
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Modified, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::Modified, asset.GetChanges());
 
         asset.UpdateLocalCheckpoint();
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Unpublished, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
         Assert::AreEqual(std::wstring(L"LocalName"), asset.GetName());
 
         asset.UpdateServerCheckpoint();
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::None, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::None, asset.GetChanges());
         Assert::AreEqual(std::wstring(L"LocalName"), asset.GetName());
     }
 
@@ -367,25 +342,25 @@ public:
     {
         AssetViewModelHarness asset;
         asset.SetName(L"ServerName");
-        asset.SetCategory(ra::ui::viewmodels::AssetCategory::Core);
+        asset.SetCategory(AssetCategory::Core);
         asset.CreateServerCheckpoint();
         asset.SetName(L"LocalName");
         asset.CreateLocalCheckpoint();
 
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Unpublished, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
 
         asset.SetName(L"ModifiedName");
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Modified, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::Modified, asset.GetChanges());
 
         asset.RestoreLocalCheckpoint();
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Unpublished, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
         Assert::AreEqual(std::wstring(L"LocalName"), asset.GetName());
 
         asset.SetName(L"ModifiedName");
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Modified, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::Modified, asset.GetChanges());
 
         asset.RestoreServerCheckpoint();
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::None, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::None, asset.GetChanges());
         Assert::AreEqual(std::wstring(L"ServerName"), asset.GetName());
     }
 
@@ -396,19 +371,19 @@ public:
         asset.CreateServerCheckpoint();
         asset.CreateLocalCheckpoint();
 
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::None, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::None, asset.GetChanges());
         Assert::AreEqual(std::string("ServerDefinition"), asset.GetDefinition());
 
         asset.SetDefinition("LocalDefinition");
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Modified, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::Modified, asset.GetChanges());
         Assert::AreEqual(std::string("LocalDefinition"), asset.GetDefinition());
 
         asset.UpdateLocalCheckpoint();
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Unpublished, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
         Assert::AreEqual(std::string("LocalDefinition"), asset.GetDefinition());
 
         asset.UpdateServerCheckpoint();
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::None, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::None, asset.GetChanges());
         Assert::AreEqual(std::string("LocalDefinition"), asset.GetDefinition());
     }
 
@@ -420,23 +395,23 @@ public:
         asset.SetDefinition("LocalDefinition");
         asset.CreateLocalCheckpoint();
 
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Unpublished, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
         Assert::AreEqual(std::string("LocalDefinition"), asset.GetDefinition());
 
         asset.SetDefinition("ModifiedDefinition");
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Modified, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::Modified, asset.GetChanges());
         Assert::AreEqual(std::string("ModifiedDefinition"), asset.GetDefinition());
 
         asset.RestoreLocalCheckpoint();
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Unpublished, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
         Assert::AreEqual(std::string("LocalDefinition"), asset.GetDefinition());
 
         asset.SetDefinition("ModifiedDefinition");
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::Modified, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::Modified, asset.GetChanges());
         Assert::AreEqual(std::string("ModifiedDefinition"), asset.GetDefinition());
 
         asset.RestoreServerCheckpoint();
-        Assert::AreEqual(ra::ui::viewmodels::AssetChanges::None, asset.GetChanges());
+        Assert::AreEqual(AssetChanges::None, asset.GetChanges());
         Assert::AreEqual(std::string("ServerDefinition"), asset.GetDefinition());
     }
 };
@@ -446,6 +421,6 @@ const IntModelProperty AssetViewModelBase_Tests::AssetViewModelHarness::IntPrope
 const IntModelProperty AssetViewModelBase_Tests::AssetDefinitionViewModelHarness::DefinitionProperty("AssetDefinitionViewModelHarness", "Int", ra::etoi(AssetChanges::None));
 
 } // namespace tests
-} // namespace viewmodels
-} // namespace ui
+} // namespace models
+} // namespace data
 } // namespace ra

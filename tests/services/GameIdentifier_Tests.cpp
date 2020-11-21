@@ -2,7 +2,9 @@
 
 #include "ui\viewmodels\UnknownGameViewModel.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
+#include "tests\data\DataAsserts.hh"
+#include "tests\ui\UIAsserts.hh"
+
 #include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"

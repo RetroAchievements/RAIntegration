@@ -3,7 +3,6 @@
 #pragma once
 
 #include "GridColumnBinding.hh"
-#include "ui\ModelProperty.hh"
 
 namespace ra {
 namespace ui {

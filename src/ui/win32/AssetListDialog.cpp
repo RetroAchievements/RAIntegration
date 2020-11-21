@@ -11,8 +11,8 @@
 #include "ui\win32\bindings\GridNumberColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
+using ra::data::models::AssetModelBase;
 using ra::ui::viewmodels::AssetListViewModel;
-using ra::ui::viewmodels::AssetViewModelBase;
 using ra::ui::win32::bindings::GridColumnBinding;
 
 namespace ra {
@@ -66,26 +66,26 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindAssets.BindColumn(0, std::move(pNameColumn));
 
     auto pPointsColumn = std::make_unique<ra::ui::win32::bindings::GridNumberColumnBinding>(
-       ra::ui::viewmodels::AchievementViewModel::PointsProperty);
+       ra::data::models::AchievementModel::PointsProperty);
     pPointsColumn->SetHeader(L"Points");
     pPointsColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 50);
     pPointsColumn->SetAlignment(ra::ui::RelativePosition::Far);
     m_bindAssets.BindColumn(1, std::move(pPointsColumn));
 
     auto pStateColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        AssetViewModelBase::StateProperty, vmAssetList.States());
+        AssetModelBase::StateProperty, vmAssetList.States());
     pStateColumn->SetHeader(L"State");
     pStateColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
     m_bindAssets.BindColumn(2, std::move(pStateColumn));
 
     auto pCategoryColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        AssetViewModelBase::CategoryProperty, vmAssetList.Categories());
+        AssetModelBase::CategoryProperty, vmAssetList.Categories());
     pCategoryColumn->SetHeader(L"Category");
     pCategoryColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
     m_bindAssets.BindColumn(3, std::move(pCategoryColumn));
 
     auto pChangesColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
-        AssetViewModelBase::ChangesProperty, vmAssetList.Changes());
+        AssetModelBase::ChangesProperty, vmAssetList.Changes());
     pChangesColumn->SetHeader(L"Changes");
     pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
     m_bindAssets.BindColumn(4, std::move(pChangesColumn));
@@ -100,9 +100,9 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindAssets.BindEnsureVisible(AssetListViewModel::EnsureVisibleAssetIndexProperty);
     m_bindAssets.BindItems(vmAssetList.FilteredAssets());
 
-    m_bindCoreAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::ui::viewmodels::AssetCategory::Core));
-    m_bindUnofficialAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::ui::viewmodels::AssetCategory::Unofficial));
-    m_bindLocalAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::ui::viewmodels::AssetCategory::Local));
+    m_bindCoreAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::data::models::AssetCategory::Core));
+    m_bindUnofficialAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::data::models::AssetCategory::Unofficial));
+    m_bindLocalAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::data::models::AssetCategory::Local));
 
     m_bindWindow.BindLabel(IDC_RA_GAMEHASH, AssetListViewModel::GameIdProperty);
     m_bindWindow.BindLabel(IDC_RA_NUMACH, AssetListViewModel::AchievementCountProperty);

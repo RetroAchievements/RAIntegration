@@ -6,7 +6,7 @@
 #include "ui\IDesktop.hh"
 #include "tests\mocks\MockDesktop.hh"
 
-#include "tests\RA_UnitTestHelpers.h"
+#include "tests\ui\UIAsserts.hh"
 
 #undef GetMessage
 

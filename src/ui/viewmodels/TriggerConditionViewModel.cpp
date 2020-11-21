@@ -5,6 +5,7 @@
 
 #include "data\context\GameContext.hh"
 
+#include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
 namespace ra {
@@ -241,13 +242,25 @@ void TriggerConditionViewModel::InitializeFrom(const rc_condition_t& pCondition)
 
 std::wstring TriggerConditionViewModel::GetTooltip(const IntModelProperty& nProperty) const
 {
-    if (nProperty == SourceValueProperty && GetSourceType() != TriggerOperandType::Value)
-        return GetAddressTooltip(GetSourceValue());
+    if (nProperty == SourceValueProperty)
+        return GetValueTooltip(GetSourceType(), GetSourceValue());
 
-    if (nProperty == TargetValueProperty && GetTargetType() != TriggerOperandType::Value)
-        return GetAddressTooltip(GetTargetValue());
+    if (nProperty == TargetValueProperty)
+        return GetValueTooltip(GetTargetType(), GetTargetValue());
 
     return L"";
+}
+
+std::wstring TriggerConditionViewModel::GetValueTooltip(TriggerOperandType nType, unsigned int nValue) const
+{
+    if (nType != TriggerOperandType::Value)
+        return GetAddressTooltip(nValue);
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+        return L"";
+
+    return std::to_wstring(nValue);
 }
 
 std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned nAddress) const

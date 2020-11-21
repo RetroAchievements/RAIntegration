@@ -125,6 +125,11 @@ private:
     void ValidateFeatureInitialize(ra::services::Feature feature, std::function<bool(OverlaySettingsViewModel&)> fGetValue)
     {
         OverlaySettingsViewModelHarness vmSettings;
+
+        // screenshot toggles require the associated notification to be enabled
+        vmSettings.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
+        vmSettings.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery, ra::ui::viewmodels::PopupLocation::BottomLeft);
+
         vmSettings.mockConfiguration.SetFeatureEnabled(feature, false);
         vmSettings.Initialize();
         Assert::IsFalse(fGetValue(vmSettings));
@@ -248,6 +253,26 @@ public:
         Assert::IsFalse(vmSettings.ScreenshotMastery());
 
         vmSettings.SetMasteryLocation(ra::ui::viewmodels::PopupLocation::None);
+        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::None, vmSettings.GetMasteryLocation());
+        Assert::IsFalse(vmSettings.ScreenshotMastery());
+    }
+
+    TEST_METHOD(TestDependencyMismatch)
+    {
+        OverlaySettingsViewModelHarness vmSettings;
+
+        // popup off has precedence over screenshot on (should disable screenshot)
+        vmSettings.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::None);
+        vmSettings.mockConfiguration.SetFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot, true);
+
+        vmSettings.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery, ra::ui::viewmodels::PopupLocation::None);
+        vmSettings.mockConfiguration.SetFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot, true);
+
+        vmSettings.Initialize();
+
+        Assert::AreEqual(ra::ui::viewmodels::PopupLocation::None, vmSettings.GetAchievementTriggerLocation());
+        Assert::IsFalse(vmSettings.ScreenshotAchievementTrigger());
+
         Assert::AreEqual(ra::ui::viewmodels::PopupLocation::None, vmSettings.GetMasteryLocation());
         Assert::IsFalse(vmSettings.ScreenshotMastery());
     }

@@ -43,10 +43,14 @@ void OverlaySettingsViewModel::Initialize()
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     SetMessageLocation(pConfiguration.GetPopupLocation(Popup::Message));
-    SetAchievementTriggerLocation(pConfiguration.GetPopupLocation(Popup::AchievementTriggered));
+
+    // set screenshot before location so location is given preference
     SetScreenshotAchievementTrigger(pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot));
-    SetMasteryLocation(pConfiguration.GetPopupLocation(Popup::Mastery));
+    SetAchievementTriggerLocation(pConfiguration.GetPopupLocation(Popup::AchievementTriggered));
+
     SetScreenshotMastery(pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot));
+    SetMasteryLocation(pConfiguration.GetPopupLocation(Popup::Mastery));
+
     SetLeaderboardStartedLocation(pConfiguration.GetPopupLocation(Popup::LeaderboardStarted));
     SetLeaderboardCanceledLocation(pConfiguration.GetPopupLocation(Popup::LeaderboardCanceled));
     SetLeaderboardTrackerLocation(pConfiguration.GetPopupLocation(Popup::LeaderboardTracker));

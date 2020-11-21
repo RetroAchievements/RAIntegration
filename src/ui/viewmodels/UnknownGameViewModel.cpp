@@ -86,7 +86,7 @@ bool UnknownGameViewModel::Associate()
         request.GameName = m_vGameTitles.GetLabelForId(nGameId);
 
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-        vmMessageBox.SetHeader(ra::StringPrintf(L"Are you sure you want to add a new checksum to '%s'?", request.GameName));
+        vmMessageBox.SetHeader(ra::StringPrintf(L"Are you sure you want to add a new hash to '%s'?", request.GameName));
         vmMessageBox.SetMessage(L"You should not do this unless you are certain that the new title is compatible. You can use 'Test' mode to check compatibility.");
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
         if (vmMessageBox.ShowModal(*this) == DialogResult::No)

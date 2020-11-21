@@ -165,17 +165,17 @@ BEGIN
     LTEXT           "My Game (U)",IDC_RA_GAMENAME,48,16,197,8
     LTEXT           "System:",IDC_STATIC,8,24,27,8
     LTEXT           "Some System",IDC_RA_SYSTEMNAME,48,24,131,8
-    LTEXT           "Checksum:",IDC_STATIC,8,32,36,8
+    LTEXT           "RA Hash:",IDC_STATIC,8,32,36,8
     LTEXT           "ABCDEF0123456789",IDC_RA_CHECKSUM,48,32,131,8
     LTEXT           "Select an existing title for the game from the following list of known titles:",IDC_STATIC,4,44,241,10
     COMBOBOX        IDC_RA_KNOWNGAMES,4,54,241,137,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Or provide an appropriate name to create a new entry:",IDC_STATIC,4,70,219,10
     EDITTEXT        IDC_RA_GAMETITLE,4,80,241,14,ES_AUTOHSCROLL | ES_WANTRETURN
-    LTEXT           "Then press 'Link' to associate the checksum to the game, or 'Test' to load the game without registering the checksum.",IDC_STATIC,4,98,241,18
+    LTEXT           "Then press 'Link' to associate the hash to the game, or 'Test' to load the game without registering the hash.",IDC_STATIC,4,98,241,18
     PUSHBUTTON      "Link",IDC_RA_LINK,4,118,66,14
     DEFPUSHBUTTON   "Test",IDOK,113,118,66,14
     PUSHBUTTON      "Cancel",IDCANCEL,179,118,66,14
-    PUSHBUTTON      "Copy Checksum",IDC_RA_COPYCHECKSUMCLIPBOARD,179,26,66,14
+    PUSHBUTTON      "Copy Hash",IDC_RA_COPYCHECKSUMCLIPBOARD,179,26,66,14
 END
 
 IDD_RA_LEADERBOARDEDITOR DIALOGEX 0, 0, 332, 310
@@ -227,7 +227,7 @@ EXSTYLE WS_EX_TOPMOST
 CAPTION "ROM Checksum"
 FONT 8, "MS Shell Dlg", 400, 0, 0x1
 BEGIN
-    LTEXT           "ROM Checksum:",IDC_RA_ROMCHECKSUMHEADER,7,7,170,11
+    LTEXT           "RetroAchievements Hash:",IDC_RA_ROMCHECKSUMHEADER,7,7,170,11
     LTEXT           "No game loaded.",IDC_RA_ROMCHECKSUMTEXT,7,17,170,10
     DEFPUSHBUTTON   "Copy To Clipboard",IDC_RA_COPYCHECKSUMCLIPBOARD,7,33,82,14
     DEFPUSHBUTTON   "OK",IDOK,127,33,50,14

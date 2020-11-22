@@ -415,6 +415,24 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
 
             return TRUE;
         }
+
+        case IDC_RA_MOVECONDUP:
+        {
+            auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+            if (vmAssetEditor)
+                vmAssetEditor->Trigger().MoveSelectedConditionsUp();
+
+            return TRUE;
+        }
+
+        case IDC_RA_MOVECONDDOWN:
+        {
+            auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+            if (vmAssetEditor)
+                vmAssetEditor->Trigger().MoveSelectedConditionsDown();
+
+            return TRUE;
+        }
     }
 
     return DialogBase::OnCommand(nCommand);

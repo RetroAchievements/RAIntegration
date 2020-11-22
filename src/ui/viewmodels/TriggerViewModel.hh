@@ -81,6 +81,9 @@ public:
     void CopySelectedConditionsToClipboard();
     void PasteFromClipboard();
 
+    void MoveSelectedConditionsUp();
+    void MoveSelectedConditionsDown();
+
     void NewCondition();
 
     /// <summary>
@@ -128,6 +131,7 @@ private:
     void UpdateConditions(const GroupViewModel* pGroup);
 
     void DeselectAllConditions();
+    void UpdateIndicesAndEnsureSelectionVisible();
 
     ViewModelCollection<GroupViewModel> m_vGroups;
     ViewModelCollection<TriggerConditionViewModel> m_vConditions;

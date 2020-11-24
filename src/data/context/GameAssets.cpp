@@ -5,6 +5,8 @@
 
 #include "GameContext.hh"
 
+#include "data\models\LocalBadgesModel.hh"
+
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
@@ -97,6 +99,12 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                 nType = ra::data::models::AssetType::Achievement;
                 nId = pTokenizer.ReadNumber();
                 break;
+
+            case 'b': case 'B':
+                nType = ra::data::models::AssetType::LocalBadges;
+                nId = 0;
+                pTokenizer.Advance();
+                break;
         }
 
         if (nType == ra::data::models::AssetType::None)
@@ -148,6 +156,14 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                     vmAchievement->CreateServerCheckpoint();
 
                     pAsset = &Append(std::move(vmAchievement));
+                    break;
+                }
+
+                case ra::data::models::AssetType::LocalBadges:
+                {
+                    auto* pLocalBadges = FindAsset(ra::data::models::AssetType::LocalBadges, 0);
+                    if (pLocalBadges)
+                        pLocalBadges->Deserialize(pTokenizer);
                     break;
                 }
             }
@@ -270,6 +286,13 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
         // serialize the item
         pData->Write(std::to_string(pItem->GetID()));
         pItem->Serialize(*pData);
+        pData->WriteLine();
+    }
+
+    const auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0));
+    if (pLocalBadges != nullptr && pLocalBadges->NeedsSerialized())
+    {
+        pLocalBadges->Serialize(*pData);
         pData->WriteLine();
     }
 

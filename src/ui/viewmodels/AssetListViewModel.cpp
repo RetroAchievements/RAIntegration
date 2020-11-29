@@ -1,6 +1,7 @@
 #include "AssetListViewModel.hh"
 
 #include "data\context\GameContext.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
@@ -52,8 +53,6 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::Unpublished), L"Unpublished");
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::New), L"New");
 
-    m_vAssets.AddNotifyTarget(*this);
-
     // have to use separate monitor for capturing selection changes in filtered list
     // so EndUpdate for filtered list doesn't trigger another call to ApplyFilter.
     m_pFilteredListMonitor.m_pOwner = this;
@@ -63,6 +62,19 @@ AssetListViewModel::AssetListViewModel() noexcept
 AssetListViewModel::~AssetListViewModel()
 {
     m_bNeedToUpdateButtons.store(false);
+}
+
+void AssetListViewModel::InitializeNotifyTargets()
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    pGameContext.AddNotifyTarget(*this);
+    pGameContext.Assets().AddNotifyTarget(*this);
+}
+
+void AssetListViewModel::OnActiveGameChanged()
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    SetGameId(pGameContext.GameId());
 }
 
 static bool IsTalliedAchievement(const ra::data::models::AchievementModel& pAchievement)
@@ -75,7 +87,8 @@ void AssetListViewModel::OnDataModelStringValueChanged(gsl::index nIndex, const 
     // sync this property through to the summary view model
     if (args.Property == ra::data::models::AssetModelBase::NameProperty)
     {
-        auto* pItem = m_vAssets.GetItemAt(nIndex);
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pItem = pGameContext.Assets().GetItemAt(nIndex);
         if (pItem != nullptr)
         {
             const auto nFilteredIndex = GetFilteredAssetIndex(*pItem);
@@ -89,7 +102,9 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
 {
     if (args.Property == ra::data::models::AchievementModel::PointsProperty)
     {
-        auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(m_vAssets.GetItemAt(nIndex));
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
         if (pAchievement != nullptr && IsTalliedAchievement(*pAchievement))
         {
             auto nPoints = GetTotalPoints();
@@ -101,9 +116,10 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
     {
         UpdateTotals();
 
-        auto* pItem = m_vAssets.GetItemAt(nIndex);
-        if (pItem != nullptr)
-            AddOrRemoveFilteredItem(*pItem);
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        if (pAsset != nullptr)
+            AddOrRemoveFilteredItem(*pAsset);
     }
 
     // sync these properties through to the summary view model
@@ -112,10 +128,11 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
         args.Property == ra::data::models::AssetModelBase::StateProperty ||
         args.Property == ra::data::models::AssetModelBase::CategoryProperty)
     {
-        auto* pItem = m_vAssets.GetItemAt(nIndex);
-        if (pItem != nullptr)
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        if (pAsset != nullptr)
         {
-            const auto nFilteredIndex = GetFilteredAssetIndex(*pItem);
+            const auto nFilteredIndex = GetFilteredAssetIndex(*pAsset);
             if (nFilteredIndex != -1)
             {
                 m_vFilteredAssets.SetItemValue(nFilteredIndex, args.Property, args.tNewValue);
@@ -127,7 +144,8 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
     }
     else if (args.Property == ra::data::models::AssetModelBase::IDProperty)
     {
-        auto* pAsset = m_vAssets.GetItemAt(nIndex);
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
         if (pAsset != nullptr)
         {
             gsl::index nFilteredIndex = -1;
@@ -151,19 +169,21 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
 
 void AssetListViewModel::OnDataModelAdded(_UNUSED gsl::index nIndex)
 {
-    if (!m_vAssets.IsUpdating())
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    if (!pGameContext.Assets().IsUpdating())
     {
         UpdateTotals();
 
-        auto* pItem = m_vAssets.GetItemAt(nIndex);
-        if (pItem != nullptr)
-            AddOrRemoveFilteredItem(*pItem);
+        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        if (pAsset != nullptr)
+            AddOrRemoveFilteredItem(*pAsset);
     }
 }
 
 void AssetListViewModel::OnDataModelRemoved(_UNUSED gsl::index nIndex)
 {
-    if (!m_vAssets.IsUpdating())
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    if (!pGameContext.Assets().IsUpdating())
     {
         UpdateTotals();
 
@@ -175,7 +195,7 @@ void AssetListViewModel::OnDataModelRemoved(_UNUSED gsl::index nIndex)
             auto* pItem = m_vFilteredAssets.GetItemAt(nFilteredIndex);
             if (pItem != nullptr)
             {
-                if (!FindAsset(pItem->GetType(), pItem->GetId()))
+                if (!pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId()))
                 {
                     m_vFilteredAssets.RemoveAt(nFilteredIndex);
                     UpdateButtons();
@@ -188,13 +208,14 @@ void AssetListViewModel::OnDataModelRemoved(_UNUSED gsl::index nIndex)
 
 void AssetListViewModel::OnDataModelChanged(_UNUSED gsl::index nIndex)
 {
-    if (!m_vAssets.IsUpdating())
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    if (!pGameContext.Assets().IsUpdating())
     {
         UpdateTotals();
 
-        auto* pItem = m_vAssets.GetItemAt(nIndex);
-        if (pItem != nullptr)
-            AddOrRemoveFilteredItem(*pItem);
+        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        if (pAsset != nullptr)
+            AddOrRemoveFilteredItem(*pAsset);
     }
 }
 
@@ -209,9 +230,10 @@ void AssetListViewModel::UpdateTotals()
     int nAchievementCount = 0;
     int nTotalPoints = 0;
 
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
     {
-        auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(m_vAssets.GetItemAt(nIndex));
+        auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pGameContext.Assets().GetItemAt(nIndex));
         if (pAchievement != nullptr && IsTalliedAchievement(*pAchievement))
         {
             ++nAchievementCount;
@@ -235,6 +257,7 @@ void AssetListViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args
 
 void AssetListViewModel::ApplyFilter()
 {
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     m_vFilteredAssets.BeginUpdate();
 
     // first pass: remove any filtered items no longer in the source collection
@@ -243,17 +266,17 @@ void AssetListViewModel::ApplyFilter()
         auto* pItem = m_vFilteredAssets.GetItemAt(nIndex);
         if (pItem != nullptr)
         {
-            if (!FindAsset(pItem->GetType(), pItem->GetId()))
+            if (!pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId()))
                 m_vFilteredAssets.RemoveAt(nIndex);
         }
     }
 
     // second pass: update visibility of each item in the source collection
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
     {
-        auto* pItem = m_vAssets.GetItemAt(nIndex);
-        if (pItem != nullptr)
-            AddOrRemoveFilteredItem(*pItem);
+        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        if (pAsset != nullptr)
+            AddOrRemoveFilteredItem(*pAsset);
     }
 
     m_vFilteredAssets.EndUpdate();
@@ -319,36 +342,15 @@ gsl::index AssetListViewModel::GetFilteredAssetIndex(const ra::data::models::Ass
     return -1;
 }
 
-ra::data::models::AssetModelBase* AssetListViewModel::FindAsset(ra::data::models::AssetType nType, ra::AchievementID nId)
-{
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
-    {
-        auto* pItem = m_vAssets.GetItemAt(nIndex);
-        if (pItem != nullptr && pItem->GetID() == nId && pItem->GetType() == nType)
-            return pItem;
-    }
-
-    return nullptr;
-}
-
-const ra::data::models::AssetModelBase* AssetListViewModel::FindAsset(ra::data::models::AssetType nType, ra::AchievementID nId) const
-{
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
-    {
-        auto* pItem = m_vAssets.GetItemAt(nIndex);
-        if (pItem != nullptr && pItem->GetID() == nId && pItem->GetType() == nType)
-            return pItem;
-    }
-
-    return nullptr;
-}
-
 void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
 {
     ra::data::models::AssetModelBase* vmAsset = nullptr;
 
     if (pAsset)
-        vmAsset = FindAsset(pAsset->GetType(), pAsset->GetId());
+    {
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+        vmAsset = pGameContext.Assets().FindAsset(pAsset->GetType(), pAsset->GetId());
+    }
 
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.AssetEditor.LoadAsset(vmAsset);
@@ -584,14 +586,16 @@ void AssetListViewModel::DoUpdateButtons()
 
 void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets)
 {
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+
     for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
     {
         const auto* pItem = m_vFilteredAssets.GetItemAt(i);
         if (pItem != nullptr && pItem->IsSelected())
         {
-            auto* vmItem = FindAsset(pItem->GetType(), pItem->GetId());
-            if (vmItem != nullptr)
-                vSelectedAssets.push_back(vmItem);
+            auto* pAsset = pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId());
+            if (pAsset != nullptr)
+                vSelectedAssets.push_back(pAsset);
         }
     }
 
@@ -603,9 +607,9 @@ void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetMo
             const auto* pItem = m_vFilteredAssets.GetItemAt(i);
             if (pItem != nullptr)
             {
-                auto* vmItem = FindAsset(pItem->GetType(), pItem->GetId());
-                if (vmItem != nullptr)
-                    vSelectedAssets.push_back(vmItem);
+                auto* pAsset = pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId());
+                if (pAsset != nullptr)
+                    vSelectedAssets.push_back(pAsset);
             }
         }
     }
@@ -636,77 +640,21 @@ void AssetListViewModel::ActivateSelected()
 
 void AssetListViewModel::SaveSelected()
 {
-    const bool bHasSelection = HasSelection(ra::data::models::AssetType::Achievement);
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    std::vector<ra::data::models::AssetModelBase*> vSelectedAssets;
 
-    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.GameId()));
-    if (pData == nullptr)
+    for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
     {
-        RA_LOG_ERR("Failed to create user assets file");
-        return;
-    }
-
-    pData->WriteLine(_RA_IntegrationVersion()); // version used to create the file
-    pData->WriteLine(pGameContext.GameTitle());
-
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
-    {
-        auto* pItem = m_vAssets.GetItemAt(nIndex);
-        if (pItem == nullptr)
-            continue;
-
-        switch (pItem->GetChanges())
+        const auto* pItem = m_vFilteredAssets.GetItemAt(i);
+        if (pItem != nullptr && pItem->IsSelected())
         {
-            case ra::data::models::AssetChanges::None:
-                // non-modified committed items don't need to be serialized
-                // ASSERT: unmodified local items should report as Unpublished
-                continue;
-
-            case ra::data::models::AssetChanges::Unpublished:
-                // always write unpublished changes
-                break;
-
-            default:
-                // if the item is modified, check to see if it's selected
-                bool bSelected = !bHasSelection;
-                if (bHasSelection)
-                {
-                    const auto nFilteredIndex = GetFilteredAssetIndex(*pItem);
-                    if (nFilteredIndex >= 0 && m_vFilteredAssets.GetItemAt(nFilteredIndex)->IsSelected())
-                        bSelected = true;
-                }
-
-                // if it's selected, commit the changes before flushing
-                if (bSelected)
-                {
-                    pItem->UpdateLocalCheckpoint();
-
-                    // reverted back to committed state, no need to serialize
-                    if (pItem->GetChanges() == ra::data::models::AssetChanges::None)
-                        continue;
-                }
-                else if (pItem->GetCategory() != ra::data::models::AssetCategory::Local)
-                {
-                    // if there's no unpublished changes and the item is not selected, ignore it
-                    if (!pItem->HasUnpublishedChanges())
-                        continue;
-                }
-                else if (pItem->GetChanges() == ra::data::models::AssetChanges::New)
-                {
-                    // unselected new item has no local state to maintain
-                    continue;
-                }
-                break;
+            auto* pAsset = pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId());
+            if (pAsset != nullptr)
+                vSelectedAssets.push_back(pAsset);
         }
-
-        // serialize the item
-        pData->Write(std::to_string(pItem->GetID()));
-        pItem->Serialize(*pData);
-        pData->WriteLine();
     }
 
-    RA_LOG_INFO("Wrote user assets file");
+    pGameContext.Assets().SaveAssets(vSelectedAssets);
 }
 
 void AssetListViewModel::ResetSelected()
@@ -735,21 +683,22 @@ void AssetListViewModel::ResetSelected()
     if (vmMessageBox.ShowModal() == DialogResult::No)
         return;
 
-    m_vAssets.BeginUpdate();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    pGameContext.Assets().BeginUpdate();
 
     std::vector<ra::data::models::AssetModelBase*> vAssetsToReset;
     if (vSelectedAssets.empty())
     {
         // reset all - first remove any "new" items
-        for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vAssets.Count()) - 1; nIndex >= 0; --nIndex)
+        for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()) - 1; nIndex >= 0; --nIndex)
         {
-            auto* pAsset = m_vAssets.GetItemAt(nIndex);
+            auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
             if (pAsset != nullptr && pAsset->GetChanges() == ra::data::models::AssetChanges::New)
-                m_vAssets.RemoveAt(nIndex);
+                pGameContext.Assets().RemoveAt(nIndex);
         }
 
         // when resetting all, always read the file to pick up new items
-        MergeLocalAssets(vAssetsToReset, true);
+        pGameContext.Assets().ReloadAssets(vAssetsToReset);
     }
     else
     {
@@ -758,13 +707,13 @@ void AssetListViewModel::ResetSelected()
         {
             const auto nType = pItem->GetType();
             const auto nId = ra::to_unsigned(pItem->GetId());
-            for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vAssets.Count()) - 1; nIndex >= 0; --nIndex)
+            for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()) - 1; nIndex >= 0; --nIndex)
             {
-                auto* pAsset = m_vAssets.GetItemAt(nIndex);
+                auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
                 if (pAsset->GetID() == nId && pAsset->GetType() == nType)
                 {
                     if (pAsset->GetChanges() == ra::data::models::AssetChanges::New)
-                        m_vAssets.RemoveAt(nIndex);
+                        pGameContext.Assets().RemoveAt(nIndex);
                     else
                         vAssetsToReset.push_back(pAsset);
                     break;
@@ -774,137 +723,10 @@ void AssetListViewModel::ResetSelected()
 
         // if there were any non-new items, reload them from disk
         if (!vAssetsToReset.empty())
-            MergeLocalAssets(vAssetsToReset, false);
+            pGameContext.Assets().ReloadAssets(vAssetsToReset);
     }
 
-    m_vAssets.EndUpdate();
-}
-
-// NOTE: destroys vAssetsToMerge as it processes the file
-void AssetListViewModel::MergeLocalAssets(std::vector<ra::data::models::AssetModelBase*>& vAssetsToMerge, bool bFullMerge)
-{
-    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(GetGameId()));
-    if (pData == nullptr)
-        return;
-
-    std::string sLine;
-    pData->GetLine(sLine); // version used to create the file
-    pData->GetLine(sLine); // game title
-
-    m_vAssets.BeginUpdate();
-
-    std::vector<ra::data::models::AssetModelBase*> vUnnumberedAssets;
-    while (pData->GetLine(sLine))
-    {
-        ra::data::models::AssetType nType = ra::data::models::AssetType::None;
-        unsigned nId = 0;
-
-        ra::Tokenizer pTokenizer(sLine);
-        switch (pTokenizer.PeekChar())
-        {
-            case '0': case '1': case '2': case '3': case '4':
-            case '5': case '6': case '7': case '8': case '9':
-                // achievements start with a number (no prefix)
-                nType = ra::data::models::AssetType::Achievement;
-                nId = pTokenizer.ReadNumber();
-                break;
-        }
-
-        if (nType == ra::data::models::AssetType::None)
-            continue;
-        if (!pTokenizer.Consume(':'))
-            continue;
-
-        // find the asset to merge
-        ra::data::models::AssetModelBase* pAsset = nullptr;
-        if (nId != 0)
-        {
-            if (nId >= m_nNextLocalId)
-                m_nNextLocalId = nId + 1;
-
-            for (auto pIter = vAssetsToMerge.begin(); pIter != vAssetsToMerge.end(); ++pIter)
-            {
-                auto* pAssetToReset = *pIter;
-                if (pAssetToReset->GetID() == nId && pAssetToReset->GetType() == nType)
-                {
-                    pAsset = pAssetToReset;
-                    vAssetsToMerge.erase(pIter);
-                    pAsset->RestoreServerCheckpoint();
-                    break;
-                }
-            }
-
-            if (!pAsset && bFullMerge && nId < FirstLocalId)
-                pAsset = FindAsset(nType, nId);
-        }
-
-        if (pAsset)
-        {
-            // merge the data from the file
-            pAsset->Deserialize(pTokenizer);
-            pAsset->UpdateLocalCheckpoint();
-        }
-        else if (bFullMerge)
-        {
-            // non-existant item, only process it if nothing was selected
-            switch (nType)
-            {
-                case ra::data::models::AssetType::Achievement:
-                {
-                    auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
-                    vmAchievement->SetID(nId);
-                    vmAchievement->SetCategory(ra::data::models::AssetCategory::Local);
-                    vmAchievement->CreateServerCheckpoint();
-
-                    pAsset = &m_vAssets.Append(std::move(vmAchievement));
-                    break;
-                }
-            }
-
-            if (pAsset)
-            {
-                pAsset->Deserialize(pTokenizer);
-                pAsset->CreateLocalCheckpoint();
-
-                if (nId == 0)
-                    vUnnumberedAssets.push_back(pAsset);
-            }
-        }
-    }
-
-    // assign IDs for any assets where one was not available
-    for (auto* pAsset : vUnnumberedAssets)
-        pAsset->SetID(m_nNextLocalId++);
-
-    // any items still in the source list no longer exist in the file. if the item is on the server,
-    // just reset to the server state. otherwise, delete the item.
-    for (auto* pAsset : vAssetsToMerge)
-    {
-        if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
-        {
-            for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(m_vAssets.Count()) - 1; nIndex >= 0; --nIndex)
-            {
-                if (m_vAssets.GetItemAt(nIndex) == pAsset)
-                {
-                    m_vAssets.RemoveAt(nIndex);
-                    break;
-                }
-            }
-        }
-        else
-        {
-            pAsset->RestoreServerCheckpoint();
-        }
-    }
-
-    m_vAssets.EndUpdate();
-}
-
-void AssetListViewModel::MergeLocalAssets()
-{
-    std::vector<ra::data::models::AssetModelBase*> vAssetsToMerge;
-    MergeLocalAssets(vAssetsToMerge, true);
+    pGameContext.Assets().EndUpdate();
 }
 
 void AssetListViewModel::RevertSelected()
@@ -916,23 +738,20 @@ void AssetListViewModel::RevertSelected()
 void AssetListViewModel::CreateNew()
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    const auto& pAchievement = pGameContext.NewAchievement(Achievement::Category::Local);
-
-    auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
-    vmAchievement->SetID(pAchievement.ID());
-    vmAchievement->SetCategory(ra::data::models::AssetCategory::Local);
-    vmAchievement->SetPoints(0);
-    vmAchievement->CreateServerCheckpoint();
-    vmAchievement->CreateLocalCheckpoint();
-    vmAchievement->SetNew();
-
-    const auto nId = ra::to_signed(vmAchievement->GetID());
+    const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
 
     FilteredAssets().BeginUpdate();
 
     SetFilterCategory(ra::data::models::AssetCategory::Local);
 
-    Assets().Append(std::move(vmAchievement));
+    auto& vmAchievement = pGameContext.Assets().NewAchievement();
+    vmAchievement.SetCategory(ra::data::models::AssetCategory::Local);
+    vmAchievement.SetPoints(0);
+    vmAchievement.SetAuthor(ra::Widen(pUserContext.GetUsername()));
+    vmAchievement.UpdateServerCheckpoint();
+    vmAchievement.SetNew();
+
+    const auto nId = ra::to_signed(vmAchievement.GetID());
 
     // select the new viewmodel, and deselect everything else
     gsl::index nIndex = -1;
@@ -985,23 +804,17 @@ void AssetListViewModel::CloneSelected()
     for (const auto* pAsset : vSelectedAssets)
     {
         const auto& pSourceAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
+        auto& vmAchievement = pGameContext.Assets().NewAchievement();
+        vmAchievement.SetCategory(ra::data::models::AssetCategory::Local);
+        vmAchievement.SetName(pSourceAchievement->GetName() + L" (copy)");
+        vmAchievement.SetDescription(pSourceAchievement->GetDescription());
+        vmAchievement.SetBadge(pSourceAchievement->GetBadge());
+        vmAchievement.SetPoints(pSourceAchievement->GetPoints());
+        vmAchievement.SetTrigger(pSourceAchievement->GetTrigger());
+        vmAchievement.UpdateServerCheckpoint();
+        vmAchievement.SetNew();
 
-        const auto& pAchievement = pGameContext.NewAchievement(Achievement::Category::Local);
-        vNewIDs.push_back(gsl::narrow_cast<int>(pAchievement.ID()));
-
-        auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
-        vmAchievement->SetID(pAchievement.ID());
-        vmAchievement->SetCategory(ra::data::models::AssetCategory::Local);
-        vmAchievement->SetName(pSourceAchievement->GetName() + L" (copy)");
-        vmAchievement->SetDescription(pSourceAchievement->GetDescription());
-        vmAchievement->SetBadge(pSourceAchievement->GetBadge());
-        vmAchievement->SetPoints(pSourceAchievement->GetPoints());
-        vmAchievement->SetTrigger(pSourceAchievement->GetTrigger());
-        vmAchievement->CreateServerCheckpoint();
-        vmAchievement->CreateLocalCheckpoint();
-        vmAchievement->SetNew();
-
-        Assets().Append(std::move(vmAchievement));
+        vNewIDs.push_back(vmAchievement.GetID());
     }
 
     // select the new items and deselect everything else
@@ -1036,16 +849,6 @@ void AssetListViewModel::CloneSelected()
         auto* vmAsset = m_vFilteredAssets.GetItemAt(nIndex);
         if (vmAsset)
             OpenEditor(vmAsset);
-    }
-}
-
-void AssetListViewModel::DoFrame()
-{
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
-    {
-        auto* pItem = m_vAssets.GetItemAt(nIndex);
-        if (pItem != nullptr)
-            pItem->DoFrame();
     }
 }
 

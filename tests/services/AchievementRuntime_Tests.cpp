@@ -645,8 +645,12 @@ public:
     {
         AchievementRuntime runtime;
         ra::services::ServiceLocator::ServiceOverride<AchievementRuntime> svcOverride(&runtime, false);
+        ra::data::models::AchievementModel vmAchievement1, vmAchievement2;
 
         Achievement pAchievement1, pAchievement2;
+        pAchievement1.m_pAchievementModel = &vmAchievement1;
+        pAchievement2.m_pAchievementModel = &vmAchievement2;
+
         pAchievement1.SetID(1U);
         pAchievement1.SetTrigger("1=1");
         pAchievement1.SetTitle("Title");

@@ -41,6 +41,11 @@ private:
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
+        OverlayAchievementsPageViewModelHarness() noexcept
+        {
+            GSL_SUPPRESS_F6 mockWindowManager.AssetList.InitializeNotifyTargets();
+        }
+
         ItemViewModel* GetItem(gsl::index nIndex) { return m_vItems.GetItemAt(nIndex); }
 
         void TestFetchItemDetail(gsl::index nIndex)
@@ -63,19 +68,10 @@ private:
         {
             const auto& pAchievement = mockGameContext.NewAchievement(ra::itoe<Achievement::Category>(ra::etoi(nCategory)));
 
-            auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
-            vmAchievement->SetID(pAchievement.ID());
-            vmAchievement->SetCategory(nCategory);
-            vmAchievement->CreateServerCheckpoint();
-            vmAchievement->CreateLocalCheckpoint();
-
-            auto& pAssets = mockWindowManager.AssetList.Assets();
-            pAssets.Append(std::move(vmAchievement));
-
-            auto* pAsset = pAssets.GetItemAt(pAssets.Count() - 1);
-            auto* pAchievementViewModel = dynamic_cast<ra::data::models::AchievementModel*>(pAsset);
-            Expects(pAchievementViewModel != nullptr);
-            return *pAchievementViewModel;
+            auto* vmAchievement = mockGameContext.Assets().FindAchievement(pAchievement.ID());
+            Assert::IsNotNull(vmAchievement);
+            Expects(vmAchievement != nullptr);
+            return *vmAchievement;
         }
 
         void SetProgress(ra::AchievementID nId, int nValue, int nMax)

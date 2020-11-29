@@ -8,6 +8,7 @@
 
 #include "data\DataModelCollection.hh"
 #include "data\Types.hh"
+#include "data\context\GameContext.hh"
 #include "data\models\AchievementModel.hh"
 #include "data\models\AssetModelBase.hh"
 
@@ -16,7 +17,8 @@ namespace ui {
 namespace viewmodels {
 
 class AssetListViewModel : public WindowViewModelBase,
-    protected ra::data::DataModelCollectionBase::NotifyTarget
+    protected ra::data::DataModelCollectionBase::NotifyTarget,
+    protected ra::data::context::GameContext::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 AssetListViewModel() noexcept;
@@ -26,6 +28,8 @@ public:
     AssetListViewModel& operator=(const AssetListViewModel&) noexcept = delete;
     AssetListViewModel(AssetListViewModel&&) noexcept = delete;
     AssetListViewModel& operator=(AssetListViewModel&&) noexcept = delete;
+
+    void InitializeNotifyTargets();
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the game ID.
@@ -133,20 +137,6 @@ public:
     bool CanClone() const { return GetValue(CanCloneProperty); }
     void CloneSelected();
 
-    void DoFrame();
-
-    ra::data::DataModelCollection<ra::data::models::AssetModelBase>& Assets() noexcept { return m_vAssets; }
-    const ra::data::DataModelCollection<ra::data::models::AssetModelBase>& Assets() const noexcept { return m_vAssets; }
-
-    ra::data::models::AchievementModel* FindAchievement(ra::AchievementID nId)
-    {
-        return dynamic_cast<ra::data::models::AchievementModel*>(FindAsset(ra::data::models::AssetType::Achievement, nId));
-    }
-    const ra::data::models::AchievementModel* FindAchievement(ra::AchievementID nId) const
-    {
-        return dynamic_cast<const ra::data::models::AchievementModel*>(FindAsset(ra::data::models::AssetType::Achievement, nId));
-    }
-
     /// <summary>
     /// The <see cref="ModelProperty" /> for the filter category.
     /// </summary>
@@ -191,7 +181,6 @@ public:
     /// </summary>
     static const IntModelProperty EnsureVisibleAssetIndexProperty;
 
-    void MergeLocalAssets();
     static const ra::AchievementID FirstLocalId = 111000001;
 
 private:
@@ -202,6 +191,9 @@ private:
     void OnDataModelRemoved(gsl::index nIndex) override;
     void OnDataModelChanged(gsl::index nIndex) override;
     void OnEndDataModelCollectionUpdate() override;
+
+    // GameContext::NotifyTarget
+    void OnActiveGameChanged() override;
 
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
@@ -217,13 +209,8 @@ private:
     };
     FilteredListMonitor m_pFilteredListMonitor;
 
-    ra::data::models::AssetModelBase* FindAsset(ra::data::models::AssetType nType, ra::AchievementID nId);
-    const ra::data::models::AssetModelBase* FindAsset(ra::data::models::AssetType nType, ra::AchievementID nId) const;
-
     bool HasSelection(ra::data::models::AssetType nAssetType) const;
     void GetSelectedAssets(std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets);
-
-    void MergeLocalAssets(std::vector<ra::data::models::AssetModelBase*>& vAssetsToMerge, bool bFullMerge);
 
     void UpdateTotals();
     void UpdateButtons();
@@ -235,7 +222,6 @@ private:
     gsl::index GetFilteredAssetIndex(const ra::data::models::AssetModelBase& pAsset) const;
     void ApplyFilter();
 
-    ra::data::DataModelCollection<ra::data::models::AssetModelBase> m_vAssets;
     ViewModelCollection<AssetSummaryViewModel> m_vFilteredAssets;
 
     ra::AchievementID m_nNextLocalId = FirstLocalId;

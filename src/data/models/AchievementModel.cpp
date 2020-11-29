@@ -1,5 +1,7 @@
 #include "AchievementModel.hh"
 
+#include "data\context\GameContext.hh"
+
 #include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
 #include "services\ServiceLocator.hh"
@@ -101,7 +103,8 @@ void AchievementModel::Serialize(ra::services::TextWriter& pWriter) const
     WriteQuoted(pWriter, GetLocalAssetDefinition(m_pTrigger));
     WritePossiblyQuoted(pWriter, GetLocalValue(NameProperty));
     WritePossiblyQuoted(pWriter, GetLocalValue(DescriptionProperty));
-    pWriter.Write("::::"); // progress/max/format/author
+    pWriter.Write(":::"); // progress/max/format/author
+    WritePossiblyQuoted(pWriter, GetLocalValue(AuthorProperty));
     WriteNumber(pWriter, GetLocalValue(PointsProperty));
     pWriter.Write("::::"); // created/modified/upvotes/downvotes
     WritePossiblyQuoted(pWriter, GetLocalValue(BadgeProperty));
@@ -156,8 +159,8 @@ bool AchievementModel::Deserialize(ra::Tokenizer& pTokenizer)
         return false;
 
     // field 8: author (unused)
-    pTokenizer.AdvanceTo(':');
-    if (!pTokenizer.Consume(':'))
+    std::string sAuthor;
+    if (!ReadPossiblyQuoted(pTokenizer, sAuthor))
         return false;
 
     // field 9: points
@@ -195,6 +198,8 @@ bool AchievementModel::Deserialize(ra::Tokenizer& pTokenizer)
     // line is valid
     SetName(ra::Widen(sTitle));
     SetDescription(ra::Widen(sDescription));
+    if (GetID() >= ra::data::context::GameAssets::FirstLocalId || GetAuthor().empty())
+        SetAuthor(ra::Widen(sAuthor));
     SetPoints(nPoints);
     SetBadge(ra::Widen(sBadge));
     SetTrigger(sTrigger);

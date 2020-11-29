@@ -191,6 +191,7 @@ void Initialization::InitializeNotifyTargets()
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.MemoryInspector.InitializeNotifyTargets();
     pWindowManager.RichPresenceMonitor.InitializeNotifyTargets();
+    pWindowManager.AssetList.InitializeNotifyTargets();
 }
 
 void Initialization::Shutdown()

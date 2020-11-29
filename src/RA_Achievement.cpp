@@ -4,6 +4,8 @@
 
 #include "RA_Defs.h"
 
+#include "data\context\GameContext.hh"
+
 #include "services\AchievementRuntime.hh"
 #include "services\ServiceLocator.hh"
 
@@ -377,6 +379,7 @@ static void MakeConditionGroup(ConditionSet& vConditions, rc_condset_t* pCondSet
 void Achievement::SetTrigger(const std::string& sTrigger)
 {
     m_sTrigger = sTrigger;
+    m_pAchievementModel->SetTrigger(sTrigger);
     m_pTrigger = nullptr;
     m_vConditions.Clear();
 }
@@ -490,8 +493,9 @@ void Achievement::SetConditionHitCount(size_t nGroup, size_t nIndex, unsigned in
 void Achievement::AddAltGroup() noexcept { m_vConditions.AddGroup(); }
 void Achievement::RemoveAltGroup(gsl::index nIndex) noexcept { m_vConditions.RemoveAltGroup(nIndex); }
 
-void Achievement::SetID(ra::AchievementID nID) noexcept
+void Achievement::SetID(ra::AchievementID nID)
 {
+    m_pAchievementModel->SetID(nID);
     m_nAchievementID = nID;
     SetDirtyFlag(DirtyFlags::ID);
 }
@@ -547,6 +551,8 @@ void Achievement::SetBadgeImage(const std::string& sBadgeURI)
 
     if (m_sBadgeImageURI.length() < 5)
         m_sBadgeImageURI.insert(0, 5 - m_sBadgeImageURI.length(), '0');
+
+    m_pAchievementModel->SetBadge(ra::Widen(m_sBadgeImageURI));
 }
 
 size_t Achievement::AddCondition(size_t nConditionGroup, const Condition& rNewCond)

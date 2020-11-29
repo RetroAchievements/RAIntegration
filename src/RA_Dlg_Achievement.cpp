@@ -735,27 +735,23 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     if (ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId() == 0U)
                         break;
 
-                    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+                    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
                     if (m_nActiveCategory == Achievement::Category::Local)
                     {
                         // Local save is to disk
-                        if (pGameContext.SaveLocal())
-                        {
-                            ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Saved OK!");
+                        std::vector<ra::data::models::AssetModelBase*> vList;
+                        pGameContext.Assets().SaveAssets(vList);
 
-                            for (auto nAchievementId : m_vAchievementIDs)
-                            {
-                                auto* pAchievement = pGameContext.FindAchievement(nAchievementId);
-                                if (pAchievement)
-                                    pAchievement->SetModified(FALSE);
-                            }
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Saved OK!");
 
-                            InvalidateRect(hDlg, nullptr, FALSE);
-                        }
-                        else
+                        for (auto nAchievementId : m_vAchievementIDs)
                         {
-                            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Error during save!");
+                            auto* pAchievement = pGameContext.FindAchievement(nAchievementId);
+                            if (pAchievement)
+                                pAchievement->SetModified(FALSE);
                         }
+
+                        InvalidateRect(hDlg, nullptr, FALSE);
                     }
                     else
                     {

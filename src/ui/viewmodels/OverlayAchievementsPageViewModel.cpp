@@ -130,10 +130,9 @@ void OverlayAchievementsPageViewModel::Refresh()
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
     const auto tNow = ra::services::ServiceLocator::Get<ra::services::IClock>().Now();
 
-    auto& vmAssetList = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
-    for (gsl::index nIndex = 0; nIndex < ra::to_signed(vmAssetList.Assets().Count()); ++nIndex)
+    for (gsl::index nIndex = 0; nIndex < ra::to_signed(pGameContext.Assets().Count()); ++nIndex)
     {
-        const auto* pAsset = vmAssetList.Assets().GetItemAt(nIndex);
+        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
         if (!pAsset || pAsset->GetType() != ra::data::models::AssetType::Achievement)
             continue;
 

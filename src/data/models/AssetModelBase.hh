@@ -120,6 +120,21 @@ public:
     void SetCategory(AssetCategory nValue) { SetValue(CategoryProperty, ra::etoi(nValue)); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for the badge.
+    /// </summary>
+    static const StringModelProperty AuthorProperty;
+
+    /// <summary>
+    /// Gets the name of the user who created the achievement.
+    /// </summary>
+    const std::wstring& GetAuthor() const { return GetValue(AuthorProperty); }
+
+    /// <summary>
+    /// Sets the name of the user who created the achievement.
+    /// </summary>
+    void SetAuthor(const std::wstring& sValue) { SetValue(AuthorProperty, sValue); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the asset state.
     /// </summary>
     static const IntModelProperty StateProperty;

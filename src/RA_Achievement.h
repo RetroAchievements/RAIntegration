@@ -5,6 +5,8 @@
 #include "RA_Condition.h"
 #include "ra_utility.h"
 
+#include "data\models\AchievementModel.hh"
+
 #include <memory>
 
 //////////////////////////////////////////////////////////////////////////
@@ -59,25 +61,52 @@ public:
     void SetModified(BOOL bModified) noexcept;
 
     inline BOOL GetPauseOnTrigger() const noexcept { return m_bPauseOnTrigger; }
-    void SetPauseOnTrigger(BOOL bPause) noexcept { m_bPauseOnTrigger = bPause; }
+    void SetPauseOnTrigger(BOOL bPause)
+    {
+        m_pAchievementModel->SetPauseOnTrigger(bPause);
+        m_bPauseOnTrigger = bPause;
+    }
 
     inline BOOL GetPauseOnReset() const noexcept { return m_bPauseOnReset; }
-    void SetPauseOnReset(BOOL bPause) noexcept { m_bPauseOnReset = bPause; }
+    void SetPauseOnReset(BOOL bPause)
+    {
+        m_pAchievementModel->SetPauseOnReset(bPause);
+        m_bPauseOnReset = bPause;
+    }
 
-    void SetID(ra::AchievementID nID) noexcept;
+    void SetID(ra::AchievementID nID);
     inline ra::AchievementID ID() const noexcept { return m_nAchievementID; }
 
     void SetCategory(Category nCategory) noexcept { m_nCategory = nCategory; }
     inline Category GetCategory() const noexcept { return m_nCategory; }
 
     inline const std::string& Title() const noexcept { return m_sTitle; }
-    void SetTitle(const std::string& sTitle) { m_sTitle = sTitle; }
+    void SetTitle(const std::string& sTitle)
+    {
+        m_pAchievementModel->SetName(ra::Widen(sTitle));
+        m_sTitle = sTitle;
+    }
+
     inline const std::string& Description() const noexcept { return m_sDescription; }
-    void SetDescription(const std::string& sDescription) { m_sDescription = sDescription; }
+    void SetDescription(const std::string& sDescription)
+    {
+        m_pAchievementModel->SetDescription(ra::Widen(sDescription));
+        m_sDescription = sDescription;
+    }
+
     inline const std::string& Author() const noexcept { return m_sAuthor; }
-    void SetAuthor(const std::string& sAuthor) { m_sAuthor = sAuthor; }
+    void SetAuthor(const std::string& sAuthor)
+    {
+        m_pAchievementModel->SetAuthor(ra::Widen(sAuthor));
+        m_sAuthor = sAuthor;
+    }
+
     inline unsigned int Points() const noexcept { return m_nPointValue; }
-    void SetPoints(unsigned int nPoints) noexcept { m_nPointValue = nPoints; }
+    void SetPoints(unsigned int nPoints)
+    {
+        m_pAchievementModel->SetPoints(nPoints);
+        m_nPointValue = nPoints;
+    }
 
     inline time_t CreatedDate() const noexcept { return m_nTimestampCreated; }
     void SetCreatedDate(time_t nTimeCreated) noexcept { m_nTimestampCreated = nTimeCreated; }
@@ -129,6 +158,8 @@ public:
     _NODISCARD inline auto begin() const noexcept { return m_vConditions.begin(); }
     _NODISCARD inline auto end() noexcept { return m_vConditions.end(); }
     _NODISCARD inline auto end() const noexcept { return m_vConditions.end(); }
+
+    ra::data::models::AchievementModel* m_pAchievementModel = nullptr;
 
 private:
     ra::AchievementID m_nAchievementID{};

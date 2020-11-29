@@ -280,6 +280,7 @@
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\data\context\GameAssets.cpp" />
     <ClCompile Include="..\src\data\ModelProperty.cpp" />
     <ClCompile Include="..\src\api\ApiCall.cpp" />
     <ClCompile Include="..\src\api\impl\ConnectedServer.cpp" />
@@ -357,6 +358,7 @@
     <ClCompile Include="..\src\ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
     <ClCompile Include="..\src\ui\WindowViewModelBase.cpp" />
     <ClCompile Include="data\context\EmulatorContext_Tests.cpp" />
+    <ClCompile Include="data\context\GameAssets_Tests.cpp" />
     <ClCompile Include="data\context\GameContext_Tests.cpp" />
     <ClCompile Include="data\context\SessionTracker_Tests.cpp" />
     <ClCompile Include="data\DataModelBase_Tests.cpp" />

@@ -73,7 +73,7 @@ void AchievementModel::OnValueChanged(const StringModelProperty::ChangeArgs& arg
     // call base first so the transaction gets updated, updating the LocalBadgesModel is just bookkeeping.
     AssetModelBase::OnValueChanged(args);
 
-    if (args.Property == BadgeProperty)
+    if (args.Property == BadgeProperty && m_pTransaction && m_pTransaction->m_pNext) /* ignore until we've created a checkpoint */
     {
         if (ra::StringStartsWith(args.tOldValue, L"local\\"))
         {

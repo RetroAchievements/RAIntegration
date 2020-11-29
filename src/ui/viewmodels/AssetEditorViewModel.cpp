@@ -45,7 +45,7 @@ void AssetEditorViewModel::SelectBadgeFile()
     ui::viewmodels::FileDialogViewModel vmFile;
     vmFile.AddFileType(L"Image Files", L"*.png;*.gif;*.jpg;*.jpeg");
     vmFile.SetDefaultExtension(L"png");
-    if (vmFile.ShowOpenFileDialog() != DialogResult::OK)
+    if (vmFile.ShowOpenFileDialog(*this) != DialogResult::OK)
         return;
 
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();

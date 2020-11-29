@@ -262,6 +262,35 @@ void TriggerViewModel::RemoveSelectedConditions()
     }
 }
 
+void TriggerViewModel::MoveSelectedConditionsUp()
+{
+    m_vConditions.ShiftItemsUp(TriggerConditionViewModel::IsSelectedProperty);
+
+    UpdateIndicesAndEnsureSelectionVisible();
+}
+
+void TriggerViewModel::MoveSelectedConditionsDown()
+{
+    m_vConditions.ShiftItemsDown(TriggerConditionViewModel::IsSelectedProperty);
+
+    UpdateIndicesAndEnsureSelectionVisible();
+}
+
+void TriggerViewModel::UpdateIndicesAndEnsureSelectionVisible()
+{
+    bool bFoundFirst = false;
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nIndex)
+    {
+        m_vConditions.SetItemValue(nIndex, TriggerConditionViewModel::IndexProperty, gsl::narrow_cast<int>(nIndex) + 1);
+
+        if (!bFoundFirst && m_vConditions.GetItemValue(nIndex, TriggerConditionViewModel::IsSelectedProperty))
+        {
+            SetValue(EnsureVisibleConditionIndexProperty, gsl::narrow_cast<int>(nIndex));
+            bFoundFirst = true;
+        }
+    }
+}
+
 void TriggerViewModel::NewCondition()
 {
     m_vConditions.BeginUpdate();

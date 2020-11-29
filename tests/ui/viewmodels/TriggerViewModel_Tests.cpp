@@ -34,6 +34,11 @@ private:
             mockWindowManager.MemoryInspector.Viewer().InitializeNotifyTargets();
             mockEmulatorContext.MockMemory(pMemory, nMemorySize);
         }
+
+        int GetEnsureVisibleConditionIndex() const
+        {
+            return GetValue(EnsureVisibleConditionIndexProperty);
+        }
     };
 
     void Parse(TriggerViewModel& vmTrigger, const std::string& sInput)
@@ -462,6 +467,108 @@ public:
         Assert::IsFalse(vmTrigger.Conditions().GetItemAt(3)->IsSelected());
 
         Assert::AreEqual(std::string("0xH1234=16_0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.Serialize());
+    }
+
+    TEST_METHOD(TestMoveSelectedConditionsUp)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1._R:0xT3333=1_0xW5555=16");
+
+        Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
+        vmTrigger.Conditions().GetItemAt(2)->SetSelected(true);
+
+        // one item selected - move item 3 to position 2
+        vmTrigger.MoveSelectedConditionsUp();
+
+        Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=16_R:0xT3333=1_0xL65ff=11.1._0xW5555=16"), vmTrigger.Serialize());
+
+        // selection should be maintained
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(2)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(3)->IsSelected());
+
+        // indices should be updated
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(0)->GetIndex(), 1);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(1)->GetIndex(), 2);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
+
+        // seleted item should be kept visible
+        Assert::AreEqual(vmTrigger.GetEnsureVisibleConditionIndex(), 1);
+
+        // items 1 and 3 are selected, they should get moved into slots 0 and 1
+        vmTrigger.Conditions().GetItemAt(3)->SetSelected(true);
+        vmTrigger.MoveSelectedConditionsUp();
+
+        Assert::AreEqual(std::string("R:0xT3333=1_0xW5555=16_0xH1234=16_0xL65ff=11.1."), vmTrigger.Serialize());
+
+        // selection should be maintained
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(2)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(3)->IsSelected());
+
+        // indices should be updated
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(0)->GetIndex(), 1);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(1)->GetIndex(), 2);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
+
+        // seleted item should be kept visible
+        Assert::AreEqual(vmTrigger.GetEnsureVisibleConditionIndex(), 0);
+    }
+
+    TEST_METHOD(TestMoveSelectedConditionsDown)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1._R:0xT3333=1_0xW5555=16");
+
+        Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
+        vmTrigger.Conditions().GetItemAt(1)->SetSelected(true);
+
+        // one item selected - move item 2 to position 3
+        vmTrigger.MoveSelectedConditionsDown();
+
+        Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=16_R:0xT3333=1_0xL65ff=11.1._0xW5555=16"), vmTrigger.Serialize());
+
+        // selection should be maintained
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(2)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(3)->IsSelected());
+
+        // indices should be updated
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(0)->GetIndex(), 1);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(1)->GetIndex(), 2);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
+
+        // seleted item should be kept visible
+        Assert::AreEqual(vmTrigger.GetEnsureVisibleConditionIndex(), 2);
+
+        // items 0 and 2 are selected, they should get moved into slots 2 and 3
+        vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
+        vmTrigger.MoveSelectedConditionsDown();
+
+        Assert::AreEqual(std::string("R:0xT3333=1_0xW5555=16_0xH1234=16_0xL65ff=11.1."), vmTrigger.Serialize());
+
+        // selection should be maintained
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(2)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(3)->IsSelected());
+
+        // indices should be updated
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(0)->GetIndex(), 1);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(1)->GetIndex(), 2);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(2)->GetIndex(), 3);
+        Assert::AreEqual(vmTrigger.Conditions().GetItemAt(3)->GetIndex(), 4);
+
+        // seleted item should be kept visible
+        Assert::AreEqual(vmTrigger.GetEnsureVisibleConditionIndex(), 2);
     }
 
     TEST_METHOD(TestNewCondition)

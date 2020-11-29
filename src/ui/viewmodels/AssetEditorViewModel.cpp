@@ -1,6 +1,7 @@
 #include "AssetEditorViewModel.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -18,6 +19,7 @@ const IntModelProperty AssetEditorViewModel::PointsProperty("AssetEditorViewMode
 const StringModelProperty AssetEditorViewModel::BadgeProperty("AssetEditorViewModel", "Badge", L"00000");
 const BoolModelProperty AssetEditorViewModel::PauseOnResetProperty("AssetEditorViewModel", "PauseOnReset", false);
 const BoolModelProperty AssetEditorViewModel::PauseOnTriggerProperty("AssetEditorViewModel", "PauseOnTrigger", false);
+const BoolModelProperty AssetEditorViewModel::DecimalPreferredProperty("AssetEditorViewModel", "DecimalPreferred", false);
 const BoolModelProperty AssetEditorViewModel::AssetLoadedProperty("AssetEditorViewModel", "AssetLoaded", false);
 
 AssetEditorViewModel::AssetEditorViewModel() noexcept
@@ -155,6 +157,20 @@ void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& a
             pAchievement->SetPauseOnReset(args.tNewValue);
         else if (args.Property == PauseOnTriggerProperty)
             pAchievement->SetPauseOnTrigger(args.tNewValue);
+    }
+
+    if (args.Property == DecimalPreferredProperty)
+    {
+        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+        pConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, args.tNewValue);
+    }
+    else if (args.Property == IsVisibleProperty)
+    {
+        if (args.tNewValue)
+        {
+            const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            SetDecimalPreferred(pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
+        }
     }
 
     WindowViewModelBase::OnValueChanged(args);

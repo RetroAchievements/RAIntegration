@@ -236,6 +236,12 @@ void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstrin
     }
 }
 
+void AssetEditorDialog::DecimalPreferredBinding::OnValueChanged()
+{
+    m_pOwner->m_bindConditions.RefreshColumn(4); // source value
+    m_pOwner->m_bindConditions.RefreshColumn(8); // target value
+}
+
 AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     : DialogBase(vmAssetEditor),
       m_bindID(vmAssetEditor),
@@ -245,6 +251,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
       m_bindBadgeImage(vmAssetEditor),
       m_bindPoints(vmAssetEditor),
       m_bindPauseOnReset(vmAssetEditor),
+      m_bindDecimalPreferred(this, vmAssetEditor),
       m_bindPauseOnTrigger(vmAssetEditor),
       m_bindGroups(vmAssetEditor),
       m_bindConditions(vmAssetEditor.Trigger())
@@ -266,6 +273,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
 
     m_bindPauseOnReset.BindCheck(AssetEditorViewModel::PauseOnResetProperty);
     m_bindPauseOnTrigger.BindCheck(AssetEditorViewModel::PauseOnTriggerProperty);
+    m_bindDecimalPreferred.BindCheck(AssetEditorViewModel::DecimalPreferredProperty);
 
     auto pGroupColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         TriggerViewModel::GroupViewModel::LabelProperty);
@@ -372,6 +380,7 @@ BOOL AssetEditorDialog::OnInitDialog()
 
     m_bindPauseOnReset.SetControl(*this, IDC_RA_CHK_ACH_PAUSE_ON_RESET);
     m_bindPauseOnTrigger.SetControl(*this, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER);
+    m_bindDecimalPreferred.SetControl(*this, IDC_RA_CHK_SHOW_DECIMALS);
 
     return DialogBase::OnInitDialog();
 }

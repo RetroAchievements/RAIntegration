@@ -3,6 +3,7 @@
 #include "ui\viewmodels\TriggerConditionViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -115,6 +116,7 @@ private:
     {
     public:
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::services::mocks::MockConfiguration mockConfiguration;
 
         void Parse(const std::string& sInput)
         {
@@ -233,6 +235,7 @@ public:
     {
         TriggerConditionViewModelHarness condition;
         condition.mockGameContext.SetCodeNote({ 8U }, L"This is a note.");
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
         condition.Parse("0xH0008=3");
 
         Assert::AreEqual(std::wstring(L"0x0008\r\nThis is a note."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
@@ -242,6 +245,7 @@ public:
     TEST_METHOD(TestTooltipAddressNoCodeNote)
     {
         TriggerConditionViewModelHarness condition;
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
         condition.Parse("0xH0008=3");
 
         Assert::AreEqual(std::wstring(L"0x0008\r\n[No code note]"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
@@ -252,6 +256,7 @@ public:
     {
         TriggerConditionViewModelHarness condition;
         condition.mockGameContext.SetCodeNote({ 8U }, L"A\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nO\nP\nQ\nR\nS\nT\nU\nV\nW\nX\nY\nZ");
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
         condition.Parse("0xH0008=3");
 
         Assert::AreEqual(std::wstring(L"0x0008\r\nA\nB\nC\nD\nE\nF\nG\nH\nI\nJ\nK\nL\nM\nO\nP\nQ\nR\nS\nT\nU\n..."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
@@ -263,10 +268,34 @@ public:
         TriggerConditionViewModelHarness condition;
         condition.mockGameContext.SetCodeNote({ 8U }, L"This is a note.");
         condition.mockGameContext.SetCodeNote({ 9U }, L"This is another note.");
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
         condition.Parse("0xH0008>d0xH0009");
 
         Assert::AreEqual(std::wstring(L"0x0008\r\nThis is a note."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
         Assert::AreEqual(std::wstring(L"0x0009\r\nThis is another note."), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipValueDecimal)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetCodeNote({ 99U }, L"This is a note.");
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        condition.Parse("255=99");
+
+        Assert::AreEqual(std::wstring(L""), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L""), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipValueHex)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetCodeNote({ 99U }, L"This is a note.");
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
+        condition.Parse("255=99");
+
+        // in hex mode, the fields will show "0xFF" and "0x63", so display the decimal value in the tooltip
+        Assert::AreEqual(std::wstring(L"255"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"99"), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
 };
 

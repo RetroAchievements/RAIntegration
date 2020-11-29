@@ -114,6 +114,7 @@ public:
 private:
     void SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, unsigned int nValue) const;
 
+    std::wstring GetValueTooltip(TriggerOperandType nType, unsigned nAddress) const;
     std::wstring GetAddressTooltip(unsigned nAddress) const;
 
     void SetOperand(const IntModelProperty& pTypeProperty, const IntModelProperty& pSizeProperty,

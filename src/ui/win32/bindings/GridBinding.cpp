@@ -50,12 +50,15 @@ void GridBinding::BindColumn(gsl::index nColumn, std::unique_ptr<GridColumnBindi
         UpdateLayout();
 
         if (m_vmItems)
-        {
-            DisableBinding();
-            UpdateItems(nColumn);
-            EnableBinding();
-        }
+            RefreshColumn(nColumn);
     }
+}
+
+void GridBinding::RefreshColumn(gsl::index nColumn)
+{
+    DisableBinding();
+    UpdateItems(nColumn);
+    EnableBinding();
 }
 
 void GridBinding::BindItems(ViewModelCollectionBase& vmItems)

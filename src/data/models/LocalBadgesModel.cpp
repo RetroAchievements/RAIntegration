@@ -18,7 +18,9 @@ LocalBadgesModel::LocalBadgesModel() noexcept
 LocalBadgesModel::~LocalBadgesModel()
 {
     if (ra::services::ServiceLocator::Exists<ra::services::IFileSystem>())
-        DeleteUncommittedBadges();
+    {
+        GSL_SUPPRESS_F6 DeleteUncommittedBadges();
+    }
 }
 
 void LocalBadgesModel::DeleteUncommittedBadges()
@@ -41,7 +43,7 @@ void LocalBadgesModel::DeleteUncommittedBadges()
 
 void LocalBadgesModel::AddReference(const std::wstring& sBadgeName, bool bCommitted)
 {
-    auto pIter = m_mReferences.find(sBadgeName);
+    const auto pIter = m_mReferences.find(sBadgeName);
     if (pIter != m_mReferences.end())
     {
         if (bCommitted)
@@ -65,7 +67,7 @@ void LocalBadgesModel::AddReference(const std::wstring& sBadgeName, bool bCommit
 
 void LocalBadgesModel::RemoveReference(const std::wstring& sBadgeName, bool bCommitted)
 {
-    auto pIter = m_mReferences.find(sBadgeName);
+    const auto pIter = m_mReferences.find(sBadgeName);
     if (pIter != m_mReferences.end())
     {
         if (bCommitted)
@@ -83,7 +85,7 @@ void LocalBadgesModel::RemoveReference(const std::wstring& sBadgeName, bool bCom
 
 int LocalBadgesModel::GetReferenceCount(const std::wstring& sBadgeName) const
 {
-    auto pIter = m_mReferences.find(sBadgeName);
+    const auto pIter = m_mReferences.find(sBadgeName);
     if (pIter != m_mReferences.end())
         return pIter->second.nCommittedCount + pIter->second.nUncommittedCount;
 
@@ -113,7 +115,7 @@ void LocalBadgesModel::Commit(const std::wstring& sPreviousBadgeName, const std:
     }
 }
 
-bool LocalBadgesModel::NeedsSerialized() const
+bool LocalBadgesModel::NeedsSerialized() const noexcept
 {
     // ASSERT: NeedsSerialized and Serialize are called after each asset has had a chance to call Commit
     for (const auto& pIter : m_mReferences)

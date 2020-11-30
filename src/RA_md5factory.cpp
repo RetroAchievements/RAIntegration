@@ -66,7 +66,7 @@ std::string RAGenerateFileMD5(const std::wstring& sPath)
     md5_state_t pms{};
     md5_byte_t digest[16]{};
 
-    md5_byte_t bytes[16384];
+    md5_byte_t bytes[4096]{};
     static_assert(sizeof(md5_byte_t) == sizeof(uint8_t), "Must be equivalent for the MD5 to work!");
 
     auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();

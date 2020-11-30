@@ -13,12 +13,16 @@ class LocalBadgesModel : public AssetModelBase
 public:
 	LocalBadgesModel() noexcept;
 	~LocalBadgesModel();
+	LocalBadgesModel(const LocalBadgesModel&) noexcept = delete;
+	LocalBadgesModel& operator=(const LocalBadgesModel&) noexcept = delete;
+	LocalBadgesModel(LocalBadgesModel&&) noexcept = delete;
+	LocalBadgesModel& operator=(LocalBadgesModel&&) noexcept = delete;
 
 	void AddReference(const std::wstring& sBadgeName, bool bCommitted);
 	void RemoveReference(const std::wstring& sBadgeName, bool bCommitted);
 
 	void Commit(const std::wstring& sPreviousBadgeName, const std::wstring& sNewBadgeName);
-	bool NeedsSerialized() const;
+	bool NeedsSerialized() const noexcept;
 
 	void Serialize(ra::services::TextWriter& pWriter) const override;
 	bool Deserialize(ra::Tokenizer& pTokenizer) override;

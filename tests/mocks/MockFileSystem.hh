@@ -144,13 +144,13 @@ public:
 
     bool CopyFile(const std::wstring& sOldPath, const std::wstring& sNewPath) const override
     {
-        auto hNode = m_mFileContents.find(sOldPath);
+        const auto hNode = m_mFileContents.find(sOldPath);
         if (hNode == m_mFileContents.end())
             return false;
 
         m_mFileContents.insert_or_assign(sNewPath, hNode->second);
 
-        auto hNode2 = m_mFileSizes.find(sOldPath);
+        const auto hNode2 = m_mFileSizes.find(sOldPath);
         if (hNode2 != m_mFileSizes.end())
             m_mFileSizes.insert_or_assign(sNewPath, hNode2->second);
 

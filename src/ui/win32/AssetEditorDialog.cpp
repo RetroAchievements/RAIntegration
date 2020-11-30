@@ -236,7 +236,7 @@ void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstrin
     }
 }
 
-void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstring& sText)
+void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstring& sText) noexcept
 {
     if (ra::StringStartsWith(sText, L"local\\"))
         SetWindowTextW(m_hWnd, L"[local]");

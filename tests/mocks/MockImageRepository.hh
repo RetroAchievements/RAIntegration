@@ -4,6 +4,8 @@
 
 #include "ui\ImageReference.hh"
 
+#include "RA_StringUtils.h"
+
 namespace ra {
 namespace ui {
 namespace mocks {
@@ -42,7 +44,7 @@ public:
 
     }
 
-    std::string StoreImage(_UNUSED ImageType nType, _UNUSED const std::wstring& sPath) noexcept override
+    std::string StoreImage(_UNUSED ImageType nType, _UNUSED const std::wstring& sPath) override
     {
         return ra::Narrow(sPath);
     }

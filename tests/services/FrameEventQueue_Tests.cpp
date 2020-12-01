@@ -185,7 +185,7 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        eventQueue.QueuePauseOnChange(MemSize::EightBit, { 0x1234U });
+        eventQueue.QueuePauseOnChange(L"8-bit 0x1234");
         Assert::AreEqual({ 1U }, eventQueue.NumMemoryChanges());
         Assert::AreEqual({ 0U }, eventQueue.NumResetTriggers());
         Assert::AreEqual({ 0U }, eventQueue.NumTriggeredTriggers());
@@ -211,16 +211,16 @@ public:
             bSawDialog = true;
 
             Assert::AreEqual(std::wstring(L"The emulator has been paused."), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"The following bookmarks have changed:\n* 16-bit 0x2345\n* 32-bit 0x3456\n* 32-bit 0x2345"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"The following bookmarks have changed:\n* 16-bit 0x2345\n* 32-bit 0x2345\n* 32-bit 0x3456"), vmMessageBox.GetMessage());
 
             return ra::ui::DialogResult::OK;
         });
 
-        eventQueue.QueuePauseOnChange(MemSize::SixteenBit, { 0x2345U });
-        eventQueue.QueuePauseOnChange(MemSize::ThirtyTwoBit, { 0x3456U });
-        eventQueue.QueuePauseOnChange(MemSize::SixteenBit, { 0x2345U }); // duplicate ignored
-        eventQueue.QueuePauseOnChange(MemSize::ThirtyTwoBit, { 0x2345U }); // same address, different size allowed
-        eventQueue.QueuePauseOnChange(MemSize::ThirtyTwoBit, { 0x2345U }); // duplicate ignored
+        eventQueue.QueuePauseOnChange(L"16-bit 0x2345");
+        eventQueue.QueuePauseOnChange(L"32-bit 0x3456");
+        eventQueue.QueuePauseOnChange(L"16-bit 0x2345"); // duplicate ignored
+        eventQueue.QueuePauseOnChange(L"32-bit 0x2345"); // same address, different size allowed
+        eventQueue.QueuePauseOnChange(L"32-bit 0x2345"); // duplicate ignored
 
         Assert::AreEqual({ 3U }, eventQueue.NumMemoryChanges());
         Assert::AreEqual({ 0U }, eventQueue.NumResetTriggers());
@@ -255,7 +255,7 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        eventQueue.QueuePauseOnChange(MemSize::EightBit, { 0x1234U });
+        eventQueue.QueuePauseOnChange(L"8-bit 0x1234");
         eventQueue.QueuePauseOnTrigger(L"You did it!");
         eventQueue.QueuePauseOnReset(L"You did it again!");
         Assert::AreEqual({ 1U }, eventQueue.NumMemoryChanges());

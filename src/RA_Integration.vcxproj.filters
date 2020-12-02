@@ -372,6 +372,12 @@
     <ClCompile Include="data\context\GameAssets.cpp">
       <Filter>Data\Context</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\ProgressViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\AssetUploadViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -922,6 +928,12 @@
     </ClInclude>
     <ClInclude Include="data\context\GameAssets.hh">
       <Filter>Data\Context</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\ProgressViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\AssetUploadViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

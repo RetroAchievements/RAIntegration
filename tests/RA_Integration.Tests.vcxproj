@@ -323,6 +323,7 @@
     <ClCompile Include="..\src\ui\ViewModelCollection.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\AssetEditorViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\AssetListViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\AssetUploadViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\CodeNotesViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\FileDialogViewModel.cpp" />
@@ -342,6 +343,7 @@
     <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupViewModelBase.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\ProgressViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\ScoreboardViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\ScoreTrackerViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\TriggerConditionViewModel.cpp" />

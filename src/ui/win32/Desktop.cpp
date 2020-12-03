@@ -17,6 +17,7 @@
 #include "ui/win32/MemoryBookmarksDialog.hh"
 #include "ui/win32/MemoryInspectorDialog.hh"
 #include "ui/win32/OverlaySettingsDialog.hh"
+#include "ui/win32/ProgressDialog.hh"
 #include "ui/win32/RichPresenceDialog.hh"
 #include "ui/win32/UnknownGameDialog.hh"
 
@@ -46,6 +47,7 @@ Desktop::Desktop() noexcept
     m_vDialogPresenters.emplace_back(new (std::nothrow) OverlaySettingsDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) BrokenAchievementsDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) UnknownGameDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) ProgressDialog::Presenter);
 
     ra::ui::win32::bindings::MemoryViewerControlBinding::RegisterControlClass();
 }
@@ -158,7 +160,7 @@ void Desktop::SetMainHWnd(HWND hWnd)
         m_pWindowBinding = std::make_unique<ra::ui::win32::bindings::WindowBinding>(pWindowManager.Emulator);
     }
 
-    m_pWindowBinding->SetHWND(hWnd);
+    m_pWindowBinding->SetHWND(nullptr, hWnd);
 
     g_RAMainWnd = hWnd;
 }

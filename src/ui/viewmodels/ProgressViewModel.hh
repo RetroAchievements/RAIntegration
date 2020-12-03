@@ -59,7 +59,7 @@ protected:
 
 private:
     void BeginTasks();
-    void ProcessQueue(ra::data::AsyncHandle& pAsyncHandle);
+    void ProcessQueue();
 
     enum class TaskState
     {

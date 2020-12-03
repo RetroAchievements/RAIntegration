@@ -189,6 +189,7 @@
     <ClCompile Include="ui\win32\MessageBoxDialog.cpp" />
     <ClCompile Include="ui\win32\OverlaySettingsDialog.cpp" />
     <ClCompile Include="ui\win32\OverlayWindow.cpp" />
+    <ClCompile Include="ui\win32\ProgressDialog.cpp" />
     <ClCompile Include="ui\win32\RichPresenceDialog.cpp" />
     <ClCompile Include="ui\win32\UnknownGameDialog.cpp" />
     <ClCompile Include="ui\WindowViewModelBase.cpp" />
@@ -359,6 +360,7 @@
     <ClInclude Include="ui\win32\bindings\MemoryViewerControlBinding.hh" />
     <ClInclude Include="ui\win32\bindings\MultiLineGridBinding.hh" />
     <ClInclude Include="ui\win32\bindings\NumericTextBoxBinding.hh" />
+    <ClInclude Include="ui\win32\bindings\ProgressBarBinding.hh" />
     <ClInclude Include="ui\win32\bindings\RadioButtonBinding.hh" />
     <ClInclude Include="ui\win32\bindings\TextBoxBinding.hh" />
     <ClInclude Include="ui\win32\bindings\WindowBinding.hh" />
@@ -374,6 +376,7 @@
     <ClInclude Include="ui\win32\MessageBoxDialog.hh" />
     <ClInclude Include="ui\win32\OverlaySettingsDialog.hh" />
     <ClInclude Include="ui\win32\OverlayWindow.hh" />
+    <ClInclude Include="ui\win32\ProgressDialog.hh" />
     <ClInclude Include="ui\win32\RichPresenceDialog.hh" />
     <ClInclude Include="ui\win32\IDialogPresenter.hh" />
     <ClInclude Include="ui\win32\UnknownGameDialog.hh" />

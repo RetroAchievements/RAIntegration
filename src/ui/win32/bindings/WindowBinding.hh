@@ -8,6 +8,9 @@
 namespace ra {
 namespace ui {
 namespace win32 {
+
+class DialogBase;
+
 namespace bindings {
 
 class WindowBinding : protected BindingBase
@@ -63,8 +66,9 @@ public:
     /// <summary>
     /// Associates the <see cref="HWND" /> of a window for binding.
     /// </summary>
+    /// <param name="pDialog">The dialog containing the binding.</param>
     /// <param name="hWnd">The window handle.</param>
-    void SetHWND(HWND hWnd);
+    void SetHWND(ra::ui::win32::DialogBase* pDialog, HWND hWnd);
     
     /// <summary>
     /// Gets the HWND bound to the window.
@@ -174,6 +178,7 @@ private:
     RelativePosition m_nDefaultHorizontalLocation{ RelativePosition::None };
     RelativePosition m_nDefaultVerticalLocation{ RelativePosition::None };
     
+    ra::ui::win32::DialogBase* m_pDialog = nullptr;
     HWND m_hWnd{};
 
     static std::vector<WindowBinding*> s_vKnownBindings;

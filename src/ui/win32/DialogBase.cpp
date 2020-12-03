@@ -119,7 +119,10 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                 // binding the window will resize it, make sure to capture sizes beforehand
                 InitializeAnchors();
 
-                m_bindWindow.SetHWND(m_hWnd);
+                // make sure to reset the DialogResult if a viewmodel is reshown
+                m_vmWindow.SetDialogResult(DialogResult::None);
+
+                m_bindWindow.SetHWND(this, m_hWnd);
             }
 
             return OnInitDialog();
@@ -444,7 +447,7 @@ void DialogBase::OnShown()
 
 void DialogBase::OnDestroy()
 {
-    m_bindWindow.SetHWND(nullptr);
+    m_bindWindow.SetHWND(nullptr, nullptr);
     m_hWnd = nullptr;
 
     auto* pClosableDialog = dynamic_cast<IClosableDialogPresenter*>(m_pDialogPresenter);
@@ -477,12 +480,15 @@ BOOL DialogBase::OnCommand(WORD nCommand)
 
 void DialogBase::SetDialogResult(DialogResult nResult)
 {
-    m_vmWindow.SetDialogResult(nResult);
+    if (m_vmWindow.GetDialogResult() == DialogResult::None)
+    {
+        m_vmWindow.SetDialogResult(nResult);
 
-    if (m_bModal)
-        EndDialog(m_hWnd, 0); // DialogBox call in CreateModalWindow() ignores return value
-    else
-        DestroyWindow(m_hWnd);
+        if (m_bModal)
+            EndDialog(m_hWnd, 0); // DialogBox call in CreateModalWindow() ignores return value
+        else
+            DestroyWindow(m_hWnd);
+    }
 }
 
 _Use_decl_annotations_

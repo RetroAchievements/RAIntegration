@@ -378,6 +378,9 @@
     <ClCompile Include="ui\viewmodels\AssetUploadViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\ProgressDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -934,6 +937,12 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\AssetUploadViewModel.hh">
       <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\bindings\ProgressBarBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\ProgressDialog.hh">
+      <Filter>UI\Win32</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -20,7 +20,7 @@ void ProgressViewModel::QueueTask(std::function<void()>&& fTaskHandler)
 
 void ProgressViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
-    if (args.Property == IsVisibleProperty)
+    if (args.Property == IsVisibleProperty && args.tNewValue)
         BeginTasks();
 }
 
@@ -32,23 +32,24 @@ void ProgressViewModel::BeginTasks()
         return;
     }
 
+    SetMessage(ra::StringPrintf(L"Uploading %d items...", m_vTasks.size()));
+
     // use up to four threads to process the queue
+    constexpr int MAX_THREADS = 4;
     auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
-    for (int i = 0; i < std::min(gsl::narrow_cast<int>(m_vTasks.size()), 4); ++i)
+    for (int i = 0; i < std::min(gsl::narrow_cast<int>(m_vTasks.size()), MAX_THREADS); ++i)
     {
         pThreadPool.RunAsync([this, pAsyncHandle = CreateAsyncHandle()]()
         {
-            ProcessQueue(*pAsyncHandle);
+            ra::data::AsyncKeepAlive pKeepAlive(*pAsyncHandle);
+            if (!pAsyncHandle->IsDestroyed())
+                ProcessQueue();
         });
     }
 }
 
-void ProgressViewModel::ProcessQueue(ra::data::AsyncHandle& pAsyncHandle)
+void ProgressViewModel::ProcessQueue()
 {
-    ra::data::AsyncKeepAlive pKeepAlive(pAsyncHandle);
-    if (pAsyncHandle.IsDestroyed())
-        return;
-
     do
     {
         TaskItem* pTask = nullptr;

@@ -48,7 +48,7 @@ public:
     }
 
     /// <summary>
-    /// Finds the achievement asset for the specified ID.
+    /// Creates a new achievement asset.
     /// </summary>
     ra::data::models::AchievementModel& NewAchievement();
 

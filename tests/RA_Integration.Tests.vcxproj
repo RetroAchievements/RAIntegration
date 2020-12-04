@@ -388,6 +388,7 @@
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\AssetEditorViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\AssetListViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\AssetUploadViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\CodeNotesViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel_Tests.cpp" />
@@ -404,6 +405,7 @@
     <ClCompile Include="ui\viewmodels\OverlayManager_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayRecentGamesPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlaySettingsViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\ProgressViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\TriggerConditionViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\TriggerViewModel_Tests.cpp" />

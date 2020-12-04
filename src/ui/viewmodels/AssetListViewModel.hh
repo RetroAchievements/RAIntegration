@@ -183,6 +183,9 @@ public:
 
     static const ra::AchievementID FirstLocalId = 111000001;
 
+protected:
+    virtual void Publish(std::vector<ra::data::models::AssetModelBase*>& vAssets);
+
 private:
     // DataModelCollectionBase::NotifyTarget
     void OnDataModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;

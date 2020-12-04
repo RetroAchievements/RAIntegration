@@ -417,6 +417,12 @@
     <ClCompile Include="..\src\ui\viewmodels\ProgressViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\ProgressViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\AssetUploadViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

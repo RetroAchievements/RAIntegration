@@ -54,8 +54,13 @@ public:
 
     void QueueTask(std::function<void()>&& fTaskHandler);
 
+    const size_t TaskCount() const { return m_vTasks.size(); }
+
 protected:
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+
+    virtual void OnBegin() noexcept(false) {}
+    virtual void OnComplete();
 
 private:
     void BeginTasks();
@@ -74,7 +79,7 @@ private:
         TaskState nState = TaskState::None;
     };
 
-    std::vector<TaskItem> m_vTasks;
+    std::vector<std::unique_ptr<TaskItem>> m_vTasks;
     std::mutex m_pMutex;
     bool m_bQueueComplete = false;
 };

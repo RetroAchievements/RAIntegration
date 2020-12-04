@@ -20,6 +20,9 @@ public:
 
     void ShowResults() const;
 
+protected:
+    void OnBegin() override;
+
 private:
     enum class UploadState
     {

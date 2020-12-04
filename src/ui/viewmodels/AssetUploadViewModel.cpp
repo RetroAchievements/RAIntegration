@@ -44,7 +44,7 @@ void AssetUploadViewModel::QueueAchievement(ra::data::models::AchievementModel& 
         for (const auto& pQueuedItem : m_vUploadQueue)
         {
             const auto* pQueuedAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pQueuedItem.pAsset);
-            if (pQueuedAchievement && pQueuedAchievement->GetBadge() == sBadge)
+            if (pQueuedAchievement && pQueuedAchievement != &pAchievement && pQueuedAchievement->GetBadge() == sBadge)
             {
                 // badge request already queued, do nothing
                 return;
@@ -65,10 +65,16 @@ void AssetUploadViewModel::QueueAchievement(ra::data::models::AchievementModel& 
     });
 }
 
+void AssetUploadViewModel::OnBegin()
+{
+    SetMessage(ra::StringPrintf(L"Uploading %d items...", TaskCount()));
+}
+
 void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
 {
-    auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
-    std::wstring sFilename = sBadge; // pImageRepostiory.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(sBadge));
+    //auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
+    //const std::wstring sFilename = pImageRepostiory.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(sBadge));
+    const std::wstring sFilename = sBadge; // pImageRepostiory.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(sBadge));
 
     ra::api::UploadBadge::Request request;
     request.ImageFilePath = sFilename;

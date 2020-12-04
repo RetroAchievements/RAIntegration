@@ -98,22 +98,22 @@ private:
             switch (nActivateButtonState)
             {
                 case ActivateButtonState::Activate:
-                    SetValue(ActivateButtonTextProperty, L"&Activate");
+                    Assert::AreEqual(std::wstring(L"&Activate"), GetValue(ActivateButtonTextProperty));
                     Assert::IsTrue(CanActivate());
                     break;
 
                 case ActivateButtonState::Deactivate:
-                    SetValue(ActivateButtonTextProperty, L"De&activate");
+                    Assert::AreEqual(std::wstring(L"De&activate"), GetValue(ActivateButtonTextProperty));
                     Assert::IsTrue(CanActivate());
                     break;
 
                 case ActivateButtonState::ActivateAll:
-                    SetValue(ActivateButtonTextProperty, L"&Activate All");
+                    Assert::AreEqual(std::wstring(L"&Activate All"), GetValue(ActivateButtonTextProperty));
                     Assert::IsTrue(CanActivate());
                     break;
 
                 case ActivateButtonState::Disabled:
-                    SetValue(ActivateButtonTextProperty, L"&Activate All");
+                    Assert::AreEqual(std::wstring(L"&Activate All"), GetValue(ActivateButtonTextProperty));
                     Assert::IsFalse(CanActivate());
                     break;
             }
@@ -124,32 +124,32 @@ private:
             switch (nSaveButtonState)
             {
                 case SaveButtonState::Save:
-                    SetValue(ActivateButtonTextProperty, L"&Save");
+                    Assert::AreEqual(std::wstring(L"&Save"), GetValue(SaveButtonTextProperty));
                     Assert::IsTrue(CanSave());
                     break;
 
                 case SaveButtonState::Publish:
-                    SetValue(ActivateButtonTextProperty, L"Publi&sh");
+                    Assert::AreEqual(std::wstring(L"Publi&sh"), GetValue(SaveButtonTextProperty));
                     Assert::IsTrue(CanSave());
                     break;
 
                 case SaveButtonState::SaveDisabled:
-                    SetValue(ActivateButtonTextProperty, L"&Save");
+                    Assert::AreEqual(std::wstring(L"&Save"), GetValue(SaveButtonTextProperty));
                     Assert::IsFalse(CanSave());
                     break;
 
                 case SaveButtonState::SaveAll:
-                    SetValue(ActivateButtonTextProperty, L"&Save All");
+                    Assert::AreEqual(std::wstring(L"&Save All"), GetValue(SaveButtonTextProperty));
                     Assert::IsTrue(CanSave());
                     break;
 
                 case SaveButtonState::PublishAll:
-                    SetValue(ActivateButtonTextProperty, L"Publi&sh All");
+                    Assert::AreEqual(std::wstring(L"Publi&sh All"), GetValue(SaveButtonTextProperty));
                     Assert::IsTrue(CanSave());
                     break;
 
                 case SaveButtonState::SaveAllDisabled:
-                    SetValue(ActivateButtonTextProperty, L"&Save All");
+                    Assert::AreEqual(std::wstring(L"&Save All"), GetValue(SaveButtonTextProperty));
                     Assert::IsFalse(CanSave());
                     break;
             }
@@ -160,17 +160,17 @@ private:
             switch (nResetButtonState)
             {
                 case ResetButtonState::Reset:
-                    SetValue(ActivateButtonTextProperty, L"&Reset");
+                    Assert::AreEqual(std::wstring(L"&Reset"), GetValue(ResetButtonTextProperty));
                     Assert::IsTrue(CanReset());
                     break;
 
                 case ResetButtonState::ResetAll:
-                    SetValue(ActivateButtonTextProperty, L"&Reset All");
+                    Assert::AreEqual(std::wstring(L"&Reset All"), GetValue(ResetButtonTextProperty));
                     Assert::IsTrue(CanReset());
                     break;
 
                 case ResetButtonState::Disabled:
-                    SetValue(ActivateButtonTextProperty, L"&Reset All");
+                    Assert::AreEqual(std::wstring(L"&Reset All"), GetValue(ResetButtonTextProperty));
                     Assert::IsFalse(CanReset());
                     break;
             }
@@ -181,22 +181,22 @@ private:
             switch (nRevertButtonState)
             {
                 case RevertButtonState::Revert:
-                    SetValue(ActivateButtonTextProperty, L"Re&vert");
+                    Assert::AreEqual(std::wstring(L"Re&vert"), GetValue(RevertButtonTextProperty));
                     Assert::IsTrue(CanRevert());
                     break;
 
                 case RevertButtonState::RevertAll:
-                    SetValue(ActivateButtonTextProperty, L"Re&vert All");
+                    Assert::AreEqual(std::wstring(L"Re&vert All"), GetValue(RevertButtonTextProperty));
                     Assert::IsTrue(CanRevert());
                     break;
 
                 case RevertButtonState::Delete:
-                    SetValue(ActivateButtonTextProperty, L"&Delete");
+                    Assert::AreEqual(std::wstring(L"&Delete"), GetValue(RevertButtonTextProperty));
                     Assert::IsTrue(CanRevert());
                     break;
 
                 case RevertButtonState::Disabled:
-                    SetValue(ActivateButtonTextProperty, L"Re&vert All");
+                    Assert::AreEqual(std::wstring(L"Re&vert All"), GetValue(RevertButtonTextProperty));
                     Assert::IsFalse(CanRevert());
                     break;
             }
@@ -320,6 +320,16 @@ private:
         {
             MockUserFile("0.0.0.0\nGameName\n" + sContents);
         }
+
+        void Publish(std::vector<ra::data::models::AssetModelBase*>& vAssets) override
+        {
+            PublishedAssets = vAssets;
+
+            for (auto* pAsset : vAssets)
+                pAsset->UpdateServerCheckpoint();
+        }
+
+        std::vector<ra::data::models::AssetModelBase*> PublishedAssets;
     };
 
 public:
@@ -787,7 +797,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -809,7 +819,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Deactivate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Deactivate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -833,7 +843,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -864,7 +874,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Deactivate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Deactivate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -873,7 +883,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -882,7 +892,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -914,7 +924,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Deactivate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Deactivate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -966,7 +976,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Deactivate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Deactivate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -1042,7 +1052,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -1060,7 +1070,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -1083,7 +1093,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Save,
-            ResetButtonState::Reset, RevertButtonState::Revert,
+            ResetButtonState::Reset, RevertButtonState::Delete,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -1128,7 +1138,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -1148,7 +1158,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -1168,7 +1178,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -1390,6 +1400,224 @@ public:
         Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
     }
 
+    TEST_METHOD(TestSaveSelectedPublishCoreModified)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to publish 1 items?"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::Yes;
+        });
+
+        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        pItem->SetName(L"Test1b");
+        pItem->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Publish);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 1U }, vmAssetList.PublishedAssets.size());
+        Assert::IsTrue(pItem == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::SaveDisabled);
+    }
+
+    TEST_METHOD(TestSaveSelectedPublishCoreModifiedCancel)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to publish 1 items?"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::No;
+        });
+
+        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        pItem->SetName(L"Test1b");
+        pItem->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Publish);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 0U }, vmAssetList.PublishedAssets.size());
+        Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
+
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Publish);
+    }
+
+    TEST_METHOD(TestSaveSelectedPublishCoreAll)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test2", L"Desc2", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test3", L"Desc3", L"12345", "0xH1234=1");
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to publish 3 items?"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::Yes;
+        });
+
+        auto* pItem1 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem1 != nullptr);
+        pItem1->SetName(L"Test1b");
+        pItem1->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pItem1->GetChanges());
+
+        auto* pItem2 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(1));
+        Expects(pItem2 != nullptr);
+        pItem2->SetName(L"Test2b");
+        pItem2->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pItem2->GetChanges());
+
+        auto* pItem3 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(2));
+        Expects(pItem3 != nullptr);
+        pItem3->SetName(L"Test3b");
+        pItem3->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pItem3->GetChanges());
+
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::PublishAll);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 3U }, vmAssetList.PublishedAssets.size());
+        Assert::IsTrue(pItem1 == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::IsTrue(pItem2 == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(1)));
+        Assert::IsTrue(pItem3 == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(2)));
+        Assert::AreEqual(AssetChanges::None, pItem1->GetChanges());
+        Assert::AreEqual(AssetChanges::None, pItem2->GetChanges());
+        Assert::AreEqual(AssetChanges::None, pItem3->GetChanges());
+
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
+    }
+
+    TEST_METHOD(TestSaveSelectedPublishCoreAllOnlyUnpublished)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test2", L"Desc2", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test3", L"Desc3", L"12345", "0xH1234=1");
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to publish 2 items?"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::Yes;
+        });
+
+        auto* pItem1 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem1 != nullptr);
+        pItem1->SetName(L"Test1b");
+        pItem1->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pItem1->GetChanges());
+
+        auto* pItem2 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(1));
+        Expects(pItem2 != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem2->GetChanges());
+
+        auto* pItem3 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(2));
+        Expects(pItem3 != nullptr);
+        pItem3->SetName(L"Test3b");
+        pItem3->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pItem3->GetChanges());
+
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::PublishAll);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 2U }, vmAssetList.PublishedAssets.size());
+        Assert::IsTrue(pItem1 == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::IsTrue(pItem3 == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(1)));
+        Assert::AreEqual(AssetChanges::None, pItem1->GetChanges());
+        Assert::AreEqual(AssetChanges::None, pItem2->GetChanges());
+        Assert::AreEqual(AssetChanges::None, pItem3->GetChanges());
+
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
+    }
+
+    TEST_METHOD(TestSaveSelectedPublishLocal)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.mockGameContext.SetGameTitle(L"GameName");
+        vmAssetList.SetFilterCategory(AssetCategory::Local);
+
+        vmAssetList.MockUserFileContents("111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
+
+        std::vector<ra::data::models::AssetModelBase*> vEmptyList;
+        vmAssetList.mockGameContext.Assets().ReloadAssets(vEmptyList);
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to publish 1 items?"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::Yes;
+        });
+
+        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Publish);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 1U }, vmAssetList.PublishedAssets.size());
+        Assert::IsTrue(pItem == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::SaveDisabled);
+
+        // local file should be updated without the local achievement
+        const auto& sText = vmAssetList.GetUserFile(L"22");
+        Assert::AreEqual(std::string("0.0.0.0\nGameName\n"), sText);
+    }
+
     TEST_METHOD(TestDoFrameUpdatesAssets)
     {
         AssetListViewModelHarness vmAssetList;
@@ -1603,7 +1831,7 @@ public:
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ResetButtonState::ResetAll);
 
         bool bDialogShown = false;
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
@@ -1781,13 +2009,13 @@ public:
         Assert::IsNull(vmAssetList.mockGameContext.Assets().FindAchievement({ 1U }));
     }
 
-    TEST_METHOD(TestResetSelectedNewFromFile)
+    TEST_METHOD(TestResetSelectedAllNewFromFile)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+        vmAssetList.AssertButtonState(ResetButtonState::ResetAll);
 
         vmAssetList.MockUserFileContents("111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
 

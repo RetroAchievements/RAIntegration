@@ -667,12 +667,7 @@ void AssetListViewModel::SaveSelected()
         if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
             return;
 
-        AssetUploadViewModel vmAssetUpload;
-        for (auto* pAsset : vSelectedAssets)
-            vmAssetUpload.QueueAsset(*pAsset);
-
-        vmAssetUpload.ShowModal(*this);
-        vmAssetUpload.ShowResults();
+        Publish(vSelectedAssets);
     }
     else
     {
@@ -692,6 +687,16 @@ void AssetListViewModel::SaveSelected()
     // update the local file
     pGameContext.Assets().SaveAssets(vSelectedAssets);
     UpdateButtons();
+}
+
+void AssetListViewModel::Publish(std::vector<ra::data::models::AssetModelBase*>& vAssets)
+{
+    AssetUploadViewModel vmAssetUpload;
+    for (auto* pAsset : vAssets)
+        vmAssetUpload.QueueAsset(*pAsset);
+
+    vmAssetUpload.ShowModal(*this);
+    vmAssetUpload.ShowResults();
 }
 
 void AssetListViewModel::ResetSelected()

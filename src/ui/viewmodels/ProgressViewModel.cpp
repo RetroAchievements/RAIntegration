@@ -12,10 +12,11 @@ const IntModelProperty ProgressViewModel::ProgressProperty("ProgressViewModel", 
 
 void ProgressViewModel::QueueTask(std::function<void()>&& fTaskHandler)
 {
-    std::lock_guard<std::mutex> pGuard(m_pMutex);
+    auto* pItem = new TaskItem();
+    pItem->fTaskHandler = std::move(fTaskHandler);
 
-    auto& pItem = m_vTasks.emplace_back();
-    pItem.fTaskHandler = std::move(fTaskHandler);
+    std::lock_guard<std::mutex> pGuard(m_pMutex);
+    m_vTasks.emplace_back(pItem);
 }
 
 void ProgressViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
@@ -32,7 +33,7 @@ void ProgressViewModel::BeginTasks()
         return;
     }
 
-    SetMessage(ra::StringPrintf(L"Uploading %d items...", m_vTasks.size()));
+    OnBegin();
 
     // use up to four threads to process the queue
     constexpr int MAX_THREADS = 4;
@@ -61,12 +62,12 @@ void ProgressViewModel::ProcessQueue()
 
             for (auto& pItem : m_vTasks)
             {
-                if (pItem.nState == TaskState::None && !pTask)
+                if (pItem->nState == TaskState::None && !pTask)
                 {
-                    pItem.nState = TaskState::Running;
-                    pTask = &pItem;
+                    pItem->nState = TaskState::Running;
+                    pTask = pItem.get();
                 }
-                else if (pItem.nState == TaskState::Done)
+                else if (pItem->nState == TaskState::Done)
                 {
                     ++nComplete;
                 }
@@ -87,9 +88,14 @@ void ProgressViewModel::ProcessQueue()
         }
         else if (m_bQueueComplete)
         {
-            SetDialogResult(DialogResult::OK);
+            OnComplete();
         }
     } while (true);
+}
+
+void ProgressViewModel::OnComplete()
+{
+    SetDialogResult(DialogResult::OK);
 }
 
 } // namespace viewmodels

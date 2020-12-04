@@ -88,7 +88,7 @@ void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
         {
             if (pItem.nState == UploadState::WaitingForImage)
             {
-                auto* pQueuedAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pItem.pAsset);
+                const auto* pQueuedAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pItem.pAsset);
                 if (pQueuedAchievement && pQueuedAchievement->GetBadge() == sBadge)
                 {
                     pItem.sErrorMessage = response.ErrorMessage;

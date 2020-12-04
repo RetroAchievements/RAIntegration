@@ -131,8 +131,8 @@ public:
     /// </summary>
     static void ShowMessage(std::wstring&& sHeader, std::wstring&& sMessage)
     {
-        MessageBoxViewModel viewModel(sMessage);
-        viewModel.SetHeader(sHeader);
+        MessageBoxViewModel viewModel(std::move(sMessage));
+        viewModel.SetHeader(std::move(sHeader));
         viewModel.ShowModal();
     }
 

@@ -326,7 +326,10 @@ private:
             PublishedAssets = vAssets;
 
             for (auto* pAsset : vAssets)
+            {
+                Expects(pAsset != nullptr);
                 pAsset->UpdateServerCheckpoint();
+            }
         }
 
         std::vector<ra::data::models::AssetModelBase*> PublishedAssets;
@@ -1547,7 +1550,7 @@ public:
         pItem1->UpdateLocalCheckpoint();
         Assert::AreEqual(AssetChanges::Unpublished, pItem1->GetChanges());
 
-        auto* pItem2 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(1));
+        const auto* pItem2 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(1));
         Expects(pItem2 != nullptr);
         Assert::AreEqual(AssetChanges::None, pItem2->GetChanges());
 
@@ -1595,7 +1598,7 @@ public:
             return DialogResult::Yes;
         });
 
-        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        const auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
         Expects(pItem != nullptr);
         Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
 

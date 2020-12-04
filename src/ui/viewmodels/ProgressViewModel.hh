@@ -54,7 +54,7 @@ public:
 
     void QueueTask(std::function<void()>&& fTaskHandler);
 
-    const size_t TaskCount() const { return m_vTasks.size(); }
+    const size_t TaskCount() const noexcept { return m_vTasks.size(); }
 
 protected:
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;

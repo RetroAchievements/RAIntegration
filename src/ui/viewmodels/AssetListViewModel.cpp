@@ -693,7 +693,10 @@ void AssetListViewModel::Publish(std::vector<ra::data::models::AssetModelBase*>&
 {
     AssetUploadViewModel vmAssetUpload;
     for (auto* pAsset : vAssets)
+    {
+        Expects(pAsset != nullptr);
         vmAssetUpload.QueueAsset(*pAsset);
+    }
 
     vmAssetUpload.ShowModal(*this);
     vmAssetUpload.ShowResults();

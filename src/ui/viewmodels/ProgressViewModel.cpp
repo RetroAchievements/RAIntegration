@@ -12,11 +12,11 @@ const IntModelProperty ProgressViewModel::ProgressProperty("ProgressViewModel", 
 
 void ProgressViewModel::QueueTask(std::function<void()>&& fTaskHandler)
 {
-    auto* pItem = new TaskItem();
+    auto pItem = std::make_unique<TaskItem>();
     pItem->fTaskHandler = std::move(fTaskHandler);
 
     std::lock_guard<std::mutex> pGuard(m_pMutex);
-    m_vTasks.emplace_back(pItem);
+    m_vTasks.emplace_back(std::move(pItem));
 }
 
 void ProgressViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)

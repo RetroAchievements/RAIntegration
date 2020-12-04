@@ -16,9 +16,8 @@ namespace win32 {
 class ProgressDialog : public DialogBase
 {
 public:
-    explicit ProgressDialog(_Inout_ ra::ui::viewmodels::ProgressViewModel& vmProgress);
-    ~ProgressDialog() noexcept = default;
-
+    explicit ProgressDialog(ra::ui::viewmodels::ProgressViewModel& vmProgress);
+    virtual ~ProgressDialog() noexcept = default;
     ProgressDialog(const ProgressDialog&) noexcept = delete;
     ProgressDialog& operator=(const ProgressDialog&) noexcept = delete;
     ProgressDialog(ProgressDialog&&) noexcept = delete;

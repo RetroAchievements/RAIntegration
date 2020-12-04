@@ -35,7 +35,7 @@ private:
 
     struct UploadItem
     {
-        ra::data::models::AssetModelBase* pAsset;
+        ra::data::models::AssetModelBase* pAsset = nullptr;
         std::string sErrorMessage;
         UploadState nState = UploadState::None;
     };

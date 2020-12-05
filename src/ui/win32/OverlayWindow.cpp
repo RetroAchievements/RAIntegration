@@ -154,7 +154,7 @@ void OverlayWindow::CreateOverlayWindow()
     m_hOverlayWnd = CreateWindowEx(
         (WS_EX_NOACTIVATE | WS_EX_TRANSPARENT | WS_EX_LAYERED),
         wndEx.lpszClassName,
-        "TransparentOverlayWindow",
+        TEXT("TransparentOverlayWindow"),
         (WS_POPUP),
         CW_USEDEFAULT, CW_USEDEFAULT, rcMainWindowClientArea.right, rcMainWindowClientArea.bottom,
         m_hWnd, nullptr, wndEx.hInstance, nullptr);

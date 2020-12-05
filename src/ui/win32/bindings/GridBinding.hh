@@ -116,13 +116,13 @@ private:
 
     HWND m_hTooltip = nullptr;
     int m_nTooltipLocation = 0;
-    std::string m_sTooltip;
+    ra::tstring m_sTooltip;
 
     const IntModelProperty* m_pRowColorProperty = nullptr;
 
     const IntModelProperty* m_pScrollOffsetProperty = nullptr;
     const IntModelProperty* m_pScrollMaximumProperty = nullptr;
-    std::string m_sDispInfo;
+    ra::tstring m_sDispInfo;
     std::function<void(gsl::index, gsl::index, bool)> m_pUpdateSelectedItems = nullptr;
 
     HWND m_hInPlaceEditor = nullptr;

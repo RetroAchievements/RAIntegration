@@ -132,13 +132,12 @@ void GridBinding::UpdateLayout()
     for (gsl::index i = 0; ra::to_unsigned(i) < m_vColumns.size(); ++i)
     {
         const auto& pColumn = *m_vColumns.at(i);
-        const auto sHeader = NativeStr(pColumn.GetHeader());
 
-        LV_COLUMN col{};
+        LV_COLUMNW col{};
         col.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM | LVCF_FMT;
         col.fmt = LVCFMT_FIXED_WIDTH;
         col.cx = vWidths.at(i);
-        GSL_SUPPRESS_TYPE3 col.pszText = const_cast<LPSTR>(sHeader.data());
+        GSL_SUPPRESS_TYPE3 col.pszText = const_cast<LPWSTR>(pColumn.GetHeader().data());
         col.iSubItem = gsl::narrow_cast<int>(i);
 
         switch (pColumn.GetAlignment())
@@ -212,7 +211,7 @@ void GridBinding::UpdateItems(gsl::index nColumn)
         LV_ITEM item{};
         item.mask = LVIF_TEXT;
         item.iSubItem = gsl::narrow_cast<int>(nColumn);
-        GSL_SUPPRESS_TYPE3 item.pszText = const_cast<LPSTR>("");
+        GSL_SUPPRESS_TYPE3 item.pszText = const_cast<LPTSTR>(TEXT(""));
 
         const auto& pBoundProperty = pCheckBoxColumn->GetBoundProperty();
 
@@ -229,22 +228,20 @@ void GridBinding::UpdateItems(gsl::index nColumn)
     }
     else
     {
-        std::string sText;
+        std::wstring sText;
 
-        LV_ITEM item{};
+        LV_ITEMW item{};
         item.mask = LVIF_TEXT;
         item.iSubItem = gsl::narrow_cast<int>(nColumn);
 
         for (gsl::index i = 0; ra::to_unsigned(i) < m_vmItems->Count(); ++i)
         {
-            sText = NativeStr(pColumn.GetText(*m_vmItems, i));
+            sText = pColumn.GetText(*m_vmItems, i);
             item.pszText = sText.data();
             item.iItem = gsl::narrow_cast<int>(i);
 
-            if (i < nItems)
-                ListView_SetItem(m_hWnd, &item);
-            else
-                ListView_InsertItem(m_hWnd, &item);
+            GSL_SUPPRESS_TYPE1
+            SNDMSG(m_hWnd, (i < nItems) ? LVM_SETITEMW : LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
         }
     }
 
@@ -303,8 +300,8 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
         return;
     }
 
-    std::string sText;
-    LV_ITEM item{};
+    std::wstring sText;
+    LV_ITEMW item{};
     item.mask = LVIF_TEXT;
     item.iItem = gsl::narrow_cast<int>(nIndex);
 
@@ -318,9 +315,11 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
                 m_nSortIndex = -1;
 
             item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
-            sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
+            sText = pColumn.GetText(*m_vmItems, nIndex);
             item.pszText = sText.data();
-            ListView_SetItem(m_hWnd, &item);
+
+            GSL_SUPPRESS_TYPE1
+            SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
 
             m_bForceRepaint = true;
         }
@@ -329,8 +328,8 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
 
 void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
 {
-    std::string sText;
-    LV_ITEM item{};
+    std::wstring sText;
+    LV_ITEMW item{};
     item.mask = LVIF_TEXT;
     item.iItem = gsl::narrow_cast<int>(nIndex);
 
@@ -344,9 +343,11 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
                 m_nSortIndex = -1;
 
             item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
-            sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
+            sText = pColumn.GetText(*m_vmItems, nIndex);
             item.pszText = sText.data();
-            ListView_SetItem(m_hWnd, &item);
+
+            GSL_SUPPRESS_TYPE1
+            SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
 
             m_bForceRepaint = true;
         }
@@ -355,8 +356,8 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
 
 void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
 {
-    std::string sText;
-    LV_ITEM item{};
+    std::wstring sText;
+    LV_ITEMW item{};
     item.mask = LVIF_TEXT;
     item.iItem = gsl::narrow_cast<int>(nIndex);
 
@@ -370,9 +371,11 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
                 m_nSortIndex = -1;
 
             item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
-            sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
+            sText = pColumn.GetText(*m_vmItems, nIndex);
             item.pszText = sText.data();
-            ListView_SetItem(m_hWnd, &item);
+
+            GSL_SUPPRESS_TYPE1
+            SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
 
             m_bForceRepaint = true;
         }
@@ -418,9 +421,9 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
     if (m_pUpdateSelectedItems)
         return;
 
-    std::string sText;
+    std::wstring sText;
 
-    LV_ITEM item{};
+    LV_ITEMW item{};
     item.mask = LVIF_TEXT;
     item.iItem = gsl::narrow_cast<int>(nIndex);
     item.iSubItem = 0;
@@ -428,13 +431,11 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
     const auto& pColumn = *m_vColumns.at(0);
     nIndex -= m_nScrollOffset;
 
-    sText = NativeStr(pColumn.GetText(*m_vmItems, nIndex));
+    sText = pColumn.GetText(*m_vmItems, nIndex);
     item.pszText = sText.data();
 
-    if (bExisting)
-        ListView_SetItem(m_hWnd, &item);
-    else
-        ListView_InsertItem(m_hWnd, &item);
+    GSL_SUPPRESS_TYPE1
+    SNDMSG(m_hWnd, bExisting ? LVM_SETITEMW : LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
 
     const auto* pCheckBoxColumn = dynamic_cast<const GridCheckBoxColumnBinding*>(&pColumn);
     if (pCheckBoxColumn != nullptr)
@@ -445,11 +446,13 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
 
     for (gsl::index i = 1; ra::to_unsigned(i) < m_vColumns.size(); ++i)
     {
-        sText = NativeStr(m_vColumns.at(i)->GetText(*m_vmItems, nIndex));
+        sText = m_vColumns.at(i)->GetText(*m_vmItems, nIndex);
 
         item.pszText = sText.data();
         item.iSubItem = gsl::narrow_cast<int>(i);
-        ListView_SetItem(m_hWnd, &item);
+
+        GSL_SUPPRESS_TYPE1
+        SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
     }
 
     if (m_pIsSelectedProperty)
@@ -997,8 +1000,8 @@ void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
     const auto nIndex = GetVisibleItemIndex(pnmDispInfo.item.iItem);
 
     // get the requested data
-    m_sDispInfo = ra::Narrow(m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));
-    GSL_SUPPRESS_TYPE3 pnmDispInfo.item.pszText = const_cast<LPSTR>(m_sDispInfo.c_str());
+    m_sDispInfo = NativeStr(m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));
+    GSL_SUPPRESS_TYPE3 pnmDispInfo.item.pszText = const_cast<LPTSTR>(m_sDispInfo.c_str());
 }
 
 void GridBinding::OnTooltipGetDispInfo(NMTTDISPINFO& pnmTtDispInfo)
@@ -1011,8 +1014,8 @@ void GridBinding::OnTooltipGetDispInfo(NMTTDISPINFO& pnmTtDispInfo)
     if (iSubItem < 0 || iSubItem >= gsl::narrow_cast<int>(m_vColumns.size()))
         return;
 
-    m_sTooltip = ra::Narrow(m_vColumns.at(iSubItem)->GetTooltip(*m_vmItems, nIndex));
-    GSL_SUPPRESS_TYPE3 pnmTtDispInfo.lpszText = const_cast<LPSTR>(m_sTooltip.c_str());
+    m_sTooltip = NativeStr(m_vColumns.at(iSubItem)->GetTooltip(*m_vmItems, nIndex));
+    GSL_SUPPRESS_TYPE3 pnmTtDispInfo.lpszText = const_cast<LPTSTR>(m_sTooltip.c_str());
 }
 
 void GridBinding::OnGotFocus()

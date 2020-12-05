@@ -211,16 +211,16 @@ void MultiLineGridBinding::UpdateItems(gsl::index nColumn)
 {
     const auto& pColumn = *m_vColumns.at(nColumn);
     const auto nItems = ListView_GetItemCount(m_hWnd);
-    std::string sText;
+    std::wstring sText;
 
-    LV_ITEM item{};
+    LV_ITEMW item{};
     item.mask = LVIF_TEXT;
     item.iSubItem = gsl::narrow_cast<int>(nColumn);
 
     gsl::index nLine = 0;
     for (gsl::index i = 0; ra::to_unsigned(i) < m_vmItems->Count(); ++i)
     {
-        sText = NativeStr(pColumn.GetText(*m_vmItems, i));
+        sText = pColumn.GetText(*m_vmItems, i);
         item.pszText = sText.data();
         item.iItem = gsl::narrow_cast<int>(nLine);
 
@@ -239,10 +239,8 @@ void MultiLineGridBinding::UpdateItems(gsl::index nColumn)
                         --nIndex2;
                     sText.at(nIndex2) = '\0';
 
-                    if (nLine < nItems)
-                        ListView_SetItem(m_hWnd, &item);
-                    else
-                        ListView_InsertItem(m_hWnd, &item);
+                    GSL_SUPPRESS_TYPE1
+                    SNDMSG(m_hWnd, (nLine < nItems) ? LVM_SETITEMW : LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
 
                     item.pszText = nIndex < sText.length() ? &sText.at(nIndex) : &sText.at(nIndex2);
                     item.iItem = gsl::narrow_cast<int>(++nLine);
@@ -254,10 +252,8 @@ void MultiLineGridBinding::UpdateItems(gsl::index nColumn)
 
             for (unsigned int nIndex = nItemLine; nIndex < pItemMetrics.nNumLines; ++nIndex)
             {
-                if (nLine < nItems)
-                    ListView_SetItem(m_hWnd, &item);
-                else
-                    ListView_InsertItem(m_hWnd, &item);
+                GSL_SUPPRESS_TYPE1
+                SNDMSG(m_hWnd, (nLine < nItems) ? LVM_SETITEMW : LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
 
                 sText.at(0) = '\0';
                 item.pszText = sText.data();
@@ -265,10 +261,8 @@ void MultiLineGridBinding::UpdateItems(gsl::index nColumn)
             }
         }
 
-        if (nLine < nItems)
-            ListView_SetItem(m_hWnd, &item);
-        else
-            ListView_InsertItem(m_hWnd, &item);
+        GSL_SUPPRESS_TYPE1
+        SNDMSG(m_hWnd, (nLine < nItems) ? LVM_SETITEMW : LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
 
         ++nLine;
     }

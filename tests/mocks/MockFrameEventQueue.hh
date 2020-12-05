@@ -20,6 +20,11 @@ public:
     size_t NumResetTriggers() const noexcept { return m_vResetTriggers.size(); }
     size_t NumMemoryChanges() const noexcept { return m_vMemChanges.size(); }
 
+    bool ContainsMemoryChange(const std::wstring& sChange) const
+    {
+        return (m_vMemChanges.find(sChange) != m_vMemChanges.end());
+    }
+
     void Reset() noexcept
     {
         m_vTriggeredTriggers.clear();

@@ -714,6 +714,7 @@ public:
         memory.at(4) = 9;
         bookmarks.DoFrame();
         Assert::AreEqual({ 1U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+        Assert::IsTrue(bookmarks.mockFrameEventQueue.ContainsMemoryChange(L"8-bit 0x0004"));
         bookmarks.mockFrameEventQueue.Reset();
 
         // only row that caused the pause should be highlighted
@@ -731,10 +732,81 @@ public:
         memory.at(5) = 77;
         bookmarks.DoFrame();
         Assert::AreEqual({ 2U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+        Assert::IsTrue(bookmarks.mockFrameEventQueue.ContainsMemoryChange(L"8-bit 0x0004"));
+        Assert::IsTrue(bookmarks.mockFrameEventQueue.ContainsMemoryChange(L"8-bit 0x0005"));
 
         // both rows that caused the pause should be highlighted
         Assert::AreEqual(0xFFFFC0C0U, bookmark1.GetRowColor().ARGB);
         Assert::AreEqual(0xFFFFC0C0U, bookmark2.GetRowColor().ARGB);
+    }
+
+    TEST_METHOD(TestPauseOnChangeShortDescription)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.AddBookmark(4U, MemSize::EightBit);
+        auto& bookmark1 = *bookmarks.Bookmarks().GetItemAt(0);
+        bookmark1.SetDescription(L"Short Description");
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = i;
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.DoFrame(); // initialize current and previous values
+        Assert::AreEqual({ 0U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+
+        bookmark1.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
+
+        memory.at(4) = 9;
+        bookmarks.DoFrame();
+        Assert::AreEqual({ 1U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+        Assert::IsTrue(bookmarks.mockFrameEventQueue.ContainsMemoryChange(L"8-bit 0x0004: Short Description"));
+    }
+
+    TEST_METHOD(TestPauseOnChangeLongDescription)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.AddBookmark(4U, MemSize::EightBit);
+        auto& bookmark1 = *bookmarks.Bookmarks().GetItemAt(0);
+        bookmark1.SetDescription(L"This description is long enough that it will be truncated at the nearest word");
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = i;
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.DoFrame(); // initialize current and previous values
+        Assert::AreEqual({ 0U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+
+        bookmark1.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
+
+        memory.at(4) = 9;
+        bookmarks.DoFrame();
+        Assert::AreEqual({ 1U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+        Assert::IsTrue(bookmarks.mockFrameEventQueue.ContainsMemoryChange(L"8-bit 0x0004: This description is long enough that it"));
+    }
+
+    TEST_METHOD(TestPauseOnChangeMultilineDescription)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.AddBookmark(4U, MemSize::EightBit);
+        auto& bookmark1 = *bookmarks.Bookmarks().GetItemAt(0);
+        bookmark1.SetDescription(L"Level:\n0x0F=1-1\n0x13=1-2\n0x14=1-3");
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = i;
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.DoFrame(); // initialize current and previous values
+        Assert::AreEqual({ 0U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+
+        bookmark1.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
+
+        memory.at(4) = 9;
+        bookmarks.DoFrame();
+        Assert::AreEqual({ 1U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+        Assert::IsTrue(bookmarks.mockFrameEventQueue.ContainsMemoryChange(L"8-bit 0x0004: Level:"));
     }
 
     TEST_METHOD(TestOnEditMemory)

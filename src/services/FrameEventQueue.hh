@@ -20,7 +20,10 @@ public:
     FrameEventQueue(FrameEventQueue&&) noexcept = delete;
     FrameEventQueue& operator=(FrameEventQueue&&) noexcept = delete;
 
-    void QueuePauseOnChange(MemSize nSize, ra::ByteAddress nAddress);
+    void QueuePauseOnChange(const std::wstring& sMemDescription)
+    {
+        m_vMemChanges.insert(sMemDescription);
+    }
 
     void QueuePauseOnReset(const std::wstring& sTriggerName)
     {
@@ -35,18 +38,7 @@ public:
     void DoFrame();
 
 protected:
-    struct MemChange
-    {
-        MemChange(ra::ByteAddress nAddress, MemSize nSize) noexcept
-            : nAddress(nAddress), nSize(nSize)
-        {
-        }
-
-        ra::ByteAddress nAddress;
-        MemSize nSize;
-    };
-
-    std::vector<MemChange> m_vMemChanges;
+    std::set<std::wstring> m_vMemChanges;
     std::vector<std::wstring> m_vResetTriggers;
     std::vector<std::wstring> m_vTriggeredTriggers;
 };

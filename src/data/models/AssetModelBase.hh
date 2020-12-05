@@ -15,9 +15,10 @@ namespace models {
 
 enum class AssetType
 {
-	None = 0,
-	Achievement,
-	Leaderboard,
+    None = 0,
+    Achievement,
+    Leaderboard,
+    LocalBadges,
 };
 
 enum class AssetCategory

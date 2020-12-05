@@ -3,6 +3,7 @@
 #include "data\context\GameAssets.hh"
 
 #include "data\models\AchievementModel.hh"
+#include "data\models\LocalBadgesModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
@@ -119,6 +120,19 @@ public:
         {
             return mockLocalStorage.GetStoredData(ra::services::StorageItemType::UserAchievements, std::to_wstring(mockGameContext.GameId()));
         }
+
+        void AddLocalBadgesModel()
+        {
+            auto pLocalBadges = std::make_unique<ra::data::models::LocalBadgesModel>();
+            pLocalBadges->CreateServerCheckpoint();
+            pLocalBadges->CreateLocalCheckpoint();
+            Append(std::move(pLocalBadges));
+        }
+
+        ra::data::models::LocalBadgesModel& GetLocalBadgesModel()
+        {
+            return *(dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0)));
+        }
     };
 
     TEST_METHOD(TestSaveLocalEmpty)
@@ -150,6 +164,31 @@ public:
         gameAssets.SaveAllAssets();
 
         const auto& sExpected = ra::StringPrintf("0.0.0.0\nGameName\n%u:\"2=2\":\"Ach:2\":\"Desc \\\"2\\\"\"::::Auth5:15:::::54321\n", GameAssets::FirstLocalId);
+        Assert::AreEqual(sExpected, gameAssets.GetUserFile());
+    }
+
+    TEST_METHOD(TestSaveLocalBadges)
+    {
+        GameAssetsHarness gameAssets;
+        gameAssets.mockGameContext.SetGameId(22);
+        gameAssets.AddLocalBadgesModel();
+        gameAssets.AddNewAchievement(10, L"Temp", L"Temp", L"local\\22-ABCDE.png", "1=1");
+
+        // gameAssets is not the same instance as mockGameContext.Assets, so manually update the badge reference count
+        auto& pLocalBadges = gameAssets.GetLocalBadgesModel();
+        pLocalBadges.AddReference(L"local\\22-ABCDE.png", false);
+
+        // simulate the pre-commit of the achievement by converting the reference from uncommitted to committed
+        pLocalBadges.RemoveReference(L"local\\22-ABCDE.png", false);
+        pLocalBadges.AddReference(L"local\\22-ABCDE.png", true);
+
+        gameAssets.SaveAllAssets();
+
+        gameAssets.ReloadAsset(AssetType::Achievement, GameAssets::FirstLocalId);
+
+        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGameName\n"
+            "%u:\"1=1\":Temp:Temp::::Authl:10:::::\"local\\\\22-ABCDE.png\"\n"
+            "b:ABCDE.png=1\n", GameAssets::FirstLocalId);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
@@ -301,6 +340,26 @@ public:
         Assert::AreEqual(std::string("0xH2345=0"), pAsset2->GetTrigger());
         Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
         Assert::AreEqual(AssetChanges::Unpublished, pAsset2->GetChanges());
+    }
+
+    TEST_METHOD(TestMergeLocalAssetsLocalBadges)
+    {
+        GameAssetsHarness gameAssets;
+        gameAssets.mockGameContext.SetGameId(22);
+        gameAssets.AddLocalBadgesModel();
+        gameAssets.MockUserFileContents(
+            "111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::local\\22-A.png\n"
+            "b:A.png=1\n");
+
+        gameAssets.ReloadAllAssets();
+
+        const auto* pAsset = gameAssets.FindAchievement({ 111000001U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        Assert::AreEqual(std::wstring(L"local\\22-A.png"), pAsset->GetBadge());
+
+        const auto& pLocalBadges = gameAssets.GetLocalBadgesModel();
+        Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-A.png"));
     }
 
     TEST_METHOD(TestReloadModifiedFromFile)

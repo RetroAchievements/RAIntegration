@@ -103,6 +103,9 @@ public:
 
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
+
+    void CommitTransaction() override;
 
 private:
     AssetDefinition m_pTrigger;

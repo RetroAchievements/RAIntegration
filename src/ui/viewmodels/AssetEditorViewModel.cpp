@@ -4,6 +4,8 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\ImageReference.hh"
+#include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 namespace ra {
@@ -40,7 +42,21 @@ AssetEditorViewModel::~AssetEditorViewModel()
 
 void AssetEditorViewModel::SelectBadgeFile()
 {
-    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Not implemented");
+    ui::viewmodels::FileDialogViewModel vmFile;
+    vmFile.AddFileType(L"Image Files", L"*.png;*.gif;*.jpg;*.jpeg");
+    vmFile.SetDefaultExtension(L"png");
+    if (vmFile.ShowOpenFileDialog(*this) != DialogResult::OK)
+        return;
+
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+    const auto sBadgeName = pImageRepository.StoreImage(ImageType::Badge, vmFile.GetFileName());
+    if (sBadgeName.empty())
+    {
+        ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::StringPrintf(L"Error processing %s", vmFile.GetFileName()));
+        return;
+    }
+
+    SetBadge(ra::Widen(sBadgeName));
 }
 
 void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)

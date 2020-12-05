@@ -99,6 +99,16 @@ public:
             return pIter->second.Bytes;
         }
 
+        void RemoveNonAchievementAssets()
+        {
+            for (gsl::index nIndex = Assets().Count() - 1; nIndex >= 0; nIndex--)
+            {
+                auto* pAsset = Assets().GetItemAt(nIndex);
+                if (!pAsset || pAsset->GetType() != ra::data::models::AssetType::Achievement)
+                    Assets().RemoveAt(nIndex);
+            }
+        }
+
     private:
         ra::services::ServiceLocator::ServiceOverride<ra::data::context::GameContext> m_OverrideGameContext;
         ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_OverrideRuntime;
@@ -326,6 +336,7 @@ public:
         Assert::AreEqual(15U, pAch2->Points());
         Assert::AreEqual(std::string("1=1"), pAch2->GetTrigger());
 
+        game.RemoveNonAchievementAssets();
         Assert::AreEqual({ 2U }, game.Assets().Count());
 
         const auto* vmAch1 = dynamic_cast<ra::data::models::AchievementModel*>(game.Assets().GetItemAt(0));
@@ -402,6 +413,7 @@ public:
         Assert::AreEqual(15U, pAch2->Points());
         Assert::AreEqual(std::string("1=1"), pAch2->GetTrigger());
 
+        game.RemoveNonAchievementAssets();
         Assert::AreEqual({ 1U }, game.Assets().Count());
 
         const auto* vmAch2 = dynamic_cast<ra::data::models::AchievementModel*>(game.Assets().GetItemAt(0));
@@ -558,7 +570,7 @@ public:
         Assert::AreEqual(std::string("1=1"), pAch->GetTrigger());
 
 
-
+        game.RemoveNonAchievementAssets();
         Assert::AreEqual({ 3U }, game.Assets().Count());
 
         // 7 is not a known ID for this game, it should be loaded into a local achievement
@@ -791,6 +803,7 @@ public:
         Assert::AreEqual(11U, pAch2->Points());
         Assert::AreEqual(std::string("1=1"), pAch2->GetTrigger());
 
+        game.RemoveNonAchievementAssets();
         Assert::AreEqual({ 2U }, game.Assets().Count());
         Assert::IsFalse(game.Assets().IsUpdating());
 
@@ -852,6 +865,7 @@ public:
 
         game.LoadGame(1U);
 
+        game.RemoveNonAchievementAssets();
         Assert::AreEqual({ 2U }, game.Assets().Count());
 
         game.LoadGame(0U);

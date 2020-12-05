@@ -13,6 +13,7 @@ namespace impl {
 #undef CreateDirectory
 #undef DeleteFile
 #undef MoveFile
+#undef CopyFile
 
 class WindowsFileSystem : public IFileSystem
 {
@@ -26,6 +27,7 @@ public:
                                _Inout_ std::vector<std::wstring>& vResults) const override;
     bool DeleteFile(const std::wstring& sPath) const noexcept override;
     bool MoveFile(const std::wstring& sOldPath, const std::wstring& sNewPath) const noexcept override;
+    bool CopyFile(const std::wstring& sSourcePath, const std::wstring& sNewPath) const noexcept override;
     int64_t GetFileSize(const std::wstring& sPath) const override;
     std::chrono::system_clock::time_point GetLastModified(const std::wstring& sPath) const override;
     std::unique_ptr<TextReader> OpenTextFile(const std::wstring& sPath) const override;

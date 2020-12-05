@@ -21,6 +21,7 @@
 #include "data\context\UserContext.hh"
 
 #include "data\models\AchievementModel.hh"
+#include "data\models\LocalBadgesModel.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IAudioSystem.hh"
@@ -56,9 +57,15 @@ static void CopyAchievementData(Achievement& pAchievement, ra::data::models::Ach
 
 void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 {
+    // remove the current asset from the asset editor
+    auto& vmWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+    vmWindowManager.AssetEditor.LoadAsset(nullptr);
+
+    // reset the runtime
     auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
     pRuntime.ResetRuntime();
 
+    // reset the GameContext
     m_nMode = nMode;
     m_sGameTitle.clear();
     m_bRichPresenceFromFile = false;
@@ -68,15 +75,11 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     m_vAchievements.clear();
     m_vLeaderboards.clear();
 
-    auto& vmWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-    vmWindowManager.AssetEditor.LoadAsset(nullptr);
-
-    auto& vmAssets = vmWindowManager.AssetList;
-    vmAssets.SetGameId(nGameId);
     m_vAssets.BeginUpdate();
 
     m_vAssets.Clear();
 
+    // if not loading a game, finish up and return
     if (nGameId == 0)
     {
         m_vAssets.EndUpdate();
@@ -91,9 +94,17 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         return;
     }
 
+    // start the load process
     BeginLoad();
     m_nGameId = nGameId;
 
+    // create a model for managing badges
+    auto pLocalBadges = std::make_unique<ra::data::models::LocalBadgesModel>();
+    pLocalBadges->CreateServerCheckpoint();
+    pLocalBadges->CreateLocalCheckpoint();
+    m_vAssets.Append(std::move(pLocalBadges));
+
+    // download the game data
     ra::api::FetchGameData::Request request;
     request.GameId = nGameId;
 
@@ -108,11 +119,8 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         return;
     }
 
+    // start fetching the code notes
     RefreshCodeNotes();
-
-#ifndef RA_UTEST
-    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-#endif
 
     // game properties
     m_sGameTitle = response.Title;
@@ -142,6 +150,10 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // achievements
     const bool bWasPaused = pRuntime.IsPaused();
     pRuntime.SetPaused(true);
+
+#ifndef RA_UTEST
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+#endif
 
     unsigned int nNumCoreAchievements = 0;
     unsigned int nTotalCoreAchievementPoints = 0;
@@ -188,7 +200,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
     ActivateLeaderboards();
 
-    // merge local achievements
+    // merge local assets
     std::vector<ra::data::models::AssetModelBase*> vEmptyAssetsList;
     m_vAssets.ReloadAssets(vEmptyAssetsList);
 
@@ -218,6 +230,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // get user unlocks asynchronously
     RefreshUnlocks(!bWasPaused, nPopup);
 
+    // finish up
     m_vAssets.EndUpdate();
 
     EndLoad();

@@ -319,8 +319,40 @@ void MemoryBookmarksViewModel::DoFrame()
                 {
                     pBookmark.SetRowColor(ra::ui::Color(0xFFFFC0C0));
 
+                    const auto nSizeIndex = m_vSizes.FindItemIndex(MemoryBookmarkViewModel::SizeProperty, ra::etoi(pBookmark.GetSize()));
+                    Expects(nSizeIndex >= 0);
+
+                    auto sMessage = ra::StringPrintf(L"%s %s",
+                        m_vSizes.GetItemAt(nSizeIndex)->GetLabel(),
+                        ra::ByteAddressToString(pBookmark.GetAddress()));
+
+                    // remove leading space of " 8-bit"
+                    if (isspace(sMessage.at(0)))
+                        sMessage.erase(0, 1);
+
+                    const auto& pDescription = pBookmark.GetDescription();
+                    if (!pDescription.empty())
+                    {
+                        auto nDescriptionLength = pDescription.find(L'\n');
+                        if (nDescriptionLength == std::string::npos)
+                        {
+                            if (pDescription.length() < 40)
+                            {
+                                nDescriptionLength = pDescription.length();
+                            }
+                            else
+                            {
+                                nDescriptionLength = pDescription.find_last_of(L' ', 40);
+                                if (nDescriptionLength == std::string::npos)
+                                    nDescriptionLength = 40;
+                            }
+                        }
+                        sMessage.append(L": ");
+                        sMessage.append(pDescription, 0, nDescriptionLength);
+                    }
+
                     auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnChange(pBookmark.GetSize(), pBookmark.GetAddress());
+                    pFrameEventQueue.QueuePauseOnChange(sMessage);
                 }
 
                 m_bIgnoreValueChanged = true;

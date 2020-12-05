@@ -290,6 +290,9 @@ bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& p
     if (pAsset.GetCategory() != GetFilterCategory())
         return false;
 
+    if (pAsset.GetType() == ra::data::models::AssetType::LocalBadges)
+        return false;
+
     return true;
 }
 

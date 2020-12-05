@@ -9,17 +9,6 @@
 namespace ra {
 namespace services {
 
-void FrameEventQueue::QueuePauseOnChange(MemSize nSize, ra::ByteAddress nAddress)
-{
-    for (const auto& pChange : m_vMemChanges)
-    {
-        if (pChange.nAddress == nAddress && pChange.nSize == nSize)
-            return;
-    }
-
-    m_vMemChanges.emplace_back(nAddress, nSize);
-}
-
 void FrameEventQueue::DoFrame()
 {
     std::wstring sPauseMessage;
@@ -51,14 +40,8 @@ void FrameEventQueue::DoFrame()
             sPauseMessage.append(L"\n");
 
         sPauseMessage.append(L"The following bookmarks have changed:");
-
-        const auto& pAssetEditor = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetEditor;
         for (const auto& pChange : m_vMemChanges)
-        {
-            sPauseMessage.append(ra::StringPrintf(L"\n* %s %s",
-                pAssetEditor.Trigger().OperandSizes().GetLabelForId(ra::etoi(pChange.nSize)),
-                ra::ByteAddressToString(pChange.nAddress)));
-        }
+            sPauseMessage.append(ra::StringPrintf(L"\n* %s", pChange));
 
         m_vMemChanges.clear();
     }

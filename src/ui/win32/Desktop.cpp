@@ -201,9 +201,10 @@ std::string Desktop::GetOSVersionString() const
 }
 
 
-void Desktop::OpenUrl(const std::string& sUrl) const noexcept
+void Desktop::OpenUrl(const std::string& sUrl) const
 {
-    ShellExecute(nullptr, TEXT("open"), sUrl.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+    const auto sNativeUrl = NativeStr(sUrl);
+    ShellExecute(nullptr, TEXT("open"), sNativeUrl.c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 }
 
 std::unique_ptr<ra::ui::drawing::ISurface> Desktop::CaptureClientArea(const WindowViewModelBase& vmViewModel) const
@@ -248,9 +249,9 @@ static bool IsSuspiciousProcessRunning()
         {
             do
             {
-                if (strlen(pe32.szExeFile) >= 15)
+                if (tcslen_s(pe32.szExeFile) >= 15)
                 {
-                    std::string sFilename = pe32.szExeFile;
+                    std::string sFilename = ra::Narrow(pe32.szExeFile);
                     std::transform(sFilename.begin(), sFilename.end(), sFilename.begin(), [](char c) noexcept
                     {
                         return gsl::narrow_cast<char>(std::tolower(c));

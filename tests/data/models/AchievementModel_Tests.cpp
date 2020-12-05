@@ -1,6 +1,7 @@
 #include "CppUnitTest.h"
 
 #include "data\models\AchievementModel.hh"
+#include "data\models\LocalBadgesModel.hh"
 
 #include "services\impl\StringTextWriter.hh"
 
@@ -9,6 +10,7 @@
 
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClock.hh"
+#include "tests\mocks\MockGameContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -23,9 +25,23 @@ private:
     class AchievementModelHarness : public AchievementModel
     {
     public:
+        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::impl::StringTextWriter textWriter;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockClock mockClock;
+
+        void AddLocalBadgesModel()
+        {
+            auto pLocalBadges = std::make_unique<LocalBadgesModel>();
+            pLocalBadges->CreateServerCheckpoint();
+            pLocalBadges->CreateLocalCheckpoint();
+            mockGameContext.Assets().Append(std::move(pLocalBadges));
+        }
+
+        ra::data::models::LocalBadgesModel& GetLocalBadgesModel()
+        {
+            return *(dynamic_cast<LocalBadgesModel*>(mockGameContext.Assets().FindAsset(AssetType::LocalBadges, 0)));
+        }
     };
 
 public:
@@ -155,6 +171,55 @@ public:
         Assert::IsNotNull(pTrigger);
         Assert::AreEqual((int)RC_TRIGGER_STATE_WAITING, (int)pTrigger->state);
         Assert::AreNotEqual(std::chrono::system_clock::duration::zero().count(), achievement.GetUnlockTime().time_since_epoch().count());
+    }
+
+    TEST_METHOD(TestSetBadgeNameLocal)
+    {
+        AchievementModelHarness achievement;
+        achievement.mockGameContext.SetGameId(22);
+        achievement.AddLocalBadgesModel();
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        achievement.SetID(1U);
+        achievement.SetTrigger("0xH1234=1");
+        achievement.SetBadge(L"local\\22-ABC.png");
+
+        const auto& pLocalBadges = achievement.GetLocalBadgesModel();
+        Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png"));
+        Assert::IsFalse(pLocalBadges.NeedsSerialized());
+
+        // this sets the committed badge reference so it'll show up in the serialized string
+        achievement.UpdateLocalCheckpoint();
+
+        Assert::IsTrue(pLocalBadges.NeedsSerialized());
+        pLocalBadges.Serialize(achievement.textWriter);
+        Assert::AreEqual(std::string("b:ABC.png=1"), achievement.textWriter.GetString());
+    }
+
+    TEST_METHOD(TestSetBadgeNameAndReset)
+    {
+        AchievementModelHarness achievement;
+        achievement.mockGameContext.SetGameId(22);
+        achievement.AddLocalBadgesModel();
+        achievement.SetBadge(L"12345.png");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        achievement.SetID(1U);
+        achievement.SetTrigger("0xH1234=1");
+        achievement.SetBadge(L"local\\22-ABC.png");
+
+        const auto& pLocalBadges = achievement.GetLocalBadgesModel();
+        Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png"));
+        Assert::IsFalse(pLocalBadges.NeedsSerialized());
+
+        achievement.SetBadge(L"12345.png");
+
+        // the local badge is no longer referenced, so shouldn't be serialized
+        achievement.UpdateLocalCheckpoint();
+
+        Assert::IsFalse(pLocalBadges.NeedsSerialized());
     }
 };
 

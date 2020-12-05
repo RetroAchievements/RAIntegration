@@ -381,6 +381,9 @@
     <ClCompile Include="ui\win32\ProgressDialog.cpp">
       <Filter>UI\Win32</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\LocalBadgesModel.cpp">
+      <Filter>Data\Models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -943,6 +946,9 @@
     </ClInclude>
     <ClInclude Include="ui\win32\ProgressDialog.hh">
       <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\LocalBadgesModel.hh">
+      <Filter>Data\Models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -108,6 +108,14 @@ bool WindowsFileSystem::MoveFile(const std::wstring& sOldPath, const std::wstrin
     return (MoveFileW(sAbsolutePathOld.c_str(), sAbsolutePathNew.c_str()) != 0);
 }
 
+bool WindowsFileSystem::CopyFile(const std::wstring& sOldPath, const std::wstring& sNewPath) const noexcept
+{
+    std::wstring sBufferNew, sBufferOld;
+    const auto& sAbsolutePathNew = MakeAbsolute(sBufferNew, sNewPath);
+    const auto& sAbsolutePathOld = MakeAbsolute(sBufferOld, sOldPath);
+    return (CopyFileW(sAbsolutePathOld.c_str(), sAbsolutePathNew.c_str(), FALSE) != 0);
+}
+
 int64_t WindowsFileSystem::GetFileSize(const std::wstring& sPath) const
 {
     std::wstring sBuffer;

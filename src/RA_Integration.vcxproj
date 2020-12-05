@@ -85,6 +85,7 @@
     <ClCompile Include="data\ModelPropertyContainer.cpp" />
     <ClCompile Include="data\models\AchievementModel.cpp" />
     <ClCompile Include="data\models\AssetModelBase.cpp" />
+    <ClCompile Include="data\models\LocalBadgesModel.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugUnicode|x64'">Create</PrecompiledHeader>
@@ -241,6 +242,7 @@
     <ClInclude Include="data\ModelPropertyContainer.hh" />
     <ClInclude Include="data\models\AchievementModel.hh" />
     <ClInclude Include="data\models\AssetModelBase.hh" />
+    <ClInclude Include="data\models\LocalBadgesModel.hh" />
     <ClInclude Include="data\Types.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="pch.h" />

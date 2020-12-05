@@ -298,6 +298,7 @@
     <ClCompile Include="..\src\data\DataModelBase.cpp" />
     <ClCompile Include="..\src\data\models\AchievementModel.cpp" />
     <ClCompile Include="..\src\data\models\AssetModelBase.cpp" />
+    <ClCompile Include="..\src\data\models\LocalBadgesModel.cpp" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -368,6 +369,7 @@
     <ClCompile Include="data\ModelProperty_Tests.cpp" />
     <ClCompile Include="data\models\AchievementModel_Tests.cpp" />
     <ClCompile Include="data\models\AssetModelBase_Tests.cpp" />
+    <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="services\AchievementRuntime_Tests.cpp" />
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />

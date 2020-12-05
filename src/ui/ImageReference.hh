@@ -57,6 +57,14 @@ public:
     /// <returns>Generated name for referencing the image.</param>
     virtual std::string StoreImage(ImageType nType, const std::wstring& sPath) = 0;
 
+    /// <summary>
+    /// Gets the full path to the file for the specified image.
+    /// </summary>
+    /// <param name="nType">Type of the image.</param>
+    /// <param name="sName">Path to image.</param>
+    /// <returns>Path to the file, or empty string if a file is not available.</returns>
+    virtual std::wstring GetFilename(ImageType nType, const std::string& sName) const = 0;
+
     /// <summary>Adds a reference to an image.</summary>
     virtual void AddReference(const ImageReference& pImage) = 0;
 

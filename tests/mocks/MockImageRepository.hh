@@ -49,6 +49,11 @@ public:
         return ra::Narrow(sPath);
     }
 
+    std::wstring GetFilename(_UNUSED ImageType nType, const std::string& sName) const override
+    {
+        return L"RACache\\Badges\\" + ra::Widen(sName);
+    }
+
     void AddReference(_UNUSED const ImageReference& pImage) noexcept override
     {
 

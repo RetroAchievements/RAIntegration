@@ -9,6 +9,7 @@
 #include "tests\ui\UIAsserts.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 
@@ -34,6 +35,7 @@ private:
         ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
+        ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::mocks::MockDesktop mockDesktop;
 
         void DoUpload(int nExpectedProgress = 100)
@@ -482,7 +484,7 @@ public:
                 (const ra::api::UploadBadge::Request& pRequest, ra::api::UploadBadge::Response& pResponse)
         {
             bImageUploaded = true;
-            Assert::AreEqual(std::wstring(L"local\\12345"), pRequest.ImageFilePath);
+            Assert::AreEqual(std::wstring(L"RACache\\Badges\\local\\12345"), pRequest.ImageFilePath);
 
             pResponse.BadgeId = "76543";
             pResponse.Result = ra::api::ApiResult::Success;
@@ -536,7 +538,7 @@ public:
         {
             ++nImagesUploaded;
 
-            if (pRequest.ImageFilePath == L"local\\12345")
+            if (pRequest.ImageFilePath == L"RACache\\Badges\\local\\12345")
                 pResponse.BadgeId = "76543";
             else
                 pResponse.BadgeId = "55555";
@@ -591,7 +593,7 @@ public:
         {
             ++nImagesUploaded;
 
-            if (pRequest.ImageFilePath == L"local\\12345")
+            if (pRequest.ImageFilePath == L"RACache\\Badges\\local\\12345")
                 pResponse.BadgeId = "76543";
             else
                 pResponse.BadgeId = "55555";
@@ -729,7 +731,7 @@ public:
         {
             ++nImagesUploaded;
 
-            if (pRequest.ImageFilePath == L"local\\12345")
+            if (pRequest.ImageFilePath == L"RACache\\Badges\\local\\12345")
                 pResponse.BadgeId = "76543";
             else
                 pResponse.BadgeId = "55555";

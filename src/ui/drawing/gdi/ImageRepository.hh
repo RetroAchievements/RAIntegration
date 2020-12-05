@@ -47,8 +47,9 @@ public:
 
     bool HasReferencedImageChanged(ImageReference& pImage) const override;
 
+    std::wstring GetFilename(ImageType nType, const std::string& sName) const override;
+
 private:
-    static std::wstring GetFilename(ImageType nType, const std::string& sName);
     static HBITMAP LoadLocalPNG(const std::wstring& sFilename, unsigned int nWidth, unsigned int nHeight);
 
     HBITMAP GetImage(ImageType nType, const std::string& sName);

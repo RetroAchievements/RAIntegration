@@ -72,9 +72,8 @@ void AssetUploadViewModel::OnBegin()
 
 void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
 {
-    //auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
-    //const std::wstring sFilename = pImageRepostiory.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(sBadge));
-    const std::wstring sFilename = sBadge; // pImageRepostiory.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(sBadge));
+    const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
+    const std::wstring sFilename = pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(sBadge));
 
     ra::api::UploadBadge::Request request;
     request.ImageFilePath = sFilename;

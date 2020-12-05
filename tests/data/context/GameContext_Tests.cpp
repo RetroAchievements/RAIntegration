@@ -1167,6 +1167,37 @@ public:
         Assert::AreEqual(125U, game.mockUser.GetScore());
     }
 
+    TEST_METHOD(TestAwardAchievementNoPopup)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::None);
+        game.SetGameHash("hash");
+        game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
+        {
+            Assert::AreEqual(1U, request.AchievementId);
+            Assert::AreEqual(false, request.Hardcore);
+            Assert::AreEqual(std::string("hash"), request.GameHash);
+
+            response.NewPlayerScore = 125U;
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        game.MockAchievement();
+        game.AwardAchievement(1U);
+
+        // sound should still be played
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+
+        // popup should not be displayed
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Assert::IsNull(pPopup);
+
+        // API call should still occur
+        game.mockThreadPool.ExecuteNextTask();
+        Assert::AreEqual(125U, game.mockUser.GetScore());
+    }
+
     TEST_METHOD(TestAwardAchievementLocal)
     {
         GameContextHarness game;

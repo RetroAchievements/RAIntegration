@@ -543,11 +543,11 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
 
     int nPopupId = -1;
 
+    ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
+        bIsError ? L"Overlay\\acherror.wav" : L"Overlay\\unlock.wav");
+
     if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered) != ra::ui::viewmodels::PopupLocation::None)
     {
-        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
-            bIsError ? L"Overlay\\acherror.wav" : L"Overlay\\unlock.wav");
-
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         nPopupId = pOverlayManager.QueueMessage(vmPopup);
 

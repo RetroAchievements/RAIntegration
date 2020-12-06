@@ -483,7 +483,7 @@ void DialogBase::SetDialogResult(DialogResult nResult)
     m_vmWindow.SetDialogResult(nResult);
 
     // make sure the dialog is closed on the UI thread
-    QueueFunction([this]()
+    QueueFunction([this]() noexcept
     {
         if (::IsWindowVisible(m_hWnd))
         {

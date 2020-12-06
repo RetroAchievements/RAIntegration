@@ -155,6 +155,7 @@ void GridBinding::UpdateLayout()
                 break;
         }
 
+        GSL_SUPPRESS_TYPE1
         SNDMSG(m_hWnd, (i < ra::to_signed(nColumns)) ? LVM_SETCOLUMNW : LVM_INSERTCOLUMNW, i, reinterpret_cast<LPARAM>(&col));
     }
 

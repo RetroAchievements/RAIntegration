@@ -158,17 +158,17 @@ public:
     /// <summary>
     /// Activates the asset.
     /// </summary>
-    virtual void Activate() noexcept(false) { }
+    virtual void Activate() noexcept(false) {}
 
     /// <summary>
     /// Activates the asset.
     /// </summary>
-    virtual void Deactivate() noexcept(false) { }
+    virtual void Deactivate() noexcept(false) {}
 
     /// <summary>
     /// Updates the asset for the current frame.
     /// </summary>
-    virtual void DoFrame() noexcept(false) { }
+    virtual void DoFrame() noexcept(false) {}
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the asset state.
@@ -224,6 +224,12 @@ public:
     /// </summary>
     void RestoreServerCheckpoint();
 
+    /// <summary>
+    /// Discards any changes made since the server checkpoint and repopulates the local checkpoint using Deserialize.
+    /// </summary>
+    /// <param name="pTokenizer"></param>
+    void ResetLocalCheckpoint(ra::Tokenizer& pTokenizer);
+
 protected:
     /// <summary>
     /// Helper class for versioned ASCII strings to avoid overhead of UNICODE characters
@@ -266,6 +272,8 @@ protected:
     static bool ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::string& sText);
     static bool ReadPossiblyQuoted(ra::Tokenizer& pTokenizer, std::wstring& sText);
 
+    bool IsUpdating() const override;
+
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
@@ -279,6 +287,11 @@ protected:
     void RevertTransaction() override;
 
     static bool IsActive(AssetState nState) noexcept;
+
+private:
+    static const std::string& GetAssetDefinition(const AssetDefinition& pAsset, AssetChanges nState);
+    AssetChanges GetAssetDefinitionState(const AssetDefinition& pAsset) const;
+    void UpdateAssetDefinitionVersion(AssetDefinition&, AssetChanges nState);
 };
 
 } // namespace models

@@ -126,7 +126,6 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                 {
                     pAsset = pAssetToReset;
                     vRemainingAssetsToReload.erase(pIter);
-                    pAsset->RestoreServerCheckpoint();
                     break;
                 }
             }
@@ -140,8 +139,7 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
         if (pAsset)
         {
             // merge the data from the file
-            pAsset->Deserialize(pTokenizer);
-            pAsset->UpdateLocalCheckpoint();
+            pAsset->ResetLocalCheckpoint(pTokenizer);
         }
         else if (bReloadAll)
         {

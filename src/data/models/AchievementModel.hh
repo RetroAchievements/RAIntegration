@@ -74,7 +74,7 @@ public:
     void SetPauseOnTrigger(bool nValue) { SetValue(PauseOnTriggerProperty, nValue); }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the trigger modification state.
+    /// The <see cref="ModelProperty" /> for the trigger version.
     /// </summary>
     static const IntModelProperty TriggerProperty;
 

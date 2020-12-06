@@ -169,7 +169,7 @@ void AssetModelBase::CreateLocalCheckpoint()
     Expects(m_pTransaction != nullptr);
     Expects(m_pTransaction->m_pNext == nullptr);
     const bool bModified = m_pTransaction->IsModified();
-    BeginTransaction();
+    BeginTransaction();       // start transaction for in-memory changes
 
     SetValue(ChangesProperty, bModified ? ra::etoi(AssetChanges::Unpublished) : ra::etoi(AssetChanges::None));
 }
@@ -178,21 +178,18 @@ void AssetModelBase::UpdateLocalCheckpoint()
 {
     Expects(m_pTransaction != nullptr);
     Expects(m_pTransaction->m_pNext != nullptr);
-    CommitTransaction();
-    BeginTransaction();
-
-    const bool bModified = m_pTransaction->m_pNext->IsModified();
-    SetValue(ChangesProperty, bModified ? ra::etoi(AssetChanges::Unpublished) : ra::etoi(AssetChanges::None));
+    CommitTransaction();      // commit in-memory changes
+    CreateLocalCheckpoint();  // start transaction for in-memory changes
 }
 
 void AssetModelBase::UpdateServerCheckpoint()
 {
     Expects(m_pTransaction != nullptr);
     Expects(m_pTransaction->m_pNext != nullptr);
-    CommitTransaction();
-    CommitTransaction();
-    BeginTransaction();
-    BeginTransaction();
+    CommitTransaction();     // commit in-memory changes
+    CommitTransaction();     // commit unpublished changes
+    BeginTransaction();      // start transaction for unpublished changes
+    BeginTransaction();      // start transaction for in-memory changes
 
     SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
 }
@@ -201,23 +198,38 @@ void AssetModelBase::RestoreLocalCheckpoint()
 {
     Expects(m_pTransaction != nullptr);
     Expects(m_pTransaction->m_pNext != nullptr);
-    RevertTransaction();
-    BeginTransaction();
-
-    const bool bModified = m_pTransaction->m_pNext->IsModified();
-    SetValue(ChangesProperty, bModified ? ra::etoi(AssetChanges::Unpublished) : ra::etoi(AssetChanges::None));
+    RevertTransaction();      // discard in-memory changes
+    CreateLocalCheckpoint();  // start transaction for in-memory changes
 }
 
 void AssetModelBase::RestoreServerCheckpoint()
 {
     Expects(m_pTransaction != nullptr);
     Expects(m_pTransaction->m_pNext != nullptr);
-    RevertTransaction();
-    RevertTransaction();
-    BeginTransaction();
-    BeginTransaction();
+    BeginUpdate();
+    RevertTransaction();     // discard in-memory changes
+    RevertTransaction();     // discard unpublished changes
+    BeginTransaction();      // start transaction for unpublished changes
+    BeginTransaction();      // start transaction for in-memory changes
 
     SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
+    EndUpdate();
+}
+
+void AssetModelBase::ResetLocalCheckpoint(ra::Tokenizer& pTokenizer)
+{
+    // this function is a conglomeration of RestoreServerCheckpoint and UpdateLocalCheckpoint that calls
+    // Deserialize to populate the local checkpoint instead of making local changes and commiting them.
+    Expects(m_pTransaction != nullptr);
+    Expects(m_pTransaction->m_pNext != nullptr);
+
+    BeginUpdate();           // disable notifications while rebuilding
+    RevertTransaction();     // discard in-memory changes
+    RevertTransaction();     // discard unpublished changes
+    BeginTransaction();      // start transaction for unpublished changes
+    Deserialize(pTokenizer); // load unpublished changes
+    CreateLocalCheckpoint(); // start transaction for in-memory changes
+    EndUpdate();             // re-enable notifications
 }
 
 void AssetModelBase::SetNew()
@@ -228,6 +240,16 @@ void AssetModelBase::SetNew()
 bool AssetModelBase::HasUnpublishedChanges() const noexcept
 {
     return (m_pTransaction && m_pTransaction->m_pNext && m_pTransaction->m_pNext->IsModified());
+}
+
+bool AssetModelBase::IsUpdating() const
+{
+    if (DataModelBase::IsUpdating())
+        return true;
+
+    // IsUpdating is used to prevent processing change notifications while things are in flux.
+    // leverage that to also prevent processing change notifications while initializing the asset.
+    return (!m_pTransaction || !m_pTransaction->m_pNext);
 }
 
 void AssetModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
@@ -242,11 +264,11 @@ void AssetModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 
 void AssetModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
-    if (args.Property == IsModifiedProperty)
+    // if IsUpdating is true, we're either setting up the object or updating the checkpoints.
+    // the Changes state will be updated appropriately later.
+    if (!IsUpdating())
     {
-        // if either transaction doesn't exist, we're either setting up the object
-        // or updating the checkpoints. the state will be updated appropriately later
-        if (m_pTransaction && m_pTransaction->m_pNext)
+        if (args.Property == IsModifiedProperty)
         {
             if (args.tNewValue)
             {
@@ -313,9 +335,36 @@ int AssetModelBase::GetLocalValue(const IntModelProperty& pProperty) const
     return GetValue(pProperty);
 }
 
+AssetChanges AssetModelBase::GetAssetDefinitionState(const AssetDefinition& pAsset) const
+{
+    return ra::itoe<AssetChanges>(GetValue(*pAsset.m_pProperty) & 0x03);
+}
+
+
+void AssetModelBase::UpdateAssetDefinitionVersion(AssetDefinition& pAsset, AssetChanges nState)
+{
+    const auto& sDefinition = GetAssetDefinition(pAsset, nState);
+
+    // DJB2 hash the definition
+    int nHash = 5381;
+    for (const auto c : sDefinition)
+        nHash = ((nHash << 5) + nHash) + c; /* hash * 33 + c */
+
+    // inject the state into the two lowermost bits - we want the state in the checkpoints so it gets restored
+    // when reverted. we can reconstruct the other properties from the state (see RevertTransaction).
+    nHash <<= 2; // make sure to shift, as DJB2 is sensitive to the last character of the string.
+    nHash |= ra::etoi(nState);
+
+    SetValue(*pAsset.m_pProperty, nHash);
+}
+
 const std::string& AssetModelBase::GetAssetDefinition(const AssetDefinition& pAsset) const
 {
-    const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset.m_pProperty));
+    return GetAssetDefinition(pAsset, GetAssetDefinitionState(pAsset));
+}
+
+const std::string& AssetModelBase::GetAssetDefinition(const AssetDefinition& pAsset, AssetChanges nState)
+{
     switch (nState)
     {
         case AssetChanges::None:
@@ -342,22 +391,29 @@ void AssetModelBase::SetAssetDefinition(AssetDefinition& pAsset, const std::stri
     if (m_pTransaction == nullptr)
     {
         // before core checkpoint
-        pAsset.m_sCoreDefinition = sValue;
+        if (pAsset.m_sCoreDefinition != sValue)
+        {
+            pAsset.m_sCoreDefinition = sValue;
+            UpdateAssetDefinitionVersion(pAsset, AssetChanges::None);
+        }
     }
     else if (m_pTransaction->m_pNext == nullptr)
     {
         // before local checkpoint
         if (sValue == pAsset.m_sCoreDefinition)
         {
-            pAsset.m_sLocalDefinition.clear();
-            SetValue(*pAsset.m_pProperty, ra::etoi(AssetChanges::None));
-            pAsset.m_bLocalModified = false;
+            if (!pAsset.m_sLocalDefinition.empty())
+            {
+                pAsset.m_sLocalDefinition.clear();
+                pAsset.m_bLocalModified = false;
+                UpdateAssetDefinitionVersion(pAsset, AssetChanges::None);
+            }
         }
-        else
+        else if (sValue != pAsset.m_sLocalDefinition)
         {
             pAsset.m_sLocalDefinition = sValue;
-            SetValue(*pAsset.m_pProperty, ra::etoi(AssetChanges::Unpublished));
             pAsset.m_bLocalModified = true;
+            UpdateAssetDefinitionVersion(pAsset, AssetChanges::Unpublished);
         }
     }
     else
@@ -365,18 +421,24 @@ void AssetModelBase::SetAssetDefinition(AssetDefinition& pAsset, const std::stri
         // after local checkpoint
         if (pAsset.m_bLocalModified && sValue == pAsset.m_sLocalDefinition)
         {
-            pAsset.m_sCurrentDefinition.clear();
-            SetValue(*pAsset.m_pProperty, ra::etoi(AssetChanges::Unpublished));
+            if (!pAsset.m_sCurrentDefinition.empty())
+            {
+                pAsset.m_sCurrentDefinition.clear();
+                UpdateAssetDefinitionVersion(pAsset, AssetChanges::Unpublished);
+            }
         }
         else if (!pAsset.m_bLocalModified && sValue == pAsset.m_sCoreDefinition)
         {
-            pAsset.m_sCurrentDefinition.clear();
-            SetValue(*pAsset.m_pProperty, ra::etoi(AssetChanges::None));
+            if (!pAsset.m_sCurrentDefinition.empty())
+            {
+                pAsset.m_sCurrentDefinition.clear();
+                UpdateAssetDefinitionVersion(pAsset, AssetChanges::None);
+            }
         }
-        else
+        else if (pAsset.m_sCurrentDefinition != sValue)
         {
             pAsset.m_sCurrentDefinition = sValue;
-            SetValue(*pAsset.m_pProperty, ra::etoi(AssetChanges::Modified));
+            UpdateAssetDefinitionVersion(pAsset, AssetChanges::Modified);
         }
     }
 }
@@ -392,17 +454,15 @@ void AssetModelBase::CommitTransaction()
         {
             Expects(pAsset != nullptr);
 
-            const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
-            if (nState == AssetChanges::Unpublished)
+            if (GetAssetDefinitionState(*pAsset) == AssetChanges::Unpublished)
             {
                 if (pAsset->m_bLocalModified)
                 {
                     pAsset->m_sCoreDefinition.swap(pAsset->m_sLocalDefinition);
                     pAsset->m_sLocalDefinition.clear();
                     pAsset->m_bLocalModified = false;
+                    UpdateAssetDefinitionVersion(*pAsset, AssetChanges::None);
                 }
-
-                SetValue(*pAsset->m_pProperty, ra::etoi(AssetChanges::None));
             }
         }
     }
@@ -416,22 +476,21 @@ void AssetModelBase::CommitTransaction()
         {
             Expects(pAsset != nullptr);
 
-            const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
-            if (nState == AssetChanges::Modified)
+            if (GetAssetDefinitionState(*pAsset) == AssetChanges::Modified)
             {
                 if (pAsset->m_sCurrentDefinition == pAsset->m_sCoreDefinition)
                 {
                     pAsset->m_sCurrentDefinition.clear();
                     pAsset->m_sLocalDefinition.clear();
                     pAsset->m_bLocalModified = false;
-                    SetValue(*pAsset->m_pProperty, ra::etoi(AssetChanges::None));
+                    UpdateAssetDefinitionVersion(*pAsset, AssetChanges::None);
                 }
-                else
+                else if (pAsset->m_sLocalDefinition != pAsset->m_sCurrentDefinition)
                 {
                     pAsset->m_sLocalDefinition.swap(pAsset->m_sCurrentDefinition);
                     pAsset->m_sCurrentDefinition.clear();
                     pAsset->m_bLocalModified = true;
-                    SetValue(*pAsset->m_pProperty, ra::etoi(AssetChanges::Unpublished));
+                    UpdateAssetDefinitionVersion(*pAsset, AssetChanges::Unpublished);
                 }
             }
         }
@@ -450,7 +509,7 @@ void AssetModelBase::RevertTransaction()
     {
         Expects(pAsset != nullptr);
 
-        const auto nState = ra::itoe<AssetChanges>(GetValue(*pAsset->m_pProperty));
+        const auto nState = GetAssetDefinitionState(*pAsset);
         switch (nState)
         {
             case AssetChanges::None:

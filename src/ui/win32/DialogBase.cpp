@@ -480,15 +480,19 @@ BOOL DialogBase::OnCommand(WORD nCommand)
 
 void DialogBase::SetDialogResult(DialogResult nResult)
 {
-    if (m_vmWindow.GetDialogResult() == DialogResult::None)
-    {
-        m_vmWindow.SetDialogResult(nResult);
+    m_vmWindow.SetDialogResult(nResult);
 
-        if (m_bModal)
-            EndDialog(m_hWnd, 0); // DialogBox call in CreateModalWindow() ignores return value
-        else
-            DestroyWindow(m_hWnd);
-    }
+    // make sure the dialog is closed on the UI thread
+    QueueFunction([this]()
+    {
+        if (::IsWindowVisible(m_hWnd))
+        {
+            if (m_bModal)
+                EndDialog(m_hWnd, 0); // DialogBox call in CreateModalWindow() ignores return value
+            else
+                DestroyWindow(m_hWnd);
+        }
+    });
 }
 
 _Use_decl_annotations_

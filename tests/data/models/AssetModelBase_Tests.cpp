@@ -13,13 +13,13 @@ namespace data {
 namespace models {
 namespace tests {
 
-TEST_CLASS(AssetViewModelBase_Tests)
+TEST_CLASS(AssetModelBase_Tests)
 {
 private:
-    class AssetViewModelHarness : public AssetModelBase
+    class AssetModelHarness : public AssetModelBase
     {
     public:
-        AssetViewModelHarness() noexcept
+        AssetModelHarness() noexcept
         {
             SetTransactional(StringProperty);
             SetTransactional(IntProperty);
@@ -96,7 +96,7 @@ private:
 public:
     TEST_METHOD(TestInitialValues)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         Assert::AreEqual(AssetType::Achievement, asset.GetType());
         Assert::AreEqual(0U, asset.GetID());
@@ -109,7 +109,7 @@ public:
 
     TEST_METHOD(TestIsActive)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         asset.SetState(AssetState::Active);
         Assert::IsTrue(asset.IsActive());
@@ -129,7 +129,7 @@ public:
 
     TEST_METHOD(TestSerializeDefaults)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         asset.Serialize(asset.textWriter);
         Assert::AreEqual(std::string(":\"\"::0:\"\":"), asset.textWriter.GetString());
@@ -137,7 +137,7 @@ public:
 
     TEST_METHOD(TestSerializeSimpleValues)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         asset.SetName(L"Name");
         asset.SetString(L"String");
@@ -151,7 +151,7 @@ public:
 
     TEST_METHOD(TestSerializeColon)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         asset.SetName(L"Mission: Impossible");
         asset.SetString(L"Mission: Impossible");
@@ -164,7 +164,7 @@ public:
 
     TEST_METHOD(TestSerializeQuotes)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         asset.SetName(L"A \"Test\" B");
         asset.SetString(L"A \"Test\" B");
@@ -177,7 +177,7 @@ public:
 
     TEST_METHOD(TestSerializeBackslash)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         asset.SetName(L"A\\B");
         asset.SetString(L"A\\B");
@@ -190,7 +190,7 @@ public:
 
     TEST_METHOD(TestDeserializeSimpleValues)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         std::string sSerialized = ":\"Name\":String:99:\"UTF-8-Quoted\":UTF-8";
         ra::Tokenizer pTokenizer(sSerialized);
@@ -206,7 +206,7 @@ public:
 
     TEST_METHOD(TestDeserializeColon)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         std::string sSerialized = ":\"Mission: Impossible\":\"Mission: Impossible\":0:\"Mission: Impossible\":\"Mission: Impossible\"";
         ra::Tokenizer pTokenizer(sSerialized);
@@ -222,7 +222,7 @@ public:
 
     TEST_METHOD(TestDeserializeQuotes)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         std::string sSerialized = ":\"A \\\"Test\\\" B\":\"A \\\"Test\\\" B\":0:\"A \\\"Test\\\" B\":\"A \\\"Test\\\" B\"";
         ra::Tokenizer pTokenizer(sSerialized);
@@ -238,7 +238,7 @@ public:
 
     TEST_METHOD(TestDeserializeBackslash)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         std::string sSerialized = ":\"A\\\\B\":\"A\\\\B\":0:\"A\\\\B\":\"A\\\\B\"";
         ra::Tokenizer pTokenizer(sSerialized);
@@ -254,7 +254,7 @@ public:
 
     TEST_METHOD(TestDeserializeInvalidNumber)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         std::string sSerialized = ":\"A\":B:C:\"D\":E";
         ra::Tokenizer pTokenizer(sSerialized);
@@ -270,7 +270,7 @@ public:
 
     TEST_METHOD(TestDeserializeMissingField)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         std::string sSerialized = ":\"A\":B:5:\"D\"";
         ra::Tokenizer pTokenizer(sSerialized);
@@ -286,7 +286,7 @@ public:
 
     TEST_METHOD(TestDeserializeNotQuoted)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         std::string sSerialized = ":A:B:5:D:E";
         ra::Tokenizer pTokenizer(sSerialized);
@@ -302,7 +302,7 @@ public:
 
     TEST_METHOD(TestDeserializeBadlyQuoted)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
 
         std::string sSerialized = ":\"A\":\"B\"C:5:\"D\":E";
         ra::Tokenizer pTokenizer(sSerialized);
@@ -318,7 +318,7 @@ public:
 
     TEST_METHOD(TestUpdateCheckpoint)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
         asset.SetName(L"ServerName");
         asset.SetCategory(AssetCategory::Core);
         asset.CreateServerCheckpoint();
@@ -340,7 +340,7 @@ public:
 
     TEST_METHOD(TestRestoreCheckpoint)
     {
-        AssetViewModelHarness asset;
+        AssetModelHarness asset;
         asset.SetName(L"ServerName");
         asset.SetCategory(AssetCategory::Core);
         asset.CreateServerCheckpoint();
@@ -414,11 +414,29 @@ public:
         Assert::AreEqual(AssetChanges::None, asset.GetChanges());
         Assert::AreEqual(std::string("ServerDefinition"), asset.GetDefinition());
     }
+
+    TEST_METHOD(TestResetLocalCheckpoint)
+    {
+        AssetModelHarness asset;
+        asset.SetName(L"ServerName");
+        asset.CreateServerCheckpoint();
+        asset.SetName(L"LocalName");
+        asset.CreateLocalCheckpoint();
+        asset.SetName(L"MemoryName");
+
+        std::string sSerialized = ":\"Name\":String:99:\"UTF-8-Quoted\":UTF-8";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Advance(); // skip leading colon
+        asset.ResetLocalCheckpoint(pTokenizer);
+
+        Assert::AreEqual(std::wstring(L"Name"), asset.GetName());
+        Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
+    }
 };
 
-const StringModelProperty AssetViewModelBase_Tests::AssetViewModelHarness::StringProperty("AssetViewModelHarness", "String", L"");
-const IntModelProperty AssetViewModelBase_Tests::AssetViewModelHarness::IntProperty("AssetViewModelHarness", "Int", 0);
-const IntModelProperty AssetViewModelBase_Tests::AssetDefinitionViewModelHarness::DefinitionProperty("AssetDefinitionViewModelHarness", "Int", ra::etoi(AssetChanges::None));
+const StringModelProperty AssetModelBase_Tests::AssetModelHarness::StringProperty("AssetModelHarness", "String", L"");
+const IntModelProperty AssetModelBase_Tests::AssetModelHarness::IntProperty("AssetModelHarness", "Int", 0);
+const IntModelProperty AssetModelBase_Tests::AssetDefinitionViewModelHarness::DefinitionProperty("AssetDefinitionViewModelHarness", "Int", ra::etoi(AssetChanges::None));
 
 } // namespace tests
 } // namespace models

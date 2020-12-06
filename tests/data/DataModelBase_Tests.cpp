@@ -48,6 +48,10 @@ TEST_CLASS(DataModelBase_Tests)
         const bool* GetPreviousTransactonalBool() const { return m_pTransaction->GetPreviousValue(TransactionalBoolProperty); }
 
         bool TransactionIsModified() const noexcept { return m_pTransaction->IsModified(); }
+
+        using DataModelBase::BeginUpdate;
+        using DataModelBase::EndUpdate;
+        using DataModelBase::IsUpdating;
     };
 
     class NotifyTargetHarness : public DataModelBase::NotifyTarget
@@ -177,220 +181,220 @@ TEST_CLASS(DataModelBase_Tests)
 public:
     TEST_METHOD(TestTransactionalBoolProperty)
     {
-        DataModelHarness vmViewModel;
-        Assert::IsFalse(vmViewModel.GetBool());
-        Assert::IsFalse(vmViewModel.GetTransactionalBool());
-        vmViewModel.BeginTransaction();
+        DataModelHarness pModel;
+        Assert::IsFalse(pModel.GetBool());
+        Assert::IsFalse(pModel.GetTransactionalBool());
+        pModel.BeginTransaction();
 
         NotifyTargetHarness oNotify;
-        vmViewModel.AddNotifyTarget(oNotify);
+        pModel.AddNotifyTarget(oNotify);
 
-        vmViewModel.SetBool(true);
-        Assert::IsTrue(vmViewModel.GetBool());
-        Assert::IsFalse(vmViewModel.GetTransactionalBool());
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::BoolProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.SetBool(true);
+        Assert::IsTrue(pModel.GetBool());
+        Assert::IsFalse(pModel.GetTransactionalBool());
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::BoolProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.AssertBoolChanged(DataModelHarness::BoolProperty, false, true);
         oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
         oNotify.Reset();
 
-        vmViewModel.SetTransactionalBool(true);
-        Assert::IsTrue(vmViewModel.GetBool());
-        Assert::IsTrue(vmViewModel.GetTransactionalBool());
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::BoolProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.SetTransactionalBool(true);
+        Assert::IsTrue(pModel.GetBool());
+        Assert::IsTrue(pModel.GetTransactionalBool());
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::BoolProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.AssertBoolChanged(DataModelHarness::TransactionalBoolProperty, false, true);
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, false, true);
         oNotify.Reset();
 
-        vmViewModel.SetTransactionalBool(true);
-        Assert::IsTrue(vmViewModel.GetBool());
-        Assert::IsTrue(vmViewModel.GetTransactionalBool());
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::BoolProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.SetTransactionalBool(true);
+        Assert::IsTrue(pModel.GetBool());
+        Assert::IsTrue(pModel.GetTransactionalBool());
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::BoolProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.AssertNotChanged(DataModelHarness::TransactionalBoolProperty);
         oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
         oNotify.Reset();
 
-        vmViewModel.SetTransactionalBool(false);
-        Assert::IsTrue(vmViewModel.GetBool());
-        Assert::IsFalse(vmViewModel.GetTransactionalBool());
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::BoolProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.SetTransactionalBool(false);
+        Assert::IsTrue(pModel.GetBool());
+        Assert::IsFalse(pModel.GetTransactionalBool());
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::BoolProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.AssertBoolChanged(DataModelHarness::TransactionalBoolProperty, true, false);
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, true, false);
     }
 
     TEST_METHOD(TestTransactionalStringProperty)
     {
-        DataModelHarness vmViewModel;
-        Assert::AreEqual(std::wstring(), vmViewModel.GetString());
-        Assert::AreEqual(std::wstring(), vmViewModel.GetTransactionalString());
-        vmViewModel.BeginTransaction();
+        DataModelHarness pModel;
+        Assert::AreEqual(std::wstring(), pModel.GetString());
+        Assert::AreEqual(std::wstring(), pModel.GetTransactionalString());
+        pModel.BeginTransaction();
 
         NotifyTargetHarness oNotify;
-        vmViewModel.AddNotifyTarget(oNotify);
+        pModel.AddNotifyTarget(oNotify);
 
-        vmViewModel.SetString(L"Test");
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetString());
-        Assert::AreEqual(std::wstring(), vmViewModel.GetTransactionalString());
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::StringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        pModel.SetString(L"Test");
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetString());
+        Assert::AreEqual(std::wstring(), pModel.GetTransactionalString());
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::StringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
         oNotify.AssertStringChanged(DataModelHarness::StringProperty, L"", L"Test");
         oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
         oNotify.Reset();
 
-        vmViewModel.SetTransactionalString(L"Test");
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetString());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::StringProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        pModel.SetTransactionalString(L"Test");
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetString());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::StringProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
         oNotify.AssertStringChanged(DataModelHarness::TransactionalStringProperty, L"", L"Test");
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, false, true);
         oNotify.Reset();
 
-        vmViewModel.SetTransactionalString(L"Test");
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetString());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::StringProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        pModel.SetTransactionalString(L"Test");
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetString());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::StringProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
         oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
         oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
         oNotify.Reset();
 
-        vmViewModel.SetTransactionalString(L"");
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetString());
-        Assert::AreEqual(std::wstring(L""), vmViewModel.GetTransactionalString());
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::StringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        pModel.SetTransactionalString(L"");
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetString());
+        Assert::AreEqual(std::wstring(L""), pModel.GetTransactionalString());
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::StringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
         oNotify.AssertStringChanged(DataModelHarness::TransactionalStringProperty, L"Test", L"");
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, true, false);
     }
 
     TEST_METHOD(TestTransactionalIntProperty)
     {
-        DataModelHarness vmViewModel;
-        Assert::AreEqual(0, vmViewModel.GetInt());
-        Assert::AreEqual(0, vmViewModel.GetTransactionalInt());
-        vmViewModel.BeginTransaction();
+        DataModelHarness pModel;
+        Assert::AreEqual(0, pModel.GetInt());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+        pModel.BeginTransaction();
 
         NotifyTargetHarness oNotify;
-        vmViewModel.AddNotifyTarget(oNotify);
+        pModel.AddNotifyTarget(oNotify);
 
-        vmViewModel.SetInt(99);
-        Assert::AreEqual(99, vmViewModel.GetInt());
-        Assert::AreEqual(0, vmViewModel.GetTransactionalInt());
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::IntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        pModel.SetInt(99);
+        Assert::AreEqual(99, pModel.GetInt());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::IntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
         oNotify.AssertIntChanged(DataModelHarness::IntProperty, 0, 99);
         oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
         oNotify.Reset();
 
-        vmViewModel.SetTransactionalInt(99);
-        Assert::AreEqual(99, vmViewModel.GetInt());
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::IntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        pModel.SetTransactionalInt(99);
+        Assert::AreEqual(99, pModel.GetInt());
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::IntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
         oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 0, 99);
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, false, true);
         oNotify.Reset();
 
-        vmViewModel.SetTransactionalInt(99);
-        Assert::AreEqual(99, vmViewModel.GetInt());
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::IntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        pModel.SetTransactionalInt(99);
+        Assert::AreEqual(99, pModel.GetInt());
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::IntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
         oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
         oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
         oNotify.Reset();
 
-        vmViewModel.SetTransactionalInt(0);
-        Assert::AreEqual(99, vmViewModel.GetInt());
-        Assert::AreEqual(0, vmViewModel.GetTransactionalInt());
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::IntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        pModel.SetTransactionalInt(0);
+        Assert::AreEqual(99, pModel.GetInt());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::IntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
         oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 99, 0);
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, true, false);
     }
 
     TEST_METHOD(TestRevertTransaction)
     {
-        DataModelHarness vmViewModel;
+        DataModelHarness pModel;
         NotifyTargetHarness oNotify;
-        vmViewModel.AddNotifyTarget(oNotify);
-        vmViewModel.BeginTransaction();
+        pModel.AddNotifyTarget(oNotify);
+        pModel.BeginTransaction();
 
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
-        vmViewModel.SetTransactionalInt(99);
-        vmViewModel.SetTransactionalString(L"Test");
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.SetTransactionalInt(99);
+        pModel.SetTransactionalString(L"Test");
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.Reset();
 
-        vmViewModel.RevertTransaction();
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.RevertTransaction();
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
-        Assert::AreEqual(0, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L""), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L""), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
 
         // no transaction to revert - modifications should be kept, but not tracked
-        vmViewModel.SetTransactionalInt(99);
-        vmViewModel.SetTransactionalString(L"Test");
-        vmViewModel.RevertTransaction();
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.SetTransactionalInt(99);
+        pModel.SetTransactionalString(L"Test");
+        pModel.RevertTransaction();
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
     }
 
     TEST_METHOD(TestRevertTransactionNested)
     {
-        DataModelHarness vmViewModel;
+        DataModelHarness pModel;
         NotifyTargetHarness oNotify;
-        vmViewModel.AddNotifyTarget(oNotify);
+        pModel.AddNotifyTarget(oNotify);
 
         // create a transaction and modify it
-        vmViewModel.BeginTransaction();
-        vmViewModel.SetTransactionalInt(99);
-        vmViewModel.SetTransactionalString(L"Test");
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.BeginTransaction();
+        pModel.SetTransactionalInt(99);
+        pModel.SetTransactionalString(L"Test");
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.Reset();
 
         // nested transaction is not initially considered modified
-        vmViewModel.BeginTransaction();
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.BeginTransaction();
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
         oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
         oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
@@ -398,16 +402,16 @@ public:
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, true, false);
         oNotify.Reset();
 
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
 
         // revert nested transaction, will pick up modifications from first transaction
-        vmViewModel.RevertTransaction();
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.RevertTransaction();
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
         oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
         oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
@@ -416,24 +420,24 @@ public:
         oNotify.Reset();
 
         // another nested transacion, this time, we'll modify it
-        vmViewModel.BeginTransaction();
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        pModel.BeginTransaction();
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
 
-        vmViewModel.SetTransactionalInt(50);
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.SetTransactionalInt(50);
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.Reset();
 
         // revert nested transaction, will pick up modifications from first transaction
-        vmViewModel.RevertTransaction();
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.RevertTransaction();
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
         oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 50, 99);
         oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
@@ -441,93 +445,93 @@ public:
         oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
         oNotify.Reset();
 
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
 
         // revert primary transaction
-        vmViewModel.RevertTransaction();
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.RevertTransaction();
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
         oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 99, 0);
         oNotify.AssertStringChanged(DataModelHarness::TransactionalStringProperty, L"Test", L"");
         oNotify.AssertNotChanged(DataModelHarness::TransactionalBoolProperty);
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, true, false);
 
-        Assert::AreEqual(0, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L""), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L""), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
     }
 
     TEST_METHOD(TestRevertTransactionRepeated)
     {
-        DataModelHarness vmViewModel;
+        DataModelHarness pModel;
         NotifyTargetHarness oNotify;
-        vmViewModel.AddNotifyTarget(oNotify);
+        pModel.AddNotifyTarget(oNotify);
 
-        Assert::AreEqual(0, vmViewModel.GetTransactionalInt());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
 
-        vmViewModel.BeginTransaction();
-        vmViewModel.BeginTransaction();
-        vmViewModel.SetTransactionalInt(99);
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
+        pModel.BeginTransaction();
+        pModel.BeginTransaction();
+        pModel.SetTransactionalInt(99);
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
 
-        vmViewModel.RevertTransaction();
-        Assert::AreEqual(0, vmViewModel.GetTransactionalInt());
-        Assert::IsFalse(vmViewModel.IsModified());
+        pModel.RevertTransaction();
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+        Assert::IsFalse(pModel.IsModified());
 
-        vmViewModel.RevertTransaction();
-        Assert::AreEqual(0, vmViewModel.GetTransactionalInt());
-        Assert::IsFalse(vmViewModel.IsModified());
+        pModel.RevertTransaction();
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+        Assert::IsFalse(pModel.IsModified());
     }
 
     TEST_METHOD(TestRevertTransactionMultipleChanges)
     {
-        DataModelHarness vmViewModel;
+        DataModelHarness pModel;
         NotifyTargetHarness oNotify;
-        vmViewModel.AddNotifyTarget(oNotify);
+        pModel.AddNotifyTarget(oNotify);
 
-        vmViewModel.SetTransactionalInt(99);
-        vmViewModel.SetTransactionalString(L"Test");
-        vmViewModel.BeginTransaction();
+        pModel.SetTransactionalInt(99);
+        pModel.SetTransactionalString(L"Test");
+        pModel.BeginTransaction();
         oNotify.Reset();
 
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
-        vmViewModel.SetTransactionalInt(50);
-        vmViewModel.SetTransactionalString(L"Test2");
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.SetTransactionalInt(50);
+        pModel.SetTransactionalString(L"Test2");
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.AssertStringChanged(DataModelHarness::TransactionalStringProperty, L"Test", L"Test2");
         oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 99, 50);
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, false, true);
         oNotify.Reset();
 
-        vmViewModel.SetTransactionalInt(75);
-        vmViewModel.SetTransactionalString(L"Test3");
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.SetTransactionalInt(75);
+        pModel.SetTransactionalString(L"Test3");
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.AssertStringChanged(DataModelHarness::TransactionalStringProperty, L"Test2", L"Test3");
         oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 50, 75);
         oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
         oNotify.Reset();
 
         // revert should return to original state, regardless of how many times values have changed within the transaction
-        vmViewModel.RevertTransaction();
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.RevertTransaction();
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.AssertStringChanged(DataModelHarness::TransactionalStringProperty, L"Test3", L"Test");
         oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 75, 99);
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, true, false);
@@ -535,70 +539,70 @@ public:
 
     TEST_METHOD(TestCommitTransaction)
     {
-        DataModelHarness vmViewModel;
+        DataModelHarness pModel;
         NotifyTargetHarness oNotify;
-        vmViewModel.AddNotifyTarget(oNotify);
-        vmViewModel.BeginTransaction();
+        pModel.AddNotifyTarget(oNotify);
+        pModel.BeginTransaction();
 
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
-        vmViewModel.SetTransactionalInt(99);
-        vmViewModel.SetTransactionalString(L"Test");
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.SetTransactionalInt(99);
+        pModel.SetTransactionalString(L"Test");
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.Reset();
 
-        vmViewModel.CommitTransaction();
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.CommitTransaction();
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
 
         // no transaction to commit - modifications should be kept, but not tracked
-        vmViewModel.SetTransactionalInt(50);
-        vmViewModel.SetTransactionalString(L"Test2");
-        vmViewModel.RevertTransaction();
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.SetTransactionalInt(50);
+        pModel.SetTransactionalString(L"Test2");
+        pModel.RevertTransaction();
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
-        Assert::AreEqual(50, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test2"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(50, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test2"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
     }
 
     TEST_METHOD(TestCommitTransactionNested)
     {
-        DataModelHarness vmViewModel;
+        DataModelHarness pModel;
         NotifyTargetHarness oNotify;
-        vmViewModel.AddNotifyTarget(oNotify);
+        pModel.AddNotifyTarget(oNotify);
 
         // create a transaction and modify it
-        vmViewModel.BeginTransaction();
-        vmViewModel.SetTransactionalInt(99);
-        vmViewModel.SetTransactionalString(L"Test");
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.BeginTransaction();
+        pModel.SetTransactionalInt(99);
+        pModel.SetTransactionalString(L"Test");
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.Reset();
 
         // nested transaction is not initially considered modified
-        vmViewModel.BeginTransaction();
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.BeginTransaction();
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
         oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
         oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
@@ -606,16 +610,16 @@ public:
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, true, false);
         oNotify.Reset();
 
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
 
         // commit (unmodified) nested transaction, will pick up modifications from first transaction
-        vmViewModel.CommitTransaction();
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.CommitTransaction();
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
         oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
         oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
@@ -624,24 +628,24 @@ public:
         oNotify.Reset();
 
         // another nested transacion, this time, we'll modify it
-        vmViewModel.BeginTransaction();
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        pModel.BeginTransaction();
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
 
-        vmViewModel.SetTransactionalInt(50);
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.SetTransactionalInt(50);
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
         oNotify.Reset();
 
         // revert nested transaction, will pick up modifications from first transaction
-        vmViewModel.CommitTransaction();
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.CommitTransaction();
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
         oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
         oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
@@ -649,69 +653,69 @@ public:
         oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
         oNotify.Reset();
 
-        Assert::AreEqual(50, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(50, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
 
         // commit primary transaction
-        vmViewModel.CommitTransaction();
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.CommitTransaction();
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
         oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
         oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
         oNotify.AssertNotChanged(DataModelHarness::TransactionalBoolProperty);
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, true, false);
 
-        Assert::AreEqual(50, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(50, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
     }
 
     TEST_METHOD(TestCommitTransactionNestedOriginalValues)
     {
-        DataModelHarness vmViewModel;
+        DataModelHarness pModel;
         NotifyTargetHarness oNotify;
-        vmViewModel.AddNotifyTarget(oNotify);
+        pModel.AddNotifyTarget(oNotify);
 
         // set some initial values
-        vmViewModel.SetTransactionalInt(99);
-        vmViewModel.SetTransactionalString(L"Test");
+        pModel.SetTransactionalInt(99);
+        pModel.SetTransactionalString(L"Test");
         oNotify.Reset();
 
         // create a transaction and modify it
-        vmViewModel.BeginTransaction();
-        vmViewModel.SetTransactionalInt(50);
-        vmViewModel.SetTransactionalString(L"Test2");
+        pModel.BeginTransaction();
+        pModel.SetTransactionalInt(50);
+        pModel.SetTransactionalString(L"Test2");
         oNotify.Reset();
 
         // create another transaction and set the values back to the original values
-        vmViewModel.BeginTransaction();
-        vmViewModel.SetTransactionalInt(99);
-        vmViewModel.SetTransactionalString(L"Test");
+        pModel.BeginTransaction();
+        pModel.SetTransactionalInt(99);
+        pModel.SetTransactionalString(L"Test");
 
-        Assert::IsTrue(vmViewModel.IsModified());
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsTrue(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        Assert::IsTrue(pModel.IsModified());
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsTrue(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
         oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 50, 99);
         oNotify.AssertStringChanged(DataModelHarness::TransactionalStringProperty, L"Test2", L"Test");
         oNotify.AssertNotChanged(DataModelHarness::TransactionalBoolProperty);
         oNotify.Reset();
 
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
 
         // commit nested transaction, since the values match the original values, the original transaction will appear unmodified
-        vmViewModel.CommitTransaction();
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.CommitTransaction();
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
         oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
         oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
@@ -719,90 +723,471 @@ public:
         oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, true, false);
         oNotify.Reset();
 
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
 
         // commiting the now-unmodified original transaction should have no effect
-        vmViewModel.CommitTransaction();
-        Assert::IsFalse(vmViewModel.IsModified());
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalIntProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalStringProperty));
-        Assert::IsFalse(vmViewModel.IsModified(DataModelHarness::TransactionalBoolProperty));
+        pModel.CommitTransaction();
+        Assert::IsFalse(pModel.IsModified());
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalIntProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalStringProperty));
+        Assert::IsFalse(pModel.IsModified(DataModelHarness::TransactionalBoolProperty));
 
         oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
         oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
         oNotify.AssertNotChanged(DataModelHarness::TransactionalBoolProperty);
         oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
 
-        Assert::AreEqual(99, vmViewModel.GetTransactionalInt());
-        Assert::AreEqual(std::wstring(L"Test"), vmViewModel.GetTransactionalString());
-        Assert::AreEqual(false, vmViewModel.GetTransactionalBool());
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        Assert::AreEqual(false, pModel.GetTransactionalBool());
     }
 
     TEST_METHOD(TestPreviousValues)
     {
-        DataModelHarness vmViewModel;
-        vmViewModel.BeginTransaction();
+        DataModelHarness pModel;
+        pModel.BeginTransaction();
 
         // no previous value captured
-        Assert::IsNull(vmViewModel.GetPreviousTransactonalBool());
-        Assert::IsNull(vmViewModel.GetPreviousTransactonalInt());
-        Assert::IsNull(vmViewModel.GetPreviousTransactonalString());
+        Assert::IsNull(pModel.GetPreviousTransactonalBool());
+        Assert::IsNull(pModel.GetPreviousTransactonalInt());
+        Assert::IsNull(pModel.GetPreviousTransactonalString());
 
-        vmViewModel.BeginTransaction();
-        vmViewModel.SetTransactionalBool(true);
-        vmViewModel.SetTransactionalInt(50);
-        vmViewModel.SetTransactionalString(L"Test2");
+        pModel.BeginTransaction();
+        pModel.SetTransactionalBool(true);
+        pModel.SetTransactionalInt(50);
+        pModel.SetTransactionalString(L"Test2");
 
         // original values captured
-        Assert::AreEqual(false, *vmViewModel.GetPreviousTransactonalBool());
-        Assert::AreEqual(0, *vmViewModel.GetPreviousTransactonalInt());
-        Assert::AreEqual(std::wstring(), *vmViewModel.GetPreviousTransactonalString());
+        Assert::AreEqual(false, *pModel.GetPreviousTransactonalBool());
+        Assert::AreEqual(0, *pModel.GetPreviousTransactonalInt());
+        Assert::AreEqual(std::wstring(), *pModel.GetPreviousTransactonalString());
 
-        vmViewModel.BeginTransaction();
+        pModel.BeginTransaction();
 
         // no previous values captured for this transaction
-        Assert::IsNull(vmViewModel.GetPreviousTransactonalBool());
-        Assert::IsNull(vmViewModel.GetPreviousTransactonalInt());
-        Assert::IsNull(vmViewModel.GetPreviousTransactonalString());
+        Assert::IsNull(pModel.GetPreviousTransactonalBool());
+        Assert::IsNull(pModel.GetPreviousTransactonalInt());
+        Assert::IsNull(pModel.GetPreviousTransactonalString());
 
-        vmViewModel.SetTransactionalBool(false);
-        vmViewModel.SetTransactionalInt(100);
-        vmViewModel.SetTransactionalString(L"Test3");
+        pModel.SetTransactionalBool(false);
+        pModel.SetTransactionalInt(100);
+        pModel.SetTransactionalString(L"Test3");
 
         // previous values captured
-        Assert::AreEqual(true, *vmViewModel.GetPreviousTransactonalBool());
-        Assert::AreEqual(50, *vmViewModel.GetPreviousTransactonalInt());
-        Assert::AreEqual(std::wstring(L"Test2"), *vmViewModel.GetPreviousTransactonalString());
+        Assert::AreEqual(true, *pModel.GetPreviousTransactonalBool());
+        Assert::AreEqual(50, *pModel.GetPreviousTransactonalInt());
+        Assert::AreEqual(std::wstring(L"Test2"), *pModel.GetPreviousTransactonalString());
 
-        vmViewModel.CommitTransaction();
+        pModel.CommitTransaction();
 
         // previous values updated from commit - since the boolean matches the original value
         // it returns null. the other older original values are maintained
-        Assert::IsNull(vmViewModel.GetPreviousTransactonalBool());
-        Assert::AreEqual(0, *vmViewModel.GetPreviousTransactonalInt());
-        Assert::AreEqual(std::wstring(), *vmViewModel.GetPreviousTransactonalString());
+        Assert::IsNull(pModel.GetPreviousTransactonalBool());
+        Assert::AreEqual(0, *pModel.GetPreviousTransactonalInt());
+        Assert::AreEqual(std::wstring(), *pModel.GetPreviousTransactonalString());
     }
 
     TEST_METHOD(TestIsModified)
     {
-        DataModelHarness vmViewModel;
-        vmViewModel.BeginTransaction();
+        DataModelHarness pModel;
+        pModel.BeginTransaction();
 
-        Assert::IsFalse(vmViewModel.TransactionIsModified());
+        Assert::IsFalse(pModel.TransactionIsModified());
 
-        vmViewModel.BeginTransaction();
-        vmViewModel.SetTransactionalBool(true);
-        vmViewModel.SetTransactionalInt(50);
-        vmViewModel.SetTransactionalString(L"Test2");
-        Assert::IsTrue(vmViewModel.TransactionIsModified());
+        pModel.BeginTransaction();
+        pModel.SetTransactionalBool(true);
+        pModel.SetTransactionalInt(50);
+        pModel.SetTransactionalString(L"Test2");
+        Assert::IsTrue(pModel.TransactionIsModified());
 
-        vmViewModel.BeginTransaction();
-        Assert::IsFalse(vmViewModel.TransactionIsModified());
+        pModel.BeginTransaction();
+        Assert::IsFalse(pModel.TransactionIsModified());
 
-        vmViewModel.SetTransactionalBool(false);
-        Assert::IsTrue(vmViewModel.TransactionIsModified());
+        pModel.SetTransactionalBool(false);
+        Assert::IsTrue(pModel.TransactionIsModified());
+    }
+
+    TEST_METHOD(TestBeginUpdate)
+    {
+        DataModelHarness pModel;
+        Assert::IsFalse(pModel.GetBool());
+        Assert::IsFalse(pModel.GetTransactionalBool());
+        Assert::AreEqual(0, pModel.GetInt());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(), pModel.GetString());
+        Assert::AreEqual(std::wstring(), pModel.GetTransactionalString());
+        pModel.BeginTransaction();
+
+        NotifyTargetHarness oNotify;
+        pModel.AddNotifyTarget(oNotify);
+
+        Assert::IsFalse(pModel.IsUpdating());
+        pModel.BeginUpdate();
+        Assert::IsTrue(pModel.IsUpdating());
+
+        pModel.SetBool(true);
+        Assert::IsTrue(pModel.GetBool());
+        Assert::IsFalse(pModel.IsModified());
+        oNotify.AssertNotChanged(DataModelHarness::BoolProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
+
+        pModel.SetTransactionalBool(true);
+        Assert::IsTrue(pModel.GetTransactionalBool());
+        Assert::IsTrue(pModel.IsModified());
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalBoolProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty); // this change also queued
+
+        pModel.SetString(L"Test");
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetString());
+        pModel.SetTransactionalString(L"Test");
+        Assert::AreEqual(std::wstring(L"Test"), pModel.GetTransactionalString());
+        oNotify.AssertNotChanged(DataModelHarness::StringProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
+
+        pModel.SetInt(99);
+        Assert::AreEqual(99, pModel.GetInt());
+        pModel.SetTransactionalInt(99);
+        Assert::AreEqual(99, pModel.GetTransactionalInt());
+        oNotify.AssertNotChanged(DataModelHarness::IntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
+
+        oNotify.Reset();
+        Assert::IsTrue(pModel.IsUpdating());
+        pModel.EndUpdate();
+        Assert::IsFalse(pModel.IsUpdating());
+
+        oNotify.AssertBoolChanged(DataModelHarness::BoolProperty, false, true);
+        oNotify.AssertBoolChanged(DataModelHarness::TransactionalBoolProperty, false, true);
+        oNotify.AssertIntChanged(DataModelHarness::IntProperty, 0, 99);
+        oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 0, 99);
+        oNotify.AssertStringChanged(DataModelHarness::StringProperty, L"", L"Test");
+        oNotify.AssertStringChanged(DataModelHarness::TransactionalStringProperty, L"", L"Test");
+        oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, false, true);
+    }
+
+    TEST_METHOD(TestBeginUpdateNested)
+    {
+        DataModelHarness pModel;
+        Assert::IsFalse(pModel.GetBool());
+        Assert::IsFalse(pModel.GetTransactionalBool());
+        Assert::AreEqual(0, pModel.GetInt());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+        Assert::AreEqual(std::wstring(), pModel.GetString());
+        Assert::AreEqual(std::wstring(), pModel.GetTransactionalString());
+        pModel.BeginTransaction();
+
+        NotifyTargetHarness oNotify;
+        pModel.AddNotifyTarget(oNotify);
+
+        Assert::IsFalse(pModel.IsUpdating());
+        pModel.BeginUpdate();
+        Assert::IsTrue(pModel.IsUpdating());
+        pModel.BeginUpdate();
+        Assert::IsTrue(pModel.IsUpdating());
+
+        pModel.SetBool(true);
+        pModel.SetTransactionalBool(true);
+        pModel.SetString(L"Test");
+        pModel.SetTransactionalString(L"Test");
+        pModel.SetInt(99);
+        pModel.SetTransactionalInt(99);
+
+        oNotify.AssertNotChanged(DataModelHarness::BoolProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalBoolProperty);
+        oNotify.AssertNotChanged(DataModelHarness::StringProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
+
+        oNotify.Reset();
+        Assert::IsTrue(pModel.IsUpdating());
+        pModel.EndUpdate();
+        Assert::IsTrue(pModel.IsUpdating());
+
+        oNotify.AssertNotChanged(DataModelHarness::BoolProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalBoolProperty);
+        oNotify.AssertNotChanged(DataModelHarness::StringProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
+
+        oNotify.Reset();
+        Assert::IsTrue(pModel.IsUpdating());
+        pModel.EndUpdate();
+        Assert::IsFalse(pModel.IsUpdating());
+
+        oNotify.AssertBoolChanged(DataModelHarness::BoolProperty, false, true);
+        oNotify.AssertBoolChanged(DataModelHarness::TransactionalBoolProperty, false, true);
+        oNotify.AssertIntChanged(DataModelHarness::IntProperty, 0, 99);
+        oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 0, 99);
+        oNotify.AssertStringChanged(DataModelHarness::StringProperty, L"", L"Test");
+        oNotify.AssertStringChanged(DataModelHarness::TransactionalStringProperty, L"", L"Test");
+        oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, false, true);
+    }
+
+
+    TEST_METHOD(TestBeginUpdateNestedChangesBetweenBeginUpdatesInt)
+    {
+        DataModelHarness pModel;
+        Assert::AreEqual(0, pModel.GetInt());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+        pModel.BeginTransaction();
+
+        NotifyTargetHarness oNotify;
+        pModel.AddNotifyTarget(oNotify);
+
+        pModel.BeginUpdate();
+
+        pModel.SetInt(66);
+        pModel.SetTransactionalInt(66);
+
+        pModel.BeginUpdate();
+
+        pModel.SetInt(99);
+        pModel.SetTransactionalInt(99);
+
+        oNotify.AssertNotChanged(DataModelHarness::IntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
+
+        oNotify.Reset();
+        pModel.EndUpdate();
+
+        oNotify.AssertNotChanged(DataModelHarness::IntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
+
+        oNotify.Reset();
+        pModel.EndUpdate();
+
+        oNotify.AssertIntChanged(DataModelHarness::IntProperty, 0, 99);
+        oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 0, 99);
+        oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, false, true);
+    }
+
+    TEST_METHOD(TestBeginUpdateNestedChangesBetweenEndUpdatesInt)
+    {
+        DataModelHarness pModel;
+        Assert::AreEqual(0, pModel.GetInt());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+        pModel.BeginTransaction();
+
+        NotifyTargetHarness oNotify;
+        pModel.AddNotifyTarget(oNotify);
+
+        pModel.BeginUpdate();
+        pModel.BeginUpdate();
+
+        pModel.SetInt(66);
+        pModel.SetTransactionalInt(66);
+
+        oNotify.AssertNotChanged(DataModelHarness::IntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
+
+        oNotify.Reset();
+        pModel.EndUpdate();
+
+        pModel.SetInt(99);
+        pModel.SetTransactionalInt(99);
+
+        oNotify.AssertNotChanged(DataModelHarness::IntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
+
+        oNotify.Reset();
+        pModel.EndUpdate();
+
+        oNotify.AssertIntChanged(DataModelHarness::IntProperty, 0, 99);
+        oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 0, 99);
+        oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, false, true);
+    }
+
+    TEST_METHOD(TestBeginUpdateChangeAndChangeBackBool)
+    {
+        DataModelHarness pModel;
+        pModel.BeginTransaction();
+        Assert::IsFalse(pModel.GetBool());
+        Assert::IsFalse(pModel.GetTransactionalBool());
+
+        NotifyTargetHarness oNotify;
+        pModel.AddNotifyTarget(oNotify);
+
+        pModel.BeginUpdate();
+
+        pModel.SetBool(true);
+        pModel.SetTransactionalBool(true);
+
+        pModel.SetBool(false);
+        pModel.SetTransactionalBool(false);
+
+        pModel.EndUpdate();
+
+        oNotify.AssertNotChanged(DataModelHarness::BoolProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalBoolProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
+
+        Assert::IsFalse(pModel.GetBool());
+        Assert::IsFalse(pModel.GetTransactionalBool());
+    }
+
+    TEST_METHOD(TestBeginUpdateChangeAndChangeBackInt)
+    {
+        DataModelHarness pModel;
+        pModel.BeginTransaction();
+        Assert::AreEqual(0, pModel.GetInt());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+
+        NotifyTargetHarness oNotify;
+        pModel.AddNotifyTarget(oNotify);
+
+        pModel.BeginUpdate();
+
+        pModel.SetInt(5);
+        pModel.SetTransactionalInt(5);
+
+        pModel.SetInt(99);
+        pModel.SetTransactionalInt(99);
+
+        pModel.SetInt(0);
+        pModel.SetTransactionalInt(0);
+
+        pModel.EndUpdate();
+
+        oNotify.AssertNotChanged(DataModelHarness::IntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalIntProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
+
+        Assert::AreEqual(0, pModel.GetInt());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+    }
+
+    TEST_METHOD(TestBeginUpdateChangeAndChangeBackString)
+    {
+        DataModelHarness pModel;
+        pModel.BeginTransaction();
+        Assert::AreEqual(std::wstring(), pModel.GetString());
+        Assert::AreEqual(std::wstring(), pModel.GetTransactionalString());
+
+        NotifyTargetHarness oNotify;
+        pModel.AddNotifyTarget(oNotify);
+
+        pModel.BeginUpdate();
+
+        pModel.SetString(L"Test");
+        pModel.SetTransactionalString(L"Test");
+
+        pModel.SetString(L"Test2");
+        pModel.SetTransactionalString(L"Test2");
+
+        pModel.SetString(L"");
+        pModel.SetTransactionalString(L"");
+
+        pModel.EndUpdate();
+
+        oNotify.AssertNotChanged(DataModelHarness::StringProperty);
+        oNotify.AssertNotChanged(DataModelHarness::TransactionalStringProperty);
+        oNotify.AssertNotChanged(DataModelHarness::IsModifiedProperty);
+
+        Assert::AreEqual(std::wstring(), pModel.GetString());
+        Assert::AreEqual(std::wstring(), pModel.GetTransactionalString());
+    }
+
+    TEST_METHOD(TestBeginUpdateMultipleChangesBool)
+    {
+        DataModelHarness pModel;
+        pModel.BeginTransaction();
+        Assert::IsFalse(pModel.GetBool());
+        Assert::IsFalse(pModel.GetTransactionalBool());
+
+        NotifyTargetHarness oNotify;
+        pModel.AddNotifyTarget(oNotify);
+
+        pModel.BeginUpdate();
+
+        pModel.SetBool(true);
+        pModel.SetTransactionalBool(true);
+
+        pModel.SetBool(false);
+        pModel.SetTransactionalBool(false);
+
+        pModel.SetBool(true);
+        pModel.SetTransactionalBool(true);
+
+        pModel.EndUpdate();
+
+        oNotify.AssertBoolChanged(DataModelHarness::BoolProperty, false, true);
+        oNotify.AssertBoolChanged(DataModelHarness::TransactionalBoolProperty, false, true);
+        oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, false, true);
+
+        Assert::IsTrue(pModel.GetBool());
+        Assert::IsTrue(pModel.GetTransactionalBool());
+    }
+
+    TEST_METHOD(TestBeginUpdateMultipleChangesInt)
+    {
+        DataModelHarness pModel;
+        pModel.BeginTransaction();
+        Assert::AreEqual(0, pModel.GetInt());
+        Assert::AreEqual(0, pModel.GetTransactionalInt());
+
+        NotifyTargetHarness oNotify;
+        pModel.AddNotifyTarget(oNotify);
+
+        pModel.BeginUpdate();
+
+        pModel.SetInt(5);
+        pModel.SetTransactionalInt(5);
+
+        pModel.SetInt(99);
+        pModel.SetTransactionalInt(99);
+
+        pModel.SetInt(67);
+        pModel.SetTransactionalInt(68);
+
+        pModel.EndUpdate();
+
+        oNotify.AssertIntChanged(DataModelHarness::IntProperty, 0, 67);
+        oNotify.AssertIntChanged(DataModelHarness::TransactionalIntProperty, 0, 68);
+        oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, false, true);
+
+        Assert::AreEqual(67, pModel.GetInt());
+        Assert::AreEqual(68, pModel.GetTransactionalInt());
+    }
+
+    TEST_METHOD(TestBeginUpdateMultipleChangesString)
+    {
+        DataModelHarness pModel;
+        pModel.BeginTransaction();
+        Assert::AreEqual(std::wstring(), pModel.GetString());
+        Assert::AreEqual(std::wstring(), pModel.GetTransactionalString());
+
+        NotifyTargetHarness oNotify;
+        pModel.AddNotifyTarget(oNotify);
+
+        pModel.BeginUpdate();
+
+        pModel.SetString(L"Test");
+        pModel.SetTransactionalString(L"Test");
+
+        pModel.SetString(L"Test2");
+        pModel.SetTransactionalString(L"Test2");
+
+        pModel.SetString(L"Test3a");
+        pModel.SetTransactionalString(L"Test3b");
+
+        pModel.EndUpdate();
+
+        oNotify.AssertStringChanged(DataModelHarness::StringProperty, L"", L"Test3a");
+        oNotify.AssertStringChanged(DataModelHarness::TransactionalStringProperty, L"", L"Test3b");
+        oNotify.AssertBoolChanged(DataModelHarness::IsModifiedProperty, false, true);
+
+        Assert::AreEqual(std::wstring(L"Test3a"), pModel.GetString());
+        Assert::AreEqual(std::wstring(L"Test3b"), pModel.GetTransactionalString());
     }
 };
 

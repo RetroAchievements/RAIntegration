@@ -7,25 +7,28 @@ const BoolModelProperty DataModelBase::IsModifiedProperty("DataModelBase", "IsMo
 
 void DataModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
-    if (m_pTransaction != nullptr && IsTransactional(args.Property))
+    if (static_cast<const void*>(&args) != m_pEndUpdateChangeArgs)
     {
-        m_pTransaction->ValueChanged(args);
-        SetValue(IsModifiedProperty, m_pTransaction->IsModified());
-    }
-
-    if (m_pUpdateTransaction)
-    {
-        for (auto& pChange : m_pUpdateTransaction->m_vDelayedBoolChanges)
+        if (m_pTransaction != nullptr && IsTransactional(args.Property))
         {
-            if (pChange.pProperty == &args.Property)
-            {
-                pChange.tNewValue = args.tNewValue;
-                return;
-            }
+            m_pTransaction->ValueChanged(args);
+            SetValue(IsModifiedProperty, m_pTransaction->IsModified());
         }
 
-        m_pUpdateTransaction->m_vDelayedBoolChanges.push_back({ &args.Property, args.tOldValue, args.tNewValue });
-        return;
+        if (m_pUpdateTransaction)
+        {
+            for (auto& pChange : m_pUpdateTransaction->m_vDelayedBoolChanges)
+            {
+                if (pChange.pProperty == &args.Property)
+                {
+                    pChange.tNewValue = args.tNewValue;
+                    return;
+                }
+            }
+
+            m_pUpdateTransaction->m_vDelayedBoolChanges.push_back({ &args.Property, args.tOldValue, args.tNewValue });
+            return;
+        }
     }
 
     if (!m_vNotifyTargets.empty())
@@ -61,25 +64,28 @@ void DataModelBase::Transaction::ValueChanged(const BoolModelProperty::ChangeArg
 
 void DataModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    if (m_pTransaction != nullptr && IsTransactional(args.Property))
+    if (static_cast<const void*>(&args) != m_pEndUpdateChangeArgs)
     {
-        m_pTransaction->ValueChanged(args);
-        SetValue(IsModifiedProperty, m_pTransaction->IsModified());
-    }
-
-    if (m_pUpdateTransaction)
-    {
-        for (auto& pChange : m_pUpdateTransaction->m_vDelayedStringChanges)
+        if (m_pTransaction != nullptr && IsTransactional(args.Property))
         {
-            if (pChange.pProperty == &args.Property)
-            {
-                pChange.tNewValue = args.tNewValue;
-                return;
-            }
+            m_pTransaction->ValueChanged(args);
+            SetValue(IsModifiedProperty, m_pTransaction->IsModified());
         }
 
-        m_pUpdateTransaction->m_vDelayedStringChanges.push_back({ &args.Property, args.tOldValue, args.tNewValue });
-        return;
+        if (m_pUpdateTransaction)
+        {
+            for (auto& pChange : m_pUpdateTransaction->m_vDelayedStringChanges)
+            {
+                if (pChange.pProperty == &args.Property)
+                {
+                    pChange.tNewValue = args.tNewValue;
+                    return;
+                }
+            }
+
+            m_pUpdateTransaction->m_vDelayedStringChanges.push_back({ &args.Property, args.tOldValue, args.tNewValue });
+            return;
+        }
     }
 
     if (!m_vNotifyTargets.empty())
@@ -115,25 +121,28 @@ void DataModelBase::Transaction::ValueChanged(const StringModelProperty::ChangeA
 
 void DataModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (m_pTransaction != nullptr && IsTransactional(args.Property))
+    if (static_cast<const void*>(&args) != m_pEndUpdateChangeArgs)
     {
-        m_pTransaction->ValueChanged(args);
-        SetValue(IsModifiedProperty, m_pTransaction->IsModified());
-    }
-
-    if (m_pUpdateTransaction)
-    {
-        for (auto& pChange : m_pUpdateTransaction->m_vDelayedIntChanges)
+        if (m_pTransaction != nullptr && IsTransactional(args.Property))
         {
-            if (pChange.pProperty == &args.Property)
-            {
-                pChange.tNewValue = args.tNewValue;
-                return;
-            }
+            m_pTransaction->ValueChanged(args);
+            SetValue(IsModifiedProperty, m_pTransaction->IsModified());
         }
 
-        m_pUpdateTransaction->m_vDelayedIntChanges.push_back({ &args.Property, args.tOldValue, args.tNewValue });
-        return;
+        if (m_pUpdateTransaction)
+        {
+            for (auto& pChange : m_pUpdateTransaction->m_vDelayedIntChanges)
+            {
+                if (pChange.pProperty == &args.Property)
+                {
+                    pChange.tNewValue = args.tNewValue;
+                    return;
+                }
+            }
+
+            m_pUpdateTransaction->m_vDelayedIntChanges.push_back({ &args.Property, args.tOldValue, args.tNewValue });
+            return;
+        }
     }
 
     if (!m_vNotifyTargets.empty())
@@ -182,11 +191,15 @@ void DataModelBase::EndUpdate()
     {
         std::unique_ptr<UpdateTransaction> pUpdateTransaction = std::move(m_pUpdateTransaction);
 
+        // m_pEndUpdateChangeArgs is set to each ChangeArgs as we call OnValueChanged so it doesn't try to
+        // apply the change to the transaction - the transaction was updated the first time it was called
+
         for (const auto& pChange : pUpdateTransaction->m_vDelayedIntChanges)
         {
             if (pChange.tNewValue != pChange.tOldValue)
             {
                 IntModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
+                m_pEndUpdateChangeArgs = static_cast<const void*>(&args);
                 OnValueChanged(args);
             }
         }
@@ -196,6 +209,7 @@ void DataModelBase::EndUpdate()
             if (pChange.tNewValue != pChange.tOldValue)
             {
                 BoolModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
+                m_pEndUpdateChangeArgs = static_cast<const void*>(&args);
                 OnValueChanged(args);
             }
         }
@@ -205,9 +219,12 @@ void DataModelBase::EndUpdate()
             if (pChange.tNewValue != pChange.tOldValue)
             {
                 StringModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
+                m_pEndUpdateChangeArgs = static_cast<const void*>(&args);
                 OnValueChanged(args);
             }
         }
+
+        m_pEndUpdateChangeArgs = nullptr;
     }
 }
 

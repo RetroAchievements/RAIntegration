@@ -311,6 +311,7 @@ private:
         std::vector<DelayedChange<bool>> m_vDelayedBoolChanges;
     };
     std::unique_ptr<UpdateTransaction> m_pUpdateTransaction;
+    const void* m_pEndUpdateChangeArgs = nullptr;
 };
 
 } // namespace data

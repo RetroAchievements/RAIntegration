@@ -9,6 +9,7 @@
 
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockImageRepository.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -27,6 +28,7 @@ private:
 
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockFileSystem mockFileSystem;
+        ra::ui::mocks::MockImageRepository mockImageRepository;
     };
 
 public:
@@ -142,13 +144,13 @@ public:
         std::string sInput = "b:A.png=1:B.png=1";
         ra::Tokenizer pTokenizer(sInput);
         badges.mockGameContext.SetGameId(123U);
-        badges.mockFileSystem.MockFileSize(L"local\\123-A.png", 1234);
-        badges.mockFileSystem.MockFileSize(L"local\\123-B.png", 2345);
+        badges.mockFileSystem.MockFileSize(L"RACache\\Badges\\local\\123-A.png", 1234);
+        badges.mockFileSystem.MockFileSize(L"RACache\\Badges\\local\\123-B.png", 2345);
 
         pTokenizer.Advance(2); // GameAssets reads "b:"
         Assert::IsTrue(badges.Deserialize(pTokenizer));
 
-        badges.RemoveReference(L"local\\123-A.png", false);
+        badges.RemoveReference(L"local\\123-A.png", true);
         badges.AddReference(L"local\\123-C.png", false);
         badges.Commit(L"local\\123-A.png", L"local\\123-C.png");
 
@@ -156,8 +158,8 @@ public:
         badges.Serialize(badges.textWriter);
         Assert::AreEqual(std::string("b:B.png=1:C.png=1"), badges.textWriter.GetString());
 
-        Assert::AreEqual({ -1 }, badges.mockFileSystem.GetFileSize(L"local\\123-A.png"));
-        Assert::AreEqual({ 2345 }, badges.mockFileSystem.GetFileSize(L"local\\123-B.png"));
+        Assert::AreEqual({ -1 }, badges.mockFileSystem.GetFileSize(L"RACache\\Badges\\local\\123-A.png"));
+        Assert::AreEqual({ 2345 }, badges.mockFileSystem.GetFileSize(L"RACache\\Badges\\local\\123-B.png"));
     }
 
     TEST_METHOD(TestDeserializePublished)
@@ -166,13 +168,13 @@ public:
         std::string sInput = "b:A.png=1:B.png=1";
         ra::Tokenizer pTokenizer(sInput);
         badges.mockGameContext.SetGameId(123U);
-        badges.mockFileSystem.MockFileSize(L"local\\123-A.png", 1234);
-        badges.mockFileSystem.MockFileSize(L"local\\123-B.png", 2345);
+        badges.mockFileSystem.MockFileSize(L"RACache\\Badges\\local\\123-A.png", 1234);
+        badges.mockFileSystem.MockFileSize(L"RACache\\Badges\\local\\123-B.png", 2345);
 
         pTokenizer.Advance(2); // GameAssets reads "b:"
         Assert::IsTrue(badges.Deserialize(pTokenizer));
 
-        badges.RemoveReference(L"local\\123-A.png", false);
+        badges.RemoveReference(L"local\\123-A.png", true);
         badges.Commit(L"local\\123-A.png", L"22222");
 
         Assert::IsTrue(badges.NeedsSerialized());
@@ -180,8 +182,8 @@ public:
         Assert::AreEqual(std::string("b:B.png=1"), badges.textWriter.GetString());
 
         // combination of RemoveReference and Commit should have deleted 123-A.png
-        Assert::AreEqual({ -1 }, badges.mockFileSystem.GetFileSize(L"local\\123-A.png"));
-        Assert::AreEqual({ 2345 }, badges.mockFileSystem.GetFileSize(L"local\\123-B.png"));
+        Assert::AreEqual({ -1 }, badges.mockFileSystem.GetFileSize(L"RACache\\Badges\\local\\123-A.png"));
+        Assert::AreEqual({ 2345 }, badges.mockFileSystem.GetFileSize(L"RACache\\Badges\\local\\123-B.png"));
     }
 
     TEST_METHOD(TestDeserializeChangedStillReferenced)
@@ -190,13 +192,13 @@ public:
         std::string sInput = "b:A.png=2:B.png=1";
         ra::Tokenizer pTokenizer(sInput);
         badges.mockGameContext.SetGameId(123U);
-        badges.mockFileSystem.MockFileSize(L"local\\123-A.png", 1234);
-        badges.mockFileSystem.MockFileSize(L"local\\123-B.png", 2345);
+        badges.mockFileSystem.MockFileSize(L"RACache\\Badges\\local\\123-A.png", 1234);
+        badges.mockFileSystem.MockFileSize(L"RACache\\Badges\\local\\123-B.png", 2345);
 
         pTokenizer.Advance(2); // GameAssets reads "b:"
         Assert::IsTrue(badges.Deserialize(pTokenizer));
 
-        badges.RemoveReference(L"local\\123-A.png", false);
+        badges.RemoveReference(L"local\\123-A.png", true);
         badges.AddReference(L"local\\123-C.png", false);
         badges.Commit(L"local\\123-A.png", L"local\\123-C.png");
 
@@ -204,8 +206,8 @@ public:
         badges.Serialize(badges.textWriter);
         Assert::AreEqual(std::string("b:A.png=1:B.png=1:C.png=1"), badges.textWriter.GetString());
 
-        Assert::AreEqual({ 1234 }, badges.mockFileSystem.GetFileSize(L"local\\123-A.png"));
-        Assert::AreEqual({ 2345 }, badges.mockFileSystem.GetFileSize(L"local\\123-B.png"));
+        Assert::AreEqual({ 1234 }, badges.mockFileSystem.GetFileSize(L"RACache\\Badges\\local\\123-A.png"));
+        Assert::AreEqual({ 2345 }, badges.mockFileSystem.GetFileSize(L"RACache\\Badges\\local\\123-B.png"));
     }
 
     TEST_METHOD(TestDeserializeChangedNotCommitted)

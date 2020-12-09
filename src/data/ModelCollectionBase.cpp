@@ -254,7 +254,7 @@ void ModelCollectionBase::UpdateIndices()
         std::sort(vDeletedIndices.rbegin(), vDeletedIndices.rend());
 
         // remove the deleted items from the collection
-        m_vItems.erase(m_vItems.begin() + m_nSize);
+        m_vItems.erase(m_vItems.begin() + m_nSize, m_vItems.end());
 
         // update the indices of any items after the deleted items
         for (auto& pItem : m_vItems)

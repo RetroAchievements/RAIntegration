@@ -478,10 +478,17 @@ void TriggerViewModel::ConditionsMonitor::OnViewModelIntValueChanged(gsl::index,
 
 void TriggerViewModel::ConditionsMonitor::OnViewModelAdded(gsl::index)
 {
-    UpdateCurrentGroup();
+    if (!m_vmTrigger->Conditions().IsUpdating())
+        UpdateCurrentGroup();
 }
 
 void TriggerViewModel::ConditionsMonitor::OnViewModelRemoved(gsl::index)
+{
+    if (!m_vmTrigger->Conditions().IsUpdating())
+        UpdateCurrentGroup();
+}
+
+void TriggerViewModel::ConditionsMonitor::OnEndViewModelCollectionUpdate()
 {
     UpdateCurrentGroup();
 }

@@ -349,7 +349,7 @@ static void AddAltGroup(ViewModelCollection<TriggerViewModel::GroupViewModel>& v
     int nId, rc_condset_t* pConditionSet)
 {
     auto& vmAltGroup = vGroups.Add();
-    vmAltGroup.SetId(++nId);
+    vmAltGroup.SetId(nId);
     vmAltGroup.SetLabel(ra::StringPrintf(L"Alt %d", nId));
     vmAltGroup.m_pConditionSet = pConditionSet;
 }
@@ -421,7 +421,7 @@ void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
         if (vmAltGroup != nullptr)
             vmAltGroup->m_pConditionSet = pConditionSet;
         else
-            AddAltGroup(m_vGroups, gsl::narrow_cast<int>(nIndex), pConditionSet);
+            AddAltGroup(m_vGroups, gsl::narrow_cast<int>(++nIndex), pConditionSet);
     }
 
     // remove any extra alt groups

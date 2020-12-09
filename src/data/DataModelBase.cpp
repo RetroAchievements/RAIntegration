@@ -7,7 +7,7 @@ const BoolModelProperty DataModelBase::IsModifiedProperty("DataModelBase", "IsMo
 
 void DataModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
-    if (static_cast<const void*>(&args) != m_pEndUpdateChangeArgs)
+    if (&args != m_pEndUpdateChangeArgs)
     {
         if (m_pTransaction != nullptr && IsTransactional(args.Property))
         {
@@ -64,7 +64,7 @@ void DataModelBase::Transaction::ValueChanged(const BoolModelProperty::ChangeArg
 
 void DataModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    if (static_cast<const void*>(&args) != m_pEndUpdateChangeArgs)
+    if (&args != m_pEndUpdateChangeArgs)
     {
         if (m_pTransaction != nullptr && IsTransactional(args.Property))
         {
@@ -121,7 +121,7 @@ void DataModelBase::Transaction::ValueChanged(const StringModelProperty::ChangeA
 
 void DataModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (static_cast<const void*>(&args) != m_pEndUpdateChangeArgs)
+    if (&args != m_pEndUpdateChangeArgs)
     {
         if (m_pTransaction != nullptr && IsTransactional(args.Property))
         {
@@ -199,7 +199,7 @@ void DataModelBase::EndUpdate()
             if (pChange.tNewValue != pChange.tOldValue)
             {
                 IntModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
-                m_pEndUpdateChangeArgs = static_cast<const void*>(&args);
+                m_pEndUpdateChangeArgs = &args;
                 OnValueChanged(args);
             }
         }
@@ -209,7 +209,7 @@ void DataModelBase::EndUpdate()
             if (pChange.tNewValue != pChange.tOldValue)
             {
                 BoolModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
-                m_pEndUpdateChangeArgs = static_cast<const void*>(&args);
+                m_pEndUpdateChangeArgs = &args;
                 OnValueChanged(args);
             }
         }
@@ -219,7 +219,7 @@ void DataModelBase::EndUpdate()
             if (pChange.tNewValue != pChange.tOldValue)
             {
                 StringModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
-                m_pEndUpdateChangeArgs = static_cast<const void*>(&args);
+                m_pEndUpdateChangeArgs = &args;
                 OnValueChanged(args);
             }
         }

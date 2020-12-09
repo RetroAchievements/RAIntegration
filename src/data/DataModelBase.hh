@@ -273,7 +273,7 @@ protected:
     /// Can be used in OnValueChanged overrides to determine if change notifications are disabled. If they are, OnValueChanged
     /// will be called again once the notifications are re-enabled, so processing should be delayed if this returns true.
     /// </remarks>
-    virtual bool IsUpdating() const { return (m_pUpdateTransaction != nullptr); }
+    virtual bool IsUpdating() const noexcept(false) { return (m_pUpdateTransaction != nullptr); }
 
 private:
     void DiscardTransaction();

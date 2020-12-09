@@ -340,8 +340,7 @@ AssetChanges AssetModelBase::GetAssetDefinitionState(const AssetDefinition& pAss
     return ra::itoe<AssetChanges>(GetValue(*pAsset.m_pProperty) & 0x03);
 }
 
-
-void AssetModelBase::UpdateAssetDefinitionVersion(AssetDefinition& pAsset, AssetChanges nState)
+void AssetModelBase::UpdateAssetDefinitionVersion(const AssetDefinition& pAsset, AssetChanges nState)
 {
     const auto& sDefinition = GetAssetDefinition(pAsset, nState);
 
@@ -363,7 +362,7 @@ const std::string& AssetModelBase::GetAssetDefinition(const AssetDefinition& pAs
     return GetAssetDefinition(pAsset, GetAssetDefinitionState(pAsset));
 }
 
-const std::string& AssetModelBase::GetAssetDefinition(const AssetDefinition& pAsset, AssetChanges nState)
+const std::string& AssetModelBase::GetAssetDefinition(const AssetDefinition& pAsset, AssetChanges nState) noexcept
 {
     switch (nState)
     {

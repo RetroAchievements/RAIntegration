@@ -289,9 +289,9 @@ protected:
     static bool IsActive(AssetState nState) noexcept;
 
 private:
-    static const std::string& GetAssetDefinition(const AssetDefinition& pAsset, AssetChanges nState);
+    static const std::string& GetAssetDefinition(const AssetDefinition& pAsset, AssetChanges nState) noexcept;
     AssetChanges GetAssetDefinitionState(const AssetDefinition& pAsset) const;
-    void UpdateAssetDefinitionVersion(AssetDefinition&, AssetChanges nState);
+    void UpdateAssetDefinitionVersion(const AssetDefinition&, AssetChanges nState);
 };
 
 } // namespace models

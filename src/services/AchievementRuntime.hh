@@ -197,6 +197,8 @@ public:
             rc_runtime_reset(&m_pRuntime);
     }
 
+    void InvalidateAddress(ra::ByteAddress nAddress);
+
 protected:
     bool m_bPaused = false;
     rc_runtime_t m_pRuntime{};

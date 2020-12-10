@@ -760,6 +760,11 @@ int AchievementRuntime::SaveProgressToBuffer(char* pBuffer, int nBufferSize) con
     return nSize;
 }
 
+void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress)
+{
+    rc_runtime_invalidate_address(&m_pRuntime, nAddress);
+}
+
 } // namespace services
 } // namespace ra
 

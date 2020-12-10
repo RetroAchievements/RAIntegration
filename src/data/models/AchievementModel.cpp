@@ -144,6 +144,9 @@ void AchievementModel::DoFrame()
             case RC_TRIGGER_STATE_WAITING:
                 SetState(AssetState::Waiting);
                 break;
+            case RC_TRIGGER_STATE_DISABLED:
+                SetState(AssetState::Disabled);
+                break;
         }
     }
 }

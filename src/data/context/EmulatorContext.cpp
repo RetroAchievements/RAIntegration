@@ -10,6 +10,7 @@
 #include "data\context\GameContext.hh"
 #include "data\context\UserContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
@@ -527,20 +528,28 @@ void EmulatorContext::OnTotalMemorySizeChanged()
 
 uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const noexcept
 {
+    const ra::ByteAddress nOriginalAddress = nAddress;
     for (const auto& pBlock : m_vMemoryBlocks)
     {
         if (nAddress < pBlock.size)
-            return pBlock.read(nAddress);
+        {
+            if (pBlock.read)
+                return pBlock.read(nAddress);
+
+            break;
+        }
 
         nAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
     }
 
-    return 0U;
+    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().InvalidateAddress(nOriginalAddress);
+    return 0;
 }
 
 _Use_decl_annotations_
 void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
 {
+    const ra::ByteAddress nOriginalAddress = nAddress;
     Expects(pBuffer != nullptr);
 
     for (const auto& pBlock : m_vMemoryBlocks)
@@ -549,6 +558,12 @@ void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], si
         {
             nAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
             continue;
+        }
+
+        if (!pBlock.read)
+        {
+            ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().InvalidateAddress(nOriginalAddress);
+            break;
         }
 
         const size_t nBlockRemaining = pBlock.size - nAddress;
@@ -644,6 +659,9 @@ void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) 
     {
         if (nAddress < pBlock.size)
         {
+            if (!pBlock.write)
+                return;
+
             pBlock.write(nAddress, nValue);
             m_bMemoryModified = true;
 

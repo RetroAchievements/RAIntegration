@@ -35,6 +35,7 @@ enum class AssetState
     Triggered,
     Waiting,
     Paused,
+    Disabled,
 };
 
 enum class AssetChanges

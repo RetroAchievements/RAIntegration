@@ -47,6 +47,7 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Active), L"Active");
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Paused), L"Paused");
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Triggered), L"Triggered");
+    m_vStates.Add(ra::etoi(ra::data::models::AssetState::Disabled), L"Disabled");
 
     m_vCategories.Add(ra::etoi(ra::data::models::AssetCategory::Core), L"Core");
     m_vCategories.Add(ra::etoi(ra::data::models::AssetCategory::Unofficial), L"Unofficial");

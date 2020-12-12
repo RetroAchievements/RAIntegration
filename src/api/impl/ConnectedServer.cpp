@@ -997,38 +997,48 @@ FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::R
             response.Result = ApiResult::Success;
 
             auto& Data = document["Response"];
-            for (auto iter = Data.MemberBegin(); iter != Data.MemberEnd(); ++iter)
+            if (!Data.IsObject())
             {
-                if (!iter->name.IsString())
+                // Response should be a dictionary of ID/Name pairs. If we got anything else, it's an error
+                response.Result = ApiResult::Error;
+                if (response.ErrorMessage.empty())
+                    response.ErrorMessage = ra::StringPrintf("%s is not a dictionary", "Response");
+            }
+            else
+            {
+                for (auto iter = Data.MemberBegin(); iter != Data.MemberEnd(); ++iter)
                 {
-                    response.Result = ApiResult::Error;
-                    if (response.ErrorMessage.empty())
-                        response.ErrorMessage = "Non-string key found in response";
+                    if (!iter->name.IsString())
+                    {
+                        response.Result = ApiResult::Error;
+                        if (response.ErrorMessage.empty())
+                            response.ErrorMessage = "Non-string key found in response";
 
-                    break;
+                        break;
+                    }
+
+                    if (!iter->value.IsString())
+                    {
+                        response.Result = ApiResult::Error;
+                        if (response.ErrorMessage.empty())
+                            response.ErrorMessage = ra::BuildString("Non-string value found in response for key ", iter->name.GetString());
+
+                        break;
+                    }
+
+                    char* pEnd;
+                    const auto nGameId = strtoul(iter->name.GetString(), &pEnd, 10);
+                    if (nGameId == 0 || (pEnd && *pEnd))
+                    {
+                        response.Result = ApiResult::Error;
+                        if (response.ErrorMessage.empty())
+                            response.ErrorMessage = ra::BuildString("Invalid game ID: ", iter->name.GetString());
+
+                        break;
+                    }
+
+                    response.Games.emplace_back(nGameId, ra::Widen(iter->value.GetString()));
                 }
-
-                if (!iter->value.IsString())
-                {
-                    response.Result = ApiResult::Error;
-                    if (response.ErrorMessage.empty())
-                        response.ErrorMessage = ra::BuildString("Non-string value found in response for key ", iter->name.GetString());
-
-                    break;
-                }
-
-                char* pEnd;
-                const auto nGameId = strtoul(iter->name.GetString(), &pEnd, 10);
-                if (nGameId == 0 || (pEnd && *pEnd))
-                {
-                    response.Result = ApiResult::Error;
-                    if (response.ErrorMessage.empty())
-                        response.ErrorMessage = ra::BuildString("Invalid game ID: ", iter->name.GetString());
-
-                    break;
-                }
-
-                response.Games.emplace_back(nGameId, ra::Widen(iter->value.GetString()));
             }
         }
     }

@@ -67,6 +67,8 @@
 #define IDC_RA_LBL_POINTS               1162
 #define IDC_RA_FREEZE                   1163
 #define IDC_RA_DISPLAY_INFORMATION      1164
+#define IDC_RA_MESSAGE                  1165
+#define IDC_RA_PROGRESSBAR              1166
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -78,6 +80,7 @@
 #define IDD_RA_GAMELIBRARY              1509
 #define IDD_RA_ROMCHECKSUM              1510
 #define IDD_RA_OVERLAYSETTINGS          1511
+#define IDD_RA_PROGRESS                 1512
 #define IDC_RA_UPLOAD_BADGE             1517
 #define IDC_RA_ADDBOOKMARK              1518
 #define IDC_RA_INFO_GG                  1519
@@ -169,9 +172,9 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        121
+#define _APS_NEXT_RESOURCE_VALUE        122
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1165
+#define _APS_NEXT_CONTROL_VALUE         1167
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

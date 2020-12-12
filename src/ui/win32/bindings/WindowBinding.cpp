@@ -18,8 +18,9 @@ namespace bindings {
 
 std::vector<WindowBinding*> WindowBinding::s_vKnownBindings;
 
-void WindowBinding::SetHWND(HWND hWnd)
+void WindowBinding::SetHWND(DialogBase* pDialog, HWND hWnd)
 {
+    m_pDialog = pDialog;
     m_hWnd = hWnd;
 
     if (m_hWnd)
@@ -290,6 +291,9 @@ void WindowBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArg
         const auto sText = std::to_wstring(args.tNewValue);
         SetDlgItemTextW(m_hWnd, pIter->second, sText.c_str());
     }
+
+    if (m_pDialog && args.Property == WindowViewModelBase::DialogResultProperty)
+        m_pDialog->SetDialogResult(ra::itoe<DialogResult>(args.tNewValue));
 }
 
 void WindowBinding::BindLabel(int nDlgItemId, const IntModelProperty& pSourceProperty)

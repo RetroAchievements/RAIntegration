@@ -5,6 +5,8 @@
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\ImageReference.hh"
+
 namespace ra {
 namespace data {
 namespace models {
@@ -94,18 +96,22 @@ int LocalBadgesModel::GetReferenceCount(const std::wstring& sBadgeName) const
 
 void LocalBadgesModel::Commit(const std::wstring& sPreviousBadgeName, const std::wstring& sNewBadgeName)
 {
+    // the old badge will have already been dereferenced by RemoveReference. if the reference count is 0
+    // go ahead and get rid ofit.
     auto pIter = m_mReferences.find(sPreviousBadgeName);
     if (pIter != m_mReferences.end())
     {
-        Expects(pIter->second.nCommittedCount > 0);
-        if (--pIter->second.nCommittedCount == 0 && pIter->second.nUncommittedCount == 0)
+        if (pIter->second.nCommittedCount == 0 && pIter->second.nUncommittedCount == 0)
         {
+            const auto& pImageRepository = ra::services::ServiceLocator::Get<ra::ui::IImageRepository>();
+            const auto sFilename = pImageRepository.GetFilename(ra::ui::ImageType::Badge, ra::Narrow(pIter->first));
             const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
-            pFileSystem.DeleteFile(pIter->first);
+            pFileSystem.DeleteFile(sFilename);
             m_mReferences.erase(pIter);
         }
     }
 
+    // update the new badge reference from uncommitted to committed
     pIter = m_mReferences.find(sNewBadgeName);
     if (pIter != m_mReferences.end())
     {

@@ -411,6 +411,18 @@
     <ClCompile Include="data\context\GameAssets_Tests.cpp">
       <Filter>Tests\Data\Context</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\AssetUploadViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\ProgressViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\ProgressViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\AssetUploadViewModel_Tests.cpp">
+      <Filter>Tests\UI\ViewModels</Filter>
+    </ClCompile>
     <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp">
       <Filter>Tests\Data\Models</Filter>
     </ClCompile>

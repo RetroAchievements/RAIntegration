@@ -7,6 +7,7 @@
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\AssetUploadViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -545,7 +546,7 @@ void AssetListViewModel::DoUpdateButtons()
     }
     else if (bHasUnpublished)
     {
-        SetValue(SaveButtonTextProperty, L"&Publish All");
+        SetValue(SaveButtonTextProperty, L"Publi&sh All");
         SetValue(CanSaveProperty, true);
     }
     else
@@ -603,7 +604,7 @@ void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetMo
     }
 
     // no selected assets found, return all assets
-    if (vSelectedAssets.size() == 0)
+    if (vSelectedAssets.empty())
     {
         for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
         {
@@ -646,18 +647,62 @@ void AssetListViewModel::SaveSelected()
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     std::vector<ra::data::models::AssetModelBase*> vSelectedAssets;
 
-    for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
+    if (GetSaveButtonText().at(0) == 'P')
     {
-        const auto* pItem = m_vFilteredAssets.GetItemAt(i);
-        if (pItem != nullptr && pItem->IsSelected())
+        // publish - find the selected unpublished items
+        GetSelectedAssets(vSelectedAssets);
+
+        auto pIter = vSelectedAssets.begin();
+        while (pIter != vSelectedAssets.end())
         {
-            auto* pAsset = pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId());
-            if (pAsset != nullptr)
-                vSelectedAssets.push_back(pAsset);
+            if ((*pIter)->GetChanges() == ra::data::models::AssetChanges::Unpublished)
+                ++pIter;
+            else
+                pIter = vSelectedAssets.erase(pIter);
+        }
+
+        if (vSelectedAssets.empty())
+            return;
+
+        ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+        vmMessageBox.SetMessage(ra::StringPrintf(L"Are you sure you want to publish %d items?", vSelectedAssets.size()));
+        vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+        if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
+            return;
+
+        Publish(vSelectedAssets);
+    }
+    else
+    {
+        // save - find the selected items (allow empty to mean all)
+        for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
+        {
+            const auto* pItem = m_vFilteredAssets.GetItemAt(i);
+            if (pItem != nullptr && pItem->IsSelected())
+            {
+                auto* pAsset = pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId());
+                if (pAsset != nullptr)
+                    vSelectedAssets.push_back(pAsset);
+            }
         }
     }
 
+    // update the local file
     pGameContext.Assets().SaveAssets(vSelectedAssets);
+    UpdateButtons();
+}
+
+void AssetListViewModel::Publish(std::vector<ra::data::models::AssetModelBase*>& vAssets)
+{
+    AssetUploadViewModel vmAssetUpload;
+    for (auto* pAsset : vAssets)
+    {
+        Expects(pAsset != nullptr);
+        vmAssetUpload.QueueAsset(*pAsset);
+    }
+
+    vmAssetUpload.ShowModal(*this);
+    vmAssetUpload.ShowResults();
 }
 
 void AssetListViewModel::ResetSelected()

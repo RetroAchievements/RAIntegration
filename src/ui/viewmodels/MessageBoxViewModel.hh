@@ -117,6 +117,26 @@ public:
     }
 
     /// <summary>
+    /// Shows a generic message.
+    /// </summary>
+    static void ShowMessage(const std::wstring& sHeader, const std::wstring& sMessage)
+    {
+        MessageBoxViewModel viewModel(sMessage);
+        viewModel.SetHeader(sHeader);
+        viewModel.ShowModal();
+    }
+
+    /// <summary>
+    /// Shows a generic message.
+    /// </summary>
+    static void ShowMessage(std::wstring&& sHeader, std::wstring&& sMessage)
+    {
+        MessageBoxViewModel viewModel(std::move(sMessage));
+        viewModel.SetHeader(std::move(sHeader));
+        viewModel.ShowModal();
+    }
+
+    /// <summary>
     /// Shows an informational message.
     /// </summary>
     static void ShowInfoMessage(const std::wstring& sMessage)

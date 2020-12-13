@@ -549,7 +549,7 @@ public:
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lb.wav"));
-        Assert::AreEqual(std::wstring(L"Leaderboard Attempt Started"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard attempt started"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Title"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Description"), pPopup->GetDetail());
 
@@ -592,7 +592,7 @@ public:
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lbcancel.wav"));
-        Assert::AreEqual(std::wstring(L"Leaderboard Attempt Canceled"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard attempt failed"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"Title"), pPopup->GetDescription());
 
         const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);

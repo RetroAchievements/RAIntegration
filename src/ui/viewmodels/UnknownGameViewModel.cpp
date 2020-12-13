@@ -121,7 +121,7 @@ bool UnknownGameViewModel::BeginTest()
 
     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
     vmMessageBox.SetHeader(ra::StringPrintf(L"Play '%s' in compatability test mode?", m_vGameTitles.GetLabelForId(nGameId)));
-    vmMessageBox.SetMessage(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn or modify them or modify code notes for the game.");
+    vmMessageBox.SetMessage(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn them.");
     vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
     if (vmMessageBox.ShowModal(*this) == DialogResult::No)
         return false;

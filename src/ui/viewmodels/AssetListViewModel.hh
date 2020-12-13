@@ -213,7 +213,8 @@ private:
     FilteredListMonitor m_pFilteredListMonitor;
 
     bool HasSelection(ra::data::models::AssetType nAssetType) const;
-    void GetSelectedAssets(std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets);
+    void GetSelectedAssets(std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, 
+        std::function<bool(const ra::data::models::AssetModelBase&)> pFilterFunction = nullptr);
 
     void UpdateTotals();
     void UpdateButtons();

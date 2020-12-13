@@ -44,9 +44,12 @@ private:
     {
         Save,
         Publish,
+        Promote,
+        Demote,
         SaveDisabled,
         SaveAll,
         PublishAll,
+        PromoteAll,
         SaveAllDisabled
     };
 
@@ -133,6 +136,16 @@ private:
                     Assert::IsTrue(CanSave());
                     break;
 
+                case SaveButtonState::Promote:
+                    Assert::AreEqual(std::wstring(L"Pro&mote"), GetValue(SaveButtonTextProperty));
+                    Assert::IsTrue(CanSave());
+                    break;
+
+                case SaveButtonState::Demote:
+                    Assert::AreEqual(std::wstring(L"De&mote"), GetValue(SaveButtonTextProperty));
+                    Assert::IsTrue(CanSave());
+                    break;
+
                 case SaveButtonState::SaveDisabled:
                     Assert::AreEqual(std::wstring(L"&Save"), GetValue(SaveButtonTextProperty));
                     Assert::IsFalse(CanSave());
@@ -145,6 +158,11 @@ private:
 
                 case SaveButtonState::PublishAll:
                     Assert::AreEqual(std::wstring(L"Publi&sh All"), GetValue(SaveButtonTextProperty));
+                    Assert::IsTrue(CanSave());
+                    break;
+
+                case SaveButtonState::PromoteAll:
+                    Assert::AreEqual(std::wstring(L"Pro&mote All"), GetValue(SaveButtonTextProperty));
                     Assert::IsTrue(CanSave());
                     break;
 
@@ -800,7 +818,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Activate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -822,7 +840,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Deactivate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Deactivate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -846,7 +864,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Activate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -877,7 +895,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Deactivate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Deactivate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -886,7 +904,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Activate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -895,7 +913,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Activate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -927,7 +945,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Deactivate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Deactivate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -979,7 +997,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Deactivate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Deactivate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -990,7 +1008,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::ActivateAll, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::ActivateAll, SaveButtonState::PromoteAll,
             ResetButtonState::ResetAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
@@ -1035,7 +1053,7 @@ public:
 
         // single unmodified selected record, show save button instead of save all, but disable it
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Activate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -1055,7 +1073,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Activate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -1073,7 +1091,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Activate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -1141,7 +1159,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Activate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -1161,7 +1179,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Activate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -1181,7 +1199,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Activate, SaveButtonState::SaveDisabled,
+            ActivateButtonState::Activate, SaveButtonState::Demote,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -1436,7 +1454,7 @@ public:
         Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
 
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(SaveButtonState::SaveDisabled);
+        vmAssetList.AssertButtonState(SaveButtonState::Demote);
     }
 
     TEST_METHOD(TestSaveSelectedPublishCoreModifiedCancel)
@@ -1573,6 +1591,189 @@ public:
         Assert::AreEqual(AssetChanges::None, pItem2->GetChanges());
         Assert::AreEqual(AssetChanges::None, pItem3->GetChanges());
 
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
+    }
+
+    TEST_METHOD(TestSaveSelectedPromoteToCore)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetCategory::Unofficial);
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to promote 1 items to core?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Items in core are officially available for players to earn."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::Yes;
+        });
+
+        const auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Promote);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 1U }, vmAssetList.PublishedAssets.size());
+        Assert::IsTrue(pItem == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+        Assert::AreEqual(AssetCategory::Core, pItem->GetCategory());
+
+        // item will have been moved to core, so nothing will be selected
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
+    }
+
+    TEST_METHOD(TestSaveSelectedPromoteAllToCore)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 6, L"Test2", L"Desc2", L"12345", "0xH1234=2");
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 7, L"Test3", L"Desc3", L"12345", "0xH1234=3");
+        vmAssetList.SetFilterCategory(AssetCategory::Unofficial);
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to promote 3 items to core?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Items in core are officially available for players to earn."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::Yes;
+        });
+
+        const auto* pItem1 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem1 != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem1->GetChanges());
+        const auto* pItem2 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem2 != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem2->GetChanges());
+        const auto* pItem3 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem3 != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem3->GetChanges());
+
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::PromoteAll);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 3U }, vmAssetList.PublishedAssets.size());
+        Assert::IsTrue(pItem1 == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::AreEqual(AssetChanges::None, pItem1->GetChanges());
+        Assert::AreEqual(AssetCategory::Core, pItem1->GetCategory());
+        Assert::IsTrue(pItem2 == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::AreEqual(AssetChanges::None, pItem2->GetChanges());
+        Assert::AreEqual(AssetCategory::Core, pItem2->GetCategory());
+        Assert::IsTrue(pItem3 == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::AreEqual(AssetChanges::None, pItem3->GetChanges());
+        Assert::AreEqual(AssetCategory::Core, pItem3->GetCategory());
+
+        // item will have been moved to core, so nothing will be selected
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
+    }
+
+    TEST_METHOD(TestSaveSelectedDemoteToUnofficial)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to demote 1 items to unofficial?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Items in unofficial can no longer be earned by players."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::Yes;
+        });
+
+        const auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Demote);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 1U }, vmAssetList.PublishedAssets.size());
+        Assert::IsTrue(pItem == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+        Assert::AreEqual(AssetCategory::Unofficial, pItem->GetCategory());
+
+        // item will have been moved to core, so nothing will be selected
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
+    }
+
+    TEST_METHOD(TestSaveSelectedDemoteAllToUnofficial)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 6, L"Test2", L"Desc2", L"12345", "0xH1234=2");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test3", L"Desc3", L"12345", "0xH1234=3");
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to demote 3 items to unofficial?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Items in unofficial can no longer be earned by players."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::Yes;
+        });
+
+        const auto* pItem1 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem1 != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem1->GetChanges());
+        const auto* pItem2 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem2 != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem2->GetChanges());
+        const auto* pItem3 = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem3 != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem3->GetChanges());
+
+        // there is no "Demote All"
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        vmAssetList.FilteredAssets().GetItemAt(2)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Demote);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 3U }, vmAssetList.PublishedAssets.size());
+        Assert::IsTrue(pItem1 == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::AreEqual(AssetChanges::None, pItem1->GetChanges());
+        Assert::AreEqual(AssetCategory::Unofficial, pItem1->GetCategory());
+        Assert::IsTrue(pItem2 == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::AreEqual(AssetChanges::None, pItem2->GetChanges());
+        Assert::AreEqual(AssetCategory::Unofficial, pItem2->GetCategory());
+        Assert::IsTrue(pItem3 == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::AreEqual(AssetChanges::None, pItem3->GetChanges());
+        Assert::AreEqual(AssetCategory::Unofficial, pItem3->GetCategory());
+
+        // item will have been moved to unofficial, so nothing will be selected
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
     }

@@ -8,6 +8,8 @@
 #include "ui\ImageReference.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
+#include "RA_Log.h"
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -217,11 +219,20 @@ void AssetUploadViewModel::ShowResults() const
     }
 
     if (bAborted)
+    {
+        RA_LOG_INFO("Publish canceled. %u successful, %u unsuccessful, %u skipped", nSuccessful, nFailed, m_vUploadQueue.size() - nSuccessful - nFailed);
         ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Publish canceled.", sMessage);
+    }
     else if (nFailed)
+    {
+        RA_LOG_INFO("Publish failed. %u successful, %u unsuccessful", nSuccessful, nFailed);
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Publish failed.", sMessage);
+    }
     else
+    {
+        RA_LOG_INFO("Publish succeeded. %u successful", nSuccessful);
         ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Publish succeeded.", sMessage);
+    }
 }
 
 } // namespace viewmodels

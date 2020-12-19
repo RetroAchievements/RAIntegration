@@ -429,6 +429,7 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasSelection = false;
     bool bHasModified = false;
     bool bHasUnpublished = false;
+    bool bHasUnofficial = false;
 
     const bool bGameLoaded = (GetGameId() != 0);
     if (!bGameLoaded)
@@ -470,6 +471,7 @@ void AssetListViewModel::DoUpdateButtons()
                             bHasCoreSelection = true;
                             break;
                         case ra::data::models::AssetCategory::Unofficial:
+                            bHasUnofficial = true;
                             bHasUnofficialSelection = true;
                             break;
                         case ra::data::models::AssetCategory::Local:
@@ -498,6 +500,17 @@ void AssetListViewModel::DoUpdateButtons()
                             break;
                         case ra::data::models::AssetChanges::Unpublished:
                             bHasUnpublishedSelection = true;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                else
+                {
+                    switch (pItem->GetCategory())
+                    {
+                        case ra::data::models::AssetCategory::Unofficial:
+                            bHasUnofficial = true;
                             break;
                         default:
                             break;
@@ -534,6 +547,16 @@ void AssetListViewModel::DoUpdateButtons()
         SetValue(SaveButtonTextProperty, L"Publi&sh");
         SetValue(CanSaveProperty, true);
     }
+    else if (bHasUnofficialSelection)
+    {
+        SetValue(SaveButtonTextProperty, L"Pro&mote");
+        SetValue(CanSaveProperty, true);
+    }
+    else if (bHasCoreSelection)
+    {
+        SetValue(SaveButtonTextProperty, L"De&mote");
+        SetValue(CanSaveProperty, true);
+    }
     else if (bHasSelection)
     {
         SetValue(SaveButtonTextProperty, L"&Save");
@@ -547,6 +570,11 @@ void AssetListViewModel::DoUpdateButtons()
     else if (bHasUnpublished)
     {
         SetValue(SaveButtonTextProperty, L"Publi&sh All");
+        SetValue(CanSaveProperty, true);
+    }
+    else if (bHasUnofficial)
+    {
+        SetValue(SaveButtonTextProperty, L"Pro&mote All");
         SetValue(CanSaveProperty, true);
     }
     else
@@ -588,7 +616,8 @@ void AssetListViewModel::DoUpdateButtons()
     }
 }
 
-void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets)
+void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets,
+    std::function<bool(const ra::data::models::AssetModelBase&)> pFilterFunction)
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
 
@@ -599,7 +628,10 @@ void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetMo
         {
             auto* pAsset = pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId());
             if (pAsset != nullptr)
-                vSelectedAssets.push_back(pAsset);
+            {
+                if (!pFilterFunction || pFilterFunction(*pAsset))
+                    vSelectedAssets.push_back(pAsset);
+            }
         }
     }
 
@@ -613,7 +645,10 @@ void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetMo
             {
                 auto* pAsset = pGameContext.Assets().FindAsset(pItem->GetType(), pItem->GetId());
                 if (pAsset != nullptr)
-                    vSelectedAssets.push_back(pAsset);
+                {
+                    if (!pFilterFunction || pFilterFunction(*pAsset))
+                        vSelectedAssets.push_back(pAsset);
+                }
             }
         }
     }
@@ -647,32 +682,8 @@ void AssetListViewModel::SaveSelected()
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     std::vector<ra::data::models::AssetModelBase*> vSelectedAssets;
 
-    if (GetSaveButtonText().at(0) == 'P')
-    {
-        // publish - find the selected unpublished items
-        GetSelectedAssets(vSelectedAssets);
-
-        auto pIter = vSelectedAssets.begin();
-        while (pIter != vSelectedAssets.end())
-        {
-            if ((*pIter)->GetChanges() == ra::data::models::AssetChanges::Unpublished)
-                ++pIter;
-            else
-                pIter = vSelectedAssets.erase(pIter);
-        }
-
-        if (vSelectedAssets.empty())
-            return;
-
-        ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
-        vmMessageBox.SetMessage(ra::StringPrintf(L"Are you sure you want to publish %d items?", vSelectedAssets.size()));
-        vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
-        if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
-            return;
-
-        Publish(vSelectedAssets);
-    }
-    else
+    const auto sSaveButtonText = GetSaveButtonText();
+    if (sSaveButtonText.at(0) == '&') // "&Save" / "&Save All"
     {
         // save - find the selected items (allow empty to mean all)
         for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
@@ -685,6 +696,77 @@ void AssetListViewModel::SaveSelected()
                     vSelectedAssets.push_back(pAsset);
             }
         }
+    }
+    else if (sSaveButtonText.at(0) == 'P' && sSaveButtonText.at(1) == 'u') // "Publi&sh" / "Publi&sh All"
+    {
+        // publish - find the selected unpublished items
+        GetSelectedAssets(vSelectedAssets, [](const ra::data::models::AssetModelBase& pModel)
+        {
+            return pModel.GetChanges() == ra::data::models::AssetChanges::Unpublished;
+        });
+
+        if (vSelectedAssets.empty())
+            return;
+
+        ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+        vmMessageBox.SetMessage(ra::StringPrintf(L"Are you sure you want to publish %d items?", vSelectedAssets.size()));
+        vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+        if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
+            return;
+
+        RA_LOG_INFO("Publishing %u items", vSelectedAssets.size());
+        Publish(vSelectedAssets);
+    }
+    else if (sSaveButtonText.at(0) == 'P') // "Pro&mote" / "Pro&mote All"
+    {
+        // promote - find the selected unpublished items
+        GetSelectedAssets(vSelectedAssets, [](const ra::data::models::AssetModelBase& pModel)
+        {
+            return (pModel.GetChanges() == ra::data::models::AssetChanges::None &&
+                pModel.GetCategory() == ra::data::models::AssetCategory::Unofficial);
+        });
+
+        if (vSelectedAssets.empty())
+            return;
+
+        ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+        vmMessageBox.SetHeader(ra::StringPrintf(L"Are you sure you want to promote %d items to core?", vSelectedAssets.size()));
+        vmMessageBox.SetMessage(L"Items in core are officially available for players to earn.");
+        vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+        if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
+            return;
+
+        for (auto* pAsset : vSelectedAssets)
+            pAsset->SetCategory(ra::data::models::AssetCategory::Core);
+
+        RA_LOG_INFO("Promoting %u items", vSelectedAssets.size());
+        Publish(vSelectedAssets);
+    }
+    else if (sSaveButtonText.at(0) == 'D') // "De&mote"
+    {
+        // promote - find the selected unpublished items
+        GetSelectedAssets(vSelectedAssets, [](const ra::data::models::AssetModelBase& pModel)
+        {
+            return (pModel.GetChanges() == ra::data::models::AssetChanges::None &&
+                pModel.GetCategory() == ra::data::models::AssetCategory::Core);
+        });
+
+        if (vSelectedAssets.empty())
+            return;
+
+        ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+        vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+        vmMessageBox.SetHeader(ra::StringPrintf(L"Are you sure you want to demote %d items to unofficial?", vSelectedAssets.size()));
+        vmMessageBox.SetMessage(L"Items in unofficial can no longer be earned by players.");
+        vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+        if (vmMessageBox.ShowModal(*this) != DialogResult::Yes)
+            return;
+
+        for (auto* pAsset : vSelectedAssets)
+            pAsset->SetCategory(ra::data::models::AssetCategory::Unofficial);
+
+        RA_LOG_INFO("Demoting %u items", vSelectedAssets.size());
+        Publish(vSelectedAssets);
     }
 
     // update the local file

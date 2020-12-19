@@ -104,7 +104,7 @@ public:
     /// Specifies the rich presence to process each frame.
     /// </summary>
     /// <remarks>Only updates the memrefs each frame (for deltas), the script is not processed here.</remarks>
-    void ActivateRichPresence(const std::string& sScript);
+    void ActivateRichPresence(const std::string& sScript) noexcept;
 
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.

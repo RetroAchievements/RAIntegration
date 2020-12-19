@@ -361,7 +361,7 @@ public:
         vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn or modify them or modify code notes for the game."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn them."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::Yes;
         });
 
@@ -382,7 +382,7 @@ public:
         vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn or modify them or modify code notes for the game."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn them."), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::No;
         });
 

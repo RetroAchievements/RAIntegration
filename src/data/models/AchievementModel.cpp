@@ -16,7 +16,7 @@ const IntModelProperty AchievementModel::PointsProperty("AchievementModel", "Poi
 const StringModelProperty AchievementModel::BadgeProperty("AchievementModel", "Badge", L"00000");
 const BoolModelProperty AchievementModel::PauseOnResetProperty("AchievementModel", "PauseOnReset", false);
 const BoolModelProperty AchievementModel::PauseOnTriggerProperty("AchievementModel", "PauseOnTrigger", false);
-const IntModelProperty AchievementModel::TriggerProperty("AchievementModel", "Trigger", ra::etoi(AssetChanges::None));
+const IntModelProperty AchievementModel::TriggerProperty("AchievementModel", "Trigger", 0);
 
 AchievementModel::AchievementModel() noexcept
 {
@@ -41,27 +41,39 @@ void AchievementModel::Deactivate()
 
 void AchievementModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == StateProperty)
+    // if we're still loading the asset, ignore the event. we'll get recalled once loading finishes
+    if (!IsUpdating())
     {
-        const bool bWasActive = IsActive(ra::itoe<AssetState>(args.tOldValue));
-        const bool bIsActive = IsActive(ra::itoe<AssetState>(args.tNewValue));
-        if (bWasActive != bIsActive)
+        if (args.Property == StateProperty)
         {
-            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-            const bool bRuntimeActive = (pRuntime.GetAchievementTrigger(GetID()) != nullptr);
-            if (bRuntimeActive != bIsActive)
+            const bool bWasActive = IsActive(ra::itoe<AssetState>(args.tOldValue));
+            const bool bIsActive = IsActive(ra::itoe<AssetState>(args.tNewValue));
+            if (bWasActive != bIsActive)
             {
-                if (bIsActive)
-                    pRuntime.ActivateAchievement(GetID(), GetTrigger());
-                else
-                    pRuntime.DeactivateAchievement(GetID());
+                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+                const bool bRuntimeActive = (pRuntime.GetAchievementTrigger(GetID()) != nullptr);
+                if (bRuntimeActive != bIsActive)
+                {
+                    if (bIsActive)
+                        pRuntime.ActivateAchievement(GetID(), GetTrigger());
+                    else
+                        pRuntime.DeactivateAchievement(GetID());
+                }
+            }
+
+            if (ra::itoe<AssetState>(args.tNewValue) == AssetState::Triggered)
+            {
+                const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
+                m_tUnlock = pClock.Now();
             }
         }
-
-        if (ra::itoe<AssetState>(args.tNewValue) == AssetState::Triggered)
+        else if (args.Property == TriggerProperty)
         {
-            const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
-            m_tUnlock = pClock.Now();
+            if (IsActive())
+            {
+                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+                pRuntime.ActivateAchievement(GetID(), GetTrigger());
+            }
         }
     }
 
@@ -70,10 +82,14 @@ void AchievementModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 
 void AchievementModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    // call base first so the transaction gets updated, updating the LocalBadgesModel is just bookkeeping.
+    // call base first so the transaction gets updated for GetLocalValue to work properly
     AssetModelBase::OnValueChanged(args);
 
-    if (args.Property == BadgeProperty && m_pTransaction && m_pTransaction->m_pNext) /* ignore until we've created a checkpoint */
+    // if we're still loading the asset, ignore the event. we'll get recalled once loading finishes
+    if (IsUpdating())
+        return;
+
+    if (args.Property == BadgeProperty)
     {
         if (ra::StringStartsWith(args.tOldValue, L"local\\"))
         {

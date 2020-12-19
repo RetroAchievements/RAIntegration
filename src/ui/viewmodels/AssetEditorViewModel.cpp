@@ -146,8 +146,8 @@ void AssetEditorViewModel::OnDataModelStringValueChanged(const StringModelProper
 
 void AssetEditorViewModel::OnDataModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == TriggerViewModel::VersionProperty)
-        OnTriggerChanged();
+    if (args.Property == ra::data::models::AchievementModel::TriggerProperty)
+        UpdateTriggerBinding();
     else if (args.Property == ra::data::models::AssetModelBase::StateProperty)
         SetState(ra::itoe<ra::data::models::AssetState>(args.tNewValue));
     else if (args.Property == ra::data::models::AssetModelBase::CategoryProperty)
@@ -261,12 +261,7 @@ void AssetEditorViewModel::OnTriggerChanged()
         const std::string& sTrigger = Trigger().Serialize();
         pAchievement->SetTrigger(sTrigger);
 
-        if (m_pAsset->IsActive())
-        {
-            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-            pRuntime.ActivateAchievement(GetID(), sTrigger);
-            UpdateTriggerBinding();
-        }
+        // if trigger has actually changed, code should call back through UpdateTriggerBinding to update the UI
     }
 }
 
@@ -275,7 +270,10 @@ void AssetEditorViewModel::UpdateTriggerBinding()
     const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
     if (pAchievement != nullptr)
     {
-        const auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
+        const rc_trigger_t* pTrigger = nullptr;
+        if (pAchievement->IsActive())
+            pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
+
         if (pTrigger != nullptr)
             Trigger().UpdateFrom(*pTrigger);
         else

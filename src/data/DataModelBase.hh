@@ -252,6 +252,29 @@ protected:
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
+    /// <summary>
+    /// Disables change notifications.
+    /// </summary>
+    /// <remarks>
+    /// Should not be called unless making multiple changes to the same property. 
+    /// OnValueChanged will be called once after EndUpdate is called instead of for each intermediate change.
+    /// </remarks>
+    void BeginUpdate();
+
+    /// <summary>
+    /// Re-enables change notifications.
+    /// </summary>
+    void EndUpdate();
+
+    /// <summary>
+    /// Determines if change notifications are disabled.
+    /// </summary>
+    /// <remarks>
+    /// Can be used in OnValueChanged overrides to determine if change notifications are disabled. If they are, OnValueChanged
+    /// will be called again once the notifications are re-enabled, so processing should be delayed if this returns true.
+    /// </remarks>
+    virtual bool IsUpdating() const noexcept(false) { return (m_pUpdateTransaction != nullptr); }
+
 private:
     void DiscardTransaction();
 
@@ -271,6 +294,24 @@ private:
     }
 
     std::set<int> m_vTransactionalProperties;
+
+    struct UpdateTransaction
+    {
+        unsigned int m_nUpdateCount = 0;
+
+        template<class T>
+        struct DelayedChange
+        {
+            const ModelProperty<T>* pProperty;
+            T tOldValue;
+            T tNewValue;
+        };
+        std::vector<DelayedChange<int>> m_vDelayedIntChanges;
+        std::vector<DelayedChange<std::wstring>> m_vDelayedStringChanges;
+        std::vector<DelayedChange<bool>> m_vDelayedBoolChanges;
+    };
+    std::unique_ptr<UpdateTransaction> m_pUpdateTransaction;
+    const void* m_pEndUpdateChangeArgs = nullptr;
 };
 
 } // namespace data

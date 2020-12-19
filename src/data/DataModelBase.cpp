@@ -7,10 +7,28 @@ const BoolModelProperty DataModelBase::IsModifiedProperty("DataModelBase", "IsMo
 
 void DataModelBase::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
-    if (m_pTransaction != nullptr && IsTransactional(args.Property))
+    if (&args != m_pEndUpdateChangeArgs)
     {
-        m_pTransaction->ValueChanged(args);
-        SetValue(IsModifiedProperty, m_pTransaction->IsModified());
+        if (m_pTransaction != nullptr && IsTransactional(args.Property))
+        {
+            m_pTransaction->ValueChanged(args);
+            SetValue(IsModifiedProperty, m_pTransaction->IsModified());
+        }
+
+        if (m_pUpdateTransaction)
+        {
+            for (auto& pChange : m_pUpdateTransaction->m_vDelayedBoolChanges)
+            {
+                if (pChange.pProperty == &args.Property)
+                {
+                    pChange.tNewValue = args.tNewValue;
+                    return;
+                }
+            }
+
+            m_pUpdateTransaction->m_vDelayedBoolChanges.push_back({ &args.Property, args.tOldValue, args.tNewValue });
+            return;
+        }
     }
 
     if (!m_vNotifyTargets.empty())
@@ -46,10 +64,28 @@ void DataModelBase::Transaction::ValueChanged(const BoolModelProperty::ChangeArg
 
 void DataModelBase::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    if (m_pTransaction != nullptr && IsTransactional(args.Property))
+    if (&args != m_pEndUpdateChangeArgs)
     {
-        m_pTransaction->ValueChanged(args);
-        SetValue(IsModifiedProperty, m_pTransaction->IsModified());
+        if (m_pTransaction != nullptr && IsTransactional(args.Property))
+        {
+            m_pTransaction->ValueChanged(args);
+            SetValue(IsModifiedProperty, m_pTransaction->IsModified());
+        }
+
+        if (m_pUpdateTransaction)
+        {
+            for (auto& pChange : m_pUpdateTransaction->m_vDelayedStringChanges)
+            {
+                if (pChange.pProperty == &args.Property)
+                {
+                    pChange.tNewValue = args.tNewValue;
+                    return;
+                }
+            }
+
+            m_pUpdateTransaction->m_vDelayedStringChanges.push_back({ &args.Property, args.tOldValue, args.tNewValue });
+            return;
+        }
     }
 
     if (!m_vNotifyTargets.empty())
@@ -85,10 +121,28 @@ void DataModelBase::Transaction::ValueChanged(const StringModelProperty::ChangeA
 
 void DataModelBase::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (m_pTransaction != nullptr && IsTransactional(args.Property))
+    if (&args != m_pEndUpdateChangeArgs)
     {
-        m_pTransaction->ValueChanged(args);
-        SetValue(IsModifiedProperty, m_pTransaction->IsModified());
+        if (m_pTransaction != nullptr && IsTransactional(args.Property))
+        {
+            m_pTransaction->ValueChanged(args);
+            SetValue(IsModifiedProperty, m_pTransaction->IsModified());
+        }
+
+        if (m_pUpdateTransaction)
+        {
+            for (auto& pChange : m_pUpdateTransaction->m_vDelayedIntChanges)
+            {
+                if (pChange.pProperty == &args.Property)
+                {
+                    pChange.tNewValue = args.tNewValue;
+                    return;
+                }
+            }
+
+            m_pUpdateTransaction->m_vDelayedIntChanges.push_back({ &args.Property, args.tOldValue, args.tNewValue });
+            return;
+        }
     }
 
     if (!m_vNotifyTargets.empty())
@@ -119,6 +173,58 @@ void DataModelBase::Transaction::ValueChanged(const IntModelProperty::ChangeArgs
     else if (args.tNewValue == iter->second)
     {
         m_mOriginalIntValues.erase(iter);
+    }
+}
+
+
+void DataModelBase::BeginUpdate()
+{
+    if (m_pUpdateTransaction == nullptr)
+        m_pUpdateTransaction = std::make_unique<UpdateTransaction>();
+
+    ++m_pUpdateTransaction->m_nUpdateCount;
+}
+
+void DataModelBase::EndUpdate()
+{
+    if (m_pUpdateTransaction && --m_pUpdateTransaction->m_nUpdateCount == 0)
+    {
+        std::unique_ptr<UpdateTransaction> pUpdateTransaction = std::move(m_pUpdateTransaction);
+
+        // m_pEndUpdateChangeArgs is set to each ChangeArgs as we call OnValueChanged so it doesn't try to
+        // apply the change to the transaction - the transaction was updated the first time it was called
+
+        for (const auto& pChange : pUpdateTransaction->m_vDelayedIntChanges)
+        {
+            if (pChange.tNewValue != pChange.tOldValue)
+            {
+                IntModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
+                m_pEndUpdateChangeArgs = &args;
+                OnValueChanged(args);
+            }
+        }
+
+        for (const auto& pChange : pUpdateTransaction->m_vDelayedBoolChanges)
+        {
+            if (pChange.tNewValue != pChange.tOldValue)
+            {
+                BoolModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
+                m_pEndUpdateChangeArgs = &args;
+                OnValueChanged(args);
+            }
+        }
+
+        for (const auto& pChange : pUpdateTransaction->m_vDelayedStringChanges)
+        {
+            if (pChange.tNewValue != pChange.tOldValue)
+            {
+                StringModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
+                m_pEndUpdateChangeArgs = &args;
+                OnValueChanged(args);
+            }
+        }
+
+        m_pEndUpdateChangeArgs = nullptr;
     }
 }
 
@@ -171,7 +277,7 @@ void DataModelBase::RevertTransaction()
     }
 }
 
-void DataModelBase::Transaction::Revert(DataModelBase& vmViewModel)
+void DataModelBase::Transaction::Revert(DataModelBase& pModel)
 {
     // swap out the map while we process it to prevent re-entrant calls to ValueChanged from
     // modifying it while we're iterating
@@ -183,14 +289,14 @@ void DataModelBase::Transaction::Revert(DataModelBase& vmViewModel)
         const IntModelProperty* pIntProperty = dynamic_cast<const IntModelProperty*>(pProperty);
         if (pIntProperty != nullptr)
         {
-            vmViewModel.SetValue(*pIntProperty, pPair.second);
+            pModel.SetValue(*pIntProperty, pPair.second);
         }
         else
         {
             const BoolModelProperty* pBoolProperty = dynamic_cast<const BoolModelProperty*>(pProperty);
             if (pBoolProperty != nullptr)
             {
-                vmViewModel.SetValue(*pBoolProperty, pPair.second);
+                pModel.SetValue(*pBoolProperty, pPair.second);
             }
         }
     }
@@ -203,12 +309,12 @@ void DataModelBase::Transaction::Revert(DataModelBase& vmViewModel)
         const StringModelProperty* pStringProperty = dynamic_cast<const StringModelProperty*>(pProperty);
         if (pStringProperty != nullptr)
         {
-            vmViewModel.SetValue(*pStringProperty, pPair.second);
+            pModel.SetValue(*pStringProperty, pPair.second);
         }
     }
 }
 
-void DataModelBase::Transaction::Commit(const DataModelBase& vmViewModel)
+void DataModelBase::Transaction::Commit(const DataModelBase& pModel)
 {
     if (!m_pNext)
         return;
@@ -229,7 +335,7 @@ void DataModelBase::Transaction::Commit(const DataModelBase& vmViewModel)
             const IntModelProperty* pIntProperty = dynamic_cast<const IntModelProperty*>(pProperty);
             if (pIntProperty != nullptr)
             {
-                if (vmViewModel.GetValue(*pIntProperty) == pScan->second)
+                if (pModel.GetValue(*pIntProperty) == pScan->second)
                     m_pNext->m_mOriginalIntValues.erase(pScan);
             }
             else
@@ -237,7 +343,7 @@ void DataModelBase::Transaction::Commit(const DataModelBase& vmViewModel)
                 const BoolModelProperty* pBoolProperty = dynamic_cast<const BoolModelProperty*>(pProperty);
                 if (pBoolProperty != nullptr)
                 {
-                    if (vmViewModel.GetValue(*pBoolProperty) == gsl::narrow_cast<bool>(pScan->second))
+                    if (pModel.GetValue(*pBoolProperty) == gsl::narrow_cast<bool>(pScan->second))
                         m_pNext->m_mOriginalIntValues.erase(pScan);
                 }
             }
@@ -260,7 +366,7 @@ void DataModelBase::Transaction::Commit(const DataModelBase& vmViewModel)
             const StringModelProperty* pStringProperty = dynamic_cast<const StringModelProperty*>(pProperty);
             if (pStringProperty != nullptr)
             {
-                if (vmViewModel.GetValue(*pStringProperty) == pScan->second)
+                if (pModel.GetValue(*pStringProperty) == pScan->second)
                     m_pNext->m_mOriginalStringValues.erase(pScan);
             }
         }

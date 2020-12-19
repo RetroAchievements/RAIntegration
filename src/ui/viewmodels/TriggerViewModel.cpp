@@ -349,7 +349,7 @@ static void AddAltGroup(ViewModelCollection<TriggerViewModel::GroupViewModel>& v
     int nId, rc_condset_t* pConditionSet)
 {
     auto& vmAltGroup = vGroups.Add();
-    vmAltGroup.SetId(++nId);
+    vmAltGroup.SetId(nId);
     vmAltGroup.SetLabel(ra::StringPrintf(L"Alt %d", nId));
     vmAltGroup.m_pConditionSet = pConditionSet;
 }
@@ -421,7 +421,7 @@ void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
         if (vmAltGroup != nullptr)
             vmAltGroup->m_pConditionSet = pConditionSet;
         else
-            AddAltGroup(m_vGroups, gsl::narrow_cast<int>(nIndex), pConditionSet);
+            AddAltGroup(m_vGroups, gsl::narrow_cast<int>(++nIndex), pConditionSet);
     }
 
     // remove any extra alt groups
@@ -478,10 +478,17 @@ void TriggerViewModel::ConditionsMonitor::OnViewModelIntValueChanged(gsl::index,
 
 void TriggerViewModel::ConditionsMonitor::OnViewModelAdded(gsl::index)
 {
-    UpdateCurrentGroup();
+    if (!m_vmTrigger->Conditions().IsUpdating())
+        UpdateCurrentGroup();
 }
 
 void TriggerViewModel::ConditionsMonitor::OnViewModelRemoved(gsl::index)
+{
+    if (!m_vmTrigger->Conditions().IsUpdating())
+        UpdateCurrentGroup();
+}
+
+void TriggerViewModel::ConditionsMonitor::OnEndViewModelCollectionUpdate()
 {
     UpdateCurrentGroup();
 }
@@ -536,18 +543,27 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
     m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
     m_vConditions.BeginUpdate();
 
-    m_vConditions.Clear();
+    int nIndex = 0;
 
     if (pGroup != nullptr && pGroup->m_pConditionSet)
     {
         rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
         for (; pCondition != nullptr; pCondition = pCondition->next)
         {
-            auto& vmCondition = m_vConditions.Add();
-            vmCondition.SetIndex(gsl::narrow_cast<int>(m_vConditions.Count()));
-            vmCondition.InitializeFrom(*pCondition);
+            auto* vmCondition = m_vConditions.GetItemAt(gsl::narrow_cast<gsl::index>(nIndex));
+            if (vmCondition == nullptr)
+            {
+                vmCondition = &m_vConditions.Add();
+                Ensures(vmCondition != nullptr);
+            }
+
+            vmCondition->SetIndex(++nIndex);
+            vmCondition->InitializeFrom(*pCondition);
         }
     }
+
+    for (gsl::index nScan = m_vConditions.Count() - 1; nScan >= nIndex; --nScan)
+        m_vConditions.RemoveAt(nScan);
 
     m_vConditions.EndUpdate();
     m_vConditions.AddNotifyTarget(m_pConditionsMonitor);

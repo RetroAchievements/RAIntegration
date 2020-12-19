@@ -68,6 +68,8 @@ public:
         AchievementModelHarness achievement;
         achievement.SetID(1U);
         achievement.SetTrigger("0xH1234=1");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
 
         Assert::AreEqual(AssetState::Inactive, achievement.GetState());
         Assert::IsNull(achievement.mockRuntime.GetAchievementTrigger(1U));
@@ -91,6 +93,8 @@ public:
         AchievementModelHarness achievement;
         achievement.SetID(1U);
         achievement.SetTrigger("0xH1234=1");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
         achievement.Activate();
 
         auto* pTrigger = achievement.mockRuntime.GetAchievementTrigger(1U);
@@ -117,6 +121,8 @@ public:
         AchievementModelHarness achievement;
         achievement.SetID(1U);
         achievement.SetTrigger("0xH1234=1");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
         achievement.Activate();
 
         auto* pTrigger = achievement.mockRuntime.GetAchievementTrigger(1U);
@@ -144,6 +150,8 @@ public:
         AchievementModelHarness achievement;
         achievement.SetID(1U);
         achievement.SetTrigger("0xH1234=1");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
         achievement.Activate();
 
         auto* pTrigger = achievement.mockRuntime.GetAchievementTrigger(1U);

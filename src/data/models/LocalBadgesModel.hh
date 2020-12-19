@@ -33,8 +33,8 @@ public:
 private:
 	struct BadgeReferenceCount
 	{
-		int nUncommittedCount;
-		int nCommittedCount;
+		int nUncommittedCount; // references not written to XXX-user.txt
+		int nCommittedCount;   // references written to XXX-user.txt
 	};
 
 	mutable std::map<std::wstring, BadgeReferenceCount> m_mReferences;

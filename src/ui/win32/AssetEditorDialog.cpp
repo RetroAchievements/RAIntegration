@@ -250,6 +250,52 @@ void AssetEditorDialog::DecimalPreferredBinding::OnValueChanged()
     m_pOwner->m_bindConditions.RefreshColumn(8); // target value
 }
 
+bool AssetEditorDialog::ActiveCheckBoxBinding::IsActive() const
+{
+    const auto& vmAssetEditor = GetViewModel<ra::ui::viewmodels::AssetEditorViewModel&>();
+    switch (vmAssetEditor.GetState())
+    {
+        case ra::data::models::AssetState::Inactive:
+        case ra::data::models::AssetState::Triggered:
+            return false;
+        default:
+            return true;
+    }
+}
+
+void AssetEditorDialog::ActiveCheckBoxBinding::SetHWND(DialogBase& pDialog, HWND hControl)
+{
+    ControlBinding::SetHWND(pDialog, hControl);
+
+    Button_SetCheck(m_hWnd, IsActive() ? BST_CHECKED : BST_UNCHECKED);
+}
+
+void AssetEditorDialog::ActiveCheckBoxBinding::OnCommand()
+{
+    // check state has already been updated - update the backing data to match
+    const auto bIsChecked = Button_GetCheck(m_hWnd);
+    if (bIsChecked)
+        SetValue(ra::ui::viewmodels::AssetEditorViewModel::StateProperty, ra::etoi(ra::data::models::AssetState::Waiting));
+    else
+        SetValue(ra::ui::viewmodels::AssetEditorViewModel::StateProperty, ra::etoi(ra::data::models::AssetState::Inactive));
+
+    OnValueChanged();
+}
+
+void AssetEditorDialog::ActiveCheckBoxBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == ra::ui::viewmodels::AssetEditorViewModel::StateProperty)
+    {
+        const bool bIsActive = IsActive();
+        const bool bWasActive = Button_GetCheck(m_hWnd);
+        if (bIsActive != bWasActive)
+        {
+            Button_SetCheck(m_hWnd, bIsActive);
+            OnValueChanged();
+        }
+    }
+}
+
 AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     : DialogBase(vmAssetEditor),
       m_bindID(vmAssetEditor),
@@ -259,8 +305,9 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
       m_bindBadgeImage(vmAssetEditor),
       m_bindPoints(vmAssetEditor),
       m_bindPauseOnReset(vmAssetEditor),
-      m_bindDecimalPreferred(this, vmAssetEditor),
       m_bindPauseOnTrigger(vmAssetEditor),
+      m_bindActive(vmAssetEditor),
+      m_bindDecimalPreferred(this, vmAssetEditor),
       m_bindGroups(vmAssetEditor),
       m_bindConditions(vmAssetEditor.Trigger())
 {
@@ -388,6 +435,7 @@ BOOL AssetEditorDialog::OnInitDialog()
 
     m_bindPauseOnReset.SetControl(*this, IDC_RA_CHK_ACH_PAUSE_ON_RESET);
     m_bindPauseOnTrigger.SetControl(*this, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER);
+    m_bindActive.SetControl(*this, IDC_RA_CHK_ACH_ACTIVE);
     m_bindDecimalPreferred.SetControl(*this, IDC_RA_CHK_SHOW_DECIMALS);
 
     return DialogBase::OnInitDialog();

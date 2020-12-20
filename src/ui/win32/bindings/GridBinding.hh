@@ -52,6 +52,7 @@ public:
     void OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo);
     void OnTooltipGetDispInfo(NMTTDISPINFO& pnmTtDispInfo);
     virtual void OnNmClick(const NMITEMACTIVATE* pnmItemActivate);
+    virtual void OnNmRClick(const NMITEMACTIVATE* pnmItemActivate);
     virtual void OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate);
     LRESULT OnCustomDraw(NMLVCUSTOMDRAW* pCustomDraw) override;
 

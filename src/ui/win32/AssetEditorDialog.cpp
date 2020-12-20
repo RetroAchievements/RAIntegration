@@ -7,6 +7,7 @@
 #include "services\IConfiguration.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 #include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridLookupColumnBinding.hh"
@@ -165,6 +166,24 @@ public:
             return vmCondition->GetTooltip(*m_pBoundProperty);
 
         return L"";
+    }
+
+    bool HandleRightClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override
+    {
+        if (IsAddressType(vmItems, nIndex))
+        {
+            const auto nAddress = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+
+            auto& pMemoryInspector = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector;
+            pMemoryInspector.SetCurrentAddress(nAddress);
+
+            if (!pMemoryInspector.IsVisible())
+                pMemoryInspector.Show();
+
+            return true;
+        }
+
+        return GridNumberColumnBinding::HandleRightClick(vmItems, nIndex);
     }
 
 protected:

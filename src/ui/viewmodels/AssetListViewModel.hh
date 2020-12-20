@@ -199,6 +199,7 @@ private:
     void OnActiveGameChanged() override;
 
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
     class FilteredListMonitor : public ViewModelCollectionBase::NotifyTarget
     {

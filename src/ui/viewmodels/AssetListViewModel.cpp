@@ -3,6 +3,7 @@
 #include "data\context\GameContext.hh"
 #include "data\context\UserContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
@@ -252,6 +253,20 @@ void AssetListViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args
         ApplyFilter();
     else if (args.Property == GameIdProperty)
         UpdateButtons();
+
+    WindowViewModelBase::OnValueChanged(args);
+}
+
+void AssetListViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == IsProcessingActiveProperty)
+    {
+        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        pRuntime.SetPaused(!args.tNewValue);
+
+        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        pEmulatorContext.SetMemoryModified();
+    }
 
     WindowViewModelBase::OnValueChanged(args);
 }

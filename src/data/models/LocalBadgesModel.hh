@@ -22,12 +22,12 @@ public:
 	void RemoveReference(const std::wstring& sBadgeName, bool bCommitted);
 
 	void Commit(const std::wstring& sPreviousBadgeName, const std::wstring& sNewBadgeName);
-	bool NeedsSerialized() const noexcept;
+	bool NeedsSerialized() const noexcept { return false; }
 
-	void Serialize(ra::services::TextWriter& pWriter) const override;
-	bool Deserialize(ra::Tokenizer& pTokenizer) override;
+	void Serialize(ra::services::TextWriter&) const override {}
+	bool Deserialize(ra::Tokenizer&) override { return true; }
 
-	int GetReferenceCount(const std::wstring& sBadgeName) const;
+	int GetReferenceCount(const std::wstring& sBadgeName, bool bCommitted) const;
 	void DeleteUncommittedBadges();
 
 private:

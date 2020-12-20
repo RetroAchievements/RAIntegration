@@ -54,7 +54,7 @@ void GameAssets::OnItemsAdded(const std::vector<gsl::index>& vNewIndices)
     auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0));
     if (pLocalBadges)
     {
-        for (gsl::index nIndex : vNewIndices)
+        for (const auto nIndex : vNewIndices)
         {
             const auto* pAsset = GetItemAt(nIndex);
             const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
@@ -71,7 +71,7 @@ void GameAssets::OnItemsRemoved(const std::vector<gsl::index>& vDeletedIndices)
     auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0));
     if (pLocalBadges)
     {
-        for (gsl::index nIndex : vDeletedIndices)
+        for (const auto nIndex : vDeletedIndices)
         {
             const auto* pAsset = GetItemAt(nIndex);
             const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);

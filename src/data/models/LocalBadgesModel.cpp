@@ -55,7 +55,7 @@ void LocalBadgesModel::AddReference(const std::wstring& sBadgeName, bool bCommit
     }
     else
     {
-        BadgeReferenceCount pCount;
+        BadgeReferenceCount pCount{};
         pCount.nCommittedCount = bCommitted ? 1 : 0;
         pCount.nUncommittedCount = bCommitted ? 0 : 1;
 

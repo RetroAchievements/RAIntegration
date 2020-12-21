@@ -384,6 +384,9 @@
     <ClCompile Include="data\models\LocalBadgesModel.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\CapturedTriggerHits.cpp">
+      <Filter>Data\Models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Achievement.h">
@@ -948,6 +951,9 @@
       <Filter>UI\Win32</Filter>
     </ClInclude>
     <ClInclude Include="data\models\LocalBadgesModel.hh">
+      <Filter>Data\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\CapturedTriggerHits.hh">
       <Filter>Data\Models</Filter>
     </ClInclude>
   </ItemGroup>

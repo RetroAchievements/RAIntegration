@@ -154,6 +154,7 @@ public:
     /// Gets whether or not the asset is in an active state.
     /// </summary>
     bool IsActive() const { return IsActive(GetState()); }
+    static bool IsActive(AssetState nState) noexcept;
 
     /// <summary>
     /// Activates the asset.
@@ -285,8 +286,6 @@ protected:
 
     void CommitTransaction() override;
     void RevertTransaction() override;
-
-    static bool IsActive(AssetState nState) noexcept;
 
 private:
     static const std::string& GetAssetDefinition(const AssetDefinition& pAsset, AssetChanges nState) noexcept;

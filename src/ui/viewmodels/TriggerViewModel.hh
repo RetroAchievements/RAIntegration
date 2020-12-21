@@ -2,6 +2,8 @@
 #define RA_UI_TRIGGERVIEWMODEL_H
 #pragma once
 
+#include "data\models\CapturedTriggerHits.hh"
+
 #include "ui\ViewModelBase.hh"
 #include "ui\ViewModelCollection.hh"
 
@@ -73,7 +75,7 @@ public:
     void SerializeAppend(std::string& sBuffer) const;
 
     void InitializeFrom(const rc_trigger_t& pTrigger);
-    void InitializeFrom(const std::string& sTrigger);
+    void InitializeFrom(const std::string& sTrigger, const ra::data::models::CapturedTriggerHits& pCapturedHits);
     void UpdateFrom(const rc_trigger_t& pTrigger);
     void UpdateFrom(const std::string& sTrigger);
 

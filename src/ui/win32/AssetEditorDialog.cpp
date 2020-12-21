@@ -253,14 +253,7 @@ void AssetEditorDialog::DecimalPreferredBinding::OnValueChanged()
 bool AssetEditorDialog::ActiveCheckBoxBinding::IsActive() const
 {
     const auto& vmAssetEditor = GetViewModel<ra::ui::viewmodels::AssetEditorViewModel&>();
-    switch (vmAssetEditor.GetState())
-    {
-        case ra::data::models::AssetState::Inactive:
-        case ra::data::models::AssetState::Triggered:
-            return false;
-        default:
-            return true;
-    }
+    return ra::data::models::AssetModelBase::IsActive(vmAssetEditor.GetState());
 }
 
 void AssetEditorDialog::ActiveCheckBoxBinding::SetHWND(DialogBase& pDialog, HWND hControl)

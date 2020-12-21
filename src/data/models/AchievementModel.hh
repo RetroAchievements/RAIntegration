@@ -4,6 +4,8 @@
 
 #include "AssetModelBase.hh"
 
+#include "CapturedTriggerHits.hh"
+
 namespace ra {
 namespace data {
 namespace models {
@@ -101,6 +103,8 @@ public:
     void Serialize(ra::services::TextWriter& pWriter) const override;
     bool Deserialize(ra::Tokenizer& pTokenizer) override;
 
+    const CapturedTriggerHits& GetCapturedHits() const noexcept { return m_pCapturedTriggerHits; }
+
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
@@ -108,8 +112,13 @@ protected:
     void CommitTransaction() override;
 
 private:
+    void HandleStateChanged(AssetState nOldState, AssetState nNewState);
+
     AssetDefinition m_pTrigger;
     std::chrono::system_clock::time_point m_tUnlock;
+    std::wstring m_sUnlockRichPresence;
+
+    CapturedTriggerHits m_pCapturedTriggerHits;
 };
 
 } // namespace models

@@ -298,6 +298,7 @@
     <ClCompile Include="..\src\data\DataModelBase.cpp" />
     <ClCompile Include="..\src\data\models\AchievementModel.cpp" />
     <ClCompile Include="..\src\data\models\AssetModelBase.cpp" />
+    <ClCompile Include="..\src\data\models\CapturedTriggerHits.cpp" />
     <ClCompile Include="..\src\data\models\LocalBadgesModel.cpp" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

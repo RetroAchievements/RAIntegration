@@ -593,6 +593,128 @@ public:
         Assert::IsFalse(editor.IsDecimalPreferred());
         Assert::IsFalse(editor.mockConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
     }
+
+    TEST_METHOD(TestCaptureRestoreHits)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("0xH1234=1");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.Activate();
+
+        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+        pTrigger->requirement->conditions->current_hits = 6U;
+
+        editor.LoadAsset(&achievement);
+
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(6U, pCondition->GetCurrentHits());
+
+        pTrigger->requirement->conditions->current_hits = 7U;
+        editor.DoFrame();
+        Assert::AreEqual(7U, pCondition->GetCurrentHits());
+
+        editor.LoadAsset(nullptr);
+        Assert::AreEqual({ 0U }, editor.Trigger().Conditions().Count());
+
+        editor.LoadAsset(&achievement);
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(7U, pCondition->GetCurrentHits());
+    }
+
+    TEST_METHOD(TestCaptureRestoreHitsTriggered)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("0xH1234=1");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.Activate();
+        Assert::AreEqual(ra::data::models::AssetState::Waiting, achievement.GetState());
+
+        auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+        pTrigger->requirement->conditions->current_hits = 6U;
+        pTrigger->has_hits = 1;
+
+        editor.LoadAsset(&achievement);
+
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(6U, pCondition->GetCurrentHits());
+
+        pTrigger->requirement->conditions->current_hits = 7U;
+        pTrigger->state = RC_TRIGGER_STATE_TRIGGERED;
+        achievement.SetState(ra::data::models::AssetState::Triggered);
+        // triggered achievement is removed from runtime
+        Assert::IsNull(editor.mockRuntime.GetAchievementTrigger(1234U));
+
+        // but the updated state should still be reflected in the UI
+        Assert::AreEqual(7U, pCondition->GetCurrentHits());
+
+        editor.LoadAsset(nullptr);
+        Assert::AreEqual({ 0U }, editor.Trigger().Conditions().Count());
+
+        editor.LoadAsset(&achievement);
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        // when reloaded, the updated state should be remembered
+        Assert::AreEqual(7U, pCondition->GetCurrentHits());
+    }
+
+    TEST_METHOD(TestCaptureRestoreHitsTriggeredChanged)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("0xH1234=1");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.Activate();
+        Assert::AreEqual(ra::data::models::AssetState::Waiting, achievement.GetState());
+
+        auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+        pTrigger->requirement->conditions->current_hits = 6U;
+        pTrigger->has_hits = 1;
+
+        editor.LoadAsset(&achievement);
+
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(6U, pCondition->GetCurrentHits());
+
+        pTrigger->requirement->conditions->current_hits = 7U;
+        pTrigger->state = RC_TRIGGER_STATE_TRIGGERED;
+        achievement.SetState(ra::data::models::AssetState::Triggered);
+        // triggered achievement is removed from runtime
+        Assert::IsNull(editor.mockRuntime.GetAchievementTrigger(1234U));
+
+        // but the updated state should still be reflected in the UI
+        Assert::AreEqual(7U, pCondition->GetCurrentHits());
+
+        editor.LoadAsset(nullptr);
+        Assert::AreEqual({ 0U }, editor.Trigger().Conditions().Count());
+
+        achievement.SetTrigger("0xH1234=2");
+        editor.LoadAsset(&achievement);
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        // definition changed. when reloaded, the updated state should be discarded
+        Assert::AreEqual(0U, pCondition->GetCurrentHits());
+    }
 };
 
 } // namespace tests

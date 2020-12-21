@@ -43,7 +43,8 @@ private:
 
     void Parse(TriggerViewModel& vmTrigger, const std::string& sInput)
     {
-        vmTrigger.InitializeFrom(sInput);
+        ra::data::models::CapturedTriggerHits pCapturedHits;
+        vmTrigger.InitializeFrom(sInput, pCapturedHits);
     }
 
     void ParseAndRegenerate(const std::string& sInput)

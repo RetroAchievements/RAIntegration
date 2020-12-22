@@ -88,6 +88,12 @@ extern "C" {
     // Perform one test for all achievements in the current set. Call this once per frame/cycle.
     API void CCONV _RA_DoAchievementsFrame();
 
+    // Temporarily disable forced redraws
+    API void CCONV _RA_SuspendRepaint();
+
+    // Resume forced redraws
+    API void CCONV _RA_ResumeRepaint();
+
     // Use in special cases where the emulator contains more than one console ID.
     API void CCONV _RA_SetConsoleID(unsigned int nConsoleID);
 

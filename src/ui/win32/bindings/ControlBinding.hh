@@ -97,18 +97,23 @@ public:
     /// </summary>
     static void ResumeRepaint();
 
-    class RepaintGuard
+    class RepaintGuard final
     {
     public:
-        RepaintGuard()
+        RepaintGuard() noexcept
         {
-            ControlBinding::SuspendRepaint();
+            GSL_SUPPRESS_F6 ControlBinding::SuspendRepaint();
         }
 
-        ~RepaintGuard()
+        ~RepaintGuard() noexcept
         {
-            ControlBinding::ResumeRepaint();
+            GSL_SUPPRESS_F6 ControlBinding::ResumeRepaint();
         }
+
+        RepaintGuard(const RepaintGuard&) noexcept = delete;
+        RepaintGuard& operator=(const RepaintGuard&) noexcept = delete;
+        RepaintGuard(RepaintGuard&&) noexcept = delete;
+        RepaintGuard& operator=(RepaintGuard&&) noexcept = delete;
     };
 
     /// <summary>

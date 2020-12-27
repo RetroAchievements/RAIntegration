@@ -10,6 +10,7 @@
 
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockThreadPool.hh"
@@ -86,6 +87,7 @@ private:
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::ui::mocks::MockDesktop mockDesktop;
@@ -2266,6 +2268,24 @@ public:
 
         // new item will be ignored when a selection is reset.
         Assert::IsNull(vmAssetList.mockGameContext.Assets().FindAchievement({ 111000001U }));
+    }
+
+    TEST_METHOD(TestIsProcessingActive)
+    {
+        AssetListViewModelHarness vmAssetList;
+        Assert::IsTrue(vmAssetList.IsProcessingActive());
+        Assert::IsFalse(vmAssetList.mockRuntime.IsPaused());
+        Assert::IsFalse(vmAssetList.mockEmulatorContext.WasMemoryModified());
+
+        vmAssetList.SetProcessingActive(false);
+        Assert::IsFalse(vmAssetList.IsProcessingActive());
+        Assert::IsTrue(vmAssetList.mockRuntime.IsPaused());
+        Assert::IsTrue(vmAssetList.mockEmulatorContext.WasMemoryModified());
+
+        vmAssetList.SetProcessingActive(true);
+        Assert::IsTrue(vmAssetList.IsProcessingActive());
+        Assert::IsFalse(vmAssetList.mockRuntime.IsPaused());
+        Assert::IsTrue(vmAssetList.mockEmulatorContext.WasMemoryModified());
     }
 };
 

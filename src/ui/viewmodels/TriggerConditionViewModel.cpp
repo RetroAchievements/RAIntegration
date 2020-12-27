@@ -217,7 +217,7 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
         {
             const auto nSize = MapMemSize(operand.size);
             SetValue(pSizeProperty, ra::etoi(nSize));
-            SetValue(pValueProperty, operand.value.memref->memref.address);
+            SetValue(pValueProperty, operand.value.memref->address);
             break;
         }
 

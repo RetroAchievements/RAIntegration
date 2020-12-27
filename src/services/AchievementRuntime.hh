@@ -104,7 +104,7 @@ public:
     /// Specifies the rich presence to process each frame.
     /// </summary>
     /// <remarks>Only updates the memrefs each frame (for deltas), the script is not processed here.</remarks>
-    void ActivateRichPresence(const std::string& sScript);
+    void ActivateRichPresence(const std::string& sScript) noexcept;
 
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
@@ -114,7 +114,7 @@ public:
         if (!m_bInitialized)
             return false;
 
-        return (m_pRuntime.richpresence_display_buffer != nullptr);
+        return (m_pRuntime.richpresence != nullptr && m_pRuntime.richpresence->richpresence != nullptr);
     }
 
     /// <summary>
@@ -208,6 +208,7 @@ private:
     void EnsureInitialized() noexcept;
 
     std::map<unsigned int, std::string> m_vQueuedAchievements;
+    int m_nRichPresenceParseResult = RC_OK;
     bool m_bInitialized = false;
 };
 

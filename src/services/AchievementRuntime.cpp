@@ -156,39 +156,35 @@ int AchievementRuntime::ActivateLeaderboard(unsigned int nId, const std::string&
     return rc_runtime_activate_lboard(&m_pRuntime, nId, sDefinition.c_str(), nullptr, 0);
 }
 
-void AchievementRuntime::ActivateRichPresence(const std::string& sScript)
+void AchievementRuntime::ActivateRichPresence(const std::string& sScript) noexcept
 {
     EnsureInitialized();
 
     if (sScript.empty())
     {
-        if (m_pRuntime.richpresence_display_buffer != nullptr)
-        {
-            free(m_pRuntime.richpresence_display_buffer);
-            m_pRuntime.richpresence_display_buffer = nullptr;
-        }
+        m_nRichPresenceParseResult = RC_OK;
+        if (m_pRuntime.richpresence != nullptr)
+            m_pRuntime.richpresence->richpresence = nullptr;
     }
     else
     {
-        const auto nResult = rc_runtime_activate_richpresence(&m_pRuntime, sScript.c_str(), nullptr, 0);
-        if (nResult != RC_OK)
-        {
-            const std::string sErrorRP = ra::StringPrintf("Parse error %d: %s\n", nResult, rc_error_str(nResult));
-            m_pRuntime.richpresence_display_buffer = _strdup(sErrorRP.c_str());
-        }
+        m_nRichPresenceParseResult = rc_runtime_activate_richpresence(&m_pRuntime, sScript.c_str(), nullptr, 0);
     }
 }
 
 std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
 {
-    if (!m_bInitialized)
-        return std::wstring(L"No Rich Presence defined.");
+    if (m_bInitialized)
+    {
+        if (m_nRichPresenceParseResult != RC_OK)
+            return ra::StringPrintf(L"Parse error %d: %s\n", m_nRichPresenceParseResult, rc_error_str(m_nRichPresenceParseResult));
 
-    const char* sRichPresence = rc_runtime_get_richpresence(&m_pRuntime);
-    if (sRichPresence == nullptr || *sRichPresence == '\0')
-        return std::wstring(L"No Rich Presence defined.");
+        char sRichPresence[256];
+        if (rc_runtime_get_richpresence(&m_pRuntime, sRichPresence, sizeof(sRichPresence), rc_peek_callback, nullptr, nullptr) > 0)
+            return ra::Widen(sRichPresence);
+    }
 
-    return ra::Widen(sRichPresence);
+    return std::wstring(L"No Rich Presence defined.");
 }
 
 void AchievementRuntime::SetPaused(bool bValue) 
@@ -405,13 +401,15 @@ static void ProcessStateString(Tokenizer& pTokenizer, unsigned int nId, rc_trigg
                         pCondition->current_hits = condSource.nHits;
                         if (IsMemoryOperand(pCondition->operand1.type))
                         {
-                            pCondition->operand1.value.memref->value = condSource.nSourceVal;
-                            pCondition->operand1.value.memref->previous = condSource.nSourcePrev;
+                            pCondition->operand1.value.memref->value.value = condSource.nSourceVal;
+                            pCondition->operand1.value.memref->value.prior = condSource.nSourcePrev;
+                            pCondition->operand1.value.memref->value.changed = 0;
                         }
                         if (IsMemoryOperand(pCondition->operand2.type))
                         {
-                            pCondition->operand2.value.memref->value = condSource.nTargetVal;
-                            pCondition->operand2.value.memref->previous = condSource.nTargetPrev;
+                            pCondition->operand2.value.memref->value.value = condSource.nTargetVal;
+                            pCondition->operand2.value.memref->value.prior = condSource.nTargetPrev;
+                            pCondition->operand2.value.memref->value.changed = 0;
                         }
 
                         pCondition = pCondition->next;
@@ -472,15 +470,16 @@ bool AchievementRuntime::LoadProgressV2(ra::services::TextReader& pFile, std::se
 
         if (c == '$') // memory reference
         {
-            rc_memref_value_t pMemRef{};
+            rc_memref_t pMemRef{};
 
             const auto cPrefix = tokenizer.PeekChar();
             tokenizer.Advance();
-            pMemRef.memref.size = ComparisonSizeFromPrefix(cPrefix);
+            pMemRef.value.size = ComparisonSizeFromPrefix(cPrefix);
 
             const auto sAddr = tokenizer.ReadTo(':');
-            pMemRef.memref.address = ra::ByteAddressFromString(sAddr);
+            pMemRef.address = ra::ByteAddressFromString(sAddr);
 
+            unsigned delta = 0;
             while (tokenizer.PeekChar() != '#' && !tokenizer.EndOfString())
             {
                 tokenizer.Advance();
@@ -490,11 +489,12 @@ bool AchievementRuntime::LoadProgressV2(ra::services::TextReader& pFile, std::se
 
                 switch (cField)
                 {
-                    case 'v': pMemRef.value = nValue; break;
-                    case 'd': pMemRef.previous = nValue; break;
-                    case 'p': pMemRef.prior = nValue; break;
+                    case 'v': pMemRef.value.value = nValue; break;
+                    case 'd': delta = nValue; break;
+                    case 'p': pMemRef.value.prior = nValue; break;
                 }
             }
+            pMemRef.value.changed = (pMemRef.value.value != delta);
 
             if (tokenizer.PeekChar() == '#')
             {
@@ -506,15 +506,15 @@ bool AchievementRuntime::LoadProgressV2(ra::services::TextReader& pFile, std::se
                     if (tokenizer.PeekChar() == sLineMD5.at(31))
                     {
                         // match! attempt to store it
-                        rc_memref_value_t* pMemoryReference = m_pRuntime.memrefs;
+                        rc_memref_t* pMemoryReference = m_pRuntime.memrefs;
                         while (pMemoryReference)
                         {
-                            if (pMemoryReference->memref.address == pMemRef.memref.address &&
-                                pMemoryReference->memref.size == pMemRef.memref.size)
+                            if (pMemoryReference->address == pMemRef.address &&
+                                pMemoryReference->value.size == pMemRef.value.size)
                             {
-                                pMemoryReference->value = pMemRef.value;
-                                pMemoryReference->previous = pMemRef.previous;
-                                pMemoryReference->prior = pMemRef.prior;
+                                pMemoryReference->value.value = pMemRef.value.value;
+                                pMemoryReference->value.changed = pMemRef.value.changed;
+                                pMemoryReference->value.prior = pMemRef.value.prior;
                                 break;
                             }
 

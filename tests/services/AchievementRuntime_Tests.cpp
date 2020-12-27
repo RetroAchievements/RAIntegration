@@ -54,14 +54,9 @@ public:
     ra::services::mocks::MockThreadPool mockThreadPool;
     ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-    rc_memref_value_t* GetMemRefs() noexcept
+    rc_memref_t* GetMemRefs() noexcept
     {
         return m_pRuntime.memrefs;
-    }
-
-    void ForceRichPresenceUpdate() noexcept
-    {
-        m_pRuntime.richpresence_update_timer = 0;
     }
 
     size_t GetTriggerCount() const noexcept
@@ -526,25 +521,25 @@ public:
         ach.SetConditionHitCount(0, 0, 2);
         ach.SetConditionHitCount(0, 1, 0);
         auto pMemRef = runtime.GetMemRefs(); // 0xH1234
-        pMemRef->value = 0x02;
-        pMemRef->previous = 0x03;
-        pMemRef->prior = 0x03;
+        pMemRef->value.value = 0x02;
+        pMemRef->value.changed = 0;
+        pMemRef->value.prior = 0x03;
         pMemRef = pMemRef->next; // 0xX1234
-        pMemRef->value = 0x020000;
-        pMemRef->previous = 0x020000;
-        pMemRef->prior = 0x040000;
+        pMemRef->value.value = 0x020000;
+        pMemRef->value.changed = 1;
+        pMemRef->value.prior = 0x040000;
 
         runtime.SaveProgressToFile("test.sav");
 
         // modify data so we can see if the persisted data is restored
         pMemRef = runtime.GetMemRefs();
-        pMemRef->value = 0;
-        pMemRef->previous = 0;
-        pMemRef->prior = 0;
+        pMemRef->value.value = 0;
+        pMemRef->value.changed = 0;
+        pMemRef->value.prior = 0;
         pMemRef = pMemRef->next;
-        pMemRef->value = 0;
-        pMemRef->previous = 0;
-        pMemRef->prior = 0;
+        pMemRef->value.value = 0;
+        pMemRef->value.changed = 0;
+        pMemRef->value.prior = 0;
         ach.SetConditionHitCount(0, 0, 1);
         ach.SetConditionHitCount(0, 1, 1);
 
@@ -555,13 +550,13 @@ public:
         Assert::AreEqual(0U, ach.GetConditionHitCount(0, 1));
 
         pMemRef = runtime.GetMemRefs();
-        Assert::AreEqual(0x02U, pMemRef->value);
-        Assert::AreEqual(0x03U, pMemRef->previous);
-        Assert::AreEqual(0x03U, pMemRef->prior);
+        Assert::AreEqual(0x02U, pMemRef->value.value);
+        Assert::AreEqual(0, (int)pMemRef->value.changed);
+        Assert::AreEqual(0x03U, pMemRef->value.prior);
         pMemRef = pMemRef->next;
-        Assert::AreEqual(0x020000U, pMemRef->value);
-        Assert::AreEqual(0x020000U, pMemRef->previous);
-        Assert::AreEqual(0x040000U, pMemRef->prior);
+        Assert::AreEqual(0x020000U, pMemRef->value.value);
+        Assert::AreEqual(1, (int)pMemRef->value.changed);
+        Assert::AreEqual(0x040000U, pMemRef->value.prior);
     }
 
     TEST_METHOD(TestLoadProgressV1)
@@ -603,25 +598,25 @@ public:
         ach.SetConditionHitCount(1, 0, 2);
         ach.SetConditionHitCount(1, 1, 0);
         auto pMemRef = runtime.GetMemRefs(); // 0xH1234
-        pMemRef->value = 0x02;
-        pMemRef->previous = 0x03;
-        pMemRef->prior = 0x03;
+        pMemRef->value.value = 0x02;
+        pMemRef->value.changed = 1;
+        pMemRef->value.prior = 0x03;
         pMemRef = pMemRef->next; // 0xX1234
-        pMemRef->value = 0x020000;
-        pMemRef->previous = 0x020000;
-        pMemRef->prior = 0x040000;
+        pMemRef->value.value = 0x020000;
+        pMemRef->value.changed = 0;
+        pMemRef->value.prior = 0x040000;
 
         runtime.SaveProgressToFile("test.sav");
 
         // modify data so we can see if the persisted data is restored
         pMemRef = runtime.GetMemRefs();
-        pMemRef->value = 0;
-        pMemRef->previous = 0;
-        pMemRef->prior = 0;
+        pMemRef->value.value = 0;
+        pMemRef->value.changed = 0;
+        pMemRef->value.prior = 0;
         pMemRef = pMemRef->next;
-        pMemRef->value = 0;
-        pMemRef->previous = 0;
-        pMemRef->prior = 0;
+        pMemRef->value.value = 0;
+        pMemRef->value.changed = 0;
+        pMemRef->value.prior = 0;
         ach.SetConditionHitCount(1, 0, 1);
         ach.SetConditionHitCount(1, 1, 1);
 
@@ -632,13 +627,13 @@ public:
         Assert::AreEqual(0U, ach.GetConditionHitCount(1, 1));
 
         pMemRef = runtime.GetMemRefs();
-        Assert::AreEqual(0x02U, pMemRef->value);
-        Assert::AreEqual(0x03U, pMemRef->previous);
-        Assert::AreEqual(0x03U, pMemRef->prior);
+        Assert::AreEqual(0x02U, pMemRef->value.value);
+        Assert::AreEqual(1, (int)pMemRef->value.changed);
+        Assert::AreEqual(0x03U, pMemRef->value.prior);
         pMemRef = pMemRef->next;
-        Assert::AreEqual(0x020000U, pMemRef->value);
-        Assert::AreEqual(0x020000U, pMemRef->previous);
-        Assert::AreEqual(0x040000U, pMemRef->prior);
+        Assert::AreEqual(0x020000U, pMemRef->value.value);
+        Assert::AreEqual(0, (int)pMemRef->value.changed);
+        Assert::AreEqual(0x040000U, pMemRef->value.prior);
     }
 
     TEST_METHOD(TestActivateClonedAchievement)
@@ -885,24 +880,20 @@ public:
         Assert::AreEqual(std::wstring(L"18 0"), runtime.GetRichPresenceDisplayString());
 
         // first update - updates value and delta
-        runtime.ForceRichPresenceUpdate();
         runtime.Process(changes);
         Assert::AreEqual(std::wstring(L"18 18"), runtime.GetRichPresenceDisplayString());
 
         // second update - updates delta
-        runtime.ForceRichPresenceUpdate();
         runtime.Process(changes);
         Assert::AreEqual(std::wstring(L"18 18"), runtime.GetRichPresenceDisplayString());
 
         // third update - updates value after change
         memory.at(1) = 11;
-        runtime.ForceRichPresenceUpdate();
         runtime.Process(changes);
         Assert::AreEqual(std::wstring(L"11 18"), runtime.GetRichPresenceDisplayString());
 
         // fourth update - updates delta and value after change
         memory.at(1) = 13;
-        runtime.ForceRichPresenceUpdate();
         runtime.Process(changes);
         Assert::AreEqual(std::wstring(L"13 11"), runtime.GetRichPresenceDisplayString());
     }

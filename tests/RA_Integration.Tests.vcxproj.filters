@@ -429,6 +429,9 @@
     <ClCompile Include="..\src\data\models\LocalBadgesModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\data\models\CapturedTriggerHits.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

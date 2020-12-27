@@ -46,26 +46,7 @@ void AchievementModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
     {
         if (args.Property == StateProperty)
         {
-            const bool bWasActive = IsActive(ra::itoe<AssetState>(args.tOldValue));
-            const bool bIsActive = IsActive(ra::itoe<AssetState>(args.tNewValue));
-            if (bWasActive != bIsActive)
-            {
-                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-                const bool bRuntimeActive = (pRuntime.GetAchievementTrigger(GetID()) != nullptr);
-                if (bRuntimeActive != bIsActive)
-                {
-                    if (bIsActive)
-                        pRuntime.ActivateAchievement(GetID(), GetTrigger());
-                    else
-                        pRuntime.DeactivateAchievement(GetID());
-                }
-            }
-
-            if (ra::itoe<AssetState>(args.tNewValue) == AssetState::Triggered)
-            {
-                const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
-                m_tUnlock = pClock.Now();
-            }
+            HandleStateChanged(ra::itoe<AssetState>(args.tOldValue), ra::itoe<AssetState>(args.tNewValue));
         }
         else if (args.Property == TriggerProperty)
         {
@@ -163,6 +144,62 @@ void AchievementModel::DoFrame()
                 SetState(AssetState::Waiting);
                 break;
         }
+    }
+}
+
+
+void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewState)
+{
+    const bool bWasActive = IsActive(nOldState);
+    const bool bIsActive = IsActive(nNewState);
+    if (bWasActive == bIsActive)
+        return;
+
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    auto* pTrigger = pRuntime.GetAchievementTrigger(GetID());
+
+    if (bIsActive)
+    {
+        const bool bRuntimeActive = (pTrigger != nullptr);
+        if (!bRuntimeActive)
+        {
+            pRuntime.ActivateAchievement(GetID(), GetTrigger());
+            pTrigger = pRuntime.GetAchievementTrigger(GetID());
+        }
+        else
+        {
+            rc_reset_trigger(pTrigger);
+        }
+    }
+    else if (pTrigger)
+    {
+        m_pCapturedTriggerHits.Capture(pTrigger, GetTrigger());
+        pRuntime.DeactivateAchievement(GetID());
+    }
+
+    switch (nNewState)
+    {
+        case AssetState::Waiting:
+            if (pTrigger)
+                pTrigger->state = RC_TRIGGER_STATE_WAITING;
+            break;
+
+        case AssetState::Active:
+            if (pTrigger)
+                pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
+            break;
+
+        case AssetState::Inactive:
+            if (pTrigger)
+                pTrigger->state = RC_TRIGGER_STATE_INACTIVE;
+            break;
+
+        case AssetState::Triggered:
+            const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
+            m_tUnlock = pClock.Now();
+
+            m_sUnlockRichPresence = pRuntime.GetRichPresenceDisplayString();
+            break;
     }
 }
 

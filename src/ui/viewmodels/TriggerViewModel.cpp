@@ -383,13 +383,14 @@ void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
     UpdateConditions(&vmCoreGroup);
 }
 
-void TriggerViewModel::InitializeFrom(const std::string& sTrigger)
+void TriggerViewModel::InitializeFrom(const std::string& sTrigger, const ra::data::models::CapturedTriggerHits& pCapturedHits)
 {
     const auto nSize = rc_trigger_size(sTrigger.c_str());
     if (nSize > 0)
     {
         m_sTriggerBuffer.resize(nSize);
         m_pTrigger = rc_parse_trigger(m_sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
+        pCapturedHits.Restore(m_pTrigger, sTrigger);
         InitializeFrom(*m_pTrigger);
     }
     else

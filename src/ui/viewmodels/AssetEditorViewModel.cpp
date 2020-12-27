@@ -95,13 +95,18 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
 
             const auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAsset->GetID());
             if (pTrigger != nullptr)
+            {
                 Trigger().InitializeFrom(*pTrigger);
+            }
             else
-                Trigger().InitializeFrom(pAchievement->GetTrigger());
+            {
+                Trigger().InitializeFrom(pAchievement->GetTrigger(), pAchievement->GetCapturedHits());
+            }
         }
         else
         {
-            Trigger().InitializeFrom("");
+            ra::data::models::CapturedTriggerHits pCapturedHits;
+            Trigger().InitializeFrom("", pCapturedHits);
         }
 
         m_pAsset = pAsset;
@@ -122,7 +127,8 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
         SetPauseOnTrigger(PauseOnTriggerProperty.GetDefaultValue());
         SetWindowTitle(L"Asset Editor");
 
-        Trigger().InitializeFrom("");
+        ra::data::models::CapturedTriggerHits pCapturedHits;
+        Trigger().InitializeFrom("", pCapturedHits);
     }
 }
 
@@ -232,8 +238,21 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
     {
         if (args.Property == StateProperty)
         {
-            m_pAsset->SetState(ra::itoe<ra::data::models::AssetState>(args.tNewValue));
-            UpdateTriggerBinding();
+            // make sure to update the hit counts in the frame where the achievement triggers
+            const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
+            if (nNewState == ra::data::models::AssetState::Triggered)
+                Trigger().DoFrame();
+
+            // update the state of the asset
+            m_pAsset->SetState(nNewState);
+
+            // if the asset became active, rebind to the actual trigger
+            if (ra::data::models::AssetModelBase::IsActive(nNewState))
+            {
+                const auto nOldState = ra::itoe<ra::data::models::AssetState>(args.tOldValue);
+                if (!ra::data::models::AssetModelBase::IsActive(nOldState))
+                    UpdateTriggerBinding();
+            }
         }
         else if (args.Property == CategoryProperty)
         {

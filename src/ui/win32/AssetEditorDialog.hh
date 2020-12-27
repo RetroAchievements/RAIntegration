@@ -68,6 +68,20 @@ private:
         AssetEditorDialog* m_pOwner;
     };
 
+    class ActiveCheckBoxBinding : public ra::ui::win32::bindings::ControlBinding
+    {
+    public:
+        explicit ActiveCheckBoxBinding(ViewModelBase& vmViewModel) noexcept :
+            ra::ui::win32::bindings::ControlBinding(vmViewModel) {}
+
+        void SetHWND(DialogBase& pDialog, HWND hControl) override;
+        void OnCommand() override;
+
+    protected:
+        void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
+        bool IsActive() const;
+    };
+
     ra::ui::win32::bindings::NumericTextBoxBinding m_bindID;
     ra::ui::win32::bindings::TextBoxBinding m_bindName;
     ra::ui::win32::bindings::TextBoxBinding m_bindDescription;
@@ -77,6 +91,7 @@ private:
 
     ra::ui::win32::bindings::CheckBoxBinding m_bindPauseOnReset;
     ra::ui::win32::bindings::CheckBoxBinding m_bindPauseOnTrigger;
+    ActiveCheckBoxBinding m_bindActive;
     DecimalPreferredBinding m_bindDecimalPreferred;
 
     ra::ui::win32::bindings::GridBinding m_bindGroups;

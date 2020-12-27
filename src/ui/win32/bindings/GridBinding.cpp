@@ -1167,6 +1167,20 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
     }
 }
 
+void GridBinding::OnNmRClick(const NMITEMACTIVATE* pnmItemActivate)
+{
+    // if an in-place editor is open, close it.
+    if (m_hInPlaceEditor)
+        SendMessage(m_hInPlaceEditor, WM_KILLFOCUS, 0, 0);
+
+    if (ra::to_unsigned(pnmItemActivate->iSubItem) < m_vColumns.size())
+    {
+        const auto& pColumn = m_vColumns.at(pnmItemActivate->iSubItem);
+        if (pColumn->HandleRightClick(GetItems(), gsl::narrow_cast<gsl::index>(pnmItemActivate->iItem) - m_nScrollOffset))
+            return;
+    }
+}
+
 void GridBinding::OnNmDblClick(const NMITEMACTIVATE* pnmItemActivate)
 {
     if (ra::to_unsigned(pnmItemActivate->iSubItem) < m_vColumns.size())

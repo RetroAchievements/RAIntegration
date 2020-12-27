@@ -174,27 +174,28 @@ void GridBinding::UpdateLayout()
 
 void GridBinding::UpdateAllItems()
 {
+    if (!m_hWnd)
+        return;
+
     RECT rcClientBefore{};
-    if (m_hWnd)
-        ::GetClientRect(m_hWnd, &rcClientBefore);
+    ::GetClientRect(m_hWnd, &rcClientBefore);
 
     DisableBinding();
 
     for (gsl::index nColumn = 0; ra::to_unsigned(nColumn) < m_vColumns.size(); ++nColumn)
         UpdateItems(nColumn);
 
+    UpdateSelectedItemStates();
+
     EnableBinding();
 
-    if (m_hWnd)
-    {
-        CheckForScrollBar();
+    CheckForScrollBar();
 
-        // if a scrollbar is added or removed, the client size will change
-        RECT rcClientAfter;
-        ::GetClientRect(m_hWnd, &rcClientAfter);
-        if (rcClientAfter.right != rcClientBefore.right)
-            UpdateLayout();
-    }
+    // if a scrollbar is added or removed, the client size will change
+    RECT rcClientAfter;
+    ::GetClientRect(m_hWnd, &rcClientAfter);
+    if (rcClientAfter.right != rcClientBefore.right)
+        UpdateLayout();
 }
 
 void GridBinding::UpdateItems(gsl::index nColumn)
@@ -326,6 +327,9 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
 
 void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
 {
+    if (m_pIsSelectedProperty && *m_pIsSelectedProperty == args.Property)
+        ListView_SetItemState(m_hWnd, nIndex, args.tNewValue ? LVIS_SELECTED : 0, LVIS_SELECTED);
+
     std::wstring sText;
     LV_ITEMW item{};
     item.mask = LVIF_TEXT;
@@ -537,14 +541,7 @@ void GridBinding::OnEndViewModelCollectionUpdate()
 
         CheckForScrollBar();
 
-        if (m_pIsSelectedProperty && !m_pUpdateSelectedItems)
-        {
-            for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vmItems->Count()); ++nIndex)
-            {
-                const bool bSelected = m_vmItems->GetItemValue(nIndex, *m_pIsSelectedProperty);
-                ListView_SetItemState(m_hWnd, nIndex, bSelected ? LVIS_SELECTED : 0, LVIS_SELECTED);
-            }
-        }
+        UpdateSelectedItemStates();
 
         if (m_bForceRepaint && m_nAdjustingScrollOffset == 0)
         {
@@ -559,14 +556,29 @@ void GridBinding::OnEndViewModelCollectionUpdate()
     }
 }
 
+void GridBinding::UpdateSelectedItemStates()
+{
+    if (m_pIsSelectedProperty && !m_pUpdateSelectedItems)
+    {
+        for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vmItems->Count()); ++nIndex)
+        {
+            const bool bSelected = m_vmItems->GetItemValue(nIndex, *m_pIsSelectedProperty);
+            ListView_SetItemState(m_hWnd, nIndex, bSelected ? LVIS_SELECTED : 0, LVIS_SELECTED);
+        }
+    }
+}
+
 void GridBinding::Invalidate()
 {
     InvalidateRect(m_hWnd, nullptr, FALSE);
 }
 
-void GridBinding::BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept
+void GridBinding::BindIsSelected(const BoolModelProperty& pIsSelectedProperty)
 {
     m_pIsSelectedProperty = &pIsSelectedProperty;
+
+    if (m_hWnd)
+        UpdateSelectedItemStates();
 }
 
 void GridBinding::BindEnsureVisible(const IntModelProperty& pEnsureVisibleProperty) noexcept

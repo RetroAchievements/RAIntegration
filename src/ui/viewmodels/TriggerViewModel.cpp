@@ -18,6 +18,7 @@ const BoolModelProperty TriggerViewModel::PauseOnResetProperty("TriggerViewModel
 const BoolModelProperty TriggerViewModel::PauseOnTriggerProperty("TriggerViewModel", "PauseOnTrigger", false);
 const IntModelProperty TriggerViewModel::VersionProperty("TriggerViewModel", "Version", 0);
 const IntModelProperty TriggerViewModel::EnsureVisibleConditionIndexProperty("TriggerViewModel", "EnsureVisibleConditionIndex", -1);
+const IntModelProperty TriggerViewModel::EnsureVisibleGroupIndexProperty("TriggerViewModel", "EnsureVisibleGroupIndex", -1);
 
 TriggerViewModel::TriggerViewModel() noexcept
     : m_pConditionsMonitor(*this)
@@ -422,7 +423,7 @@ void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
         if (vmAltGroup != nullptr)
             vmAltGroup->m_pConditionSet = pConditionSet;
         else
-            AddAltGroup(m_vGroups, gsl::narrow_cast<int>(++nIndex), pConditionSet);
+            AddAltGroup(m_vGroups, gsl::narrow_cast<int>(nIndex), pConditionSet);
     }
 
     // remove any extra alt groups
@@ -568,6 +569,73 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
 
     m_vConditions.EndUpdate();
     m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
+}
+
+void TriggerViewModel::AddGroup()
+{
+    const int nGroups = gsl::narrow_cast<int>(m_vGroups.Count());
+
+    if (nGroups == 1)
+    {
+        // only a core group, add two alt groups
+        AddAltGroup(m_vGroups, nGroups, nullptr);
+        AddAltGroup(m_vGroups, nGroups + 1, nullptr);
+    }
+    else
+    {
+        // already at least one alt group, only add one more
+        AddAltGroup(m_vGroups, nGroups, nullptr);
+    }
+
+    SetSelectedGroupIndex(nGroups);
+    SetValue(EnsureVisibleGroupIndexProperty, nGroups);
+
+    UpdateVersion();
+}
+
+void TriggerViewModel::RemoveGroup()
+{
+    int nIndex = GetSelectedGroupIndex();
+    if (nIndex == 0)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"The core group cannot be removed.");
+        return;
+    }
+
+    const auto* pGroup = m_vGroups.GetItemAt(nIndex);
+    Expects(pGroup != nullptr);
+
+    if (m_vConditions.Count() > 0)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel vmWarning;
+        vmWarning.SetHeader(ra::StringPrintf(L"Are you sure that you want to delete %s?", pGroup->GetLabel()));
+        vmWarning.SetMessage(L"The group is not empty, and this operation cannot be reverted.");
+        vmWarning.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+        vmWarning.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
+        const auto& pEditor = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetEditor;
+        if (vmWarning.ShowModal(pEditor) != ra::ui::DialogResult::Yes)
+            return;
+    }
+
+    SetSelectedGroupIndex(-1);
+
+    m_vGroups.RemoveAt(nIndex);
+
+    if (nIndex == m_vGroups.Count())
+    {
+        --nIndex;
+    }
+    else
+    {
+        for (gsl::index nScan = gsl::narrow_cast<gsl::index>(nIndex); nScan < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++nScan)
+            m_vGroups.GetItemAt(nScan)->SetLabel(ra::StringPrintf(L"Alt %d", nScan));
+    }
+
+    SetSelectedGroupIndex(nIndex);
+    SetValue(EnsureVisibleGroupIndexProperty, nIndex);
+
+    UpdateVersion();
 }
 
 void TriggerViewModel::DoFrame()

@@ -320,7 +320,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
       m_bindPauseOnTrigger(vmAssetEditor),
       m_bindActive(vmAssetEditor),
       m_bindDecimalPreferred(this, vmAssetEditor),
-      m_bindGroups(vmAssetEditor),
+      m_bindGroups(vmAssetEditor.Trigger()),
       m_bindConditions(vmAssetEditor.Trigger())
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::After, "Achievement Editor");
@@ -350,6 +350,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
 
     m_bindGroups.BindIsSelected(TriggerViewModel::GroupViewModel::IsSelectedProperty);
     m_bindGroups.BindItems(vmAssetEditor.Trigger().Groups());
+    m_bindGroups.BindEnsureVisible(TriggerViewModel::EnsureVisibleGroupIndexProperty);
 
     auto pIdColumn = std::make_unique<ra::ui::win32::bindings::GridNumberColumnBinding>(
         TriggerConditionViewModel::IndexProperty);
@@ -516,6 +517,24 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
             auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
             if (vmAssetEditor)
                 vmAssetEditor->SelectBadgeFile();
+
+            return TRUE;
+        }
+
+        case IDC_RA_ACH_ADDGROUP:
+        {
+            auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+            if (vmAssetEditor)
+                vmAssetEditor->Trigger().AddGroup();
+
+            return TRUE;
+        }
+
+        case IDC_RA_ACH_DELGROUP:
+        {
+            auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+            if (vmAssetEditor)
+                vmAssetEditor->Trigger().RemoveGroup();
 
             return TRUE;
         }

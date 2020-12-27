@@ -26,6 +26,12 @@ public:
         UpdateBoundText();
     }
 
+    void SetRange(int nMinimum, int nMaximum)
+    {
+        m_nMinimum = nMinimum;
+        m_nMaximum = nMaximum;
+    }
+
 protected:
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override
     {
@@ -40,12 +46,28 @@ protected:
             std::wstring sValue = std::to_wstring(GetValue(*m_pValueBoundProperty));
             SetWindowTextW(m_hWnd, sValue.c_str());
         }
+        else
+        {
+            TextBoxBinding::UpdateBoundText();
+        }
     }
 
     void UpdateSourceFromText(const std::wstring& sValue) override
     {
         std::wstring sError;
+        const int nValue = ParseValue(sValue, sError);
+        if (!sError.empty())
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(sError);
+        }
+        else
+        {
+            SetValue(*m_pValueBoundProperty, nValue);
+        }
+    }
 
+    int ParseValue(const std::wstring& sValue, std::wstring& sError)
+    {
         try
         {
             wchar_t* pEnd = nullptr;
@@ -67,8 +89,8 @@ protected:
             }
             else
             {
-                const int nValue = gsl::narrow_cast<unsigned int>(ra::to_unsigned(nVal));
-                SetValue(*m_pValueBoundProperty, nValue);
+                sError.clear();
+                return gsl::narrow_cast<int>(nVal);
             }
         }
         catch (const std::invalid_argument&)
@@ -80,11 +102,10 @@ protected:
             sError = ra::StringPrintf(L"Value cannot exceed %d", m_nMaximum);
         }
 
-        if (!sError.empty())
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(sError);
+        return 0;
     }
 
-private:
+protected:
     const IntModelProperty* m_pValueBoundProperty = nullptr;
     int m_nMinimum = 0;
     int m_nMaximum = 0x7FFFFFFF;

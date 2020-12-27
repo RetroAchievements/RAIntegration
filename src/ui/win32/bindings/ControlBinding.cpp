@@ -5,12 +5,17 @@
 #include "services\ServiceLocator.hh"
 #include "services\IClock.hh"
 
+#include "ui\viewmodels\MessageBoxViewModel.hh"
+
 #include "ui\win32\Desktop.hh"
 
 namespace ra {
 namespace ui {
 namespace win32 {
 namespace bindings {
+
+static std::atomic_int g_nSuspendRepaintCount = 0;
+static std::set<HWND> g_vSuspendedRepaintHWnds;
 
 ControlBinding::~ControlBinding() noexcept
 {
@@ -23,10 +28,8 @@ ControlBinding::~ControlBinding() noexcept
     }
 }
 
-void ControlBinding::ForceRepaint(HWND hWnd)
+static bool NeedsUpdate()
 {
-    InvalidateRect(hWnd, nullptr, FALSE);
-
     // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
     // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
     // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
@@ -34,8 +37,60 @@ void ControlBinding::ForceRepaint(HWND hWnd)
     {
         case RA_Libretro:
         case RA_Oricutron:
-            UpdateWindow(hWnd);
-            break;
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+void ControlBinding::ForceRepaint(HWND hWnd)
+{
+    if (g_nSuspendRepaintCount == 0)
+    {
+        ::InvalidateRect(hWnd, nullptr, FALSE);
+
+        if (NeedsUpdate())
+            ::UpdateWindow(hWnd);
+    }
+    else
+    {
+#ifdef DEBUG
+        if (g_vSuspendedRepaintHWnds.find(hWnd) != g_vSuspendedRepaintHWnds.end())
+            return;
+#endif
+        g_vSuspendedRepaintHWnds.insert(hWnd);
+    }
+}
+
+void ControlBinding::SuspendRepaint()
+{
+    if (++g_nSuspendRepaintCount == 50)
+        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"SuspendRepaint count is abnormally high.", L"Make sure to call ResumeRepaint whenever you call SuspendRepaint.");
+}
+
+void ControlBinding::ResumeRepaint()
+{
+    if (--g_nSuspendRepaintCount == 0)
+    {
+        std::set<HWND> vSuspendedRepaintWnds;
+        vSuspendedRepaintWnds.swap(g_vSuspendedRepaintHWnds);
+
+        if (!vSuspendedRepaintWnds.empty())
+        {
+            for (HWND hWnd : vSuspendedRepaintWnds)
+                ::InvalidateRect(hWnd, nullptr, FALSE);
+
+            if (NeedsUpdate())
+            {
+                for (HWND hWnd : vSuspendedRepaintWnds)
+                    ::UpdateWindow(hWnd);
+            }
+        }
+    }
+    else
+    {
+        Expects(g_nSuspendRepaintCount > 0);
     }
 }
 

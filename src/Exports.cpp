@@ -31,6 +31,7 @@
 #include "ui\viewmodels\WindowManager.hh"
 #include "ui\win32\Desktop.hh"
 #include "ui\win32\OverlayWindow.hh"
+#include "ui\win32\bindings\ControlBinding.hh"
 
 #include "RAInterface\RA_Emulators.h"
 
@@ -502,6 +503,10 @@ static void UpdateUIForFrameChange()
 
 API void CCONV _RA_DoAchievementsFrame()
 {
+#ifndef RA_UTEST
+    ra::ui::win32::bindings::ControlBinding::RepaintGuard guard;
+#endif
+
     // make sure we process the achievements _before_ the frozen bookmarks modify the memory
     ProcessAchievements();
 
@@ -510,6 +515,20 @@ API void CCONV _RA_DoAchievementsFrame()
 #endif
 
     CHECK_PERFORMANCE();
+}
+
+API void CCONV _RA_SuspendRepaint()
+{
+#ifndef RA_UTEST
+    ra::ui::win32::bindings::ControlBinding::SuspendRepaint();
+#endif
+}
+
+API void CCONV _RA_ResumeRepaint()
+{
+#ifndef RA_UTEST
+    ra::ui::win32::bindings::ControlBinding::ResumeRepaint();
+#endif
 }
 
 API void CCONV _RA_OnSaveState(const char* sFilename)

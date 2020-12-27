@@ -88,6 +88,35 @@ public:
     static void ForceRepaint(HWND hWnd);
 
     /// <summary>
+    /// Delays ForceRepaint calls until resumed.
+    /// </summary>
+    static void SuspendRepaint();
+
+    /// <summary>
+    /// Resumes ForceRepaint calls.
+    /// </summary>
+    static void ResumeRepaint();
+
+    class RepaintGuard final
+    {
+    public:
+        RepaintGuard() noexcept
+        {
+            GSL_SUPPRESS_F6 ControlBinding::SuspendRepaint();
+        }
+
+        ~RepaintGuard() noexcept
+        {
+            GSL_SUPPRESS_F6 ControlBinding::ResumeRepaint();
+        }
+
+        RepaintGuard(const RepaintGuard&) noexcept = delete;
+        RepaintGuard& operator=(const RepaintGuard&) noexcept = delete;
+        RepaintGuard(RepaintGuard&&) noexcept = delete;
+        RepaintGuard& operator=(RepaintGuard&&) noexcept = delete;
+    };
+
+    /// <summary>
     /// DO NOT CALL! Must be public for WINAPI interop.
     /// </summary>
     _NODISCARD virtual INT_PTR CALLBACK WndProc(_In_ HWND, _In_ UINT, _In_ WPARAM, _In_ LPARAM) noexcept(false);

@@ -68,42 +68,51 @@ void DataModelCollectionBase::OnEndUpdate()
 
 void DataModelCollectionBase::OnItemsRemoved(const std::vector<gsl::index>& vDeletedIndices)
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (auto nDeletedIndex : vDeletedIndices)
+    if (!m_vNotifyTargets.empty())
     {
-        for (NotifyTarget* target : vNotifyTargets)
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (auto nDeletedIndex : vDeletedIndices)
         {
-            Expects(target != nullptr);
-            target->OnDataModelRemoved(nDeletedIndex);
+            for (NotifyTarget* target : vNotifyTargets)
+            {
+                Expects(target != nullptr);
+                target->OnDataModelRemoved(nDeletedIndex);
+            }
         }
     }
 }
 
 void DataModelCollectionBase::OnItemsAdded(const std::vector<gsl::index>& vNewIndices)
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (auto vNewIndex : vNewIndices)
+    if (!m_vNotifyTargets.empty())
     {
-        for (NotifyTarget* target : vNotifyTargets)
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (auto vNewIndex : vNewIndices)
         {
-            Expects(target != nullptr);
-            target->OnDataModelAdded(vNewIndex);
+            for (NotifyTarget* target : vNotifyTargets)
+            {
+                Expects(target != nullptr);
+                target->OnDataModelAdded(vNewIndex);
+            }
         }
     }
 }
 
 void DataModelCollectionBase::OnItemsChanged(const std::vector<gsl::index>& vChangedIndices)
 {
-    // create a copy of the list of pointers in case it's modified by one of the callbacks
-    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
-    for (auto vChangedIndex : vChangedIndices)
+    if (!m_vNotifyTargets.empty())
     {
-        for (NotifyTarget* target : vNotifyTargets)
+        // create a copy of the list of pointers in case it's modified by one of the callbacks
+        NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+        for (auto vChangedIndex : vChangedIndices)
         {
-            Expects(target != nullptr);
-            target->OnDataModelChanged(vChangedIndex);
+            for (NotifyTarget* target : vNotifyTargets)
+            {
+                Expects(target != nullptr);
+                target->OnDataModelChanged(vChangedIndex);
+            }
         }
     }
 }

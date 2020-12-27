@@ -272,7 +272,7 @@ void ModelCollectionBase::UpdateIndices()
             }
         }
 
-        if (bWatching && !vDeletedIndices.empty())
+        if (!vDeletedIndices.empty())
             OnItemsRemoved(vDeletedIndices);
     }
 
@@ -295,10 +295,9 @@ void ModelCollectionBase::UpdateIndices()
             pItem->m_nCollectionIndex = nIndex;
 
             if (bWatching)
-            {
                 StartWatching(*pItem, nIndex);
-                vNewIndices.push_back(nIndex);
-            }
+
+            vNewIndices.push_back(nIndex);
         }
     }
 
@@ -313,9 +312,7 @@ void ModelCollectionBase::UpdateIndices()
         if (pItem->m_nCollectionIndex != nIndex)
         {
             pItem->m_nCollectionIndex = nIndex;
-
-            if (bWatching)
-                vChangedIndices.push_back(nIndex);
+            vChangedIndices.push_back(nIndex);
         }
 
         ++nIndex;

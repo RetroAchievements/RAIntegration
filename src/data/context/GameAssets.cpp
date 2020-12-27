@@ -49,6 +49,40 @@ ra::data::models::AchievementModel& GameAssets::NewAchievement()
     return dynamic_cast<ra::data::models::AchievementModel&>(AddItem(std::move(vmAchievement)));
 }
 
+void GameAssets::OnItemsAdded(const std::vector<gsl::index>& vNewIndices)
+{
+    auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0));
+    if (pLocalBadges)
+    {
+        for (const auto nIndex : vNewIndices)
+        {
+            const auto* pAsset = GetItemAt(nIndex);
+            const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
+            if (pAchievement && ra::StringStartsWith(pAchievement->GetBadge(), L"local\\"))
+                pLocalBadges->AddReference(pAchievement->GetBadge(), pAchievement->IsBadgeCommitted());
+        }
+    }
+
+    ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnItemsAdded(vNewIndices);
+}
+
+void GameAssets::OnItemsRemoved(const std::vector<gsl::index>& vDeletedIndices)
+{
+    auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0));
+    if (pLocalBadges)
+    {
+        for (const auto nIndex : vDeletedIndices)
+        {
+            const auto* pAsset = GetItemAt(nIndex);
+            const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
+            if (pAchievement && ra::StringStartsWith(pAchievement->GetBadge(), L"local\\"))
+                pLocalBadges->RemoveReference(pAchievement->GetBadge(), pAchievement->IsBadgeCommitted());
+        }
+    }
+
+    ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnItemsRemoved(vDeletedIndices);
+}
+
 void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase*>& vAssetsToReload)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
@@ -99,12 +133,6 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                 nType = ra::data::models::AssetType::Achievement;
                 nId = pTokenizer.ReadNumber();
                 break;
-
-            case 'b': case 'B':
-                nType = ra::data::models::AssetType::LocalBadges;
-                nId = 0;
-                pTokenizer.Advance();
-                break;
         }
 
         if (nType == ra::data::models::AssetType::None)
@@ -154,14 +182,6 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                     vmAchievement->CreateServerCheckpoint();
 
                     pAsset = &Append(std::move(vmAchievement));
-                    break;
-                }
-
-                case ra::data::models::AssetType::LocalBadges:
-                {
-                    auto* pLocalBadges = FindAsset(ra::data::models::AssetType::LocalBadges, 0);
-                    if (pLocalBadges)
-                        pLocalBadges->Deserialize(pTokenizer);
                     break;
                 }
             }
@@ -284,13 +304,6 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
         // serialize the item
         pData->Write(std::to_string(pItem->GetID()));
         pItem->Serialize(*pData);
-        pData->WriteLine();
-    }
-
-    const auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0));
-    if (pLocalBadges != nullptr && pLocalBadges->NeedsSerialized())
-    {
-        pLocalBadges->Serialize(*pData);
         pData->WriteLine();
     }
 

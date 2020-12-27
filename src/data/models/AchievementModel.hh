@@ -44,6 +44,14 @@ public:
     void SetBadge(const std::wstring& sValue) { SetValue(BadgeProperty, sValue); }
 
     /// <summary>
+    /// Determines if the badge has been committed.
+    /// </summary>
+    bool IsBadgeCommitted() const
+    {
+        return (GetLocalValue(BadgeProperty) == GetValue(BadgeProperty));
+    }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the emulator should be paused when the trigger is reset.
     /// </summary>
     static const BoolModelProperty PauseOnResetProperty;

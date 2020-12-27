@@ -194,15 +194,14 @@ public:
         achievement.SetBadge(L"local\\22-ABC.png");
 
         const auto& pLocalBadges = achievement.GetLocalBadgesModel();
-        Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png"));
-        Assert::IsFalse(pLocalBadges.NeedsSerialized());
+        Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", false));
+        Assert::AreEqual(0, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", true));
 
         // this sets the committed badge reference so it'll show up in the serialized string
         achievement.UpdateLocalCheckpoint();
 
-        Assert::IsTrue(pLocalBadges.NeedsSerialized());
-        pLocalBadges.Serialize(achievement.textWriter);
-        Assert::AreEqual(std::string("b:ABC.png=1"), achievement.textWriter.GetString());
+        Assert::AreEqual(0, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", false));
+        Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", true));
     }
 
     TEST_METHOD(TestSetBadgeNameAndReset)
@@ -219,15 +218,16 @@ public:
         achievement.SetBadge(L"local\\22-ABC.png");
 
         const auto& pLocalBadges = achievement.GetLocalBadgesModel();
-        Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png"));
-        Assert::IsFalse(pLocalBadges.NeedsSerialized());
+        Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", false));
+        Assert::AreEqual(0, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", true));
 
         achievement.SetBadge(L"12345.png");
 
         // the local badge is no longer referenced, so shouldn't be serialized
         achievement.UpdateLocalCheckpoint();
 
-        Assert::IsFalse(pLocalBadges.NeedsSerialized());
+        Assert::AreEqual(0, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", false));
+        Assert::AreEqual(0, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", true));
     }
 };
 

@@ -187,8 +187,7 @@ public:
         gameAssets.ReloadAsset(AssetType::Achievement, GameAssets::FirstLocalId);
 
         const auto& sExpected = ra::StringPrintf("0.0.0.0\nGameName\n"
-            "%u:\"1=1\":Temp:Temp::::Authl:10:::::\"local\\\\22-ABCDE.png\"\n"
-            "b:ABCDE.png=1\n", GameAssets::FirstLocalId);
+            "%u:\"1=1\":Temp:Temp::::Authl:10:::::\"local\\\\22-ABCDE.png\"\n", GameAssets::FirstLocalId);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
@@ -348,8 +347,7 @@ public:
         gameAssets.mockGameContext.SetGameId(22);
         gameAssets.AddLocalBadgesModel();
         gameAssets.MockUserFileContents(
-            "111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::local\\22-A.png\n"
-            "b:A.png=1\n");
+            "111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::local\\22-A.png\n");
 
         gameAssets.ReloadAllAssets();
 
@@ -359,7 +357,7 @@ public:
         Assert::AreEqual(std::wstring(L"local\\22-A.png"), pAsset->GetBadge());
 
         const auto& pLocalBadges = gameAssets.GetLocalBadgesModel();
-        Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-A.png"));
+        Assert::AreEqual(1, pLocalBadges.GetReferenceCount(L"local\\22-A.png", true));
     }
 
     TEST_METHOD(TestReloadModifiedFromFile)

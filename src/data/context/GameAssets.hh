@@ -68,6 +68,9 @@ public:
     void ResetLocalId() noexcept { m_nNextLocalId = FirstLocalId; }
 
 protected:
+    void OnItemsRemoved(const std::vector<gsl::index>& vDeletedIndices) override;
+    void OnItemsAdded(const std::vector<gsl::index>& vNewIndices) override;
+
     uint32_t m_nNextLocalId = FirstLocalId;
 };
 

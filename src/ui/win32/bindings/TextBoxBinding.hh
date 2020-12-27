@@ -107,7 +107,7 @@ protected:
             UpdateTextFromSource(GetValue(*m_pTextBoundProperty));
     }
 
-    virtual void UpdateTextFromSource(const std::wstring& sText) noexcept
+    virtual void UpdateTextFromSource(const std::wstring& sText) noexcept(false)
     {
         SetWindowTextW(m_hWnd, sText.c_str());
     }

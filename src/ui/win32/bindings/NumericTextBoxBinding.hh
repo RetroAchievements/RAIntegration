@@ -26,7 +26,7 @@ public:
         UpdateBoundText();
     }
 
-    void SetRange(int nMinimum, int nMaximum)
+    void SetRange(int nMinimum, int nMaximum) noexcept
     {
         m_nMinimum = nMinimum;
         m_nMaximum = nMaximum;

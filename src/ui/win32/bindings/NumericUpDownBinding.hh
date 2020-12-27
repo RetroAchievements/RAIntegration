@@ -15,25 +15,25 @@ public:
     explicit NumericUpDownBinding(ViewModelBase& vmViewModel) noexcept 
         : NumericTextBoxBinding(vmViewModel) 
     {
-        BindKey(VK_UP, [this]() 
+        GSL_SUPPRESS_F6 BindKey(VK_UP, [this]()
         { 
             Adjust(1); return true; 
         });
 
-        BindKey(VK_DOWN, [this]() 
+        GSL_SUPPRESS_F6 BindKey(VK_DOWN, [this]()
         { 
             Adjust(-1); return true; 
         });
     }
 
-    void SetWrapAround(bool bValue) { m_bWrapAround = bValue; }
+    void SetWrapAround(bool bValue) noexcept { m_bWrapAround = bValue; }
 
-    void SetSpinnerControl(DialogBase& pDialog, int nControlResourceId)
+    void SetSpinnerControl(const DialogBase& pDialog, int nControlResourceId) noexcept
     {
         SetSpinnerHWND(GetDlgItem(pDialog.GetHWND(), nControlResourceId));
     }
 
-    void SetSpinnerHWND(HWND hControl)
+    void SetSpinnerHWND(HWND hControl) noexcept
     {
         m_hWndSpinner = hControl;
         ControlBinding::AddSecondaryControlBinding(hControl);

@@ -246,6 +246,7 @@ void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstrin
         // special case - don't validate if the string is entirely made of 0s.
         // the default value is "00000", which is less than the minimum.
         const wchar_t* pChar = &sValue.at(0);
+        Expects(pChar != nullptr);
         while (*pChar && *pChar == L'0')
             ++pChar;
 
@@ -255,12 +256,12 @@ void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstrin
 
     if (!sError.empty())
     {
-        EnableWindow(m_hWndSpinner, false);
+        ::EnableWindow(m_hWndSpinner, false);
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(sError);
     }
     else
     {
-        EnableWindow(m_hWndSpinner, true);
+        ::EnableWindow(m_hWndSpinner, true);
 
         if (sValue.length() < 5)
         {
@@ -276,12 +277,12 @@ void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstrin
     }
 }
 
-void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstring& sText) noexcept
+void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstring& sText)
 {
     if (ra::StringStartsWith(sText, L"local\\"))
     {
         SetWindowTextW(m_hWnd, L"[local]");
-        EnableWindow(m_hWndSpinner, false);
+        ::EnableWindow(m_hWndSpinner, false);
     }
     else
     {
@@ -289,18 +290,18 @@ void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstrin
 
         if (m_nMinimum == 0)
         {
-            EnableWindow(m_hWndSpinner, false);
+            ::EnableWindow(m_hWndSpinner, false);
 
             ra::api::FetchBadgeIds::Request request;
-            request.CallAsync([this](const ra::api::FetchBadgeIds::Response& response)
+            request.CallAsync([this](const ra::api::FetchBadgeIds::Response& response) noexcept
             {
                 SetRange(ra::to_signed(response.FirstID), ra::to_signed(response.NextID) - 1);
-                EnableWindow(m_hWndSpinner, true);
+                ::EnableWindow(m_hWndSpinner, true);
             });
         }
         else
         {
-            EnableWindow(m_hWndSpinner, true);
+            ::EnableWindow(m_hWndSpinner, true);
         }
     }
 }

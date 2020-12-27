@@ -181,7 +181,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
                 ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
                 ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
                     L"Playing in Softcore Mode",
-                    bLeaderboardsEnabled ? L"Leaderboard submissions will be canceled." : L"");
+                    bLeaderboardsEnabled ? L"Leaderboard entries will not be submitted." : L"");
             }
         }
     }

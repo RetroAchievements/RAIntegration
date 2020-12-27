@@ -321,7 +321,7 @@ public:
         const auto* pPopup = identifier.mockOverlayManager.GetMessage(1U);
         Expects(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Playing in Softcore Mode"), pPopup->GetTitle());
-        Assert::AreEqual(std::wstring(L"Leaderboard submissions will be canceled."), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Leaderboard entries will not be submitted."), pPopup->GetDescription());
     }
 
     TEST_METHOD(TestActivateGamePendingNonHardcoreNoLeaderboards)

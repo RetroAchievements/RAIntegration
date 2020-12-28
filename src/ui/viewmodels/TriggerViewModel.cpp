@@ -622,7 +622,7 @@ void TriggerViewModel::RemoveGroup()
 
     m_vGroups.RemoveAt(nIndex);
 
-    if (nIndex == m_vGroups.Count())
+    if (nIndex == gsl::narrow_cast<int>(m_vGroups.Count()))
     {
         --nIndex;
     }

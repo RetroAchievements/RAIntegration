@@ -760,7 +760,7 @@ public:
         pAchievement->SetState(AssetState::Active);
         pAchievement->CreateServerCheckpoint();
         pAchievement->CreateLocalCheckpoint();
-        const auto& vmAchievement = dynamic_cast<ra::data::models::AchievementModel&>(vmAssetList.mockGameContext.Assets().Append(std::move(pAchievement)));
+        vmAssetList.mockGameContext.Assets().Append(std::move(pAchievement));
 
         Assert::AreEqual({ 1U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());

@@ -744,6 +744,37 @@ public:
         Assert::AreEqual(AssetState::Active, pItem->GetState());
     }
 
+    TEST_METHOD(TestSyncAddItem)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetCategory::Core);
+
+        // between this test and TestSyncFilteredItem, we can validate each of the synced properties are
+        // correctly handled when an item is added to the list. TestSyncFilteredItem will also test to make
+        // sure they update after they've been added.
+        auto pAchievement = std::make_unique<ra::data::models::AchievementModel>();
+        pAchievement->SetID(2U);
+        pAchievement->SetCategory(AssetCategory::Core);
+        pAchievement->SetPoints(10);
+        pAchievement->SetName(L"Title2");
+        pAchievement->SetState(AssetState::Active);
+        pAchievement->CreateServerCheckpoint();
+        pAchievement->CreateLocalCheckpoint();
+        const auto& vmAchievement = dynamic_cast<ra::data::models::AchievementModel&>(vmAssetList.mockGameContext.Assets().Append(std::move(pAchievement)));
+
+        Assert::AreEqual({ 1U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        const auto* pItem = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pItem != nullptr);
+
+        Assert::AreEqual(2, pItem->GetId());
+        Assert::AreEqual(AssetCategory::Core, pItem->GetCategory());
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+        Assert::AreEqual(std::wstring(L"Title2"), pItem->GetLabel());
+        Assert::AreEqual(10, pItem->GetPoints());
+        Assert::AreEqual(AssetState::Active, pItem->GetState());
+    }
+
     TEST_METHOD(TestUpdateButtonsNoGame)
     {
         AssetListViewModelHarness vmAssetList;

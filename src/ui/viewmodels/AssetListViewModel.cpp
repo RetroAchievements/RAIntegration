@@ -325,6 +325,7 @@ void AssetListViewModel::AddOrRemoveFilteredItem(const ra::data::models::AssetMo
             pSummary->SetType(pAsset.GetType());
             pSummary->SetCategory(pAsset.GetCategory());
             pSummary->SetChanges(pAsset.GetChanges());
+            pSummary->SetState(pAsset.GetState());
 
             const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pAsset);
             if (pAchievement != nullptr)

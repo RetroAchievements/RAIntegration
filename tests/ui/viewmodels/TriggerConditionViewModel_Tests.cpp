@@ -130,6 +130,11 @@ private:
             TriggerConditionViewModel::InitializeFrom(*pTrigger->requirement->conditions);
         }
 
+        bool HasSourceSize() const { return GetValue(HasSourceSizeProperty); }
+        bool HasTargetSize() const { return GetValue(HasTargetSizeProperty); }
+        bool HasTarget() const { return GetValue(HasTargetProperty); }
+        bool HasHits() const { return GetValue(HasHitsProperty); }
+
     private:
         std::string sBuffer;
     };
@@ -154,7 +159,7 @@ private:
 public:
     TEST_METHOD(TestInitialState)
     {
-        TriggerConditionViewModel vmCondition;
+        TriggerConditionViewModelHarness vmCondition;
         Assert::AreEqual(1, vmCondition.GetIndex());
         Assert::AreEqual(TriggerConditionType::Standard, vmCondition.GetType());
         Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetSourceType());
@@ -166,6 +171,204 @@ public:
         Assert::AreEqual({ 0U }, vmCondition.GetTargetValue());
         Assert::AreEqual(0U, vmCondition.GetCurrentHits());
         Assert::AreEqual(0U, vmCondition.GetRequiredHits());
+
+        Assert::IsTrue(vmCondition.HasSourceSize());
+        Assert::IsFalse(vmCondition.HasTargetSize());
+        Assert::IsTrue(vmCondition.HasTarget());
+        Assert::IsTrue(vmCondition.HasHits());
+    }
+
+    TEST_METHOD(TestHasSourceSize)
+    {
+        TriggerConditionViewModelHarness vmCondition;
+        Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetSourceType());
+        Assert::IsTrue(vmCondition.HasSourceSize());
+
+        vmCondition.SetSourceType(TriggerOperandType::BCD);
+        Assert::AreEqual(TriggerOperandType::BCD, vmCondition.GetSourceType());
+        Assert::IsTrue(vmCondition.HasSourceSize());
+
+        vmCondition.SetSourceType(TriggerOperandType::Delta);
+        Assert::AreEqual(TriggerOperandType::Delta, vmCondition.GetSourceType());
+        Assert::IsTrue(vmCondition.HasSourceSize());
+
+        vmCondition.SetSourceType(TriggerOperandType::Prior);
+        Assert::AreEqual(TriggerOperandType::Prior, vmCondition.GetSourceType());
+        Assert::IsTrue(vmCondition.HasSourceSize());
+
+        vmCondition.SetSourceType(TriggerOperandType::Value);
+        Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetSourceType());
+        Assert::IsFalse(vmCondition.HasSourceSize());
+
+        vmCondition.SetSourceType(TriggerOperandType::Address);
+        Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetSourceType());
+        Assert::IsTrue(vmCondition.HasSourceSize());
+    }
+
+    TEST_METHOD(TestHasTarget)
+    {
+        TriggerConditionViewModelHarness vmCondition;
+        Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::NotEquals);
+        Assert::AreEqual(TriggerOperatorType::NotEquals, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::LessThan);
+        Assert::AreEqual(TriggerOperatorType::LessThan, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::LessThanOrEqual);
+        Assert::AreEqual(TriggerOperatorType::LessThanOrEqual, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::GreaterThan);
+        Assert::AreEqual(TriggerOperatorType::GreaterThan, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::GreaterThanOrEqual);
+        Assert::AreEqual(TriggerOperatorType::GreaterThanOrEqual, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::None);
+        Assert::AreEqual(TriggerOperatorType::None, vmCondition.GetOperator());
+        Assert::IsFalse(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::Multiply);
+        Assert::AreEqual(TriggerOperatorType::Multiply, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::Divide);
+        Assert::AreEqual(TriggerOperatorType::Divide, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::BitwiseAnd);
+        Assert::AreEqual(TriggerOperatorType::BitwiseAnd, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasTarget());
+    }
+
+    TEST_METHOD(TestHasTargetSize)
+    {
+        TriggerConditionViewModelHarness vmCondition;
+        Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetTargetType());
+        Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
+        Assert::IsFalse(vmCondition.HasTargetSize());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetTargetType(TriggerOperandType::Address);
+        Assert::IsTrue(vmCondition.HasTargetSize());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::None);
+        Assert::IsFalse(vmCondition.HasTargetSize());
+        Assert::IsFalse(vmCondition.HasTarget());
+
+        vmCondition.SetTargetType(TriggerOperandType::Value);
+        Assert::IsFalse(vmCondition.HasTargetSize());
+        Assert::IsFalse(vmCondition.HasTarget());
+
+        vmCondition.SetTargetType(TriggerOperandType::Delta);
+        Assert::IsFalse(vmCondition.HasTargetSize());
+        Assert::IsFalse(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::Equals);
+        Assert::IsTrue(vmCondition.HasTargetSize());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetTargetType(TriggerOperandType::Value);
+        Assert::IsFalse(vmCondition.HasTargetSize());
+        Assert::IsTrue(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::None);
+        Assert::IsFalse(vmCondition.HasTargetSize());
+        Assert::IsFalse(vmCondition.HasTarget());
+
+        vmCondition.SetTargetType(TriggerOperandType::Prior);
+        Assert::IsFalse(vmCondition.HasTargetSize());
+        Assert::IsFalse(vmCondition.HasTarget());
+
+        vmCondition.SetOperator(TriggerOperatorType::NotEquals);
+        Assert::IsTrue(vmCondition.HasTargetSize());
+        Assert::IsTrue(vmCondition.HasTarget());
+    }
+
+    TEST_METHOD(TestHasTargetSizeHasTarget)
+    {
+        TriggerConditionViewModelHarness vmCondition;
+        Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetTargetType());
+        Assert::IsFalse(vmCondition.HasTargetSize());
+
+        vmCondition.SetTargetType(TriggerOperandType::Address);
+        Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetTargetType());
+        Assert::IsTrue(vmCondition.HasTargetSize());
+
+        vmCondition.SetTargetType(TriggerOperandType::BCD);
+        Assert::AreEqual(TriggerOperandType::BCD, vmCondition.GetTargetType());
+        Assert::IsTrue(vmCondition.HasTargetSize());
+
+        vmCondition.SetTargetType(TriggerOperandType::Delta);
+        Assert::AreEqual(TriggerOperandType::Delta, vmCondition.GetTargetType());
+        Assert::IsTrue(vmCondition.HasTargetSize());
+
+        vmCondition.SetTargetType(TriggerOperandType::Prior);
+        Assert::AreEqual(TriggerOperandType::Prior, vmCondition.GetTargetType());
+        Assert::IsTrue(vmCondition.HasTargetSize());
+
+        vmCondition.SetTargetType(TriggerOperandType::Value);
+        Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetTargetType());
+        Assert::IsFalse(vmCondition.HasTargetSize());
+    }
+
+    TEST_METHOD(TestHasHits)
+    {
+        TriggerConditionViewModelHarness vmCondition;
+        Assert::AreEqual(TriggerConditionType::Standard, vmCondition.GetType());
+        Assert::IsTrue(vmCondition.HasHits());
+
+        vmCondition.SetType(TriggerConditionType::AddAddress);
+        Assert::AreEqual(TriggerConditionType::AddAddress, vmCondition.GetType());
+        Assert::IsFalse(vmCondition.HasHits());
+
+        vmCondition.SetType(TriggerConditionType::AddHits);
+        Assert::AreEqual(TriggerConditionType::AddHits, vmCondition.GetType());
+        Assert::IsTrue(vmCondition.HasHits());
+
+        vmCondition.SetType(TriggerConditionType::AddSource);
+        Assert::AreEqual(TriggerConditionType::AddSource, vmCondition.GetType());
+        Assert::IsFalse(vmCondition.HasHits());
+
+        vmCondition.SetType(TriggerConditionType::AndNext);
+        Assert::AreEqual(TriggerConditionType::AndNext, vmCondition.GetType());
+        Assert::IsTrue(vmCondition.HasHits());
+
+        vmCondition.SetType(TriggerConditionType::Measured);
+        Assert::AreEqual(TriggerConditionType::Measured, vmCondition.GetType());
+        Assert::IsTrue(vmCondition.HasHits());
+
+        vmCondition.SetType(TriggerConditionType::MeasuredIf);
+        Assert::AreEqual(TriggerConditionType::MeasuredIf, vmCondition.GetType());
+        Assert::IsTrue(vmCondition.HasHits());
+
+        vmCondition.SetType(TriggerConditionType::OrNext);
+        Assert::AreEqual(TriggerConditionType::OrNext, vmCondition.GetType());
+        Assert::IsTrue(vmCondition.HasHits());
+
+        vmCondition.SetType(TriggerConditionType::PauseIf);
+        Assert::AreEqual(TriggerConditionType::PauseIf, vmCondition.GetType());
+        Assert::IsTrue(vmCondition.HasHits());
+
+        vmCondition.SetType(TriggerConditionType::ResetIf);
+        Assert::AreEqual(TriggerConditionType::ResetIf, vmCondition.GetType());
+        Assert::IsTrue(vmCondition.HasHits());
+
+        vmCondition.SetType(TriggerConditionType::SubSource);
+        Assert::AreEqual(TriggerConditionType::SubSource, vmCondition.GetType());
+        Assert::IsFalse(vmCondition.HasHits());
+
+        vmCondition.SetType(TriggerConditionType::Trigger);
+        Assert::AreEqual(TriggerConditionType::Trigger, vmCondition.GetType());
+        Assert::IsTrue(vmCondition.HasHits());
     }
 
     TEST_METHOD(TestSizes)
@@ -204,6 +407,7 @@ public:
         ParseAndRegenerate("0xH1234<=5"); // less than or equal
         ParseAndRegenerate("0xH1234>5"); // greater than
         ParseAndRegenerate("0xH1234>=5"); // greater than or equal
+        ParseAndRegenerate("A:0xH1234"); // none
         ParseAndRegenerate("A:0xH1234*5"); // multiply
         ParseAndRegenerate("A:0xH1234/5"); // divide
         ParseAndRegenerate("A:0xH1234&5"); // bitwise and
@@ -336,6 +540,44 @@ public:
         Assert::IsTrue(condition.IsModifying());
 
         condition.SetType(TriggerConditionType::Trigger);
+        Assert::IsFalse(condition.IsModifying());
+    }
+
+    TEST_METHOD(TestSwitchBetweenModifyingAndNonModifying)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.SetSourceValue(0x1234U);
+        condition.SetOperator(TriggerOperatorType::NotEquals);
+        condition.SetTargetValue(8);
+        Assert::AreEqual(std::string("0xH1234!=8"), condition.Serialize());
+        Assert::IsFalse(condition.IsModifying());
+
+        // change to modifying switches operator to None. the 8 is unmodified, but ignored
+        condition.SetType(TriggerConditionType::AddSource);
+        Assert::AreEqual(TriggerOperatorType::None, condition.GetOperator());
+        Assert::AreEqual(std::string("A:0xH1234"), condition.Serialize());
+        Assert::IsTrue(condition.IsModifying());
+
+        // changing operator "restores" the 8
+        condition.SetOperator(TriggerOperatorType::Multiply);
+        Assert::AreEqual(std::string("A:0xH1234*8"), condition.Serialize());
+
+        // change to non-modifying switches operator to Equals
+        condition.SetType(TriggerConditionType::ResetIf);
+        Assert::AreEqual(TriggerOperatorType::Equals, condition.GetOperator());
+        Assert::AreEqual(std::string("R:0xH1234=8"), condition.Serialize());
+        Assert::IsFalse(condition.IsModifying());
+
+        // change to modifying switches operator to None. the 8 is unmodified, but ignored
+        condition.SetType(TriggerConditionType::AddAddress);
+        Assert::AreEqual(TriggerOperatorType::None, condition.GetOperator());
+        Assert::AreEqual(std::string("I:0xH1234"), condition.Serialize());
+        Assert::IsTrue(condition.IsModifying());
+
+        // change to non-modifying switches operator to Equals
+        condition.SetType(TriggerConditionType::Standard);
+        Assert::AreEqual(TriggerOperatorType::Equals, condition.GetOperator());
+        Assert::AreEqual(std::string("0xH1234=8"), condition.Serialize());
         Assert::IsFalse(condition.IsModifying());
     }
 

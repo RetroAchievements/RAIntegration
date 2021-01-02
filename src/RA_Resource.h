@@ -69,6 +69,9 @@
 #define IDC_RA_DISPLAY_INFORMATION      1164
 #define IDC_RA_MESSAGE                  1165
 #define IDC_RA_PROGRESSBAR              1166
+#define IDC_RA_CATEGORY                 1167
+#define IDC_RA_GAMEID                   1168
+#define IDC_RA_ACHIEVEMENTS             1169
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -83,7 +86,6 @@
 #define IDD_RA_PROGRESS                 1512
 #define IDC_RA_UPLOAD_BADGE             1517
 #define IDC_RA_ADDBOOKMARK              1518
-#define IDC_RA_INFO_GG                  1519
 #define IDC_RA_HELP                     1521
 #define IDC_RA_CHEEVOPIC                1522
 #define IDC_RA_REVERTSELECTED           1523
@@ -174,7 +176,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        122
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1167
+#define _APS_NEXT_CONTROL_VALUE         1170
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

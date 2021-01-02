@@ -51,13 +51,14 @@ void AssetListDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
 AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     : DialogBase(vmAssetList),
       m_bindAssets(vmAssetList),
-      m_bindProcessingActive(vmAssetList),
-      m_bindCoreAchievements(vmAssetList),
-      m_bindUnofficialAchievements(vmAssetList),
-      m_bindLocalAchievements(vmAssetList)
+      m_bindCategories(vmAssetList),
+      m_bindProcessingActive(vmAssetList)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::Near, RelativePosition::After, "Achievements");
-    m_bindAssets.BindIsSelected(AssetListViewModel::AssetSummaryViewModel::IsSelectedProperty);
+
+    m_bindCategories.BindItems(vmAssetList.Categories(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
+        ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
+    m_bindCategories.BindSelectedItem(AssetListViewModel::FilterCategoryProperty);
 
     auto pNameColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         AssetListViewModel::AssetSummaryViewModel::LabelProperty);
@@ -99,10 +100,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     });
     m_bindAssets.BindEnsureVisible(AssetListViewModel::EnsureVisibleAssetIndexProperty);
     m_bindAssets.BindItems(vmAssetList.FilteredAssets());
-
-    m_bindCoreAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::data::models::AssetCategory::Core));
-    m_bindUnofficialAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::data::models::AssetCategory::Unofficial));
-    m_bindLocalAchievements.BindCheck(AssetListViewModel::FilterCategoryProperty, ra::etoi(ra::data::models::AssetCategory::Local));
+    m_bindAssets.BindIsSelected(AssetListViewModel::AssetSummaryViewModel::IsSelectedProperty);
 
     m_bindWindow.BindLabel(IDC_RA_GAMEHASH, AssetListViewModel::GameIdProperty);
     m_bindWindow.BindLabel(IDC_RA_NUMACH, AssetListViewModel::AchievementCountProperty);
@@ -110,7 +108,6 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
 
     m_bindWindow.BindEnabled(IDC_RA_RESET_ACH, AssetListViewModel::CanActivateProperty);
     m_bindWindow.BindLabel(IDC_RA_RESET_ACH, AssetListViewModel::ActivateButtonTextProperty);
-    m_bindWindow.BindEnabled(IDC_RA_ADD_ACH, AssetListViewModel::CanCreateProperty);
     m_bindWindow.BindLabel(IDC_RA_COMMIT_ACH, AssetListViewModel::SaveButtonTextProperty);
     m_bindWindow.BindEnabled(IDC_RA_COMMIT_ACH, AssetListViewModel::CanSaveProperty);
     m_bindWindow.BindLabel(IDC_RA_DOWNLOAD_ACH, AssetListViewModel::ResetButtonTextProperty);
@@ -123,9 +120,23 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindProcessingActive.BindCheck(AssetListViewModel::IsProcessingActiveProperty);
 
     using namespace ra::bitwise_ops;
+    SetAnchor(IDC_RA_CATEGORY, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_GAMEID, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_GAMEHASH, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_ACHIEVEMENTS, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_NUMACH, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_ACH_POINTS, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_POINT_TOTAL, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_CHKACHPROCESSINGACTIVE, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_LISTACHIEVEMENTS, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_RESET_ACH, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_COMMIT_ACH, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_DOWNLOAD_ACH, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_REVERTSELECTED, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_ADD_ACH, Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_CLONE_ACH, Anchor::Bottom | Anchor::Right);
 
-    SetMinimumSize(640, 288);
+    SetMinimumSize(640, 293);
 }
 
 BOOL AssetListDialog::OnInitDialog()
@@ -133,9 +144,7 @@ BOOL AssetListDialog::OnInitDialog()
     m_bindAssets.SetControl(*this, IDC_RA_LISTACHIEVEMENTS);
     m_bindProcessingActive.SetControl(*this, IDC_RA_CHKACHPROCESSINGACTIVE);
 
-    m_bindCoreAchievements.SetControl(*this, IDC_RA_ACTIVE_CORE);
-    m_bindUnofficialAchievements.SetControl(*this, IDC_RA_ACTIVE_UNOFFICIAL);
-    m_bindLocalAchievements.SetControl(*this, IDC_RA_ACTIVE_LOCAL);
+    m_bindCategories.SetControl(*this, IDC_RA_CATEGORY);
 
     return DialogBase::OnInitDialog();
 }

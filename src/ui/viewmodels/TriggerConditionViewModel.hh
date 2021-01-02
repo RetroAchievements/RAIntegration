@@ -131,7 +131,7 @@ private:
     void SetOperand(const IntModelProperty& pTypeProperty, const IntModelProperty& pSizeProperty,
         const IntModelProperty& pValueProperty, const rc_operand_t& operand);
 
-    static bool IsModifying(TriggerConditionType nType);
+    static bool IsModifying(TriggerConditionType nType) noexcept;
 };
 
 } // namespace viewmodels

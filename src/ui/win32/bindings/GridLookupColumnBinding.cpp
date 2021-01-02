@@ -103,7 +103,7 @@ HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, InPlaceEditorInf
         Expects(pItem != nullptr);
         const auto nItemValue = pItem->GetId();
 
-        if (m_fIsVisible != nullptr)
+        if (vmItem != nullptr)
         {
             if (nItemValue != nValue && !m_fIsVisible(*vmItem, nItemValue))
                 continue;

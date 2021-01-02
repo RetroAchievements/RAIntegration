@@ -35,7 +35,7 @@ public:
     const IntModelProperty& GetBoundProperty() const noexcept { return *m_pBoundProperty; }
 
     typedef bool (*IsVisibleFunction)(const ViewModelBase& vmItem, int nValue);
-    void SetVisibilityFilter(IsVisibleFunction fIsVisible) { m_fIsVisible = fIsVisible; }
+    void SetVisibilityFilter(IsVisibleFunction fIsVisible) noexcept { m_fIsVisible = fIsVisible; }
 
 protected:
     const IntModelProperty* m_pBoundProperty = nullptr;

@@ -341,7 +341,7 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned int nAddress)
     return ra::StringPrintf(L"%s\r\n%s", ra::ByteAddressToString(nAddress), *pNote);
 }
 
-bool TriggerConditionViewModel::IsModifying(TriggerConditionType nType)
+bool TriggerConditionViewModel::IsModifying(TriggerConditionType nType) noexcept
 {
     switch (nType)
     {

@@ -89,7 +89,7 @@ public:
         return GridLookupColumnBinding::GetTooltip(vmItems, nIndex);
     }
 
-    bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const noexcept override
+    bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const override
     {
         if (pProperty == m_pIsHiddenProperty)
             return true;
@@ -222,7 +222,7 @@ public:
         return ValueColumnBinding::GetText(vmItems, nIndex);
     }
 
-    bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const noexcept override
+    bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const override
     {
         if (pProperty == TriggerConditionViewModel::HasTargetProperty)
             return true;

@@ -61,17 +61,21 @@ public:
 
     void UpdateSource()
     {
-        const int nLength = GetWindowTextLengthW(m_hWnd);
-
         std::wstring sBuffer;
-        sBuffer.resize(gsl::narrow_cast<size_t>(nLength) + 1);
-        GetWindowTextW(m_hWnd, sBuffer.data(), gsl::narrow_cast<int>(sBuffer.capacity()));
-        sBuffer.resize(nLength);
+        GetText(sBuffer);
 
         UpdateSourceFromText(sBuffer);
     }
 
 protected:
+    void GetText(std::wstring& sBuffer)
+    {
+        const int nLength = GetWindowTextLengthW(m_hWnd);
+        sBuffer.resize(gsl::narrow_cast<size_t>(nLength) + 1);
+        GetWindowTextW(m_hWnd, sBuffer.data(), gsl::narrow_cast<int>(sBuffer.capacity()));
+        sBuffer.resize(nLength);
+    }
+
     void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override
     {
         if (m_pTextBoundProperty && *m_pTextBoundProperty == args.Property)
@@ -103,7 +107,7 @@ protected:
             UpdateTextFromSource(GetValue(*m_pTextBoundProperty));
     }
 
-    virtual void UpdateTextFromSource(const std::wstring& sText) noexcept
+    virtual void UpdateTextFromSource(const std::wstring& sText) noexcept(false)
     {
         SetWindowTextW(m_hWnd, sText.c_str());
     }

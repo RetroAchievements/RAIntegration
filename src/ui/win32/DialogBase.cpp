@@ -2,6 +2,7 @@
 
 #include "ui\win32\bindings\ControlBinding.hh"
 #include "ui\win32\bindings\GridBinding.hh"
+#include "ui\win32\bindings\NumericUpDownBinding.hh"
 
 #include "RA_Core.h" // g_RAMainWnd, g_hThisDLLInst
 
@@ -394,6 +395,23 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
                         GSL_SUPPRESS_TYPE1{ pnmTtDispInfo = reinterpret_cast<NMTTDISPINFO*>(lParam); }
                         Expects(pnmTtDispInfo != nullptr);
                         pGridBinding->OnTooltipGetDispInfo(*pnmTtDispInfo);
+                    }
+
+                    return 0;
+                }
+
+                case UDN_DELTAPOS:
+                {
+                    ra::ui::win32::bindings::NumericUpDownBinding* pUpDownBinding;
+                    GSL_SUPPRESS_TYPE1 pUpDownBinding = dynamic_cast<ra::ui::win32::bindings::NumericUpDownBinding*>(
+                        FindControlBinding(pnmHdr->hwndFrom));
+
+                    if (pUpDownBinding)
+                    {
+                        NMUPDOWN* pnmUpDown;
+                        GSL_SUPPRESS_TYPE1{ pnmUpDown = reinterpret_cast<NMUPDOWN*>(lParam); }
+                        Expects(pnmUpDown != nullptr);
+                        pUpDownBinding->OnUdnDeltaPos(*pnmUpDown);
                     }
 
                     return 0;

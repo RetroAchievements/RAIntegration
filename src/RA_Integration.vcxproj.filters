@@ -956,6 +956,9 @@
     <ClInclude Include="data\models\CapturedTriggerHits.hh">
       <Filter>Data\Models</Filter>
     </ClInclude>
+    <ClInclude Include="ui\win32\bindings\NumericUpDownBinding.hh">
+      <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

@@ -2,6 +2,8 @@
 
 #include "RA_Resource.h"
 
+#include "api\FetchBadgeIds.hh"
+
 #include "data\context\EmulatorContext.hh"
 
 #include "services\IConfiguration.hh"
@@ -236,31 +238,72 @@ private:
     mutable gsl::index m_nEditingItemIndex = -1;
 };
 
-void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstring& sText)
+void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstring& sValue)
 {
-    if (sText.length() < 5)
+    std::wstring sError;
+    if (!sValue.empty())
     {
-        std::wstring sBadge;
-        for (int i = gsl::narrow_cast<int>(sText.length()); i < 5; ++i)
-            sBadge.push_back('0');
-        sBadge.append(sText);
+        // special case - don't validate if the string is entirely made of 0s.
+        // the default value is "00000", which is less than the minimum.
+        const wchar_t* pChar = &sValue.at(0);
+        Expects(pChar != nullptr);
+        while (*pChar && *pChar == L'0')
+            ++pChar;
 
-        SetWindowTextW(m_hWnd, sBadge.c_str());
+        if (*pChar)
+            ParseValue(sValue, sError);
+    }
 
-        TextBoxBinding::UpdateSourceFromText(sBadge);
+    if (!sError.empty())
+    {
+        ::EnableWindow(m_hWndSpinner, false);
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(sError);
     }
     else
     {
-        TextBoxBinding::UpdateSourceFromText(sText);
+        ::EnableWindow(m_hWndSpinner, true);
+
+        if (sValue.length() < 5)
+        {
+            std::wstring sBadge(sValue);
+            sBadge.insert(0, 5 - sValue.length(), '0');
+            SetWindowTextW(m_hWnd, sBadge.c_str());
+            TextBoxBinding::UpdateSourceFromText(sBadge);
+        }
+        else
+        {
+            TextBoxBinding::UpdateSourceFromText(sValue);
+        }
     }
 }
 
-void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstring& sText) noexcept
+void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstring& sText)
 {
     if (ra::StringStartsWith(sText, L"local\\"))
+    {
         SetWindowTextW(m_hWnd, L"[local]");
+        ::EnableWindow(m_hWndSpinner, false);
+    }
     else
+    {
         SetWindowTextW(m_hWnd, sText.c_str());
+
+        if (m_nMinimum == 0)
+        {
+            ::EnableWindow(m_hWndSpinner, false);
+
+            ra::api::FetchBadgeIds::Request request;
+            request.CallAsync([this](const ra::api::FetchBadgeIds::Response& response) noexcept
+            {
+                SetRange(ra::to_signed(response.FirstID), ra::to_signed(response.NextID) - 1);
+                ::EnableWindow(m_hWndSpinner, true);
+            });
+        }
+        else
+        {
+            ::EnableWindow(m_hWndSpinner, true);
+        }
+    }
 }
 
 void AssetEditorDialog::DecimalPreferredBinding::OnValueChanged()
@@ -330,6 +373,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindName.BindText(AssetEditorViewModel::NameProperty);
     m_bindDescription.BindText(AssetEditorViewModel::DescriptionProperty);
     m_bindBadge.BindText(AssetEditorViewModel::BadgeProperty);
+    m_bindBadge.SetWrapAround(true);
     m_bindBadgeImage.BindImage(AssetEditorViewModel::BadgeProperty, ra::ui::ImageType::Badge);
     m_bindPoints.BindValue(AssetEditorViewModel::PointsProperty);
 
@@ -438,6 +482,7 @@ BOOL AssetEditorDialog::OnInitDialog()
     m_bindName.SetControl(*this, IDC_RA_ACH_TITLE);
     m_bindDescription.SetControl(*this, IDC_RA_ACH_DESC);
     m_bindBadge.SetControl(*this, IDC_RA_BADGENAME);
+    m_bindBadge.SetSpinnerControl(*this, IDC_RA_BADGE_SPIN);
     m_bindBadgeImage.SetControl(*this, IDC_RA_CHEEVOPIC);
     m_bindPoints.SetControl(*this, IDC_RA_ACH_POINTS);
 

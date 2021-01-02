@@ -8,6 +8,7 @@
 #include "ui/win32/bindings/GridBinding.hh"
 #include "ui/win32/bindings/ImageBinding.hh"
 #include "ui/win32/bindings/NumericTextBoxBinding.hh"
+#include "ui/win32/bindings/NumericUpDownBinding.hh"
 #include "ui/win32/bindings/TextBoxBinding.hh"
 
 #include "ui/win32/DialogBase.hh"
@@ -44,15 +45,15 @@ protected:
     BOOL OnCommand(WORD nCommand) override;
 
 private:
-    class BadgeNameBinding : public ra::ui::win32::bindings::TextBoxBinding
+    class BadgeNameBinding : public ra::ui::win32::bindings::NumericUpDownBinding
     {
     public:
         BadgeNameBinding(ViewModelBase& vmViewModel) noexcept
-            : ra::ui::win32::bindings::TextBoxBinding(vmViewModel) {}
+            : ra::ui::win32::bindings::NumericUpDownBinding(vmViewModel) {}
 
     protected:
         void UpdateSourceFromText(const std::wstring& sText) override;
-        void UpdateTextFromSource(const std::wstring& sText) noexcept override;
+        void UpdateTextFromSource(const std::wstring& sText) override;
     };
 
     class DecimalPreferredBinding : public ra::ui::win32::bindings::CheckBoxBinding

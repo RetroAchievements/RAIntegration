@@ -39,6 +39,16 @@ private:
         {
             return GetValue(EnsureVisibleConditionIndexProperty);
         }
+
+        int GetEnsureVisibleGroupIndex() const
+        {
+            return GetValue(EnsureVisibleGroupIndexProperty);
+        }
+
+        int GetVersion() const
+        {
+            return GetValue(VersionProperty);
+        }
     };
 
     void Parse(TriggerViewModel& vmTrigger, const std::string& sInput)
@@ -639,6 +649,216 @@ public:
 
         Assert::AreEqual({ 3U }, vmTrigger.Conditions().Count());
         Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312_0xX0004=117835012"), vmTrigger.Serialize());
+    }
+
+    TEST_METHOD(TestAddGroupNoAlts)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "");
+        Assert::AreEqual({ 1U }, vmTrigger.Groups().Count());
+
+        vmTrigger.AddGroup();
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+
+        Assert::AreEqual(std::wstring(L"Core"), vmTrigger.Groups().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 1"), vmTrigger.Groups().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 2"), vmTrigger.Groups().GetItemAt(2)->GetLabel());
+
+        Assert::AreEqual(1, vmTrigger.GetSelectedGroupIndex());
+        Assert::AreEqual(1, vmTrigger.GetEnsureVisibleGroupIndex());
+        Assert::AreEqual(1, vmTrigger.GetVersion());
+    }
+
+    TEST_METHOD(TestAddGroupOneAlt)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "S");
+        Assert::AreEqual({ 2U }, vmTrigger.Groups().Count());
+
+        vmTrigger.AddGroup();
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+
+        Assert::AreEqual(std::wstring(L"Core"), vmTrigger.Groups().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 1"), vmTrigger.Groups().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 2"), vmTrigger.Groups().GetItemAt(2)->GetLabel());
+
+        Assert::AreEqual(2, vmTrigger.GetSelectedGroupIndex());
+        Assert::AreEqual(2, vmTrigger.GetEnsureVisibleGroupIndex());
+        Assert::AreEqual(1, vmTrigger.GetVersion());
+    }
+
+    TEST_METHOD(TestAddGroupTwoAlts)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "SS");
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+
+        vmTrigger.AddGroup();
+        Assert::AreEqual({ 4U }, vmTrigger.Groups().Count());
+
+        Assert::AreEqual(std::wstring(L"Core"), vmTrigger.Groups().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 1"), vmTrigger.Groups().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 2"), vmTrigger.Groups().GetItemAt(2)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 3"), vmTrigger.Groups().GetItemAt(3)->GetLabel());
+
+        Assert::AreEqual(3, vmTrigger.GetSelectedGroupIndex());
+        Assert::AreEqual(3, vmTrigger.GetEnsureVisibleGroupIndex());
+        Assert::AreEqual(1, vmTrigger.GetVersion());
+    }
+
+    TEST_METHOD(TestRemoveGroupCore)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "SS");
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+        Assert::AreEqual(0, vmTrigger.GetSelectedGroupIndex());
+
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogShown = true;
+
+            Assert::AreEqual(std::wstring(L"The core group cannot be removed."), vmMessageBox.GetMessage());
+
+            return DialogResult::OK;
+        });
+
+        vmTrigger.RemoveGroup();
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+
+        Assert::AreEqual(0, vmTrigger.GetSelectedGroupIndex());
+        Assert::AreEqual(0, vmTrigger.GetVersion());
+    }
+
+    TEST_METHOD(TestRemoveGroupNonEmptyAlt)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "S0xH1234=1S");
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+        vmTrigger.SetSelectedGroupIndex(1);
+        Assert::AreEqual(1, vmTrigger.GetSelectedGroupIndex());
+
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogShown = true;
+
+            Assert::AreEqual(std::wstring(L"Are you sure that you want to delete Alt 1?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The group is not empty, and this operation cannot be reverted."), vmMessageBox.GetMessage());
+
+            return DialogResult::Yes;
+        });
+
+        vmTrigger.RemoveGroup();
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual({ 2U }, vmTrigger.Groups().Count());
+
+        Assert::AreEqual(std::wstring(L"Core"), vmTrigger.Groups().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 1"), vmTrigger.Groups().GetItemAt(1)->GetLabel());
+
+        Assert::AreEqual(1, vmTrigger.GetSelectedGroupIndex());
+        Assert::AreEqual(1, vmTrigger.GetVersion());
+
+        Assert::AreEqual(std::string("S"), vmTrigger.Serialize());
+    }
+
+    TEST_METHOD(TestRemoveGroupNonEmptyAltCanceled)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "S0xH1234=1S");
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+        vmTrigger.SetSelectedGroupIndex(1);
+        Assert::AreEqual(1, vmTrigger.GetSelectedGroupIndex());
+
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogShown = true;
+
+            Assert::AreEqual(std::wstring(L"Are you sure that you want to delete Alt 1?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The group is not empty, and this operation cannot be reverted."), vmMessageBox.GetMessage());
+
+            return DialogResult::No;
+        });
+
+        vmTrigger.RemoveGroup();
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+
+        Assert::AreEqual(std::wstring(L"Core"), vmTrigger.Groups().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 1"), vmTrigger.Groups().GetItemAt(1)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 2"), vmTrigger.Groups().GetItemAt(2)->GetLabel());
+
+        Assert::AreEqual(1, vmTrigger.GetSelectedGroupIndex());
+        Assert::AreEqual(0, vmTrigger.GetVersion());
+
+        Assert::AreEqual(std::string("S0xH1234=1S"), vmTrigger.Serialize());
+    }
+
+    TEST_METHOD(TestRemoveGroupNonEmptyAltLast)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "S0xH1234=1S0xH2345=1");
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+        vmTrigger.SetSelectedGroupIndex(2);
+        Assert::AreEqual(2, vmTrigger.GetSelectedGroupIndex());
+
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogShown = true;
+
+            Assert::AreEqual(std::wstring(L"Are you sure that you want to delete Alt 2?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The group is not empty, and this operation cannot be reverted."), vmMessageBox.GetMessage());
+
+            return DialogResult::Yes;
+        });
+
+        vmTrigger.RemoveGroup();
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual({ 2U }, vmTrigger.Groups().Count());
+
+        Assert::AreEqual(std::wstring(L"Core"), vmTrigger.Groups().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 1"), vmTrigger.Groups().GetItemAt(1)->GetLabel());
+
+        Assert::AreEqual(1, vmTrigger.GetSelectedGroupIndex());
+        Assert::AreEqual(1, vmTrigger.GetVersion());
+
+        Assert::AreEqual(std::string("S0xH1234=1"), vmTrigger.Serialize());
+    }
+
+    TEST_METHOD(TestRemoveGroupEmptyAlt)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "SS");
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+        vmTrigger.SetSelectedGroupIndex(1);
+        Assert::AreEqual(1, vmTrigger.GetSelectedGroupIndex());
+
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        vmTrigger.RemoveGroup();
+        Assert::IsFalse(bDialogShown);
+        Assert::AreEqual({ 2U }, vmTrigger.Groups().Count());
+
+        Assert::AreEqual(std::wstring(L"Core"), vmTrigger.Groups().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 1"), vmTrigger.Groups().GetItemAt(1)->GetLabel());
+
+        Assert::AreEqual(1, vmTrigger.GetSelectedGroupIndex());
+        Assert::AreEqual(1, vmTrigger.GetVersion());
+
+        Assert::AreEqual(std::string("S"), vmTrigger.Serialize());
     }
 };
 

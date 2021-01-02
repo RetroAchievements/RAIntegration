@@ -58,6 +58,11 @@ public:
     ViewModelCollection<GroupViewModel>& Groups() noexcept { return m_vGroups; }
     const ViewModelCollection<GroupViewModel>& Groups() const noexcept { return m_vGroups; }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the index of the group that should be made visible.
+    /// </summary>
+    static const IntModelProperty EnsureVisibleGroupIndexProperty;
+
     ViewModelCollection<TriggerConditionViewModel>& Conditions() noexcept { return m_vConditions; }
     const ViewModelCollection<TriggerConditionViewModel>& Conditions() const noexcept { return m_vConditions; }
 
@@ -87,6 +92,9 @@ public:
     void MoveSelectedConditionsDown();
 
     void NewCondition();
+
+    void AddGroup();
+    void RemoveGroup();
 
     /// <summary>
     /// Gets the list of condition types.

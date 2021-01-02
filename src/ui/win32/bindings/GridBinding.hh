@@ -34,7 +34,7 @@ public:
     void Virtualize(const IntModelProperty& pScrollOffsetProperty, const IntModelProperty& pScrollMaximumProperty,
         std::function<void(gsl::index, gsl::index, bool)> pUpdateSelectedItems);
 
-    void BindIsSelected(const BoolModelProperty& pIsSelectedProperty) noexcept;
+    void BindIsSelected(const BoolModelProperty& pIsSelectedProperty);
     void BindEnsureVisible(const IntModelProperty& pEnsureVisibleProperty) noexcept;
     void BindRowColor(const IntModelProperty& pRowColorProperty) noexcept;
 
@@ -106,6 +106,7 @@ protected:
 
 private:
     void UpdateRow(gsl::index nIndex, bool bExisting);
+    void UpdateSelectedItemStates();
 
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;

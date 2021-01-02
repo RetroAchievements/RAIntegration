@@ -185,6 +185,8 @@ public:
 
 protected:
     virtual void Publish(std::vector<ra::data::models::AssetModelBase*>& vAssets);
+    bool ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly);
+    virtual void ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const;
 
 private:
     // DataModelCollectionBase::NotifyTarget

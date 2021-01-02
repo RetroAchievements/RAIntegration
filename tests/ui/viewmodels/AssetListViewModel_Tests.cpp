@@ -353,6 +353,21 @@ private:
         }
 
         std::vector<ra::data::models::AssetModelBase*> PublishedAssets;
+
+        void SetPublishError(ra::AchievementID nId, const std::wstring& sError)
+        {
+            m_mPublishErrors.insert_or_assign(nId, sError);
+        }
+
+        void ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const override
+        {
+            const auto pIter = m_mPublishErrors.find(pAchievement.GetID());
+            if (pIter != m_mPublishErrors.end())
+                sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), pIter->second));
+        }
+
+    private:
+        std::map<ra::AchievementID, std::wstring> m_mPublishErrors;
     };
 
 public:
@@ -1525,6 +1540,42 @@ public:
         vmAssetList.AssertButtonState(SaveButtonState::Publish);
     }
 
+    TEST_METHOD(TestSaveSelectedPublishCoreModifiedAbort)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.SetPublishError(1U, L"NewFeature is pre-release functionality");
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Publish aborted."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The following items could not be published:\n* Test1b: NewFeature is pre-release functionality"), vmMessageBox.GetMessage());
+            return DialogResult::OK;
+        });
+
+        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        pItem->SetName(L"Test1b");
+        pItem->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Publish);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 0U }, vmAssetList.PublishedAssets.size());
+        Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
+
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Publish);
+    }
+
     TEST_METHOD(TestSaveSelectedPublishCoreAll)
     {
         AssetListViewModelHarness vmAssetList;
@@ -1715,6 +1766,39 @@ public:
         // item will have been moved to core, so nothing will be selected
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
+    }
+
+    TEST_METHOD(TestSaveSelectedPromoteToCoreAbort)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetCategory::Unofficial);
+        vmAssetList.SetPublishError(1U, L"Test excuse");
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Promote to core aborted."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The following items could not be published:\n* Test1: Test excuse"), vmMessageBox.GetMessage());
+            return DialogResult::OK;
+        });
+
+        const auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Promote);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 0U }, vmAssetList.PublishedAssets.size());
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+        Assert::AreEqual(AssetCategory::Unofficial, pItem->GetCategory());
     }
 
     TEST_METHOD(TestSaveSelectedDemoteToUnofficial)

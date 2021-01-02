@@ -111,11 +111,15 @@ public:
 
     std::wstring GetTooltip(const IntModelProperty& nProperty) const;
 
+    bool IsModifying() const;
+
+    static bool IsComparisonVisible(const ViewModelBase& vmItem, int nValue);
+
 private:
     void SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, unsigned int nValue) const;
 
-    std::wstring GetValueTooltip(TriggerOperandType nType, unsigned nAddress) const;
-    std::wstring GetAddressTooltip(unsigned nAddress) const;
+    std::wstring GetValueTooltip(TriggerOperandType nType, unsigned int nValue) const;
+    std::wstring GetAddressTooltip(unsigned int nAddress) const;
 
     void SetOperand(const IntModelProperty& pTypeProperty, const IntModelProperty& pSizeProperty,
         const IntModelProperty& pValueProperty, const rc_operand_t& operand);

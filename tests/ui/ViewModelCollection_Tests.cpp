@@ -249,6 +249,28 @@ public:
         Assert::AreEqual(TestViewModel::BoolProperty.GetDefaultValue(), vmCollection.GetItemValue(1, TestViewModel::BoolProperty));
     }
 
+    TEST_METHOD(TestGetViewModelAt)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        auto& pItem1 = vmCollection.Add(1, L"Test1");
+        pItem1.SetBool(false);
+
+        auto& pItem2 = vmCollection.Add(2, L"Test2");
+        pItem2.SetBool(true);
+
+        const auto* vm1 = vmCollection.GetViewModelAt(0);
+        Assert::IsTrue(vm1 == &pItem1);
+
+        const auto* vm2 = vmCollection.GetViewModelAt(1);
+        Assert::IsTrue(vm2 == &pItem2);
+
+        const auto* vm3 = vmCollection.GetViewModelAt(2);
+        Assert::IsNull(vm3);
+
+        const auto* vm0 = vmCollection.GetViewModelAt(-1);
+        Assert::IsNull(vm0);
+    }
+
     TEST_METHOD(TestStringPropertyNotification)
     {
         ViewModelCollection<TestViewModel> vmCollection;

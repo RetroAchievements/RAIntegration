@@ -297,6 +297,76 @@ public:
         Assert::AreEqual(std::wstring(L"255"), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
         Assert::AreEqual(std::wstring(L"99"), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
+
+    TEST_METHOD(TestIsModifying)
+    {
+        TriggerConditionViewModelHarness condition;
+
+        condition.SetType(TriggerConditionType::AddAddress);
+        Assert::IsTrue(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::AddHits);
+        Assert::IsFalse(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::AddSource);
+        Assert::IsTrue(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::AndNext);
+        Assert::IsFalse(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::Measured);
+        Assert::IsFalse(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::MeasuredIf);
+        Assert::IsFalse(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::OrNext);
+        Assert::IsFalse(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::PauseIf);
+        Assert::IsFalse(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::ResetIf);
+        Assert::IsFalse(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::Standard);
+        Assert::IsFalse(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::SubSource);
+        Assert::IsTrue(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::Trigger);
+        Assert::IsFalse(condition.IsModifying());
+    }
+
+    TEST_METHOD(TestIsComparisonVisible)
+    {
+        TriggerConditionViewModelHarness condition;
+
+        condition.SetType(TriggerConditionType::Standard);
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Equals)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::NotEquals)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThan)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThanOrEqual)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThan)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThanOrEqual)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::None)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Multiply)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
+
+        condition.SetType(TriggerConditionType::AddAddress);
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Equals)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::NotEquals)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThan)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThanOrEqual)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThan)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThanOrEqual)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::None)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Multiply)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
+    }
 };
 
 } // namespace tests

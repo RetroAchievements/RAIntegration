@@ -263,7 +263,7 @@ std::wstring TriggerConditionViewModel::GetValueTooltip(TriggerOperandType nType
     return std::to_wstring(nValue);
 }
 
-std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned nAddress) const
+std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned int nAddress) const
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nAddress);
@@ -290,6 +290,40 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned nAddress) con
     }
 
     return ra::StringPrintf(L"%s\r\n%s", ra::ByteAddressToString(nAddress), *pNote);
+}
+
+bool TriggerConditionViewModel::IsModifying() const
+{
+    switch (GetType())
+    {
+        case TriggerConditionType::AddAddress:
+        case TriggerConditionType::AddSource:
+        case TriggerConditionType::SubSource:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+bool TriggerConditionViewModel::IsComparisonVisible(const ViewModelBase& vmItem, int nValue)
+{
+    const auto* vmCondition = dynamic_cast<const TriggerConditionViewModel*>(&vmItem);
+    if (vmCondition == nullptr)
+        return false;
+
+    const auto nComparison = ra::itoe<TriggerOperatorType>(nValue);
+    switch (nComparison)
+    {
+        case TriggerOperatorType::None:
+        case TriggerOperatorType::Multiply:
+        case TriggerOperatorType::Divide:
+        case TriggerOperatorType::BitwiseAnd:
+            return vmCondition->IsModifying();
+
+        default:
+            return !vmCondition->IsModifying();
+    }
 }
 
 } // namespace viewmodels

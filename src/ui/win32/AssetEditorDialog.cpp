@@ -434,6 +434,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
         TriggerConditionViewModel::OperatorProperty, vmAssetEditor.Trigger().OperatorTypes());
     pOperatorColumn->SetHeader(L"Cmp");
     pOperatorColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_OPERATOR);
+    pOperatorColumn->SetVisibilityFilter(TriggerConditionViewModel::IsComparisonVisible);
     pOperatorColumn->SetReadOnly(false);
     m_bindConditions.BindColumn(5, std::move(pOperatorColumn));
 

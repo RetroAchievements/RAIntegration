@@ -113,6 +113,8 @@ std::wstring ToString<ra::data::models::AssetChanges>(
             return L"Unpublished";
         case ra::data::models::AssetChanges::New:
             return L"New";
+        case ra::data::models::AssetChanges::Deleted:
+            return L"Deleted";
         default:
             return std::to_wstring(static_cast<int>(nAssetChanges));
     }

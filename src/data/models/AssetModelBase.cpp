@@ -237,6 +237,11 @@ void AssetModelBase::SetNew()
     SetValue(ChangesProperty, ra::etoi(AssetChanges::New));
 }
 
+void AssetModelBase::SetDeleted()
+{
+    SetValue(ChangesProperty, ra::etoi(AssetChanges::Deleted));
+}
+
 bool AssetModelBase::HasUnpublishedChanges() const noexcept
 {
     return (m_pTransaction && m_pTransaction->m_pNext && m_pTransaction->m_pNext->IsModified());

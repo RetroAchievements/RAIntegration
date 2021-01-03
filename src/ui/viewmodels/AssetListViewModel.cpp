@@ -54,6 +54,7 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::Modified), L"Modified");
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::Unpublished), L"Unpublished");
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::New), L"New");
+    m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::Deleted), L"Deleted");
 
     // have to use separate monitor for capturing selection changes in filtered list
     // so EndUpdate for filtered list doesn't trigger another call to ApplyFilter.
@@ -879,6 +880,78 @@ void AssetListViewModel::RevertSelected()
 {
     if (!CanRevert())
         return;
+
+    std::vector<ra::data::models::AssetModelBase*> vAssetsToReset;
+    GetSelectedAssets(vAssetsToReset);
+
+    bool bHasLocal = false;
+    for (const auto* pAsset : vAssetsToReset)
+    {
+        if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
+        {
+            bHasLocal = true;
+            break;
+        }
+    }
+
+    ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+    vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+    vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
+    std::wstring sWarningMessage;
+
+    if (GetRevertButtonText().at(0) == 'R') // Revert
+    {
+        vmMessageBox.SetHeader(L"Revert from server?");
+
+        if (vAssetsToReset.size() == m_vFilteredAssets.Count())
+            sWarningMessage = L"This will discard all local changes and revert the assets to the last state retrieved from the server.";
+        else
+            sWarningMessage = L"This will discard any local changes to the selected assets and revert them to the last state retrieved from the server.";
+
+        if (bHasLocal)
+            sWarningMessage += L"\n\n";
+    }
+    else // Delete
+    {
+        vmMessageBox.SetHeader(L"Permanently delete?");
+
+        Expects(bHasLocal); // message is shared with text appended to Revert message
+    }
+
+    if (bHasLocal)
+        sWarningMessage += L"Assets not available on the server will be permanently deleted.";
+    vmMessageBox.SetMessage(sWarningMessage);
+
+    if (vmMessageBox.ShowModal() == DialogResult::No)
+        return;
+
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto& pAssets = pGameContext.Assets();
+    pAssets.BeginUpdate();
+
+    for (auto* pAsset : vAssetsToReset)
+    {
+        if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
+        {
+            // reverting a local item deletes it
+            pAsset->SetDeleted();
+        }
+        else
+        {
+            // Assert: New items should always be in the Local category
+            Expects(pAsset->GetChanges() != ra::data::models::AssetChanges::New);
+
+            // reverting a non-local item restores the server state
+            pAsset->RestoreServerCheckpoint();
+        }
+    }
+
+    pAssets.EndUpdate();
+
+    // update the local file
+    pAssets.SaveAssets(vAssetsToReset);
+    UpdateButtons();
 }
 
 void AssetListViewModel::CreateNew()

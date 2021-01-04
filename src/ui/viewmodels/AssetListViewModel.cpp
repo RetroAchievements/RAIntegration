@@ -887,7 +887,7 @@ void AssetListViewModel::RevertSelected()
     bool bHasLocal = false;
     for (const auto* pAsset : vAssetsToReset)
     {
-        if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
+        if (pAsset != nullptr && pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
         {
             bHasLocal = true;
             break;
@@ -932,6 +932,7 @@ void AssetListViewModel::RevertSelected()
 
     for (auto* pAsset : vAssetsToReset)
     {
+        Expects(pAsset != nullptr);
         if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
         {
             // reverting a local item deletes it

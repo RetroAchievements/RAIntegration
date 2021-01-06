@@ -28,7 +28,12 @@ private:
     class AssetEditorViewModelHarness : public AssetEditorViewModel
     {
     public:
-        AssetEditorViewModelHarness() = default;
+        AssetEditorViewModelHarness() noexcept
+        {
+            // DoFrame tests expect the dialog to be visible
+            GSL_SUPPRESS_F6 SetIsVisible(true);
+        }
+
         ~AssetEditorViewModelHarness()
         {
             // prevent exception if asset is destroyed before harness
@@ -556,6 +561,40 @@ public:
 
         editor.DoFrame();
         Assert::AreEqual(6U, pCondition->GetCurrentHits());
+    }
+
+    TEST_METHOD(TestDoFrameUpdatesHitsFromActiveAchievementWhenHidden)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("0xH1234=1");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.Activate();
+
+        editor.SetIsVisible(false);
+        editor.LoadAsset(&achievement);
+
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(0U, pCondition->GetCurrentHits());
+
+        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+        pTrigger->requirement->conditions->current_hits = 6U;
+        Assert::AreEqual(0U, pCondition->GetCurrentHits());
+
+        editor.DoFrame();
+        Assert::AreEqual(0U, pCondition->GetCurrentHits());
+
+        editor.SetIsVisible(true);
+        Assert::AreEqual(6U, pCondition->GetCurrentHits());
+
+        pTrigger->requirement->conditions->current_hits = 7U;
+        editor.DoFrame();
+        Assert::AreEqual(7U, pCondition->GetCurrentHits());
     }
 
     TEST_METHOD(TestDecimalPreferredOnVisible)

@@ -192,6 +192,9 @@ void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& a
         {
             const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
             SetDecimalPreferred(pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
+
+            if (m_pAsset)
+                m_vmTrigger.DoFrame();
         }
     }
 
@@ -226,15 +229,7 @@ void AssetEditorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs&
 
 void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == DialogResultProperty)
-    {
-        if (m_pAsset)
-        {
-            m_pAsset->RemoveNotifyTarget(*this);
-            m_pAsset = nullptr;
-        }
-    }
-    else if (m_pAsset != nullptr)
+    if (m_pAsset != nullptr)
     {
         if (args.Property == StateProperty)
         {
@@ -305,7 +300,8 @@ void AssetEditorViewModel::DoFrame()
     if (m_pAsset == nullptr || !m_pAsset->IsActive())
         return;
 
-    m_vmTrigger.DoFrame();
+    if (IsVisible())
+        m_vmTrigger.DoFrame();
 }
 
 } // namespace viewmodels

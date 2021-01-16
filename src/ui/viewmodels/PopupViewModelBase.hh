@@ -136,6 +136,11 @@ public:
     }
 
     /// <summary>
+    /// Determines if there is an image to render.
+    /// </summary>
+    const bool HasRenderImage() const noexcept { return m_pSurface != nullptr; }
+
+    /// <summary>
     /// Updates the image to render.
     /// </summary>
     /// <param name="fElapsed">The fractional of seconds that have passed.</param>

@@ -344,6 +344,9 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, const Popu
     }
     else
     {
+        if (!vmPopup.HasRenderImage())
+            vmPopup.UpdateRenderImage(0.0);
+
         const auto& pImage = vmPopup.GetRenderImage();
         nOldWidth = pImage.GetWidth();
         nOldHeight = pImage.GetHeight();
@@ -628,8 +631,6 @@ void OverlayManager::ProcessScreenshots()
                     if (pImageRepository.IsImageAvailable(pImageReference.Type(), pImageReference.Name()))
                     {
                         RA_LOG_INFO("Rendering screenshot for %s", iter->second);
-
-                        PopupMessageViewModel::RenderImageLock lock(*pMessage);
 
                         if (!pMessage->IsAnimationStarted())
                             pMessage->BeginAnimation();

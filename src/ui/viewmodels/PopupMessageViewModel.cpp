@@ -32,6 +32,8 @@ void PopupMessageViewModel::BeginAnimation()
     const int nHeight = 4 + nImageSize + 4 + nShadowOffset;
     m_nInitialY = -nHeight;
     SetVerticalOffset(m_nInitialY);
+
+    UpdateRenderImage(0.0);
 }
 
 bool PopupMessageViewModel::UpdateRenderImage(double fElapsed)
@@ -47,6 +49,8 @@ bool PopupMessageViewModel::UpdateRenderImage(double fElapsed)
         SetVerticalOffset(nNewY);
         bUpdated = true;
     }
+
+    RenderImageLock lock(*this);
 
     if (m_bSurfaceStale)
     {

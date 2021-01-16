@@ -48,6 +48,27 @@ void AssetListDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
 
 // ------------------------------------
 
+class IdColumnBinding : public ra::ui::win32::bindings::GridNumberColumnBinding
+{
+public:
+    IdColumnBinding(const IntModelProperty& pBoundProperty) noexcept
+        : ra::ui::win32::bindings::GridNumberColumnBinding(pBoundProperty)
+    {
+    }
+
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto nId = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+
+        if (nId >= ra::data::context::GameAssets::FirstLocalId)
+            return L"0";
+
+        return std::to_wstring(nId);
+    }
+};
+
+// ------------------------------------
+
 AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     : DialogBase(vmAssetList),
       m_bindAssets(vmAssetList),
@@ -60,36 +81,42 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
         ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
     m_bindCategories.BindSelectedItem(AssetListViewModel::FilterCategoryProperty);
 
+    auto pIdColumn = std::make_unique<IdColumnBinding>(AssetListViewModel::AssetSummaryViewModel::IdProperty);
+    pIdColumn->SetHeader(L"ID");
+    pIdColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 45);
+    pIdColumn->SetAlignment(ra::ui::RelativePosition::Far);
+    m_bindAssets.BindColumn(0, std::move(pIdColumn));
+
     auto pNameColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         AssetListViewModel::AssetSummaryViewModel::LabelProperty);
     pNameColumn->SetHeader(L"Name");
     pNameColumn->SetWidth(GridColumnBinding::WidthType::Fill, 100);
-    m_bindAssets.BindColumn(0, std::move(pNameColumn));
+    m_bindAssets.BindColumn(1, std::move(pNameColumn));
 
     auto pPointsColumn = std::make_unique<ra::ui::win32::bindings::GridNumberColumnBinding>(
        ra::data::models::AchievementModel::PointsProperty);
     pPointsColumn->SetHeader(L"Points");
-    pPointsColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 50);
+    pPointsColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 45);
     pPointsColumn->SetAlignment(ra::ui::RelativePosition::Far);
-    m_bindAssets.BindColumn(1, std::move(pPointsColumn));
+    m_bindAssets.BindColumn(2, std::move(pPointsColumn));
 
     auto pStateColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         AssetModelBase::StateProperty, vmAssetList.States());
     pStateColumn->SetHeader(L"State");
-    pStateColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
-    m_bindAssets.BindColumn(2, std::move(pStateColumn));
+    pStateColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 70);
+    m_bindAssets.BindColumn(3, std::move(pStateColumn));
 
     auto pCategoryColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         AssetModelBase::CategoryProperty, vmAssetList.Categories());
     pCategoryColumn->SetHeader(L"Category");
-    pCategoryColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
-    m_bindAssets.BindColumn(3, std::move(pCategoryColumn));
+    pCategoryColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 70);
+    m_bindAssets.BindColumn(4, std::move(pCategoryColumn));
 
     auto pChangesColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         AssetModelBase::ChangesProperty, vmAssetList.Changes());
     pChangesColumn->SetHeader(L"Changes");
-    pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
-    m_bindAssets.BindColumn(4, std::move(pChangesColumn));
+    pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 70);
+    m_bindAssets.BindColumn(5, std::move(pChangesColumn));
 
     m_bindAssets.SetDoubleClickHandler([this](gsl::index nIndex)
     {

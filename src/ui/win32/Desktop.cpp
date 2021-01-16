@@ -93,11 +93,7 @@ void Desktop::CloseWindow(WindowViewModelBase& vmViewModel) const noexcept
 {
     const auto* const pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
     if (pBinding != nullptr)
-    {
-        const auto hWnd = pBinding->GetHWnd();
-        ::SendMessage(hWnd, WM_COMMAND, IDCANCEL, 0);
-        //Expects(!::IsWindow(hWnd));
-    }
+        ::SendMessage(pBinding->GetHWnd(), WM_COMMAND, IDCANCEL, 0);
 }
 
 void Desktop::GetWorkArea(ra::ui::Position& oUpperLeftCorner, ra::ui::Size& oSize) const

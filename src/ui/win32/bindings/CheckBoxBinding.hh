@@ -50,6 +50,12 @@ protected:
         }
     }
 
+    void OnValueChanged() override
+    {
+        ControlBinding::ForceRepaint(m_hWnd);
+        ControlBinding::OnValueChanged();
+    }
+
 private:
     const BoolModelProperty* m_pIsCheckedProperty = nullptr;
 };

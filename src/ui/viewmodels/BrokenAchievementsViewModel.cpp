@@ -2,17 +2,15 @@
 
 #include "RA_StringUtils.h"
 
-#ifndef RA_UTEST
-#include "RA_Dlg_Achievement.h"
-#endif
-
 #include "api\SubmitTicket.hh"
 
 #include "data\context\GameContext.hh"
+#include "data\context\GameAssets.hh"
 
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 namespace ra {
 namespace ui {
@@ -39,24 +37,32 @@ bool BrokenAchievementsViewModel::InitializeAchievements()
         return false;
     }
 
+    const auto& pWindowManager = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>();
+    const auto& pFilteredAssets = pWindowManager.AssetList.FilteredAssets();
     bool bSawLocal = false;
-    pGameContext.EnumerateFilteredAchievements([&bSawLocal, this](const Achievement& pAchievement)
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pFilteredAssets.Count()); ++nIndex)
     {
-        if (pAchievement.GetCategory() == Achievement::Category::Local)
+        const auto* pAssetSummary = pFilteredAssets.GetItemAt(nIndex);
+        if (pAssetSummary && pAssetSummary->GetType() == ra::data::models::AssetType::Achievement)
         {
-            bSawLocal = true;
+            if (pAssetSummary->GetCategory() == ra::data::models::AssetCategory::Local)
+            {
+                bSawLocal = true;
+            }
+            else
+            {
+                const auto* pAchievement = pGameContext.Assets().FindAchievement(pAssetSummary->GetId());
+                if (pAchievement)
+                {
+                    auto& vmAchievement = m_vAchievements.Add();
+                    vmAchievement.SetId(pAchievement->GetID());
+                    vmAchievement.SetLabel(ra::Widen(pAchievement->GetName()));
+                    vmAchievement.SetDescription(ra::Widen(pAchievement->GetDescription()));
+                    vmAchievement.SetAchieved(!pAchievement->IsActive());
+                }
+            }
         }
-        else
-        {
-            auto& vmAchievement = m_vAchievements.Add();
-            vmAchievement.SetId(pAchievement.ID());
-            vmAchievement.SetLabel(ra::Widen(pAchievement.Title()));
-            vmAchievement.SetDescription(ra::Widen(pAchievement.Description()));
-            vmAchievement.SetAchieved(!pAchievement.Active());
-        }
-
-        return true;
-    });
+    }
 
     if (m_vAchievements.Count() == 0)
     {
@@ -80,7 +86,7 @@ static std::wstring GetRichPresence(const ra::data::context::GameContext& pGameC
     std::wstring sRichPresence;
     for (const auto nId : vAchievementIds)
     {
-        const auto* pAchievement = pGameContext.FindAchievement(nId);
+        const auto* pAchievement = pGameContext.Assets().FindAchievement(nId);
         if (pAchievement == nullptr)
             continue;
 
@@ -99,7 +105,7 @@ static std::wstring GetRichPresence(const ra::data::context::GameContext& pGameC
 
         for (const auto nId : vAchievementIds)
         {
-            const auto* pAchievement = pGameContext.FindAchievement(nId);
+            const auto* pAchievement = pGameContext.Assets().FindAchievement(nId);
             if (pAchievement != nullptr && !pAchievement->GetUnlockRichPresence().empty())
                 sRichPresence.append(ra::StringPrintf(L"%u: %s\n", nId, pAchievement->GetUnlockRichPresence()));
         }
@@ -297,7 +303,6 @@ void BrokenAchievementsViewModel::OnItemSelectedChanged(gsl::index nIndex, const
         }
     }
 }
-
 
 } // namespace viewmodels
 } // namespace ui

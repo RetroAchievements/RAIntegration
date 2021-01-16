@@ -103,6 +103,22 @@ public:
     /// </summary>
     std::chrono::system_clock::time_point GetUnlockTime() const noexcept { return m_tUnlock; }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the rich presence at the time of the unlock.
+    /// </summary>
+    static const StringModelProperty UnlockRichPresenceProperty;
+
+    /// <summary>
+    /// Gets the trigger definition.
+    /// </summary>
+    const std::wstring& GetUnlockRichPresence() const { return GetValue(UnlockRichPresenceProperty); }
+
+    /// <summary>
+    /// Sets the trigger definition.
+    /// </summary>
+    /// <remarks>For unit testing - should not be called in the code</remarks>
+    void SetUnlockRichPresence(const std::wstring& sValue) { SetValue(UnlockRichPresenceProperty, sValue); }
+
     void Activate() override;
     void Deactivate() override;
 
@@ -124,7 +140,6 @@ private:
 
     AssetDefinition m_pTrigger;
     std::chrono::system_clock::time_point m_tUnlock;
-    std::wstring m_sUnlockRichPresence;
 
     CapturedTriggerHits m_pCapturedTriggerHits;
 };

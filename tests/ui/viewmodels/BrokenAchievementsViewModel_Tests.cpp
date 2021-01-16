@@ -30,32 +30,42 @@ private:
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
+        BrokenAchievementsViewModelHarness() noexcept
+        {
+            GSL_SUPPRESS_F6 mockWindowManager.AssetList.InitializeNotifyTargets();
+        }
+
         void MockAchievements()
         {
             mockGameContext.SetGameId(1U);
             mockGameContext.SetGameTitle(L"GAME");
             mockGameContext.SetGameHash("HASH");
 
-            auto& ach1 = mockGameContext.NewAchievement(Achievement::Category::Core);
+            auto& ach1 = mockGameContext.Assets().NewAchievement();
+            ach1.SetCategory(ra::data::models::AssetCategory::Core);
             ach1.SetID(1U);
-            ach1.SetTitle("Title1");
-            ach1.SetActive(false);
-            auto& ach2 = mockGameContext.NewAchievement(Achievement::Category::Core);
+            ach1.SetName(L"Title1");
+            ach1.SetState(ra::data::models::AssetState::Inactive);
+            auto& ach2 = mockGameContext.Assets().NewAchievement();
+            ach2.SetCategory(ra::data::models::AssetCategory::Core);
             ach2.SetID(2U);
-            ach2.SetTitle("Title2");
-            ach2.SetActive(true);
-            auto& ach3 = mockGameContext.NewAchievement(Achievement::Category::Core);
+            ach2.SetName(L"Title2");
+            ach2.SetState(ra::data::models::AssetState::Active);
+            auto& ach3 = mockGameContext.Assets().NewAchievement();
+            ach3.SetCategory(ra::data::models::AssetCategory::Core);
             ach3.SetID(3U);
-            ach3.SetTitle("Title3");
-            ach3.SetActive(false);
-            auto& ach4 = mockGameContext.NewAchievement(Achievement::Category::Core);
+            ach3.SetName(L"Title3");
+            ach3.SetState(ra::data::models::AssetState::Inactive);
+            auto& ach4 = mockGameContext.Assets().NewAchievement();
+            ach4.SetCategory(ra::data::models::AssetCategory::Core);
             ach4.SetID(4U);
-            ach4.SetTitle("Title4");
-            ach4.SetActive(true);
-            auto& ach5 = mockGameContext.NewAchievement(Achievement::Category::Core);
+            ach4.SetName(L"Title4");
+            ach4.SetState(ra::data::models::AssetState::Active);
+            auto& ach5 = mockGameContext.Assets().NewAchievement();
+            ach5.SetCategory(ra::data::models::AssetCategory::Core);
             ach5.SetID(5U);
-            ach5.SetTitle("Title5");
-            ach5.SetActive(true);
+            ach5.SetName(L"Title5");
+            ach5.SetState(ra::data::models::AssetState::Active);
 
             Assert::IsTrue(InitializeAchievements());
         }
@@ -91,7 +101,8 @@ public:
     {
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         vmBrokenAchievements.mockGameContext.SetGameId(1U);
-        vmBrokenAchievements.mockGameContext.NewAchievement(Achievement::Category::Local);
+        vmBrokenAchievements.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
+        vmBrokenAchievements.mockWindowManager.AssetList.SetFilterCategory(ra::data::models::AssetCategory::Local);
 
         bool bDialogSeen = false;
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
@@ -480,7 +491,7 @@ public:
         vmBrokenAchievements.SetSelectedProblemId(1);
         vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
         vmBrokenAchievements.SetComment(L"I tried.");
-        vmBrokenAchievements.mockGameContext.FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
+        vmBrokenAchievements.mockGameContext.Assets().FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
 
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([](const MessageBoxViewModel& vmMessageBox)
         {
@@ -512,8 +523,8 @@ public:
         vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
         vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
         vmBrokenAchievements.SetComment(L"I tried.");
-        vmBrokenAchievements.mockGameContext.FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
-        vmBrokenAchievements.mockGameContext.FindAchievement(3U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
+        vmBrokenAchievements.mockGameContext.Assets().FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
+        vmBrokenAchievements.mockGameContext.Assets().FindAchievement(3U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
 
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([](const MessageBoxViewModel& vmMessageBox)
         {
@@ -545,8 +556,8 @@ public:
         vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
         vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
         vmBrokenAchievements.SetComment(L"I tried.");
-        vmBrokenAchievements.mockGameContext.FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
-        vmBrokenAchievements.mockGameContext.FindAchievement(3U)->SetUnlockRichPresence(L"Somewhere, 2 Lives");
+        vmBrokenAchievements.mockGameContext.Assets().FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
+        vmBrokenAchievements.mockGameContext.Assets().FindAchievement(3U)->SetUnlockRichPresence(L"Somewhere, 2 Lives");
 
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([](const MessageBoxViewModel& vmMessageBox)
         {

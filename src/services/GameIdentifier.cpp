@@ -21,11 +21,6 @@
 #include "ui\viewmodels\UnknownGameViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
-#ifndef RA_UTEST
-#include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
-#include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
-#endif
-
 namespace ra {
 namespace services {
 
@@ -197,11 +192,6 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
     }
 
     ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().ResetMemoryModified();
-
-#ifndef RA_UTEST
-    g_AchievementsDialog.OnLoad_NewRom(nGameId);
-    g_AchievementEditorDialog.OnLoad_NewRom();
-#endif
 }
 
 void GameIdentifier::IdentifyAndActivateGame(const BYTE* pROM, size_t nROMSize)

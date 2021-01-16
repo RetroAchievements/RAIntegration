@@ -418,18 +418,18 @@ void AssetEditorDialog::ActiveCheckBoxBinding::OnViewModelIntValueChanged(const 
 
 AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     : DialogBase(vmAssetEditor),
-      m_bindID(vmAssetEditor),
-      m_bindName(vmAssetEditor),
-      m_bindDescription(vmAssetEditor),
-      m_bindBadge(vmAssetEditor),
-      m_bindBadgeImage(vmAssetEditor),
-      m_bindPoints(vmAssetEditor),
-      m_bindPauseOnReset(vmAssetEditor),
-      m_bindPauseOnTrigger(vmAssetEditor),
-      m_bindActive(vmAssetEditor),
-      m_bindDecimalPreferred(this, vmAssetEditor),
-      m_bindGroups(vmAssetEditor.Trigger()),
-      m_bindConditions(vmAssetEditor.Trigger())
+    m_bindID(vmAssetEditor),
+    m_bindName(vmAssetEditor),
+    m_bindDescription(vmAssetEditor),
+    m_bindBadge(vmAssetEditor),
+    m_bindBadgeImage(vmAssetEditor),
+    m_bindPoints(vmAssetEditor),
+    m_bindPauseOnReset(vmAssetEditor),
+    m_bindPauseOnTrigger(vmAssetEditor),
+    m_bindActive(vmAssetEditor),
+    m_bindDecimalPreferred(this, vmAssetEditor),
+    m_bindGroups(vmAssetEditor.Trigger()),
+    m_bindConditions(vmAssetEditor.Trigger())
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::After, "Achievement Editor");
     m_bindWindow.AddChildViewModel(vmAssetEditor.Trigger());
@@ -441,11 +441,25 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindBadge.SetWrapAround(true);
     m_bindBadgeImage.BindImage(AssetEditorViewModel::BadgeProperty, ra::ui::ImageType::Badge);
     m_bindPoints.BindValue(AssetEditorViewModel::PointsProperty);
-
-    m_bindWindow.BindEnabled(IDC_RA_ACH_TITLE, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_ACH_DESC, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_CHK_ACH_PAUSE_ON_RESET, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_TITLE, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DESCRIPTION, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_ACTIVE, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_POINTS, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_BADGENAME, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_BADGE_SPIN, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_UPLOAD_BADGE, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_RESET, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_TRIGGER, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_LBX_GROUPS, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_ADD_GROUP, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DELETE_GROUP, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_LBX_CONDITIONS, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_ADD_COND, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DELETE_COND, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_COPY_COND, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_PASTE_COND, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_MOVE_COND_UP, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_MOVE_COND_DOWN, AssetEditorViewModel::AssetLoadedProperty);
 
     m_bindPauseOnReset.BindCheck(AssetEditorViewModel::PauseOnResetProperty);
     m_bindPauseOnTrigger.BindCheck(AssetEditorViewModel::PauseOnTriggerProperty);
@@ -538,28 +552,52 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindConditions.BindEnsureVisible(TriggerViewModel::EnsureVisibleConditionIndexProperty);
 
     using namespace ra::bitwise_ops;
-    SetAnchor(IDC_RA_LISTACHIEVEMENTS, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_TITLE, Anchor::Top | Anchor::Left | Anchor::Right);
+    SetAnchor(IDC_RA_LBL_ID, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_ID, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_CHK_ACTIVE, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_DESCRIPTION, Anchor::Top | Anchor::Left | Anchor::Right);
+    SetAnchor(IDC_RA_LBL_POINTS, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_POINTS, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_LBL_BADGENAME, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_BADGENAME, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_BADGE_SPIN, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_UPLOAD_BADGE, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_BADGEPIC, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_LBX_GROUPS, Anchor::Top | Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_ADD_GROUP, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_DELETE_GROUP, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_CHK_PAUSE_ON_RESET, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_CHK_PAUSE_ON_TRIGGER, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_LBX_CONDITIONS, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_ADD_COND, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_DELETE_COND, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_COPY_COND, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_PASTE_COND, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_MOVE_COND_UP, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_MOVE_COND_DOWN, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_CHK_SHOW_DECIMALS, Anchor::Bottom | Anchor::Right);
 
-    SetMinimumSize(400, 188);
+    SetMinimumSize(665, 348);
 }
 
 BOOL AssetEditorDialog::OnInitDialog()
 {
-    m_bindID.SetControl(*this, IDC_RA_ACH_ID);
-    m_bindName.SetControl(*this, IDC_RA_ACH_TITLE);
-    m_bindDescription.SetControl(*this, IDC_RA_ACH_DESC);
+    m_bindID.SetControl(*this, IDC_RA_ID);
+    m_bindName.SetControl(*this, IDC_RA_TITLE);
+    m_bindDescription.SetControl(*this, IDC_RA_DESCRIPTION);
     m_bindBadge.SetControl(*this, IDC_RA_BADGENAME);
     m_bindBadge.SetSpinnerControl(*this, IDC_RA_BADGE_SPIN);
-    m_bindBadgeImage.SetControl(*this, IDC_RA_CHEEVOPIC);
-    m_bindPoints.SetControl(*this, IDC_RA_ACH_POINTS);
+    m_bindBadgeImage.SetControl(*this, IDC_RA_BADGEPIC);
+    m_bindPoints.SetControl(*this, IDC_RA_POINTS);
 
-    m_bindGroups.SetControl(*this, IDC_RA_ACH_GROUP);
+    m_bindGroups.SetControl(*this, IDC_RA_LBX_GROUPS);
     m_bindConditions.SetControl(*this, IDC_RA_LBX_CONDITIONS);
     m_bindConditions.InitializeTooltips(std::chrono::seconds(30));
 
-    m_bindPauseOnReset.SetControl(*this, IDC_RA_CHK_ACH_PAUSE_ON_RESET);
-    m_bindPauseOnTrigger.SetControl(*this, IDC_RA_CHK_ACH_PAUSE_ON_TRIGGER);
-    m_bindActive.SetControl(*this, IDC_RA_CHK_ACH_ACTIVE);
+    m_bindPauseOnReset.SetControl(*this, IDC_RA_CHK_PAUSE_ON_RESET);
+    m_bindPauseOnTrigger.SetControl(*this, IDC_RA_CHK_PAUSE_ON_TRIGGER);
+    m_bindActive.SetControl(*this, IDC_RA_CHK_ACTIVE);
     m_bindDecimalPreferred.SetControl(*this, IDC_RA_CHK_SHOW_DECIMALS);
 
     return DialogBase::OnInitDialog();
@@ -569,7 +607,7 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
 {
     switch (nCommand)
     {
-        case IDC_RA_ADDCOND:
+        case IDC_RA_ADD_COND:
         {
             auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
             if (vmAssetEditor)
@@ -578,7 +616,7 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
-        case IDC_RA_COPYCOND:
+        case IDC_RA_COPY_COND:
         {
             auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
             if (vmAssetEditor)
@@ -587,7 +625,7 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
-        case IDC_RA_PASTECOND:
+        case IDC_RA_PASTE_COND:
         {
             auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
             if (vmAssetEditor)
@@ -596,7 +634,7 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
-        case IDC_RA_DELETECOND:
+        case IDC_RA_DELETE_COND:
         {
             auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
             if (vmAssetEditor)
@@ -605,7 +643,7 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
-        case IDC_RA_MOVECONDUP:
+        case IDC_RA_MOVE_COND_UP:
         {
             auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
             if (vmAssetEditor)
@@ -614,7 +652,7 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
-        case IDC_RA_MOVECONDDOWN:
+        case IDC_RA_MOVE_COND_DOWN:
         {
             auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
             if (vmAssetEditor)
@@ -632,7 +670,7 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
-        case IDC_RA_ACH_ADDGROUP:
+        case IDC_RA_ADD_GROUP:
         {
             auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
             if (vmAssetEditor)
@@ -641,7 +679,7 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
-        case IDC_RA_ACH_DELGROUP:
+        case IDC_RA_DELETE_GROUP:
         {
             auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
             if (vmAssetEditor)

@@ -97,14 +97,6 @@ public:
     }
 
     /// <summary>
-    /// Enumerates the achievements being shown in the achievement list.
-    /// </summary>
-    /// <remarks>
-    /// <paramref name="callback" /> is called for each known achievement. If it returns <c>false</c> enumeration stops.
-    /// </remarks>
-    void EnumerateFilteredAchievements(std::function<bool(const Achievement&)> callback) const;
-
-    /// <summary>
     /// Finds the achievement associated to the specified unique identifier.
     /// </summary>
     /// <returns>Pointer to achievement, <c>nullptr</c> if not found.</returns>

@@ -17,6 +17,7 @@ const StringModelProperty AchievementModel::BadgeProperty("AchievementModel", "B
 const BoolModelProperty AchievementModel::PauseOnResetProperty("AchievementModel", "PauseOnReset", false);
 const BoolModelProperty AchievementModel::PauseOnTriggerProperty("AchievementModel", "PauseOnTrigger", false);
 const IntModelProperty AchievementModel::TriggerProperty("AchievementModel", "Trigger", 0);
+const StringModelProperty AchievementModel::UnlockRichPresenceProperty("AchievementModel", "UnlockRichPresence", L"");
 
 AchievementModel::AchievementModel() noexcept
 {
@@ -150,6 +151,9 @@ void AchievementModel::DoFrame()
 
 void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewState)
 {
+    if (!ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+        return;
+
     const bool bWasActive = IsActive(nOldState);
     const bool bIsActive = IsActive(nNewState);
     if (bWasActive == bIsActive)
@@ -198,7 +202,7 @@ void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
             const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
             m_tUnlock = pClock.Now();
 
-            m_sUnlockRichPresence = pRuntime.GetRichPresenceDisplayString();
+            SetUnlockRichPresence(pRuntime.GetRichPresenceDisplayString());
             break;
     }
 }

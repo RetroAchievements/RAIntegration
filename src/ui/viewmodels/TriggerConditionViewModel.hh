@@ -27,7 +27,8 @@ enum class TriggerConditionType : uint8_t
     AddAddress = RC_CONDITION_ADD_ADDRESS,
     OrNext = RC_CONDITION_OR_NEXT,
     Trigger = RC_CONDITION_TRIGGER,
-    MeasuredIf = RC_CONDITION_MEASURED_IF
+    MeasuredIf = RC_CONDITION_MEASURED_IF,
+    ResetNextIf = RC_CONDITION_RESET_NEXT_IF
 };
 
 enum class TriggerOperandType : uint8_t

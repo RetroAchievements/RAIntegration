@@ -54,6 +54,7 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
             case TriggerConditionType::MeasuredIf:  sBuffer.push_back('Q'); break;
             case TriggerConditionType::AddAddress:  sBuffer.push_back('I'); break;
             case TriggerConditionType::Trigger:     sBuffer.push_back('T'); break;
+            case TriggerConditionType::ResetNextIf: sBuffer.push_back('Z'); break;
             default:
                 assert(!"Unknown condition type");
                 break;

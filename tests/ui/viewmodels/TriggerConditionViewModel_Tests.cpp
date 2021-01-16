@@ -43,6 +43,8 @@ std::wstring ToString<ra::ui::viewmodels::TriggerConditionType>(
             return L"Trigger";
         case ra::ui::viewmodels::TriggerConditionType::MeasuredIf:
             return L"MeasuredIf";
+        case ra::ui::viewmodels::TriggerConditionType::ResetNextIf:
+            return L"ResetNextIf";
         default:
             return std::to_wstring(static_cast<int>(nConditionType));
     }
@@ -417,6 +419,7 @@ public:
     {
         ParseAndRegenerate("0xH1234=5"); // none
         ParseAndRegenerate("R:0xH1234=5"); // reset if
+        ParseAndRegenerate("Z:0xH1234=5"); // reset next if
         ParseAndRegenerate("P:0xH1234=5"); // pause if
         ParseAndRegenerate("A:0xH1234"); // add source
         ParseAndRegenerate("B:0xH1234"); // sub source

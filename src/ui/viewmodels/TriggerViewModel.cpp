@@ -26,6 +26,7 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::Standard), L"");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::PauseIf), L"Pause If");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::ResetIf), L"Reset If");
+    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::ResetNextIf), L"Reset Next If");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AddSource), L"Add Source");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::SubSource), L"Sub Source");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AddHits), L"Add Hits");

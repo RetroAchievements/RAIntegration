@@ -4,6 +4,7 @@
 #include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\IConfiguration.hh"
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
@@ -13,6 +14,7 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #include "Exports.hh"
+#include "RA_BuildVer.h"
 #include "RA_Log.h"
 
 namespace ra {
@@ -724,6 +726,9 @@ void AssetListViewModel::SaveSelected()
         if (vSelectedAssets.empty())
             return;
 
+        if (!ValidateAssetsForCore(vSelectedAssets, true))
+            return;
+
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetMessage(ra::StringPrintf(L"Are you sure you want to publish %d items?", vSelectedAssets.size()));
         vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
@@ -745,6 +750,9 @@ void AssetListViewModel::SaveSelected()
         if (vSelectedAssets.empty())
             return;
 
+        if (!ValidateAssetsForCore(vSelectedAssets, false))
+            return;
+
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetHeader(ra::StringPrintf(L"Are you sure you want to promote %d items to core?", vSelectedAssets.size()));
         vmMessageBox.SetMessage(L"Items in core are officially available for players to earn.");
@@ -760,7 +768,7 @@ void AssetListViewModel::SaveSelected()
     }
     else if (sSaveButtonText.at(0) == 'D') // "De&mote"
     {
-        // promote - find the selected unpublished items
+        // demote - find the selected published items
         GetSelectedAssets(vSelectedAssets, [](const ra::data::models::AssetModelBase& pModel)
         {
             return (pModel.GetChanges() == ra::data::models::AssetChanges::None &&
@@ -788,6 +796,87 @@ void AssetListViewModel::SaveSelected()
     // update the local file
     pGameContext.Assets().SaveAssets(vSelectedAssets);
     UpdateButtons();
+}
+
+#if RA_INTEGRATION_VERSION_MINOR < 79
+static std::wstring ValidateCondSet(const rc_condset_t* pCondSet)
+{
+    for (const auto* pCondition = pCondSet->conditions; pCondition != nullptr; pCondition = pCondition->next)
+    {
+        if (pCondition->type == RC_CONDITION_RESET_NEXT_IF)
+            return L"ResetNextIf is pre-release functionality";
+        if (pCondition->type == RC_CONDITION_TRIGGER)
+            return L"Trigger is pre-release functionality";
+        if (pCondition->oper == RC_OPERATOR_MULT)
+            return L"Multiplication is pre-release functionality";
+        if (pCondition->oper == RC_OPERATOR_DIV)
+            return L"Division is pre-release functionality";
+        if (pCondition->oper == RC_OPERATOR_AND)
+            return L"Bitwise And is pre-release functionality";
+    }
+
+    return L"";
+}
+
+static std::wstring ValidateTriggerLogic(const std::string& sTrigger)
+{
+    const auto nSize = rc_trigger_size(sTrigger.c_str());
+    if (nSize < 0)
+        return ra::StringPrintf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
+
+    std::string sBuffer;
+    sBuffer.resize(nSize);
+    const auto* pTrigger = rc_parse_trigger(sBuffer.data(), sTrigger.c_str(), nullptr, 0);
+
+    std::wstring sError = ValidateCondSet(pTrigger->requirement);
+    if (sError.empty())
+    {
+        const auto* pAlt = pTrigger->alternative;
+        while (pAlt != nullptr)
+        {
+            sError = ValidateCondSet(pAlt);
+            if (!sError.empty())
+                break;
+
+            pAlt = pAlt->next;
+        }
+    }
+
+    return sError;
+}
+#endif
+
+void AssetListViewModel::ValidateAchievementForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::AchievementModel& pAchievement) const
+{
+#if RA_INTEGRATION_VERSION_MINOR < 79
+    if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsCustomHost())
+    {
+        std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
+        if (!sTriggerError.empty())
+            sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
+    }
+#endif
+}
+
+bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly)
+{
+    std::wstring sError;
+
+    for (const auto* pAsset : vAssets)
+    {
+        const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
+        if (pAchievement != nullptr)
+            ValidateAchievementForCore(sError, *pAchievement);
+    }
+
+    if (!sError.empty())
+    {
+        sError.insert(0, L"The following items could not be published:");
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(bCoreOnly ? L"Publish aborted." : L"Promote to core aborted.", sError);
+        return false;
+    }
+
+    return true;
 }
 
 void AssetListViewModel::Publish(std::vector<ra::data::models::AssetModelBase*>& vAssets)

@@ -24,6 +24,10 @@ const IntModelProperty TriggerConditionViewModel::TargetValueProperty("TriggerCo
 const IntModelProperty TriggerConditionViewModel::CurrentHitsProperty("TriggerConditionViewModel", "CurrentHits", 0);
 const IntModelProperty TriggerConditionViewModel::RequiredHitsProperty("TriggerConditionViewModel", "RequiredHits", 0);
 const BoolModelProperty TriggerConditionViewModel::IsSelectedProperty("TriggerConditionViewModel", "IsSelected", false);
+const BoolModelProperty TriggerConditionViewModel::HasSourceSizeProperty("TriggerConditionViewModel", "HasSourceSize", true);
+const BoolModelProperty TriggerConditionViewModel::HasTargetProperty("TriggerConditionViewModel", "HasTarget", true);
+const BoolModelProperty TriggerConditionViewModel::HasTargetSizeProperty("TriggerConditionViewModel", "HasTargetSize", false);
+const BoolModelProperty TriggerConditionViewModel::HasHitsProperty("TriggerConditionViewModel", "HasHits", true);
 
 std::string TriggerConditionViewModel::Serialize() const
 {
@@ -240,6 +244,51 @@ void TriggerConditionViewModel::InitializeFrom(const rc_condition_t& pCondition)
     SetRequiredHits(pCondition.required_hits);
 }
 
+void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == SourceTypeProperty)
+    {
+        SetValue(HasSourceSizeProperty, ra::itoe<TriggerOperandType>(args.tNewValue) != TriggerOperandType::Value);
+    }
+    else if (args.Property == TargetTypeProperty)
+    {
+        SetValue(HasTargetSizeProperty, ra::itoe<TriggerOperandType>(args.tNewValue) != TriggerOperandType::Value && GetValue(HasTargetProperty));
+    }
+    else if (args.Property == OperatorProperty)
+    {
+        SetValue(HasTargetProperty, ra::itoe<TriggerOperatorType>(args.tNewValue) != TriggerOperatorType::None);
+    }
+    else if (args.Property == TypeProperty)
+    {
+        const auto nOldType = ra::itoe<TriggerConditionType>(args.tOldValue);
+        const auto nNewType = ra::itoe<TriggerConditionType>(args.tNewValue);
+        const auto bIsModifying = IsModifying(nNewType);
+        if (bIsModifying != IsModifying(nOldType))
+        {
+            if (bIsModifying)
+            {
+                SetValue(HasHitsProperty, false);
+                SetOperator(TriggerOperatorType::None);
+            }
+            else
+            {
+                SetValue(HasHitsProperty, true);
+                SetOperator(TriggerOperatorType::Equals);
+            }
+        }
+    }
+
+    ViewModelBase::OnValueChanged(args);
+}
+
+void TriggerConditionViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == HasTargetProperty)
+        SetValue(HasTargetSizeProperty, args.tNewValue && GetTargetType() != TriggerOperandType::Value);
+
+    ViewModelBase::OnValueChanged(args);
+}
+
 std::wstring TriggerConditionViewModel::GetTooltip(const IntModelProperty& nProperty) const
 {
     if (nProperty == SourceValueProperty)
@@ -263,7 +312,7 @@ std::wstring TriggerConditionViewModel::GetValueTooltip(TriggerOperandType nType
     return std::to_wstring(nValue);
 }
 
-std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned nAddress) const
+std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned int nAddress) const
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nAddress);
@@ -290,6 +339,40 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned nAddress) con
     }
 
     return ra::StringPrintf(L"%s\r\n%s", ra::ByteAddressToString(nAddress), *pNote);
+}
+
+bool TriggerConditionViewModel::IsModifying(TriggerConditionType nType) noexcept
+{
+    switch (nType)
+    {
+        case TriggerConditionType::AddAddress:
+        case TriggerConditionType::AddSource:
+        case TriggerConditionType::SubSource:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
+bool TriggerConditionViewModel::IsComparisonVisible(const ViewModelBase& vmItem, int nValue)
+{
+    const auto* vmCondition = dynamic_cast<const TriggerConditionViewModel*>(&vmItem);
+    if (vmCondition == nullptr)
+        return false;
+
+    const auto nComparison = ra::itoe<TriggerOperatorType>(nValue);
+    switch (nComparison)
+    {
+        case TriggerOperatorType::None:
+        case TriggerOperatorType::Multiply:
+        case TriggerOperatorType::Divide:
+        case TriggerOperatorType::BitwiseAnd:
+            return vmCondition->IsModifying();
+
+        default:
+            return !vmCondition->IsModifying();
+    }
 }
 
 } // namespace viewmodels

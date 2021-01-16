@@ -90,13 +90,30 @@ HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, InPlaceEditorInf
 
     const auto& pItems = static_cast<GridBinding*>(pInfo.pGridBinding)->GetItems();
     const auto nValue = pItems.GetItemValue(pInfo.nItemIndex, *m_pBoundProperty);
+
+    const ViewModelBase* vmItem = nullptr;
+    if (m_fIsVisible)
+        vmItem = pItems.GetViewModelAt(pInfo.nItemIndex);
+
+    m_vVisibleItems.clear();
+
     for (size_t i = 0; i < m_vmItems.Count(); ++i)
     {
         const auto* pItem = m_vmItems.GetItemAt(i);
         Expects(pItem != nullptr);
+        const auto nItemValue = pItem->GetId();
+
+        if (vmItem != nullptr)
+        {
+            if (nItemValue != nValue && !m_fIsVisible(*vmItem, nItemValue))
+                continue;
+
+            m_vVisibleItems.push_back(nItemValue);
+        }
+
         const auto nIndex = ComboBox_AddString(hInPlaceEditor, NativeStr(pItem->GetLabel()).c_str());
 
-        if (pItem->GetId() == nValue)
+        if (nItemValue == nValue)
             ComboBox_SetCurSel(hInPlaceEditor, nIndex);
     }
 
@@ -110,6 +127,9 @@ HWND GridLookupColumnBinding::CreateInPlaceEditor(HWND hParent, InPlaceEditorInf
 
 int GridLookupColumnBinding::GetValueFromIndex(gsl::index nIndex) const
 {
+    if (m_fIsVisible != nullptr)
+        return m_vVisibleItems.at(nIndex);
+
     const auto* pItem = m_vmItems.GetItemAt(nIndex);
     return (pItem != nullptr) ? pItem->GetId() : 0;        
 }

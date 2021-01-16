@@ -74,6 +74,16 @@ public:
         }
     }
 
+    /// <summary>
+    /// Gets the <see cref="ViewModelBase" /> at the specified index.
+    /// </summary>
+    ViewModelBase* GetViewModelAt(gsl::index nIndex) { return dynamic_cast<ViewModelBase*>(GetModelAt(nIndex)); }
+
+    /// <summary>
+    /// Gets the <see cref="ViewModelBase" /> at the specified index.
+    /// </summary>
+    const ViewModelBase* GetViewModelAt(gsl::index nIndex) const { return dynamic_cast<const ViewModelBase*>(GetModelAt(nIndex)); }
+
 protected:
     void OnModelValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
     void OnModelValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;

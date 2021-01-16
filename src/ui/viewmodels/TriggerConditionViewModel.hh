@@ -68,6 +68,7 @@ public:
     TriggerOperandType GetSourceType() const { return ra::itoe<TriggerOperandType>(GetValue(SourceTypeProperty)); }
     void SetSourceType(TriggerOperandType nValue) { SetValue(SourceTypeProperty, ra::etoi(nValue)); }
 
+    static const BoolModelProperty HasSourceSizeProperty;
     static const IntModelProperty SourceSizeProperty;
     MemSize GetSourceSize() const { return ra::itoe<MemSize>(GetValue(SourceSizeProperty)); }
     void SetSourceSize(MemSize nValue) { SetValue(SourceSizeProperty, ra::etoi(nValue)); }
@@ -80,10 +81,12 @@ public:
     TriggerOperatorType GetOperator() const { return ra::itoe<TriggerOperatorType>(GetValue(OperatorProperty)); }
     void SetOperator(TriggerOperatorType nValue) { SetValue(OperatorProperty, ra::etoi(nValue)); }
 
+    static const BoolModelProperty HasTargetProperty;
     static const IntModelProperty TargetTypeProperty;
     TriggerOperandType GetTargetType() const { return ra::itoe<TriggerOperandType>(GetValue(TargetTypeProperty)); }
     void SetTargetType(TriggerOperandType nValue) { SetValue(TargetTypeProperty, ra::etoi(nValue)); }
 
+    static const BoolModelProperty HasTargetSizeProperty;
     static const IntModelProperty TargetSizeProperty;
     MemSize GetTargetSize() const { return ra::itoe<MemSize>(GetValue(TargetSizeProperty)); }
     void SetTargetSize(MemSize nValue) { SetValue(TargetSizeProperty, ra::etoi(nValue)); }
@@ -92,6 +95,7 @@ public:
     unsigned int GetTargetValue() const { return ra::to_unsigned(GetValue(TargetValueProperty)); }
     void SetTargetValue(unsigned int nValue) { SetValue(TargetValueProperty, ra::to_signed(nValue)); }
 
+    static const BoolModelProperty HasHitsProperty;
     static const IntModelProperty CurrentHitsProperty;
     unsigned int GetCurrentHits() const { return ra::to_unsigned(GetValue(CurrentHitsProperty)); }
     void SetCurrentHits(unsigned int nValue) { SetValue(CurrentHitsProperty, ra::to_signed(nValue)); }
@@ -111,14 +115,23 @@ public:
 
     std::wstring GetTooltip(const IntModelProperty& nProperty) const;
 
+    bool IsModifying() const { return IsModifying(GetType()); }
+
+    static bool IsComparisonVisible(const ViewModelBase& vmItem, int nValue);
+
 private:
+    void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+
     void SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, unsigned int nValue) const;
 
-    std::wstring GetValueTooltip(TriggerOperandType nType, unsigned nAddress) const;
-    std::wstring GetAddressTooltip(unsigned nAddress) const;
+    std::wstring GetValueTooltip(TriggerOperandType nType, unsigned int nValue) const;
+    std::wstring GetAddressTooltip(unsigned int nAddress) const;
 
     void SetOperand(const IntModelProperty& pTypeProperty, const IntModelProperty& pSizeProperty,
         const IntModelProperty& pValueProperty, const rc_operand_t& operand);
+
+    static bool IsModifying(TriggerConditionType nType) noexcept;
 };
 
 } // namespace viewmodels

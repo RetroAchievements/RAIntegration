@@ -34,9 +34,15 @@ public:
     int GetValueFromIndex(gsl::index nIndex) const;
     const IntModelProperty& GetBoundProperty() const noexcept { return *m_pBoundProperty; }
 
+    typedef bool (*IsVisibleFunction)(const ViewModelBase& vmItem, int nValue);
+    void SetVisibilityFilter(IsVisibleFunction fIsVisible) noexcept { m_fIsVisible = fIsVisible; }
+
 protected:
     const IntModelProperty* m_pBoundProperty = nullptr;
     const ra::ui::viewmodels::LookupItemViewModelCollection& m_vmItems;
+
+    IsVisibleFunction m_fIsVisible = nullptr;
+    std::vector<int> m_vVisibleItems;
 };
 
 } // namespace bindings

@@ -244,6 +244,7 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
 
     pData->WriteLine(pGameContext.GameTitle());
 
+    bool bHasDeleted = false;
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Count()); ++nIndex)
     {
         auto* pItem = GetItemAt(nIndex);
@@ -260,6 +261,11 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
             case ra::data::models::AssetChanges::Unpublished:
                 // always write unpublished changes
                 break;
+
+            case ra::data::models::AssetChanges::Deleted:
+                // never write deleted objects - we'll remove them after we update the file
+                bHasDeleted = true;
+                continue;
 
             default:
                 // if the item is modified, check to see if it's selected
@@ -308,6 +314,16 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
     }
 
     RA_LOG_INFO("Wrote user assets file");
+
+    if (bHasDeleted)
+    {
+        for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(Count()) - 1; nIndex >= 0; --nIndex)
+        {
+            auto* pItem = GetItemAt(nIndex);
+            if (pItem != nullptr && pItem->GetChanges() == ra::data::models::AssetChanges::Deleted)
+                RemoveAt(nIndex);
+        }
+    }
 }
 
 } // namespace context

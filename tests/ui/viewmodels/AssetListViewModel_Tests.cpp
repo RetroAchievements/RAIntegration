@@ -401,7 +401,7 @@ public:
         Assert::AreEqual((int)AssetCategory::Local, vmAssetList.Categories().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"Local"), vmAssetList.Categories().GetItemAt(2)->GetLabel());
 
-        Assert::AreEqual({ 4U }, vmAssetList.Changes().Count());
+        Assert::AreEqual({ 5U }, vmAssetList.Changes().Count());
         Assert::AreEqual((int)AssetChanges::None, vmAssetList.Changes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L""), vmAssetList.Changes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)AssetChanges::Modified, vmAssetList.Changes().GetItemAt(1)->GetId());
@@ -410,6 +410,8 @@ public:
         Assert::AreEqual(std::wstring(L"Unpublished"), vmAssetList.Changes().GetItemAt(2)->GetLabel());
         Assert::AreEqual((int)AssetChanges::New, vmAssetList.Changes().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"New"), vmAssetList.Changes().GetItemAt(3)->GetLabel());
+        Assert::AreEqual((int)AssetChanges::Deleted, vmAssetList.Changes().GetItemAt(4)->GetId());
+        Assert::AreEqual(std::wstring(L"Deleted"), vmAssetList.Changes().GetItemAt(4)->GetLabel());
     }
 
     TEST_METHOD(TestAddRemoveCoreAchievement)
@@ -2383,6 +2385,167 @@ public:
 
         // new item will be ignored when a selection is reset.
         Assert::IsNull(vmAssetList.mockGameContext.Assets().FindAchievement({ 111000001U }));
+    }
+
+    TEST_METHOD(TestRevertSelectedAllUnmodified)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(RevertButtonState::RevertAll);
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Revert from server?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"This will discard all local changes and revert the assets to the last state retrieved from the server."), vmMessageBox.GetMessage());
+
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        vmAssetList.RevertSelected();
+
+        Assert::IsTrue(bDialogShown);
+
+        const auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
+    }
+
+    TEST_METHOD(TestRevertSelectedAllUncommitted)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(RevertButtonState::RevertAll);
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Revert from server?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"This will discard all local changes and revert the assets to the last state retrieved from the server."), vmMessageBox.GetMessage());
+
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        pAsset->SetName(L"Apple");
+        Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
+
+        vmAssetList.RevertSelected();
+
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
+    }
+
+    TEST_METHOD(TestRevertSelectedAllUnpublished)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(RevertButtonState::RevertAll);
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Revert from server?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"This will discard all local changes and revert the assets to the last state retrieved from the server."), vmMessageBox.GetMessage());
+
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        pAsset->SetName(L"Apple");
+        pAsset->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+
+        vmAssetList.RevertSelected();
+
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
+    }
+
+    TEST_METHOD(TestRevertSelectedAllLocalUnpublished)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetCategory::Local);
+        vmAssetList.ForceUpdateButtons();
+
+        // when nothing is selected, the button defaults to revert all, even if only local achievements are present
+        vmAssetList.AssertButtonState(RevertButtonState::RevertAll);
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Revert from server?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"This will discard all local changes and revert the assets to the last state retrieved from the server.\n\nAssets not available on the server will be permanently deleted."), vmMessageBox.GetMessage());
+
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        pAsset->SetName(L"Apple");
+        pAsset->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+
+        vmAssetList.RevertSelected();
+
+        Assert::IsTrue(bDialogShown);
+
+        pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNull(pAsset);
+    }
+
+    TEST_METHOD(TestRevertSelectedLocalUnpublished)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetCategory::Local);
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(RevertButtonState::Delete);
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Permanently delete?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Assets not available on the server will be permanently deleted."), vmMessageBox.GetMessage());
+
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        pAsset->SetName(L"Apple");
+        pAsset->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+
+        vmAssetList.RevertSelected();
+
+        Assert::IsTrue(bDialogShown);
+
+        pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNull(pAsset);
     }
 
     TEST_METHOD(TestIsProcessingActive)

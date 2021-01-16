@@ -191,6 +191,41 @@ public:
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 
+    TEST_METHOD(TestSaveDeleted)
+    {
+        GameAssetsHarness gameAssets;
+        gameAssets.MockUserFileContents(
+            "111000001:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n"
+            "111000002:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
+
+        gameAssets.ReloadAllAssets();
+        Assert::AreEqual({ 2U }, gameAssets.Count());
+
+        auto* pAsset = gameAssets.FindAchievement({ 111000001U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+
+        pAsset->SetDeleted();
+        Assert::AreEqual(AssetChanges::Deleted, pAsset->GetChanges());
+
+        gameAssets.SaveAllAssets();
+
+        const std::string sExpected = "0.0.0.0\nGameName\n"
+            "111000002:\"0xH2345=0\":Test2:::::User:0:::::00000\n";
+        Assert::AreEqual(sExpected, gameAssets.GetUserFile());
+
+        Assert::AreEqual({ 1U }, gameAssets.Count());
+
+        pAsset = gameAssets.FindAchievement({ 111000001U });
+        Assert::IsNull(pAsset);
+
+        pAsset = gameAssets.FindAchievement({ 111000002U });
+        Assert::IsNotNull(pAsset);
+    }
+
     TEST_METHOD(TestMergeLocalAssetsNoFile)
     {
         GameAssetsHarness gameAssets;

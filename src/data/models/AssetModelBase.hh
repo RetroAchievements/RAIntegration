@@ -43,6 +43,7 @@ enum class AssetChanges
     Modified,    // differs from local data
     Unpublished, // local data differs from server data
     New,         // asset not in local or server data
+    Deleted,     // asset to be removed from local data
 };
 
 class AssetModelBase : public DataModelBase
@@ -185,6 +186,11 @@ public:
     /// Marks the asset as not existing in local or on the server.
     /// </summary>
     void SetNew();
+
+    /// <summary>
+    /// Marks the asset as to be removed from local.
+    /// </summary>
+    void SetDeleted();
 
     /// <summary>
     /// Determines if the local checkpoint differs from the server checkpoint. Ignores any changes

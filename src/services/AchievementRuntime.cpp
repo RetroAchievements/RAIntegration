@@ -652,7 +652,9 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
         pFile->GetBytes(&pBuffer.front(), nSize);
 
         if (rc_runtime_deserialize_progress(&m_pRuntime, &pBuffer.front(), nullptr) == RC_OK)
+        {
             RA_LOG_INFO("Runtime state loaded from %s", sLoadStateFilename);
+        }
     }
     else if (sContents == "v2")
     {
@@ -705,7 +707,9 @@ bool AchievementRuntime::LoadProgressFromBuffer(const char* pBuffer)
     const unsigned char* pBytes;
     GSL_SUPPRESS_TYPE1 pBytes = reinterpret_cast<const unsigned char*>(pBuffer);
     if (rc_runtime_deserialize_progress(&m_pRuntime, pBytes, nullptr) == RC_OK)
+    {
         RA_LOG_INFO("Runtime state loaded from buffer");
+    }
 
     return true;
 }

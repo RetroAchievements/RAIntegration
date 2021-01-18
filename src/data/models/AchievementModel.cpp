@@ -151,7 +151,6 @@ void AchievementModel::DoFrame()
     }
 }
 
-
 void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewState)
 {
     if (!ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())

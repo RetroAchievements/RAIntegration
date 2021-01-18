@@ -199,6 +199,8 @@ public:
 
     void InvalidateAddress(ra::ByteAddress nAddress);
 
+    size_t DetectUnsupportedAchievements();
+
 protected:
     bool m_bPaused = false;
     rc_runtime_t m_pRuntime{};

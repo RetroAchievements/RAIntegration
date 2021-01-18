@@ -765,6 +765,52 @@ void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress)
     rc_runtime_invalidate_address(&m_pRuntime, nAddress);
 }
 
+#pragma warning(push)
+#pragma warning(disable : 5045)
+
+size_t AchievementRuntime::DetectUnsupportedAchievements()
+{
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+
+    const rc_memref_t* memref = m_pRuntime.memrefs;
+    while (memref)
+    {
+        // ignore indirect memory references as their value is calculated from other memory and can easily point at
+        // invalid addresses.
+        if (!memref->value.is_indirect)
+        {
+            // attempt to read one byte from the memory address (assume multi-byte reads won't span regions). if the
+            // read fails, EmulatorContext will call InvalidateAddress, which will flag all associated achievements.
+            pEmulatorContext.ReadMemoryByte(memref->address);
+        }
+
+        memref = memref->next;
+    }
+
+    size_t nDisabled = 0;
+    const auto* pTrigger = m_pRuntime.triggers;
+    const auto* pStop = pTrigger + m_pRuntime.trigger_count;
+    while (pTrigger < pStop)
+    {
+        if (pTrigger->invalid_memref)
+        {
+            // before rc_runtime_do_frame called
+            ++nDisabled;
+        }
+        else if (pTrigger->trigger && pTrigger->trigger->state == RC_TRIGGER_STATE_DISABLED)
+        {
+            // after rc_runtime_do_frame called
+            ++nDisabled;
+        }
+
+        ++pTrigger;
+    }
+
+    return nDisabled;
+}
+
+#pragma warning(pop)
+
 } // namespace services
 } // namespace ra
 

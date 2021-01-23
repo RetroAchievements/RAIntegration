@@ -651,7 +651,10 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
         pFile->SetPosition({ 0 });
         pFile->GetBytes(&pBuffer.front(), nSize);
 
-        rc_runtime_deserialize_progress(&m_pRuntime, &pBuffer.front(), nullptr);
+        if (rc_runtime_deserialize_progress(&m_pRuntime, &pBuffer.front(), nullptr) == RC_OK)
+        {
+            RA_LOG_INFO("Runtime state loaded from %s", sLoadStateFilename);
+        }
     }
     else if (sContents == "v2")
     {
@@ -659,8 +662,14 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
         switch (nVersion)
         {
             case 2:
-                if (!LoadProgressV2(*pFile, vProcessedAchievementIds))
+                if (LoadProgressV2(*pFile, vProcessedAchievementIds))
+                {
+                    RA_LOG_INFO("Runtime state (v2) loaded from %s", sLoadStateFilename);
+                }
+                else
+                {
                     vProcessedAchievementIds.clear();
+                }
                 break;
 
             default:
@@ -670,8 +679,14 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
     }
     else
     {
-        if (!LoadProgressV1(sContents, vProcessedAchievementIds))
+        if (LoadProgressV1(sContents, vProcessedAchievementIds))
+        {
+            RA_LOG_INFO("Runtime state (v1) loaded from %s", sLoadStateFilename);
+        }
+        else
+        {
             vProcessedAchievementIds.clear();
+        }
     }
 
     return true;
@@ -691,7 +706,11 @@ bool AchievementRuntime::LoadProgressFromBuffer(const char* pBuffer)
 
     const unsigned char* pBytes;
     GSL_SUPPRESS_TYPE1 pBytes = reinterpret_cast<const unsigned char*>(pBuffer);
-    rc_runtime_deserialize_progress(&m_pRuntime, pBytes, nullptr);
+    if (rc_runtime_deserialize_progress(&m_pRuntime, pBytes, nullptr) == RC_OK)
+    {
+        RA_LOG_INFO("Runtime state loaded from buffer");
+    }
+
     return true;
 }
 
@@ -717,6 +736,8 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
     sSerialized.resize(nSize);
     rc_runtime_serialize_progress(sSerialized.data(), &m_pRuntime, nullptr);
     pFile->Write(sSerialized);
+
+    RA_LOG_INFO("Runtime state written to %s", sSaveStateFilename);
 }
 
 int AchievementRuntime::SaveProgressToBuffer(char* pBuffer, int nBufferSize) const
@@ -727,7 +748,14 @@ int AchievementRuntime::SaveProgressToBuffer(char* pBuffer, int nBufferSize) con
 
     const auto nSize = rc_runtime_progress_size(&m_pRuntime, nullptr);
     if (nSize <= nBufferSize)
+    {
         rc_runtime_serialize_progress(pBuffer, &m_pRuntime, nullptr);
+        RA_LOG_INFO("Runtime state written to buffer (%d/%d bytes)", nSize, nBufferSize);
+    }
+    else
+    {
+        RA_LOG_WARN("Runtime state not written to buffer (%d/%d bytes)", nSize, nBufferSize);
+    }
 
     return nSize;
 }

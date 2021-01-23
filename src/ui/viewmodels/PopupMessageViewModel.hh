@@ -126,6 +126,7 @@ public:
     /// </summary>
     int GetTargetVerticalOffset() const noexcept { return m_nTargetY; }
 
+private:
     class RenderImageLock
     {
     public:
@@ -138,7 +139,6 @@ public:
         std::lock_guard<std::recursive_mutex> m_pLock;
     };
 
-private:
     void CreateRenderImage();
     bool m_bSurfaceStale = false;
     std::recursive_mutex m_pSurfaceMutex;

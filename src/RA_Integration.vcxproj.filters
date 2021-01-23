@@ -60,12 +60,6 @@
     <ClCompile Include="RA_Condition.cpp">
       <Filter>Data</Filter>
     </ClCompile>
-    <ClCompile Include="RA_Dlg_AchEditor.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_Dlg_Achievement.cpp">
-      <Filter>UI</Filter>
-    </ClCompile>
     <ClCompile Include="RA_Dlg_GameLibrary.cpp">
       <Filter>UI</Filter>
     </ClCompile>
@@ -394,12 +388,6 @@
     </ClInclude>
     <ClInclude Include="RA_Condition.h">
       <Filter>Data</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_AchEditor.h">
-      <Filter>UI</Filter>
-    </ClInclude>
-    <ClInclude Include="RA_Dlg_Achievement.h">
-      <Filter>UI</Filter>
     </ClInclude>
     <ClInclude Include="RA_Dlg_GameLibrary.h">
       <Filter>UI</Filter>

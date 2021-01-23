@@ -1,7 +1,6 @@
 #include "SessionTracker.hh"
 
 #include "Exports.hh"
-#include "RA_Dlg_AchEditor.h"
 #include "RA_Log.h"
 #include "RA_md5factory.h"
 #include "RA_StringUtils.h"
@@ -233,10 +232,8 @@ bool SessionTracker::IsInspectingMemory() const
     if (pWindowManager.MemoryInspector.IsVisible())
         return true;
 
-#ifndef RA_UTEST
-    if (g_AchievementEditorDialog.IsActive())
+    if (pWindowManager.AssetEditor.IsVisible())
         return true;
-#endif
 
     return false;
 }

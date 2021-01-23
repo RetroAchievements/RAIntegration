@@ -62,7 +62,7 @@ BOOL ProgressDialog::OnCommand(WORD nCommand)
 {
     switch (nCommand)
     {
-        case IDC_RA_ADDCOND:
+        case IDCLOSE:
         {
             auto* vmProgress = dynamic_cast<ProgressViewModel*>(&m_vmWindow);
             if (vmProgress)

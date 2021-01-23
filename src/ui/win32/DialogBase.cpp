@@ -500,15 +500,30 @@ BOOL DialogBase::OnCommand(WORD nCommand)
     {
         case IDOK:
             SetDialogResult(DialogResult::OK);
+            if (m_vmWindow.GetDialogResult() != DialogResult::None)
+               DoCloseWindow();
             return TRUE;
 
         case IDCLOSE:
         case IDCANCEL:
             SetDialogResult(DialogResult::Cancel);
+            if (m_vmWindow.GetDialogResult() != DialogResult::None)
+                DoCloseWindow();
             return TRUE;
 
         default:
             return FALSE;
+    }
+}
+
+void DialogBase::DoCloseWindow() noexcept
+{
+    if (::IsWindowVisible(m_hWnd))
+    {
+        if (m_bModal)
+            EndDialog(m_hWnd, 0); // DialogBox call in CreateModalWindow() ignores return value
+        else
+            DestroyWindow(m_hWnd);
     }
 }
 
@@ -519,13 +534,7 @@ void DialogBase::SetDialogResult(DialogResult nResult)
     // make sure the dialog is closed on the UI thread
     QueueFunction([this]() noexcept
     {
-        if (::IsWindowVisible(m_hWnd))
-        {
-            if (m_bModal)
-                EndDialog(m_hWnd, 0); // DialogBox call in CreateModalWindow() ignores return value
-            else
-                DestroyWindow(m_hWnd);
-        }
+        DoCloseWindow();
     });
 }
 

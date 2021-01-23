@@ -3,7 +3,6 @@
 #include "Exports.hh"
 
 #include "RA_Defs.h"
-#include "RA_Dlg_Achievement.h"
 #include "RA_Log.h"
 #include "RA_md5factory.h"
 #include "RA_StringUtils.h"
@@ -216,7 +215,6 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     }
 
 #ifndef RA_UTEST
-    g_AchievementsDialog.UpdateAchievementList();
     DoFrame();
 #endif
 
@@ -336,10 +334,6 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
     if (bUnpause)
         ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(false);
 
-#ifndef RA_UTEST
-    g_AchievementsDialog.UpdateActiveAchievements();
-#endif
-
     if (nPopup)
     {
         auto* pPopup = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().GetMessage(nPopup);
@@ -366,20 +360,6 @@ void GameContext::DoFrame()
         if (pItem != nullptr)
             pItem->DoFrame();
     }
-}
-
-void GameContext::EnumerateFilteredAchievements(std::function<bool(const Achievement&)> callback) const
-{
-#ifdef RA_UTEST
-    EnumerateAchievements(callback);
-#else
-    for (auto nID : g_AchievementsDialog.FilteredAchievements())
-    {
-        const auto* pAchievement = FindAchievement(nID);
-        if (pAchievement != nullptr && !callback(*pAchievement))
-            break;
-    }
-#endif
 }
 
 Achievement& GameContext::NewAchievement(Achievement::Category nType)
@@ -666,10 +646,6 @@ void GameContext::ReloadAchievements(Achievement::Category nCategory)
     {
         // TODO
     }
-
-#ifndef RA_UTEST
-    g_AchievementsDialog.UpdateAchievementList();
-#endif
 }
 
 bool GameContext::ReloadAchievement(ra::AchievementID nAchievementId)

@@ -158,7 +158,10 @@ private:
         GSL_SUPPRESS_F6 m_mControlBindings.insert_or_assign(hControl, &pControlBinding);
     }
 
-    void RemoveControlBinding(HWND hControl) noexcept { GSL_SUPPRESS_F6 m_mControlBindings.erase(hControl); }
+    void RemoveControlBinding(HWND hControl) noexcept
+    {
+        GSL_SUPPRESS_F6 m_mControlBindings.erase(hControl);
+    }
 
     void QueueFunction(std::function<void()> fAction);
 
@@ -185,6 +188,7 @@ private:
 
     void InitializeAnchors() noexcept;
     void UpdateAnchoredControls();
+    void DoCloseWindow() noexcept;
 };
 
 } // namespace win32

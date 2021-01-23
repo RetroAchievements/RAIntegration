@@ -152,7 +152,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     SetAnchor(IDC_RA_GAMEHASH, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_ACHIEVEMENTS, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_NUMACH, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_ACH_POINTS, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_POINTS, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_POINT_TOTAL, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_CHKACHPROCESSINGACTIVE, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_LISTACHIEVEMENTS, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);

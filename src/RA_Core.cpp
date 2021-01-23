@@ -8,8 +8,6 @@
 #include "RA_Resource.h"
 #include "RA_md5factory.h"
 
-#include "RA_Dlg_AchEditor.h"   // RA_httpthread.h, services/ImageRepository.h
-#include "RA_Dlg_Achievement.h" // RA_AchievementSet.h
 #include "RA_Dlg_GameLibrary.h"
 
 #include "data\context\ConsoleContext.hh"
@@ -37,8 +35,6 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #include "RAInterface\RA_Emulators.h"
-
-//#define USE_ASSET_LIST
 
 std::string g_sROMDirLocation;
 
@@ -132,18 +128,6 @@ API int CCONV _RA_Shutdown()
         ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>().EndSession();
 
         ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().LoadGame(0U);
-    }
-
-    if (g_AchievementsDialog.GetHWND() != nullptr)
-    {
-        DestroyWindow(g_AchievementsDialog.GetHWND());
-        g_AchievementsDialog.InstallHWND(nullptr);
-    }
-
-    if (g_AchievementEditorDialog.GetHWND() != nullptr)
-    {
-        DestroyWindow(g_AchievementEditorDialog.GetHWND());
-        g_AchievementEditorDialog.InstallHWND(nullptr);
     }
 
     if (g_GameLibrary.GetHWND() != nullptr)
@@ -415,21 +399,11 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
     switch (nID)
     {
         case IDM_RA_FILES_ACHIEVEMENTS:
-#ifdef USE_ASSET_LIST
             ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList.Show();
-#else
-            if (g_AchievementsDialog.GetHWND() == nullptr)
-                g_AchievementsDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTS), g_RAMainWnd, g_AchievementsDialog.s_AchievementsProc));
-            if (g_AchievementsDialog.GetHWND() != nullptr)
-                ShowWindow(g_AchievementsDialog.GetHWND(), SW_SHOW);
-#endif
             break;
 
         case IDM_RA_FILES_ACHIEVEMENTEDITOR:
-            if (g_AchievementEditorDialog.GetHWND() == nullptr)
-                g_AchievementEditorDialog.InstallHWND(CreateDialog(g_hThisDLLInst, MAKEINTRESOURCE(IDD_RA_ACHIEVEMENTEDITOR), g_RAMainWnd, g_AchievementEditorDialog.s_AchievementEditorProc));
-            if (g_AchievementEditorDialog.GetHWND() != nullptr)
-                ShowWindow(g_AchievementEditorDialog.GetHWND(), SW_SHOW);
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetEditor.Show();
             break;
 
         case IDM_RA_FILES_MEMORYFINDER:

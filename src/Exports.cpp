@@ -36,8 +36,6 @@
 #include "RAInterface\RA_Emulators.h"
 
 #ifndef RA_UTEST
-#include "RA_Dlg_Achievement.h"
-#include "RA_Dlg_AchEditor.h"
 #include "RA_Dlg_GameLibrary.h"
 #endif
 
@@ -323,14 +321,6 @@ static void ProcessAchievements()
     if (pRuntime.IsPaused())
         return;
 
-#ifndef RA_UTEST
-    {
-        auto* pEditingAchievement = g_AchievementEditorDialog.ActiveAchievement();
-        if (pEditingAchievement && pEditingAchievement->Active())
-            pEditingAchievement->SetDirtyFlag(Achievement::DirtyFlags::Conditions);
-    }
-#endif
-
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     
     TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeProcess);
@@ -372,13 +362,6 @@ static void ProcessAchievements()
                 {
                     if (pGameContext.HasRichPresence() && !pGameContext.IsRichPresenceFromFile())
                         pAchievement->SetUnlockRichPresence(pGameContext.GetRichPresenceDisplayString());
-
-#ifndef RA_UTEST
-                    g_AchievementsDialog.ReloadLBXData(pAchievement->ID());
-
-                    if (g_AchievementEditorDialog.ActiveAchievement() == pAchievement)
-                        g_AchievementEditorDialog.LoadAchievement(pAchievement, TRUE);
-#endif
                 }
 
                 if (vmAchievement && vmAchievement->IsPauseOnTrigger())
@@ -565,9 +548,6 @@ static void OnStateRestored()
 
 #ifndef RA_UTEST
     UpdateUIForFrameChange();
-
-    if (g_AchievementEditorDialog.ActiveAchievement() != nullptr)
-        g_AchievementEditorDialog.ActiveAchievement()->SetDirtyFlag(Achievement::DirtyFlags::Conditions);
 #endif
 }
 

@@ -110,8 +110,6 @@
     <ClCompile Include="RA_Condition.cpp" />
     <ClCompile Include="RA_Core.cpp" />
     <ClCompile Include="RA_Defs.cpp" />
-    <ClCompile Include="RA_Dlg_AchEditor.cpp" />
-    <ClCompile Include="RA_Dlg_Achievement.cpp" />
     <ClCompile Include="RA_Dlg_GameLibrary.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
     <ClCompile Include="RA_Json.cpp" />
@@ -255,8 +253,6 @@
     <ClInclude Include="RA_Condition.h" />
     <ClInclude Include="RA_Core.h" />
     <ClInclude Include="RA_Defs.h" />
-    <ClInclude Include="RA_Dlg_AchEditor.h" />
-    <ClInclude Include="RA_Dlg_Achievement.h" />
     <ClInclude Include="RA_Dlg_GameLibrary.h" />
     <ClInclude Include="ra_fwd.h" />
     <ClInclude Include="RA_ImageFactory.h" />

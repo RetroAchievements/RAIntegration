@@ -834,7 +834,7 @@ void MemoryViewerViewModel::BuildFontSurface()
             case TextColor::Frozen:       nColor = pEditorTheme.ColorFrozen(); break;
         }
 
-        for (size_t j = 0; j < g_sHexChars.size(); ++j)
+        for (int j = 0; j < gsl::narrow_cast<int>(g_sHexChars.size()); ++j)
         {
             sHexChar.at(0) = g_sHexChars.at(j);
             m_pFontSurface->WriteText(j * m_szChar.Width, i * m_szChar.Height - 1, m_nFont, nColor, sHexChar);

@@ -303,6 +303,7 @@ public:
         Assert::AreEqual(std::wstring(L"2 of 4 won (4/10)"), achievementsPage.GetSummary());
 
         auto const* pItem = achievementsPage.GetItem(0);
+        Expects(pItem != nullptr);
         Assert::IsTrue(pItem->IsHeader());
         Assert::AreEqual(std::wstring(L"Unsupported"), pItem->GetLabel());
         Assert::IsFalse(pItem->IsDisabled());
@@ -354,6 +355,7 @@ public:
         Assert::AreEqual(std::wstring(L"0 of 2 won (0/6)"), achievementsPage.GetSummary());
 
         auto const* pItem = achievementsPage.GetItem(0);
+        Expects(pItem != nullptr);
         Assert::IsTrue(pItem->IsHeader());
         Assert::AreEqual(std::wstring(L"Unsupported"), pItem->GetLabel());
         Assert::IsFalse(pItem->IsDisabled());

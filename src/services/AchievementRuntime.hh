@@ -42,12 +42,12 @@ public:
     /// <summary>
     /// Removes an achievement from the processing queue.
     /// </summary>
-    void DeactivateAchievement(ra::AchievementID nId) noexcept;
+    void DeactivateAchievement(ra::AchievementID nId);
 
     /// <summary>
     /// Updates any references using the provided ID to a new value
     /// </summary>
-    void UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId) noexcept;
+    void UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId);
 
     /// <summary>
     /// Gets the raw trigger for the achievement (if active)
@@ -74,22 +74,22 @@ public:
     /// <summary>
     /// Gets the raw trigger for the achievement (if ever active)
     /// </summary>
-    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId, const std::string& sTrigger) noexcept;
+    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId, const std::string& sTrigger);
 
     /// <summary>
     /// Gets the raw trigger for the achievement (if active)
     /// </summary>
-    rc_trigger_t* DetachAchievementTrigger(ra::AchievementID nId) noexcept;
+    rc_trigger_t* DetachAchievementTrigger(ra::AchievementID nId);
 
     /// <summary>
     /// Removes an achievement from the processing queue.
     /// </summary>
-    void ReleaseAchievementTrigger(ra::AchievementID nId, _In_ rc_trigger_t* pTrigger) noexcept;
+    void ReleaseAchievementTrigger(ra::AchievementID nId, _In_ rc_trigger_t* pTrigger);
 
     /// <summary>
     /// Adds a leaderboard to the processing queue.
     /// </summary>
-    int ActivateLeaderboard(unsigned int nId, const std::string& sDefinition) noexcept;
+    int ActivateLeaderboard(unsigned int nId, const std::string& sDefinition);
 
     /// <summary>
     /// Removes a leaderboard from the processing queue.
@@ -104,7 +104,7 @@ public:
     /// Specifies the rich presence to process each frame.
     /// </summary>
     /// <remarks>Only updates the memrefs each frame (for deltas), the script is not processed here.</remarks>
-    void ActivateRichPresence(const std::string& sScript) noexcept;
+    void ActivateRichPresence(const std::string& sScript);
 
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
@@ -146,7 +146,7 @@ public:
     /// <summary>
     /// Processes all active achievements for the current frame.
     /// </summary>
-    virtual void Process(_Inout_ std::vector<Change>& changes) noexcept;
+    virtual void Process(_Inout_ std::vector<Change>& changes);
 
     /// <summary>
     /// Loads HitCount data for active achievements from a save state file.
@@ -199,7 +199,7 @@ public:
             rc_runtime_reset(&m_pRuntime);
     }
 
-    void InvalidateAddress(ra::ByteAddress nAddress);
+    void InvalidateAddress(ra::ByteAddress nAddress) noexcept;
 
     size_t DetectUnsupportedAchievements();
 

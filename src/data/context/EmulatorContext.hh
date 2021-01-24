@@ -203,7 +203,7 @@ public:
     /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
-    uint8_t ReadMemoryByte(ra::ByteAddress nAddress) const noexcept;
+    uint8_t ReadMemoryByte(ra::ByteAddress nAddress) const;
 
     /// <summary>
     /// Reads memory from the emulator.

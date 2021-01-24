@@ -54,7 +54,7 @@ int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::st
     return rc_runtime_activate_achievement(&m_pRuntime, nId, sTrigger.c_str(), nullptr, 0);
 }
 
-rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId, const std::string& sTrigger) noexcept
+rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId, const std::string& sTrigger)
 {
     if (!m_bInitialized)
         return nullptr;
@@ -83,7 +83,7 @@ rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId, c
     return nullptr;
 }
 
-void AchievementRuntime::DeactivateAchievement(ra::AchievementID nId) noexcept
+void AchievementRuntime::DeactivateAchievement(ra::AchievementID nId)
 {
     // NOTE: rc_runtime_deactivate_achievement will either reset the trigger or free it
     // we want to keep it so the user can examine the hit counts after an incorrect trigger
@@ -91,7 +91,7 @@ void AchievementRuntime::DeactivateAchievement(ra::AchievementID nId) noexcept
     DetachAchievementTrigger(nId);
 }
 
-rc_trigger_t* AchievementRuntime::DetachAchievementTrigger(ra::AchievementID nId) noexcept
+rc_trigger_t* AchievementRuntime::DetachAchievementTrigger(ra::AchievementID nId)
 {
     if (!m_bInitialized)
         return nullptr;
@@ -113,7 +113,7 @@ rc_trigger_t* AchievementRuntime::DetachAchievementTrigger(ra::AchievementID nId
     return nullptr;
 }
 
-void AchievementRuntime::ReleaseAchievementTrigger(ra::AchievementID nId, _In_ rc_trigger_t* pTrigger) noexcept
+void AchievementRuntime::ReleaseAchievementTrigger(ra::AchievementID nId, _In_ rc_trigger_t* pTrigger)
 {
     if (!m_bInitialized)
         return;
@@ -142,7 +142,7 @@ void AchievementRuntime::ReleaseAchievementTrigger(ra::AchievementID nId, _In_ r
 #pragma warning(pop)
 }
 
-void AchievementRuntime::UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId) noexcept
+void AchievementRuntime::UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId)
 {
     if (!m_bInitialized)
         return;
@@ -155,7 +155,7 @@ void AchievementRuntime::UpdateAchievementId(ra::AchievementID nOldId, ra::Achie
     }
 }
 
-int AchievementRuntime::ActivateLeaderboard(unsigned int nId, const std::string& sDefinition) noexcept
+int AchievementRuntime::ActivateLeaderboard(unsigned int nId, const std::string& sDefinition)
 {
     std::lock_guard<std::mutex> pLock(m_pMutex);
     EnsureInitialized();
@@ -163,7 +163,7 @@ int AchievementRuntime::ActivateLeaderboard(unsigned int nId, const std::string&
     return rc_runtime_activate_lboard(&m_pRuntime, nId, sDefinition.c_str(), nullptr, 0);
 }
 
-void AchievementRuntime::ActivateRichPresence(const std::string& sScript) noexcept
+void AchievementRuntime::ActivateRichPresence(const std::string& sScript)
 {
     std::lock_guard<std::mutex> pLock(m_pMutex);
     EnsureInitialized();
@@ -252,7 +252,7 @@ static void map_event_to_change(const rc_runtime_event_t* pRuntimeEvent)
     g_pChanges->emplace_back(AchievementRuntime::Change{ nChangeType, pRuntimeEvent->id, pRuntimeEvent->value });
 }
 
-_Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& changes) noexcept
+_Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& changes)
 {
     if (!m_bInitialized || m_bPaused)
         return;
@@ -785,7 +785,7 @@ int AchievementRuntime::SaveProgressToBuffer(char* pBuffer, int nBufferSize) con
     return nSize;
 }
 
-void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress)
+void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress) noexcept
 {
     // this should only be called from DetectUnsupportedAchievements or indirectly via Process,
     // both of which aquire the lock, so we shouldn't try to acquire it here.

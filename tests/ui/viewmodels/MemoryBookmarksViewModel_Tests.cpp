@@ -5,6 +5,7 @@
 
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
@@ -54,6 +55,7 @@ private:
     public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockFileSystem mockFileSystem;
         ra::services::mocks::MockFrameEventQueue mockFrameEventQueue;

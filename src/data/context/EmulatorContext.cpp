@@ -526,6 +526,25 @@ void EmulatorContext::OnTotalMemorySizeChanged()
     }
 }
 
+bool EmulatorContext::IsValidAddress(ra::ByteAddress nAddress) const noexcept
+{
+    const ra::ByteAddress nOriginalAddress = nAddress;
+    for (const auto& pBlock : m_vMemoryBlocks)
+    {
+        if (nAddress < pBlock.size)
+        {
+            if (pBlock.read)
+                return true;
+
+            break;
+        }
+
+        nAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
+    }
+
+    return false;
+}
+
 uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const noexcept
 {
     const ra::ByteAddress nOriginalAddress = nAddress;

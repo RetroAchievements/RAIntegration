@@ -186,6 +186,11 @@ public:
     size_t TotalMemorySize() const noexcept { return m_nTotalMemorySize; }
 
     /// <summary>
+    /// Determines if the specified address is valid.
+    /// </summary>
+    bool IsValidAddress(ra::ByteAddress nAddress) const noexcept;
+
+    /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
     uint32_t ReadMemory(ra::ByteAddress nAddress, MemSize nSize) const;

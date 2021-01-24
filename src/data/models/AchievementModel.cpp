@@ -122,7 +122,7 @@ void AchievementModel::DoFrame()
     const auto* pTrigger = pRuntime.GetAchievementTrigger(GetID());
     if (pTrigger == nullptr)
     {
-        if (GetState() != AssetState::Triggered)
+        if (IsActive())
             SetState(AssetState::Inactive);
     }
     else

@@ -84,6 +84,13 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, cons
             vmItem.SetProgressValue(0);
         }
     }
+    else if (vmAchievement.GetState() == ra::data::models::AssetState::Disabled)
+    {
+        vmItem.Image.ChangeReference(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement.GetBadge()) + "_lock");
+        vmItem.SetDisabled(true);
+        vmItem.SetProgressValue(0U);
+        vmItem.SetProgressMaximum(0U);
+    }
     else
     {
         vmItem.Image.ChangeReference(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement.GetBadge()));
@@ -126,6 +133,7 @@ void OverlayAchievementsPageViewModel::Refresh()
     std::vector<const ra::data::models::AchievementModel*> vLocalAchievements;
     std::vector<const ra::data::models::AchievementModel*> vLockedCoreAchievements;
     std::vector<const ra::data::models::AchievementModel*> vUnlockedCoreAchievements;
+    std::vector<const ra::data::models::AchievementModel*> vUnsupportedCoreAchievements;
 
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
     const auto tNow = ra::services::ServiceLocator::Get<ra::services::IClock>().Now();
@@ -188,6 +196,8 @@ void OverlayAchievementsPageViewModel::Refresh()
             default:
                 if (vmAchievement->IsActive())
                     vLockedCoreAchievements.push_back(vmAchievement);
+                else if (vmAchievement->GetState() == ra::data::models::AssetState::Disabled)
+                    vUnsupportedCoreAchievements.push_back(vmAchievement);
                 else
                     vUnlockedCoreAchievements.push_back(vmAchievement);
                 break;
@@ -298,6 +308,22 @@ void OverlayAchievementsPageViewModel::Refresh()
 
         nNumberOfAchievements += vLockedCoreAchievements.size();
         nNumberOfCoreAchievements += vLockedCoreAchievements.size();
+    }
+
+    if (!vUnsupportedCoreAchievements.empty())
+    {
+        auto& pvmHeader = GetNextItem(&nIndex);
+        SetHeader(pvmHeader, L"Unsupported");
+
+        for (const auto* vmAchievement : vUnsupportedCoreAchievements)
+        {
+            auto& pvmAchievement = GetNextItem(&nIndex);
+            SetAchievement(pvmAchievement, *vmAchievement);
+            nMaxPts += vmAchievement->GetPoints();
+        }
+
+        nNumberOfAchievements += vUnsupportedCoreAchievements.size();
+        nNumberOfCoreAchievements += vUnsupportedCoreAchievements.size();
     }
 
     if (vUnlockedCoreAchievements.size() > 0)

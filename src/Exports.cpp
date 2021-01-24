@@ -373,6 +373,18 @@ static void ProcessAchievements()
                 break;
             }
 
+            case ra::services::AchievementRuntime::ChangeType::AchievementDisabled:
+            {
+                auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
+                if (vmAchievement)
+                {
+                    RA_LOG_WARN("Achievement #%u disabled: address %s not supported by current core", pChange.nId, ra::ByteAddressToString(pChange.nValue));
+                    vmAchievement->SetState(ra::data::models::AssetState::Disabled);
+                }
+
+                break;
+            }
+
             case ra::services::AchievementRuntime::ChangeType::LeaderboardStarted:
             {
                 const auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);

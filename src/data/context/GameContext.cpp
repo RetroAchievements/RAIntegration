@@ -326,7 +326,7 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
         auto* pAchievement = Assets().FindAchievement(nAchievementId);
         if (pAchievement && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
         {
-            if (!pAchievement->IsActive())
+            if (!pAchievement->IsActive() && pAchievement->GetState() != ra::data::models::AssetState::Disabled)
                 pAchievement->SetState(ra::data::models::AssetState::Waiting);
 
 #ifndef RA_UTEST

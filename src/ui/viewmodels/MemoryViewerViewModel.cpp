@@ -86,7 +86,7 @@ private:
 
 MemoryViewerViewModel::MemoryViewerViewModel()
 {
-    m_pBuffer.reset(new uint8_t[MaxLines * 16 * 2]);
+    m_pBuffer.reset(new uint8_t[MaxLines * 16 * 3]);
 
     m_pMemory = m_pBuffer.get();
     memset(m_pMemory, 0, MaxLines * 16);
@@ -95,6 +95,9 @@ MemoryViewerViewModel::MemoryViewerViewModel()
     memset(m_pColor, STALE_COLOR, MaxLines * 16);
 
     m_pColor[0] = HIGHLIGHTED_COLOR;
+
+    m_pInvalid = m_pMemory + MaxLines * 16 * 2;
+    memset(m_pInvalid, 0, MaxLines * 16);
 }
 
 void MemoryViewerViewModel::InitializeNotifyTargets()
@@ -166,6 +169,13 @@ void MemoryViewerViewModel::UpdateColors()
 
     for (int i = 0; i < nVisibleLines * 16; ++i)
         m_pColor[i] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nFirstAddress + i, pBookmarksViewModel, pGameContext)));
+
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    if (pEmulatorContext.HasInvalidRegions())
+    {
+        for (int i = 0; i < nVisibleLines * 16; ++i)
+            m_pInvalid[i] = pEmulatorContext.IsValidAddress(nFirstAddress + i) ? 0 : 1;
+    }
 
     UpdateHighlight(GetAddress(), NibblesPerWord() / 2, 0);
 
@@ -704,6 +714,12 @@ bool MemoryViewerViewModel::OnChar(char c)
         nSelectedNibble -= 2;
     }
 
+    if (m_pInvalid[nIndex])
+    {
+        AdvanceCursor();
+        return true;
+    }
+
     auto nByte = m_pMemory[nIndex];
     if (nSelectedNibble != 0)
     {
@@ -783,8 +799,8 @@ void MemoryViewerViewModel::DoFrame()
 
 // ====== Render ==============================================================
 
-static constexpr std::array<wchar_t, 16> g_sHexChars = {
-    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+static constexpr std::array<wchar_t, 17> g_sHexChars = {
+    '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f', '-'
 };
 
 void MemoryViewerViewModel::BuildFontSurface()
@@ -798,7 +814,7 @@ void MemoryViewerViewModel::BuildFontSurface()
     m_szChar = pSurface->MeasureText(m_nFont, L"0");
     m_szChar.Height--; // don't need space for dangly bits
 
-    m_pFontSurface = pSurfaceFactory.CreateSurface(m_szChar.Width * 16, m_szChar.Height * ra::etoi(TextColor::NumColors));
+    m_pFontSurface = pSurfaceFactory.CreateSurface(m_szChar.Width * gsl::narrow_cast<int>(g_sHexChars.size()), m_szChar.Height * ra::etoi(TextColor::NumColors));
     m_pFontSurface->FillRectangle(0, 0, m_pFontSurface->GetWidth(), m_pFontSurface->GetHeight(), pEditorTheme.ColorBackground());
 
     m_pFontSurface->FillRectangle(0, m_szChar.Height * ra::etoi(TextColor::Cursor),
@@ -818,7 +834,7 @@ void MemoryViewerViewModel::BuildFontSurface()
             case TextColor::Frozen:       nColor = pEditorTheme.ColorFrozen(); break;
         }
 
-        for (int j = 0; j < 16; ++j)
+        for (int j = 0; j < g_sHexChars.size(); ++j)
         {
             sHexChar.at(0) = g_sHexChars.at(j);
             m_pFontSurface->WriteText(j * m_szChar.Width, i * m_szChar.Height - 1, m_nFont, nColor, sHexChar);
@@ -918,9 +934,18 @@ void MemoryViewerViewModel::RenderMemory()
             }
         }
 
-        const auto nValue = m_pMemory[i];
-        WriteChar(nX, nY, nColorUpper, nValue >> 4);
-        WriteChar(nX + m_szChar.Width, nY, nColorLower, nValue & 0x0F);
+        if (m_pInvalid[i])
+        {
+            constexpr int INVALID_CHAR = 16;
+            WriteChar(nX, nY, nColorUpper, INVALID_CHAR);
+            WriteChar(nX + m_szChar.Width, nY, nColorLower, INVALID_CHAR);
+        }
+        else
+        {
+            const auto nValue = m_pMemory[i];
+            WriteChar(nX, nY, nColorUpper, nValue >> 4);
+            WriteChar(nX + m_szChar.Width, nY, nColorLower, nValue & 0x0F);
+        }
     }
 }
 

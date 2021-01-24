@@ -184,6 +184,7 @@ protected:
 
     uint8_t* m_pMemory;
     uint8_t* m_pColor;
+    uint8_t* m_pInvalid;
 
     ra::ui::Size m_szChar;
     int m_nSelectedNibble = 0;

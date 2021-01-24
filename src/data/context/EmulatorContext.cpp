@@ -526,6 +526,17 @@ void EmulatorContext::OnTotalMemorySizeChanged()
     }
 }
 
+bool EmulatorContext::HasInvalidRegions() const noexcept
+{
+    for (const auto& pBlock : m_vMemoryBlocks)
+    {
+        if (!pBlock.read)
+            return true;
+    }
+
+    return false;
+}
+
 bool EmulatorContext::IsValidAddress(ra::ByteAddress nAddress) const noexcept
 {
     const ra::ByteAddress nOriginalAddress = nAddress;

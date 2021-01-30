@@ -51,6 +51,14 @@ private:
 
             mockGameContext.SetCodeNote(0x0040, L"[10 bytes] Inventory");
         }
+
+        void PopulateMemory()
+        {
+            std::array<uint8_t, 100> memory = {};
+            for (uint8_t i = 0; i < memory.size(); ++i)
+                memory.at(i) = i;
+            mockEmulatorContext.MockMemory(memory);
+        }
     };
 
     void AssertRow(CodeNotesViewModelHarness& notes, gsl::index nRow, ra::ByteAddress nAddress,
@@ -408,6 +416,7 @@ public:
     {
         CodeNotesViewModelHarness notes;
         notes.PopulateNotes();
+        notes.PopulateMemory();
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
         notes.SetIsVisible(true);

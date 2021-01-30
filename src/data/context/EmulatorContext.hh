@@ -186,6 +186,16 @@ public:
     size_t TotalMemorySize() const noexcept { return m_nTotalMemorySize; }
 
     /// <summary>
+    /// Determines if any invalid regions were registered.
+    /// </summary>
+    bool HasInvalidRegions() const noexcept;
+
+    /// <summary>
+    /// Determines if the specified address is valid.
+    /// </summary>
+    bool IsValidAddress(ra::ByteAddress nAddress) const noexcept;
+
+    /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
     uint32_t ReadMemory(ra::ByteAddress nAddress, MemSize nSize) const;
@@ -193,7 +203,7 @@ public:
     /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
-    uint8_t ReadMemoryByte(ra::ByteAddress nAddress) const noexcept;
+    uint8_t ReadMemoryByte(ra::ByteAddress nAddress) const;
 
     /// <summary>
     /// Reads memory from the emulator.

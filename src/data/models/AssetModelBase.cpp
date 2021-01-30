@@ -540,6 +540,7 @@ bool AssetModelBase::IsActive(AssetState nState) noexcept
     {
         case AssetState::Inactive:
         case AssetState::Triggered:
+        case AssetState::Disabled:
             return false;
         default:
             return true;

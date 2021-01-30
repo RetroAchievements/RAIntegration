@@ -305,12 +305,16 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
         vLockedAchievements.insert(pAchievement->ID());
 
     // deactivate anything the player has already unlocked
+    size_t nUnlockedCoreAchievements = 0U;
     for (const auto nUnlockedAchievement : vUnlockedAchievements)
     {
         vLockedAchievements.erase(nUnlockedAchievement);
-        auto* pAchievement = FindAchievement(nUnlockedAchievement);
+        auto* pAchievement = Assets().FindAchievement(nUnlockedAchievement);
         if (pAchievement != nullptr)
-            pAchievement->SetActive(false);
+        {
+            pAchievement->SetState(ra::data::models::AssetState::Inactive);
+            ++nUnlockedCoreAchievements;
+        }
     }
 
 #ifndef RA_UTEST
@@ -319,14 +323,15 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
     // activate any core achievements the player hasn't earned and pre-fetch the locked image
     for (auto nAchievementId : vLockedAchievements)
     {
-        auto* pAchievement = FindAchievement(nAchievementId);
-        if (pAchievement && pAchievement->GetCategory() == Achievement::Category::Core)
+        auto* pAchievement = Assets().FindAchievement(nAchievementId);
+        if (pAchievement && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
         {
-            pAchievement->SetActive(true);
+            if (!pAchievement->IsActive() && pAchievement->GetState() != ra::data::models::AssetState::Disabled)
+                pAchievement->SetState(ra::data::models::AssetState::Waiting);
 
 #ifndef RA_UTEST
-            if (!pAchievement->BadgeImageURI().empty())
-                pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI() + "_lock");
+            if (!pAchievement->GetBadge().empty())
+                pImageRepository.FetchImage(ra::ui::ImageType::Badge, ra::Narrow(pAchievement->GetBadge()) + "_lock");
 #endif
         }
     }
@@ -339,11 +344,11 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
         auto* pPopup = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().GetMessage(nPopup);
         if (pPopup != nullptr)
         {
-            size_t nUnlockedCoreAchievements = 0U;
-            for (auto& pAchievement : m_vAchievements)
+            const auto nDisabledAchievements = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().DetectUnsupportedAchievements();
+            if (nDisabledAchievements != 0)
             {
-                if (pAchievement->GetCategory() == Achievement::Category::Core && !pAchievement->Active())
-                    ++nUnlockedCoreAchievements;
+                const auto sDescription = ra::StringPrintf(L"%s (%s unsupported)", pPopup->GetDescription(), nDisabledAchievements);
+                pPopup->SetDescription(sDescription);
             }
 
             pPopup->SetDetail(ra::StringPrintf(L"You have earned %u achievements", nUnlockedCoreAchievements));

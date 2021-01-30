@@ -122,7 +122,7 @@ void AchievementModel::DoFrame()
     const auto* pTrigger = pRuntime.GetAchievementTrigger(GetID());
     if (pTrigger == nullptr)
     {
-        if (GetState() != AssetState::Triggered)
+        if (IsActive())
             SetState(AssetState::Inactive);
     }
     else
@@ -144,10 +144,12 @@ void AchievementModel::DoFrame()
             case RC_TRIGGER_STATE_WAITING:
                 SetState(AssetState::Waiting);
                 break;
+            case RC_TRIGGER_STATE_DISABLED:
+                SetState(AssetState::Disabled);
+                break;
         }
     }
 }
-
 
 void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewState)
 {

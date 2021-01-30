@@ -4,6 +4,7 @@
 
 #include "tests\ui\UIAsserts.hh"
 
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -32,6 +33,7 @@ private:
         ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
+        ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockFileSystem mockFileSystem;
@@ -921,10 +923,28 @@ public:
     static void WriteMemory2(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(gsl::narrow_cast<size_t>(nAddress) + 20) = nValue; }
     static void WriteMemory3(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(gsl::narrow_cast<size_t>(nAddress) + 30) = nValue; }
 
-    TEST_METHOD(TestReadMemoryByte)
+    static void InitializeMemory()
     {
         for (size_t i = 0; i < memory.size(); ++i)
             memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+    }
+
+    TEST_METHOD(TestIsValidAddress)
+    {
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        Assert::AreEqual({ 30U }, emulator.TotalMemorySize());
+
+        Assert::IsTrue(emulator.IsValidAddress(12U));
+        Assert::IsTrue(emulator.IsValidAddress(25U));
+        Assert::IsTrue(emulator.IsValidAddress(29U));
+        Assert::IsFalse(emulator.IsValidAddress(30U));
+    }
+
+    TEST_METHOD(TestReadMemoryByte)
+    {
+        InitializeMemory();
 
         EmulatorContextHarness emulator;
         emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
@@ -940,8 +960,7 @@ public:
 
     TEST_METHOD(TestAddMemoryBlocksOutOfOrder)
     {
-        for (size_t i = 0; i < memory.size(); ++i)
-            memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+        InitializeMemory();
 
         EmulatorContextHarness emulator;
         emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
@@ -957,8 +976,7 @@ public:
 
     TEST_METHOD(TestAddMemoryBlockDoesNotOverwrite)
     {
-        for (size_t i = 0; i < memory.size(); ++i)
-            memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+        InitializeMemory();
 
         EmulatorContextHarness emulator;
         emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
@@ -975,8 +993,7 @@ public:
 
     TEST_METHOD(TestClearMemoryBlocks)
     {
-        for (size_t i = 0; i < memory.size(); ++i)
-            memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+        InitializeMemory();
 
         EmulatorContextHarness emulator;
         emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
@@ -988,6 +1005,33 @@ public:
         Assert::AreEqual(32, static_cast<int>(emulator.ReadMemoryByte(2U)));
         Assert::AreEqual(41, static_cast<int>(emulator.ReadMemoryByte(11U)));
         Assert::AreEqual(0, static_cast<int>(emulator.ReadMemoryByte(55U)));
+    }
+
+    TEST_METHOD(TestInvalidMemoryBlock)
+    {
+        InitializeMemory();
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, nullptr, nullptr);
+        emulator.AddMemoryBlock(2, 10, &ReadMemory3, &WriteMemory3);
+        Assert::AreEqual({ 40U }, emulator.TotalMemorySize());
+
+        Assert::IsTrue(emulator.IsValidAddress(12U));
+        Assert::IsTrue(emulator.IsValidAddress(19U));
+        Assert::IsFalse(emulator.IsValidAddress(20U));
+        Assert::IsFalse(emulator.IsValidAddress(29U));
+        Assert::IsTrue(emulator.IsValidAddress(30U));
+        Assert::IsTrue(emulator.IsValidAddress(39U));
+        Assert::IsFalse(emulator.IsValidAddress(40U));
+
+        Assert::AreEqual(12, static_cast<int>(emulator.ReadMemoryByte(12U)));
+        Assert::AreEqual(19, static_cast<int>(emulator.ReadMemoryByte(19U)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemoryByte(20U)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemoryByte(29U)));
+        Assert::AreEqual(30, static_cast<int>(emulator.ReadMemoryByte(30U)));
+        Assert::AreEqual(39, static_cast<int>(emulator.ReadMemoryByte(39U)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemoryByte(40U)));
     }
 
     TEST_METHOD(TestReadMemory)
@@ -1032,8 +1076,7 @@ public:
 
     TEST_METHOD(TestReadMemoryBuffer)
     {
-        for (size_t i = 0; i < memory.size(); ++i)
-            memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+        InitializeMemory();
 
         EmulatorContextHarness emulator;
         emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
@@ -1076,8 +1119,7 @@ public:
 
     TEST_METHOD(TestWriteMemoryByte)
     {
-        for (size_t i = 0; i < memory.size(); ++i)
-            memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+        InitializeMemory();
 
         EmulatorContextHarness emulator;
         emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);

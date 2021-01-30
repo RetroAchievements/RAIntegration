@@ -223,6 +223,156 @@ public:
         Assert::IsNull(achievementsPage.GetItem(5));
     }
 
+    TEST_METHOD(TestRefreshActiveAndDisabledAchievements)
+    {
+        OverlayAchievementsPageViewModelHarness achievementsPage;
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch1.SetID(1);
+        pAch1.SetPoints(1U);
+        pAch1.SetState(AssetState::Waiting);
+        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch2.SetID(2);
+        pAch2.SetPoints(2U);
+        pAch2.SetState(AssetState::Disabled);
+        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch3.SetID(3);
+        pAch3.SetPoints(3U);
+        pAch3.SetState(AssetState::Active);
+        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch4.SetID(4);
+        pAch4.SetPoints(4U);
+        pAch4.SetState(AssetState::Disabled);
+        achievementsPage.mockClock.AdvanceTime(std::chrono::hours(1));
+        achievementsPage.Refresh();
+
+        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"0 of 4 won (0/10)"), achievementsPage.GetSummary());
+
+        auto const* pItem = achievementsPage.GetItem(0);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(1, pItem->GetId());
+        Assert::IsTrue(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(1);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(3, pItem->GetId());
+        Assert::IsTrue(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(2);
+        Expects(pItem != nullptr);
+        Assert::IsTrue(pItem->IsHeader());
+        Assert::AreEqual(std::wstring(L"Unsupported"), pItem->GetLabel());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(3);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(2, pItem->GetId());
+        Assert::IsTrue(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(4);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(4, pItem->GetId());
+        Assert::IsTrue(pItem->IsDisabled());
+
+        Assert::IsNull(achievementsPage.GetItem(5));
+    }
+
+    TEST_METHOD(TestRefreshInactiveAndDisabledAchievements)
+    {
+        OverlayAchievementsPageViewModelHarness achievementsPage;
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch1.SetID(1);
+        pAch1.SetPoints(1U);
+        pAch1.SetState(AssetState::Inactive);
+        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch2.SetID(2);
+        pAch2.SetPoints(2U);
+        pAch2.SetState(AssetState::Disabled);
+        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch3.SetID(3);
+        pAch3.SetPoints(3U);
+        pAch3.SetState(AssetState::Triggered);
+        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch4.SetID(4);
+        pAch4.SetPoints(4U);
+        pAch4.SetState(AssetState::Disabled);
+        achievementsPage.mockClock.AdvanceTime(std::chrono::hours(1));
+        achievementsPage.Refresh();
+
+        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"2 of 4 won (4/10)"), achievementsPage.GetSummary());
+
+        auto const* pItem = achievementsPage.GetItem(0);
+        Expects(pItem != nullptr);
+        Assert::IsTrue(pItem->IsHeader());
+        Assert::AreEqual(std::wstring(L"Unsupported"), pItem->GetLabel());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(1);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(2, pItem->GetId());
+        Assert::IsTrue(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(2);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(4, pItem->GetId());
+        Assert::IsTrue(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(3);
+        Expects(pItem != nullptr);
+        Assert::IsTrue(pItem->IsHeader());
+        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(4);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(1, pItem->GetId());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(5);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(3, pItem->GetId());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        Assert::IsNull(achievementsPage.GetItem(6));
+    }
+
+    TEST_METHOD(TestRefreshDisabledAchievements)
+    {
+        OverlayAchievementsPageViewModelHarness achievementsPage;
+        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch2.SetID(2);
+        pAch2.SetPoints(2U);
+        pAch2.SetState(AssetState::Disabled);
+        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch4.SetID(4);
+        pAch4.SetPoints(4U);
+        pAch4.SetState(AssetState::Disabled);
+        achievementsPage.mockClock.AdvanceTime(std::chrono::hours(1));
+        achievementsPage.Refresh();
+
+        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"0 of 2 won (0/6)"), achievementsPage.GetSummary());
+
+        auto const* pItem = achievementsPage.GetItem(0);
+        Expects(pItem != nullptr);
+        Assert::IsTrue(pItem->IsHeader());
+        Assert::AreEqual(std::wstring(L"Unsupported"), pItem->GetLabel());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(1);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(2, pItem->GetId());
+        Assert::IsTrue(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(2);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(4, pItem->GetId());
+        Assert::IsTrue(pItem->IsDisabled());
+
+        Assert::IsNull(achievementsPage.GetItem(3));
+    }
+
     TEST_METHOD(TestRefreshCategoryFilter)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;

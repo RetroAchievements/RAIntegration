@@ -26,6 +26,18 @@ std::wstring ToString<ra::services::AchievementRuntime::ChangeType>(
             return L"AchievementTriggered";
         case ra::services::AchievementRuntime::ChangeType::AchievementReset:
             return L"AchievementReset";
+        case ra::services::AchievementRuntime::ChangeType::AchievementDisabled:
+            return L"AchievementDisabled";
+        case ra::services::AchievementRuntime::ChangeType::LeaderboardStarted:
+            return L"LeaderboardStarted";
+        case ra::services::AchievementRuntime::ChangeType::LeaderboardCanceled:
+            return L"LeaderboardCanceled";
+        case ra::services::AchievementRuntime::ChangeType::LeaderboardUpdated:
+            return L"LeaderboardUpdated";
+        case ra::services::AchievementRuntime::ChangeType::LeaderboardTriggered:
+            return L"LeaderboardTriggered";
+        case ra::services::AchievementRuntime::ChangeType::LeaderboardDisabled:
+            return L"LeaderboardDisabled";
         default:
             return std::to_wstring(static_cast<int>(nChangeType));
     }
@@ -118,6 +130,19 @@ private:
         return rc_parse_richpresence(sBuffer, sScript, nullptr, 0);
     }
 
+    static void AssertChange(const std::vector<AchievementRuntime::Change>& vChanges, AchievementRuntime::ChangeType nType, unsigned nId)
+    {
+        for (const auto& pChange : vChanges)
+        {
+            if (pChange.nId == nId && pChange.nType == nType)
+                return;
+        }
+
+        const auto pString = ra::StringPrintf(L"Could not find change notification for %s:%d",
+            Microsoft::VisualStudio::CppUnitTestFramework::ToString<AchievementRuntime::ChangeType>(nType), nId);
+        Assert::Fail(pString.c_str());
+    }
+
 public:
     TEST_METHOD(TestActivateAchievement)
     {
@@ -141,8 +166,7 @@ public:
         memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 6U);
 
         // triggered achievement should not continue to trigger
         vChanges.clear();
@@ -198,8 +222,7 @@ public:
         runtime.SetPaused(false);
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 6U);
     }
 
     TEST_METHOD(TestMonitorAchievementReset)
@@ -221,8 +244,7 @@ public:
         memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(4U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementReset, vChanges.front().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementReset, 4U);
         vChanges.clear();
 
         // watch for notification, already reset, no notification
@@ -238,8 +260,7 @@ public:
         memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(4U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementReset, vChanges.front().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementReset, 4U);
         vChanges.clear();
 
         // already reset, shouldn't get repeated notification
@@ -252,8 +273,7 @@ public:
         runtime.Process(vChanges);
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(4U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 4U);
         vChanges.clear();
     }
 
@@ -291,8 +311,7 @@ public:
         memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(99001U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 99001U);
     }
 
     TEST_METHOD(TestResetActiveAchievements)
@@ -345,10 +364,8 @@ public:
         memory.at(1) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual({ 2U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
-        Assert::AreEqual(7U, vChanges.back().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementReset, vChanges.back().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 6U);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementReset, 7U);
         Assert::AreEqual(0U, pTrigger2->requirement->conditions->current_hits);
     }
 
@@ -668,10 +685,8 @@ public:
         std::vector<AchievementRuntime::Change> vChanges;
         runtime.Process(vChanges);
         Assert::AreEqual({ 2U }, vChanges.size());
-        Assert::AreEqual(pAchievement1.ID(), vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.front().nType);
-        Assert::AreEqual(pAchievement2.ID(), vChanges.at(1).nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::AchievementTriggered, vChanges.at(1).nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 1U);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 12U);
     }
 
     TEST_METHOD(TestReactivateAchievement)
@@ -786,8 +801,7 @@ public:
         memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardStarted, vChanges.front().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardStarted, 6U);
         Assert::AreEqual(52, vChanges.front().nValue);
 
         // still active leaderboard should not notify unless the value changes
@@ -798,8 +812,7 @@ public:
         memory.at(2) = 33;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardUpdated, vChanges.front().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardUpdated, 6U);
         Assert::AreEqual(33, vChanges.front().nValue);
         vChanges.clear();
 
@@ -807,8 +820,7 @@ public:
         memory.at(0) = 2;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardCanceled, vChanges.front().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardCanceled, 6U);
         vChanges.clear();
 
         // leaderboard submit condition should not trigger if leaderboard not started
@@ -821,8 +833,7 @@ public:
         memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardStarted, vChanges.front().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardStarted, 6U);
         Assert::AreEqual(33, vChanges.front().nValue);
         vChanges.clear();
 
@@ -830,8 +841,7 @@ public:
         memory.at(0) = 3;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardTriggered, vChanges.front().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardTriggered, 6U);
         Assert::AreEqual(33, vChanges.front().nValue);
         vChanges.clear();
 
@@ -844,8 +854,7 @@ public:
         memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        Assert::AreEqual(6U, vChanges.front().nId);
-        Assert::AreEqual(AchievementRuntime::ChangeType::LeaderboardStarted, vChanges.front().nType);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardStarted, 6U);
         Assert::AreEqual(33, vChanges.front().nValue);
         vChanges.clear();
 

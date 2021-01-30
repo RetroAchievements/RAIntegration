@@ -910,15 +910,15 @@ public:
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
         game.mockThreadPool.ExecuteNextTask();
 
-        const auto* pAch1 = game.FindAchievement(5U);
+        const auto* pAch1 = game.Assets().FindAchievement(5U);
         Assert::IsNotNull(pAch1);
         Ensures(pAch1 != nullptr);
-        Assert::IsTrue(pAch1->Active());
+        Assert::IsTrue(pAch1->IsActive());
 
-        const auto* pAch2 = game.FindAchievement(7U);
+        const auto* pAch2 = game.Assets().FindAchievement(7U);
         Assert::IsNotNull(pAch2);
         Ensures(pAch2 != nullptr);
-        Assert::IsFalse(pAch2->Active());
+        Assert::IsFalse(pAch2->IsActive());
     }
 
     TEST_METHOD(TestLoadGameUserUnlocksCompatibilityMode)
@@ -947,15 +947,15 @@ public:
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
         game.mockThreadPool.ExecuteNextTask();
 
-        const auto* pAch1 = game.FindAchievement(5U);
+        const auto* pAch1 = game.Assets().FindAchievement(5U);
         Assert::IsNotNull(pAch1);
         Ensures(pAch1 != nullptr);
-        Assert::IsTrue(pAch1->Active());
+        Assert::IsTrue(pAch1->IsActive());
 
-        const auto* pAch2 = game.FindAchievement(7U);
+        const auto* pAch2 = game.Assets().FindAchievement(7U);
         Assert::IsNotNull(pAch2);
         Ensures(pAch2 != nullptr);
-        Assert::IsTrue(pAch2->Active());
+        Assert::IsTrue(pAch2->IsActive());
     }
 
     TEST_METHOD(TestLoadGamePausesRuntime)

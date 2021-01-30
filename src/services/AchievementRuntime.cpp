@@ -38,6 +38,7 @@ void AchievementRuntime::ResetRuntime() noexcept
 
 int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::string& sTrigger)
 {
+    std::lock_guard<std::mutex> pLock(m_pMutex);
     EnsureInitialized();
 
     if (m_bPaused)
@@ -53,7 +54,7 @@ int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::st
     return rc_runtime_activate_achievement(&m_pRuntime, nId, sTrigger.c_str(), nullptr, 0);
 }
 
-rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId, const std::string& sTrigger) noexcept
+rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId, const std::string& sTrigger)
 {
     if (!m_bInitialized)
         return nullptr;
@@ -67,6 +68,7 @@ rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId, c
     md5_append(&state, bytes, gsl::narrow_cast<int>(sTrigger.length()));
     md5_finish(&state, md5);
 
+    std::lock_guard<std::mutex> pLock(m_pMutex);
     for (size_t i = 0; i < m_pRuntime.trigger_count; ++i)
     {
         if (m_pRuntime.triggers[i].id == nId && memcmp(m_pRuntime.triggers[i].md5, md5, sizeof(md5)) == 0)
@@ -81,7 +83,7 @@ rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId, c
     return nullptr;
 }
 
-void AchievementRuntime::DeactivateAchievement(ra::AchievementID nId) noexcept
+void AchievementRuntime::DeactivateAchievement(ra::AchievementID nId)
 {
     // NOTE: rc_runtime_deactivate_achievement will either reset the trigger or free it
     // we want to keep it so the user can examine the hit counts after an incorrect trigger
@@ -89,11 +91,12 @@ void AchievementRuntime::DeactivateAchievement(ra::AchievementID nId) noexcept
     DetachAchievementTrigger(nId);
 }
 
-rc_trigger_t* AchievementRuntime::DetachAchievementTrigger(ra::AchievementID nId) noexcept
+rc_trigger_t* AchievementRuntime::DetachAchievementTrigger(ra::AchievementID nId)
 {
     if (!m_bInitialized)
         return nullptr;
 
+    std::lock_guard<std::mutex> pLock(m_pMutex);
     for (unsigned i = 0; i < m_pRuntime.trigger_count; ++i)
     {
         if (m_pRuntime.triggers[i].id == nId)
@@ -110,10 +113,12 @@ rc_trigger_t* AchievementRuntime::DetachAchievementTrigger(ra::AchievementID nId
     return nullptr;
 }
 
-void AchievementRuntime::ReleaseAchievementTrigger(ra::AchievementID nId, _In_ rc_trigger_t* pTrigger) noexcept
+void AchievementRuntime::ReleaseAchievementTrigger(ra::AchievementID nId, _In_ rc_trigger_t* pTrigger)
 {
     if (!m_bInitialized)
         return;
+
+    std::lock_guard<std::mutex> pLock(m_pMutex);
 
 #pragma warning(push)
 #pragma warning(disable:6001) // Using uninitialized memory 'pTrigger'
@@ -137,11 +142,12 @@ void AchievementRuntime::ReleaseAchievementTrigger(ra::AchievementID nId, _In_ r
 #pragma warning(pop)
 }
 
-void AchievementRuntime::UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId) noexcept
+void AchievementRuntime::UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId)
 {
     if (!m_bInitialized)
         return;
 
+    std::lock_guard<std::mutex> pLock(m_pMutex);
     for (unsigned i = 0; i < m_pRuntime.trigger_count; ++i)
     {
         if (m_pRuntime.triggers[i].id == nOldId)
@@ -149,15 +155,17 @@ void AchievementRuntime::UpdateAchievementId(ra::AchievementID nOldId, ra::Achie
     }
 }
 
-int AchievementRuntime::ActivateLeaderboard(unsigned int nId, const std::string& sDefinition) noexcept
+int AchievementRuntime::ActivateLeaderboard(unsigned int nId, const std::string& sDefinition)
 {
+    std::lock_guard<std::mutex> pLock(m_pMutex);
     EnsureInitialized();
 
     return rc_runtime_activate_lboard(&m_pRuntime, nId, sDefinition.c_str(), nullptr, 0);
 }
 
-void AchievementRuntime::ActivateRichPresence(const std::string& sScript) noexcept
+void AchievementRuntime::ActivateRichPresence(const std::string& sScript)
 {
+    std::lock_guard<std::mutex> pLock(m_pMutex);
     EnsureInitialized();
 
     if (sScript.empty())
@@ -176,6 +184,8 @@ std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
 {
     if (m_bInitialized)
     {
+        std::lock_guard<std::mutex> pLock(m_pMutex);
+
         if (m_nRichPresenceParseResult != RC_OK)
             return ra::StringPrintf(L"Parse error %d: %s\n", m_nRichPresenceParseResult, rc_error_str(m_nRichPresenceParseResult));
 
@@ -216,6 +226,9 @@ static void map_event_to_change(const rc_runtime_event_t* pRuntimeEvent)
         case RC_RUNTIME_EVENT_ACHIEVEMENT_RESET:
             nChangeType = AchievementRuntime::ChangeType::AchievementReset;
             break;
+        case RC_RUNTIME_EVENT_ACHIEVEMENT_DISABLED:
+            nChangeType = AchievementRuntime::ChangeType::AchievementDisabled;
+            break;
         case RC_RUNTIME_EVENT_LBOARD_STARTED:
             nChangeType = AchievementRuntime::ChangeType::LeaderboardStarted;
             break;
@@ -228,6 +241,9 @@ static void map_event_to_change(const rc_runtime_event_t* pRuntimeEvent)
         case RC_RUNTIME_EVENT_LBOARD_TRIGGERED:
             nChangeType = AchievementRuntime::ChangeType::LeaderboardTriggered;
             break;
+        case RC_RUNTIME_EVENT_LBOARD_DISABLED:
+            nChangeType = AchievementRuntime::ChangeType::LeaderboardDisabled;
+            break;
         default:
             // unsupported
             return;
@@ -236,11 +252,12 @@ static void map_event_to_change(const rc_runtime_event_t* pRuntimeEvent)
     g_pChanges->emplace_back(AchievementRuntime::Change{ nChangeType, pRuntimeEvent->id, pRuntimeEvent->value });
 }
 
-_Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& changes) noexcept
+_Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& changes)
 {
     if (!m_bInitialized || m_bPaused)
         return;
 
+    std::lock_guard<std::mutex> pLock(m_pMutex);
     g_pChanges = &changes;
     rc_runtime_do_frame(&m_pRuntime, map_event_to_change, rc_peek_callback, nullptr, nullptr);
     g_pChanges = nullptr;
@@ -621,6 +638,8 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
     if (!m_bInitialized)
         return true;
 
+    std::lock_guard<std::mutex> pLock(m_pMutex);
+
     // reset the runtime state, then apply state from file
     rc_runtime_reset(&m_pRuntime);
 
@@ -697,6 +716,8 @@ bool AchievementRuntime::LoadProgressFromBuffer(const char* pBuffer)
     if (!m_bInitialized)
         return true;
 
+    std::lock_guard<std::mutex> pLock(m_pMutex);
+
     // reset the runtime state, then apply state from file
     rc_runtime_reset(&m_pRuntime);
 
@@ -731,6 +752,8 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
         return;
     }
 
+    std::lock_guard<std::mutex> pLock(m_pMutex);
+
     const auto nSize = rc_runtime_progress_size(&m_pRuntime, nullptr);
     std::string sSerialized;
     sSerialized.resize(nSize);
@@ -746,6 +769,8 @@ int AchievementRuntime::SaveProgressToBuffer(char* pBuffer, int nBufferSize) con
     if (!pUserContext.IsLoggedIn())
         return 0;
 
+    std::lock_guard<std::mutex> pLock(m_pMutex);
+
     const auto nSize = rc_runtime_progress_size(&m_pRuntime, nullptr);
     if (nSize <= nBufferSize)
     {
@@ -759,6 +784,62 @@ int AchievementRuntime::SaveProgressToBuffer(char* pBuffer, int nBufferSize) con
 
     return nSize;
 }
+
+void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress) noexcept
+{
+    // this should only be called from DetectUnsupportedAchievements or indirectly via Process,
+    // both of which aquire the lock, so we shouldn't try to acquire it here.
+    // we can also avoid checking m_bInitialized
+    rc_runtime_invalidate_address(&m_pRuntime, nAddress);
+}
+
+#pragma warning(push)
+#pragma warning(disable : 5045)
+
+size_t AchievementRuntime::DetectUnsupportedAchievements()
+{
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    std::lock_guard<std::mutex> pLock(m_pMutex);
+
+    const rc_memref_t* memref = m_pRuntime.memrefs;
+    while (memref)
+    {
+        // ignore indirect memory references as their value is calculated from other memory and can easily point at
+        // invalid addresses.
+        if (!memref->value.is_indirect)
+        {
+            // attempt to read one byte from the memory address (assume multi-byte reads won't span regions). if the
+            // read fails, EmulatorContext will call InvalidateAddress, which will flag all associated achievements.
+            if (!pEmulatorContext.IsValidAddress(memref->address))
+                InvalidateAddress(memref->address);
+        }
+
+        memref = memref->next;
+    }
+
+    size_t nDisabled = 0;
+    const auto* pTrigger = m_pRuntime.triggers;
+    const auto* pStop = pTrigger + m_pRuntime.trigger_count;
+    while (pTrigger < pStop)
+    {
+        if (pTrigger->invalid_memref)
+        {
+            // before rc_runtime_do_frame called
+            ++nDisabled;
+        }
+        else if (pTrigger->trigger && pTrigger->trigger->state == RC_TRIGGER_STATE_DISABLED)
+        {
+            // after rc_runtime_do_frame called
+            ++nDisabled;
+        }
+
+        ++pTrigger;
+    }
+
+    return nDisabled;
+}
+
+#pragma warning(pop)
 
 } // namespace services
 } // namespace ra

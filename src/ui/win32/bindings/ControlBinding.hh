@@ -83,6 +83,16 @@ public:
     }
 
     /// <summary>
+    /// If set to true, UpdateWindow will be called when a control is Invalidated.
+    /// </summary>
+    static void SetNeedsUpdateWindow(bool bValue) noexcept { s_bNeedsUpdateWindow = bValue; }
+
+    /// <summary>
+    /// Determines if UpdateWindow should be called when invalidating a control.
+    /// </summary>
+    static bool NeedsUpdateWindow() noexcept { return s_bNeedsUpdateWindow; }
+
+    /// <summary>
     /// Calls Invalidate() or UpdateWindow() to cause the control to repaint
     /// </summary>
     static void ForceRepaint(HWND hWnd);
@@ -161,6 +171,8 @@ protected:
 private:
     DialogBase* m_pDialog = nullptr;
     WNDPROC m_pOriginalWndProc = nullptr;
+
+    static bool s_bNeedsUpdateWindow;
 };
 
 } // namespace bindings

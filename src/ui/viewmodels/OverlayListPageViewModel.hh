@@ -135,6 +135,7 @@ public:
     };
 
 protected:
+    void EnsureSelectedItemIndexValid();
     bool SetDetail(bool bDetail);
     void ForceRedraw();
     virtual void FetchItemDetail(_UNUSED ItemViewModel& vmItem) noexcept(false) {};

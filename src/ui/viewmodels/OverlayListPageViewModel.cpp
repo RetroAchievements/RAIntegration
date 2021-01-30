@@ -28,6 +28,27 @@ void OverlayListPageViewModel::Refresh()
     m_nImagesPending = 99;
 }
 
+void OverlayListPageViewModel::EnsureSelectedItemIndexValid()
+{
+    auto nSelectedIndex = GetSelectedItemIndex();
+    const auto* vmItem = m_vItems.GetItemAt(nSelectedIndex);
+    while (vmItem && vmItem->IsHeader())
+        vmItem = m_vItems.GetItemAt(++nSelectedIndex);
+
+    if (!vmItem)
+    {
+        nSelectedIndex = 0;
+        vmItem = m_vItems.GetItemAt(nSelectedIndex);
+        while (vmItem && vmItem->IsHeader())
+            vmItem = m_vItems.GetItemAt(++nSelectedIndex);
+
+        m_nScrollOffset = 0;
+    }
+
+    if (nSelectedIndex < ra::to_signed(m_vItems.Count()))
+        SetSelectedItemIndex(nSelectedIndex);
+}
+
 bool OverlayListPageViewModel::Update(double fElapsed)
 {
     m_fElapsed += fElapsed;
@@ -208,6 +229,7 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
         if (nSelectedItemIndex > 0)
         {
             auto* vmItem = m_vItems.GetItemAt(gsl::narrow_cast<size_t>(--nSelectedItemIndex));
+            const auto nScrollOfffset = m_nScrollOffset;
 
             // skip over header items
             while (vmItem && vmItem->IsHeader())
@@ -217,7 +239,7 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
                 m_nScrollOffset = std::max(nSelectedItemIndex, 0);
 
             if (!vmItem)
-                return false;
+                return (m_nScrollOffset != nScrollOfffset);
 
             SetSelectedItemIndex(nSelectedItemIndex);
 

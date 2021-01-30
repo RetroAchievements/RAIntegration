@@ -376,22 +376,7 @@ void OverlayAchievementsPageViewModel::Refresh()
         m_fElapsed = static_cast<double>(nPlayTimeSeconds.count() % 60);
     }
 
-    // ensure selected index is valid
-    auto nSelectedIndex = GetSelectedItemIndex();
-    const auto* vmItem = m_vItems.GetItemAt(nSelectedIndex);
-    while (vmItem && vmItem->IsHeader())
-        vmItem = m_vItems.GetItemAt(++nSelectedIndex);
-
-    if (!vmItem)
-    {
-        nSelectedIndex = 0;
-        vmItem = m_vItems.GetItemAt(nSelectedIndex);
-        while (vmItem && vmItem->IsHeader())
-            vmItem = m_vItems.GetItemAt(++nSelectedIndex);
-    }
-
-    if (nSelectedIndex < ra::to_signed(m_vItems.Count()))
-        SetSelectedItemIndex(nSelectedIndex);
+    EnsureSelectedItemIndexValid();
 }
 
 bool OverlayAchievementsPageViewModel::Update(double fElapsed)

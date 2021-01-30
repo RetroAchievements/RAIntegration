@@ -89,18 +89,21 @@ public:
         Ensures(pFriend1 != nullptr);
         Assert::AreEqual(std::wstring(L"User1 (20)"), pFriend1->GetLabel());
         Assert::AreEqual(std::wstring(L"Activity1"), pFriend1->GetDetail());
+        Assert::IsFalse(pFriend1->IsHeader());
 
         const auto* pFriend2 = friendsPage.GetItem(1);
         Assert::IsNotNull(pFriend2);
         Ensures(pFriend2 != nullptr);
         Assert::AreEqual(std::wstring(L"User2 (60)"), pFriend2->GetLabel());
         Assert::AreEqual(std::wstring(L"Activity2"), pFriend2->GetDetail());
+        Assert::IsFalse(pFriend2->IsHeader());
 
         const auto* pFriend3 = friendsPage.GetItem(2);
         Assert::IsNotNull(pFriend3);
         Ensures(pFriend3 != nullptr);
         Assert::AreEqual(std::wstring(L"User3 (40)"), pFriend3->GetLabel());
         Assert::AreEqual(std::wstring(L"Activity3"), pFriend3->GetDetail());
+        Assert::IsFalse(pFriend3->IsHeader());
     }
 
     TEST_METHOD(TestRefreshError)
@@ -178,24 +181,28 @@ public:
         Ensures(pFriend1 != nullptr);
         Assert::AreEqual(std::wstring(L"User1 (30)"), pFriend1->GetLabel());
         Assert::AreEqual(std::wstring(L"Activity1b"), pFriend1->GetDetail());
+        Assert::IsFalse(pFriend1->IsHeader());
 
         const auto* pFriend2 = friendsPage.GetItem(1);
         Assert::IsNotNull(pFriend2);
         Ensures(pFriend2 != nullptr);
         Assert::AreEqual(std::wstring(L"User2 (60)"), pFriend2->GetLabel());
         Assert::AreEqual(std::wstring(L"Activity2"), pFriend2->GetDetail());
+        Assert::IsFalse(pFriend2->IsHeader());
 
         const auto* pFriend3 = friendsPage.GetItem(2);
         Assert::IsNotNull(pFriend3);
         Ensures(pFriend3 != nullptr);
         Assert::AreEqual(std::wstring(L"User3 (45)"), pFriend3->GetLabel());
         Assert::AreEqual(std::wstring(L"Activity3b"), pFriend3->GetDetail());
+        Assert::IsFalse(pFriend3->IsHeader());
 
         const auto* pFriend4 = friendsPage.GetItem(3);
         Assert::IsNotNull(pFriend4);
         Ensures(pFriend4 != nullptr);
         Assert::AreEqual(std::wstring(L"User4 (90)"), pFriend4->GetLabel());
         Assert::AreEqual(std::wstring(L"Activity4"), pFriend4->GetDetail());
+        Assert::IsFalse(pFriend4->IsHeader());
     }
 };
 

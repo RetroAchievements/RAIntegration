@@ -331,7 +331,7 @@ void JsonFileConfiguration::UpdateHost()
     if (m_sHostName.empty())
     {
         m_sHostName = "retroachievements.org";
-        m_sHostUrl = "http://retroachievements.org";
+        m_sHostUrl = "https://retroachievements.org";
         m_sImageHostUrl = "http://i.retroachievements.org";
     }
     else
@@ -351,6 +351,8 @@ void JsonFileConfiguration::UpdateHost()
 
         m_sImageHostUrl = m_sHostUrl;
     }
+
+    RA_LOG_INFO("Using server: %s", m_sHostUrl.c_str());
 }
 
 } // namespace impl

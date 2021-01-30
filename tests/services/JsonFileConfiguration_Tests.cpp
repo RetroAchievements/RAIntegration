@@ -239,7 +239,7 @@ public:
         MockFileSystem mockFileSystem;
         JsonFileConfiguration config;
         Assert::AreEqual(std::string("retroachievements.org"), config.GetHostName());
-        Assert::AreEqual(std::string("http://retroachievements.org"), config.GetHostUrl());
+        Assert::AreEqual(std::string("https://retroachievements.org"), config.GetHostUrl());
         Assert::AreEqual(std::string("http://i.retroachievements.org"), config.GetImageHostUrl());
     }
 

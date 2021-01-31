@@ -382,7 +382,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.NewAchievement(Achievement::Category::Core);
+        tracker.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         Assert::AreEqual(std::wstring(L"Inspecting Memory in Hardcore mode"), tracker.GetActivity());
     }
@@ -390,7 +390,7 @@ public:
     TEST_METHOD(TestCurrentActivityInspectingMemoryCompatibilityMode)
     {
         SessionTrackerHarness tracker;
-        tracker.mockGameContext.NewAchievement(Achievement::Category::Core);
+        tracker.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Core);
         tracker.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
         tracker.MockInspectingMemory(true);
         Assert::AreEqual(std::wstring(L"Testing Compatibility"), tracker.GetActivity());
@@ -400,7 +400,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.NewAchievement(Achievement::Category::Core);
+        tracker.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Core);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::wstring(L"Fixing Achievements"), tracker.GetActivity());
     }
@@ -409,7 +409,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.NewAchievement(Achievement::Category::Unofficial);
+        tracker.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Unofficial);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::wstring(L"Developing Achievements"), tracker.GetActivity());
     }
@@ -418,7 +418,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.NewAchievement(Achievement::Category::Local);
+        tracker.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
         tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::wstring(L"Developing Achievements"), tracker.GetActivity());
     }

@@ -53,6 +53,11 @@ public:
     ra::data::models::AchievementModel& NewAchievement();
 
     /// <summary>
+    /// Determines if any Core achievements exist.
+    /// </summary>
+    bool HasCoreAssets() const;
+
+    /// <summary>
     /// Writes the local assets files.
     /// </summary>
     /// <param name="vAssetsToSave">List of assets to write, empty to write all assets.</param>

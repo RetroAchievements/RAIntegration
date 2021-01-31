@@ -78,6 +78,12 @@ bool CapturedTriggerHits::Restore(rc_trigger_t* pTrigger, const std::string& sTr
     return true;
 }
 
+void CapturedTriggerHits::Reset()
+{
+    m_vCapturedHitCounts.clear();
+    m_sCapturedHitsMD5.clear();
+}
+
 } // namespace models
 } // namespace data
 } // namespace ra

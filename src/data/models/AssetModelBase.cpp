@@ -12,6 +12,8 @@ const IntModelProperty AssetModelBase::CategoryProperty("AssetModelBase", "Categ
 const StringModelProperty AssetModelBase::AuthorProperty("AssetModelBase", "Author", L"");
 const IntModelProperty AssetModelBase::StateProperty("AssetModelBase", "State", ra::etoi(AssetState::Inactive));
 const IntModelProperty AssetModelBase::ChangesProperty("AssetModelBase", "Changes", ra::etoi(AssetChanges::None));
+const IntModelProperty AssetModelBase::CreationTimeProperty("AssetModelBase", "CreationTime", 0);
+const IntModelProperty AssetModelBase::UpdatedTimeProperty("AssetModelBase", "UpdatedTime", 0);
 
 AssetModelBase::AssetModelBase() noexcept
 {

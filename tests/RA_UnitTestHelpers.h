@@ -4,10 +4,9 @@
 
 #include "ra_utility.h"
 
-#include "RA_Condition.h"
 #include "RA_StringUtils.h"
 
-#include "RA_Achievement.h"
+#include "data\Types.hh"
 
 // The rcheevos nameless struct warning is only affecting the test project, for now we have
 // to disable the warning in the project or pragmatically in rcheevos. Careful not to use nameless structs here.
@@ -43,32 +42,63 @@ std::wstring ToString<MemSize>(const MemSize& t)
 {
     switch (t)
     {
+        case MemSize::Bit_0:
+            return L"Bit_0";
+        case MemSize::Bit_1:
+            return L"Bit_1";
+        case MemSize::Bit_2:
+            return L"Bit_2";
+        case MemSize::Bit_3:
+            return L"Bit_3";
+        case MemSize::Bit_4:
+            return L"Bit_4";
+        case MemSize::Bit_5:
+            return L"Bit_5";
+        case MemSize::Bit_6:
+            return L"Bit_6";
+        case MemSize::Bit_7:
+            return L"Bit_7";
+        case MemSize::Nibble_Lower:
+            return L"Nibble_Lower";
+        case MemSize::Nibble_Upper:
+            return L"Nibble_Upper";
+        case MemSize::EightBit:
+            return L"EightBit";
+        case MemSize::SixteenBit:
+            return L"SixteenBit";
+        case MemSize::TwentyFourBit:
+            return L"TwentyFourBit";
+        case MemSize::ThirtyTwoBit:
+            return L"ThirtyTwoBit";
+        case MemSize::BitCount:
+            return L"BitCount";
         case MemSize::Text:
             return L"Text";
         default:
-            if (ra::etoi(t) < MEMSIZE_STR.size())
-                return MEMSIZE_STR.at(ra::etoi(t));
             return std::to_wstring(ra::etoi(t));
     }
-
-}
-
-template<>
-std::wstring ToString<CompVariable::Type>(const CompVariable::Type& t)
-{
-    return ra::Widen(CompVariable::TYPE_STR.at(ra::etoi(t)));
 }
 
 template<>
 std::wstring ToString<ComparisonType>(const ComparisonType& t)
 {
-    return ra::Widen(COMPARISONTYPE_STR.at(ra::etoi(t)));
-}
-
-template<>
-std::wstring ToString<Condition::Type>(const Condition::Type& t)
-{
-    return (Condition::TYPE_STR.at(ra::etoi(t)));
+    switch (t)
+    {
+        case ComparisonType::Equals:
+            return L"Equals";
+        case ComparisonType::LessThan:
+            return L"LessThan";
+        case ComparisonType::LessThanOrEqual:
+            return L"LessThanOrEqual";
+        case ComparisonType::GreaterThan:
+            return L"GreaterThan";
+        case ComparisonType::GreaterThanOrEqual:
+            return L"GreaterThanOrEqual";
+        case ComparisonType::NotEqualTo:
+            return L"NotEqualTo";
+        default:
+            return std::to_wstring(ra::etoi(t));
+    }
 }
 
 #pragma warning(pop)

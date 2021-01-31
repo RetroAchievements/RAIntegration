@@ -22,6 +22,16 @@ enum class MemSize : uint8_t
     Text
 };
 
+enum class ComparisonType : uint8_t
+{
+    Equals,
+    LessThan,
+    LessThanOrEqual,
+    GreaterThan,
+    GreaterThanOrEqual,
+    NotEqualTo
+};
+
 namespace ra {
 
 enum class MemFormat : uint8_t

@@ -49,6 +49,29 @@ ra::data::models::AchievementModel& GameAssets::NewAchievement()
     return dynamic_cast<ra::data::models::AchievementModel&>(AddItem(std::move(vmAchievement)));
 }
 
+bool GameAssets::HasCoreAssets() const
+{
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Count()); ++nIndex)
+    {
+        const auto* pAsset = GetItemAt(nIndex);
+        if (pAsset != nullptr)
+        {
+            switch (pAsset->GetCategory())
+            {
+                case ra::data::models::AssetCategory::Local:
+                case ra::data::models::AssetCategory::Unofficial:
+                    break;
+
+                default:
+                    // Core, Bonus, or something else that's been published
+                    return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 void GameAssets::OnItemsAdded(const std::vector<gsl::index>& vNewIndices)
 {
     auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0));

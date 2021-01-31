@@ -8,8 +8,6 @@
 #include "RA_Resource.h"
 #include "RA_md5factory.h"
 
-#include "RA_Dlg_GameLibrary.h"
-
 #include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
@@ -129,7 +127,7 @@ API int CCONV _RA_Shutdown()
 
         ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().LoadGame(0U);
     }
-
+    /*
     if (g_GameLibrary.GetHWND() != nullptr)
     {
         DestroyWindow(g_GameLibrary.GetHWND());
@@ -137,7 +135,7 @@ API int CCONV _RA_Shutdown()
     }
 
     g_GameLibrary.KillThread();
-
+    */
     if (ra::services::ServiceLocator::Exists<ra::ui::viewmodels::WindowManager>())
     {
         auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
@@ -179,26 +177,25 @@ API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
     bool bLocalModified = false;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    pGameContext.EnumerateAchievements([&bCoreModified, &bUnofficialModified, &bLocalModified](const Achievement& pAchievement) noexcept
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
     {
-        if (pAchievement.Modified())
+        const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pGameContext.Assets().GetItemAt(nIndex));
+        if (pAchievement != nullptr && pAchievement->IsModified())
         {
-            switch (pAchievement.GetCategory())
+            switch (pAchievement->GetCategory())
             {
-                case Achievement::Category::Local:
+                case ra::data::models::AssetCategory::Local:
                     bLocalModified = true;
                     break;
-                case Achievement::Category::Core:
+                case ra::data::models::AssetCategory::Core:
                     bCoreModified = true;
                     break;
-                case Achievement::Category::Unofficial:
+                case ra::data::models::AssetCategory::Unofficial:
                     bUnofficialModified = true;
                     break;
             }
         }
-
-        return true;
-    });
+    }
 
     if (bCoreModified)
         sModifiedSet = L"Core";

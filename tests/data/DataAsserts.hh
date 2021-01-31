@@ -29,22 +29,6 @@ std::wstring ToString<ra::data::context::GameContext::Mode>(const ra::data::cont
 }
 
 template<>
-std::wstring ToString<Achievement::Category>(const Achievement::Category& category)
-{
-    switch (category)
-    {
-        case Achievement::Category::Local:
-            return L"Local";
-        case Achievement::Category::Core:
-            return L"Core";
-        case Achievement::Category::Unofficial:
-            return L"Unofficial";
-        default:
-            return std::to_wstring(ra::etoi(category));
-    }
-}
-
-template<>
 std::wstring ToString<ra::data::models::AssetType>(
     const ra::data::models::AssetType& nAssetType)
 {

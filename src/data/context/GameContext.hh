@@ -2,7 +2,6 @@
 #define RA_DATA_GAMECONTEXT_HH
 #pragma once
 
-#include "RA_Achievement.h"
 #include "RA_Leaderboard.h"
 
 #include "GameAssets.hh"
@@ -82,43 +81,9 @@ public:
     const GameAssets& Assets() const noexcept { return m_vAssets; }
 
     /// <summary>
-    /// Enumerates the achievement collection.
-    /// </summary>
-    /// <remarks>
-    /// <paramref name="callback" /> is called for each known achievement. If it returns <c>false</c> enumeration stops.
-    /// </remarks>
-    void EnumerateAchievements(std::function<bool(const Achievement&)> callback) const
-    {
-        for (auto& pAchievement : m_vAchievements)
-        {
-            if (!callback(*pAchievement))
-                break;
-        }
-    }
-
-    /// <summary>
-    /// Finds the achievement associated to the specified unique identifier.
-    /// </summary>
-    /// <returns>Pointer to achievement, <c>nullptr</c> if not found.</returns>
-    Achievement* FindAchievement(ra::AchievementID nAchievementId) const noexcept
-    {
-        for (auto& pAchievement : m_vAchievements)
-        {
-            if (pAchievement->ID() == nAchievementId)
-                return pAchievement.get();
-        }
-
-        return nullptr;
-    }
-
-    Achievement& NewAchievement(Achievement::Category nType);
-
-    bool RemoveAchievement(ra::AchievementID nAchievementId) noexcept;
-
-    /// <summary>
     /// Shows the popup for earning an achievement and notifies the server if legitimate.
     /// </summary>
-    void AwardAchievement(ra::AchievementID nAchievementId) const;
+    void AwardAchievement(ra::AchievementID nAchievementId);
 
     /// <summary>
     /// Finds the leaderboard associated to the specified unique identifier.
@@ -184,18 +149,6 @@ public:
     /// Reloads the rich presence script.
     /// </summary>
     void ReloadRichPresenceScript();
-
-    /// <summary>
-    /// Reloads all achievements of the specified category from local storage.
-    /// </summary>
-    void ReloadAchievements(Achievement::Category nCategory);
-
-    /// <summary>
-    /// Reloads a specific achievement from local storage.
-    /// </summary>    
-    /// <returns><c>true</c> if the achievement was reloaded, <c>false</c> if it was not found or destroyed.</returns>
-    /// <remarks>Destroys the achievement if it does not exist in local storage</remarks>
-    bool ReloadAchievement(ra::AchievementID nAchievementId);
 
     /// <summary>
     /// Returns the note associated with the specified address.
@@ -319,7 +272,6 @@ private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
 
 protected:
-    bool ReloadAchievement(Achievement& pAchievement);
     void RefreshUnlocks(bool bUnpause, int nPopup);
     void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup);
     void AwardMastery() const;
@@ -340,7 +292,6 @@ protected:
     std::string m_sServerRichPresenceMD5;
     bool m_bRichPresenceFromFile = false;
 
-    std::vector<std::unique_ptr<Achievement>> m_vAchievements;
     std::vector<std::unique_ptr<RA_Leaderboard>> m_vLeaderboards;
 
     struct CodeNote

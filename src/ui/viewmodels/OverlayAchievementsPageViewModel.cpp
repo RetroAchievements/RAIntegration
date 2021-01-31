@@ -469,25 +469,25 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         return;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pAchievement = pGameContext.FindAchievement(vmItem.GetId());
+    const auto* pAchievement = pGameContext.Assets().FindAchievement(vmItem.GetId());
     if (pAchievement == nullptr)
         return;
 
     auto& vmAchievement = m_vAchievementDetails.emplace(vmItem.GetId(), AchievementViewModel{}).first->second;
-    vmAchievement.SetCreatedDate(ra::Widen(ra::FormatDateTime(pAchievement->CreatedDate())));
-    vmAchievement.SetModifiedDate(ra::Widen(ra::FormatDateTime(pAchievement->ModifiedDate())));
+    vmAchievement.SetCreatedDate(ra::Widen(ra::FormatDateTime(pAchievement->GetCreationTime())));
+    vmAchievement.SetModifiedDate(ra::Widen(ra::FormatDateTime(pAchievement->GetUpdatedTime())));
 
-    if (pAchievement->GetCategory() == Achievement::Category::Local)
+    if (pAchievement->GetCategory() == ra::data::models::AssetCategory::Local)
     {
         vmAchievement.SetWonBy(L"Local Achievement");
         return;
     }
 
     ra::api::FetchAchievementInfo::Request request;
-    request.AchievementId = pAchievement->ID();
+    request.AchievementId = pAchievement->GetID();
     request.FirstEntry = 1;
     request.NumEntries = 10;
-    request.CallAsync([this, nId = pAchievement->ID()](const ra::api::FetchAchievementInfo::Response& response)
+    request.CallAsync([this, nId = pAchievement->GetID()](const ra::api::FetchAchievementInfo::Response& response)
     {
         const auto pIter = m_vAchievementDetails.find(nId);
         if (pIter == m_vAchievementDetails.end())

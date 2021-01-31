@@ -2,7 +2,7 @@
 #define SEARCHRESULTS_H
 #pragma once
 
-#include "RA_Condition.h" // MemSize, ComparisonType
+#include "data\Types.hh"
 
 namespace ra {
 namespace services {

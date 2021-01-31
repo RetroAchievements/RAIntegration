@@ -204,7 +204,9 @@ void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
             const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
             m_tUnlock = pClock.Now();
 
-            SetUnlockRichPresence(pRuntime.GetRichPresenceDisplayString());
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+            if (pGameContext.HasRichPresence())
+                SetUnlockRichPresence(pGameContext.GetRichPresenceDisplayString());
             break;
     }
 }

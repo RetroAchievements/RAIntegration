@@ -369,7 +369,7 @@ public:
         Assert::AreEqual(0U, pTrigger2->requirement->conditions->current_hits);
     }
 
-    static rc_condition_t* GetCondition(AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond)
+    static rc_condition_t* GetCondition(AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond) noexcept
     {
         rc_trigger_t* pTrigger = harness.GetAchievementTrigger(nId);
         rc_condset_t* pCondset = pTrigger->requirement;
@@ -399,7 +399,7 @@ public:
 
     static void AssertConditionHitCount(AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond, int nHits)
     {
-        rc_condition_t* pCond = GetCondition(harness, nId, nGroup, nCond);
+        const rc_condition_t* pCond = GetCondition(harness, nId, nGroup, nCond);
         Assert::IsNotNull(pCond);
         Assert::AreEqual(pCond->current_hits, ra::to_unsigned(nHits));
     }

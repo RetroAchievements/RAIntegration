@@ -78,7 +78,7 @@ bool CapturedTriggerHits::Restore(rc_trigger_t* pTrigger, const std::string& sTr
     return true;
 }
 
-void CapturedTriggerHits::Reset()
+void CapturedTriggerHits::Reset() noexcept
 {
     m_vCapturedHitCounts.clear();
     m_sCapturedHitsMD5.clear();

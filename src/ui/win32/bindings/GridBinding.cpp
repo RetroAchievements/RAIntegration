@@ -637,6 +637,12 @@ void GridBinding::SetHWND(DialogBase& pDialog, HWND hControl)
         if (m_vmItems)
             UpdateAllItems();
     }
+
+#ifdef UNICODE
+    // ListView control still sends LVN_GETDISPINFOA messages for LVS_OWNERDATA unless we explicitly tell it to use unicode
+    if ((GetWindowStyle(m_hWnd) & LVS_OWNERDATA) != 0)
+        ListView_SetUnicodeFormat(hControl, TRUE);
+#endif
 }
 
 INT_PTR CALLBACK GridBinding::WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam)
@@ -1004,13 +1010,27 @@ int GridBinding::GetVisibleItemIndex(int iItem)
     return -1;
 }
 
+static void CacheText(ra::tstring& sCacheString, const std::wstring& sText)
+{
+    // weird bug - assigning the NativeStr to the cache string seems to do some weird stuff with the
+    // backing pointer, sometimes causing invalid memory to be displayed in the control. This forces
+    // the string into the same buffer, instead of doing a swap() or whatever is happening.
+#ifdef NEVER
+    sCacheString = NativeStr(sText);
+#else
+    ra::tstring sNativeText = NativeStr(sText);
+    sCacheString.resize(sNativeText.length());
+    memcpy(sCacheString.data(), sNativeText.data(), (sNativeText.length() + 1) * 2);
+#endif
+}
+
 void GridBinding::OnLvnGetDispInfo(NMLVDISPINFO& pnmDispInfo)
 {
     // when virtualizing, only the visible items have view models. adjust the index accordingly.
     const auto nIndex = GetVisibleItemIndex(pnmDispInfo.item.iItem);
 
     // get the requested data
-    m_sDispInfo = NativeStr(m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));
+    CacheText(m_sDispInfo, m_vColumns.at(pnmDispInfo.item.iSubItem)->GetText(*m_vmItems, nIndex));
     GSL_SUPPRESS_TYPE3 pnmDispInfo.item.pszText = const_cast<LPTSTR>(m_sDispInfo.c_str());
 }
 
@@ -1024,7 +1044,7 @@ void GridBinding::OnTooltipGetDispInfo(NMTTDISPINFO& pnmTtDispInfo)
     if (iSubItem < 0 || iSubItem >= gsl::narrow_cast<int>(m_vColumns.size()))
         return;
 
-    m_sTooltip = NativeStr(m_vColumns.at(iSubItem)->GetTooltip(*m_vmItems, nIndex));
+    CacheText(m_sTooltip, m_vColumns.at(iSubItem)->GetTooltip(*m_vmItems, nIndex));
     GSL_SUPPRESS_TYPE3 pnmTtDispInfo.lpszText = const_cast<LPTSTR>(m_sTooltip.c_str());
 }
 

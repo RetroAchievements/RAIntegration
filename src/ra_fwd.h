@@ -103,7 +103,11 @@ using LPTSTR = TCHAR*;
 
 namespace ra {
 
-using tstring = std::basic_string<TCHAR>;
+#ifdef UNICODE
+using tstring = std::wstring;
+#else
+using tstring = std::string;
+#endif
 
 } /* namespace ra */
 

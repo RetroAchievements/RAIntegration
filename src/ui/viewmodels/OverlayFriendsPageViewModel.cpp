@@ -49,8 +49,9 @@ void OverlayFriendsPageViewModel::Refresh()
                 if (pvmFriend == nullptr)
                 {
                     pvmFriend = &m_vItems.Add();
-                    pvmFriend->Image.ChangeReference(ra::ui::ImageType::UserPic, pFriend.User);
                     Ensures(pvmFriend != nullptr);
+                    pvmFriend->SetId(gsl::narrow_cast<int>(m_vItems.Count())); // prevent it from looking like a header
+                    pvmFriend->Image.ChangeReference(ra::ui::ImageType::UserPic, pFriend.User);
                 }
 
                 pvmFriend->SetLabel(ra::StringPrintf(L"%s (%u)", pFriend.User, pFriend.Score));

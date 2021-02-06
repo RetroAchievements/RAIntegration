@@ -35,10 +35,6 @@
 
 #include "RAInterface\RA_Emulators.h"
 
-#ifndef RA_UTEST
-#include "RA_Dlg_GameLibrary.h"
-#endif
-
 API const char* CCONV _RA_IntegrationVersion() { return RA_INTEGRATION_VERSION; }
 
 API const char* CCONV _RA_HostName()
@@ -169,10 +165,6 @@ API void CCONV _RA_InstallSharedFunctionsExt(bool(*)(void), void(*fpCauseUnpause
     pEmulatorContext.SetUnpauseFunction(fpCauseUnpause);
     pEmulatorContext.SetGetGameTitleFunction(fpEstimateTitle);
     pEmulatorContext.SetRebuildMenuFunction(fpRebuildMenu);
-
-#ifndef RA_UTEST
-    g_GameLibrary.m_fpLoadROM = fpLoadROM;
-#endif
 }
 
 static void HandleLoginResponse(const ra::api::Login::Response& response)
@@ -362,22 +354,12 @@ static void ProcessAchievements()
             case ra::services::AchievementRuntime::ChangeType::AchievementTriggered:
             {
                 // AwardAchievement may detach the trigger, which would result in the state changing to Inactive.
-                // explicitly call DoFrame now to set the state to Triggered before the trigger gets detached.
+                // explicitly set the state to Triggered before the trigger gets detached.
                 auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
                 if (vmAchievement)
-                    vmAchievement->DoFrame();
+                    vmAchievement->SetState(ra::data::models::AssetState::Triggered);
 
                 pGameContext.AwardAchievement(pChange.nId);
-
-#pragma warning(push)
-#pragma warning(disable : 26462)
-                auto* pAchievement = pGameContext.FindAchievement(pChange.nId);
-#pragma warning(pop)
-                if (pAchievement)
-                {
-                    if (pGameContext.HasRichPresence() && !pGameContext.IsRichPresenceFromFile())
-                        pAchievement->SetUnlockRichPresence(pGameContext.GetRichPresenceDisplayString());
-                }
 
                 if (vmAchievement && vmAchievement->IsPauseOnTrigger())
                 {

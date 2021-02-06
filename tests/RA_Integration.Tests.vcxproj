@@ -309,7 +309,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="..\src\Exports.cpp" />
-    <ClCompile Include="..\src\RA_Achievement.cpp" />
     <ClCompile Include="..\src\RA_Json.cpp" />
     <ClCompile Include="..\src\RA_md5factory.cpp" />
     <ClCompile Include="..\src\RA_StringUtils.cpp" />
@@ -353,7 +352,6 @@
     <ClCompile Include="..\src\ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="api\ConnectedServer_Tests.cpp" />
     <ClCompile Include="api\DisconnectedServer_Tests.cpp" />
-    <ClInclude Include="..\src\RA_Achievement.h" />
     <ClInclude Include="..\src\RA_Defs.h" />
     <ClInclude Include="..\src\RA_Leaderboard.h" />
     <ClCompile Include="..\src\ui\ViewModelBase.cpp" />
@@ -385,7 +383,6 @@
     <ClCompile Include="services\SearchResults_Tests.cpp" />
     <ClCompile Include="services\StringTextReader_Tests.cpp" />
     <ClCompile Include="services\StringTextWriter_Tests.cpp" />
-    <ClCompile Include="..\src\RA_Condition.cpp" />
     <ClCompile Include="..\src\RA_Defs.cpp" />
     <ClCompile Include="..\src\RA_Leaderboard.cpp" />
     <ClCompile Include="ui\ViewModelCollection_Tests.cpp" />
@@ -439,7 +436,6 @@
     <ClInclude Include="mocks\MockWindowManager.hh" />
     <ClInclude Include="RA_UnitTestApiHelpers.h" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
-    <ClCompile Include="RA_Condition_Tests.cpp" />
     <ClCompile Include="RA_UnitTestHelpers.cpp" />
     <ClInclude Include="RA_UnitTestDataHelpers.h" />
     <ClInclude Include="RA_UnitTestServicesHelpers.h" />

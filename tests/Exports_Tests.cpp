@@ -5,6 +5,7 @@
 #include "RA_BuildVer.h"
 
 #include "tests\mocks\MockAudioSystem.hh"
+#include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
@@ -34,6 +35,7 @@ using ra::data::context::mocks::MockGameContext;
 using ra::data::context::mocks::MockSessionTracker;
 using ra::data::context::mocks::MockUserContext;
 using ra::services::mocks::MockAudioSystem;
+using ra::services::mocks::MockClock;
 using ra::services::mocks::MockConfiguration;
 using ra::services::mocks::MockFrameEventQueue;
 using ra::services::mocks::MockThreadPool;
@@ -388,6 +390,7 @@ private:
         MockOverlayTheme mockTheme;
         MockFrameEventQueue mockFrameEventQueue;
         MockWindowManager mockWindowManager;
+        MockClock mockClock;
 
         DoAchievementsFrameHarness() noexcept
         {
@@ -410,12 +413,15 @@ private:
             });
         }
 
-        void MockAchievement(unsigned int nId)
+        ra::data::models::AchievementModel& MockAchievement(unsigned int nId)
         {
-            auto& pAch = mockGameContext.NewAchievement(Achievement::Category::Core);
+            auto& pAch = mockGameContext.Assets().NewAchievement();
+            pAch.SetCategory(ra::data::models::AssetCategory::Core);
             pAch.SetID(nId);
             pAch.SetTrigger("1=1");
-            pAch.SetActive(true);
+            pAch.UpdateServerCheckpoint();
+            pAch.SetState(ra::data::models::AssetState::Active);
+            return pAch;
         }
 
         bool WasUnlocked(unsigned int nId)
@@ -452,7 +458,7 @@ public:
 
         Assert::IsTrue(harness.WasUnlocked(1U));
         Assert::IsFalse(harness.mockDesktop.WasDialogShown());
-        Assert::AreEqual(std::wstring(L"Titles"), harness.mockGameContext.FindAchievement(1U)->GetUnlockRichPresence());
+        Assert::AreEqual(std::wstring(L"Titles"), harness.mockGameContext.Assets().FindAchievement(1U)->GetUnlockRichPresence());
     }
 
     TEST_METHOD(TestDoAchievementsFrameAchievementTriggeredNoRichPresence)
@@ -465,7 +471,7 @@ public:
 
         Assert::IsTrue(harness.WasUnlocked(1U));
         Assert::IsFalse(harness.mockDesktop.WasDialogShown());
-        Assert::AreEqual(std::wstring(), harness.mockGameContext.FindAchievement(1U)->GetUnlockRichPresence());
+        Assert::AreEqual(std::wstring(), harness.mockGameContext.Assets().FindAchievement(1U)->GetUnlockRichPresence());
     }
 
     TEST_METHOD(TestDoAchievementsFramePaused)
@@ -486,9 +492,11 @@ public:
     TEST_METHOD(TestDoAchievementsFramePauseOnTrigger)
     {
         DoAchievementsFrameHarness harness;
-        harness.MockAchievement(1U);
-        harness.mockGameContext.FindAchievement(1U)->SetPauseOnTrigger(true);
-        harness.mockGameContext.FindAchievement(1U)->SetTitle("AchievementTitle");
+        auto& pAch = harness.MockAchievement(1U);
+        pAch.SetName(L"AchievementTitle");
+        pAch.UpdateServerCheckpoint();
+        pAch.SetPauseOnTrigger(true);
+
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementTriggered, 1U);
         bool bWasPaused = false;
         harness.mockEmulatorContext.SetPauseFunction([&bWasPaused] { bWasPaused = true; });
@@ -513,8 +521,8 @@ public:
     {
         DoAchievementsFrameHarness harness;
         harness.MockAchievement(1U);
-        harness.mockGameContext.FindAchievement(1U)->SetPauseOnReset(true);
-        harness.mockGameContext.FindAchievement(1U)->SetTitle("AchievementTitle");
+        harness.mockGameContext.Assets().FindAchievement(1U)->SetPauseOnReset(true);
+        harness.mockGameContext.Assets().FindAchievement(1U)->SetName(L"AchievementTitle");
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementReset, 1U);
         bool bWasPaused = false;
         harness.mockEmulatorContext.SetPauseFunction([&bWasPaused] { bWasPaused = true; });

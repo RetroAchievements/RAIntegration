@@ -15,6 +15,7 @@ class CapturedTriggerHits
 public:
     void Capture(const rc_trigger_t* pTrigger, const std::string& sTrigger);
     bool Restore(rc_trigger_t* pTrigger, const std::string& sTrigger) const;
+    void Reset() noexcept;
 
 private:
     std::vector<unsigned> m_vCapturedHitCounts;

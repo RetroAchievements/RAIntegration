@@ -145,18 +145,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
         {
             bool bShowHardcorePrompt = false;
             if (pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning))
-            {
-                pGameContext.EnumerateAchievements([&bShowHardcorePrompt](const Achievement & pAchievment) noexcept
-                {
-                    if (pAchievment.GetCategory() == Achievement::Category::Core)
-                    {
-                        bShowHardcorePrompt = true;
-                        return false;
-                    }
-
-                    return true;
-                });
-            }
+                bShowHardcorePrompt = pGameContext.Assets().HasCoreAssets();
 
             if (bShowHardcorePrompt)
             {

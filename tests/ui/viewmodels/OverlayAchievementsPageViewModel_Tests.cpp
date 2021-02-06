@@ -66,12 +66,9 @@ private:
 
         ra::data::models::AchievementModel& NewAchievement(AssetCategory nCategory)
         {
-            const auto& pAchievement = mockGameContext.NewAchievement(ra::itoe<Achievement::Category>(ra::etoi(nCategory)));
-
-            auto* vmAchievement = mockGameContext.Assets().FindAchievement(pAchievement.ID());
-            Assert::IsNotNull(vmAchievement);
-            Expects(vmAchievement != nullptr);
-            return *vmAchievement;
+            auto& pAchievement = mockGameContext.Assets().NewAchievement();
+            pAchievement.SetCategory(nCategory);
+            return pAchievement;
         }
 
         void SetProgress(ra::AchievementID nId, int nValue, int nMax)
@@ -622,7 +619,6 @@ public:
         OverlayAchievementsPageViewModelHarness achievementsPage;
         achievementsPage.mockWindowManager.AssetList.SetFilterCategory(AssetCategory::Local);
         auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Local);
-        achievementsPage.mockGameContext.FindAchievement(pAch1.GetID())->SetID(1);
         pAch1.SetID(1);
         pAch1.SetName(L"AchievementTitle");
         pAch1.SetDescription(L"Trigger this");
@@ -646,7 +642,6 @@ public:
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
         auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        achievementsPage.mockGameContext.FindAchievement(pAch1.GetID())->SetID(1);
         pAch1.SetID(1);
         pAch1.SetName(L"AchievementTitle");
         pAch1.SetDescription(L"Trigger this");

@@ -128,6 +128,7 @@ public:
     bool Deserialize(ra::Tokenizer& pTokenizer) override;
 
     const CapturedTriggerHits& GetCapturedHits() const noexcept { return m_pCapturedTriggerHits; }
+    void ResetCapturedHits() noexcept { m_pCapturedTriggerHits.Reset(); }
 
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;

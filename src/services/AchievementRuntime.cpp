@@ -463,7 +463,7 @@ bool AchievementRuntime::LoadProgressV1(const std::string& sProgress, std::set<u
         }
         else
         {
-            const auto* pAchievement = pGameContext.FindAchievement(nId);
+            const auto* pAchievement = pGameContext.Assets().FindAchievement(nId);
             std::string sMemString = pAchievement ? pAchievement->GetTrigger() : "";
             ProcessStateString(pTokenizer, nId, pTrigger, pUserContext.GetUsername(), sMemString);
             pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
@@ -639,6 +639,15 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
         return true;
 
     std::lock_guard<std::mutex> pLock(m_pMutex);
+
+    // clear out any captured hits for active achievements so they get re-evaluated from the runtime
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
+    {
+        auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pGameContext.Assets().GetItemAt(nIndex));
+        if (pAchievement != nullptr && pAchievement->IsActive())
+            pAchievement->ResetCapturedHits();
+    }
 
     // reset the runtime state, then apply state from file
     rc_runtime_reset(&m_pRuntime);

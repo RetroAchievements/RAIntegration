@@ -41,19 +41,6 @@ namespace ra {
 namespace data {
 namespace context {
 
-static void CopyAchievementData(Achievement& pAchievement, ra::data::models::AchievementModel& pAsset)
-{
-    pAchievement.m_pAchievementModel = &pAsset;
-    pAchievement.SetCategory(ra::itoe<Achievement::Category>(ra::etoi(pAsset.GetCategory())));
-    pAchievement.SetID(pAsset.GetID());
-    pAchievement.SetTitle(ra::Narrow(pAsset.GetName()));
-    pAchievement.SetDescription(ra::Narrow(pAsset.GetDescription()));
-    pAchievement.SetPoints(pAsset.GetPoints());
-    pAchievement.SetBadgeImage(ra::Narrow(pAsset.GetBadge()));
-    pAchievement.SetTrigger(pAsset.GetTrigger());
-    pAchievement.SetAuthor(ra::Narrow(pAsset.GetAuthor()));
-}
-
 void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 {
     // remove the current asset from the asset editor
@@ -71,7 +58,6 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     m_mCodeNotes.clear();
     m_vAssets.ResetLocalId();
 
-    m_vAchievements.clear();
     m_vLeaderboards.clear();
 
     m_vAssets.BeginUpdate();
@@ -159,19 +145,21 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     for (const auto& pAchievementData : response.Achievements)
     {
         // if the server has provided an unexpected category (usually 0), ignore it.
-        const auto nCategory = ra::itoe<Achievement::Category>(pAchievementData.CategoryId);
-        if (nCategory != Achievement::Category::Core && nCategory != Achievement::Category::Unofficial)
+        const auto nCategory = ra::itoe<ra::data::models::AssetCategory>(pAchievementData.CategoryId);
+        if (nCategory != ra::data::models::AssetCategory::Core && nCategory != ra::data::models::AssetCategory::Unofficial)
             continue;
 
         auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
         vmAchievement->SetID(pAchievementData.Id);
         vmAchievement->SetName(ra::Widen(pAchievementData.Title));
         vmAchievement->SetDescription(ra::Widen(pAchievementData.Description));
-        vmAchievement->SetCategory(ra::itoe<ra::data::models::AssetCategory>(pAchievementData.CategoryId));
+        vmAchievement->SetCategory(nCategory);
         vmAchievement->SetPoints(pAchievementData.Points);
         vmAchievement->SetAuthor(ra::Widen(pAchievementData.Author));
         vmAchievement->SetBadge(ra::Widen(pAchievementData.BadgeName));
         vmAchievement->SetTrigger(pAchievementData.Definition);
+        vmAchievement->SetCreationTime(pAchievementData.Created);
+        vmAchievement->SetUpdatedTime(pAchievementData.Updated);
         vmAchievement->CreateServerCheckpoint();
         vmAchievement->CreateLocalCheckpoint();
         m_vAssets.Append(std::move(vmAchievement));
@@ -181,7 +169,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievementData.BadgeName);
 #endif
 
-        if (pAchievementData.CategoryId == ra::to_unsigned(ra::etoi(Achievement::Category::Core)))
+        if (nCategory == ra::data::models::AssetCategory::Core)
         {
             ++nNumCoreAchievements;
             nTotalCoreAchievementPoints += pAchievementData.Points;
@@ -202,17 +190,6 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // merge local assets
     std::vector<ra::data::models::AssetModelBase*> vEmptyAssetsList;
     m_vAssets.ReloadAssets(vEmptyAssetsList);
-
-    // create legacy containers
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
-    {
-        auto* pAsset = dynamic_cast<ra::data::models::AchievementModel*>(m_vAssets.GetItemAt(nIndex));
-        if (!pAsset)
-            continue;
-
-        auto& pAchievement = *m_vAchievements.emplace_back(std::make_unique<Achievement>());
-        CopyAchievementData(pAchievement, *pAsset);
-    }
 
 #ifndef RA_UTEST
     DoFrame();
@@ -301,8 +278,12 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
 {
     // start by identifying all available achievements
     std::set<unsigned int> vLockedAchievements;
-    for (auto& pAchievement : m_vAchievements)
-        vLockedAchievements.insert(pAchievement->ID());
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Assets().Count()); ++nIndex)
+    {
+        const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(Assets().GetItemAt(nIndex));
+        if (pAchievement != nullptr)
+            vLockedAchievements.insert(pAchievement->GetID());
+    }
 
     // deactivate anything the player has already unlocked
     size_t nUnlockedCoreAchievements = 0U;
@@ -367,31 +348,6 @@ void GameContext::DoFrame()
     }
 }
 
-Achievement& GameContext::NewAchievement(Achievement::Category nType)
-{
-    auto& pAsset = m_vAssets.NewAchievement();
-    pAsset.SetCategory(ra::itoe<ra::data::models::AssetCategory>(ra::etoi(nType)));
-
-    Achievement& pAchievement = *m_vAchievements.emplace_back(std::make_unique<Achievement>());
-    CopyAchievementData(pAchievement, pAsset);
-
-    return pAchievement;
-}
-
-bool GameContext::RemoveAchievement(ra::AchievementID nAchievementId) noexcept
-{
-    for (auto pIter = m_vAchievements.begin(); pIter != m_vAchievements.end(); ++pIter)
-    {
-        if (*pIter && (*pIter)->ID() == nAchievementId)
-        {
-            m_vAchievements.erase(pIter);
-            return true;
-        }
-    }
-
-    return false;
-}
-
 void GameContext::AwardMastery() const
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -405,18 +361,19 @@ void GameContext::AwardMastery() const
         unsigned int nTotalCoreAchievementPoints = 0;
 
         bool bActiveCoreAchievement = false;
-        for (const auto& pAchievement : m_vAchievements)
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Assets().Count()); ++nIndex)
         {
-            if (pAchievement->GetCategory() == Achievement::Category::Core)
+            const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(Assets().GetItemAt(nIndex));
+            if (pAchievement != nullptr && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
             {
-                if (response.UnlockedAchievements.find(pAchievement->ID()) == response.UnlockedAchievements.end())
+                if (response.UnlockedAchievements.find(pAchievement->GetID()) == response.UnlockedAchievements.end())
                 {
                     bActiveCoreAchievement = true;
                     break;
                 }
 
                 ++nNumCoreAchievements;
-                nTotalCoreAchievementPoints += pAchievement->Points();
+                nTotalCoreAchievementPoints += pAchievement->GetPoints();
             }
         }
 
@@ -450,9 +407,9 @@ void GameContext::AwardMastery() const
     });
 }
 
-void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
+void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
 {
-    auto* pAchievement = FindAchievement(nAchievementId);
+    auto* pAchievement = Assets().FindAchievement(nAchievementId);
     if (pAchievement == nullptr)
         return;
 
@@ -462,20 +419,20 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
     bool bIsError = false;
 
     std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-    vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->Title(), pAchievement->Points()));
-    vmPopup->SetDetail(ra::Widen(pAchievement->Description()));
-    vmPopup->SetImage(ra::ui::ImageType::Badge, pAchievement->BadgeImageURI());
+    vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->GetName(), pAchievement->GetPoints()));
+    vmPopup->SetDetail(ra::Widen(pAchievement->GetDescription()));
+    vmPopup->SetImage(ra::ui::ImageType::Badge, ra::Narrow(pAchievement->GetBadge()));
     vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);
 
     switch (pAchievement->GetCategory())
     {
-        case Achievement::Category::Local:
+        case ra::data::models::AssetCategory::Local:
             vmPopup->SetTitle(L"Local Achievement Unlocked");
             bSubmit = false;
             bTakeScreenshot = false;
             break;
 
-        case Achievement::Category::Unofficial:
+        case ra::data::models::AssetCategory::Unofficial:
             vmPopup->SetTitle(L"Unofficial Achievement Unlocked");
             bSubmit = false;
             break;
@@ -495,7 +452,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
         bSubmit = false;
     }
 
-    if (pAchievement->Modified())
+    if (pAchievement->IsModified())
     {
         auto sHeader = vmPopup->GetTitle();
         sHeader.insert(0, L"Modified ");
@@ -543,7 +500,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
         }
     }
 
-    pAchievement->SetActive(false);
+    pAchievement->SetState(ra::data::models::AssetState::Triggered);
 
     if (!bSubmit)
         return;
@@ -607,13 +564,14 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
     {
         bool bHasCoreAchievement = false;
         bool bActiveCoreAchievement = false;
-        for (const auto& pCheckAchievement : m_vAchievements)
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Assets().Count()); ++nIndex)
         {
-            if (pCheckAchievement->GetCategory() == Achievement::Category::Core)
+            const auto* pCheckAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(Assets().GetItemAt(nIndex));
+            if (pCheckAchievement != nullptr && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
             {
                 bHasCoreAchievement = true;
 
-                if (pCheckAchievement->Active())
+                if (pCheckAchievement->IsActive())
                 {
                     bActiveCoreAchievement = true;
                     break;
@@ -629,96 +587,6 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId) const
                 .ScheduleAsync(std::chrono::milliseconds(500), [this]() { AwardMastery(); });
         }
     }
-}
-
-void GameContext::ReloadAchievements(Achievement::Category nCategory)
-{
-    if (nCategory == Achievement::Category::Local)
-    {
-        auto pIter = m_vAchievements.begin();
-        while (pIter != m_vAchievements.end())
-        {
-            if ((*pIter)->GetCategory() == nCategory)
-                pIter = m_vAchievements.erase(pIter);
-            else
-                ++pIter;
-        }
-
-        std::vector<ra::data::models::AssetModelBase*> vEmptyList;
-        m_vAssets.ReloadAssets(vEmptyList);
-    }
-    else
-    {
-        // TODO
-    }
-}
-
-bool GameContext::ReloadAchievement(ra::AchievementID nAchievementId)
-{
-    auto pIter = m_vAchievements.begin();
-    while (pIter != m_vAchievements.end())
-    {
-        if ((*pIter)->ID() == nAchievementId)
-        {
-            if (ReloadAchievement(*pIter->get()))
-                return true;
-
-            break;
-        }
-
-        ++pIter;
-    }
-
-    return false;
-}
-
-bool GameContext::ReloadAchievement(Achievement& pAchievement)
-{
-    if (pAchievement.GetCategory() == Achievement::Category::Local)
-    {
-        auto* pAsset = m_vAssets.FindAchievement(pAchievement.ID());
-        if (pAsset)
-        {
-            std::vector<ra::data::models::AssetModelBase*> vAssetsToReload;
-            vAssetsToReload.push_back(pAsset);
-            m_vAssets.ReloadAssets(vAssetsToReload);
-
-            // make sure the item still exists
-            pAsset = m_vAssets.FindAchievement(pAchievement.ID());
-            if (pAsset)
-            {
-                CopyAchievementData(pAchievement, *pAsset);
-                return true;
-            }
-        }
-        return false;
-    }
-    else
-    {
-        ra::api::FetchGameData::Request request;
-        request.GameId = m_nGameId;
-
-        const auto response = request.Call();
-        if (response.Failed())
-        {
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download game data",
-                                                                      ra::Widen(response.ErrorMessage));
-            return true; // prevent deleting achievement if server call failed
-        }
-
-        for (const auto& pAchievementData : response.Achievements)
-        {
-            if (pAchievementData.Id != pAchievement.ID())
-                continue;
-
-            //CopyAchievementData(pAchievement, pAchievementData);
-            pAchievement.SetDirtyFlag(Achievement::DirtyFlags::All);
-            pAchievement.SetModified(false);
-            return true;
-        }
-    }
-
-    return false;
 }
 
 void GameContext::DeactivateLeaderboards() noexcept

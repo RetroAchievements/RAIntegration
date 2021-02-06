@@ -238,35 +238,13 @@ bool SessionTracker::IsInspectingMemory() const
     return false;
 }
 
-static bool HasCoreAchievements(const ra::data::context::GameContext& pGameContext)
-{
-    bool bResult = false;
-    pGameContext.EnumerateAchievements([&bResult](const Achievement& pAchievement) noexcept
-    {
-        switch (pAchievement.GetCategory())
-        {
-            case Achievement::Category::Local:
-            case Achievement::Category::Unofficial:
-                // not Core, keep looking
-                return true;
-
-            default:
-                // Core, Bonus, or something else that's been published, set found flag and stop looking
-                bResult = true;
-                return false;
-        }
-    });
-
-    return bResult;
-}
-
 std::wstring SessionTracker::GetCurrentActivity() const
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
 
     if (IsInspectingMemory())
     {
-        if (!HasCoreAchievements(pGameContext))
+        if (!pGameContext.Assets().HasCoreAssets())
             return L"Developing Achievements";
 
         if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)

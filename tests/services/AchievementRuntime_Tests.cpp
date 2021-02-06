@@ -369,67 +369,94 @@ public:
         Assert::AreEqual(0U, pTrigger2->requirement->conditions->current_hits);
     }
 
+    static rc_condition_t* GetCondition(AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond) noexcept
+    {
+        rc_trigger_t* pTrigger = harness.GetAchievementTrigger(nId);
+        rc_condset_t* pCondset = pTrigger->requirement;
+        if (nGroup > 1)
+        {
+            pCondset = pTrigger->alternative;
+            while (pCondset && --nGroup > 0)
+                pCondset = pCondset->next;
+        }
+
+        if (!pCondset)
+            return nullptr;
+
+        rc_condition_t* pCondition = pCondset->conditions;
+        while (pCondition && nCond-- > 0)
+            pCondition = pCondition->next;
+
+        return pCondition;
+    }
+
+    static void SetConditionHitCount(AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond, int nHits)
+    {
+        rc_condition_t* pCond = GetCondition(harness, nId, nGroup, nCond);
+        Assert::IsNotNull(pCond);
+        pCond->current_hits = ra::to_unsigned(nHits);
+    }
+
+    static void AssertConditionHitCount(AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond, int nHits)
+    {
+        const rc_condition_t* pCond = GetCondition(harness, nId, nGroup, nCond);
+        Assert::IsNotNull(pCond);
+        Assert::AreEqual(pCond->current_hits, ra::to_unsigned(nHits));
+    }
+    /*
     TEST_METHOD(TestPersistProgressFile)
     {
         AchievementRuntimeHarness runtime;
-        auto& ach1 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
-        ach1.SetID(3U);
-        ach1.SetTrigger("1=1.10.");
-        auto& ach2 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
-        ach2.SetID(5U);
-        ach2.SetTrigger("1=1.2.");
+        runtime.ActivateAchievement(3U, "1=1.10.");
+        runtime.ActivateAchievement(5U, "1=1.2.");
 
-        const gsl::not_null<Achievement*> pAchievement3{
-            gsl::make_not_null(runtime.mockGameContext.FindAchievement(3U))};
-        const gsl::not_null<Achievement*> pAchievement5{
-            gsl::make_not_null(runtime.mockGameContext.FindAchievement(5U))};
-
-        pAchievement3->SetConditionHitCount(0, 0, 2);
-        pAchievement5->SetConditionHitCount(0, 0, 2);
+        SetConditionHitCount(runtime, 3U, 0, 0, 2);
+        SetConditionHitCount(runtime, 5U, 0, 0, 2);
 
         runtime.SaveProgressToFile("test.sav");
 
-        // achievements weren't active, so they weren't persisted
-        pAchievement3->SetConditionHitCount(0, 0, 1);
-        pAchievement5->SetConditionHitCount(0, 0, 1);
+        // inactive achievements aren't persisted
+        runtime.GetAchievementTrigger(3U)->state = RC_TRIGGER_STATE_INACTIVE;
+        runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_INACTIVE;
+        SetConditionHitCount(runtime, 3U, 0, 0, 1);
+        SetConditionHitCount(runtime, 5U, 0, 0, 1);
         runtime.LoadProgressFromFile("test.sav");
-        Assert::AreEqual(0U, pAchievement3->GetConditionHitCount(0, 0));
-        Assert::AreEqual(0U, pAchievement5->GetConditionHitCount(0, 0));
+        AssertConditionHitCount(runtime, 3U, 0, 0, 0);
+        AssertConditionHitCount(runtime, 5U, 0, 0, 0);
 
         // activate one achievement, save, activate other, restore - only first should be restored,
         // second should be reset because it wasn't captured.
-        pAchievement3->SetActive(true);
         runtime.GetAchievementTrigger(3U)->state = RC_TRIGGER_STATE_ACTIVE;
-        pAchievement3->SetConditionHitCount(0, 0, 1);
-        pAchievement5->SetConditionHitCount(0, 0, 1);
+        SetConditionHitCount(runtime, 3U, 0, 0, 1);
+        SetConditionHitCount(runtime, 5U, 0, 0, 1);
         runtime.SaveProgressToFile("test.sav");
-        pAchievement5->SetActive(true);
         runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
 
-        pAchievement3->SetConditionHitCount(0, 0, 2);
-        pAchievement5->SetConditionHitCount(0, 0, 2);
+        SetConditionHitCount(runtime, 3U, 0, 0, 2);
+        SetConditionHitCount(runtime, 5U, 0, 0, 2);
         runtime.LoadProgressFromFile("test.sav");
-        Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
-        Assert::AreEqual(0U, pAchievement5->GetConditionHitCount(0, 0));
+        AssertConditionHitCount(runtime, 3U, 0, 0, 1);
+        AssertConditionHitCount(runtime, 5U, 0, 0, 0);
 
         // both active, save and restore should reset both
         runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
-        pAchievement5->SetConditionHitCount(0, 0, 1);
+        SetConditionHitCount(runtime, 3U, 0, 0, 1);
+        SetConditionHitCount(runtime, 5U, 0, 0, 1);
         runtime.SaveProgressToFile("test.sav");
 
-        pAchievement3->SetConditionHitCount(0, 0, 2);
-        pAchievement5->SetConditionHitCount(0, 0, 2);
+        SetConditionHitCount(runtime, 3U, 0, 0, 2);
+        SetConditionHitCount(runtime, 5U, 0, 0, 2);
         runtime.LoadProgressFromFile("test.sav");
-        Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
-        Assert::AreEqual(1U, pAchievement5->GetConditionHitCount(0, 0));
+        AssertConditionHitCount(runtime, 3U, 0, 0, 1);
+        AssertConditionHitCount(runtime, 5U, 0, 0, 1);
 
         // second no longer active, file contains data that should be ignored
-        pAchievement3->SetConditionHitCount(0, 0, 6);
-        pAchievement5->SetConditionHitCount(0, 0, 6);
-        pAchievement5->SetActive(false);
+        SetConditionHitCount(runtime, 3U, 0, 0, 6);
+        SetConditionHitCount(runtime, 5U, 0, 0, 6);
+        runtime.DeactivateAchievement(5U);
         runtime.LoadProgressFromFile("test.sav");
-        Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
-        Assert::AreEqual(6U, pAchievement5->GetConditionHitCount(0, 0));
+        AssertConditionHitCount(runtime, 3U, 0, 0, 1);
+        AssertConditionHitCount(runtime, 5U, 0, 0, 6);
 
         // if the definition changes, the hits should be reset instead of remembered
         pAchievement3->GenerateConditions();
@@ -652,42 +679,7 @@ public:
         Assert::AreEqual(0, (int)pMemRef->value.changed);
         Assert::AreEqual(0x040000U, pMemRef->value.prior);
     }
-
-    TEST_METHOD(TestActivateClonedAchievement)
-    {
-        AchievementRuntime runtime;
-        ra::services::ServiceLocator::ServiceOverride<AchievementRuntime> svcOverride(&runtime, false);
-        ra::data::models::AchievementModel vmAchievement1, vmAchievement2;
-
-        Achievement pAchievement1, pAchievement2;
-        pAchievement1.m_pAchievementModel = &vmAchievement1;
-        pAchievement2.m_pAchievementModel = &vmAchievement2;
-
-        pAchievement1.SetID(1U);
-        pAchievement1.SetTrigger("1=1");
-        pAchievement1.SetTitle("Title");
-        pAchievement1.SetDescription("Desc");
-        pAchievement1.SetAuthor("Auth");
-        pAchievement1.SetPoints(5);
-        pAchievement1.SetCreatedDate(1234567890);
-        pAchievement1.SetModifiedDate(1234567890);
-        pAchievement1.SetBadgeImage("12345");
-        pAchievement1.SetActive(true);
-        runtime.GetAchievementTrigger(1U)->state = RC_TRIGGER_STATE_ACTIVE;
-
-        pAchievement2.CopyFrom(pAchievement1);
-        pAchievement2.SetID(12U);
-        Assert::IsFalse(pAchievement2.Active()); // clone should not be immediately active
-        pAchievement2.SetActive(true);
-        runtime.GetAchievementTrigger(12U)->state = RC_TRIGGER_STATE_ACTIVE;
-
-        // both achievements should trigger
-        std::vector<AchievementRuntime::Change> vChanges;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 2U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 1U);
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 12U);
-    }
+    */
 
     TEST_METHOD(TestReactivateAchievement)
     {

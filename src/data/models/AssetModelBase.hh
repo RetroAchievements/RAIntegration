@@ -138,6 +138,36 @@ public:
     void SetAuthor(const std::wstring& sValue) { SetValue(AuthorProperty, sValue); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for when the asset was created.
+    /// </summary>
+    static const IntModelProperty CreationTimeProperty;
+
+    /// <summary>
+    /// Gets when the asset was created.
+    /// </summary>
+    time_t GetCreationTime() const { return gsl::narrow_cast<time_t>(GetValue(CreationTimeProperty)); }
+
+    /// <summary>
+    /// Sets when the asset was created.
+    /// </summary>
+    void SetCreationTime(time_t nValue) { SetValue(CreationTimeProperty, gsl::narrow_cast<int>(nValue)); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for when the asset was last updated.
+    /// </summary>
+    static const IntModelProperty UpdatedTimeProperty;
+
+    /// <summary>
+    /// Gets when the asset was last updated.
+    /// </summary>
+    time_t GetUpdatedTime() const { return gsl::narrow_cast<time_t>(GetValue(UpdatedTimeProperty)); }
+
+    /// <summary>
+    /// Sets when the asset was last updated.
+    /// </summary>
+    void SetUpdatedTime(time_t nValue) { SetValue(UpdatedTimeProperty, gsl::narrow_cast<int>(nValue)); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the asset state.
     /// </summary>
     static const IntModelProperty StateProperty;

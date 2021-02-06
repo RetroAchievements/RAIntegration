@@ -16,6 +16,7 @@ namespace bindings {
 
 static std::atomic_int g_nSuspendRepaintCount = 0;
 static std::set<HWND> g_vSuspendedRepaintHWnds;
+bool ControlBinding::s_bNeedsUpdateWindow = false;
 
 ControlBinding::~ControlBinding() noexcept
 {
@@ -28,29 +29,13 @@ ControlBinding::~ControlBinding() noexcept
     }
 }
 
-static bool NeedsUpdate()
-{
-    // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
-    // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
-    // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
-    switch (ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetEmulatorId())
-    {
-        case RA_Libretro:
-        case RA_Oricutron:
-            return true;
-
-        default:
-            return false;
-    }
-}
-
 void ControlBinding::ForceRepaint(HWND hWnd)
 {
     if (g_nSuspendRepaintCount == 0)
     {
         ::InvalidateRect(hWnd, nullptr, FALSE);
 
-        if (NeedsUpdate())
+        if (NeedsUpdateWindow())
             ::UpdateWindow(hWnd);
     }
     else
@@ -81,7 +66,7 @@ void ControlBinding::ResumeRepaint()
             for (HWND hWnd : vSuspendedRepaintWnds)
                 ::InvalidateRect(hWnd, nullptr, FALSE);
 
-            if (NeedsUpdate())
+            if (NeedsUpdateWindow())
             {
                 for (HWND hWnd : vSuspendedRepaintWnds)
                     ::UpdateWindow(hWnd);

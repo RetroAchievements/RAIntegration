@@ -88,6 +88,10 @@ extern "C" {
     // Perform one test for all achievements in the current set. Call this once per frame/cycle.
     API void CCONV _RA_DoAchievementsFrame();
 
+    // Enables forced repainting for controls when InvalidateWindow doesn't cause them to update
+    // properly. Seems to primarily be an issue when integrating with an application using SDL.
+    API void CCONV _RA_SetForceRepaint(bool bEnable);
+
     // Temporarily disable forced redraws
     API void CCONV _RA_SuspendRepaint();
 

@@ -80,6 +80,21 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
     ra::services::Initialization::RegisterServices(ra::itoe<EmulatorID>(nEmulatorID), sClientName);
 
     _RA_UpdateHWnd(hMainHWND);
+
+    // When using SDL, the Windows message queue is never empty (there's a flood of WM_PAINT messages for the
+    // SDL window). InvalidateRect only generates a WM_PAINT when the message queue is empty, so we have to
+    // explicitly generate (and dispatch) a WM_PAINT message by calling UpdateWindow.
+    switch (ra::itoe<EmulatorID>(nEmulatorID))
+    {
+        case RA_Libretro:
+        case RA_Oricutron:
+            ra::ui::win32::bindings::ControlBinding::SetNeedsUpdateWindow(true);
+            break;
+
+        default:
+            ra::ui::win32::bindings::ControlBinding::SetNeedsUpdateWindow(false);
+            break;
+    }
 #endif
 
     if (bOffline)
@@ -510,6 +525,13 @@ API void CCONV _RA_DoAchievementsFrame()
 #endif
 
     CHECK_PERFORMANCE();
+}
+
+API void CCONV _RA_SetForceRepaint([[maybe_unused]] bool bEnable)
+{
+#ifndef RA_UTEST
+    ra::ui::win32::bindings::ControlBinding::SetNeedsUpdateWindow(bEnable);
+#endif
 }
 
 API void CCONV _RA_SuspendRepaint()

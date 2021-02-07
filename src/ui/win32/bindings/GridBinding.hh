@@ -79,7 +79,7 @@ protected:
     virtual void UpdateItems(gsl::index nColumn);
     void CheckForScrollBar();
     int GetVisibleItemIndex(int iItem);
-    int GetRealItemIndex(int iItem) const;
+    gsl::index GetRealItemIndex(gsl::index iItem) const;
     virtual void Invalidate() noexcept(false);
 
     INT_PTR CALLBACK WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam) override;

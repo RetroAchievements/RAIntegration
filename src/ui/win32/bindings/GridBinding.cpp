@@ -942,7 +942,7 @@ void GridBinding::OnLvnColumnClick(const LPNMLISTVIEW pnmListView)
     m_vmItems->EndUpdate();
 }
 
-int GridBinding::GetRealItemIndex(int iItem) const
+gsl::index GridBinding::GetRealItemIndex(gsl::index iItem) const
 {
     // if not virtualizing, the index doesn't need to be modified
     if (!m_pScrollOffsetProperty)

@@ -129,6 +129,10 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                 if (pAsset->GetChanges() != ra::data::models::AssetChanges::None ||
                     pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
                 {
+                    // ignore LocalBadges container
+                    if (pAsset->GetType() == ra::data::models::AssetType::LocalBadges)
+                        continue;
+
                     vRemainingAssetsToReload.push_back(pAsset);
                 }
             }

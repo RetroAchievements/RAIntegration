@@ -40,7 +40,7 @@ public:
         Assert::AreEqual(0U, badges.GetID());
         Assert::AreEqual(std::wstring(L"Local Badges"), badges.GetName());
         Assert::AreEqual(std::wstring(L""), badges.GetDescription());
-        Assert::AreEqual(AssetCategory::Core, badges.GetCategory());
+        Assert::AreEqual(AssetCategory::Local, badges.GetCategory());
         Assert::AreEqual(AssetState::Inactive, badges.GetState());
         Assert::AreEqual(AssetChanges::None, badges.GetChanges());
         Assert::IsFalse(badges.NeedsSerialized());

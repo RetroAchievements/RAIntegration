@@ -292,6 +292,9 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
 
 void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
 {
+    // when virtualizing, only the visible items have view models. adjust the index accordingly.
+    nIndex = GetRealItemIndex(nIndex);
+
     if (m_pRowColorProperty && *m_pRowColorProperty == args.Property)
     {
         if (m_nAdjustingScrollOffset == 0)
@@ -327,6 +330,9 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
 
 void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)
 {
+    // when virtualizing, only the visible items have view models. adjust the index accordingly.
+    nIndex = GetRealItemIndex(nIndex);
+
     if (m_pIsSelectedProperty && *m_pIsSelectedProperty == args.Property)
         ListView_SetItemState(m_hWnd, nIndex, args.tNewValue ? LVIS_SELECTED : 0, LVIS_SELECTED);
 
@@ -358,6 +364,9 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
 
 void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
 {
+    // when virtualizing, only the visible items have view models. adjust the index accordingly.
+    nIndex = GetRealItemIndex(nIndex);
+
     std::wstring sText;
     LV_ITEMW item{};
     item.mask = LVIF_TEXT;
@@ -842,8 +851,10 @@ void GridBinding::OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateC
             else
                 nTo -= m_nScrollOffset;
 
+            m_vmItems->RemoveNotifyTarget(*this);
             for (gsl::index nIndex = nFrom; nIndex < nTo; ++nIndex)
                 m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, bSelected);
+            m_vmItems->AddNotifyTarget(*this);
         }
     }
 }
@@ -929,6 +940,23 @@ void GridBinding::OnLvnColumnClick(const LPNMLISTVIEW pnmListView)
         }
     }
     m_vmItems->EndUpdate();
+}
+
+gsl::index GridBinding::GetRealItemIndex(gsl::index iItem) const
+{
+    // if not virtualizing, the index doesn't need to be modified
+    if (!m_pScrollOffsetProperty)
+        return iItem;
+
+    // adjust for scroll offset
+    const auto iAdjustedItem = iItem + m_nScrollOffset;
+
+    // quick check to make sure the item is valid
+    const auto nScrollMax = GetValue(*m_pScrollMaximumProperty);
+    if (iAdjustedItem >= nScrollMax)
+        return -1;
+
+    return iAdjustedItem;
 }
 
 int GridBinding::GetVisibleItemIndex(int iItem)

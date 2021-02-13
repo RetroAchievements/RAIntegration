@@ -14,6 +14,7 @@ namespace ui {
 namespace win32 {
 namespace bindings {
 
+static std::mutex g_pSuspendRepaintMutex;
 static std::atomic_int g_nSuspendRepaintCount = 0;
 static std::set<HWND> g_vSuspendedRepaintHWnds;
 bool ControlBinding::s_bNeedsUpdateWindow = false;
@@ -40,10 +41,7 @@ void ControlBinding::ForceRepaint(HWND hWnd)
     }
     else
     {
-#ifdef DEBUG
-        if (g_vSuspendedRepaintHWnds.find(hWnd) != g_vSuspendedRepaintHWnds.end())
-            return;
-#endif
+        std::lock_guard<std::mutex> guard(g_pSuspendRepaintMutex);
         g_vSuspendedRepaintHWnds.insert(hWnd);
     }
 }
@@ -59,7 +57,10 @@ void ControlBinding::ResumeRepaint()
     if (--g_nSuspendRepaintCount == 0)
     {
         std::set<HWND> vSuspendedRepaintWnds;
-        vSuspendedRepaintWnds.swap(g_vSuspendedRepaintHWnds);
+        {
+            std::lock_guard<std::mutex> guard(g_pSuspendRepaintMutex);
+            vSuspendedRepaintWnds.swap(g_vSuspendedRepaintHWnds);
+        }
 
         if (!vSuspendedRepaintWnds.empty())
         {

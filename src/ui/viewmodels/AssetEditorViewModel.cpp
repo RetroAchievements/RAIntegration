@@ -23,6 +23,7 @@ const BoolModelProperty AssetEditorViewModel::PauseOnResetProperty("AssetEditorV
 const BoolModelProperty AssetEditorViewModel::PauseOnTriggerProperty("AssetEditorViewModel", "PauseOnTrigger", false);
 const BoolModelProperty AssetEditorViewModel::DecimalPreferredProperty("AssetEditorViewModel", "DecimalPreferred", false);
 const BoolModelProperty AssetEditorViewModel::AssetLoadedProperty("AssetEditorViewModel", "AssetLoaded", false);
+const StringModelProperty AssetEditorViewModel::WaitingLabelProperty("AssetEditorViewModel", "WaitingLabel", L"Active");
 
 AssetEditorViewModel::AssetEditorViewModel() noexcept
 {
@@ -229,12 +230,15 @@ void AssetEditorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs&
 
 void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (m_pAsset != nullptr)
+    if (args.Property == StateProperty)
     {
-        if (args.Property == StateProperty)
+        const auto nOldState = ra::itoe<ra::data::models::AssetState>(args.tOldValue);
+        const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
+
+        if (m_pAsset != nullptr)
         {
             // make sure to update the hit counts in the frame where the achievement triggers
-            const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
+            // before it's deactivated, which might remove it from the runtime
             if (nNewState == ra::data::models::AssetState::Triggered)
                 Trigger().DoFrame();
 
@@ -244,12 +248,20 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
             // if the asset became active, rebind to the actual trigger
             if (ra::data::models::AssetModelBase::IsActive(nNewState))
             {
-                const auto nOldState = ra::itoe<ra::data::models::AssetState>(args.tOldValue);
                 if (!ra::data::models::AssetModelBase::IsActive(nOldState))
                     UpdateTriggerBinding();
             }
         }
-        else if (args.Property == CategoryProperty)
+
+        if (nNewState == ra::data::models::AssetState::Waiting)
+            SetValue(WaitingLabelProperty, L"Waiting");
+        else if (nOldState == ra::data::models::AssetState::Waiting)
+            SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
+    }
+
+    if (m_pAsset != nullptr)
+    {
+        if (args.Property == CategoryProperty)
         {
             m_pAsset->SetCategory(ra::itoe<ra::data::models::AssetCategory>(args.tNewValue));
         }

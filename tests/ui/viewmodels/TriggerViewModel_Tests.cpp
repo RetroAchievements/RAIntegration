@@ -862,6 +862,48 @@ public:
 
         Assert::AreEqual(std::string("S"), vmTrigger.Serialize());
     }
+
+    TEST_METHOD(TestDoFrameUpdatesHits)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "1=1");
+        Assert::AreEqual({ 1U }, vmTrigger.Groups().Count());
+
+        vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits = 2;
+        vmTrigger.DoFrame();
+        Assert::AreEqual(2U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+
+        vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits++;
+        vmTrigger.DoFrame();
+        Assert::AreEqual(3U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+
+        vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits++;
+        vmTrigger.DoFrame();
+        Assert::AreEqual(4U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+
+        vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits = 0;
+        vmTrigger.DoFrame();
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+    }
+
+    TEST_METHOD(TestDoFrameDoesNotUpdateTrigger)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0001=0001(10)");
+        Assert::AreEqual({ 1U }, vmTrigger.Groups().Count());
+        Assert::AreEqual(0, vmTrigger.GetVersion());
+
+        vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits = 2;
+        vmTrigger.DoFrame();
+        Assert::AreEqual(2U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+
+        // version should not have been updated. trigger did not actually change.
+        Assert::AreEqual(0, vmTrigger.GetVersion());
+
+        // Serialize will regenerate the input string, which will differ, but the trigger version should not be updated
+        Assert::AreEqual(std::string("1=1.10."), vmTrigger.Serialize());
+        Assert::AreEqual(0, vmTrigger.GetVersion());
+    }
 };
 
 } // namespace tests

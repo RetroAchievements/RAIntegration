@@ -644,6 +644,7 @@ void TriggerViewModel::DoFrame()
     auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
     if (pGroup != nullptr)
     {
+        m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
         m_vConditions.BeginUpdate();
 
         gsl::index nConditionIndex = 0;
@@ -657,6 +658,7 @@ void TriggerViewModel::DoFrame()
         }
 
         m_vConditions.EndUpdate();
+        m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
     }
 }
 

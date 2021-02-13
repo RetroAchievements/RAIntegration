@@ -115,6 +115,20 @@ public:
         Assert::IsFalse(editor.IsAssetLoaded());
     }
 
+    TEST_METHOD(TestLoadAchievementTrigger)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetTrigger("0xH1234=6.1.");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&achievement);
+
+        Assert::AreEqual(std::string("0xH1234=6.1."), editor.Trigger().Serialize());
+        Assert::IsFalse(achievement.IsModified());
+    }
+
     TEST_METHOD(TestSyncId)
     {
         AssetEditorViewModelHarness editor;

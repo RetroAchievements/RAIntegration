@@ -1119,7 +1119,7 @@ public:
 
     TEST_METHOD(TestReadMemoryBufferInvalidMemoryBlock)
     {
-        const uint8_t zero = 0;
+        constexpr uint8_t zero = 0;
         InitializeMemory();
 
         EmulatorContextHarness emulator;

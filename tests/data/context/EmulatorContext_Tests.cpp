@@ -1117,6 +1117,53 @@ public:
         Assert::AreEqual(0, static_cast<int>(buffer[3]));
     }
 
+    TEST_METHOD(TestReadMemoryBufferInvalidMemoryBlock)
+    {
+        const uint8_t zero = 0;
+        InitializeMemory();
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, nullptr, nullptr);
+        emulator.AddMemoryBlock(2, 10, &ReadMemory3, &WriteMemory3);
+        Assert::AreEqual({ 40U }, emulator.TotalMemorySize());
+
+        uint8_t buffer[32];
+
+        // simple read within valid block
+        emulator.ReadMemory(6U, buffer, 12);
+        Assert::IsTrue(memcmp(buffer, &memory.at(6), 11) == 0);
+
+        // simple read within invalid block
+        emulator.ReadMemory(22U, buffer, 4);
+        Assert::AreEqual(zero, buffer[0]);
+        Assert::AreEqual(zero, buffer[1]);
+        Assert::AreEqual(zero, buffer[2]);
+        Assert::AreEqual(zero, buffer[3]);
+
+        // read across block (valid -> invalid)
+        emulator.ReadMemory(16U, buffer, 8);
+        Assert::AreEqual(memory.at(16), buffer[0]);
+        Assert::AreEqual(memory.at(17), buffer[1]);
+        Assert::AreEqual(memory.at(18), buffer[2]);
+        Assert::AreEqual(memory.at(19), buffer[3]);
+        Assert::AreEqual(zero, buffer[4]);
+        Assert::AreEqual(zero, buffer[5]);
+        Assert::AreEqual(zero, buffer[6]);
+        Assert::AreEqual(zero, buffer[7]);
+
+        // read across block (invalid -> valid)
+        emulator.ReadMemory(26U, buffer, 8);
+        Assert::AreEqual(zero, buffer[0]);
+        Assert::AreEqual(zero, buffer[1]);
+        Assert::AreEqual(zero, buffer[2]);
+        Assert::AreEqual(zero, buffer[3]);
+        Assert::AreEqual(memory.at(30), buffer[4]);
+        Assert::AreEqual(memory.at(31), buffer[5]);
+        Assert::AreEqual(memory.at(32), buffer[6]);
+        Assert::AreEqual(memory.at(33), buffer[7]);
+    }
+
     TEST_METHOD(TestWriteMemoryByte)
     {
         InitializeMemory();

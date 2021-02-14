@@ -153,9 +153,6 @@
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\RA_Achievement.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
     <ClCompile Include="RA_UnitTestHelpers.cpp">
       <Filter>Tests</Filter>
     </ClCompile>
@@ -194,9 +191,6 @@
     </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\ScoreboardViewModel.cpp">
       <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="RA_Condition_Tests.cpp">
-      <Filter>Tests\Data</Filter>
     </ClCompile>
     <ClCompile Include="RA_StringUtils_Tests.cpp">
       <Filter>Tests\Services</Filter>
@@ -420,8 +414,8 @@
     <ClCompile Include="..\src\data\models\CapturedTriggerHits.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include=".cpp">
-      <Filter>Tests</Filter>
+    <ClCompile Include="..\src\ui\viewmodels\ChallengeIndicatorViewModel.cpp">
+      <Filter>Code</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

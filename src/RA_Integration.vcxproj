@@ -96,6 +96,7 @@
     <ClCompile Include="ui\viewmodels\AssetListViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\AssetUploadViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\ChallengeIndicatorViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\CodeNotesViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\FileDialogViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
@@ -268,6 +269,7 @@
     <ClInclude Include="ui\viewmodels\AssetListViewModel.hh" />
     <ClInclude Include="ui\viewmodels\AssetUploadViewModel.hh" />
     <ClInclude Include="ui\viewmodels\BrokenAchievementsViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\ChallengeIndicatorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\CodeNotesViewModel.hh" />
     <ClInclude Include="ui\viewmodels\EmulatorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\FileDialogViewModel.hh" />

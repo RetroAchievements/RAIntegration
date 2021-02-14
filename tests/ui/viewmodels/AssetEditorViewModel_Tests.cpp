@@ -237,6 +237,10 @@ public:
         achievement.SetState(AssetState::Waiting);
         Assert::AreEqual(AssetState::Waiting, editor.GetState());
         Assert::AreEqual(AssetState::Waiting, achievement.GetState());
+
+        achievement.SetState(AssetState::Primed);
+        Assert::AreEqual(AssetState::Primed, editor.GetState());
+        Assert::AreEqual(AssetState::Primed, achievement.GetState());
     }
 
     TEST_METHOD(TestSyncCategory)

@@ -36,6 +36,7 @@ enum class AssetState
     Waiting,
     Paused,
     Disabled,
+    Primed,
 };
 
 enum class AssetChanges

@@ -125,6 +125,9 @@ public:
 
         asset.SetState(AssetState::Waiting);
         Assert::IsTrue(asset.IsActive());
+
+        asset.SetState(AssetState::Primed);
+        Assert::IsTrue(asset.IsActive());
     }
 
     TEST_METHOD(TestSerializeDefaults)

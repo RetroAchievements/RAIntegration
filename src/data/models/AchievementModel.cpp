@@ -147,6 +147,9 @@ void AchievementModel::DoFrame()
             case RC_TRIGGER_STATE_DISABLED:
                 SetState(AssetState::Disabled);
                 break;
+            case RC_TRIGGER_STATE_PRIMED:
+                SetState(AssetState::Primed);
+                break;
         }
     }
 }
@@ -198,6 +201,11 @@ void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
         case AssetState::Inactive:
             if (pTrigger)
                 pTrigger->state = RC_TRIGGER_STATE_INACTIVE;
+            break;
+
+        case AssetState::Primed:
+            if (pTrigger)
+                pTrigger->state = RC_TRIGGER_STATE_PRIMED;
             break;
 
         case AssetState::Triggered:

@@ -44,6 +44,7 @@ private:
     ra::ui::win32::bindings::ComboBoxBinding m_bindDisplayLeaderboardCanceled;
     ra::ui::win32::bindings::ComboBoxBinding m_bindDisplayLeaderboardValue;
     ra::ui::win32::bindings::ComboBoxBinding m_bindDisplayLeaderboardScoreboards;
+    ra::ui::win32::bindings::ComboBoxBinding m_bindChallengeNotifications;
     ra::ui::win32::bindings::ComboBoxBinding m_bindInformationLocation;
     ra::ui::win32::bindings::TextBoxBinding m_bindScreenshotLocation;
 };

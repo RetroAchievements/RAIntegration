@@ -229,6 +229,11 @@ public:
         TestPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, "Leaderboard Scoreboard Display", ra::ui::viewmodels::PopupLocation::BottomRight);
     }
 
+    TEST_METHOD(TestChallengeNotificationDisplay)
+    {
+        TestPopupLocation(ra::ui::viewmodels::Popup::Challenge, "Challenge Notification Display", ra::ui::viewmodels::PopupLocation::BottomRight);
+    }
+
     TEST_METHOD(TestMessageDisplay)
     {
         TestPopupLocation(ra::ui::viewmodels::Popup::Message, "Informational Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft);

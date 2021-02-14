@@ -77,6 +77,7 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled, ra::ui::viewmodels::PopupLocation::BottomLeft);
     SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
     SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
+    SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
 
     RA_LOG_INFO("Loading preferences...");
 
@@ -113,6 +114,8 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardCanceled, doc, "Leaderboard Cancel Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
     ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardTracker, doc, "Leaderboard Counter Display", ra::ui::viewmodels::PopupLocation::BottomRight, true);
     ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardScoreboard, doc, "Leaderboard Scoreboard Display", ra::ui::viewmodels::PopupLocation::BottomRight, false);
+
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::Challenge, doc, "Challenge Notification Display", ra::ui::viewmodels::PopupLocation::BottomRight, true);
 
     ReadPopupLocation(*this, ra::ui::viewmodels::Popup::Message, doc, "Informational Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
 
@@ -205,6 +208,7 @@ void JsonFileConfiguration::Save() const
     WritePopupLocation(doc, a, "Leaderboard Cancel Display", GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled));
     WritePopupLocation(doc, a, "Leaderboard Counter Display", GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker));
     WritePopupLocation(doc, a, "Leaderboard Scoreboard Display", GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard));
+    WritePopupLocation(doc, a, "Challenge Notification Display", GetPopupLocation(ra::ui::viewmodels::Popup::Challenge));
     WritePopupLocation(doc, a, "Informational Notification Display", GetPopupLocation(ra::ui::viewmodels::Popup::Message));
     doc.AddMember("Prefer Decimal", IsFeatureEnabled(Feature::PreferDecimal), a);
     doc.AddMember("Num Background Threads", m_nBackgroundThreads, a);

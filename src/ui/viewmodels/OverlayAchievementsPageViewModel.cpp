@@ -128,6 +128,7 @@ void OverlayAchievementsPageViewModel::Refresh()
 
     // achievement list
     std::vector<const ra::data::models::AchievementModel*> vRecentAchievements;
+    std::vector<const ra::data::models::AchievementModel*> vActiveChallengeAchievements;
     std::vector<const ra::data::models::AchievementModel*> vAlmostThereAchievements;
     std::vector<const ra::data::models::AchievementModel*> vUnofficialAchievements;
     std::vector<const ra::data::models::AchievementModel*> vLocalAchievements;
@@ -163,6 +164,12 @@ void OverlayAchievementsPageViewModel::Refresh()
                     continue;
                 }
                 break;
+            }
+
+            case ra::data::models::AssetState::Primed:
+            {
+                vActiveChallengeAchievements.push_back(vmAchievement);
+                continue;
             }
 
             default:
@@ -212,6 +219,26 @@ void OverlayAchievementsPageViewModel::Refresh()
     size_t nNumberOfCoreAchievements = 0;
 
     m_vItems.BeginUpdate();
+
+    if (!vActiveChallengeAchievements.empty())
+    {
+        auto& pvmHeader = GetNextItem(&nIndex);
+        SetHeader(pvmHeader, L"Active Challenges");
+
+        for (const auto* vmAchievement : vActiveChallengeAchievements)
+        {
+            auto& pvmAchievement = GetNextItem(&nIndex);
+            SetAchievement(pvmAchievement, *vmAchievement);
+
+            const auto nPoints = vmAchievement->GetPoints();
+            nMaxPts += nPoints;
+
+            if (vmAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
+                ++nNumberOfCoreAchievements;
+        }
+
+        nNumberOfAchievements += vRecentAchievements.size();
+    }
 
     if (!vRecentAchievements.empty())
     {

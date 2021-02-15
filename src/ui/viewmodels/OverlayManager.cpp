@@ -163,11 +163,11 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
             bRequestRender = true;
         }
 
-        if (!m_vChallengeIndicators.empty())
-            UpdateChallengeIndicators(pSurface, pPopupLocations, fElapsed);
-
         if (!m_vScoreTrackers.empty())
             UpdateScoreTrackers(pSurface, pPopupLocations, fElapsed);
+
+        if (!m_vChallengeIndicators.empty())
+            UpdateChallengeIndicators(pSurface, pPopupLocations, fElapsed);
 
         // if anything changed, or caller requested a repaint, do so now
         if (m_bRedrawAll)
@@ -175,10 +175,10 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
             // render pass - items that should appear over other items should be drawn last
             if (!m_vScoreboards.empty())
                 RenderPopup(pSurface, m_vScoreboards.front());
-            for (const auto& pChallengeIndicator : m_vChallengeIndicators)
-                RenderPopup(pSurface, *pChallengeIndicator);
             for (const auto& pScoreTracker : m_vScoreTrackers)
                 RenderPopup(pSurface, *pScoreTracker);
+            for (const auto& pChallengeIndicator : m_vChallengeIndicators)
+                RenderPopup(pSurface, *pChallengeIndicator);
             if (!m_vPopupMessages.empty())
                 RenderPopup(pSurface, *m_vPopupMessages.front());
 
@@ -610,11 +610,11 @@ void OverlayManager::UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double f
         const int nOverlayRight = m_vmOverlay.GetHorizontalOffset() +
             m_vmOverlay.GetRenderImage().GetWidth();
 
-        for (const auto& pTracker : m_vScoreTrackers)
-            RenderPopupClippedX(pSurface, *pTracker, nOverlayRight);
-
         for (const auto& pChallengeIndicator : m_vChallengeIndicators)
             RenderPopupClippedX(pSurface, *pChallengeIndicator, nOverlayRight);
+
+        for (const auto& pTracker : m_vScoreTrackers)
+            RenderPopupClippedX(pSurface, *pTracker, nOverlayRight);
 
         if (!m_vScoreboards.empty())
             RenderPopupClippedX(pSurface, m_vScoreboards.front(), nOverlayRight);

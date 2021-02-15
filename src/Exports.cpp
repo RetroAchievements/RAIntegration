@@ -586,7 +586,25 @@ static bool CanRestoreState()
 
 static void OnStateRestored()
 {
-    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    pOverlayManager.ClearPopups();
+
+    auto& pAssets = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets();
+    pAssets.BeginUpdate();
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pAssets.Count()); ++nIndex)
+    {
+        auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pAssets.GetItemAt(nIndex));
+        if (pAchievement != nullptr)
+        {
+            // synchronize the state
+            pAchievement->DoFrame();
+
+            // if it's Primed, show the indicator
+            if (pAchievement->GetState() == ra::data::models::AssetState::Primed)
+                pOverlayManager.AddChallengeIndicator(pAchievement->GetID(), ra::ui::ImageType::Badge, ra::Narrow(pAchievement->GetBadge()));
+        }
+    }
+    pAssets.EndUpdate();
 
 #ifndef RA_UTEST
     UpdateUIForFrameChange();

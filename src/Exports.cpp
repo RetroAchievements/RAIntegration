@@ -361,7 +361,7 @@ static void ProcessAchievements()
 
                 // make sure to hide the challenge indicator
                 auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                pOverlayManager.RemoveChallengeIndicator(vmAchievement->GetID());
+                pOverlayManager.RemoveChallengeIndicator(pChange.nId);
 
                 pGameContext.AwardAchievement(pChange.nId);
 
@@ -388,7 +388,7 @@ static void ProcessAchievements()
 
             case ra::services::AchievementRuntime::ChangeType::AchievementPrimed:
             {
-                auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
+                const auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
                 if (vmAchievement)
                 {
                     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();

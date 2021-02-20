@@ -104,6 +104,7 @@ private:
                 return nResult;
         }
 
+        vmViewModel.SetIsVisible(true);
         return ra::ui::DialogResult::None;
     }
 

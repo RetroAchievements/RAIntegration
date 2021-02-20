@@ -55,6 +55,35 @@ API int CCONV _RA_HardcoreModeIsActive()
     return pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
 }
 
+API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
+{
+    // already disabled, just return success
+    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+        return true;
+
+    // if no activity specified, just proceed to disabling without prompting
+    if (sActivity && *sActivity)
+    {
+        // prompt. if user doesn't consent, return failure - caller should not continue
+        ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+        vmMessageBox.SetHeader(L"Disable Hardcore mode?");
+        vmMessageBox.SetMessage(L"You cannot " + ra::Widen(sActivity) + L" while Hardcore mode is active.");
+        vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+        vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+        if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
+            return false;
+    }
+
+    RA_LOG_INFO("User chose to disable hardcore to %s", sActivity);
+
+    // user consented, switch to non-hardcore mode
+    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().DisableHardcoreMode();
+
+    // return success
+    return true;
+}
+
 #ifndef RA_UTEST
 API void CCONV _RA_UpdateHWnd(HWND hMainHWND)
 {

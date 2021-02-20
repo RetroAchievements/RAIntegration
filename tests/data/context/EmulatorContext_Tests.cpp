@@ -11,6 +11,7 @@
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockHttpRequester.hh"
+#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
@@ -821,6 +822,43 @@ public:
         // user should be logged out if hardcore was enabled on an older version
         Assert::IsFalse(emulator.mockUserContext.IsLoggedIn());
         Assert::IsFalse(bWasReset);
+    }
+
+    TEST_METHOD(TestEnableHardcoreModeClosesEditors)
+    {
+        EmulatorContextHarness emulator;
+        emulator.MockVersions("0.58", "0.57");
+        emulator.mockGameContext.SetGameId(1U);
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            return ra::ui::DialogResult::Yes;
+        });
+
+        ra::services::mocks::MockLocalStorage mockLocalStorage; // required by RichPresenceMonitor.Show()
+
+        emulator.mockWindowManager.RichPresenceMonitor.Show();
+        emulator.mockWindowManager.AssetList.Show();
+        emulator.mockWindowManager.AssetEditor.Show();
+        emulator.mockWindowManager.MemoryBookmarks.Show();
+        emulator.mockWindowManager.MemoryInspector.Show();
+        emulator.mockWindowManager.CodeNotes.Show();
+
+        Assert::IsTrue(emulator.mockWindowManager.RichPresenceMonitor.IsVisible());
+        Assert::IsTrue(emulator.mockWindowManager.AssetList.IsVisible());
+        Assert::IsTrue(emulator.mockWindowManager.AssetEditor.IsVisible());
+        Assert::IsTrue(emulator.mockWindowManager.MemoryBookmarks.IsVisible());
+        Assert::IsTrue(emulator.mockWindowManager.MemoryInspector.IsVisible());
+        Assert::IsTrue(emulator.mockWindowManager.CodeNotes.IsVisible());
+
+        Assert::IsTrue(emulator.EnableHardcoreMode());
+
+        Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsTrue(emulator.mockWindowManager.RichPresenceMonitor.IsVisible());
+        Assert::IsTrue(emulator.mockWindowManager.AssetList.IsVisible());
+        Assert::IsFalse(emulator.mockWindowManager.AssetEditor.IsVisible());
+        Assert::IsFalse(emulator.mockWindowManager.MemoryBookmarks.IsVisible());
+        Assert::IsFalse(emulator.mockWindowManager.MemoryInspector.IsVisible());
+        Assert::IsFalse(emulator.mockWindowManager.CodeNotes.IsVisible());
     }
 
     TEST_METHOD(TestGetAppTitleDefault)

@@ -369,6 +369,9 @@ gsl::index AssetListViewModel::GetFilteredAssetIndex(const ra::data::models::Ass
 
 void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
 {
+    if (!_RA_WarnDisableHardcore("edit assets"))
+        return;
+
     ra::data::models::AssetModelBase* vmAsset = nullptr;
 
     if (pAsset)
@@ -451,6 +454,7 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasModified = false;
     bool bHasUnpublished = false;
     bool bHasUnofficial = false;
+    const bool bHardcore = _RA_HardcoreModeIsActive();
 
     const bool bGameLoaded = (GetGameId() != 0);
     if (!bGameLoaded)
@@ -461,7 +465,7 @@ void AssetListViewModel::DoUpdateButtons()
     }
     else
     {
-        SetValue(CanCreateProperty, true);
+        SetValue(CanCreateProperty, !bHardcore);
         SetValue(CanActivateProperty, m_vFilteredAssets.Count() > 0);
 
         for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
@@ -544,12 +548,12 @@ void AssetListViewModel::DoUpdateButtons()
     if (bHasInactiveSelection)
     {
         SetValue(ActivateButtonTextProperty, L"&Activate");
-        SetValue(CanCloneProperty, true);
+        SetValue(CanCloneProperty, !bHardcore);
     }
     else if (bHasActiveSelection)
     {
         SetValue(ActivateButtonTextProperty, L"De&activate");
-        SetValue(CanCloneProperty, true);
+        SetValue(CanCloneProperty, !bHardcore);
     }
     else
     {
@@ -1048,6 +1052,9 @@ void AssetListViewModel::RevertSelected()
 
 void AssetListViewModel::CreateNew()
 {
+    if (!CanCreate())
+        return;
+
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
 

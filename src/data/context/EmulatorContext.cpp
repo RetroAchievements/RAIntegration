@@ -370,6 +370,10 @@ void EmulatorContext::DisableHardcoreMode()
     {
         pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
 
+        // updating the enabled-ness of the buttons of the asset list
+        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+        pWindowManager.AssetList.UpdateButtons();
+
         RebuildMenu();
 
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -420,6 +424,26 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     // User has agreed to reset the emulator, or no game is loaded. Enabled hardcore!
     pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
+    // close any windows not permitted in hardcore
+    auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+    auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+
+    if (pWindowManager.MemoryInspector.IsVisible())
+        pDesktop.CloseWindow(pWindowManager.MemoryInspector);
+
+    if (pWindowManager.MemoryBookmarks.IsVisible())
+        pDesktop.CloseWindow(pWindowManager.MemoryBookmarks);
+
+    if (pWindowManager.AssetEditor.IsVisible())
+        pDesktop.CloseWindow(pWindowManager.AssetEditor);
+
+    if (pWindowManager.CodeNotes.IsVisible())
+        pDesktop.CloseWindow(pWindowManager.CodeNotes);
+
+    // updating the enabled-ness of the buttons of the asset list
+    pWindowManager.AssetList.UpdateButtons();
+
+    // update the integration menu
     RebuildMenu();
 
     // when enabling hardcore mode, force a system reset

@@ -14,6 +14,7 @@ namespace models {
 LocalBadgesModel::LocalBadgesModel() noexcept
 {
     GSL_SUPPRESS_F6 SetValue(TypeProperty, ra::etoi(AssetType::LocalBadges));
+    GSL_SUPPRESS_F6 SetValue(CategoryProperty, ra::etoi(AssetCategory::Local));
     GSL_SUPPRESS_F6 SetName(L"Local Badges");
 }
 

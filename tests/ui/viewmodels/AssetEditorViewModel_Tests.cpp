@@ -50,6 +50,11 @@ private:
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::data::context::mocks::MockGameContext mockGameContext;
+
+        const std::wstring& GetWaitingLabel() const
+        {
+            return GetValue(WaitingLabelProperty);
+        }
     };
 
 
@@ -225,18 +230,27 @@ public:
         editor.LoadAsset(&achievement);
         Assert::AreEqual(AssetState::Active, editor.GetState());
         Assert::AreEqual(AssetState::Active, achievement.GetState());
+        Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
 
         editor.SetState(AssetState::Paused);
         Assert::AreEqual(AssetState::Paused, editor.GetState());
         Assert::AreEqual(AssetState::Paused, achievement.GetState());
+        Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
 
         editor.SetState(AssetState::Triggered);
         Assert::AreEqual(AssetState::Triggered, editor.GetState());
         Assert::AreEqual(AssetState::Triggered, achievement.GetState());
+        Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
 
         achievement.SetState(AssetState::Waiting);
         Assert::AreEqual(AssetState::Waiting, editor.GetState());
         Assert::AreEqual(AssetState::Waiting, achievement.GetState());
+        Assert::AreEqual(std::wstring(L"Waiting"), editor.GetWaitingLabel());
+
+        achievement.SetState(AssetState::Active);
+        Assert::AreEqual(AssetState::Active, editor.GetState());
+        Assert::AreEqual(AssetState::Active, achievement.GetState());
+        Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
     }
 
     TEST_METHOD(TestSyncCategory)

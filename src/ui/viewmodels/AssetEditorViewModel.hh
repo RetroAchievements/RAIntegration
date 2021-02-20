@@ -109,6 +109,12 @@ public:
     /// </summary>
     void SetState(ra::data::models::AssetState nValue) { SetValue(StateProperty, ra::etoi(nValue)); }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for a string to bind to an activation checkbox.
+    /// Will be "Waiting" if state is Waiting, otherwise will be "Active".
+    /// </summary>
+    static const StringModelProperty WaitingLabelProperty;
+
     // ===== Achievement Specific =====
 
     /// <summary>
@@ -214,6 +220,8 @@ protected:
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
+    void OnDataModelStateChanged(const IntModelProperty::ChangeArgs& args);
 
     void UpdateTriggerBinding();
     void OnTriggerChanged();

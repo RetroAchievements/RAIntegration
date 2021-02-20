@@ -11,6 +11,7 @@
 #include "data\context\UserContext.hh"
 
 #include "services\IFileSystem.hh"
+#include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
 #include <rcheevos\src\rhash\md5.h>
@@ -800,6 +801,18 @@ int AchievementRuntime::SaveProgressToBuffer(char* pBuffer, int nBufferSize) con
     return nSize;
 }
 
+void AchievementRuntime::OnTotalMemorySizeChanged()
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    pEmulatorContext.RemoveNotifyTarget(*this);
+
+    auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
+    pThreadPool.ScheduleAsync(std::chrono::milliseconds(100), [this]()
+    {
+        DetectUnsupportedAchievements();
+    });
+}
+
 void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress) noexcept
 {
     // this should only be called from DetectUnsupportedAchievements or indirectly via Process,
@@ -813,7 +826,14 @@ void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress) noexcept
 
 size_t AchievementRuntime::DetectUnsupportedAchievements()
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    if (pEmulatorContext.TotalMemorySize() == 0)
+    {
+        // no memory registered yet, wait
+        pEmulatorContext.AddNotifyTarget(*this);
+        return 0;
+    }
+
     std::lock_guard<std::mutex> pLock(m_pMutex);
 
     const rc_memref_t* memref = m_pRuntime.memrefs;

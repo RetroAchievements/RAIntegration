@@ -157,19 +157,21 @@ public:
         runtime.Process(vChanges);
         Assert::AreEqual({ 0U }, vChanges.size());
 
-        // first Process call will switch the state from Waiting to Active - we ignore that
+        // first Process call will switch the state from Waiting to Active
         runtime.ActivateAchievement(6U, pTrigger);
         runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 6U);
+        vChanges.clear();
 
         // now that it's active, we can trigger it
         memory.at(0) = 1;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
         AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 6U);
+        vChanges.clear();
 
         // triggered achievement should not continue to trigger
-        vChanges.clear();
         runtime.Process(vChanges);
         Assert::AreEqual({ 0U }, vChanges.size());
     }
@@ -208,7 +210,9 @@ public:
         // achievement is no longer true, so it can activate
         memory.at(0) = 1;
         runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 6U);
+        vChanges.clear();
 
         // achievement is true again, but should not trigger when paused
         memory.at(0) = 0;
@@ -303,9 +307,11 @@ public:
         pTrigger = runtime.GetAchievementTrigger(110000006U);
         Assert::IsNull(pTrigger);
 
-        // first Process call will switch the state from Waiting to Active - we ignore that
+        // first Process call will switch the state from Waiting to Active
         runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 99001U);
+        vChanges.clear();
 
         // now that it's active, we can trigger it
         memory.at(0) = 1;
@@ -345,6 +351,10 @@ public:
         Assert::AreEqual(0U, pTrigger->requirement->conditions->current_hits);
         Assert::AreEqual(0U, pTrigger2->requirement->conditions->current_hits);
 
+        // first call will register an activation change for 7. ignore it
+        runtime.Process(vChanges);
+        vChanges.clear();
+
         for (int i = 0; i < 10; i++)
         {
             runtime.Process(vChanges);
@@ -354,7 +364,9 @@ public:
         // achievement is no longer true, so it will transition from waiting to active
         memory.at(1) = 0;
         runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 6U);
+        vChanges.clear();
 
         // second achievement should get a hitcount since the reset condition is no longer true
         Assert::AreEqual(1U, pTrigger2->requirement->conditions->current_hits);

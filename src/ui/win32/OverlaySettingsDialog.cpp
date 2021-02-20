@@ -37,6 +37,7 @@ OverlaySettingsDialog::OverlaySettingsDialog(ra::ui::viewmodels::OverlaySettings
       m_bindDisplayLeaderboardCanceled(vmSettings),
       m_bindDisplayLeaderboardValue(vmSettings),
       m_bindDisplayLeaderboardScoreboards(vmSettings),
+      m_bindChallengeNotifications(vmSettings),
       m_bindScreenshotLocation(vmSettings),
       m_bindInformationLocation(vmSettings)
 {
@@ -60,6 +61,9 @@ OverlaySettingsDialog::OverlaySettingsDialog(ra::ui::viewmodels::OverlaySettings
     m_bindDisplayLeaderboardScoreboards.BindItems(vmSettings.PopupLocationsNoMiddle());
     m_bindDisplayLeaderboardScoreboards.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::LeaderboardScoreboardLocationProperty);
 
+    m_bindChallengeNotifications.BindItems(vmSettings.PopupLocationsNoMiddle());
+    m_bindChallengeNotifications.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::ActiveChallengeLocationProperty);
+
     m_bindInformationLocation.BindItems(vmSettings.PopupLocations());
     m_bindInformationLocation.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::MessageLocationProperty);
 
@@ -76,6 +80,7 @@ BOOL OverlaySettingsDialog::OnInitDialog()
     m_bindDisplayLeaderboardCanceled.SetControl(*this, IDC_RA_DISPLAY_LBOARD_CANCEL);
     m_bindDisplayLeaderboardValue.SetControl(*this, IDC_RA_DISPLAY_LBOARD_VALUE);
     m_bindDisplayLeaderboardScoreboards.SetControl(*this, IDC_RA_DISPLAY_LBOARD_SCOREBOARD);
+    m_bindChallengeNotifications.SetControl(*this, IDC_RA_DISPLAY_CHALLENGE_INDICATOR);
     m_bindInformationLocation.SetControl(*this, IDC_RA_DISPLAY_INFORMATION);
 
     m_bindScreenshotLocation.SetControl(*this, IDC_RA_SCREENSHOT_LOCATION);

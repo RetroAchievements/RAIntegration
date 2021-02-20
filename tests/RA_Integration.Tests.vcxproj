@@ -326,6 +326,7 @@
     <ClCompile Include="..\src\ui\viewmodels\AssetListViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\AssetUploadViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\BrokenAchievementsViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\ChallengeIndicatorViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\CodeNotesViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\FileDialogViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LookupItemViewModel.cpp" />

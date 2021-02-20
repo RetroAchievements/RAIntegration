@@ -78,6 +78,8 @@ std::wstring ToString<ra::data::models::AssetState>(
             return L"Waiting";
         case ra::data::models::AssetState::Paused:
             return L"Paused";
+        case ra::data::models::AssetState::Primed:
+            return L"Primed";
         case ra::data::models::AssetState::Disabled:
             return L"Disabled";
         default:

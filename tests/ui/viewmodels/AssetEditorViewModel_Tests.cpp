@@ -237,6 +237,11 @@ public:
         Assert::AreEqual(AssetState::Paused, achievement.GetState());
         Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
 
+        achievement.SetState(AssetState::Primed);
+        Assert::AreEqual(AssetState::Primed, editor.GetState());
+        Assert::AreEqual(AssetState::Primed, achievement.GetState());
+        Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
+
         editor.SetState(AssetState::Triggered);
         Assert::AreEqual(AssetState::Triggered, editor.GetState());
         Assert::AreEqual(AssetState::Triggered, achievement.GetState());

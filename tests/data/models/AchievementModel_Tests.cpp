@@ -181,6 +181,23 @@ public:
         Assert::AreNotEqual(std::chrono::system_clock::duration::zero().count(), achievement.GetUnlockTime().time_since_epoch().count());
     }
 
+    TEST_METHOD(TestStatePrimed)
+    {
+        AchievementModelHarness achievement;
+        achievement.SetID(1U);
+        achievement.SetTrigger("0xH1234=1_T:0xH1234=2");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.Activate();
+
+        auto* pTrigger = achievement.mockRuntime.GetAchievementTrigger(1U);
+        Assert::IsNotNull(pTrigger);
+        Expects(pTrigger != nullptr);
+        pTrigger->state = RC_TRIGGER_STATE_PRIMED;
+        achievement.DoFrame();
+        Assert::AreEqual(AssetState::Primed, achievement.GetState());
+    }
+
     TEST_METHOD(TestSetBadgeNameLocal)
     {
         AchievementModelHarness achievement;

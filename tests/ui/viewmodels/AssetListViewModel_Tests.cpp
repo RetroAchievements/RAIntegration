@@ -381,7 +381,7 @@ public:
         Assert::AreEqual(0, vmAssetList.GetTotalPoints());
         Assert::AreEqual(true, vmAssetList.IsProcessingActive());
 
-        Assert::AreEqual({ 6U }, vmAssetList.States().Count());
+        Assert::AreEqual({ 7U }, vmAssetList.States().Count());
         Assert::AreEqual((int)AssetState::Inactive, vmAssetList.States().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Inactive"), vmAssetList.States().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)AssetState::Waiting, vmAssetList.States().GetItemAt(1)->GetId());
@@ -390,10 +390,12 @@ public:
         Assert::AreEqual(std::wstring(L"Active"), vmAssetList.States().GetItemAt(2)->GetLabel());
         Assert::AreEqual((int)AssetState::Paused, vmAssetList.States().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Paused"), vmAssetList.States().GetItemAt(3)->GetLabel());
-        Assert::AreEqual((int)AssetState::Triggered, vmAssetList.States().GetItemAt(4)->GetId());
-        Assert::AreEqual(std::wstring(L"Triggered"), vmAssetList.States().GetItemAt(4)->GetLabel());
-        Assert::AreEqual((int)AssetState::Disabled, vmAssetList.States().GetItemAt(5)->GetId());
-        Assert::AreEqual(std::wstring(L"Disabled"), vmAssetList.States().GetItemAt(5)->GetLabel());
+        Assert::AreEqual((int)AssetState::Primed, vmAssetList.States().GetItemAt(4)->GetId());
+        Assert::AreEqual(std::wstring(L"Primed"), vmAssetList.States().GetItemAt(4)->GetLabel());
+        Assert::AreEqual((int)AssetState::Triggered, vmAssetList.States().GetItemAt(5)->GetId());
+        Assert::AreEqual(std::wstring(L"Triggered"), vmAssetList.States().GetItemAt(5)->GetLabel());
+        Assert::AreEqual((int)AssetState::Disabled, vmAssetList.States().GetItemAt(6)->GetId());
+        Assert::AreEqual(std::wstring(L"Disabled"), vmAssetList.States().GetItemAt(6)->GetLabel());
 
         Assert::AreEqual({ 3U }, vmAssetList.Categories().Count());
         Assert::AreEqual((int)AssetCategory::Core, vmAssetList.Categories().GetItemAt(0)->GetId());

@@ -4,6 +4,7 @@
 #include "RA_Interface.h"
 
 #include "OverlayViewModel.hh"
+#include "ChallengeIndicatorViewModel.hh"
 #include "PopupMessageViewModel.hh"
 #include "ScoreboardViewModel.hh"
 #include "ScoreTrackerViewModel.hh"
@@ -238,6 +239,33 @@ public:
     }
 
     /// <summary>
+    /// Adds a challenge indicator for an achievement.
+    /// </summary>
+    ChallengeIndicatorViewModel& AddChallengeIndicator(ra::AchievementID nAchievementId, ra::ui::ImageType imageType, const std::string& sImageName);
+
+    /// <summary>
+    /// Removes the challenge indicator associated to the specified achievement.
+    /// </summary>
+    /// <param name="nLeaderboardId">The unique identifier of the achievement associated to the indicator.</param>
+    void RemoveChallengeIndicator(ra::AchievementID nAchievementId);
+    
+    /// <summary>
+    /// Gets the challenge indicator associated to the specified achievement.
+    /// </summary>
+    /// <param name="nLeaderboardId">The unique identifier of the achievement associated to the indicator.</param>
+    /// <returns>Requested challenge indicator view model, <c>nullptr</c> if not found.</returns>
+    const ChallengeIndicatorViewModel* GetChallengeIndicator(ra::AchievementID nAchievementId) const noexcept
+    {
+        for (auto& pIndicator : m_vChallengeIndicators)
+        {
+            if (ra::to_unsigned(pIndicator->GetPopupId()) == nAchievementId)
+                return pIndicator.get();
+        }
+
+        return nullptr;
+    }
+
+    /// <summary>
     /// Clears all popups.
     /// </summary>
     virtual void ClearPopups();
@@ -278,6 +306,7 @@ protected:
     ra::ui::viewmodels::OverlayViewModel m_vmOverlay;
     std::deque<std::unique_ptr<PopupMessageViewModel>> m_vPopupMessages;
     std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
+    std::vector<std::unique_ptr<ChallengeIndicatorViewModel>> m_vChallengeIndicators;
     std::deque<ScoreboardViewModel> m_vScoreboards;
 
     bool m_bIsRendering = false;
@@ -311,6 +340,7 @@ private:
     void UpdateActiveMessage(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
     void UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
     void UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
+    void UpdateChallengeIndicators(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
     void UpdatePopup(ra::ui::drawing::ISurface& pSurface, const PopupLocations& pPopupLocations, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup);
 
     void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);

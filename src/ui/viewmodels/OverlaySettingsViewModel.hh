@@ -161,6 +161,21 @@ public:
     void SetLeaderboardScoreboardLocation(PopupLocation nValue) { SetValue(LeaderboardScoreboardLocationProperty, ra::etoi(nValue)); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for where the active challenge notifications should be displayed.
+    /// </summary>
+    static const IntModelProperty ActiveChallengeLocationProperty;
+
+    /// <summary>
+    /// Gets the location where active challenge notifications should be displayed.
+    /// </summary>
+    PopupLocation GetActiveChallengeLocation() const { return ra::itoe<PopupLocation>(GetValue(ActiveChallengeLocationProperty)); }
+
+    /// <summary>
+    /// Sets the location where active challenge notifications should be displayed.
+    /// </summary>
+    void SetActiveChallengeLocation(PopupLocation nValue) { SetValue(ActiveChallengeLocationProperty, ra::etoi(nValue)); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the location to write screenshots.
     /// </summary>
     static const StringModelProperty ScreenshotLocationProperty;

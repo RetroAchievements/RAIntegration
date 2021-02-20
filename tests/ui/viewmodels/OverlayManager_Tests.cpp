@@ -396,6 +396,80 @@ public:
         Assert::IsNull(overlay.GetScoreboard(3));
     }
 
+    TEST_METHOD(TestAddRemoveChallengeIndicator)
+    {
+        OverlayManagerHarness overlay;
+        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        const auto& vmIndicator = overlay.AddChallengeIndicator(6, ra::ui::ImageType::Badge, "12345");
+        Assert::AreEqual(6, vmIndicator.GetPopupId());
+        Assert::AreEqual(ra::ui::ImageType::Badge, vmIndicator.GetImage().Type());
+        Assert::AreEqual(std::string("12345"), vmIndicator.GetImage().Name());
+        Assert::IsTrue(overlay.WasRenderRequested());
+        Assert::IsFalse(vmIndicator.IsDestroyPending());
+        Assert::AreEqual(10, vmIndicator.GetVerticalOffset());
+
+        Assert::IsTrue(&vmIndicator == overlay.GetChallengeIndicator(6));
+
+        ra::ui::drawing::mocks::MockSurface mockSurface(800, 600);
+        overlay.Render(mockSurface, false);
+        Assert::AreEqual(10, vmIndicator.GetVerticalOffset());
+
+        overlay.ResetRenderRequested();
+        overlay.RemoveChallengeIndicator(6);
+        Assert::IsTrue(vmIndicator.IsDestroyPending()); // has to erase itself in render
+        Assert::IsFalse(overlay.WasRenderRequested());
+        Assert::IsNotNull(overlay.GetChallengeIndicator(6));
+
+        overlay.Render(mockSurface, false);
+        Assert::IsNull(overlay.GetChallengeIndicator(6)); // render should erase and destroy
+    }
+
+    TEST_METHOD(TestAddMultipleChallengeIndicator)
+    {
+        OverlayManagerHarness overlay;
+        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        const auto& vmIndicator = overlay.AddChallengeIndicator(6, ra::ui::ImageType::Badge, "12345");
+        const auto& vmIndicator2 = overlay.AddChallengeIndicator(7, ra::ui::ImageType::Badge, "22222");
+        const auto& vmIndicator3 = overlay.AddChallengeIndicator(8, ra::ui::ImageType::Badge, "75319");
+
+        Assert::AreEqual(6, vmIndicator.GetPopupId());
+        Assert::AreEqual(ra::ui::ImageType::Badge, vmIndicator.GetImage().Type());
+        Assert::AreEqual(std::string("12345"), vmIndicator.GetImage().Name());
+
+        Assert::AreEqual(7, vmIndicator2.GetPopupId());
+        Assert::AreEqual(ra::ui::ImageType::Badge, vmIndicator2.GetImage().Type());
+        Assert::AreEqual(std::string("22222"), vmIndicator2.GetImage().Name());
+
+        Assert::AreEqual(8, vmIndicator3.GetPopupId());
+        Assert::AreEqual(ra::ui::ImageType::Badge, vmIndicator3.GetImage().Type());
+        Assert::AreEqual(std::string("75319"), vmIndicator3.GetImage().Name());
+
+        Assert::IsTrue(overlay.WasRenderRequested());
+        ra::ui::drawing::mocks::MockSurface mockSurface(800, 600);
+        overlay.Render(mockSurface, false);
+
+        constexpr int nSpacing = 10 + 32 + 2; // spacing + image + shadow
+        Assert::AreEqual(10, vmIndicator.GetHorizontalOffset());
+        Assert::AreEqual(10 + nSpacing, vmIndicator2.GetHorizontalOffset());
+        Assert::AreEqual(10 + nSpacing * 2, vmIndicator3.GetHorizontalOffset());
+        Assert::AreEqual(10, vmIndicator.GetVerticalOffset());
+        Assert::AreEqual(10, vmIndicator2.GetVerticalOffset());
+        Assert::AreEqual(10, vmIndicator3.GetVerticalOffset());
+
+        overlay.RemoveChallengeIndicator(7);
+        Assert::IsFalse(vmIndicator.IsDestroyPending());
+        Assert::IsTrue(vmIndicator2.IsDestroyPending());
+        Assert::IsFalse(vmIndicator3.IsDestroyPending());
+
+        overlay.Render(mockSurface, false);
+        Assert::AreEqual(10, vmIndicator.GetHorizontalOffset());
+        Assert::AreEqual(10 + nSpacing, vmIndicator3.GetHorizontalOffset());
+        Assert::AreEqual(10, vmIndicator.GetVerticalOffset());
+        Assert::AreEqual(10, vmIndicator3.GetVerticalOffset());
+    }
+
     TEST_METHOD(TestShowHideOverlay)
     {
         OverlayManagerHarness overlay;

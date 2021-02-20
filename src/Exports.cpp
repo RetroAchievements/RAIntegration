@@ -359,6 +359,10 @@ static void ProcessAchievements()
                 if (vmAchievement)
                     vmAchievement->SetState(ra::data::models::AssetState::Triggered);
 
+                // make sure to hide the challenge indicator
+                auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                pOverlayManager.RemoveChallengeIndicator(pChange.nId);
+
                 pGameContext.AwardAchievement(pChange.nId);
 
                 if (vmAchievement && vmAchievement->IsPauseOnTrigger())
@@ -378,6 +382,28 @@ static void ProcessAchievements()
                     RA_LOG_WARN("Achievement #%u disabled: address %s not supported by current core", pChange.nId, ra::ByteAddressToString(pChange.nValue));
                     vmAchievement->SetState(ra::data::models::AssetState::Disabled);
                 }
+
+                break;
+            }
+
+            case ra::services::AchievementRuntime::ChangeType::AchievementPrimed:
+            {
+                const auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
+                if (vmAchievement)
+                {
+                    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                    pOverlayManager.AddChallengeIndicator(vmAchievement->GetID(), ra::ui::ImageType::Badge, ra::Narrow(vmAchievement->GetBadge()));
+                }
+
+                break;
+            }
+
+            case ra::services::AchievementRuntime::ChangeType::AchievementActivated:
+            {
+                // state change from Waiting, Paused, or Primed to Active.
+                // we only care about the change from Primed to Active, which should hide the indicator.
+                auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                pOverlayManager.RemoveChallengeIndicator(pChange.nId);
 
                 break;
             }
@@ -560,7 +586,25 @@ static bool CanRestoreState()
 
 static void OnStateRestored()
 {
-    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    pOverlayManager.ClearPopups();
+
+    auto& pAssets = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets();
+    pAssets.BeginUpdate();
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pAssets.Count()); ++nIndex)
+    {
+        auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pAssets.GetItemAt(nIndex));
+        if (pAchievement != nullptr)
+        {
+            // synchronize the state
+            pAchievement->DoFrame();
+
+            // if it's Primed, show the indicator
+            if (pAchievement->GetState() == ra::data::models::AssetState::Primed)
+                pOverlayManager.AddChallengeIndicator(pAchievement->GetID(), ra::ui::ImageType::Badge, ra::Narrow(pAchievement->GetBadge()));
+        }
+    }
+    pAssets.EndUpdate();
 
 #ifndef RA_UTEST
     UpdateUIForFrameChange();

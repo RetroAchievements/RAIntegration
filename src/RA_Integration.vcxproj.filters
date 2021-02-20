@@ -372,6 +372,9 @@
     <ClCompile Include="data\models\CapturedTriggerHits.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\ChallengeIndicatorViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Leaderboard.h">
@@ -928,6 +931,9 @@
     </ClInclude>
     <ClInclude Include="ui\win32\bindings\NumericUpDownBinding.hh">
       <Filter>UI\Win32\Bindings</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\ChallengeIndicatorViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

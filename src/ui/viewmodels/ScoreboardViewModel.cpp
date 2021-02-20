@@ -111,7 +111,7 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
                 const ra::ui::Color nTextColor = pEntry->IsHighlighted() ? pTheme.ColorLeaderboardPlayer() : pTheme.ColorLeaderboardEntry();
 
                 // rank (right aligned)
-                const auto sRank = ra::ToWString(pEntry->GetRank());
+                const auto sRank = pEntry->GetRank() ? ra::ToWString(pEntry->GetRank()) : L"-";
                 const auto nEntryRankSize = m_pSurface->MeasureText(nFontText, sRank);
                 m_pSurface->WriteText(8 + nRankSize.Width - nEntryRankSize.Width, nY, nFontText, nTextColor, sRank);
 

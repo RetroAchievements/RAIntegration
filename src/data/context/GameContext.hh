@@ -278,6 +278,7 @@ protected:
     void LoadRichPresenceScript(const std::string& sRichPresenceScript);
     void RefreshCodeNotes();
     void AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote);
+    void ShowSimplifiedScoreboard(ra::LeaderboardID nLeaderboardId, int nScore) const;
 
     void OnActiveGameChanged();
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);

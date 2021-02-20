@@ -590,13 +590,21 @@ void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], si
             continue;
         }
 
+        const size_t nBlockRemaining = pBlock.size - nAddress;
+
         if (!pBlock.read)
         {
             ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().InvalidateAddress(nOriginalAddress);
-            break;
+            if (nCount <= nBlockRemaining)
+                break;
+
+            memset(pBuffer, 0, nBlockRemaining);
+            pBuffer += nBlockRemaining;
+            nCount -= nBlockRemaining;
+            nAddress = 0;
+            continue;
         }
 
-        const size_t nBlockRemaining = pBlock.size - nAddress;
         size_t nToRead = std::min(nCount, nBlockRemaining);
         nCount -= nToRead;
 

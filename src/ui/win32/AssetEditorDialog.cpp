@@ -460,6 +460,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindEnabled(IDC_RA_PASTE_COND, AssetEditorViewModel::AssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_MOVE_COND_UP, AssetEditorViewModel::AssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_MOVE_COND_DOWN, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindLabel(IDC_RA_CHK_ACTIVE, AssetEditorViewModel::WaitingLabelProperty);
 
     m_bindPauseOnReset.BindCheck(AssetEditorViewModel::PauseOnResetProperty);
     m_bindPauseOnTrigger.BindCheck(AssetEditorViewModel::PauseOnTriggerProperty);

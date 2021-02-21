@@ -62,6 +62,16 @@ public:
             pProperty == MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty);
     }
 
+    HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override
+    {
+        const auto& vmItems = static_cast<ra::ui::win32::bindings::GridBinding*>(pInfo.pGridBinding)->GetItems();
+        const auto nSize = ra::itoe<MemSize>(vmItems.GetItemValue(pInfo.nItemIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty));
+        if (nSize == MemSize::BitCount)
+            return nullptr;
+
+        return ra::ui::win32::bindings::GridNumberColumnBinding::CreateInPlaceEditor(hParent, pInfo);
+    }
+
     std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
     {
         const auto nValue = gsl::narrow_cast<unsigned int>(vmItems.GetItemValue(nIndex, *m_pBoundProperty));
@@ -86,9 +96,11 @@ public:
                     case MemSize::SixteenBit:
                         return ra::StringPrintf(L"%04X", nValue);
 
-                    default:
                     case MemSize::EightBit:
                         return ra::StringPrintf(L"%02X", nValue);
+
+                    default:
+                        return ra::StringPrintf(L"%X", nValue);
                 }
             }
         }
@@ -116,6 +128,11 @@ public:
 
             case MemSize::EightBit:
                 m_nMaximum = 0xFF;
+                break;
+
+            case MemSize::Nibble_Lower:
+            case MemSize::Nibble_Upper:
+                m_nMaximum = 0x0F;
                 break;
         }
 

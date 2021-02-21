@@ -688,6 +688,12 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) co
             ReadMemory(nAddress, buffer, 4);
             return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
         }
+        case MemSize::BitCount:
+        {
+            const uint8_t nValue = ReadMemoryByte(nAddress);
+            static const std::array<uint8_t, 16> nBitsSet = { 0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4 };
+            return nBitsSet.at(nValue & 0x0F) + nBitsSet.at((nValue >> 4) & 0x0F);
+        }
     }
 }
 
@@ -745,6 +751,8 @@ void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint3
             WriteMemoryByte(++nAddress, nValue & 0xFF);
             nValue >>= 8;
             WriteMemoryByte(++nAddress, nValue & 0xFF);
+            return;
+        case MemSize::BitCount:
             return;
     }
 

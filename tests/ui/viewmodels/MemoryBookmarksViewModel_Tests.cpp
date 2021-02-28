@@ -74,7 +74,7 @@ public:
 
         Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Count());
 
-        Assert::AreEqual({ 4U }, bookmarks.Sizes().Count());
+        Assert::AreEqual({ 7U }, bookmarks.Sizes().Count());
         Assert::AreEqual((int)MemSize::EightBit, bookmarks.Sizes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L" 8-bit"), bookmarks.Sizes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)MemSize::SixteenBit, bookmarks.Sizes().GetItemAt(1)->GetId());
@@ -83,6 +83,12 @@ public:
         Assert::AreEqual(std::wstring(L"24-bit"), bookmarks.Sizes().GetItemAt(2)->GetLabel());
         Assert::AreEqual((int)MemSize::ThirtyTwoBit, bookmarks.Sizes().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"32-bit"), bookmarks.Sizes().GetItemAt(3)->GetLabel());
+        Assert::AreEqual((int)MemSize::BitCount, bookmarks.Sizes().GetItemAt(4)->GetId());
+        Assert::AreEqual(std::wstring(L"BitCount"), bookmarks.Sizes().GetItemAt(4)->GetLabel());
+        Assert::AreEqual((int)MemSize::Nibble_Lower, bookmarks.Sizes().GetItemAt(5)->GetId());
+        Assert::AreEqual(std::wstring(L"Lower4"), bookmarks.Sizes().GetItemAt(5)->GetLabel());
+        Assert::AreEqual((int)MemSize::Nibble_Upper, bookmarks.Sizes().GetItemAt(6)->GetId());
+        Assert::AreEqual(std::wstring(L"Upper4"), bookmarks.Sizes().GetItemAt(6)->GetLabel());
 
         Assert::AreEqual({ 2U }, bookmarks.Formats().Count());
         Assert::AreEqual((int)MemFormat::Hex, bookmarks.Formats().GetItemAt(0)->GetId());

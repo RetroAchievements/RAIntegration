@@ -38,6 +38,9 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
     m_vSizes.Add(ra::etoi(MemSize::SixteenBit), L"16-bit");
     m_vSizes.Add(ra::etoi(MemSize::TwentyFourBit), L"24-bit");
     m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBit), L"32-bit");
+    m_vSizes.Add(ra::etoi(MemSize::BitCount), L"BitCount");
+    m_vSizes.Add(ra::etoi(MemSize::Nibble_Lower), L"Lower4");
+    m_vSizes.Add(ra::etoi(MemSize::Nibble_Upper), L"Upper4");
 
     m_vFormats.Add(ra::etoi(MemFormat::Hex), L"Hex");
     m_vFormats.Add(ra::etoi(MemFormat::Dec), L"Dec");

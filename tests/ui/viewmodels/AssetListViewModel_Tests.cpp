@@ -9,6 +9,7 @@
 #include "tests\ui\UIAsserts.hh"
 
 #include "tests\mocks\MockAchievementRuntime.hh"
+#include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -85,6 +86,7 @@ private:
     {
     public:
         ra::services::mocks::MockAchievementRuntime mockRuntime;
+        ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
@@ -1973,6 +1975,7 @@ public:
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+        vmAssetList.ForceUpdateButtons();
 
         Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
@@ -2568,6 +2571,88 @@ public:
         Assert::IsTrue(vmAssetList.IsProcessingActive());
         Assert::IsFalse(vmAssetList.mockRuntime.IsPaused());
         Assert::IsTrue(vmAssetList.mockEmulatorContext.WasMemoryModified());
+    }
+
+    TEST_METHOD(TestOpenEditor)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+
+        vmAssetList.SetGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetCategory::Core, vmAssetList.GetFilterCategory());
+
+        auto* pItem = vmAssetList.FilteredAssets().GetItemAt(1);
+        Expects(pItem != nullptr);
+        pItem->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+        vmAssetList.OpenEditor(pItem);
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+        Assert::AreEqual(ra::to_unsigned(pItem->GetId()), vmAssetList.mockWindowManager.AssetEditor.GetID());
+    }
+
+    TEST_METHOD(TestOpenEditorHardcore)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmAssetList.SetGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetCategory::Core, vmAssetList.GetFilterCategory());
+
+        auto* pItem = vmAssetList.FilteredAssets().GetItemAt(1);
+        Expects(pItem != nullptr);
+        pItem->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+        vmAssetList.OpenEditor(pItem);
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+        Assert::AreEqual(ra::to_unsigned(pItem->GetId()), vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::IsFalse(vmAssetList.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestOpenEditorHardcoreCancel)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            return ra::ui::DialogResult::No;
+        });
+
+        vmAssetList.SetGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetCategory::Core, vmAssetList.GetFilterCategory());
+
+        auto* pItem = vmAssetList.FilteredAssets().GetItemAt(1);
+        Expects(pItem != nullptr);
+        pItem->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+        vmAssetList.OpenEditor(pItem);
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+        Assert::AreEqual(0U, vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::IsTrue(vmAssetList.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
     }
 };
 

@@ -175,6 +175,7 @@ public:
     const ViewModelCollection<AssetSummaryViewModel>& FilteredAssets() const noexcept { return m_vFilteredAssets; }
 
     void OpenEditor(const AssetSummaryViewModel* pAsset);
+    void UpdateButtons();
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the index of the asset that should be made visible.
@@ -220,7 +221,6 @@ private:
         std::function<bool(const ra::data::models::AssetModelBase&)> pFilterFunction = nullptr);
 
     void UpdateTotals();
-    void UpdateButtons();
     void DoUpdateButtons();
     std::atomic_bool m_bNeedToUpdateButtons = false;
 

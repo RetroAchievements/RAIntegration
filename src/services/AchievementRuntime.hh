@@ -5,6 +5,7 @@
 #include "ra_fwd.h"
 
 #include "data\Types.hh"
+#include "data\context\EmulatorContext.hh"
 
 #include "services\TextReader.hh"
 
@@ -15,7 +16,7 @@
 namespace ra {
 namespace services {
 
-class AchievementRuntime
+class AchievementRuntime : protected ra::data::context::EmulatorContext::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 AchievementRuntime() = default;
@@ -209,6 +210,9 @@ protected:
     bool m_bPaused = false;
     rc_runtime_t m_pRuntime{};
     mutable std::mutex m_pMutex;
+
+    // EmulatorContext::NotifyTarget
+    void OnTotalMemorySizeChanged() override;
 
 private:
     bool LoadProgressV1(const std::string& sProgress, std::set<unsigned int>& vProcessedAchievementIds);

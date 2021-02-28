@@ -74,6 +74,7 @@ public:
         Assert::IsNotNull((const void*)_RA_InitClient);
         Assert::IsNotNull((const void*)_RA_InitClientOffline);
         Assert::IsNotNull((const void*)_RA_InstallSharedFunctions);
+        Assert::IsNotNull((const void*)_RA_SetForceRepaint);
         Assert::IsNotNull((const void*)_RA_CreatePopupMenu);
         Assert::IsNotNull((const void*)_RA_InvokeDialog);
         Assert::IsNotNull((const void*)_RA_SetUserAgentDetail);
@@ -92,6 +93,8 @@ public:
         Assert::IsNotNull((const void*)_RA_OnLoadNewRom);
         Assert::IsNotNull((const void*)_RA_ConfirmLoadNewRom);
         Assert::IsNotNull((const void*)_RA_DoAchievementsFrame);
+        Assert::IsNotNull((const void*)_RA_SuspendRepaint);
+        Assert::IsNotNull((const void*)_RA_ResumeRepaint);
         Assert::IsNotNull((const void*)_RA_UpdateAppTitle);
         Assert::IsNotNull((const void*)_RA_UserName);
         Assert::IsNotNull((const void*)_RA_HardcoreModeIsActive);
@@ -113,6 +116,7 @@ public:
         Assert::IsNull((const void*)_RA_InitClient);
         Assert::IsNull((const void*)_RA_InitClientOffline);
         Assert::IsNull((const void*)_RA_InstallSharedFunctions);
+        Assert::IsNull((const void*)_RA_SetForceRepaint);
         Assert::IsNull((const void*)_RA_CreatePopupMenu);
         Assert::IsNull((const void*)_RA_InvokeDialog);
         Assert::IsNull((const void*)_RA_SetUserAgentDetail);
@@ -131,6 +135,8 @@ public:
         Assert::IsNull((const void*)_RA_OnLoadNewRom);
         Assert::IsNull((const void*)_RA_ConfirmLoadNewRom);
         Assert::IsNull((const void*)_RA_DoAchievementsFrame);
+        Assert::IsNull((const void*)_RA_SuspendRepaint);
+        Assert::IsNull((const void*)_RA_ResumeRepaint);
         Assert::IsNull((const void*)_RA_UpdateAppTitle);
         Assert::IsNull((const void*)_RA_UserName);
         Assert::IsNull((const void*)_RA_HardcoreModeIsActive);

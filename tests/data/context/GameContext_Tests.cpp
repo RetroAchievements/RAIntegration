@@ -1729,6 +1729,8 @@ public:
     {
         GameContextHarness game;
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
+        game.mockUser.Initialize("Player", "ApiToken");
         game.SetGameHash("hash");
 
         game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
@@ -1749,12 +1751,29 @@ public:
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Submission requires Hardcore mode"), pPopup->GetDetail());
         Assert::IsTrue(pPopup->IsDetailError());
+
+        // empty leaderboard should be displayed with the non-submitted score
+        const auto* vmScoreboard = game.mockOverlayManager.GetScoreboard(1U);
+        Assert::IsNotNull(vmScoreboard);
+        Ensures(vmScoreboard != nullptr);
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
+        Assert::AreEqual({ 1U }, vmScoreboard->Entries().Count());
+
+        const auto* vmEntry = vmScoreboard->Entries().GetItemAt(0);
+        Assert::IsNotNull(vmEntry);
+        Ensures(vmEntry != nullptr);
+        Assert::AreEqual(0, vmEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"Player"), vmEntry->GetUserName());
+        Assert::AreEqual(std::wstring(L"1234"), vmEntry->GetScore());
+        Assert::IsTrue(vmEntry->IsHighlighted());
     }
 
     TEST_METHOD(TestSubmitLeaderboardEntryCompatibilityMode)
     {
         GameContextHarness game;
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
+        game.mockUser.Initialize("Player", "ApiToken");
         game.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
         game.SetGameHash("hash");
 
@@ -1776,6 +1795,21 @@ public:
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Leaderboards are not submitted in test mode."), pPopup->GetDetail());
         Assert::IsFalse(pPopup->IsDetailError());
+
+        // empty leaderboard should be displayed with the non-submitted score
+        const auto* vmScoreboard = game.mockOverlayManager.GetScoreboard(1U);
+        Assert::IsNotNull(vmScoreboard);
+        Ensures(vmScoreboard != nullptr);
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
+        Assert::AreEqual({ 1U }, vmScoreboard->Entries().Count());
+
+        const auto* vmEntry = vmScoreboard->Entries().GetItemAt(0);
+        Assert::IsNotNull(vmEntry);
+        Ensures(vmEntry != nullptr);
+        Assert::AreEqual(0, vmEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"Player"), vmEntry->GetUserName());
+        Assert::AreEqual(std::wstring(L"1234"), vmEntry->GetScore());
+        Assert::IsTrue(vmEntry->IsHighlighted());
     }
 
     TEST_METHOD(TestSubmitLeaderboardEntryLowRank)
@@ -1894,6 +1928,8 @@ public:
     TEST_METHOD(TestSubmitLeaderboardEntryMemoryModified)
     {
         GameContextHarness game;
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
+        game.mockUser.Initialize("Player", "ApiToken");
         game.SetGameHash("hash");
 
         game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
@@ -1915,11 +1951,28 @@ public:
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Error: RAM tampered with"), pPopup->GetDetail());
         Assert::IsTrue(pPopup->IsDetailError());
+
+        // empty leaderboard should be displayed with the non-submitted score
+        const auto* vmScoreboard = game.mockOverlayManager.GetScoreboard(1U);
+        Assert::IsNotNull(vmScoreboard);
+        Ensures(vmScoreboard != nullptr);
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
+        Assert::AreEqual({ 1U }, vmScoreboard->Entries().Count());
+
+        const auto* vmEntry = vmScoreboard->Entries().GetItemAt(0);
+        Assert::IsNotNull(vmEntry);
+        Ensures(vmEntry != nullptr);
+        Assert::AreEqual(0, vmEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"Player"), vmEntry->GetUserName());
+        Assert::AreEqual(std::wstring(L"1234"), vmEntry->GetScore());
+        Assert::IsTrue(vmEntry->IsHighlighted());
     }
 
     TEST_METHOD(TestSubmitLeaderboardEntryMemoryInsecure)
     {
         GameContextHarness game;
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
+        game.mockUser.Initialize("Player", "ApiToken");
         game.SetGameHash("hash");
         game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
@@ -1942,6 +1995,21 @@ public:
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Error: RAM insecure"), pPopup->GetDetail());
         Assert::IsTrue(pPopup->IsDetailError());
+
+        // empty leaderboard should be displayed with the non-submitted score
+        const auto* vmScoreboard = game.mockOverlayManager.GetScoreboard(1U);
+        Assert::IsNotNull(vmScoreboard);
+        Ensures(vmScoreboard != nullptr);
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
+        Assert::AreEqual({ 1U }, vmScoreboard->Entries().Count());
+
+        const auto* vmEntry = vmScoreboard->Entries().GetItemAt(0);
+        Assert::IsNotNull(vmEntry);
+        Ensures(vmEntry != nullptr);
+        Assert::AreEqual(0, vmEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"Player"), vmEntry->GetUserName());
+        Assert::AreEqual(std::wstring(L"1234"), vmEntry->GetScore());
+        Assert::IsTrue(vmEntry->IsHighlighted());
     }
 
     TEST_METHOD(TestLoadCodeNotes)

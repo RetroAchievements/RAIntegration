@@ -605,6 +605,30 @@ void GameContext::ActivateLeaderboards()
     }
 }
 
+void GameContext::ShowSimplifiedScoreboard(ra::LeaderboardID nLeaderboardId, int nScore) const
+{
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) == ra::ui::viewmodels::PopupLocation::None)
+        return;
+
+    const auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
+    if (!pLeaderboard)
+        return;
+
+    ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
+    vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->Title()));
+
+    const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
+    auto& pEntryViewModel = vmScoreboard.Entries().Add();
+    pEntryViewModel.SetRank(0);
+    pEntryViewModel.SetScore(ra::Widen(pLeaderboard->FormatScore(nScore)));
+    pEntryViewModel.SetUserName(ra::Widen(pUserName));
+    pEntryViewModel.SetHighlighted(true);
+
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(
+        pLeaderboard->ID(), std::move(vmScoreboard));
+}
+
 void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int nScore) const
 {
     const auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
@@ -621,6 +645,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
 
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
+        ShowSimplifiedScoreboard(nLeaderboardId, nScore);
         return;
     }
 
@@ -634,6 +659,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
 
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
+        ShowSimplifiedScoreboard(nLeaderboardId, nScore);
         return;
     }
 
@@ -646,6 +672,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
 
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
+        ShowSimplifiedScoreboard(nLeaderboardId, nScore);
         return;
     }
 
@@ -658,6 +685,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
 
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
+        ShowSimplifiedScoreboard(nLeaderboardId, nScore);
         return;
     }
 

@@ -793,7 +793,7 @@ int AchievementRuntime::SaveProgressToBuffer(char* pBuffer, int nBufferSize) con
         rc_runtime_serialize_progress(pBuffer, &m_pRuntime, nullptr);
         RA_LOG_INFO("Runtime state written to buffer (%d/%d bytes)", nSize, nBufferSize);
     }
-    else
+    else if (nBufferSize > 0) // 0 size buffer indicates caller is asking for size, don't log - we'll capture the actual save soon.
     {
         RA_LOG_WARN("Runtime state not written to buffer (%d/%d bytes)", nSize, nBufferSize);
     }

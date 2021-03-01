@@ -969,10 +969,12 @@ void MemoryViewerViewModel::RenderAddresses()
     if (nFirstAddress + nVisibleLines * 16 > m_nTotalMemorySize)
         nVisibleLines = (m_nTotalMemorySize - nFirstAddress) / 16;
 
+    const wchar_t* sFormat = (m_nTotalMemorySize >= 0x01000000) ? L"%08x" : L"0x%06x";
+
     for (int i = 0; i < nVisibleLines; ++i)
     {
         const auto nColor = (nCursorAddress == nFirstAddress) ? pEditorTheme.ColorHeaderSelected() : pEditorTheme.ColorHeader();
-        const auto sAddress = ra::StringPrintf(L"0x%06x", nFirstAddress);
+        const auto sAddress = ra::StringPrintf(sFormat, nFirstAddress);
         nFirstAddress += 16;
 
         m_pSurface->WriteText(0, nY, m_nFont, nColor, sAddress);

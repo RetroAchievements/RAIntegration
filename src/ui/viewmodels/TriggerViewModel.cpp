@@ -414,6 +414,7 @@ void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
     auto* vmCoreGroup = m_vGroups.GetItemAt(0);
     Expects(vmCoreGroup != nullptr);
     vmCoreGroup->m_pConditionSet = pTrigger.requirement;
+    vmCoreGroup->ResetSerialized();
 
     // update alt groups (add any new alt groups)
     gsl::index nIndex = 0;
@@ -422,9 +423,14 @@ void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
     {
         auto* vmAltGroup = m_vGroups.GetItemAt(++nIndex);
         if (vmAltGroup != nullptr)
+        {
             vmAltGroup->m_pConditionSet = pConditionSet;
+            vmAltGroup->ResetSerialized();
+        }
         else
+        {
             AddAltGroup(m_vGroups, gsl::narrow_cast<int>(nIndex), pConditionSet);
+        }
     }
 
     // remove any extra alt groups

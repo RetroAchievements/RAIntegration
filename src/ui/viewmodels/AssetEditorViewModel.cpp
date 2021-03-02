@@ -295,18 +295,34 @@ void AssetEditorViewModel::OnTriggerChanged()
         if (nSize < 0)
         {
             SetValue(AssetValidationErrorProperty, ra::Widen(rc_error_str(nSize)));
-            return;
+
+            // if the achievement is active, we have to disable it
+            if (pAchievement->IsActive())
+                pAchievement->SetState(ra::data::models::AssetState::Inactive);
+
+            // we need to update the trigger to mark the asset as modified, and so any attempt to reset/revert
+            // the trigger will cause a PropertyChanged event. but we can't allow UpdateTriggerBinding to try
+            // to process it because the trigger is not valid.
+            m_bIgnoreTriggerUpdate = true;
+            pAchievement->SetTrigger(sTrigger);
+            m_bIgnoreTriggerUpdate = false;
         }
+        else
+        {
+            SetValue(AssetValidationErrorProperty, L"");
 
-        SetValue(AssetValidationErrorProperty, L"");
-        pAchievement->SetTrigger(sTrigger);
+            pAchievement->SetTrigger(sTrigger);
 
-        // if trigger has actually changed, code should call back through UpdateTriggerBinding to update the UI
+            // if trigger has actually changed, the code will call back through UpdateTriggerBinding to update the UI
+        }
     }
 }
 
 void AssetEditorViewModel::UpdateTriggerBinding()
 {
+    if (m_bIgnoreTriggerUpdate)
+        return;
+
     const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
     if (pAchievement != nullptr)
     {
@@ -318,6 +334,8 @@ void AssetEditorViewModel::UpdateTriggerBinding()
             Trigger().UpdateFrom(*pTrigger);
         else
             Trigger().UpdateFrom(pAchievement->GetTrigger());
+
+        SetValue(AssetValidationErrorProperty, L"");
     }
 }
 

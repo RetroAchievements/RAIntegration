@@ -679,6 +679,22 @@ void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetMo
     }
 }
 
+static bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets)
+{
+    auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+    if (pWindowManager.AssetEditor.HasAssetValidationError())
+    {
+        const auto* vmInvalidAsset = pWindowManager.AssetEditor.GetAsset();
+        for (auto* vmItem : vSelectedAssets)
+        {
+            if (vmItem == vmInvalidAsset)
+                return true;
+        }
+    }
+
+    return false;
+}
+
 void AssetListViewModel::ActivateSelected()
 {
     std::vector<ra::data::models::AssetModelBase*> vSelectedAssets;
@@ -694,6 +710,15 @@ void AssetListViewModel::ActivateSelected()
     }
     else // Activate
     {
+        if (SelectionContainsInvalidAsset(vSelectedAssets))
+        {
+            auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+            const auto sError = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
+                pWindowManager.AssetEditor.GetAssetValidationError());
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to activate", sError);
+            return;
+        }
+
         for (auto* vmItem : vSelectedAssets)
         {
             if (vmItem)
@@ -720,6 +745,15 @@ void AssetListViewModel::SaveSelected()
                 if (pAsset != nullptr)
                     vSelectedAssets.push_back(pAsset);
             }
+        }
+
+        if (SelectionContainsInvalidAsset(vSelectedAssets))
+        {
+            auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+            const auto sError = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
+                pWindowManager.AssetEditor.GetAssetValidationError());
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to save", sError);
+            return;
         }
     }
     else if (sSaveButtonText.at(0) == 'P' && sSaveButtonText.at(1) == 'u') // "Publi&sh" / "Publi&sh All"
@@ -1110,6 +1144,15 @@ void AssetListViewModel::CloneSelected()
     GetSelectedAssets(vSelectedAssets);
     if (vSelectedAssets.empty())
         return;
+
+    if (SelectionContainsInvalidAsset(vSelectedAssets))
+    {
+        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+        const auto sError = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
+            pWindowManager.AssetEditor.GetAssetValidationError());
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to clone", sError);
+        return;
+    }
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
 

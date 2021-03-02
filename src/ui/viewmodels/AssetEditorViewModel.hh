@@ -222,6 +222,7 @@ public:
     // ===== Functions =====
 
     void LoadAsset(ra::data::models::AssetModelBase* pAsset);
+    const ra::data::models::AssetModelBase* GetAsset() const noexcept { return m_pAsset; }
 
     void DoFrame();
 
@@ -241,14 +242,13 @@ protected:
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
-    void OnDataModelStateChanged(const IntModelProperty::ChangeArgs& args);
-
     void UpdateTriggerBinding();
     void OnTriggerChanged();
 
     TriggerViewModel m_vmTrigger;
 
     ra::data::models::AssetModelBase* m_pAsset = nullptr;
+    bool m_bIgnoreTriggerUpdate = false;
 };
 
 } // namespace viewmodels

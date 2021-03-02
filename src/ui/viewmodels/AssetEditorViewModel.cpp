@@ -67,8 +67,24 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
     if (m_pAsset == pAsset)
         return;
 
-    if (m_pAsset)
+    if (HasAssetValidationError())
+    {
+        if (ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Discard changes?",
+            L"The currently loaded asset has an error that cannot be saved. If you switch to another asset, your changes will be lost.",
+            ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo) == ra::ui::DialogResult::No)
+        {
+            return;
+        }
+
         m_pAsset->RemoveNotifyTarget(*this);
+        m_pAsset->RestoreLocalCheckpoint();
+
+        SetValue(AssetValidationErrorProperty, L"");
+    }
+    else if (m_pAsset)
+    {
+        m_pAsset->RemoveNotifyTarget(*this);
+    }
 
     // null out internal pointer while binding to prevent change triggers
     m_pAsset = nullptr;

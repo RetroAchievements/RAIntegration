@@ -679,7 +679,7 @@ void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetMo
     }
 }
 
-static bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets)
+bool AssetListViewModel::SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Outref_ std::wstring& sErrorMessage) const
 {
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     if (pWindowManager.AssetEditor.HasAssetValidationError())
@@ -688,7 +688,12 @@ static bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::As
         for (auto* vmItem : vSelectedAssets)
         {
             if (vmItem == vmInvalidAsset)
+            {
+                sErrorMessage = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
+                    pWindowManager.AssetEditor.GetAssetValidationError());
+
                 return true;
+            }
         }
     }
 
@@ -710,12 +715,10 @@ void AssetListViewModel::ActivateSelected()
     }
     else // Activate
     {
-        if (SelectionContainsInvalidAsset(vSelectedAssets))
+        std::wstring sErrorMessage;
+        if (SelectionContainsInvalidAsset(vSelectedAssets, sErrorMessage))
         {
-            auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-            const auto sError = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
-                pWindowManager.AssetEditor.GetAssetValidationError());
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to activate", sError);
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to activate", sErrorMessage);
             return;
         }
 
@@ -747,12 +750,10 @@ void AssetListViewModel::SaveSelected()
             }
         }
 
-        if (SelectionContainsInvalidAsset(vSelectedAssets))
+        std::wstring sErrorMessage;
+        if (SelectionContainsInvalidAsset(vSelectedAssets, sErrorMessage))
         {
-            auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-            const auto sError = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
-                pWindowManager.AssetEditor.GetAssetValidationError());
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to save", sError);
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to save", sErrorMessage);
             return;
         }
     }
@@ -1145,12 +1146,10 @@ void AssetListViewModel::CloneSelected()
     if (vSelectedAssets.empty())
         return;
 
-    if (SelectionContainsInvalidAsset(vSelectedAssets))
+    std::wstring sErrorMessage;
+    if (SelectionContainsInvalidAsset(vSelectedAssets, sErrorMessage))
     {
-        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-        const auto sError = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
-            pWindowManager.AssetEditor.GetAssetValidationError());
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to clone", sError);
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to clone", sErrorMessage);
         return;
     }
 

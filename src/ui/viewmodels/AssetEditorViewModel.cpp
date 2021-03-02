@@ -22,7 +22,9 @@ const StringModelProperty AssetEditorViewModel::BadgeProperty("AssetEditorViewMo
 const BoolModelProperty AssetEditorViewModel::PauseOnResetProperty("AssetEditorViewModel", "PauseOnReset", false);
 const BoolModelProperty AssetEditorViewModel::PauseOnTriggerProperty("AssetEditorViewModel", "PauseOnTrigger", false);
 const BoolModelProperty AssetEditorViewModel::DecimalPreferredProperty("AssetEditorViewModel", "DecimalPreferred", false);
-const BoolModelProperty AssetEditorViewModel::AssetLoadedProperty("AssetEditorViewModel", "AssetLoaded", false);
+const BoolModelProperty AssetEditorViewModel::IsAssetLoadedProperty("AssetEditorViewModel", "IsAssetLoaded", false);
+const BoolModelProperty AssetEditorViewModel::HasAssetValidationErrorProperty("AssetEditorViewModel", "HasAssetValidationError", false);
+const StringModelProperty AssetEditorViewModel::AssetValidationErrorProperty("AssetEditorViewModel", "AssetValidationError", L"");
 const StringModelProperty AssetEditorViewModel::WaitingLabelProperty("AssetEditorViewModel", "WaitingLabel", L"Active");
 
 AssetEditorViewModel::AssetEditorViewModel() noexcept
@@ -111,11 +113,11 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
         }
 
         m_pAsset = pAsset;
-        SetValue(AssetLoadedProperty, true);
+        SetValue(IsAssetLoadedProperty, true);
     }
     else
     {
-        SetValue(AssetLoadedProperty, false);
+        SetValue(IsAssetLoadedProperty, false);
 
         SetName(NameProperty.GetDefaultValue());
         SetValue(IDProperty, IDProperty.GetDefaultValue());
@@ -225,6 +227,9 @@ void AssetEditorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs&
         }
     }
 
+    if (args.Property == AssetValidationErrorProperty)
+        SetValue(HasAssetValidationErrorProperty, !args.tNewValue.empty());
+
     WindowViewModelBase::OnValueChanged(args);
 }
 
@@ -285,6 +290,15 @@ void AssetEditorViewModel::OnTriggerChanged()
     if (pAchievement != nullptr)
     {
         const std::string& sTrigger = Trigger().Serialize();
+
+        const int nSize = rc_trigger_size(sTrigger.c_str());
+        if (nSize < 0)
+        {
+            SetValue(AssetValidationErrorProperty, ra::Widen(rc_error_str(nSize)));
+            return;
+        }
+
+        SetValue(AssetValidationErrorProperty, L"");
         pAchievement->SetTrigger(sTrigger);
 
         // if trigger has actually changed, code should call back through UpdateTriggerBinding to update the UI

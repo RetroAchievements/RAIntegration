@@ -395,9 +395,24 @@ void AssetEditorDialog::ActiveCheckBoxBinding::OnCommand()
     // check state has already been updated - update the backing data to match
     const auto bIsChecked = Button_GetCheck(m_hWnd);
     if (bIsChecked)
+    {
+        if (GetValue(ra::ui::viewmodels::AssetEditorViewModel::HasAssetValidationErrorProperty))
+        {
+            Button_SetCheck(m_hWnd, BST_UNCHECKED);
+
+            const auto sError = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
+                GetValue(ra::ui::viewmodels::AssetEditorViewModel::AssetValidationErrorProperty));
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to activate", sError);
+
+            return;
+        }
+
         SetValue(ra::ui::viewmodels::AssetEditorViewModel::StateProperty, ra::etoi(ra::data::models::AssetState::Waiting));
+    }
     else
+    {
         SetValue(ra::ui::viewmodels::AssetEditorViewModel::StateProperty, ra::etoi(ra::data::models::AssetState::Inactive));
+    }
 
     OnValueChanged();
 }
@@ -441,26 +456,27 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindBadge.SetWrapAround(true);
     m_bindBadgeImage.BindImage(AssetEditorViewModel::BadgeProperty, ra::ui::ImageType::Badge);
     m_bindPoints.BindValue(AssetEditorViewModel::PointsProperty);
-    m_bindWindow.BindEnabled(IDC_RA_TITLE, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_DESCRIPTION, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_CHK_ACTIVE, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_POINTS, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_BADGENAME, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_BADGE_SPIN, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_UPLOAD_BADGE, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_RESET, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_TRIGGER, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_LBX_GROUPS, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_ADD_GROUP, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_DELETE_GROUP, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_LBX_CONDITIONS, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_ADD_COND, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_DELETE_COND, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_COPY_COND, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_PASTE_COND, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_MOVE_COND_UP, AssetEditorViewModel::AssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_MOVE_COND_DOWN, AssetEditorViewModel::AssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_TITLE, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DESCRIPTION, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_ACTIVE, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_POINTS, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_BADGENAME, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_BADGE_SPIN, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_UPLOAD_BADGE, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_RESET, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_TRIGGER, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_LBX_GROUPS, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_ADD_GROUP, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DELETE_GROUP, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_LBX_CONDITIONS, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_ADD_COND, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DELETE_COND, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_COPY_COND, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_PASTE_COND, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_MOVE_COND_UP, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_MOVE_COND_DOWN, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindLabel(IDC_RA_CHK_ACTIVE, AssetEditorViewModel::WaitingLabelProperty);
+    m_bindWindow.BindVisible(IDC_RA_ERROR_INDICATOR, AssetEditorViewModel::HasAssetValidationErrorProperty);
 
     m_bindPauseOnReset.BindCheck(AssetEditorViewModel::PauseOnResetProperty);
     m_bindPauseOnTrigger.BindCheck(AssetEditorViewModel::PauseOnTriggerProperty);
@@ -601,7 +617,91 @@ BOOL AssetEditorDialog::OnInitDialog()
     m_bindActive.SetControl(*this, IDC_RA_CHK_ACTIVE);
     m_bindDecimalPreferred.SetControl(*this, IDC_RA_CHK_SHOW_DECIMALS);
 
+    if (!m_hErrorIcon)
+    {
+        SHSTOCKICONINFO sii{};
+        sii.cbSize = sizeof(sii);
+        if (SUCCEEDED(::SHGetStockIconInfo(SIID_ERROR, SHGSI_ICON | SHGSI_SMALLICON, &sii)))
+            m_hErrorIcon = sii.hIcon;
+    }
+
+    const auto hErrorIconControl = GetDlgItem(GetHWND(), IDC_RA_ERROR_INDICATOR);
+    if (m_hErrorIcon)
+        ::SendMessage(hErrorIconControl, STM_SETICON, reinterpret_cast<WPARAM>(m_hErrorIcon), NULL);
+
+    m_hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
+        WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
+        CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
+        GetHWND(), nullptr, GetModuleHandle(nullptr), nullptr);
+
+    if (m_hTooltip)
+    {
+        TOOLINFO toolInfo;
+        memset(&toolInfo, 0, sizeof(toolInfo));
+        GSL_SUPPRESS_ES47 toolInfo.cbSize = TTTOOLINFO_V1_SIZE;
+        toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
+        toolInfo.hwnd = GetHWND();
+        GSL_SUPPRESS_TYPE1 toolInfo.uId = reinterpret_cast<UINT_PTR>(hErrorIconControl);
+        toolInfo.lpszText = LPSTR_TEXTCALLBACK;
+        ::GetClientRect(hErrorIconControl, &toolInfo.rect);
+        GSL_SUPPRESS_TYPE1 SendMessage(m_hTooltip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo));
+        SendMessage(m_hTooltip, TTM_ACTIVATE, TRUE, 0);
+    }
+
     return DialogBase::OnInitDialog();
+}
+
+INT_PTR CALLBACK AssetEditorDialog::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+    switch (uMsg)
+    {
+        case WM_NOTIFY:
+        {
+            LPNMHDR pnmHdr;
+            GSL_SUPPRESS_TYPE1{ pnmHdr = reinterpret_cast<LPNMHDR>(lParam); }
+            switch (pnmHdr->code)
+            {
+                case TTN_GETDISPINFO:
+                {
+                    if (pnmHdr->hwndFrom == m_hTooltip)
+                    {
+                        auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+                        if (vmAssetEditor)
+                        {
+                            NMTTDISPINFO* pnmTtDispInfo;
+                            GSL_SUPPRESS_TYPE1{ pnmTtDispInfo = reinterpret_cast<NMTTDISPINFO*>(lParam); }
+                            Expects(pnmTtDispInfo != nullptr);
+                            pnmTtDispInfo->lpszText = const_cast<LPTSTR>(vmAssetEditor->GetAssetValidationError().c_str());
+                            return 0;
+                        }
+                    }
+
+                    break;
+                }
+            }
+
+            break;
+        }
+    }
+
+    return DialogBase::DialogProc(hDlg, uMsg, wParam, lParam);
+}
+
+void AssetEditorDialog::OnDestroy()
+{
+    if (m_hErrorIcon)
+    {
+        ::DestroyIcon(m_hErrorIcon);
+        m_hErrorIcon = nullptr;
+    }
+
+    if (m_hTooltip)
+    {
+        ::DestroyWindow(m_hTooltip);
+        m_hTooltip = nullptr;
+    }
+
+    return DialogBase::OnDestroy();
 }
 
 BOOL AssetEditorDialog::OnCommand(WORD nCommand)

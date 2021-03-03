@@ -627,7 +627,7 @@ BOOL AssetEditorDialog::OnInitDialog()
 
     const auto hErrorIconControl = GetDlgItem(GetHWND(), IDC_RA_ERROR_INDICATOR);
     if (m_hErrorIcon)
-        ::SendMessage(hErrorIconControl, STM_SETICON, reinterpret_cast<WPARAM>(m_hErrorIcon), NULL);
+        GSL_SUPPRESS_TYPE1 ::SendMessage(hErrorIconControl, STM_SETICON, reinterpret_cast<WPARAM>(m_hErrorIcon), NULL);
 
     m_hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
         WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
@@ -665,13 +665,13 @@ INT_PTR CALLBACK AssetEditorDialog::DialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                 {
                     if (pnmHdr->hwndFrom == m_hTooltip)
                     {
-                        auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+                        const auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
                         if (vmAssetEditor)
                         {
                             NMTTDISPINFO* pnmTtDispInfo;
                             GSL_SUPPRESS_TYPE1{ pnmTtDispInfo = reinterpret_cast<NMTTDISPINFO*>(lParam); }
                             Expects(pnmTtDispInfo != nullptr);
-                            pnmTtDispInfo->lpszText = const_cast<LPTSTR>(vmAssetEditor->GetAssetValidationError().c_str());
+                            GSL_SUPPRESS_TYPE3 pnmTtDispInfo->lpszText = const_cast<LPTSTR>(vmAssetEditor->GetAssetValidationError().c_str());
                             return 0;
                         }
                     }

@@ -368,10 +368,11 @@ private:
                 sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), pIter->second));
         }
 
-        bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Outref_ std::wstring& sErrorMessage) const override
+        bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Out_ std::wstring& sErrorMessage) const override
         {
             for (const auto* pAsset : vSelectedAssets)
             {
+                Expects(pAsset != nullptr);
                 const auto pIter = m_mPublishErrors.find(pAsset->GetID());
                 if (pIter != m_mPublishErrors.end())
                 {
@@ -380,6 +381,7 @@ private:
                 }
             }
 
+            sErrorMessage.clear();
             return false;
         }
 

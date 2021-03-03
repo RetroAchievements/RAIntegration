@@ -679,13 +679,13 @@ void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetMo
     }
 }
 
-bool AssetListViewModel::SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Outref_ std::wstring& sErrorMessage) const
+bool AssetListViewModel::SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Out_ std::wstring& sErrorMessage) const
 {
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     if (pWindowManager.AssetEditor.HasAssetValidationError())
     {
         const auto* vmInvalidAsset = pWindowManager.AssetEditor.GetAsset();
-        for (auto* vmItem : vSelectedAssets)
+        for (const auto* vmItem : vSelectedAssets)
         {
             if (vmItem == vmInvalidAsset)
             {
@@ -697,6 +697,7 @@ bool AssetListViewModel::SelectionContainsInvalidAsset(const std::vector<ra::dat
         }
     }
 
+    sErrorMessage.clear();
     return false;
 }
 

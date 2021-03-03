@@ -49,7 +49,7 @@ public:
 
         bool UpdateSerialized(const ViewModelCollection<TriggerConditionViewModel>& vConditions);
         const std::string& GetSerialized() const;
-        void ResetSerialized() { m_sSerialized.clear(); }
+        void ResetSerialized() noexcept { m_sSerialized.clear(); }
 
     private:
         static void UpdateSerialized(std::string& sSerialized, const ViewModelCollection<TriggerConditionViewModel>& vConditions);

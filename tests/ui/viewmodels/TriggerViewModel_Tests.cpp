@@ -257,6 +257,26 @@ public:
         Assert::AreEqual(std::string("0xH1234=0xH2345_0xH04d2=0S0xX5555=1"), pMonitor.sNewTrigger);
     }
 
+    TEST_METHOD(TestTriggerUpdateConditionsResetAndReapplied)
+    {
+        TriggerViewModel vmTrigger;
+        Parse(vmTrigger, "0xH1234=1");
+
+        TriggerMonitor pMonitor(vmTrigger);
+        vmTrigger.SetSelectedGroupIndex(0);
+        vmTrigger.Conditions().Add();
+        Assert::AreEqual(std::string("0xH1234=1_0xH0000=0"), pMonitor.sNewTrigger);
+        Assert::AreEqual(std::string("0xH1234=1_0xH0000=0"), vmTrigger.Serialize());
+
+        vmTrigger.UpdateFrom("0xH1234=1");
+        Assert::AreEqual({ 1 }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=1"), vmTrigger.Serialize());
+
+        vmTrigger.Conditions().Add();
+        Assert::AreEqual(std::string("0xH1234=1_0xH0000=0"), pMonitor.sNewTrigger);
+        Assert::AreEqual(std::string("0xH1234=1_0xH0000=0"), vmTrigger.Serialize());
+    }
+
     TEST_METHOD(TestCopySelectedConditionsToClipboard)
     {
         TriggerViewModelHarness vmTrigger;

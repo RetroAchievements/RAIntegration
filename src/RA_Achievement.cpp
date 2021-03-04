@@ -379,6 +379,13 @@ void Achievement::SetTrigger(const std::string& sTrigger)
     m_sTrigger = sTrigger;
     m_pTrigger = nullptr;
     m_vConditions.Clear();
+
+    if (m_bActive)
+    {
+        // deactivate and reactivate to update the runtime
+        SetActive(false);
+        SetActive(true);
+    }
 }
 
 static rc_trigger_t* GetRawTrigger(ra::AchievementID nId, const std::string& sTrigger)

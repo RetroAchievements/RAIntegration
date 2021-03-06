@@ -679,6 +679,28 @@ void AssetListViewModel::GetSelectedAssets(std::vector<ra::data::models::AssetMo
     }
 }
 
+bool AssetListViewModel::SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Out_ std::wstring& sErrorMessage) const
+{
+    auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+    if (pWindowManager.AssetEditor.HasAssetValidationError())
+    {
+        const auto* vmInvalidAsset = pWindowManager.AssetEditor.GetAsset();
+        for (const auto* vmItem : vSelectedAssets)
+        {
+            if (vmItem == vmInvalidAsset)
+            {
+                sErrorMessage = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
+                    pWindowManager.AssetEditor.GetAssetValidationError());
+
+                return true;
+            }
+        }
+    }
+
+    sErrorMessage.clear();
+    return false;
+}
+
 void AssetListViewModel::ActivateSelected()
 {
     std::vector<ra::data::models::AssetModelBase*> vSelectedAssets;
@@ -694,6 +716,13 @@ void AssetListViewModel::ActivateSelected()
     }
     else // Activate
     {
+        std::wstring sErrorMessage;
+        if (SelectionContainsInvalidAsset(vSelectedAssets, sErrorMessage))
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to activate", sErrorMessage);
+            return;
+        }
+
         for (auto* vmItem : vSelectedAssets)
         {
             if (vmItem)
@@ -720,6 +749,13 @@ void AssetListViewModel::SaveSelected()
                 if (pAsset != nullptr)
                     vSelectedAssets.push_back(pAsset);
             }
+        }
+
+        std::wstring sErrorMessage;
+        if (SelectionContainsInvalidAsset(vSelectedAssets, sErrorMessage))
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to save", sErrorMessage);
+            return;
         }
     }
     else if (sSaveButtonText.at(0) == 'P' && sSaveButtonText.at(1) == 'u') // "Publi&sh" / "Publi&sh All"
@@ -1110,6 +1146,13 @@ void AssetListViewModel::CloneSelected()
     GetSelectedAssets(vSelectedAssets);
     if (vSelectedAssets.empty())
         return;
+
+    std::wstring sErrorMessage;
+    if (SelectionContainsInvalidAsset(vSelectedAssets, sErrorMessage))
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to clone", sErrorMessage);
+        return;
+    }
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
 

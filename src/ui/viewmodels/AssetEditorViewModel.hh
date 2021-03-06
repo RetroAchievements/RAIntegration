@@ -28,14 +28,34 @@ public:
     AssetEditorViewModel& operator=(AssetEditorViewModel&&) noexcept = delete;
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for whether or not the emulator should be paused when the achievement triggers.
+    /// The <see cref="ModelProperty" /> for whether or not an asset is loaded in the editor.
     /// </summary>
-    static const BoolModelProperty AssetLoadedProperty;
+    static const BoolModelProperty IsAssetLoadedProperty;
 
     /// <summary>
-    /// Gets whether or not the emulator should be paused when the achievement triggers.
+    /// Gets whether or not an asset is loaded in the editor.
     /// </summary>
-    bool IsAssetLoaded() const { return GetValue(AssetLoadedProperty); }
+    bool IsAssetLoaded() const { return GetValue(IsAssetLoadedProperty); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not an AssetValidationError is set.
+    /// </summary>
+    static const BoolModelProperty HasAssetValidationErrorProperty;
+
+    /// <summary>
+    /// Gets whether or not an AssetValidationError is set.
+    /// </summary>
+    bool HasAssetValidationError() const { return GetValue(HasAssetValidationErrorProperty); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the reason why the asset is not valid.
+    /// </summary>
+    static const StringModelProperty AssetValidationErrorProperty;
+
+    /// <summary>
+    /// Gets the reason why the asset is not valid.
+    /// </summary>
+    const std::wstring& GetAssetValidationError() const { return GetValue(AssetValidationErrorProperty); }
 
     // ===== Common =====
 
@@ -202,6 +222,7 @@ public:
     // ===== Functions =====
 
     void LoadAsset(ra::data::models::AssetModelBase* pAsset);
+    const ra::data::models::AssetModelBase* GetAsset() const noexcept { return m_pAsset; }
 
     void DoFrame();
 
@@ -221,14 +242,13 @@ protected:
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
-    void OnDataModelStateChanged(const IntModelProperty::ChangeArgs& args);
-
     void UpdateTriggerBinding();
     void OnTriggerChanged();
 
     TriggerViewModel m_vmTrigger;
 
     ra::data::models::AssetModelBase* m_pAsset = nullptr;
+    bool m_bIgnoreTriggerUpdate = false;
 };
 
 } // namespace viewmodels

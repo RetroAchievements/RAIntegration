@@ -42,7 +42,9 @@ public:
 
 protected:
     BOOL OnInitDialog() override;
+    INT_PTR CALLBACK DialogProc(HWND, UINT, WPARAM, LPARAM) override;
     BOOL OnCommand(WORD nCommand) override;
+    void OnDestroy() override;
 
 private:
     class BadgeNameBinding : public ra::ui::win32::bindings::NumericUpDownBinding
@@ -97,6 +99,9 @@ private:
 
     ra::ui::win32::bindings::GridBinding m_bindGroups;
     ra::ui::win32::bindings::GridBinding m_bindConditions;
+
+    HICON m_hErrorIcon = nullptr;
+    HWND m_hTooltip = nullptr;
 };
 
 } // namespace win32

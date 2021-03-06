@@ -1,14 +1,17 @@
 #include "CppUnitTest.h"
 
 #include "ui\viewmodels\AssetEditorViewModel.hh"
+#include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
+#include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
 
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockDesktop.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -50,10 +53,16 @@ private:
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::ui::mocks::MockDesktop mockDesktop;
 
         const std::wstring& GetWaitingLabel() const
         {
             return GetValue(WaitingLabelProperty);
+        }
+
+        void SetAssetValidationError(const std::wstring& sValue)
+        {
+            SetValue(AssetValidationErrorProperty, sValue);
         }
     };
 
@@ -132,6 +141,110 @@ public:
 
         Assert::AreEqual(std::string("0xH1234=6.1."), editor.Trigger().Serialize());
         Assert::IsFalse(achievement.IsModified());
+    }
+
+    TEST_METHOD(TestLoadAchievementWhileInvalid)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetName(L"Test Achievement");
+        achievement.SetID(1234U);
+        achievement.SetState(AssetState::Active);
+        achievement.SetDescription(L"Do something cool");
+        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetPoints(10);
+        achievement.SetBadge(L"58329");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.SetDescription(L"Do something modified");
+        Assert::AreEqual(AssetChanges::Modified, achievement.GetChanges());
+
+        editor.LoadAsset(&achievement);
+
+        editor.SetAssetValidationError(L"I am error.");
+        bool bMessageSeen = false;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+        {
+            bMessageSeen = true;
+            Assert::AreEqual(std::wstring(L"Discard changes?"), vmMessage.GetHeader());
+            Assert::AreEqual(std::wstring(L"The currently loaded asset has an error that cannot be saved. If you switch to another asset, your changes will be lost."), vmMessage.GetMessage());
+
+            return DialogResult::No;
+        });
+        Assert::IsTrue(editor.HasAssetValidationError());
+
+        // attempt to reload current asset does not show warning
+        editor.LoadAsset(&achievement);
+        Assert::IsFalse(bMessageSeen);
+        Assert::AreEqual(1234U, editor.GetID());
+
+        AchievementModel achievement2;
+        achievement2.SetName(L"Test Achievement 2");
+        achievement2.SetID(2345U);
+        achievement2.SetState(AssetState::Waiting);
+        achievement2.SetDescription(L"Do something else");
+        achievement2.SetCategory(AssetCategory::Unofficial);
+        achievement2.SetPoints(5);
+        achievement2.SetBadge(L"83295");
+        achievement2.CreateServerCheckpoint();
+        achievement2.CreateLocalCheckpoint();
+
+        // attempt to load alternate asset shows warning (set up to abort)
+        editor.LoadAsset(&achievement2);
+        Assert::IsTrue(bMessageSeen);
+        bMessageSeen = false;
+
+        Assert::AreEqual(1234U, editor.GetID());
+        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Do something modified"), editor.GetDescription());
+        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
+        Assert::AreEqual(AssetState::Active, editor.GetState());
+        Assert::AreEqual(10, editor.GetPoints());
+        Assert::AreEqual(std::wstring(L"58329"), editor.GetBadge());
+        Assert::IsTrue(editor.IsAssetLoaded());
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(AssetChanges::Modified, achievement.GetChanges());
+
+        // attempt to load no asset shows warning (set up to abort)
+        editor.LoadAsset(nullptr);
+        Assert::IsTrue(bMessageSeen);
+        bMessageSeen = false;
+
+        Assert::AreEqual(1234U, editor.GetID());
+        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Do something modified"), editor.GetDescription());
+        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
+        Assert::AreEqual(AssetState::Active, editor.GetState());
+        Assert::AreEqual(10, editor.GetPoints());
+        Assert::AreEqual(std::wstring(L"58329"), editor.GetBadge());
+        Assert::IsTrue(editor.IsAssetLoaded());
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(AssetChanges::Modified, achievement.GetChanges());
+
+        // change behavior to not abort
+        editor.mockDesktop.ResetExpectedWindows();
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            bMessageSeen = true;
+            return DialogResult::Yes;
+        });
+
+        editor.LoadAsset(&achievement2);
+        Assert::IsTrue(bMessageSeen);
+
+        Assert::AreEqual(2345U, editor.GetID());
+        Assert::AreEqual(std::wstring(L"Test Achievement 2"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Do something else"), editor.GetDescription());
+        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
+        Assert::AreEqual(AssetState::Waiting, editor.GetState());
+        Assert::AreEqual(5, editor.GetPoints());
+        Assert::AreEqual(std::wstring(L"83295"), editor.GetBadge());
+        Assert::IsTrue(editor.IsAssetLoaded());
+        Assert::IsFalse(editor.HasAssetValidationError());
+
+        // changes should have been discarded
+        Assert::AreEqual(AssetChanges::None, achievement.GetChanges());
+        Assert::AreEqual(std::wstring(L"Do something cool"), achievement.GetDescription());
     }
 
     TEST_METHOD(TestSyncId)
@@ -570,6 +683,68 @@ public:
         Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(2U, pCondition->GetTargetValue());
+    }
+
+    TEST_METHOD(TestTriggerUpdatedInvalid)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("M:0xH1234=1.1._0xH2345=1.2.");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.Activate();
+
+        editor.LoadAsset(&achievement);
+
+        // make sure the record got loaded into the runtime
+        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+
+        Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
+        editor.Trigger().Conditions().GetItemAt(1)->SetType(ra::ui::viewmodels::TriggerConditionType::Measured);
+
+        // make sure the trigger definition got updated
+        Assert::AreEqual(std::string("M:0xH1234=1.1._M:0xH2345=1.2."), achievement.GetTrigger());
+
+        // make sure the error got set
+        Assert::AreEqual(std::wstring(L"Multiple measured targets"), editor.GetAssetValidationError());
+        Assert::IsTrue(editor.HasAssetValidationError());
+
+        // make sure the achievement was disabled
+        Assert::AreEqual(AssetState::Inactive, achievement.GetState());
+        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Assert::IsNull(pTrigger);
+
+        // make sure the UI kept the change
+        Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
+        auto* pCondition = editor.Trigger().Conditions().GetItemAt(1);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+
+        // fix the error
+        editor.Trigger().Conditions().GetItemAt(0)->SetType(ra::ui::viewmodels::TriggerConditionType::Standard);
+
+        // make sure the trigger definition got updated
+        Assert::AreEqual(std::string("0xH1234=1.1._M:0xH2345=1.2."), achievement.GetTrigger());
+
+        // make sure the error got cleared
+        Assert::AreEqual(std::wstring(L""), editor.GetAssetValidationError());
+        Assert::IsFalse(editor.HasAssetValidationError());
+
+        // the achievement should have remained disabled
+        Assert::AreEqual(AssetState::Inactive, achievement.GetState());
+        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Assert::IsNull(pTrigger);
+
+        // make sure the UI kept the change
+        Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
+        pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(TriggerConditionType::Standard, pCondition->GetType());
+        pCondition = editor.Trigger().Conditions().GetItemAt(1);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
     }
 
     TEST_METHOD(TestDoFrameUpdatesHitsFromActiveAchievement)

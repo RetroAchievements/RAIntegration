@@ -368,6 +368,23 @@ private:
                 sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), pIter->second));
         }
 
+        bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Out_ std::wstring& sErrorMessage) const override
+        {
+            for (const auto* pAsset : vSelectedAssets)
+            {
+                Expects(pAsset != nullptr);
+                const auto pIter = m_mPublishErrors.find(pAsset->GetID());
+                if (pIter != m_mPublishErrors.end())
+                {
+                    sErrorMessage = pIter->second;
+                    return true;
+                }
+            }
+
+            sErrorMessage.clear();
+            return false;
+        }
+
     private:
         std::map<ra::AchievementID, std::wstring> m_mPublishErrors;
     };
@@ -1320,6 +1337,34 @@ public:
         Assert::IsTrue(vmAssetList.CanActivate());
     }
 
+    TEST_METHOD(TestActivateSelectedInvalid)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetCategory::Core);
+        vmAssetList.AddThreeAchievements();
+
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        vmAssetList.SetPublishError(vmAssetList.FilteredAssets().GetItemAt(1)->GetId(), L"Error message goes here.");
+        vmAssetList.ForceUpdateButtons();
+
+        bool bMessageSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+        {
+            bMessageSeen = true;
+            Assert::AreEqual(std::wstring(L"Unable to activate"), vmMessage.GetHeader());
+            Assert::AreEqual(std::wstring(L"Error message goes here."), vmMessage.GetMessage());
+
+            return DialogResult::OK;
+        });
+
+        Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
+        vmAssetList.ActivateSelected();
+        Assert::IsTrue(bMessageSeen);
+        Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
+    }
+
     TEST_METHOD(TestSaveSelectedLocalUnmodified)
     {
         AssetListViewModelHarness vmAssetList;
@@ -1475,6 +1520,36 @@ public:
         AssertDoesNotContain(sText2, "2:\"0xH1111=1\":");
 
         Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+    }
+
+    TEST_METHOD(TestSaveSelectedInvalid)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(1U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        pItem->SetName(L"Test1b");
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.SetPublishError(pItem->GetID(), L"Error message goes here.");
+        vmAssetList.ForceUpdateButtons();
+
+        bool bMessageSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+        {
+            bMessageSeen = true;
+            Assert::AreEqual(std::wstring(L"Unable to save"), vmMessage.GetHeader());
+            Assert::AreEqual(std::wstring(L"Error message goes here."), vmMessage.GetMessage());
+
+            return DialogResult::OK;
+        });
+
+        Assert::AreEqual(AssetChanges::Modified, pItem->GetChanges());
+        vmAssetList.SaveSelected();
+        Assert::IsTrue(bMessageSeen);
+        Assert::AreEqual(AssetChanges::Modified, pItem->GetChanges());
     }
 
     TEST_METHOD(TestSaveSelectedPublishCoreModified)
@@ -2155,6 +2230,38 @@ public:
         Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(1)->IsSelected());
     }
 
+    TEST_METHOD(TestCloneInvalid)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetCategory::Core, vmAssetList.GetFilterCategory());
+
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        vmAssetList.SetPublishError(vmAssetList.FilteredAssets().GetItemAt(1)->GetId(), L"Error message goes here.");
+        vmAssetList.ForceUpdateButtons();
+
+        bool bMessageSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+        {
+            bMessageSeen = true;
+            Assert::AreEqual(std::wstring(L"Unable to clone"), vmMessage.GetHeader());
+            Assert::AreEqual(std::wstring(L"Error message goes here."), vmMessage.GetMessage());
+
+            return DialogResult::OK;
+        });
+
+        vmAssetList.CloneSelected();
+
+        // achievement should not be created
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::IsTrue(bMessageSeen);
+    }
+
     TEST_METHOD(TestResetSelectedAllUnmodified)
     {
         AssetListViewModelHarness vmAssetList;
@@ -2306,6 +2413,42 @@ public:
         Assert::AreEqual(std::string("0xH2345=1"), pAsset->GetTrigger());
         Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
         Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
+    }
+
+    TEST_METHOD(TestResetSelectedModifiedInvalid)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.SetPublishError(vmAssetList.FilteredAssets().GetItemAt(0)->GetId(), L"Error message goes here.");
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        pAsset->SetTrigger("0x2345=1");
+        Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
+
+        vmAssetList.MockUserFileContents("1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n");
+
+        int nDialogShown = 0;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&nDialogShown](MessageBoxViewModel& vmMessage)
+        {
+            Assert::AreEqual(std::wstring(L"Reload from disk?"), vmMessage.GetHeader());
+            ++nDialogShown;
+            return DialogResult::Yes;
+        });
+
+        vmAssetList.ResetSelected();
+
+        // invalid asset should be allowed to be reset, with only one confirmation dialog
+        Assert::AreEqual(1, nDialogShown);
+
+        Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
+        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
     }
 
     TEST_METHOD(TestResetSelectedNew)

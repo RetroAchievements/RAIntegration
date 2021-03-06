@@ -413,6 +413,8 @@
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel_Tests.cpp" />
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
     <ClInclude Include="..\src\pch.h" />
+    <ClInclude Include="api\ApiAsserts.hh" />
+    <ClInclude Include="data\DataAsserts.hh" />
     <ClInclude Include="mocks\MockAchievementRuntime.hh" />
     <ClInclude Include="mocks\MockAudioSystem.hh" />
     <ClInclude Include="mocks\MockClipboard.hh" />
@@ -435,12 +437,11 @@
     <ClInclude Include="mocks\MockThreadPool.hh" />
     <ClInclude Include="mocks\MockUserContext.hh" />
     <ClInclude Include="mocks\MockWindowManager.hh" />
-    <ClInclude Include="RA_UnitTestApiHelpers.h" />
     <ClInclude Include="RA_UnitTestHelpers.h" />
     <ClCompile Include="RA_UnitTestHelpers.cpp" />
-    <ClInclude Include="RA_UnitTestDataHelpers.h" />
-    <ClInclude Include="RA_UnitTestServicesHelpers.h" />
-    <ClInclude Include="RA_UnitTestUIHelpers.h" />
+    <ClInclude Include="services\ServicesAsserts.hh" />
+    <ClInclude Include="ui\UIAsserts.hh" />
+    <ClInclude Include="ui\viewmodels\TriggerConditionAsserts.hh" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

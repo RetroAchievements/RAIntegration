@@ -491,17 +491,20 @@
     <ClInclude Include="mocks\MockFrameEventQueue.hh">
       <Filter>Mocks</Filter>
     </ClInclude>
-    <ClInclude Include="RA_UnitTestUIHelpers.h">
-      <Filter>Tests</Filter>
+    <ClInclude Include="ui\UIAsserts.hh">
+      <Filter>Tests\UI</Filter>
     </ClInclude>
-    <ClInclude Include="RA_UnitTestDataHelpers.h">
-      <Filter>Tests</Filter>
+    <ClInclude Include="services\ServicesAsserts.hh">
+      <Filter>Tests\Services</Filter>
     </ClInclude>
-    <ClInclude Include="RA_UnitTestApiHelpers.h">
-      <Filter>Tests</Filter>
+    <ClInclude Include="data\DataAsserts.hh">
+      <Filter>Tests\Data</Filter>
     </ClInclude>
-    <ClInclude Include="RA_UnitTestServicesHelpers.h">
-      <Filter>Tests</Filter>
+    <ClInclude Include="api\ApiAsserts.hh">
+      <Filter>Tests\API</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\TriggerConditionAsserts.hh">
+      <Filter>Tests\UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

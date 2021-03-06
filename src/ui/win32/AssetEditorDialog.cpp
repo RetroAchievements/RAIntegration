@@ -182,7 +182,13 @@ public:
     {
         if (IsAddressType(vmItems, nIndex))
         {
-            const auto nAddress = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+            auto nAddress = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+            if (vmItems.GetItemValue(nIndex, TriggerConditionViewModel::IsIndirectProperty))
+            {
+                const auto* pConditionViewModel = dynamic_cast<const TriggerConditionViewModel*>(vmItems.GetViewModelAt(nIndex));
+                Expects(pConditionViewModel != nullptr);
+                nAddress = pConditionViewModel->GetIndirectAddress(nAddress);
+            }
 
             auto& pMemoryInspector = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector;
             pMemoryInspector.SetCurrentAddress(nAddress);

@@ -1,6 +1,7 @@
 #include "TriggerViewModel.hh"
 
-#include "rcheevos.h"
+#include <rcheevos.h>
+
 #include "RA_StringUtils.h"
 
 #include "services\IClipboard.hh"
@@ -212,6 +213,7 @@ void TriggerViewModel::PasteFromClipboard()
     {
         auto& vmCondition = m_vConditions.Add();
         vmCondition.InitializeFrom(*pCondition);
+        vmCondition.SetTriggerViewModel(this);
         vmCondition.SetSelected(true);
         vmCondition.SetIndex(gsl::narrow_cast<int>(m_vConditions.Count()));
     }
@@ -356,7 +358,7 @@ static void AddAltGroup(ViewModelCollection<TriggerViewModel::GroupViewModel>& v
     vmAltGroup.m_pConditionSet = pConditionSet;
 }
 
-void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
+void TriggerViewModel::InitializeGroups(const rc_trigger_t& pTrigger)
 {
     m_vGroups.RemoveNotifyTarget(*this);
     m_vGroups.BeginUpdate();
@@ -385,6 +387,12 @@ void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
     UpdateConditions(&vmCoreGroup);
 }
 
+void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
+{
+    m_pTrigger = nullptr;
+    InitializeGroups(pTrigger);
+}
+
 void TriggerViewModel::InitializeFrom(const std::string& sTrigger, const ra::data::models::CapturedTriggerHits& pCapturedHits)
 {
     const auto nSize = rc_trigger_size(sTrigger.c_str());
@@ -393,7 +401,7 @@ void TriggerViewModel::InitializeFrom(const std::string& sTrigger, const ra::dat
         m_sTriggerBuffer.resize(nSize);
         m_pTrigger = rc_parse_trigger(m_sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
         pCapturedHits.Restore(m_pTrigger, sTrigger);
-        InitializeFrom(*m_pTrigger);
+        InitializeGroups(*m_pTrigger);
     }
     else
     {
@@ -556,6 +564,7 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
 
     if (pGroup != nullptr && pGroup->m_pConditionSet)
     {
+        bool bIsIndirect = false;
         rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
         for (; pCondition != nullptr; pCondition = pCondition->next)
         {
@@ -564,10 +573,15 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
             {
                 vmCondition = &m_vConditions.Add();
                 Ensures(vmCondition != nullptr);
+                vmCondition->SetTriggerViewModel(this);
             }
 
             vmCondition->SetIndex(++nIndex);
             vmCondition->InitializeFrom(*pCondition);
+            vmCondition->SetCurrentHits(pCondition->current_hits);
+
+            vmCondition->SetIndirect(bIsIndirect);
+            bIsIndirect = (pCondition->type == RC_CONDITION_ADD_ADDRESS);
         }
     }
 

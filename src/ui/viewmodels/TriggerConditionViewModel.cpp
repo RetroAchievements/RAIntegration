@@ -5,8 +5,13 @@
 
 #include "data\context\GameContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
+
+#include "ui\viewmodels\TriggerViewModel.hh"
+
+#include <rcheevos\src\rcheevos\rc_internal.h>
 
 namespace ra {
 namespace ui {
@@ -24,6 +29,7 @@ const IntModelProperty TriggerConditionViewModel::TargetValueProperty("TriggerCo
 const IntModelProperty TriggerConditionViewModel::CurrentHitsProperty("TriggerConditionViewModel", "CurrentHits", 0);
 const IntModelProperty TriggerConditionViewModel::RequiredHitsProperty("TriggerConditionViewModel", "RequiredHits", 0);
 const BoolModelProperty TriggerConditionViewModel::IsSelectedProperty("TriggerConditionViewModel", "IsSelected", false);
+const BoolModelProperty TriggerConditionViewModel::IsIndirectProperty("TriggerConditionViewModel", "IsIndirect", false);
 const BoolModelProperty TriggerConditionViewModel::HasSourceSizeProperty("TriggerConditionViewModel", "HasSourceSize", true);
 const BoolModelProperty TriggerConditionViewModel::HasTargetProperty("TriggerConditionViewModel", "HasTarget", true);
 const BoolModelProperty TriggerConditionViewModel::HasTargetSizeProperty("TriggerConditionViewModel", "HasTargetSize", false);
@@ -293,19 +299,34 @@ void TriggerConditionViewModel::OnValueChanged(const BoolModelProperty::ChangeAr
 std::wstring TriggerConditionViewModel::GetTooltip(const IntModelProperty& nProperty) const
 {
     if (nProperty == SourceValueProperty)
-        return GetValueTooltip(GetSourceType(), GetSourceValue());
+    {
+        const auto nType = GetSourceType();
+        if (nType == TriggerOperandType::Value)
+            return GetValueTooltip(GetSourceValue());
+
+        if (IsIndirect())
+            return GetAddressTooltip(GetIndirectAddress(GetSourceValue()), true);
+
+        return GetAddressTooltip(GetSourceValue(), false);
+    }
 
     if (nProperty == TargetValueProperty)
-        return GetValueTooltip(GetTargetType(), GetTargetValue());
+    {
+        const auto nType = GetTargetType();
+        if (nType == TriggerOperandType::Value)
+            return GetValueTooltip(GetTargetValue());
+
+        if (IsIndirect())
+            return GetAddressTooltip(GetIndirectAddress(GetTargetValue()), true);
+
+        return GetAddressTooltip(GetTargetValue(), false);
+    }
 
     return L"";
 }
 
-std::wstring TriggerConditionViewModel::GetValueTooltip(TriggerOperandType nType, unsigned int nValue) const
+std::wstring TriggerConditionViewModel::GetValueTooltip(unsigned int nValue)
 {
-    if (nType != TriggerOperandType::Value)
-        return GetAddressTooltip(nValue);
-
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
         return L"";
@@ -313,12 +334,94 @@ std::wstring TriggerConditionViewModel::GetValueTooltip(TriggerOperandType nType
     return std::to_wstring(nValue);
 }
 
-std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned int nAddress) const
+static bool IsIndirectMemref(rc_operand_t& operand) noexcept
 {
+    return rc_operand_is_memref(&operand) && operand.value.memref->value.is_indirect;
+}
+
+unsigned int TriggerConditionViewModel::GetIndirectAddress(unsigned int nAddress) const
+{
+    const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
+    if (pTriggerViewModel == nullptr)
+        return nAddress;
+
+    const auto* pGroup = pTriggerViewModel->Groups().GetItemAt(pTriggerViewModel->GetSelectedGroupIndex());
+    if (pGroup == nullptr)
+        return nAddress;
+
+    const auto* pTrigger = pTriggerViewModel->GetTriggerFromString();
+    if (pTrigger != nullptr)
+    {
+        // if the trigger is managed by the viewmodel (not the runtime) then we need to update the memrefs
+        rc_update_memref_values(pTrigger->memrefs, rc_peek_callback, nullptr);
+    }
+
+    bool bIsIndirect = false;
+    rc_eval_state_t oEvalState;
+    memset(&oEvalState, 0, sizeof(oEvalState));
+    oEvalState.peek = rc_peek_callback;
+
+    gsl::index nConditionIndex = 0;
+    rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
+    for (; pCondition != nullptr; pCondition = pCondition->next)
+    {
+        auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex++);
+        if (!vmCondition)
+            break;
+
+        if (vmCondition == this)
+            return nAddress + oEvalState.add_address;
+
+        if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
+        {
+            if (bIsIndirect && pTrigger == nullptr)
+            {
+                // if this is part of a chain, we have to create a copy of the condition so we can point
+                // at copies of the indirect memrefs so the real delta values aren't modified.
+                rc_condition_t oCondition;
+                memcpy(&oCondition, pCondition, sizeof(oCondition));
+                rc_memref_t oSource{}, oTarget{};
+
+                if (IsIndirectMemref(pCondition->operand1))
+                {
+                    memcpy(&oSource, pCondition->operand1.value.memref, sizeof(oSource));
+                    oCondition.operand1.value.memref = &oSource;
+                }
+
+                if (IsIndirectMemref(pCondition->operand2))
+                {
+                    memcpy(&oTarget, pCondition->operand2.value.memref, sizeof(oTarget));
+                    oCondition.operand2.value.memref = &oTarget;
+                }
+
+                oEvalState.add_address = rc_evaluate_condition_value(&oCondition, &oEvalState);
+            }
+            else
+            {
+                oEvalState.add_address = rc_evaluate_condition_value(pCondition, &oEvalState);
+                bIsIndirect = true;
+            }
+        }
+        else
+        {
+            bIsIndirect = false;
+            oEvalState.add_address = 0;
+        }
+    }
+
+    return nAddress;
+}
+
+std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned int nAddress, bool bIsIndirect)
+{
+    auto sAddress = ra::ByteAddressToString(nAddress);
+    if (bIsIndirect)
+        sAddress.append(" (indirect)");
+
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pNote = pGameContext.FindCodeNote(nAddress);
     if (!pNote)
-        return ra::StringPrintf(L"%s\r\n[No code note]", ra::ByteAddressToString(nAddress));
+        return ra::StringPrintf(L"%s\r\n[No code note]", sAddress);
 
     // limit the tooltip to the first 20 lines of the code note
     size_t nLines = 0;
@@ -336,10 +439,10 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned int nAddress)
     if (nIndex != std::string::npos && pNote->find('\n', nIndex) != std::string::npos)
     {
         std::wstring sSubString(*pNote, 0, nIndex);
-        return ra::StringPrintf(L"%s\r\n%s...", ra::ByteAddressToString(nAddress), sSubString);
+        return ra::StringPrintf(L"%s\r\n%s...", sAddress, sSubString);
     }
 
-    return ra::StringPrintf(L"%s\r\n%s", ra::ByteAddressToString(nAddress), *pNote);
+    return ra::StringPrintf(L"%s\r\n%s", sAddress, *pNote);
 }
 
 bool TriggerConditionViewModel::IsModifying(TriggerConditionType nType) noexcept

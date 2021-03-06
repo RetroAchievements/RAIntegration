@@ -31,6 +31,8 @@ std::wstring ToString<ra::ui::viewmodels::TriggerConditionType>(
             return L"SubSource";
         case ra::ui::viewmodels::TriggerConditionType::AddHits:
             return L"AddHits";
+        case ra::ui::viewmodels::TriggerConditionType::SubHits:
+            return L"SubHits";
         case ra::ui::viewmodels::TriggerConditionType::AndNext:
             return L"AndNext";
         case ra::ui::viewmodels::TriggerConditionType::Measured:

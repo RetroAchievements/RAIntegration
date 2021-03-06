@@ -48,6 +48,7 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
             case TriggerConditionType::AddSource:   sBuffer.push_back('A'); break;
             case TriggerConditionType::SubSource:   sBuffer.push_back('B'); break;
             case TriggerConditionType::AddHits:     sBuffer.push_back('C'); break;
+            case TriggerConditionType::SubHits:     sBuffer.push_back('D'); break;
             case TriggerConditionType::AndNext:     sBuffer.push_back('N'); break;
             case TriggerConditionType::OrNext:      sBuffer.push_back('O'); break;
             case TriggerConditionType::Measured:    sBuffer.push_back('M'); break;

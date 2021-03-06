@@ -118,6 +118,9 @@ API int CCONV _RA_Shutdown()
     // if _RA_Init wasn't called, the services won't have been registered, so there's nothing to shut down
     if (ra::services::ServiceLocator::Exists<ra::services::IThreadPool>())
     {
+        // detach any client-registered functions
+        _RA_InstallSharedFunctionsExt(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+
         // notify the background threads as soon as possible so they start to wind down
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(false);
 

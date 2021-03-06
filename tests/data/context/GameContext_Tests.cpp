@@ -1175,6 +1175,32 @@ public:
         game.mockThreadPool.ExecuteNextTask();
     }
 
+    TEST_METHOD(TestAwardAchievementUnpublished)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+
+        auto& pAch = game.MockAchievement();
+        pAch.SetPoints(99);
+        pAch.UpdateLocalCheckpoint();
+        Assert::IsFalse(pAch.IsModified());
+        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, pAch.GetChanges());
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Modified Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (99)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
     TEST_METHOD(TestAwardAchievementMemoryModified)
     {
         GameContextHarness game;

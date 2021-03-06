@@ -452,7 +452,8 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
         bSubmit = false;
     }
 
-    if (pAchievement->IsModified())
+    if (pAchievement->IsModified() || // actual modifications
+        (bSubmit && pAchievement->GetChanges() != ra::data::models::AssetChanges::None)) // unpublished changes
     {
         auto sHeader = vmPopup->GetTitle();
         sHeader.insert(0, L"Modified ");

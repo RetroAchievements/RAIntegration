@@ -50,9 +50,10 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Triggered), L"Triggered");
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Disabled), L"Disabled");
 
-    m_vCategories.Add(ra::etoi(ra::data::models::AssetCategory::Core), L"Core");
-    m_vCategories.Add(ra::etoi(ra::data::models::AssetCategory::Unofficial), L"Unofficial");
-    m_vCategories.Add(ra::etoi(ra::data::models::AssetCategory::Local), L"Local");
+    m_vCategories.Add(ra::etoi(FilterCategory::Core), L"Core");
+    m_vCategories.Add(ra::etoi(FilterCategory::Unofficial), L"Unofficial");
+    m_vCategories.Add(ra::etoi(FilterCategory::Local), L"Local");
+    m_vCategories.Add(ra::etoi(FilterCategory::All), L"All");
 
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::None), L"");
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::Modified), L"Modified");
@@ -307,8 +308,13 @@ void AssetListViewModel::ApplyFilter()
 
 bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& pAsset)
 {
-    if (pAsset.GetCategory() != GetFilterCategory())
-        return false;
+    const auto nFilterCategory = GetFilterCategory();
+    if (nFilterCategory != FilterCategory::All)
+    {
+        const auto nAssetCategory = ra::itoe<ra::data::models::AssetCategory>(ra::etoi(nFilterCategory));
+        if (pAsset.GetCategory() != nAssetCategory)
+            return false;
+    }
 
     if (pAsset.GetType() == ra::data::models::AssetType::LocalBadges)
         return false;
@@ -1096,7 +1102,7 @@ void AssetListViewModel::CreateNew()
 
     FilteredAssets().BeginUpdate();
 
-    SetFilterCategory(ra::data::models::AssetCategory::Local);
+    SetFilterCategory(FilterCategory::Local);
 
     auto& vmAchievement = pGameContext.Assets().NewAchievement();
     vmAchievement.SetCategory(ra::data::models::AssetCategory::Local);
@@ -1158,7 +1164,7 @@ void AssetListViewModel::CloneSelected()
 
     FilteredAssets().BeginUpdate();
 
-    SetFilterCategory(ra::data::models::AssetCategory::Local);
+    SetFilterCategory(FilterCategory::Local);
 
     // add the cloned items
     std::vector<int> vNewIDs;

@@ -137,6 +137,14 @@ public:
     bool CanClone() const { return GetValue(CanCloneProperty); }
     void CloneSelected();
 
+    enum class FilterCategory
+    {
+        Local = ra::etoi(ra::data::models::AssetCategory::Local),
+        All = -1,
+        Core = ra::etoi(ra::data::models::AssetCategory::Core),
+        Unofficial = ra::etoi(ra::data::models::AssetCategory::Unofficial),
+    };
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the filter category.
     /// </summary>
@@ -145,12 +153,12 @@ public:
     /// <summary>
     /// Gets the filter category.
     /// </summary>
-    ra::data::models::AssetCategory GetFilterCategory() const { return ra::itoe<ra::data::models::AssetCategory>(GetValue(FilterCategoryProperty)); }
+    FilterCategory GetFilterCategory() const { return ra::itoe<FilterCategory>(GetValue(FilterCategoryProperty)); }
 
     /// <summary>
     /// Sets the filter category.
     /// </summary>
-    void SetFilterCategory(ra::data::models::AssetCategory nValue) { SetValue(FilterCategoryProperty, ra::etoi(nValue)); }
+    void SetFilterCategory(FilterCategory nValue) { SetValue(FilterCategoryProperty, ra::etoi(nValue)); }
 
     class AssetSummaryViewModel : public LookupItemViewModel
     {

@@ -454,6 +454,20 @@ public:
         Assert::AreEqual((int)AssetListViewModel::FilterCategory::All, vmAssetList.Categories().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"All"), vmAssetList.Categories().GetItemAt(3)->GetLabel());
 
+        Assert::AreEqual({ 6U }, vmAssetList.SpecialFilters().Count());
+        Assert::AreEqual((int)AssetListViewModel::SpecialFilter::All, vmAssetList.SpecialFilters().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"All"), vmAssetList.SpecialFilters().GetItemAt(0)->GetLabel());
+        Assert::AreEqual((int)AssetListViewModel::SpecialFilter::Active, vmAssetList.SpecialFilters().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Active"), vmAssetList.SpecialFilters().GetItemAt(1)->GetLabel());
+        Assert::AreEqual((int)AssetListViewModel::SpecialFilter::Inactive, vmAssetList.SpecialFilters().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Inactive"), vmAssetList.SpecialFilters().GetItemAt(2)->GetLabel());
+        Assert::AreEqual((int)AssetListViewModel::SpecialFilter::Modified, vmAssetList.SpecialFilters().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"Modified"), vmAssetList.SpecialFilters().GetItemAt(3)->GetLabel());
+        Assert::AreEqual((int)AssetListViewModel::SpecialFilter::Unpublished, vmAssetList.SpecialFilters().GetItemAt(4)->GetId());
+        Assert::AreEqual(std::wstring(L"Unpublished"), vmAssetList.SpecialFilters().GetItemAt(4)->GetLabel());
+        Assert::AreEqual((int)AssetListViewModel::SpecialFilter::Authored, vmAssetList.SpecialFilters().GetItemAt(5)->GetId());
+        Assert::AreEqual(std::wstring(L"Authored"), vmAssetList.SpecialFilters().GetItemAt(5)->GetLabel());
+
         Assert::AreEqual({ 5U }, vmAssetList.Changes().Count());
         Assert::AreEqual((int)AssetChanges::None, vmAssetList.Changes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L""), vmAssetList.Changes().GetItemAt(0)->GetLabel());
@@ -774,6 +788,115 @@ public:
         Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
         Assert::AreEqual(2, vmAssetList.FilteredAssets().GetItemAt(1)->GetId());
         Assert::AreEqual(1, vmAssetList.FilteredAssets().GetItemAt(2)->GetId()); // item changed to match filter appears at end of list
+    }
+
+    TEST_METHOD(TestSpecialFilterActive)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
+        Assert::AreEqual({1U}, vmAssetList.mockGameContext.Assets().Count());
+        auto* pAsset = vmAssetList.mockGameContext.Assets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        pAsset->SetState(AssetState::Active);
+
+        vmAssetList.SetSpecialFilter(AssetListViewModel::SpecialFilter::Active);
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+
+        pAsset->SetState(AssetState::Inactive);
+        Assert::AreEqual({0U}, vmAssetList.FilteredAssets().Count());
+
+        pAsset->SetState(AssetState::Waiting);
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+    }
+
+    TEST_METHOD(TestSpecialFilterInactive)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
+        Assert::AreEqual({1U}, vmAssetList.mockGameContext.Assets().Count());
+        auto* pAsset = vmAssetList.mockGameContext.Assets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        pAsset->SetState(AssetState::Inactive);
+
+        vmAssetList.SetSpecialFilter(AssetListViewModel::SpecialFilter::Inactive);
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+
+        pAsset->SetState(AssetState::Waiting);
+        Assert::AreEqual({0U}, vmAssetList.FilteredAssets().Count());
+
+        pAsset->SetState(AssetState::Disabled);
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+    }
+
+    TEST_METHOD(TestSpecialFilterModified)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
+        Assert::AreEqual({1U}, vmAssetList.mockGameContext.Assets().Count());
+        auto* pAsset = vmAssetList.mockGameContext.Assets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        pAsset->SetName(L"New Title");
+
+        vmAssetList.SetSpecialFilter(AssetListViewModel::SpecialFilter::Modified);
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+
+        pAsset->RestoreLocalCheckpoint();
+        Assert::AreEqual({0U}, vmAssetList.FilteredAssets().Count());
+
+        pAsset->SetDescription(L"New Description");
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+    }
+
+    TEST_METHOD(TestSpecialFilterUnpublished)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
+        Assert::AreEqual({ 1U }, vmAssetList.mockGameContext.Assets().Count());
+        auto* pAsset = vmAssetList.mockGameContext.Assets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        pAsset->SetName(L"New Title");
+        pAsset->UpdateLocalCheckpoint();
+
+        vmAssetList.SetSpecialFilter(AssetListViewModel::SpecialFilter::Unpublished);
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+
+        pAsset->RestoreServerCheckpoint();
+        Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
+
+        pAsset->SetDescription(L"New Description");
+        pAsset->UpdateLocalCheckpoint();
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+    }
+
+    TEST_METHOD(TestSpecialFilterAuthored)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.mockUserContext.Initialize("Me", "ABCDEFGH");
+
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach2");
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+
+        auto* pAsset1 = vmAssetList.mockGameContext.Assets().GetItemAt(0);
+        Expects(pAsset1 != nullptr);
+        pAsset1->SetAuthor(L"Me");
+
+        auto* pAsset2 = vmAssetList.mockGameContext.Assets().GetItemAt(1);
+        Expects(pAsset2 != nullptr);
+        pAsset2->SetAuthor(L"You");
+
+        vmAssetList.SetSpecialFilter(AssetListViewModel::SpecialFilter::Authored);
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(std::wstring(L"Ach1"), vmAssetList.FilteredAssets().GetItemAt(0)->GetLabel());
     }
 
     TEST_METHOD(TestSyncFilteredItem)

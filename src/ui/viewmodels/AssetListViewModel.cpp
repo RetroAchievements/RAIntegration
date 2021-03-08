@@ -35,7 +35,8 @@ const BoolModelProperty AssetListViewModel::CanResetProperty("AssetListViewModel
 const BoolModelProperty AssetListViewModel::CanRevertProperty("AssetListViewModel", "CanRevert", false);
 const BoolModelProperty AssetListViewModel::CanCreateProperty("AssetListViewModel", "CanCreate", false);
 const BoolModelProperty AssetListViewModel::CanCloneProperty("AssetListViewModel", "CanClone", false);
-const IntModelProperty AssetListViewModel::FilterCategoryProperty("AssetListViewModel", "FilterCategory", ra::etoi(ra::data::models::AssetCategory::Core));
+const IntModelProperty AssetListViewModel::FilterCategoryProperty("AssetListViewModel", "FilterCategory", ra::etoi(AssetListViewModel::FilterCategory::Core));
+const IntModelProperty AssetListViewModel::SpecialFilterProperty("AssetListViewModel", "SpecialFilter", ra::etoi(AssetListViewModel::SpecialFilter::All));
 const IntModelProperty AssetListViewModel::EnsureVisibleAssetIndexProperty("AssetListViewModel", "EnsureVisibleAssetIndex", -1);
 
 AssetListViewModel::AssetListViewModel() noexcept
@@ -54,6 +55,13 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vCategories.Add(ra::etoi(FilterCategory::Unofficial), L"Unofficial");
     m_vCategories.Add(ra::etoi(FilterCategory::Local), L"Local");
     m_vCategories.Add(ra::etoi(FilterCategory::All), L"All");
+
+    m_vSpecialFilters.Add(ra::etoi(SpecialFilter::All), L"All");
+    m_vSpecialFilters.Add(ra::etoi(SpecialFilter::Active), L"Active");
+    m_vSpecialFilters.Add(ra::etoi(SpecialFilter::Inactive), L"Inactive");
+    m_vSpecialFilters.Add(ra::etoi(SpecialFilter::Modified), L"Modified");
+    m_vSpecialFilters.Add(ra::etoi(SpecialFilter::Unpublished), L"Unpublished");
+    m_vSpecialFilters.Add(ra::etoi(SpecialFilter::Authored), L"Authored");
 
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::None), L"");
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::Modified), L"Modified");
@@ -124,10 +132,24 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
     {
         UpdateTotals();
 
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-        if (pAsset != nullptr)
-            AddOrRemoveFilteredItem(*pAsset);
+        if (GetFilterCategory() != FilterCategory::All)
+        {
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+            const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+            if (pAsset != nullptr)
+                AddOrRemoveFilteredItem(*pAsset);
+        }
+    }
+    else if (args.Property == ra::data::models::AssetModelBase::StateProperty ||
+             args.Property == ra::data::models::AssetModelBase::ChangesProperty)
+    {
+        if (GetSpecialFilter() != SpecialFilter::All)
+        {
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+            const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+            if (pAsset != nullptr)
+                AddOrRemoveFilteredItem(*pAsset);
+        }
     }
 
     // sync these properties through to the summary view model
@@ -255,7 +277,7 @@ void AssetListViewModel::UpdateTotals()
 
 void AssetListViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == FilterCategoryProperty)
+    if (args.Property == FilterCategoryProperty || args.Property == SpecialFilterProperty)
         ApplyFilter();
     else if (args.Property == GameIdProperty)
         UpdateButtons();
@@ -318,6 +340,37 @@ bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& p
 
     if (pAsset.GetType() == ra::data::models::AssetType::LocalBadges)
         return false;
+
+    switch (GetSpecialFilter())
+    {
+        default:
+            break;
+
+        case SpecialFilter::Active:
+            if (!pAsset.IsActive())
+                return false;
+            break;
+
+        case SpecialFilter::Inactive:
+            if (pAsset.IsActive())
+                return false;
+            break;
+
+        case SpecialFilter::Modified:
+            if (!pAsset.IsModified())
+                return false;
+            break;
+
+        case SpecialFilter::Unpublished:
+            if (pAsset.GetChanges() != ra::data::models::AssetChanges::Unpublished)
+                return false;
+            break;
+
+        case SpecialFilter::Authored:
+            if (pAsset.GetAuthor() != ra::Widen(ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername()))
+                return false;
+            break;
+    }
 
     return true;
 }

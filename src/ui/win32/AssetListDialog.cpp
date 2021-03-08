@@ -73,6 +73,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     : DialogBase(vmAssetList),
       m_bindAssets(vmAssetList),
       m_bindCategories(vmAssetList),
+      m_bindSpecialFilters(vmAssetList),
       m_bindProcessingActive(vmAssetList)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::Near, RelativePosition::After, "Achievements");
@@ -80,6 +81,10 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindCategories.BindItems(vmAssetList.Categories(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
         ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
     m_bindCategories.BindSelectedItem(AssetListViewModel::FilterCategoryProperty);
+
+    m_bindSpecialFilters.BindItems(vmAssetList.SpecialFilters(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
+       ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
+    m_bindSpecialFilters.BindSelectedItem(AssetListViewModel::SpecialFilterProperty);
 
     auto pIdColumn = std::make_unique<IdColumnBinding>(AssetListViewModel::AssetSummaryViewModel::IdProperty);
     pIdColumn->SetHeader(L"ID");
@@ -148,6 +153,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_CATEGORY, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_SPECIAL_FILTER, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_GAMEID, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_GAMEHASH, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_ACHIEVEMENTS, Anchor::Top | Anchor::Right);
@@ -172,6 +178,7 @@ BOOL AssetListDialog::OnInitDialog()
     m_bindProcessingActive.SetControl(*this, IDC_RA_CHKACHPROCESSINGACTIVE);
 
     m_bindCategories.SetControl(*this, IDC_RA_CATEGORY);
+    m_bindSpecialFilters.SetControl(*this, IDC_RA_SPECIAL_FILTER);
 
     return DialogBase::OnInitDialog();
 }

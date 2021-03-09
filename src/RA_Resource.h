@@ -96,6 +96,8 @@
 #define IDC_RA_MOVE_COND_DOWN           1191
 #define IDC_RA_DISPLAY_CHALLENGE_INDICATOR 1192
 #define IDC_RA_ERROR_INDICATOR          1193
+#define IDC_RA_LBL_MEASURED             1194
+#define IDC_RA_MEASURED                 1195
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -178,7 +180,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        122
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1194
+#define _APS_NEXT_CONTROL_VALUE         1196
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

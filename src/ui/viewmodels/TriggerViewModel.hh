@@ -84,6 +84,7 @@ public:
     void InitializeFrom(const std::string& sTrigger, const ra::data::models::CapturedTriggerHits& pCapturedHits);
     void UpdateFrom(const rc_trigger_t& pTrigger);
     void UpdateFrom(const std::string& sTrigger);
+    rc_trigger_t* GetTriggerFromString() const noexcept { return m_pTrigger; }
 
     void RemoveSelectedConditions();
     void CopySelectedConditionsToClipboard();

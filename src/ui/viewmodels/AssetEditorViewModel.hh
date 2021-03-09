@@ -219,6 +219,31 @@ public:
     /// </summary>
     void SetDecimalPreferred(bool nValue) { SetValue(DecimalPreferredProperty, nValue); }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the trigger has a Measured target.
+    /// </summary>
+    static const BoolModelProperty HasMeasuredProperty;
+
+    /// <summary>
+    /// Gets whether or not the trigger has a Measured target.
+    /// </summary>
+    bool HasMeasured() const { return GetValue(HasMeasuredProperty); }
+
+    /// <summary>
+    /// Sets whether or not the trigger has a Measured target.
+    /// </summary>
+    void SetMeasured(bool nValue) { SetValue(HasMeasuredProperty, nValue); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the Measured display string.
+    /// </summary>
+    static const StringModelProperty MeasuredValueProperty;
+
+    /// <summary>
+    /// Gets the Measured display string.
+    /// </summary>
+    const std::wstring& GetMeasuredValue() const { return GetValue(MeasuredValueProperty); }
+
     // ===== Functions =====
 
     void LoadAsset(ra::data::models::AssetModelBase* pAsset);
@@ -244,6 +269,8 @@ protected:
 
     void UpdateTriggerBinding();
     void OnTriggerChanged();
+
+    void UpdateMeasuredValue();
 
     TriggerViewModel m_vmTrigger;
 

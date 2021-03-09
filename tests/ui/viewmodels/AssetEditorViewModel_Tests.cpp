@@ -84,6 +84,10 @@ public:
         Assert::IsFalse(editor.IsPauseOnTrigger());
         Assert::IsFalse(editor.IsDecimalPreferred());
         Assert::IsFalse(editor.IsAssetLoaded());
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationError());
+        Assert::IsFalse(editor.HasMeasured());
+        Assert::AreEqual(std::wstring(L"[Not Active]"), editor.GetMeasuredValue());
     }
 
     TEST_METHOD(TestLoadAchievement)
@@ -113,6 +117,7 @@ public:
         Assert::IsFalse(editor.IsPauseOnReset());
         Assert::IsFalse(editor.IsPauseOnTrigger());
         Assert::IsTrue(editor.IsAssetLoaded());
+        Assert::IsFalse(editor.HasMeasured());
 
         editor.LoadAsset(nullptr);
 
@@ -127,6 +132,7 @@ public:
         Assert::IsFalse(editor.IsPauseOnReset());
         Assert::IsFalse(editor.IsPauseOnTrigger());
         Assert::IsFalse(editor.IsAssetLoaded());
+        Assert::IsFalse(editor.HasMeasured());
     }
 
     TEST_METHOD(TestLoadAchievementTrigger)
@@ -245,6 +251,78 @@ public:
         // changes should have been discarded
         Assert::AreEqual(AssetChanges::None, achievement.GetChanges());
         Assert::AreEqual(std::wstring(L"Do something cool"), achievement.GetDescription());
+    }
+
+    TEST_METHOD(TestLoadAchievementMeasured)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetName(L"Test Achievement");
+        achievement.SetID(1234U);
+        achievement.SetState(AssetState::Active);
+        achievement.SetDescription(L"Do something cool");
+        achievement.SetTrigger("M:0xH1234=6.11.");
+        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetPoints(10);
+        achievement.SetBadge(L"58329");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&achievement);
+
+        Assert::AreEqual(std::wstring(L"Achievement Editor"), editor.GetWindowTitle());
+        Assert::AreEqual(1234U, editor.GetID());
+        Assert::AreEqual(std::wstring(L"Test Achievement"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Do something cool"), editor.GetDescription());
+        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
+        Assert::AreEqual(AssetState::Active, editor.GetState());
+        Assert::AreEqual(10, editor.GetPoints());
+        Assert::AreEqual(std::wstring(L"58329"), editor.GetBadge());
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::IsFalse(editor.IsPauseOnTrigger());
+        Assert::IsTrue(editor.IsAssetLoaded());
+        Assert::IsTrue(editor.HasMeasured());
+        Assert::AreEqual(std::wstring(L"0/11"), editor.GetMeasuredValue());
+
+        editor.LoadAsset(nullptr);
+
+        Assert::AreEqual(std::wstring(L"Asset Editor"), editor.GetWindowTitle());
+        Assert::AreEqual(0U, editor.GetID());
+        Assert::AreEqual(std::wstring(L"[No Asset Loaded]"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Open an asset from the Assets List"), editor.GetDescription());
+        Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
+        Assert::AreEqual(AssetState::Inactive, editor.GetState());
+        Assert::AreEqual(0, editor.GetPoints());
+        Assert::AreEqual(std::wstring(L"00000"), editor.GetBadge());
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::IsFalse(editor.IsPauseOnTrigger());
+        Assert::IsFalse(editor.IsAssetLoaded());
+        Assert::IsFalse(editor.HasMeasured());
+    }
+
+    TEST_METHOD(TestLoadAchievementMeasuredFromRuntime)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetState(AssetState::Active);
+        achievement.SetTrigger("M:0xH1234=6.11.");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        editor.mockRuntime.ActivateAchievement(achievement.GetID(), achievement.GetTrigger());
+
+        editor.LoadAsset(&achievement);
+
+        Assert::AreEqual(1234U, editor.GetID());
+        Assert::AreEqual(AssetState::Active, editor.GetState());
+        Assert::IsTrue(editor.HasMeasured());
+        Assert::AreEqual(std::wstring(L"0/11"), editor.GetMeasuredValue());
+
+        editor.LoadAsset(nullptr);
+
+        Assert::AreEqual(0U, editor.GetID());
+        Assert::IsFalse(editor.HasMeasured());
     }
 
     TEST_METHOD(TestSyncId)
@@ -369,6 +447,29 @@ public:
         Assert::AreEqual(AssetState::Active, editor.GetState());
         Assert::AreEqual(AssetState::Active, achievement.GetState());
         Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
+    }
+
+    TEST_METHOD(TestSyncStateMeasured)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetTrigger("M:0xH1234=6.11.");
+        achievement.SetState(AssetState::Inactive);
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        editor.LoadAsset(&achievement);
+
+        Assert::IsTrue(editor.HasMeasured());
+        Assert::AreEqual(std::wstring(L"[Not Active]"), editor.GetMeasuredValue());
+
+        achievement.SetState(AssetState::Waiting);
+        Assert::AreEqual(std::wstring(L"0/11"), editor.GetMeasuredValue());
+
+        achievement.SetState(AssetState::Active);
+        Assert::AreEqual(std::wstring(L"0/11"), editor.GetMeasuredValue());
+
+        achievement.SetState(AssetState::Triggered);
+        Assert::AreEqual(std::wstring(L"[Not Active]"), editor.GetMeasuredValue());
     }
 
     TEST_METHOD(TestSyncCategory)
@@ -807,6 +908,27 @@ public:
         Assert::AreEqual(7U, pCondition->GetCurrentHits());
     }
 
+    TEST_METHOD(TestDoFrameUpdatesMeasuredFromActiveAchievement)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("M:0xH1234=1.99.");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.Activate();
+
+        editor.LoadAsset(&achievement);
+
+        auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+        pTrigger->measured_value = 6U;
+        Assert::AreEqual(std::wstring(L"0/99"), editor.GetMeasuredValue());
+
+        editor.DoFrame();
+        Assert::AreEqual(std::wstring(L"6/99"), editor.GetMeasuredValue());
+    }
+
     TEST_METHOD(TestDecimalPreferredOnVisible)
     {
         AssetEditorViewModelHarness editor;
@@ -964,6 +1086,7 @@ public:
         // definition changed. when reloaded, the updated state should be discarded
         Assert::AreEqual(0U, pCondition->GetCurrentHits());
     }
+
 };
 
 } // namespace tests

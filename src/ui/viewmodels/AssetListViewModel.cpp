@@ -850,6 +850,8 @@ static std::wstring ValidateCondSet(const rc_condset_t* pCondSet)
             return L"ResetNextIf is pre-release functionality";
         if (pCondition->type == RC_CONDITION_TRIGGER)
             return L"Trigger is pre-release functionality";
+        if (pCondition->type == RC_CONDITION_SUB_HITS)
+            return L"Trigger is pre-release functionality";
         if (pCondition->oper == RC_OPERATOR_MULT)
             return L"Multiplication is pre-release functionality";
         if (pCondition->oper == RC_OPERATOR_DIV)

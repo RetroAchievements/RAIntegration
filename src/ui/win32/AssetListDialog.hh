@@ -44,6 +44,7 @@ protected:
 private:
     ra::ui::win32::bindings::GridBinding m_bindAssets;
     ra::ui::win32::bindings::ComboBoxBinding m_bindCategories;
+    ra::ui::win32::bindings::ComboBoxBinding m_bindSpecialFilters;
     ra::ui::win32::bindings::CheckBoxBinding m_bindProcessingActive;
 };
 

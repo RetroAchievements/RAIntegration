@@ -98,6 +98,14 @@ public:
     }
 
     /// <summary>
+    /// Gets the list of special filters.
+    /// </summary>
+    const LookupItemViewModelCollection& SpecialFilters() const noexcept
+    {
+        return m_vSpecialFilters;
+    }
+
+    /// <summary>
     /// Gets the list of asset modification states.
     /// </summary>
     const LookupItemViewModelCollection& Changes() const noexcept
@@ -137,6 +145,14 @@ public:
     bool CanClone() const { return GetValue(CanCloneProperty); }
     void CloneSelected();
 
+    enum class FilterCategory
+    {
+        Local = ra::etoi(ra::data::models::AssetCategory::Local),
+        All = -1,
+        Core = ra::etoi(ra::data::models::AssetCategory::Core),
+        Unofficial = ra::etoi(ra::data::models::AssetCategory::Unofficial),
+    };
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the filter category.
     /// </summary>
@@ -145,12 +161,37 @@ public:
     /// <summary>
     /// Gets the filter category.
     /// </summary>
-    ra::data::models::AssetCategory GetFilterCategory() const { return ra::itoe<ra::data::models::AssetCategory>(GetValue(FilterCategoryProperty)); }
+    FilterCategory GetFilterCategory() const { return ra::itoe<FilterCategory>(GetValue(FilterCategoryProperty)); }
 
     /// <summary>
     /// Sets the filter category.
     /// </summary>
-    void SetFilterCategory(ra::data::models::AssetCategory nValue) { SetValue(FilterCategoryProperty, ra::etoi(nValue)); }
+    void SetFilterCategory(FilterCategory nValue) { SetValue(FilterCategoryProperty, ra::etoi(nValue)); }
+
+    enum class SpecialFilter
+    {
+        All = 0,
+        Active,
+        Inactive,
+        Modified,
+        Unpublished,
+        Authored,
+    };
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the special filter.
+    /// </summary>
+    static const IntModelProperty SpecialFilterProperty;
+
+    /// <summary>
+    /// Gets the special filter.
+    /// </summary>
+    SpecialFilter GetSpecialFilter() const { return ra::itoe<SpecialFilter>(GetValue(SpecialFilterProperty)); }
+
+    /// <summary>
+    /// Sets the special filter.
+    /// </summary>
+    void SetSpecialFilter(SpecialFilter nValue) { SetValue(SpecialFilterProperty, ra::etoi(nValue)); }
 
     class AssetSummaryViewModel : public LookupItemViewModel
     {
@@ -236,6 +277,7 @@ private:
 
     LookupItemViewModelCollection m_vStates;
     LookupItemViewModelCollection m_vCategories;
+    LookupItemViewModelCollection m_vSpecialFilters;
     LookupItemViewModelCollection m_vChanges;
 };
 

@@ -468,7 +468,7 @@ public:
     TEST_METHOD(TestRefreshLocalAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockWindowManager.AssetList.SetFilterCategory(AssetCategory::Local);
+        achievementsPage.mockWindowManager.AssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
         auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Local);
         pAch1.SetID(1);
         pAch1.SetName(L"AchievementTitle");
@@ -668,7 +668,7 @@ public:
     TEST_METHOD(TestFetchItemDetailLocal)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockWindowManager.AssetList.SetFilterCategory(AssetCategory::Local);
+        achievementsPage.mockWindowManager.AssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
         auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Local);
         pAch1.SetID(1);
         pAch1.SetName(L"AchievementTitle");

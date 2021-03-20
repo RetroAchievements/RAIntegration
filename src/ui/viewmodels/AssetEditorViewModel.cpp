@@ -25,6 +25,8 @@ const BoolModelProperty AssetEditorViewModel::DecimalPreferredProperty("AssetEdi
 const BoolModelProperty AssetEditorViewModel::IsAssetLoadedProperty("AssetEditorViewModel", "IsAssetLoaded", false);
 const BoolModelProperty AssetEditorViewModel::HasAssetValidationErrorProperty("AssetEditorViewModel", "HasAssetValidationError", false);
 const StringModelProperty AssetEditorViewModel::AssetValidationErrorProperty("AssetEditorViewModel", "AssetValidationError", L"");
+const BoolModelProperty AssetEditorViewModel::HasMeasuredProperty("AssetEditorViewModel", "HasMeasured", false);
+const StringModelProperty AssetEditorViewModel::MeasuredValueProperty("AssetEditorViewModel", "MeasuredValue", L"[Not Active]");
 const StringModelProperty AssetEditorViewModel::WaitingLabelProperty("AssetEditorViewModel", "WaitingLabel", L"Active");
 
 AssetEditorViewModel::AssetEditorViewModel() noexcept
@@ -112,7 +114,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
             SetPauseOnTrigger(pAchievement->IsPauseOnTrigger());
             SetWindowTitle(L"Achievement Editor");
 
-            const auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAsset->GetID());
+            auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAsset->GetID());
             if (pTrigger != nullptr)
             {
                 Trigger().InitializeFrom(*pTrigger);
@@ -120,20 +122,27 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
             else
             {
                 Trigger().InitializeFrom(pAchievement->GetTrigger(), pAchievement->GetCapturedHits());
+                pTrigger = Trigger().GetTriggerFromString();
             }
+
+            SetValue(HasMeasuredProperty, (pTrigger != nullptr && pTrigger->measured_target != 0));
         }
         else
         {
             ra::data::models::CapturedTriggerHits pCapturedHits;
             Trigger().InitializeFrom("", pCapturedHits);
+            SetValue(HasMeasuredProperty, false);
         }
 
         m_pAsset = pAsset;
         SetValue(IsAssetLoadedProperty, true);
+
+        UpdateMeasuredValue();
     }
     else
     {
         SetValue(IsAssetLoadedProperty, false);
+        SetValue(HasMeasuredProperty, false);
 
         SetName(NameProperty.GetDefaultValue());
         SetValue(IDProperty, IDProperty.GetDefaultValue());
@@ -278,6 +287,8 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
             SetValue(WaitingLabelProperty, L"Waiting");
         else if (nOldState == ra::data::models::AssetState::Waiting)
             SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
+
+        UpdateMeasuredValue();
     }
 
     if (m_pAsset != nullptr)
@@ -347,12 +358,20 @@ void AssetEditorViewModel::UpdateTriggerBinding()
             pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
 
         if (pTrigger != nullptr)
+        {
             Trigger().UpdateFrom(*pTrigger);
+        }
         else
+        {
             Trigger().UpdateFrom(pAchievement->GetTrigger());
+            pTrigger = Trigger().GetTriggerFromString();
+        }
 
         SetValue(AssetValidationErrorProperty, L"");
+        SetValue(HasMeasuredProperty, (pTrigger && pTrigger->measured_target != 0));
     }
+
+    UpdateMeasuredValue();
 }
 
 void AssetEditorViewModel::DoFrame()
@@ -361,7 +380,38 @@ void AssetEditorViewModel::DoFrame()
         return;
 
     if (IsVisible())
+    {
         m_vmTrigger.DoFrame();
+
+        UpdateMeasuredValue();
+    }
+}
+
+void AssetEditorViewModel::UpdateMeasuredValue()
+{
+    if (HasMeasured())
+    {
+        if (!m_pAsset || !m_pAsset->IsActive())
+        {
+            SetValue(MeasuredValueProperty, MeasuredValueProperty.GetDefaultValue());
+        }
+        else
+        {
+            const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
+            if (pAchievement != nullptr)
+            {
+                auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
+                if (!pTrigger)
+                {
+                    pTrigger = Trigger().GetTriggerFromString();
+                    if (!pTrigger)
+                        return;
+                }
+
+                SetValue(MeasuredValueProperty, ra::StringPrintf(L"%d/%d", pTrigger->measured_value, pTrigger->measured_target));
+            }
+        }
+    }
 }
 
 } // namespace viewmodels

@@ -22,6 +22,7 @@ enum class TriggerConditionType : uint8_t
     AddSource = RC_CONDITION_ADD_SOURCE,
     SubSource = RC_CONDITION_SUB_SOURCE,
     AddHits = RC_CONDITION_ADD_HITS,
+    SubHits = RC_CONDITION_SUB_HITS,
     AndNext = RC_CONDITION_AND_NEXT,
     Measured = RC_CONDITION_MEASURED,
     AddAddress = RC_CONDITION_ADD_ADDRESS,

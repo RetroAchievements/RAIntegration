@@ -30,6 +30,7 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AddSource), L"Add Source");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::SubSource), L"Sub Source");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AddHits), L"Add Hits");
+    m_vConditionTypes.Add(ra::etoi(TriggerConditionType::SubHits), L"Sub Hits");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AddAddress), L"Add Address");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::AndNext), L"And Next");
     m_vConditionTypes.Add(ra::etoi(TriggerConditionType::OrNext), L"Or Next");

@@ -267,6 +267,10 @@ public:
         Assert::AreEqual(TriggerConditionType::ResetIf, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
 
+        vmCondition.SetType(TriggerConditionType::SubHits);
+        Assert::AreEqual(TriggerConditionType::SubHits, vmCondition.GetType());
+        Assert::IsTrue(vmCondition.HasHits());
+
         vmCondition.SetType(TriggerConditionType::SubSource);
         Assert::AreEqual(TriggerConditionType::SubSource, vmCondition.GetType());
         Assert::IsFalse(vmCondition.HasHits());
@@ -327,6 +331,7 @@ public:
         ParseAndRegenerate("A:0xH1234"); // add source
         ParseAndRegenerate("B:0xH1234"); // sub source
         ParseAndRegenerate("C:0xH1234=5"); // add hits
+        ParseAndRegenerate("D:0xH1234=5"); // sub hits
         ParseAndRegenerate("N:0xH1234=5"); // and next
         ParseAndRegenerate("O:0xH1234=5"); // or next
         ParseAndRegenerate("M:0xH1234=5"); // measured
@@ -440,6 +445,9 @@ public:
         Assert::IsFalse(condition.IsModifying());
 
         condition.SetType(TriggerConditionType::Standard);
+        Assert::IsFalse(condition.IsModifying());
+
+        condition.SetType(TriggerConditionType::SubHits);
         Assert::IsFalse(condition.IsModifying());
 
         condition.SetType(TriggerConditionType::SubSource);

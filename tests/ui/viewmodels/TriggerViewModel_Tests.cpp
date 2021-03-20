@@ -97,7 +97,7 @@ public:
         Assert::AreEqual({ 0U }, vmTrigger.Groups().Count());
         Assert::AreEqual(std::string(), vmTrigger.Serialize());
 
-        Assert::AreEqual({ 13U }, vmTrigger.ConditionTypes().Count());
+        Assert::AreEqual({ 14U }, vmTrigger.ConditionTypes().Count());
         Assert::AreEqual((int)TriggerConditionType::Standard, vmTrigger.ConditionTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L""), vmTrigger.ConditionTypes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)TriggerConditionType::PauseIf, vmTrigger.ConditionTypes().GetItemAt(1)->GetId());
@@ -112,18 +112,20 @@ public:
         Assert::AreEqual(std::wstring(L"Sub Source"), vmTrigger.ConditionTypes().GetItemAt(5)->GetLabel());
         Assert::AreEqual((int)TriggerConditionType::AddHits, vmTrigger.ConditionTypes().GetItemAt(6)->GetId());
         Assert::AreEqual(std::wstring(L"Add Hits"), vmTrigger.ConditionTypes().GetItemAt(6)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::AddAddress, vmTrigger.ConditionTypes().GetItemAt(7)->GetId());
-        Assert::AreEqual(std::wstring(L"Add Address"), vmTrigger.ConditionTypes().GetItemAt(7)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::AndNext, vmTrigger.ConditionTypes().GetItemAt(8)->GetId());
-        Assert::AreEqual(std::wstring(L"And Next"), vmTrigger.ConditionTypes().GetItemAt(8)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::OrNext, vmTrigger.ConditionTypes().GetItemAt(9)->GetId());
-        Assert::AreEqual(std::wstring(L"Or Next"), vmTrigger.ConditionTypes().GetItemAt(9)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::Measured, vmTrigger.ConditionTypes().GetItemAt(10)->GetId());
-        Assert::AreEqual(std::wstring(L"Measured"), vmTrigger.ConditionTypes().GetItemAt(10)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::MeasuredIf, vmTrigger.ConditionTypes().GetItemAt(11)->GetId());
-        Assert::AreEqual(std::wstring(L"Measured If"), vmTrigger.ConditionTypes().GetItemAt(11)->GetLabel());
-        Assert::AreEqual((int)TriggerConditionType::Trigger, vmTrigger.ConditionTypes().GetItemAt(12)->GetId());
-        Assert::AreEqual(std::wstring(L"Trigger"), vmTrigger.ConditionTypes().GetItemAt(12)->GetLabel());
+        Assert::AreEqual((int)TriggerConditionType::SubHits, vmTrigger.ConditionTypes().GetItemAt(7)->GetId());
+        Assert::AreEqual(std::wstring(L"Sub Hits"), vmTrigger.ConditionTypes().GetItemAt(7)->GetLabel());
+        Assert::AreEqual((int)TriggerConditionType::AddAddress, vmTrigger.ConditionTypes().GetItemAt(8)->GetId());
+        Assert::AreEqual(std::wstring(L"Add Address"), vmTrigger.ConditionTypes().GetItemAt(8)->GetLabel());
+        Assert::AreEqual((int)TriggerConditionType::AndNext, vmTrigger.ConditionTypes().GetItemAt(9)->GetId());
+        Assert::AreEqual(std::wstring(L"And Next"), vmTrigger.ConditionTypes().GetItemAt(9)->GetLabel());
+        Assert::AreEqual((int)TriggerConditionType::OrNext, vmTrigger.ConditionTypes().GetItemAt(10)->GetId());
+        Assert::AreEqual(std::wstring(L"Or Next"), vmTrigger.ConditionTypes().GetItemAt(10)->GetLabel());
+        Assert::AreEqual((int)TriggerConditionType::Measured, vmTrigger.ConditionTypes().GetItemAt(11)->GetId());
+        Assert::AreEqual(std::wstring(L"Measured"), vmTrigger.ConditionTypes().GetItemAt(11)->GetLabel());
+        Assert::AreEqual((int)TriggerConditionType::MeasuredIf, vmTrigger.ConditionTypes().GetItemAt(12)->GetId());
+        Assert::AreEqual(std::wstring(L"Measured If"), vmTrigger.ConditionTypes().GetItemAt(12)->GetLabel());
+        Assert::AreEqual((int)TriggerConditionType::Trigger, vmTrigger.ConditionTypes().GetItemAt(13)->GetId());
+        Assert::AreEqual(std::wstring(L"Trigger"), vmTrigger.ConditionTypes().GetItemAt(13)->GetLabel());
 
         Assert::AreEqual({ 5U }, vmTrigger.OperandTypes().Count());
         Assert::AreEqual((int)TriggerOperandType::Address, vmTrigger.OperandTypes().GetItemAt(0)->GetId());

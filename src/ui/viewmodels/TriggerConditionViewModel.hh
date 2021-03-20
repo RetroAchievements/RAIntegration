@@ -106,6 +106,11 @@ public:
     unsigned int GetRequiredHits() const { return ra::to_unsigned(GetValue(RequiredHitsProperty)); }
     void SetRequiredHits(unsigned int nValue) { SetValue(RequiredHitsProperty, ra::to_signed(nValue)); }
 
+    static const BoolModelProperty IsIndirectProperty;
+    bool IsIndirect() const { return GetValue(IsIndirectProperty); }
+    void SetIndirect(bool bValue) { SetValue(IsIndirectProperty, bValue); }
+    unsigned int GetIndirectAddress(unsigned int nAddress) const;
+
     static const BoolModelProperty IsSelectedProperty;
     bool IsSelected() const { return GetValue(IsSelectedProperty); }
     void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
@@ -114,6 +119,7 @@ public:
     void SerializeAppend(std::string& sBuffer) const;
 
     void InitializeFrom(const struct rc_condition_t& pCondition);
+    void SetTriggerViewModel(const ViewModelBase* pTriggerViewModel) noexcept { m_pTriggerViewModel = pTriggerViewModel; }
 
     std::wstring GetTooltip(const IntModelProperty& nProperty) const;
 
@@ -127,13 +133,15 @@ private:
 
     void SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, unsigned int nValue) const;
 
-    std::wstring GetValueTooltip(TriggerOperandType nType, unsigned int nValue) const;
-    std::wstring GetAddressTooltip(unsigned int nAddress) const;
+    static std::wstring GetValueTooltip(unsigned int nValue);
+    static std::wstring GetAddressTooltip(unsigned int nAddress, bool bIsIndirect);
 
     void SetOperand(const IntModelProperty& pTypeProperty, const IntModelProperty& pSizeProperty,
         const IntModelProperty& pValueProperty, const rc_operand_t& operand);
 
     static bool IsModifying(TriggerConditionType nType) noexcept;
+
+    const ViewModelBase* m_pTriggerViewModel = nullptr;
 };
 
 } // namespace viewmodels

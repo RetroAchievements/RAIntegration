@@ -182,7 +182,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         RA_Leaderboard& pLeaderboard = *m_vLeaderboards.emplace_back(std::make_unique<RA_Leaderboard>(pLeaderboardData.Id));
         pLeaderboard.SetTitle(pLeaderboardData.Title);
         pLeaderboard.SetDescription(pLeaderboardData.Description);
-        pLeaderboard.ParseFromString(pLeaderboardData.Definition.c_str(), pLeaderboardData.Format.c_str());
+        pLeaderboard.ParseFromString(pLeaderboardData.Definition.c_str(), pLeaderboardData.Format);
     }
 
     ActivateLeaderboards();

@@ -138,7 +138,7 @@ public:
         gamesPage.mockSessions.MockSession(3U, 1234567890U, std::chrono::seconds(5000));
         gamesPage.mockServer.ExpectUncalled<ra::api::FetchGameData>();
         gamesPage.mockLocalStorage.MockStoredData(ra::services::StorageItemType::GameData, L"3",
-            "{\"Title\":\"Game Name\", \"ConsoleID\":5, \"ImageIcon\":\"/Images/BADGE.png\", \"Achievements\":[], \"Leaderboards\":[]}");
+            "{\"ID\":99, \"Title\":\"Game Name\", \"ConsoleID\":5, \"ImageIcon\":\"/Images/BADGE.png\", \"Achievements\":[], \"Leaderboards\":[]}");
 
         gamesPage.Refresh();
 

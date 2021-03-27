@@ -15,7 +15,7 @@ public:
     RA_Leaderboard(RA_Leaderboard&&) noexcept = default;
     RA_Leaderboard& operator=(RA_Leaderboard&&) noexcept = default;
 
-    void ParseFromString(const char* sBuffer, const char* sFormat);
+    void ParseFromString(const char* sBuffer, int nFormat);
 
     ra::LeaderboardID ID() const noexcept { return m_nID; }
 

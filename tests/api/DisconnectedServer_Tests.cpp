@@ -27,10 +27,8 @@ public:
         ra::services::ServiceLocator::ServiceOverride<ra::api::IServer> serviceOverride(new DisconnectedServer("host.com"), true);
         auto& server = ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
 
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([](const Http::Request&)
         {
-            Assert::AreEqual(std::string("host.com/login_app.php"), request.GetUrl());
-            Assert::AreEqual(std::string("u=User&p=pa%24%24w0rd"), request.GetPostData());
             return Http::Response(Http::StatusCode::OK, "{\"Success\":true,\"User\":\"User\",\"Token\":\"ApiTOKEN\",\"Score\":1234,\"Messages\":2}");
         });
 

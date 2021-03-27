@@ -2181,7 +2181,7 @@ public:
             response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1100, L"Level", "Author" });
             response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1110, L"[16-bit] Strength", "Author" });
             response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1120, L"[8 byte] Exp", "Author" });
-            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1200, L"[20 bytes] Items", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1200, L"[20 bytes] Items\r\nMultiline ignored", "Author" });
             return true;
         });
 
@@ -2241,6 +2241,64 @@ public:
         Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), game.FindCodeNote(1110, MemSize::ThirtyTwoBit));
         Assert::AreEqual(std::wstring(L"[16-bit] Strength [partial]"), game.FindCodeNote(1111, MemSize::ThirtyTwoBit));
         Assert::AreEqual(std::wstring(L""), game.FindCodeNote(1112, MemSize::ThirtyTwoBit));
+    }
+
+    TEST_METHOD(TestFindCodeNoteStart)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1000, L"[32-bit] Location", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1100, L"Level", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1110, L"[16-bit] Strength", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1120, L"[8 byte] Exp", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1200, L"[20 bytes] Items", "Author" });
+            return true;
+        });
+
+        game.LoadGame(1U);
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(100));
+
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(999));
+        Assert::AreEqual(1000U, game.FindCodeNoteStart(1000));
+        Assert::AreEqual(1000U, game.FindCodeNoteStart(1001));
+        Assert::AreEqual(1000U, game.FindCodeNoteStart(1002));
+        Assert::AreEqual(1000U, game.FindCodeNoteStart(1003));
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1004));
+
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1099));
+        Assert::AreEqual(1100U, game.FindCodeNoteStart(1100));
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1101));
+
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1109));
+        Assert::AreEqual(1110U, game.FindCodeNoteStart(1110));
+        Assert::AreEqual(1110U, game.FindCodeNoteStart(1111));
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1112));
+
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1119));
+        Assert::AreEqual(1120U, game.FindCodeNoteStart(1120));
+        Assert::AreEqual(1120U, game.FindCodeNoteStart(1127));
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1128));
+
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1199));
+        Assert::AreEqual(1200U, game.FindCodeNoteStart(1200));
+        Assert::AreEqual(1200U, game.FindCodeNoteStart(1219));
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1220));
     }
 
     TEST_METHOD(TestSetCodeNote)

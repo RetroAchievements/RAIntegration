@@ -161,6 +161,14 @@ public:
     }
 
     /// <summary>
+    /// Returns the address of the first byte containing the specified code note.
+    /// </summary>
+    /// <returns>
+    ///  Returns 0xFFFFFFFF if not found.
+    /// </returns>
+    ra::ByteAddress FindCodeNoteStart(ra::ByteAddress nAddress) const;
+
+    /// <summary>
     /// Returns the note associated with the specified address.
     /// </summary>
     /// <returns>

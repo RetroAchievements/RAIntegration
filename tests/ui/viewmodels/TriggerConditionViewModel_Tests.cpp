@@ -392,6 +392,18 @@ public:
         Assert::AreEqual(std::wstring(L"0x0009\r\nThis is another note."), condition.GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
 
+    TEST_METHOD(TestTooltipAddressMultiByteNote)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockGameContext.SetCodeNote({ 8U }, L"[8 bytes] This is a note.");
+
+        condition.Parse("0xH0008=3");
+        Assert::AreEqual(std::wstring(L"0x0008\r\n[8 bytes] This is a note."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        condition.Parse("0xH000C=3");
+        Assert::AreEqual(std::wstring(L"0x0008 [5/8]\r\n[8 bytes] This is a note."), condition.GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
     TEST_METHOD(TestTooltipValueDecimal)
     {
         TriggerConditionViewModelHarness condition;
@@ -498,6 +510,22 @@ public:
         vmTrigger.SetMemory({ 1 }, 3);
         Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\nThis is another note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
         Assert::AreEqual(std::wstring(L"0x0007 (indirect)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipIndirectAddressMultiByteNote)
+    {
+        IndirectAddressTriggerViewModelHarness vmTrigger;
+        vmTrigger.Parse("I:0xH0001_0xH0002=0xH0004");
+        vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        vmTrigger.mockGameContext.SetCodeNote({ 4U }, L"[8 bytes] This is a note.");
+
+        const auto* pCondition = vmTrigger.Conditions().GetItemAt(1);
+        Expects(pCondition != nullptr);
+        Assert::IsTrue(pCondition->IsIndirect());
+
+        // $0001 = 1, 1+2 = $0003, 1+4 = $0005
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0004 [2/8] (indirect)\r\n[8 bytes] This is a note."), pCondition->GetTooltip(TriggerConditionViewModel::TargetValueProperty));
     }
 
     TEST_METHOD(TestTooltipIndirectAddressMultiplyNoCodeNote)

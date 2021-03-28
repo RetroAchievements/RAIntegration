@@ -797,6 +797,15 @@ BOOL AssetEditorDialog::OnCommand(WORD nCommand)
 
             return TRUE;
         }
+
+        case IDC_RA_COPY_ALL:
+        {
+            auto* vmAssetEditor = dynamic_cast<AssetEditorViewModel*>(&m_vmWindow);
+            if (vmAssetEditor)
+                vmAssetEditor->Trigger().CopyToClipboard();
+
+            return TRUE;
+        }
     }
 
     return DialogBase::OnCommand(nCommand);

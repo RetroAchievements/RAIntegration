@@ -421,8 +421,8 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned int nAddress,
     const auto nStartAddress = pGameContext.FindCodeNoteStart(nAddress);
     if (nStartAddress != nAddress && nStartAddress != 0xFFFFFFFF)
     {
-        sAddress = ra::StringPrintf(L"%s [%d/%d]", ra::ByteAddressToString(nStartAddress),
-            nAddress - nStartAddress + 1, pGameContext.FindCodeNoteSize(nStartAddress));
+        sAddress = ra::StringPrintf(L"%s [%s+%d]", ra::ByteAddressToString(nAddress),
+            ra::ByteAddressToString(nStartAddress), nAddress - nStartAddress);
     }
     else
     {

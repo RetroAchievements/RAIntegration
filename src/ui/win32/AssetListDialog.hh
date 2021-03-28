@@ -46,6 +46,7 @@ private:
     ra::ui::win32::bindings::ComboBoxBinding m_bindCategories;
     ra::ui::win32::bindings::ComboBoxBinding m_bindSpecialFilters;
     ra::ui::win32::bindings::CheckBoxBinding m_bindProcessingActive;
+    ra::ui::win32::bindings::CheckBoxBinding m_bindKeepActive;
 };
 
 } // namespace win32

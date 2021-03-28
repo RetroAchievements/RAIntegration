@@ -82,6 +82,21 @@ public:
     void SetProcessingActive(bool bValue) { SetValue(IsProcessingActiveProperty, bValue); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for the whether triggered achievements should be reactivated.
+    /// </summary>
+    static const BoolModelProperty KeepActiveProperty;
+
+    /// <summary>
+    /// Gets whether triggered achievements should be reactivated.
+    /// </summary>
+    bool KeepActive() const { return GetValue(KeepActiveProperty); }
+
+    /// <summary>
+    /// Sets whether triggered achievements should be reactivated.
+    /// </summary>
+    void SetKeepActive(bool bValue) { SetValue(KeepActiveProperty, bValue); }
+
+    /// <summary>
     /// Gets the list of asset states.
     /// </summary>
     const LookupItemViewModelCollection& States() const noexcept

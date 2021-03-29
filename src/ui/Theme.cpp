@@ -189,6 +189,16 @@ void EditorTheme::LoadFromFile()
             ReadColor(m_colorHeaderSelected, colors, "HeaderSelected");
         }
     }
+
+    if (document.HasMember("TriggerColors"))
+    {
+        const rapidjson::Value& triggerColors = document["TriggerColors"];
+        ReadColor(m_colorTriggerIsTrue, triggerColors, "IsTrue");
+        ReadColor(m_colorTriggerWasTrue, triggerColors, "WasTrue");
+        ReadColor(m_colorTriggerBecomingTrue, triggerColors, "BecomingTrue");
+        ReadColor(m_colorTriggerResetTrue, triggerColors, "ResetTrue");
+        ReadColor(m_colorTriggerPauseTrue, triggerColors, "PauseTrue");
+    }
 }
 
 } // namespace ui

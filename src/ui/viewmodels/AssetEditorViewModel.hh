@@ -270,6 +270,7 @@ protected:
     void UpdateTriggerBinding();
     void OnTriggerChanged();
 
+    void UpdateAssetFrameValues();
     void UpdateMeasuredValue();
 
     TriggerViewModel m_vmTrigger;

@@ -8,6 +8,7 @@
 #include "services\IClipboard.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\EditorTheme.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -695,6 +696,7 @@ void TriggerViewModel::DoFrame()
 void TriggerViewModel::UpdateColors(const rc_trigger_t* pTrigger)
 {
     const auto nDefaultColor = ra::ui::Color(ra::to_unsigned(GroupViewModel::ColorProperty.GetDefaultValue()));
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
 
     if (pTrigger == nullptr)
     {
@@ -728,7 +730,7 @@ void TriggerViewModel::UpdateColors(const rc_trigger_t* pTrigger)
             }
 
             if (bIsReset)
-                pGroup->SetColor(ra::ui::Color(0xFF, 0xC8, 0x00));
+                pGroup->SetColor(pTheme.ColorTriggerResetTrue());
             else
                 pGroup->SetColor(nDefaultColor);
         }
@@ -744,7 +746,7 @@ void TriggerViewModel::UpdateColors(const rc_trigger_t* pTrigger)
 
             if (pGroup->m_pConditionSet->is_paused)
             {
-                pGroup->SetColor(ra::ui::Color(0xFF, 0x80, 0x00));
+                pGroup->SetColor(pTheme.ColorTriggerPauseTrue());
             }
             else
             {
@@ -775,7 +777,7 @@ void TriggerViewModel::UpdateColors(const rc_trigger_t* pTrigger)
                 }
 
                 if (bIsTrue)
-                    pGroup->SetColor(ra::ui::Color(0x80, 0xFF, 0x80));
+                    pGroup->SetColor(pTheme.ColorTriggerIsTrue());
                 else
                     pGroup->SetColor(nDefaultColor);
             }

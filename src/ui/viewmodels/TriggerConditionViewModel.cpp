@@ -10,6 +10,7 @@
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\TriggerViewModel.hh"
+#include "ui\EditorTheme.hh"
 
 #include <rcheevos\src\rcheevos\rc_internal.h>
 
@@ -501,12 +502,14 @@ void TriggerConditionViewModel::UpdateRowColor(const rc_condition_t* pCondition)
         return;
     }
 
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
+
     if (!pCondition->is_true)
     {
         if (pCondition->required_hits != 0 && pCondition->current_hits == pCondition->required_hits)
         {
             // not true this frame, but target hitcount met
-            SetRowColor(ra::ui::Color(0x00, 0xC8, 0xFF));
+            SetRowColor(pTheme.ColorTriggerWasTrue());
             return;
         }
 
@@ -516,7 +519,7 @@ void TriggerConditionViewModel::UpdateRowColor(const rc_condition_t* pCondition)
     else if (pCondition->required_hits != 0 && pCondition->current_hits != pCondition->required_hits)
     {
         // true this frame, but target hitcount not met
-        SetRowColor(ra::ui::Color(0x00, 0xFF, 0xC8));
+        SetRowColor(pTheme.ColorTriggerBecomingTrue());
     }
     else
     {
@@ -524,15 +527,15 @@ void TriggerConditionViewModel::UpdateRowColor(const rc_condition_t* pCondition)
         switch (pCondition->type)
         {
             case RC_CONDITION_RESET_IF:
-                SetRowColor(ra::ui::Color(0xFF, 0xC8, 0x00));
+                SetRowColor(pTheme.ColorTriggerResetTrue());
                 return;
 
             case RC_CONDITION_PAUSE_IF:
-                SetRowColor(ra::ui::Color(0xFF, 0x80, 0x00));
+                SetRowColor(pTheme.ColorTriggerPauseTrue());
                 return;
 
             default:
-                SetRowColor(ra::ui::Color(0x80, 0xFF, 0x80));
+                SetRowColor(pTheme.ColorTriggerIsTrue());
                 return;
         }
     }

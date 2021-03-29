@@ -288,7 +288,7 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
         else if (nOldState == ra::data::models::AssetState::Waiting)
             SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
 
-        UpdateMeasuredValue();
+        UpdateAssetFrameValues();
     }
 
     if (m_pAsset != nullptr)
@@ -380,19 +380,21 @@ void AssetEditorViewModel::DoFrame()
         return;
 
     if (IsVisible())
+        UpdateAssetFrameValues();
+}
+
+void AssetEditorViewModel::UpdateAssetFrameValues()
+{
+    m_vmTrigger.DoFrame();
+
+    const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
+    if (pAchievement != nullptr)
     {
-        m_vmTrigger.DoFrame();
-
-        const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
-        if (pAchievement != nullptr)
-        {
-            const rc_trigger_t* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
-            if (pTrigger != nullptr)
-                m_vmTrigger.UpdateColors(pTrigger);
-        }
-
-        UpdateMeasuredValue();
+        const rc_trigger_t* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
+        m_vmTrigger.UpdateColors(pTrigger);
     }
+
+    UpdateMeasuredValue();
 }
 
 void AssetEditorViewModel::UpdateMeasuredValue()

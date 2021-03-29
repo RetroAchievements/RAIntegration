@@ -500,6 +500,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindGroups.BindIsSelected(TriggerViewModel::GroupViewModel::IsSelectedProperty);
     m_bindGroups.BindItems(vmAssetEditor.Trigger().Groups());
     m_bindGroups.BindEnsureVisible(TriggerViewModel::EnsureVisibleGroupIndexProperty);
+    m_bindGroups.BindRowColor(TriggerViewModel::GroupViewModel::ColorProperty);
 
     auto pIdColumn = std::make_unique<ra::ui::win32::bindings::GridNumberColumnBinding>(
         TriggerConditionViewModel::IndexProperty);
@@ -576,6 +577,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindConditions.SetCopyHandler([&vmAssetEditor]() { vmAssetEditor.Trigger().CopySelectedConditionsToClipboard(); });
     m_bindConditions.SetPasteHandler([&vmAssetEditor]() { vmAssetEditor.Trigger().PasteFromClipboard(); });
     m_bindConditions.BindEnsureVisible(TriggerViewModel::EnsureVisibleConditionIndexProperty);
+    m_bindConditions.BindRowColor(TriggerConditionViewModel::RowColorProperty);
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_TITLE, Anchor::Top | Anchor::Left | Anchor::Right);

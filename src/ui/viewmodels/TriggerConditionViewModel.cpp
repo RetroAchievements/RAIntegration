@@ -34,6 +34,7 @@ const BoolModelProperty TriggerConditionViewModel::HasSourceSizeProperty("Trigge
 const BoolModelProperty TriggerConditionViewModel::HasTargetProperty("TriggerConditionViewModel", "HasTarget", true);
 const BoolModelProperty TriggerConditionViewModel::HasTargetSizeProperty("TriggerConditionViewModel", "HasTargetSize", false);
 const BoolModelProperty TriggerConditionViewModel::HasHitsProperty("TriggerConditionViewModel", "HasHits", true);
+const IntModelProperty TriggerConditionViewModel::RowColorProperty("TriggerConditionViewModel", "RowColor", 0);
 
 std::string TriggerConditionViewModel::Serialize() const
 {
@@ -490,6 +491,52 @@ bool TriggerConditionViewModel::IsComparisonVisible(const ViewModelBase& vmItem,
         default:
             return !vmCondition->IsModifying();
     }
+}
+
+void TriggerConditionViewModel::UpdateRowColor(const rc_condition_t* pCondition)
+{
+    if (!pCondition)
+    {
+        SetValue(RowColorProperty, RowColorProperty.GetDefaultValue());
+        return;
+    }
+
+    if (!pCondition->is_true)
+    {
+        if (pCondition->required_hits != 0 && pCondition->current_hits == pCondition->required_hits)
+        {
+            // not true this frame, but target hitcount met
+            SetRowColor(ra::ui::Color(0x00, 0xC8, 0xFF));
+            return;
+        }
+
+        // not true this frame, and target hitcount not met
+        SetValue(RowColorProperty, RowColorProperty.GetDefaultValue());
+    }
+    else if (pCondition->required_hits != 0 && pCondition->current_hits != pCondition->required_hits)
+    {
+        // true this frame, but target hitcount not met
+        SetRowColor(ra::ui::Color(0x00, 0xFF, 0xC8));
+    }
+    else
+    {
+        // true this frame, and target hitcount met
+        switch (pCondition->type)
+        {
+            case RC_CONDITION_RESET_IF:
+                SetRowColor(ra::ui::Color(0xFF, 0xC8, 0x00));
+                return;
+
+            case RC_CONDITION_PAUSE_IF:
+                SetRowColor(ra::ui::Color(0xFF, 0x80, 0x00));
+                return;
+
+            default:
+                SetRowColor(ra::ui::Color(0x80, 0xFF, 0x80));
+                return;
+        }
+    }
+
 }
 
 } // namespace viewmodels

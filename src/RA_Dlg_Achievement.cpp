@@ -778,6 +778,9 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                         if (!Cheevo.Modified())
                             break;
 
+                        if (!_RA_WarnDisableHardcore("revert an achievement"))
+                            break;
+
                         if (MessageBox(hDlg, TEXT("Attempt to revert this achievement from file?"),
                                        TEXT("Revert from file?"), MB_YESNO) == IDYES)
                         {

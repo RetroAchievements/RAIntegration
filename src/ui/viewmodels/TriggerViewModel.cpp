@@ -143,6 +143,12 @@ void TriggerViewModel::SerializeAppend(std::string& sBuffer) const
     }
 }
 
+void TriggerViewModel::CopyToClipboard()
+{
+    const auto sSerialized = Serialize();
+    ra::services::ServiceLocator::Get<ra::services::IClipboard>().SetText(ra::Widen(sSerialized));
+}
+
 void TriggerViewModel::CopySelectedConditionsToClipboard()
 {
     std::string sSerialized;
@@ -663,7 +669,7 @@ void TriggerViewModel::RemoveGroup()
 void TriggerViewModel::DoFrame()
 {
     auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
-    if (pGroup != nullptr)
+    if (pGroup != nullptr && pGroup->m_pConditionSet)
     {
         m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
         m_vConditions.BeginUpdate();

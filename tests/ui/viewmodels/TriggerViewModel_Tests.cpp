@@ -279,6 +279,25 @@ public:
         Assert::AreEqual(std::string("0xH1234=1_0xH0000=0"), vmTrigger.Serialize());
     }
 
+    TEST_METHOD(TestCopyToClipboard)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16_0xL65FF=11.1.SR:0xT3333=1S0xW5555=16");
+
+        Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+        vmTrigger.CopyToClipboard();
+        Assert::AreEqual(std::wstring(L"0xH1234=16_0xL65ff=11.1.SR:0xT3333=1S0xW5555=16"), vmTrigger.mockClipboard.GetText());
+
+        vmTrigger.Conditions().GetItemAt(1)->SetSelected(true);
+        vmTrigger.CopyToClipboard();
+        Assert::AreEqual(std::wstring(L"0xH1234=16_0xL65ff=11.1.SR:0xT3333=1S0xW5555=16"), vmTrigger.mockClipboard.GetText());
+
+        vmTrigger.Groups().GetItemAt(2)->SetSelected(true);
+        vmTrigger.CopyToClipboard();
+        Assert::AreEqual(std::wstring(L"0xH1234=16_0xL65ff=11.1.SR:0xT3333=1S0xW5555=16"), vmTrigger.mockClipboard.GetText());
+    }
+
     TEST_METHOD(TestCopySelectedConditionsToClipboard)
     {
         TriggerViewModelHarness vmTrigger;

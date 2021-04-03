@@ -86,6 +86,8 @@ public:
     void UpdateFrom(const std::string& sTrigger);
     rc_trigger_t* GetTriggerFromString() const noexcept { return m_pTrigger; }
 
+    void CopyToClipboard();
+
     void RemoveSelectedConditions();
     void CopySelectedConditionsToClipboard();
     void PasteFromClipboard();

@@ -25,6 +25,7 @@ const IntModelProperty AssetListViewModel::GameIdProperty("AssetListViewModel", 
 const IntModelProperty AssetListViewModel::AchievementCountProperty("AssetListViewModel", "AchievementCount", 0);
 const IntModelProperty AssetListViewModel::TotalPointsProperty("AssetListViewModel", "TotalPoints", 0);
 const BoolModelProperty AssetListViewModel::IsProcessingActiveProperty("AssetListViewModel", "IsProcessingActive", true);
+const BoolModelProperty AssetListViewModel::KeepActiveProperty("AssetListViewModel", "KeepActive", false);
 const StringModelProperty AssetListViewModel::ActivateButtonTextProperty("AssetListViewModel", "ActivateButtonText", L"&Activate All");
 const StringModelProperty AssetListViewModel::SaveButtonTextProperty("AssetListViewModel", "SaveButtonText", L"&Save All");
 const StringModelProperty AssetListViewModel::ResetButtonTextProperty("AssetListViewModel", "ResetButtonText", L"&Reset All");
@@ -128,7 +129,23 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
             SetValue(TotalPointsProperty, nPoints);
         }
     }
-    else if (args.Property == ra::data::models::AssetModelBase::CategoryProperty)
+    else if (args.Property == ra::data::models::AssetModelBase::StateProperty)
+    {
+        const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
+        if (nNewState == ra::data::models::AssetState::Triggered && KeepActive())
+        {
+            // if KeepActive is selected, set a Triggered achievement back to Waiting
+            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+            auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+            pAsset->SetState(ra::data::models::AssetState::Waiting);
+
+            // SetState is re-entrant - we don't want to do any further processing with the previous new value
+            return;
+        }
+    }
+
+    // these properties potentially affect visibility
+    if (args.Property == ra::data::models::AssetModelBase::CategoryProperty)
     {
         UpdateTotals();
 

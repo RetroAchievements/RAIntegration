@@ -74,7 +74,8 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
       m_bindAssets(vmAssetList),
       m_bindCategories(vmAssetList),
       m_bindSpecialFilters(vmAssetList),
-      m_bindProcessingActive(vmAssetList)
+      m_bindProcessingActive(vmAssetList),
+      m_bindKeepActive(vmAssetList)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::Near, RelativePosition::After, "Achievements");
 
@@ -150,6 +151,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindWindow.BindEnabled(IDC_RA_CLONE_ACH, AssetListViewModel::CanCloneProperty);
 
     m_bindProcessingActive.BindCheck(AssetListViewModel::IsProcessingActiveProperty);
+    m_bindKeepActive.BindCheck(AssetListViewModel::KeepActiveProperty);
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_CATEGORY, Anchor::Top | Anchor::Left);
@@ -176,6 +178,7 @@ BOOL AssetListDialog::OnInitDialog()
 {
     m_bindAssets.SetControl(*this, IDC_RA_LISTACHIEVEMENTS);
     m_bindProcessingActive.SetControl(*this, IDC_RA_CHKACHPROCESSINGACTIVE);
+    m_bindKeepActive.SetControl(*this, IDC_RA_CHK_ACTIVE);
 
     m_bindCategories.SetControl(*this, IDC_RA_CATEGORY);
     m_bindSpecialFilters.SetControl(*this, IDC_RA_SPECIAL_FILTER);

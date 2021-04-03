@@ -896,6 +896,27 @@ void GameContext::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring
     }
 }
 
+ra::ByteAddress GameContext::FindCodeNoteStart(ra::ByteAddress nAddress) const
+{
+    auto pIter = m_mCodeNotes.lower_bound(nAddress);
+
+    // exact match, return it
+    if (pIter != m_mCodeNotes.end() && pIter->first == nAddress)
+        return nAddress;
+
+    // lower_bound returns the first item _after_ the search value. we want to look at the item _before_.
+    if (pIter != m_mCodeNotes.begin())
+    {
+        --pIter;
+
+        // check to see if the item before the search value contains the search value
+        if (pIter->first + pIter->second.Bytes > nAddress)
+            return pIter->first;
+    }
+
+    return 0xFFFFFFFF;
+}
+
 std::wstring GameContext::FindCodeNote(ra::ByteAddress nAddress, MemSize nSize) const
 {
     unsigned int nCheckSize = 0;
@@ -924,7 +945,12 @@ std::wstring GameContext::FindCodeNote(ra::ByteAddress nAddress, MemSize nSize) 
 
         const auto iNewLine = sNote.find('\n');
         if (iNewLine != std::string::npos)
+        {
             sNote.resize(iNewLine);
+
+            if (sNote.back() == '\r')
+                sNote.pop_back();
+        }
 
         // exact match
         if (nAddress == nNoteAddress && nNoteSize == nCheckSize)
@@ -955,7 +981,12 @@ std::wstring GameContext::FindCodeNote(ra::ByteAddress nAddress, MemSize nSize) 
 
             const auto iNewLine = sNote.find('\n');
             if (iNewLine != std::string::npos)
+            {
                 sNote.resize(iNewLine);
+
+                if (sNote.back() == '\r')
+                    sNote.pop_back();
+            }
 
             if (nCheckSize == 1)
                 sNote.append(ra::StringPrintf(L" [%d/%d]", nAddress - nNoteAddress + 1, nNoteSize));

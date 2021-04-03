@@ -33,6 +33,31 @@ public:
         SetGetGameTitleFunction([sTitle](char* sBuffer) noexcept { strcpy_s(sBuffer, 64, sTitle); });
     }
 
+    void MockDisableHardcoreWarning(ra::ui::DialogResult nPromptResult)
+    {
+        m_nWarnDisableHardcoreResult = nPromptResult;
+        m_sWarnDisableHardcoreActivity.clear();
+    }
+
+    const std::string& GetDisableHardcoreWarningMessage() const
+    {
+        return m_sWarnDisableHardcoreActivity;
+    }
+
+    bool WarnDisableHardcoreMode(const std::string& sActivity) override
+    {
+        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+        if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+            return true;
+
+        m_sWarnDisableHardcoreActivity = sActivity;
+        if (m_nWarnDisableHardcoreResult != ra::ui::DialogResult::Yes)
+            return false;
+
+        pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        return true;
+    }
+
     void DisableHardcoreMode() override
     {
         auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
@@ -86,6 +111,9 @@ private:
     {
         s_pMemory.at(nAddress) = nValue;
     }
+
+    std::string m_sWarnDisableHardcoreActivity;
+    ra::ui::DialogResult m_nWarnDisableHardcoreResult = ra::ui::DialogResult::No;
 
     ra::services::ServiceLocator::ServiceOverride<ra::data::context::EmulatorContext> m_Override;
     static gsl::span<uint8_t> s_pMemory;

@@ -363,6 +363,39 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
     return bResult;
 }
 
+bool EmulatorContext::WarnDisableHardcoreMode(const std::string& sActivity)
+{
+    // already disabled, just return success
+    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+        return true;
+
+    if (!sActivity.empty())
+    {
+        // prompt. if user doesn't consent, return failure - caller should not continue
+        ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
+        vmMessageBox.SetHeader(L"Disable Hardcore mode?");
+        vmMessageBox.SetMessage(ra::StringPrintf(L"You cannot %s while Hardcore mode is active.", sActivity));
+        vmMessageBox.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+        vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+        if (vmMessageBox.ShowModal() != ra::ui::DialogResult::Yes)
+            return false;
+
+        RA_LOG_INFO("User chose to disable hardcore to %s", sActivity);
+    }
+    else
+    {
+        // no activity specified. just proceed to disabling without prompting.
+        RA_LOG_INFO("Disabling hardcore. No activity provided to WarnDisableHardcore");
+    }
+
+    // user consented, switch to non-hardcore mode
+    DisableHardcoreMode();
+
+    // return success
+    return true;
+}
+
 void EmulatorContext::DisableHardcoreMode()
 {
     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();

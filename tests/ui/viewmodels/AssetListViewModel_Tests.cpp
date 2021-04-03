@@ -1550,6 +1550,67 @@ public:
         Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
     }
 
+    TEST_METHOD(TestActivateSelectedHardcoreDeactivateCore)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetState(AssetState::Active);
+
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        Assert::IsFalse(vmAssetList.FilteredAssets().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(1)->IsSelected());
+        Assert::AreEqual(AssetState::Active, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::No);
+        vmAssetList.ActivateSelected();
+        vmAssetList.ForceUpdateButtons();
+        Assert::AreEqual(std::string("deactivate core achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        Assert::AreEqual(AssetState::Active, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
+        Assert::AreEqual(std::wstring(L"De&activate"), vmAssetList.GetActivateButtonText());
+        Assert::IsTrue(vmAssetList.CanActivate());
+        Assert::IsTrue(vmAssetList.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
+        vmAssetList.ActivateSelected();
+        vmAssetList.ForceUpdateButtons();
+        Assert::AreEqual(std::string("deactivate core achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
+        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
+        Assert::IsTrue(vmAssetList.CanActivate());
+        Assert::IsFalse(vmAssetList.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestActivateSelectedHardcoreDeactivateLocal)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.mockGameContext.Assets().GetItemAt(0)->SetState(AssetState::Active);
+
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(0)->IsSelected());
+        Assert::AreEqual(AssetState::Active, vmAssetList.FilteredAssets().GetItemAt(0)->GetState());
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::No);
+        vmAssetList.ActivateSelected();
+        vmAssetList.ForceUpdateButtons();
+        Assert::AreEqual(std::string(), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(0)->GetState());
+        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
+        Assert::IsTrue(vmAssetList.CanActivate());
+        Assert::IsTrue(vmAssetList.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
     TEST_METHOD(TestSaveSelectedLocalUnmodified)
     {
         AssetListViewModelHarness vmAssetList;
@@ -2636,6 +2697,85 @@ public:
         Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
     }
 
+    TEST_METHOD(TestResetSelectedModifiedCoreHardcore)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddThreeAchievements();
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        pAsset->SetTrigger("0x2345=1");
+        Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
+        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel&) { return DialogResult::Yes; });
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
+        vmAssetList.ResetSelected();
+        Assert::AreEqual(std::string("reset core achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+
+        Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
+    }
+
+    TEST_METHOD(TestResetSelectedModifiedCoreHardcoreCancel)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddThreeAchievements();
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        pAsset->SetTrigger("0x2345=1");
+        Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
+        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel&) { return DialogResult::Yes; });
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::No);
+        vmAssetList.ResetSelected();
+        Assert::AreEqual(std::string("reset core achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+
+        Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
+    }
+
+    TEST_METHOD(TestResetSelectedModifiedFromFileHardcore)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        pAsset->SetTrigger("0x2345=1");
+        Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
+
+        vmAssetList.MockUserFileContents("1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n");
+
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel&) { return DialogResult::Yes; });
+        vmAssetList.ResetSelected();
+        Assert::AreEqual(std::string(), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+
+        Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+    }
+
     TEST_METHOD(TestResetSelectedNew)
     {
         AssetListViewModelHarness vmAssetList;
@@ -2883,6 +3023,77 @@ public:
         Assert::IsNull(pAsset);
     }
 
+    TEST_METHOD(TestRevertSelectedCoreHardcore)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(RevertButtonState::RevertAll);
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        pAsset->SetName(L"Apple");
+        Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
+
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel&) { return DialogResult::Yes; });
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
+        vmAssetList.RevertSelected();
+
+        Assert::AreEqual(std::string("revert core achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
+    }
+
+    TEST_METHOD(TestRevertSelectedCoreHardcoreCancel)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(RevertButtonState::RevertAll);
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        pAsset->SetName(L"Apple");
+        Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
+
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel&) { return DialogResult::Yes; });
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::No);
+        vmAssetList.RevertSelected();
+
+        Assert::AreEqual(std::string("revert core achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
+    }
+
+    TEST_METHOD(TestRevertSelectedLocalHardcore)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(RevertButtonState::RevertAll);
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        pAsset->SetName(L"Apple");
+        Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
+
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel&) { return DialogResult::Yes; });
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
+        vmAssetList.RevertSelected();
+
+        Assert::AreEqual(std::string(), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNull(pAsset);
+    }
+
     TEST_METHOD(TestIsProcessingActive)
     {
         AssetListViewModelHarness vmAssetList;
@@ -2901,7 +3112,7 @@ public:
         Assert::IsTrue(vmAssetList.mockEmulatorContext.WasMemoryModified());
     }
 
-    TEST_METHOD(TestOpenEditor)
+    TEST_METHOD(TestOpenEditorNonHardcore)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
@@ -2923,16 +3134,14 @@ public:
         vmAssetList.OpenEditor(pItem);
         Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
         Assert::AreEqual(ra::to_unsigned(pItem->GetId()), vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::AreEqual(std::string(), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
     }
 
     TEST_METHOD(TestOpenEditorHardcore)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel&)
-        {
-            return ra::ui::DialogResult::Yes;
-        });
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
 
         vmAssetList.SetGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
@@ -2951,6 +3160,7 @@ public:
         vmAssetList.OpenEditor(pItem);
         Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
         Assert::AreEqual(ra::to_unsigned(pItem->GetId()), vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::AreEqual(std::string("edit assets"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
         Assert::IsFalse(vmAssetList.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
     }
 
@@ -2958,10 +3168,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel&)
-        {
-            return ra::ui::DialogResult::No;
-        });
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::No);
 
         vmAssetList.SetGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
@@ -2980,6 +3187,7 @@ public:
         vmAssetList.OpenEditor(pItem);
         Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
         Assert::AreEqual(0U, vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::AreEqual(std::string("edit assets"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
         Assert::IsTrue(vmAssetList.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
     }
 };

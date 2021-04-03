@@ -445,7 +445,8 @@ gsl::index AssetListViewModel::GetFilteredAssetIndex(const ra::data::models::Ass
 
 void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
 {
-    if (!_RA_WarnDisableHardcore("edit assets"))
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    if (!pEmulatorContext.WarnDisableHardcoreMode("edit assets"))
         return;
 
     ra::data::models::AssetModelBase* vmAsset = nullptr;
@@ -784,6 +785,23 @@ void AssetListViewModel::ActivateSelected()
 
     if (GetActivateButtonText().at(0) == 'D') // Deactivate
     {
+        bool bCoreAssetSelected = false;
+        for (auto* vmItem : vSelectedAssets)
+        {
+            if (vmItem && vmItem->GetCategory() == ra::data::models::AssetCategory::Core)
+            {
+                bCoreAssetSelected = true;
+                break;
+            }
+        }
+
+        if (bCoreAssetSelected)
+        {
+            auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+            if (!pEmulatorContext.WarnDisableHardcoreMode("deactivate core achievements"))
+                return;
+        }
+
         for (auto* vmItem : vSelectedAssets)
         {
             if (vmItem)
@@ -1018,12 +1036,24 @@ void AssetListViewModel::ResetSelected()
     if (!CanReset())
         return;
 
+    bool bCoreAssetSelected = false;
     std::vector<const AssetSummaryViewModel*> vSelectedAssets;
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nIndex)
     {
         const auto* pItem = m_vFilteredAssets.GetItemAt(nIndex);
         if (pItem != nullptr && pItem->IsSelected())
+        {
             vSelectedAssets.push_back(pItem);
+
+            bCoreAssetSelected |= (pItem->GetCategory() == ra::data::models::AssetCategory::Core);
+        }
+    }
+
+    if (bCoreAssetSelected)
+    {
+        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        if (!pEmulatorContext.WarnDisableHardcoreMode("reset core achievements"))
+            return;
     }
 
     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
@@ -1093,14 +1123,30 @@ void AssetListViewModel::RevertSelected()
     std::vector<ra::data::models::AssetModelBase*> vAssetsToReset;
     GetSelectedAssets(vAssetsToReset);
 
-    bool bHasLocal = false;
+    bool bLocalAssetSelected = false;
+    bool bCoreAssetSelected = false;
     for (const auto* pAsset : vAssetsToReset)
     {
-        if (pAsset != nullptr && pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
+        if (pAsset == nullptr)
+            continue;
+
+        switch (pAsset->GetCategory())
         {
-            bHasLocal = true;
-            break;
+            case ra::data::models::AssetCategory::Local:
+                bLocalAssetSelected = true;
+                break;
+
+            case ra::data::models::AssetCategory::Core:
+                bCoreAssetSelected = true;
+                break;
         }
+    }
+
+    if (bCoreAssetSelected)
+    {
+        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        if (!pEmulatorContext.WarnDisableHardcoreMode("revert core achievements"))
+            return;
     }
 
     ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
@@ -1118,17 +1164,17 @@ void AssetListViewModel::RevertSelected()
         else
             sWarningMessage = L"This will discard any local changes to the selected assets and revert them to the last state retrieved from the server.";
 
-        if (bHasLocal)
+        if (bLocalAssetSelected)
             sWarningMessage += L"\n\n";
     }
     else // Delete
     {
         vmMessageBox.SetHeader(L"Permanently delete?");
 
-        Expects(bHasLocal); // message is shared with text appended to Revert message
+        Expects(bLocalAssetSelected); // message is shared with text appended to Revert message
     }
 
-    if (bHasLocal)
+    if (bLocalAssetSelected)
         sWarningMessage += L"Assets not available on the server will be permanently deleted.";
     vmMessageBox.SetMessage(sWarningMessage);
 

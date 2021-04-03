@@ -91,69 +91,6 @@ public:
     }
 
 private:
-    class WarnDisableHardcoreHarness
-    {
-    public:
-        MockConfiguration mockConfiguration;
-        MockDesktop mockDesktop;
-        MockEmulatorContext mockEmulatorContext;
-    };
-
-    TEST_METHOD(TestWarnDisableHardcoreNotEnabled)
-    {
-        WarnDisableHardcoreHarness harness;
-        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-
-        Assert::IsTrue(_RA_WarnDisableHardcore("test"));
-        Assert::IsFalse(harness.mockDesktop.WasDialogShown());
-        Assert::IsFalse(harness.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
-    }
-
-    TEST_METHOD(TestWarnDisableHardcoreAborted)
-    {
-        WarnDisableHardcoreHarness harness;
-        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-
-        bool bWasShown = false;
-        harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWasShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"Disable Hardcore mode?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"You cannot test while Hardcore mode is active."), vmMessageBox.GetMessage());
-            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
-            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
-            bWasShown = true;
-
-            return ra::ui::DialogResult::No;
-        });
-
-        Assert::IsFalse(_RA_WarnDisableHardcore("test"));
-        Assert::IsTrue(bWasShown);
-        Assert::IsTrue(harness.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
-    }
-
-    TEST_METHOD(TestWarnDisableHardcoreAllowed)
-    {
-        WarnDisableHardcoreHarness harness;
-        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-
-        bool bWasShown = false;
-        harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWasShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"Disable Hardcore mode?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"You cannot test while Hardcore mode is active."), vmMessageBox.GetMessage());
-            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
-            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
-            bWasShown = true;
-
-            return ra::ui::DialogResult::Yes;
-        });
-
-        Assert::IsTrue(_RA_WarnDisableHardcore("test"));
-        Assert::IsTrue(bWasShown);
-        Assert::IsFalse(harness.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
-    }
-
-private:
     class AttemptLoginHarness
     {
     public:

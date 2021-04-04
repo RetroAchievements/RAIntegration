@@ -302,37 +302,33 @@ static bool DoRequest(const rc_api_request_t& api_request, const char* sApiName,
         while (*ptr && *ptr != '?')
             ++ptr;
 
+        std::string sParams;
         if (*ptr == '?')
+            sParams = ++ptr;
+
+        if (api_request.post_data)
         {
-            std::string sParams = ++ptr;
+            // don't log the api token
+            ptr = api_request.post_data;
+            while (*ptr && (ptr[0] != 't' || ptr[1] != '='))
+                ++ptr;
 
-            if (api_request.post_data)
+            if (ptr > api_request.post_data)
             {
-                // don't log the api token
-                ptr = api_request.post_data;
-                while (*ptr && ptr[0] != 't' && ptr[1] != '=')
-                    ++ptr;
-
-                if (ptr > api_request.post_data)
-                {
+                if (!sParams.empty())
                     sParams.push_back('&');
-                    sParams.append(api_request.post_data, ptr - api_request.post_data - 1);
-                }
 
-                while (*ptr && ptr[0] != '&')
-                    ++ptr;
-
-                if (*ptr)
-                    sParams.append(ptr);
+                sParams.append(api_request.post_data, ptr - api_request.post_data - 1);
             }
 
-            pLogger.LogMessage(ra::services::LogLevel::Info, ra::StringPrintf("%s Request: %s", sApiName, sParams));
+            while (*ptr && ptr[0] != '&')
+                ++ptr;
+
+            if (*ptr)
+                sParams.append(ptr);
         }
-        else
-        {
-            // this should never occur as we expect at least the credentials to be provided
-            pLogger.LogMessage(ra::services::LogLevel::Info, ra::StringPrintf("%s Request", sApiName));
-        }
+
+        pLogger.LogMessage(ra::services::LogLevel::Info, ra::StringPrintf("%s Request: %s", sApiName, sParams));
     }
 #endif
     return DoRequestWithoutLog(api_request, sApiName, pHttpResponse, pResponse);

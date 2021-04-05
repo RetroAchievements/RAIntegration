@@ -593,6 +593,9 @@ INT_PTR Dlg_Achievements::AchievementsProc(HWND hDlg, UINT nMsg, WPARAM wParam, 
                     }
                     else
                     {
+                        if (!_RA_WarnDisableHardcore("refresh achievements"))
+                            break;
+
                         std::ostringstream oss;
                         oss << "Are you sure that you want to download fresh achievements from " << _RA_HostName()
                             << "?\n"

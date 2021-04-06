@@ -33,13 +33,13 @@ public:
         SetGetGameTitleFunction([sTitle](char* sBuffer) noexcept { strcpy_s(sBuffer, 64, sTitle); });
     }
 
-    void MockDisableHardcoreWarning(ra::ui::DialogResult nPromptResult)
+    void MockDisableHardcoreWarning(ra::ui::DialogResult nPromptResult) noexcept
     {
         m_nWarnDisableHardcoreResult = nPromptResult;
         m_sWarnDisableHardcoreActivity.clear();
     }
 
-    const std::string& GetDisableHardcoreWarningMessage() const
+    const std::string& GetDisableHardcoreWarningMessage() const noexcept
     {
         return m_sWarnDisableHardcoreActivity;
     }

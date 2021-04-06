@@ -786,7 +786,7 @@ void AssetListViewModel::ActivateSelected()
     if (GetActivateButtonText().at(0) == 'D') // Deactivate
     {
         bool bCoreAssetSelected = false;
-        for (auto* vmItem : vSelectedAssets)
+        for (const auto* vmItem : vSelectedAssets)
         {
             if (vmItem && vmItem->GetCategory() == ra::data::models::AssetCategory::Core)
             {

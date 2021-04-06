@@ -82,12 +82,13 @@ bool ScoreboardViewModel::UpdateRenderImage(double fElapsed)
                                   pTheme.ColorShadow());
 
         // frame
+        const auto nColorBackground = GetBackgroundColor();
         m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth() - nShadowOffset, m_pSurface->GetHeight() - nShadowOffset,
-                                  pTheme.ColorBackground());
+                                  nColorBackground);
         m_pSurface->FillRectangle(1, 1, m_pSurface->GetWidth() - nShadowOffset - 2, m_pSurface->GetHeight() - nShadowOffset - 2,
             pTheme.ColorBorder());
         m_pSurface->FillRectangle(2, 2, m_pSurface->GetWidth() - nShadowOffset - 4, m_pSurface->GetHeight() - nShadowOffset - 4,
-            pTheme.ColorBackground());
+            nColorBackground);
         m_pSurface->FillRectangle(2, 25, m_pSurface->GetWidth() - nShadowOffset - 4, 1, pTheme.ColorBorder());
 
         // title

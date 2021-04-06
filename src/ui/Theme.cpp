@@ -96,6 +96,7 @@ void OverlayTheme::LoadFromFile()
 
             ReadColor(m_colorBackground, colors, "Background");
             ReadColor(m_colorMasteryBackground, colors, "MasteryBackground");
+            ReadColor(m_colorNonHardcoreBackground, colors, "NonHardcoreBackground");
             ReadColor(m_colorBorder, colors, "Border");
             ReadColor(m_colorTextShadow, colors, "TextShadow");
             ReadColor(m_colorTitle, colors, "Title");

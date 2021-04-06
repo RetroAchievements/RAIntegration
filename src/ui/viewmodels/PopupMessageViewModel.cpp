@@ -115,7 +115,7 @@ void PopupMessageViewModel::CreateRenderImage()
     pSurface->FillRectangle(nShadowOffset, nShadowOffset, nWidth - nShadowOffset, nHeight - nShadowOffset, pOverlayTheme.ColorShadow());
 
     // frame
-    const auto nColorBackground = (GetPopupType() == Popup::Mastery) ? pOverlayTheme.ColorMasteryBackground() : pOverlayTheme.ColorBackground();
+    const auto nColorBackground = (GetPopupType() == Popup::Mastery) ? pOverlayTheme.ColorMasteryBackground() : GetBackgroundColor();
     pSurface->FillRectangle(0, 0, nWidth - nShadowOffset, nHeight - nShadowOffset, nColorBackground);
     pSurface->FillRectangle(1, 1, nWidth - nShadowOffset - 2, nHeight - nShadowOffset - 2, pOverlayTheme.ColorBorder());
     pSurface->FillRectangle(2, 2, nWidth - nShadowOffset - 4, nHeight - nShadowOffset - 4, nColorBackground);

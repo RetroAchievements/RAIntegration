@@ -146,6 +146,9 @@ private:
     void DeselectAllConditions();
     void UpdateIndicesAndEnsureSelectionVisible();
 
+    void UpdateGroupColors(const rc_trigger_t* pTrigger);
+    void UpdateConditionColors(const rc_trigger_t* pTrigger);
+
     ViewModelCollection<GroupViewModel> m_vGroups;
     ViewModelCollection<TriggerConditionViewModel> m_vConditions;
 

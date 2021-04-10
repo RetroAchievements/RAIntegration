@@ -35,11 +35,10 @@ private:
     {
     public:
         AssetEditorViewModelHarness() noexcept
+            : m_pMockThemeOverride(&mockTheme, false)
         {
             // DoFrame tests expect the dialog to be visible
             GSL_SUPPRESS_F6 SetIsVisible(true);
-
-            ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme>(&mockTheme, false);
         }
 
         ~AssetEditorViewModelHarness()
@@ -69,6 +68,9 @@ private:
         {
             SetValue(AssetValidationErrorProperty, sValue);
         }
+
+    private:
+        ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> m_pMockThemeOverride;
     };
 
 

@@ -539,7 +539,6 @@ void TriggerConditionViewModel::UpdateRowColor(const rc_condition_t* pCondition)
                 return;
         }
     }
-
 }
 
 } // namespace viewmodels

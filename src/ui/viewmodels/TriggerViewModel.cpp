@@ -692,8 +692,13 @@ void TriggerViewModel::DoFrame()
 
 void TriggerViewModel::UpdateColors(const rc_trigger_t* pTrigger)
 {
+    UpdateGroupColors(pTrigger);
+    UpdateConditionColors(pTrigger);
+}
+
+void TriggerViewModel::UpdateGroupColors(const rc_trigger_t* pTrigger)
+{
     const auto nDefaultColor = ra::ui::Color(ra::to_unsigned(GroupViewModel::ColorProperty.GetDefaultValue()));
-    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
 
     if (pTrigger == nullptr)
     {
@@ -704,8 +709,13 @@ void TriggerViewModel::UpdateColors(const rc_trigger_t* pTrigger)
             if (pGroup != nullptr)
                 pGroup->SetColor(nDefaultColor);
         }
+
+        return;
     }
-    else if (!pTrigger->has_hits)
+
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
+
+    if (!pTrigger->has_hits)
     {
         // trigger has been reset, or is waiting
         for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
@@ -760,15 +770,15 @@ void TriggerViewModel::UpdateColors(const rc_trigger_t* pTrigger)
                     {
                         switch (pCondition->type)
                         {
-                        case RC_CONDITION_MEASURED:
-                        case RC_CONDITION_MEASURED_IF:
-                        case RC_CONDITION_STANDARD:
-                        case RC_CONDITION_TRIGGER:
-                            bIsTrue = false;
-                            break;
+                            case RC_CONDITION_MEASURED:
+                            case RC_CONDITION_MEASURED_IF:
+                            case RC_CONDITION_STANDARD:
+                            case RC_CONDITION_TRIGGER:
+                                bIsTrue = false;
+                                break;
 
-                        default:
-                            break;
+                            default:
+                                break;
                         }
                     }
                 }
@@ -780,27 +790,57 @@ void TriggerViewModel::UpdateColors(const rc_trigger_t* pTrigger)
             }
         }
     }
+}
 
+void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
+{
     // update the condition rows for the currently selected group
-    gsl::index nGroupIndex = 0;
+    gsl::index nConditionIndex = 0;
     if (pTrigger)
     {
         auto* pSelectedGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
         if (pSelectedGroup && pSelectedGroup->m_pConditionSet)
         {
-            rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
-            for (; pCondition != nullptr; pCondition = pCondition->next, ++nGroupIndex)
+            if (pSelectedGroup->m_pConditionSet->is_paused)
             {
-                auto* vmCondition = m_vConditions.GetItemAt(nGroupIndex);
-                if (vmCondition != nullptr)
-                    vmCondition->UpdateRowColor(pCondition);
+                // when a condset is paused, processing stops when the first pause condition is true. only highlight it
+                bool bFirstPause = true;
+                rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
+                for (; pCondition != nullptr; pCondition = pCondition->next, ++nConditionIndex)
+                {
+                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex);
+                    if (vmCondition != nullptr)
+                    {
+                        if (pCondition->pause && bFirstPause)
+                        {
+                            vmCondition->UpdateRowColor(pCondition);
+
+                            if (pCondition->is_true && pCondition->type == RC_CONDITION_PAUSE_IF)
+                                bFirstPause = false;
+                        }
+                        else
+                        {
+                            vmCondition->UpdateRowColor(nullptr);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
+                for (; pCondition != nullptr; pCondition = pCondition->next, ++nConditionIndex)
+                {
+                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex);
+                    if (vmCondition != nullptr)
+                        vmCondition->UpdateRowColor(pCondition);
+                }
             }
         }
     }
 
-    for (; nGroupIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nGroupIndex)
+    for (; nConditionIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nConditionIndex)
     {
-        auto* pCondition = m_vConditions.GetItemAt(nGroupIndex);
+        auto* pCondition = m_vConditions.GetItemAt(nConditionIndex);
         if (pCondition != nullptr)
             pCondition->UpdateRowColor(nullptr);
     }

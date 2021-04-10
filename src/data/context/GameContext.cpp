@@ -318,7 +318,13 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
     }
 
     if (bUnpause)
+    {
         ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(false);
+#ifndef RA_UTEST
+        auto& pAssetList = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
+        pAssetList.SetProcessingActive(true);
+#endif
+    }
 
     if (nPopup)
     {

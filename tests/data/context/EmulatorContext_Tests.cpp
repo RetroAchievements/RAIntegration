@@ -532,6 +532,70 @@ public:
         Assert::AreEqual(std::string("RALibRetro/1.0.15 (UnitTests) Integration/VERSION fceumm_libretro/(SVN)_0a0fdb8"), sVersion);
     }
 
+    TEST_METHOD(TestWarnDisableHardcoreNotEnabled)
+    {
+        EmulatorContextHarness emulator;
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+
+        Assert::IsTrue(emulator.WarnDisableHardcoreMode("test"));
+        Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
+        Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestWarnDisableHardcoreAborted)
+    {
+        EmulatorContextHarness emulator;
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+
+        bool bWasShown = false;
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWasShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Disable Hardcore mode?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"You cannot test while Hardcore mode is active."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
+            bWasShown = true;
+
+            return ra::ui::DialogResult::No;
+        });
+
+        Assert::IsFalse(emulator.WarnDisableHardcoreMode("test"));
+        Assert::IsTrue(bWasShown);
+        Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestWarnDisableHardcoreAllowed)
+    {
+        EmulatorContextHarness emulator;
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+
+        bool bWasShown = false;
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWasShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Disable Hardcore mode?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"You cannot test while Hardcore mode is active."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
+            bWasShown = true;
+
+            return ra::ui::DialogResult::Yes;
+        });
+
+        Assert::IsTrue(emulator.WarnDisableHardcoreMode("test"));
+        Assert::IsTrue(bWasShown);
+        Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestWarnDisableHardcoreNoActivity)
+    {
+        EmulatorContextHarness emulator;
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+
+        Assert::IsTrue(emulator.WarnDisableHardcoreMode(""));
+        Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
+        Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
     TEST_METHOD(TestDisableHardcoreMode)
     {
         EmulatorContextHarness emulator;

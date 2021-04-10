@@ -113,7 +113,18 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.GameId()));
     if (pData == nullptr)
+    {
+        // no local file found. reset non-local items to their server state
+        BeginUpdate();
+        for (auto* pAsset : vAssetsToReload)
+        {
+            if (pAsset->GetCategory() != ra::data::models::AssetCategory::Local)
+                pAsset->RestoreServerCheckpoint();
+        }
+        EndUpdate();
+
         return;
+    }
 
     std::vector<ra::data::models::AssetModelBase*> vRemainingAssetsToReload(vAssetsToReload);
     const bool bReloadAll = vAssetsToReload.empty();

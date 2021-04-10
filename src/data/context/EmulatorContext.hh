@@ -66,6 +66,21 @@ public:
     /// </summary>
     void SetClientUserAgentDetail(const std::string& sDetail) { m_sClientUserAgentDetail = sDetail; UpdateUserAgent(); }
 
+
+    /// <summary>
+    /// Prompts the user to confirm disabling hardcore mode to perform some activity.
+    /// </summary>
+    /// <param name="sActivity">The activity that is not allowed in hardcore mode.</param>
+    /// <returns>
+    /// <c>false</c> if the user does not want to switch out of hardcore mode - the calling code should not allow
+    /// the activity to occur. <c>true</c> if hardcore mode was not enabled, or the user acknowledged the switch to
+    /// non-hardcore mode, in which case hardcore mode will have been disabled before returning.
+    /// </returns>
+    /// <remarks>
+    /// If <paramref="sActivity" /> is empty, just calls <see cref="DisableHardcoreMode" /> without prompting.
+    /// </remarks>
+    virtual bool WarnDisableHardcoreMode(const std::string& sActivity);
+
     /// <summary>
     /// Disables hardcore mode and notifies other services of that fact.
     /// </summary>

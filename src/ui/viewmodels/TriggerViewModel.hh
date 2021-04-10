@@ -34,14 +34,6 @@ public:
     int GetSelectedGroupIndex() const { return GetValue(SelectedGroupIndexProperty); }
     void SetSelectedGroupIndex(int nValue) { SetValue(SelectedGroupIndexProperty, nValue); }
 
-    static const BoolModelProperty PauseOnResetProperty;
-    bool IsPauseOnReset() const { return GetValue(PauseOnResetProperty); }
-    void SetPauseOnReset(bool nValue) { SetValue(PauseOnResetProperty, nValue); }
-
-    static const BoolModelProperty PauseOnTriggerProperty;
-    bool IsPauseOnTrigger() const { return GetValue(PauseOnTriggerProperty); }
-    void SetPauseOnTrigger(bool nValue) { SetValue(PauseOnTriggerProperty, nValue); }
-
     class GroupViewModel : public LookupItemViewModel,
         protected ViewModelCollectionBase::NotifyTarget
     {

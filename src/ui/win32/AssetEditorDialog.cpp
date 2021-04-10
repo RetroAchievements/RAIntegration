@@ -445,6 +445,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindBadge(vmAssetEditor),
     m_bindBadgeImage(vmAssetEditor),
     m_bindPoints(vmAssetEditor),
+    m_bindDebugHighlights(vmAssetEditor),
     m_bindPauseOnReset(vmAssetEditor),
     m_bindPauseOnTrigger(vmAssetEditor),
     m_bindActive(vmAssetEditor),
@@ -474,6 +475,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindEnabled(IDC_RA_LBX_GROUPS, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADD_GROUP, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_DELETE_GROUP, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_COPY_ALL, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_LBX_CONDITIONS, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADD_COND, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_DELETE_COND, AssetEditorViewModel::IsAssetLoadedProperty);
@@ -487,6 +489,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindVisible(IDC_RA_LBL_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
     m_bindWindow.BindVisible(IDC_RA_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
 
+    m_bindDebugHighlights.BindCheck(AssetEditorViewModel::DebugHighlightsEnabledProperty);
     m_bindPauseOnReset.BindCheck(AssetEditorViewModel::PauseOnResetProperty);
     m_bindPauseOnTrigger.BindCheck(AssetEditorViewModel::PauseOnTriggerProperty);
     m_bindDecimalPreferred.BindCheck(AssetEditorViewModel::DecimalPreferredProperty);
@@ -595,6 +598,8 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     SetAnchor(IDC_RA_LBX_GROUPS, Anchor::Top | Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_ADD_GROUP, Anchor::Bottom | Anchor::Left);
     SetAnchor(IDC_RA_DELETE_GROUP, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_COPY_ALL, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_CHK_HIGHLIGHTS, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_CHK_PAUSE_ON_RESET, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_CHK_PAUSE_ON_TRIGGER, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_LBX_CONDITIONS, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
@@ -623,6 +628,7 @@ BOOL AssetEditorDialog::OnInitDialog()
     m_bindConditions.SetControl(*this, IDC_RA_LBX_CONDITIONS);
     m_bindConditions.InitializeTooltips(std::chrono::seconds(30));
 
+    m_bindDebugHighlights.SetControl(*this, IDC_RA_CHK_HIGHLIGHTS);
     m_bindPauseOnReset.SetControl(*this, IDC_RA_CHK_PAUSE_ON_RESET);
     m_bindPauseOnTrigger.SetControl(*this, IDC_RA_CHK_PAUSE_ON_TRIGGER);
     m_bindActive.SetControl(*this, IDC_RA_CHK_ACTIVE);

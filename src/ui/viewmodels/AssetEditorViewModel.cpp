@@ -21,6 +21,7 @@ const IntModelProperty AssetEditorViewModel::PointsProperty("AssetEditorViewMode
 const StringModelProperty AssetEditorViewModel::BadgeProperty("AssetEditorViewModel", "Badge", L"00000");
 const BoolModelProperty AssetEditorViewModel::PauseOnResetProperty("AssetEditorViewModel", "PauseOnReset", false);
 const BoolModelProperty AssetEditorViewModel::PauseOnTriggerProperty("AssetEditorViewModel", "PauseOnTrigger", false);
+const BoolModelProperty AssetEditorViewModel::DebugHighlightsEnabledProperty("AssetEditorViewModel", "DebugHighlightsEnabled", false);
 const BoolModelProperty AssetEditorViewModel::DecimalPreferredProperty("AssetEditorViewModel", "DecimalPreferred", false);
 const BoolModelProperty AssetEditorViewModel::IsAssetLoadedProperty("AssetEditorViewModel", "IsAssetLoaded", false);
 const BoolModelProperty AssetEditorViewModel::HasAssetValidationErrorProperty("AssetEditorViewModel", "HasAssetValidationError", false);
@@ -209,6 +210,13 @@ void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& a
             pAchievement->SetPauseOnTrigger(args.tNewValue);
     }
 
+    if (args.Property == DebugHighlightsEnabledProperty)
+    {
+        if (args.tNewValue)
+            UpdateDebugHighlights();
+        else
+            m_vmTrigger.UpdateColors(nullptr);
+    }
     if (args.Property == DecimalPreferredProperty)
     {
         auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
@@ -371,6 +379,9 @@ void AssetEditorViewModel::UpdateTriggerBinding()
         SetValue(HasMeasuredProperty, (pTrigger && pTrigger->measured_target != 0));
     }
 
+    if (AreDebugHighlightsEnabled())
+        UpdateDebugHighlights();
+
     UpdateMeasuredValue();
 }
 
@@ -387,14 +398,20 @@ void AssetEditorViewModel::UpdateAssetFrameValues()
 {
     m_vmTrigger.DoFrame();
 
+    if (AreDebugHighlightsEnabled())
+        UpdateDebugHighlights();
+
+    UpdateMeasuredValue();
+}
+
+void AssetEditorViewModel::UpdateDebugHighlights()
+{
     const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
     if (pAchievement != nullptr)
     {
         const rc_trigger_t* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
         m_vmTrigger.UpdateColors(pTrigger);
     }
-
-    UpdateMeasuredValue();
 }
 
 void AssetEditorViewModel::UpdateMeasuredValue()

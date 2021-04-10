@@ -17,8 +17,6 @@ namespace ui {
 namespace viewmodels {
 
 const IntModelProperty TriggerViewModel::SelectedGroupIndexProperty("TriggerViewModel", "SelectedGroupIndex", -1);
-const BoolModelProperty TriggerViewModel::PauseOnResetProperty("TriggerViewModel", "PauseOnReset", false);
-const BoolModelProperty TriggerViewModel::PauseOnTriggerProperty("TriggerViewModel", "PauseOnTrigger", false);
 const IntModelProperty TriggerViewModel::VersionProperty("TriggerViewModel", "Version", 0);
 const IntModelProperty TriggerViewModel::EnsureVisibleConditionIndexProperty("TriggerViewModel", "EnsureVisibleConditionIndex", -1);
 const IntModelProperty TriggerViewModel::EnsureVisibleGroupIndexProperty("TriggerViewModel", "EnsureVisibleGroupIndex", -1);
@@ -461,7 +459,6 @@ void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
 
     // forcibly update the conditions from the selected group
     UpdateConditions(m_vGroups.GetItemAt(nSelectedIndex));
-    UpdateColors(&pTrigger);
 }
 
 void TriggerViewModel::UpdateFrom(const std::string& sTrigger)
@@ -786,15 +783,18 @@ void TriggerViewModel::UpdateColors(const rc_trigger_t* pTrigger)
 
     // update the condition rows for the currently selected group
     gsl::index nGroupIndex = 0;
-    auto* pSelectedGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
-    if (pSelectedGroup && pSelectedGroup->m_pConditionSet)
+    if (pTrigger)
     {
-        rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
-        for (; pCondition != nullptr; pCondition = pCondition->next, ++nGroupIndex)
+        auto* pSelectedGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+        if (pSelectedGroup && pSelectedGroup->m_pConditionSet)
         {
-            auto* vmCondition = m_vConditions.GetItemAt(nGroupIndex);
-            if (vmCondition != nullptr)
-                vmCondition->UpdateRowColor(pCondition);
+            rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
+            for (; pCondition != nullptr; pCondition = pCondition->next, ++nGroupIndex)
+            {
+                auto* vmCondition = m_vConditions.GetItemAt(nGroupIndex);
+                if (vmCondition != nullptr)
+                    vmCondition->UpdateRowColor(pCondition);
+            }
         }
     }
 

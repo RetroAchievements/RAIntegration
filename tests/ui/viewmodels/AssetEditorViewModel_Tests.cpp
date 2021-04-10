@@ -1,5 +1,7 @@
 #include "CppUnitTest.h"
 
+#include "ui\EditorTheme.hh"
+
 #include "ui\viewmodels\AssetEditorViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
@@ -36,6 +38,8 @@ private:
         {
             // DoFrame tests expect the dialog to be visible
             GSL_SUPPRESS_F6 SetIsVisible(true);
+
+            ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme>(&mockTheme, false);
         }
 
         ~AssetEditorViewModelHarness()
@@ -54,6 +58,7 @@ private:
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::ui::mocks::MockDesktop mockDesktop;
+        ra::ui::EditorTheme mockTheme;
 
         const std::wstring& GetWaitingLabel() const
         {

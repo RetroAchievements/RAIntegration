@@ -171,6 +171,8 @@ public:
 protected:
     static int GetFadeOffset(double fAnimationProgress, double fTotalAnimationTime, double fInOutTime, int nInitialOffset, int nTargetOffset);
 
+    static ra::ui::Color GetBackgroundColor();
+
     std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
     int m_nPopupId = 0;
     bool m_bDestroyPending = false;

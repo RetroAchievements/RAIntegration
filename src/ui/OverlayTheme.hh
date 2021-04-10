@@ -31,6 +31,7 @@ public:
 
     Color ColorBackground() const noexcept { return m_colorBackground; }
     Color ColorMasteryBackground() const noexcept { return m_colorMasteryBackground; }
+    Color ColorNonHardcoreBackground() const noexcept { return m_colorNonHardcoreBackground; }
     Color ColorBorder() const noexcept { return m_colorBorder; }
     Color ColorTextShadow() const noexcept { return m_colorTextShadow; }
     Color ColorTitle() const noexcept { return m_colorTitle; }
@@ -81,6 +82,7 @@ private:
 
     Color m_colorBackground{ 255, 64, 64, 64 };
     Color m_colorMasteryBackground{ 255, 104, 88, 32 };
+    Color m_colorNonHardcoreBackground{ 255, 64, 80, 104 };
     Color m_colorBorder{ 255, 32, 32, 32 };
     Color m_colorTextShadow{ 255, 32, 32, 32 };
     Color m_colorTitle{ 255, 255, 255, 255 };

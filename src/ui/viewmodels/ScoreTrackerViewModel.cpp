@@ -56,7 +56,7 @@ bool ScoreTrackerViewModel::UpdateRenderImage(_UNUSED double fElapsed)
     // frame
     m_pSurface->FillRectangle(nShadowOffset, nShadowOffset, szScoreSoFar.Width + 8,
         szScoreSoFar.Height, pTheme.ColorShadow());
-    m_pSurface->FillRectangle(0, 0, szScoreSoFar.Width + 8, szScoreSoFar.Height, pTheme.ColorBackground());
+    m_pSurface->FillRectangle(0, 0, szScoreSoFar.Width + 8, szScoreSoFar.Height, GetBackgroundColor());
 
     // text
     m_pSurface->WriteText(4, 0, nFontText, pTheme.ColorLeaderboardEntry(), sScoreSoFar);

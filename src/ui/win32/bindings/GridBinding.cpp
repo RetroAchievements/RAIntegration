@@ -852,7 +852,7 @@ void GridBinding::OnLvnOwnerDrawStateChanged(const LPNMLVODSTATECHANGE pnmStateC
                 nTo -= m_nScrollOffset;
 
             m_vmItems->RemoveNotifyTarget(*this);
-            for (gsl::index nIndex = nFrom; nIndex < nTo; ++nIndex)
+            for (gsl::index nIndex = nFrom; nIndex <= nTo; ++nIndex)
                 m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, bSelected);
             m_vmItems->AddNotifyTarget(*this);
         }

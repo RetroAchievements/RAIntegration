@@ -497,7 +497,7 @@ void TriggerViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelPr
 
 void TriggerViewModel::ConditionsMonitor::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property != TriggerConditionViewModel::CurrentHitsProperty)
+    if (args.Property != TriggerConditionViewModel::CurrentHitsProperty && args.Property != TriggerConditionViewModel::RowColorProperty)
         UpdateCurrentGroup();
 }
 

@@ -42,7 +42,7 @@ const IntModelProperty AssetListViewModel::EnsureVisibleAssetIndexProperty("Asse
 
 AssetListViewModel::AssetListViewModel() noexcept
 {
-    SetWindowTitle(L"Assets List");
+    SetWindowTitle(L"Achievements List");
 
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Inactive), L"Inactive");
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Waiting), L"Waiting");

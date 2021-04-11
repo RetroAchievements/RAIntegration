@@ -13,8 +13,8 @@ namespace ui {
 namespace viewmodels {
 
 const IntModelProperty AssetEditorViewModel::IDProperty("AssetEditorViewModel", "ID", 0);
-const StringModelProperty AssetEditorViewModel::NameProperty("AssetEditorViewModel", "Name", L"[No Asset Loaded]");
-const StringModelProperty AssetEditorViewModel::DescriptionProperty("AssetEditorViewModel", "Description", L"Open an asset from the Assets List");
+const StringModelProperty AssetEditorViewModel::NameProperty("AssetEditorViewModel", "Name", L"[No Achievement Loaded]");
+const StringModelProperty AssetEditorViewModel::DescriptionProperty("AssetEditorViewModel", "Description", L"Open an achievement from the Achievements List");
 const IntModelProperty AssetEditorViewModel::CategoryProperty("AssetEditorViewModel", "Category", ra::etoi(ra::data::models::AssetCategory::Core));
 const IntModelProperty AssetEditorViewModel::StateProperty("AssetEditorViewModel", "State", ra::etoi(ra::data::models::AssetState::Inactive));
 const IntModelProperty AssetEditorViewModel::PointsProperty("AssetEditorViewModel", "Points", 0);
@@ -32,7 +32,7 @@ const StringModelProperty AssetEditorViewModel::WaitingLabelProperty("AssetEdito
 
 AssetEditorViewModel::AssetEditorViewModel() noexcept
 {
-    SetWindowTitle(L"Asset Editor");
+    SetWindowTitle(L"Achievement Editor");
 
     m_vmTrigger.AddNotifyTarget(*this);
 }
@@ -154,7 +154,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
         SetBadge(BadgeProperty.GetDefaultValue());
         SetPauseOnReset(PauseOnResetProperty.GetDefaultValue());
         SetPauseOnTrigger(PauseOnTriggerProperty.GetDefaultValue());
-        SetWindowTitle(L"Asset Editor");
+        SetWindowTitle(L"Achievement Editor");
 
         ra::data::models::CapturedTriggerHits pCapturedHits;
         Trigger().InitializeFrom("", pCapturedHits);

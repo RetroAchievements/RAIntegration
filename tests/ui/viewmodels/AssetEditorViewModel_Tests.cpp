@@ -79,10 +79,10 @@ public:
     {
         AssetEditorViewModelHarness editor;
 
-        Assert::AreEqual(std::wstring(L"Asset Editor"), editor.GetWindowTitle());
+        Assert::AreEqual(std::wstring(L"Achievement Editor"), editor.GetWindowTitle());
         Assert::AreEqual(0U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"[No Asset Loaded]"), editor.GetName());
-        Assert::AreEqual(std::wstring(L"Open an asset from the Assets List"), editor.GetDescription());
+        Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Open an achievement from the Achievements List"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
         Assert::AreEqual(0, editor.GetPoints());
@@ -128,10 +128,10 @@ public:
 
         editor.LoadAsset(nullptr);
 
-        Assert::AreEqual(std::wstring(L"Asset Editor"), editor.GetWindowTitle());
+        Assert::AreEqual(std::wstring(L"Achievement Editor"), editor.GetWindowTitle());
         Assert::AreEqual(0U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"[No Asset Loaded]"), editor.GetName());
-        Assert::AreEqual(std::wstring(L"Open an asset from the Assets List"), editor.GetDescription());
+        Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Open an achievement from the Achievements List"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
         Assert::AreEqual(0, editor.GetPoints());
@@ -293,10 +293,10 @@ public:
 
         editor.LoadAsset(nullptr);
 
-        Assert::AreEqual(std::wstring(L"Asset Editor"), editor.GetWindowTitle());
+        Assert::AreEqual(std::wstring(L"Achievement Editor"), editor.GetWindowTitle());
         Assert::AreEqual(0U, editor.GetID());
-        Assert::AreEqual(std::wstring(L"[No Asset Loaded]"), editor.GetName());
-        Assert::AreEqual(std::wstring(L"Open an asset from the Assets List"), editor.GetDescription());
+        Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Open an achievement from the Achievements List"), editor.GetDescription());
         Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
         Assert::AreEqual(AssetState::Inactive, editor.GetState());
         Assert::AreEqual(0, editor.GetPoints());

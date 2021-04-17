@@ -205,6 +205,21 @@ public:
     void SetPauseOnTrigger(bool nValue) { SetValue(PauseOnTriggerProperty, nValue); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not condition truthiness should be color-highlighted.
+    /// </summary>
+    static const BoolModelProperty DebugHighlightsEnabledProperty;
+
+    /// <summary>
+    /// Gets whether or not condition truthiness should be color-highlighted.
+    /// </summary>
+    bool AreDebugHighlightsEnabled() const { return GetValue(DebugHighlightsEnabledProperty); }
+
+    /// <summary>
+    /// Sets whether or not condition truthiness should be color-highlighted.
+    /// </summary>
+    void SetDebugHighlightsEnabled(bool nValue) { SetValue(DebugHighlightsEnabledProperty, nValue); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the condition values should be shown in decimal.
     /// </summary>
     static const BoolModelProperty DecimalPreferredProperty;
@@ -270,6 +285,8 @@ protected:
     void UpdateTriggerBinding();
     void OnTriggerChanged();
 
+    void UpdateAssetFrameValues();
+    void UpdateDebugHighlights();
     void UpdateMeasuredValue();
 
     TriggerViewModel m_vmTrigger;

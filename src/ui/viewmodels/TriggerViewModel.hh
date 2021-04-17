@@ -6,6 +6,7 @@
 
 #include "ui\ViewModelBase.hh"
 #include "ui\ViewModelCollection.hh"
+#include "ui\Types.hh"
 
 #include "LookupItemViewModel.hh"
 #include "TriggerConditionViewModel.hh"
@@ -33,14 +34,6 @@ public:
     int GetSelectedGroupIndex() const { return GetValue(SelectedGroupIndexProperty); }
     void SetSelectedGroupIndex(int nValue) { SetValue(SelectedGroupIndexProperty, nValue); }
 
-    static const BoolModelProperty PauseOnResetProperty;
-    bool IsPauseOnReset() const { return GetValue(PauseOnResetProperty); }
-    void SetPauseOnReset(bool nValue) { SetValue(PauseOnResetProperty, nValue); }
-
-    static const BoolModelProperty PauseOnTriggerProperty;
-    bool IsPauseOnTrigger() const { return GetValue(PauseOnTriggerProperty); }
-    void SetPauseOnTrigger(bool nValue) { SetValue(PauseOnTriggerProperty, nValue); }
-
     class GroupViewModel : public LookupItemViewModel,
         protected ViewModelCollectionBase::NotifyTarget
     {
@@ -50,6 +43,10 @@ public:
         bool UpdateSerialized(const ViewModelCollection<TriggerConditionViewModel>& vConditions);
         const std::string& GetSerialized() const;
         void ResetSerialized() noexcept { m_sSerialized.clear(); }
+
+        static const IntModelProperty ColorProperty;
+        Color GetColor() const { return Color(ra::to_unsigned(GetValue(ColorProperty))); }
+        void SetColor(Color value) { SetValue(ColorProperty, ra::to_signed(value.ARGB)); }
 
     private:
         static void UpdateSerialized(std::string& sSerialized, const ViewModelCollection<TriggerConditionViewModel>& vConditions);
@@ -133,6 +130,7 @@ public:
     }
 
     void DoFrame();
+    void UpdateColors(const rc_trigger_t* pTrigger);
 
 protected:
     // ViewModelCollectionBase::NotifyTarget
@@ -147,6 +145,9 @@ private:
 
     void DeselectAllConditions();
     void UpdateIndicesAndEnsureSelectionVisible();
+
+    void UpdateGroupColors(const rc_trigger_t* pTrigger);
+    void UpdateConditionColors(const rc_trigger_t* pTrigger);
 
     ViewModelCollection<GroupViewModel> m_vGroups;
     ViewModelCollection<TriggerConditionViewModel> m_vConditions;

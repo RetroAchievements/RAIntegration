@@ -260,7 +260,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
         AppendMenu(hRA, MF_STRING, IDM_RA_OVERLAYSETTINGS, TEXT("O&verlay Settings"));
         AppendMenu(hRA, MF_SEPARATOR, 0U, nullptr);
 
-        AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievement &Sets"));
+        AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTS, TEXT("Achievements Li&st"));
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_ACHIEVEMENTEDITOR, TEXT("Achievement &Editor"));
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYFINDER, TEXT("&Memory Inspector"));
         AppendMenu(hRA, MF_STRING, IDM_RA_FILES_MEMORYBOOKMARKS, TEXT("Memory &Bookmarks"));

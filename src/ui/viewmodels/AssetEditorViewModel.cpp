@@ -13,14 +13,15 @@ namespace ui {
 namespace viewmodels {
 
 const IntModelProperty AssetEditorViewModel::IDProperty("AssetEditorViewModel", "ID", 0);
-const StringModelProperty AssetEditorViewModel::NameProperty("AssetEditorViewModel", "Name", L"[No Asset Loaded]");
-const StringModelProperty AssetEditorViewModel::DescriptionProperty("AssetEditorViewModel", "Description", L"Open an asset from the Assets List");
+const StringModelProperty AssetEditorViewModel::NameProperty("AssetEditorViewModel", "Name", L"[No Achievement Loaded]");
+const StringModelProperty AssetEditorViewModel::DescriptionProperty("AssetEditorViewModel", "Description", L"Open an achievement from the Achievements List");
 const IntModelProperty AssetEditorViewModel::CategoryProperty("AssetEditorViewModel", "Category", ra::etoi(ra::data::models::AssetCategory::Core));
 const IntModelProperty AssetEditorViewModel::StateProperty("AssetEditorViewModel", "State", ra::etoi(ra::data::models::AssetState::Inactive));
 const IntModelProperty AssetEditorViewModel::PointsProperty("AssetEditorViewModel", "Points", 0);
 const StringModelProperty AssetEditorViewModel::BadgeProperty("AssetEditorViewModel", "Badge", L"00000");
 const BoolModelProperty AssetEditorViewModel::PauseOnResetProperty("AssetEditorViewModel", "PauseOnReset", false);
 const BoolModelProperty AssetEditorViewModel::PauseOnTriggerProperty("AssetEditorViewModel", "PauseOnTrigger", false);
+const BoolModelProperty AssetEditorViewModel::DebugHighlightsEnabledProperty("AssetEditorViewModel", "DebugHighlightsEnabled", false);
 const BoolModelProperty AssetEditorViewModel::DecimalPreferredProperty("AssetEditorViewModel", "DecimalPreferred", false);
 const BoolModelProperty AssetEditorViewModel::IsAssetLoadedProperty("AssetEditorViewModel", "IsAssetLoaded", false);
 const BoolModelProperty AssetEditorViewModel::HasAssetValidationErrorProperty("AssetEditorViewModel", "HasAssetValidationError", false);
@@ -31,7 +32,7 @@ const StringModelProperty AssetEditorViewModel::WaitingLabelProperty("AssetEdito
 
 AssetEditorViewModel::AssetEditorViewModel() noexcept
 {
-    SetWindowTitle(L"Asset Editor");
+    SetWindowTitle(L"Achievement Editor");
 
     m_vmTrigger.AddNotifyTarget(*this);
 }
@@ -153,7 +154,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
         SetBadge(BadgeProperty.GetDefaultValue());
         SetPauseOnReset(PauseOnResetProperty.GetDefaultValue());
         SetPauseOnTrigger(PauseOnTriggerProperty.GetDefaultValue());
-        SetWindowTitle(L"Asset Editor");
+        SetWindowTitle(L"Achievement Editor");
 
         ra::data::models::CapturedTriggerHits pCapturedHits;
         Trigger().InitializeFrom("", pCapturedHits);
@@ -209,6 +210,13 @@ void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& a
             pAchievement->SetPauseOnTrigger(args.tNewValue);
     }
 
+    if (args.Property == DebugHighlightsEnabledProperty)
+    {
+        if (args.tNewValue)
+            UpdateDebugHighlights();
+        else
+            m_vmTrigger.UpdateColors(nullptr);
+    }
     if (args.Property == DecimalPreferredProperty)
     {
         auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
@@ -288,7 +296,7 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
         else if (nOldState == ra::data::models::AssetState::Waiting)
             SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
 
-        UpdateMeasuredValue();
+        UpdateAssetFrameValues();
     }
 
     if (m_pAsset != nullptr)
@@ -371,6 +379,9 @@ void AssetEditorViewModel::UpdateTriggerBinding()
         SetValue(HasMeasuredProperty, (pTrigger && pTrigger->measured_target != 0));
     }
 
+    if (AreDebugHighlightsEnabled())
+        UpdateDebugHighlights();
+
     UpdateMeasuredValue();
 }
 
@@ -380,10 +391,26 @@ void AssetEditorViewModel::DoFrame()
         return;
 
     if (IsVisible())
-    {
-        m_vmTrigger.DoFrame();
+        UpdateAssetFrameValues();
+}
 
-        UpdateMeasuredValue();
+void AssetEditorViewModel::UpdateAssetFrameValues()
+{
+    m_vmTrigger.DoFrame();
+
+    if (AreDebugHighlightsEnabled())
+        UpdateDebugHighlights();
+
+    UpdateMeasuredValue();
+}
+
+void AssetEditorViewModel::UpdateDebugHighlights()
+{
+    const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
+    if (pAchievement != nullptr)
+    {
+        const rc_trigger_t* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
+        m_vmTrigger.UpdateColors(pTrigger);
     }
 }
 

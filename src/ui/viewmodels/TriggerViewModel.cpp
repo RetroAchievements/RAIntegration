@@ -4,9 +4,11 @@
 
 #include "RA_StringUtils.h"
 
+#include "services\AchievementRuntime.hh"
 #include "services\IClipboard.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\EditorTheme.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -15,11 +17,10 @@ namespace ui {
 namespace viewmodels {
 
 const IntModelProperty TriggerViewModel::SelectedGroupIndexProperty("TriggerViewModel", "SelectedGroupIndex", -1);
-const BoolModelProperty TriggerViewModel::PauseOnResetProperty("TriggerViewModel", "PauseOnReset", false);
-const BoolModelProperty TriggerViewModel::PauseOnTriggerProperty("TriggerViewModel", "PauseOnTrigger", false);
 const IntModelProperty TriggerViewModel::VersionProperty("TriggerViewModel", "Version", 0);
 const IntModelProperty TriggerViewModel::EnsureVisibleConditionIndexProperty("TriggerViewModel", "EnsureVisibleConditionIndex", -1);
 const IntModelProperty TriggerViewModel::EnsureVisibleGroupIndexProperty("TriggerViewModel", "EnsureVisibleGroupIndex", -1);
+const IntModelProperty TriggerViewModel::GroupViewModel::ColorProperty("GroupViewModel", "Color", 0);
 
 TriggerViewModel::TriggerViewModel() noexcept
     : m_pConditionsMonitor(*this)
@@ -496,7 +497,7 @@ void TriggerViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelPr
 
 void TriggerViewModel::ConditionsMonitor::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property != TriggerConditionViewModel::CurrentHitsProperty)
+    if (args.Property != TriggerConditionViewModel::CurrentHitsProperty && args.Property != TriggerConditionViewModel::RowColorProperty)
         UpdateCurrentGroup();
 }
 
@@ -686,6 +687,162 @@ void TriggerViewModel::DoFrame()
 
         m_vConditions.EndUpdate();
         m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
+    }
+}
+
+void TriggerViewModel::UpdateColors(const rc_trigger_t* pTrigger)
+{
+    UpdateGroupColors(pTrigger);
+    UpdateConditionColors(pTrigger);
+}
+
+void TriggerViewModel::UpdateGroupColors(const rc_trigger_t* pTrigger)
+{
+    const auto nDefaultColor = ra::ui::Color(ra::to_unsigned(GroupViewModel::ColorProperty.GetDefaultValue()));
+
+    if (pTrigger == nullptr)
+    {
+        // no trigger, or trigger not active, disable highlights
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
+        {
+            auto* pGroup = m_vGroups.GetItemAt(i);
+            if (pGroup != nullptr)
+                pGroup->SetColor(nDefaultColor);
+        }
+
+        return;
+    }
+
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
+
+    if (!pTrigger->has_hits)
+    {
+        // trigger has been reset, or is waiting
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
+        {
+            auto* pGroup = m_vGroups.GetItemAt(i);
+            if (pGroup == nullptr || pGroup->m_pConditionSet == nullptr)
+                continue;
+
+            bool bIsReset = false;
+            rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
+            for (; pCondition != nullptr; pCondition = pCondition->next)
+            {
+                // a reset condition cannot remain true with a target hitcount, so only check if it's currently true
+                if (pCondition->is_true && pCondition->type == RC_CONDITION_RESET_IF)
+                {
+                    bIsReset = true;
+                    break;
+                }
+            }
+
+            if (bIsReset)
+                pGroup->SetColor(pTheme.ColorTriggerResetTrue());
+            else
+                pGroup->SetColor(nDefaultColor);
+        }
+    }
+    else
+    {
+        // trigger is active
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
+        {
+            auto* pGroup = m_vGroups.GetItemAt(i);
+            if (pGroup == nullptr || pGroup->m_pConditionSet == nullptr)
+                continue;
+
+            if (pGroup->m_pConditionSet->is_paused)
+            {
+                pGroup->SetColor(pTheme.ColorTriggerPauseTrue());
+            }
+            else
+            {
+                bool bIsTrue = true;
+                rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
+                for (; bIsTrue && pCondition != nullptr; pCondition = pCondition->next)
+                {
+                    // target hitcount met, ignore current truthiness
+                    if (pCondition->required_hits != 0 && pCondition->current_hits == pCondition->required_hits)
+                        continue;
+
+                    // if it's a non-true logical condition, the group is not ready to trigger
+                    if (!pCondition->is_true)
+                    {
+                        switch (pCondition->type)
+                        {
+                            case RC_CONDITION_MEASURED:
+                            case RC_CONDITION_MEASURED_IF:
+                            case RC_CONDITION_STANDARD:
+                            case RC_CONDITION_TRIGGER:
+                                bIsTrue = false;
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+                }
+
+                if (bIsTrue)
+                    pGroup->SetColor(pTheme.ColorTriggerIsTrue());
+                else
+                    pGroup->SetColor(nDefaultColor);
+            }
+        }
+    }
+}
+
+void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
+{
+    // update the condition rows for the currently selected group
+    gsl::index nConditionIndex = 0;
+    if (pTrigger)
+    {
+        auto* pSelectedGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+        if (pSelectedGroup && pSelectedGroup->m_pConditionSet)
+        {
+            if (pSelectedGroup->m_pConditionSet->is_paused)
+            {
+                // when a condset is paused, processing stops when the first pause condition is true. only highlight it
+                bool bFirstPause = true;
+                rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
+                for (; pCondition != nullptr; pCondition = pCondition->next, ++nConditionIndex)
+                {
+                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex);
+                    if (vmCondition != nullptr)
+                    {
+                        if (pCondition->pause && bFirstPause)
+                        {
+                            vmCondition->UpdateRowColor(pCondition);
+
+                            if (pCondition->is_true && pCondition->type == RC_CONDITION_PAUSE_IF)
+                                bFirstPause = false;
+                        }
+                        else
+                        {
+                            vmCondition->UpdateRowColor(nullptr);
+                        }
+                    }
+                }
+            }
+            else
+            {
+                rc_condition_t* pCondition = pSelectedGroup->m_pConditionSet->conditions;
+                for (; pCondition != nullptr; pCondition = pCondition->next, ++nConditionIndex)
+                {
+                    auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex);
+                    if (vmCondition != nullptr)
+                        vmCondition->UpdateRowColor(pCondition);
+                }
+            }
+        }
+    }
+
+    for (; nConditionIndex < gsl::narrow_cast<gsl::index>(m_vConditions.Count()); ++nConditionIndex)
+    {
+        auto* pCondition = m_vConditions.GetItemAt(nConditionIndex);
+        if (pCondition != nullptr)
+            pCondition->UpdateRowColor(nullptr);
     }
 }
 

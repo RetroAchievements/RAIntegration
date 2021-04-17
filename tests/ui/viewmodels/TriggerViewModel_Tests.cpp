@@ -92,8 +92,6 @@ public:
     {
         TriggerViewModel vmTrigger;
         Assert::AreEqual(-1, vmTrigger.GetSelectedGroupIndex());
-        Assert::IsFalse(vmTrigger.IsPauseOnReset());
-        Assert::IsFalse(vmTrigger.IsPauseOnTrigger());
         Assert::AreEqual({ 0U }, vmTrigger.Groups().Count());
         Assert::AreEqual(std::string(), vmTrigger.Serialize());
 

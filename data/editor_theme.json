@@ -14,5 +14,12 @@
       "Header": "#808080",
       "HeaderSelected": "#FF8080"
     }
+  },
+  "TriggerColors": {
+    "IsTrue": "#C0FFC0",
+    "WasTrue": "#C0C0FF",
+    "BecomingTrue": "#C0FFFF",
+    "ResetTrue": "#FFFFC0",
+    "PauseTrue": "#FFC0C0",
   }
 }

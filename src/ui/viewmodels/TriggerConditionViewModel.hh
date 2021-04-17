@@ -3,6 +3,7 @@
 #pragma once
 
 #include "ui\ViewModelBase.hh"
+#include "ui\Types.hh"
 
 #include "data\Types.hh"
 
@@ -126,6 +127,11 @@ public:
     bool IsModifying() const { return IsModifying(GetType()); }
 
     static bool IsComparisonVisible(const ViewModelBase& vmItem, int nValue);
+
+    static const IntModelProperty RowColorProperty;
+    Color GetRowColor() const { return Color(ra::to_unsigned(GetValue(RowColorProperty))); }
+    void SetRowColor(Color value) { SetValue(RowColorProperty, ra::to_signed(value.ARGB)); }
+    void UpdateRowColor(const rc_condition_t* pCondition);
 
 private:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;

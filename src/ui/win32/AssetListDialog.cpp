@@ -165,6 +165,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     SetAnchor(IDC_RA_CHKACHPROCESSINGACTIVE, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_LISTACHIEVEMENTS, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
     SetAnchor(IDC_RA_RESET_ACH, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_CHK_ACTIVE, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_COMMIT_ACH, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_DOWNLOAD_ACH, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_REVERTSELECTED, Anchor::Top | Anchor::Right);

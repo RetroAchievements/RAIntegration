@@ -35,6 +35,14 @@ public:
     Color ColorHeader() const noexcept { return m_colorHeader; }
     Color ColorHeaderSelected() const noexcept { return m_colorHeaderSelected; }
 
+    // ===== triggers =====
+
+    Color ColorTriggerIsTrue() const noexcept { return m_colorTriggerIsTrue; }
+    Color ColorTriggerWasTrue() const noexcept { return m_colorTriggerWasTrue; }
+    Color ColorTriggerBecomingTrue() const noexcept { return m_colorTriggerBecomingTrue; }
+    Color ColorTriggerResetTrue() const noexcept { return m_colorTriggerResetTrue; }
+    Color ColorTriggerPauseTrue() const noexcept { return m_colorTriggerPauseTrue; }
+
     // ===== methods =====
 
     void LoadFromFile();
@@ -53,6 +61,12 @@ private:
     Color m_colorFrozen{ 255, 255, 200, 0 };
     Color m_colorHeader{ 255, 128, 128, 128 };
     Color m_colorHeaderSelected{ 255, 255, 96, 96 };
+
+    Color m_colorTriggerIsTrue{ 255, 192, 255, 192 };
+    Color m_colorTriggerWasTrue{ 255, 192, 192, 255 };
+    Color m_colorTriggerBecomingTrue{ 255, 192, 255, 255 };
+    Color m_colorTriggerResetTrue{ 255, 255, 255, 192 };
+    Color m_colorTriggerPauseTrue{ 255, 255, 192, 192 };
 };
 
 } // namespace ui

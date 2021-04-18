@@ -683,7 +683,7 @@ void TriggerViewModel::DoFrame()
         m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
         m_vConditions.BeginUpdate();
 
-        unsigned int nHits = 0, nConditionHits = 0;
+        unsigned int nHits = 0;
         bool bIsHitsChain = false;
 
         gsl::index nConditionIndex = 0;

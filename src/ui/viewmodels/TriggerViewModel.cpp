@@ -497,8 +497,12 @@ void TriggerViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelPr
 
 void TriggerViewModel::ConditionsMonitor::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property != TriggerConditionViewModel::CurrentHitsProperty && args.Property != TriggerConditionViewModel::RowColorProperty)
+    if (args.Property != TriggerConditionViewModel::CurrentHitsProperty &&
+        args.Property != TriggerConditionViewModel::TotalHitsProperty &&
+        args.Property != TriggerConditionViewModel::RowColorProperty)
+    {
         UpdateCurrentGroup();
+    }
 }
 
 void TriggerViewModel::ConditionsMonitor::OnViewModelAdded(gsl::index)
@@ -569,6 +573,7 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
     m_vConditions.BeginUpdate();
 
     int nIndex = 0;
+    m_bHasHitChain = false;
 
     if (pGroup != nullptr && pGroup->m_pConditionSet)
     {
@@ -587,9 +592,12 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
             vmCondition->SetIndex(++nIndex);
             vmCondition->InitializeFrom(*pCondition);
             vmCondition->SetCurrentHits(pCondition->current_hits);
+            vmCondition->SetTotalHits(0);
 
             vmCondition->SetIndirect(bIsIndirect);
             bIsIndirect = (pCondition->type == RC_CONDITION_ADD_ADDRESS);
+
+            m_bHasHitChain |= (pCondition->type == RC_CONDITION_ADD_HITS || pCondition->type == RC_CONDITION_SUB_HITS);
         }
     }
 
@@ -675,6 +683,9 @@ void TriggerViewModel::DoFrame()
         m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
         m_vConditions.BeginUpdate();
 
+        unsigned int nHits = 0, nConditionHits = 0;
+        bool bIsHitsChain = false;
+
         gsl::index nConditionIndex = 0;
         rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
         for (; pCondition != nullptr; pCondition = pCondition->next)
@@ -683,11 +694,115 @@ void TriggerViewModel::DoFrame()
             Expects(vmCondition != nullptr);
 
             vmCondition->SetCurrentHits(pCondition->current_hits);
+
+            if (m_bHasHitChain)
+            {
+                switch (vmCondition->GetType())
+                {
+                    case ra::ui::viewmodels::TriggerConditionType::AddHits:
+                        bIsHitsChain = true;
+                        nHits += vmCondition->GetCurrentHits();
+                        break;
+
+                    case ra::ui::viewmodels::TriggerConditionType::SubHits:
+                        bIsHitsChain = true;
+                        nHits -= vmCondition->GetCurrentHits();
+                        break;
+
+                    case ra::ui::viewmodels::TriggerConditionType::AddAddress:
+                    case ra::ui::viewmodels::TriggerConditionType::AddSource:
+                    case ra::ui::viewmodels::TriggerConditionType::SubSource:
+                    case ra::ui::viewmodels::TriggerConditionType::AndNext:
+                    case ra::ui::viewmodels::TriggerConditionType::OrNext:
+                    case ra::ui::viewmodels::TriggerConditionType::ResetNextIf:
+                        break;
+
+                    default:
+                        if (bIsHitsChain)
+                        {
+                            nHits += vmCondition->GetCurrentHits();
+                            vmCondition->SetTotalHits(nHits);
+                            bIsHitsChain = false;
+                        }
+                        nHits = 0;
+                        break;
+                }
+            }
         }
 
         m_vConditions.EndUpdate();
         m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
     }
+}
+
+bool TriggerViewModel::BuildHitChainTooltip(std::wstring& sTooltip,
+    const ViewModelCollection<TriggerConditionViewModel>& vmConditions, gsl::index nIndex)
+{
+    unsigned int nHits = 0, nConditionHits = 0;
+    bool bIsHitsChain = false;
+    sTooltip.clear();
+
+    for (gsl::index nScan = 0; nScan < gsl::narrow_cast<gsl::index>(vmConditions.Count()); ++nScan)
+    {
+        const auto* vmCondition = vmConditions.GetItemAt(nScan);
+        Expects(vmCondition != nullptr);
+
+        switch (vmCondition->GetType())
+        {
+            case ra::ui::viewmodels::TriggerConditionType::AddHits:
+                bIsHitsChain = true;
+                nConditionHits = vmCondition->GetCurrentHits();
+                if (nConditionHits != 0)
+                {
+                    sTooltip.append(ra::StringPrintf(L"+%u (condition %d)\n", nConditionHits, vmCondition->GetIndex()));
+                    nHits += nConditionHits;
+                }
+                break;
+
+            case ra::ui::viewmodels::TriggerConditionType::SubHits:
+                bIsHitsChain = true;
+                nConditionHits = vmCondition->GetCurrentHits();
+                if (nConditionHits != 0)
+                {
+                    sTooltip.append(ra::StringPrintf(L"-%u (condition %d)\n", nConditionHits, vmCondition->GetIndex()));
+                    nHits -= nConditionHits;
+                }
+                break;
+
+            case ra::ui::viewmodels::TriggerConditionType::AddAddress:
+            case ra::ui::viewmodels::TriggerConditionType::AddSource:
+            case ra::ui::viewmodels::TriggerConditionType::SubSource:
+            case ra::ui::viewmodels::TriggerConditionType::AndNext:
+            case ra::ui::viewmodels::TriggerConditionType::OrNext:
+            case ra::ui::viewmodels::TriggerConditionType::ResetNextIf:
+                break;
+
+            default:
+                if (nScan >= nIndex)
+                {
+                    if (bIsHitsChain)
+                    {
+                        nConditionHits = vmCondition->GetCurrentHits();
+                        if (nConditionHits != 0)
+                        {
+                            sTooltip.append(ra::StringPrintf(L"+%u (condition %d)\n", nConditionHits, vmCondition->GetIndex()));
+                            nHits += nConditionHits;
+                        }
+
+                        sTooltip.append(ra::StringPrintf(L"%d/%u total", ra::to_signed(nHits), vmCondition->GetRequiredHits()));
+                    }
+
+                    return true;
+                }
+
+                bIsHitsChain = false;
+                nHits = 0;
+                sTooltip.clear();
+                break;
+        }
+    }
+
+    return false;
 }
 
 void TriggerViewModel::UpdateColors(const rc_trigger_t* pTrigger)

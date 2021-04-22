@@ -298,7 +298,7 @@ public:
         ParseAndRegenerate("0xR1234=0xR2345"); // bit5
         ParseAndRegenerate("0xS1234=0xS2345"); // bit6
         ParseAndRegenerate("0xT1234=0xT2345"); // bit7
-        ParseAndRegenerate("0xH1234=0xH2345"); // bitcount
+        ParseAndRegenerate("0xK1234=0xK2345"); // bitcount
     }
 
     TEST_METHOD(TestOperandTypes)

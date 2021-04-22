@@ -205,6 +205,7 @@ static constexpr MemSize MapMemSize(char nSize) noexcept
         case RC_MEMSIZE_16_BITS: return MemSize::SixteenBit;
         case RC_MEMSIZE_24_BITS: return MemSize::TwentyFourBit;
         case RC_MEMSIZE_32_BITS: return MemSize::ThirtyTwoBit;
+        case RC_MEMSIZE_BITCOUNT: return MemSize::BitCount;
         default:
             assert(!"Unsupported operand size");
             return MemSize::EightBit;

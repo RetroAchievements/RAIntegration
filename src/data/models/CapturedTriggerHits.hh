@@ -4,8 +4,6 @@
 
 #include "CapturedTriggerHits.hh"
 
-#include <rcheevos\include\rcheevos.h>
-
 namespace ra {
 namespace data {
 namespace models {

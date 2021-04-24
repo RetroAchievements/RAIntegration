@@ -49,6 +49,13 @@ private:
         {
             return GetValue(VersionProperty);
         }
+
+        std::wstring GetHitChainTooltip(gsl::index nIndex)
+        {
+            std::wstring sTooltip;
+            BuildHitChainTooltip(sTooltip, Conditions(), nIndex);
+            return sTooltip;
+        }
     };
 
     void Parse(TriggerViewModel& vmTrigger, const std::string& sInput)
@@ -911,18 +918,22 @@ public:
         vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits = 2;
         vmTrigger.DoFrame();
         Assert::AreEqual(2U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // total hits only applies to AddHits groups
 
         vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits++;
         vmTrigger.DoFrame();
         Assert::AreEqual(3U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // total hits only applies to AddHits groups
 
         vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits++;
         vmTrigger.DoFrame();
         Assert::AreEqual(4U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // total hits only applies to AddHits groups
 
         vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions->current_hits = 0;
         vmTrigger.DoFrame();
         Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // total hits only applies to AddHits groups
     }
 
     TEST_METHOD(TestDoFrameDoesNotUpdateTrigger)
@@ -942,6 +953,122 @@ public:
         // Serialize will regenerate the input string, which will differ, but the trigger version should not be updated
         Assert::AreEqual(std::string("1=1.10."), vmTrigger.Serialize());
         Assert::AreEqual(0, vmTrigger.GetVersion());
+    }
+
+    TEST_METHOD(TestDoFrameHitsChain)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0=0.5._C:0=0.10._0=0.20._0=0.30._C:0=0.50._D:0=0.60._0=0.70.");
+        Assert::AreEqual({ 1U }, vmTrigger.Groups().Count());
+
+        auto* cond = vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions;
+        cond->current_hits = 2; cond = cond->next;  //         0=0 (5)
+        cond->current_hits = 3; cond = cond->next;  // AddHits 0=0 (10)
+        cond->current_hits = 6; cond = cond->next;  //         0=0 (20)
+        cond->current_hits = 12; cond = cond->next; //         0=0 (30)
+        cond->current_hits = 24; cond = cond->next; // AddHits 0=0 (50)
+        cond->current_hits = 1; cond = cond->next;  // SubHits 0=0 (60)
+        cond->current_hits = 48;                    //         0=0 (70)
+        vmTrigger.DoFrame();
+        Assert::AreEqual(2U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+        Assert::AreEqual(3U, vmTrigger.Conditions().GetItemAt(1)->GetCurrentHits());
+        Assert::AreEqual(6U, vmTrigger.Conditions().GetItemAt(2)->GetCurrentHits());
+        Assert::AreEqual(12U, vmTrigger.Conditions().GetItemAt(3)->GetCurrentHits());
+        Assert::AreEqual(24U, vmTrigger.Conditions().GetItemAt(4)->GetCurrentHits());
+        Assert::AreEqual(1U, vmTrigger.Conditions().GetItemAt(5)->GetCurrentHits());
+        Assert::AreEqual(48U, vmTrigger.Conditions().GetItemAt(6)->GetCurrentHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // non hit-chain
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits()); // middle of hit-chain
+        Assert::AreEqual(9U, vmTrigger.Conditions().GetItemAt(2)->GetTotalHits()); // end of hit-chain (3+6)
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(3)->GetTotalHits()); // new non hit-chain
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(4)->GetTotalHits()); // middle of new hit-chain
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(5)->GetTotalHits()); // middle of new hit-chain
+        Assert::AreEqual(71U, vmTrigger.Conditions().GetItemAt(6)->GetTotalHits()); // end of new hit-chain (24-1+48)
+    }
+
+    TEST_METHOD(TestDoFrameHitsChainWithModifiers)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "C:0=0.5._I:0_A:0_C:0=0.50._N:0=0_O:0=0_P:0=0.70.");
+        Assert::AreEqual({ 1U }, vmTrigger.Groups().Count());
+
+        auto* cond = vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions;
+        cond->current_hits = 2; cond = cond->next;  // AddHits    0=0 (5)
+        cond->current_hits = 3; cond = cond->next;  // AddAddress 0
+        cond->current_hits = 6; cond = cond->next;  // AddSource  0
+        cond->current_hits = 12; cond = cond->next; // AddHits    0=0 (50)
+        cond->current_hits = 24; cond = cond->next; // AndNext    0=0
+        cond->current_hits = 1; cond = cond->next;  // OrNext     0=0
+        cond->current_hits = 48;                    // PauseIf    0=0 (70)
+        vmTrigger.DoFrame();
+        Assert::AreEqual(2U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+        Assert::AreEqual(3U, vmTrigger.Conditions().GetItemAt(1)->GetCurrentHits());
+        Assert::AreEqual(6U, vmTrigger.Conditions().GetItemAt(2)->GetCurrentHits());
+        Assert::AreEqual(12U, vmTrigger.Conditions().GetItemAt(3)->GetCurrentHits());
+        Assert::AreEqual(24U, vmTrigger.Conditions().GetItemAt(4)->GetCurrentHits());
+        Assert::AreEqual(1U, vmTrigger.Conditions().GetItemAt(5)->GetCurrentHits());
+        Assert::AreEqual(48U, vmTrigger.Conditions().GetItemAt(6)->GetCurrentHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // start of hit-chain
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits()); // non hit modifier
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(2)->GetTotalHits()); // non hit modifier
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(3)->GetTotalHits()); // middle of hits-chain
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(4)->GetTotalHits()); // non hit modifier
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(5)->GetTotalHits()); // non hit modifier
+        Assert::AreEqual(62U, vmTrigger.Conditions().GetItemAt(6)->GetTotalHits()); // end of hit-chain (2+12+48)
+    }
+
+    TEST_METHOD(TestBuildHitChainTooltip)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0=0.5._C:0=0.10._0=0.20._0=0.30._C:0=0.50._D:0=0.60._0=0.70.");
+        Assert::AreEqual({ 1U }, vmTrigger.Groups().Count());
+
+        auto* cond = vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions;
+        cond->current_hits = 2; cond = cond->next;  //         0=0 (5)
+        cond->current_hits = 3; cond = cond->next;  // AddHits 0=0 (10)
+        cond->current_hits = 6; cond = cond->next;  //         0=0 (20)
+        cond->current_hits = 12; cond = cond->next; //         0=0 (30)
+        cond->current_hits = 24; cond = cond->next; // AddHits 0=0 (50)
+        cond->current_hits = 1; cond = cond->next;  // SubHits 0=0 (60)
+        cond->current_hits = 48;                    //         0=0 (70)
+        vmTrigger.DoFrame();
+
+        const std::wstring sTooltip0 = L"";
+        const std::wstring sTooltip1 = L"+3 (condition 2)\n+6 (condition 3)\n9/20 total";
+        const std::wstring sTooltip2 = L"+24 (condition 5)\n-1 (condition 6)\n+48 (condition 7)\n71/70 total";
+        Assert::AreEqual(sTooltip0, vmTrigger.GetHitChainTooltip(0)); // non hit-chain
+        Assert::AreEqual(sTooltip1, vmTrigger.GetHitChainTooltip(1)); // middle of hit-chain
+        Assert::AreEqual(sTooltip1, vmTrigger.GetHitChainTooltip(2)); // end of hit-chain (3+6)
+        Assert::AreEqual(sTooltip0, vmTrigger.GetHitChainTooltip(3)); // new non hit-chain
+        Assert::AreEqual(sTooltip2, vmTrigger.GetHitChainTooltip(4)); // middle of new hit-chain
+        Assert::AreEqual(sTooltip2, vmTrigger.GetHitChainTooltip(5)); // middle of new hit-chain
+        Assert::AreEqual(sTooltip2, vmTrigger.GetHitChainTooltip(6)); // end of new hit-chain (24-1+48)
+    }
+
+    TEST_METHOD(TestBuildHitChainTooltipWithModifiers)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "C:0=0.5._I:0_A:0_C:0=0.50._N:0=0_O:0=0_P:0=0.70.");
+        Assert::AreEqual({ 1U }, vmTrigger.Groups().Count());
+
+        auto* cond = vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions;
+        cond->current_hits = 2; cond = cond->next;  // AddHits    0=0 (5)
+        cond->current_hits = 3; cond = cond->next;  // AddAddress 0
+        cond->current_hits = 6; cond = cond->next;  // AddSource  0
+        cond->current_hits = 12; cond = cond->next; // AddHits    0=0 (50)
+        cond->current_hits = 24; cond = cond->next; // AndNext    0=0
+        cond->current_hits = 1; cond = cond->next;  // OrNext     0=0
+        cond->current_hits = 48;                    // PauseIf    0=0 (70)
+        vmTrigger.DoFrame();
+
+        const std::wstring sTooltip = L"+2 (condition 1)\n+12 (condition 4)\n+48 (condition 7)\n62/70 total";
+        Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(0)); // start of hit-chain
+        Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(1)); // non hit modifier
+        Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(2)); // non hit modifier
+        Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(3)); // middle of hits-chain
+        Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(4)); // non hit modifier
+        Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(5)); // non hit modifier
+        Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(6)); // end of hits-chain
     }
 };
 

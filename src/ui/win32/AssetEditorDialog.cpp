@@ -281,6 +281,10 @@ public:
             return std::to_wstring(nRequiredHits);
         }
 
+        const auto nTotalHits = vmItems.GetItemValue(nIndex, TriggerConditionViewModel::TotalHitsProperty);
+        if (nTotalHits > 0)
+            return ra::StringPrintf(L"%d (%d) [%d]", nRequiredHits, nCurrentHits, nTotalHits);
+
         return ra::StringPrintf(L"%d (%d)", nRequiredHits, nCurrentHits);
     }
 
@@ -290,8 +294,22 @@ public:
             return true;
         if (pProperty == TriggerConditionViewModel::HasHitsProperty)
             return true;
+        if (pProperty == TriggerConditionViewModel::TotalHitsProperty)
+            return true;
 
         return GridNumberColumnBinding::DependsOn(pProperty);
+    }
+
+    std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto* vmConditions = dynamic_cast<const ViewModelCollection<TriggerConditionViewModel>*>(&vmItems);
+        Expects(vmConditions != nullptr);
+
+        std::wstring sTooltip;
+        if (!TriggerViewModel::BuildHitChainTooltip(sTooltip, *vmConditions, nIndex))
+            sTooltip.clear();
+
+        return sTooltip;
     }
 
     HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override

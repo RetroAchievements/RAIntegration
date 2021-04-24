@@ -132,6 +132,8 @@ public:
     void DoFrame();
     void UpdateColors(const rc_trigger_t* pTrigger);
 
+    static bool BuildHitChainTooltip(std::wstring& sTooltip, const ViewModelCollection<TriggerConditionViewModel>& vmConditions, gsl::index nIndex);
+
 protected:
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
@@ -151,6 +153,7 @@ private:
 
     ViewModelCollection<GroupViewModel> m_vGroups;
     ViewModelCollection<TriggerConditionViewModel> m_vConditions;
+    bool m_bHasHitChain = false;
 
     class ConditionsMonitor : public ViewModelCollectionBase::NotifyTarget
     {

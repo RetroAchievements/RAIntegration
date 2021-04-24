@@ -141,7 +141,7 @@ public:
 
     bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) override
     {
-        if (ra::StringStartsWith(sValue, L"0x"))
+        if (ra::StringStartsWith(sValue, L"0x") || IsAddressType(vmItems, nIndex))
         {
             std::wstring sError;
             unsigned int nValue = 0U;

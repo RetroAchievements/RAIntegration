@@ -792,6 +792,29 @@ public:
         Assert::AreEqual(1, vmAssetList.FilteredAssets().GetItemAt(2)->GetId()); // item changed to match filter appears at end of list
     }
 
+    TEST_METHOD(TestChangeFilter)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 10, L"Ach2");
+        vmAssetList.AddAchievement(AssetCategory::Core, 15, L"Ach3");
+
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(20, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(1, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+        Assert::AreEqual(3, vmAssetList.FilteredAssets().GetItemAt(1)->GetId());
+
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(10, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(2, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+    }
+
     TEST_METHOD(TestSpecialFilterActive)
     {
         AssetListViewModelHarness vmAssetList;
@@ -927,6 +950,7 @@ public:
         Assert::AreEqual(std::wstring(L"Title"), pItem->GetLabel());
         Assert::AreEqual(5, pItem->GetPoints());
         Assert::AreEqual(AssetState::Inactive, pItem->GetState());
+        Assert::AreEqual(5, vmAssetList.GetTotalPoints());
 
         vmAchievement.SetName(L"New Title");
         Assert::AreEqual(std::wstring(L"New Title"), pItem->GetLabel());
@@ -934,6 +958,7 @@ public:
 
         vmAchievement.SetPoints(10);
         Assert::AreEqual(10, pItem->GetPoints());
+        Assert::AreEqual(10, vmAssetList.GetTotalPoints());
 
         vmAchievement.SetState(AssetState::Active);
         Assert::AreEqual(AssetState::Active, pItem->GetState());

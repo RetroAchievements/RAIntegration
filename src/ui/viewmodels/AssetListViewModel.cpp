@@ -94,11 +94,6 @@ void AssetListViewModel::OnActiveGameChanged()
     SetGameId(pGameContext.GameId());
 }
 
-static bool IsTalliedAchievement(const ra::data::models::AchievementModel& pAchievement)
-{
-    return (pAchievement.GetCategory() == ra::data::models::AssetCategory::Core);
-}
-
 void AssetListViewModel::OnDataModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
 {
     // sync this property through to the summary view model
@@ -122,7 +117,7 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
         const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
-        if (pAchievement != nullptr && IsTalliedAchievement(*pAchievement))
+        if (pAchievement != nullptr && GetFilteredAssetIndex(*pAsset) >= 0)
         {
             auto nPoints = GetTotalPoints();
             nPoints += args.tNewValue - args.tOldValue;
@@ -131,6 +126,9 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
     }
     else if (args.Property == ra::data::models::AssetModelBase::StateProperty)
     {
+        if (GetSpecialFilter() != SpecialFilter::All)
+            AddOrRemoveFilteredItem(nIndex);
+
         const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
         if (nNewState == ra::data::models::AssetState::Triggered && KeepActive())
         {
@@ -150,23 +148,13 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
         UpdateTotals();
 
         if (GetFilterCategory() != FilterCategory::All)
-        {
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-            const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-            if (pAsset != nullptr)
-                AddOrRemoveFilteredItem(*pAsset);
-        }
+            AddOrRemoveFilteredItem(nIndex);
     }
     else if (args.Property == ra::data::models::AssetModelBase::StateProperty ||
              args.Property == ra::data::models::AssetModelBase::ChangesProperty)
     {
         if (GetSpecialFilter() != SpecialFilter::All)
-        {
-            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-            const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-            if (pAsset != nullptr)
-                AddOrRemoveFilteredItem(*pAsset);
-        }
+            AddOrRemoveFilteredItem(nIndex);
     }
 
     // sync these properties through to the summary view model
@@ -218,13 +206,7 @@ void AssetListViewModel::OnDataModelAdded(_UNUSED gsl::index nIndex)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (!pGameContext.Assets().IsUpdating())
-    {
-        UpdateTotals();
-
-        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-        if (pAsset != nullptr)
-            AddOrRemoveFilteredItem(*pAsset);
-    }
+        AddOrRemoveFilteredItem(nIndex);
 }
 
 void AssetListViewModel::OnDataModelRemoved(_UNUSED gsl::index nIndex)
@@ -232,8 +214,6 @@ void AssetListViewModel::OnDataModelRemoved(_UNUSED gsl::index nIndex)
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (!pGameContext.Assets().IsUpdating())
     {
-        UpdateTotals();
-
         // the item has already been removed from the vAssets collection, and all we know about it
         // is the index where it was located. scan through the vFilteredAssets collection and remove 
         // any that no longer exist in the vAssets collection.
@@ -250,6 +230,8 @@ void AssetListViewModel::OnDataModelRemoved(_UNUSED gsl::index nIndex)
                 }
             }
         }
+
+        UpdateTotals();
     }
 }
 
@@ -258,17 +240,16 @@ void AssetListViewModel::OnDataModelChanged(_UNUSED gsl::index nIndex)
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (!pGameContext.Assets().IsUpdating())
     {
-        UpdateTotals();
-
         const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
         if (pAsset != nullptr)
             AddOrRemoveFilteredItem(*pAsset);
+
+        UpdateTotals();
     }
 }
 
 void AssetListViewModel::OnEndDataModelCollectionUpdate()
 {
-    UpdateTotals();
     ApplyFilter();
 }
 
@@ -277,14 +258,13 @@ void AssetListViewModel::UpdateTotals()
     int nAchievementCount = 0;
     int nTotalPoints = 0;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nIndex)
     {
-        auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pGameContext.Assets().GetItemAt(nIndex));
-        if (pAchievement != nullptr && IsTalliedAchievement(*pAchievement))
+        auto* pAsset = m_vFilteredAssets.GetItemAt(nIndex);
+        if (pAsset->GetType() == ra::data::models::AssetType::Achievement)
         {
             ++nAchievementCount;
-            nTotalPoints += pAchievement->GetPoints();
+            nTotalPoints += pAsset->GetPoints();
         }
     }
 
@@ -342,6 +322,7 @@ void AssetListViewModel::ApplyFilter()
 
     m_vFilteredAssets.EndUpdate();
 
+    UpdateTotals();
     UpdateButtons();
 }
 
@@ -392,7 +373,21 @@ bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& p
     return true;
 }
 
-void AssetListViewModel::AddOrRemoveFilteredItem(const ra::data::models::AssetModelBase& pAsset)
+void AssetListViewModel::AddOrRemoveFilteredItem(gsl::index nAssetIndex)
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pAsset = pGameContext.Assets().GetItemAt(nAssetIndex);
+    if (pAsset != nullptr)
+    {
+        if (AddOrRemoveFilteredItem(*pAsset))
+        {
+            UpdateTotals();
+            UpdateButtons();
+        }
+    }
+}
+
+bool AssetListViewModel::AddOrRemoveFilteredItem(const ra::data::models::AssetModelBase& pAsset)
 {
     const auto nIndex = GetFilteredAssetIndex(pAsset);
 
@@ -413,7 +408,7 @@ void AssetListViewModel::AddOrRemoveFilteredItem(const ra::data::models::AssetMo
                 pSummary->SetPoints(pAchievement->GetPoints());
 
             m_vFilteredAssets.Append(std::move(pSummary));
-            UpdateButtons();
+            return true;
         }
     }
     else
@@ -423,9 +418,11 @@ void AssetListViewModel::AddOrRemoveFilteredItem(const ra::data::models::AssetMo
             const bool bIsSelected = m_vFilteredAssets.GetItemValue(nIndex, AssetSummaryViewModel::IsSelectedProperty);
 
             m_vFilteredAssets.RemoveAt(nIndex);
-            UpdateButtons();
+            return true;
         }
     }
+
+    return false;
 }
 
 gsl::index AssetListViewModel::GetFilteredAssetIndex(const ra::data::models::AssetModelBase& pAsset) const
@@ -1252,7 +1249,7 @@ void AssetListViewModel::CreateNew()
 
     FilteredAssets().EndUpdate();
 
-    // assert: only Core assets are tallied, so we shouldn't need to call UpdateTotals
+    UpdateTotals();
 
     SetValue(EnsureVisibleAssetIndexProperty, gsl::narrow_cast<int>(nIndex));
 
@@ -1324,7 +1321,7 @@ void AssetListViewModel::CloneSelected()
 
     FilteredAssets().EndUpdate();
 
-    // assert: only Core assets are tallied, so we shouldn't need to call UpdateTotals
+    UpdateTotals();
 
     SetValue(EnsureVisibleAssetIndexProperty, gsl::narrow_cast<int>(m_vFilteredAssets.Count()) - 1);
 

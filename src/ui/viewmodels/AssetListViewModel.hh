@@ -282,7 +282,8 @@ private:
     std::atomic_bool m_bNeedToUpdateButtons = false;
 
     bool MatchesFilter(const ra::data::models::AssetModelBase& pAsset);
-    void AddOrRemoveFilteredItem(const ra::data::models::AssetModelBase& pAsset);
+    void AddOrRemoveFilteredItem(gsl::index nAssetIndex);
+    bool AddOrRemoveFilteredItem(const ra::data::models::AssetModelBase& pAsset);
     gsl::index GetFilteredAssetIndex(const ra::data::models::AssetModelBase& pAsset) const;
     void ApplyFilter();
 

@@ -17,7 +17,7 @@
 
 #include <rapidjson\document.h>
 
-#include <rcheevos\src\rapi\rc_api_common.h>
+#include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
 #include <rc_api_runtime.h>
 #include <rc_api_user.h>
 

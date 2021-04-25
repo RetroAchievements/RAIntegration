@@ -261,7 +261,7 @@ void AssetListViewModel::UpdateTotals()
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nIndex)
     {
         auto* pAsset = m_vFilteredAssets.GetItemAt(nIndex);
-        if (pAsset->GetType() == ra::data::models::AssetType::Achievement)
+        if (pAsset && pAsset->GetType() == ra::data::models::AssetType::Achievement)
         {
             ++nAchievementCount;
             nTotalPoints += pAsset->GetPoints();

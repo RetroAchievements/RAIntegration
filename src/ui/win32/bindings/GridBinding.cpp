@@ -536,31 +536,25 @@ void GridBinding::CheckForScrollBar()
 void GridBinding::OnBeginViewModelCollectionUpdate() noexcept
 {
     m_bForceRepaint = false;
-
-    if (m_hWnd)
-        SendMessage(m_hWnd, WM_SETREDRAW, FALSE, 0);
 }
 
 void GridBinding::OnEndViewModelCollectionUpdate()
 {
     if (m_hWnd)
     {
-        // enable redraw before calling CheckForScrollBar to ensure metrics are updated
-        SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
-
         CheckForScrollBar();
 
-        UpdateSelectedItemStates();
+        if (m_bUpdateSelectedItemStates)
+        {
+            m_bUpdateSelectedItemStates = false;
+            UpdateSelectedItemStates();
+        }
 
         if (m_bForceRepaint && m_nAdjustingScrollOffset == 0)
         {
             m_bForceRepaint = false;
 
             ControlBinding::ForceRepaint(m_hWnd);
-        }
-        else
-        {
-            Invalidate();
         }
     }
 }
@@ -790,6 +784,10 @@ void GridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
                 m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, true);
             else if (pnmListView->uOldState & LVIS_SELECTED)
                 m_vmItems->SetItemValue(nIndex, *m_pIsSelectedProperty, false);
+        }
+        else
+        {
+            m_bUpdateSelectedItemStates = true;
         }
     }
 

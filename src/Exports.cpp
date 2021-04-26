@@ -55,14 +55,14 @@ API int CCONV _RA_HardcoreModeIsActive()
     return pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
 }
 
-API bool CCONV _RA_WarnDisableHardcore(const char* sActivity)
+API int CCONV _RA_WarnDisableHardcore(const char* sActivity)
 {
     std::string sActivityString;
     if (sActivity)
         sActivityString = sActivity;
 
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    return pEmulatorContext.WarnDisableHardcoreMode(sActivityString);
+    return pEmulatorContext.WarnDisableHardcoreMode(sActivityString) ? 1 : 0;
 }
 
 #ifndef RA_UTEST
@@ -222,7 +222,7 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
     }
 }
 
-API void CCONV _RA_AttemptLogin(bool bBlocking)
+API void CCONV _RA_AttemptLogin(int bBlocking)
 {
     auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
     if (pUserContext.IsLoginDisabled())
@@ -317,9 +317,9 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
     vmEmulator.SetWindowTitle(sTitle);
 }
 
-API bool _RA_IsOverlayFullyVisible()
+API int _RA_IsOverlayFullyVisible()
 {
-    return ra::services::ServiceLocator::Get<ra::ui::viewmodels::OverlayManager>().IsOverlayFullyVisible();
+    return ra::services::ServiceLocator::Get<ra::ui::viewmodels::OverlayManager>().IsOverlayFullyVisible() ? 1 : 0;
 }
 
 _Use_decl_annotations_
@@ -492,7 +492,7 @@ static void ProcessAchievements()
     }
 }
 
-API void CCONV _RA_SetPaused(bool bIsPaused)
+API void CCONV _RA_SetPaused(int bIsPaused)
 {
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
     if (bIsPaused)
@@ -545,10 +545,10 @@ API void CCONV _RA_DoAchievementsFrame()
     CHECK_PERFORMANCE();
 }
 
-API void CCONV _RA_SetForceRepaint([[maybe_unused]] bool bEnable)
+API void CCONV _RA_SetForceRepaint([[maybe_unused]] int bEnable)
 {
 #ifndef RA_UTEST
-    ra::ui::win32::bindings::ControlBinding::SetNeedsUpdateWindow(bEnable);
+    ra::ui::win32::bindings::ControlBinding::SetNeedsUpdateWindow(bEnable != 0);
 #endif
 }
 

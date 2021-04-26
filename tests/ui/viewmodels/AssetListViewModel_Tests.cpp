@@ -1,5 +1,7 @@
 #include "CppUnitTest.h"
 
+#include "data\models\LocalBadgesModel.hh"
+
 #include "ui\viewmodels\AssetListViewModel.hh"
 
 #include "services\impl\StringTextWriter.hh"
@@ -414,6 +416,17 @@ private:
             sErrorMessage.clear();
             return false;
         }
+
+        ra::data::models::LocalBadgesModel* AddLocalBadgesModel()
+        {
+            auto pLocalBadges = std::make_unique<ra::data::models::LocalBadgesModel>();
+            pLocalBadges->CreateServerCheckpoint();
+            pLocalBadges->CreateLocalCheckpoint();
+            mockGameContext.Assets().Append(std::move(pLocalBadges));
+
+            return dynamic_cast<ra::data::models::LocalBadgesModel*>(mockGameContext.Assets().FindAsset(ra::data::models::AssetType::LocalBadges, 0));
+        }
+
 
     private:
         std::map<ra::AchievementID, std::wstring> m_mPublishErrors;
@@ -2410,6 +2423,64 @@ public:
         pAsset = vmAssetList.FilteredAssets().GetItemAt(1);
         Expects(pAsset != nullptr);
         Assert::IsTrue(pAsset->IsSelected());
+    }
+
+    TEST_METHOD(TestCloneLocal)
+    {
+        AssetListViewModelHarness vmAssetList;
+        const auto* pLocalBadges = vmAssetList.AddLocalBadgesModel();
+        const std::wstring sLocalBadgeName = L"local\\1234.png";
+
+        vmAssetList.SetGameId(22U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        auto* pSourceAchievement = vmAssetList.mockGameContext.Assets().FindAchievement(2);
+        Expects(pSourceAchievement != nullptr);
+        pSourceAchievement->SetBadge(sLocalBadgeName);
+
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
+        {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        vmAssetList.CloneSelected();
+
+        // new Local achievement should be created and focused
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+
+        const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(1);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+        Assert::AreEqual(std::wstring(L"Test1 (copy)"), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
+        Assert::AreEqual({ 111000001U }, pAsset->GetId());
+        Assert::AreEqual(5, pAsset->GetPoints());
+
+        const auto* pAchievement = vmAssetList.mockGameContext.Assets().FindAchievement(pAsset->GetId());
+        Expects(pAchievement != nullptr);
+        Assert::AreEqual(std::wstring(L"Desc1"), pAchievement->GetDescription());
+        Assert::AreEqual(sLocalBadgeName, pAchievement->GetBadge());
+        Assert::AreEqual(std::string("0xH1234=1"), pAchievement->GetTrigger());
+
+        // and loaded in the editor, which should be shown (local achievement will always have ID 0)
+        Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsAssetLoaded());
+        Assert::IsTrue(bEditorShown);
+
+        // image should have two references - one for source achievement, and one for clone
+        Assert::AreEqual(2, pLocalBadges->GetReferenceCount(sLocalBadgeName, false));
     }
 
     TEST_METHOD(TestCloneMultiple)

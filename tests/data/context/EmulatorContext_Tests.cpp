@@ -1146,6 +1146,7 @@ public:
         EmulatorContextHarness emulator;
         emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
 
+        // ReadMemory calls ReadMemoryByte for small sizes
         Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_0)));
         Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_1)));
         Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_2)));
@@ -1176,6 +1177,36 @@ public:
         Assert::AreEqual(7, static_cast<int>(emulator.ReadMemory(4U, MemSize::Nibble_Lower)));
         Assert::AreEqual(5, static_cast<int>(emulator.ReadMemory(4U, MemSize::Nibble_Upper)));
         Assert::AreEqual(0x57, static_cast<int>(emulator.ReadMemory(4U, MemSize::EightBit)));
+    }
+
+    TEST_METHOD(TestReadMemoryByteInvalidAddressDisablesAchievement)
+    {
+        memory.at(4) = 0xA8;
+        memory.at(5) = 0x00;
+        memory.at(6) = 0x37;
+        memory.at(7) = 0x2E;
+
+        EmulatorContextHarness emulator;
+        emulator.mockAchievementRuntime.ActivateAchievement(1, "0xH0004=1_0xH0044=1");
+        Assert::IsTrue(emulator.mockAchievementRuntime.IsAchievementSupported(1));
+
+        // memory has not yet been registered. achievement should not be disabled [client may register memory later]
+        Assert::AreEqual(0x00, static_cast<int>(emulator.ReadMemory(4U, MemSize::EightBit)));
+        Assert::IsTrue(emulator.mockAchievementRuntime.IsAchievementSupported(1));
+
+        // valid memory registered. achievement should not be disabled
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        Assert::AreEqual(0xA8, static_cast<int>(emulator.ReadMemory(4U, MemSize::EightBit)));
+        Assert::IsTrue(emulator.mockAchievementRuntime.IsAchievementSupported(1));
+
+        // address not in supported memory range, achievement should not be disabled [indirect memory address]
+        Assert::AreEqual(0x00, static_cast<int>(emulator.ReadMemory(68U, MemSize::EightBit)));
+        Assert::IsTrue(emulator.mockAchievementRuntime.IsAchievementSupported(1));
+
+        // invalid memory region registered, address not supported. achievement should be disabled
+        emulator.AddMemoryBlock(1, 80, nullptr, nullptr);
+        Assert::AreEqual(0x00, static_cast<int>(emulator.ReadMemory(68U, MemSize::EightBit)));
+        Assert::IsFalse(emulator.mockAchievementRuntime.IsAchievementSupported(1));
     }
 
     TEST_METHOD(TestReadMemoryBuffer)

@@ -16,6 +16,21 @@ public:
     {
     }
 
+    bool IsAchievementSupported(ra::AchievementID nAchievement) noexcept
+    {
+        for (unsigned i = 0; i < m_pRuntime.trigger_count; ++i)
+        {
+            if (m_pRuntime.triggers[i].id == nAchievement)
+            {
+                const auto* pTrigger = m_pRuntime.triggers[i].trigger;
+                if (pTrigger)
+                    return pTrigger->state != RC_TRIGGER_STATE_DISABLED && !m_pRuntime.triggers[i].invalid_memref;
+            }
+        }
+
+        return false;
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_Override;
 };

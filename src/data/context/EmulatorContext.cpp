@@ -629,7 +629,9 @@ uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
         nAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
     }
 
-    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().InvalidateAddress(nOriginalAddress);
+    if (nOriginalAddress < m_nTotalMemorySize)
+        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().InvalidateAddress(nOriginalAddress);
+
     return 0;
 }
 

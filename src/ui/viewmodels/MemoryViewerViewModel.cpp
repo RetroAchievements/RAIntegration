@@ -16,6 +16,7 @@ const IntModelProperty MemoryViewerViewModel::AddressProperty("MemoryViewerViewM
 const IntModelProperty MemoryViewerViewModel::FirstAddressProperty("MemoryViewerViewModel", "FirstAddress", 0);
 const IntModelProperty MemoryViewerViewModel::NumVisibleLinesProperty("MemoryViewerViewModel", "NumVisibleLines", 8);
 const IntModelProperty MemoryViewerViewModel::SizeProperty("MemoryViewerViewModel", "Size", ra::etoi(MemSize::EightBit));
+const IntModelProperty MemoryViewerViewModel::PendingAddressProperty("MemoryViewerViewModel", "PendingAddress", 0);
 
 constexpr uint8_t STALE_COLOR = 0x80;
 constexpr uint8_t HIGHLIGHTED_COLOR = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(MemoryViewerViewModel::TextColor::Selected));
@@ -543,10 +544,32 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
 void MemoryViewerViewModel::OnTotalMemorySizeChanged()
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
+    const bool bTotalMemorySizeWasZero = (m_nTotalMemorySize == 0);
+    m_nTotalMemorySize = gsl::narrow_cast<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
-    if (GetAddress() >= m_nTotalMemorySize)
-        SetAddress(m_nTotalMemorySize - 1);
+    if (m_nTotalMemorySize == 0)
+    {
+        // size changing to 0, clear out addresses
+        SetValue(AddressProperty, AddressProperty.GetDefaultValue());
+        SetValue(PendingAddressProperty, PendingAddressProperty.GetDefaultValue());
+    }
+    else
+    {
+        if (bTotalMemorySizeWasZero)
+        {
+            // size changing from 0, see if a memory address was requested
+            const auto nPendingAddress = gsl::narrow_cast<ra::ByteAddress>(GetValue(PendingAddressProperty));
+            if (nPendingAddress > 0)
+            {
+                SetValue(PendingAddressProperty, PendingAddressProperty.GetDefaultValue());
+                SetAddress(nPendingAddress);
+            }
+        }
+
+        // make sure the current memory address is valid
+        if (GetAddress() >= m_nTotalMemorySize)
+            SetValue(AddressProperty, gsl::narrow_cast<int>(m_nTotalMemorySize - 1));
+    }
 
     const auto nVisibleLines = GetNumVisibleLines();
     if (m_nTotalMemorySize < ra::to_unsigned(nVisibleLines * 16))

@@ -180,7 +180,7 @@ public:
 
         // address after viewing window, first address should change to center new address in viewing window
         viewer.SetAddress(444U);
-        Assert::AreEqual({ 368U }, viewer.GetFirstAddress()); // (444 & 0x0F) - 4 * 16
+        Assert::AreEqual({ 368U }, viewer.GetFirstAddress()); // (444 & ~0x0F) - 4 * 16
         Assert::AreEqual({ 444U }, viewer.GetAddress());
         Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(444U));
         for (ra::ByteAddress i = 1; i < 128; ++i)
@@ -192,7 +192,7 @@ public:
 
         // address before viewing window, first address should change to center new address in viewing window
         viewer.SetAddress(360U);
-        Assert::AreEqual({ 288U }, viewer.GetFirstAddress()); // (360U & 0x0F) - 4 * 16
+        Assert::AreEqual({ 288U }, viewer.GetFirstAddress()); // (360U & ~0x0F) - 4 * 16
         Assert::AreEqual({ 360U }, viewer.GetAddress());
         Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(360U));
         for (ra::ByteAddress i = 1; i < 128; ++i)
@@ -201,6 +201,62 @@ public:
                 Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(i + 288));
         }
         Assert::IsTrue(viewer.NeedsRedraw());
+    }
+
+    TEST_METHOD(TestSetAddressBeforeMemoryAvailable)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.MockRender();
+
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+
+        // address not available, no memory registered
+        viewer.SetAddress(444U);
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // memory becomes available, address should immediately update
+        viewer.InitializeMemory(1024);
+        Assert::AreEqual({ 444U }, viewer.GetAddress());
+        Assert::AreEqual({ 368U }, viewer.GetFirstAddress()); // (444 & ~0x0F) - 4 * 16
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(444U));
+        for (ra::ByteAddress i = 1; i < 128; ++i)
+        {
+            if (i != 444 - 368)
+                Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(i + 368));
+        }
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+    }
+
+    TEST_METHOD(TestSetAddressBeforeMemoryAvailableOutOfRange)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.MockRender();
+
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+
+        // address not available, no memory registered
+        viewer.SetAddress(4444U);
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 0U }, viewer.GetAddress());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // memory becomes available, address should immediately update (clamped at max address)
+        viewer.InitializeMemory(1024);
+        Assert::AreEqual({ 1023U }, viewer.GetAddress());
+        Assert::AreEqual({ 896U }, viewer.GetFirstAddress()); // (1023 & ~0x0F) - 4 * 16
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(1023U));
+        for (ra::ByteAddress i = 1; i < 128; ++i)
+        {
+            if (i != 1023 - 896)
+                Assert::AreEqual({ COLOR_BLACK | COLOR_REDRAW }, viewer.GetColor(i + 896));
+        }
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
     }
 
     TEST_METHOD(TestAdvanceCursorEightBit)

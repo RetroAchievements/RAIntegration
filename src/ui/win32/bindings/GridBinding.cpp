@@ -298,7 +298,10 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
     if (m_pRowColorProperty && *m_pRowColorProperty == args.Property)
     {
         if (m_nAdjustingScrollOffset == 0)
+        {
             ListView_RedrawItems(m_hWnd, nIndex, nIndex);
+            m_bForceRepaintItems = true;
+        }
         return;
     }
 
@@ -323,7 +326,8 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
             GSL_SUPPRESS_TYPE1
             SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
 
-            m_bForceRepaint = true;
+            ListView_RedrawItems(m_hWnd, nIndex, nIndex);
+            m_bForceRepaintItems = true;
         }
     }
 }
@@ -357,7 +361,8 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
             GSL_SUPPRESS_TYPE1
             SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
 
-            m_bForceRepaint = true;
+            ListView_RedrawItems(m_hWnd, nIndex, nIndex);
+            m_bForceRepaintItems = true;
         }
     }
 }
@@ -388,7 +393,8 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
             GSL_SUPPRESS_TYPE1
             SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
 
-            m_bForceRepaint = true;
+            ListView_RedrawItems(m_hWnd, nIndex, nIndex);
+            m_bForceRepaintItems = true;
         }
     }
 }
@@ -536,6 +542,7 @@ void GridBinding::CheckForScrollBar()
 void GridBinding::OnBeginViewModelCollectionUpdate() noexcept
 {
     m_bForceRepaint = false;
+    m_bForceRepaintItems = false;
 }
 
 void GridBinding::OnEndViewModelCollectionUpdate()
@@ -550,11 +557,20 @@ void GridBinding::OnEndViewModelCollectionUpdate()
             UpdateSelectedItemStates();
         }
 
-        if (m_bForceRepaint && m_nAdjustingScrollOffset == 0)
+        if (m_nAdjustingScrollOffset == 0)
         {
-            m_bForceRepaint = false;
+            if (m_bForceRepaint)
+            {
+                m_bForceRepaint = false;
+                m_bForceRepaintItems = false;
 
-            ControlBinding::ForceRepaint(m_hWnd);
+                ControlBinding::ForceRepaint(m_hWnd);
+            }
+            else if (m_bForceRepaintItems)
+            {
+                m_bForceRepaintItems = false;
+                ControlBinding::RedrawWindow(m_hWnd);
+            }
         }
     }
 }
@@ -648,34 +664,37 @@ INT_PTR CALLBACK GridBinding::WndProc(HWND hControl, UINT uMsg, WPARAM wParam, L
     switch (uMsg)
     {
         case WM_MOUSEMOVE:
-            LVHITTESTINFO lvHitTestInfo;
-            GetCursorPos(&lvHitTestInfo.pt);
-            ScreenToClient(m_hWnd, &lvHitTestInfo.pt);
-
-            int nTooltipLocation = -1;
-            if (ListView_SubItemHitTest(m_hWnd, &lvHitTestInfo) != -1)
-                nTooltipLocation = lvHitTestInfo.iItem * 256 + lvHitTestInfo.iSubItem;
-
-            // if the mouse has moved to a new grid cell, hide the toolip
-            if (nTooltipLocation != m_nTooltipLocation)
+            if (m_hTooltip)
             {
-                m_nTooltipLocation = nTooltipLocation;
-                m_sTooltip.clear();
+                LVHITTESTINFO lvHitTestInfo;
+                GetCursorPos(&lvHitTestInfo.pt);
+                ScreenToClient(m_hWnd, &lvHitTestInfo.pt);
 
-                if (IsWindowVisible(m_hTooltip))
-                {
-                    // tooltip is visible, just hide it
-                    SendMessage(m_hTooltip, TTM_POP, 0, 0);
-                }
-                else
-                {
-                    // tooltip is not visible. if we told the tooltip to not display in the TTM_GETDISPINFO handler by
-                    // setting lpszText to empty string, it won't try to display again unless we tell it to, so do so now
-                    SendMessage(m_hTooltip, TTM_POPUP, 0, 0);
+                int nTooltipLocation = -1;
+                if (ListView_SubItemHitTest(m_hWnd, &lvHitTestInfo) != -1)
+                    nTooltipLocation = lvHitTestInfo.iItem * 256 + lvHitTestInfo.iSubItem;
 
-                    // but we don't want the tooltip to immediately display when entering a new cell, so immediately
-                    // hide it. the normal hover behavior will make it display as expected after a normal hover wait time.
-                    SendMessage(m_hTooltip, TTM_POP, 0, 0);
+                // if the mouse has moved to a new grid cell, hide the toolip
+                if (nTooltipLocation != m_nTooltipLocation)
+                {
+                    m_nTooltipLocation = nTooltipLocation;
+                    m_sTooltip.clear();
+
+                    if (IsWindowVisible(m_hTooltip))
+                    {
+                        // tooltip is visible, just hide it
+                        SendMessage(m_hTooltip, TTM_POP, 0, 0);
+                    }
+                    else
+                    {
+                        // tooltip is not visible. if we told the tooltip to not display in the TTM_GETDISPINFO handler by
+                        // setting lpszText to empty string, it won't try to display again unless we tell it to, so do so now
+                        SendMessage(m_hTooltip, TTM_POPUP, 0, 0);
+
+                        // but we don't want the tooltip to immediately display when entering a new cell, so immediately
+                        // hide it. the normal hover behavior will make it display as expected after a normal hover wait time.
+                        SendMessage(m_hTooltip, TTM_POP, 0, 0);
+                    }
                 }
             }
             break;

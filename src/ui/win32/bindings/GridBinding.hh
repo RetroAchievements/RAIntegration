@@ -111,6 +111,7 @@ private:
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;
     bool m_bForceRepaint = false;
+    bool m_bForceRepaintItems = false;
     bool m_bUpdateSelectedItemStates = false;
     int m_nAdjustingScrollOffset = 0;
 

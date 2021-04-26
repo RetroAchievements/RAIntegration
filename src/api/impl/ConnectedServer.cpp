@@ -297,6 +297,7 @@ static bool DoRequest(const rc_api_request_t& api_request, const char* sApiName,
     const auto& pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>();
     if (pLogger.IsEnabled(ra::services::LogLevel::Info))
     {
+        // capture the GET parameters
         const char* ptr = api_request.url;
         Expects(ptr != nullptr);
         while (*ptr && *ptr != '?')
@@ -306,10 +307,11 @@ static bool DoRequest(const rc_api_request_t& api_request, const char* sApiName,
         if (*ptr == '?')
             sParams = ++ptr;
 
-        if (api_request.post_data)
+        // capture the POST parameters
+        ptr = api_request.post_data;
+        if (ptr)
         {
             // don't log the api token
-            ptr = api_request.post_data;
             while (*ptr && (ptr[0] != 't' || ptr[1] != '='))
                 ++ptr;
 

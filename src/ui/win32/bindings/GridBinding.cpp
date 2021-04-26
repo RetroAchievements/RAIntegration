@@ -571,11 +571,6 @@ void GridBinding::UpdateSelectedItemStates()
     }
 }
 
-void GridBinding::Invalidate()
-{
-    InvalidateRect(m_hWnd, nullptr, FALSE);
-}
-
 void GridBinding::BindIsSelected(const BoolModelProperty& pIsSelectedProperty)
 {
     m_pIsSelectedProperty = &pIsSelectedProperty;

@@ -35,8 +35,6 @@ public:
 
     void DoFrame();
 
-    bool NeedsRedraw() noexcept;
-
     class PredefinedFilterRangeViewModel : public LookupItemViewModel
     {
     public:
@@ -452,8 +450,6 @@ protected:
 
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
-    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) noexcept override;
-    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) noexcept override;
 
     // EmulatorContext::NotifyTarget
     void OnTotalMemorySizeChanged() override;
@@ -482,7 +478,6 @@ private:
     ViewModelCollection<SearchResultViewModel> m_vResults;
     bool m_bIsContinuousFiltering = false;
     std::chrono::steady_clock::time_point m_tLastContinuousFilter;
-    bool m_bNeedsRedraw = false;
     bool m_bScrolling = false;
     bool m_bSelectingFilter = false;
 

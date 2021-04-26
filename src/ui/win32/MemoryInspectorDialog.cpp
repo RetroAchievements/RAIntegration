@@ -48,16 +48,6 @@ void MemoryInspectorDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); 
 
 // ------------------------------------
 
-void MemoryInspectorDialog::SearchResultsGridBinding::Invalidate()
-{
-    if (GetViewModel<MemorySearchViewModel>().NeedsRedraw())
-    {
-        GridBinding::Invalidate();
-
-        ControlBinding::ForceRepaint(m_hWnd);
-    }
-}
-
 void MemoryInspectorDialog::SearchResultsGridBinding::OnLvnItemChanged(const LPNMLISTVIEW pnmListView)
 {
     GridBinding::OnLvnItemChanged(pnmListView);

@@ -80,7 +80,6 @@ protected:
     void CheckForScrollBar();
     int GetVisibleItemIndex(int iItem);
     gsl::index GetRealItemIndex(gsl::index iItem) const;
-    virtual void Invalidate() noexcept(false);
 
     INT_PTR CALLBACK WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 

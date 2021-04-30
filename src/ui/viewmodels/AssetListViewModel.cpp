@@ -135,9 +135,10 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
         const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
         if (!ra::data::models::AssetModelBase::IsActive(nNewState))
         {
-            // if the asset was primed, make sure to hide the challenge indicator
+            // when an active achievement is deactivated, the challenge indicator needs
+            // to be hidden as no event will be raised
             const auto nOldState = ra::itoe<ra::data::models::AssetState>(args.tOldValue);
-            if (nOldState == ra::data::models::AssetState::Primed)
+            if (ra::data::models::AssetModelBase::IsActive(nOldState))
             {
                 const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
                 const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);

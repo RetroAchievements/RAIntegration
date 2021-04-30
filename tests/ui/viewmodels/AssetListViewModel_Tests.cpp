@@ -126,6 +126,9 @@ private:
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::ui::mocks::MockDesktop mockDesktop;
+        ra::ui::mocks::MockOverlayTheme mockTheme;
+        ra::ui::drawing::mocks::MockSurfaceFactory mockSurfaceFactory;
+        ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         mocks::MockWindowManager mockWindowManager;
 
         AssetListViewModelHarness() noexcept
@@ -1624,11 +1627,8 @@ public:
         vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetState(AssetState::Primed);
         const auto nAchievementId = vmAssetList.mockGameContext.Assets().GetItemAt(2)->GetID();
 
-        ra::ui::mocks::MockOverlayTheme mockTheme;
-        ra::ui::drawing::mocks::MockSurfaceFactory mockSurfaceFactory;
-        ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
-        mockOverlayManager.AddChallengeIndicator(nAchievementId, ra::ui::ImageType::Badge, "12345");
-        const auto* pIndicator = mockOverlayManager.GetChallengeIndicator(nAchievementId);
+        vmAssetList.mockOverlayManager.AddChallengeIndicator(nAchievementId, ra::ui::ImageType::Badge, "12345");
+        const auto* pIndicator = vmAssetList.mockOverlayManager.GetChallengeIndicator(nAchievementId);
         Assert::IsNotNull(pIndicator);
         Ensures(pIndicator != nullptr);
         Assert::IsFalse(pIndicator->IsDestroyPending());

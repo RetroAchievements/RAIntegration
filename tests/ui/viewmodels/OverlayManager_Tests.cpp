@@ -470,6 +470,25 @@ public:
         Assert::AreEqual(10, vmIndicator3.GetVerticalOffset());
     }
 
+    TEST_METHOD(TestAddExistingChallengeIndicator)
+    {
+        OverlayManagerHarness overlay;
+        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        const auto& vmIndicator = overlay.AddChallengeIndicator(6, ra::ui::ImageType::Badge, "12345");
+        Assert::AreEqual(6, vmIndicator.GetPopupId());
+        Assert::AreEqual(ra::ui::ImageType::Badge, vmIndicator.GetImage().Type());
+        Assert::AreEqual(std::string("12345"), vmIndicator.GetImage().Name());
+        Assert::IsTrue(overlay.WasRenderRequested());
+        Assert::IsFalse(vmIndicator.IsDestroyPending());
+        Assert::AreEqual(10, vmIndicator.GetVerticalOffset());
+
+        Assert::IsTrue(&vmIndicator == overlay.GetChallengeIndicator(6));
+
+        const auto& vmIndicator2 = overlay.AddChallengeIndicator(6, ra::ui::ImageType::Badge, "12345");
+        Assert::IsTrue(&vmIndicator == &vmIndicator2);
+    }
+
     TEST_METHOD(TestShowHideOverlay)
     {
         OverlayManagerHarness overlay;

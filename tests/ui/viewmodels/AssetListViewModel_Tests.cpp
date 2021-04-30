@@ -15,6 +15,9 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockOverlayManager.hh"
+#include "tests\mocks\MockOverlayTheme.hh"
+#include "tests\mocks\MockSurface.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
@@ -1609,6 +1612,45 @@ public:
         Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
         Assert::IsTrue(vmAssetList.CanActivate());
         Assert::IsTrue(vmAssetList.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestDeactivatePrimed)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetState(AssetState::Primed);
+        const auto nAchievementId = vmAssetList.mockGameContext.Assets().GetItemAt(2)->GetID();
+
+        ra::ui::mocks::MockOverlayTheme mockTheme;
+        ra::ui::drawing::mocks::MockSurfaceFactory mockSurfaceFactory;
+        ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
+        mockOverlayManager.AddChallengeIndicator(nAchievementId, ra::ui::ImageType::Badge, "12345");
+        const auto* pIndicator = mockOverlayManager.GetChallengeIndicator(nAchievementId);
+        Assert::IsNotNull(pIndicator);
+        Ensures(pIndicator != nullptr);
+        Assert::IsFalse(pIndicator->IsDestroyPending());
+
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        Assert::IsFalse(vmAssetList.FilteredAssets().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(1)->IsSelected());
+        Assert::AreEqual(AssetState::Primed, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
+        vmAssetList.ForceUpdateButtons();
+        Assert::AreEqual(std::wstring(L"De&activate"), vmAssetList.GetActivateButtonText());
+        Assert::IsTrue(vmAssetList.CanActivate());
+
+        vmAssetList.ActivateSelected();
+        vmAssetList.ForceUpdateButtons();
+        Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
+        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
+        Assert::IsTrue(vmAssetList.CanActivate());
+
+        // RemoveChallengeIndicator only marks the item as to be destroyed.
+        // it still exists until the next Render()
+        Assert::IsTrue(pIndicator->IsDestroyPending());
     }
 
     TEST_METHOD(TestSaveSelectedLocalUnmodified)

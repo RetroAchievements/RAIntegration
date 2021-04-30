@@ -42,7 +42,7 @@ public:
 
         bool UpdateSerialized(const ViewModelCollection<TriggerConditionViewModel>& vConditions);
         const std::string& GetSerialized() const;
-        void ResetSerialized() noexcept { m_sSerialized = NOT_SERIALIZED; }
+        void ResetSerialized() { m_sSerialized = NOT_SERIALIZED; }
 
         static const IntModelProperty ColorProperty;
         Color GetColor() const { return Color(ra::to_unsigned(GetValue(ColorProperty))); }

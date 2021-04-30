@@ -178,6 +178,8 @@ void AchievementRuntime::ActivateRichPresence(const std::string& sScript)
     else
     {
         m_nRichPresenceParseResult = rc_runtime_activate_richpresence(&m_pRuntime, sScript.c_str(), nullptr, 0);
+        if (m_nRichPresenceParseResult != RC_OK)
+            m_nRichPresenceParseResult = rc_richpresence_size_lines(sScript.c_str(), &m_nRichPresenceErrorLine);
     }
 }
 
@@ -188,7 +190,10 @@ std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
         std::lock_guard<std::mutex> pLock(m_pMutex);
 
         if (m_nRichPresenceParseResult != RC_OK)
-            return ra::StringPrintf(L"Parse error %d: %s\n", m_nRichPresenceParseResult, rc_error_str(m_nRichPresenceParseResult));
+        {
+            return ra::StringPrintf(L"Parse error %d (line %d): %s", m_nRichPresenceParseResult,
+                m_nRichPresenceErrorLine, rc_error_str(m_nRichPresenceParseResult));
+        }
 
         char sRichPresence[256];
         if (rc_runtime_get_richpresence(&m_pRuntime, sRichPresence, sizeof(sRichPresence), rc_peek_callback, nullptr, nullptr) > 0)

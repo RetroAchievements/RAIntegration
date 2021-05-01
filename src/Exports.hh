@@ -46,7 +46,7 @@ extern "C" {
     API HMENU CCONV _RA_CreatePopupMenu();
 
     // Check all achievement sets for changes, and displays a dlg box to warn lost changes.
-    API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp);
+    API int CCONV _RA_ConfirmLoadNewRom(int bQuittingApp);
 
     //  Gets the unique identifier of the game associated to the provided ROM data
     API unsigned int CCONV _RA_IdentifyRom(const BYTE* pROMData, unsigned int nROMSize);
@@ -90,7 +90,7 @@ extern "C" {
 
     // Enables forced repainting for controls when InvalidateWindow doesn't cause them to update
     // properly. Seems to primarily be an issue when integrating with an application using SDL.
-    API void CCONV _RA_SetForceRepaint(bool bEnable);
+    API void CCONV _RA_SetForceRepaint(int bEnable);
 
     // Temporarily disable forced redraws
     API void CCONV _RA_SuspendRepaint();
@@ -108,10 +108,10 @@ extern "C" {
     API void CCONV _RA_InvokeDialog(LPARAM nID);
 
     // Call this when the pause state changes, to update RA with the new state.
-    API void CCONV _RA_SetPaused(bool bIsPaused);
+    API void CCONV _RA_SetPaused(int bIsPaused);
 
     // Attempt to login, or present login dialog.
-    API void CCONV _RA_AttemptLogin(bool bBlocking);
+    API void CCONV _RA_AttemptLogin(int bBlocking);
 
     // Gets the user name of the currently logged in user - empty string is no user is currently logged in.
     API const char* CCONV _RA_UserName();
@@ -122,7 +122,7 @@ extern "C" {
     // Should be called before performing an activity that is not allowed in hardcore mode to
     // give the user a chance to disable hardcore mode and continue with the activity.
     // Returns TRUE if hardcore was disabled, or FALSE to cancel the activity.
-    API bool CCONV _RA_WarnDisableHardcore(const char* sActivity);
+    API int CCONV _RA_WarnDisableHardcore(const char* sActivity);
 
     // Install user-side functions that can be called from the DLL
     API void CCONV _RA_InstallSharedFunctions(bool(*)(void), void(*fpCauseUnpause)(void), void(*fpRebuildMenu)(void), void(*fpEstimateTitle)(char*), void(*fpResetEmulation)(void), void(*fpLoadROM)(const char*));
@@ -130,10 +130,7 @@ extern "C" {
 
     struct ControllerInput;
     API void CCONV _RA_NavigateOverlay(_In_ const ControllerInput* pInput);
-    API int CCONV _RA_UpdateOverlay(_In_ const ControllerInput* pInput, _In_ float /*fDTime*/,
-        _In_ bool /*Full_Screen*/, _In_ bool /*Paused*/);
-    API void CCONV _RA_RenderOverlay(_In_ HDC hDC, _In_ const RECT* rcSize);
-    API bool CCONV _RA_IsOverlayFullyVisible();
+    API int CCONV _RA_IsOverlayFullyVisible();
 
 #ifdef __cplusplus
 }

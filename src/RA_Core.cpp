@@ -170,7 +170,7 @@ API int CCONV _RA_Shutdown()
     return 0;
 }
 
-API bool CCONV _RA_ConfirmLoadNewRom(bool bQuittingApp)
+API int CCONV _RA_ConfirmLoadNewRom(int bQuittingApp)
 {
     //	Returns true if we can go ahead and load the new rom.
     std::wstring sModifiedSet;

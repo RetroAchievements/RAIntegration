@@ -1293,7 +1293,6 @@ void AssetListViewModel::CloneSelected()
         vmAchievement.SetBadge(pSourceAchievement->GetBadge());
         vmAchievement.SetPoints(pSourceAchievement->GetPoints());
         vmAchievement.SetTrigger(pSourceAchievement->GetTrigger());
-        vmAchievement.UpdateServerCheckpoint();
         vmAchievement.SetNew();
 
         vNewIDs.push_back(vmAchievement.GetID());

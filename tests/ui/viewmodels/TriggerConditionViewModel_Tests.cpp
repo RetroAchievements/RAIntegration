@@ -88,28 +88,36 @@ public:
     TEST_METHOD(TestHasSourceSize)
     {
         TriggerConditionViewModelHarness vmCondition;
+        vmCondition.SetTargetSize(MemSize::SixteenBit);
+
         Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceSize());
+        Assert::AreEqual(MemSize::EightBit, vmCondition.GetSourceSize()); // initial size is 8-bit
 
         vmCondition.SetSourceType(TriggerOperandType::BCD);
         Assert::AreEqual(TriggerOperandType::BCD, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceSize());
+        Assert::AreEqual(MemSize::EightBit, vmCondition.GetSourceSize());
 
         vmCondition.SetSourceType(TriggerOperandType::Delta);
         Assert::AreEqual(TriggerOperandType::Delta, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceSize());
+        Assert::AreEqual(MemSize::EightBit, vmCondition.GetSourceSize());
 
         vmCondition.SetSourceType(TriggerOperandType::Prior);
         Assert::AreEqual(TriggerOperandType::Prior, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceSize());
+        Assert::AreEqual(MemSize::EightBit, vmCondition.GetSourceSize());
 
         vmCondition.SetSourceType(TriggerOperandType::Value);
         Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetSourceType());
         Assert::IsFalse(vmCondition.HasSourceSize());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, vmCondition.GetSourceSize()); // value always 32-bit
 
         vmCondition.SetSourceType(TriggerOperandType::Address);
         Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetSourceType());
         Assert::IsTrue(vmCondition.HasSourceSize());
+        Assert::AreEqual(MemSize::SixteenBit, vmCondition.GetSourceSize()); // copied from target size
     }
 
     TEST_METHOD(TestHasTarget)
@@ -162,10 +170,12 @@ public:
         Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
 
         vmCondition.SetTargetType(TriggerOperandType::Address);
         Assert::IsTrue(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
+        Assert::AreEqual(MemSize::EightBit, vmCondition.GetTargetSize()); // size copied from source
 
         vmCondition.SetOperator(TriggerOperatorType::None);
         Assert::IsFalse(vmCondition.HasTargetSize());
@@ -174,30 +184,37 @@ public:
         vmCondition.SetTargetType(TriggerOperandType::Value);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsFalse(vmCondition.HasTarget());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
 
         vmCondition.SetTargetType(TriggerOperandType::Delta);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsFalse(vmCondition.HasTarget());
+        Assert::AreEqual(MemSize::EightBit, vmCondition.GetTargetSize()); // size copied from source
 
         vmCondition.SetOperator(TriggerOperatorType::Equals);
         Assert::IsTrue(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
+        Assert::AreEqual(MemSize::EightBit, vmCondition.GetTargetSize()); // size copied from source
 
         vmCondition.SetTargetType(TriggerOperandType::Value);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
 
         vmCondition.SetOperator(TriggerOperatorType::None);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsFalse(vmCondition.HasTarget());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, vmCondition.GetTargetSize()); // value still 32-bit
 
         vmCondition.SetTargetType(TriggerOperandType::Prior);
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsFalse(vmCondition.HasTarget());
+        Assert::AreEqual(MemSize::EightBit, vmCondition.GetTargetSize()); // size copied from source
 
         vmCondition.SetOperator(TriggerOperatorType::NotEquals);
         Assert::IsTrue(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
+        Assert::AreEqual(MemSize::EightBit, vmCondition.GetTargetSize());
     }
 
     TEST_METHOD(TestHasTargetSizeHasTarget)

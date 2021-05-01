@@ -260,11 +260,29 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
 {
     if (args.Property == SourceTypeProperty)
     {
-        SetValue(HasSourceSizeProperty, ra::itoe<TriggerOperandType>(args.tNewValue) != TriggerOperandType::Value);
+        if (ra::itoe<TriggerOperandType>(args.tNewValue) == TriggerOperandType::Value)
+        {
+            SetValue(HasSourceSizeProperty, false);
+            SetSourceSize(MemSize::ThirtyTwoBit);
+        }
+        else if (ra::itoe<TriggerOperandType>(args.tOldValue) == TriggerOperandType::Value)
+        {
+            SetSourceSize(GetTargetSize());
+            SetValue(HasSourceSizeProperty, true);
+        }
     }
     else if (args.Property == TargetTypeProperty)
     {
-        SetValue(HasTargetSizeProperty, ra::itoe<TriggerOperandType>(args.tNewValue) != TriggerOperandType::Value && GetValue(HasTargetProperty));
+        if (ra::itoe<TriggerOperandType>(args.tNewValue) == TriggerOperandType::Value)
+        {
+            SetValue(HasTargetSizeProperty, false);
+            SetTargetSize(MemSize::ThirtyTwoBit);
+        }
+        else if (ra::itoe<TriggerOperandType>(args.tOldValue) == TriggerOperandType::Value)
+        {
+            SetTargetSize(GetSourceSize());
+            SetValue(HasTargetSizeProperty, GetValue(HasTargetProperty));
+        }
     }
     else if (args.Property == OperatorProperty)
     {

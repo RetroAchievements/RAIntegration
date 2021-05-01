@@ -95,12 +95,19 @@ public:
     void SetAddress(ByteAddress value)
     {
         int nSignedValue = ra::to_signed(value);
-        if (nSignedValue < 0 || m_nTotalMemorySize == 0)
-            nSignedValue = 0;
-        else if (nSignedValue >= gsl::narrow_cast<int>(m_nTotalMemorySize))
-            nSignedValue = gsl::narrow_cast<int>(m_nTotalMemorySize) - 1;
+        if (m_nTotalMemorySize > 0)
+        {
+            if (nSignedValue < 0)
+                nSignedValue = 0;
+            else if (nSignedValue >= gsl::narrow_cast<int>(m_nTotalMemorySize))
+                nSignedValue = gsl::narrow_cast<int>(m_nTotalMemorySize) - 1;
 
-        SetValue(AddressProperty, nSignedValue);
+            SetValue(AddressProperty, nSignedValue);
+        }
+        else
+        {
+            SetValue(PendingAddressProperty, gsl::narrow_cast<int>(value));
+        }
     }
 
     /// <summary>
@@ -201,6 +208,8 @@ protected:
     static constexpr int MaxLines = 128;
 
 private:
+    static const IntModelProperty PendingAddressProperty;
+
     void BuildFontSurface();
     void RenderAddresses();
     void RenderHeader();

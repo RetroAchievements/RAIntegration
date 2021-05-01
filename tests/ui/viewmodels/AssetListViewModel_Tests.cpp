@@ -3161,6 +3161,78 @@ public:
         Assert::IsNull(pAsset);
     }
 
+    TEST_METHOD(TestRevertSelectedLocalOpenInEditor)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(RevertButtonState::Delete);
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Permanently delete?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Assets not available on the server will be permanently deleted."), vmMessageBox.GetMessage());
+
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        vmAssetList.mockWindowManager.AssetEditor.LoadAsset(pAsset);
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsAssetLoaded());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.GetAsset() == pAsset);
+
+        vmAssetList.RevertSelected();
+        Assert::IsTrue(bDialogShown);
+
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsAssetLoaded());
+        Assert::IsNull(vmAssetList.mockWindowManager.AssetEditor.GetAsset());
+    }
+
+    TEST_METHOD(TestRevertSelectedLocalActiveChallenge)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+
+        auto* vmAsset = vmAssetList.mockGameContext.Assets().GetItemAt(0);
+        Assert::IsNotNull(vmAsset);
+        Ensures(vmAsset != nullptr);
+        vmAsset->SetState(ra::data::models::AssetState::Primed);
+
+        vmAssetList.mockOverlayManager.AddChallengeIndicator(vmAsset->GetID(), ra::ui::ImageType::Badge, "12345");
+        const auto* pIndicator = vmAssetList.mockOverlayManager.GetChallengeIndicator(vmAsset->GetID());
+        Assert::IsNotNull(pIndicator);
+        Ensures(pIndicator != nullptr);
+        Assert::IsFalse(pIndicator->IsDestroyPending());
+
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(RevertButtonState::Delete);
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Permanently delete?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Assets not available on the server will be permanently deleted."), vmMessageBox.GetMessage());
+
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        vmAssetList.RevertSelected();
+        Assert::IsTrue(bDialogShown);
+
+        // RemoveChallengeIndicator only marks the item as to be destroyed.
+        // it still exists until the next Render()
+        Assert::IsTrue(pIndicator->IsDestroyPending());
+    }
+
     TEST_METHOD(TestRevertSelectedCoreHardcore)
     {
         AssetListViewModelHarness vmAssetList;

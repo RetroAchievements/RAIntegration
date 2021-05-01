@@ -954,7 +954,7 @@ static std::wstring ValidateCondSet(const rc_condset_t* pCondSet)
         if (pCondition->type == RC_CONDITION_TRIGGER)
             return L"Trigger is pre-release functionality";
         if (pCondition->type == RC_CONDITION_SUB_HITS)
-            return L"Trigger is pre-release functionality";
+            return L"SubHits is pre-release functionality";
         if (pCondition->oper == RC_OPERATOR_MULT)
             return L"Multiplication is pre-release functionality";
         if (pCondition->oper == RC_OPERATOR_DIV)
@@ -1201,6 +1201,18 @@ void AssetListViewModel::RevertSelected()
         {
             // reverting a local item deletes it
             pAsset->SetDeleted();
+
+            // when an active achievement is deleted, the challenge indicator needs to be hidden as no event will be raised
+            if (pAsset->IsActive() && pAsset->GetType() == ra::data::models::AssetType::Achievement)
+            {
+                auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                pOverlayManager.RemoveChallengeIndicator(pAsset->GetID());
+            }
+
+            // if the asset is open in the editor, select no asset
+            auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+            if (pWindowManager.AssetEditor.GetAsset() == pAsset)
+                pWindowManager.AssetEditor.LoadAsset(nullptr);
         }
         else
         {

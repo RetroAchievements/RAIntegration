@@ -11,6 +11,7 @@
 
 #include "ui\viewmodels\AssetUploadViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 #include "Exports.hh"
@@ -130,6 +131,23 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
             AddOrRemoveFilteredItem(nIndex);
 
         const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
+        if (!ra::data::models::AssetModelBase::IsActive(nNewState))
+        {
+            // when an active achievement is deactivated, the challenge indicator needs
+            // to be hidden as no event will be raised
+            const auto nOldState = ra::itoe<ra::data::models::AssetState>(args.tOldValue);
+            if (ra::data::models::AssetModelBase::IsActive(nOldState))
+            {
+                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+                const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+                if (pAsset->GetType() == ra::data::models::AssetType::Achievement)
+                {
+                    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                    pOverlayManager.RemoveChallengeIndicator(pAsset->GetID());
+                }
+            }
+        }
+
         if (nNewState == ra::data::models::AssetState::Triggered && KeepActive())
         {
             // if KeepActive is selected, set a Triggered achievement back to Waiting
@@ -580,16 +598,10 @@ void AssetListViewModel::DoUpdateButtons()
                             break;
                     }
 
-                    switch (pItem->GetState())
-                    {
-                        case ra::data::models::AssetState::Inactive:
-                        case ra::data::models::AssetState::Triggered:
-                            bHasInactiveSelection = true;
-                            break;
-                        default:
-                            bHasActiveSelection = true;
-                            break;
-                    }
+                    if (ra::data::models::AssetModelBase::IsActive(pItem->GetState()))
+                        bHasActiveSelection = true;
+                    else
+                        bHasInactiveSelection = true;
 
                     switch (pItem->GetChanges())
                     {

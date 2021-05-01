@@ -251,6 +251,15 @@ void OverlayManager::QueueScoreboard(ra::LeaderboardID nLeaderboardId, Scoreboar
 ChallengeIndicatorViewModel& OverlayManager::AddChallengeIndicator(ra::AchievementID nAchievementId,
     ra::ui::ImageType imageType, const std::string& sImageName)
 {
+    for (auto pIter = m_vChallengeIndicators.begin(); pIter != m_vChallengeIndicators.end(); ++pIter)
+    {
+        if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId)
+        {
+            // already showing indicator for achievement, just return it
+            return **pIter;
+        }
+    }
+
     auto pChallengeIndicator = std::make_unique<ChallengeIndicatorViewModel>();
     pChallengeIndicator->SetPopupId(nAchievementId);
     pChallengeIndicator->SetImage(imageType, sImageName);

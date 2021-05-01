@@ -528,6 +528,36 @@ public:
         Assert::AreEqual(std::string("0xH1234=16_0xL65ff=11.1._R:0xT3333=1_0xW5555=16"), vmTrigger.Serialize());
     }
 
+    TEST_METHOD(TestRemoveSelectedConditionsAll)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16_0xL65FF=11");
+
+        Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
+        vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
+        vmTrigger.Conditions().GetItemAt(1)->SetSelected(true);
+        // DO NOT test Serialize() response here. We need to validate that it can go TO empty from uninitialized
+        Assert::AreEqual(0, vmTrigger.GetVersion());
+
+        // two items selected
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogShown = true;
+
+            Assert::AreEqual(std::wstring(L"Are you sure that you want to delete 2 conditions?"), vmMessageBox.GetMessage());
+
+            return DialogResult::Yes;
+        });
+
+        vmTrigger.RemoveSelectedConditions();
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual({ 0U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string(""), vmTrigger.Serialize());
+        Assert::AreEqual(1, vmTrigger.GetVersion());
+    }
+
     TEST_METHOD(TestMoveSelectedConditionsUp)
     {
         TriggerViewModelHarness vmTrigger;

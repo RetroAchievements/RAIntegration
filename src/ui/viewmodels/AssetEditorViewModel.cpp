@@ -268,13 +268,13 @@ void AssetEditorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs&
 
 void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == StateProperty)
+    if (m_pAsset != nullptr)
     {
-        const auto nOldState = ra::itoe<ra::data::models::AssetState>(args.tOldValue);
-        const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
-
-        if (m_pAsset != nullptr)
+        if (args.Property == StateProperty)
         {
+            const auto nOldState = ra::itoe<ra::data::models::AssetState>(args.tOldValue);
+            const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
+
             // make sure to update the hit counts in the frame where the achievement triggers
             // before it's deactivated, which might remove it from the runtime
             if (nNewState == ra::data::models::AssetState::Triggered)
@@ -289,19 +289,15 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
                 if (!ra::data::models::AssetModelBase::IsActive(nOldState))
                     UpdateTriggerBinding();
             }
+
+            if (nNewState == ra::data::models::AssetState::Waiting)
+                SetValue(WaitingLabelProperty, L"Waiting");
+            else if (nOldState == ra::data::models::AssetState::Waiting)
+                SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
+
+            UpdateAssetFrameValues();
         }
-
-        if (nNewState == ra::data::models::AssetState::Waiting)
-            SetValue(WaitingLabelProperty, L"Waiting");
-        else if (nOldState == ra::data::models::AssetState::Waiting)
-            SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
-
-        UpdateAssetFrameValues();
-    }
-
-    if (m_pAsset != nullptr)
-    {
-        if (args.Property == CategoryProperty)
+        else if (args.Property == CategoryProperty)
         {
             m_pAsset->SetCategory(ra::itoe<ra::data::models::AssetCategory>(args.tNewValue));
         }

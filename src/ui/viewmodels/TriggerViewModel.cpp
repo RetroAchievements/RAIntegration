@@ -113,17 +113,22 @@ void TriggerViewModel::GroupViewModel::UpdateSerialized(std::string& sSerialized
 
 const std::string& TriggerViewModel::GroupViewModel::GetSerialized() const
 {
-    if (m_sSerialized.empty() && m_pConditionSet)
+    if (m_sSerialized == TriggerViewModel::GroupViewModel::NOT_SERIALIZED)
     {
-        ViewModelCollection<TriggerConditionViewModel> vConditions;
-        rc_condition_t* pCondition = m_pConditionSet->conditions;
-        for (; pCondition != nullptr; pCondition = pCondition->next)
-        {
-            auto& vmCondition = vConditions.Add();
-            vmCondition.InitializeFrom(*pCondition);
-        }
+        m_sSerialized.clear();
 
-        UpdateSerialized(m_sSerialized, vConditions);
+        if (m_pConditionSet)
+        {
+            ViewModelCollection<TriggerConditionViewModel> vConditions;
+            rc_condition_t* pCondition = m_pConditionSet->conditions;
+            for (; pCondition != nullptr; pCondition = pCondition->next)
+            {
+                auto& vmCondition = vConditions.Add();
+                vmCondition.InitializeFrom(*pCondition);
+            }
+
+            UpdateSerialized(m_sSerialized, vConditions);
+        }
     }
 
     return m_sSerialized;

@@ -134,7 +134,7 @@ public:
 
         const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
         if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
-            return std::to_wstring(nValue);
+            return std::to_wstring(ra::to_unsigned(nValue));
 
         return ra::StringPrintf(L"0x%02x", nValue);
     }

@@ -882,7 +882,7 @@ public:
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
 
-        auto* pRichPresence = "Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0xH01) @Num(d0xH01)\n";
+        const char* pRichPresence = "Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0xH01) @Num(d0xH01)\n";
         runtime.ActivateRichPresence(pRichPresence);
 
         // string is evaluated with current memrefs (which will be 0)
@@ -927,6 +927,20 @@ public:
 
         runtime.ActivateRichPresence("");
         Assert::AreEqual(std::wstring(L"No Rich Presence defined."), runtime.GetRichPresenceDisplayString());
+    }
+
+    TEST_METHOD(TestActivateRichPresenceWithError)
+    {
+        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        std::vector<ra::services::AchievementRuntime::Change> changes;
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+
+        const char* pRichPresence = "Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0H01) @Num(d0xH01)\n";
+        runtime.ActivateRichPresence(pRichPresence);
+
+        Assert::AreEqual(std::wstring(L"Parse error -6 (line 5): Invalid operator"), runtime.GetRichPresenceDisplayString());
     }
 };
 

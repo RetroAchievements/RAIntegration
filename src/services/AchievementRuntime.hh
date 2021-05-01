@@ -222,6 +222,7 @@ private:
 
     std::map<unsigned int, std::string> m_vQueuedAchievements;
     int m_nRichPresenceParseResult = RC_OK;
+    int m_nRichPresenceErrorLine = 0;
     bool m_bInitialized = false;
 };
 

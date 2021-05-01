@@ -1271,7 +1271,23 @@ void GridBinding::OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown)
     // only interested in Ctrl key events
     const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
     if (!bControlHeld)
+    {
+        // if Enter is pushed, treat it as a double-click on the first selected item
+        if (pnmKeyDown->wVKey == VK_RETURN && m_pDoubleClickHandler)
+        {
+            // ignore Alt && Shift
+            const bool bAltHeld = (GetKeyState(VK_MENU) < 0);
+            const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
+            if (bAltHeld || bShiftHeld)
+                return;
+
+            const int nFirstSelectedItem = ListView_GetNextItem(m_hWnd, 0, LVNI_SELECTED);
+            if (nFirstSelectedItem != -1)
+                m_pDoubleClickHandler(gsl::narrow_cast<gsl::index>(nFirstSelectedItem));
+        }
+
         return;
+    }
 
     // ignore Ctrl+Alt
     const bool bAltHeld = (GetKeyState(VK_MENU) < 0);

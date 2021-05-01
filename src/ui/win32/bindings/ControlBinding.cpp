@@ -32,12 +32,17 @@ ControlBinding::~ControlBinding() noexcept
 
 void ControlBinding::ForceRepaint(HWND hWnd)
 {
+    ::InvalidateRect(hWnd, nullptr, FALSE);
+
+    if (NeedsUpdateWindow())
+        RedrawWindow(hWnd);
+}
+
+void ControlBinding::RedrawWindow(HWND hWnd)
+{
     if (g_nSuspendRepaintCount == 0)
     {
-        ::InvalidateRect(hWnd, nullptr, FALSE);
-
-        if (NeedsUpdateWindow())
-            ::UpdateWindow(hWnd);
+        ::UpdateWindow(hWnd);
     }
     else
     {
@@ -65,13 +70,7 @@ void ControlBinding::ResumeRepaint()
         if (!vSuspendedRepaintWnds.empty())
         {
             for (HWND hWnd : vSuspendedRepaintWnds)
-                ::InvalidateRect(hWnd, nullptr, FALSE);
-
-            if (NeedsUpdateWindow())
-            {
-                for (HWND hWnd : vSuspendedRepaintWnds)
-                    ::UpdateWindow(hWnd);
-            }
+                ::UpdateWindow(hWnd);
         }
     }
     else

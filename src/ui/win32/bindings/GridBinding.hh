@@ -80,7 +80,6 @@ protected:
     void CheckForScrollBar();
     int GetVisibleItemIndex(int iItem);
     gsl::index GetRealItemIndex(gsl::index iItem) const;
-    virtual void Invalidate() noexcept(false);
 
     INT_PTR CALLBACK WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam) override;
 
@@ -112,6 +111,8 @@ private:
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;
     bool m_bForceRepaint = false;
+    bool m_bForceRepaintItems = false;
+    bool m_bUpdateSelectedItemStates = false;
     int m_nAdjustingScrollOffset = 0;
 
     size_t m_nColumnsCreated = 0;

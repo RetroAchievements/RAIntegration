@@ -348,7 +348,6 @@ void MemorySearchViewModel::DoFrame()
         return;
     }
 
-    m_bNeedsRedraw = false;
     m_vResults.BeginUpdate();
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
@@ -370,13 +369,6 @@ void MemorySearchViewModel::DoFrame()
     }
 
     m_vResults.EndUpdate();
-}
-
-bool MemorySearchViewModel::NeedsRedraw() noexcept
-{
-    const bool bNeedsRedraw = m_bNeedsRedraw;
-    m_bNeedsRedraw = false;
-    return bNeedsRedraw;
 }
 
 inline static constexpr auto ParseAddress(const wchar_t* ptr, ra::ByteAddress& address) noexcept
@@ -1024,18 +1016,6 @@ void MemorySearchViewModel::OnViewModelBoolValueChanged(gsl::index nIndex, const
 
         SetValue(HasSelectionProperty, (m_vSelectedAddresses.size() > 0));
     }
-}
-
-void MemorySearchViewModel::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs&) noexcept
-{
-    // assume color
-    m_bNeedsRedraw = true;
-}
-
-void MemorySearchViewModel::OnViewModelStringValueChanged(gsl::index, const StringModelProperty::ChangeArgs&) noexcept
-{
-    // assume text
-    m_bNeedsRedraw = true;
 }
 
 void MemorySearchViewModel::NextPage()

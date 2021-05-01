@@ -98,6 +98,11 @@ public:
     static void ForceRepaint(HWND hWnd);
 
     /// <summary>
+    /// Calls UpdateWindow() to cause the control to repaint
+    /// </summary>
+    static void RedrawWindow(HWND hWnd);
+
+    /// <summary>
     /// Delays ForceRepaint calls until resumed.
     /// </summary>
     static void SuspendRepaint();

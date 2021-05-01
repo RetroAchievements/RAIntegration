@@ -301,7 +301,9 @@ API unsigned int CCONV _RA_IdentifyHash(const char* sHash)
 
 API void CCONV _RA_ActivateGame(unsigned int nGameId)
 {
+    _RA_SuspendRepaint();
     ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().ActivateGame(nGameId);
+    _RA_ResumeRepaint();
 }
 
 API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)

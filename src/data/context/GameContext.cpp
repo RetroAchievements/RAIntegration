@@ -797,6 +797,10 @@ void GameContext::ReloadRichPresenceScript()
             sRichPresence.append(sLine);
             sRichPresence.append("\n");
         }
+
+        // remove UTF-8 BOM if present
+        if (ra::StringStartsWith(sRichPresence, "\xef\xbb\xbf"))
+            sRichPresence.erase(0, 3);
     }
 
     const auto sFileRichPresenceMD5 = RAGenerateMD5(sRichPresence);

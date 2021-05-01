@@ -17,21 +17,25 @@
 
 #include <rapidjson\document.h>
 
+#include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
+#include <rc_api_runtime.h>
+#include <rc_api_user.h>
+
 namespace ra {
 namespace api {
 namespace impl {
 
-_NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::Response& httpResponse,
+_NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::StatusCode nStatusCode,
                                        _Inout_ ApiResponseBase& pResponse)
 {
-    if (httpResponse.StatusCode() != ra::services::Http::StatusCode::OK)
+    if (nStatusCode != ra::services::Http::StatusCode::OK)
     {
         const auto& pHttpRequester = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
-        const bool bRetry = pHttpRequester.IsRetryable(ra::etoi(httpResponse.StatusCode()));
+        const bool bRetry = pHttpRequester.IsRetryable(ra::etoi(nStatusCode));
         pResponse.Result = bRetry ? ApiResult::Incomplete : ApiResult::Error;
-        pResponse.ErrorMessage = ra::BuildString("HTTP error code: ", ra::etoi(httpResponse.StatusCode()));
+        pResponse.ErrorMessage = ra::BuildString("HTTP error code: ", ra::etoi(nStatusCode));
 
-        const auto& pStatusCodeText = pHttpRequester.GetStatusCodeText(ra::etoi(httpResponse.StatusCode()));
+        const auto& pStatusCodeText = pHttpRequester.GetStatusCodeText(ra::etoi(nStatusCode));
         if (!pStatusCodeText.empty())
             pResponse.ErrorMessage = ra::StringPrintf("%s (%s)", pResponse.ErrorMessage, pStatusCodeText);
 
@@ -49,7 +53,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
     {
         pDocument.SetArray();
 
-        if (!HandleHttpError(httpResponse, pResponse))
+        if (!HandleHttpError(httpResponse.StatusCode(), pResponse))
         {
             pResponse.ErrorMessage = "Empty JSON response";
             pResponse.Result = ApiResult::Failed;
@@ -64,7 +68,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
     pDocument.Parse(httpResponse.Content());
     if (pDocument.HasParseError())
     {
-        if (HandleHttpError(httpResponse, pResponse))
+        if (HandleHttpError(httpResponse.StatusCode(), pResponse))
         {
             RA_LOG_ERR("-- %s: %s", sApiName, pResponse.ErrorMessage.c_str());
             return false;
@@ -120,7 +124,7 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
         return false;
     }
 
-    if (HandleHttpError(httpResponse, pResponse))
+    if (HandleHttpError(httpResponse.StatusCode(), pResponse))
     {
         RA_LOG_ERR("-- %s: %s", sApiName, pResponse.ErrorMessage.c_str());
         return false;
@@ -209,44 +213,6 @@ static void GetRequiredJsonField(_Out_ unsigned int& nValue, _In_ const rapidjso
     }
 }
 
-static void GetRequiredJsonField(_Out_ int& nValue, _In_ const rapidjson::Value& pDocument,
-    _In_ const char* const sField, _Inout_ ApiResponseBase& response)
-{
-    if (!pDocument.HasMember(sField))
-    {
-        nValue = 0;
-
-        response.Result = ApiResult::Error;
-        if (response.ErrorMessage.empty())
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", sField);
-    }
-    else
-    {
-        auto& pField = pDocument[sField];
-        if (pField.IsInt())
-            nValue = pField.GetInt();
-        else
-            nValue = 0;
-    }
-}
-
-static void GetOptionalJsonField(_Out_ unsigned int& nValue, _In_ const rapidjson::Value& pDocument,
-                                 _In_ const char* sField, _In_ unsigned int nDefaultValue = 0)
-{
-    if (pDocument.HasMember(sField))
-    {
-        auto& pField = pDocument[sField];
-        if (pField.IsNumber())
-            nValue = pDocument[sField].GetUint();
-        else
-            nValue = nDefaultValue;
-    }
-    else
-    {
-        nValue = nDefaultValue;
-    }
-}
-
 static void AppendUrlParam(_Inout_ std::string& sParams, _In_ const char* const sParam, _In_ const std::string& sValue)
 {
     if (!sParams.empty() && sParams.back() != '?')
@@ -280,6 +246,131 @@ static bool DoRequest(const std::string& sHost, const char* restrict sApiName, c
 
     const auto httpResponse = httpRequest.Call();
     return GetJson(sApiName, httpResponse, pResponse, document);
+}
+
+static bool DoRequestWithoutLog(const rc_api_request_t& api_request, _UNUSED const char* sApiName, ra::services::Http::Response& pHttpResponse, ApiResponseBase& pResponse)
+{
+    ra::services::Http::Request httpRequest(api_request.url);
+    httpRequest.SetPostData(api_request.post_data);
+    pHttpResponse = httpRequest.Call();
+
+    if (pHttpResponse.Content().empty())
+    {
+        if (!HandleHttpError(pHttpResponse.StatusCode(), pResponse))
+        {
+            pResponse.ErrorMessage = "Empty JSON response";
+            pResponse.Result = ApiResult::Failed;
+        }
+
+        RA_LOG_ERR("-- %s: %s", sApiName, pResponse.ErrorMessage);
+        return false;
+    }
+
+    RA_LOG_INFO("-- %s Response: %s", sApiName, pHttpResponse.Content());
+
+    switch (pHttpResponse.Content().at(0))
+    {
+        case '{': // JSON, expected
+        case '<': // HTML, not expected
+            break;
+
+        default:
+            // not HTML or JSON, return the first line of the response as the error message
+            const auto nIndex = pHttpResponse.Content().find('\n');
+            std::string sContent = (nIndex != std::string::npos) ? pHttpResponse.Content().substr(0, nIndex) : pHttpResponse.Content();
+            ra::TrimLineEnding(sContent);
+
+            if (!sContent.empty())
+            {
+                pResponse.ErrorMessage = sContent;
+                pResponse.Result = ApiResult::Error;
+            }
+            return false;
+    }
+
+    return true;
+}
+
+static bool DoRequest(const rc_api_request_t& api_request, const char* sApiName, ra::services::Http::Response& pHttpResponse, ApiResponseBase& pResponse)
+{
+#ifndef RA_UTEST
+    const auto& pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>();
+    if (pLogger.IsEnabled(ra::services::LogLevel::Info))
+    {
+        // capture the GET parameters
+        const char* ptr = api_request.url;
+        Expects(ptr != nullptr);
+        while (*ptr && *ptr != '?')
+            ++ptr;
+
+        std::string sParams;
+        if (*ptr == '?')
+            sParams = ++ptr;
+
+        // capture the POST parameters
+        ptr = api_request.post_data;
+        if (ptr)
+        {
+            // don't log the api token
+            while (*ptr && (ptr[0] != 't' || ptr[1] != '='))
+                ++ptr;
+
+            if (ptr > api_request.post_data)
+            {
+                if (!sParams.empty())
+                    sParams.push_back('&');
+
+                sParams.append(api_request.post_data, ptr - api_request.post_data - 1);
+            }
+
+            while (*ptr && ptr[0] != '&')
+                ++ptr;
+
+            if (*ptr)
+                sParams.append(ptr);
+        }
+
+        pLogger.LogMessage(ra::services::LogLevel::Info, ra::StringPrintf("%s Request: %s", sApiName, sParams));
+    }
+#endif
+    return DoRequestWithoutLog(api_request, sApiName, pHttpResponse, pResponse);
+}
+
+static bool ValidateResponse(int nResult, const rc_api_response_t& api_response, _UNUSED const char* sApiName, ra::services::Http::StatusCode nStatusCode, ApiResponseBase& pResponse)
+{
+    if (nResult != RC_OK)
+    {
+        /* parse error */
+        pResponse.ErrorMessage = ra::StringPrintf("JSON Parse Error: %s", rc_error_str(nResult));
+        pResponse.Result = ApiResult::Error;
+        RA_LOG_ERR("-- %s %s", sApiName, pResponse.ErrorMessage);
+        return false;
+    }
+
+    if (!api_response.succeeded)
+    {
+        if (api_response.error_message && *api_response.error_message)
+        {
+            pResponse.ErrorMessage = api_response.error_message;
+            pResponse.Result = ApiResult::Error;
+            RA_LOG_ERR("-- %s Error: %s", sApiName, pResponse.ErrorMessage);
+        }
+        else
+        {
+            pResponse.Result = ApiResult::Failed;
+            RA_LOG_ERR("-- %s Error: Success=false", sApiName, pResponse.ErrorMessage);
+        }
+
+        return false;
+    }
+
+    if (HandleHttpError(nStatusCode, pResponse))
+    {
+        RA_LOG_ERR("-- %s: %s", sApiName, pResponse.ErrorMessage.c_str());
+        return false;
+    }
+
+    return true;
 }
 
 static bool DoUpload(const std::string& sHost, const char* restrict sApiName, const char* restrict sRequestName,
@@ -362,35 +453,43 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
 
 Login::Response ConnectedServer::Login(const Login::Request& request)
 {
-    ra::services::Http::Request httpRequest(ra::StringPrintf("%s/login_app.php", m_sHost));
+    Login::Response response;
 
     std::string sPostData;
-    AppendUrlParam(sPostData, "u", request.Username);
+    rc_api_login_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
+
+    api_params.username = request.Username.c_str();
     if (!request.ApiToken.empty())
-    {
-        AppendUrlParam(sPostData, "t", request.ApiToken);
-        RA_LOG_INFO("%s Request: %s", Login::Name(), sPostData.c_str());
-    }
+        api_params.api_token = request.ApiToken.c_str();
     else
-    {
-        // intentionally do not log password
-        RA_LOG_INFO("%s Request: %s", Login::Name(), sPostData.c_str());
-        AppendUrlParam(sPostData, "p", request.Password);
-    }
-    httpRequest.SetPostData(sPostData);
+        api_params.password = request.Password.c_str();
 
-    ra::services::Http::Response httpResponse = httpRequest.Call();
-
-    Login::Response response;
-    rapidjson::Document document;
-    if (GetJson(Login::Name(), httpResponse, response, document))
+    rc_api_request_t api_request;
+    if (rc_api_init_login_request(&api_request, &api_params) == RC_OK)
     {
-        response.Result = ApiResult::Success;
-        GetRequiredJsonField(response.Username, document, "User", response);
-        GetRequiredJsonField(response.ApiToken, document, "Token", response);
-        GetOptionalJsonField(response.Score, document, "Score");
-        GetOptionalJsonField(response.NumUnreadMessages, document, "Messages");
+        RA_LOG_INFO("Login Request: (using %s)", !request.ApiToken.empty() ? "token" : "password");
+
+        ra::services::Http::Response httpResponse;
+        if (DoRequestWithoutLog(api_request, Login::Name(), httpResponse, response))
+        {
+            rc_api_login_response_t api_response;
+            const auto nResult = rc_api_process_login_response(&api_response, httpResponse.Content().c_str());
+
+            if (ValidateResponse(nResult, api_response.response, Login::Name(), httpResponse.StatusCode(), response))
+            {
+                response.Result = ApiResult::Success;
+                response.Username = api_response.username;
+                response.ApiToken = api_response.api_token;
+                response.Score = api_response.score;
+                response.NumUnreadMessages = api_response.num_unread_messages;
+            }
+
+            rc_api_destroy_login_response(&api_response);
+        }
     }
+
+    rc_api_destroy_request(&api_request);
 
     return std::move(response);
 }
@@ -408,21 +507,33 @@ Logout::Response ConnectedServer::Logout(const Logout::Request&)
 StartSession::Response ConnectedServer::StartSession(const StartSession::Request& request)
 {
     StartSession::Response response;
-    rapidjson::Document document;
+
     std::string sPostData;
+    rc_api_start_session_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
-    // activity type enum (only 3 is used )
-    // 1 = earned achievement - handled by awardachievement
-    // 2 = logged in - handled by login
-    // 3 = started playing
-    // 4 = uploaded achievement - handled by uploadachievement
-    // 5 = modified achievmeent - handled by uploadachievement
-    AppendUrlParam(sPostData, "a", "3");
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+    api_params.game_id = request.GameId;
 
-    AppendUrlParam(sPostData, "m", std::to_string(request.GameId));
+    rc_api_request_t api_request;
+    if (rc_api_init_start_session_request(&api_request, &api_params) == RC_OK)
+    {
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, StartSession::Name(), httpResponse, response))
+        {
+            rc_api_start_session_response_t api_response;
+            const auto nResult = rc_api_process_start_session_response(&api_response, httpResponse.Content().c_str());
 
-    if (DoRequest(m_sHost, StartSession::Name(), "postactivity", sPostData, response, document))
-        response.Result = ApiResult::Success;
+            if (ValidateResponse(nResult, api_response.response, StartSession::Name(), httpResponse.StatusCode(), response))
+                response.Result = ApiResult::Success;
+
+            rc_api_destroy_start_session_response(&api_response);
+        }
+    }
+
+    rc_api_destroy_request(&api_request);
 
     return std::move(response);
 }
@@ -430,15 +541,40 @@ StartSession::Response ConnectedServer::StartSession(const StartSession::Request
 Ping::Response ConnectedServer::Ping(const Ping::Request& request)
 {
     Ping::Response response;
-    rapidjson::Document document;
+
     std::string sPostData;
+    rc_api_ping_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
-    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+    api_params.game_id = request.GameId;
+
+    std::string sRichPresence;
     if (!request.CurrentActivity.empty())
-        AppendUrlParam(sPostData, "m", ra::Narrow(request.CurrentActivity));
+    {
+        sRichPresence = ra::Narrow(request.CurrentActivity);
+        api_params.rich_presence = sRichPresence.c_str();
+    }
 
-    if (DoRequest(m_sHost, Ping::Name(), "ping", sPostData, response, document))
-        response.Result = ApiResult::Success;
+    rc_api_request_t api_request;
+    if (rc_api_init_ping_request(&api_request, &api_params) == RC_OK)
+    {
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, Ping::Name(), httpResponse, response))
+        {
+            rc_api_ping_response_t api_response;
+            const auto nResult = rc_api_process_ping_response(&api_response, httpResponse.Content().c_str());
+
+            if (ValidateResponse(nResult, api_response.response, Ping::Name(), httpResponse.StatusCode(), response))
+                response.Result = ApiResult::Success;
+
+            rc_api_destroy_ping_response(&api_response);
+        }
+    }
+
+    rc_api_destroy_request(&api_request);
 
     return std::move(response);
 }
@@ -446,28 +582,39 @@ Ping::Response ConnectedServer::Ping(const Ping::Request& request)
 FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlocks::Request& request)
 {
     FetchUserUnlocks::Response response;
-    rapidjson::Document document;
+
     std::string sPostData;
+    rc_api_fetch_user_unlocks_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
-    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
-    AppendUrlParam(sPostData, "h", request.Hardcore ? "1" : "0");
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+    api_params.game_id = request.GameId;
+    api_params.hardcore = request.Hardcore ? 1 : 0;
 
-    if (DoRequest(m_sHost, FetchUserUnlocks::Name(), "unlocks", sPostData, response, document))
+    rc_api_request_t api_request;
+    if (rc_api_init_fetch_user_unlocks_request(&api_request, &api_params) == RC_OK)
     {
-        if (!document.HasMember("UserUnlocks"))
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, FetchUserUnlocks::Name(), httpResponse, response))
         {
-            response.Result = ApiResult::Error;
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", "UserUnlocks");
-        }
-        else
-        {
-            response.Result = ApiResult::Success;
+            rc_api_fetch_user_unlocks_response_t api_response;
+            const auto nResult = rc_api_process_fetch_user_unlocks_response(&api_response, httpResponse.Content().c_str());
 
-            const auto& UserUnlocks{ document["UserUnlocks"] };
-            for (const auto& unlocked : UserUnlocks.GetArray())
-                response.UnlockedAchievements.insert(unlocked.GetUint());
+            if (ValidateResponse(nResult, api_response.response, FetchUserUnlocks::Name(), httpResponse.StatusCode(), response))
+            {
+                response.Result = ApiResult::Success;
+
+                for (unsigned i = 0; i < api_response.num_achievement_ids; ++i)
+                    response.UnlockedAchievements.insert(api_response.achievement_ids[i]);
+            }
+
+            rc_api_destroy_fetch_user_unlocks_response(&api_response);
         }
     }
+
+    rc_api_destroy_request(&api_request);
 
     return std::move(response);
 }
@@ -475,19 +622,41 @@ FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlo
 AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievement::Request& request)
 {
     AwardAchievement::Response response;
-    rapidjson::Document document;
+
     std::string sPostData;
+    rc_api_award_achievement_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
-    AppendUrlParam(sPostData, "a", std::to_string(request.AchievementId));
-    AppendUrlParam(sPostData, "h", request.Hardcore ? "1" : "0");
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+
     if (!request.GameHash.empty())
-        AppendUrlParam(sPostData, "m", request.GameHash);
+        api_params.game_hash = request.GameHash.c_str();
 
-    if (DoRequest(m_sHost, AwardAchievement::Name(), "awardachievement", sPostData, response, document))
+    api_params.achievement_id = request.AchievementId;
+    api_params.hardcore = request.Hardcore ? 1 : 0;
+
+    rc_api_request_t api_request;
+    if (rc_api_init_award_achievement_request(&api_request, &api_params) == RC_OK)
     {
-        response.Result = ApiResult::Success;
-        GetRequiredJsonField(response.NewPlayerScore, document, "Score", response);
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, AwardAchievement::Name(), httpResponse, response))
+        {
+            rc_api_award_achievement_response_t api_response;
+            const auto nResult = rc_api_process_award_achievement_response(&api_response, httpResponse.Content().c_str());
+
+            if (ValidateResponse(nResult, api_response.response, AwardAchievement::Name(), httpResponse.StatusCode(), response))
+            {
+                response.Result = ApiResult::Success;
+                response.NewPlayerScore = api_response.new_player_score;
+            }
+
+            rc_api_destroy_award_achievement_response(&api_response);
+        }
     }
+
+    rc_api_destroy_request(&api_request);
 
     return std::move(response);
 }
@@ -495,63 +664,53 @@ AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievem
 SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request)
 {
     SubmitLeaderboardEntry::Response response;
-    rapidjson::Document document;
-    std::string sPostData;
 
-    AppendUrlParam(sPostData, "i", std::to_string(request.LeaderboardId));
-    AppendUrlParam(sPostData, "s", std::to_string(request.Score));
+    std::string sPostData;
+    rc_api_submit_lboard_entry_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    std::string sValidationSignature = ra::StringPrintf("%u%s%u", request.LeaderboardId, pUserContext.GetUsername(), request.LeaderboardId);
-    AppendUrlParam(sPostData, "v", RAGenerateMD5(sValidationSignature));
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+
+    api_params.leaderboard_id = request.LeaderboardId;
+    api_params.score = request.Score;
 
     if (!request.GameHash.empty())
-        AppendUrlParam(sPostData, "m", request.GameHash);
+        api_params.game_hash = request.GameHash.c_str();
 
-    if (DoRequest(m_sHost, SubmitLeaderboardEntry::Name(), "submitlbentry", sPostData, response, document))
+    rc_api_request_t api_request;
+    if (rc_api_init_submit_lboard_entry_request(&api_request, &api_params) == RC_OK)
     {
-        response.Result = ApiResult::Success;
-
-        if (!document.HasMember("Response"))
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, SubmitLeaderboardEntry::Name(), httpResponse, response))
         {
-            response.Result = ApiResult::Error;
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
-        }
-        else
-        {
-            const auto& submitResponse = document["Response"];
-            GetRequiredJsonField(response.Score, submitResponse, "Score", response);
-            GetRequiredJsonField(response.BestScore, submitResponse, "BestScore", response);
+            rc_api_submit_lboard_entry_response_t api_response;
+            const auto nResult = rc_api_process_submit_lboard_entry_response(&api_response, httpResponse.Content().c_str());
 
-            if (!submitResponse.HasMember("RankInfo"))
+            if (ValidateResponse(nResult, api_response.response, SubmitLeaderboardEntry::Name(), httpResponse.StatusCode(), response))
             {
-                response.Result = ApiResult::Error;
-                response.ErrorMessage = ra::StringPrintf("%s not found in response", "RankInfo");
-            }
-            else
-            {
-                const auto& pRankInfo = submitResponse["RankInfo"];
-                GetRequiredJsonField(response.NewRank, pRankInfo, "Rank", response);
-                std::string sNumEntries;
-                GetRequiredJsonField(sNumEntries, pRankInfo, "NumEntries", response);
-                response.NumEntries = std::stoi(sNumEntries);
-            }
+                response.Result = ApiResult::Success;
+                response.Score = api_response.submitted_score;
+                response.BestScore = api_response.best_score;
+                response.NewRank = api_response.new_rank;
+                response.NumEntries = api_response.num_entries;
 
-            if (submitResponse.HasMember("TopEntries"))
-            {
-                const auto& pTopEntries = submitResponse["TopEntries"].GetArray();
-                response.TopEntries.reserve(pTopEntries.Size());
-                for (const auto& pEntry : pTopEntries)
+                for (unsigned i = 0; i < api_response.num_top_entries; ++i)
                 {
-                    SubmitLeaderboardEntry::Response::Entry entry;
-                    GetRequiredJsonField(entry.Rank, pEntry, "Rank", response);
-                    GetRequiredJsonField(entry.User, pEntry, "User", response);
-                    GetRequiredJsonField(entry.Score, pEntry, "Score", response);
-                    response.TopEntries.emplace_back(entry);
+                    const auto* pSrcEntry = &api_response.top_entries[i];
+                    auto& entry = response.TopEntries.emplace_back();
+                    entry.Rank = pSrcEntry->rank;
+                    entry.Score = pSrcEntry->score;
+                    entry.User = pSrcEntry->username;
                 }
             }
+
+            rc_api_destroy_submit_lboard_entry_response(&api_response);
         }
     }
+
+    rc_api_destroy_request(&api_request);
 
     return std::move(response);
 }
@@ -599,16 +758,36 @@ FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFrie
 ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& request)
 {
     ResolveHash::Response response;
-    rapidjson::Document document;
+
     std::string sPostData;
+    rc_api_resolve_hash_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
-    AppendUrlParam(sPostData, "m", request.Hash);
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+    api_params.game_hash = request.Hash.c_str();
 
-    if (DoRequest(m_sHost, ResolveHash::Name(), "gameid", sPostData, response, document))
+    rc_api_request_t api_request;
+    if (rc_api_init_resolve_hash_request(&api_request, &api_params) == RC_OK)
     {
-        response.Result = ApiResult::Success;
-        GetRequiredJsonField(response.GameId, document, "GameID", response);
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, ResolveHash::Name(), httpResponse, response))
+        {
+            rc_api_resolve_hash_response_t api_response;
+            const auto nResult = rc_api_process_resolve_hash_response(&api_response, httpResponse.Content().c_str());
+
+            if (ValidateResponse(nResult, api_response.response, ResolveHash::Name(), httpResponse.StatusCode(), response))
+            {
+                response.Result = ApiResult::Success;
+                response.GameId = api_response.game_id;
+            }
+
+            rc_api_destroy_resolve_hash_response(&api_response);
+        }
     }
+
+    rc_api_destroy_request(&api_request);
 
     return std::move(response);
 }
@@ -616,92 +795,98 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
 FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Request& request)
 {
     FetchGameData::Response response;
-    rapidjson::Document document;
+
     std::string sPostData;
+    rc_api_fetch_game_data_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
-    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+    api_params.game_id = request.GameId;
 
-    if (DoRequest(m_sHost, FetchGameData::Name(), "patch", sPostData, response, document))
+    rc_api_request_t api_request;
+    if (rc_api_init_fetch_game_data_request(&api_request, &api_params) == RC_OK)
     {
-        if (!document.HasMember("PatchData"))
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, FetchGameData::Name(), httpResponse, response))
         {
-            response.Result = ApiResult::Error;
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", "PatchData");
-        }
-        else
-        {
-            response.Result = ApiResult::Success;
-
-            const auto& PatchData = document["PatchData"];
-
-            // store a copy in the cache for offline mode
-            auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-            auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::GameData, std::to_wstring(request.GameId));
-            if (pData != nullptr)
-            {
-                rapidjson::Document patchData;
-                patchData.CopyFrom(PatchData, document.GetAllocator());
-                SaveDocument(patchData, *pData.get());
-            }
-
             // process it
-            ProcessGamePatchData(response, PatchData);
+            ProcessGamePatchData(response, httpResponse);
+
+            if (response.Result == ApiResult::Success)
+            {
+                // extract the PatchData and store a copy in the cache for offline mode
+                rc_api_response_t api_response{};
+                rc_json_field_t fields[] = {
+                    {"Success"},
+                    {"Error"},
+                    {"PatchData"}
+                };
+
+                if (rc_json_parse_response(&api_response, httpResponse.Content().c_str(), fields, sizeof(fields) / sizeof(fields[0])) == RC_OK &&
+                    fields[2].value_start && fields[2].value_end)
+                {
+                    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+                    auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::GameData, std::to_wstring(request.GameId));
+                    if (pData != nullptr)
+                    {
+                        std::string sPatchData;
+                        sPatchData.append(fields[2].value_start, fields[2].value_end - fields[2].value_start);
+                        pData->Write(sPatchData);
+                    }
+                }
+            }
         }
     }
+
+    rc_api_destroy_request(&api_request);
 
     return std::move(response);
 }
 
-void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &response, const rapidjson::Value& PatchData)
+void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &response, const ra::services::Http::Response& httpResponse)
 {
-    GetRequiredJsonField(response.Title, PatchData, "Title", response);
-    GetRequiredJsonField(response.ConsoleId, PatchData, "ConsoleID", response);
-    GetOptionalJsonField(response.ForumTopicId, PatchData, "ForumTopicID");
-    GetOptionalJsonField(response.Flags, PatchData, "Flags");
-    GetOptionalJsonField(response.ImageIcon, PatchData, "ImageIcon");
-    GetOptionalJsonField(response.RichPresence, PatchData, "RichPresencePatch");
+    rc_api_fetch_game_data_response_t api_response;
+    const auto nResult = rc_api_process_fetch_game_data_response(&api_response, httpResponse.Content().c_str());
 
-    if (!response.ImageIcon.empty())
+    if (ValidateResponse(nResult, api_response.response, FetchGameData::Name(), httpResponse.StatusCode(), response))
     {
-        // ImageIcon value will be "/Images/001234.png" - extract the "001234"
-        auto nIndex = response.ImageIcon.find_last_of('/');
-        if (nIndex != std::string::npos)
-            response.ImageIcon.erase(0, nIndex + 1);
-        nIndex = response.ImageIcon.find_last_of('.');
-        if (nIndex != std::string::npos)
-            response.ImageIcon.erase(nIndex);
+        response.Result = ApiResult::Success;
+        response.Title = ra::Widen(api_response.title);
+        response.ConsoleId = api_response.console_id;
+        response.ImageIcon = api_response.image_name;
+        response.RichPresence = api_response.rich_presence_script;
+
+        for (unsigned i = 0; i < api_response.num_achievements; ++i)
+        {
+            const auto* pSrcAchievement = &api_response.achievements[i];
+            auto& pAchievement = response.Achievements.emplace_back();
+            pAchievement.Id = pSrcAchievement->id;
+            pAchievement.Title = pSrcAchievement->title;
+            pAchievement.Description = pSrcAchievement->description;
+            pAchievement.CategoryId = pSrcAchievement->category;
+            pAchievement.Points = pSrcAchievement->points;
+            pAchievement.Definition = pSrcAchievement->definition;
+            pAchievement.Author = pSrcAchievement->author;
+            pAchievement.BadgeName = pSrcAchievement->badge_name;
+            pAchievement.Created = pSrcAchievement->created;
+            pAchievement.Updated = pSrcAchievement->updated;
+        }
+
+        for (unsigned i = 0; i < api_response.num_leaderboards; ++i)
+        {
+            const auto* pSrcLeaderboard = &api_response.leaderboards[i];
+            auto& pLeaderboard = response.Leaderboards.emplace_back();
+            pLeaderboard.Id = pSrcLeaderboard->id;
+            pLeaderboard.Title = pSrcLeaderboard->title;
+            pLeaderboard.Description = pSrcLeaderboard->description;
+            pLeaderboard.Definition = pSrcLeaderboard->definition;
+            pLeaderboard.Format = pSrcLeaderboard->format;
+        }
     }
 
-    const auto& AchievementsData{ PatchData["Achievements"] };
-    for (const auto& achData : AchievementsData.GetArray())
-    {
-        auto& pAchievement = response.Achievements.emplace_back();
-        GetRequiredJsonField(pAchievement.Id, achData, "ID", response);
-        GetRequiredJsonField(pAchievement.Title, achData, "Title", response);
-        GetRequiredJsonField(pAchievement.Description, achData, "Description", response);
-        GetRequiredJsonField(pAchievement.CategoryId, achData, "Flags", response);
-        GetOptionalJsonField(pAchievement.Points, achData, "Points");
-        GetRequiredJsonField(pAchievement.Definition, achData, "MemAddr", response);
-        GetOptionalJsonField(pAchievement.Author, achData, "Author");
-        GetRequiredJsonField(pAchievement.BadgeName, achData, "BadgeName", response);
-
-        unsigned int time;
-        GetRequiredJsonField(time, achData, "Created", response);
-        pAchievement.Created = static_cast<time_t>(time);
-        GetRequiredJsonField(time, achData, "Modified", response);
-        pAchievement.Updated = static_cast<time_t>(time);
-    }
-
-    const auto& LeaderboardsData{ PatchData["Leaderboards"] };
-    for (const auto& lbData : LeaderboardsData.GetArray())
-    {
-        auto& pLeaderboard = response.Leaderboards.emplace_back();
-        GetRequiredJsonField(pLeaderboard.Id, lbData, "ID", response);
-        GetRequiredJsonField(pLeaderboard.Title, lbData, "Title", response);
-        GetRequiredJsonField(pLeaderboard.Description, lbData, "Description", response);
-        GetRequiredJsonField(pLeaderboard.Definition, lbData, "Mem", response);
-        GetOptionalJsonField(pLeaderboard.Format, lbData, "Format", "VALUE");
-    }
+    rc_api_destroy_fetch_game_data_response(&api_response);
 }
 
 FetchCodeNotes::Response ConnectedServer::FetchCodeNotes(const FetchCodeNotes::Request& request)

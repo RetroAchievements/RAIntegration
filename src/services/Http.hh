@@ -26,11 +26,12 @@ public:
         {
         }
 
+        Response() noexcept = default;
         ~Response() noexcept = default;
         Response(const Response&) noexcept = default;
-        Response& operator=(const Response&) noexcept = delete;
+        Response& operator=(const Response&) noexcept = default;
         Response(Response&&) noexcept = default;
-        Response& operator=(Response&&) noexcept = delete;
+        Response& operator=(Response&&) noexcept = default;
 
         /// <summary>
         /// Gets the HTTP status code returned from the server.

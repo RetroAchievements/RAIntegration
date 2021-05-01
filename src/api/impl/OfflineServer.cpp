@@ -40,16 +40,21 @@ FetchGameData::Response OfflineServer::FetchGameData(const FetchGameData::Reques
         response.Result = ApiResult::Failed;
         response.ErrorMessage = ra::StringPrintf("Achievement data for game %u not found in cache", request.GameId);
     }
-    else if (!LoadDocument(document, *pData.get()))
+    else 
     {
-        response.Result = ApiResult::Error;
-        response.ErrorMessage =
-            ra::StringPrintf("%s (%zu)", GetParseError_En(document.GetParseError()), document.GetErrorOffset());
-    }
-    else
-    {
-        response.Result = ApiResult::Success;
-        ConnectedServer::ProcessGamePatchData(response, document);
+        std::string sContents = "{\"Success\":true,\"PatchData\":";
+        std::string sLine;
+        while (pData->GetLine(sLine))
+        {
+            if (!sContents.empty())
+                sContents.push_back('\n');
+
+            sContents.append(sLine);
+        }
+        sContents.push_back('}');
+
+        ra::services::Http::Response httpResponse(ra::services::Http::StatusCode::OK, sContents);
+        ConnectedServer::ProcessGamePatchData(response, httpResponse);
     }
 
     return std::move(response);

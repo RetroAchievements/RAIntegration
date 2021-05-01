@@ -7,6 +7,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\api\ApiAsserts.hh"
 #include "tests\mocks\MockHttpRequester.hh"
+#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -17,6 +18,7 @@ using ra::api::impl::ConnectedServer;
 using ra::api::mocks::MockServer;
 using ra::data::context::mocks::MockUserContext;
 using ra::services::mocks::MockHttpRequester;
+using ra::services::mocks::MockLocalStorage;
 using ra::services::mocks::MockThreadPool;
 using ra::services::Http;
 
@@ -351,7 +353,7 @@ public:
         auto response = server.Login(request);
 
         Assert::AreEqual(ApiResult::Error, response.Result);
-        Assert::AreEqual(std::string("JSON Parse Error: Invalid value. (at 0)"), response.ErrorMessage);
+        Assert::AreEqual(std::string("JSON Parse Error: Invalid JSON"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
         Assert::AreEqual(0U, response.Score);
@@ -375,7 +377,7 @@ public:
 
         // only the first missing required field is reported
         Assert::AreEqual(ApiResult::Error, response.Result);
-        Assert::AreEqual(std::string("User not found in response"), response.ErrorMessage);
+        Assert::AreEqual(std::string("JSON Parse Error: Missing value expression"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
         Assert::AreEqual(0U, response.Score);
@@ -390,10 +392,8 @@ public:
 
     TEST_METHOD(TestLoginPasswordSuccess)
     {
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([](const Http::Request&)
         {
-            Assert::AreEqual(std::string("host.com/login_app.php"), request.GetUrl());
-            Assert::AreEqual(std::string("u=User&p=pa%24%24w0rd"), request.GetPostData());
             return Http::Response(Http::StatusCode::OK, "{\"Success\":true,\"User\":\"User\",\"Token\":\"ApiTOKEN\",\"Score\":1234,\"Messages\":2}");
         });
 
@@ -415,10 +415,8 @@ public:
 
     TEST_METHOD(TestLoginTokenSuccess)
     {
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([](const Http::Request&)
         {
-            Assert::AreEqual(std::string("host.com/login_app.php"), request.GetUrl());
-            Assert::AreEqual(std::string("u=User&t=ApiTOKEN"), request.GetPostData());
             return Http::Response(Http::StatusCode::OK, "{\"Success\":true,\"User\":\"User\",\"Token\":\"ApiTOKEN\",\"Score\":1234,\"Messages\":2}");
         });
 
@@ -515,10 +513,8 @@ public:
         MockUserContext mockUserContext;
         mockUserContext.Initialize("Username", "ApiToken");
 
-        MockHttpRequester mockHttp([](const Http::Request& request)
+        MockHttpRequester mockHttp([](const Http::Request&)
         {
-            Assert::AreEqual(std::string("host.com/dorequest.php"), request.GetUrl());
-            Assert::AreEqual(std::string("u=Username&r=submitlbentry&i=234&s=-55667788&v=82e403f7ff0395469330977dbe46f2a3&t=ApiToken"), request.GetPostData());
             return Http::Response(Http::StatusCode::OK,
                 "{\"Success\":true,\"Response\":{\"Score\":1234,\"BestScore\":2345,"
                 "\"TopEntries\":[{\"User\":\"Player1\",\"Score\":8765,\"Rank\":1},{\"User\":\"Player2\",\"Score\":7654,\"Rank\":2}],"
@@ -535,6 +531,38 @@ public:
 
         Assert::AreEqual(ApiResult::Success, response.Result);
         Assert::AreEqual(std::string(), response.ErrorMessage);
+    }
+
+    // ====================================================
+    // FetchGameData
+
+    TEST_METHOD(TestFetchGameDataCachesPatchData)
+    {
+        MockUserContext mockUserContext;
+        mockUserContext.Initialize("Username", "ApiToken");
+
+        MockHttpRequester mockHttp([](const Http::Request&)
+        {
+            return Http::Response(Http::StatusCode::OK,
+                "{\"Success\":true,\"PatchData\":"
+                    "{\"ID\":99, \"Title\":\"Game Name\", \"ConsoleID\":5, \"ImageIcon\":\"/Images/BADGE.png\", \"Achievements\":[], \"Leaderboards\":[]}"
+                "}");
+        });
+
+        MockLocalStorage mockLocalStorage;
+
+        ra::services::ServiceLocator::ServiceOverride<ra::api::IServer> serviceOverride(new ConnectedServer("host.com"), true);
+        auto& server = ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
+
+        FetchGameData::Request request;
+        request.GameId = 99;
+        auto response = server.FetchGameData(request);
+
+        Assert::AreEqual(ApiResult::Success, response.Result);
+        Assert::AreEqual(std::string(), response.ErrorMessage);
+
+        std::string sPatchData = "{\"ID\":99, \"Title\":\"Game Name\", \"ConsoleID\":5, \"ImageIcon\":\"/Images/BADGE.png\", \"Achievements\":[], \"Leaderboards\":[]}";
+        Assert::AreEqual(sPatchData, mockLocalStorage.GetStoredData(ra::services::StorageItemType::GameData, L"99"));
     }
 };
 

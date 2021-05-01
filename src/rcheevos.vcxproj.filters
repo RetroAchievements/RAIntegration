@@ -121,6 +121,15 @@
     <ClInclude Include="..\rcheevos\src\rcheevos\compat.h">
       <Filter>rcheevos</Filter>
     </ClInclude>
+    <ClCompile Include="..\rcheevos\src\rapi\rc_api_user.c">
+      <Filter>rapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rapi\rc_api_common.c">
+      <Filter>rapi</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rapi\rc_api_runtime.c">
+      <Filter>rapi</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="lua">
@@ -131,6 +140,9 @@
     </Filter>
     <Filter Include="md5">
       <UniqueIdentifier>{0d89b82c-19cc-4151-b2f6-c54895534c95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="rapi">
+      <UniqueIdentifier>{d363eb07-b5ba-4ce7-99a4-de23227fd446}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

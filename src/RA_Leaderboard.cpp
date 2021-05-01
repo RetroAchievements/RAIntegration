@@ -22,10 +22,10 @@ RA_Leaderboard::~RA_Leaderboard() noexcept
     }
 }
 
-void RA_Leaderboard::ParseFromString(const char* sBuffer, const char* sFormat)
+void RA_Leaderboard::ParseFromString(const char* sBuffer, int nFormat)
 {
     m_sDefinition = sBuffer;
-    m_nFormat = rc_parse_format(sFormat);
+    m_nFormat = nFormat;
 }
 
 void RA_Leaderboard::SetActive(bool bActive) noexcept

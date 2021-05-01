@@ -2,6 +2,8 @@
 
 #include "ServerBase.hh"
 
+#include "services\Http.hh"
+
 namespace ra {
 namespace api {
 namespace impl {
@@ -36,7 +38,7 @@ public:
     FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) override;
     UploadBadge::Response UploadBadge(const UploadBadge::Request& request) override;
 
-    static void ProcessGamePatchData(FetchGameData::Response &response, const rapidjson::Value& PatchData);
+    static void ProcessGamePatchData(FetchGameData::Response &response, const ra::services::Http::Response& httpResponse);
     static void ProcessCodeNotes(FetchCodeNotes::Response &response, const rapidjson::Value& CodeNotes);
 
 private:

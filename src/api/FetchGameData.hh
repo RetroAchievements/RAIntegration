@@ -16,8 +16,6 @@ public:
     {
         std::wstring Title;
         unsigned int ConsoleId{};
-        unsigned int ForumTopicId{};
-        unsigned int Flags{};
         std::string ImageIcon;
         std::string RichPresence;
 
@@ -42,7 +40,7 @@ public:
             std::string Title;
             std::string Description;
             std::string Definition;
-            std::string Format;
+            int Format{ 0 };
         };
         std::vector<Leaderboard> Leaderboards;
     };

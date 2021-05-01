@@ -178,6 +178,9 @@
     <ClInclude Include="..\rcheevos\include\rcheevos.h" />
     <ClInclude Include="..\rcheevos\src\rcheevos\compat.h" />
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h" />
+    <ClCompile Include="..\rcheevos\src\rapi\rc_api_common.c" />
+    <ClCompile Include="..\rcheevos\src\rapi\rc_api_runtime.c" />
+    <ClCompile Include="..\rcheevos\src\rapi\rc_api_user.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\consoleinfo.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\compat.c">
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>

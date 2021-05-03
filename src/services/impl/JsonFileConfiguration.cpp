@@ -369,7 +369,7 @@ void JsonFileConfiguration::UpdateHost()
 
                 if (nStatusCode == 12175) // ERROR_WINHTTP_SECURE_FAILURE
                 {
-                    ::MessageBoxA(NULL,
+                    ::MessageBoxA(nullptr,
                         "An error occurred trying to communicate with the server via secure protocols. Switching to non-secure protocols.\n\n"
                         "retroachievements.org requires TLS 1.2 or higher. You may need to manually enable it on this operating system. Note that non-secure protocols are deprecated and will no longer be allowed at some point in the future.",
                         "Security Error", MB_OK);

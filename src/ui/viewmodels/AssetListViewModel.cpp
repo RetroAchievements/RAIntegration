@@ -542,6 +542,7 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasInactiveSelection = false;
     bool bHasModifiedSelection = false;
     bool bHasUnpublishedSelection = false;
+    bool bHasNonNewSelection = false;
     bool bHasSelection = false;
     bool bHasModified = false;
     bool bHasUnpublished = false;
@@ -605,14 +606,19 @@ void AssetListViewModel::DoUpdateButtons()
 
                     switch (pItem->GetChanges())
                     {
-                        case ra::data::models::AssetChanges::Modified:
                         case ra::data::models::AssetChanges::New:
                             bHasModifiedSelection = true;
                             break;
+                        case ra::data::models::AssetChanges::Modified:
+                            bHasNonNewSelection = true;
+                            bHasModifiedSelection = true;
+                            break;
                         case ra::data::models::AssetChanges::Unpublished:
+                            bHasNonNewSelection = true;
                             bHasUnpublishedSelection = true;
                             break;
                         default:
+                            bHasNonNewSelection = true;
                             break;
                     }
                 }
@@ -697,11 +703,15 @@ void AssetListViewModel::DoUpdateButtons()
     if (bGameLoaded)
     {
         if (bHasSelection)
+        {
             SetValue(ResetButtonTextProperty, L"&Reset");
+            SetValue(CanResetProperty, bHasNonNewSelection);
+        }
         else
+        {
             SetValue(ResetButtonTextProperty, ResetButtonTextProperty.GetDefaultValue());
-
-        SetValue(CanResetProperty, true);
+            SetValue(CanResetProperty, true);
+        }
     }
     else
     {
@@ -1097,7 +1107,7 @@ void AssetListViewModel::ResetSelected()
     }
     else
     {
-        // reset selection, remove any "new" items and get the AssetViewModel for the others
+        // reset selection, remove "new" items and get the AssetViewModel for the others
         for (auto* pItem : vSelectedAssets)
         {
             const auto nType = pItem->GetType();

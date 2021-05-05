@@ -947,6 +947,9 @@ void AssetListViewModel::SaveSelected()
 #if RA_INTEGRATION_VERSION_MINOR < 79
 static std::wstring ValidateCondSet(const rc_condset_t* pCondSet)
 {
+    if (!pCondSet)
+        return L"";
+
     for (const auto* pCondition = pCondSet->conditions; pCondition != nullptr; pCondition = pCondition->next)
     {
         if (pCondition->type == RC_CONDITION_RESET_NEXT_IF)

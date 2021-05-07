@@ -166,7 +166,9 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
         if (pAsset != nullptr)
+        {
             RA_LOG_INFO("%s %u category changed from %d to %d", ra::data::models::AssetModelBase::GetAssetTypeString(pAsset->GetType()), pAsset->GetID(), args.tOldValue, args.tNewValue);
+        }
 
         UpdateTotals();
 
@@ -1273,6 +1275,8 @@ void AssetListViewModel::CreateNew()
     if (!CanCreate())
         return;
 
+    RA_LOG_INFO("Creating new achievement");
+
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
 
@@ -1341,6 +1345,8 @@ void AssetListViewModel::CloneSelected()
     FilteredAssets().BeginUpdate();
 
     SetFilterCategory(FilterCategory::Local);
+
+    RA_LOG_INFO("Cloning %u assets", vSelectedAssets.size());
 
     // add the cloned items
     std::vector<int> vNewIDs;

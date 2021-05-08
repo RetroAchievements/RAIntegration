@@ -328,11 +328,21 @@ void ModelCollectionBase::NotifyModelValueChanged(gsl::index nIndex, const BoolM
     if (nIndex < 0)
         return;
 
-    // Updating property values after inserting or removing items while updates are suspended causes synchronization
-    // errors in the GridBinding. This exception serves as a reminder until the problem can be resolved.
-    Expects(nIndex == m_vItems.at(gsl::narrow_cast<size_t>(nIndex))->m_nCollectionIndex);
-
-    OnModelValueChanged(nIndex, args);
+    const auto nCollectionIndex = m_vItems.at(gsl::narrow_cast<size_t>(nIndex))->m_nCollectionIndex;
+    if (IsUpdating())
+    {
+        // if updates are suspended, only raise events for items that haven't moved. OnItemsChanged events
+        // will be raised for moved items when the update suspension is resumed.
+        if (nIndex == nCollectionIndex)
+            OnModelValueChanged(nIndex, args);
+    }
+    else
+    {
+        // raising property changed events for the wrong index causes synchronization errors for the GridBinding.
+        // that should only happen when updates are suspended, so generate an error if we see it here.
+        Expects(nIndex == nCollectionIndex);
+        OnModelValueChanged(nIndex, args);
+    }
 }
 
 void ModelCollectionBase::NotifyModelValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
@@ -341,11 +351,21 @@ void ModelCollectionBase::NotifyModelValueChanged(gsl::index nIndex, const Strin
     if (nIndex < 0)
         return;
 
-    // Updating property values after inserting or removing items while updates are suspended causes synchronization
-    // errors in the GridBinding. This exception serves as a reminder until the problem can be resolved.
-    Expects(nIndex == m_vItems.at(gsl::narrow_cast<size_t>(nIndex))->m_nCollectionIndex);
-
-    OnModelValueChanged(nIndex, args);
+    const auto nCollectionIndex = m_vItems.at(gsl::narrow_cast<size_t>(nIndex))->m_nCollectionIndex;
+    if (IsUpdating())
+    {
+        // if updates are suspended, only raise events for items that haven't moved. OnItemsChanged events
+        // will be raised for moved items when the update suspension is resumed.
+        if (nIndex == nCollectionIndex)
+            OnModelValueChanged(nIndex, args);
+    }
+    else
+    {
+        // raising property changed events for the wrong index causes synchronization errors for the GridBinding.
+        // that should only happen when updates are suspended, so generate an error if we see it here.
+        Expects(nIndex == nCollectionIndex);
+        OnModelValueChanged(nIndex, args);
+    }
 }
 
 void ModelCollectionBase::NotifyModelValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
@@ -354,11 +374,21 @@ void ModelCollectionBase::NotifyModelValueChanged(gsl::index nIndex, const IntMo
     if (nIndex < 0)
         return;
 
-    // Updating property values after inserting or removing items while updates are suspended causes synchronization
-    // errors in the GridBinding. This exception serves as a reminder until the problem can be resolved.
-    Expects(nIndex == m_vItems.at(gsl::narrow_cast<size_t>(nIndex))->m_nCollectionIndex);
-
-    OnModelValueChanged(nIndex, args);
+    const auto nCollectionIndex = m_vItems.at(gsl::narrow_cast<size_t>(nIndex))->m_nCollectionIndex;
+    if (IsUpdating())
+    {
+        // if updates are suspended, only raise events for items that haven't moved. OnItemsChanged events
+        // will be raised for moved items when the update suspension is resumed.
+        if (nIndex == nCollectionIndex)
+            OnModelValueChanged(nIndex, args);
+    }
+    else
+    {
+        // raising property changed events for the wrong index causes synchronization errors for the GridBinding.
+        // that should only happen when updates are suspended, so generate an error if we see it here.
+        Expects(nIndex == nCollectionIndex);
+        OnModelValueChanged(nIndex, args);
+    }
 }
 
 } // namespace data

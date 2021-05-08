@@ -92,8 +92,9 @@ private:
     enum class ResetButtonState
     {
         Reset,
+        ResetDisabled,
         ResetAll,
-        Disabled
+        ResetAllDisabled
     };
 
     enum class RevertButtonState
@@ -224,12 +225,17 @@ private:
                     Assert::IsTrue(CanReset());
                     break;
 
+                case ResetButtonState::ResetDisabled:
+                    Assert::AreEqual(std::wstring(L"&Reset"), GetValue(ResetButtonTextProperty));
+                    Assert::IsFalse(CanReset());
+                    break;
+
                 case ResetButtonState::ResetAll:
                     Assert::AreEqual(std::wstring(L"&Reset All"), GetValue(ResetButtonTextProperty));
                     Assert::IsTrue(CanReset());
                     break;
 
-                case ResetButtonState::Disabled:
+                case ResetButtonState::ResetAllDisabled:
                     Assert::AreEqual(std::wstring(L"&Reset All"), GetValue(ResetButtonTextProperty));
                     Assert::IsFalse(CanReset());
                     break;
@@ -1054,7 +1060,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::Disabled, RevertButtonState::Disabled,
+            ResetButtonState::ResetAllDisabled, RevertButtonState::Disabled,
             CreateButtonState::Disabled, CloneButtonState::Disabled
         );
 
@@ -1065,7 +1071,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::Disabled, RevertButtonState::Disabled,
+            ResetButtonState::ResetAllDisabled, RevertButtonState::Disabled,
             CreateButtonState::Disabled, CloneButtonState::Disabled
         );
     }
@@ -1416,7 +1422,7 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Save,
-            ResetButtonState::Reset, RevertButtonState::Delete,
+            ResetButtonState::ResetDisabled, RevertButtonState::Delete,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
     }
@@ -2989,20 +2995,19 @@ public:
         Assert::IsTrue(pIndicator->IsDestroyPending());
     }
 
-    TEST_METHOD(TestResetSelectedNew)
+    TEST_METHOD(TestResetSelectedSomeNew)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
-        vmAssetList.AddThreeAchievements();
+        vmAssetList.AddNewAchievement(5, L"Ach1", L"Test1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test2", L"Desc2", L"12345", "0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+
+        // if new and non-new items are selected, allow the user to reset. new items will be discarded
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(ResetButtonState::Reset);
-
-        vmAssetList.MockUserFileContents("1:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n");
-        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
-        Assert::IsNotNull(pAsset);
-        Ensures(pAsset != nullptr);
-        pAsset->SetNew();
 
         bool bDialogShown = false;
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
@@ -3011,13 +3016,53 @@ public:
             return DialogResult::Yes;
         });
 
+        vmAssetList.MockUserFileContents("2:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
+
         vmAssetList.ResetSelected();
 
         Assert::IsTrue(bDialogShown);
 
         // item marked as new should be removed, and not restored from the file.
-        // NOTE: new items should not be in the file. this is mostly just testing the removal of new items.
+        // other item will be updated from file
         Assert::IsNull(vmAssetList.mockGameContext.Assets().FindAchievement({ 1U }));
+        const auto* pAch2 = vmAssetList.mockGameContext.Assets().FindAchievement({ 2U });
+        Assert::IsNotNull(pAch2);
+        Ensures(pAch2 != nullptr);
+        Assert::AreEqual(std::string("0xH2345=0"), pAch2->GetTrigger());
+    }
+
+    TEST_METHOD(TestResetSelectedAllSomeNew)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddNewAchievement(5, L"Ach1", L"Test1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test2", L"Desc2", L"12345", "0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+
+        // if new and non-new items are selected, allow the user to reset. new items will be discarded
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(ResetButtonState::ResetAll);
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
+        {
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        vmAssetList.MockUserFileContents("2:\"0xH2345=0\":Test2:::::User:0:0:0:::00000\n");
+
+        vmAssetList.ResetSelected();
+
+        Assert::IsTrue(bDialogShown);
+
+        // item marked as new should be removed, and not restored from the file.
+        // other item will be updated from file
+        Assert::IsNull(vmAssetList.mockGameContext.Assets().FindAchievement({ 1U }));
+        const auto* pAch2 = vmAssetList.mockGameContext.Assets().FindAchievement({ 2U });
+        Assert::IsNotNull(pAch2);
+        Ensures(pAch2 != nullptr);
+        Assert::AreEqual(std::string("0xH2345=0"), pAch2->GetTrigger());
     }
 
     TEST_METHOD(TestResetSelectedAllNewFromFile)

@@ -549,6 +549,19 @@ bool AssetModelBase::IsActive(AssetState nState) noexcept
     }
 }
 
+const char* AssetModelBase::GetAssetTypeString(AssetType nType) noexcept
+{
+    switch (nType)
+    {
+        case AssetType::None: return "None";
+        case AssetType::Achievement: return "Achievement";
+        case AssetType::Leaderboard: return "Leaderboard";
+        case AssetType::LocalBadges: return "LocalBadges";
+        default: return "Unknown";
+    }
+}
+
+
 } // namespace models
 } // namespace data
 } // namespace ra

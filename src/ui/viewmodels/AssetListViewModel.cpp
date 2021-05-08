@@ -163,6 +163,13 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
     // these properties potentially affect visibility
     if (args.Property == ra::data::models::AssetModelBase::CategoryProperty)
     {
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        if (pAsset != nullptr)
+        {
+            RA_LOG_INFO("%s %u category changed from %d to %d", ra::data::models::AssetModelBase::GetAssetTypeString(pAsset->GetType()), pAsset->GetID(), args.tOldValue, args.tNewValue);
+        }
+
         UpdateTotals();
 
         if (GetFilterCategory() != FilterCategory::All)
@@ -204,6 +211,9 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
             gsl::index nFilteredIndex = -1;
             const auto nType = pAsset->GetType();
 
+            RA_LOG_INFO("%s %u ID changed from %d to %d", ra::data::models::AssetModelBase::GetAssetTypeString(pAsset->GetType()), pAsset->GetID(), args.tOldValue, args.tNewValue);
+
+            // have to find the filtered item using the old ID
             for (gsl::index nScanIndex = 0; nScanIndex < gsl::narrow_cast<gsl::index>(m_vFilteredAssets.Count()); ++nScanIndex)
             {
                 auto* pItem = m_vFilteredAssets.GetItemAt(nScanIndex);
@@ -542,6 +552,7 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasInactiveSelection = false;
     bool bHasModifiedSelection = false;
     bool bHasUnpublishedSelection = false;
+    bool bHasNonNewSelection = false;
     bool bHasSelection = false;
     bool bHasModified = false;
     bool bHasUnpublished = false;
@@ -605,14 +616,19 @@ void AssetListViewModel::DoUpdateButtons()
 
                     switch (pItem->GetChanges())
                     {
-                        case ra::data::models::AssetChanges::Modified:
                         case ra::data::models::AssetChanges::New:
                             bHasModifiedSelection = true;
                             break;
+                        case ra::data::models::AssetChanges::Modified:
+                            bHasNonNewSelection = true;
+                            bHasModifiedSelection = true;
+                            break;
                         case ra::data::models::AssetChanges::Unpublished:
+                            bHasNonNewSelection = true;
                             bHasUnpublishedSelection = true;
                             break;
                         default:
+                            bHasNonNewSelection = true;
                             break;
                     }
                 }
@@ -697,11 +713,15 @@ void AssetListViewModel::DoUpdateButtons()
     if (bGameLoaded)
     {
         if (bHasSelection)
+        {
             SetValue(ResetButtonTextProperty, L"&Reset");
+            SetValue(CanResetProperty, bHasNonNewSelection);
+        }
         else
+        {
             SetValue(ResetButtonTextProperty, ResetButtonTextProperty.GetDefaultValue());
-
-        SetValue(CanResetProperty, true);
+            SetValue(CanResetProperty, true);
+        }
     }
     else
     {
@@ -859,6 +879,15 @@ void AssetListViewModel::SaveSelected()
         {
             ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Unable to save", sErrorMessage);
             return;
+        }
+
+        if (vSelectedAssets.empty())
+        {
+            RA_LOG_INFO("Saving all assets", vSelectedAssets.size());
+        }
+        else
+        {
+            RA_LOG_INFO("Saving %u assets", vSelectedAssets.size());
         }
     }
     else if (sSaveButtonText.at(0) == 'P' && sSaveButtonText.at(1) == 'u') // "Publi&sh" / "Publi&sh All"
@@ -1089,6 +1118,8 @@ void AssetListViewModel::ResetSelected()
     std::vector<ra::data::models::AssetModelBase*> vAssetsToReset;
     if (vSelectedAssets.empty())
     {
+        RA_LOG_INFO("Resetting all assets");
+
         // reset all - first remove any "new" items
         for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()) - 1; nIndex >= 0; --nIndex)
         {
@@ -1108,7 +1139,7 @@ void AssetListViewModel::ResetSelected()
     }
     else
     {
-        // reset selection, remove any "new" items and get the AssetViewModel for the others
+        // reset selection, remove "new" items and get the AssetViewModel for the others
         for (auto* pItem : vSelectedAssets)
         {
             const auto nType = pItem->GetType();
@@ -1132,7 +1163,18 @@ void AssetListViewModel::ResetSelected()
 
         // if there were any non-new items, reload them from disk
         if (!vAssetsToReset.empty())
+        {
+            std::string sMessage;
+            for (const auto* pAsset : vAssetsToReset)
+            {
+                if (!sMessage.empty())
+                    sMessage.push_back(',');
+                sMessage.append(std::to_string(pAsset->GetID()));
+            }
+            RA_LOG_INFO("Resetting %zu assets: %s", vAssetsToReset.size(), sMessage);
+
             pGameContext.Assets().ReloadAssets(vAssetsToReset);
+        }
     }
 
     // if the asset that is loaded in the editor no longer exists, clear out the editor
@@ -1222,6 +1264,15 @@ void AssetListViewModel::RevertSelected()
     if (vmMessageBox.ShowModal() == DialogResult::No)
         return;
 
+    std::string sMessage;
+    for (const auto* pAsset : vAssetsToReset)
+    {
+        if (!sMessage.empty())
+            sMessage.push_back(',');
+        sMessage.append(std::to_string(pAsset->GetID()));
+    }
+    RA_LOG_INFO("Reverting %zu assets: %s", vAssetsToReset.size(), sMessage);
+
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     auto& pAssets = pGameContext.Assets();
     pAssets.BeginUpdate();
@@ -1267,6 +1318,8 @@ void AssetListViewModel::CreateNew()
 {
     if (!CanCreate())
         return;
+
+    RA_LOG_INFO("Creating new achievement");
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
@@ -1336,6 +1389,8 @@ void AssetListViewModel::CloneSelected()
     FilteredAssets().BeginUpdate();
 
     SetFilterCategory(FilterCategory::Local);
+
+    RA_LOG_INFO("Cloning %u assets", vSelectedAssets.size());
 
     // add the cloned items
     std::vector<int> vNewIDs;

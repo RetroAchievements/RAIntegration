@@ -266,8 +266,12 @@ public:
     /// <summary>
     /// Discards any changes made since the server checkpoint and repopulates the local checkpoint using Deserialize.
     /// </summary>
-    /// <param name="pTokenizer"></param>
     void ResetLocalCheckpoint(ra::Tokenizer& pTokenizer);
+
+    /// <summary>
+    /// Gets a human-readable string for the AssetType enum values.
+    /// </summary>
+    static const char* GetAssetTypeString(AssetType nType) noexcept;
 
 protected:
     /// <summary>

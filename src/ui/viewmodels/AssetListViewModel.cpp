@@ -954,7 +954,7 @@ static std::wstring ValidateCondSet(const rc_condset_t* pCondSet)
         if (pCondition->type == RC_CONDITION_TRIGGER)
             return L"Trigger is pre-release functionality";
         if (pCondition->type == RC_CONDITION_SUB_HITS)
-            return L"Trigger is pre-release functionality";
+            return L"SubHits is pre-release functionality";
         if (pCondition->oper == RC_OPERATOR_MULT)
             return L"Multiplication is pre-release functionality";
         if (pCondition->oper == RC_OPERATOR_DIV)
@@ -1078,6 +1078,8 @@ void AssetListViewModel::ResetSelected()
     if (vmMessageBox.ShowModal() == DialogResult::No)
         return;
 
+    std::vector<ra::AchievementID> vActiveAchievementsBefore;
+
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.Assets().BeginUpdate();
 
@@ -1088,8 +1090,14 @@ void AssetListViewModel::ResetSelected()
         for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()) - 1; nIndex >= 0; --nIndex)
         {
             auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-            if (pAsset != nullptr && pAsset->GetChanges() == ra::data::models::AssetChanges::New)
-                pGameContext.Assets().RemoveAt(nIndex);
+            if (pAsset != nullptr)
+            {
+                if (pAsset->GetType() == ra::data::models::AssetType::Achievement && pAsset->IsActive())
+                    vActiveAchievementsBefore.push_back(pAsset->GetID());
+
+                if (pAsset->GetChanges() == ra::data::models::AssetChanges::New)
+                    pGameContext.Assets().RemoveAt(nIndex);
+            }
         }
 
         // when resetting all, always read the file to pick up new items
@@ -1107,6 +1115,9 @@ void AssetListViewModel::ResetSelected()
                 auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
                 if (pAsset->GetID() == nId && pAsset->GetType() == nType)
                 {
+                    if (nType == ra::data::models::AssetType::Achievement && pAsset->IsActive())
+                        vActiveAchievementsBefore.push_back(nId);
+
                     if (pAsset->GetChanges() == ra::data::models::AssetChanges::New)
                         pGameContext.Assets().RemoveAt(nIndex);
                     else
@@ -1121,7 +1132,25 @@ void AssetListViewModel::ResetSelected()
             pGameContext.Assets().ReloadAssets(vAssetsToReset);
     }
 
+    // if the asset that is loaded in the editor no longer exists, clear out the editor
+    // do this before EndUpdate so the asset won't have been destroyed yet
+    auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+    const auto* pEditorAsset = pWindowManager.AssetEditor.GetAsset();
+    if (pEditorAsset != nullptr && !pGameContext.Assets().FindAsset(pEditorAsset->GetType(), pEditorAsset->GetID()))
+        pWindowManager.AssetEditor.LoadAsset(nullptr);
+
     pGameContext.Assets().EndUpdate();
+
+    // if any achievements were deleted, disable their challenge indicators
+    for (auto nId : vActiveAchievementsBefore)
+    {
+        if (!pGameContext.Assets().FindAchievement(nId))
+        {
+            // when an active achievement is deleted, the challenge indicator needs to be hidden as no event will be raised
+            auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+            pOverlayManager.RemoveChallengeIndicator(nId);
+        }
+    }
 }
 
 void AssetListViewModel::RevertSelected()
@@ -1201,6 +1230,18 @@ void AssetListViewModel::RevertSelected()
         {
             // reverting a local item deletes it
             pAsset->SetDeleted();
+
+            // when an active achievement is deleted, the challenge indicator needs to be hidden as no event will be raised
+            if (pAsset->IsActive() && pAsset->GetType() == ra::data::models::AssetType::Achievement)
+            {
+                auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                pOverlayManager.RemoveChallengeIndicator(pAsset->GetID());
+            }
+
+            // if the asset is open in the editor, select no asset
+            auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+            if (pWindowManager.AssetEditor.GetAsset() == pAsset)
+                pWindowManager.AssetEditor.LoadAsset(nullptr);
         }
         else
         {

@@ -254,10 +254,59 @@ public:
         Assert::AreEqual(std::wstring(L"83295"), editor.GetBadge());
         Assert::IsTrue(editor.IsAssetLoaded());
         Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Waiting"), editor.GetWaitingLabel());
 
         // changes should have been discarded
         Assert::AreEqual(AssetChanges::None, achievement.GetChanges());
         Assert::AreEqual(std::wstring(L"Do something cool"), achievement.GetDescription());
+    }
+
+    TEST_METHOD(TestLoadAchievementWaiting)
+    {
+        AssetEditorViewModelHarness editor;
+        Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
+
+        AchievementModel achievement;
+        achievement.SetName(L"Test Achievement");
+        achievement.SetID(1234U);
+        achievement.SetState(AssetState::Active);
+        achievement.SetDescription(L"Do something cool");
+        achievement.SetTrigger("M:0xH1234=6.11.");
+        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetPoints(10);
+        achievement.SetBadge(L"58329");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        AchievementModel achievement2;
+        achievement2.SetName(L"Test Achievement");
+        achievement2.SetID(1234U);
+        achievement2.SetState(AssetState::Waiting);
+        achievement2.SetDescription(L"Do something cool");
+        achievement2.SetTrigger("M:0xH1234=6.11.");
+        achievement2.SetCategory(AssetCategory::Unofficial);
+        achievement2.SetPoints(10);
+        achievement2.SetBadge(L"58329");
+        achievement2.CreateServerCheckpoint();
+        achievement2.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&achievement);
+        Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
+
+        editor.LoadAsset(nullptr);
+        Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
+
+        editor.LoadAsset(&achievement2);
+        Assert::AreEqual(std::wstring(L"Waiting"), editor.GetWaitingLabel());
+
+        editor.LoadAsset(nullptr);
+        Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
+
+        editor.LoadAsset(&achievement2);
+        Assert::AreEqual(std::wstring(L"Waiting"), editor.GetWaitingLabel());
+
+        editor.LoadAsset(&achievement);
+        Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
     }
 
     TEST_METHOD(TestLoadAchievementMeasured)

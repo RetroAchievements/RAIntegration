@@ -107,7 +107,7 @@ protected:
 private:
     void UpdateRow(gsl::index nIndex, bool bExisting);
     void UpdateSelectedItemStates();
-    void SuspendRedraw();
+    void SuspendRedraw() noexcept;
 
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;

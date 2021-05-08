@@ -601,7 +601,7 @@ void GridBinding::OnEndViewModelCollectionUpdate()
     }
 }
 
-void GridBinding::SuspendRedraw()
+void GridBinding::SuspendRedraw() noexcept
 {
     if (!m_bRedrawSuspended && m_vmItems->IsUpdating())
     {

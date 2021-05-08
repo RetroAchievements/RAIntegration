@@ -315,6 +315,8 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
+            SuspendRedraw();
+
             // if the affected data is in the sort column, it's no longer sorted
             if (m_nSortIndex == ra::to_signed(nColumnIndex))
                 m_nSortIndex = -1;
@@ -350,6 +352,8 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
+            SuspendRedraw();
+
             // if the affected data is in the sort column, it's no longer sorted
             if (m_nSortIndex == ra::to_signed(nColumnIndex))
                 m_nSortIndex = -1;
@@ -382,6 +386,8 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
         {
+            SuspendRedraw();
+
             // if the affected data is in the sort column, it's no longer sorted
             if (m_nSortIndex == ra::to_signed(nColumnIndex))
                 m_nSortIndex = -1;
@@ -488,11 +494,16 @@ void GridBinding::OnViewModelAdded(gsl::index nIndex)
     // when an item is added, we can't assume the list is still sorted
     m_nSortIndex = -1;
 
-    // don't actually add/update items in virtual listview
     if (m_pUpdateSelectedItems)
+    {
+        // don't actually add/update items in virtual listview
         m_bForceRepaint = true;
+    }
     else
+    {
+        SuspendRedraw();
         UpdateRow(nIndex, false);
+    }
 
     if (!m_vmItems->IsUpdating())
         CheckForScrollBar();
@@ -502,11 +513,16 @@ void GridBinding::OnViewModelRemoved(gsl::index nIndex)
 {
     if (m_hWnd)
     {
-        // don't actually delete items from virtual listview
         if (m_pUpdateSelectedItems)
+        {
+            // don't actually delete items from virtual listview
             m_bForceRepaint = true;
+        }
         else
+        {
+            SuspendRedraw();
             ListView_DeleteItem(m_hWnd, nIndex);
+        }
 
         if (!m_vmItems->IsUpdating())
             CheckForScrollBar();
@@ -516,7 +532,10 @@ void GridBinding::OnViewModelRemoved(gsl::index nIndex)
 void GridBinding::OnViewModelChanged(gsl::index nIndex)
 {
     if (m_hWnd)
+    {
+        SuspendRedraw();
         UpdateRow(nIndex, true);
+    }
 }
 
 void GridBinding::CheckForScrollBar()
@@ -549,6 +568,13 @@ void GridBinding::OnEndViewModelCollectionUpdate()
 {
     if (m_hWnd)
     {
+        if (m_bRedrawSuspended)
+        {
+            // enable redraw before calling CheckForScrollBar to ensure metrics are updated
+            SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
+            m_bRedrawSuspended = false;
+        }
+
         CheckForScrollBar();
 
         if (m_bUpdateSelectedItemStates)
@@ -572,6 +598,16 @@ void GridBinding::OnEndViewModelCollectionUpdate()
                 ControlBinding::RedrawWindow(m_hWnd);
             }
         }
+    }
+}
+
+void GridBinding::SuspendRedraw() noexcept
+{
+    if (!m_bRedrawSuspended && m_vmItems->IsUpdating())
+    {
+        // if we're in a BeginUpdate/EndUpdate block, stop redrawing until the EndUpdate
+        m_bRedrawSuspended = true;
+        SendMessage(m_hWnd, WM_SETREDRAW, FALSE, 0);
     }
 }
 

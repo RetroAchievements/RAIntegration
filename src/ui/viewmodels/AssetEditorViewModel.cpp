@@ -101,6 +101,13 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
         SetState(pAsset->GetState());
         SetCategory(pAsset->GetCategory());
 
+        // normally this happens in OnValueChanged, but only if m_pAsset is set, which doesn't happen until later
+        // and we don't want the other stuff in OnValueChanged to run right now
+        if (pAsset->GetState() == ra::data::models::AssetState::Waiting)
+            SetValue(WaitingLabelProperty, L"Waiting");
+        else
+            SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
+
         if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
             SetValue(IDProperty, 0);
         else
@@ -155,6 +162,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
         SetPauseOnReset(PauseOnResetProperty.GetDefaultValue());
         SetPauseOnTrigger(PauseOnTriggerProperty.GetDefaultValue());
         SetWindowTitle(L"Achievement Editor");
+        SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
 
         ra::data::models::CapturedTriggerHits pCapturedHits;
         Trigger().InitializeFrom("", pCapturedHits);

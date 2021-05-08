@@ -172,7 +172,7 @@ std::string Desktop::GetRunningExecutable() const
     return std::string(buffer);
 }
 
-std::string Desktop::GetOSVersionString() const
+std::string Desktop::GetWindowsVersionString()
 {
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724832(v=vs.85).aspx
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ms724429(v=vs.85).aspx
@@ -199,7 +199,6 @@ std::string Desktop::GetOSVersionString() const
 
     return "Windows";
 }
-
 
 void Desktop::OpenUrl(const std::string& sUrl) const
 {

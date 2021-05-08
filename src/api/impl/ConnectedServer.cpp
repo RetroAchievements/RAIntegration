@@ -25,6 +25,12 @@ namespace ra {
 namespace api {
 namespace impl {
 
+ConnectedServer::ConnectedServer(const std::string& sHost)
+    : m_sHost(sHost)
+{
+    rc_api_set_host(sHost.c_str());
+}
+
 _NODISCARD static bool HandleHttpError(_In_ const ra::services::Http::StatusCode nStatusCode,
                                        _Inout_ ApiResponseBase& pResponse)
 {

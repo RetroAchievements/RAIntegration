@@ -141,7 +141,9 @@ public:
 
     bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) override
     {
-        if (ra::StringStartsWith(sValue, L"0x") || IsAddressType(vmItems, nIndex))
+        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal) ||
+            ra::StringStartsWith(sValue, L"0x") || IsAddressType(vmItems, nIndex))
         {
             std::wstring sError;
             unsigned int nValue = 0U;
@@ -332,6 +334,10 @@ void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstrin
     std::wstring sError;
     if (!sValue.empty())
     {
+        // ignore virtual tag that's hiding a more complex path
+        if (sValue == L"[local]")
+            return;
+
         // special case - don't validate if the string is entirely made of 0s.
         // the default value is "00000", which is less than the minimum.
         const wchar_t* pChar = &sValue.at(0);

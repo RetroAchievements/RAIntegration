@@ -8,6 +8,12 @@
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
+#ifndef RA_UTEST
+#include "services\impl\StringTextWriter.hh"
+#include "services\impl\WindowsHttpRequester.hh"
+#include "ui\win32\Desktop.hh"
+#endif
+
 namespace ra {
 namespace services {
 namespace impl {
@@ -337,6 +343,42 @@ void JsonFileConfiguration::UpdateHost()
         m_sHostName = "retroachievements.org";
         m_sHostUrl = "https://retroachievements.org";
         m_sImageHostUrl = "http://i.retroachievements.org";
+
+#ifndef RA_UTEST
+        const auto sOSVersion = ra::ui::win32::Desktop::GetWindowsVersionString();
+        if (ra::StringStartsWith(sOSVersion, "WindowsNT "))
+        {
+            // Windows 7 (and Vista and XP) only support TLS 1.0 by default. Windows 8+ support TLS 1.2.
+            // https://social.msdn.microsoft.com/Forums/windowsdesktop/en-US/b27a9ddd-d8f7-408c-8029-cf5f8f9ddbef/winhttp-winhttpcallbackstatusflagsecuritychannelerror-on-win7?forum=vcgeneral
+            // The server requires at least TLS 1.2 due to security issues in TLS 1.0 and 1.1.
+
+            // If this is a one of the vulnerable operating systems, try to make a secure request.
+            // https://docs.microsoft.com/en-us/windows/win32/sysinfo/operating-system-version
+            // https://docs.microsoft.com/en-us/windows/win32/secauthn/protocols-in-tls-ssl--schannel-ssp-
+            const auto nVersion = std::atof(&sOSVersion.at(9));
+            if (nVersion < 6.2) // Windows 8
+            {
+                // Try to make a secure request, and if it fails with ERROR_WINHTTP_SECURE_FAILURE,
+                // switch to a non-secure host
+                ra::services::Http::Request request(m_sHostUrl + "/dorequest.php?r=latestclient&e=0");
+                std::string sResponse;
+                ra::services::impl::StringTextWriter pWriter(sResponse);
+
+                ra::services::impl::WindowsHttpRequester httpRequester;
+                const auto nStatusCode = httpRequester.Request(request, pWriter);
+
+                if (nStatusCode == 12175) // ERROR_WINHTTP_SECURE_FAILURE
+                {
+                    ::MessageBoxA(nullptr,
+                        "An error occurred trying to communicate with the server via secure protocols. Switching to non-secure protocols.\n\n"
+                        "retroachievements.org requires TLS 1.2 or higher. You may need to manually enable it on this operating system. Note that non-secure protocols are deprecated and will no longer be allowed at some point in the future.",
+                        "Security Error", MB_OK);
+                    m_sHostUrl = "http://retroachievements.org";
+                }
+            }
+        }
+#endif
+
     }
     else
     {

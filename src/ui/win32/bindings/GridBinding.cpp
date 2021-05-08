@@ -1281,7 +1281,7 @@ void GridBinding::OnLvnKeyDown(const LPNMLVKEYDOWN pnmKeyDown)
             if (bAltHeld || bShiftHeld)
                 return;
 
-            const int nFirstSelectedItem = ListView_GetNextItem(m_hWnd, 0, LVNI_SELECTED);
+            const int nFirstSelectedItem = ListView_GetNextItem(m_hWnd, -1, LVNI_SELECTED);
             if (nFirstSelectedItem != -1)
                 m_pDoubleClickHandler(gsl::narrow_cast<gsl::index>(nFirstSelectedItem));
         }

@@ -478,6 +478,7 @@ public:
     {
         DoAchievementsFrameHarness harness;
         harness.MockAchievement(1U).SetBadge(L"55223");
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementPrimed, 1U);
 
         _RA_DoAchievementsFrame();
@@ -490,10 +491,24 @@ public:
         Assert::AreEqual(std::string("55223"), pIndicator->GetImage().Name());
     }
 
+    TEST_METHOD(TestDoAchievementsFrameAchievementPrimedNoTracker)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U).SetBadge(L"55223");
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::None);
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementPrimed, 1U);
+
+        _RA_DoAchievementsFrame();
+
+        const auto* pIndicator = harness.mockOverlayManager.GetChallengeIndicator(1U);
+        Assert::IsNull(pIndicator);
+    }
+
     TEST_METHOD(TestDoAchievementsFrameAchievementUnprimed)
     {
         DoAchievementsFrameHarness harness;
         harness.MockAchievement(1U).SetBadge(L"55223");
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
         harness.mockOverlayManager.AddChallengeIndicator(1U, ra::ui::ImageType::Badge, "55223");
 
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementActivated, 1U);
@@ -511,6 +526,7 @@ public:
     {
         DoAchievementsFrameHarness harness;
         harness.MockAchievement(1U).SetBadge(L"55223");
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementPrimed, 1U);
 
         _RA_DoAchievementsFrame();
@@ -602,6 +618,7 @@ public:
     {
         DoAchievementsFrameHarness harness;
         harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted, ra::ui::viewmodels::PopupLocation::BottomLeft);
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
         auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
         pLeaderboard.SetTitle("Title");
         pLeaderboard.SetDescription("Description");
@@ -623,10 +640,30 @@ public:
         Assert::AreEqual(std::wstring(L"1234"), pScore->GetDisplayText());
     }
 
+    TEST_METHOD(TestDoAchievementsFrameLeaderboardStartNoPopups)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted, ra::ui::viewmodels::PopupLocation::None);
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::None);
+        auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
+        pLeaderboard.SetTitle("Title");
+        pLeaderboard.SetDescription("Description");
+
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 1U, 1234U);
+        _RA_DoAchievementsFrame();
+
+        const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
+        Assert::IsNull(pPopup);
+
+        const auto* pScore = harness.mockOverlayManager.GetScoreTracker(1U);
+        Assert::IsNull(pScore);
+    }
+
     TEST_METHOD(TestDoAchievementsFrameLeaderboardStartPopupDisabled)
     {
         DoAchievementsFrameHarness harness;
         harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted, ra::ui::viewmodels::PopupLocation::None);
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
         harness.mockGameContext.NewLeaderboard(1U);
 
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 1U, 1234U);
@@ -645,6 +682,7 @@ public:
     {
         DoAchievementsFrameHarness harness;
         harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled, ra::ui::viewmodels::PopupLocation::BottomLeft);
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
         auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
         pLeaderboard.SetTitle("Title");
         pLeaderboard.SetDescription("Description");
@@ -667,6 +705,7 @@ public:
     {
         DoAchievementsFrameHarness harness;
         harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled, ra::ui::viewmodels::PopupLocation::None);
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
         auto& pLeaderboard = harness.mockGameContext.NewLeaderboard(1U);
         pLeaderboard.SetTitle("Title");
         pLeaderboard.SetDescription("Description");
@@ -685,6 +724,7 @@ public:
     {
         DoAchievementsFrameHarness harness;
         harness.mockGameContext.NewLeaderboard(1U);
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
         harness.mockOverlayManager.AddScoreTracker(1U);
 
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardUpdated, 1U, 1235U);
@@ -700,6 +740,7 @@ public:
     {
         DoAchievementsFrameHarness harness;
         harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
         harness.mockGameContext.NewLeaderboard(1U);
 
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardTriggered, 1U, 1236U);
@@ -718,6 +759,7 @@ public:
         harness.MockAchievement(2U);
         harness.mockGameContext.NewLeaderboard(3U);
         harness.mockGameContext.NewLeaderboard(4U);
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
 
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStarted, 3U, 1234U);
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementTriggered, 1U);

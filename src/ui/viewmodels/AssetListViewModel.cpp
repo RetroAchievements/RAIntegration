@@ -1396,9 +1396,11 @@ void AssetListViewModel::CloneSelected()
     std::vector<int> vNewIDs;
     for (const auto* pAsset : vSelectedAssets)
     {
-        const auto& pSourceAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
         auto& vmAchievement = pGameContext.Assets().NewAchievement();
         vmAchievement.SetCategory(ra::data::models::AssetCategory::Local);
+        vmAchievement.UpdateServerCheckpoint();
+
+        const auto* pSourceAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
         vmAchievement.SetName(pSourceAchievement->GetName() + L" (copy)");
         vmAchievement.SetDescription(pSourceAchievement->GetDescription());
         vmAchievement.SetBadge(pSourceAchievement->GetBadge());

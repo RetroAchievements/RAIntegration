@@ -79,34 +79,16 @@ void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
 
     ra::api::UploadBadge::Request request;
     request.ImageFilePath = sFilename;
-    const auto response = request.Call();
 
-    // if the upload failed, set the error message on all the associated achievements (including this one)
-    if (!response.Succeeded())
-    {
-        std::lock_guard<std::mutex> pLock(m_pMutex);
-        for (auto& pItem : m_vUploadQueue)
-        {
-            if (pItem.nState == UploadState::WaitingForImage)
-            {
-                const auto* pQueuedAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pItem.pAsset);
-                if (pQueuedAchievement && pQueuedAchievement->GetBadge() == sBadge)
-                {
-                    pItem.sErrorMessage = response.ErrorMessage;
-                    pItem.nState = UploadState::Failed;
-                }
-            }
-        }
-
-        return;
-    }
-
-    // upload succeeded. update the badge property for each associated achievement and identify any achievements that
-    // need to be reprocessed because the image wasn't ready when they were previously given a chance to process.
     std::vector<ra::data::models::AchievementModel*> vAffectedAchievements;
-
     {
+        // only allow one badge upload at a time to prevent a race condition on server that could
+        // result in non-unique image IDs being returned.
         std::lock_guard<std::mutex> pLock(m_pMutex);
+        const auto response = request.Call();
+
+        // if the upload succeeded, update the badge property for each associated achievement and queue the
+        // achievement update. if the upload failed, set the error message and don't queue the achievement update.
         for (auto& pItem : m_vUploadQueue)
         {
             if (pItem.nState == UploadState::WaitingForImage)
@@ -114,14 +96,23 @@ void AssetUploadViewModel::UploadBadge(const std::wstring& sBadge)
                 auto* pQueuedAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pItem.pAsset);
                 if (pQueuedAchievement && pQueuedAchievement->GetBadge() == sBadge)
                 {
-                    pQueuedAchievement->SetBadge(ra::Widen(response.BadgeId));
-                    vAffectedAchievements.push_back(pQueuedAchievement);
+                    if (response.Succeeded())
+                    {
+                        RA_LOG_INFO("Changed badge on achievement %u to %s", pQueuedAchievement->GetID(), response.BadgeId);
+                        pQueuedAchievement->SetBadge(ra::Widen(response.BadgeId));
+                        vAffectedAchievements.push_back(pQueuedAchievement);
+                    }
+                    else
+                    {
+                        pItem.sErrorMessage = response.ErrorMessage;
+                        pItem.nState = UploadState::Failed;
+                    }
                 }
             }
         }
     }
 
-    // the affected achievements can be uploaded now
+    // the affected achievements can be uploaded now - will be empty on failure
     for (auto* pAchievement : vAffectedAchievements)
     {
         QueueTask([this, pAchievement]()
@@ -151,18 +142,9 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
         request.AchievementId = pAchievement.GetID();
     }
 
-    UploadItem* pItem = nullptr;
-    for (auto& pScan : m_vUploadQueue)
-    {
-        if (pScan.pAsset == &pAchievement)
-        {
-            pItem = &pScan;
-            break;
-        }
-    }
-    Expects(pItem != nullptr);
-
     const auto& response = request.Call();
+
+    // update the achievement
     if (response.Succeeded())
     {
         if (pAchievement.GetCategory() == ra::data::models::AssetCategory::Local)
@@ -173,13 +155,18 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
 
         pAchievement.UpdateLocalCheckpoint();
         pAchievement.UpdateServerCheckpoint();
-
-        pItem->nState = UploadState::Success;
     }
-    else
+
+    // update the queue
+    std::lock_guard<std::mutex> pLock(m_pMutex);
+    for (auto& pScan : m_vUploadQueue)
     {
-        pItem->sErrorMessage = response.ErrorMessage;
-        pItem->nState = UploadState::Failed;
+        if (pScan.pAsset == &pAchievement)
+        {
+            pScan.sErrorMessage = response.ErrorMessage;
+            pScan.nState = response.Succeeded() ? UploadState::Success : UploadState::Failed;
+            break;
+        }
     }
 }
 

@@ -403,8 +403,12 @@ static void ProcessAchievements()
                 const auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
                 if (vmAchievement)
                 {
-                    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                    pOverlayManager.AddChallengeIndicator(vmAchievement->GetID(), ra::ui::ImageType::Badge, ra::Narrow(vmAchievement->GetBadge()));
+                    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Challenge) != ra::ui::viewmodels::PopupLocation::None)
+                    {
+                        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                        pOverlayManager.AddChallengeIndicator(vmAchievement->GetID(), ra::ui::ImageType::Badge, ra::Narrow(vmAchievement->GetBadge()));
+                    }
                 }
 
                 break;
@@ -434,10 +438,13 @@ static void ProcessAchievements()
                             L"Leaderboard attempt started", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
                     }
 
-                    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                    auto& pScoreTracker = pOverlayManager.AddScoreTracker(pLeaderboard->ID());
-                    const auto sDisplayText = pLeaderboard->FormatScore(pChange.nValue);
-                    pScoreTracker.SetDisplayText(ra::Widen(sDisplayText));
+                    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker) != ra::ui::viewmodels::PopupLocation::None)
+                    {
+                        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                        auto& pScoreTracker = pOverlayManager.AddScoreTracker(pLeaderboard->ID());
+                        const auto sDisplayText = pLeaderboard->FormatScore(pChange.nValue);
+                        pScoreTracker.SetDisplayText(ra::Widen(sDisplayText));
+                    }
                 }
 
                 break;

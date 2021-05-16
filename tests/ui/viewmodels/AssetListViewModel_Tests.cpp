@@ -2652,6 +2652,63 @@ public:
         Assert::IsTrue(bMessageSeen);
     }
 
+    TEST_METHOD(TestCloneReset)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
+        {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        vmAssetList.CloneSelected();
+
+        // new Local achievement should be created and focused
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+
+        auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+        Assert::AreEqual(std::wstring(L"Test2 (copy)"), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
+        Assert::AreEqual({ 111000001U }, pAsset->GetId());
+        Assert::AreEqual(7, pAsset->GetPoints());
+
+        // save the asset - if we reset without saving, it'll just get deleted
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.SaveSelected();
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+
+        // resetting the achievement should not change anything about it
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.ResetSelected();
+
+        pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::AreEqual(std::wstring(L"Test2 (copy)"), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+        Assert::AreEqual({ 111000001U }, pAsset->GetId());
+        Assert::AreEqual(7, pAsset->GetPoints());
+    }
+
     TEST_METHOD(TestResetSelectedAllUnmodified)
     {
         AssetListViewModelHarness vmAssetList;

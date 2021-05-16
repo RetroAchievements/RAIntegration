@@ -1396,17 +1396,22 @@ void AssetListViewModel::CloneSelected()
     std::vector<int> vNewIDs;
     for (const auto* pAsset : vSelectedAssets)
     {
-        const auto& pSourceAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
-        auto& vmAchievement = pGameContext.Assets().NewAchievement();
-        vmAchievement.SetCategory(ra::data::models::AssetCategory::Local);
-        vmAchievement.SetName(pSourceAchievement->GetName() + L" (copy)");
-        vmAchievement.SetDescription(pSourceAchievement->GetDescription());
-        vmAchievement.SetBadge(pSourceAchievement->GetBadge());
-        vmAchievement.SetPoints(pSourceAchievement->GetPoints());
-        vmAchievement.SetTrigger(pSourceAchievement->GetTrigger());
-        vmAchievement.SetNew();
+        const auto* pSourceAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
+        if (pSourceAchievement != nullptr)
+        {
+            auto& vmAchievement = pGameContext.Assets().NewAchievement();
+            vmAchievement.SetCategory(ra::data::models::AssetCategory::Local);
+            vmAchievement.UpdateServerCheckpoint();
 
-        vNewIDs.push_back(vmAchievement.GetID());
+            vmAchievement.SetName(pSourceAchievement->GetName() + L" (copy)");
+            vmAchievement.SetDescription(pSourceAchievement->GetDescription());
+            vmAchievement.SetBadge(pSourceAchievement->GetBadge());
+            vmAchievement.SetPoints(pSourceAchievement->GetPoints());
+            vmAchievement.SetTrigger(pSourceAchievement->GetTrigger());
+            vmAchievement.SetNew();
+
+            vNewIDs.push_back(vmAchievement.GetID());
+        }
     }
 
     // select the new items and deselect everything else

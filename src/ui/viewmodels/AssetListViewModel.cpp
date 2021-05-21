@@ -883,11 +883,18 @@ void AssetListViewModel::SaveSelected()
 
         if (vSelectedAssets.empty())
         {
-            RA_LOG_INFO("Saving all assets", vSelectedAssets.size());
+            RA_LOG_INFO("Saving all %u assets", pGameContext.Assets().Count());
         }
         else
         {
-            RA_LOG_INFO("Saving %u assets", vSelectedAssets.size());
+            std::string sMessage;
+            for (const auto* pAsset : vSelectedAssets)
+            {
+                if (!sMessage.empty())
+                    sMessage.push_back(',');
+                sMessage.append(std::to_string(pAsset->GetID()));
+            }
+            RA_LOG_INFO("Saving %u assets: %s", vSelectedAssets.size(), sMessage);
         }
     }
     else if (sSaveButtonText.at(0) == 'P' && sSaveButtonText.at(1) == 'u') // "Publi&sh" / "Publi&sh All"
@@ -1384,13 +1391,22 @@ void AssetListViewModel::CloneSelected()
         return;
     }
 
+    {
+        std::string sMessage;
+        for (const auto* pAsset : vSelectedAssets)
+        {
+            if (!sMessage.empty())
+                sMessage.push_back(',');
+            sMessage.append(std::to_string(pAsset->GetID()));
+        }
+        RA_LOG_INFO("Cloning %u assets: %s", vSelectedAssets.size(), sMessage);
+    }
+
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
 
     FilteredAssets().BeginUpdate();
 
     SetFilterCategory(FilterCategory::Local);
-
-    RA_LOG_INFO("Cloning %u assets", vSelectedAssets.size());
 
     // add the cloned items
     std::vector<int> vNewIDs;

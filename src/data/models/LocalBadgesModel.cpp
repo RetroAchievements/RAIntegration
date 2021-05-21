@@ -1,7 +1,5 @@
 #include "LocalBadgesModel.hh"
 
-#include "data\context\GameContext.hh"
-
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
@@ -113,6 +111,7 @@ void LocalBadgesModel::Commit(const std::wstring& sPreviousBadgeName, const std:
     if (pIter != m_mReferences.end())
     {
         Expects(pIter->second.nUncommittedCount > 0);
+
         --pIter->second.nUncommittedCount;
         ++pIter->second.nCommittedCount;
     }

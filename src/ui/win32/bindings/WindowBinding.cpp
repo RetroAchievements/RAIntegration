@@ -240,6 +240,8 @@ void WindowBinding::OnSizeChanged(_UNUSED ra::ui::Size oSize)
 
         ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>().SetWindowSize(m_sSizeAndPositionKey, oDialogSize);
     }
+
+    ControlBinding::ForceRepaint(m_hWnd);
 }
 
 void WindowBinding::OnPositionChanged(_UNUSED ra::ui::Position oPosition)

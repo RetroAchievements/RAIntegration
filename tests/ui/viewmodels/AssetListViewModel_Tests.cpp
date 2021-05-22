@@ -2709,6 +2709,199 @@ public:
         Assert::AreEqual(7, pAsset->GetPoints());
     }
 
+    TEST_METHOD(TestCloneResetWithTemporaryImage)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(22U);
+        const auto* pLocalBadges = vmAssetList.AddLocalBadgesModel();
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+        const std::wstring sBadge1 = L"local\\ABCD.png";
+        const std::wstring sBadge2 = L"local\\EFGH.png";
+
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(1);
+        Expects(pAsset != nullptr);
+        pAsset->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        const auto* pAch = vmAssetList.mockGameContext.Assets().FindAchievement(pAsset->GetId());
+        Expects(pAch != nullptr);
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
+        {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        vmAssetList.CloneSelected();
+
+        // new Local achievement should be created and focused
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+
+        // new achievement should have updated uncommitted reference count to badge
+        pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        auto* pAchClone = vmAssetList.mockGameContext.Assets().FindAchievement(pAsset->GetId());
+        Expects(pAchClone != nullptr);
+
+        // save the asset - if we reset without saving, it'll just get deleted
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.SaveSelected();
+        Assert::AreEqual(pAch->GetBadge(), pAchClone->GetBadge());
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
+
+        // resetting the achievement should not change anything about it
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.ResetSelected();
+        Assert::AreEqual(pAch->GetBadge(), pAchClone->GetBadge());
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
+
+        // changing the badge should update reference counts
+        pAchClone->SetBadge(sBadge1);
+        Assert::AreEqual(sBadge1, pAchClone->GetBadge());
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
+
+        // saving the asset should update reference counts
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.SaveSelected();
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, true));
+
+        // resetting the achievement should not change anything about it
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.ResetSelected();
+        Assert::AreEqual(sBadge1, pAchClone->GetBadge());
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, true));
+
+        // changing the badge should update reference counts
+        pAchClone->SetBadge(sBadge2);
+        Assert::AreEqual(sBadge2, pAchClone->GetBadge());
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
+
+        // resetting should update reference counts
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.ResetSelected();
+        Assert::AreEqual(sBadge1, pAchClone->GetBadge());
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
+    }
+
+    TEST_METHOD(TestCloneResetWithTemporaryImages)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(22U);
+        const auto* pLocalBadges = vmAssetList.AddLocalBadgesModel();
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+        const std::wstring sBadge1 = L"local\\ABCD.png";
+        const std::wstring sBadge2 = L"local\\EFGH.png";
+
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(1);
+        Expects(pAsset != nullptr);
+        pAsset->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        auto* pAch = vmAssetList.mockGameContext.Assets().FindAchievement(pAsset->GetId());
+        Expects(pAch != nullptr);
+        pAch->SetBadge(sBadge1);
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
+        {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        vmAssetList.CloneSelected();
+
+        // new Local achievement should be created and focused
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+
+        // new achievement should have updated uncommitted reference count to badge
+        pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        auto* pAchClone = vmAssetList.mockGameContext.Assets().FindAchievement(pAsset->GetId());
+        Expects(pAchClone != nullptr);
+        Assert::AreEqual(pAch->GetBadge(), pAchClone->GetBadge());
+        Assert::AreEqual(2, pLocalBadges->GetReferenceCount(sBadge1, false));
+
+        // save the asset - if we reset without saving, it'll just get deleted
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.SaveSelected();
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
+
+        // resetting the achievement should not change anything about it
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.ResetSelected();
+        Assert::AreEqual(sBadge1, pAchClone->GetBadge());
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
+
+        // changing the badge should update reference counts
+        pAchClone->SetBadge(sBadge2);
+        Assert::AreEqual(sBadge2, pAchClone->GetBadge());
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
+
+        // saving the asset should update reference counts
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.SaveSelected();
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge2, true));
+
+        // resetting the achievement should not change anything about it
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.ResetSelected();
+        Assert::AreEqual(sBadge2, pAchClone->GetBadge());
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge2, true));
+
+        // changing the badge should update reference counts
+        pAchClone->SetBadge(sBadge1);
+        Assert::AreEqual(sBadge1, pAchClone->GetBadge());
+        Assert::AreEqual(2, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
+
+        // resetting should update reference counts
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.ResetSelected();
+        Assert::AreEqual(sBadge2, pAchClone->GetBadge());
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge2, true));
+    }
+
     TEST_METHOD(TestResetSelectedAllUnmodified)
     {
         AssetListViewModelHarness vmAssetList;
@@ -3177,6 +3370,47 @@ public:
         Assert::IsNull(vmAssetList.mockGameContext.Assets().FindAchievement({ 111000001U }));
     }
 
+    TEST_METHOD(TestResetSelectedAllNewFromFileLocalImage)
+    {
+        AssetListViewModelHarness vmAssetList;
+        const auto* pLocalBadges = vmAssetList.AddLocalBadgesModel();
+        Expects(pLocalBadges != nullptr);
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(ResetButtonState::ResetAll);
+        const std::wstring sBadge = L"local\\ABCD.png";
+
+        vmAssetList.MockUserFileContents("111000001:\"0xH2345=0\":Test2:::::User:0:0:0:::\"local\\\\ABCD.png\"\n");
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
+        {
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        vmAssetList.ResetSelected();
+
+        Assert::IsTrue(bDialogShown);
+
+        // new item will be added when there is no selection.
+        const auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 111000001U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge, false));
+
+        vmAssetList.ResetSelected();
+        Assert::IsTrue(bDialogShown);
+
+        // make sure reference counts remain unchanged
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge, false));
+    }
+
     TEST_METHOD(TestRevertSelectedAllUnmodified)
     {
         AssetListViewModelHarness vmAssetList;
@@ -3408,6 +3642,76 @@ public:
         // RemoveChallengeIndicator only marks the item as to be destroyed.
         // it still exists until the next Render()
         Assert::IsTrue(pIndicator->IsDestroyPending());
+    }
+
+    TEST_METHOD(TestRevertSelectedLocalWithTemporaryImages)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(22U);
+        const std::wstring sBadge1 = L"local\\ABCD.png";
+        const std::wstring sBadge2 = L"local\\EFGH.png";
+        const auto* pLocalBadges = vmAssetList.AddLocalBadgesModel();
+        vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", sBadge1, "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Local, 7, L"Test2", L"Desc2", sBadge2, "0xH1234=1");
+
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge2, true));
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Permanently delete?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Assets not available on the server will be permanently deleted."), vmMessageBox.GetMessage());
+
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        // deleting first asset should update badge reference counts
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        pAsset->SetSelected(true);
+
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(RevertButtonState::Delete);
+
+        vmAssetList.RevertSelected();
+        Assert::IsTrue(bDialogShown);
+
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge2, true));
+
+        // select the other asset
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        pAsset->SetSelected(true);
+
+        // change the badge for other asset
+        auto* pAch = vmAssetList.mockGameContext.Assets().FindAchievement(pAsset->GetId());
+        Expects(pAch != nullptr);
+        pAch->SetBadge(sBadge1);
+
+        Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
+
+        // delete it
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(RevertButtonState::Delete);
+        vmAssetList.RevertSelected();
+
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge1, true));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, false));
+        Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
     }
 
     TEST_METHOD(TestRevertSelectedCoreHardcore)

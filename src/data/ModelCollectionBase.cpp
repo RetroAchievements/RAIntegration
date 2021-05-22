@@ -248,7 +248,11 @@ void ModelCollectionBase::UpdateIndices()
         vDeletedIndices.reserve(nDeletedIndices);
 
         for (gsl::index nIndex = m_vItems.size() - 1; nIndex >= gsl::narrow_cast<gsl::index>(m_nSize); --nIndex)
-            vDeletedIndices.push_back(m_vItems.at(nIndex)->m_nCollectionIndex);
+        {
+            auto& pModel = *m_vItems.at(nIndex);
+            OnBeforeItemRemoved(pModel);
+            vDeletedIndices.push_back(pModel.m_nCollectionIndex);
+        }
 
         // use a reversed list so later indices are removed first when the callbacks are called
         std::sort(vDeletedIndices.rbegin(), vDeletedIndices.rend());

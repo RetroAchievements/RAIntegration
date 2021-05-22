@@ -89,21 +89,17 @@ void GameAssets::OnItemsAdded(const std::vector<gsl::index>& vNewIndices)
     ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnItemsAdded(vNewIndices);
 }
 
-void GameAssets::OnItemsRemoved(const std::vector<gsl::index>& vDeletedIndices)
+void GameAssets::OnBeforeItemRemoved(ModelBase& pModel)
 {
     auto* pLocalBadges = dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0));
     if (pLocalBadges)
     {
-        for (const auto nIndex : vDeletedIndices)
-        {
-            const auto* pAsset = GetItemAt(nIndex);
-            const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
-            if (pAchievement && ra::StringStartsWith(pAchievement->GetBadge(), L"local\\"))
-                pLocalBadges->RemoveReference(pAchievement->GetBadge(), pAchievement->IsBadgeCommitted());
-        }
+        const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pModel);
+        if (pAchievement && ra::StringStartsWith(pAchievement->GetBadge(), L"local\\"))
+            pLocalBadges->RemoveReference(pAchievement->GetBadge(), pAchievement->IsBadgeCommitted());
     }
 
-    ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnItemsRemoved(vDeletedIndices);
+    ra::data::DataModelCollection<ra::data::models::AssetModelBase>::OnBeforeItemRemoved(pModel);
 }
 
 void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase*>& vAssetsToReload)

@@ -199,6 +199,7 @@ protected:
     virtual void OnFrozen() noexcept(false) {}
     virtual void OnBeginUpdate() noexcept(false) {}
     virtual void OnEndUpdate() noexcept(false) {}
+    virtual void OnBeforeItemRemoved(_UNUSED ModelBase& vmModel) noexcept(false) {}
     virtual void OnItemsRemoved(_UNUSED const std::vector<gsl::index>& vDeletedIndices) noexcept(false) {}
     virtual void OnItemsAdded(_UNUSED const std::vector<gsl::index>& vNewIndices) noexcept(false) {}
     virtual void OnItemsChanged(_UNUSED const std::vector<gsl::index>& vChangedIndices) noexcept(false) {}

@@ -684,7 +684,7 @@ BOOL AssetEditorDialog::OnInitDialog()
             // provided. GetStockIconInfo is prefered because it retusn an appropriately sized icon. this
             // is fallback logic for WinXP.
             GSL_SUPPRESS_TYPE1 m_hErrorIcon = reinterpret_cast<HICON>(
-                LoadImage(NULL, MAKEINTRESOURCE(OIC_ERROR), IMAGE_ICON, 16, 16, LR_SHARED));
+                LoadImage(nullptr, MAKEINTRESOURCE(OIC_ERROR), IMAGE_ICON, 16, 16, LR_SHARED));
         }
     }
 

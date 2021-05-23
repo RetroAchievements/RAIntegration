@@ -40,6 +40,7 @@ public:
     {
         return pProperty == *m_pBoundProperty;
     }
+    using GridColumnBinding::DependsOn; // inherit other overloads
 
     const StringModelProperty& GetBoundProperty() const noexcept { return *m_pBoundProperty; }
 

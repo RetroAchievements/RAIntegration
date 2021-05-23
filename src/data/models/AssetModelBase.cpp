@@ -425,9 +425,12 @@ void AssetModelBase::SetAssetDefinition(AssetDefinition& pAsset, const std::stri
     else
     {
         // after local checkpoint
+        const auto nState = GetAssetDefinitionState(pAsset);
+
         if (pAsset.m_bLocalModified && sValue == pAsset.m_sLocalDefinition)
         {
-            if (!pAsset.m_sCurrentDefinition.empty())
+            // value being set to unpublished value
+            if (nState != AssetChanges::Unpublished)
             {
                 pAsset.m_sCurrentDefinition.clear();
                 UpdateAssetDefinitionVersion(pAsset, AssetChanges::Unpublished);
@@ -435,7 +438,8 @@ void AssetModelBase::SetAssetDefinition(AssetDefinition& pAsset, const std::stri
         }
         else if (!pAsset.m_bLocalModified && sValue == pAsset.m_sCoreDefinition)
         {
-            if (!pAsset.m_sCurrentDefinition.empty())
+            // value being set to core value (and no unpublished value exists)
+            if (nState != AssetChanges::None)
             {
                 pAsset.m_sCurrentDefinition.clear();
                 UpdateAssetDefinitionVersion(pAsset, AssetChanges::None);
@@ -443,7 +447,13 @@ void AssetModelBase::SetAssetDefinition(AssetDefinition& pAsset, const std::stri
         }
         else if (pAsset.m_sCurrentDefinition != sValue)
         {
+            // value being changed
             pAsset.m_sCurrentDefinition = sValue;
+            UpdateAssetDefinitionVersion(pAsset, AssetChanges::Modified);
+        }
+        else if (sValue.empty() && !GetAssetDefinition(pAsset, nState).empty())
+        {
+            // value being changed to empty string
             UpdateAssetDefinitionVersion(pAsset, AssetChanges::Modified);
         }
     }

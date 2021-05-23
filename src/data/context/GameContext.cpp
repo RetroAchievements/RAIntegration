@@ -455,6 +455,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
         sHeader.insert(0, L"Test ");
         vmPopup->SetTitle(sHeader);
 
+        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement->GetID(), "test compatibility mode");
         bSubmit = false;
     }
 
@@ -466,6 +467,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
         sHeader.insert(sHeader.length() - 8, L"NOT ");
         vmPopup->SetTitle(sHeader);
 
+        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement->GetID(), pAchievement->IsModified() ? "modified" : "unpublished");
         bIsError = true;
         bSubmit = false;
         bTakeScreenshot = false;
@@ -477,6 +479,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
         vmPopup->SetTitle(L"Achievement NOT Unlocked");
         vmPopup->SetErrorDetail(L"Error: RAM tampered with");
 
+        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement->GetID(), "RAM tampered with");
         bIsError = true;
         bSubmit = false;
     }
@@ -486,6 +489,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
         vmPopup->SetTitle(L"Achievement NOT Unlocked");
         vmPopup->SetErrorDetail(L"Error: RAM insecure");
 
+        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement->GetID(), "RAM insecure");
         bIsError = true;
         bSubmit = false;
     }

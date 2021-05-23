@@ -243,7 +243,7 @@ public:
 protected:
     virtual void Publish(std::vector<ra::data::models::AssetModelBase*>& vAssets);
     bool ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly);
-    virtual void ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const;
+    virtual void ValidateAchievementForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::AchievementModel& pAchievement) const noexcept(false);
     virtual bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Out_ std::wstring& sErrorMessage) const;
 
 private:

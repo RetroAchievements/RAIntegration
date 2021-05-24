@@ -462,7 +462,7 @@ void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
     m_vGroups.EndUpdate();
     m_vGroups.AddNotifyTarget(*this);
 
-    if (nSelectedIndex < m_vGroups.Count())
+    if (nSelectedIndex < gsl::narrow_cast<int>(m_vGroups.Count()))
     {
         // forcibly update the conditions from the selected group
         UpdateConditions(m_vGroups.GetItemAt(nSelectedIndex));

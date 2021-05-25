@@ -367,7 +367,7 @@ static void AddAltGroup(ViewModelCollection<TriggerViewModel::GroupViewModel>& v
 {
     auto& vmAltGroup = vGroups.Add();
     vmAltGroup.SetId(nId);
-    vmAltGroup.SetLabel(ra::StringPrintf(L"Alt %d", nId));
+    vmAltGroup.SetLabel(ra::StringPrintf(L"%s%d", (nId < 1000) ? "Alt " : "A", nId));
     vmAltGroup.m_pConditionSet = pConditionSet;
 }
 

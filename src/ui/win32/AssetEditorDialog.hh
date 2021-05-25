@@ -85,6 +85,21 @@ private:
         bool IsActive() const;
     };
 
+    class ConditionsGridBinding : public ra::ui::win32::bindings::GridBinding
+    {
+    public:
+        explicit ConditionsGridBinding(ViewModelBase& vmViewModel) noexcept : GridBinding(vmViewModel) {}
+
+    protected:
+        void OnViewModelAdded(gsl::index nIndex) override;
+        void OnViewModelRemoved(gsl::index nIndex) override;
+        void OnEndViewModelCollectionUpdate() override;
+
+    private:
+        void CheckIdWidth();
+        bool m_bWideId = false;
+    };
+
     ra::ui::win32::bindings::NumericTextBoxBinding m_bindID;
     ra::ui::win32::bindings::TextBoxBinding m_bindName;
     ra::ui::win32::bindings::TextBoxBinding m_bindDescription;
@@ -99,7 +114,7 @@ private:
     DecimalPreferredBinding m_bindDecimalPreferred;
 
     ra::ui::win32::bindings::GridBinding m_bindGroups;
-    ra::ui::win32::bindings::GridBinding m_bindConditions;
+    ConditionsGridBinding m_bindConditions;
 
     HICON m_hErrorIcon = nullptr;
     HWND m_hTooltip = nullptr;

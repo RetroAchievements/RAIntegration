@@ -435,6 +435,36 @@ public:
         Assert::AreEqual(std::wstring(L"Name"), asset.GetName());
         Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
     }
+
+    TEST_METHOD(TestSetDefinitionToBlank)
+    {
+        AssetDefinitionViewModelHarness asset;
+        asset.SetName(L"ServerName");
+        asset.SetCategory(AssetCategory::Core);
+        asset.SetDefinition("ServerDefinition");
+        asset.CreateServerCheckpoint();
+        asset.CreateLocalCheckpoint();
+
+        Assert::AreEqual(AssetChanges::None, asset.GetChanges());
+
+        asset.SetDefinition("");
+        Assert::AreEqual(AssetChanges::Modified, asset.GetChanges());
+
+        asset.SetDefinition("ServerDefinition");
+        Assert::AreEqual(AssetChanges::None, asset.GetChanges());
+
+        asset.SetDefinition("LocalDefinition");
+        Assert::AreEqual(AssetChanges::Modified, asset.GetChanges());
+
+        asset.UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
+
+        asset.SetDefinition("");
+        Assert::AreEqual(AssetChanges::Modified, asset.GetChanges());
+
+        asset.SetDefinition("LocalDefinition");
+        Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
+    }
 };
 
 const StringModelProperty AssetModelBase_Tests::AssetModelHarness::StringProperty("AssetModelHarness", "String", L"");

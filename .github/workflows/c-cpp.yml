@@ -1,0 +1,93 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  Win32-DLL:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Build
+      run: msbuild.exe RA_Integration.sln -t:RA_Integration -p:Configuration=Release -p:Platform=Win32
+
+  Win64-DLL:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Build
+      run: msbuild.exe RA_Integration.sln -t:RA_Integration -p:Configuration=Release -p:Platform=x64
+
+  Win32-Tests:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Install VSTest
+      uses: Malcolmnixon/Setup-VSTest@v4
+    - name: Build
+      run: msbuild.exe -m RA_Integration.sln -p:Configuration=Release -p:Platform=Win32
+    - name: Run DLL Tests
+      run: vstest.console bin\Win32\Release\tests\RA_Integration\RA_Integration.Tests.dll
+    - name: Run Interface Tests
+      # requires the DLL to have been built
+      run: vstest.console bin\Win32\Release\tests\RA_Interface\RA_Interface.Tests.dll
+
+  Win64-Tests:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Install VSTest
+      uses: Malcolmnixon/Setup-VSTest@v4
+    - name: Build
+      run: msbuild.exe -m RA_Integration.sln -p:Configuration=Release -p:Platform=x64
+    - name: Run DLL Tests
+      run: vstest.console bin\x64\Release\tests\RA_Integration\RA_Integration.Tests.dll
+    - name: Run Interface Tests
+      run: vstest.console bin\x64\Release\tests\RA_Interface\RA_Interface.Tests.dll
+
+  Win32-Analysis:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Build
+      run: msbuild.exe RA_Integration.sln -p:Configuration=Analysis -p:Platform=Win32
+
+  Win64-Analysis:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Build
+      run: msbuild.exe RA_Integration.sln -p:Configuration=Analysis -p:Platform=x64

@@ -31,6 +31,28 @@ jobs:
     - name: Build
       run: msbuild.exe RA_Integration.sln -t:RA_Integration -p:Configuration=Release -p:Platform=x64
 
+  Win32-Tests:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Install VSTest
+      uses: Malcolmnixon/Setup-VSTest@v4
+    - name: Build DLL Tests
+      # real project name is RA_Integration.Tests, but MSBuild.exe requires changing the period to an underscore
+      run: msbuild.exe RA_Integration.sln -t:RA_Integration_Tests -p:Configuration=Release -p:Platform=Win32
+    - name: Build Interface Tests
+      # real project name is RA_Interface.Tests, but MSBuild.exe requires changing the period to an underscore
+      run: msbuild.exe RA_Integration.sln -t:RA_Interface_Tests -p:Configuration=Release -p:Platform=Win32
+    - name: Run Interface Tests
+      run: vstest.console bin\x64\Release\tests\RA_Interface\RA_Interface.Tests.dll
+    - name: Run DLL Tests
+      run: vstest.console bin\x64\Release\tests\RA_Integration\RA_Integration.Tests.dll
+
   Win64-Tests:
     runs-on: windows-latest
     steps:
@@ -43,13 +65,27 @@ jobs:
     - name: Install VSTest
       uses: Malcolmnixon/Setup-VSTest@v4
     - name: Build DLL Tests
-      run: msbuild.exe RA_Integration.sln -t:RA_Integration.Tests -p:Configuration=Release -p:Platform=x64
+      # real project name is RA_Integration.Tests, but MSBuild.exe requires changing the period to an underscore
+      run: msbuild.exe RA_Integration.sln -t:RA_Integration_Tests -p:Configuration=Release -p:Platform=x64
     - name: Build Interface Tests
-      run: msbuild.exe RA_Integration.sln -t:RA_Interface.Tests -p:Configuration=Release -p:Platform=x64
+      # real project name is RA_Interface.Tests, but MSBuild.exe requires changing the period to an underscore
+      run: msbuild.exe RA_Integration.sln -t:RA_Interface_Tests -p:Configuration=Release -p:Platform=x64
     - name: Run Interface Tests
       run: vstest.console bin\x64\Release\tests\RA_Interface\RA_Interface.Tests.dll
     - name: Run DLL Tests
       run: vstest.console bin\x64\Release\tests\RA_Integration\RA_Integration.Tests.dll
+
+  Win32-Analysis:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Build
+      run: msbuild.exe RA_Integration.sln -p:Configuration=Analysis -p:Platform=Win32
 
   Win64-Analysis:
     runs-on: windows-latest

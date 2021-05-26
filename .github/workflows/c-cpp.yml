@@ -42,16 +42,13 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
     - name: Install VSTest
       uses: Malcolmnixon/Setup-VSTest@v4
-    - name: Build DLL Tests
-      # real project name is RA_Integration.Tests, but MSBuild.exe requires changing the period to an underscore
-      run: msbuild.exe RA_Integration.sln -t:RA_Integration_Tests -p:Configuration=Release -p:Platform=Win32
-    - name: Build Interface Tests
-      # real project name is RA_Interface.Tests, but MSBuild.exe requires changing the period to an underscore
-      run: msbuild.exe RA_Integration.sln -t:RA_Interface_Tests -p:Configuration=Release -p:Platform=Win32
-    - name: Run Interface Tests
-      run: vstest.console bin\x64\Release\tests\RA_Interface\RA_Interface.Tests.dll
+    - name: Build
+      run: msbuild.exe -m RA_Integration.sln -p:Configuration=Release -p:Platform=Win32
     - name: Run DLL Tests
-      run: vstest.console bin\x64\Release\tests\RA_Integration\RA_Integration.Tests.dll
+      run: vstest.console bin\Win32\Release\tests\RA_Integration\RA_Integration.Tests.dll
+    - name: Run Interface Tests
+      # requires the DLL to have been built
+      run: vstest.console bin\Win32\Release\tests\RA_Interface\RA_Interface.Tests.dll
 
   Win64-Tests:
     runs-on: windows-latest
@@ -64,16 +61,12 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
     - name: Install VSTest
       uses: Malcolmnixon/Setup-VSTest@v4
-    - name: Build DLL Tests
-      # real project name is RA_Integration.Tests, but MSBuild.exe requires changing the period to an underscore
-      run: msbuild.exe RA_Integration.sln -t:RA_Integration_Tests -p:Configuration=Release -p:Platform=x64
-    - name: Build Interface Tests
-      # real project name is RA_Interface.Tests, but MSBuild.exe requires changing the period to an underscore
-      run: msbuild.exe RA_Integration.sln -t:RA_Interface_Tests -p:Configuration=Release -p:Platform=x64
-    - name: Run Interface Tests
-      run: vstest.console bin\x64\Release\tests\RA_Interface\RA_Interface.Tests.dll
+    - name: Build
+      run: msbuild.exe -m RA_Integration.sln -p:Configuration=Release -p:Platform=x64
     - name: Run DLL Tests
       run: vstest.console bin\x64\Release\tests\RA_Integration\RA_Integration.Tests.dll
+    - name: Run Interface Tests
+      run: vstest.console bin\x64\Release\tests\RA_Interface\RA_Interface.Tests.dll
 
   Win32-Analysis:
     runs-on: windows-latest

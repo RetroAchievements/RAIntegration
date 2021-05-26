@@ -44,6 +44,7 @@ jobs:
       uses: Malcolmnixon/Setup-VSTest@v4
     - name: Build
       run: msbuild.exe RA_Integration.sln -p:Configuration=Release -p:Platform=x64
-    - name: Run Tests
+    - name: Run Interface Tests
       run: vstest.console bin\x64\Release\tests\RA_Interface\RA_Interface.Tests.dll
+    - name: Run DLL Tests
       run: vstest.console bin\x64\Release\tests\RA_Integration\RA_Integration.Tests.dll

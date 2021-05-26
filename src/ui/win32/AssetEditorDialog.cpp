@@ -305,9 +305,15 @@ public:
     {
         if (pProperty == TriggerConditionViewModel::CurrentHitsProperty)
             return true;
-        if (pProperty == TriggerConditionViewModel::HasHitsProperty)
-            return true;
         if (pProperty == TriggerConditionViewModel::TotalHitsProperty)
+            return true;
+
+        return GridNumberColumnBinding::DependsOn(pProperty);
+    }
+
+    bool DependsOn(const ra::ui::BoolModelProperty& pProperty) const override
+    {
+        if (pProperty == TriggerConditionViewModel::HasHitsProperty)
             return true;
 
         return GridNumberColumnBinding::DependsOn(pProperty);

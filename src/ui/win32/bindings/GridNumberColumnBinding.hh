@@ -36,6 +36,7 @@ public:
     {
         return pProperty == *m_pBoundProperty;
     }
+    using GridTextColumnBindingBase::DependsOn; // inherit other overloads
 
     unsigned int Maximum() const noexcept { return m_nMaximum; }
     void SetMaximum(unsigned int nValue) noexcept { m_nMaximum = nValue; }

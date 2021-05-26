@@ -478,6 +478,36 @@ void AssetEditorDialog::ActiveCheckBoxBinding::OnViewModelIntValueChanged(const 
     }
 }
 
+void AssetEditorDialog::ConditionsGridBinding::OnViewModelAdded(gsl::index nIndex)
+{
+    CheckIdWidth();
+    GridBinding::OnViewModelAdded(nIndex);
+}
+
+void AssetEditorDialog::ConditionsGridBinding::OnViewModelRemoved(gsl::index nIndex)
+{
+    CheckIdWidth();
+    GridBinding::OnViewModelRemoved(nIndex);
+}
+
+void AssetEditorDialog::ConditionsGridBinding::OnEndViewModelCollectionUpdate()
+{
+    CheckIdWidth();
+    GridBinding::OnEndViewModelCollectionUpdate();
+}
+
+void AssetEditorDialog::ConditionsGridBinding::CheckIdWidth()
+{
+    const bool bWideId = m_vmItems->Count() >= 1000;
+    if (bWideId != m_bWideId)
+    {
+        m_vColumns.at(0)->SetWidth(GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_ID + (bWideId ? 5 : 0));
+        m_bWideId = bWideId;
+
+        UpdateLayout();
+    }
+}
+
 AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     : DialogBase(vmAssetEditor),
     m_bindID(vmAssetEditor),

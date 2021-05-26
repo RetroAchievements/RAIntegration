@@ -12,6 +12,8 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - name: Install MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
     - name: Build

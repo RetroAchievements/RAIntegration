@@ -7,6 +7,18 @@ on:
     branches: [ master ]
 
 jobs:
+  Win32-DLL:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Build
+      run: msbuild.exe RA_Integration.sln -t:RA_Integration -p:Configuration=Release -p:Platform=x86
+
   Win64-DLL:
     runs-on: windows-latest
     steps:
@@ -18,4 +30,20 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
     - name: Build
       run: msbuild.exe RA_Integration.sln -t:RA_Integration -p:Configuration=Release -p:Platform=x64
-      
+
+  Win64-Tests:
+    runs-on: windows-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
+    - name: Install MSBuild
+      uses: microsoft/setup-msbuild@v1.0.2
+    - name: Install VSTest
+      uses: Malcolmnixon/Setup-VSTest@v4
+    - name: Build
+      run: msbuild.exe RA_Integration.sln -p:Configuration=Release -p:Platform=x64
+    - name: Run Tests
+      run: vstest.console bin\x64\Release\tests\RA_Interface\RA_Interface.Tests.dll
+      run: vstest.console bin\x64\Release\tests\RA_Integration\RA_Integration.Tests.dll

@@ -35,6 +35,17 @@ static constexpr int COLUMN_WIDTH_VALUE = 72;
 static constexpr int COLUMN_WIDTH_OPERATOR = 35;
 static constexpr int COLUMN_WIDTH_HITS = 84;
 
+using fnGetStockIconInfo = std::add_pointer_t<HRESULT WINAPI(SHSTOCKICONID, UINT, SHSTOCKICONINFO*)>;
+static fnGetStockIconInfo pGetStockIconInfo = nullptr;
+
+AssetEditorDialog::Presenter::Presenter() noexcept
+{
+    // SHGetStockIconInfo isn't supported on WinXP, so we have to dynamically find it.
+    auto hDll = LoadLibraryA("Shell32");
+    if (hDll)
+        GSL_SUPPRESS_TYPE1 pGetStockIconInfo = reinterpret_cast<fnGetStockIconInfo>(GetProcAddress(hDll, "SHGetStockIconInfo"));
+}
+
 bool AssetEditorDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& vmViewModel) noexcept
 {
     return (dynamic_cast<const AssetEditorViewModel*>(&vmViewModel) != nullptr);
@@ -660,10 +671,21 @@ BOOL AssetEditorDialog::OnInitDialog()
 
     if (!m_hErrorIcon)
     {
-        SHSTOCKICONINFO sii{};
-        sii.cbSize = sizeof(sii);
-        if (SUCCEEDED(::SHGetStockIconInfo(SIID_ERROR, SHGSI_ICON | SHGSI_SMALLICON, &sii)))
-            m_hErrorIcon = sii.hIcon;
+        if (pGetStockIconInfo != nullptr)
+        {
+            SHSTOCKICONINFO sii{};
+            sii.cbSize = sizeof(sii);
+            if (SUCCEEDED(pGetStockIconInfo(SIID_ERROR, SHGSI_ICON | SHGSI_SMALLICON, &sii)))
+                m_hErrorIcon = sii.hIcon;
+        }
+        else
+        {
+            // despite requesting a 16x16 icon, this returns a 32x32 one, which looks awkward in the space
+            // provided. GetStockIconInfo is prefered because it retusn an appropriately sized icon. this
+            // is fallback logic for WinXP.
+            GSL_SUPPRESS_TYPE1 m_hErrorIcon = reinterpret_cast<HICON>(
+                LoadImage(nullptr, MAKEINTRESOURCE(OIC_ERROR), IMAGE_ICON, 16, 16, LR_SHARED));
+        }
     }
 
     const auto hErrorIconControl = GetDlgItem(GetHWND(), IDC_RA_ERROR_INDICATOR);

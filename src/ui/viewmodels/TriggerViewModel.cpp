@@ -462,8 +462,16 @@ void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
     m_vGroups.EndUpdate();
     m_vGroups.AddNotifyTarget(*this);
 
-    // forcibly update the conditions from the selected group
-    UpdateConditions(m_vGroups.GetItemAt(nSelectedIndex));
+    if (nSelectedIndex < gsl::narrow_cast<int>(m_vGroups.Count()))
+    {
+        // forcibly update the conditions from the selected group
+        UpdateConditions(m_vGroups.GetItemAt(nSelectedIndex));
+    }
+    else
+    {
+        // selected group no longer exists, select core group
+        SetSelectedGroupIndex(0);
+    }
 }
 
 void TriggerViewModel::UpdateFrom(const std::string& sTrigger)
@@ -559,8 +567,8 @@ void TriggerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
             if (args.tOldValue != -1)
             {
                 auto* pOldGroup = m_vGroups.GetItemAt(args.tOldValue);
-                Expects(pOldGroup != nullptr);
-                pOldGroup->SetSelected(false);
+                if (pOldGroup != nullptr) // group may have been deleted
+                    pOldGroup->SetSelected(false);
             }
 
             m_vGroups.AddNotifyTarget(*this);

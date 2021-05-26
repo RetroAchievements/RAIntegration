@@ -264,6 +264,26 @@ public:
         Assert::AreEqual(std::string("0xH1234=0xH2345_0xH04d2=0S0xX5555=1"), pMonitor.sNewTrigger);
     }
 
+    TEST_METHOD(TestTriggerUpdateSelectedGroupRemoved)
+    {
+        TriggerViewModel vmTrigger;
+        Parse(vmTrigger, "0xH1234=0xH2345S0xX5555=1");
+
+        vmTrigger.SetSelectedGroupIndex(1);
+        Assert::AreEqual({ 1 }, vmTrigger.Conditions().Count());
+        Assert::AreEqual({ 0x5555 }, vmTrigger.Conditions().GetItemAt(0)->GetSourceValue());
+
+        vmTrigger.UpdateFrom("0xH1234=0xH2345");
+
+        Assert::AreEqual(0, vmTrigger.GetSelectedGroupIndex());
+        Assert::AreEqual({ 1 }, vmTrigger.Conditions().Count());
+        Assert::AreEqual({ 0x1234 }, vmTrigger.Conditions().GetItemAt(0)->GetSourceValue());
+
+        // calling UpdateFrom does not change the version, so we can't use a monitor as it
+        // won't get the event. but we can check the serialized value
+        Assert::AreEqual(std::string("0xH1234=0xH2345"), vmTrigger.Serialize());
+    }
+
     TEST_METHOD(TestTriggerUpdateConditionsResetAndReapplied)
     {
         TriggerViewModel vmTrigger;

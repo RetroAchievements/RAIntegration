@@ -232,6 +232,9 @@ static void map_event_to_change(const rc_runtime_event_t* pRuntimeEvent)
         case RC_RUNTIME_EVENT_ACHIEVEMENT_RESET:
             nChangeType = AchievementRuntime::ChangeType::AchievementReset;
             break;
+        case RC_RUNTIME_EVENT_ACHIEVEMENT_PAUSED:
+            nChangeType = AchievementRuntime::ChangeType::AchievementPaused;
+            break;
         case RC_RUNTIME_EVENT_ACHIEVEMENT_DISABLED:
             nChangeType = AchievementRuntime::ChangeType::AchievementDisabled;
             break;

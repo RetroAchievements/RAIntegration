@@ -129,7 +129,7 @@ void OverlayAchievementsPageViewModel::Refresh()
     // achievement list
     std::vector<const ra::data::models::AchievementModel*> vRecentAchievements;
     std::vector<const ra::data::models::AchievementModel*> vActiveChallengeAchievements;
-    std::vector<const ra::data::models::AchievementModel*> vAlmostThereAchievements;
+    std::vector<std::pair<const ra::data::models::AchievementModel*, unsigned>> vAlmostThereAchievements;
     std::vector<const ra::data::models::AchievementModel*> vUnofficialAchievements;
     std::vector<const ra::data::models::AchievementModel*> vLocalAchievements;
     std::vector<const ra::data::models::AchievementModel*> vLockedCoreAchievements;
@@ -180,7 +180,15 @@ void OverlayAchievementsPageViewModel::Refresh()
                     const auto nProgress = pTrigger->measured_value * 100 / pTrigger->measured_target;
                     if (nProgress >= 80)
                     {
-                        vAlmostThereAchievements.push_back(vmAchievement);
+                        auto pIter = vAlmostThereAchievements.begin();
+                        while (pIter < vAlmostThereAchievements.end())
+                        {
+                            if (pIter->second < nProgress)
+                                break;
+
+                            ++pIter;
+                        }
+                        vAlmostThereAchievements.insert(pIter, std::make_pair(vmAchievement, nProgress));
                         continue;
                     }
                 }
@@ -269,8 +277,9 @@ void OverlayAchievementsPageViewModel::Refresh()
         auto& pvmHeader = GetNextItem(&nIndex);
         SetHeader(pvmHeader, L"Almost There");
 
-        for (const auto* vmAchievement : vAlmostThereAchievements)
+        for (const auto& pPair : vAlmostThereAchievements)
         {
+            const auto* vmAchievement = pPair.first;
             auto& pvmAchievement = GetNextItem(&nIndex);
             SetAchievement(pvmAchievement, *vmAchievement);
             nMaxPts += vmAchievement->GetPoints();

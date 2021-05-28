@@ -624,6 +624,67 @@ public:
         Assert::IsNull(achievementsPage.GetItem(7));
     }
 
+    TEST_METHOD(TestRefreshAlmostThereAchievementsSorting)
+    {
+        OverlayAchievementsPageViewModelHarness achievementsPage;
+        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch1.SetID(1);
+        pAch1.SetPoints(1U);
+        pAch1.SetState(AssetState::Active);
+        achievementsPage.SetProgress(1U, 85, 100);
+        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch2.SetID(2);
+        pAch2.SetPoints(2U);
+        pAch2.SetState(AssetState::Active);
+        achievementsPage.SetProgress(2U, 95, 100);
+        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch3.SetID(3);
+        pAch3.SetPoints(3U);
+        pAch3.SetState(AssetState::Active);
+        achievementsPage.SetProgress(3U, 85, 100);
+        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
+        pAch4.SetID(4);
+        pAch4.SetPoints(4U);
+        pAch4.SetState(AssetState::Active);
+        achievementsPage.SetProgress(4U, 90, 100);
+
+        achievementsPage.Refresh();
+        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"0 of 4 won (0/10)"), achievementsPage.GetSummary());
+
+        auto const* pItem = achievementsPage.GetItem(0);
+        Expects(pItem != nullptr);
+        Assert::IsTrue(pItem->IsHeader());
+        Assert::AreEqual(std::wstring(L"Almost There"), pItem->GetLabel());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(1);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(2, pItem->GetId());
+        Assert::AreEqual(100U, pItem->GetProgressMaximum());
+        Assert::AreEqual(95U, pItem->GetProgressValue());
+
+        pItem = achievementsPage.GetItem(2);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(4, pItem->GetId());
+        Assert::AreEqual(100U, pItem->GetProgressMaximum());
+        Assert::AreEqual(90U, pItem->GetProgressValue());
+
+        pItem = achievementsPage.GetItem(3);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(1, pItem->GetId());
+        Assert::AreEqual(100U, pItem->GetProgressMaximum());
+        Assert::AreEqual(85U, pItem->GetProgressValue());
+
+        pItem = achievementsPage.GetItem(4);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(3, pItem->GetId());
+        Assert::AreEqual(100U, pItem->GetProgressMaximum());
+        Assert::AreEqual(85U, pItem->GetProgressValue());
+
+        Assert::IsNull(achievementsPage.GetItem(5));
+    }
+
     TEST_METHOD(TestRefreshSession)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;

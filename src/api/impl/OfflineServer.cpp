@@ -17,14 +17,14 @@ Login::Response OfflineServer::Login(const Login::Request& request)
     response.Result = ApiResult::Success;
     response.Username = request.Username;
     response.ApiToken = "offlineToken";
-    return std::move(response);
+    return response;
 }
 
 Logout::Response OfflineServer::Logout(const Logout::Request&) noexcept
 {
     Logout::Response response;
     response.Result = ApiResult::Success;
-    return std::move(response);
+    return response;
 }
 
 FetchGameData::Response OfflineServer::FetchGameData(const FetchGameData::Request& request)
@@ -57,7 +57,7 @@ FetchGameData::Response OfflineServer::FetchGameData(const FetchGameData::Reques
         ConnectedServer::ProcessGamePatchData(response, httpResponse);
     }
 
-    return std::move(response);
+    return response;
 }
 
 FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Request& request)
@@ -85,7 +85,7 @@ FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Req
         ConnectedServer::ProcessCodeNotes(response, document);
     }
 
-    return std::move(response);
+    return response;
 }
 
 } // namespace impl

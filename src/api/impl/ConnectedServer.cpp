@@ -497,7 +497,7 @@ Login::Response ConnectedServer::Login(const Login::Request& request)
 
     rc_api_destroy_request(&api_request);
 
-    return std::move(response);
+    return response;
 }
 
 Logout::Response ConnectedServer::Logout(const Logout::Request&)
@@ -541,7 +541,7 @@ StartSession::Response ConnectedServer::StartSession(const StartSession::Request
 
     rc_api_destroy_request(&api_request);
 
-    return std::move(response);
+    return response;
 }
 
 Ping::Response ConnectedServer::Ping(const Ping::Request& request)
@@ -582,7 +582,7 @@ Ping::Response ConnectedServer::Ping(const Ping::Request& request)
 
     rc_api_destroy_request(&api_request);
 
-    return std::move(response);
+    return response;
 }
 
 FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlocks::Request& request)
@@ -622,7 +622,7 @@ FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlo
 
     rc_api_destroy_request(&api_request);
 
-    return std::move(response);
+    return response;
 }
 
 AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievement::Request& request)
@@ -664,7 +664,7 @@ AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievem
 
     rc_api_destroy_request(&api_request);
 
-    return std::move(response);
+    return response;
 }
 
 SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request)
@@ -718,7 +718,7 @@ SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const S
 
     rc_api_destroy_request(&api_request);
 
-    return std::move(response);
+    return response;
 }
 
 FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFriends::Request&)
@@ -758,7 +758,7 @@ FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFrie
         }
     }
 
-    return std::move(response);
+    return response;
 }
 
 ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& request)
@@ -795,7 +795,7 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
 
     rc_api_destroy_request(&api_request);
 
-    return std::move(response);
+    return response;
 }
 
 FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Request& request)
@@ -848,7 +848,7 @@ FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Requ
 
     rc_api_destroy_request(&api_request);
 
-    return std::move(response);
+    return response;
 }
 
 void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &response, const ra::services::Http::Response& httpResponse)
@@ -931,7 +931,7 @@ FetchCodeNotes::Response ConnectedServer::FetchCodeNotes(const FetchCodeNotes::R
         }
     }
 
-    return std::move(response);
+    return response;
 }
 
 void ConnectedServer::ProcessCodeNotes(ra::api::FetchCodeNotes::Response &response, const rapidjson::Value& CodeNotes)
@@ -968,7 +968,7 @@ UpdateCodeNote::Response ConnectedServer::UpdateCodeNote(const UpdateCodeNote::R
         response.Result = ApiResult::Success;
     }
 
-    return std::move(response);
+    return response;
 }
 
 DeleteCodeNote::Response ConnectedServer::DeleteCodeNote(const DeleteCodeNote::Request& request)
@@ -985,7 +985,7 @@ DeleteCodeNote::Response ConnectedServer::DeleteCodeNote(const DeleteCodeNote::R
         response.Result = ApiResult::Success;
     }
 
-    return std::move(response);
+    return response;
 }
 
 UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchievement::Request& request)
@@ -1015,7 +1015,7 @@ UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchie
         GetRequiredJsonField(response.AchievementId, document, "AchievementID", response);
     }
 
-    return std::move(response);
+    return response;
 }
 
 FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const FetchAchievementInfo::Request& request)
@@ -1076,7 +1076,7 @@ FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const Fetch
         }
     }
 
-    return std::move(response);
+    return response;
 }
 
 FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request)
@@ -1137,7 +1137,7 @@ FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const Fetch
         }
     }
 
-    return std::move(response);
+    return response;
 }
 
 LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request& request)

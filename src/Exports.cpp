@@ -414,6 +414,14 @@ static void ProcessAchievements()
                 break;
             }
 
+            case ra::services::AchievementRuntime::ChangeType::AchievementPaused:
+            {
+                // hide the challenge indicator - it'll be reshown when unpaused
+                auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                pOverlayManager.RemoveChallengeIndicator(pChange.nId);
+                break;
+            }
+
             case ra::services::AchievementRuntime::ChangeType::AchievementActivated:
             {
                 // state change from Waiting, Paused, or Primed to Active.

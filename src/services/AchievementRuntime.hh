@@ -138,6 +138,7 @@ public:
         None = 0,
         AchievementTriggered,
         AchievementReset,
+        AchievementPaused,
         LeaderboardStarted,
         LeaderboardCanceled,
         LeaderboardUpdated,

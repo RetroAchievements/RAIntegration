@@ -881,9 +881,11 @@ public:
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
+        Assert::IsFalse(runtime.HasRichPresence());
 
         const char* pRichPresence = "Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0xH01) @Num(d0xH01)\n";
         runtime.ActivateRichPresence(pRichPresence);
+        Assert::IsTrue(runtime.HasRichPresence());
 
         // string is evaluated with current memrefs (which will be 0)
         Assert::AreEqual(std::wstring(L"0 0"), runtime.GetRichPresenceDisplayString());
@@ -918,15 +920,19 @@ public:
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
+        Assert::IsFalse(runtime.HasRichPresence());
 
         runtime.ActivateRichPresence("Display:\nHello, World\n");
         Assert::AreEqual(std::wstring(L"Hello, World"), runtime.GetRichPresenceDisplayString());
+        Assert::IsTrue(runtime.HasRichPresence());
 
         runtime.ActivateRichPresence("Display:\nNew String\n");
         Assert::AreEqual(std::wstring(L"New String"), runtime.GetRichPresenceDisplayString());
+        Assert::IsTrue(runtime.HasRichPresence());
 
         runtime.ActivateRichPresence("");
         Assert::AreEqual(std::wstring(L"No Rich Presence defined."), runtime.GetRichPresenceDisplayString());
+        Assert::IsFalse(runtime.HasRichPresence());
     }
 
     TEST_METHOD(TestActivateRichPresenceWithError)
@@ -939,6 +945,7 @@ public:
 
         const char* pRichPresence = "Format:Num\nFormatType:Value\n\nDisplay:\n@Num(0H01) @Num(d0xH01)\n";
         runtime.ActivateRichPresence(pRichPresence);
+        Assert::IsTrue(runtime.HasRichPresence());
 
         Assert::AreEqual(std::wstring(L"Parse error -6 (line 5): Invalid operator"), runtime.GetRichPresenceDisplayString());
     }

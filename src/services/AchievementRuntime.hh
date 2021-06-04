@@ -115,7 +115,16 @@ public:
         if (!m_bInitialized)
             return false;
 
-        return (m_pRuntime.richpresence != nullptr && m_pRuntime.richpresence->richpresence != nullptr);
+        /* valid rich presence */
+        if (m_pRuntime.richpresence != nullptr && m_pRuntime.richpresence->richpresence != nullptr)
+            return true;
+
+        /* invalid rich presence */
+        if (m_nRichPresenceParseResult != RC_OK)
+            return true;
+
+        /* no rich presence */
+        return false;
     }
 
     /// <summary>

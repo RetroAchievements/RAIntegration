@@ -354,6 +354,22 @@ void AssetListViewModel::ApplyFilter()
     UpdateButtons();
 }
 
+void AssetListViewModel::EnsureAppearsInFilteredList(const ra::data::models::AssetModelBase& pAsset)
+{
+    // if the filter category is not all, ensure it matches the asset
+    const auto nFilterCategory = GetFilterCategory();
+    if (nFilterCategory != FilterCategory::All)
+    {
+        const auto nAssetCategory = ra::itoe<ra::data::models::AssetCategory>(ra::etoi(nFilterCategory));
+        if (pAsset.GetCategory() != nAssetCategory)
+            SetValue(FilterCategoryProperty, ra::etoi(pAsset.GetCategory()));
+    }
+
+    // if there's a special filter and it doesn't match, clear the special filter
+    if (GetSpecialFilter() != SpecialFilter::All && !MatchesFilter(pAsset))
+        SetSpecialFilter(ra::ui::viewmodels::AssetListViewModel::SpecialFilter::All);
+}
+
 bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& pAsset)
 {
     const auto nFilterCategory = GetFilterCategory();
@@ -1343,14 +1359,14 @@ void AssetListViewModel::CreateNew()
 
     FilteredAssets().BeginUpdate();
 
-    SetFilterCategory(FilterCategory::Local);
-
     auto& vmAchievement = pGameContext.Assets().NewAchievement();
     vmAchievement.SetCategory(ra::data::models::AssetCategory::Local);
     vmAchievement.SetPoints(0);
     vmAchievement.SetAuthor(ra::Widen(pUserContext.GetUsername()));
     vmAchievement.UpdateServerCheckpoint();
     vmAchievement.SetNew();
+
+    EnsureAppearsInFilteredList(vmAchievement);
 
     const auto nId = ra::to_signed(vmAchievement.GetID());
 
@@ -1416,8 +1432,6 @@ void AssetListViewModel::CloneSelected()
 
     FilteredAssets().BeginUpdate();
 
-    SetFilterCategory(FilterCategory::Local);
-
     // add the cloned items
     std::vector<int> vNewIDs;
     for (const auto* pAsset : vSelectedAssets)
@@ -1435,6 +1449,8 @@ void AssetListViewModel::CloneSelected()
             vmAchievement.SetPoints(pSourceAchievement->GetPoints());
             vmAchievement.SetTrigger(pSourceAchievement->GetTrigger());
             vmAchievement.SetNew();
+
+            EnsureAppearsInFilteredList(vmAchievement);
 
             vNewIDs.push_back(vmAchievement.GetID());
         }

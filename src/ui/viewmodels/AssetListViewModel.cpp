@@ -1076,6 +1076,16 @@ void AssetListViewModel::Publish(std::vector<ra::data::models::AssetModelBase*>&
     }
 
     vmAssetUpload.ShowModal(*this);
+
+    // if anything failed, revert to pre-publish state
+    // this assumes that publish can only be called on committed assets
+    for (auto* pAsset : vAssets)
+    {
+        Expects(pAsset != nullptr);
+        if (pAsset->GetChanges() != ra::data::models::AssetChanges::None)
+            pAsset->RestoreLocalCheckpoint();
+    }
+
     vmAssetUpload.ShowResults();
 }
 

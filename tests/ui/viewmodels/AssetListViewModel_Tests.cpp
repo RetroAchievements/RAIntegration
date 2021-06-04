@@ -394,22 +394,30 @@ private:
             for (auto* pAsset : vAssets)
             {
                 Expects(pAsset != nullptr);
-                pAsset->UpdateServerCheckpoint();
+                if (m_mPublishServerErrors.find(pAsset->GetID()) == m_mPublishServerErrors.end())
+                    pAsset->UpdateServerCheckpoint();
+                else
+                    pAsset->RestoreLocalCheckpoint();
             }
         }
 
         std::vector<ra::data::models::AssetModelBase*> PublishedAssets;
 
-        void SetPublishError(ra::AchievementID nId, const std::wstring& sError)
+        void SetValidationError(ra::AchievementID nId, const std::wstring& sError)
         {
-            m_mPublishErrors.insert_or_assign(nId, sError);
+            m_mValidationErrors.insert_or_assign(nId, sError);
         }
 
         void ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const override
         {
-            const auto pIter = m_mPublishErrors.find(pAchievement.GetID());
-            if (pIter != m_mPublishErrors.end())
+            const auto pIter = m_mValidationErrors.find(pAchievement.GetID());
+            if (pIter != m_mValidationErrors.end())
                 sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), pIter->second));
+        }
+
+        void SetPublishServerError(ra::AchievementID nId, const std::string& sError)
+        {
+            m_mPublishServerErrors.insert_or_assign(nId, sError);
         }
 
         bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Out_ std::wstring& sErrorMessage) const override
@@ -417,8 +425,8 @@ private:
             for (const auto* pAsset : vSelectedAssets)
             {
                 Expects(pAsset != nullptr);
-                const auto pIter = m_mPublishErrors.find(pAsset->GetID());
-                if (pIter != m_mPublishErrors.end())
+                const auto pIter = m_mValidationErrors.find(pAsset->GetID());
+                if (pIter != m_mValidationErrors.end())
                 {
                     sErrorMessage = pIter->second;
                     return true;
@@ -441,7 +449,8 @@ private:
 
 
     private:
-        std::map<ra::AchievementID, std::wstring> m_mPublishErrors;
+        std::map<ra::AchievementID, std::wstring> m_mValidationErrors;
+        std::map<ra::AchievementID, std::string> m_mPublishServerErrors;
     };
 
 public:
@@ -1581,7 +1590,7 @@ public:
 
         Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
-        vmAssetList.SetPublishError(vmAssetList.FilteredAssets().GetItemAt(1)->GetId(), L"Error message goes here.");
+        vmAssetList.SetValidationError(vmAssetList.FilteredAssets().GetItemAt(1)->GetId(), L"Error message goes here.");
         vmAssetList.ForceUpdateButtons();
 
         bool bMessageSeen = false;
@@ -1865,7 +1874,7 @@ public:
         Expects(pItem != nullptr);
         pItem->SetName(L"Test1b");
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
-        vmAssetList.SetPublishError(pItem->GetID(), L"Error message goes here.");
+        vmAssetList.SetValidationError(pItem->GetID(), L"Error message goes here.");
         vmAssetList.ForceUpdateButtons();
 
         bool bMessageSeen = false;
@@ -1960,7 +1969,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
-        vmAssetList.SetPublishError(1U, L"NewFeature is pre-release functionality");
+        vmAssetList.SetValidationError(1U, L"NewFeature is pre-release functionality");
 
         bool bDialogSeen = false;
         vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -2183,13 +2192,13 @@ public:
         vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
     }
 
-    TEST_METHOD(TestSaveSelectedPromoteToCoreAbort)
+    TEST_METHOD(TestSaveSelectedPromoteToCoreValidationError)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
         vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
-        vmAssetList.SetPublishError(1U, L"Test excuse");
+        vmAssetList.SetValidationError(1U, L"Test excuse");
 
         bool bDialogSeen = false;
         vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -2214,6 +2223,40 @@ public:
         Assert::AreEqual({ 0U }, vmAssetList.PublishedAssets.size());
         Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
         Assert::AreEqual(AssetCategory::Unofficial, pItem->GetCategory());
+    }
+
+    TEST_METHOD(TestSaveSelectedPromoteToCoreServerError)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.SetPublishServerError(1U, "Not allowed.");
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to promote 1 items to core?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Items in core are officially available for players to earn."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::Yes;
+        });
+
+        const auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Promote);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 1U }, vmAssetList.PublishedAssets.size());      // tried to publish
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+        Assert::AreEqual(AssetCategory::Unofficial, pItem->GetCategory()); // didn't change category
     }
 
     TEST_METHOD(TestSaveSelectedDemoteToUnofficial)
@@ -2251,6 +2294,40 @@ public:
         // item will have been moved to core, so nothing will be selected
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
+    }
+
+    TEST_METHOD(TestSaveSelectedDemoteToUnofficialServerError)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetPublishServerError(1U, "Not allowed.");
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to demote 1 items to unofficial?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Items in unofficial can no longer be earned by players."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::Yes;
+        });
+
+        const auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Demote);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 1U }, vmAssetList.PublishedAssets.size());      // tried to publish
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+        Assert::AreEqual(AssetCategory::Core, pItem->GetCategory());       // didn't change category
     }
 
     TEST_METHOD(TestSaveSelectedDemoteAllToUnofficial)
@@ -2632,7 +2709,7 @@ public:
         Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
 
         vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
-        vmAssetList.SetPublishError(vmAssetList.FilteredAssets().GetItemAt(1)->GetId(), L"Error message goes here.");
+        vmAssetList.SetValidationError(vmAssetList.FilteredAssets().GetItemAt(1)->GetId(), L"Error message goes here.");
         vmAssetList.ForceUpdateButtons();
 
         bool bMessageSeen = false;
@@ -3061,7 +3138,7 @@ public:
         vmAssetList.MockGameId(22U);
         vmAssetList.AddThreeAchievements();
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
-        vmAssetList.SetPublishError(vmAssetList.FilteredAssets().GetItemAt(0)->GetId(), L"Error message goes here.");
+        vmAssetList.SetValidationError(vmAssetList.FilteredAssets().GetItemAt(0)->GetId(), L"Error message goes here.");
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(ResetButtonState::Reset);
 

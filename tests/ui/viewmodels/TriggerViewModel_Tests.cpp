@@ -959,6 +959,23 @@ public:
         Assert::AreEqual(std::string("S"), vmTrigger.Serialize());
     }
 
+    TEST_METHOD(TestRemoveGroupNoSelection)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "SS");
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+
+        vmTrigger.SetSelectedGroupIndex(-1);
+        Assert::AreEqual(-1, vmTrigger.GetSelectedGroupIndex());
+
+        vmTrigger.RemoveGroup();
+        Assert::IsFalse(vmTrigger.mockDesktop.WasDialogShown());
+        Assert::AreEqual({ 3U }, vmTrigger.Groups().Count());
+
+        Assert::AreEqual(-1, vmTrigger.GetSelectedGroupIndex());
+        Assert::AreEqual(0, vmTrigger.GetVersion());
+    }
+
     TEST_METHOD(TestDoFrameUpdatesHits)
     {
         TriggerViewModelHarness vmTrigger;

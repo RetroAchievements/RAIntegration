@@ -646,6 +646,9 @@ void TriggerViewModel::AddGroup()
 void TriggerViewModel::RemoveGroup()
 {
     int nIndex = GetSelectedGroupIndex();
+    if (nIndex < 0) // no selection
+        return;
+
     if (nIndex == 0)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"The core group cannot be removed.");

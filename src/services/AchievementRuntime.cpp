@@ -241,6 +241,9 @@ static void map_event_to_change(const rc_runtime_event_t* pRuntimeEvent)
         case RC_RUNTIME_EVENT_ACHIEVEMENT_PRIMED:
             nChangeType = AchievementRuntime::ChangeType::AchievementPrimed;
             break;
+        case RC_RUNTIME_EVENT_ACHIEVEMENT_UNPRIMED:
+            nChangeType = AchievementRuntime::ChangeType::AchievementUnprimed;
+            break;
         case RC_RUNTIME_EVENT_ACHIEVEMENT_ACTIVATED:
             nChangeType = AchievementRuntime::ChangeType::AchievementActivated;
             break;

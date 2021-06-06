@@ -946,8 +946,12 @@ void TriggerViewModel::UpdateConditionColors(const rc_trigger_t* pTrigger)
                         {
                             vmCondition->UpdateRowColor(pCondition);
 
-                            if (pCondition->is_true && pCondition->type == RC_CONDITION_PAUSE_IF)
-                                bFirstPause = false;
+                            // processing stops when a PauseIf has met its hit target
+                            if (pCondition->type == RC_CONDITION_PAUSE_IF)
+                            {
+                                if (pCondition->required_hits == 0 || pCondition->current_hits == pCondition->required_hits)
+                                    bFirstPause = false;
+                            }
                         }
                         else
                         {

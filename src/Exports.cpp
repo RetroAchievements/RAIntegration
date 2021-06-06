@@ -371,10 +371,6 @@ static void ProcessAchievements()
                 if (vmAchievement)
                     vmAchievement->SetState(ra::data::models::AssetState::Triggered);
 
-                // make sure to hide the challenge indicator
-                auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                pOverlayManager.RemoveChallengeIndicator(pChange.nId);
-
                 pGameContext.AwardAchievement(pChange.nId);
 
                 if (vmAchievement && vmAchievement->IsPauseOnTrigger())
@@ -414,21 +410,10 @@ static void ProcessAchievements()
                 break;
             }
 
-            case ra::services::AchievementRuntime::ChangeType::AchievementPaused:
+            case ra::services::AchievementRuntime::ChangeType::AchievementUnprimed:
             {
-                // hide the challenge indicator - it'll be reshown when unpaused
                 auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
                 pOverlayManager.RemoveChallengeIndicator(pChange.nId);
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::AchievementActivated:
-            {
-                // state change from Waiting, Paused, or Primed to Active.
-                // we only care about the change from Primed to Active, which should hide the indicator.
-                auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                pOverlayManager.RemoveChallengeIndicator(pChange.nId);
-
                 break;
             }
 

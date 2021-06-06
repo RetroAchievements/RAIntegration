@@ -147,6 +147,7 @@ public:
         LeaderboardDisabled,
         AchievementPrimed,
         AchievementActivated,
+        AchievementUnprimed,
     };
 
     struct Change

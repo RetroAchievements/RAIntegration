@@ -511,7 +511,7 @@ public:
         harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
         harness.mockOverlayManager.AddChallengeIndicator(1U, ra::ui::ImageType::Badge, "55223");
 
-        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementActivated, 1U);
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementUnprimed, 1U);
 
         _RA_DoAchievementsFrame();
 
@@ -520,30 +520,6 @@ public:
         Ensures(pIndicator != nullptr);
 
         Assert::IsTrue(pIndicator->IsDestroyPending());
-    }
-
-    TEST_METHOD(TestDoAchievementsFrameAchievementPrimedTriggered)
-    {
-        DoAchievementsFrameHarness harness;
-        harness.MockAchievement(1U).SetBadge(L"55223");
-        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
-        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementPrimed, 1U);
-
-        _RA_DoAchievementsFrame();
-
-        const auto* pIndicator = harness.mockOverlayManager.GetChallengeIndicator(1U);
-        Assert::IsNotNull(pIndicator);
-        Ensures(pIndicator != nullptr);
-        Assert::IsFalse(pIndicator->IsDestroyPending());
-
-        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementTriggered, 1U);
-
-        _RA_DoAchievementsFrame();
-
-        const auto* pIndicator2 = harness.mockOverlayManager.GetChallengeIndicator(1U);
-        Assert::IsNotNull(pIndicator2);
-        Ensures(pIndicator2 != nullptr);
-        Assert::IsTrue(pIndicator2->IsDestroyPending());
     }
 
     TEST_METHOD(TestDoAchievementsFramePaused)

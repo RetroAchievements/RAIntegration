@@ -748,6 +748,42 @@ public:
         Assert::AreEqual(0xFFFFC0C0U, bookmark2.GetRowColor().ARGB);
     }
 
+    TEST_METHOD(TestPauseOnChange16Bit)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.AddBookmark(4U, MemSize::SixteenBit);
+        auto& bookmark1 = *bookmarks.Bookmarks().GetItemAt(0);
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = i;
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.DoFrame(); // initialize current and previous values
+        Assert::AreEqual({ 0U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+
+        bookmark1.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange);
+
+        // no change, dialog should not be shown
+        bookmarks.DoFrame();
+        Assert::AreEqual({ 0U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+
+        // change second byte of 16-bit value. dialog should be shown and emulator should be paused
+        memory.at(5) = 9;
+        bookmarks.DoFrame();
+        Assert::AreEqual({ 1U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+        Assert::IsTrue(bookmarks.mockFrameEventQueue.ContainsMemoryChange(L"16-bit 0x0004"));
+        bookmarks.mockFrameEventQueue.Reset();
+
+        // row that caused the pause should be highlighted
+        Assert::AreEqual(0xFFFFC0C0U, bookmark1.GetRowColor().ARGB);
+
+        // unpause, dialog should not show, emulator should not pause, row should unhighlight
+        bookmarks.DoFrame();
+        Assert::AreEqual({ 0U }, bookmarks.mockFrameEventQueue.NumMemoryChanges());
+        Assert::AreEqual(0U, bookmark1.GetRowColor().ARGB);
+    }
+
     TEST_METHOD(TestPauseOnChangeShortDescription)
     {
         MemoryBookmarksViewModelHarness bookmarks;

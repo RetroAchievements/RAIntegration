@@ -770,9 +770,6 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
     rc_api_resolve_hash_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    api_params.username = pUserContext.GetUsername().c_str();
-    api_params.api_token = pUserContext.GetApiToken().c_str();
     api_params.game_hash = request.Hash.c_str();
 
     rc_api_request_t api_request;
@@ -1152,67 +1149,35 @@ LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request
 FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::Request& request)
 {
     FetchGamesList::Response response;
-    rapidjson::Document document;
     std::string sPostData;
 
-    AppendUrlParam(sPostData, "c", std::to_string(request.ConsoleId));
+    rc_api_fetch_games_list_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
-    if (DoRequest(m_sHost, FetchGamesList::Name(), "gameslist", sPostData, response, document))
+    api_params.console_id = request.ConsoleId;
+
+    rc_api_request_t api_request;
+    if (rc_api_init_fetch_games_list_request(&api_request, &api_params) == RC_OK)
     {
-        if (!document.HasMember("Response"))
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, FetchGamesList::Name(), httpResponse, response))
         {
-            response.Result = ApiResult::Error;
-            if (response.ErrorMessage.empty())
-                response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
-        }
-        else
-        {
-            response.Result = ApiResult::Success;
+            rc_api_fetch_games_list_response_t api_response;
+            const auto nResult = rc_api_process_fetch_games_list_response(&api_response, httpResponse.Content().c_str());
 
-            auto& Data = document["Response"];
-            if (!Data.IsObject())
+            if (ValidateResponse(nResult, api_response.response, FetchGamesList::Name(), httpResponse.StatusCode(), response))
             {
-                // Response should be a dictionary of ID/Name pairs. If we got anything else, it's an error
-                response.Result = ApiResult::Error;
-                if (response.ErrorMessage.empty())
-                    response.ErrorMessage = ra::StringPrintf("%s is not a dictionary", "Response");
-            }
-            else
-            {
-                for (auto iter = Data.MemberBegin(); iter != Data.MemberEnd(); ++iter)
+                response.Result = ApiResult::Success;
+
+                response.Games.reserve(api_response.num_entries);
+                for (unsigned i = 0; i < api_response.num_entries; ++i)
                 {
-                    if (!iter->name.IsString())
-                    {
-                        response.Result = ApiResult::Error;
-                        if (response.ErrorMessage.empty())
-                            response.ErrorMessage = "Non-string key found in response";
-
-                        break;
-                    }
-
-                    if (!iter->value.IsString())
-                    {
-                        response.Result = ApiResult::Error;
-                        if (response.ErrorMessage.empty())
-                            response.ErrorMessage = ra::BuildString("Non-string value found in response for key ", iter->name.GetString());
-
-                        break;
-                    }
-
-                    char* pEnd;
-                    const auto nGameId = strtoul(iter->name.GetString(), &pEnd, 10);
-                    if (nGameId == 0 || (pEnd && *pEnd))
-                    {
-                        response.Result = ApiResult::Error;
-                        if (response.ErrorMessage.empty())
-                            response.ErrorMessage = ra::BuildString("Invalid game ID: ", iter->name.GetString());
-
-                        break;
-                    }
-
-                    response.Games.emplace_back(nGameId, ra::Widen(iter->value.GetString()));
+                    const auto* pEntry = &api_response.entries[i];
+                    response.Games.emplace_back(pEntry->id, ra::Widen(pEntry->name));
                 }
             }
+
+            rc_api_destroy_fetch_games_list_response(&api_response);
         }
     }
 

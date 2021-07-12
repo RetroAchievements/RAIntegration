@@ -102,8 +102,8 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
 
     ra::api::FetchLeaderboardInfo::Request request;
     request.LeaderboardId = vmItem.GetId();
-    request.FirstEntry = 1;
-    request.NumEntries = 10;
+    request.AroundUser = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
+    request.NumEntries = 11;
     request.CallAsync([this, nId = vmItem.GetId()](const ra::api::FetchLeaderboardInfo::Response& response)
     {
         const auto pIter = m_vLeaderboardRanks.find(nId);

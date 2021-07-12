@@ -15,7 +15,6 @@ public:
     struct Response : ApiResponseBase
     {
         unsigned int GameId{ 0U };
-        unsigned int ConsoleId{ 0U };
         bool LowerIsBetter{ false };
 
         struct Entry
@@ -31,6 +30,7 @@ public:
 
     struct Request : ApiRequestBase
     {
+        std::string AroundUser;
         unsigned int LeaderboardId{ 0U };
         unsigned int FirstEntry{ 1U };
         unsigned int NumEntries{ 10U };

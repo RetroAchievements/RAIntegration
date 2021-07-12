@@ -18,6 +18,7 @@
 #include <rapidjson\document.h>
 
 #include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
+#include <rc_api_info.h>
 #include <rc_api_runtime.h>
 #include <rc_api_user.h>
 
@@ -1082,58 +1083,47 @@ FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const Fetch
 FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request)
 {
     FetchLeaderboardInfo::Response response;
-    rapidjson::Document document;
     std::string sPostData;
 
-    AppendUrlParam(sPostData, "i", std::to_string(request.LeaderboardId));
-    if (request.FirstEntry > 1)
-        AppendUrlParam(sPostData, "o", std::to_string(request.FirstEntry - 1));
-    AppendUrlParam(sPostData, "c", std::to_string(request.NumEntries));
+    rc_api_fetch_leaderboard_info_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
-    if (DoRequest(m_sHost, FetchLeaderboardInfo::Name(), "lbinfo", sPostData, response, document))
+    api_params.leaderboard_id = request.LeaderboardId;
+    if (!request.AroundUser.empty())
+        api_params.username = request.AroundUser.c_str();
+    else
+        api_params.offset = request.FirstEntry;
+
+    api_params.count = request.NumEntries;
+
+    rc_api_request_t api_request;
+    if (rc_api_init_fetch_leaderboard_info_request(&api_request, &api_params) == RC_OK)
     {
-        if (!document.HasMember("LeaderboardData"))
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, FetchLeaderboardInfo::Name(), httpResponse, response))
         {
-            response.Result = ApiResult::Error;
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", "LeaderboardData");
-        }
-        else
-        {
-            response.Result = ApiResult::Success;
+            rc_api_fetch_leaderboard_info_response_t api_response;
+            const auto nResult = rc_api_process_fetch_leaderboard_info_response(&api_response, httpResponse.Content().c_str());
 
-            const auto& LeaderboardData = document["LeaderboardData"];
-
-            GetRequiredJsonField(response.GameId, LeaderboardData, "GameID", response);
-            GetRequiredJsonField(response.ConsoleId, LeaderboardData, "ConsoleID", response);
-            unsigned int nLowerIsBetter;
-            GetRequiredJsonField(nLowerIsBetter, LeaderboardData, "LowerIsBetter", response);
-            response.LowerIsBetter = (nLowerIsBetter != 0);
-
-            if (LeaderboardData.HasMember("Entries"))
+            if (ValidateResponse(nResult, api_response.response, FetchLeaderboardInfo::Name(), httpResponse.StatusCode(), response))
             {
-                const auto& pEntries = LeaderboardData["Entries"];
-                if (!pEntries.IsArray())
+                response.Result = ApiResult::Success;
+
+                response.GameId = api_response.game_id;
+                response.LowerIsBetter = api_response.lower_is_better;
+
+                response.Entries.reserve(api_response.num_entries);
+                for (unsigned i = 0; i < api_response.num_entries; ++i)
                 {
-                    response.Result = ApiResult::Error;
-                    response.ErrorMessage = ra::StringPrintf("%s not an array", "Entries");
-                }
-                else
-                {
-                    const auto& pEntriesArray = pEntries.GetArray();
-                    response.Entries.reserve(pEntriesArray.Size());
-                    for (const auto& pEntry : pEntriesArray)
-                    {
-                        FetchLeaderboardInfo::Response::Entry entry;
-                        GetRequiredJsonField(entry.Rank, pEntry, "Rank", response);
-                        GetRequiredJsonField(entry.User, pEntry, "User", response);
-                        GetRequiredJsonField(entry.Score, pEntry, "Score", response);
-                        unsigned int nTime;
-                        GetRequiredJsonField(nTime, pEntry, "DateSubmitted", response);
-                        entry.DateSubmitted = nTime;
-                        response.Entries.emplace_back(entry);
-                    }
+                    auto& pEntry = response.Entries.emplace_back();
+                    pEntry.Rank = api_response.entries[i].rank;
+                    pEntry.Score = api_response.entries[i].score;
+                    pEntry.User = api_response.entries[i].username;
+                    pEntry.DateSubmitted = api_response.entries[i].submitted;
                 }
             }
+
+            rc_api_destroy_fetch_leaderboard_info_response(&api_response);
         }
     }
 

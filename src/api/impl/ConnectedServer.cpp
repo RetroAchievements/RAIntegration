@@ -1022,58 +1022,49 @@ UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchie
 FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const FetchAchievementInfo::Request& request)
 {
     FetchAchievementInfo::Response response;
-    rapidjson::Document document;
     std::string sPostData;
 
-    AppendUrlParam(sPostData, "a", std::to_string(request.AchievementId));
-    if (request.FirstEntry > 1)
-        AppendUrlParam(sPostData, "o", std::to_string(request.FirstEntry - 1));
-    AppendUrlParam(sPostData, "c", std::to_string(request.NumEntries));
+    rc_api_fetch_achievement_info_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+
+    api_params.achievement_id = request.AchievementId;
+    api_params.first_entry = request.FirstEntry;
+    api_params.count = request.NumEntries;
     if (request.FriendsOnly)
-        AppendUrlParam(sPostData, "f", "1");
+        api_params.friends_only = 1;
 
-    if (DoRequest(m_sHost, FetchAchievementInfo::Name(), "achievementwondata", sPostData, response, document))
+    rc_api_request_t api_request;
+    if (rc_api_init_fetch_achievement_info_request(&api_request, &api_params) == RC_OK)
     {
-        if (!document.HasMember("Response"))
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, FetchAchievementInfo::Name(), httpResponse, response))
         {
-            response.Result = ApiResult::Error;
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
-        }
-        else
-        {
-            response.Result = ApiResult::Success;
+            rc_api_fetch_achievement_info_response_t api_response;
+            const auto nResult = rc_api_process_fetch_achievement_info_response(&api_response, httpResponse.Content().c_str());
 
-            const auto& AchievmentInfo = document["Response"];
-
-            GetRequiredJsonField(response.GameId, AchievmentInfo, "GameID", response);
-            GetRequiredJsonField(response.EarnedBy, AchievmentInfo, "NumEarned", response);
-            GetRequiredJsonField(response.NumPlayers, AchievmentInfo, "TotalPlayers", response);
-
-            if (AchievmentInfo.HasMember("RecentWinner")) // RecentWinner will not be returned if there are no winners
+            if (ValidateResponse(nResult, api_response.response, FetchAchievementInfo::Name(), httpResponse.StatusCode(), response))
             {
-                const auto& pEntries = AchievmentInfo["RecentWinner"];
-                if (!pEntries.IsArray())
+                response.Result = ApiResult::Success;
+
+                response.GameId = api_response.game_id;
+                response.EarnedBy = api_response.num_awarded;
+                response.NumPlayers = api_response.num_players;
+
+                response.Entries.reserve(api_response.num_recently_awarded);
+                for (unsigned i = 0; i < api_response.num_recently_awarded; ++i)
                 {
-                    response.Result = ApiResult::Error;
-                    response.ErrorMessage = ra::StringPrintf("%s not an array", "RecentWinner");
-                }
-                else
-                {
-                    const auto& pEntriesArray = pEntries.GetArray();
-                    response.Entries.reserve(pEntriesArray.Size());
-                    for (const auto& pEntry : pEntriesArray)
-                    {
-                        FetchAchievementInfo::Response::Entry entry;
-                        GetRequiredJsonField(entry.User, pEntry, "User", response);
-                        GetRequiredJsonField(entry.Points, pEntry, "RAPoints", response);
-                        unsigned int nTime;
-                        GetRequiredJsonField(nTime, pEntry, "DateAwarded", response);
-                        entry.DateAwarded = nTime;
-                        response.Entries.emplace_back(entry);
-                    }
+                    const auto* pAwarded = &api_response.recently_awarded[i];
+                    auto& pEntry = response.Entries.emplace_back();
+                    pEntry.User = pAwarded->username;
+                    pEntry.DateAwarded = pAwarded->awarded;
                 }
             }
+
+            rc_api_destroy_fetch_achievement_info_response(&api_response);
         }
     }
 
@@ -1092,7 +1083,7 @@ FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const Fetch
     if (!request.AroundUser.empty())
         api_params.username = request.AroundUser.c_str();
     else
-        api_params.offset = request.FirstEntry;
+        api_params.first_entry = request.FirstEntry;
 
     api_params.count = request.NumEntries;
 
@@ -1115,11 +1106,12 @@ FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const Fetch
                 response.Entries.reserve(api_response.num_entries);
                 for (unsigned i = 0; i < api_response.num_entries; ++i)
                 {
+                    const auto* pApiEntry = &api_response.entries[i];
                     auto& pEntry = response.Entries.emplace_back();
-                    pEntry.Rank = api_response.entries[i].rank;
-                    pEntry.Score = api_response.entries[i].score;
-                    pEntry.User = api_response.entries[i].username;
-                    pEntry.DateSubmitted = api_response.entries[i].submitted;
+                    pEntry.Rank = pApiEntry->rank;
+                    pEntry.Score = pApiEntry->score;
+                    pEntry.User = pApiEntry->username;
+                    pEntry.DateSubmitted = pApiEntry->submitted;
                 }
             }
 

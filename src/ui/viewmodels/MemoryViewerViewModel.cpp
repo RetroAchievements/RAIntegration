@@ -144,7 +144,7 @@ int MemoryViewerViewModel::NibblesPerWord() const
 
 static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
     const ra::ui::viewmodels::MemoryBookmarksViewModel& pBookmarksViewModel,
-    const ra::data::context::GameContext& pGameContext)
+    const ra::data::context::GameContext& pGameContext, bool bCheckBookmarks = true)
 {
     if (pBookmarksViewModel.HasBookmark(nAddress))
     {
@@ -154,8 +154,17 @@ static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
         return MemoryViewerViewModel::TextColor::HasBookmark;
     }
 
-    if (pGameContext.FindCodeNote(nAddress) != nullptr)
-        return MemoryViewerViewModel::TextColor::HasNote;
+    if (bCheckBookmarks)
+    {
+        const auto nNoteStart = pGameContext.FindCodeNoteStart(nAddress);
+        if (nNoteStart != 0xFFFFFFFF)
+        {
+            if (nNoteStart == nAddress)
+                return MemoryViewerViewModel::TextColor::HasNote;
+            else
+                return MemoryViewerViewModel::TextColor::HasSurrogateNote;
+        }
+    }
 
     return MemoryViewerViewModel::TextColor::Default;
 }
@@ -524,21 +533,36 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
     if (nAddress < nFirstAddress)
         return;
 
-    const auto nOffset = nAddress - nFirstAddress;
+    auto nOffset = nAddress - nFirstAddress;
     const auto nVisibleLines = GetNumVisibleLines();
     if (nOffset >= ra::to_unsigned(nVisibleLines * 16))
         return;
 
     const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto nNewColor = (nAddress == GetAddress()) ? ra::itoe<TextColor>(HIGHLIGHTED_COLOR & 0x0F) :
-        GetColor(nAddress, pBookmarksViewModel, pGameContext);
 
-    if ((m_pColor[nOffset] & 0x0F) != ra::etoi(nNewColor))
+    const auto nSelectedAddress = GetAddress();
+
+    const auto nMax = nFirstAddress + nVisibleLines * 16 - nAddress;
+    const auto nSize = std::min(pGameContext.FindCodeNoteSize(nAddress), nMax);
+    for (unsigned i = 0; i < nSize; ++i)
     {
-        m_pColor[nOffset] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(nNewColor));
-        m_nNeedsRedraw |= REDRAW_MEMORY;
-    }
+        auto nNewColor = (nAddress == nSelectedAddress) ?
+            ra::itoe<TextColor>(HIGHLIGHTED_COLOR & 0x0F):
+            GetColor(nAddress, pBookmarksViewModel, pGameContext, false);
+
+        if (nNewColor == TextColor::Default)
+            nNewColor = (i == 0) ? TextColor::HasNote : TextColor::HasSurrogateNote;
+
+        if ((m_pColor[nOffset] & 0x0F) != ra::etoi(nNewColor))
+        {
+            m_pColor[nOffset] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(nNewColor));
+            m_nNeedsRedraw |= REDRAW_MEMORY;
+        }
+
+        ++nAddress;
+        ++nOffset;
+    }    
 }
 
 void MemoryViewerViewModel::OnTotalMemorySizeChanged()
@@ -849,12 +873,13 @@ void MemoryViewerViewModel::BuildFontSurface()
     {
         switch (ra::itoe<TextColor>(i))
         {
-            case TextColor::Default:      nColor = pEditorTheme.ColorNormal(); break;
-            case TextColor::HasNote:      nColor = pEditorTheme.ColorHasNote(); break;
-            case TextColor::HasBookmark:  nColor = pEditorTheme.ColorHasBookmark(); break;
+            case TextColor::Default:          nColor = pEditorTheme.ColorNormal(); break;
+            case TextColor::HasNote:          nColor = pEditorTheme.ColorHasNote(); break;
+            case TextColor::HasSurrogateNote: nColor = pEditorTheme.ColorHasSurrogateNote(); break;
+            case TextColor::HasBookmark:      nColor = pEditorTheme.ColorHasBookmark(); break;
             case TextColor::Cursor:
-            case TextColor::Selected:     nColor = pEditorTheme.ColorSelected(); break;
-            case TextColor::Frozen:       nColor = pEditorTheme.ColorFrozen(); break;
+            case TextColor::Selected:         nColor = pEditorTheme.ColorSelected(); break;
+            case TextColor::Frozen:           nColor = pEditorTheme.ColorFrozen(); break;
         }
 
         for (int j = 0; j < gsl::narrow_cast<int>(g_sHexChars.size()); ++j)

@@ -916,14 +916,19 @@ ra::ByteAddress GameContext::FindCodeNoteStart(ra::ByteAddress nAddress) const
     if (pIter != m_mCodeNotes.end() && pIter->first == nAddress)
         return nAddress;
 
-    // lower_bound returns the first item _after_ the search value. we want to look at the item _before_.
+    // lower_bound returns the first item _after_ the search value. scan all items before
+    // the found item to see if any of them contain the target address. have to scan
+    // all items because a singular note may exist within a range.
     if (pIter != m_mCodeNotes.begin())
     {
-        --pIter;
+        do
+        {
+            --pIter;
 
-        // check to see if the item before the search value contains the search value
-        if (pIter->first + pIter->second.Bytes > nAddress)
-            return pIter->first;
+            if (pIter->second.Bytes > 1 && pIter->second.Bytes + pIter->first > nAddress)
+                return pIter->first;
+
+        } while (pIter != m_mCodeNotes.begin());
     }
 
     return 0xFFFFFFFF;

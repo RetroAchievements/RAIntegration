@@ -2190,6 +2190,8 @@ public:
         TestCodeNoteSize(L"[128-bit] Test", 16U);
         TestCodeNoteSize(L"[17-bit] Test", 3U);
         TestCodeNoteSize(L"[100-bit] Test", 13U);
+        TestCodeNoteSize(L"[4-bit] Test", 1U);
+        TestCodeNoteSize(L"[0-bit] Test", 1U);
 
         TestCodeNoteSize(L"[2 Byte] Test", 2U);
         TestCodeNoteSize(L"[4 Byte] Test", 4U);
@@ -2345,6 +2347,60 @@ public:
         Assert::AreEqual(1200U, game.FindCodeNoteStart(1200));
         Assert::AreEqual(1200U, game.FindCodeNoteStart(1219));
         Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1220));
+    }
+
+    TEST_METHOD(TestFindCodeNoteStartOverlap)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response&)
+        {
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1000, L"[100 bytes] Outer", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1010, L"[10 bytes] Inner", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1015, L"Individual", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1120, L"[10 bytes] Secondary", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1125, L"[10 bytes] Overlap", "Author" });
+            response.Notes.emplace_back(ra::api::FetchCodeNotes::Response::CodeNote{ 1200, L"Extra", "Author" });
+            return true;
+        });
+
+        game.LoadGame(1U);
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(999));
+        Assert::AreEqual(1000U, game.FindCodeNoteStart(1000));
+        Assert::AreEqual(1000U, game.FindCodeNoteStart(1009));
+        Assert::AreEqual(1010U, game.FindCodeNoteStart(1010));
+        Assert::AreEqual(1010U, game.FindCodeNoteStart(1014));
+        Assert::AreEqual(1015U, game.FindCodeNoteStart(1015));
+        Assert::AreEqual(1010U, game.FindCodeNoteStart(1016));
+        Assert::AreEqual(1010U, game.FindCodeNoteStart(1019));
+        Assert::AreEqual(1000U, game.FindCodeNoteStart(1020));
+        Assert::AreEqual(1000U, game.FindCodeNoteStart(1099));
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1100));
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1119));
+        Assert::AreEqual(1120U, game.FindCodeNoteStart(1120));
+        Assert::AreEqual(1120U, game.FindCodeNoteStart(1124));
+        Assert::AreEqual(1125U, game.FindCodeNoteStart(1125));
+        Assert::AreEqual(1125U, game.FindCodeNoteStart(1126));
+        Assert::AreEqual(1125U, game.FindCodeNoteStart(1130));
+        Assert::AreEqual(1125U, game.FindCodeNoteStart(1134));
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1135));
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1199));
+        Assert::AreEqual(1200U, game.FindCodeNoteStart(1200));
+        Assert::AreEqual(0xFFFFFFFF, game.FindCodeNoteStart(1201));
     }
 
     TEST_METHOD(TestSetCodeNote)

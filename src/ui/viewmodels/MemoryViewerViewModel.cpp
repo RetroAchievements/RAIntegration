@@ -183,13 +183,14 @@ void MemoryViewerViewModel::UpdateColors()
 
     // apply code notes
     const auto nStopAddress = nFirstAddress + nVisibleLines * 16;
-    pGameContext.EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
+    pGameContext.EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring&) {
         if (nAddress + nBytes <= nFirstAddress)
             return true;
         if (nAddress >= nStopAddress)
             return false;
 
         uint8_t* pOffset = m_pColor;
+        Expects(pOffset != nullptr);
         if (nAddress < nFirstAddress)
         {
             nBytes -= (nFirstAddress - nAddress);

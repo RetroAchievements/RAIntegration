@@ -849,7 +849,7 @@ void GameContext::AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuth
     auto nIndex = sNote.find(L"yte");
     if (nIndex != std::string::npos && nIndex >= 2) // have to have room for the 'b' of bytes plus at least one digit
     {
-        wchar_t c = sNote.at(--nIndex);
+        const wchar_t c = sNote.at(--nIndex);
         if (c == L'b' || c == L'B')
             bIsBytes = true;
     }

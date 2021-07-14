@@ -843,53 +843,51 @@ void GameContext::RefreshCodeNotes()
 void GameContext::AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
 {
     unsigned int nBytes = 1;
+    bool bIsBytes = false;
 
     // attempt to match "X byte", "X Byte", "XX bytes", or "XX Bytes"
     auto nIndex = sNote.find(L"yte");
-    if (nIndex != std::string::npos && nIndex >= 3)
+    if (nIndex != std::string::npos && nIndex >= 2) // have to have room for the 'b' of bytes plus at least one digit
     {
-        wchar_t c = sNote.at(--nIndex);
+        const wchar_t c = sNote.at(--nIndex);
         if (c == L'b' || c == L'B')
-        {
-            c = sNote.at(--nIndex);
-            if (c == L'-' || c == L' ')
-                c = sNote.at(--nIndex);
-
-            if (c >= L'0' && c <= L'9')
-            {
-                int nMultiplier = 1;
-                nBytes = 0;
-                do
-                {
-                    nBytes += (c - L'0') * nMultiplier;
-                    if (nIndex == 0)
-                        break;
-
-                    nMultiplier *= 10;
-                    c = sNote.at(--nIndex);
-                } while (c >= L'0' && c <= L'9');
-            }
-        }
+            bIsBytes = true;
     }
 
-    if (nBytes == 1)
+    if (!bIsBytes)
     {
-        // attempt to match "16-bit" or "32-bit"
+        // attempt to match "N bit" or "N bits"
         nIndex = sNote.find(L"Bit");
         if (nIndex == std::string::npos)
             nIndex = sNote.find(L"bit");
+    }
 
-        if (nIndex != std::string::npos && nIndex >= 3)
+    if (nIndex != std::string::npos && nIndex >= 2)
+    {
+        // allow "N-bits", "N bits" or "Nbits". ignore if any other character appears between "N" and "bits"
+        wchar_t c = sNote.at(--nIndex);
+        if (c == L'-' || c == L' ')
+            c = sNote.at(--nIndex);
+
+        if (c >= L'0' && c <= L'9')
         {
-            wchar_t c = sNote.at(--nIndex);
-            if (c == L'-' || c == L' ')
-                c = sNote.at(--nIndex);
+            int nMultiplier = 1;
+            nBytes = 0;
+            do
+            {
+                nBytes += (c - L'0') * nMultiplier;
+                if (nIndex == 0)
+                    break;
 
-            if (c == L'6' && sNote.at(nIndex - 1) == L'1')
-                nBytes = 2;
-            else if (c == L'2' && sNote.at(nIndex - 1) == L'3')
-                nBytes = 4;
+                nMultiplier *= 10;
+                c = sNote.at(--nIndex);
+            } while (c >= L'0' && c <= L'9');
         }
+
+        if (nBytes == 0) // sanity check
+            nBytes = 1;
+        else if (!bIsBytes) // convert bits to bytes, rounding up
+            nBytes = (nBytes + 7) / 8;
     }
 
     m_mCodeNotes.insert_or_assign(nAddress, CodeNote{ sAuthor, sNote, nBytes });
@@ -918,14 +916,19 @@ ra::ByteAddress GameContext::FindCodeNoteStart(ra::ByteAddress nAddress) const
     if (pIter != m_mCodeNotes.end() && pIter->first == nAddress)
         return nAddress;
 
-    // lower_bound returns the first item _after_ the search value. we want to look at the item _before_.
+    // lower_bound returns the first item _after_ the search value. scan all items before
+    // the found item to see if any of them contain the target address. have to scan
+    // all items because a singular note may exist within a range.
     if (pIter != m_mCodeNotes.begin())
     {
-        --pIter;
+        do
+        {
+            --pIter;
 
-        // check to see if the item before the search value contains the search value
-        if (pIter->first + pIter->second.Bytes > nAddress)
-            return pIter->first;
+            if (pIter->second.Bytes > 1 && pIter->second.Bytes + pIter->first > nAddress)
+                return pIter->first;
+
+        } while (pIter != m_mCodeNotes.begin());
     }
 
     return 0xFFFFFFFF;

@@ -322,7 +322,7 @@ void MemoryBookmarksViewModel::DoFrame()
                 {
                     pBookmark.SetRowColor(ra::ui::Color(0xFFFFC0C0));
 
-                    const auto nSizeIndex = m_vSizes.FindItemIndex(MemoryBookmarkViewModel::SizeProperty, ra::etoi(pBookmark.GetSize()));
+                    const auto nSizeIndex = m_vSizes.FindItemIndex(LookupItemViewModel::IdProperty, ra::etoi(pBookmark.GetSize()));
                     Expects(nSizeIndex >= 0);
 
                     auto sMessage = ra::StringPrintf(L"%s %s",

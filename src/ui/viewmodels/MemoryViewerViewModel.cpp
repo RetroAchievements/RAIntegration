@@ -171,15 +171,57 @@ static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
 
 void MemoryViewerViewModel::UpdateColors()
 {
-    const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
 
     const auto nVisibleLines = GetNumVisibleLines();
     const auto nFirstAddress = GetFirstAddress();
 
+    // identify bookmarks
+    const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     for (int i = 0; i < nVisibleLines * 16; ++i)
-        m_pColor[i] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nFirstAddress + i, pBookmarksViewModel, pGameContext)));
+        m_pColor[i] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nFirstAddress + i, pBookmarksViewModel, pGameContext, false)));
 
+    // apply code notes
+    const auto nStopAddress = nFirstAddress + nVisibleLines * 16;
+    pGameContext.EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
+        if (nAddress + nBytes <= nFirstAddress)
+            return true;
+        if (nAddress >= nStopAddress)
+            return false;
+
+        uint8_t* pOffset = m_pColor;
+        if (nAddress < nFirstAddress)
+        {
+            nBytes -= (nFirstAddress - nAddress);
+            nAddress = nFirstAddress;
+
+            // so first processed surrogate will be nFirstAddress
+            --pOffset;
+            ++nBytes;
+        }
+        else
+        {
+            pOffset += (nAddress - nFirstAddress);
+            if ((*pOffset & 0x0F) == ra::etoi(TextColor::Default))
+                *pOffset |= ra::etoi(TextColor::HasNote);
+        }
+
+        if (nBytes > 1)
+        {
+            nBytes = std::min(nBytes, nStopAddress - nAddress);
+            for (unsigned i = 1; i < nBytes; ++i)
+            {
+                ++pOffset;
+
+                if ((*pOffset & 0x0F) == ra::etoi(TextColor::Default))
+                    *pOffset |= ra::etoi(TextColor::HasSurrogateNote);
+            }
+        }
+
+        return true;
+    });
+
+    // flag invalid regions
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     if (pEmulatorContext.HasInvalidRegions())
     {
@@ -187,6 +229,7 @@ void MemoryViewerViewModel::UpdateColors()
             m_pInvalid[i] = pEmulatorContext.IsValidAddress(nFirstAddress + i) ? 0 : 1;
     }
 
+    // update cursor
     UpdateHighlight(GetAddress(), NibblesPerWord() / 2, 0);
 
     m_nNeedsRedraw |= REDRAW_MEMORY;
@@ -562,7 +605,7 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
 
         ++nAddress;
         ++nOffset;
-    }    
+    }
 }
 
 void MemoryViewerViewModel::OnTotalMemorySizeChanged()

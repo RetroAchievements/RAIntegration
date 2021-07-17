@@ -209,7 +209,7 @@ void MemoryViewerViewModel::UpdateColors()
 
         if (nBytes > 1)
         {
-            nBytes = std::min(nBytes, nStopAddress - nAddress);
+            nBytes = std::min(nBytes, nStopAddress - nAddress + 1);
             for (unsigned i = 1; i < nBytes; ++i)
             {
                 ++pOffset;

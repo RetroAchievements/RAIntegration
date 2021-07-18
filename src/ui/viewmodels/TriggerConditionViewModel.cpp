@@ -127,9 +127,12 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
         SerializeAppendOperand(sBuffer, GetTargetType(), GetTargetSize(), GetTargetValue());
     }
 
-    const auto nRequiredHits = GetRequiredHits();
-    if (nRequiredHits > 0)
-        sBuffer.append(ra::StringPrintf(".%zu.", nRequiredHits));
+    if (GetValue(HasHitsProperty))
+    {
+        const auto nRequiredHits = GetRequiredHits();
+        if (nRequiredHits > 0)
+            sBuffer.append(ra::StringPrintf(".%zu.", nRequiredHits));
+    }
 }
 
 void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, unsigned int nValue) const

@@ -219,6 +219,9 @@
     <ClCompile Include="..\rcheevos\src\rcheevos\runtime_progress.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\trigger.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\value.c" />
+    <ClCompile Include="..\rcheevos\src\rhash\hash.c">
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
     <ClCompile Include="..\rcheevos\src\rhash\md5.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

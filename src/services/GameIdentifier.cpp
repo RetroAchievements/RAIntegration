@@ -4,6 +4,8 @@
 #include "RA_md5factory.h"
 #include "RA_StringUtils.h"
 
+#include <rc_hash.h>
+
 #include "api\ResolveHash.hh"
 
 #include "data\context\ConsoleContext.hh"
@@ -28,7 +30,8 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
 {
     m_nPendingMode = ra::data::context::GameContext::Mode::Normal;
 
-    if (ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().Id() == 0U)
+    const auto nConsoleId = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().Id();
+    if (nConsoleId == 0)
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot identify game for unknown console.");
         return 0U;
@@ -41,8 +44,10 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
         return 0U;
     }
 
-    const std::string sMD5 = RAGenerateMD5(pROM, nROMSize);
-    return IdentifyHash(sMD5);
+    char hash[33];
+    rc_hash_generate_from_buffer(hash, nConsoleId, const_cast<BYTE*>(pROM), nROMSize);
+
+    return IdentifyHash(hash);
 }
 
 unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)

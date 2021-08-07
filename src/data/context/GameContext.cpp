@@ -179,6 +179,19 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // leaderboards
     for (const auto& pLeaderboardData : response.Leaderboards)
     {
+#ifdef ASSET_ICONS
+        auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
+        vmLeaderboard->SetID(pLeaderboardData.Id);
+        vmLeaderboard->SetName(ra::Widen(pLeaderboardData.Title));
+        vmLeaderboard->SetDescription(ra::Widen(pLeaderboardData.Description));
+        vmLeaderboard->SetCategory(ra::data::models::AssetCategory::Core);
+        vmLeaderboard->SetValueFormat(ra::itoe<ValueFormat>(pLeaderboardData.Format));
+        vmLeaderboard->SetDefinition(pLeaderboardData.Definition);
+        vmLeaderboard->CreateServerCheckpoint();
+        vmLeaderboard->CreateLocalCheckpoint();
+        m_vAssets.Append(std::move(vmLeaderboard));
+#endif
+
         RA_Leaderboard& pLeaderboard = *m_vLeaderboards.emplace_back(std::make_unique<RA_Leaderboard>(pLeaderboardData.Id));
         pLeaderboard.SetTitle(pLeaderboardData.Title);
         pLeaderboard.SetDescription(pLeaderboardData.Description);

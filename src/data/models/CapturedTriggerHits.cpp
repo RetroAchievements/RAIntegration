@@ -78,6 +78,34 @@ bool CapturedTriggerHits::Restore(rc_trigger_t* pTrigger, const std::string& sTr
     return true;
 }
 
+void CapturedTriggerHits::Capture(const rc_value_t* pValue, const std::string& sValue)
+{
+    m_vCapturedHitCounts.clear();
+
+    m_sCapturedHitsMD5 = RAGenerateMD5(sValue);
+
+    if (pValue->conditions)
+        CaptureCondSetHitCounts(pValue->conditions, m_vCapturedHitCounts);
+}
+
+bool CapturedTriggerHits::Restore(rc_value_t* pValue, const std::string& sValue) const
+{
+    if (m_sCapturedHitsMD5.empty())
+        return false;
+
+    const auto sCapturedHitsMD5 = RAGenerateMD5(sValue);
+    if (sCapturedHitsMD5 != m_sCapturedHitsMD5)
+        return false;
+
+    if (!m_vCapturedHitCounts.empty())
+    {
+        gsl::index nIndex = 0;
+        RestoreCondSetHitCounts(pValue->conditions, m_vCapturedHitCounts, nIndex);
+    }
+
+    return true;
+}
+
 void CapturedTriggerHits::Reset() noexcept
 {
     m_vCapturedHitCounts.clear();

@@ -44,6 +44,20 @@ using ByteAddress = uint32_t;
 using AchievementID = uint32_t;
 using LeaderboardID = uint32_t;
 
+namespace data {
+
+enum class ValueFormat : uint8_t
+{
+    Value = RC_FORMAT_VALUE,
+    Score = RC_FORMAT_SCORE,
+    Frames = RC_FORMAT_FRAMES,
+    Centiseconds = RC_FORMAT_CENTISECS,
+    Seconds = RC_FORMAT_SECONDS,
+    Minutes = RC_FORMAT_MINUTES,
+    SecondsAsMinutes = RC_FORMAT_SECONDS_AS_MINUTES,
+};
+
+} // namespace data
 } // namespace ra
 
 #endif RA_UI_TYPES_H

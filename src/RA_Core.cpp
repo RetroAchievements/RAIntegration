@@ -2,11 +2,8 @@
 
 #include "Exports.hh"
 
-#include "RA_BuildVer.h"
-#include "RA_ImageFactory.h"
 #include "RA_Log.h"
 #include "RA_Resource.h"
-#include "RA_md5factory.h"
 
 #include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
@@ -16,14 +13,11 @@
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
-#include "services\IFileSystem.hh"
-#include "services\IHttpRequester.hh"
 #include "services\IThreadPool.hh"
 #include "services\Initialization.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\IDesktop.hh"
-#include "ui\ImageReference.hh"
 #include "ui\viewmodels\BrokenAchievementsViewModel.hh"
 #include "ui\viewmodels\GameChecksumViewModel.hh"
 #include "ui\viewmodels\LoginViewModel.hh"
@@ -31,10 +25,6 @@
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\OverlaySettingsViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
-
-#include "RAInterface\RA_Emulators.h"
-
-std::string g_sROMDirLocation;
 
 HMODULE g_hThisDLLInst = nullptr;
 HWND g_RAMainWnd = nullptr;
@@ -277,92 +267,6 @@ API HMENU CCONV _RA_CreatePopupMenu()
     }
 
     return hRA;
-}
-
-void RestoreWindowPosition(HWND hDlg, const char* sDlgKey, bool bToRight, bool bToBottom)
-{
-    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    const ra::ui::Position oPosition = pConfiguration.GetWindowPosition(std::string(sDlgKey));
-    ra::ui::Size oSize = pConfiguration.GetWindowSize(std::string(sDlgKey));
-
-    // if the remembered size is less than the default size, reset it
-    RECT rc;
-    GetWindowRect(hDlg, &rc);
-    const int nDlgWidth = rc.right - rc.left;
-    if (oSize.Width != INT32_MIN && oSize.Width < nDlgWidth)
-        oSize.Width = INT32_MIN;
-    const int nDlgHeight = rc.bottom - rc.top;
-    if (oSize.Height != INT32_MIN && oSize.Height < nDlgHeight)
-        oSize.Height = INT32_MIN;
-
-    RECT rcMainWindow;
-    GetWindowRect(g_RAMainWnd, &rcMainWindow);
-
-    // determine where the window should be placed
-    rc.left = (oPosition.X != INT32_MIN) ? (rcMainWindow.left + oPosition.X) : bToRight ? rcMainWindow.right : rcMainWindow.left;
-    rc.right = (oSize.Width != INT32_MIN) ? (rc.left + oSize.Width) : (rc.left + nDlgWidth);
-    rc.top = (oPosition.Y != INT32_MIN) ? (rcMainWindow.top + oPosition.Y) : bToBottom ? rcMainWindow.bottom : rcMainWindow.top;
-    rc.bottom = (oSize.Height != INT32_MIN) ? (rc.top + oSize.Height) : (rc.top + nDlgHeight);
-
-    // make sure the window is on screen
-    RECT rcWorkArea;
-    if (SystemParametersInfo(SPI_GETWORKAREA, 0, &rcWorkArea, 0))
-    {
-        LONG offset = rc.right - rcWorkArea.right;
-        if (offset > 0)
-        {
-            rc.left -= offset;
-            rc.right -= offset;
-        }
-        offset = rcWorkArea.left - rc.left;
-        if (offset > 0)
-        {
-            rc.left += offset;
-            rc.right += offset;
-        }
-
-        offset = rc.bottom - rcWorkArea.bottom;
-        if (offset > 0)
-        {
-            rc.top -= offset;
-            rc.bottom -= offset;
-        }
-        offset = rcWorkArea.top - rc.top;
-        if (offset > 0)
-        {
-            rc.top += offset;
-            rc.bottom += offset;
-        }
-    }
-
-    SetWindowPos(hDlg, nullptr, rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top, 0);
-}
-
-void RememberWindowPosition(HWND hDlg, const char* sDlgKey)
-{
-    RECT rcMainWindow;
-    GetWindowRect(g_RAMainWnd, &rcMainWindow);
-
-    RECT rc;
-    GetWindowRect(hDlg, &rc);
-
-    ra::ui::Position oPosition;
-    oPosition.X = rc.left - rcMainWindow.left;
-    oPosition.Y = rc.top - rcMainWindow.top;
-
-    ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>().SetWindowPosition(std::string(sDlgKey), oPosition);
-}
-
-void RememberWindowSize(HWND hDlg, const char* sDlgKey)
-{
-    RECT rc;
-    GetWindowRect(hDlg, &rc);
-
-    ra::ui::Size oSize;
-    oSize.Width = rc.right - rc.left;
-    oSize.Height = rc.bottom - rc.top;
-
-    ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>().SetWindowSize(std::string(sDlgKey), oSize);
 }
 
 API void CCONV _RA_InvokeDialog(LPARAM nID)

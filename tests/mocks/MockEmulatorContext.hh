@@ -28,6 +28,16 @@ public:
         m_sVersion = sClientVersion;
     }
 
+    void MockInvalidClient(bool bInvalid)
+    {
+        m_bInvalid = bInvalid;
+    }
+
+    bool ValidateClientVersion(bool&) override
+    {
+        return !m_bInvalid;
+    }
+
     void MockGameTitle(const char* sTitle)
     {
         SetGetGameTitleFunction([sTitle](char* sBuffer) noexcept { strcpy_s(sBuffer, 64, sTitle); });
@@ -111,6 +121,8 @@ private:
     {
         s_pMemory.at(nAddress) = nValue;
     }
+
+    bool m_bInvalid = false;
 
     std::string m_sWarnDisableHardcoreActivity;
     ra::ui::DialogResult m_nWarnDisableHardcoreResult = ra::ui::DialogResult::No;

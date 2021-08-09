@@ -375,6 +375,9 @@
     <ClCompile Include="ui\viewmodels\ChallengeIndicatorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\IntegrationMenuViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Leaderboard.h">
@@ -933,6 +936,9 @@
       <Filter>UI\Win32\Bindings</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\ChallengeIndicatorViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\IntegrationMenuViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>

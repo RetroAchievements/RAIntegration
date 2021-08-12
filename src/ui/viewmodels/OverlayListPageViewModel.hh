@@ -129,6 +129,21 @@ public:
         void SetProgressValue(unsigned int nValue) { SetValue(ProgressValueProperty, ra::to_signed(nValue)); }
 
         /// <summary>
+        /// The <see cref="ModelProperty" /> for whether the current progress value should be shown as a percentage (or raw).
+        /// </summary>
+        static const BoolModelProperty IsProgressPercentageProperty;
+
+        /// <summary>
+        /// Gets whether the progress value should be shown as a percentage.
+        /// </summary>
+        bool IsProgressPercentage() const { return GetValue(IsProgressPercentageProperty); }
+
+        /// <summary>
+        /// Sets whether the progress value should be shown as a percentage.
+        /// </summary>
+        void SetProgressPercentage(bool bValue) { SetValue(IsProgressPercentageProperty, bValue); }
+
+        /// <summary>
         /// Gets whether the current item is a header item.
         /// </summary>
         bool IsHeader() const { return GetId() == 0; }

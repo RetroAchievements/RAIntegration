@@ -20,6 +20,7 @@ const IntModelProperty TriggerViewModel::SelectedGroupIndexProperty("TriggerView
 const IntModelProperty TriggerViewModel::VersionProperty("TriggerViewModel", "Version", 0);
 const IntModelProperty TriggerViewModel::EnsureVisibleConditionIndexProperty("TriggerViewModel", "EnsureVisibleConditionIndex", -1);
 const IntModelProperty TriggerViewModel::EnsureVisibleGroupIndexProperty("TriggerViewModel", "EnsureVisibleGroupIndex", -1);
+const BoolModelProperty TriggerViewModel::IsMeasuredTrackedAsPercentProperty("TriggerViewModel", "IsMeasuredTrackedAsPercent", false);
 const IntModelProperty TriggerViewModel::GroupViewModel::ColorProperty("GroupViewModel", "Color", 0);
 
 TriggerViewModel::TriggerViewModel() noexcept
@@ -111,7 +112,7 @@ void TriggerViewModel::GroupViewModel::UpdateSerialized(std::string& sSerialized
         sSerialized.pop_back();
 }
 
-const std::string& TriggerViewModel::GroupViewModel::GetSerialized() const
+const std::string& TriggerViewModel::GroupViewModel::GetSerialized(const TriggerViewModel& vmTrigger) const
 {
     if (m_sSerialized == TriggerViewModel::GroupViewModel::NOT_SERIALIZED)
     {
@@ -124,6 +125,7 @@ const std::string& TriggerViewModel::GroupViewModel::GetSerialized() const
             for (; pCondition != nullptr; pCondition = pCondition->next)
             {
                 auto& vmCondition = vConditions.Add();
+                vmCondition.SetTriggerViewModel(&vmTrigger);
                 vmCondition.InitializeFrom(*pCondition);
             }
 
@@ -132,6 +134,24 @@ const std::string& TriggerViewModel::GroupViewModel::GetSerialized() const
     }
 
     return m_sSerialized;
+}
+
+bool TriggerViewModel::GroupViewModel::UpdateMeasuredFlags()
+{
+    if (m_pConditionSet)
+    {
+        rc_condition_t* pCondition = m_pConditionSet->conditions;
+        for (; pCondition != nullptr; pCondition = pCondition->next)
+        {
+            if (pCondition->type == RC_CONDITION_MEASURED)
+            {
+                m_sSerialized = TriggerViewModel::GroupViewModel::NOT_SERIALIZED;
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 void TriggerViewModel::SerializeAppend(std::string& sBuffer) const
@@ -144,7 +164,7 @@ void TriggerViewModel::SerializeAppend(std::string& sBuffer) const
             if (nGroup != 0)
                 sBuffer.push_back('S');
 
-            sBuffer.append(vmGroup->GetSerialized());
+            sBuffer.append(vmGroup->GetSerialized(*this));
         }
     }
 }
@@ -174,7 +194,7 @@ void TriggerViewModel::CopySelectedConditionsToClipboard()
         // no selection, get the whole group
         const auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
         if (pGroup != nullptr)
-            sSerialized = pGroup->GetSerialized();
+            sSerialized = pGroup->GetSerialized(*this);
     }
     else if (sSerialized.back() == '_')
     {
@@ -376,6 +396,8 @@ void TriggerViewModel::InitializeGroups(const rc_trigger_t& pTrigger)
     m_vGroups.RemoveNotifyTarget(*this);
     m_vGroups.BeginUpdate();
 
+    SetMeasuredTrackedAsPercent(m_pTrigger != nullptr ? m_pTrigger->measured_as_percent : false);
+
     // this will not update the conditions collection because OnValueChange ignores it when m_vGroups.IsUpdating
     SetSelectedGroupIndex(0);
 
@@ -424,7 +446,7 @@ void TriggerViewModel::InitializeFrom(const std::string& sTrigger, const ra::dat
     }
 }
 
-void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
+void TriggerViewModel::UpdateGroups(const rc_trigger_t& pTrigger)
 {
     const int nSelectedIndex = GetSelectedGroupIndex();
 
@@ -474,6 +496,13 @@ void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
     }
 }
 
+void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
+{
+    m_pTrigger = nullptr;
+    m_sTriggerBuffer.clear();
+    UpdateGroups(pTrigger);
+}
+
 void TriggerViewModel::UpdateFrom(const std::string& sTrigger)
 {
     const auto nSize = rc_trigger_size(sTrigger.c_str());
@@ -481,13 +510,13 @@ void TriggerViewModel::UpdateFrom(const std::string& sTrigger)
     {
         m_sTriggerBuffer.resize(nSize);
         m_pTrigger = rc_parse_trigger(m_sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
-        UpdateFrom(*m_pTrigger);
+        UpdateGroups(*m_pTrigger);
     }
     else
     {
         rc_trigger_t pTrigger;
         memset(&pTrigger, 0, sizeof(pTrigger));
-        UpdateFrom(pTrigger);
+        UpdateGroups(pTrigger);
     }
 }
 
@@ -550,6 +579,42 @@ void TriggerViewModel::UpdateVersion()
     SetValue(VersionProperty, GetValue(VersionProperty) + 1);
 }
 
+void TriggerViewModel::UpdateVersionAndRestoreHits()
+{
+    // WARNING: this method should only be called when the number and type of conditions is known to not change
+    std::vector<unsigned> vCurrentHits;
+    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
+    {
+        auto* pGroup = m_vGroups.GetItemAt(i);
+        if (pGroup != nullptr)
+        {
+            const auto* pCondition = pGroup->m_pConditionSet->conditions;
+            while (pCondition != nullptr)
+            {
+                vCurrentHits.push_back(pCondition->current_hits);
+                pCondition = pCondition->next;
+            }
+        }
+    }
+
+    UpdateVersion();
+
+    gsl::index nHitIndex = 0;
+    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
+    {
+        auto* pGroup = m_vGroups.GetItemAt(i);
+        if (pGroup != nullptr)
+        {
+            auto* pCondition = pGroup->m_pConditionSet->conditions;
+            while (pCondition != nullptr)
+            {
+                pCondition->current_hits = vCurrentHits.at(nHitIndex++);
+                pCondition = pCondition->next;
+            }
+        }
+    }
+}
+
 void TriggerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
     if (args.Property == SelectedGroupIndexProperty)
@@ -574,6 +639,29 @@ void TriggerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
             m_vGroups.AddNotifyTarget(*this);
 
             UpdateConditions(pGroup);
+        }
+    }
+
+    ViewModelBase::OnValueChanged(args);
+}
+
+void TriggerViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == IsMeasuredTrackedAsPercentProperty)
+    {
+        // ignore change caused in InitializeFrom
+        if (!m_vGroups.IsUpdating())
+        {
+            bool bChanged = false;
+            for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vGroups.Count()); ++i)
+            {
+                auto* pGroup = m_vGroups.GetItemAt(i);
+                if (pGroup != nullptr)
+                    bChanged |= pGroup->UpdateMeasuredFlags();
+            }
+
+            if (bChanged)
+                UpdateVersionAndRestoreHits();
         }
     }
 

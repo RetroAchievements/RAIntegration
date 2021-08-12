@@ -60,11 +60,19 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
             case TriggerConditionType::SubHits:     sBuffer.push_back('D'); break;
             case TriggerConditionType::AndNext:     sBuffer.push_back('N'); break;
             case TriggerConditionType::OrNext:      sBuffer.push_back('O'); break;
-            case TriggerConditionType::Measured:    sBuffer.push_back('M'); break;
             case TriggerConditionType::MeasuredIf:  sBuffer.push_back('Q'); break;
             case TriggerConditionType::AddAddress:  sBuffer.push_back('I'); break;
             case TriggerConditionType::Trigger:     sBuffer.push_back('T'); break;
             case TriggerConditionType::ResetNextIf: sBuffer.push_back('Z'); break;
+            case TriggerConditionType::Measured:
+            {
+                const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
+                if (pTriggerViewModel != nullptr && pTriggerViewModel->IsMeasuredTrackedAsPercent())
+                    sBuffer.push_back('G');
+                else
+                    sBuffer.push_back('M');
+                break;
+            }
             default:
                 assert(!"Unknown condition type");
                 break;

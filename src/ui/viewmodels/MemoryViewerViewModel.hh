@@ -73,6 +73,7 @@ public:
         Selected,        // selected
         Cursor,          // selected and highlighted
         HasNote,         // has notes
+        HasSurrogateNote,// part of a multibyte note
         HasBookmark,     // has bookmark
         Frozen,          // has frozen bookmark
 

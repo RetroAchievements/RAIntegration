@@ -97,9 +97,6 @@
     <ClCompile Include="..\rcheevos\src\rcheevos\runtime.c">
       <Filter>rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rhash\md5.c">
-      <Filter>md5</Filter>
-    </ClCompile>
     <ClCompile Include="..\rcheevos\src\rcheevos\consoleinfo.c">
       <Filter>rcheevos</Filter>
     </ClCompile>
@@ -114,9 +111,6 @@
     </ClInclude>
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
       <Filter>rcheevos</Filter>
-    </ClInclude>
-    <ClInclude Include="..\rcheevos\src\rhash\md5.h">
-      <Filter>md5</Filter>
     </ClInclude>
     <ClInclude Include="..\rcheevos\src\rcheevos\compat.h">
       <Filter>rcheevos</Filter>
@@ -133,6 +127,12 @@
     <ClCompile Include="..\rcheevos\src\rapi\rc_api_info.c">
       <Filter>rapi</Filter>
     </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rhash\hash.c">
+      <Filter>rhash</Filter>
+    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rhash\md5.c">
+      <Filter>rhash</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="lua">
@@ -141,11 +141,16 @@
     <Filter Include="rcheevos">
       <UniqueIdentifier>{551d7e10-0699-4da6-9d2d-d992d7b26a3a}</UniqueIdentifier>
     </Filter>
-    <Filter Include="md5">
-      <UniqueIdentifier>{0d89b82c-19cc-4151-b2f6-c54895534c95}</UniqueIdentifier>
-    </Filter>
     <Filter Include="rapi">
       <UniqueIdentifier>{d363eb07-b5ba-4ce7-99a4-de23227fd446}</UniqueIdentifier>
     </Filter>
+    <Filter Include="rhash">
+      <UniqueIdentifier>{0e5a622a-3c8d-46f8-b2cb-78c0b296cbbe}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\rcheevos\src\rhash\md5.h">
+      <Filter>rhash</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

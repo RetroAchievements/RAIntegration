@@ -30,6 +30,7 @@ public:
     Color ColorNormal() const noexcept { return m_colorNormal; }
     Color ColorSelected() const noexcept { return m_colorSelected; }
     Color ColorHasNote() const noexcept { return m_colorHasNote; }
+    Color ColorHasSurrogateNote() const noexcept { return m_colorHasSurrogateNote; }
     Color ColorHasBookmark() const noexcept { return m_colorHasBookmark; }
     Color ColorFrozen() const noexcept { return m_colorFrozen; }
     Color ColorHeader() const noexcept { return m_colorHeader; }
@@ -57,6 +58,7 @@ private:
     Color m_colorNormal{ 255, 0, 0, 0 };
     Color m_colorSelected{ 255, 255, 0, 0 };
     Color m_colorHasNote{ 255, 0, 0, 255 };
+    Color m_colorHasSurrogateNote{ 255, 32, 64, 160 };
     Color m_colorHasBookmark{ 255, 0, 160, 0 };
     Color m_colorFrozen{ 255, 255, 200, 0 };
     Color m_colorHeader{ 255, 128, 128, 128 };

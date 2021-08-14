@@ -299,6 +299,45 @@ public:
         Assert::IsTrue(vmCondition.HasHits());
     }
 
+    TEST_METHOD(TestSerializeHasHits)
+    {
+        TriggerConditionViewModelHarness vmCondition;
+        vmCondition.Parse("0xH1234=0xH2345.10.");
+        std::string sSerialized = vmCondition.Serialize();
+        Assert::AreEqual(std::string("0xH1234=0xH2345.10."), sSerialized);
+
+        // changing to a type that supports hits does not change the hit count
+        vmCondition.SetType(TriggerConditionType::AddHits);
+        sSerialized = vmCondition.Serialize();
+        Assert::AreEqual(std::string("C:0xH1234=0xH2345.10."), sSerialized);
+
+        // changing to a type that does not support hits should remove the hit count (and comparison)
+        vmCondition.SetType(TriggerConditionType::AddSource);
+        sSerialized = vmCondition.Serialize();
+        Assert::AreEqual(std::string("A:0xH1234"), sSerialized);
+
+        // changing back to a type that does support hits should restore the hit count and comparison
+        // NOTE: editor does not behave this way as the condition is reconstructed from the serialized trigger
+        vmCondition.SetType(TriggerConditionType::ResetIf);
+        sSerialized = vmCondition.Serialize();
+        Assert::AreEqual(std::string("R:0xH1234=0xH2345.10."), sSerialized);
+
+        // changing to a type that does not support hits should remove the hit count (and comparison)
+        vmCondition.SetType(TriggerConditionType::AddAddress);
+        sSerialized = vmCondition.Serialize();
+        Assert::AreEqual(std::string("I:0xH1234"), sSerialized);
+
+        // changing to a type that does not support hits should remove the hit count (and comparison)
+        vmCondition.SetType(TriggerConditionType::SubSource);
+        sSerialized = vmCondition.Serialize();
+        Assert::AreEqual(std::string("B:0xH1234"), sSerialized);
+
+        // changing back to a type that does support hits should restore the hit count and comparison
+        vmCondition.SetType(TriggerConditionType::Standard);
+        sSerialized = vmCondition.Serialize();
+        Assert::AreEqual(std::string("0xH1234=0xH2345.10."), sSerialized);
+    }
+
     TEST_METHOD(TestSizes)
     {
         ParseAndRegenerate("0xH1234=0xH2345"); // 8-bit

@@ -183,6 +183,7 @@ void EditorTheme::LoadFromFile()
             ReadColor(m_colorNormal, colors, "Normal");
             ReadColor(m_colorSelected, colors, "Selected");
             ReadColor(m_colorHasNote, colors, "HasNote");
+            ReadColor(m_colorHasSurrogateNote, colors, "HasSurrogateNote");
             ReadColor(m_colorHasBookmark, colors, "HasBookmark");
             ReadColor(m_colorFrozen, colors, "Frozen");
             ReadColor(m_colorHeader, colors, "Header");

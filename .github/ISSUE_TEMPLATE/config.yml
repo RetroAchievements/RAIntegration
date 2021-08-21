@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Suggest a new feature
+    url: https://github.com/RetroAchievements/RAIntegration/discussions/new
+    about: Share ideas for new features or enhancements

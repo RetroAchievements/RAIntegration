@@ -190,7 +190,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
         const auto* pItem = vmMenuItems.GetItemAt(i);
         Expects(pItem != nullptr);
 
-        int nId = pItem->GetId();
+        const int nId = pItem->GetId();
         if (nId == 0)
             AppendMenu(hMenu, MF_SEPARATOR, 0U, nullptr);
         else if (pItem->IsSelected())
@@ -204,7 +204,7 @@ API HMENU CCONV _RA_CreatePopupMenu()
 
 API void CCONV _RA_InvokeDialog(LPARAM nID)
 {
-    ra::ui::viewmodels::IntegrationMenuViewModel::ActivateMenuItem(static_cast<int>(nID));
+    ra::ui::viewmodels::IntegrationMenuViewModel::ActivateMenuItem(gsl::narrow_cast<int>(nID));
 }
 
 static void HandleLoginResponse(const ra::api::Login::Response& response)

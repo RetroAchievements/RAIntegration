@@ -28,12 +28,12 @@ public:
         m_sVersion = sClientVersion;
     }
 
-    void MockInvalidClient(bool bInvalid)
+    void MockInvalidClient(bool bInvalid) noexcept
     {
         m_bInvalid = bInvalid;
     }
 
-    bool ValidateClientVersion(bool&) override
+    bool ValidateClientVersion(bool&) noexcept override
     {
         return !m_bInvalid;
     }

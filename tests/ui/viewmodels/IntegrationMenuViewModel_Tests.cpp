@@ -67,7 +67,7 @@ private:
 
         void AssertMenuItem(gsl::index nIndex, int nId, const std::wstring& sLabel)
         {
-            auto* vmItem = m_vmItems.GetItemAt(nIndex);
+            const auto* vmItem = m_vmItems.GetItemAt(nIndex);
             Expects(vmItem != nullptr);
             Assert::AreEqual(nId, vmItem->GetId());
             Assert::AreEqual(sLabel, vmItem->GetLabel());

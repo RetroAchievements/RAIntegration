@@ -95,13 +95,26 @@ void GridBinding::UpdateLayout()
     std::vector<int> vWidths;
     vWidths.resize(m_vColumns.size());
 
+    constexpr int nDefaultDPI = 96;
+    int nDPI = 0;
+
     for (gsl::index i = 0; ra::to_unsigned(i) < m_vColumns.size(); ++i)
     {
         const auto& pColumn = *m_vColumns.at(i);
         switch (pColumn.GetWidthType())
         {
         case GridColumnBinding::WidthType::Pixels:
-            vWidths.at(i) = pColumn.GetWidth();
+            if (nDPI == 0)
+            {
+                const HDC hScreen = GetDC(nullptr);
+                nDPI = GetDeviceCaps(hScreen, LOGPIXELSX);
+                ReleaseDC(nullptr, hScreen);
+
+                if (nDPI == 0)
+                    nDPI = nDefaultDPI;
+            }
+
+            vWidths.at(i) = pColumn.GetWidth() * nDPI / nDefaultDPI;
             break;
 
         case GridColumnBinding::WidthType::Percentage:

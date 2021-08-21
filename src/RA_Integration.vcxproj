@@ -100,6 +100,7 @@
     <ClCompile Include="ui\viewmodels\CodeNotesViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\FileDialogViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\IntegrationMenuViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\LookupItemViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MemoryBookmarksViewModel.cpp" />
@@ -274,6 +275,7 @@
     <ClInclude Include="ui\viewmodels\EmulatorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\FileDialogViewModel.hh" />
     <ClInclude Include="ui\viewmodels\GameChecksumViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\IntegrationMenuViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LoginViewModel.hh" />
     <ClInclude Include="ui\viewmodels\LookupItemViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MemoryBookmarksViewModel.hh" />

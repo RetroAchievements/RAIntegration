@@ -74,10 +74,24 @@ void MemoryBookmarksViewModel::OnValueChanged(const BoolModelProperty::ChangeArg
 GSL_SUPPRESS_F6
 void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == MemoryBookmarkViewModel::FormatProperty ||
-        args.Property == MemoryBookmarkViewModel::SizeProperty)
+    if (args.Property == MemoryBookmarkViewModel::FormatProperty)
     {
         m_bModified = true;
+    }
+    else if (args.Property == MemoryBookmarkViewModel::SizeProperty)
+    {
+        m_bModified = true;
+
+        auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
+        Expects(pBookmark != nullptr);
+
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+        const auto nValue = pEmulatorContext.ReadMemory(pBookmark->GetAddress(), pBookmark->GetSize());
+
+        m_bIgnoreValueChanged = true;
+        pBookmark->SetCurrentValue(nValue);
+        m_bIgnoreValueChanged = false;
+
     }
     else if (args.Property == MemoryBookmarkViewModel::BehaviorProperty)
     {

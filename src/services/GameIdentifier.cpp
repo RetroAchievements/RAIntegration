@@ -45,7 +45,7 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
     }
 
     char hash[33];
-    rc_hash_generate_from_buffer(hash, nConsoleId, const_cast<BYTE*>(pROM), nROMSize);
+    rc_hash_generate_from_buffer(hash, nConsoleId, pROM, nROMSize);
 
     return IdentifyHash(hash);
 }

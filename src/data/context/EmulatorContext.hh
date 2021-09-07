@@ -279,7 +279,7 @@ private:
 protected:
     void UpdateUserAgent();
     void OnTotalMemorySizeChanged();
-    bool ValidateClientVersion(bool& bHardcore);
+    virtual bool ValidateClientVersion(bool& bHardcore);
 
     EmulatorID m_nEmulatorId = EmulatorID::UnknownEmulator;
     std::string m_sVersion;

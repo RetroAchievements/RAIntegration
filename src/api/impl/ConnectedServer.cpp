@@ -18,6 +18,7 @@
 #include <rapidjson\document.h>
 
 #include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
+#include <rc_api_info.h>
 #include <rc_api_runtime.h>
 #include <rc_api_user.h>
 
@@ -769,9 +770,6 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
     rc_api_resolve_hash_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    api_params.username = pUserContext.GetUsername().c_str();
-    api_params.api_token = pUserContext.GetApiToken().c_str();
     api_params.game_hash = request.Hash.c_str();
 
     rc_api_request_t api_request;
@@ -1021,58 +1019,49 @@ UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchie
 FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const FetchAchievementInfo::Request& request)
 {
     FetchAchievementInfo::Response response;
-    rapidjson::Document document;
     std::string sPostData;
 
-    AppendUrlParam(sPostData, "a", std::to_string(request.AchievementId));
-    if (request.FirstEntry > 1)
-        AppendUrlParam(sPostData, "o", std::to_string(request.FirstEntry - 1));
-    AppendUrlParam(sPostData, "c", std::to_string(request.NumEntries));
+    rc_api_fetch_achievement_info_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+
+    api_params.achievement_id = request.AchievementId;
+    api_params.first_entry = request.FirstEntry;
+    api_params.count = request.NumEntries;
     if (request.FriendsOnly)
-        AppendUrlParam(sPostData, "f", "1");
+        api_params.friends_only = 1;
 
-    if (DoRequest(m_sHost, FetchAchievementInfo::Name(), "achievementwondata", sPostData, response, document))
+    rc_api_request_t api_request;
+    if (rc_api_init_fetch_achievement_info_request(&api_request, &api_params) == RC_OK)
     {
-        if (!document.HasMember("Response"))
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, FetchAchievementInfo::Name(), httpResponse, response))
         {
-            response.Result = ApiResult::Error;
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
-        }
-        else
-        {
-            response.Result = ApiResult::Success;
+            rc_api_fetch_achievement_info_response_t api_response;
+            const auto nResult = rc_api_process_fetch_achievement_info_response(&api_response, httpResponse.Content().c_str());
 
-            const auto& AchievmentInfo = document["Response"];
-
-            GetRequiredJsonField(response.GameId, AchievmentInfo, "GameID", response);
-            GetRequiredJsonField(response.EarnedBy, AchievmentInfo, "NumEarned", response);
-            GetRequiredJsonField(response.NumPlayers, AchievmentInfo, "TotalPlayers", response);
-
-            if (AchievmentInfo.HasMember("RecentWinner")) // RecentWinner will not be returned if there are no winners
+            if (ValidateResponse(nResult, api_response.response, FetchAchievementInfo::Name(), httpResponse.StatusCode(), response))
             {
-                const auto& pEntries = AchievmentInfo["RecentWinner"];
-                if (!pEntries.IsArray())
+                response.Result = ApiResult::Success;
+
+                response.GameId = api_response.game_id;
+                response.EarnedBy = api_response.num_awarded;
+                response.NumPlayers = api_response.num_players;
+
+                response.Entries.reserve(api_response.num_recently_awarded);
+                for (unsigned i = 0; i < api_response.num_recently_awarded; ++i)
                 {
-                    response.Result = ApiResult::Error;
-                    response.ErrorMessage = ra::StringPrintf("%s not an array", "RecentWinner");
-                }
-                else
-                {
-                    const auto& pEntriesArray = pEntries.GetArray();
-                    response.Entries.reserve(pEntriesArray.Size());
-                    for (const auto& pEntry : pEntriesArray)
-                    {
-                        FetchAchievementInfo::Response::Entry entry;
-                        GetRequiredJsonField(entry.User, pEntry, "User", response);
-                        GetRequiredJsonField(entry.Points, pEntry, "RAPoints", response);
-                        unsigned int nTime;
-                        GetRequiredJsonField(nTime, pEntry, "DateAwarded", response);
-                        entry.DateAwarded = nTime;
-                        response.Entries.emplace_back(entry);
-                    }
+                    const auto* pAwarded = &api_response.recently_awarded[i];
+                    auto& pEntry = response.Entries.emplace_back();
+                    pEntry.User = pAwarded->username;
+                    pEntry.DateAwarded = pAwarded->awarded;
                 }
             }
+
+            rc_api_destroy_fetch_achievement_info_response(&api_response);
         }
     }
 
@@ -1082,58 +1071,48 @@ FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const Fetch
 FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request)
 {
     FetchLeaderboardInfo::Response response;
-    rapidjson::Document document;
     std::string sPostData;
 
-    AppendUrlParam(sPostData, "i", std::to_string(request.LeaderboardId));
-    if (request.FirstEntry > 1)
-        AppendUrlParam(sPostData, "o", std::to_string(request.FirstEntry - 1));
-    AppendUrlParam(sPostData, "c", std::to_string(request.NumEntries));
+    rc_api_fetch_leaderboard_info_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
-    if (DoRequest(m_sHost, FetchLeaderboardInfo::Name(), "lbinfo", sPostData, response, document))
+    api_params.leaderboard_id = request.LeaderboardId;
+    if (!request.AroundUser.empty())
+        api_params.username = request.AroundUser.c_str();
+    else
+        api_params.first_entry = request.FirstEntry;
+
+    api_params.count = request.NumEntries;
+
+    rc_api_request_t api_request;
+    if (rc_api_init_fetch_leaderboard_info_request(&api_request, &api_params) == RC_OK)
     {
-        if (!document.HasMember("LeaderboardData"))
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, FetchLeaderboardInfo::Name(), httpResponse, response))
         {
-            response.Result = ApiResult::Error;
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", "LeaderboardData");
-        }
-        else
-        {
-            response.Result = ApiResult::Success;
+            rc_api_fetch_leaderboard_info_response_t api_response;
+            const auto nResult = rc_api_process_fetch_leaderboard_info_response(&api_response, httpResponse.Content().c_str());
 
-            const auto& LeaderboardData = document["LeaderboardData"];
-
-            GetRequiredJsonField(response.GameId, LeaderboardData, "GameID", response);
-            GetRequiredJsonField(response.ConsoleId, LeaderboardData, "ConsoleID", response);
-            unsigned int nLowerIsBetter;
-            GetRequiredJsonField(nLowerIsBetter, LeaderboardData, "LowerIsBetter", response);
-            response.LowerIsBetter = (nLowerIsBetter != 0);
-
-            if (LeaderboardData.HasMember("Entries"))
+            if (ValidateResponse(nResult, api_response.response, FetchLeaderboardInfo::Name(), httpResponse.StatusCode(), response))
             {
-                const auto& pEntries = LeaderboardData["Entries"];
-                if (!pEntries.IsArray())
+                response.Result = ApiResult::Success;
+
+                response.GameId = api_response.game_id;
+                response.LowerIsBetter = api_response.lower_is_better;
+
+                response.Entries.reserve(api_response.num_entries);
+                for (unsigned i = 0; i < api_response.num_entries; ++i)
                 {
-                    response.Result = ApiResult::Error;
-                    response.ErrorMessage = ra::StringPrintf("%s not an array", "Entries");
-                }
-                else
-                {
-                    const auto& pEntriesArray = pEntries.GetArray();
-                    response.Entries.reserve(pEntriesArray.Size());
-                    for (const auto& pEntry : pEntriesArray)
-                    {
-                        FetchLeaderboardInfo::Response::Entry entry;
-                        GetRequiredJsonField(entry.Rank, pEntry, "Rank", response);
-                        GetRequiredJsonField(entry.User, pEntry, "User", response);
-                        GetRequiredJsonField(entry.Score, pEntry, "Score", response);
-                        unsigned int nTime;
-                        GetRequiredJsonField(nTime, pEntry, "DateSubmitted", response);
-                        entry.DateSubmitted = nTime;
-                        response.Entries.emplace_back(entry);
-                    }
+                    const auto* pApiEntry = &api_response.entries[i];
+                    auto& pEntry = response.Entries.emplace_back();
+                    pEntry.Rank = pApiEntry->rank;
+                    pEntry.Score = pApiEntry->score;
+                    pEntry.User = pApiEntry->username;
+                    pEntry.DateSubmitted = pApiEntry->submitted;
                 }
             }
+
+            rc_api_destroy_fetch_leaderboard_info_response(&api_response);
         }
     }
 
@@ -1170,67 +1149,35 @@ LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request
 FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::Request& request)
 {
     FetchGamesList::Response response;
-    rapidjson::Document document;
     std::string sPostData;
 
-    AppendUrlParam(sPostData, "c", std::to_string(request.ConsoleId));
+    rc_api_fetch_games_list_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
-    if (DoRequest(m_sHost, FetchGamesList::Name(), "gameslist", sPostData, response, document))
+    api_params.console_id = request.ConsoleId;
+
+    rc_api_request_t api_request;
+    if (rc_api_init_fetch_games_list_request(&api_request, &api_params) == RC_OK)
     {
-        if (!document.HasMember("Response"))
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, FetchGamesList::Name(), httpResponse, response))
         {
-            response.Result = ApiResult::Error;
-            if (response.ErrorMessage.empty())
-                response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
-        }
-        else
-        {
-            response.Result = ApiResult::Success;
+            rc_api_fetch_games_list_response_t api_response;
+            const auto nResult = rc_api_process_fetch_games_list_response(&api_response, httpResponse.Content().c_str());
 
-            auto& Data = document["Response"];
-            if (!Data.IsObject())
+            if (ValidateResponse(nResult, api_response.response, FetchGamesList::Name(), httpResponse.StatusCode(), response))
             {
-                // Response should be a dictionary of ID/Name pairs. If we got anything else, it's an error
-                response.Result = ApiResult::Error;
-                if (response.ErrorMessage.empty())
-                    response.ErrorMessage = ra::StringPrintf("%s is not a dictionary", "Response");
-            }
-            else
-            {
-                for (auto iter = Data.MemberBegin(); iter != Data.MemberEnd(); ++iter)
+                response.Result = ApiResult::Success;
+
+                response.Games.reserve(api_response.num_entries);
+                for (unsigned i = 0; i < api_response.num_entries; ++i)
                 {
-                    if (!iter->name.IsString())
-                    {
-                        response.Result = ApiResult::Error;
-                        if (response.ErrorMessage.empty())
-                            response.ErrorMessage = "Non-string key found in response";
-
-                        break;
-                    }
-
-                    if (!iter->value.IsString())
-                    {
-                        response.Result = ApiResult::Error;
-                        if (response.ErrorMessage.empty())
-                            response.ErrorMessage = ra::BuildString("Non-string value found in response for key ", iter->name.GetString());
-
-                        break;
-                    }
-
-                    char* pEnd;
-                    const auto nGameId = strtoul(iter->name.GetString(), &pEnd, 10);
-                    if (nGameId == 0 || (pEnd && *pEnd))
-                    {
-                        response.Result = ApiResult::Error;
-                        if (response.ErrorMessage.empty())
-                            response.ErrorMessage = ra::BuildString("Invalid game ID: ", iter->name.GetString());
-
-                        break;
-                    }
-
-                    response.Games.emplace_back(nGameId, ra::Widen(iter->value.GetString()));
+                    const auto* pEntry = &api_response.entries[i];
+                    response.Games.emplace_back(pEntry->id, ra::Widen(pEntry->name));
                 }
             }
+
+            rc_api_destroy_fetch_games_list_response(&api_response);
         }
     }
 

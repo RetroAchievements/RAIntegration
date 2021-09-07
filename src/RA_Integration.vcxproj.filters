@@ -378,6 +378,9 @@
     <ClCompile Include="data\models\LeaderboardModel.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\IntegrationMenuViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Leaderboard.h">
@@ -940,6 +943,9 @@
     </ClInclude>
     <ClInclude Include="data\models\LeaderboardModel.hh">
       <Filter>Data\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\IntegrationMenuViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

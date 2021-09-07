@@ -740,6 +740,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
 
                 const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
                 constexpr int nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
+                bool bSeenPlayer = false;
 
                 for (const auto& pEntry : response.TopEntries)
                 {
@@ -749,13 +750,19 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
                     pEntryViewModel.SetUserName(ra::Widen(pEntry.User));
 
                     if (pEntry.User == pUserName)
+                    {
+                        bSeenPlayer = true;
                         pEntryViewModel.SetHighlighted(true);
+
+                        if (response.BestScore != response.Score)
+                            pEntryViewModel.SetScore(ra::StringPrintf(L"(%s) %s", pLeaderboard->FormatScore(response.Score), pLeaderboard->FormatScore(response.BestScore)));
+                    }
 
                     if (vmScoreboard.Entries().Count() == nEntriesDisplayed)
                         break;
                 }
 
-                if (response.NewRank >= nEntriesDisplayed)
+                if (!bSeenPlayer)
                 {
                     auto* pEntryViewModel = vmScoreboard.Entries().GetItemAt(6);
                     if (pEntryViewModel != nullptr)
@@ -770,12 +777,6 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
                         pEntryViewModel->SetUserName(ra::Widen(pUserName));
                         pEntryViewModel->SetHighlighted(true);
                     }
-                }
-                else if (response.BestScore != response.Score)
-                {
-                    auto* pEntryViewModel = vmScoreboard.Entries().GetItemAt(response.NewRank - 1);
-                    if (pEntryViewModel != nullptr)
-                        pEntryViewModel->SetScore(ra::StringPrintf(L"(%s) %s", pLeaderboard->FormatScore(response.Score), pLeaderboard->FormatScore(response.BestScore)));
                 }
 
                 ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(
@@ -853,56 +854,95 @@ void GameContext::RefreshCodeNotes()
     });
 }
 
-void GameContext::AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
+static unsigned int ExtractSize(const std::wstring& sNote)
 {
-    unsigned int nBytes = 1;
     bool bIsBytes = false;
 
-    // attempt to match "X byte", "X Byte", "XX bytes", or "XX Bytes"
-    auto nIndex = sNote.find(L"yte");
-    if (nIndex != std::string::npos && nIndex >= 2) // have to have room for the 'b' of bytes plus at least one digit
-    {
-        const wchar_t c = sNote.at(--nIndex);
-        if (c == L'b' || c == L'B')
-            bIsBytes = true;
-    }
+    // "Nbit" smallest possible note - and that's just the size annotation
+    if (sNote.length() < 4)
+        return 1;
 
-    if (!bIsBytes)
+    const size_t nStop = sNote.length() - 3;
+    for (size_t nIndex = 1; nIndex <= nStop; ++nIndex)
     {
-        // attempt to match "N bit" or "N bits"
-        nIndex = sNote.find(L"Bit");
-        if (nIndex == std::string::npos)
-            nIndex = sNote.find(L"bit");
-    }
+        wchar_t c = sNote.at(nIndex);
+        if (c != L'b' && c != L'B')
+            continue;
 
-    if (nIndex != std::string::npos && nIndex >= 2)
-    {
-        // allow "N-bits", "N bits" or "Nbits". ignore if any other character appears between "N" and "bits"
-        wchar_t c = sNote.at(--nIndex);
-        if (c == L'-' || c == L' ')
-            c = sNote.at(--nIndex);
-
-        if (c >= L'0' && c <= L'9')
+        c = sNote.at(nIndex + 1);
+        if (c == L'i' || c == L'I')
         {
-            int nMultiplier = 1;
-            nBytes = 0;
-            do
-            {
-                nBytes += (c - L'0') * nMultiplier;
-                if (nIndex == 0)
-                    break;
+            c = sNote.at(nIndex + 2);
+            if (c != L't' && c != L'T')
+                continue;
 
-                nMultiplier *= 10;
-                c = sNote.at(--nIndex);
-            } while (c >= L'0' && c <= L'9');
+            // found "bit"
+            bIsBytes = false;
+        }
+        else if (c == L'y' || c == L'Y')
+        {
+            if (nIndex == nStop)
+                continue;
+
+            c = sNote.at(nIndex + 2);
+            if (c != L't' && c != L'T')
+                continue;
+
+            c = sNote.at(nIndex + 3);
+            if (c != L'e' && c != L'E')
+                continue;
+
+            // found "byte"
+            bIsBytes = true;
+        }
+        else
+        {
+            continue;
         }
 
-        if (nBytes == 0) // sanity check
-            nBytes = 1;
-        else if (!bIsBytes) // convert bits to bytes, rounding up
-            nBytes = (nBytes + 7) / 8;
+        // ignore single space or hyphen preceding "bit" or "byte"
+        size_t nScan = nIndex - 1;
+        c = sNote.at(nScan);
+        if (c == ' ' || c == '-')
+        {
+            if (nScan == 0)
+                continue;
+
+            c = sNote.at(--nScan);
+        }
+
+        // extract the number
+        unsigned int nBytes = 0;
+        int nMultiplier = 1;
+        while (c <= L'9' && c >= L'0')
+        {
+            nBytes += (c - L'0') * nMultiplier;
+
+            if (nScan == 0)
+                break;
+
+            nMultiplier *= 10;
+            c = sNote.at(--nScan);
+        }
+
+        // if a number was found, return it
+        if (nBytes > 0)
+        {
+            if (bIsBytes)
+                return nBytes;
+
+            // convert bits to bytes, rounding up
+            return (nBytes + 7) / 8;
+        }
     }
 
+    // could not find annotation, associate note to single address
+    return 1;
+}
+
+void GameContext::AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
+{
+    const unsigned int nBytes = ExtractSize(sNote);
     m_mCodeNotes.insert_or_assign(nAddress, CodeNote{ sAuthor, sNote, nBytes });
     OnCodeNoteChanged(nAddress, sNote);
 }

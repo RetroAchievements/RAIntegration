@@ -936,6 +936,40 @@ public:
         Assert::AreEqual(0U, bookmark5.GetPreviousValue());
         Assert::AreEqual(0U, bookmark5.GetChanges());
     }
+
+    TEST_METHOD(TestUpdateCurrentValueOnSizeChange)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.AddBookmark(4U, MemSize::SixteenBit);
+        auto& bookmark1 = *bookmarks.Bookmarks().GetItemAt(0);
+
+        std::array<uint8_t, 64> memory = {};
+        for (uint8_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = i;
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.DoFrame(); // initialize current and previous values
+
+        Assert::AreEqual(0x0504U, bookmark1.GetCurrentValue());
+        bookmark1.SetChanges(0U);
+
+        memory.at(5) = 0x17;
+        bookmarks.DoFrame();
+
+        Assert::AreEqual(0x1704U, bookmark1.GetCurrentValue());
+        Assert::AreEqual(0x0504U, bookmark1.GetPreviousValue());
+        Assert::AreEqual(1U, bookmark1.GetChanges());
+
+        bookmark1.SetSize(MemSize::EightBit);
+        Assert::AreEqual(0x04U, bookmark1.GetCurrentValue());
+        Assert::AreEqual(0x0504U, bookmark1.GetPreviousValue());
+        Assert::AreEqual(1U, bookmark1.GetChanges());
+
+        bookmark1.SetSize(MemSize::ThirtyTwoBit);
+        Assert::AreEqual(0x07061704U, bookmark1.GetCurrentValue());
+        Assert::AreEqual(0x0504U, bookmark1.GetPreviousValue());
+        Assert::AreEqual(1U, bookmark1.GetChanges());
+    }
 };
 
 } // namespace tests

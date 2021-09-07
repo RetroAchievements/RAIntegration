@@ -25,6 +25,7 @@
 #include "services\ServiceLocator.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
+#include "ui\viewmodels\IntegrationMenuViewModel.hh"
 #include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
@@ -175,6 +176,35 @@ API void CCONV _RA_InstallSharedFunctionsExt(bool(*)(void), void(*fpCauseUnpause
     pEmulatorContext.SetUnpauseFunction(fpCauseUnpause);
     pEmulatorContext.SetGetGameTitleFunction(fpEstimateTitle);
     pEmulatorContext.SetRebuildMenuFunction(fpRebuildMenu);
+}
+
+API HMENU CCONV _RA_CreatePopupMenu()
+{
+    HMENU hMenu = CreatePopupMenu();
+
+    ra::ui::viewmodels::LookupItemViewModelCollection vmMenuItems;
+    ra::ui::viewmodels::IntegrationMenuViewModel::BuildMenu(vmMenuItems);
+
+    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(vmMenuItems.Count()); ++i)
+    {
+        const auto* pItem = vmMenuItems.GetItemAt(i);
+        Expects(pItem != nullptr);
+
+        const int nId = pItem->GetId();
+        if (nId == 0)
+            AppendMenu(hMenu, MF_SEPARATOR, 0U, nullptr);
+        else if (pItem->IsSelected())
+            AppendMenu(hMenu, MF_CHECKED, nId, pItem->GetLabel().c_str());
+        else
+            AppendMenu(hMenu, MF_STRING, nId, pItem->GetLabel().c_str());
+    }
+
+    return hMenu;
+}
+
+API void CCONV _RA_InvokeDialog(LPARAM nID)
+{
+    ra::ui::viewmodels::IntegrationMenuViewModel::ActivateMenuItem(gsl::narrow_cast<int>(nID));
 }
 
 static void HandleLoginResponse(const ra::api::Login::Response& response)

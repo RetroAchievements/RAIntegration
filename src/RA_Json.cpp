@@ -5,17 +5,6 @@
 #include "services\impl\StringTextReader.hh"
 #include "services\impl\StringTextWriter.hh"
 
-void _WriteBufferToFile(const std::wstring& sFileName, const rapidjson::Document& doc)
-{
-    std::ofstream ofile{ sFileName };
-    if (!ofile.is_open())
-        return;
-
-    rapidjson::OStreamWrapper osw{ ofile };
-    rapidjson::Writer<rapidjson::OStreamWrapper> writer{ osw };
-    doc.Accept(writer);
-}
-
 _Use_decl_annotations_
 bool LoadDocument(rapidjson::Document& doc, ra::services::TextReader& reader)
 {

@@ -1988,6 +1988,128 @@ public:
         Assert::IsTrue(vmEntry2->IsHighlighted());
     }
 
+    TEST_METHOD(TestSubmitLeaderboardEntryScoreNotImprovedSharedRank)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
+        game.mockUser.Initialize("Player", "ApiToken");
+        game.SetGameHash("hash");
+
+        unsigned int nNewScore = 0U;
+        game.mockServer.HandleRequest<ra::api::SubmitLeaderboardEntry>([&nNewScore]
+        (const ra::api::SubmitLeaderboardEntry::Request& request, ra::api::SubmitLeaderboardEntry::Response& response)
+        {
+            Assert::AreEqual(1U, request.LeaderboardId);
+            Assert::AreEqual(1234, request.Score);
+            Assert::AreEqual(std::string("hash"), request.GameHash);
+            nNewScore = request.Score;
+
+            response.Result = ra::api::ApiResult::Success;
+            response.TopEntries.push_back({ 1, "George", 1000U });
+            response.TopEntries.push_back({ 2, "Steve", 1200U });
+            response.TopEntries.push_back({ 2, "Player", 1200U });
+            response.TopEntries.push_back({ 4, "Bill", 1700U });
+
+            response.Score = 1234U;
+            response.BestScore = 1200U;
+            response.NewRank = 2;
+            return true;
+        });
+
+        game.MockLeaderboard();
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        game.mockThreadPool.ExecuteNextTask();
+        Assert::AreEqual(1234U, nNewScore);
+
+        const auto* vmScoreboard = game.mockOverlayManager.GetScoreboard(1U);
+        Assert::IsNotNull(vmScoreboard);
+        Ensures(vmScoreboard != nullptr);
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
+        Assert::AreEqual({ 4U }, vmScoreboard->Entries().Count());
+
+        const auto* vmEntry2 = vmScoreboard->Entries().GetItemAt(1);
+        Assert::IsNotNull(vmEntry2);
+        Ensures(vmEntry2 != nullptr);
+        Assert::AreEqual(2, vmEntry2->GetRank());
+        Assert::AreEqual(std::wstring(L"Steve"), vmEntry2->GetUserName());
+        Assert::AreEqual(std::wstring(L"1200"), vmEntry2->GetScore());
+        Assert::IsFalse(vmEntry2->IsHighlighted());
+
+        const auto* vmEntry3 = vmScoreboard->Entries().GetItemAt(2);
+        Assert::IsNotNull(vmEntry3);
+        Ensures(vmEntry3 != nullptr);
+        Assert::AreEqual(2, vmEntry3->GetRank());
+        Assert::AreEqual(std::wstring(L"Player"), vmEntry3->GetUserName());
+        Assert::AreEqual(std::wstring(L"(1234) 1200"), vmEntry3->GetScore());
+        Assert::IsTrue(vmEntry3->IsHighlighted());
+    }
+
+    TEST_METHOD(TestSubmitLeaderboardEntryScoreNotImprovedSharedRankLastEntry)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
+        game.mockUser.Initialize("Player", "ApiToken");
+        game.SetGameHash("hash");
+
+        unsigned int nNewScore = 0U;
+        game.mockServer.HandleRequest<ra::api::SubmitLeaderboardEntry>([&nNewScore]
+        (const ra::api::SubmitLeaderboardEntry::Request& request, ra::api::SubmitLeaderboardEntry::Response& response)
+        {
+            Assert::AreEqual(1U, request.LeaderboardId);
+            Assert::AreEqual(1234, request.Score);
+            Assert::AreEqual(std::string("hash"), request.GameHash);
+            nNewScore = request.Score;
+
+            response.Result = ra::api::ApiResult::Success;
+            response.TopEntries.push_back({ 1, "George", 1000U });
+            response.TopEntries.push_back({ 2, "Harold", 1100U });
+            response.TopEntries.push_back({ 2, "Roger", 1100U });
+            response.TopEntries.push_back({ 4, "Phil", 1150U });
+            response.TopEntries.push_back({ 5, "Steve", 1175U });
+            response.TopEntries.push_back({ 6, "Terry", 1200U });
+            response.TopEntries.push_back({ 6, "Edward", 1200U });
+            response.TopEntries.push_back({ 6, "Player", 1200U });
+            response.TopEntries.push_back({ 9, "Bill", 1300U });
+
+            response.Score = 1234U;
+            response.BestScore = 1200U;
+            response.NewRank = 6;
+            return true;
+        });
+
+        game.MockLeaderboard();
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        game.mockThreadPool.ExecuteNextTask();
+        Assert::AreEqual(1234U, nNewScore);
+
+        const auto* vmScoreboard = game.mockOverlayManager.GetScoreboard(1U);
+        Assert::IsNotNull(vmScoreboard);
+        Ensures(vmScoreboard != nullptr);
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
+        Assert::AreEqual({ 7U }, vmScoreboard->Entries().Count());
+
+        const auto* vmEntry6 = vmScoreboard->Entries().GetItemAt(5);
+        Assert::IsNotNull(vmEntry6);
+        Ensures(vmEntry6 != nullptr);
+        Assert::AreEqual(6, vmEntry6->GetRank());
+        Assert::AreEqual(std::wstring(L"Terry"), vmEntry6->GetUserName());
+        Assert::AreEqual(std::wstring(L"1200"), vmEntry6->GetScore());
+        Assert::IsFalse(vmEntry6->IsHighlighted());
+
+        // player is entry 8, but rank 6. 7 items will be shown, 7th item should be replaced with player entry
+        const auto* vmEntry7 = vmScoreboard->Entries().GetItemAt(6);
+        Assert::IsNotNull(vmEntry7);
+        Ensures(vmEntry7 != nullptr);
+        Assert::AreEqual(6, vmEntry7->GetRank());
+        Assert::AreEqual(std::wstring(L"Player"), vmEntry7->GetUserName());
+        Assert::AreEqual(std::wstring(L"(1234) 1200"), vmEntry7->GetScore());
+        Assert::IsTrue(vmEntry7->IsHighlighted());
+    }
+
     TEST_METHOD(TestSubmitLeaderboardEntryMemoryModified)
     {
         GameContextHarness game;
@@ -2175,8 +2297,11 @@ public:
 
     TEST_METHOD(TestLoadCodeNotesSized)
     {
+        TestCodeNoteSize(L"", 1U);
         TestCodeNoteSize(L"Test", 1U);
         TestCodeNoteSize(L"16-bit Test", 2U);
+        TestCodeNoteSize(L"Test 16-bit", 2U);
+        TestCodeNoteSize(L"Test 16-bi", 1U);
         TestCodeNoteSize(L"[16-bit] Test", 2U);
         TestCodeNoteSize(L"[16 bit] Test", 2U);
         TestCodeNoteSize(L"[16 Bit] Test", 2U);
@@ -2186,13 +2311,20 @@ public:
         TestCodeNoteSize(L"[32bit] Test", 4U);
         TestCodeNoteSize(L"Test [16-bit]", 2U);
         TestCodeNoteSize(L"Test (16-bit)", 2U);
+        TestCodeNoteSize(L"Test (16 bits)", 2U);
         TestCodeNoteSize(L"[64-bit] Test", 8U);
         TestCodeNoteSize(L"[128-bit] Test", 16U);
         TestCodeNoteSize(L"[17-bit] Test", 3U);
         TestCodeNoteSize(L"[100-bit] Test", 13U);
         TestCodeNoteSize(L"[4-bit] Test", 1U);
         TestCodeNoteSize(L"[0-bit] Test", 1U);
+        TestCodeNoteSize(L"bit", 1U);
+        TestCodeNoteSize(L"9bit", 2U);
+        TestCodeNoteSize(L"-bit", 1U);
 
+        TestCodeNoteSize(L"8 BYTE Test", 8U);
+        TestCodeNoteSize(L"Test 8 BYTE", 8U);
+        TestCodeNoteSize(L"Test 8 BYT", 1U);
         TestCodeNoteSize(L"[2 Byte] Test", 2U);
         TestCodeNoteSize(L"[4 Byte] Test", 4U);
         TestCodeNoteSize(L"[4 Byte - Float] Test", 4U);
@@ -2203,9 +2335,12 @@ public:
         TestCodeNoteSize(L"Test (6 bytes)", 6U);
         TestCodeNoteSize(L"[2byte] Test", 2U);
 
-        TestCodeNoteSize(L"4=bitten", 1U);
+        TestCodeNoteSize(L"42=bitten", 1U);
         TestCodeNoteSize(L"bit by bit", 1U);
         TestCodeNoteSize(L"bit1=chest", 1U);
+
+        TestCodeNoteSize(L"Bite count (16-bit)", 2U);
+        TestCodeNoteSize(L"Number of bits collected (32 bits)", 4U);
     }
 
     TEST_METHOD(TestFindCodeNoteSized)

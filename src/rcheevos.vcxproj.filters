@@ -124,6 +124,9 @@
     <ClCompile Include="..\rcheevos\src\rapi\rc_api_runtime.c">
       <Filter>rapi</Filter>
     </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rapi\rc_api_info.c">
+      <Filter>rapi</Filter>
+    </ClCompile>
     <ClCompile Include="..\rcheevos\src\rhash\hash.c">
       <Filter>rhash</Filter>
     </ClCompile>

@@ -2297,8 +2297,11 @@ public:
 
     TEST_METHOD(TestLoadCodeNotesSized)
     {
+        TestCodeNoteSize(L"", 1U);
         TestCodeNoteSize(L"Test", 1U);
         TestCodeNoteSize(L"16-bit Test", 2U);
+        TestCodeNoteSize(L"Test 16-bit", 2U);
+        TestCodeNoteSize(L"Test 16-bi", 1U);
         TestCodeNoteSize(L"[16-bit] Test", 2U);
         TestCodeNoteSize(L"[16 bit] Test", 2U);
         TestCodeNoteSize(L"[16 Bit] Test", 2U);
@@ -2308,13 +2311,20 @@ public:
         TestCodeNoteSize(L"[32bit] Test", 4U);
         TestCodeNoteSize(L"Test [16-bit]", 2U);
         TestCodeNoteSize(L"Test (16-bit)", 2U);
+        TestCodeNoteSize(L"Test (16 bits)", 2U);
         TestCodeNoteSize(L"[64-bit] Test", 8U);
         TestCodeNoteSize(L"[128-bit] Test", 16U);
         TestCodeNoteSize(L"[17-bit] Test", 3U);
         TestCodeNoteSize(L"[100-bit] Test", 13U);
         TestCodeNoteSize(L"[4-bit] Test", 1U);
         TestCodeNoteSize(L"[0-bit] Test", 1U);
+        TestCodeNoteSize(L"bit", 1U);
+        TestCodeNoteSize(L"9bit", 2U);
+        TestCodeNoteSize(L"-bit", 1U);
 
+        TestCodeNoteSize(L"8 BYTE Test", 8U);
+        TestCodeNoteSize(L"Test 8 BYTE", 8U);
+        TestCodeNoteSize(L"Test 8 BYT", 1U);
         TestCodeNoteSize(L"[2 Byte] Test", 2U);
         TestCodeNoteSize(L"[4 Byte] Test", 4U);
         TestCodeNoteSize(L"[4 Byte - Float] Test", 4U);
@@ -2325,9 +2335,12 @@ public:
         TestCodeNoteSize(L"Test (6 bytes)", 6U);
         TestCodeNoteSize(L"[2byte] Test", 2U);
 
-        TestCodeNoteSize(L"4=bitten", 1U);
+        TestCodeNoteSize(L"42=bitten", 1U);
         TestCodeNoteSize(L"bit by bit", 1U);
         TestCodeNoteSize(L"bit1=chest", 1U);
+
+        TestCodeNoteSize(L"Bite count (16-bit)", 2U);
+        TestCodeNoteSize(L"Number of bits collected (32 bits)", 4U);
     }
 
     TEST_METHOD(TestFindCodeNoteSized)

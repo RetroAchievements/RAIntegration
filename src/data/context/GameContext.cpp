@@ -844,6 +844,7 @@ void GameContext::RefreshCodeNotes()
 static unsigned int ExtractSize(const std::wstring& sNote)
 {
     bool bIsBytes = false;
+    int nBytesFromBits = 0;
 
     // "Nbit" smallest possible note - and that's just the size annotation
     if (sNote.length() < 4)
@@ -859,9 +860,21 @@ static unsigned int ExtractSize(const std::wstring& sNote)
         c = sNote.at(nIndex + 1);
         if (c == L'i' || c == L'I')
         {
+            // already found one bit reference, give it precedence
+            if (nBytesFromBits > 0)
+                continue;
+
             c = sNote.at(nIndex + 2);
             if (c != L't' && c != L'T')
                 continue;
+
+            // match "bits", but not "bite" even if there is a numeric prefix
+            if (nIndex < nStop)
+            {
+                c = sNote.at(nIndex + 3);
+                if (isalpha(c) && c != L's' && c != L'S')
+                    continue;
+            }
 
             // found "bit"
             bIsBytes = false;
@@ -915,13 +928,19 @@ static unsigned int ExtractSize(const std::wstring& sNote)
         // if a number was found, return it
         if (nBytes > 0)
         {
+            // if "bytes" were found, we're done. if bits were found, it might be indicating
+            // the size of individual elements. capture the bit value and keep searching.
             if (bIsBytes)
                 return nBytes;
 
             // convert bits to bytes, rounding up
-            return (nBytes + 7) / 8;
+            nBytesFromBits = (nBytes + 7) / 8;
         }
     }
+
+    // did not find any byte reference, return the bit reference (if found)
+    if (nBytesFromBits > 0)
+        return nBytesFromBits;
 
     // could not find annotation, associate note to single address
     return 1;

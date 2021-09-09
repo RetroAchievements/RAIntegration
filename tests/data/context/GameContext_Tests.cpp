@@ -2336,11 +2336,15 @@ public:
         TestCodeNoteSize(L"[2byte] Test", 2U);
 
         TestCodeNoteSize(L"42=bitten", 1U);
+        TestCodeNoteSize(L"42-bitten", 1U);
         TestCodeNoteSize(L"bit by bit", 1U);
         TestCodeNoteSize(L"bit1=chest", 1U);
 
         TestCodeNoteSize(L"Bite count (16-bit)", 2U);
         TestCodeNoteSize(L"Number of bits collected (32 bits)", 4U);
+
+        TestCodeNoteSize(L"100 32-bit pointers [400 bytes]", 400U);
+        TestCodeNoteSize(L"[400 bytes] 100 32-bit pointers", 400U);
     }
 
     TEST_METHOD(TestFindCodeNoteSized)

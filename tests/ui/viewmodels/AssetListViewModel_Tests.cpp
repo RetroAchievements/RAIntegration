@@ -125,6 +125,7 @@ private:
         Revert,
         RevertAll,
         Delete,
+        DeleteAll,
         Disabled
     };
 
@@ -281,6 +282,11 @@ private:
 
                 case RevertButtonState::Delete:
                     Assert::AreEqual(std::wstring(L"&Delete"), GetValue(RevertButtonTextProperty));
+                    Assert::IsTrue(CanRevert());
+                    break;
+
+                case RevertButtonState::DeleteAll:
+                    Assert::AreEqual(std::wstring(L"&Delete All"), GetValue(RevertButtonTextProperty));
                     Assert::IsTrue(CanRevert());
                     break;
 
@@ -3664,7 +3670,7 @@ public:
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Revert from server?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"This will discard all local changes and revert the assets to the last state retrieved from the server."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"This will discard all local work and revert the assets to the last state retrieved from the server."), vmMessageBox.GetMessage());
 
             bDialogShown = true;
             return DialogResult::Yes;
@@ -3693,7 +3699,7 @@ public:
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Revert from server?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"This will discard all local changes and revert the assets to the last state retrieved from the server."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"This will discard all local work and revert the assets to the last state retrieved from the server."), vmMessageBox.GetMessage());
 
             bDialogShown = true;
             return DialogResult::Yes;
@@ -3723,7 +3729,7 @@ public:
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Revert from server?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"This will discard all local changes and revert the assets to the last state retrieved from the server."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"This will discard all local work and revert the assets to the last state retrieved from the server."), vmMessageBox.GetMessage());
 
             bDialogShown = true;
             return DialogResult::Yes;
@@ -3750,14 +3756,13 @@ public:
         vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
         vmAssetList.ForceUpdateButtons();
 
-        // when nothing is selected, the button defaults to revert all, even if only local achievements are present
-        vmAssetList.AssertButtonState(RevertButtonState::RevertAll);
+        vmAssetList.AssertButtonState(RevertButtonState::DeleteAll);
 
         bool bDialogShown = false;
         vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Revert from server?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"This will discard all local changes and revert the assets to the last state retrieved from the server.\n\nAssets not available on the server will be permanently deleted."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Permanently delete?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Assets not available on the server will be permanently deleted."), vmMessageBox.GetMessage());
 
             bDialogShown = true;
             return DialogResult::Yes;
@@ -3955,6 +3960,38 @@ public:
         Assert::AreEqual(0, pLocalBadges->GetReferenceCount(sBadge2, true));
     }
 
+    TEST_METHOD(TestRevertSelectedCore)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddThreeAchievements();
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Revert from server?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"This will discard any local work for the selected assets and revert them to the last state retrieved from the server."), vmMessageBox.GetMessage());
+
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        pAsset->SetName(L"Apple");
+        Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(RevertButtonState::Revert);
+
+        vmAssetList.RevertSelected();
+
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
+    }
+
     TEST_METHOD(TestRevertSelectedCoreHardcore)
     {
         AssetListViewModelHarness vmAssetList;
@@ -4009,7 +4046,7 @@ public:
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
         vmAssetList.ForceUpdateButtons();
-        vmAssetList.AssertButtonState(RevertButtonState::RevertAll);
+        vmAssetList.AssertButtonState(RevertButtonState::DeleteAll);
 
         auto* pAsset = vmAssetList.mockGameContext.Assets().FindAchievement({ 1U });
         Assert::IsNotNull(pAsset);

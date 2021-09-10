@@ -848,7 +848,7 @@ static unsigned int ExtractSize(const std::wstring& sNote)
 
     // "Nbit" smallest possible note - and that's just the size annotation
     if (sNote.length() < 4)
-        return 1;
+        return 0;
 
     const size_t nStop = sNote.length() - 3;
     for (size_t nIndex = 1; nIndex <= nStop; ++nIndex)
@@ -942,14 +942,15 @@ static unsigned int ExtractSize(const std::wstring& sNote)
     if (nBytesFromBits > 0)
         return nBytesFromBits;
 
-    // could not find annotation, associate note to single address
-    return 1;
+    // could not find annotation
+    return 0;
 }
 
 void GameContext::AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
 {
-    const unsigned int nBytes = ExtractSize(sNote);
-    m_mCodeNotes.insert_or_assign(nAddress, CodeNote{ sAuthor, sNote, nBytes });
+    const unsigned int nSize = ExtractSize(sNote);
+    const unsigned int nBytes = (nSize == 0) ? 1 : nSize;
+    m_mCodeNotes.insert_or_assign(nAddress, CodeNote{ sAuthor, sNote, nBytes, nSize });
     OnCodeNoteChanged(nAddress, sNote);
 }
 

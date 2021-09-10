@@ -330,6 +330,10 @@ void TriggerViewModel::NewCondition()
             nSize = pMemoryInspector.Viewer().GetSize();
             break;
 
+        case 1:
+            nSize = MemSize::EightBit;
+            break;
+
         case 2:
             nSize = MemSize::SixteenBit;
             break;

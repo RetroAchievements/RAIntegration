@@ -202,7 +202,7 @@ public:
     unsigned FindCodeNoteSize(ra::ByteAddress nAddress) const
     {
         const auto pIter = m_mCodeNotes.find(nAddress);
-        return (pIter == m_mCodeNotes.end()) ? 0 : pIter->second.Bytes;
+        return (pIter == m_mCodeNotes.end()) ? 0 : pIter->second.AnnotatedSize;
     }
 
     /// <summary>
@@ -308,6 +308,7 @@ protected:
         std::string Author;
         std::wstring Note;
         unsigned int Bytes;
+        unsigned int AnnotatedSize;
     };
     std::map<ra::ByteAddress, CodeNote> m_mCodeNotes;
 

@@ -7,6 +7,7 @@
 #include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 
@@ -27,6 +28,7 @@ private:
     public:
         ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
 
@@ -58,6 +60,7 @@ public:
         Assert::AreEqual(std::wstring(L""), vmUnknownGame.GetNewGameName());
         Assert::AreEqual(std::wstring(L""), vmUnknownGame.GetChecksum());
         Assert::AreEqual({ 0U }, vmUnknownGame.GameTitles().Count());
+        Assert::IsTrue(vmUnknownGame.IsSelectedGameEnabled());
     }
 
     TEST_METHOD(TestInitializeGameTitles)
@@ -79,18 +82,22 @@ public:
 
         vmUnknownGame.InitializeGameTitles();
 
-        // <New Title> item should be loaded immediately
+        // <New Title> item should be loaded immediately, but linking should be disabled
         Assert::AreEqual({ 1U }, vmUnknownGame.GameTitles().Count());
         Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GameTitles().GetLabelForId(0));
         Assert::IsFalse(vmUnknownGame.GameTitles().IsFrozen());
+        Assert::IsFalse(vmUnknownGame.IsAssociateEnabled());
+        Assert::IsFalse(vmUnknownGame.IsSelectedGameEnabled());
 
-        // after server response, collection should have three items
+        // after server response, collection should have three items and be frozen. linking should be enabled
         vmUnknownGame.mockThreadPool.ExecuteNextTask();
         Assert::AreEqual({ 3U }, vmUnknownGame.GameTitles().Count());
         Assert::AreEqual(std::wstring(L"<New Title>"), vmUnknownGame.GameTitles().GetLabelForId(0));
         Assert::AreEqual(std::wstring(L"Game 33"), vmUnknownGame.GameTitles().GetLabelForId(33));
         Assert::AreEqual(std::wstring(L"Game 37"), vmUnknownGame.GameTitles().GetLabelForId(37));
         Assert::IsTrue(vmUnknownGame.GameTitles().IsFrozen());
+        Assert::IsTrue(vmUnknownGame.IsAssociateEnabled());
+        Assert::IsTrue(vmUnknownGame.IsSelectedGameEnabled());
     }
 
     TEST_METHOD(TestNameAndSelectionInteraction)
@@ -388,7 +395,62 @@ public:
 
         Assert::IsFalse(vmUnknownGame.BeginTest());
     }
-};
+
+    TEST_METHOD(TestInitializeTestCompatibilityMode)
+    {
+        UnknownGameViewModelHarness vmUnknownGame;
+        vmUnknownGame.mockConsoleContext.SetId(ConsoleID::C64);
+        vmUnknownGame.mockGameContext.SetGameId(33U);
+        vmUnknownGame.mockGameContext.SetGameTitle(L"Game 33");
+        vmUnknownGame.mockGameContext.SetGameHash("CHECKSUM");
+
+        vmUnknownGame.InitializeTestCompatibilityMode();
+
+        Assert::AreEqual({ 1U }, vmUnknownGame.GameTitles().Count());
+        Assert::AreEqual(33, vmUnknownGame.GameTitles().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"Game 33"), vmUnknownGame.GameTitles().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(33, vmUnknownGame.GetSelectedGameId());
+        Assert::AreEqual(std::wstring(L"CHECKSUM"), vmUnknownGame.GetChecksum());
+        Assert::IsTrue(vmUnknownGame.GameTitles().IsFrozen());
+
+        Assert::IsFalse(vmUnknownGame.IsSelectedGameEnabled());
+    }
+
+    TEST_METHOD(TestAssociateExistingTestCompatibilityMode)
+    {
+        UnknownGameViewModelHarness vmUnknownGame;
+        vmUnknownGame.mockConsoleContext.SetId(ConsoleID::PSP);
+        vmUnknownGame.mockGameContext.SetGameId(40U);
+        vmUnknownGame.mockGameContext.SetGameTitle(L"Game 40");
+        vmUnknownGame.mockGameContext.SetGameHash("CHECKSUM");
+        vmUnknownGame.SetEstimatedGameName(L"GAME40");
+        vmUnknownGame.InitializeTestCompatibilityMode();
+
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Are you sure you want to add a new hash to 'Game 40'?"), vmMessageBox.GetHeader());
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmUnknownGame.mockServer.HandleRequest<ra::api::SubmitNewTitle>([]
+        (const ra::api::SubmitNewTitle::Request& request, ra::api::SubmitNewTitle::Response& response)
+        {
+            Assert::AreEqual(41U, request.ConsoleId);
+            Assert::AreEqual(std::string("CHECKSUM"), request.Hash);
+            Assert::AreEqual(std::wstring(L"Game 40"), request.GameName);
+            Assert::AreEqual(std::wstring(L"GAME40"), request.Description);
+            Assert::AreEqual(40U, request.GameId);
+
+            response.Result = ra::api::ApiResult::Success;
+            response.GameId = 40U;
+
+            return true;
+        });
+
+        Assert::IsTrue(vmUnknownGame.Associate());
+        Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
+        Assert::IsFalse(vmUnknownGame.GetTestMode());
+    }};
 
 } // namespace tests
 } // namespace viewmodels

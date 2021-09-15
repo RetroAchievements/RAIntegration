@@ -13,10 +13,13 @@
 #include "ui\viewmodels\MemoryInspectorViewModel.hh"
 #include "ui\viewmodels\OverlaySettingsViewModel.hh"
 #include "ui\viewmodels\RichPresenceMonitorViewModel.hh"
+#include "ui\viewmodels\UnknownGameViewModel.hh"
 
+#include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
+#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -40,6 +43,7 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
@@ -530,6 +534,47 @@ public:
         menu.AssertShowWindow<ra::ui::viewmodels::GameChecksumViewModel>(IDM_RA_GETROMCHECKSUM, true, "", DialogResult::None);
     }
 
+    TEST_METHOD(TestShowGameHashTestCompatibilityModeCancel)
+    {
+        IntegrationMenuViewModelHarness menu;
+
+        bool bDialogShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>([&bDialogShown](ra::ui::viewmodels::UnknownGameViewModel& vmUnknown)
+        {
+            bDialogShown = true;
+
+            Assert::IsFalse(vmUnknown.IsSelectedGameEnabled());
+
+            return DialogResult::Cancel;
+        });
+
+        menu.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
+        menu.ActivateMenuItem(IDM_RA_GETROMCHECKSUM);
+
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual(ra::data::context::GameContext::Mode::CompatibilityTest, menu.mockGameContext.GetMode());
+    }
+
+    TEST_METHOD(TestShowGameHashTestCompatibilityModeAssociate)
+    {
+        IntegrationMenuViewModelHarness menu;
+
+        bool bDialogShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>([&bDialogShown](ra::ui::viewmodels::UnknownGameViewModel& vmUnknown)
+        {
+            bDialogShown = true;
+
+            Assert::IsFalse(vmUnknown.IsSelectedGameEnabled());
+
+            return DialogResult::OK;
+        });
+
+        menu.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
+        menu.ActivateMenuItem(IDM_RA_GETROMCHECKSUM);
+
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, menu.mockGameContext.GetMode());
+    }
 };
 
 } // namespace tests

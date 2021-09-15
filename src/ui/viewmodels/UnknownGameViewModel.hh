@@ -55,6 +55,21 @@ public:
     void InitializeGameTitles();
 
     /// <summary>
+    /// Initializes the <see cref="GameTitles"/> collection (asynchronously).
+    /// </summary>
+    void InitializeTestCompatibilityMode();
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not a game can be selected.
+    /// </summary>
+    static const BoolModelProperty IsSelectedGameEnabledProperty;
+
+    /// <summary>
+    /// Gets whether or not a game can be selected.
+    /// </summary>
+    bool IsSelectedGameEnabled() const { return GetValue(IsSelectedGameEnabledProperty); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the new game name.
     /// </summary>
     static const StringModelProperty NewGameNameProperty;
@@ -133,6 +148,16 @@ public:
     /// Sets whether test mode is selected.
     /// </summary>
     void SetTestMode(bool bValue) { SetValue(TestModeProperty, bValue); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the link button is enabled.
+    /// </summary>
+    static const BoolModelProperty IsAssociateEnabledProperty;
+
+    /// <summary>
+    /// Gets whether or not the link button is enabled.
+    /// </summary>
+    bool IsAssociateEnabled() const { return GetValue(IsAssociateEnabledProperty); }
 
     /// <summary>
     /// Command handler for Associate button.

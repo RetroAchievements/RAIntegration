@@ -147,7 +147,7 @@ void LeaderboardModel::SetDefinition(const std::string& sDefinition)
     size_t nIndex = 0;
     while (nIndex < sDefinition.length())
     {
-        int nNext = sDefinition.find("::", nIndex);
+        size_t nNext = sDefinition.find("::", nIndex);
         if (nNext == std::string::npos)
             nNext = sDefinition.length();
 

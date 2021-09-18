@@ -568,6 +568,7 @@
       <ShowIncludes>false</ShowIncludes>
       <ConformanceMode>true</ConformanceMode>
       <EnablePREfast>true</EnablePREfast>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -595,6 +596,7 @@
       <ShowIncludes>false</ShowIncludes>
       <ConformanceMode>true</ConformanceMode>
       <EnablePREfast>true</EnablePREfast>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <AdditionalDependencies>windowscodecs.lib;winmm.lib;Winhttp.lib;user32.lib;%(AdditionalDependencies)</AdditionalDependencies>

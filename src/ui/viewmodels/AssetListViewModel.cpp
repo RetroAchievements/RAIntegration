@@ -573,6 +573,8 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasModified = false;
     bool bHasUnpublished = false;
     bool bHasUnofficial = false;
+    bool bHasCore = false;
+    bool bHasLocal = false;
     const bool bHardcore = _RA_HardcoreModeIsActive();
 
     const bool bGameLoaded = (GetGameId() != 0);
@@ -652,8 +654,14 @@ void AssetListViewModel::DoUpdateButtons()
                 {
                     switch (pItem->GetCategory())
                     {
+                        case ra::data::models::AssetCategory::Core:
+                            bHasCore = true;
+                            break;
                         case ra::data::models::AssetCategory::Unofficial:
                             bHasUnofficial = true;
+                            break;
+                        case ra::data::models::AssetCategory::Local:
+                            bHasLocal = true;
                             break;
                         default:
                             break;
@@ -751,6 +759,8 @@ void AssetListViewModel::DoUpdateButtons()
             SetValue(RevertButtonTextProperty, L"Re&vert");
         else if (bHasLocalSelection)
             SetValue(RevertButtonTextProperty, L"&Delete");
+        else if (bHasLocal && !bHasCore && !bHasUnofficial)
+            SetValue(RevertButtonTextProperty, L"&Delete All");
         else
             SetValue(RevertButtonTextProperty, RevertButtonTextProperty.GetDefaultValue());
 
@@ -1276,9 +1286,9 @@ void AssetListViewModel::RevertSelected()
         vmMessageBox.SetHeader(L"Revert from server?");
 
         if (vAssetsToReset.size() == m_vFilteredAssets.Count())
-            sWarningMessage = L"This will discard all local changes and revert the assets to the last state retrieved from the server.";
+            sWarningMessage = L"This will discard all local work and revert the assets to the last state retrieved from the server.";
         else
-            sWarningMessage = L"This will discard any local changes to the selected assets and revert them to the last state retrieved from the server.";
+            sWarningMessage = L"This will discard any local work for the selected assets and revert them to the last state retrieved from the server.";
 
         if (bLocalAssetSelected)
             sWarningMessage += L"\n\n";

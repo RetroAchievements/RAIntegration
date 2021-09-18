@@ -92,15 +92,6 @@ public:
             return pLeaderboard;
         }
 
-        unsigned int GetCodeNoteSize(ra::ByteAddress nAddress)
-        {
-            const auto pIter = m_mCodeNotes.find(nAddress);
-            if (pIter == m_mCodeNotes.end())
-                return 0U;
-
-            return pIter->second.Bytes;
-        }
-
         void RemoveNonAchievementAssets()
         {
             for (gsl::index nIndex = Assets().Count() - 1; nIndex >= 0; nIndex--)
@@ -2292,16 +2283,16 @@ public:
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
         game.mockThreadPool.ExecuteNextTask();
 
-        Assert::AreEqual(nExpectedSize, game.GetCodeNoteSize(1234U), sNote.c_str());
+        Assert::AreEqual(nExpectedSize, game.FindCodeNoteSize(1234U), sNote.c_str());
     }
 
     TEST_METHOD(TestLoadCodeNotesSized)
     {
-        TestCodeNoteSize(L"", 1U);
-        TestCodeNoteSize(L"Test", 1U);
+        TestCodeNoteSize(L"", 0U);
+        TestCodeNoteSize(L"Test", 0U);
         TestCodeNoteSize(L"16-bit Test", 2U);
         TestCodeNoteSize(L"Test 16-bit", 2U);
-        TestCodeNoteSize(L"Test 16-bi", 1U);
+        TestCodeNoteSize(L"Test 16-bi", 0U);
         TestCodeNoteSize(L"[16-bit] Test", 2U);
         TestCodeNoteSize(L"[16 bit] Test", 2U);
         TestCodeNoteSize(L"[16 Bit] Test", 2U);
@@ -2316,15 +2307,18 @@ public:
         TestCodeNoteSize(L"[128-bit] Test", 16U);
         TestCodeNoteSize(L"[17-bit] Test", 3U);
         TestCodeNoteSize(L"[100-bit] Test", 13U);
+        TestCodeNoteSize(L"[0-bit] Test", 0U);
+        TestCodeNoteSize(L"[1-bit] Test", 1U);
         TestCodeNoteSize(L"[4-bit] Test", 1U);
-        TestCodeNoteSize(L"[0-bit] Test", 1U);
-        TestCodeNoteSize(L"bit", 1U);
+        TestCodeNoteSize(L"[8-bit] Test", 1U);
+        TestCodeNoteSize(L"[9-bit] Test", 2U);
+        TestCodeNoteSize(L"bit", 0U);
         TestCodeNoteSize(L"9bit", 2U);
-        TestCodeNoteSize(L"-bit", 1U);
+        TestCodeNoteSize(L"-bit", 0U);
 
         TestCodeNoteSize(L"8 BYTE Test", 8U);
         TestCodeNoteSize(L"Test 8 BYTE", 8U);
-        TestCodeNoteSize(L"Test 8 BYT", 1U);
+        TestCodeNoteSize(L"Test 8 BYT", 0U);
         TestCodeNoteSize(L"[2 Byte] Test", 2U);
         TestCodeNoteSize(L"[4 Byte] Test", 4U);
         TestCodeNoteSize(L"[4 Byte - Float] Test", 4U);
@@ -2335,12 +2329,16 @@ public:
         TestCodeNoteSize(L"Test (6 bytes)", 6U);
         TestCodeNoteSize(L"[2byte] Test", 2U);
 
-        TestCodeNoteSize(L"42=bitten", 1U);
-        TestCodeNoteSize(L"bit by bit", 1U);
-        TestCodeNoteSize(L"bit1=chest", 1U);
+        TestCodeNoteSize(L"42=bitten", 0U);
+        TestCodeNoteSize(L"42-bitten", 0U);
+        TestCodeNoteSize(L"bit by bit", 0U);
+        TestCodeNoteSize(L"bit1=chest", 0U);
 
         TestCodeNoteSize(L"Bite count (16-bit)", 2U);
         TestCodeNoteSize(L"Number of bits collected (32 bits)", 4U);
+
+        TestCodeNoteSize(L"100 32-bit pointers [400 bytes]", 400U);
+        TestCodeNoteSize(L"[400 bytes] 100 32-bit pointers", 400U);
     }
 
     TEST_METHOD(TestFindCodeNoteSized)

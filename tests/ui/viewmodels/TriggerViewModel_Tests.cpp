@@ -749,6 +749,37 @@ public:
         Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312_0xX0004=117835012"), vmTrigger.Serialize());
     }
 
+    TEST_METHOD(TestNewConditionCodeNoteSizeViewerSize)
+    {
+        std::array<uint8_t, 10> pMemory = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16");
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+        vmTrigger.mockGameContext.SetCodeNote({ 8U }, L"[16-bit] test");
+        vmTrigger.mockGameContext.SetCodeNote({ 2U }, L"[8-bit] test");
+        vmTrigger.mockGameContext.SetCodeNote({ 4U }, L"test");
+
+        vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::ThirtyTwoBit);
+        vmTrigger.NewCondition();
+
+        Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312"), vmTrigger.Serialize());
+
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(4);
+        vmTrigger.NewCondition();
+
+        Assert::AreEqual({ 3U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312_0xX0004=117835012"), vmTrigger.Serialize());
+
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(2);
+        vmTrigger.NewCondition();
+
+        Assert::AreEqual({ 4U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312_0xX0004=117835012_0xH0002=2"), vmTrigger.Serialize());
+    }
+
     TEST_METHOD(TestAddGroupNoAlts)
     {
         TriggerViewModelHarness vmTrigger;

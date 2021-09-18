@@ -375,6 +375,9 @@
     <ClCompile Include="ui\viewmodels\ChallengeIndicatorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\LeaderboardModel.cpp">
+      <Filter>Data\Models</Filter>
+    </ClCompile>
     <ClCompile Include="ui\viewmodels\IntegrationMenuViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
@@ -937,6 +940,9 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\ChallengeIndicatorViewModel.hh">
       <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\LeaderboardModel.hh">
+      <Filter>Data\Models</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\IntegrationMenuViewModel.hh">
       <Filter>UI\ViewModels</Filter>

@@ -13,6 +13,10 @@ class CapturedTriggerHits
 public:
     void Capture(const rc_trigger_t* pTrigger, const std::string& sTrigger);
     bool Restore(rc_trigger_t* pTrigger, const std::string& sTrigger) const;
+
+    void Capture(const rc_value_t* pValue, const std::string& sValue);
+    bool Restore(rc_value_t* pValue, const std::string& sValue) const;
+
     void Reset() noexcept;
 
 private:

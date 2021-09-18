@@ -108,6 +108,30 @@ std::wstring ToString<ra::data::models::AssetChanges>(
     }
 }
 
+template<>
+std::wstring ToString<ra::data::ValueFormat>(const ra::data::ValueFormat& nFormat)
+{
+    switch (nFormat)
+    {
+        case ra::data::ValueFormat::Score:
+            return L"Score";
+        case ra::data::ValueFormat::Value:
+            return L"Value";
+        case ra::data::ValueFormat::Frames:
+            return L"Frames";
+        case ra::data::ValueFormat::Centiseconds:
+            return L"Centiseconds";
+        case ra::data::ValueFormat::Seconds:
+            return L"Seconds";
+        case ra::data::ValueFormat::Minutes:
+            return L"Minutes";
+        case ra::data::ValueFormat::SecondsAsMinutes:
+            return L"SecondsAsMinutes";
+        default:
+            return std::to_wstring(ra::etoi(nFormat));
+    }
+}
+
 #pragma warning(pop)
 
 } // namespace CppUnitTestFramework

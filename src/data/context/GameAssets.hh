@@ -6,6 +6,7 @@
 #include "data\Types.hh"
 
 #include "data\models\AchievementModel.hh"
+#include "data\models\LeaderboardModel.hh"
 
 namespace ra {
 namespace data {
@@ -53,7 +54,28 @@ public:
     ra::data::models::AchievementModel& NewAchievement();
 
     /// <summary>
-    /// Determines if any Core achievements exist.
+    /// Finds the leaderboard asset for the specified ID.
+    /// </summary>
+    ra::data::models::LeaderboardModel* FindLeaderboard(ra::LeaderboardID nId)
+    {
+        return dynamic_cast<ra::data::models::LeaderboardModel*>(FindAsset(ra::data::models::AssetType::Leaderboard, nId));
+    }
+
+    /// <summary>
+    /// Finds the leaderboard asset for the specified ID.
+    /// </summary>
+    const ra::data::models::LeaderboardModel* FindLeaderboard(ra::AchievementID nId) const
+    {
+        return dynamic_cast<const ra::data::models::LeaderboardModel*>(FindAsset(ra::data::models::AssetType::Leaderboard, nId));
+    }
+
+    /// <summary>
+    /// Creates a new leaderboard asset.
+    /// </summary>
+    ra::data::models::LeaderboardModel& NewLeaderboard();
+
+    /// <summary>
+    /// Determines if any Core assets exist.
     /// </summary>
     bool HasCoreAssets() const;
 

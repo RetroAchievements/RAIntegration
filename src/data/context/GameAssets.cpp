@@ -49,6 +49,17 @@ ra::data::models::AchievementModel& GameAssets::NewAchievement()
     return dynamic_cast<ra::data::models::AchievementModel&>(AddItem(std::move(vmAchievement)));
 }
 
+ra::data::models::LeaderboardModel& GameAssets::NewLeaderboard()
+{
+    auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
+    vmLeaderboard->SetID(m_nNextLocalId++);
+    vmLeaderboard->SetNew();
+    vmLeaderboard->CreateServerCheckpoint();
+    vmLeaderboard->CreateLocalCheckpoint();
+
+    return dynamic_cast<ra::data::models::LeaderboardModel&>(AddItem(std::move(vmLeaderboard)));
+}
+
 bool GameAssets::HasCoreAssets() const
 {
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Count()); ++nIndex)
@@ -165,9 +176,15 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
             case '5': case '6': case '7': case '8': case '9':
                 // achievements start with a number (no prefix)
                 nType = ra::data::models::AssetType::Achievement;
-                nId = pTokenizer.ReadNumber();
+                break;
+
+            case 'L':
+                nType = ra::data::models::AssetType::Leaderboard;
+                pTokenizer.Consume('L');
                 break;
         }
+
+        nId = pTokenizer.ReadNumber();
 
         if (nType == ra::data::models::AssetType::None)
             continue;
@@ -210,13 +227,23 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
             {
                 case ra::data::models::AssetType::Achievement:
                 {
-                    auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
-                    vmAchievement->SetID(nId);
-                    vmAchievement->SetCategory(ra::data::models::AssetCategory::Local);
-                    vmAchievement->CreateServerCheckpoint();
+                    auto mAchievement = std::make_unique<ra::data::models::AchievementModel>();
+                    mAchievement->SetID(nId);
+                    mAchievement->SetCategory(ra::data::models::AssetCategory::Local);
+                    mAchievement->CreateServerCheckpoint();
 
-                    pAsset = &Append(std::move(vmAchievement));
+                    pAsset = &Append(std::move(mAchievement));
                     break;
+                }
+
+                case ra::data::models::AssetType::Leaderboard:
+                {
+                    auto mLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
+                    mLeaderboard->SetID(nId);
+                    mLeaderboard->SetCategory(ra::data::models::AssetCategory::Local);
+                    mLeaderboard->CreateServerCheckpoint();
+
+                    pAsset = &Append(std::move(mLeaderboard));
                 }
             }
 
@@ -342,6 +369,16 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
         }
 
         // serialize the item
+        switch (pItem->GetType())
+        {
+            case ra::data::models::AssetType::Achievement:
+                break;
+
+            case ra::data::models::AssetType::Leaderboard:
+                pData->Write("L");
+                break;
+        }
+
         pData->Write(std::to_string(pItem->GetID()));
         pItem->Serialize(*pData);
         pData->WriteLine();

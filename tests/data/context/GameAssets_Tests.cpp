@@ -106,6 +106,33 @@ public:
             ResetLocalId();
         }
 
+        ra::data::models::LeaderboardModel& AddLeaderboard(AssetCategory nCategory,
+            const std::wstring& sTitle, const std::wstring& sDescription, const std::string& sStart,
+            const std::string& sSubmit, const std::string& sCancel, const std::string& sValue, ValueFormat nFormat)
+        {
+            auto& pLeaderboard = NewLeaderboard();
+            pLeaderboard.SetCategory(nCategory);
+            pLeaderboard.SetName(sTitle);
+            pLeaderboard.SetDescription(sDescription);
+            pLeaderboard.SetStartTrigger(sStart);
+            pLeaderboard.SetSubmitTrigger(sSubmit);
+            pLeaderboard.SetCancelTrigger(sCancel);
+            pLeaderboard.SetValueDefinition(sValue);
+            pLeaderboard.SetValueFormat(nFormat);
+
+            if (nCategory == AssetCategory::Local)
+            {
+                pLeaderboard.UpdateLocalCheckpoint();
+            }
+            else
+            {
+                pLeaderboard.SetID(gsl::narrow_cast<uint32_t>(Count()));
+                pLeaderboard.UpdateServerCheckpoint();
+            }
+
+            return pLeaderboard;
+        }
+
         void MockUserFile(const std::string& sContents)
         {
             return mockLocalStorage.MockStoredData(ra::services::StorageItemType::UserAchievements, std::to_wstring(mockGameContext.GameId()), sContents);
@@ -585,6 +612,50 @@ public:
         gameAssets.ReloadAllAssets();
 
         Assert::IsNull(gameAssets.FindAchievement(GameAssets::FirstLocalId));
+    }
+
+    TEST_METHOD(TestSaveLocalLeaderboard)
+    {
+        GameAssetsHarness gameAssets;
+        gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", ValueFormat::Seconds);
+        gameAssets.AddLeaderboard(AssetCategory::Local, L"LB2", L"Desc2", "0xH2234=1", "0xH2234=2", "0xH2234=3", "M:0xH2235", ValueFormat::Minutes);
+
+        gameAssets.SaveAllAssets();
+
+        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGameName\nL%u:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2\n", GameAssets::FirstLocalId + 1);
+        Assert::AreEqual(sExpected, gameAssets.GetUserFile());
+    }
+
+    TEST_METHOD(TestMergeLocalAssetsAchievementAndLeaderboard)
+    {
+        GameAssetsHarness gameAssets;
+        gameAssets.AddThreeAchievements();
+        gameAssets.AddLeaderboard(AssetCategory::Core, L"LB1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "M:0xH1235", ValueFormat::Seconds);
+        gameAssets.MockUserFileContents(
+            "111000001:\"0xH1234=0\":Test:::::User:0:0:0:::00000\n"
+            "L111000002:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2\n");
+
+        gameAssets.ReloadAllAssets();
+
+        Assert::AreEqual({ 6U }, gameAssets.Count());
+
+        const auto* pAsset = gameAssets.FindAchievement({ 111000001U });
+        Assert::IsNotNull(pAsset);
+        Ensures(pAsset != nullptr);
+        Assert::AreEqual(std::string("0xH1234=0"), pAsset->GetTrigger());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset->GetChanges());
+
+        const auto* pAsset2 = gameAssets.FindLeaderboard({ 111000002U });
+        Assert::IsNotNull(pAsset2);
+        Ensures(pAsset2 != nullptr);
+        Assert::AreEqual(std::string("0xH2234=1"), pAsset2->GetStartTrigger());
+        Assert::AreEqual(std::string("0xH2234=2"), pAsset2->GetSubmitTrigger());
+        Assert::AreEqual(std::string("0xH2234=3"), pAsset2->GetCancelTrigger());
+        Assert::AreEqual(std::string("M:0xH2235"), pAsset2->GetValueDefinition());
+        Assert::AreEqual(ValueFormat::Minutes, pAsset2->GetValueFormat());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetChanges::Unpublished, pAsset2->GetChanges());
     }
 };
 

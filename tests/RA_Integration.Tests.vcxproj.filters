@@ -417,6 +417,12 @@
     <ClCompile Include="..\src\ui\viewmodels\ChallengeIndicatorViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\data\models\LeaderboardModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\LeaderboardModel_Tests.cpp">
+      <Filter>Tests\Data\Models</Filter>
+    </ClCompile>
     <ClCompile Include="..\src\ui\viewmodels\IntegrationMenuViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
@@ -511,6 +517,9 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\TriggerConditionAsserts.hh">
       <Filter>Tests\UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\data\models\LeaderboardModel.hh">
+      <Filter>Code</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

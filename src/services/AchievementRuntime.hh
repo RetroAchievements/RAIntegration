@@ -102,6 +102,28 @@ public:
     }
 
     /// <summary>
+    /// Gets the raw definition for the leaderboard (if active)
+    /// </summary>
+    rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) noexcept
+    {
+        if (!m_bInitialized)
+            return nullptr;
+
+        return rc_runtime_get_lboard(&m_pRuntime, nId);
+    }
+
+    /// <summary>
+    /// Gets the raw definition for the leaderboard (if active)
+    /// </summary>
+    const rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) const noexcept
+    {
+        if (!m_bInitialized)
+            return nullptr;
+
+        return rc_runtime_get_lboard(&m_pRuntime, nId);
+    }
+
+    /// <summary>
     /// Specifies the rich presence to process each frame.
     /// </summary>
     /// <remarks>Only updates the memrefs each frame (for deltas), the script is not processed here.</remarks>

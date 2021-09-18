@@ -419,23 +419,7 @@ void MemoryBookmarksViewModel::OnEditMemory(ra::ByteAddress nAddress)
         const auto nBookmarkSize = pBookmark.GetSize();
         if (distance != 0)
         {
-            bool bInBookmark = false;
-
-            switch (nBookmarkSize)
-            {
-                case MemSize::SixteenBit:
-                    bInBookmark = (distance <= 1);
-                    break;
-
-                case MemSize::TwentyFourBit:
-                    bInBookmark = (distance <= 2);
-                    break;
-
-                case MemSize::ThirtyTwoBit:
-                    bInBookmark = (distance <= 3);
-                    break;
-            }
-
+            const bool bInBookmark = (distance < ra::to_signed(ra::data::MemSizeBytes(nBookmarkSize)));
             if (!bInBookmark)
                 continue;
         }

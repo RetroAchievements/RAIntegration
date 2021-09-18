@@ -344,6 +344,9 @@ public:
         ParseAndRegenerate("0x 1234=0x 2345"); // 16-bit
         ParseAndRegenerate("0xW1234=0xW2345"); // 24-bit
         ParseAndRegenerate("0xX1234=0xX2345"); // 32-bit
+        ParseAndRegenerate("0xI1234=0xI2345"); // 16-bit BE
+        ParseAndRegenerate("0xJ1234=0xJ2345"); // 24-bit BE
+        ParseAndRegenerate("0xG1234=0xG2345"); // 32-bit BE
         ParseAndRegenerate("0xU1234=0xU2345"); // upper4
         ParseAndRegenerate("0xL1234=0xL2345"); // lower4
         ParseAndRegenerate("0xM1234=0xM2345"); // bit0

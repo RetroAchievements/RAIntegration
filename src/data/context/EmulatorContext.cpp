@@ -747,6 +747,24 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) co
             ReadMemory(nAddress, buffer, 4);
             return buffer[0] | (buffer[1] << 8) | (buffer[2] << 16) | (buffer[3] << 24);
         }
+        case MemSize::SixteenBitBigEndian:
+        {
+            uint8_t buffer[2];
+            ReadMemory(nAddress, buffer, 2);
+            return buffer[1] | (buffer[0] << 8);
+        }
+        case MemSize::TwentyFourBitBigEndian:
+        {
+            uint8_t buffer[3];
+            ReadMemory(nAddress, buffer, 3);
+            return buffer[2] | (buffer[1] << 8) | (buffer[0] << 16);
+        }
+        case MemSize::ThirtyTwoBitBigEndian:
+        {
+            uint8_t buffer[4];
+            ReadMemory(nAddress, buffer, 4);
+            return buffer[3] | (buffer[2] << 8) | (buffer[1] << 16) | (buffer[0] << 24);
+        }
         case MemSize::BitCount:
         {
             const uint8_t nValue = ReadMemoryByte(nAddress);
@@ -809,6 +827,21 @@ void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint3
             nValue >>= 8;
             WriteMemoryByte(++nAddress, nValue & 0xFF);
             nValue >>= 8;
+            WriteMemoryByte(++nAddress, nValue & 0xFF);
+            return;
+        case MemSize::SixteenBitBigEndian:
+            WriteMemoryByte(nAddress, (nValue >> 8) & 0xFF);
+            WriteMemoryByte(++nAddress, nValue & 0xFF);
+            return;
+        case MemSize::TwentyFourBitBigEndian:
+            WriteMemoryByte(nAddress, (nValue >> 16) & 0xFF);
+            WriteMemoryByte(++nAddress, (nValue >> 8) & 0xFF);
+            WriteMemoryByte(++nAddress, nValue & 0xFF);
+            return;
+        case MemSize::ThirtyTwoBitBigEndian:
+            WriteMemoryByte(nAddress, (nValue >> 24) & 0xFF);
+            WriteMemoryByte(++nAddress, (nValue >> 16) & 0xFF);
+            WriteMemoryByte(++nAddress, (nValue >> 8) & 0xFF);
             WriteMemoryByte(++nAddress, nValue & 0xFF);
             return;
         case MemSize::BitCount:

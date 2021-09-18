@@ -79,9 +79,7 @@ constexpr unsigned int MemSizeBits(MemSize nSize)
         case MemSize::TwentyFourBitBigEndian:
             return 24;
 
-        case MemSize::BitCount:
-            return 3;
-
+        case MemSize::BitCount: // value will be 0-8
         case MemSize::Nibble_Lower:
         case MemSize::Nibble_Upper:
             return 4;

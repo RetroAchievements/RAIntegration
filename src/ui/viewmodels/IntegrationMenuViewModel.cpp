@@ -3,6 +3,8 @@
 #include "RA_Log.h"
 #include "RA_Resource.h"
 
+#include "data/context/ConsoleContext.hh"
+#include "data/context/GameContext.hh"
 #include "data/context/UserContext.hh"
 
 #include "services/IConfiguration.hh"
@@ -15,6 +17,7 @@
 #include "ui/viewmodels/LoginViewModel.hh"
 #include "ui/viewmodels/MessageBoxViewModel.hh"
 #include "ui/viewmodels/OverlaySettingsViewModel.hh"
+#include "ui/viewmodels/UnknownGameViewModel.hh"
 #include "ui/viewmodels/WindowManager.hh"
 
 namespace ra {
@@ -289,8 +292,30 @@ void IntegrationMenuViewModel::ReportBrokenAchievements()
 
 void IntegrationMenuViewModel::ShowGameHash()
 {
-    ra::ui::viewmodels::GameChecksumViewModel vmGameChecksum;
-    vmGameChecksum.ShowModal();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
+    {
+        ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
+        vmUnknownGame.InitializeTestCompatibilityMode();
+
+        auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetGameTitle();
+        vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
+        vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().Name());
+
+        if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
+        {
+            // Test button is disabled, can only get here by clicking Link
+            Expects(!vmUnknownGame.GetTestMode());
+
+            pGameContext.SetMode(ra::data::context::GameContext::Mode::Normal);
+            pGameContext.RefreshUnlocks();
+        }
+    }
+    else
+    {
+        ra::ui::viewmodels::GameChecksumViewModel vmGameChecksum;
+        vmGameChecksum.ShowModal();
+    }
 }
 
 } // namespace viewmodels

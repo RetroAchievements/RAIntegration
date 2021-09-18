@@ -34,13 +34,18 @@ UnknownGameDialog::UnknownGameDialog(ra::ui::viewmodels::UnknownGameViewModel& v
 
     m_bindExistingTitle.BindItems(vmUnknownGame.GameTitles());
     m_bindExistingTitle.BindSelectedItem(ra::ui::viewmodels::UnknownGameViewModel::SelectedGameIdProperty);
+    m_bindWindow.BindEnabled(IDC_RA_KNOWNGAMES, ra::ui::viewmodels::UnknownGameViewModel::IsSelectedGameEnabledProperty);
 
     m_bindNewTitle.BindText(ra::ui::viewmodels::UnknownGameViewModel::NewGameNameProperty,
         ra::ui::win32::bindings::TextBoxBinding::UpdateMode::KeyPress);
+    m_bindWindow.BindEnabled(IDC_RA_GAMETITLE, ra::ui::viewmodels::UnknownGameViewModel::IsSelectedGameEnabledProperty);
 
     m_bindWindow.BindLabel(IDC_RA_GAMENAME, ra::ui::viewmodels::UnknownGameViewModel::EstimatedGameNameProperty);
     m_bindWindow.BindLabel(IDC_RA_SYSTEMNAME, ra::ui::viewmodels::UnknownGameViewModel::SystemNameProperty);
     m_bindWindow.BindLabel(IDC_RA_CHECKSUM, ra::ui::viewmodels::UnknownGameViewModel::ChecksumProperty);
+
+    m_bindWindow.BindEnabled(IDC_RA_LINK, ra::ui::viewmodels::UnknownGameViewModel::IsAssociateEnabledProperty);
+    m_bindWindow.BindEnabled(IDOK, ra::ui::viewmodels::UnknownGameViewModel::IsSelectedGameEnabledProperty);
 }
 
 BOOL UnknownGameDialog::OnInitDialog()

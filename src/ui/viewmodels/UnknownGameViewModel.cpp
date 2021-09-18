@@ -6,6 +6,7 @@
 #include "api\SubmitNewTitle.hh"
 
 #include "data\context\ConsoleContext.hh"
+#include "data\context\GameContext.hh"
 
 #include "services\IClipboard.hh"
 
@@ -16,6 +17,8 @@ namespace ui {
 namespace viewmodels {
 
 const IntModelProperty UnknownGameViewModel::SelectedGameIdProperty("UnknownGameViewModel", "SelectedGameId", 0);
+const BoolModelProperty UnknownGameViewModel::IsSelectedGameEnabledProperty("UnknownGameViewModel", "IsSelectedGameEnabled", true);
+const BoolModelProperty UnknownGameViewModel::IsAssociateEnabledProperty("UnknownGameViewModel", "IsAssociateEnabled", true);
 const StringModelProperty UnknownGameViewModel::NewGameNameProperty("UnknownGameViewModel", "NewGameName", L"");
 const StringModelProperty UnknownGameViewModel::ChecksumProperty("UnknownGameViewModel", "Checksum", L"");
 const StringModelProperty UnknownGameViewModel::EstimatedGameNameProperty("UnknownGameViewModel", "EstimatedGameName", L"");
@@ -33,6 +36,9 @@ void UnknownGameViewModel::InitializeGameTitles()
 
     m_vGameTitles.Add(0U, L"<New Title>");
 
+    SetValue(IsSelectedGameEnabledProperty, false);
+    SetValue(IsAssociateEnabledProperty, false);
+
     ra::api::FetchGamesList::Request request;
     request.ConsoleId = pConsoleContext.Id();
 
@@ -49,12 +55,28 @@ void UnknownGameViewModel::InitializeGameTitles()
         }
         else
         {
+            m_vGameTitles.BeginUpdate();
             for (const auto& pGame : response.Games)
                 m_vGameTitles.Add(pGame.Id, pGame.Name);
+            m_vGameTitles.EndUpdate();
         }
 
         m_vGameTitles.Freeze();
+
+        SetValue(IsAssociateEnabledProperty, true);
+        SetValue(IsSelectedGameEnabledProperty, true);
     });
+}
+
+void UnknownGameViewModel::InitializeTestCompatibilityMode()
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    m_vGameTitles.Add(pGameContext.GameId(), pGameContext.GameTitle());
+    m_vGameTitles.Freeze();
+    SetSelectedGameId(pGameContext.GameId());
+    SetChecksum(ra::Widen(pGameContext.GameHash()));
+
+    SetValue(IsSelectedGameEnabledProperty, false);
 }
 
 bool UnknownGameViewModel::Associate()

@@ -72,7 +72,13 @@ public:
     /// <summary>
     /// Sets the game play mode.
     /// </summary>
-    void SetMode(Mode nMode) noexcept { m_nMode = nMode; }
+    void SetMode(Mode nMode)
+    {
+        m_nMode = nMode;
+
+        if (m_nGameId != 0)
+            OnActiveGameChanged();
+    }
 
     /// <summary>
     /// Gets the assets for the current game.

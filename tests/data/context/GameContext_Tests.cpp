@@ -2665,6 +2665,49 @@ public:
         const auto* pNote1 = game.FindCodeNote(1234U);
         Assert::IsNull(pNote1);
     }
+
+    TEST_METHOD(TestSetModeNotify)
+    {
+        class NotifyHarness : public GameContext::NotifyTarget
+        {
+        public:
+            bool m_bNotified = false;
+
+        protected:
+            void OnActiveGameChanged() noexcept override { m_bNotified = true; }
+        };
+        NotifyHarness notifyHarness;
+
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            response.Title = L"GameTitle";
+            response.ImageIcon = "9743";
+            return true;
+        });
+
+        Assert::AreEqual(GameContext::Mode::Normal, game.GetMode());
+
+        game.AddNotifyTarget(notifyHarness);
+        game.LoadGame(0U);
+
+        Assert::AreEqual(0U, game.GameId());
+        Assert::IsFalse(notifyHarness.m_bNotified);
+
+        game.SetMode(GameContext::Mode::CompatibilityTest);
+        Assert::AreEqual(GameContext::Mode::CompatibilityTest, game.GetMode());
+        Assert::IsFalse(notifyHarness.m_bNotified);
+
+        game.LoadGame(1U, GameContext::Mode::CompatibilityTest);
+        Assert::AreEqual(1U, game.GameId());
+        Assert::AreEqual(GameContext::Mode::CompatibilityTest, game.GetMode());
+        Assert::IsTrue(notifyHarness.m_bNotified);
+
+        notifyHarness.m_bNotified = false;
+        game.SetMode(GameContext::Mode::Normal);
+        Assert::AreEqual(GameContext::Mode::Normal, game.GetMode());
+        Assert::IsTrue(notifyHarness.m_bNotified);
+    }
 };
 
 } // namespace tests

@@ -138,16 +138,28 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
         if (!ra::data::models::AssetModelBase::IsActive(nNewState))
         {
             // when an active achievement is deactivated, the challenge indicator needs
-            // to be hidden as no event will be raised
+            // to be hidden as no event will be raised. similarly, the leaderboard tracker
+            // needs to be hidden when a leaderboard is deactivated.
             const auto nOldState = ra::itoe<ra::data::models::AssetState>(args.tOldValue);
             if (ra::data::models::AssetModelBase::IsActive(nOldState))
             {
                 const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
                 const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-                if (pAsset->GetType() == ra::data::models::AssetType::Achievement)
+                switch (pAsset->GetType())
                 {
-                    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                    pOverlayManager.RemoveChallengeIndicator(pAsset->GetID());
+                    case ra::data::models::AssetType::Achievement:
+                    {
+                        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                        pOverlayManager.RemoveChallengeIndicator(pAsset->GetID());
+                        break;
+                    }
+
+                    case ra::data::models::AssetType::Leaderboard:
+                    {
+                        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                        pOverlayManager.RemoveScoreTracker(pAsset->GetID());
+                        break;
+                    }
                 }
             }
         }

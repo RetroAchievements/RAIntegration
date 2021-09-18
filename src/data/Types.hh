@@ -101,6 +101,15 @@ constexpr unsigned int MemSizeBits(MemSize nSize)
     }
 }
 
+constexpr unsigned int MemSizeMax(MemSize nSize)
+{
+    const auto nBits = ra::data::MemSizeBits(nSize);
+    if (nBits >= 32)
+        return 0xFFFFFFFF;
+
+    return (1 << nBits) - 1;
+}
+
 constexpr unsigned int MemSizeBytes(MemSize nSize)
 {
     switch (nSize)

@@ -85,23 +85,13 @@ public:
             default:
             {
                 const auto nSize = vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty);
-                switch (ra::itoe<MemSize>(nSize))
-                {
-                    case MemSize::ThirtyTwoBit:
-                        return ra::StringPrintf(L"%08X", nValue);
+                const auto nBits = ra::data::MemSizeBits(ra::itoe<MemSize>(nSize));
+                if (nBits <= 4)
+                    return ra::StringPrintf(L"%X", nValue);
 
-                    case MemSize::TwentyFourBit:
-                        return ra::StringPrintf(L"%06X", nValue);
-
-                    case MemSize::SixteenBit:
-                        return ra::StringPrintf(L"%04X", nValue);
-
-                    case MemSize::EightBit:
-                        return ra::StringPrintf(L"%02X", nValue);
-
-                    default:
-                        return ra::StringPrintf(L"%X", nValue);
-                }
+                wchar_t format[5] = L"%08X";
+                format[2] = static_cast<wchar_t>(L'0' + (nBits / 4));
+                return ra::StringPrintf(format, nValue);
             }
         }
     }
@@ -112,29 +102,7 @@ public:
         std::wstring sError;
 
         const auto nSize = ra::itoe<MemSize>(vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty));
-        switch (nSize)
-        {
-            case MemSize::ThirtyTwoBit:
-                m_nMaximum = 0xFFFFFFFF;
-                break;
-
-            case MemSize::TwentyFourBit:
-                m_nMaximum = 0xFFFFFF;
-                break;
-
-            case MemSize::SixteenBit:
-                m_nMaximum = 0xFFFF;
-                break;
-
-            case MemSize::EightBit:
-                m_nMaximum = 0xFF;
-                break;
-
-            case MemSize::Nibble_Lower:
-            case MemSize::Nibble_Upper:
-                m_nMaximum = 0x0F;
-                break;
-        }
+        m_nMaximum = ra::data::MemSizeMax(nSize);
 
         const auto nFormat = vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty);
         switch (ra::itoe<MemFormat>(nFormat))

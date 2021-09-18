@@ -230,6 +230,11 @@ static constexpr MemSize MapMemSize(char nSize) noexcept
     }
 }
 
+MemSize TriggerConditionViewModel::MapRcheevosMemSize(char nSize)
+{
+    return MapMemSize(nSize);
+}
+
 void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty,
     const IntModelProperty& pSizeProperty, const IntModelProperty& pValueProperty, const rc_operand_t& operand)
 {

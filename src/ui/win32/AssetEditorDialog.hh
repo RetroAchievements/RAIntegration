@@ -109,6 +109,7 @@ private:
     ra::ui::win32::bindings::ImageBinding m_bindBadgeImage;
     ra::ui::win32::bindings::NumericTextBoxBinding m_bindPoints;
 
+    ra::ui::win32::bindings::CheckBoxBinding m_bindMeasuredAsPercent;
     ra::ui::win32::bindings::CheckBoxBinding m_bindDebugHighlights;
     ra::ui::win32::bindings::CheckBoxBinding m_bindPauseOnReset;
     ra::ui::win32::bindings::CheckBoxBinding m_bindPauseOnTrigger;

@@ -29,6 +29,9 @@ public:
     TriggerViewModel(TriggerViewModel&&) noexcept = delete;
     TriggerViewModel& operator=(TriggerViewModel&&) noexcept = delete;
 
+    static const BoolModelProperty IsMeasuredTrackedAsPercentProperty;
+    bool IsMeasuredTrackedAsPercent() const { return GetValue(IsMeasuredTrackedAsPercentProperty); }
+    void SetMeasuredTrackedAsPercent(bool nValue) { SetValue(IsMeasuredTrackedAsPercentProperty, nValue); }
 
     static const IntModelProperty SelectedGroupIndexProperty;
     int GetSelectedGroupIndex() const { return GetValue(SelectedGroupIndexProperty); }
@@ -41,8 +44,10 @@ public:
         rc_condset_t* m_pConditionSet = nullptr;
 
         bool UpdateSerialized(const ViewModelCollection<TriggerConditionViewModel>& vConditions);
-        const std::string& GetSerialized() const;
+        const std::string& GetSerialized(const TriggerViewModel& vmTrigger) const;
         void ResetSerialized() { m_sSerialized = NOT_SERIALIZED; }
+
+        bool UpdateMeasuredFlags();
 
         static const IntModelProperty ColorProperty;
         Color GetColor() const { return Color(ra::to_unsigned(GetValue(ColorProperty))); }
@@ -140,10 +145,13 @@ protected:
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
 
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
 private:
     void UpdateVersion();
+    void UpdateVersionAndRestoreHits();
     void InitializeGroups(const rc_trigger_t& pTrigger);
+    void UpdateGroups(const rc_trigger_t& pTrigger);
     void UpdateConditions(const GroupViewModel* pGroup);
 
     void DeselectAllConditions();

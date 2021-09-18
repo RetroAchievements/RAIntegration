@@ -48,6 +48,7 @@ static void SetHeader(OverlayListPageViewModel::ItemViewModel& vmItem, const std
     vmItem.Image.ChangeReference(ra::ui::ImageType::None, "");
     vmItem.SetProgressValue(0U);
     vmItem.SetProgressMaximum(0U);
+    vmItem.SetProgressPercentage(true);
 }
 
 static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, const ra::data::models::AchievementModel& vmAchievement)
@@ -77,11 +78,13 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, cons
         {
             vmItem.SetProgressMaximum(pTrigger->measured_target);
             vmItem.SetProgressValue(pTrigger->measured_value);
+            vmItem.SetProgressPercentage(pTrigger->measured_as_percent);
         }
         else
         {
             vmItem.SetProgressMaximum(0);
             vmItem.SetProgressValue(0);
+            vmItem.SetProgressPercentage(false);
         }
     }
     else if (vmAchievement.GetState() == ra::data::models::AssetState::Disabled)
@@ -90,6 +93,7 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, cons
         vmItem.SetDisabled(true);
         vmItem.SetProgressValue(0U);
         vmItem.SetProgressMaximum(0U);
+        vmItem.SetProgressPercentage(false);
     }
     else
     {
@@ -97,6 +101,7 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, cons
         vmItem.SetDisabled(false);
         vmItem.SetProgressValue(0U);
         vmItem.SetProgressMaximum(0U);
+        vmItem.SetProgressPercentage(false);
     }
 }
 

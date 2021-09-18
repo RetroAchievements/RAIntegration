@@ -225,7 +225,7 @@ void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& a
         else
             m_vmTrigger.UpdateColors(nullptr);
     }
-    if (args.Property == DecimalPreferredProperty)
+    else if (args.Property == DecimalPreferredProperty)
     {
         auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
         pConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, args.tNewValue);

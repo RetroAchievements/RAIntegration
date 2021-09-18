@@ -30,7 +30,7 @@ namespace win32 {
 static constexpr int COLUMN_WIDTH_ID = 30;
 static constexpr int COLUMN_WIDTH_FLAG = 78;
 static constexpr int COLUMN_WIDTH_TYPE = 42;
-static constexpr int COLUMN_WIDTH_SIZE = 54;
+static constexpr int COLUMN_WIDTH_SIZE = 56;
 static constexpr int COLUMN_WIDTH_VALUE = 72;
 static constexpr int COLUMN_WIDTH_OPERATOR = 35;
 static constexpr int COLUMN_WIDTH_HITS = 84;

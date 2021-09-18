@@ -144,7 +144,7 @@ public:
         Assert::AreEqual((int)TriggerOperandType::BCD, vmTrigger.OperandTypes().GetItemAt(4)->GetId());
         Assert::AreEqual(std::wstring(L"BCD"), vmTrigger.OperandTypes().GetItemAt(4)->GetLabel());
 
-        Assert::AreEqual({ 15U }, vmTrigger.OperandSizes().Count());
+        Assert::AreEqual({ 18U }, vmTrigger.OperandSizes().Count());
         Assert::AreEqual((int)MemSize::Bit_0, vmTrigger.OperandSizes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Bit0"), vmTrigger.OperandSizes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)MemSize::Bit_1, vmTrigger.OperandSizes().GetItemAt(1)->GetId());
@@ -173,8 +173,14 @@ public:
         Assert::AreEqual(std::wstring(L"24-bit"), vmTrigger.OperandSizes().GetItemAt(12)->GetLabel());
         Assert::AreEqual((int)MemSize::ThirtyTwoBit, vmTrigger.OperandSizes().GetItemAt(13)->GetId());
         Assert::AreEqual(std::wstring(L"32-bit"), vmTrigger.OperandSizes().GetItemAt(13)->GetLabel());
-        Assert::AreEqual((int)MemSize::BitCount, vmTrigger.OperandSizes().GetItemAt(14)->GetId());
-        Assert::AreEqual(std::wstring(L"BitCount"), vmTrigger.OperandSizes().GetItemAt(14)->GetLabel());
+        Assert::AreEqual((int)MemSize::SixteenBitBigEndian, vmTrigger.OperandSizes().GetItemAt(14)->GetId());
+        Assert::AreEqual(std::wstring(L"16-bit BE"), vmTrigger.OperandSizes().GetItemAt(14)->GetLabel());
+        Assert::AreEqual((int)MemSize::TwentyFourBitBigEndian, vmTrigger.OperandSizes().GetItemAt(15)->GetId());
+        Assert::AreEqual(std::wstring(L"24-bit BE"), vmTrigger.OperandSizes().GetItemAt(15)->GetLabel());
+        Assert::AreEqual((int)MemSize::ThirtyTwoBitBigEndian, vmTrigger.OperandSizes().GetItemAt(16)->GetId());
+        Assert::AreEqual(std::wstring(L"32-bit BE"), vmTrigger.OperandSizes().GetItemAt(16)->GetLabel());
+        Assert::AreEqual((int)MemSize::BitCount, vmTrigger.OperandSizes().GetItemAt(17)->GetId());
+        Assert::AreEqual(std::wstring(L"BitCount"), vmTrigger.OperandSizes().GetItemAt(17)->GetLabel());
 
         Assert::AreEqual({ 10U }, vmTrigger.OperatorTypes().Count());
         Assert::AreEqual((int)TriggerOperatorType::Equals, vmTrigger.OperatorTypes().GetItemAt(0)->GetId());

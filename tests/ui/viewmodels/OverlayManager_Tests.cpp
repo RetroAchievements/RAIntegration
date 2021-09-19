@@ -425,6 +425,37 @@ public:
         Assert::IsNull(overlay.GetChallengeIndicator(6)); // render should erase and destroy
     }
 
+    TEST_METHOD(TestAddRemoveChallengeIndicatorDestroyPending)
+    {
+        OverlayManagerHarness overlay;
+        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        const auto& vmIndicator = overlay.AddChallengeIndicator(6, ra::ui::ImageType::Badge, "12345");
+        Assert::IsFalse(vmIndicator.IsDestroyPending());
+        Assert::IsTrue(&vmIndicator == overlay.GetChallengeIndicator(6));
+
+        overlay.RemoveChallengeIndicator(6);
+        Assert::IsTrue(vmIndicator.IsDestroyPending());
+        Assert::IsNotNull(overlay.GetChallengeIndicator(6));
+
+        ra::ui::drawing::mocks::MockSurface mockSurface(800, 600);
+        overlay.Render(mockSurface, false);
+        overlay.ResetRenderRequested();
+
+        // request to redisplay indicator (it's currently queued to be destroyed)
+        const auto& vmNewIndicator = overlay.AddChallengeIndicator(6, ra::ui::ImageType::Badge, "12345");
+        Assert::AreEqual(6, vmNewIndicator.GetPopupId());
+        Assert::AreEqual(ra::ui::ImageType::Badge, vmNewIndicator.GetImage().Type());
+        Assert::AreEqual(std::string("12345"), vmNewIndicator.GetImage().Name());
+        Assert::IsTrue(overlay.WasRenderRequested());
+        Assert::IsFalse(vmNewIndicator.IsDestroyPending());
+
+        overlay.Render(mockSurface, false);
+
+        // indicator should exist
+        Assert::IsTrue(&vmNewIndicator == overlay.GetChallengeIndicator(6));
+    }
+
     TEST_METHOD(TestAddMultipleChallengeIndicator)
     {
         OverlayManagerHarness overlay;

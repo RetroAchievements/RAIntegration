@@ -102,20 +102,6 @@ public:
 
     std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
     {
-        //switch (nIndex % 10)
-        //{
-        //    case 0: return L"\U0001F947"; // 1F947 - First Place Medal Emoji
-        //    case 1: return L"\U0001F3C5"; // 1F3C5 - Sports Medal
-        //    case 2: return L"\U0001F3C6"; // 1F3C6 - Trophy
-        //    case 3: return L"\U0001F4CA"; // 1F4CA - Bar Chart
-        //    case 4: return L"\U0001F4C8"; // 1F4C8 - Up Pointing Graph [NO - looks like a checkbox]
-        //    case 5: return L"\U0001F522"; // 1F522 - Input Numbers
-        //    case 6: return L"\U0001F680"; // 1F680 - Rocket Ship
-        //    case 7: return L"\U0001F3AB"; // 1F3AB - Ticket with Stub
-        //    case 8: return L"\U0001F3C1"; // 1F3C1 - Checkered Flag
-        //    case 9: return L"\U0001F321"; // 1F321 - Thermometer
-        //}
-
         const auto nType = ra::itoe<ra::data::models::AssetType>(vmItems.GetItemValue(nIndex, *m_pBoundProperty));
         switch (nType)
         {

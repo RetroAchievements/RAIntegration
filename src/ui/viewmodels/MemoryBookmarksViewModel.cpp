@@ -240,8 +240,8 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                 if (bookmark.HasMember("MemAddr"))
                 {
                     // third bookmark format uses the memref serializer
-                    char size;
-                    unsigned address;
+                    char size = 0;
+                    unsigned address = 0;
                     const char* memaddr = bookmark["MemAddr"].GetString();
                     if (rc_parse_memref(&memaddr, &size, &address) == RC_OK)
                     {

@@ -230,7 +230,8 @@ static constexpr MemSize MapMemSize(char nSize) noexcept
     }
 }
 
-MemSize TriggerConditionViewModel::MapRcheevosMemSize(char nSize)
+GSL_SUPPRESS_F4
+MemSize TriggerConditionViewModel::MapRcheevosMemSize(char nSize) noexcept
 {
     return MapMemSize(nSize);
 }

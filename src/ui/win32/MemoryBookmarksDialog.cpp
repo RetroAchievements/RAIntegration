@@ -90,7 +90,7 @@ public:
                     return ra::StringPrintf(L"%X", nValue);
 
                 wchar_t format[5] = L"%08X";
-                format[2] = static_cast<wchar_t>(L'0' + (nBits / 4));
+                format[2] = gsl::narrow_cast<wchar_t>(L'0' + (nBits / 4));
                 return ra::StringPrintf(format, nValue);
             }
         }

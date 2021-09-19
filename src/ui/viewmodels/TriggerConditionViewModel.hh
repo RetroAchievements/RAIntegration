@@ -137,7 +137,7 @@ public:
     void SetRowColor(Color value) { SetValue(RowColorProperty, ra::to_signed(value.ARGB)); }
     void UpdateRowColor(const rc_condition_t* pCondition);
 
-    static MemSize MapRcheevosMemSize(char nSize);
+    static MemSize MapRcheevosMemSize(char nSize) noexcept;
 
 private:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;

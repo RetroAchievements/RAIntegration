@@ -508,6 +508,71 @@ void AssetEditorDialog::ConditionsGridBinding::CheckIdWidth()
     }
 }
 
+AssetEditorDialog::ErrorIconBinding::~ErrorIconBinding()
+{
+    if (m_hErrorIcon)
+    {
+        ::DestroyIcon(m_hErrorIcon);
+        m_hErrorIcon = nullptr;
+    }
+}
+
+void AssetEditorDialog::ErrorIconBinding::SetHWND(DialogBase& pDialog, HWND hControl)
+{
+    ControlBinding::SetHWND(pDialog, hControl);
+    UpdateImage();
+}
+
+void AssetEditorDialog::ErrorIconBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == AssetEditorViewModel::HasAssetValidationErrorProperty)
+        UpdateImage();
+}
+
+static HICON GetIcon(SHSTOCKICONID nStockIconId, LPWSTR nOicIconId)
+{
+    if (pGetStockIconInfo != nullptr)
+    {
+        SHSTOCKICONINFO sii{};
+        sii.cbSize = sizeof(sii);
+        if (SUCCEEDED(pGetStockIconInfo(nStockIconId, SHGSI_ICON | SHGSI_SMALLICON, &sii)))
+            return sii.hIcon;
+
+        return nullptr;
+    }
+
+    // despite requesting a 16x16 icon, this returns a 32x32 one, which looks awkward in the space
+    // provided. GetStockIconInfo is prefered because it returns an appropriately sized icon. this
+    // is fallback logic for WinXP.
+    GSL_SUPPRESS_TYPE1
+    return reinterpret_cast<HICON>(LoadImage(nullptr, nOicIconId, IMAGE_ICON, 16, 16, LR_SHARED));
+}
+
+void AssetEditorDialog::ErrorIconBinding::SetErrorIcon()
+{
+    if (!m_hErrorIcon)
+        m_hErrorIcon = GetIcon(SIID_ERROR, MAKEINTRESOURCE(OIC_ERROR));
+
+    if (m_hErrorIcon)
+        GSL_SUPPRESS_TYPE1::SendMessage(m_hWnd, STM_SETICON, reinterpret_cast<WPARAM>(m_hErrorIcon), NULL);
+}
+
+void AssetEditorDialog::ErrorIconBinding::UpdateImage()
+{
+    if (m_hWnd)
+    {
+        if (GetValue(AssetEditorViewModel::HasAssetValidationErrorProperty))
+        {
+            SetErrorIcon();
+            ShowWindow(m_hWnd, SW_SHOW);
+        }
+        else
+        {
+            ShowWindow(m_hWnd, SW_HIDE);
+        }
+    }
+}
+
 AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     : DialogBase(vmAssetEditor),
     m_bindID(vmAssetEditor),
@@ -516,6 +581,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindBadge(vmAssetEditor),
     m_bindBadgeImage(vmAssetEditor),
     m_bindPoints(vmAssetEditor),
+    m_bindErrorIcon(vmAssetEditor),
     m_bindMeasuredAsPercent(vmAssetEditor.Trigger()),
     m_bindDebugHighlights(vmAssetEditor),
     m_bindPauseOnReset(vmAssetEditor),
@@ -556,7 +622,6 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindEnabled(IDC_RA_MOVE_COND_UP, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_MOVE_COND_DOWN, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindLabel(IDC_RA_CHK_ACTIVE, AssetEditorViewModel::WaitingLabelProperty);
-    m_bindWindow.BindVisible(IDC_RA_ERROR_INDICATOR, AssetEditorViewModel::HasAssetValidationErrorProperty);
     m_bindWindow.BindLabel(IDC_RA_MEASURED, AssetEditorViewModel::MeasuredValueProperty);
     m_bindWindow.BindVisible(IDC_RA_LBL_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
     m_bindWindow.BindVisible(IDC_RA_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
@@ -706,35 +771,13 @@ BOOL AssetEditorDialog::OnInitDialog()
     m_bindConditions.SetControl(*this, IDC_RA_LBX_CONDITIONS);
     m_bindConditions.InitializeTooltips(std::chrono::seconds(30));
 
+    m_bindErrorIcon.SetControl(*this, IDC_RA_ERROR_INDICATOR);
     m_bindMeasuredAsPercent.SetControl(*this, IDC_RA_CHK_AS_PERCENT);
     m_bindDebugHighlights.SetControl(*this, IDC_RA_CHK_HIGHLIGHTS);
     m_bindPauseOnReset.SetControl(*this, IDC_RA_CHK_PAUSE_ON_RESET);
     m_bindPauseOnTrigger.SetControl(*this, IDC_RA_CHK_PAUSE_ON_TRIGGER);
     m_bindActive.SetControl(*this, IDC_RA_CHK_ACTIVE);
     m_bindDecimalPreferred.SetControl(*this, IDC_RA_CHK_SHOW_DECIMALS);
-
-    if (!m_hErrorIcon)
-    {
-        if (pGetStockIconInfo != nullptr)
-        {
-            SHSTOCKICONINFO sii{};
-            sii.cbSize = sizeof(sii);
-            if (SUCCEEDED(pGetStockIconInfo(SIID_ERROR, SHGSI_ICON | SHGSI_SMALLICON, &sii)))
-                m_hErrorIcon = sii.hIcon;
-        }
-        else
-        {
-            // despite requesting a 16x16 icon, this returns a 32x32 one, which looks awkward in the space
-            // provided. GetStockIconInfo is prefered because it retusn an appropriately sized icon. this
-            // is fallback logic for WinXP.
-            GSL_SUPPRESS_TYPE1 m_hErrorIcon = reinterpret_cast<HICON>(
-                LoadImage(nullptr, MAKEINTRESOURCE(OIC_ERROR), IMAGE_ICON, 16, 16, LR_SHARED));
-        }
-    }
-
-    const auto hErrorIconControl = GetDlgItem(GetHWND(), IDC_RA_ERROR_INDICATOR);
-    if (m_hErrorIcon)
-        GSL_SUPPRESS_TYPE1 ::SendMessage(hErrorIconControl, STM_SETICON, reinterpret_cast<WPARAM>(m_hErrorIcon), NULL);
 
     m_hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
         WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
@@ -743,6 +786,8 @@ BOOL AssetEditorDialog::OnInitDialog()
 
     if (m_hTooltip)
     {
+        const auto hErrorIconControl = GetDlgItem(GetHWND(), IDC_RA_ERROR_INDICATOR);
+
         TOOLINFO toolInfo;
         memset(&toolInfo, 0, sizeof(toolInfo));
         GSL_SUPPRESS_ES47 toolInfo.cbSize = TTTOOLINFO_V1_SIZE;
@@ -796,12 +841,6 @@ INT_PTR CALLBACK AssetEditorDialog::DialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
 
 void AssetEditorDialog::OnDestroy()
 {
-    if (m_hErrorIcon)
-    {
-        ::DestroyIcon(m_hErrorIcon);
-        m_hErrorIcon = nullptr;
-    }
-
     if (m_hTooltip)
     {
         ::DestroyWindow(m_hTooltip);

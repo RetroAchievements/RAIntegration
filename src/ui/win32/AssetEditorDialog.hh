@@ -102,6 +102,25 @@ private:
         bool m_bWideId = false;
     };
 
+    class ErrorIconBinding : public ra::ui::win32::bindings::ControlBinding
+    {
+    public:
+        ErrorIconBinding(ViewModelBase& vmViewModel) noexcept
+            : ra::ui::win32::bindings::ControlBinding(vmViewModel) {}
+        ~ErrorIconBinding();
+
+    protected:
+        void SetHWND(DialogBase& pDialog, HWND hControl) override;
+
+        void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
+
+    private:
+        void UpdateImage();
+        void SetErrorIcon();
+
+        HICON m_hErrorIcon = nullptr;
+    };
+
     ra::ui::win32::bindings::NumericTextBoxBinding m_bindID;
     ra::ui::win32::bindings::TextBoxBinding m_bindName;
     ra::ui::win32::bindings::TextBoxBinding m_bindDescription;
@@ -109,6 +128,7 @@ private:
     ra::ui::win32::bindings::ImageBinding m_bindBadgeImage;
     ra::ui::win32::bindings::NumericTextBoxBinding m_bindPoints;
 
+    ErrorIconBinding m_bindErrorIcon;
     ra::ui::win32::bindings::CheckBoxBinding m_bindMeasuredAsPercent;
     ra::ui::win32::bindings::CheckBoxBinding m_bindDebugHighlights;
     ra::ui::win32::bindings::CheckBoxBinding m_bindPauseOnReset;
@@ -119,7 +139,6 @@ private:
     ra::ui::win32::bindings::GridBinding m_bindGroups;
     ConditionsGridBinding m_bindConditions;
 
-    HICON m_hErrorIcon = nullptr;
     HWND m_hTooltip = nullptr;
 };
 

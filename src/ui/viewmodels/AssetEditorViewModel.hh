@@ -57,6 +57,26 @@ public:
     /// </summary>
     const std::wstring& GetAssetValidationError() const { return GetValue(AssetValidationErrorProperty); }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not an AssetValidationWarning is set.
+    /// </summary>
+    static const BoolModelProperty HasAssetValidationWarningProperty;
+
+    /// <summary>
+    /// Gets whether or not an AssetValidationWarning is set.
+    /// </summary>
+    bool HasAssetValidationWarning() const { return GetValue(HasAssetValidationWarningProperty); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the reason why the asset is not valid.
+    /// </summary>
+    static const StringModelProperty AssetValidationWarningProperty;
+
+    /// <summary>
+    /// Gets the reason why the asset is not valid.
+    /// </summary>
+    const std::wstring& GetAssetValidationWarning() const { return GetValue(AssetValidationWarningProperty); }
+
     // ===== Common =====
 
     /// <summary>

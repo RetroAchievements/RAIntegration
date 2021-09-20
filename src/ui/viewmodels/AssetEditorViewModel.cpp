@@ -26,6 +26,8 @@ const BoolModelProperty AssetEditorViewModel::DecimalPreferredProperty("AssetEdi
 const BoolModelProperty AssetEditorViewModel::IsAssetLoadedProperty("AssetEditorViewModel", "IsAssetLoaded", false);
 const BoolModelProperty AssetEditorViewModel::HasAssetValidationErrorProperty("AssetEditorViewModel", "HasAssetValidationError", false);
 const StringModelProperty AssetEditorViewModel::AssetValidationErrorProperty("AssetEditorViewModel", "AssetValidationError", L"");
+const BoolModelProperty AssetEditorViewModel::HasAssetValidationWarningProperty("AssetEditorViewModel", "HasAssetValidationWarning", false);
+const StringModelProperty AssetEditorViewModel::AssetValidationWarningProperty("AssetEditorViewModel", "AssetValidationWarning", L"");
 const BoolModelProperty AssetEditorViewModel::HasMeasuredProperty("AssetEditorViewModel", "HasMeasured", false);
 const StringModelProperty AssetEditorViewModel::MeasuredValueProperty("AssetEditorViewModel", "MeasuredValue", L"[Not Active]");
 const StringModelProperty AssetEditorViewModel::WaitingLabelProperty("AssetEditorViewModel", "WaitingLabel", L"Active");
@@ -270,6 +272,8 @@ void AssetEditorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs&
 
     if (args.Property == AssetValidationErrorProperty)
         SetValue(HasAssetValidationErrorProperty, !args.tNewValue.empty());
+    else if (args.Property == AssetValidationWarningProperty)
+        SetValue(HasAssetValidationWarningProperty, !args.tNewValue.empty());
 
     WindowViewModelBase::OnValueChanged(args);
 }

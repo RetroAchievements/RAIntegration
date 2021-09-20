@@ -515,6 +515,12 @@ AssetEditorDialog::ErrorIconBinding::~ErrorIconBinding()
         ::DestroyIcon(m_hErrorIcon);
         m_hErrorIcon = nullptr;
     }
+
+    if (m_hWarningIcon)
+    {
+        ::DestroyIcon(m_hWarningIcon);
+        m_hWarningIcon = nullptr;
+    }
 }
 
 void AssetEditorDialog::ErrorIconBinding::SetHWND(DialogBase& pDialog, HWND hControl)
@@ -526,6 +532,8 @@ void AssetEditorDialog::ErrorIconBinding::SetHWND(DialogBase& pDialog, HWND hCon
 void AssetEditorDialog::ErrorIconBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == AssetEditorViewModel::HasAssetValidationErrorProperty)
+        UpdateImage();
+    else if (args.Property == AssetEditorViewModel::HasAssetValidationWarningProperty)
         UpdateImage();
 }
 
@@ -557,19 +565,33 @@ void AssetEditorDialog::ErrorIconBinding::SetErrorIcon()
         GSL_SUPPRESS_TYPE1::SendMessage(m_hWnd, STM_SETICON, reinterpret_cast<WPARAM>(m_hErrorIcon), NULL);
 }
 
+void AssetEditorDialog::ErrorIconBinding::SetWarningIcon()
+{
+    if (!m_hWarningIcon)
+        m_hWarningIcon = GetIcon(SIID_WARNING, MAKEINTRESOURCE(OIC_WARNING));
+
+    if (m_hWarningIcon)
+        GSL_SUPPRESS_TYPE1::SendMessage(m_hWnd, STM_SETICON, reinterpret_cast<WPARAM>(m_hWarningIcon), NULL);
+}
+
 void AssetEditorDialog::ErrorIconBinding::UpdateImage()
 {
-    if (m_hWnd)
+    if (!m_hWnd)
+        return;
+
+    if (GetValue(AssetEditorViewModel::HasAssetValidationErrorProperty))
     {
-        if (GetValue(AssetEditorViewModel::HasAssetValidationErrorProperty))
-        {
-            SetErrorIcon();
-            ShowWindow(m_hWnd, SW_SHOW);
-        }
-        else
-        {
-            ShowWindow(m_hWnd, SW_HIDE);
-        }
+        SetErrorIcon();
+        ShowWindow(m_hWnd, SW_SHOW);
+    }
+    else if (GetValue(AssetEditorViewModel::HasAssetValidationWarningProperty))
+    {
+        SetWarningIcon();
+        ShowWindow(m_hWnd, SW_SHOW);
+    }
+    else
+    {
+        ShowWindow(m_hWnd, SW_HIDE);
     }
 }
 

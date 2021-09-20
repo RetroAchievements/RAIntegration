@@ -117,8 +117,10 @@ private:
     private:
         void UpdateImage();
         void SetErrorIcon();
+        void SetWarningIcon();
 
         HICON m_hErrorIcon = nullptr;
+        HICON m_hWarningIcon = nullptr;
     };
 
     ra::ui::win32::bindings::NumericTextBoxBinding m_bindID;

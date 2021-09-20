@@ -3,6 +3,7 @@
 #include "data\context\GameContext.hh"
 
 #include "data\models\LocalBadgesModel.hh"
+#include "data\models\TriggerValidation.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
@@ -114,6 +115,12 @@ void AchievementModel::CommitTransaction()
     }
 
     AssetModelBase::CommitTransaction();
+}
+
+bool AchievementModel::ValidateAsset(std::wstring& sError)
+{
+    const auto& sTrigger = GetLocalAssetDefinition(m_pTrigger);
+    return TriggerValidation::Validate(sTrigger, sError);
 }
 
 void AchievementModel::DoFrame()

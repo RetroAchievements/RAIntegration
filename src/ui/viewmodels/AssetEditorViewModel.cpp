@@ -102,6 +102,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
         SetDescription(pAsset->GetDescription());
         SetState(pAsset->GetState());
         SetCategory(pAsset->GetCategory());
+        SetValue(AssetValidationWarningProperty, pAsset->GetValidationError());
 
         // normally this happens in OnValueChanged, but only if m_pAsset is set, which doesn't happen until later
         // and we don't want the other stuff in OnValueChanged to run right now
@@ -165,6 +166,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
         SetPauseOnTrigger(PauseOnTriggerProperty.GetDefaultValue());
         SetWindowTitle(L"Achievement Editor");
         SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
+        SetValue(AssetValidationWarningProperty, AssetValidationErrorProperty.GetDefaultValue());
 
         ra::data::models::CapturedTriggerHits pCapturedHits;
         Trigger().InitializeFrom("", pCapturedHits);
@@ -187,6 +189,8 @@ void AssetEditorViewModel::OnDataModelStringValueChanged(const StringModelProper
         SetName(args.tNewValue);
     else if (args.Property == ra::data::models::AchievementModel::BadgeProperty)
         SetBadge(args.tNewValue);
+    else if (args.Property == ra::data::models::AssetModelBase::ValidationErrorProperty)
+        SetValue(AssetValidationWarningProperty, args.tNewValue);
 }
 
 void AssetEditorViewModel::OnDataModelIntValueChanged(const IntModelProperty::ChangeArgs& args)

@@ -845,7 +845,9 @@ INT_PTR CALLBACK AssetEditorDialog::DialogProc(HWND hDlg, UINT uMsg, WPARAM wPar
                             NMTTDISPINFO* pnmTtDispInfo;
                             GSL_SUPPRESS_TYPE1{ pnmTtDispInfo = reinterpret_cast<NMTTDISPINFO*>(lParam); }
                             Expects(pnmTtDispInfo != nullptr);
-                            GSL_SUPPRESS_TYPE3 pnmTtDispInfo->lpszText = const_cast<LPTSTR>(vmAssetEditor->GetAssetValidationError().c_str());
+                            const auto& sError = (vmAssetEditor->HasAssetValidationError()) ?
+                                vmAssetEditor->GetAssetValidationError() : vmAssetEditor->GetAssetValidationWarning();
+                            GSL_SUPPRESS_TYPE3 pnmTtDispInfo->lpszText = const_cast<LPTSTR>(sError.c_str());
                             return 0;
                         }
                     }

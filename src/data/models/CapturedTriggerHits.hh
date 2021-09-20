@@ -2,8 +2,6 @@
 #define RA_DATA_CAPTURED_TRIGGER_HITS_H
 #pragma once
 
-#include "CapturedTriggerHits.hh"
-
 namespace ra {
 namespace data {
 namespace models {

@@ -72,6 +72,24 @@ private:
 
             return true;
         }
+
+        void MockValidationError(const std::wstring& sError)
+        {
+            m_sValidationError = sError;
+        }
+
+    protected:
+        bool ValidateAsset(std::wstring& sError) override
+        {
+            if (m_sValidationError.empty())
+                return true;
+
+            sError = m_sValidationError;
+            return false;
+        }
+
+    private:
+        std::wstring m_sValidationError;
     };
 
     class AssetDefinitionViewModelHarness : public AssetModelBase
@@ -464,6 +482,91 @@ public:
 
         asset.SetDefinition("LocalDefinition");
         Assert::AreEqual(AssetChanges::Unpublished, asset.GetChanges());
+    }
+
+    TEST_METHOD(TestValidateExplicit)
+    {
+        AssetModelHarness asset;
+        Assert::AreEqual(std::wstring(), asset.GetValidationError());
+
+        Assert::IsTrue(asset.Validate());
+        Assert::AreEqual(std::wstring(), asset.GetValidationError());
+
+        asset.MockValidationError(L"It's bad.");
+        Assert::IsFalse(asset.Validate());
+        Assert::AreEqual(std::wstring(L"It's bad."), asset.GetValidationError());
+
+        asset.MockValidationError(L"");
+        Assert::IsTrue(asset.Validate());
+        Assert::AreEqual(std::wstring(), asset.GetValidationError());
+    }
+
+    TEST_METHOD(TestValidateCoreError)
+    {
+        AssetModelHarness asset;
+        asset.SetName(L"ServerName");
+        asset.SetCategory(AssetCategory::Core);
+        asset.MockValidationError(L"Core Error");
+
+        // creating server checkpoint does not validate
+        asset.CreateServerCheckpoint();
+        Assert::AreEqual(std::wstring(), asset.GetValidationError());
+
+        // creating local checkpoint does validate
+        asset.CreateLocalCheckpoint();
+        Assert::AreEqual(std::wstring(L"Core Error"), asset.GetValidationError());
+    }
+
+    TEST_METHOD(TestValidateLocalError)
+    {
+        AssetModelHarness asset;
+        asset.SetName(L"ServerName");
+        asset.SetCategory(AssetCategory::Core);
+        asset.CreateServerCheckpoint();
+        Assert::AreEqual(std::wstring(), asset.GetValidationError());
+
+        // creating local checkpoint does validate
+        asset.MockValidationError(L"Local Error");
+        asset.CreateLocalCheckpoint();
+        Assert::AreEqual(std::wstring(L"Local Error"), asset.GetValidationError());
+    }
+
+    TEST_METHOD(TestValidateModifiedError)
+    {
+        AssetModelHarness asset;
+        asset.SetName(L"ServerName");
+        asset.SetCategory(AssetCategory::Core);
+        asset.CreateServerCheckpoint();
+        asset.CreateLocalCheckpoint();
+        Assert::AreEqual(std::wstring(), asset.GetValidationError());
+
+        // applying the modification does not validate
+        asset.MockValidationError(L"Modified Error");
+        Assert::AreEqual(std::wstring(), asset.GetValidationError());
+
+        // committing the change does validate
+        asset.UpdateLocalCheckpoint();
+        Assert::AreEqual(std::wstring(L"Modified Error"), asset.GetValidationError());
+
+        // reverting changes does validate
+        asset.MockValidationError(L"Restored Error");
+        asset.RestoreLocalCheckpoint();
+        Assert::AreEqual(std::wstring(L"Restored Error"), asset.GetValidationError());
+    }
+
+    TEST_METHOD(TestValidateDeletedError)
+    {
+        AssetModelHarness asset;
+        asset.SetName(L"ServerName");
+        asset.SetCategory(AssetCategory::Core);
+        asset.MockValidationError(L"Local Error");
+        asset.CreateServerCheckpoint();
+        asset.CreateLocalCheckpoint();
+        Assert::AreEqual(std::wstring(L"Local Error"), asset.GetValidationError());
+
+        // deleting clears the validation error
+        asset.SetDeleted();
+        Assert::AreEqual(std::wstring(L""), asset.GetValidationError());
     }
 };
 

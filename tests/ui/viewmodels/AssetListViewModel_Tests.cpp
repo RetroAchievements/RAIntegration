@@ -1922,6 +1922,39 @@ public:
         Assert::AreEqual(AssetChanges::Modified, pItem->GetChanges());
     }
 
+    TEST_METHOD(TestSaveSelectedValidationWarning)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        pItem->SetName(L"Test1b");
+        pItem->SetTrigger("A:0x1234");
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        // item is not validated until saved
+        Assert::AreEqual(std::wstring(), pItem->GetValidationError());
+
+        vmAssetList.SaveSelected();
+
+        // invalid item can still be saved
+        const auto& sText = vmAssetList.GetUserFile(L"22");
+        AssertContains(sText, "1:\"A:0x1234\":Test1b:Desc1:::::5:::::12345");
+
+        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow."), pItem->GetValidationError());
+
+        pItem->SetName(L"Test1c");
+        vmAssetList.SaveSelected();
+
+        // invalid item can still be saved
+        const auto& sText2 = vmAssetList.GetUserFile(L"22");
+        AssertContains(sText2, "1:\"A:0x1234\":Test1c:Desc1:::::5:::::12345");
+    }
+
     TEST_METHOD(TestSaveSelectedPublishCoreModified)
     {
         AssetListViewModelHarness vmAssetList;
@@ -2027,6 +2060,44 @@ public:
 
         vmAssetList.ForceUpdateButtons();
         vmAssetList.AssertButtonState(SaveButtonState::Publish);
+    }
+
+    TEST_METHOD(TestSaveSelectedPublishCoreValidationError)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Are you sure you want to publish 1 items?"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            return DialogResult::Yes;
+        });
+
+        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        pItem->SetTrigger("A:0x1234");
+        pItem->UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pItem->GetChanges());
+        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow."), pItem->GetValidationError());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Publish);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 1U }, vmAssetList.PublishedAssets.size());
+        Assert::IsTrue(pItem == dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.PublishedAssets.at(0)));
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow."), pItem->GetValidationError());
+
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Demote);
     }
 
     TEST_METHOD(TestSaveSelectedPublishCoreAll)

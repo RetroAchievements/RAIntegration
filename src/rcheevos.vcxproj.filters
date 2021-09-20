@@ -106,9 +106,6 @@
     <ClCompile Include="..\rcheevos\src\rcheevos\compat.c">
       <Filter>rcheevos</Filter>
     </ClCompile>
-    <ClInclude Include="..\rcheevos\include\rcheevos.h">
-      <Filter>rcheevos</Filter>
-    </ClInclude>
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
       <Filter>rcheevos</Filter>
     </ClInclude>
@@ -151,6 +148,15 @@
   <ItemGroup>
     <ClInclude Include="..\rcheevos\src\rhash\md5.h">
       <Filter>rhash</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rcheevos\src\rcheevos\rc_internal.h">
+      <Filter>rcheevos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rcheevos\include\rc_runtime.h">
+      <Filter>rcheevos</Filter>
+    </ClInclude>
+    <ClInclude Include="..\rcheevos\include\rc_runtime_types.h">
+      <Filter>rcheevos</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

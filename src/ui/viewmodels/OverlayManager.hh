@@ -171,6 +171,7 @@ public:
     /// <returns>Requested popup view model, <c>nullptr</c> if not found.</returns>
     PopupMessageViewModel* GetMessage(int nId) noexcept
     {
+        std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
         for (auto& pMessage : m_vPopupMessages)
         {
             if (pMessage->GetPopupId() == nId)
@@ -208,6 +209,7 @@ public:
     /// <returns>Requested score tracker view model, <c>nullptr</c> if not found.</returns>
     ScoreTrackerViewModel* GetScoreTracker(ra::LeaderboardID nLeaderboardId) noexcept
     {
+        std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
         for (auto& pTracker : m_vScoreTrackers)
         {
             if (ra::to_unsigned(pTracker->GetPopupId()) == nLeaderboardId)
@@ -229,6 +231,7 @@ public:
     /// <returns>Requested scoreboard view model, <c>nullptr</c> if not found.</returns>
     ScoreboardViewModel* GetScoreboard(ra::LeaderboardID nLeaderboardId) noexcept
     {
+        std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
         for (auto& pScoreboard : m_vScoreboards)
         {
             if (ra::to_unsigned(pScoreboard.GetPopupId()) == nLeaderboardId)
@@ -367,6 +370,7 @@ private:
     };
     std::vector<Screenshot> m_vScreenshotQueue;
     std::mutex m_pScreenshotQueueMutex;
+    std::mutex m_pPopupQueueMutex;
     bool m_bProcessingScreenshots = false;
 };
 

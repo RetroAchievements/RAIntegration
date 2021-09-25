@@ -231,7 +231,7 @@ void OverlayManager::RemoveScoreTracker(ra::LeaderboardID nLeaderboardId)
 {
     for (auto pIter = m_vScoreTrackers.begin(); pIter != m_vScoreTrackers.end(); ++pIter)
     {
-        if (ra::to_unsigned((*pIter)->GetPopupId()) == nLeaderboardId)
+        if (ra::to_unsigned((*pIter)->GetPopupId()) == nLeaderboardId && !(*pIter)->IsDestroyPending())
         {
             (*pIter)->SetDestroyPending();
             RequestRender();
@@ -253,7 +253,7 @@ ChallengeIndicatorViewModel& OverlayManager::AddChallengeIndicator(ra::Achieveme
 {
     for (auto pIter = m_vChallengeIndicators.begin(); pIter != m_vChallengeIndicators.end(); ++pIter)
     {
-        if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId)
+        if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId && !(*pIter)->IsDestroyPending())
         {
             // already showing indicator for achievement, just return it
             return **pIter;
@@ -275,7 +275,7 @@ void OverlayManager::RemoveChallengeIndicator(ra::AchievementID nAchievementId)
 {
     for (auto pIter = m_vChallengeIndicators.begin(); pIter != m_vChallengeIndicators.end(); ++pIter)
     {
-        if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId)
+        if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId && !(*pIter)->IsDestroyPending())
         {
             (*pIter)->SetDestroyPending();
             RequestRender();

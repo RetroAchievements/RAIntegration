@@ -52,8 +52,13 @@ void IntegrationMenuViewModel::BuildMenuLoggedIn(LookupItemViewModelCollection& 
     vmMenu.Add(IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards").SetSelected(pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards));
     vmMenu.Add(IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
     vmMenu.Add(0, L"-----");
+#ifdef ASSET_ICONS
+    vmMenu.Add(IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+    vmMenu.Add(IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+#else
     vmMenu.Add(IDM_RA_FILES_ACHIEVEMENTS, L"Achievements Li&st");
     vmMenu.Add(IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Achievement &Editor");
+#endif
     vmMenu.Add(IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
     vmMenu.Add(IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
     vmMenu.Add(IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");

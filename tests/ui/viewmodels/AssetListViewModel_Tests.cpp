@@ -1,5 +1,6 @@
 #include "CppUnitTest.h"
 
+#include "data\models\LeaderboardModel.hh"
 #include "data\models\LocalBadgesModel.hh"
 
 #include "ui\viewmodels\AssetListViewModel.hh"
@@ -388,6 +389,22 @@ private:
             AddAchievement(AssetCategory::Core, 5, L"Ach1");
             AddAchievement(AssetCategory::Unofficial, 10, L"Ach2");
             AddAchievement(AssetCategory::Core, 15, L"Ach3");
+        }
+
+        void AddLeaderboard(AssetCategory nCategory, const std::wstring& sTitle)
+        {
+            auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
+            vmLeaderboard->SetID(gsl::narrow_cast<unsigned int>(mockGameContext.Assets().Count() + 1));
+            vmLeaderboard->SetCategory(nCategory);
+            vmLeaderboard->SetName(sTitle);
+            vmLeaderboard->CreateServerCheckpoint();
+            vmLeaderboard->CreateLocalCheckpoint();
+            mockGameContext.Assets().Append(std::move(vmLeaderboard));
+        }
+
+        void AddLeaderboard()
+        {
+            AddLeaderboard(AssetCategory::Core, L"Lboard1");
         }
 
         void ForceUpdateButtons()
@@ -1731,6 +1748,40 @@ public:
         Assert::IsTrue(vmAssetList.CanActivate());
 
         // RemoveChallengeIndicator only marks the item as to be destroyed.
+        // it still exists until the next Render()
+        Assert::IsTrue(pIndicator->IsDestroyPending());
+    }
+
+    TEST_METHOD(TestDeactivateStartedLeaderboard)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.AddLeaderboard();
+        vmAssetList.mockGameContext.Assets().GetItemAt(0)->SetState(AssetState::Primed);
+        const auto nLeaderboardId = vmAssetList.mockGameContext.Assets().GetItemAt(0)->GetID();
+
+        vmAssetList.mockOverlayManager.AddScoreTracker(nLeaderboardId);
+        const auto* pIndicator = vmAssetList.mockOverlayManager.GetScoreTracker(nLeaderboardId);
+        Assert::IsNotNull(pIndicator);
+        Ensures(pIndicator != nullptr);
+        Assert::IsFalse(pIndicator->IsDestroyPending());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(0)->IsSelected());
+        Assert::AreEqual(AssetState::Primed, vmAssetList.FilteredAssets().GetItemAt(0)->GetState());
+        vmAssetList.ForceUpdateButtons();
+        Assert::AreEqual(std::wstring(L"De&activate"), vmAssetList.GetActivateButtonText());
+        Assert::IsTrue(vmAssetList.CanActivate());
+
+        vmAssetList.ActivateSelected();
+        vmAssetList.ForceUpdateButtons();
+        Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(0)->GetState());
+        Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
+        Assert::IsTrue(vmAssetList.CanActivate());
+
+        // RemoveScoreTracker only marks the item as to be destroyed.
         // it still exists until the next Render()
         Assert::IsTrue(pIndicator->IsDestroyPending());
     }

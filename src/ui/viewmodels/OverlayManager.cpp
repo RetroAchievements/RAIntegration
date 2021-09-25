@@ -268,7 +268,7 @@ void OverlayManager::QueueScoreboard(ra::LeaderboardID nLeaderboardId, Scoreboar
 ChallengeIndicatorViewModel& OverlayManager::AddChallengeIndicator(ra::AchievementID nAchievementId,
     ra::ui::ImageType imageType, const std::string& sImageName)
 {
-    ChallengeIndicatorViewModel* vmChallengeIndicator;
+    ChallengeIndicatorViewModel* vmChallengeIndicator = nullptr;
     {
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
 

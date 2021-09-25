@@ -169,7 +169,7 @@ public:
     /// </summary>
     /// <param name="nId">The unique identifier of the popup.</param>
     /// <returns>Requested popup view model, <c>nullptr</c> if not found.</returns>
-    PopupMessageViewModel* GetMessage(int nId) noexcept
+    PopupMessageViewModel* GetMessage(int nId)
     {
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
         for (auto& pMessage : m_vPopupMessages)
@@ -207,7 +207,7 @@ public:
     /// </summary>
     /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the tracker.</param>
     /// <returns>Requested score tracker view model, <c>nullptr</c> if not found.</returns>
-    ScoreTrackerViewModel* GetScoreTracker(ra::LeaderboardID nLeaderboardId) noexcept
+    ScoreTrackerViewModel* GetScoreTracker(ra::LeaderboardID nLeaderboardId)
     {
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
         for (auto& pTracker : m_vScoreTrackers)
@@ -229,7 +229,7 @@ public:
     /// </summary>
     /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the scoreboard.</param>
     /// <returns>Requested scoreboard view model, <c>nullptr</c> if not found.</returns>
-    ScoreboardViewModel* GetScoreboard(ra::LeaderboardID nLeaderboardId) noexcept
+    ScoreboardViewModel* GetScoreboard(ra::LeaderboardID nLeaderboardId)
     {
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
         for (auto& pScoreboard : m_vScoreboards)

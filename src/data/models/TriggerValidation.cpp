@@ -174,7 +174,7 @@ static bool ValidateCondSet(const rc_condset_t* pCondSet, std::wstring& sError)
             if (overflow > 0xFFFFFFFFUL)
                 nMax = 0xFFFFFFFF;
             else
-                nMax = (unsigned)overflow;
+                nMax = gsl::narrow_cast<unsigned>(overflow);
         }
 
         // maximum comparison value

@@ -339,11 +339,11 @@ ra::ui::Position OverlayManager::GetRenderLocation(const ra::ui::viewmodels::Pop
             break;
         case PopupLocation::TopMiddle:
         case PopupLocation::BottomMiddle:
-            nPos.X = (pSurface.GetWidth() - vmPopup.GetRenderImage().GetWidth()) / 2;
+            nPos.X = (ra::to_signed(pSurface.GetWidth()) - ra::to_signed(vmPopup.GetRenderImage().GetWidth())) / 2;
             break;
         case PopupLocation::TopRight:
         case PopupLocation::BottomRight:
-            nPos.X = pSurface.GetWidth() - vmPopup.GetRenderImage().GetWidth() - nPos.X;
+            nPos.X = (ra::to_signed(pSurface.GetWidth()) - ra::to_signed(vmPopup.GetRenderImage().GetWidth())) - nPos.X;
             break;
     }
 

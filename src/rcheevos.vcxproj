@@ -175,7 +175,8 @@
     <Lib />
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\rcheevos\include\rcheevos.h" />
+    <ClInclude Include="..\rcheevos\include\rc_runtime.h" />
+    <ClInclude Include="..\rcheevos\include\rc_runtime_types.h" />
     <ClInclude Include="..\rcheevos\src\rcheevos\compat.h" />
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h" />
     <ClCompile Include="..\rcheevos\src\rapi\rc_api_common.c">
@@ -190,6 +191,7 @@
     </ClCompile>
     <ClCompile Include="..\rcheevos\src\rcheevos\memref.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\richpresence.c" />
+    <ClInclude Include="..\rcheevos\src\rcheevos\rc_internal.h" />
     <ClInclude Include="..\rcheevos\src\rhash\md5.h" />
     <ClCompile Include="..\lua\lapi.c" />
     <ClCompile Include="..\lua\lauxlib.c" />

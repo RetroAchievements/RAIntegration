@@ -381,6 +381,9 @@
     <ClCompile Include="ui\viewmodels\IntegrationMenuViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\TriggerValidation.cpp">
+      <Filter>Data\Models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Leaderboard.h">
@@ -946,6 +949,9 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\IntegrationMenuViewModel.hh">
       <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\TriggerValidation.hh">
+      <Filter>Data\Models</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

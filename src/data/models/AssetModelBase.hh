@@ -200,6 +200,25 @@ public:
     virtual void Deactivate() noexcept(false) {}
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for the reason why the asset is not valid.
+    /// </summary>
+    static const StringModelProperty ValidationErrorProperty;
+
+    /// <summary>
+    /// Gets the reason why the asset is not valid.
+    /// </summary>
+    const std::wstring& GetValidationError() const { return GetValue(ValidationErrorProperty); }
+
+    /// <summary>
+    /// Updates the <see cref="ValidationErrorProperty" />.
+    /// </summary>
+    /// <returns>
+    /// <c>true</c> if the asset is valid (GetValidationError will return empty string).
+    /// <c>false</c> if the asset is not valid (GetValidationError will return more information about why).
+    /// </returns>
+    bool Validate();
+
+    /// <summary>
     /// Updates the asset for the current frame.
     /// </summary>
     virtual void DoFrame() noexcept(false) {}
@@ -302,6 +321,8 @@ protected:
     bool GetLocalValue(const BoolModelProperty& pProperty) const;
     const std::wstring& GetLocalValue(const StringModelProperty& pProperty) const;
     int GetLocalValue(const IntModelProperty& pProperty) const;
+
+    virtual bool ValidateAsset(std::wstring& sErrorMessage) noexcept(false) { (void)sErrorMessage; return true; }
 
     static void WriteNumber(ra::services::TextWriter& pWriter, const uint32_t nValue);
     static void WriteQuoted(ra::services::TextWriter& pWriter, const std::string& sText);

@@ -125,6 +125,8 @@ public:
         Assert::IsFalse(editor.IsPauseOnTrigger());
         Assert::IsTrue(editor.IsAssetLoaded());
         Assert::IsFalse(editor.HasMeasured());
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::IsFalse(editor.HasAssetValidationWarning());
 
         editor.LoadAsset(nullptr);
 
@@ -140,6 +142,8 @@ public:
         Assert::IsFalse(editor.IsPauseOnTrigger());
         Assert::IsFalse(editor.IsAssetLoaded());
         Assert::IsFalse(editor.HasMeasured());
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::IsFalse(editor.HasAssetValidationWarning());
     }
 
     TEST_METHOD(TestLoadAchievementTrigger)
@@ -381,6 +385,36 @@ public:
         Assert::IsFalse(editor.HasMeasured());
     }
 
+    TEST_METHOD(TestLoadAchievementValidationError)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetName(L"Test Achievement");
+        achievement.SetID(1234U);
+        achievement.SetState(AssetState::Active);
+        achievement.SetDescription(L"Do something cool");
+        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetPoints(10);
+        achievement.SetBadge(L"58329");
+        achievement.SetTrigger("A:0xH1234"); // AddSource cannot be final condition
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&achievement);
+
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationError());
+
+        Assert::IsTrue(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow."), editor.GetAssetValidationWarning());
+
+        editor.LoadAsset(nullptr);
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationError());
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationWarning());
+    }
+
     TEST_METHOD(TestSyncId)
     {
         AssetEditorViewModelHarness editor;
@@ -464,6 +498,27 @@ public:
         achievement.SetDescription(L"New description 3");
         Assert::AreEqual(std::wstring(L"New description 3"), editor.GetDescription());
         Assert::AreEqual(std::wstring(L"New description 3"), achievement.GetDescription());
+    }
+
+    TEST_METHOD(TestSyncValidationWarning)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetName(L"Test Achievement");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&achievement);
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L""), editor.GetAssetValidationWarning());
+
+        achievement.SetTrigger("A:0x1234");
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L""), editor.GetAssetValidationWarning());
+
+        achievement.UpdateLocalCheckpoint();
+        Assert::IsTrue(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow."), editor.GetAssetValidationWarning());
     }
 
     TEST_METHOD(TestSyncState)

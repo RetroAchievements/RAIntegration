@@ -429,6 +429,12 @@
     <ClCompile Include="ui\viewmodels\IntegrationMenuViewModel_Tests.cpp">
       <Filter>Tests\UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\data\models\TriggerValidation.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\TriggerValidation_Tests.cpp">
+      <Filter>Tests\Data\Models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

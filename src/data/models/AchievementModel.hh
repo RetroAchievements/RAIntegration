@@ -136,6 +136,8 @@ protected:
 
     void CommitTransaction() override;
 
+    bool ValidateAsset(std::wstring& sErrorMessage) override;
+
 private:
     void HandleStateChanged(AssetState nOldState, AssetState nNewState);
 

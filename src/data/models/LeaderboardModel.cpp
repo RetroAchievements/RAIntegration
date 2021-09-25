@@ -2,6 +2,8 @@
 
 #include "data\context\GameContext.hh"
 
+#include "data\models\TriggerValidation.hh"
+
 #include "services\AchievementRuntime.hh"
 #include "services\ServiceLocator.hh"
 
@@ -48,6 +50,32 @@ void LeaderboardModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
     }
 
     AssetModelBase::OnValueChanged(args);
+}
+
+bool LeaderboardModel::ValidateAsset(std::wstring& sError)
+{
+    const auto& sStartTrigger = GetLocalAssetDefinition(m_pStartTrigger);
+    if (!TriggerValidation::Validate(sStartTrigger, sError))
+    {
+        sError.insert(0, L"Start: ");
+        return false;
+    }
+
+    const auto& sSubmitTrigger = GetLocalAssetDefinition(m_pSubmitTrigger);
+    if (!TriggerValidation::Validate(sSubmitTrigger, sError))
+    {
+        sError.insert(0, L"Submit: ");
+        return false;
+    }
+
+    const auto& sCancelTrigger = GetLocalAssetDefinition(m_pCancelTrigger);
+    if (!TriggerValidation::Validate(sCancelTrigger, sError))
+    {
+        sError.insert(0, L"Cancel: ");
+        return false;
+    }
+
+    return true;
 }
 
 void LeaderboardModel::DoFrame()

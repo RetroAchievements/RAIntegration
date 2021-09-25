@@ -15,6 +15,8 @@ enum class SearchType
     ThirtyTwoBit,
     SixteenBitAligned,
     ThirtyTwoBitAligned,
+    SixteenBitBigEndian,
+    ThirtyTwoBitBigEndian,
     AsciiText,
 };
 

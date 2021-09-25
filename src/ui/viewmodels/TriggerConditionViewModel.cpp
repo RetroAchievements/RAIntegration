@@ -176,21 +176,24 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
 
     switch (nSize)
     {
-        case MemSize::BitCount:     sBuffer.push_back('K'); break;
-        case MemSize::Bit_0:        sBuffer.push_back('M'); break;
-        case MemSize::Bit_1:        sBuffer.push_back('N'); break;
-        case MemSize::Bit_2:        sBuffer.push_back('O'); break;
-        case MemSize::Bit_3:        sBuffer.push_back('P'); break;
-        case MemSize::Bit_4:        sBuffer.push_back('Q'); break;
-        case MemSize::Bit_5:        sBuffer.push_back('R'); break;
-        case MemSize::Bit_6:        sBuffer.push_back('S'); break;
-        case MemSize::Bit_7:        sBuffer.push_back('T'); break;
-        case MemSize::Nibble_Lower: sBuffer.push_back('L'); break;
-        case MemSize::Nibble_Upper: sBuffer.push_back('U'); break;
-        case MemSize::EightBit:     sBuffer.push_back('H'); break;
-        case MemSize::TwentyFourBit:sBuffer.push_back('W'); break;
-        case MemSize::ThirtyTwoBit: sBuffer.push_back('X'); break;
-        case MemSize::SixteenBit:   sBuffer.push_back(' '); break;
+        case MemSize::BitCount:              sBuffer.push_back('K'); break;
+        case MemSize::Bit_0:                 sBuffer.push_back('M'); break;
+        case MemSize::Bit_1:                 sBuffer.push_back('N'); break;
+        case MemSize::Bit_2:                 sBuffer.push_back('O'); break;
+        case MemSize::Bit_3:                 sBuffer.push_back('P'); break;
+        case MemSize::Bit_4:                 sBuffer.push_back('Q'); break;
+        case MemSize::Bit_5:                 sBuffer.push_back('R'); break;
+        case MemSize::Bit_6:                 sBuffer.push_back('S'); break;
+        case MemSize::Bit_7:                 sBuffer.push_back('T'); break;
+        case MemSize::Nibble_Lower:          sBuffer.push_back('L'); break;
+        case MemSize::Nibble_Upper:          sBuffer.push_back('U'); break;
+        case MemSize::EightBit:              sBuffer.push_back('H'); break;
+        case MemSize::TwentyFourBit:         sBuffer.push_back('W'); break;
+        case MemSize::ThirtyTwoBit:          sBuffer.push_back('X'); break;
+        case MemSize::SixteenBit:            sBuffer.push_back(' '); break;
+        case MemSize::ThirtyTwoBitBigEndian: sBuffer.push_back('G'); break;
+        case MemSize::SixteenBitBigEndian:   sBuffer.push_back('I'); break;
+        case MemSize::TwentyFourBitBigEndian:sBuffer.push_back('J'); break;
         default:
             assert(!"Unknown memory size");
             break;
@@ -218,10 +221,19 @@ static constexpr MemSize MapMemSize(char nSize) noexcept
         case RC_MEMSIZE_24_BITS: return MemSize::TwentyFourBit;
         case RC_MEMSIZE_32_BITS: return MemSize::ThirtyTwoBit;
         case RC_MEMSIZE_BITCOUNT: return MemSize::BitCount;
+        case RC_MEMSIZE_16_BITS_BE: return MemSize::SixteenBitBigEndian;
+        case RC_MEMSIZE_24_BITS_BE: return MemSize::TwentyFourBitBigEndian;
+        case RC_MEMSIZE_32_BITS_BE: return MemSize::ThirtyTwoBitBigEndian;
         default:
             assert(!"Unsupported operand size");
             return MemSize::EightBit;
     }
+}
+
+GSL_SUPPRESS_F4
+MemSize TriggerConditionViewModel::MapRcheevosMemSize(char nSize) noexcept
+{
+    return MapMemSize(nSize);
 }
 
 void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty,

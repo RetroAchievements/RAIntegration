@@ -469,6 +469,28 @@ public:
     }
 };
 
+class SixteenBitBigEndianSearchImpl : public SixteenBitSearchImpl
+{
+    MemSize GetMemSize() const noexcept override { return MemSize::SixteenBitBigEndian; }
+
+    unsigned int BuildValue(const unsigned char* ptr) const noexcept override
+    {
+        GSL_SUPPRESS_F6 Expects(ptr != nullptr);
+        return (ptr[0] << 8) | ptr[1];
+    }
+};
+
+class ThirtyTwoBitBigEndianSearchImpl : public ThirtyTwoBitSearchImpl
+{
+    MemSize GetMemSize() const noexcept override { return MemSize::ThirtyTwoBitBigEndian; }
+
+    unsigned int BuildValue(const unsigned char* ptr) const noexcept override
+    {
+        GSL_SUPPRESS_F6 Expects(ptr != nullptr);
+        return (ptr[0] << 24) | (ptr[1] << 16) | (ptr[2] << 8) | ptr[3];
+    }
+};
+
 class AsciiTextSearchImpl : public SearchImpl
 {
 public:
@@ -586,6 +608,8 @@ static SixteenBitSearchImpl s_pSixteenBitSearchImpl;
 static ThirtyTwoBitSearchImpl s_pThirtyTwoBitSearchImpl;
 static SixteenBitAlignedSearchImpl s_pSixteenBitAlignedSearchImpl;
 static ThirtyTwoBitAlignedSearchImpl s_pThirtyTwoBitAlignedSearchImpl;
+static SixteenBitBigEndianSearchImpl s_pSixteenBitBigEndianSearchImpl;
+static ThirtyTwoBitBigEndianSearchImpl s_pThirtyTwoBitBigEndianSearchImpl;
 static AsciiTextSearchImpl s_pAsciiTextSearchImpl;
 
 } // namespace impl
@@ -620,6 +644,12 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
             break;
         case SearchType::ThirtyTwoBitAligned:
             m_pImpl = &ra::services::impl::s_pThirtyTwoBitAlignedSearchImpl;
+            break;
+        case SearchType::SixteenBitBigEndian:
+            m_pImpl = &ra::services::impl::s_pSixteenBitBigEndianSearchImpl;
+            break;
+        case SearchType::ThirtyTwoBitBigEndian:
+            m_pImpl = &ra::services::impl::s_pThirtyTwoBitBigEndianSearchImpl;
             break;
         case SearchType::AsciiText:
             m_pImpl = &ra::services::impl::s_pAsciiTextSearchImpl;

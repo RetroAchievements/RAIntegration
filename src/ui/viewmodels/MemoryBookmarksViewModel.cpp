@@ -14,6 +14,9 @@
 
 #include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\TriggerConditionViewModel.hh"
+
+#include <rcheevos/src/rcheevos/rc_internal.h>
 
 namespace ra {
 namespace ui {
@@ -38,6 +41,9 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
     m_vSizes.Add(ra::etoi(MemSize::SixteenBit), L"16-bit");
     m_vSizes.Add(ra::etoi(MemSize::TwentyFourBit), L"24-bit");
     m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBit), L"32-bit");
+    m_vSizes.Add(ra::etoi(MemSize::SixteenBitBigEndian), L"16-bit BE");
+    m_vSizes.Add(ra::etoi(MemSize::TwentyFourBitBigEndian), L"24-bit BE");
+    m_vSizes.Add(ra::etoi(MemSize::ThirtyTwoBitBigEndian), L"32-bit BE");
     m_vSizes.Add(ra::etoi(MemSize::BitCount), L"BitCount");
     m_vSizes.Add(ra::etoi(MemSize::Nibble_Lower), L"Lower4");
     m_vSizes.Add(ra::etoi(MemSize::Nibble_Upper), L"Upper4");
@@ -224,7 +230,6 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
         if (document.HasMember("Bookmarks"))
         {
             const auto& bookmarks = document["Bookmarks"];
-
             for (const auto& bookmark : bookmarks.GetArray())
             {
                 auto* vmBookmark = m_vBookmarks.GetItemAt(nIndex);
@@ -232,7 +237,60 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                     vmBookmark = &m_vBookmarks.Add();
                 ++nIndex;
 
-                vmBookmark->SetAddress(bookmark["Address"].GetUint());
+                if (bookmark.HasMember("MemAddr"))
+                {
+                    // third bookmark format uses the memref serializer
+                    char size = 0;
+                    unsigned address = 0;
+                    const char* memaddr = bookmark["MemAddr"].GetString();
+                    if (rc_parse_memref(&memaddr, &size, &address) == RC_OK)
+                    {
+                        vmBookmark->SetAddress(address);
+                        vmBookmark->SetSize(TriggerConditionViewModel::MapRcheevosMemSize(size));
+                    }
+                }
+                else
+                {
+                    MemSize nSize = MemSize::EightBit;
+
+                    if (bookmark.HasMember("Type"))
+                    {
+                        // original bookmark format used Type for the three supported sizes.
+                        switch (bookmark["Type"].GetInt())
+                        {
+                            case 1: nSize = MemSize::EightBit; break;
+                            case 2: nSize = MemSize::SixteenBit; break;
+                            case 3: nSize = MemSize::ThirtyTwoBit; break;
+                        }
+                    }
+                    else
+                    {
+                        // second bookmark format used the raw enum values, which was fragile.
+                        // this enumerates the mapping for backwards compatibility.
+                        switch (bookmark["Size"].GetInt())
+                        {
+                            case 0: nSize = MemSize::Bit_0; break;
+                            case 1: nSize = MemSize::Bit_1; break;
+                            case 2: nSize = MemSize::Bit_2; break;
+                            case 3: nSize = MemSize::Bit_3; break;
+                            case 4: nSize = MemSize::Bit_4; break;
+                            case 5: nSize = MemSize::Bit_5; break;
+                            case 6: nSize = MemSize::Bit_6; break;
+                            case 7: nSize = MemSize::Bit_7; break;
+                            case 8: nSize = MemSize::Nibble_Lower; break;
+                            case 9: nSize = MemSize::Nibble_Upper; break;
+                            case 10: nSize = MemSize::EightBit; break;
+                            case 11: nSize = MemSize::SixteenBit; break;
+                            case 12: nSize = MemSize::TwentyFourBit; break;
+                            case 13: nSize = MemSize::ThirtyTwoBit; break;
+                            case 14: nSize = MemSize::BitCount; break;
+                            case 15: nSize = MemSize::Text; break;
+                        }
+                    }
+
+                    vmBookmark->SetSize(nSize);
+                    vmBookmark->SetAddress(bookmark["Address"].GetUint());
+                }
 
                 vmBookmark->SetIsCustomDescription(false);
                 const auto* pNote = pGameContext.FindCodeNote(vmBookmark->GetAddress());
@@ -249,20 +307,6 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                         sDescription = *pNote;
                 }
                 vmBookmark->SetDescription(sDescription);
-
-                if (bookmark.HasMember("Type"))
-                {
-                    switch (bookmark["Type"].GetInt())
-                    {
-                        case 1: vmBookmark->SetSize(MemSize::EightBit); break;
-                        case 2: vmBookmark->SetSize(MemSize::SixteenBit); break;
-                        case 3: vmBookmark->SetSize(MemSize::ThirtyTwoBit); break;
-                    }
-                }
-                else
-                {
-                    vmBookmark->SetSize(ra::itoe<MemSize>(bookmark["Size"].GetInt()));
-                }
 
                 if (bookmark.HasMember("Decimal") && bookmark["Decimal"].GetBool())
                     vmBookmark->SetFormat(ra::MemFormat::Dec);
@@ -287,6 +331,9 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
 
 void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmarksFile) const
 {
+    TriggerConditionViewModel vmCondition;
+    vmCondition.SetOperator(ra::ui::viewmodels::TriggerOperatorType::None);
+
     rapidjson::Document document;
     auto& allocator = document.GetAllocator();
     document.SetObject();
@@ -297,8 +344,21 @@ void MemoryBookmarksViewModel::SaveBookmarks(ra::services::TextWriter& sBookmark
         const auto& vmBookmark = *m_vBookmarks.GetItemAt(nIndex);
 
         rapidjson::Value item(rapidjson::kObjectType);
-        item.AddMember("Address", vmBookmark.GetAddress(), allocator);
-        item.AddMember("Size", gsl::narrow_cast<int>(ra::etoi(vmBookmark.GetSize())), allocator);
+
+        const auto nSize = vmBookmark.GetSize();
+        switch (nSize)
+        {
+            case MemSize::Text:
+                item.AddMember("Size", 15, allocator);
+                item.AddMember("Address", vmBookmark.GetAddress(), allocator);
+                break;
+
+            default:
+                vmCondition.SetSourceSize(nSize);
+                vmCondition.SetSourceValue(vmBookmark.GetAddress());
+                item.AddMember("MemAddr", vmCondition.Serialize(), allocator);
+                break;
+        }
 
         if (vmBookmark.GetFormat() != MemFormat::Hex)
             item.AddMember("Decimal", true, allocator);
@@ -419,23 +479,7 @@ void MemoryBookmarksViewModel::OnEditMemory(ra::ByteAddress nAddress)
         const auto nBookmarkSize = pBookmark.GetSize();
         if (distance != 0)
         {
-            bool bInBookmark = false;
-
-            switch (nBookmarkSize)
-            {
-                case MemSize::SixteenBit:
-                    bInBookmark = (distance <= 1);
-                    break;
-
-                case MemSize::TwentyFourBit:
-                    bInBookmark = (distance <= 2);
-                    break;
-
-                case MemSize::ThirtyTwoBit:
-                    bInBookmark = (distance <= 3);
-                    break;
-            }
-
+            const bool bInBookmark = (distance < ra::to_signed(ra::data::MemSizeBytes(nBookmarkSize)));
             if (!bInBookmark)
                 continue;
         }

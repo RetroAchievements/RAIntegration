@@ -1009,21 +1009,7 @@ ra::ByteAddress GameContext::FindCodeNoteStart(ra::ByteAddress nAddress) const
 
 std::wstring GameContext::FindCodeNote(ra::ByteAddress nAddress, MemSize nSize) const
 {
-    unsigned int nCheckSize = 0;
-    switch (nSize)
-    {
-        case MemSize::SixteenBit:
-            nCheckSize = 2;
-            break;
-
-        case MemSize::ThirtyTwoBit:
-            nCheckSize = 4;
-            break;
-
-        default: // 1 byte or less
-            nCheckSize = 1;
-            break;
-    }
+    const unsigned int nCheckSize = ra::data::MemSizeBytes(nSize);
 
     // lower_bound will return the item if it's an exact match, or the *next* item otherwise
     auto pIter = m_mCodeNotes.lower_bound(nAddress);

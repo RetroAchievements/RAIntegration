@@ -80,24 +80,20 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnViewModelIntValueChanged
         const auto& vmMemory = GetViewModel<MemorySearchViewModel>();
         constexpr int nCharWidth = 6;
         constexpr int nPadding = 6;
-        switch (vmMemory.ResultMemSize())
-        {
-            case MemSize::Nibble_Lower: nWidth = nCharWidth * (1 + 2) + nPadding * 2; break;
-            case MemSize::EightBit:     nWidth = nCharWidth * (2 + 2) + nPadding * 2; break;
-            default:
-            case MemSize::SixteenBit:   nWidth = nCharWidth * (4 + 2) + nPadding * 2; break;
-            case MemSize::ThirtyTwoBit: nWidth = nCharWidth * (8 + 2) + nPadding * 2; break;
-            case MemSize::Text:         nWidth = nCharWidth * (16 + 2) + nPadding * 2; break;
-        }
 
+        // value column
+        auto nMaxChars = (ra::data::MemSizeBits(vmMemory.ResultMemSize()) + 3) / 4; // 4 bits per nibble
+        if (nMaxChars == 0)
+            nMaxChars = 16;
+        nWidth = nCharWidth * (nMaxChars + 2) + nPadding * 2;
         m_vColumns.at(1)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
 
+        // address column
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        nWidth = (pEmulatorContext.TotalMemorySize() > 0x10000) ? 8 : 6; // 0x123456 or 0x1234
+        nMaxChars = (pEmulatorContext.TotalMemorySize() > 0x10000) ? 8 : 6; // 0x123456 or 0x1234
         if (vmMemory.ResultMemSize() == MemSize::Nibble_Lower)
-            ++nWidth; // 0x1234L
-        nWidth *= nCharWidth;
-        nWidth += nPadding * 2;
+            ++nMaxChars; // 0x1234L
+        nWidth = (nCharWidth * nMaxChars) + nPadding * 2;
         m_vColumns.at(0)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
 
         UpdateLayout();

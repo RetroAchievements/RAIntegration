@@ -140,6 +140,8 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
 
     if (m_vmOverlay.CurrentState() == OverlayViewModel::State::Hidden)
     {
+        std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
+
         PopupLocations pPopupLocations;
         memset(&pPopupLocations, 0, sizeof(pPopupLocations));
 
@@ -217,33 +219,48 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
 
 ScoreTrackerViewModel& OverlayManager::AddScoreTracker(ra::LeaderboardID nLeaderboardId)
 {
-    auto pScoreTracker = std::make_unique<ScoreTrackerViewModel>();
-    pScoreTracker->SetPopupId(nLeaderboardId);
-    pScoreTracker->UpdateRenderImage(0.0);
-    auto& pReturn = *m_vScoreTrackers.emplace_back(std::move(pScoreTracker));
+    ScoreTrackerViewModel* vmTracker;
+    {
+        std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
+        auto pScoreTracker = std::make_unique<ScoreTrackerViewModel>();
+        pScoreTracker->SetPopupId(nLeaderboardId);
+        pScoreTracker->UpdateRenderImage(0.0);
+        vmTracker = m_vScoreTrackers.emplace_back(std::move(pScoreTracker)).get();
+    }
 
     RequestRender();
 
-    return pReturn;
+    return *vmTracker;
 }
 
 void OverlayManager::RemoveScoreTracker(ra::LeaderboardID nLeaderboardId)
 {
-    for (auto pIter = m_vScoreTrackers.begin(); pIter != m_vScoreTrackers.end(); ++pIter)
+    bool bRequestRender = false;
     {
-        if (ra::to_unsigned((*pIter)->GetPopupId()) == nLeaderboardId && !(*pIter)->IsDestroyPending())
+        std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
+        for (auto pIter = m_vScoreTrackers.begin(); pIter != m_vScoreTrackers.end(); ++pIter)
         {
-            (*pIter)->SetDestroyPending();
-            RequestRender();
-            break;
+            if (ra::to_unsigned((*pIter)->GetPopupId()) == nLeaderboardId && !(*pIter)->IsDestroyPending())
+            {
+                (*pIter)->SetDestroyPending();
+                bRequestRender = true;
+                break;
+            }
         }
     }
+
+    if (bRequestRender)
+        RequestRender();
 }
 
 void OverlayManager::QueueScoreboard(ra::LeaderboardID nLeaderboardId, ScoreboardViewModel&& vmScoreboard)
 {
     vmScoreboard.SetPopupId(nLeaderboardId);
-    m_vScoreboards.push_back(std::move(vmScoreboard));
+
+    {
+        std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
+        m_vScoreboards.push_back(std::move(vmScoreboard));
+    }
 
     RequestRender();
 }
@@ -251,37 +268,49 @@ void OverlayManager::QueueScoreboard(ra::LeaderboardID nLeaderboardId, Scoreboar
 ChallengeIndicatorViewModel& OverlayManager::AddChallengeIndicator(ra::AchievementID nAchievementId,
     ra::ui::ImageType imageType, const std::string& sImageName)
 {
-    for (auto pIter = m_vChallengeIndicators.begin(); pIter != m_vChallengeIndicators.end(); ++pIter)
+    ChallengeIndicatorViewModel* vmChallengeIndicator = nullptr;
     {
-        if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId && !(*pIter)->IsDestroyPending())
-        {
-            // already showing indicator for achievement, just return it
-            return **pIter;
-        }
-    }
+        std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
 
-    auto pChallengeIndicator = std::make_unique<ChallengeIndicatorViewModel>();
-    pChallengeIndicator->SetPopupId(nAchievementId);
-    pChallengeIndicator->SetImage(imageType, sImageName);
-    pChallengeIndicator->UpdateRenderImage(0.0);
-    auto& pReturn = *m_vChallengeIndicators.emplace_back(std::move(pChallengeIndicator));
+        for (auto pIter = m_vChallengeIndicators.begin(); pIter != m_vChallengeIndicators.end(); ++pIter)
+        {
+            if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId && !(*pIter)->IsDestroyPending())
+            {
+                // already showing indicator for achievement, just return it
+                return **pIter;
+            }
+        }
+
+        auto pChallengeIndicator = std::make_unique<ChallengeIndicatorViewModel>();
+        pChallengeIndicator->SetPopupId(nAchievementId);
+        pChallengeIndicator->SetImage(imageType, sImageName);
+        pChallengeIndicator->UpdateRenderImage(0.0);
+        vmChallengeIndicator = m_vChallengeIndicators.emplace_back(std::move(pChallengeIndicator)).get();
+    }
 
     RequestRender();
 
-    return pReturn;
+    return *vmChallengeIndicator;
 }
 
 void OverlayManager::RemoveChallengeIndicator(ra::AchievementID nAchievementId)
 {
-    for (auto pIter = m_vChallengeIndicators.begin(); pIter != m_vChallengeIndicators.end(); ++pIter)
+    bool bRequestRender = false;
     {
-        if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId && !(*pIter)->IsDestroyPending())
+        std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
+        for (auto pIter = m_vChallengeIndicators.begin(); pIter != m_vChallengeIndicators.end(); ++pIter)
         {
-            (*pIter)->SetDestroyPending();
-            RequestRender();
-            break;
+            if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId && !(*pIter)->IsDestroyPending())
+            {
+                (*pIter)->SetDestroyPending();
+                bRequestRender = true;
+                break;
+            }
         }
     }
+
+    if (bRequestRender)
+        RequestRender();
 }
 
 int OverlayManager::QueueMessage(std::unique_ptr<PopupMessageViewModel>& pMessage)
@@ -298,7 +327,10 @@ int OverlayManager::QueueMessage(std::unique_ptr<PopupMessageViewModel>& pMessag
     const auto nPopupId = ++m_nPopupId;
     pMessage->SetPopupId(nPopupId);
 
-    m_vPopupMessages.emplace_back(std::move(pMessage));
+    {
+        std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
+        m_vPopupMessages.emplace_back(std::move(pMessage));
+    }
 
     RequestRender();
 
@@ -307,17 +339,21 @@ int OverlayManager::QueueMessage(std::unique_ptr<PopupMessageViewModel>& pMessag
 
 void OverlayManager::ClearPopups()
 {
-    for (auto& pPopup : m_vPopupMessages)
-        pPopup->SetDestroyPending();
+    {
+        std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
 
-    for (auto& pScoreboard : m_vScoreboards)
-        pScoreboard.SetDestroyPending();
+        for (auto& pPopup : m_vPopupMessages)
+            pPopup->SetDestroyPending();
 
-    for (auto& pChallengeIndicator : m_vChallengeIndicators)
-        pChallengeIndicator->SetDestroyPending();
+        for (auto& pScoreboard : m_vScoreboards)
+            pScoreboard.SetDestroyPending();
 
-    for (auto& pTracker : m_vScoreTrackers)
-        pTracker->SetDestroyPending();
+        for (auto& pChallengeIndicator : m_vChallengeIndicators)
+            pChallengeIndicator->SetDestroyPending();
+
+        for (auto& pTracker : m_vScoreTrackers)
+            pTracker->SetDestroyPending();
+    }
 
     RequestRender();
 }

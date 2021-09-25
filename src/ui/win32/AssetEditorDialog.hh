@@ -108,6 +108,10 @@ private:
         ErrorIconBinding(ViewModelBase& vmViewModel) noexcept
             : ra::ui::win32::bindings::ControlBinding(vmViewModel) {}
         ~ErrorIconBinding();
+        ErrorIconBinding(const ErrorIconBinding&) noexcept = delete;
+        ErrorIconBinding& operator=(const ErrorIconBinding&) noexcept = delete;
+        ErrorIconBinding(ErrorIconBinding&&) noexcept = delete;
+        ErrorIconBinding& operator=(ErrorIconBinding&&) noexcept = delete;
 
     protected:
         void SetHWND(DialogBase& pDialog, HWND hControl) override;
@@ -116,8 +120,8 @@ private:
 
     private:
         void UpdateImage();
-        void SetErrorIcon();
-        void SetWarningIcon();
+        void SetErrorIcon() noexcept;
+        void SetWarningIcon() noexcept;
 
         HICON m_hErrorIcon = nullptr;
         HICON m_hWarningIcon = nullptr;

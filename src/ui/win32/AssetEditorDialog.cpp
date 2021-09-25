@@ -537,7 +537,7 @@ void AssetEditorDialog::ErrorIconBinding::OnViewModelBoolValueChanged(const Bool
         UpdateImage();
 }
 
-static HICON GetIcon(SHSTOCKICONID nStockIconId, LPWSTR nOicIconId)
+static HICON GetIcon(SHSTOCKICONID nStockIconId, LPCWSTR nOicIconId) noexcept
 {
     if (pGetStockIconInfo != nullptr)
     {
@@ -556,7 +556,7 @@ static HICON GetIcon(SHSTOCKICONID nStockIconId, LPWSTR nOicIconId)
     return reinterpret_cast<HICON>(LoadImage(nullptr, nOicIconId, IMAGE_ICON, 16, 16, LR_SHARED));
 }
 
-void AssetEditorDialog::ErrorIconBinding::SetErrorIcon()
+void AssetEditorDialog::ErrorIconBinding::SetErrorIcon() noexcept
 {
     if (!m_hErrorIcon)
         m_hErrorIcon = GetIcon(SIID_ERROR, MAKEINTRESOURCE(OIC_ERROR));
@@ -565,7 +565,7 @@ void AssetEditorDialog::ErrorIconBinding::SetErrorIcon()
         GSL_SUPPRESS_TYPE1::SendMessage(m_hWnd, STM_SETICON, reinterpret_cast<WPARAM>(m_hErrorIcon), NULL);
 }
 
-void AssetEditorDialog::ErrorIconBinding::SetWarningIcon()
+void AssetEditorDialog::ErrorIconBinding::SetWarningIcon() noexcept
 {
     if (!m_hWarningIcon)
         m_hWarningIcon = GetIcon(SIID_WARNING, MAKEINTRESOURCE(OIC_WARNING));

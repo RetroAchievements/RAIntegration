@@ -240,7 +240,7 @@ void OverlayManager::RemoveScoreTracker(ra::LeaderboardID nLeaderboardId)
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
         for (auto pIter = m_vScoreTrackers.begin(); pIter != m_vScoreTrackers.end(); ++pIter)
         {
-            if (ra::to_unsigned((*pIter)->GetPopupId()) == nLeaderboardId)
+            if (ra::to_unsigned((*pIter)->GetPopupId()) == nLeaderboardId && !(*pIter)->IsDestroyPending())
             {
                 (*pIter)->SetDestroyPending();
                 bRequestRender = true;
@@ -274,7 +274,7 @@ ChallengeIndicatorViewModel& OverlayManager::AddChallengeIndicator(ra::Achieveme
 
         for (auto pIter = m_vChallengeIndicators.begin(); pIter != m_vChallengeIndicators.end(); ++pIter)
         {
-            if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId)
+            if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId && !(*pIter)->IsDestroyPending())
             {
                 // already showing indicator for achievement, just return it
                 return **pIter;
@@ -300,7 +300,7 @@ void OverlayManager::RemoveChallengeIndicator(ra::AchievementID nAchievementId)
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
         for (auto pIter = m_vChallengeIndicators.begin(); pIter != m_vChallengeIndicators.end(); ++pIter)
         {
-            if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId)
+            if (ra::to_unsigned((*pIter)->GetPopupId()) == nAchievementId && !(*pIter)->IsDestroyPending())
             {
                 (*pIter)->SetDestroyPending();
                 bRequestRender = true;
@@ -375,11 +375,11 @@ ra::ui::Position OverlayManager::GetRenderLocation(const ra::ui::viewmodels::Pop
             break;
         case PopupLocation::TopMiddle:
         case PopupLocation::BottomMiddle:
-            nPos.X = (pSurface.GetWidth() - vmPopup.GetRenderImage().GetWidth()) / 2;
+            nPos.X = (ra::to_signed(pSurface.GetWidth()) - ra::to_signed(vmPopup.GetRenderImage().GetWidth())) / 2;
             break;
         case PopupLocation::TopRight:
         case PopupLocation::BottomRight:
-            nPos.X = pSurface.GetWidth() - vmPopup.GetRenderImage().GetWidth() - nPos.X;
+            nPos.X = (ra::to_signed(pSurface.GetWidth()) - ra::to_signed(vmPopup.GetRenderImage().GetWidth())) - nPos.X;
             break;
     }
 

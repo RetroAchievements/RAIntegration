@@ -56,6 +56,7 @@
     <ClCompile Include="data\models\CapturedTriggerHits.cpp" />
     <ClCompile Include="data\models\LeaderboardModel.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel.cpp" />
+    <ClCompile Include="data\models\TriggerValidation.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -204,6 +205,7 @@
     <ClInclude Include="data\models\CapturedTriggerHits.hh" />
     <ClInclude Include="data\models\LeaderboardModel.hh" />
     <ClInclude Include="data\models\LocalBadgesModel.hh" />
+    <ClInclude Include="data\models\TriggerValidation.hh" />
     <ClInclude Include="data\Types.hh" />
     <ClInclude Include="Exports.hh" />
     <ClInclude Include="pch.h" />

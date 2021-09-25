@@ -97,6 +97,8 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBit), L"32-bit");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::SixteenBitAligned), L"16-bit (aligned)");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBitAligned), L"32-bit (aligned)");
+    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::SixteenBitBigEndian), L"16-bit BE");
+    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBitBigEndian), L"32-bit BE");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::AsciiText), L"ASCII Text");
 
     m_vComparisonTypes.Add(ra::etoi(ComparisonType::Equals), L"=");
@@ -331,8 +333,10 @@ static constexpr const wchar_t* MemSizeFormat(MemSize nSize)
         case MemSize::EightBit:
             return L"0x%02x";
         case MemSize::SixteenBit:
+        case MemSize::SixteenBitBigEndian:
             return L"0x%04x";
         case MemSize::ThirtyTwoBit:
+        case MemSize::ThirtyTwoBitBigEndian:
             return L"0x%08x";
     }
 }

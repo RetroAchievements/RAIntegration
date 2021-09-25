@@ -69,6 +69,78 @@ public:
 
 // ------------------------------------
 
+class PointsColumnBinding : public ra::ui::win32::bindings::GridNumberColumnBinding
+{
+public:
+    PointsColumnBinding(const IntModelProperty& pBoundProperty) noexcept
+        : ra::ui::win32::bindings::GridNumberColumnBinding(pBoundProperty)
+    {
+    }
+
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto nType = ra::itoe<ra::data::models::AssetType>(vmItems.GetItemValue(nIndex, ra::data::models::AssetModelBase::TypeProperty));
+        if (nType == ra::data::models::AssetType::Achievement)
+        {
+            const auto nPoints = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+            return std::to_wstring(nPoints);
+        }
+
+        return L"";
+    }
+};
+
+// ------------------------------------
+
+class IconColumnBinding : public ra::ui::win32::bindings::GridNumberColumnBinding
+{
+public:
+    IconColumnBinding(const IntModelProperty& pBoundProperty) noexcept
+        : ra::ui::win32::bindings::GridNumberColumnBinding(pBoundProperty)
+    {
+    }
+
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto nType = ra::itoe<ra::data::models::AssetType>(vmItems.GetItemValue(nIndex, *m_pBoundProperty));
+        switch (nType)
+        {
+            case ra::data::models::AssetType::Achievement:
+                return L"\U0001F3C6"; // 1F3C6 - Trophy
+
+            case ra::data::models::AssetType::Leaderboard:
+                return L"\U0001F4CA"; // 1F4CA - Bar Chart
+
+            //case ra::data::models::AssetType::RichPresence:
+            //    return L"\U0001F4C4"; // 1F4C4 - Document
+            //    return L"\U0001F4CD"; // 1F4CD - Round Pushpin
+            //    return L"\U0001F4DC"; // 1F4DC - Scroll
+            //    return L"\U0001F522"; // 1F5FA - World Map
+
+            default:
+                return std::to_wstring(ra::etoi(nType));
+        }
+    }
+
+    std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto nType = ra::itoe<ra::data::models::AssetType>(vmItems.GetItemValue(nIndex, *m_pBoundProperty));
+        switch (nType)
+        {
+            case ra::data::models::AssetType::Achievement:
+                return L"Achievement";
+
+            case ra::data::models::AssetType::Leaderboard:
+                return L"Leaderboard";
+
+            default:
+                return std::to_wstring(ra::etoi(nType));
+        }
+    }
+};
+
+// ------------------------------------
+
 AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     : DialogBase(vmAssetList),
       m_bindAssets(vmAssetList),
@@ -87,42 +159,52 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
        ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
     m_bindSpecialFilters.BindSelectedItem(AssetListViewModel::SpecialFilterProperty);
 
+#ifdef ASSET_ICONS
+    constexpr int nOffset = 1;
+
+    auto pIconColumn = std::make_unique<IconColumnBinding>(AssetModelBase::TypeProperty);
+    pIconColumn->SetHeader(L"Type");
+    pIconColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 24);
+    m_bindAssets.BindColumn(0, std::move(pIconColumn));
+#else
+    constexpr int nOffset = 0;
+#endif
+
     auto pIdColumn = std::make_unique<IdColumnBinding>(AssetListViewModel::AssetSummaryViewModel::IdProperty);
     pIdColumn->SetHeader(L"ID");
-    pIdColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 45);
+    pIdColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 49);
     pIdColumn->SetAlignment(ra::ui::RelativePosition::Far);
-    m_bindAssets.BindColumn(0, std::move(pIdColumn));
+    m_bindAssets.BindColumn(0 + nOffset, std::move(pIdColumn));
 
     auto pNameColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         AssetListViewModel::AssetSummaryViewModel::LabelProperty);
     pNameColumn->SetHeader(L"Name");
     pNameColumn->SetWidth(GridColumnBinding::WidthType::Fill, 100);
-    m_bindAssets.BindColumn(1, std::move(pNameColumn));
+    m_bindAssets.BindColumn(1 + nOffset, std::move(pNameColumn));
 
-    auto pPointsColumn = std::make_unique<ra::ui::win32::bindings::GridNumberColumnBinding>(
-       ra::data::models::AchievementModel::PointsProperty);
+    auto pPointsColumn = std::make_unique<PointsColumnBinding>(ra::data::models::AchievementModel::PointsProperty);
     pPointsColumn->SetHeader(L"Points");
     pPointsColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 45);
     pPointsColumn->SetAlignment(ra::ui::RelativePosition::Far);
-    m_bindAssets.BindColumn(2, std::move(pPointsColumn));
+    m_bindAssets.BindColumn(2 + nOffset, std::move(pPointsColumn));
 
     auto pStateColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         AssetModelBase::StateProperty, vmAssetList.States());
     pStateColumn->SetHeader(L"State");
     pStateColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 70);
-    m_bindAssets.BindColumn(3, std::move(pStateColumn));
+    m_bindAssets.BindColumn(3 + nOffset, std::move(pStateColumn));
 
     auto pCategoryColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         AssetModelBase::CategoryProperty, vmAssetList.Categories());
     pCategoryColumn->SetHeader(L"Category");
     pCategoryColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 70);
-    m_bindAssets.BindColumn(4, std::move(pCategoryColumn));
+    m_bindAssets.BindColumn(4 + nOffset, std::move(pCategoryColumn));
 
     auto pChangesColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         AssetModelBase::ChangesProperty, vmAssetList.Changes());
     pChangesColumn->SetHeader(L"Changes");
     pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 70);
-    m_bindAssets.BindColumn(5, std::move(pChangesColumn));
+    m_bindAssets.BindColumn(5 + nOffset, std::move(pChangesColumn));
 
     m_bindAssets.SetDoubleClickHandler([this](gsl::index nIndex)
     {
@@ -183,6 +265,10 @@ BOOL AssetListDialog::OnInitDialog()
 
     m_bindCategories.SetControl(*this, IDC_RA_CATEGORY);
     m_bindSpecialFilters.SetControl(*this, IDC_RA_SPECIAL_FILTER);
+
+#ifdef ASSET_ICONS
+    m_bindAssets.InitializeTooltips(std::chrono::milliseconds(500));
+#endif
 
     return DialogBase::OnInitDialog();
 }

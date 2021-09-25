@@ -26,6 +26,8 @@ const BoolModelProperty AssetEditorViewModel::DecimalPreferredProperty("AssetEdi
 const BoolModelProperty AssetEditorViewModel::IsAssetLoadedProperty("AssetEditorViewModel", "IsAssetLoaded", false);
 const BoolModelProperty AssetEditorViewModel::HasAssetValidationErrorProperty("AssetEditorViewModel", "HasAssetValidationError", false);
 const StringModelProperty AssetEditorViewModel::AssetValidationErrorProperty("AssetEditorViewModel", "AssetValidationError", L"");
+const BoolModelProperty AssetEditorViewModel::HasAssetValidationWarningProperty("AssetEditorViewModel", "HasAssetValidationWarning", false);
+const StringModelProperty AssetEditorViewModel::AssetValidationWarningProperty("AssetEditorViewModel", "AssetValidationWarning", L"");
 const BoolModelProperty AssetEditorViewModel::HasMeasuredProperty("AssetEditorViewModel", "HasMeasured", false);
 const StringModelProperty AssetEditorViewModel::MeasuredValueProperty("AssetEditorViewModel", "MeasuredValue", L"[Not Active]");
 const StringModelProperty AssetEditorViewModel::WaitingLabelProperty("AssetEditorViewModel", "WaitingLabel", L"Active");
@@ -100,6 +102,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
         SetDescription(pAsset->GetDescription());
         SetState(pAsset->GetState());
         SetCategory(pAsset->GetCategory());
+        SetValue(AssetValidationWarningProperty, pAsset->GetValidationError());
 
         // normally this happens in OnValueChanged, but only if m_pAsset is set, which doesn't happen until later
         // and we don't want the other stuff in OnValueChanged to run right now
@@ -163,6 +166,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
         SetPauseOnTrigger(PauseOnTriggerProperty.GetDefaultValue());
         SetWindowTitle(L"Achievement Editor");
         SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
+        SetValue(AssetValidationWarningProperty, AssetValidationErrorProperty.GetDefaultValue());
 
         ra::data::models::CapturedTriggerHits pCapturedHits;
         Trigger().InitializeFrom("", pCapturedHits);
@@ -185,6 +189,8 @@ void AssetEditorViewModel::OnDataModelStringValueChanged(const StringModelProper
         SetName(args.tNewValue);
     else if (args.Property == ra::data::models::AchievementModel::BadgeProperty)
         SetBadge(args.tNewValue);
+    else if (args.Property == ra::data::models::AssetModelBase::ValidationErrorProperty)
+        SetValue(AssetValidationWarningProperty, args.tNewValue);
 }
 
 void AssetEditorViewModel::OnDataModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
@@ -270,6 +276,8 @@ void AssetEditorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs&
 
     if (args.Property == AssetValidationErrorProperty)
         SetValue(HasAssetValidationErrorProperty, !args.tNewValue.empty());
+    else if (args.Property == AssetValidationWarningProperty)
+        SetValue(HasAssetValidationWarningProperty, !args.tNewValue.empty());
 
     WindowViewModelBase::OnValueChanged(args);
 }

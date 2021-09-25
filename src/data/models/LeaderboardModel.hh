@@ -141,6 +141,8 @@ public:
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
+    bool ValidateAsset(std::wstring& sErrorMessage) override;
+
 private:
     void HandleStateChanged(AssetState nOldState, AssetState nNewState);
 

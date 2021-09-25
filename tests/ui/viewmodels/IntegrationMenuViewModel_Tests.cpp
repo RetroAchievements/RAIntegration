@@ -151,8 +151,13 @@ public:
         menu.AssertMenuItem(8, IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
         menu.AssertMenuItem(9, IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
         menu.AssertMenuSeparator(10);
+#ifdef ASSET_ICONS
+        menu.AssertMenuItem(11, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        menu.AssertMenuItem(12, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+#else
         menu.AssertMenuItem(11, IDM_RA_FILES_ACHIEVEMENTS, L"Achievements Li&st");
         menu.AssertMenuItem(12, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Achievement &Editor");
+#endif
         menu.AssertMenuItem(13, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
         menu.AssertMenuItem(14, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
         menu.AssertMenuItem(15, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");

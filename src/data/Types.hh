@@ -19,6 +19,9 @@ enum class MemSize : uint8_t
     TwentyFourBit,
     ThirtyTwoBit,
     BitCount,
+    SixteenBitBigEndian,
+    TwentyFourBitBigEndian,
+    ThirtyTwoBitBigEndian,
     Text
 };
 
@@ -56,6 +59,78 @@ enum class ValueFormat : uint8_t
     Minutes = RC_FORMAT_MINUTES,
     SecondsAsMinutes = RC_FORMAT_SECONDS_AS_MINUTES,
 };
+
+constexpr unsigned int MemSizeBits(MemSize nSize)
+{
+    switch (nSize)
+    {
+        case MemSize::ThirtyTwoBit:
+        case MemSize::ThirtyTwoBitBigEndian:
+            return 32;
+
+        case MemSize::EightBit:
+            return 8;
+
+        case MemSize::SixteenBit:
+        case MemSize::SixteenBitBigEndian:
+            return 16;
+
+        case MemSize::TwentyFourBit:
+        case MemSize::TwentyFourBitBigEndian:
+            return 24;
+
+        case MemSize::BitCount: // value will be 0-8
+        case MemSize::Nibble_Lower:
+        case MemSize::Nibble_Upper:
+            return 4;
+
+        case MemSize::Bit_0:
+        case MemSize::Bit_1:
+        case MemSize::Bit_2:
+        case MemSize::Bit_3:
+        case MemSize::Bit_4:
+        case MemSize::Bit_5:
+        case MemSize::Bit_6:
+        case MemSize::Bit_7:
+            return 1;
+
+        default:
+            return 0;
+    }
+}
+
+constexpr unsigned int MemSizeMax(MemSize nSize)
+{
+    const auto nBits = ra::data::MemSizeBits(nSize);
+    if (nBits >= 32)
+        return 0xFFFFFFFF;
+
+    return (1 << nBits) - 1;
+}
+
+constexpr unsigned int MemSizeBytes(MemSize nSize)
+{
+    switch (nSize)
+    {
+        case MemSize::ThirtyTwoBit:
+        case MemSize::ThirtyTwoBitBigEndian:
+            return 4;
+
+        case MemSize::SixteenBit:
+        case MemSize::SixteenBitBigEndian:
+            return 2;
+
+        case MemSize::TwentyFourBit:
+        case MemSize::TwentyFourBitBigEndian:
+            return 3;
+
+        case MemSize::Text:
+            return 0;
+
+        default:
+            return 1;
+    }
+}
 
 } // namespace data
 } // namespace ra

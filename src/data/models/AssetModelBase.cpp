@@ -14,6 +14,7 @@ const IntModelProperty AssetModelBase::StateProperty("AssetModelBase", "State", 
 const IntModelProperty AssetModelBase::ChangesProperty("AssetModelBase", "Changes", ra::etoi(AssetChanges::None));
 const IntModelProperty AssetModelBase::CreationTimeProperty("AssetModelBase", "CreationTime", 0);
 const IntModelProperty AssetModelBase::UpdatedTimeProperty("AssetModelBase", "UpdatedTime", 0);
+const StringModelProperty AssetModelBase::ValidationErrorProperty("AssetModelBase", "ValidationError", L"");
 
 AssetModelBase::AssetModelBase() noexcept
 {
@@ -174,6 +175,7 @@ void AssetModelBase::CreateLocalCheckpoint()
     BeginTransaction();       // start transaction for in-memory changes
 
     SetValue(ChangesProperty, bModified ? ra::etoi(AssetChanges::Unpublished) : ra::etoi(AssetChanges::None));
+    Validate();
 }
 
 void AssetModelBase::UpdateLocalCheckpoint()
@@ -194,6 +196,7 @@ void AssetModelBase::UpdateServerCheckpoint()
     BeginTransaction();      // start transaction for in-memory changes
 
     SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
+    Validate();
 }
 
 void AssetModelBase::RestoreLocalCheckpoint()
@@ -215,6 +218,7 @@ void AssetModelBase::RestoreServerCheckpoint()
     BeginTransaction();      // start transaction for in-memory changes
 
     SetValue(ChangesProperty, ra::etoi(AssetChanges::None));
+    Validate();
     EndUpdate();
 }
 
@@ -242,6 +246,7 @@ void AssetModelBase::SetNew()
 void AssetModelBase::SetDeleted()
 {
     SetValue(ChangesProperty, ra::etoi(AssetChanges::Deleted));
+    SetValue(ValidationErrorProperty, ValidationErrorProperty.GetDefaultValue());
 }
 
 bool AssetModelBase::HasUnpublishedChanges() const noexcept
@@ -571,6 +576,14 @@ const char* AssetModelBase::GetAssetTypeString(AssetType nType) noexcept
     }
 }
 
+bool AssetModelBase::Validate()
+{
+    std::wstring sError;
+    const bool bResult = ValidateAsset(sError);
+
+    SetValue(ValidationErrorProperty, sError);
+    return bResult;
+}
 
 } // namespace models
 } // namespace data

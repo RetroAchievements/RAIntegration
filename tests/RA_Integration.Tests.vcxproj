@@ -301,6 +301,7 @@
     <ClCompile Include="..\src\data\models\CapturedTriggerHits.cpp" />
     <ClCompile Include="..\src\data\models\LeaderboardModel.cpp" />
     <ClCompile Include="..\src\data\models\LocalBadgesModel.cpp" />
+    <ClCompile Include="..\src\data\models\TriggerValidation.cpp" />
     <ClCompile Include="..\src\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -374,6 +375,7 @@
     <ClCompile Include="data\models\AssetModelBase_Tests.cpp" />
     <ClCompile Include="data\models\LeaderboardModel_Tests.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />
+    <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="services\AchievementRuntime_Tests.cpp" />
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />

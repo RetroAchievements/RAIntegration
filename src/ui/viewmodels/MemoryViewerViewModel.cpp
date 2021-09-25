@@ -128,13 +128,7 @@ MemoryViewerViewModel::~MemoryViewerViewModel()
 
 static constexpr int NibblesForSize(MemSize nSize)
 {
-    switch (nSize)
-    {
-        default:
-        case MemSize::EightBit: return 2;
-        case MemSize::SixteenBit: return 4;
-        case MemSize::ThirtyTwoBit: return 8;
-    }
+    return ra::data::MemSizeBytes(nSize) * 2;
 }
 
 int MemoryViewerViewModel::NibblesPerWord() const

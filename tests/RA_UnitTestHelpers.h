@@ -72,6 +72,12 @@ std::wstring ToString<MemSize>(const MemSize& t)
             return L"ThirtyTwoBit";
         case MemSize::BitCount:
             return L"BitCount";
+        case MemSize::SixteenBitBigEndian:
+            return L"SixteenBitBigEndian";
+        case MemSize::TwentyFourBitBigEndian:
+            return L"TwentyFourBitBigEndian";
+        case MemSize::ThirtyTwoBitBigEndian:
+            return L"ThirtyTwoBitBigEndian";
         case MemSize::Text:
             return L"Text";
         default:

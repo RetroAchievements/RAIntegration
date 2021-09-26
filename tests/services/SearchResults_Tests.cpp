@@ -1240,6 +1240,30 @@ public:
         Assert::AreEqual(24U, result.nAddress);
     }
 
+    TEST_METHOD(TestInitializeFromResultsAsciiTextSingleMatch)
+    {
+        std::array<unsigned char, 36> memory{
+            'S', 'h', 'e', ' ', 's', 'e', 'l', 'l', 's', ' ', 's', 'e', 'a', 's', 'h', 'e',
+            'l', 'l', 's', ' ', 'b', 'y', ' ', 't', 'h', 'e', ' ', 's', 'e', 'a', 's', 'h',
+            'o', 'r', 'e', '.'
+        };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(0U, memory.size(), ra::services::SearchType::AsciiText);
+        Assert::AreEqual(memory.size(), results1.MatchingAddressCount());
+
+        SearchResults results2;
+        results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"by");
+        Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
+        Assert::IsTrue(results2.ContainsAddress(20U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results2.GetMatchingAddress(0U, result));
+        Assert::AreEqual(20U, result.nAddress);
+    }
+
     TEST_METHOD(TestInitializeFromResultsAsciiTextComparison)
     {
         std::array<unsigned char, 36> memory{

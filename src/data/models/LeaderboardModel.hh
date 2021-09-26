@@ -123,6 +123,21 @@ public:
     void SetValueFormat(ValueFormat nValue) { SetValue(ValueFormatProperty, ra::etoi(nValue)); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not lower values are better.
+    /// </summary>
+    static const BoolModelProperty LowerIsBetterProperty;
+
+    /// <summary>
+    /// Gets whether or not lower values are better.
+    /// </summary>
+    bool IsLowerBetter() const { return GetValue(LowerIsBetterProperty); }
+
+    /// <summary>
+    /// Sets whether or not lower values are better.
+    /// </summary>
+    void SetLowerIsBetter(bool nValue) { SetValue(LowerIsBetterProperty, nValue); }
+
+    /// <summary>
     /// Populates the start/submit/cancel/value fields from a compound definition.
     /// </summary>
     void SetDefinition(const std::string& sDefinition);

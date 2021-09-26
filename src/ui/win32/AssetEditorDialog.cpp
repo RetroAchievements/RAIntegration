@@ -603,6 +603,8 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindBadge(vmAssetEditor),
     m_bindBadgeImage(vmAssetEditor),
     m_bindPoints(vmAssetEditor),
+    m_bindFormats(vmAssetEditor),
+    m_bindLowerIsBetter(vmAssetEditor),
     m_bindErrorIcon(vmAssetEditor),
     m_bindMeasuredAsPercent(vmAssetEditor.Trigger()),
     m_bindDebugHighlights(vmAssetEditor),
@@ -619,10 +621,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindID.BindValue(AssetEditorViewModel::IDProperty);
     m_bindName.BindText(AssetEditorViewModel::NameProperty);
     m_bindDescription.BindText(AssetEditorViewModel::DescriptionProperty);
-    m_bindBadge.BindText(AssetEditorViewModel::BadgeProperty);
-    m_bindBadge.SetWrapAround(true);
-    m_bindBadgeImage.BindImage(AssetEditorViewModel::BadgeProperty, ra::ui::ImageType::Badge);
-    m_bindPoints.BindValue(AssetEditorViewModel::PointsProperty);
+
     m_bindWindow.BindEnabled(IDC_RA_TITLE, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_DESCRIPTION, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_CHK_ACTIVE, AssetEditorViewModel::IsAssetLoadedProperty);
@@ -647,12 +646,16 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindLabel(IDC_RA_MEASURED, AssetEditorViewModel::MeasuredValueProperty);
     m_bindWindow.BindVisible(IDC_RA_LBL_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
     m_bindWindow.BindVisible(IDC_RA_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
-    m_bindWindow.BindVisible(IDC_RA_CHK_AS_PERCENT, AssetEditorViewModel::HasMeasuredProperty);
 
     // achievement only fields
+    m_bindBadge.BindText(AssetEditorViewModel::BadgeProperty);
+    m_bindBadge.SetWrapAround(true);
+    m_bindBadgeImage.BindImage(AssetEditorViewModel::BadgeProperty, ra::ui::ImageType::Badge);
+    m_bindPoints.BindValue(AssetEditorViewModel::PointsProperty);
     m_bindWindow.BindVisible(IDC_RA_LBL_POINTS, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_POINTS, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_CHK_AS_PERCENT, AssetEditorViewModel::IsAchievementProperty);
+    m_bindWindow.BindVisible(IDC_RA_CHK_AS_PERCENT, AssetEditorViewModel::HasMeasuredProperty);
     m_bindWindow.BindVisible(IDC_RA_LBL_BADGENAME, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_BADGENAME, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_BADGE_SPIN, AssetEditorViewModel::IsAchievementProperty);
@@ -660,6 +663,10 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindVisible(IDC_RA_BADGEPIC, AssetEditorViewModel::IsAchievementProperty);
 
     // leaderboard only fields
+    m_bindFormats.BindItems(vmAssetEditor.Formats());
+    m_bindFormats.BindSelectedItem(AssetEditorViewModel::ValueFormatProperty);
+    m_bindLowerIsBetter.BindCheck(AssetEditorViewModel::LowerIsBetterProperty);
+    m_bindWindow.BindLabel(IDC_RA_DISPLAY, AssetEditorViewModel::FormattedValueProperty);
     m_bindWindow.BindVisible(IDC_RA_LBL_FORMAT, AssetEditorViewModel::IsLeaderboardProperty);
     m_bindWindow.BindVisible(IDC_RA_FORMAT, AssetEditorViewModel::IsLeaderboardProperty);
     m_bindWindow.BindVisible(IDC_RA_CHK_LOWER_IS_BETTER, AssetEditorViewModel::IsLeaderboardProperty);
@@ -667,7 +674,6 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindVisible(IDC_RA_DISPLAY, AssetEditorViewModel::IsLeaderboardProperty);
     m_bindWindow.BindVisible(IDC_RA_LBX_LBOARD_PARTS, AssetEditorViewModel::IsLeaderboardProperty);
 
-    m_bindMeasuredAsPercent.BindCheck(TriggerViewModel::IsMeasuredTrackedAsPercentProperty);
     m_bindDebugHighlights.BindCheck(AssetEditorViewModel::DebugHighlightsEnabledProperty);
     m_bindPauseOnReset.BindCheck(AssetEditorViewModel::PauseOnResetProperty);
     m_bindPauseOnTrigger.BindCheck(AssetEditorViewModel::PauseOnTriggerProperty);
@@ -812,6 +818,7 @@ BOOL AssetEditorDialog::OnInitDialog()
     m_bindBadge.SetSpinnerControl(*this, IDC_RA_BADGE_SPIN);
     m_bindBadgeImage.SetControl(*this, IDC_RA_BADGEPIC);
     m_bindPoints.SetControl(*this, IDC_RA_POINTS);
+    m_bindFormats.SetControl(*this, IDC_RA_FORMAT);
 
     m_bindGroups.SetControl(*this, IDC_RA_LBX_GROUPS);
     m_bindConditions.SetControl(*this, IDC_RA_LBX_CONDITIONS);

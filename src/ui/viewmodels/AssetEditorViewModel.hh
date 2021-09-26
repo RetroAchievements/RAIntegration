@@ -213,6 +213,54 @@ public:
     /// </summary>
     bool IsLeaderboard() const { return GetValue(IsLeaderboardProperty); }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the asset value format.
+    /// </summary>
+    static const IntModelProperty ValueFormatProperty;
+
+    /// <summary>
+    /// Gets the asset value format.
+    /// </summary>
+    ra::data::ValueFormat ValueFormat() const { return ra::itoe<ra::data::ValueFormat>(GetValue(ValueFormatProperty)); }
+
+    /// <summary>
+    /// Sets the asset value format.
+    /// </summary>
+    void SetValueFormat(ra::data::ValueFormat nValue) { SetValue(ValueFormatProperty, ra::etoi(nValue)); }
+
+    /// <summary>
+    /// Gets the list of leaderboard formats.
+    /// </summary>
+    const LookupItemViewModelCollection& Formats() const noexcept
+    {
+        return m_vFormats;
+    }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the formatted value.
+    /// </summary>
+    static const StringModelProperty FormattedValueProperty;
+
+    /// <summary>
+    /// Gets the formatted value.
+    /// </summary>
+    const std::wstring& GetFormattedValue() const { return GetValue(FormattedValueProperty); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not lower values are better.
+    /// </summary>
+    static const BoolModelProperty LowerIsBetterProperty;
+
+    /// <summary>
+    /// Gets whether or not lower values are better.
+    /// </summary>
+    bool IsLowerBetter() const { return GetValue(LowerIsBetterProperty); }
+
+    /// <summary>
+    /// Sets whether or not lower values are better.
+    /// </summary>
+    void SetLowerIsBetter(bool nValue) { SetValue(LowerIsBetterProperty, nValue); }
+
     // ===== Trigger =====
 
     /// <summary>
@@ -334,6 +382,8 @@ protected:
 
     ra::data::models::AssetModelBase* m_pAsset = nullptr;
     bool m_bIgnoreTriggerUpdate = false;
+
+    LookupItemViewModelCollection m_vFormats;
 };
 
 } // namespace viewmodels

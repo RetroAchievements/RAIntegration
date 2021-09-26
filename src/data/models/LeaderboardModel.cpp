@@ -16,6 +16,7 @@ const IntModelProperty LeaderboardModel::SubmitTriggerProperty("LeaderboardModel
 const IntModelProperty LeaderboardModel::CancelTriggerProperty("LeaderboardModel", "CancelTrigger", 0);
 const IntModelProperty LeaderboardModel::ValueDefinitionProperty("LeaderboardModel", "ValueDefinition", 0);
 const IntModelProperty LeaderboardModel::ValueFormatProperty("LeaderboardModel", "ValueFormat", ra::etoi(ValueFormat::Value));
+const BoolModelProperty LeaderboardModel::LowerIsBetterProperty("LeaderboardModel", "LowerIsBetter", false);
 
 LeaderboardModel::LeaderboardModel() noexcept
 {
@@ -25,6 +26,9 @@ LeaderboardModel::LeaderboardModel() noexcept
     GSL_SUPPRESS_F6 AddAssetDefinition(m_pSubmitTrigger, SubmitTriggerProperty);
     GSL_SUPPRESS_F6 AddAssetDefinition(m_pCancelTrigger, CancelTriggerProperty);
     GSL_SUPPRESS_F6 AddAssetDefinition(m_pValueDefinition, ValueDefinitionProperty);
+
+    SetTransactional(ValueFormatProperty);
+    SetTransactional(LowerIsBetterProperty);
 }
 
 void LeaderboardModel::Activate()

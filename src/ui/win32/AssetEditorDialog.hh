@@ -5,6 +5,7 @@
 #include "ui/viewmodels/AssetEditorViewModel.hh"
 
 #include "ui/win32/bindings/CheckBoxBinding.hh"
+#include "ui/win32/bindings/ComboBoxBinding.hh"
 #include "ui/win32/bindings/GridBinding.hh"
 #include "ui/win32/bindings/ImageBinding.hh"
 #include "ui/win32/bindings/NumericTextBoxBinding.hh"
@@ -133,6 +134,8 @@ private:
     BadgeNameBinding m_bindBadge;
     ra::ui::win32::bindings::ImageBinding m_bindBadgeImage;
     ra::ui::win32::bindings::NumericTextBoxBinding m_bindPoints;
+    ra::ui::win32::bindings::ComboBoxBinding m_bindFormats;
+    ra::ui::win32::bindings::CheckBoxBinding m_bindLowerIsBetter;
 
     ErrorIconBinding m_bindErrorIcon;
     ra::ui::win32::bindings::CheckBoxBinding m_bindMeasuredAsPercent;

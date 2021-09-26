@@ -24,6 +24,9 @@ const BoolModelProperty AssetEditorViewModel::IsAchievementProperty("AssetEditor
 const IntModelProperty AssetEditorViewModel::PointsProperty("AssetEditorViewModel", "Points", 0);
 const StringModelProperty AssetEditorViewModel::BadgeProperty("AssetEditorViewModel", "Badge", L"00000");
 const BoolModelProperty AssetEditorViewModel::IsLeaderboardProperty("AssetEditorViewModel", "IsLeaderboard", false);
+const IntModelProperty AssetEditorViewModel::ValueFormatProperty("AssetEditorViewModel", "ValueFormat", ra::etoi(ra::data::ValueFormat::Value));
+const BoolModelProperty AssetEditorViewModel::LowerIsBetterProperty("AssetEditorViewModel", "LowerIsBetter", false);
+const StringModelProperty AssetEditorViewModel::FormattedValueProperty("AssetEditorViewModel", "FormattedValue", L"0");
 const BoolModelProperty AssetEditorViewModel::PauseOnResetProperty("AssetEditorViewModel", "PauseOnReset", false);
 const BoolModelProperty AssetEditorViewModel::PauseOnTriggerProperty("AssetEditorViewModel", "PauseOnTrigger", false);
 const BoolModelProperty AssetEditorViewModel::DebugHighlightsEnabledProperty("AssetEditorViewModel", "DebugHighlightsEnabled", false);
@@ -42,6 +45,13 @@ AssetEditorViewModel::AssetEditorViewModel() noexcept
     SetWindowTitle(L"Achievement Editor");
 
     m_vmTrigger.AddNotifyTarget(*this);
+
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Value), L"Value");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Score), L"Score");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Frames), L"Frames");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Centiseconds), L"Centiseconds");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Seconds), L"Seconds");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Minutes), L"Minutes");
 }
 
 AssetEditorViewModel::~AssetEditorViewModel()
@@ -129,6 +139,8 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
             SetValue(IsLeaderboardProperty, true);
             SetValue(HasMeasuredProperty, true);
 
+            SetValueFormat(pLeaderboard->GetValueFormat());
+            SetLowerIsBetter(pLeaderboard->IsLowerBetter());
         }
         else
         {
@@ -245,6 +257,15 @@ void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& a
         else if (args.Property == PauseOnTriggerProperty)
             pAchievement->SetPauseOnTrigger(args.tNewValue);
     }
+    else
+    {
+        auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
+        if (pLeaderboard != nullptr)
+        {
+            if (args.Property == LowerIsBetterProperty)
+                pLeaderboard->SetLowerIsBetter(args.tNewValue);
+        }
+    }
 
     if (args.Property == DebugHighlightsEnabledProperty)
     {
@@ -346,6 +367,18 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
             {
                 if (args.Property == PointsProperty)
                     pAchievement->SetPoints(args.tNewValue);
+            }
+            else
+            {
+                auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
+                if (pLeaderboard != nullptr)
+                {
+                    if (args.Property == ValueFormatProperty)
+                    {
+                        pLeaderboard->SetValueFormat(ra::itoe<ra::data::ValueFormat>(args.tNewValue));
+                        UpdateMeasuredValue();
+                    }
+                }
             }
         }
     }
@@ -470,6 +503,23 @@ void AssetEditorViewModel::UpdateMeasuredValue()
                 }
 
                 SetValue(MeasuredValueProperty, ra::StringPrintf(L"%d/%d", pTrigger->measured_value, pTrigger->measured_target));
+            }
+            else
+            {
+                const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
+                if (pLeaderboard != nullptr)
+                {
+                    auto* pLeaderboardDefinition = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetLeaderboardDefinition(pLeaderboard->GetID());
+                    if (pLeaderboardDefinition)
+                    {
+                        const unsigned nValue = pLeaderboardDefinition->value.value.value;
+                        SetValue(MeasuredValueProperty, std::to_wstring(nValue));
+
+                        char buffer[16];
+                        rc_format_value(buffer, sizeof(buffer), nValue, ra::etoi(ValueFormat()));
+                        SetValue(FormattedValueProperty, ra::Widen(buffer));
+                    }
+                }
             }
         }
     }

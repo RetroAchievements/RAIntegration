@@ -15,6 +15,7 @@ namespace viewmodels {
 
 class AssetEditorViewModel : public WindowViewModelBase, 
     protected ViewModelBase::NotifyTarget,
+    protected ViewModelCollectionBase::NotifyTarget,
     protected ra::data::DataModelBase::NotifyTarget
 {
 public:
@@ -261,6 +262,36 @@ public:
     /// </summary>
     void SetLowerIsBetter(bool nValue) { SetValue(LowerIsBetterProperty, nValue); }
 
+    enum class LeaderboardPart
+    {
+        None = 0,
+        Start,
+        Submit,
+        Cancel,
+        Value
+    };
+
+    /// <summary>
+    /// Gets the list of leaderboard parts.
+    /// </summary>
+    const LookupItemViewModelCollection& LeaderboardParts() const noexcept { return m_vLeaderboardParts; }
+    LookupItemViewModelCollection& LeaderboardParts() noexcept { return m_vLeaderboardParts; }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the selected leaderboard part.
+    /// </summary>
+    static const IntModelProperty SelectedLeaderboardPartProperty;
+
+    /// <summary>
+    /// Gets the selected leaderboard part.
+    /// </summary>
+    LeaderboardPart GetSelectedLeaderboardPart() const { return ra::itoe<LeaderboardPart>(GetValue(SelectedLeaderboardPartProperty)); }
+
+    /// <summary>
+    /// Sets the selected leaderboard part.
+    /// </summary>
+    void SetSelectedLeaderboardPart(LeaderboardPart nValue) { SetValue(SelectedLeaderboardPartProperty, ra::etoi(nValue)); }
+
     // ===== Trigger =====
 
     /// <summary>
@@ -362,6 +393,9 @@ protected:
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
+    // ViewModelCollectionBase::NotifyTarget
+    void OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args) override;
+
     // DataModelBase::NotifyTarget
     void OnDataModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
     void OnDataModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
@@ -377,6 +411,7 @@ protected:
     void UpdateAssetFrameValues();
     void UpdateDebugHighlights();
     void UpdateMeasuredValue();
+    void UpdateLeaderboardTrigger();
 
     TriggerViewModel m_vmTrigger;
 
@@ -384,6 +419,7 @@ protected:
     bool m_bIgnoreTriggerUpdate = false;
 
     LookupItemViewModelCollection m_vFormats;
+    LookupItemViewModelCollection m_vLeaderboardParts;
 };
 
 } // namespace viewmodels

@@ -24,6 +24,7 @@ const BoolModelProperty AssetEditorViewModel::IsAchievementProperty("AssetEditor
 const IntModelProperty AssetEditorViewModel::PointsProperty("AssetEditorViewModel", "Points", 0);
 const StringModelProperty AssetEditorViewModel::BadgeProperty("AssetEditorViewModel", "Badge", L"00000");
 const BoolModelProperty AssetEditorViewModel::IsLeaderboardProperty("AssetEditorViewModel", "IsLeaderboard", false);
+const IntModelProperty AssetEditorViewModel::SelectedLeaderboardPartProperty("AssetEditorViewModel", "SelectedLeaderboardPart", ra::etoi(AssetEditorViewModel::LeaderboardPart::Start));
 const IntModelProperty AssetEditorViewModel::ValueFormatProperty("AssetEditorViewModel", "ValueFormat", ra::etoi(ra::data::ValueFormat::Value));
 const BoolModelProperty AssetEditorViewModel::LowerIsBetterProperty("AssetEditorViewModel", "LowerIsBetter", false);
 const StringModelProperty AssetEditorViewModel::FormattedValueProperty("AssetEditorViewModel", "FormattedValue", L"0");
@@ -52,6 +53,13 @@ AssetEditorViewModel::AssetEditorViewModel() noexcept
     m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Centiseconds), L"Centiseconds");
     m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Seconds), L"Seconds");
     m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Minutes), L"Minutes");
+
+    m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Start), L"Start");
+    m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Submit), L"Submit");
+    m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Cancel), L"Cancel");
+    m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Value), L"Value");
+    m_vLeaderboardParts.GetItemAt(0)->SetSelected(true);
+    m_vLeaderboardParts.AddNotifyTarget(*this);
 }
 
 AssetEditorViewModel::~AssetEditorViewModel()
@@ -141,6 +149,9 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
 
             SetValueFormat(pLeaderboard->GetValueFormat());
             SetLowerIsBetter(pLeaderboard->IsLowerBetter());
+
+            m_pAsset = pAsset; // must be set before calling UpdateLeaderboardTrigger
+            UpdateLeaderboardTrigger();
         }
         else
         {
@@ -204,6 +215,53 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
 
         ra::data::models::CapturedTriggerHits pCapturedHits;
         Trigger().InitializeFrom("", pCapturedHits);
+    }
+}
+
+void AssetEditorViewModel::UpdateLeaderboardTrigger()
+{
+    const auto* pLeaderboardDefinition = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetLeaderboardDefinition(m_pAsset->GetID());
+    if (pLeaderboardDefinition != nullptr)
+    {
+        switch (GetSelectedLeaderboardPart())
+        {
+            case LeaderboardPart::Start:
+                Trigger().InitializeFrom(pLeaderboardDefinition->start);
+                return;
+            case LeaderboardPart::Submit:
+                Trigger().InitializeFrom(pLeaderboardDefinition->submit);
+                return;
+            case LeaderboardPart::Cancel:
+                Trigger().InitializeFrom(pLeaderboardDefinition->cancel);
+                return;
+            case LeaderboardPart::Value:
+                //Trigger().InitializeFrom(pLeaderboardDefinition->value.conditions);
+                return;
+            default:
+                break;
+        }
+    }
+
+    ra::data::models::CapturedTriggerHits pCapturedHits;
+    Trigger().InitializeFrom("", pCapturedHits);
+}
+
+void AssetEditorViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == LookupItemViewModel::IsSelectedProperty)
+    {
+        for (gsl::index i = 0; i < ra::to_signed(m_vLeaderboardParts.Count()); ++i)
+        {
+            const auto* pItem = m_vLeaderboardParts.GetItemAt(i);
+            Expects(pItem != nullptr);
+            if (pItem->IsSelected())
+            {
+                SetValue(SelectedLeaderboardPartProperty, pItem->GetId());
+                return;
+            }
+        }
+
+        SetSelectedLeaderboardPart(LeaderboardPart::None);
     }
 }
 
@@ -373,7 +431,23 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
                 auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
                 if (pLeaderboard != nullptr)
                 {
-                    if (args.Property == ValueFormatProperty)
+                    if (args.Property == SelectedLeaderboardPartProperty)
+                    {
+                        // disable notifications while updating the selected group to prevent re-entrancy
+                        m_vLeaderboardParts.RemoveNotifyTarget(*this);
+
+                        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vLeaderboardParts.Count()); ++nIndex)
+                        {
+                            auto* pItem = m_vLeaderboardParts.GetItemAt(nIndex);
+                            if (pItem != nullptr)
+                                pItem->SetSelected(pItem->GetId() == args.tNewValue);
+                        }
+
+                        m_vLeaderboardParts.AddNotifyTarget(*this);
+
+                        UpdateLeaderboardTrigger();
+                    }
+                    else if (args.Property == ValueFormatProperty)
                     {
                         pLeaderboard->SetValueFormat(ra::itoe<ra::data::ValueFormat>(args.tNewValue));
                         UpdateMeasuredValue();
@@ -473,12 +547,46 @@ void AssetEditorViewModel::UpdateAssetFrameValues()
 
 void AssetEditorViewModel::UpdateDebugHighlights()
 {
-    const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
-    if (pAchievement != nullptr)
+    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+    const rc_trigger_t* pTrigger = nullptr;
+
+    switch (m_pAsset->GetType())
     {
-        const rc_trigger_t* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAchievement->GetID());
-        m_vmTrigger.UpdateColors(pTrigger);
+        case ra::data::models::AssetType::Achievement:
+            pTrigger = pRuntime.GetAchievementTrigger(m_pAsset->GetID());
+            break;
+
+        case ra::data::models::AssetType::Leaderboard:
+        {
+            const auto* pLeaderboardDefinition = pRuntime.GetLeaderboardDefinition(m_pAsset->GetID());
+            if (pLeaderboardDefinition == nullptr)
+                break;
+
+            switch (GetSelectedLeaderboardPart())
+            {
+                case LeaderboardPart::Start:
+                    pTrigger = &pLeaderboardDefinition->start;
+                    break;
+                case LeaderboardPart::Submit:
+                    pTrigger = &pLeaderboardDefinition->submit;
+                    break;
+                case LeaderboardPart::Cancel:
+                    pTrigger = &pLeaderboardDefinition->cancel;
+                    break;
+                case LeaderboardPart::Value:
+                    // pTrigger = pLeaderboardDefinition->value.conditions;
+                    break;
+                default:
+                    break;
+            }
+            break;
+        }
+
+        default:
+            break;
     }
+
+    m_vmTrigger.UpdateColors(pTrigger);
 }
 
 void AssetEditorViewModel::UpdateMeasuredValue()

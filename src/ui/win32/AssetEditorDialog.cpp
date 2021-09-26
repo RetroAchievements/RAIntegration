@@ -604,6 +604,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindBadgeImage(vmAssetEditor),
     m_bindPoints(vmAssetEditor),
     m_bindFormats(vmAssetEditor),
+    m_bindLeaderboardParts(vmAssetEditor),
     m_bindLowerIsBetter(vmAssetEditor),
     m_bindErrorIcon(vmAssetEditor),
     m_bindMeasuredAsPercent(vmAssetEditor.Trigger()),
@@ -673,6 +674,14 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindVisible(IDC_RA_LBL_DISPLAY, AssetEditorViewModel::IsLeaderboardProperty);
     m_bindWindow.BindVisible(IDC_RA_DISPLAY, AssetEditorViewModel::IsLeaderboardProperty);
     m_bindWindow.BindVisible(IDC_RA_LBX_LBOARD_PARTS, AssetEditorViewModel::IsLeaderboardProperty);
+
+    auto pPartColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
+    pPartColumn->SetHeader(L"Part");
+    pPartColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Fill, 50);
+    m_bindLeaderboardParts.BindColumn(0, std::move(pPartColumn));
+    m_bindLeaderboardParts.BindIsSelected(ra::ui::viewmodels::LookupItemViewModel::IsSelectedProperty);
+    m_bindLeaderboardParts.BindItems(vmAssetEditor.LeaderboardParts());
 
     m_bindDebugHighlights.BindCheck(AssetEditorViewModel::DebugHighlightsEnabledProperty);
     m_bindPauseOnReset.BindCheck(AssetEditorViewModel::PauseOnResetProperty);
@@ -819,6 +828,7 @@ BOOL AssetEditorDialog::OnInitDialog()
     m_bindBadgeImage.SetControl(*this, IDC_RA_BADGEPIC);
     m_bindPoints.SetControl(*this, IDC_RA_POINTS);
     m_bindFormats.SetControl(*this, IDC_RA_FORMAT);
+    m_bindLeaderboardParts.SetControl(*this, IDC_RA_LBX_LBOARD_PARTS);
 
     m_bindGroups.SetControl(*this, IDC_RA_LBX_GROUPS);
     m_bindConditions.SetControl(*this, IDC_RA_LBX_CONDITIONS);

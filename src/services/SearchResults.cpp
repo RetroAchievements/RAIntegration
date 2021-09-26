@@ -567,8 +567,8 @@ public:
                 // adjust the block size to account for the length of the string to ensure
                 // the block contains the whole string
                 // (duplicates the AddBlock function, but replaces "GetPadding()-1" with "nCompareLength")
-                const unsigned int nBlockSize = vMatches.back() - vMatches.front() + nCompareLength;
-                MemBlock& newBlock = AddBlock(srNew, vMatches.front(), nBlockSize);
+                const size_t nBlockSize = vMatches.back() - vMatches.front() + nCompareLength;
+                MemBlock& newBlock = AddBlock(srNew, vMatches.front(), gsl::narrow_cast<unsigned int>(nBlockSize));
                 memcpy(newBlock.GetBytes(), &vMemory.at(vMatches.front() - block.GetAddress()), nBlockSize);
 
                 vMatches.clear();

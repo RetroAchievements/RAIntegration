@@ -5,7 +5,6 @@
 #include "TriggerViewModel.hh"
 
 #include "data\Types.hh"
-#include "data\models\AchievementModel.hh"
 #include "data\models\AssetModelBase.hh"
 
 #include "ui\WindowViewModelBase.hh"
@@ -158,6 +157,16 @@ public:
     // ===== Achievement Specific =====
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not an asset is an achievement.
+    /// </summary>
+    static const BoolModelProperty IsAchievementProperty;
+
+    /// <summary>
+    /// Gets whether or not an asset is an achievement.
+    /// </summary>
+    bool IsAchievement() const { return GetValue(IsAchievementProperty); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the achievement points.
     /// </summary>
     static const IntModelProperty PointsProperty;
@@ -191,6 +200,18 @@ public:
     /// Opens the file chooser to select a new badge image.
     /// </summary>
     void SelectBadgeFile();
+
+    // ===== Leaderboard Specific =====
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not an asset is a leaderboard.
+    /// </summary>
+    static const BoolModelProperty IsLeaderboardProperty;
+
+    /// <summary>
+    /// Gets whether or not an asset is a leaderboard.
+    /// </summary>
+    bool IsLeaderboard() const { return GetValue(IsLeaderboardProperty); }
 
     // ===== Trigger =====
 

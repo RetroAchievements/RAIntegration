@@ -649,6 +649,24 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindVisible(IDC_RA_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
     m_bindWindow.BindVisible(IDC_RA_CHK_AS_PERCENT, AssetEditorViewModel::HasMeasuredProperty);
 
+    // achievement only fields
+    m_bindWindow.BindVisible(IDC_RA_LBL_POINTS, AssetEditorViewModel::IsAchievementProperty);
+    m_bindWindow.BindVisible(IDC_RA_POINTS, AssetEditorViewModel::IsAchievementProperty);
+    m_bindWindow.BindVisible(IDC_RA_CHK_AS_PERCENT, AssetEditorViewModel::IsAchievementProperty);
+    m_bindWindow.BindVisible(IDC_RA_LBL_BADGENAME, AssetEditorViewModel::IsAchievementProperty);
+    m_bindWindow.BindVisible(IDC_RA_BADGENAME, AssetEditorViewModel::IsAchievementProperty);
+    m_bindWindow.BindVisible(IDC_RA_BADGE_SPIN, AssetEditorViewModel::IsAchievementProperty);
+    m_bindWindow.BindVisible(IDC_RA_UPLOAD_BADGE, AssetEditorViewModel::IsAchievementProperty);
+    m_bindWindow.BindVisible(IDC_RA_BADGEPIC, AssetEditorViewModel::IsAchievementProperty);
+
+    // leaderboard only fields
+    m_bindWindow.BindVisible(IDC_RA_LBL_FORMAT, AssetEditorViewModel::IsLeaderboardProperty);
+    m_bindWindow.BindVisible(IDC_RA_FORMAT, AssetEditorViewModel::IsLeaderboardProperty);
+    m_bindWindow.BindVisible(IDC_RA_CHK_LOWER_IS_BETTER, AssetEditorViewModel::IsLeaderboardProperty);
+    m_bindWindow.BindVisible(IDC_RA_LBL_DISPLAY, AssetEditorViewModel::IsLeaderboardProperty);
+    m_bindWindow.BindVisible(IDC_RA_DISPLAY, AssetEditorViewModel::IsLeaderboardProperty);
+    m_bindWindow.BindVisible(IDC_RA_LBX_LBOARD_PARTS, AssetEditorViewModel::IsLeaderboardProperty);
+
     m_bindMeasuredAsPercent.BindCheck(TriggerViewModel::IsMeasuredTrackedAsPercentProperty);
     m_bindDebugHighlights.BindCheck(AssetEditorViewModel::DebugHighlightsEnabledProperty);
     m_bindPauseOnReset.BindCheck(AssetEditorViewModel::PauseOnResetProperty);
@@ -751,6 +769,11 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     SetAnchor(IDC_RA_DESCRIPTION, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_LBL_POINTS, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_POINTS, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_LBL_FORMAT, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_FORMAT, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_LBL_DISPLAY, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_DISPLAY, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_CHK_LOWER_IS_BETTER, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_LBL_MEASURED, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_MEASURED, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_CHK_AS_PERCENT, Anchor::Top | Anchor::Left);
@@ -759,6 +782,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     SetAnchor(IDC_RA_BADGE_SPIN, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_UPLOAD_BADGE, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_BADGEPIC, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_LBX_LBOARD_PARTS, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_LBX_GROUPS, Anchor::Top | Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_ADD_GROUP, Anchor::Bottom | Anchor::Left);
     SetAnchor(IDC_RA_DELETE_GROUP, Anchor::Bottom | Anchor::Left);

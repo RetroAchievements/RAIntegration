@@ -1,5 +1,8 @@
 #include "AssetEditorViewModel.hh"
 
+#include "data\models\AchievementModel.hh"
+#include "data\models\LeaderboardModel.hh"
+
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
@@ -17,8 +20,10 @@ const StringModelProperty AssetEditorViewModel::NameProperty("AssetEditorViewMod
 const StringModelProperty AssetEditorViewModel::DescriptionProperty("AssetEditorViewModel", "Description", L"Open an achievement from the Achievements List");
 const IntModelProperty AssetEditorViewModel::CategoryProperty("AssetEditorViewModel", "Category", ra::etoi(ra::data::models::AssetCategory::Core));
 const IntModelProperty AssetEditorViewModel::StateProperty("AssetEditorViewModel", "State", ra::etoi(ra::data::models::AssetState::Inactive));
+const BoolModelProperty AssetEditorViewModel::IsAchievementProperty("AssetEditorViewModel", "IsAchievement", true);
 const IntModelProperty AssetEditorViewModel::PointsProperty("AssetEditorViewModel", "Points", 0);
 const StringModelProperty AssetEditorViewModel::BadgeProperty("AssetEditorViewModel", "Badge", L"00000");
+const BoolModelProperty AssetEditorViewModel::IsLeaderboardProperty("AssetEditorViewModel", "IsLeaderboard", false);
 const BoolModelProperty AssetEditorViewModel::PauseOnResetProperty("AssetEditorViewModel", "PauseOnReset", false);
 const BoolModelProperty AssetEditorViewModel::PauseOnTriggerProperty("AssetEditorViewModel", "PauseOnTrigger", false);
 const BoolModelProperty AssetEditorViewModel::DebugHighlightsEnabledProperty("AssetEditorViewModel", "DebugHighlightsEnabled", false);
@@ -116,33 +121,50 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
         else
             SetValue(IDProperty, pAsset->GetID());
 
-        const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pAsset);
-        if (pAchievement != nullptr)
+        const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(pAsset);
+        if (pLeaderboard != nullptr)
         {
-            SetPoints(pAchievement->GetPoints());
-            SetBadge(pAchievement->GetBadge());
-            SetPauseOnReset(pAchievement->IsPauseOnReset());
-            SetPauseOnTrigger(pAchievement->IsPauseOnTrigger());
-            SetWindowTitle(L"Achievement Editor");
+            SetWindowTitle(L"Leaderboard Editor");
+            SetValue(IsAchievementProperty, false);
+            SetValue(IsLeaderboardProperty, true);
+            SetValue(HasMeasuredProperty, true);
 
-            auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAsset->GetID());
-            if (pTrigger != nullptr)
-            {
-                Trigger().InitializeFrom(*pTrigger);
-            }
-            else
-            {
-                Trigger().InitializeFrom(pAchievement->GetTrigger(), pAchievement->GetCapturedHits());
-                pTrigger = Trigger().GetTriggerFromString();
-            }
-
-            SetValue(HasMeasuredProperty, (pTrigger != nullptr && pTrigger->measured_target != 0));
         }
         else
         {
-            ra::data::models::CapturedTriggerHits pCapturedHits;
-            Trigger().InitializeFrom("", pCapturedHits);
-            SetValue(HasMeasuredProperty, false);
+            SetWindowTitle(L"Achievement Editor");
+            SetValue(IsLeaderboardProperty, false);
+            SetValue(IsAchievementProperty, true);
+
+            const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pAsset);
+            if (pAchievement != nullptr)
+            {
+                SetPoints(pAchievement->GetPoints());
+                SetBadge(pAchievement->GetBadge());
+                SetPauseOnReset(pAchievement->IsPauseOnReset());
+                SetPauseOnTrigger(pAchievement->IsPauseOnTrigger());
+
+                auto* pTrigger = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetAchievementTrigger(pAsset->GetID());
+                if (pTrigger != nullptr)
+                {
+                    Trigger().InitializeFrom(*pTrigger);
+                }
+                else
+                {
+                    Trigger().InitializeFrom(pAchievement->GetTrigger(), pAchievement->GetCapturedHits());
+                    pTrigger = Trigger().GetTriggerFromString();
+                }
+
+                SetValue(HasMeasuredProperty, (pTrigger != nullptr && pTrigger->measured_target != 0));
+            }
+            else
+            {
+                ra::data::models::CapturedTriggerHits pCapturedHits;
+                Trigger().InitializeFrom("", pCapturedHits);
+                SetPauseOnReset(PauseOnResetProperty.GetDefaultValue());
+                SetPauseOnTrigger(PauseOnTriggerProperty.GetDefaultValue());
+                SetValue(HasMeasuredProperty, false);
+            }
         }
 
         m_pAsset = pAsset;

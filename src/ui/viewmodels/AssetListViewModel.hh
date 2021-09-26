@@ -12,7 +12,7 @@
 #include "data\models\AchievementModel.hh"
 #include "data\models\AssetModelBase.hh"
 
-//#define ASSET_ICONS
+#define ASSET_ICONS
 
 namespace ra {
 namespace ui {

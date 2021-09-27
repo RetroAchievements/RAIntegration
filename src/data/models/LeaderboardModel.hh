@@ -150,8 +150,17 @@ public:
     void Serialize(ra::services::TextWriter& pWriter) const override;
     bool Deserialize(ra::Tokenizer& pTokenizer) override;
 
-    //const CapturedTriggerHits& GetCapturedHits() const noexcept { return m_pCapturedTriggerHits; }
-    //void ResetCapturedHits() noexcept { m_pCapturedTriggerHits.Reset(); }
+    const CapturedTriggerHits& GetStartCapturedHits() const noexcept { return m_pCapturedStartTriggerHits; }
+    const CapturedTriggerHits& GetSubmitCapturedHits() const noexcept { return m_pCapturedSubmitTriggerHits; }
+    const CapturedTriggerHits& GetCancelCapturedHits() const noexcept { return m_pCapturedCancelTriggerHits; }
+    const CapturedTriggerHits& GetValueCapturedHits() const noexcept { return m_pCapturedValueDefinitionHits; }
+    void ResetCapturedHits() noexcept 
+    {
+        m_pCapturedStartTriggerHits.Reset();
+        m_pCapturedSubmitTriggerHits.Reset();
+        m_pCapturedCancelTriggerHits.Reset();
+        m_pCapturedValueDefinitionHits.Reset();
+    }
 
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;

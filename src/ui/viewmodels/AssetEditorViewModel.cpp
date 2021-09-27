@@ -241,6 +241,30 @@ void AssetEditorViewModel::UpdateLeaderboardTrigger()
                 break;
         }
     }
+    else
+    {
+        const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
+        if (pLeaderboard != nullptr)
+        {
+            switch (GetSelectedLeaderboardPart())
+            {
+                case LeaderboardPart::Start:
+                    Trigger().InitializeFrom(pLeaderboard->GetStartTrigger(), pLeaderboard->GetStartCapturedHits());
+                    return;
+                case LeaderboardPart::Submit:
+                    Trigger().InitializeFrom(pLeaderboard->GetSubmitTrigger(), pLeaderboard->GetSubmitCapturedHits());
+                    return;
+                case LeaderboardPart::Cancel:
+                    Trigger().InitializeFrom(pLeaderboard->GetCancelTrigger(), pLeaderboard->GetCancelCapturedHits());
+                    return;
+                case LeaderboardPart::Value:
+                    Trigger().InitializeFrom(pLeaderboard->GetValueDefinition(), pLeaderboard->GetValueCapturedHits());
+                    return;
+                default:
+                    break;
+            }
+        }
+    }
 
     ra::data::models::CapturedTriggerHits pCapturedHits;
     Trigger().InitializeFrom("", pCapturedHits);
@@ -271,6 +295,8 @@ void AssetEditorViewModel::OnDataModelBoolValueChanged(const BoolModelProperty::
         SetPauseOnReset(args.tNewValue);
     else if (args.Property == ra::data::models::AchievementModel::PauseOnTriggerProperty)
         SetPauseOnTrigger(args.tNewValue);
+    else if (args.Property == ra::data::models::LeaderboardModel::LowerIsBetterProperty)
+        SetLowerIsBetter(args.tNewValue);
 }
 
 void AssetEditorViewModel::OnDataModelStringValueChanged(const StringModelProperty::ChangeArgs& args)
@@ -295,6 +321,8 @@ void AssetEditorViewModel::OnDataModelIntValueChanged(const IntModelProperty::Ch
         SetCategory(ra::itoe<ra::data::models::AssetCategory>(args.tNewValue));
     else if (args.Property == ra::data::models::AchievementModel::PointsProperty)
         SetPoints(args.tNewValue);
+    else if (args.Property == ra::data::models::LeaderboardModel::ValueFormatProperty)
+        SetValueFormat(ra::itoe<ra::data::ValueFormat>(args.tNewValue));
     else if (args.Property == ra::data::models::AssetModelBase::IDProperty)
         SetValue(IDProperty, args.tNewValue);
 }
@@ -624,7 +652,7 @@ void AssetEditorViewModel::UpdateMeasuredValue()
                         SetValue(MeasuredValueProperty, std::to_wstring(nValue));
 
                         char buffer[16];
-                        rc_format_value(buffer, sizeof(buffer), nValue, ra::etoi(ValueFormat()));
+                        rc_format_value(buffer, sizeof(buffer), nValue, ra::etoi(GetValueFormat()));
                         SetValue(FormattedValueProperty, ra::Widen(buffer));
                     }
                 }

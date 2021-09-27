@@ -662,9 +662,28 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
     {
-        auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pGameContext.Assets().GetItemAt(nIndex));
-        if (pAchievement != nullptr && pAchievement->IsActive())
-            pAchievement->ResetCapturedHits();
+        auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        switch (pAsset->GetType())
+        {
+            case ra::data::models::AssetType::Achievement:
+            {
+                auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pAsset);
+                if (pAchievement != nullptr && pAchievement->IsActive())
+                    pAchievement->ResetCapturedHits();
+                break;
+            }
+
+            case ra::data::models::AssetType::Leaderboard:
+            {
+                auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(pAsset);
+                if (pLeaderboard != nullptr && pLeaderboard->IsActive())
+                    pLeaderboard->ResetCapturedHits();
+                break;
+            }
+
+            default:
+                break;
+        }
     }
 
     // reset the runtime state, then apply state from file

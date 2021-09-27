@@ -22,6 +22,7 @@ using ra::data::models::AssetCategory;
 using ra::data::models::AssetChanges;
 using ra::data::models::AssetState;
 using ra::data::models::AssetType;
+using ra::data::models::LeaderboardModel;
 
 namespace ra {
 namespace ui {
@@ -95,6 +96,34 @@ public:
         Assert::AreEqual(std::wstring(), editor.GetAssetValidationError());
         Assert::IsFalse(editor.HasMeasured());
         Assert::AreEqual(std::wstring(L"[Not Active]"), editor.GetMeasuredValue());
+        Assert::IsTrue(editor.IsAchievement());
+        Assert::IsFalse(editor.IsLeaderboard());
+        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Start, (int)editor.GetSelectedLeaderboardPart());
+        Assert::AreEqual(ra::data::ValueFormat::Value, editor.GetValueFormat());
+
+        Assert::AreEqual({ 6U }, editor.Formats().Count());
+        Assert::AreEqual((int)ra::data::ValueFormat::Value, editor.Formats().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"Value"), editor.Formats().GetItemAt(0)->GetLabel());
+        Assert::AreEqual((int)ra::data::ValueFormat::Score, editor.Formats().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Score"), editor.Formats().GetItemAt(1)->GetLabel());
+        Assert::AreEqual((int)ra::data::ValueFormat::Frames, editor.Formats().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Frames"), editor.Formats().GetItemAt(2)->GetLabel());
+        Assert::AreEqual((int)ra::data::ValueFormat::Centiseconds, editor.Formats().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"Centiseconds"), editor.Formats().GetItemAt(3)->GetLabel());
+        Assert::AreEqual((int)ra::data::ValueFormat::Seconds, editor.Formats().GetItemAt(4)->GetId());
+        Assert::AreEqual(std::wstring(L"Seconds"), editor.Formats().GetItemAt(4)->GetLabel());
+        Assert::AreEqual((int)ra::data::ValueFormat::Minutes, editor.Formats().GetItemAt(5)->GetId());
+        Assert::AreEqual(std::wstring(L"Minutes"), editor.Formats().GetItemAt(5)->GetLabel());
+
+        Assert::AreEqual({ 4U }, editor.LeaderboardParts().Count());
+        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Start, editor.LeaderboardParts().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"Start"), editor.LeaderboardParts().GetItemAt(0)->GetLabel());
+        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Submit, editor.LeaderboardParts().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Submit"), editor.LeaderboardParts().GetItemAt(1)->GetLabel());
+        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Cancel, editor.LeaderboardParts().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Cancel"), editor.LeaderboardParts().GetItemAt(2)->GetLabel());
+        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Value, editor.LeaderboardParts().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"Value"), editor.LeaderboardParts().GetItemAt(3)->GetLabel());
     }
 
     TEST_METHOD(TestLoadAchievement)
@@ -415,6 +444,69 @@ public:
         Assert::AreEqual(std::wstring(), editor.GetAssetValidationWarning());
     }
 
+    TEST_METHOD(TestLoadLeaderboard)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetName(L"Test Leaderboard");
+        leaderboard.SetID(1234U);
+        leaderboard.SetState(AssetState::Active);
+        leaderboard.SetDescription(L"Do something cool");
+        leaderboard.SetCategory(AssetCategory::Unofficial);
+        leaderboard.SetValueFormat(ra::data::ValueFormat::Centiseconds);
+        leaderboard.SetLowerIsBetter(false);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+
+        Assert::AreEqual(std::wstring(L"Leaderboard Editor"), editor.GetWindowTitle());
+        Assert::AreEqual(1234U, editor.GetID());
+        Assert::AreEqual(std::wstring(L"Test Leaderboard"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Do something cool"), editor.GetDescription());
+        Assert::AreEqual(AssetCategory::Unofficial, editor.GetCategory());
+        Assert::AreEqual(AssetState::Active, editor.GetState());
+        Assert::AreEqual(ra::data::ValueFormat::Centiseconds, editor.GetValueFormat());
+        Assert::IsFalse(editor.IsLowerBetter());
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::IsFalse(editor.IsPauseOnTrigger());
+        Assert::IsTrue(editor.IsAssetLoaded());
+        Assert::IsTrue(editor.HasMeasured());
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+
+        editor.LoadAsset(nullptr);
+
+        Assert::AreEqual(std::wstring(L"Achievement Editor"), editor.GetWindowTitle());
+        Assert::AreEqual(0U, editor.GetID());
+        Assert::AreEqual(std::wstring(L"[No Achievement Loaded]"), editor.GetName());
+        Assert::AreEqual(std::wstring(L"Open an achievement from the Achievements List"), editor.GetDescription());
+        Assert::AreEqual(AssetCategory::Core, editor.GetCategory());
+        Assert::AreEqual(AssetState::Inactive, editor.GetState());
+        Assert::AreEqual(0, editor.GetPoints());
+        Assert::AreEqual(std::wstring(L"00000"), editor.GetBadge());
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::IsFalse(editor.IsPauseOnTrigger());
+        Assert::IsFalse(editor.IsAssetLoaded());
+        Assert::IsFalse(editor.HasMeasured());
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+    }
+
+    TEST_METHOD(TestLoadLeaderboardTrigger)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetStartTrigger("0xH1234=6.1.");
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+
+        Assert::AreEqual(std::string("0xH1234=6.1."), editor.Trigger().Serialize());
+        Assert::IsFalse(leaderboard.IsModified());
+    }
+
     TEST_METHOD(TestSyncId)
     {
         AssetEditorViewModelHarness editor;
@@ -656,6 +748,48 @@ public:
         achievement.SetBadge(L"67890");
         Assert::AreEqual(std::wstring(L"67890"), editor.GetBadge());
         Assert::AreEqual(std::wstring(L"67890"), achievement.GetBadge());
+    }
+
+    TEST_METHOD(TestSyncValueFormat)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetValueFormat(ra::data::ValueFormat::Score);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+        Assert::AreEqual(ra::data::ValueFormat::Score, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::ValueFormat::Score, leaderboard.GetValueFormat());
+
+        editor.SetValueFormat(ra::data::ValueFormat::Frames);
+        Assert::AreEqual(ra::data::ValueFormat::Frames, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::ValueFormat::Frames, leaderboard.GetValueFormat());
+
+        leaderboard.SetValueFormat(ra::data::ValueFormat::Centiseconds);
+        Assert::AreEqual(ra::data::ValueFormat::Centiseconds, editor.GetValueFormat());
+        Assert::AreEqual(ra::data::ValueFormat::Centiseconds, leaderboard.GetValueFormat());
+    }
+
+    TEST_METHOD(TestSyncLowerIsBetter)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetLowerIsBetter(true);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+        Assert::IsTrue(editor.IsLowerBetter());
+        Assert::IsTrue(leaderboard.IsLowerBetter());
+
+        editor.SetLowerIsBetter(false);
+        Assert::IsFalse(editor.IsLowerBetter());
+        Assert::IsFalse(leaderboard.IsLowerBetter());
+
+        leaderboard.SetLowerIsBetter(true);
+        Assert::IsTrue(editor.IsLowerBetter());
+        Assert::IsTrue(leaderboard.IsLowerBetter());
     }
 
     TEST_METHOD(TestSyncPauseOnReset)
@@ -1040,6 +1174,38 @@ public:
         Assert::AreEqual(std::wstring(L"6/99"), editor.GetMeasuredValue());
     }
 
+    TEST_METHOD(TestDoFrameUpdatesMeasuredFromActiveLeaderboard)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetID(1234U);
+        leaderboard.SetStartTrigger("1=1");
+        leaderboard.SetSubmitTrigger("1=0");
+        leaderboard.SetCancelTrigger("0=1");
+        leaderboard.SetValueDefinition("M:0xH1234");
+        leaderboard.SetValueFormat(ra::data::ValueFormat::Centiseconds);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+        leaderboard.Activate();
+
+        editor.LoadAsset(&leaderboard);
+
+        auto* pDefinition = editor.mockRuntime.GetLeaderboardDefinition(1234U);
+        Expects(pDefinition != nullptr);
+        pDefinition->value.value.value = 6U;
+        Assert::AreEqual(std::wstring(L"0"), editor.GetMeasuredValue());
+        Assert::AreEqual(std::wstring(L"0:00.00"), editor.GetFormattedValue());
+
+        editor.DoFrame();
+        Assert::AreEqual(std::wstring(L"6"), editor.GetMeasuredValue());
+        Assert::AreEqual(std::wstring(L"0:00.06"), editor.GetFormattedValue());
+
+        pDefinition->value.value.value = 12345U;
+        editor.DoFrame();
+        Assert::AreEqual(std::wstring(L"12345"), editor.GetMeasuredValue());
+        Assert::AreEqual(std::wstring(L"2:03.45"), editor.GetFormattedValue());
+    }
+
     TEST_METHOD(TestDecimalPreferredOnVisible)
     {
         AssetEditorViewModelHarness editor;
@@ -1196,6 +1362,29 @@ public:
         Expects(pCondition != nullptr);
         // definition changed. when reloaded, the updated state should be discarded
         Assert::AreEqual(0U, pCondition->GetCurrentHits());
+    }
+
+    TEST_METHOD(TestSelectedLeaderboardPart)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetStartTrigger("0xH1234=6.1.");
+        leaderboard.SetSubmitTrigger("0xH2345!=99");
+        leaderboard.SetCancelTrigger("0xH3456>3");
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+        Assert::AreEqual(std::string("0xH1234=6.1."), editor.Trigger().Serialize());
+        Assert::IsFalse(leaderboard.IsModified());
+
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Submit);
+        Assert::AreEqual(std::string("0xH2345!=99"), editor.Trigger().Serialize());
+        Assert::IsFalse(leaderboard.IsModified());
+
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Cancel);
+        Assert::AreEqual(std::string("0xH3456>3"), editor.Trigger().Serialize());
+        Assert::IsFalse(leaderboard.IsModified());
     }
 
 };

@@ -222,7 +222,7 @@ public:
     /// <summary>
     /// Gets the asset value format.
     /// </summary>
-    ra::data::ValueFormat ValueFormat() const { return ra::itoe<ra::data::ValueFormat>(GetValue(ValueFormatProperty)); }
+    ra::data::ValueFormat GetValueFormat() const { return ra::itoe<ra::data::ValueFormat>(GetValue(ValueFormatProperty)); }
 
     /// <summary>
     /// Sets the asset value format.

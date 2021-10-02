@@ -2,6 +2,10 @@
 
 #include "RA_StringUtils.h"
 
+#include "data/context/EmulatorContext.hh"
+
+#include "services/ServiceLocator.hh"
+
 #include <rcheevos/include/rc_runtime_types.h>
 
 namespace ra {
@@ -118,13 +122,39 @@ static bool ValidateCondSet(const rc_condset_t* pCondSet, std::wstring& sError)
 {
     bool bInAddHits = false;
     bool bIsCombining = false;
+    bool bInAddAddress = false;
     unsigned long long nAddSourceMax = 0;
+    ra::ByteAddress nMaxAddress = 0;
 
     int nIndex = 1;
     const rc_condition_t* pCondition = pCondSet->conditions;
     for (; pCondition != nullptr; ++nIndex, pCondition = pCondition->next)
     {
         unsigned nMax = MaxValue(&pCondition->operand1); // maximum possible calculated value for comparison
+
+        if (!bInAddAddress)
+        {
+            if (nMaxAddress == 0)
+            {
+                if (ra::services::ServiceLocator::Exists<ra::data::context::EmulatorContext>())
+                {
+                    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+                    nMaxAddress = gsl::narrow_cast<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
+                }
+
+                if (nMaxAddress == 0)
+                    nMaxAddress = 0xFFFFFFFF;
+                else
+                    nMaxAddress--;
+            }
+
+            if ((rc_operand_is_memref(&pCondition->operand1) && pCondition->operand1.value.memref->address > nMaxAddress) ||
+                (rc_operand_is_memref(&pCondition->operand2) && pCondition->operand2.value.memref->address > nMaxAddress))
+            {
+                sError = ra::StringPrintf(L"Condition %u: Address out of range (max %04X).", nIndex, nMaxAddress);
+                return false;
+            }
+        }
 
         switch (pCondition->type)
         {
@@ -205,6 +235,9 @@ static bool ValidateCondSet(const rc_condset_t* pCondSet, std::wstring& sError)
 
         // reset AddSource chain
         nAddSourceMax = 0;
+
+        // AddAddress only ever effects the next condition
+        bInAddAddress = (pCondition->type == RC_CONDITION_ADD_ADDRESS);
     }
 
     if (bIsCombining)

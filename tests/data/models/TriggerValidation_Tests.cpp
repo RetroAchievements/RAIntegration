@@ -2,6 +2,8 @@
 
 #include "data\models\TriggerValidation.hh"
 
+#include "tests\mocks\MockEmulatorContext.hh"
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
@@ -113,6 +115,35 @@ public:
         // size of the final result.
         AssertValidation("A:0xH1234_0xH1235=0xH2345", L"");
         AssertValidation("A:0xH1234_0xH1235=0x 2345", L"");
+    }
+
+    TEST_METHOD(TestAddressRange)
+    {
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+
+        // no range registered, don't invalidate
+        AssertValidation("0xH1234>0xH1235", L"");
+
+        mockEmulatorContext.AddMemoryBlock(0, 0x10000, nullptr, nullptr);
+
+        // basic checks for each side
+        AssertValidation("0xH1234>0xH1235", L"");
+        AssertValidation("0xH12345>0xH1235", L"Condition 1: Address out of range (max FFFF).");
+        AssertValidation("0xH1234>0xH12345", L"Condition 1: Address out of range (max FFFF).");
+        AssertValidation("0xH12345>0xH12345", L"Condition 1: Address out of range (max FFFF).");
+        AssertValidation("0xX1234>h12345", L"");
+
+        // support for multiple memory blocks and edge addresses
+        mockEmulatorContext.AddMemoryBlock(1, 0x10000, nullptr, nullptr);
+        AssertValidation("0xH1234>0xH1235", L"");
+        AssertValidation("0xH12345>0xH1235", L"");
+        AssertValidation("0xH0000>5", L"");
+        AssertValidation("0xH1FFFF>5", L"");
+        AssertValidation("0xH20000>5", L"Condition 1: Address out of range (max 1FFFF).");
+
+        // AddAddress can use really big values for negative offsets, don't flag them.
+        AssertValidation("I:0xX1234_0xHFFFFFF00>5", L"");
+        AssertValidation("I:0xX1234_0xH1234>5_0xHFFFFFF00>5", L"Condition 3: Address out of range (max 1FFFF).");
     }
 };
 

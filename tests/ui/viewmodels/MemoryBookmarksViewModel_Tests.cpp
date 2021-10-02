@@ -3,6 +3,7 @@
 #include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MemoryBookmarksViewModel.hh"
 
+#include "tests\RA_UnitTestHelpers.h"
 #include "tests\ui\UIAsserts.hh"
 
 #include "tests\mocks\MockAchievementRuntime.hh"
@@ -30,7 +31,7 @@ std::wstring ToString<ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBeha
         case ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::None:
             return L"None";
         case ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen:
-            return L"Fozen";
+            return L"Frozen";
         case ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange:
             return L"PauseOnChange";
         default:
@@ -74,7 +75,7 @@ public:
 
         Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Count());
 
-        Assert::AreEqual({ 10U }, bookmarks.Sizes().Count());
+        Assert::AreEqual({ 12U }, bookmarks.Sizes().Count());
         Assert::AreEqual((int)MemSize::EightBit, bookmarks.Sizes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L" 8-bit"), bookmarks.Sizes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)MemSize::SixteenBit, bookmarks.Sizes().GetItemAt(1)->GetId());
@@ -95,6 +96,10 @@ public:
         Assert::AreEqual(std::wstring(L"Lower4"), bookmarks.Sizes().GetItemAt(8)->GetLabel());
         Assert::AreEqual((int)MemSize::Nibble_Upper, bookmarks.Sizes().GetItemAt(9)->GetId());
         Assert::AreEqual(std::wstring(L"Upper4"), bookmarks.Sizes().GetItemAt(9)->GetLabel());
+        Assert::AreEqual((int)MemSize::Float, bookmarks.Sizes().GetItemAt(10)->GetId());
+        Assert::AreEqual(std::wstring(L"Float"), bookmarks.Sizes().GetItemAt(10)->GetLabel());
+        Assert::AreEqual((int)MemSize::MBF32, bookmarks.Sizes().GetItemAt(11)->GetId());
+        Assert::AreEqual(std::wstring(L"MBF32"), bookmarks.Sizes().GetItemAt(11)->GetLabel());
 
         Assert::AreEqual({ 2U }, bookmarks.Formats().Count());
         Assert::AreEqual((int)MemFormat::Hex, bookmarks.Formats().GetItemAt(0)->GetId());
@@ -272,6 +277,43 @@ public:
         Assert::AreEqual(1234U, bookmark.GetAddress());
         Assert::AreEqual((int)MemSize::EightBit, (int)bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
+    }
+
+    TEST_METHOD(TestLoadSaveBookmarkSizes)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+
+        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>([](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            vmFileDialog.SetFileName(L"bookmarks.json");
+            return DialogResult::OK;
+        });
+
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(bookmarks.Sizes().Count()); ++nIndex)
+        {
+            const auto nSize = ra::itoe<MemSize>(bookmarks.Sizes().GetItemAt(nIndex)->GetId());
+            Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Count());
+
+            bookmarks.AddBookmark(1234U, nSize);
+            Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+
+            bookmarks.SaveBookmarkFile();
+
+            bookmarks.Bookmarks().GetItemAt(0)->SetSelected(true);
+            bookmarks.RemoveSelectedBookmarks();
+            Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Count());
+
+            bookmarks.LoadBookmarkFile();
+            Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+
+            Assert::AreEqual(nSize, bookmarks.Bookmarks().GetItemAt(0)->GetSize());
+
+            bookmarks.Bookmarks().GetItemAt(0)->SetSelected(true);
+            bookmarks.RemoveSelectedBookmarks();
+        }
     }
 
     TEST_METHOD(TestSaveBookmarks)

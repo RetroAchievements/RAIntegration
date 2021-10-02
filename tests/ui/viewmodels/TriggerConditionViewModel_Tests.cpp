@@ -358,6 +358,8 @@ public:
         ParseAndRegenerate("0xS1234=0xS2345"); // bit6
         ParseAndRegenerate("0xT1234=0xT2345"); // bit7
         ParseAndRegenerate("0xK1234=0xK2345"); // bitcount
+        ParseAndRegenerate("fF1234=fF2345"); // float
+        ParseAndRegenerate("fM1234=fM2345"); // mbf32
     }
 
     TEST_METHOD(TestOperandTypes)

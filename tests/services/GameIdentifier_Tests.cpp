@@ -26,8 +26,9 @@ namespace ra {
 namespace services {
 namespace tests {
 
-std::array<BYTE, 16> ROM = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
-std::string ROM_HASH = "190c4c105786a2121d85018939108a6c";
+static std::array<BYTE, 16> ROM = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
+static std::array<BYTE, 16> ROM2 = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
+static std::string ROM_HASH = "190c4c105786a2121d85018939108a6c";
 
 class GameIdentifierHarness : public GameIdentifier
 {
@@ -224,6 +225,85 @@ public:
         Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
         Assert::AreEqual(ra::data::context::GameContext::Mode::CompatibilityTest, identifier.mockGameContext.GetMode());
         Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
+    }
+
+    TEST_METHOD(TestIdentifyGameCached)
+    {
+        GameIdentifierHarness identifier;
+        identifier.mockUserContext.Initialize("User", "ApiToken");
+        identifier.MockResolveHashResponse(23U);
+
+        Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+
+        identifier.mockServer.HandleRequest<ra::api::ResolveHash>(
+            [](const ra::api::ResolveHash::Request&, ra::api::ResolveHash::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            response.GameId = 32U;
+            return true;
+        });
+        Assert::AreEqual(32U, identifier.IdentifyGame(&ROM2.at(0), ROM2.size()));
+
+        // switching back and forth between hashes should avoid the server request
+        identifier.mockServer.HandleRequest<ra::api::ResolveHash>(
+            [](const ra::api::ResolveHash::Request&, ra::api::ResolveHash::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            response.GameId = 99U;
+            return true;
+        });
+        Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+        Assert::AreEqual(32U, identifier.IdentifyGame(&ROM2.at(0), ROM2.size()));
+    }
+
+    TEST_METHOD(TestIdentifyGameUnknownNotCached)
+    {
+        GameIdentifierHarness identifier;
+        identifier.mockEmulatorContext.MockGameTitle("TestGame");
+        identifier.mockUserContext.Initialize("User", "ApiToken");
+
+        identifier.mockServer.HandleRequest<ra::api::ResolveHash>(
+            [](const ra::api::ResolveHash::Request&, ra::api::ResolveHash::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            response.GameId = 0U;
+            return true;
+        });
+
+        bool bDialogShown = false;
+        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::UnknownGameViewModel& vmUnknownGame)
+        {
+            bDialogShown = true;
+            vmUnknownGame.SetSelectedGameId(23);
+            return ra::ui::DialogResult::OK;
+        });
+        Assert::AreEqual(23U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+        Assert::IsTrue(bDialogShown);
+
+        bDialogShown = false;
+        identifier.mockDesktop.ResetExpectedWindows();
+        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::UnknownGameViewModel& vmUnknownGame)
+        {
+            bDialogShown = true;
+            vmUnknownGame.SetSelectedGameId(32);
+            return ra::ui::DialogResult::OK;
+        });
+        Assert::AreEqual(32U, identifier.IdentifyGame(&ROM2.at(0), ROM2.size()));
+        Assert::IsTrue(bDialogShown);
+
+        // switching back to the first unidentified game will show the unknown game dialog again
+        bDialogShown = false;
+        identifier.mockDesktop.ResetExpectedWindows();
+        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::UnknownGameViewModel& vmUnknownGame)
+        {
+            bDialogShown = true;
+            vmUnknownGame.SetSelectedGameId(99);
+            return ra::ui::DialogResult::OK;
+        });
+        Assert::AreEqual(99U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
     }
 
     TEST_METHOD(TestActivateGameZeroGameNotLoaded)

@@ -27,8 +27,8 @@ public:
     /// <summary>
     /// Identifies a game.
     /// </summary>
-    /// <param name="sMD5">The unique identifier of the game.</param>
-    unsigned int IdentifyHash(const std::string& sMD5);
+    /// <param name="sHash">The unique identifier of the game.</param>
+    unsigned int IdentifyHash(const std::string& sHash);
 
     /// <summary>
     /// Activates a game.
@@ -37,9 +37,10 @@ public:
     void ActivateGame(unsigned int nGameId);
 
 private:
-    std::string m_sPendingMD5;
+    std::string m_sPendingHash;
     unsigned int m_nPendingGameId{};
     ra::data::context::GameContext::Mode m_nPendingMode{};
+    std::map<std::string, unsigned> m_mKnownHashes;
 };
 
 } // namespace services

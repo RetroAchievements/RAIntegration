@@ -1,7 +1,6 @@
 #include "GameIdentifier.hh"
 
 #include "RA_Log.h"
-#include "RA_md5factory.h"
 #include "RA_StringUtils.h"
 
 #include <rc_hash.h>
@@ -39,7 +38,7 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
 
     if (pROM == nullptr || nROMSize == 0)
     {
-        m_sPendingMD5.clear();
+        m_sPendingHash.clear();
         m_nPendingGameId = 0U;
         return 0U;
     }
@@ -50,7 +49,7 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
     return IdentifyHash(hash);
 }
 
-unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
+unsigned int GameIdentifier::IdentifyHash(const std::string& sHash)
 {
     if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
     {
@@ -62,53 +61,63 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
     unsigned int nGameId = 0U;
     m_nPendingMode = ra::data::context::GameContext::Mode::Normal;
 
-    ra::api::ResolveHash::Request request;
-    request.Hash = sMD5;
-
-    const auto response = request.Call();
-    if (response.Succeeded())
+    const auto pIter = m_mKnownHashes.find(sHash);
+    if (pIter != m_mKnownHashes.end())
     {
-        nGameId = response.GameId;
-        if (nGameId == 0) // Unknown
+        RA_LOG_INFO("Using previously looked up game ID %u for hash %s", nGameId, sHash);
+        nGameId = pIter->second;
+    }
+    else
+    {
+        ra::api::ResolveHash::Request request;
+        request.Hash = sHash;
+
+        const auto response = request.Call();
+        if (response.Succeeded())
         {
-            RA_LOG_INFO("Could not identify game with hash %s", sMD5);
-
-            auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetGameTitle();
-
-            ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
-            vmUnknownGame.InitializeGameTitles();
-            vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().Name());
-            vmUnknownGame.SetChecksum(ra::Widen(sMD5));
-            vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
-            vmUnknownGame.SetNewGameName(vmUnknownGame.GetEstimatedGameName());
-
-            if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
+            nGameId = response.GameId;
+            if (nGameId == 0) // Unknown
             {
-                nGameId = vmUnknownGame.GetSelectedGameId();
+                RA_LOG_INFO("Could not identify game with hash %s", sHash);
 
-                if (vmUnknownGame.GetTestMode())
-                    m_nPendingMode = ra::data::context::GameContext::Mode::CompatibilityTest;
+                auto sEstimatedGameTitle = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetGameTitle();
+
+                ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
+                vmUnknownGame.InitializeGameTitles();
+                vmUnknownGame.SetSystemName(ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>().Name());
+                vmUnknownGame.SetChecksum(ra::Widen(sHash));
+                vmUnknownGame.SetEstimatedGameName(ra::Widen(sEstimatedGameTitle));
+                vmUnknownGame.SetNewGameName(vmUnknownGame.GetEstimatedGameName());
+
+                if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
+                {
+                    nGameId = vmUnknownGame.GetSelectedGameId();
+
+                    if (vmUnknownGame.GetTestMode())
+                        m_nPendingMode = ra::data::context::GameContext::Mode::CompatibilityTest;
+                }
+            }
+            else
+            {
+                RA_LOG_INFO("Successfully looked up game with ID %u", nGameId);
+                m_mKnownHashes.insert_or_assign(sHash, nGameId);
             }
         }
         else
         {
-            RA_LOG_INFO("Successfully looked up game with ID %u", nGameId);
-        }
-    }
-    else
-    {
-        std::wstring sErrorMessage = ra::Widen(response.ErrorMessage);
-        if (sErrorMessage.empty())
-        {
-            auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-            sErrorMessage = ra::StringPrintf(L"Error from %s", pConfiguration.GetHostName());
-        }
+            std::wstring sErrorMessage = ra::Widen(response.ErrorMessage);
+            if (sErrorMessage.empty())
+            {
+                auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                sErrorMessage = ra::StringPrintf(L"Error from %s", pConfiguration.GetHostName());
+            }
 
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Could not identify game.", sErrorMessage);
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Could not identify game.", sErrorMessage);
+        }
     }
 
     // store the hash and game id - will be used by _RA_ActivateGame (if called)
-    m_sPendingMD5 = sMD5;
+    m_sPendingHash = sHash;
     m_nPendingGameId = nGameId;
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -116,7 +125,7 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sMD5)
     {
         // same as currently loaded rom. assume user is switching disks and _RA_ActivateGame won't be called.
         // update the hash now. if it does get called, this is redundant.
-        pGameContext.SetGameHash(sMD5);
+        pGameContext.SetGameHash(sHash);
         pGameContext.SetMode(m_nPendingMode);
     }
 
@@ -141,7 +150,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
 
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.LoadGame(nGameId, m_nPendingMode);
-        pGameContext.SetGameHash((nGameId == m_nPendingGameId) ? m_sPendingMD5 : "");
+        pGameContext.SetGameHash((nGameId == m_nPendingGameId) ? m_sPendingHash : "");
 
         ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>().BeginSession(nGameId);
 
@@ -182,7 +191,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
 
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.LoadGame(0U, m_nPendingMode);
-        pGameContext.SetGameHash((m_nPendingGameId == 0) ? m_sPendingMD5 : "");
+        pGameContext.SetGameHash((m_nPendingGameId == 0) ? m_sPendingHash : "");
     }
 
     ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().ResetMemoryModified();

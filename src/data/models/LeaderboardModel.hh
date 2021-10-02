@@ -123,6 +123,21 @@ public:
     void SetValueFormat(ValueFormat nValue) { SetValue(ValueFormatProperty, ra::etoi(nValue)); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not lower values are better.
+    /// </summary>
+    static const BoolModelProperty LowerIsBetterProperty;
+
+    /// <summary>
+    /// Gets whether or not lower values are better.
+    /// </summary>
+    bool IsLowerBetter() const { return GetValue(LowerIsBetterProperty); }
+
+    /// <summary>
+    /// Sets whether or not lower values are better.
+    /// </summary>
+    void SetLowerIsBetter(bool nValue) { SetValue(LowerIsBetterProperty, nValue); }
+
+    /// <summary>
     /// Populates the start/submit/cancel/value fields from a compound definition.
     /// </summary>
     void SetDefinition(const std::string& sDefinition);
@@ -135,8 +150,17 @@ public:
     void Serialize(ra::services::TextWriter& pWriter) const override;
     bool Deserialize(ra::Tokenizer& pTokenizer) override;
 
-    //const CapturedTriggerHits& GetCapturedHits() const noexcept { return m_pCapturedTriggerHits; }
-    //void ResetCapturedHits() noexcept { m_pCapturedTriggerHits.Reset(); }
+    const CapturedTriggerHits& GetStartCapturedHits() const noexcept { return m_pCapturedStartTriggerHits; }
+    const CapturedTriggerHits& GetSubmitCapturedHits() const noexcept { return m_pCapturedSubmitTriggerHits; }
+    const CapturedTriggerHits& GetCancelCapturedHits() const noexcept { return m_pCapturedCancelTriggerHits; }
+    const CapturedTriggerHits& GetValueCapturedHits() const noexcept { return m_pCapturedValueDefinitionHits; }
+    void ResetCapturedHits() noexcept 
+    {
+        m_pCapturedStartTriggerHits.Reset();
+        m_pCapturedSubmitTriggerHits.Reset();
+        m_pCapturedCancelTriggerHits.Reset();
+        m_pCapturedValueDefinitionHits.Reset();
+    }
 
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;

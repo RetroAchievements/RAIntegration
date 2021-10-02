@@ -228,6 +228,33 @@ public:
         TestSerializeValueFormat(ValueFormat::Minutes, "MINUTES");
         TestSerializeValueFormat(ValueFormat::SecondsAsMinutes, "SECS_AS_MINS");
     }
+
+    TEST_METHOD(TestTransactionalProperties)
+    {
+        LeaderboardModelHarness leaderboard;
+        leaderboard.SetID(1U);
+        leaderboard.SetName(L"Title");
+        leaderboard.SetDescription(L"Desc");
+        leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
+        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetLowerIsBetter(true);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        Assert::AreEqual(AssetChanges::None, leaderboard.GetChanges());
+
+        leaderboard.SetValueFormat(ValueFormat::Score);
+        Assert::AreEqual(AssetChanges::Modified, leaderboard.GetChanges());
+
+        leaderboard.SetValueFormat(ValueFormat::Value);
+        Assert::AreEqual(AssetChanges::None, leaderboard.GetChanges());
+
+        leaderboard.SetLowerIsBetter(false);
+        Assert::AreEqual(AssetChanges::Modified, leaderboard.GetChanges());
+
+        leaderboard.SetLowerIsBetter(true);
+        Assert::AreEqual(AssetChanges::None, leaderboard.GetChanges());
+    }
 };
 
 

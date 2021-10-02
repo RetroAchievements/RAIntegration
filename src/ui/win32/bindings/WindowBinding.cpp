@@ -71,10 +71,23 @@ void WindowBinding::SetHWND(DialogBase* pDialog, HWND hWnd)
             {
                 for (const auto nDlgItemId : pIter.second)
                 {
+                    if (m_vMultipleVisibilityBoundControls.find(nDlgItemId) != m_vMultipleVisibilityBoundControls.end())
+                        continue;
+
                     auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
                     if (hControl)
                         ShowWindow(hControl, GetValueFromAny(*pProperty) ? SW_SHOW : SW_HIDE);
                 }
+            }
+        }
+
+        for (const auto nDlgItemId : m_vMultipleVisibilityBoundControls)
+        {
+            auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
+            if (hControl)
+            {
+                const bool bVisible = CheckMultiBoundVisibility(nDlgItemId);
+                ShowWindow(hControl, bVisible ? SW_SHOW : SW_HIDE);
             }
         }
 
@@ -336,7 +349,11 @@ void WindowBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeA
             auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
             if (hControl)
             {
-                ShowWindow(hControl, args.tNewValue ? SW_SHOW : SW_HIDE);
+                bool bVisible = args.tNewValue;
+                if (bVisible && m_vMultipleVisibilityBoundControls.find(nDlgItemId) != m_vMultipleVisibilityBoundControls.end())
+                    bVisible = CheckMultiBoundVisibility(nDlgItemId);
+
+                ShowWindow(hControl, bVisible ? SW_SHOW : SW_HIDE);
                 bRepaint = true;
             }
         }
@@ -361,6 +378,17 @@ void WindowBinding::BindEnabled(int nDlgItemId, const BoolModelProperty& pSource
 
 void WindowBinding::BindVisible(int nDlgItemId, const BoolModelProperty& pSourceProperty)
 {
+    bool bMultipleBindings = false;
+    for (const auto& pPair : m_mVisibilityBindings)
+    {
+        if (pPair.second.find(nDlgItemId) != pPair.second.end())
+        {
+            m_vMultipleVisibilityBoundControls.insert(nDlgItemId);
+            bMultipleBindings = true;
+            break;
+        }
+    }
+
     m_mVisibilityBindings[pSourceProperty.GetKey()].insert(nDlgItemId);
 
     if (m_hWnd)
@@ -368,8 +396,33 @@ void WindowBinding::BindVisible(int nDlgItemId, const BoolModelProperty& pSource
         // immediately push values from the viewmodel to the UI
         auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
         if (hControl)
-            ShowWindow(hControl, GetValueFromAny(pSourceProperty) ? SW_SHOW : SW_HIDE);
+        {
+            const bool bVisible = bMultipleBindings ?
+                CheckMultiBoundVisibility(nDlgItemId) : GetValueFromAny(pSourceProperty);
+            ShowWindow(hControl, bVisible ? SW_SHOW : SW_HIDE);
+        }
     }
+}
+
+bool WindowBinding::CheckMultiBoundVisibility(int nDlgItemId) const
+{
+    bool bVisible = true;
+
+    for (const auto& pPair : m_mVisibilityBindings)
+    {
+        if (pPair.second.find(nDlgItemId) != pPair.second.end())
+        {
+            const auto* pProperty = dynamic_cast<const BoolModelProperty*>(ra::data::ModelPropertyBase::GetPropertyForKey(pPair.first));
+            if (pProperty != nullptr)
+            {
+                bVisible &= GetValueFromAny(*pProperty);
+                if (!bVisible)
+                    break;
+            }
+        }
+    }
+
+    return bVisible;
 }
 
 const std::wstring& WindowBinding::GetValueFromAny(const StringModelProperty& pProperty) const

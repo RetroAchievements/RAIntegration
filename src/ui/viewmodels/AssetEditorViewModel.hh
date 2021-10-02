@@ -5,7 +5,6 @@
 #include "TriggerViewModel.hh"
 
 #include "data\Types.hh"
-#include "data\models\AchievementModel.hh"
 #include "data\models\AssetModelBase.hh"
 
 #include "ui\WindowViewModelBase.hh"
@@ -16,6 +15,7 @@ namespace viewmodels {
 
 class AssetEditorViewModel : public WindowViewModelBase, 
     protected ViewModelBase::NotifyTarget,
+    protected ViewModelCollectionBase::NotifyTarget,
     protected ra::data::DataModelBase::NotifyTarget
 {
 public:
@@ -158,6 +158,16 @@ public:
     // ===== Achievement Specific =====
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not an asset is an achievement.
+    /// </summary>
+    static const BoolModelProperty IsAchievementProperty;
+
+    /// <summary>
+    /// Gets whether or not an asset is an achievement.
+    /// </summary>
+    bool IsAchievement() const { return GetValue(IsAchievementProperty); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the achievement points.
     /// </summary>
     static const IntModelProperty PointsProperty;
@@ -191,6 +201,96 @@ public:
     /// Opens the file chooser to select a new badge image.
     /// </summary>
     void SelectBadgeFile();
+
+    // ===== Leaderboard Specific =====
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not an asset is a leaderboard.
+    /// </summary>
+    static const BoolModelProperty IsLeaderboardProperty;
+
+    /// <summary>
+    /// Gets whether or not an asset is a leaderboard.
+    /// </summary>
+    bool IsLeaderboard() const { return GetValue(IsLeaderboardProperty); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the asset value format.
+    /// </summary>
+    static const IntModelProperty ValueFormatProperty;
+
+    /// <summary>
+    /// Gets the asset value format.
+    /// </summary>
+    ra::data::ValueFormat GetValueFormat() const { return ra::itoe<ra::data::ValueFormat>(GetValue(ValueFormatProperty)); }
+
+    /// <summary>
+    /// Sets the asset value format.
+    /// </summary>
+    void SetValueFormat(ra::data::ValueFormat nValue) { SetValue(ValueFormatProperty, ra::etoi(nValue)); }
+
+    /// <summary>
+    /// Gets the list of leaderboard formats.
+    /// </summary>
+    const LookupItemViewModelCollection& Formats() const noexcept
+    {
+        return m_vFormats;
+    }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the formatted value.
+    /// </summary>
+    static const StringModelProperty FormattedValueProperty;
+
+    /// <summary>
+    /// Gets the formatted value.
+    /// </summary>
+    const std::wstring& GetFormattedValue() const { return GetValue(FormattedValueProperty); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not lower values are better.
+    /// </summary>
+    static const BoolModelProperty LowerIsBetterProperty;
+
+    /// <summary>
+    /// Gets whether or not lower values are better.
+    /// </summary>
+    bool IsLowerBetter() const { return GetValue(LowerIsBetterProperty); }
+
+    /// <summary>
+    /// Sets whether or not lower values are better.
+    /// </summary>
+    void SetLowerIsBetter(bool nValue) { SetValue(LowerIsBetterProperty, nValue); }
+
+    enum class LeaderboardPart
+    {
+        None = 0,
+        Start,
+        Submit,
+        Cancel,
+        Value
+    };
+
+    /// <summary>
+    /// Gets the list of leaderboard parts.
+    /// </summary>
+    const LookupItemViewModelCollection& LeaderboardParts() const noexcept { return m_vLeaderboardParts; }
+    LookupItemViewModelCollection& LeaderboardParts() noexcept { return m_vLeaderboardParts; }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the selected leaderboard part.
+    /// </summary>
+    static const IntModelProperty SelectedLeaderboardPartProperty;
+
+    /// <summary>
+    /// Gets the selected leaderboard part.
+    /// </summary>
+    LeaderboardPart GetSelectedLeaderboardPart() const { return ra::itoe<LeaderboardPart>(GetValue(SelectedLeaderboardPartProperty)); }
+
+    /// <summary>
+    /// Sets the selected leaderboard part.
+    /// </summary>
+    void SetSelectedLeaderboardPart(LeaderboardPart nValue) { SetValue(SelectedLeaderboardPartProperty, ra::etoi(nValue)); }
 
     // ===== Trigger =====
 
@@ -293,6 +393,9 @@ protected:
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
+    // ViewModelCollectionBase::NotifyTarget
+    void OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args) override;
+
     // DataModelBase::NotifyTarget
     void OnDataModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
     void OnDataModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
@@ -308,11 +411,15 @@ protected:
     void UpdateAssetFrameValues();
     void UpdateDebugHighlights();
     void UpdateMeasuredValue();
+    void UpdateLeaderboardTrigger();
 
     TriggerViewModel m_vmTrigger;
 
     ra::data::models::AssetModelBase* m_pAsset = nullptr;
     bool m_bIgnoreTriggerUpdate = false;
+
+    LookupItemViewModelCollection m_vFormats;
+    LookupItemViewModelCollection m_vLeaderboardParts;
 };
 
 } // namespace viewmodels

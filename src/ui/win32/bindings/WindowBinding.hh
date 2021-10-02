@@ -137,6 +137,7 @@ private:
     std::unordered_map<int, int> m_mLabelBindings;
     std::unordered_map<int, std::set<int>> m_mEnabledBindings;
     std::unordered_map<int, std::set<int>> m_mVisibilityBindings;
+    std::set<int> m_vMultipleVisibilityBoundControls;
 
     class ChildBinding : public BindingBase
     {
@@ -173,6 +174,7 @@ private:
     const std::wstring& GetValueFromAny(const StringModelProperty& pProperty) const;
     int GetValueFromAny(const IntModelProperty& pProperty) const;
     bool GetValueFromAny(const BoolModelProperty& pProperty) const;
+    bool CheckMultiBoundVisibility(int nDlgItemId) const;
 
     std::string m_sSizeAndPositionKey;
     RelativePosition m_nDefaultHorizontalLocation{ RelativePosition::None };

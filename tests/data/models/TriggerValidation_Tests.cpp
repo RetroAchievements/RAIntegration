@@ -61,6 +61,59 @@ public:
         AssertValidation("C:0xH1234=1_0xH2345=2.1.", L"");
         AssertValidation("D:0xH1234=1_0xH2345=2.1.", L"");
     }
+
+    TEST_METHOD(TestRangeComparisons)
+    {
+        AssertValidation("0xH1234>1", L"");
+
+        AssertValidation("0xH1234=255", L"");
+        AssertValidation("0xH1234!=255", L"");
+        AssertValidation("0xH1234>255", L"Condition 1: Comparison is never true");
+        AssertValidation("0xH1234>=255", L"");
+        AssertValidation("0xH1234<255", L"");
+        AssertValidation("0xH1234<=255", L"Condition 1: Comparison is always true");
+
+        AssertValidation("R:0xH1234<255", L"");
+        AssertValidation("R:0xH1234<=255", L"Condition 1: Comparison is always true");
+
+        AssertValidation("0xH1234=256", L"Condition 1: Comparison is never true");
+        AssertValidation("0xH1234!=256", L"Condition 1: Comparison is always true");
+        AssertValidation("0xH1234>256", L"Condition 1: Comparison is never true");
+        AssertValidation("0xH1234>=256", L"Condition 1: Comparison is never true");
+        AssertValidation("0xH1234<256", L"Condition 1: Comparison is always true");
+        AssertValidation("0xH1234<=256", L"Condition 1: Comparison is always true");
+
+        AssertValidation("0x 1234>=65535", L"");
+        AssertValidation("0x 1234>=65536", L"Condition 1: Comparison is never true");
+
+        AssertValidation("0xW1234>=16777215", L"");
+        AssertValidation("0xW1234>=16777216", L"Condition 1: Comparison is never true");
+
+        AssertValidation("0xX1234>=4294967295", L"");
+        AssertValidation("0xX1234>4294967295", L"Condition 1: Comparison is never true");
+
+        AssertValidation("0xT1234>=1", L"");
+        AssertValidation("0xT1234>1", L"Condition 1: Comparison is never true");
+
+        // AddSource max is the sum of all parts (255+255=510)
+        AssertValidation("A:0xH1234_0xH1235<510", L"");
+        AssertValidation("A:0xH1234_0xH1235<=510", L"Condition 2: Comparison is always true");
+
+        // SubSource max is always 0xFFFFFFFF
+        AssertValidation("B:0xH1234_0xH1235<510", L"");
+        AssertValidation("B:0xH1234_0xH1235<=510", L"");
+    }
+
+    TEST_METHOD(TestSizeComparisons)
+    {
+        AssertValidation("0xH1234>0xH1235", L"");
+        AssertValidation("0xH1234>0x 1235", L"Condition 1: Comparing different memory sizes");
+
+        // AddSource chain may compare different sizes without warning as the chain changes the
+        // size of the final result.
+        AssertValidation("A:0xH1234_0xH1235=0xH2345", L"");
+        AssertValidation("A:0xH1234_0xH1235=0x 2345", L"");
+    }
 };
 
 

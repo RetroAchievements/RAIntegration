@@ -5,6 +5,7 @@
 #include "RA_StringUtils.h"
 
 #include "data\context\EmulatorContext.hh"
+#include "data\models\TriggerValidation.hh"
 
 #include "services\FrameEventQueue.hh"
 #include "services\IConfiguration.hh"
@@ -246,7 +247,7 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                     if (rc_parse_memref(&memaddr, &size, &address) == RC_OK)
                     {
                         vmBookmark->SetAddress(address);
-                        vmBookmark->SetSize(TriggerConditionViewModel::MapRcheevosMemSize(size));
+                        vmBookmark->SetSize(ra::data::models::TriggerValidation::MapRcheevosMemSize(size));
                     }
                 }
                 else

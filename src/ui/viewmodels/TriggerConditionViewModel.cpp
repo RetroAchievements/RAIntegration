@@ -4,6 +4,7 @@
 #include "RA_StringUtils.h"
 
 #include "data\context\GameContext.hh"
+#include "data\models\TriggerValidation.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
@@ -202,40 +203,6 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
     sBuffer.append(ra::ByteAddressToString(nValue), 2);
 }
 
-static constexpr MemSize MapMemSize(char nSize) noexcept
-{
-    switch (nSize)
-    {
-        case RC_MEMSIZE_BIT_0: return MemSize::Bit_0;
-        case RC_MEMSIZE_BIT_1: return MemSize::Bit_1;
-        case RC_MEMSIZE_BIT_2: return MemSize::Bit_2;
-        case RC_MEMSIZE_BIT_3: return MemSize::Bit_3;
-        case RC_MEMSIZE_BIT_4: return MemSize::Bit_4;
-        case RC_MEMSIZE_BIT_5: return MemSize::Bit_5;
-        case RC_MEMSIZE_BIT_6: return MemSize::Bit_6;
-        case RC_MEMSIZE_BIT_7: return MemSize::Bit_7;
-        case RC_MEMSIZE_LOW: return MemSize::Nibble_Lower;
-        case RC_MEMSIZE_HIGH: return MemSize::Nibble_Upper;
-        case RC_MEMSIZE_8_BITS: return MemSize::EightBit;
-        case RC_MEMSIZE_16_BITS: return MemSize::SixteenBit;
-        case RC_MEMSIZE_24_BITS: return MemSize::TwentyFourBit;
-        case RC_MEMSIZE_32_BITS: return MemSize::ThirtyTwoBit;
-        case RC_MEMSIZE_BITCOUNT: return MemSize::BitCount;
-        case RC_MEMSIZE_16_BITS_BE: return MemSize::SixteenBitBigEndian;
-        case RC_MEMSIZE_24_BITS_BE: return MemSize::TwentyFourBitBigEndian;
-        case RC_MEMSIZE_32_BITS_BE: return MemSize::ThirtyTwoBitBigEndian;
-        default:
-            assert(!"Unsupported operand size");
-            return MemSize::EightBit;
-    }
-}
-
-GSL_SUPPRESS_F4
-MemSize TriggerConditionViewModel::MapRcheevosMemSize(char nSize) noexcept
-{
-    return MapMemSize(nSize);
-}
-
 void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty,
     const IntModelProperty& pSizeProperty, const IntModelProperty& pValueProperty, const rc_operand_t& operand)
 {
@@ -254,7 +221,7 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
         case TriggerOperandType::Prior:
         case TriggerOperandType::BCD:
         {
-            const auto nSize = MapMemSize(operand.size);
+            const auto nSize = ra::data::models::TriggerValidation::MapRcheevosMemSize(operand.size);
             SetValue(pSizeProperty, ra::etoi(nSize));
             SetValue(pValueProperty, operand.value.memref->address);
             break;
@@ -380,7 +347,7 @@ std::wstring TriggerConditionViewModel::GetValueTooltip(unsigned int nValue)
     return std::to_wstring(nValue);
 }
 
-static bool IsIndirectMemref(rc_operand_t& operand) noexcept
+static bool IsIndirectMemref(const rc_operand_t& operand) noexcept
 {
     return rc_operand_is_memref(&operand) && operand.value.memref->value.is_indirect;
 }
@@ -405,6 +372,7 @@ unsigned int TriggerConditionViewModel::GetIndirectAddress(unsigned int nAddress
     bool bIsIndirect = false;
     rc_eval_state_t oEvalState;
     memset(&oEvalState, 0, sizeof(oEvalState));
+    rc_typed_value_t value = {};
     oEvalState.peek = rc_peek_callback;
 
     gsl::index nConditionIndex = 0;
@@ -440,11 +408,15 @@ unsigned int TriggerConditionViewModel::GetIndirectAddress(unsigned int nAddress
                     oCondition.operand2.value.memref = &oTarget;
                 }
 
-                oEvalState.add_address = rc_evaluate_condition_value(&oCondition, &oEvalState);
+                rc_evaluate_condition_value(&value, &oCondition, &oEvalState);
+                rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
+                oEvalState.add_address = value.value.u32;
             }
             else
             {
-                oEvalState.add_address = rc_evaluate_condition_value(pCondition, &oEvalState);
+                rc_evaluate_condition_value(&value, pCondition, &oEvalState);
+                rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
+                oEvalState.add_address = value.value.u32;
                 bIsIndirect = true;
             }
         }

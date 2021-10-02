@@ -148,8 +148,8 @@ static bool ValidateCondSet(const rc_condset_t* pCondSet, std::wstring& sError)
                     nMaxAddress--;
             }
 
-            if ((rc_operand_is_memref(&pCondition->operand1) && pCondition->operand1.value.memref->address > nMaxAddress) ||
-                (rc_operand_is_memref(&pCondition->operand2) && pCondition->operand2.value.memref->address > nMaxAddress))
+            if ((rc_operand_is_memref(&pCondition->operand1) && pCondition->operand1.value.memref && pCondition->operand1.value.memref->address > nMaxAddress) ||
+                (rc_operand_is_memref(&pCondition->operand2) && pCondition->operand2.value.memref && pCondition->operand2.value.memref->address > nMaxAddress))
             {
                 sError = ra::StringPrintf(L"Condition %u: Address out of range (max %04X).", nIndex, nMaxAddress);
                 return false;

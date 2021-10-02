@@ -824,6 +824,22 @@ void MemorySearchViewModel::UpdateResults()
     m_vResults.AddNotifyTarget(*this);
 }
 
+static void GetASCIIText(std::wstring& sText, const unsigned char* pBytes, size_t nBytes)
+{
+    sText.clear();
+    for (size_t i = 0; i < nBytes; ++i)
+    {
+        wchar_t c = gsl::narrow_cast<wchar_t>(*pBytes++);
+        if (c == 0)
+            break;
+
+        if (c < 0x20 || c > 0x7E)
+            c = L'\xFFFD';
+
+        sText.push_back(c);
+    }
+}
+
 void MemorySearchViewModel::UpdateResult(SearchResultViewModel& pRow, ra::services::SearchResults::Result& pResult,
     const ra::data::context::EmulatorContext& pEmulatorContext, bool bCapturePrevious)
 {
@@ -838,20 +854,16 @@ void MemorySearchViewModel::UpdateResult(SearchResultViewModel& pRow, ra::servic
             std::array<unsigned char, 16> pBuffer;
             pEmulatorContext.ReadMemory(pResult.nAddress, &pBuffer.at(0), pBuffer.size());
 
-            std::string sText;
-            for (size_t i = 0; i < pBuffer.size() && pBuffer.at(i); ++i)
-                sText.push_back(static_cast<char>(pBuffer.at(i)));
+            std::wstring sText;
+            GetASCIIText(sText, pBuffer.data(), pBuffer.size());
 
-            pRow.SetCurrentValue(ra::Widen(sText));
+            pRow.SetCurrentValue(sText);
 
             if (bCapturePrevious)
             {
                 pCompareResults.GetBytes(pResult.nAddress, &pBuffer.at(0), pBuffer.size());
-                sText.clear();
-                for (size_t i = 0; i < pBuffer.size() && pBuffer.at(i); ++i)
-                    sText.push_back(static_cast<char>(pBuffer.at(i)));
-
-                pRow.SetPreviousValue(ra::Widen(sText));
+                GetASCIIText(sText, pBuffer.data(), pBuffer.size());
+                pRow.SetPreviousValue(sText);
             }
             else if (!pRow.bHasBeenModified && pRow.GetCurrentValue() != pRow.GetPreviousValue())
             {

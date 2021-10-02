@@ -500,12 +500,20 @@ public:
     // populates a vector of addresses that match the specified filter when applied to a previous search result
     void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious) const override
     {
+        size_t nCompareLength = 16; // maximum length for generic search
         std::vector<unsigned char> vSearchText;
         GetSearchText(vSearchText, srNew.GetFilterString());
 
-        // can't match 0 characters!
         if (vSearchText.empty())
-            return;
+        {
+            // can't match 0 characters!
+            if (srNew.GetFilterType() == SearchFilterType::Constant)
+                return;
+        }
+        else
+        {
+            nCompareLength = vSearchText.size();
+        }
 
         unsigned int nLargestBlock = 0U;
         for (auto& block : GetBlocks(srPrevious))
@@ -530,7 +538,7 @@ public:
                 case SearchFilterType::Constant:
                     for (unsigned int i = 0; i < nStop; ++i)
                     {
-                        if (CompareMemory(&vMemory.at(i), &vSearchText.at(0), vSearchText.size(), srNew.GetFilterComparison()))
+                        if (CompareMemory(&vMemory.at(i), &vSearchText.at(0), nCompareLength, srNew.GetFilterComparison()))
                         {
                             const unsigned int nAddress = block.GetAddress() + i;
                             AddMatch(vMatches, srPrevious, nAddress);
@@ -542,7 +550,7 @@ public:
                 case SearchFilterType::LastKnownValue:
                     for (unsigned int i = 0; i < nStop; ++i)
                     {
-                        if (CompareMemory(&vMemory.at(i), block.GetBytes() + i, vSearchText.size(), srNew.GetFilterComparison()))
+                        if (CompareMemory(&vMemory.at(i), block.GetBytes() + i, nCompareLength, srNew.GetFilterComparison()))
                         {
                             const unsigned int nAddress = block.GetAddress() + i;
                             AddMatch(vMatches, srPrevious, nAddress);
@@ -556,10 +564,12 @@ public:
                 auto& vMatchingAddresses = GetMatchingAddresses(srNew);
                 vMatchingAddresses.insert(vMatchingAddresses.end(), vMatches.begin(), vMatches.end());
 
-                // adjust the last entry to account for the length of the string to ensure
+                // adjust the block size to account for the length of the string to ensure
                 // the block contains the whole string
-                vMatches.back() += gsl::narrow_cast<ra::ByteAddress>(vSearchText.size() - 1);
-                AddBlock(srNew, vMatches, vMemory, block.GetAddress());
+                // (duplicates the AddBlock function, but replaces "GetPadding()-1" with "nCompareLength")
+                const size_t nBlockSize = vMatches.back() - vMatches.front() + nCompareLength;
+                MemBlock& newBlock = AddBlock(srNew, vMatches.front(), gsl::narrow_cast<unsigned int>(nBlockSize));
+                memcpy(newBlock.GetBytes(), &vMemory.at(vMatches.front() - block.GetAddress()), nBlockSize);
 
                 vMatches.clear();
             }

@@ -202,7 +202,7 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged()
     SetChanges(GetChanges() + 1);
 }
 
-static unsigned FloatToU32(float fValue, MemSize nFloatType)
+static unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept
 {
     // this leverages the fact that Windows uses IEE754 floats
     union u
@@ -232,7 +232,7 @@ bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetCurrentValue(const st
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto nAddress = m_nAddress;
-    unsigned nValue;
+    unsigned nValue = 0;
 
     switch (m_nSize)
     {

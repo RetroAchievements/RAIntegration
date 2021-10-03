@@ -71,8 +71,8 @@ private:
             InitializeNotifyTargets();
         }
 
-        bool IsModified() const noexcept { return MemoryBookmarksViewModel::IsModified(); }
-        void ResetModified() { m_nUnmodifiedBookmarkCount = Bookmarks().Count(); }
+        using MemoryBookmarksViewModel::IsModified;
+        void ResetModified() noexcept { m_nUnmodifiedBookmarkCount = Bookmarks().Count(); }
     };
 
 public:

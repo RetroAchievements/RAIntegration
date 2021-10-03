@@ -82,7 +82,7 @@ public:
         /// <summary>
         /// Gets the bookmark address.
         /// </summary>
-        ByteAddress GetAddress() const { return m_nAddress; }
+        ByteAddress GetAddress() const noexcept { return m_nAddress; }
 
         /// <summary>
         /// Sets the bookmark address.
@@ -97,7 +97,7 @@ public:
         /// <summary>
         /// Gets the bookmark size.
         /// </summary>
-        MemSize GetSize() const { return m_nSize; }
+        MemSize GetSize() const noexcept { return m_nSize; }
 
         /// <summary>
         /// Sets the bookmark size.
@@ -212,12 +212,12 @@ public:
         /// <summary>
         /// Gets whether or not the bookmark has been modified.
         /// </summary>
-        bool IsModified() const { return m_bModified; }
+        bool IsModified() const noexcept { return m_bModified; }
 
         /// <summary>
         /// Clears the modified flag.
         /// </summary>
-        void ResetModified() { m_bModified = false; }
+        void ResetModified() noexcept { m_bModified = false; }
 
         /// <summary>
         /// Determines if the bookmarked memory has changed since the last time MemoryChanged was called.
@@ -228,7 +228,7 @@ public:
         /// <summary>
         /// Starts initialization of the bookmark.
         /// </summary>
-        void BeginInitialization() { m_bInitialized = false; }
+        void BeginInitialization() noexcept { m_bInitialized = false; }
 
         /// <summary>
         /// Finishes initialization of the bookmark.
@@ -365,7 +365,7 @@ public:
     /// </summary>
     void SaveBookmarkFile();
 
-    void BeginWritingMemory() { m_nWritingMemoryCount++; }
+    void BeginWritingMemory() noexcept { m_nWritingMemoryCount++; }
     void EndWritingMemory();
 
 protected:

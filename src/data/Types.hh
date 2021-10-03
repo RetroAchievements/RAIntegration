@@ -118,6 +118,8 @@ constexpr unsigned int MemSizeBytes(MemSize nSize)
     {
         case MemSize::ThirtyTwoBit:
         case MemSize::ThirtyTwoBitBigEndian:
+        case MemSize::Float:
+        case MemSize::MBF32:
             return 4;
 
         case MemSize::SixteenBit:

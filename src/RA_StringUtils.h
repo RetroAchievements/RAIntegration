@@ -22,6 +22,7 @@ _NODISCARD std::string Narrow(_In_ const std::string& wstr);
 
 bool ParseUnsignedInt(const std::wstring& sValue, unsigned int nMaximumValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError);
 bool ParseHex(const std::wstring& sValue, unsigned int nMaximumValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError);
+bool ParseFloat(const std::wstring& sValue, _Out_ float& fValue, _Out_ std::wstring& sError);
 
 /// <summary>
 /// Removes one "\r", "\n", or "\r\n" from the end of a string.

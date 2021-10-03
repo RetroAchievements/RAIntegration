@@ -20,6 +20,11 @@
 
 #include <rcheevos/src/rcheevos/rc_internal.h>
 
+#ifdef RA_UTEST
+// awkward workaround to allow individual bookmarks access to the bookmarks view model being tested
+extern ra::ui::viewmodels::MemoryBookmarksViewModel* g_pMemoryBookmarksViewModel;
+#endif
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -85,7 +90,7 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Int
     else if (args.Property == MemoryBookmarkViewModel::SizeProperty)
     {
         m_nSize = ra::itoe<MemSize>(args.tNewValue);
-        SetReadOnly(m_nSize != MemSize::BitCount);
+        SetReadOnly(m_nSize == MemSize::BitCount);
 
         if (m_bInitialized)
         {
@@ -153,13 +158,7 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Str
 unsigned MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadValue() const
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    switch (m_nSize)
-    {
-        default:
-            return pEmulatorContext.ReadMemory(m_nAddress, m_nSize);
-    }
-
-    return 0U;
+    return pEmulatorContext.ReadMemory(m_nAddress, m_nSize);
 }
 
 void MemoryBookmarksViewModel::MemoryBookmarkViewModel::EndInitialization()
@@ -203,16 +202,51 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged()
     SetChanges(GetChanges() + 1);
 }
 
+static unsigned FloatToU32(float fValue, MemSize nFloatType)
+{
+    // this leverages the fact that Windows uses IEE754 floats
+    union u
+    {
+        float fValue;
+        unsigned nValue;
+    } uUnion;
+
+    uUnion.fValue = fValue;
+    if (nFloatType == MemSize::Float)
+        return uUnion.nValue;
+
+    // MBF32 puts the sign after the exponent, uses a 129 base instead of 127, and stores in big endian
+    unsigned nValue = ((uUnion.nValue & 0x007FFFFF)     ) | // mantissa is unmoved
+                      ((uUnion.nValue & 0x7F800000) << 1) | // exponent is shifted one bit left
+                      ((uUnion.nValue & 0x80000000) >> 8);  // sign is shifted eight bits right
+
+    nValue += 0x02000000; // adjust to 129 base
+
+    return ((nValue & 0xFF000000) >> 24) | // convert to big endian
+           ((nValue & 0x00FF0000) >>  8) |
+           ((nValue & 0x0000FF00) <<  8) |
+           ((nValue & 0x000000FF) << 24);
+}
+
 bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetCurrentValue(const std::wstring& sValue, _Out_ std::wstring& sError)
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto nAddress = m_nAddress;
+    unsigned nValue;
 
     switch (m_nSize)
     {
+        case MemSize::Float:
+        case MemSize::MBF32:
+            float fValue;
+            if (!ra::ParseFloat(sValue, fValue, sError))
+                return false;
+
+            nValue = FloatToU32(fValue, m_nSize);
+            break;
+
         default:
             const auto nMaximumValue = ra::data::MemSizeMax(m_nSize);
-            unsigned nValue;
 
             if (GetFormat() == MemFormat::Dec)
             {
@@ -224,15 +258,19 @@ bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetCurrentValue(const st
                 if (!ra::ParseHex(sValue, nMaximumValue, nValue, sError))
                     return false;
             }
-
-            // do not set m_nValue here, it will get set by UpdateCurrentValue which will be called by the
-            // OnByteWritten notification handler when WriteMemory modifies the EmulatorContext.
-            auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-            vmBookmarks.BeginWritingMemory();
-            pEmulatorContext.WriteMemory(nAddress, m_nSize, nValue);
-            vmBookmarks.EndWritingMemory();
             break;
     }
+
+    // do not set m_nValue here, it will get set by UpdateCurrentValue which will be called by the
+    // OnByteWritten notification handler when WriteMemory modifies the EmulatorContext.
+#ifndef RA_UTEST
+    auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+#else
+    auto& vmBookmarks = *g_pMemoryBookmarksViewModel;
+#endif
+    vmBookmarks.BeginWritingMemory();
+    pEmulatorContext.WriteMemory(nAddress, m_nSize, nValue);
+    vmBookmarks.EndWritingMemory();
 
     return true;
 }
@@ -247,10 +285,32 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateCurrentValue()
     }
 }
 
+static std::wstring U32ToFloatString(unsigned nValue, char nFloatType)
+{
+    rc_typed_value_t value;
+    value.type = RC_VALUE_TYPE_UNSIGNED;
+    value.value.u32 = nValue;
+    rc_transform_memref_value(&value, nFloatType);
+
+    std::wstring sValue = ra::StringPrintf(L"%f", value.value.f32);
+    while (sValue.back() == L'0')
+        sValue.pop_back();
+    if (sValue.back() == L'.')
+        sValue.push_back(L'0');
+
+    return sValue;
+}
+
 std::wstring MemoryBookmarksViewModel::MemoryBookmarkViewModel::BuildCurrentValue() const
 {
     switch (m_nSize)
     {
+        case MemSize::Float:
+            return U32ToFloatString(m_nValue, RC_MEMSIZE_FLOAT);
+
+        case MemSize::MBF32:
+            return U32ToFloatString(m_nValue, RC_MEMSIZE_MBF32);
+
         default:
         {
             if (GetFormat() == MemFormat::Dec)

@@ -162,6 +162,24 @@ bool ParseHex(const std::wstring& sValue, unsigned int nMaximumValue, unsigned i
 }
 
 _Use_decl_annotations_
+bool ParseFloat(const std::wstring& sValue, float& fValue, std::wstring& sError)
+{
+    fValue = 0.0f;
+    sError.clear();
+
+    wchar_t* pEnd = nullptr;
+    const auto fVal = std::wcstof(sValue.c_str(), &pEnd);
+    if (pEnd && *pEnd != '\0')
+    {
+        sError = L"Only values that can be represented as floating point numbers are allowed";
+        return false;
+    }
+
+    fValue = fVal;
+    return true;
+}
+
+_Use_decl_annotations_
 std::string& TrimLineEnding(std::string& str) noexcept
 {
     if (!str.empty())

@@ -107,7 +107,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty, vmMemoryBookmarks.Sizes());
     pSizeColumn->SetHeader(L"Size");
-    pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 40);
+    pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 56);
     pSizeColumn->SetAlignment(ra::ui::RelativePosition::Far);
     pSizeColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(2, std::move(pSizeColumn));

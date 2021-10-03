@@ -227,6 +227,9 @@ public:
 
         ra::data::models::AssetChanges GetChanges() const { return ra::itoe<ra::data::models::AssetChanges>(GetValue(ra::data::models::AssetModelBase::ChangesProperty)); }
         void SetChanges(ra::data::models::AssetChanges nValue) { SetValue(ra::data::models::AssetModelBase::ChangesProperty, ra::etoi(nValue)); }
+
+        const std::wstring& GetWarning() const { return GetValue(ra::data::models::AssetModelBase::ValidationErrorProperty); }
+        void SetWarning(const std::wstring& sValue) { SetValue(ra::data::models::AssetModelBase::ValidationErrorProperty, sValue); }
     };
 
     ViewModelCollection<AssetSummaryViewModel>& FilteredAssets() noexcept { return m_vFilteredAssets; }

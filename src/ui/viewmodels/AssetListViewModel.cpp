@@ -113,6 +113,17 @@ void AssetListViewModel::OnDataModelStringValueChanged(gsl::index nIndex, const 
                 m_vFilteredAssets.SetItemValue(nFilteredIndex, AssetSummaryViewModel::LabelProperty, args.tNewValue);
         }
     }
+    else if (args.Property == ra::data::models::AssetModelBase::ValidationErrorProperty)
+    {
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        if (pAsset != nullptr)
+        {
+            const auto nFilteredIndex = GetFilteredAssetIndex(*pAsset);
+            if (nFilteredIndex != -1)
+                m_vFilteredAssets.SetItemValue(nFilteredIndex, args.Property, args.tNewValue);
+        }
+    }
 }
 
 void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args)
@@ -462,6 +473,7 @@ bool AssetListViewModel::AddOrRemoveFilteredItem(const ra::data::models::AssetMo
             pSummary->SetCategory(pAsset.GetCategory());
             pSummary->SetChanges(pAsset.GetChanges());
             pSummary->SetState(pAsset.GetState());
+            pSummary->SetWarning(pAsset.GetValidationError());
 
             const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(&pAsset);
             if (pAchievement != nullptr)

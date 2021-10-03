@@ -76,6 +76,92 @@ std::string Narrow(const std::string& str)
 }
 
 _Use_decl_annotations_
+bool ParseUnsignedInt(const std::wstring& sValue, unsigned int nMaximumValue, unsigned int& nValue, std::wstring& sError)
+{
+    nValue = 0U;
+    sError.clear();
+
+    try
+    {
+        wchar_t* pEnd = nullptr;
+        const auto nVal = std::wcstoll(sValue.c_str(), &pEnd, 10);
+        if (pEnd && *pEnd != '\0')
+        {
+            sError = L"Only values that can be represented as decimal are allowed";
+            return false;
+        }
+
+        if (nVal < 0)
+        {
+            sError = L"Negative values are not allowed";
+            return false;
+        }
+
+        if (ra::to_unsigned(nVal) > nMaximumValue)
+        {
+            sError = ra::StringPrintf(L"Value cannot exceed %lu", nMaximumValue);
+            return false;
+        }
+
+        nValue = gsl::narrow_cast<unsigned int>(ra::to_unsigned(nVal));
+        return true;
+    }
+    catch (const std::invalid_argument&)
+    {
+        sError = L"Only values that can be represented as decimal are allowed";
+    }
+    catch (const std::out_of_range&)
+    {
+        sError = ra::StringPrintf(L"Value cannot exceed %lu", nMaximumValue);
+    }
+
+    return false;
+}
+
+_Use_decl_annotations_
+bool ParseHex(const std::wstring& sValue, unsigned int nMaximumValue, unsigned int& nValue, std::wstring& sError)
+{
+    nValue = 0U;
+    sError.clear();
+
+    try
+    {
+        wchar_t* pEnd = nullptr;
+        const auto nVal = std::wcstoll(sValue.c_str(), &pEnd, 16);
+        if (pEnd && *pEnd != '\0')
+        {
+            sError = L"Only values that can be represented as hexadecimal are allowed";
+            return false;
+        }
+
+        if (nVal < 0)
+        {
+            sError = L"Negative values are not allowed";
+            return false;
+        }
+
+        if (nVal > nMaximumValue)
+        {
+            sError = ra::StringPrintf(L"Value cannot exceed 0x%02X", nMaximumValue);
+            return false;
+        }
+
+        nValue = gsl::narrow_cast<unsigned int>(nVal);
+        return true;
+    }
+    catch (const std::invalid_argument&)
+    {
+        sError = L"Only values that can be represented as hexadecimal are allowed";
+    }
+    catch (const std::out_of_range&)
+    {
+        sError = ra::StringPrintf(L"Value cannot exceed 0x%02X", nMaximumValue);
+    }
+
+    return false;
+}
+
+_Use_decl_annotations_
 std::string& TrimLineEnding(std::string& str) noexcept
 {
     if (!str.empty())

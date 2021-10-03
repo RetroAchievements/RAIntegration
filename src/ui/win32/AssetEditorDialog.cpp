@@ -159,7 +159,7 @@ public:
             std::wstring sError;
             unsigned int nValue = 0U;
 
-            if (!ParseHex(sValue, nValue, sError))
+            if (!ParseHex(sValue, m_nMaximum, nValue, sError))
             {
                 ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
                 return false;

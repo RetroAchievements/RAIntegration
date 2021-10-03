@@ -190,6 +190,7 @@ void Initialization::InitializeNotifyTargets()
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().InitializeNotifyTargets();
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.MemoryInspector.InitializeNotifyTargets();
+    pWindowManager.MemoryBookmarks.InitializeNotifyTargets();
     pWindowManager.RichPresenceMonitor.InitializeNotifyTargets();
     pWindowManager.AssetList.InitializeNotifyTargets();
 }

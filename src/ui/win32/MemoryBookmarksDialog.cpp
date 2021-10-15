@@ -47,93 +47,34 @@ void MemoryBookmarksDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); 
 
 // ------------------------------------
 
-class GridBookmarkValueColumnBinding : public ra::ui::win32::bindings::GridNumberColumnBinding
+class GridBookmarkValueColumnBinding : public ra::ui::win32::bindings::GridTextColumnBinding
 {
 public:
-    GridBookmarkValueColumnBinding(const IntModelProperty& pBoundProperty) noexcept
-        : ra::ui::win32::bindings::GridNumberColumnBinding(pBoundProperty)
+    GridBookmarkValueColumnBinding(const StringModelProperty& pBoundProperty) noexcept
+        : ra::ui::win32::bindings::GridTextColumnBinding(pBoundProperty)
     {
-    }
-
-    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
-    {
-        return (pProperty == *m_pBoundProperty ||
-            pProperty == MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty ||
-            pProperty == MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty);
     }
 
     HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override
     {
         const auto& vmItems = static_cast<ra::ui::win32::bindings::GridBinding*>(pInfo.pGridBinding)->GetItems();
-        const auto nSize = ra::itoe<MemSize>(vmItems.GetItemValue(pInfo.nItemIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty));
-        if (nSize == MemSize::BitCount)
+        if (vmItems.GetItemValue(pInfo.nColumnIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadOnlyProperty))
             return nullptr;
 
-        return ra::ui::win32::bindings::GridNumberColumnBinding::CreateInPlaceEditor(hParent, pInfo);
-    }
-
-    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
-    {
-        const auto nValue = gsl::narrow_cast<unsigned int>(vmItems.GetItemValue(nIndex, *m_pBoundProperty));
-
-        const auto nFormat = vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty);
-        switch (ra::itoe<MemFormat>(nFormat))
-        {
-            case MemFormat::Dec:
-                return std::to_wstring(nValue);
-
-            default:
-            {
-                const auto nSize = vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty);
-                const auto nBits = ra::data::MemSizeBits(ra::itoe<MemSize>(nSize));
-                if (nBits <= 4)
-                    return ra::StringPrintf(L"%X", nValue);
-
-                wchar_t format[5] = L"%08X";
-                format[2] = gsl::narrow_cast<wchar_t>(L'0' + (nBits / 4));
-                return ra::StringPrintf(format, nValue);
-            }
-        }
+        return ra::ui::win32::bindings::GridTextColumnBinding::CreateInPlaceEditor(hParent, pInfo);
     }
 
     bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) override
     {
-        unsigned int nValue = 0U;
-        std::wstring sError;
-
-        const auto nSize = ra::itoe<MemSize>(vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty));
-        m_nMaximum = ra::data::MemSizeMax(nSize);
-
-        const auto nFormat = vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::FormatProperty);
-        switch (ra::itoe<MemFormat>(nFormat))
+        auto* vmItem = dynamic_cast<MemoryBookmarksViewModel::MemoryBookmarkViewModel*>(vmItems.GetViewModelAt(nIndex));
+        if (vmItem != nullptr)
         {
-            case MemFormat::Dec:
-                if (!ParseUnsignedInt(sValue, nValue, sError))
-                {
-                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
-                    return false;
-                }
-                break;
-
-            default:
-                if (!ParseHex(sValue, nValue, sError))
-                {
-                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
-                    return false;
-                }
-                break;
-        }
-
-        const auto nCurrentValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
-        if (ra::to_unsigned(nCurrentValue) != nValue)
-        {
-            const auto nAddress = vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty);
-            ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().WriteMemory(nAddress, nSize, nValue);
-
-            vmItems.SetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::PreviousValueProperty, nCurrentValue);
-            vmItems.SetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::CurrentValueProperty, nValue);
-            vmItems.SetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangesProperty,
-                vmItems.GetItemValue(nIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ChangesProperty) + 1);
+            std::wstring sError;
+            if (!vmItem->SetCurrentValue(sValue, sError))
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
+                return false;
+            }
         }
 
         return true;
@@ -166,7 +107,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty, vmMemoryBookmarks.Sizes());
     pSizeColumn->SetHeader(L"Size");
-    pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 40);
+    pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 56);
     pSizeColumn->SetAlignment(ra::ui::RelativePosition::Far);
     pSizeColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(2, std::move(pSizeColumn));
@@ -262,7 +203,7 @@ BOOL MemoryBookmarksDialog::OnCommand(WORD nCommand)
 
         case IDC_RA_SAVEBOOKMARK:
         {
-            const auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
+            auto* vmMemoryBookmarks = dynamic_cast<MemoryBookmarksViewModel*>(&m_vmWindow);
             if (vmMemoryBookmarks)
                 vmMemoryBookmarks->SaveBookmarkFile();
 

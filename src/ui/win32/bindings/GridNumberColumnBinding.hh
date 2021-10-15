@@ -44,9 +44,6 @@ public:
     const IntModelProperty& GetBoundProperty() const noexcept { return *m_pBoundProperty; }
 
 protected:
-    bool ParseUnsignedInt(const std::wstring& sValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError);
-    bool ParseHex(const std::wstring& sValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError);
-
     const IntModelProperty* m_pBoundProperty = nullptr;
     unsigned int m_nMaximum = 0xFFFFFFFF;
 };

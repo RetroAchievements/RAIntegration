@@ -293,10 +293,6 @@ void MemoryInspectorViewModel::ToggleBit(int nBit)
     nValue ^= (1 << nBit);
     pEmulatorContext.WriteMemoryByte(nAddress, nValue);
 
-    // if a bookmark exists for the modified address, update the current value
-    auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-    pBookmarks.OnEditMemory(nAddress);
-
     // update the local value, which will cause the bits string to get updated
     SetValue(CurrentAddressValueProperty, nValue);
 }

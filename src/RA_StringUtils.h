@@ -20,6 +20,10 @@ _NODISCARD std::wstring Widen(_In_ const std::wstring& wstr);
 _NODISCARD std::string Narrow(_In_z_ const char* str);
 _NODISCARD std::string Narrow(_In_ const std::string& wstr);
 
+bool ParseUnsignedInt(const std::wstring& sValue, unsigned int nMaximumValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError);
+bool ParseHex(const std::wstring& sValue, unsigned int nMaximumValue, _Out_ unsigned int& nValue, _Out_ std::wstring& sError);
+bool ParseFloat(const std::wstring& sValue, _Out_ float& fValue, _Out_ std::wstring& sError);
+
 /// <summary>
 /// Removes one "\r", "\n", or "\r\n" from the end of a string.
 /// </summary>
@@ -715,26 +719,6 @@ private:
 };
 
 // ----- other -----
-
-// More functions to be Unicode compatible w/o sacrificing MBCS
-/* A wrapper for converting a string to an unsigned long depending on _String */
-/* The template parameter does not need to be specified */
-template<typename CharT, typename = std::enable_if_t<ra::is_char_v<CharT>>>
-_Success_(0 < return < ULONG_MAX) _NODISCARD
-    inline auto __cdecl tcstoul(_In_z_ const CharT* __restrict str,
-                                _Out_opt_ _Deref_post_z_ CharT** __restrict endptr = nullptr,
-                                _In_ int base = 0 /*auto-detect base*/)
-{
-    auto ret = 0UL;
-    if constexpr (std::is_same_v<CharT, char>)
-        ret = std::strtoul(str, endptr, base);
-    else if constexpr (std::is_same_v<CharT, wchar_t>)
-        ret = std::wcstoul(str, endptr, base);
-
-    assert((errno != ERANGE) && (ret != ULONG_MAX)); // out of range error
-    assert(ret != 0);                                // invalid argument, no conversion done
-    return ret;
-} /* end function tcstoul */
 
 /// <summary>
 ///   Returns the number of characters of a null-terminated byte string or wide-character string depending on

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "data\Types.hh"
+#include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
 #include "services\TextReader.hh"
@@ -18,7 +19,7 @@ namespace viewmodels {
 
 class MemoryBookmarksViewModel : public WindowViewModelBase,
     protected ra::data::context::GameContext::NotifyTarget,
-    protected ViewModelCollectionBase::NotifyTarget
+    protected ra::data::context::EmulatorContext::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 MemoryBookmarksViewModel() noexcept;
@@ -29,6 +30,8 @@ public:
     MemoryBookmarksViewModel(MemoryBookmarksViewModel&&) noexcept = delete;
     MemoryBookmarksViewModel& operator=(MemoryBookmarksViewModel&&) noexcept = delete;
     
+    void InitializeNotifyTargets();
+
     void DoFrame();
 
     enum class BookmarkBehavior
@@ -79,7 +82,7 @@ public:
         /// <summary>
         /// Gets the bookmark address.
         /// </summary>
-        ByteAddress GetAddress() const { return GetValue(AddressProperty); }
+        ByteAddress GetAddress() const noexcept { return m_nAddress; }
 
         /// <summary>
         /// Sets the bookmark address.
@@ -94,7 +97,7 @@ public:
         /// <summary>
         /// Gets the bookmark size.
         /// </summary>
-        MemSize GetSize() const { return ra::itoe<MemSize>(GetValue(SizeProperty)); }
+        MemSize GetSize() const noexcept { return m_nSize; }
 
         /// <summary>
         /// Sets the bookmark size.
@@ -119,32 +122,32 @@ public:
         /// <summary>
         /// The <see cref="ModelProperty" /> for the current value of the bookmarked address.
         /// </summary>
-        static const IntModelProperty CurrentValueProperty;
+        static const StringModelProperty CurrentValueProperty;
 
         /// <summary>
         /// Gets the current value of the bookmarked address. 
         /// </summary>
-        unsigned int GetCurrentValue() const { return gsl::narrow_cast<unsigned int>(GetValue(CurrentValueProperty)); }
+        const std::wstring& GetCurrentValue() const { return GetValue(CurrentValueProperty); }
 
         /// <summary>
         /// Sets the current value of the bookmarked address.
         /// </summary>
-        void SetCurrentValue(unsigned int value) { SetValue(CurrentValueProperty, value); }
+        bool SetCurrentValue(const std::wstring& sValue, _Out_ std::wstring& sError);
 
         /// <summary>
         /// The <see cref="ModelProperty" /> for the previous value of the bookmarked address.
         /// </summary>
-        static const IntModelProperty PreviousValueProperty;
+        static const StringModelProperty PreviousValueProperty;
 
         /// <summary>
         /// Gets the previous value of the bookmarked address.
         /// </summary>
-        unsigned int GetPreviousValue() const { return gsl::narrow_cast<unsigned int>(GetValue(PreviousValueProperty)); }
+        const std::wstring& GetPreviousValue() const { return GetValue(PreviousValueProperty); }
 
         /// <summary>
         /// Sets the previous value of the bookmarked address.
         /// </summary>
-        void SetPreviousValue(unsigned int value) { SetValue(PreviousValueProperty, value); }
+        void SetPreviousValue(const std::wstring& sValue) { SetValue(PreviousValueProperty, sValue); }
 
         /// <summary>
         /// The <see cref="ModelProperty" /> for the number of times the value of the bookmarked address changed.
@@ -177,6 +180,21 @@ public:
         void SetBehavior(BookmarkBehavior value) { SetValue(BehaviorProperty, ra::etoi(value)); }
 
         /// <summary>
+        /// The <see cref="ModelProperty" /> for whether or not the <see cref="CurrentValueProperty"/> is read only.
+        /// </summary>
+        static const BoolModelProperty ReadOnlyProperty;
+
+        /// <summary>
+        /// Gets whether or not the <see cref="CurrentValueProperty"/> is read only. 
+        /// </summary>
+        bool IsReadOnly() const { return GetValue(ReadOnlyProperty); }
+
+        /// <summary>
+        /// Sets whether or not the <see cref="CurrentValueProperty"/> is read only.
+        /// </summary>
+        void SetReadOnly(bool bValue) { SetValue(ReadOnlyProperty, bValue); }
+
+        /// <summary>
         /// The <see cref="ModelProperty" /> for the row color.
         /// </summary>
         static const IntModelProperty RowColorProperty;
@@ -190,6 +208,70 @@ public:
         /// Sets the row color.
         /// </summary>
         void SetRowColor(Color value) { SetValue(RowColorProperty, ra::to_signed(value.ARGB)); }
+
+        /// <summary>
+        /// Gets whether or not the bookmark has been modified.
+        /// </summary>
+        bool IsModified() const noexcept { return m_bModified; }
+
+        /// <summary>
+        /// Clears the modified flag.
+        /// </summary>
+        void ResetModified() noexcept { m_bModified = false; }
+
+        /// <summary>
+        /// Determines if the bookmarked memory has changed since the last time MemoryChanged was called.
+        /// </summary>
+        /// <returns><c>true</c> if the memory has changed, <c>false</c> if not.</returns>
+        bool MemoryChanged();
+
+        /// <summary>
+        /// Starts initialization of the bookmark.
+        /// </summary>
+        void BeginInitialization() noexcept { m_bInitialized = false; }
+
+        /// <summary>
+        /// Finishes initialization of the bookmark.
+        /// </summary>
+        void EndInitialization();
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for whether or not the <see cref="CurrentValueProperty"/> is dirty.
+        /// </summary>
+        static const BoolModelProperty IsDirtyProperty;
+
+        /// <summary>
+        /// Gets whether or not the <see cref="CurrentValueProperty"/> is dirty. 
+        /// </summary>
+        bool IsDirty() const { return GetValue(IsDirtyProperty); }
+
+        /// <summary>
+        /// Sets whether or not the <see cref="CurrentValueProperty"/> is dirty.
+        /// </summary>
+        void SetDirty(bool bValue) { SetValue(IsDirtyProperty, bValue); }
+
+        /// <summary>
+        /// Updates the <see cref="CurrentValueProperty" /> for the bookmark.
+        /// </summary>
+        void UpdateCurrentValue();
+
+    protected:
+        void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+        void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
+
+        void OnValueChanged();
+
+        unsigned ReadValue() const;
+
+    private:
+        std::wstring BuildCurrentValue() const;
+
+        // keep address/size/value fields directly accessible for speed - also keep in ValueProperty for binding
+        ra::ByteAddress m_nAddress = 0;
+        uint32_t m_nValue = 0;
+        MemSize m_nSize = MemSize::EightBit;
+        bool m_bModified = false;
+        bool m_bInitialized = false;
     };
 
     /// <summary>
@@ -217,11 +299,6 @@ public:
     /// Determines if a bookmark that is frozen exists for the specified address.
     /// </summary>
     bool HasFrozenBookmark(ra::ByteAddress nAddress) const;
-
-    /// <summary>
-    /// Tells the control that the user has modified memory and any associated bookmarks should be updated
-    /// </summary>
-    void OnEditMemory(ra::ByteAddress nAddress);
 
     /// <summary>
     /// Gets the list of selectable sizes for each bookmark.
@@ -286,23 +363,24 @@ public:
     /// <summary>
     /// Prompts the user to select a bookmarks file to save.
     /// </summary>
-    void SaveBookmarkFile() const;
+    void SaveBookmarkFile();
+
+    void BeginWritingMemory() noexcept { m_nWritingMemoryCount++; }
+    void EndWritingMemory();
 
 protected:
     void LoadBookmarks(ra::services::TextReader& sBookmarksFile);
-    void SaveBookmarks(ra::services::TextWriter& sBookmarksFile) const;
-
-    void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
-
-    // ViewModelCollectionBase::NotifyTarget
-    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
-    void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
+    void SaveBookmarks(ra::services::TextWriter& sBookmarksFile);
 
     // ra::data::context::GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
 
-    bool m_bModified = false;
+    // ra::data::context::EmulatorContext::NotifyTarget
+    void OnByteWritten(ra::ByteAddress, uint8_t) override;
+
+    bool IsModified() const;
+    size_t m_nUnmodifiedBookmarkCount = 0;
 
 private:
     ViewModelCollection<MemoryBookmarkViewModel> m_vBookmarks;
@@ -311,7 +389,7 @@ private:
     LookupItemViewModelCollection m_vBehaviors;
 
     unsigned int m_nLoadedGameId = 0;
-    bool m_bIgnoreValueChanged = false;
+    int m_nWritingMemoryCount = 0;
 };
 
 } // namespace viewmodels

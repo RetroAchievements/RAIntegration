@@ -22,6 +22,8 @@ enum class MemSize : uint8_t
     SixteenBitBigEndian,
     TwentyFourBitBigEndian,
     ThirtyTwoBitBigEndian,
+    Float,
+    MBF32,
     Text
 };
 
@@ -66,6 +68,8 @@ constexpr unsigned int MemSizeBits(MemSize nSize)
     {
         case MemSize::ThirtyTwoBit:
         case MemSize::ThirtyTwoBitBigEndian:
+        case MemSize::Float:
+        case MemSize::MBF32:
             return 32;
 
         case MemSize::EightBit:
@@ -114,6 +118,8 @@ constexpr unsigned int MemSizeBytes(MemSize nSize)
     {
         case MemSize::ThirtyTwoBit:
         case MemSize::ThirtyTwoBitBigEndian:
+        case MemSize::Float:
+        case MemSize::MBF32:
             return 4;
 
         case MemSize::SixteenBit:

@@ -3,6 +3,7 @@
 #include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MemoryBookmarksViewModel.hh"
 
+#include "tests\RA_UnitTestHelpers.h"
 #include "tests\ui\UIAsserts.hh"
 
 #include "tests\mocks\MockAchievementRuntime.hh"
@@ -30,7 +31,7 @@ std::wstring ToString<ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBeha
         case ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::None:
             return L"None";
         case ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::Frozen:
-            return L"Fozen";
+            return L"Frozen";
         case ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange:
             return L"PauseOnChange";
         default:
@@ -41,6 +42,8 @@ std::wstring ToString<ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBeha
 } // namespace CppUnitTestFramework
 } // namespace VisualStudio
 } // namespace Microsoft
+
+ra::ui::viewmodels::MemoryBookmarksViewModel* g_pMemoryBookmarksViewModel = nullptr;
 
 namespace ra {
 namespace ui {
@@ -63,8 +66,13 @@ private:
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
 
-        bool IsModified() const noexcept { return m_bModified; }
-        void ResetModified() noexcept { m_bModified = false; }
+        GSL_SUPPRESS_F6 MemoryBookmarksViewModelHarness()
+        {
+            InitializeNotifyTargets();
+        }
+
+        using MemoryBookmarksViewModel::IsModified;
+        void ResetModified() noexcept { m_nUnmodifiedBookmarkCount = Bookmarks().Count(); }
     };
 
 public:
@@ -74,7 +82,7 @@ public:
 
         Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Count());
 
-        Assert::AreEqual({ 10U }, bookmarks.Sizes().Count());
+        Assert::AreEqual({ 12U }, bookmarks.Sizes().Count());
         Assert::AreEqual((int)MemSize::EightBit, bookmarks.Sizes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L" 8-bit"), bookmarks.Sizes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)MemSize::SixteenBit, bookmarks.Sizes().GetItemAt(1)->GetId());
@@ -95,6 +103,10 @@ public:
         Assert::AreEqual(std::wstring(L"Lower4"), bookmarks.Sizes().GetItemAt(8)->GetLabel());
         Assert::AreEqual((int)MemSize::Nibble_Upper, bookmarks.Sizes().GetItemAt(9)->GetId());
         Assert::AreEqual(std::wstring(L"Upper4"), bookmarks.Sizes().GetItemAt(9)->GetLabel());
+        Assert::AreEqual((int)MemSize::Float, bookmarks.Sizes().GetItemAt(10)->GetId());
+        Assert::AreEqual(std::wstring(L"Float"), bookmarks.Sizes().GetItemAt(10)->GetLabel());
+        Assert::AreEqual((int)MemSize::MBF32, bookmarks.Sizes().GetItemAt(11)->GetId());
+        Assert::AreEqual(std::wstring(L"MBF32"), bookmarks.Sizes().GetItemAt(11)->GetLabel());
 
         Assert::AreEqual({ 2U }, bookmarks.Formats().Count());
         Assert::AreEqual((int)MemFormat::Hex, bookmarks.Formats().GetItemAt(0)->GetId());
@@ -126,11 +138,11 @@ public:
         const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
         Assert::AreEqual(std::wstring(L"desc"), bookmark.GetDescription());
         Assert::AreEqual(1234U, bookmark.GetAddress());
-        Assert::AreEqual((int)MemSize::EightBit, (int)bookmark.GetSize());
+        Assert::AreEqual(MemSize::EightBit, bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Dec, (int)bookmark.GetFormat());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
-        Assert::AreEqual(0U, bookmark.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
         Assert::IsTrue(bookmarks.HasBookmark(1234U));
     }
@@ -150,11 +162,11 @@ public:
         const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
         Assert::AreEqual(std::wstring(L"desc"), bookmark.GetDescription());
         Assert::AreEqual(1234U, bookmark.GetAddress());
-        Assert::AreEqual((int)MemSize::EightBit, (int)bookmark.GetSize());
+        Assert::AreEqual(MemSize::EightBit, bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Dec, (int)bookmark.GetFormat());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
-        Assert::AreEqual(0U, bookmark.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
         Assert::IsTrue(bookmarks.HasBookmark(1234U));
     }
@@ -174,33 +186,13 @@ public:
         const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
         Assert::AreEqual(std::wstring(L"desc"), bookmark.GetDescription());
         Assert::AreEqual(1234U, bookmark.GetAddress());
-        Assert::AreEqual((int)MemSize::EightBit, (int)bookmark.GetSize());
+        Assert::AreEqual(MemSize::EightBit, bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Dec, (int)bookmark.GetFormat());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
-        Assert::AreEqual(0U, bookmark.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
         Assert::IsTrue(bookmarks.HasBookmark(1234U));
-    }
-
-    TEST_METHOD(TestLoadBookmarksOnGameChangedNotVisible)
-    {
-        MemoryBookmarksViewModelHarness bookmarks;
-        bookmarks.SetIsVisible(false);
-        bookmarks.mockGameContext.SetGameId(3U);
-        bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
-            "{\"Bookmarks\":[{\"Description\":\"desc\",\"Address\":1234,\"Type\":2,\"Decimal\":false}]}");
-
-        bookmarks.mockGameContext.NotifyActiveGameChanged();
-        Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Count());
-
-        bookmarks.SetIsVisible(true);
-        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
-        const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
-        Assert::AreEqual(std::wstring(L"desc"), bookmark.GetDescription());
-        Assert::AreEqual(1234U, bookmark.GetAddress());
-        Assert::AreEqual((int)MemSize::SixteenBit, (int)bookmark.GetSize());
-        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
     }
 
     TEST_METHOD(TestLoadBookmarksFewer)
@@ -227,11 +219,11 @@ public:
         const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
         Assert::AreEqual(std::wstring(L"desc3"), bookmark.GetDescription());
         Assert::AreEqual(5555U, bookmark.GetAddress());
-        Assert::AreEqual((int)MemSize::SixteenBit, (int)bookmark.GetSize());
+        Assert::AreEqual(MemSize::SixteenBit, bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
-        Assert::AreEqual(0U, bookmark.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0000"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0000"), bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
 
         Assert::IsFalse(bookmarks.HasBookmark(1234U));
@@ -270,8 +262,45 @@ public:
         const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
         Assert::AreEqual(std::wstring(L"Note description"), bookmark.GetDescription());
         Assert::AreEqual(1234U, bookmark.GetAddress());
-        Assert::AreEqual((int)MemSize::EightBit, (int)bookmark.GetSize());
+        Assert::AreEqual(MemSize::EightBit, bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
+    }
+
+    TEST_METHOD(TestLoadSaveBookmarkSizes)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+
+        bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>([](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            vmFileDialog.SetFileName(L"bookmarks.json");
+            return DialogResult::OK;
+        });
+
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(bookmarks.Sizes().Count()); ++nIndex)
+        {
+            const auto nSize = ra::itoe<MemSize>(bookmarks.Sizes().GetItemAt(nIndex)->GetId());
+            Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Count());
+
+            bookmarks.AddBookmark(1234U, nSize);
+            Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+
+            bookmarks.SaveBookmarkFile();
+
+            bookmarks.Bookmarks().GetItemAt(0)->SetSelected(true);
+            bookmarks.RemoveSelectedBookmarks();
+            Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Count());
+
+            bookmarks.LoadBookmarkFile();
+            Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+
+            Assert::AreEqual(nSize, bookmarks.Bookmarks().GetItemAt(0)->GetSize());
+
+            bookmarks.Bookmarks().GetItemAt(0)->SetSelected(true);
+            bookmarks.RemoveSelectedBookmarks();
+        }
     }
 
     TEST_METHOD(TestSaveBookmarks)
@@ -360,38 +389,38 @@ public:
         Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
 
         auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
-        Assert::AreEqual(18U, bookmark.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"12"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"00"), bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
 
         bookmarks.DoFrame();
-        Assert::AreEqual(18U, bookmark.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"12"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"00"), bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
 
         memory.at(18) = 12;
         bookmarks.DoFrame();
-        Assert::AreEqual(12U, bookmark.GetCurrentValue());
-        Assert::AreEqual(18U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0C"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"12"), bookmark.GetPreviousValue());
         Assert::AreEqual(1U, bookmark.GetChanges());
 
         bookmarks.DoFrame();
-        Assert::AreEqual(12U, bookmark.GetCurrentValue());
-        Assert::AreEqual(18U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0C"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"12"), bookmark.GetPreviousValue());
         Assert::AreEqual(1U, bookmark.GetChanges());
 
         memory.at(18) = 15;
         bookmarks.DoFrame();
-        Assert::AreEqual(15U, bookmark.GetCurrentValue());
-        Assert::AreEqual(12U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0F"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0C"), bookmark.GetPreviousValue());
         Assert::AreEqual(2U, bookmark.GetChanges());
 
         bookmark.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
 
         memory.at(18) = 16;
         bookmarks.DoFrame();
-        Assert::AreEqual(15U, bookmark.GetCurrentValue());
-        Assert::AreEqual(12U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0F"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0C"), bookmark.GetPreviousValue());
         Assert::AreEqual(2U, bookmark.GetChanges());
 
         Assert::AreEqual(15, (int)memory.at(18));
@@ -406,11 +435,11 @@ public:
         const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
         Assert::AreEqual(std::wstring(L""), bookmark.GetDescription());
         Assert::AreEqual(1234U, bookmark.GetAddress());
-        Assert::AreEqual((int)MemSize::EightBit, (int)bookmark.GetSize());
+        Assert::AreEqual(MemSize::EightBit, bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
-        Assert::AreEqual(0U, bookmark.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"00"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"00"), bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
 
         Assert::IsTrue(bookmarks.IsModified());
@@ -427,11 +456,11 @@ public:
         const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
         Assert::AreEqual(std::wstring(L"NOTE"), bookmark.GetDescription());
         Assert::AreEqual(2345U, bookmark.GetAddress());
-        Assert::AreEqual((int)MemSize::SixteenBit, (int)bookmark.GetSize());
+        Assert::AreEqual(MemSize::SixteenBit, bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
-        Assert::AreEqual(0U, bookmark.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0000"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0000"), bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
 
         Assert::IsTrue(bookmarks.IsModified());
@@ -447,11 +476,11 @@ public:
         const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
         Assert::AreEqual(std::wstring(L""), bookmark.GetDescription());
         Assert::AreEqual(5678U, bookmark.GetAddress());
-        Assert::AreEqual((int)MemSize::ThirtyTwoBit, (int)bookmark.GetSize());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Dec, (int)bookmark.GetFormat());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
-        Assert::AreEqual(0U, bookmark.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark.GetPreviousValue());
         Assert::AreEqual(0U, bookmark.GetChanges());
 
         Assert::IsTrue(bookmarks.IsModified());
@@ -611,7 +640,7 @@ public:
         const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
         Assert::AreEqual(std::wstring(L"Note description"), bookmark.GetDescription());
         Assert::AreEqual(1234U, bookmark.GetAddress());
-        Assert::AreEqual((int)MemSize::EightBit, (int)bookmark.GetSize());
+        Assert::AreEqual(MemSize::EightBit, bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
     }
 
@@ -927,24 +956,24 @@ public:
         bookmarks.AddBookmark(5, MemSize::EightBit);
 
         auto& bookmark1 = *bookmarks.Bookmarks().GetItemAt(0);
-        Assert::AreEqual(0x04030201U, bookmark1.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark1.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"04030201"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"00000000"), bookmark1.GetPreviousValue());
         Assert::AreEqual(0U, bookmark1.GetChanges());
 
         auto& bookmark2 = *bookmarks.Bookmarks().GetItemAt(1);
-        Assert::AreEqual(0x040302U, bookmark2.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark2.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"040302"), bookmark2.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"000000"), bookmark2.GetPreviousValue());
         Assert::AreEqual(0U, bookmark2.GetChanges());
         bookmark2.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::Frozen); // OnEditMemory should ignore frozen bookmarks
 
         auto& bookmark3 = *bookmarks.Bookmarks().GetItemAt(2);
-        Assert::AreEqual(0x0403U, bookmark3.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark3.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0403"), bookmark3.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0000"), bookmark3.GetPreviousValue());
         Assert::AreEqual(0U, bookmark3.GetChanges());
 
         auto& bookmark4a = *bookmarks.Bookmarks().GetItemAt(3);
-        Assert::AreEqual(0x04U, bookmark4a.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark4a.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"04"), bookmark4a.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"00"), bookmark4a.GetPreviousValue());
         Assert::AreEqual(0U, bookmark4a.GetChanges());
         bookmark4a.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::PauseOnChange); // OnEditMemory should not trigger pause
         bookmarks.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel&)
@@ -954,40 +983,40 @@ public:
         });
 
         auto& bookmark4b = *bookmarks.Bookmarks().GetItemAt(4);
-        Assert::AreEqual(0x0504U, bookmark4b.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark4b.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0504"), bookmark4b.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0000"), bookmark4b.GetPreviousValue());
         Assert::AreEqual(0U, bookmark4b.GetChanges());
 
         auto& bookmark5 = *bookmarks.Bookmarks().GetItemAt(5);
-        Assert::AreEqual(0x05U, bookmark5.GetCurrentValue());
-        Assert::AreEqual(0U, bookmark5.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"05"), bookmark5.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"00"), bookmark5.GetPreviousValue());
         Assert::AreEqual(0U, bookmark5.GetChanges());
 
-        memory.at(4) = 0x40;
-        bookmarks.OnEditMemory(4U);
+        //memory.at(4) = 0x40;
+        bookmarks.mockEmulatorContext.WriteMemoryByte(4U, 0x40);
 
-        Assert::AreEqual(0x40030201U, bookmark1.GetCurrentValue());
-        Assert::AreEqual(0x04030201U, bookmark1.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"40030201"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"04030201"), bookmark1.GetPreviousValue());
         Assert::AreEqual(1U, bookmark1.GetChanges());
 
-        Assert::AreEqual(0x400302U, bookmark2.GetCurrentValue());
-        Assert::AreEqual(0x040302U, bookmark2.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"400302"), bookmark2.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"040302"), bookmark2.GetPreviousValue());
         Assert::AreEqual(1U, bookmark2.GetChanges());
 
-        Assert::AreEqual(0x4003U, bookmark3.GetCurrentValue());
-        Assert::AreEqual(0x0403U, bookmark3.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"4003"), bookmark3.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0403"), bookmark3.GetPreviousValue());
         Assert::AreEqual(1U, bookmark3.GetChanges());
 
-        Assert::AreEqual(0x40U, bookmark4a.GetCurrentValue());
-        Assert::AreEqual(0x04U, bookmark4a.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"40"), bookmark4a.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"04"), bookmark4a.GetPreviousValue());
         Assert::AreEqual(1U, bookmark4a.GetChanges());
 
-        Assert::AreEqual(0x0540U, bookmark4b.GetCurrentValue());
-        Assert::AreEqual(0x0504U, bookmark4b.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0540"), bookmark4b.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0504"), bookmark4b.GetPreviousValue());
         Assert::AreEqual(1U, bookmark4b.GetChanges());
 
-        Assert::AreEqual(0x05U, bookmark5.GetCurrentValue()); // not affected by the edited memory, should not update
-        Assert::AreEqual(0U, bookmark5.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"05"), bookmark5.GetCurrentValue()); // not affected by the edited memory, should not update
+        Assert::AreEqual(std::wstring(L"00"), bookmark5.GetPreviousValue());
         Assert::AreEqual(0U, bookmark5.GetChanges());
     }
 
@@ -1004,25 +1033,179 @@ public:
 
         bookmarks.DoFrame(); // initialize current and previous values
 
-        Assert::AreEqual(0x0504U, bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0504"), bookmark1.GetCurrentValue());
         bookmark1.SetChanges(0U);
 
         memory.at(5) = 0x17;
         bookmarks.DoFrame();
 
-        Assert::AreEqual(0x1704U, bookmark1.GetCurrentValue());
-        Assert::AreEqual(0x0504U, bookmark1.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"1704"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0504"), bookmark1.GetPreviousValue());
         Assert::AreEqual(1U, bookmark1.GetChanges());
 
         bookmark1.SetSize(MemSize::EightBit);
-        Assert::AreEqual(0x04U, bookmark1.GetCurrentValue());
-        Assert::AreEqual(0x0504U, bookmark1.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"04"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0504"), bookmark1.GetPreviousValue());
         Assert::AreEqual(1U, bookmark1.GetChanges());
 
         bookmark1.SetSize(MemSize::ThirtyTwoBit);
-        Assert::AreEqual(0x07061704U, bookmark1.GetCurrentValue());
-        Assert::AreEqual(0x0504U, bookmark1.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"07061704"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0504"), bookmark1.GetPreviousValue());
         Assert::AreEqual(1U, bookmark1.GetChanges());
+    }
+
+    TEST_METHOD(TestReadOnly)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+
+        std::array<uint8_t, 64> memory = {};
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.AddBookmark(1U, MemSize::EightBit);
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::IsFalse(bookmark.IsReadOnly());
+
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(bookmarks.Sizes().Count()); ++nIndex)
+        {
+            const auto nSize = ra::itoe<MemSize>(bookmarks.Sizes().GetItemAt(nIndex)->GetId());
+            bookmark.SetSize(nSize);
+
+            if (nSize == MemSize::BitCount)
+                Assert::IsTrue(bookmark.IsReadOnly());
+            else
+                Assert::IsFalse(bookmark.IsReadOnly());
+        }
+    }
+
+    TEST_METHOD(TestAddBookmarkFloat)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+
+        std::array<uint8_t, 64> memory = {};
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.AddBookmark(1U, MemSize::Float);
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::AreEqual(std::wstring(L""), bookmark.GetDescription());
+        Assert::AreEqual(1U, bookmark.GetAddress());
+        Assert::AreEqual(MemSize::Float, bookmark.GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
+        Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmark.GetBehavior());
+        Assert::AreEqual(std::wstring(L"0.0"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0.0"), bookmark.GetPreviousValue());
+        Assert::AreEqual(0U, bookmark.GetChanges());
+
+        bookmarks.mockEmulatorContext.WriteMemoryByte(4U, 0xC0);
+        Assert::AreEqual(std::wstring(L"-2.0"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0.0"), bookmark.GetPreviousValue());
+        Assert::AreEqual(1U, bookmark.GetChanges());
+
+        memory.at(4) = 0x42; // 0x429A4492 => 77.133926
+        memory.at(3) = 0x9A;
+        memory.at(2) = 0x44;
+        memory.at(1) = 0x92;
+
+        bookmarks.DoFrame();
+        Assert::AreEqual(std::wstring(L"77.133926"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"-2.0"), bookmark.GetPreviousValue());
+        Assert::AreEqual(2U, bookmark.GetChanges());
+    }
+
+    TEST_METHOD(TestSetCurrentValue)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        g_pMemoryBookmarksViewModel = &bookmarks;
+
+        std::array<uint8_t, 64> memory = {};
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.AddBookmark(1U, MemSize::EightBit);
+        bookmarks.AddBookmark(1U, MemSize::SixteenBit);
+        bookmarks.AddBookmark(1U, MemSize::Bit_3);
+
+        Assert::AreEqual({ 3U }, bookmarks.Bookmarks().Count());
+        auto& bookmark1 = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::AreEqual(std::wstring(L"00"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"00"), bookmark1.GetPreviousValue());
+        auto& bookmark2 = *bookmarks.Bookmarks().GetItemAt(1);
+        Assert::AreEqual(std::wstring(L"0000"), bookmark2.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0000"), bookmark2.GetPreviousValue());
+        auto& bookmark3 = *bookmarks.Bookmarks().GetItemAt(2);
+        Assert::AreEqual(std::wstring(L"0"), bookmark3.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark3.GetPreviousValue());
+
+        std::wstring sError;
+        Assert::IsTrue(bookmark1.SetCurrentValue(L"1C", sError));
+        Assert::AreEqual(std::wstring(L"1C"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"00"), bookmark1.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"001C"), bookmark2.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0000"), bookmark2.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"1"), bookmark3.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark3.GetPreviousValue());
+
+        Assert::IsTrue(bookmark2.SetCurrentValue(L"1234", sError));
+        Assert::AreEqual(std::wstring(L"34"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"1C"), bookmark1.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"1234"), bookmark2.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"001C"), bookmark2.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark3.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"1"), bookmark3.GetPreviousValue());
+
+        Assert::IsTrue(bookmark3.SetCurrentValue(L"1", sError));
+        Assert::AreEqual(std::wstring(L"3C"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"34"), bookmark1.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"123C"), bookmark2.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"1234"), bookmark2.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"1"), bookmark3.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0"), bookmark3.GetPreviousValue());
+
+        g_pMemoryBookmarksViewModel = nullptr;
+    }
+
+    TEST_METHOD(TestSetCurrentValueFloat)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        g_pMemoryBookmarksViewModel = &bookmarks;
+
+        std::array<uint8_t, 64> memory = {};
+        bookmarks.mockEmulatorContext.MockMemory(memory);
+
+        bookmarks.AddBookmark(4U, MemSize::Float);
+        bookmarks.AddBookmark(8U, MemSize::MBF32);
+
+        Assert::AreEqual({ 2U }, bookmarks.Bookmarks().Count());
+        auto& bookmark1 = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::AreEqual(std::wstring(L"0.0"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0.0"), bookmark1.GetPreviousValue());
+        auto& bookmark2 = *bookmarks.Bookmarks().GetItemAt(1);
+        Assert::AreEqual(std::wstring(L"0.0"), bookmark2.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0.0"), bookmark2.GetPreviousValue());
+
+        std::wstring sError;
+        Assert::IsTrue(bookmark1.SetCurrentValue(L"-2", sError));
+        Assert::IsTrue(bookmark2.SetCurrentValue(L"-3", sError));
+        Assert::AreEqual(std::wstring(L"-2.0"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0.0"), bookmark1.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"-3.0"), bookmark2.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0.0"), bookmark2.GetPreviousValue());
+
+        Assert::AreEqual({ 0xC0 }, memory.at(7)); // -2 => 0xC0000000
+
+        Assert::AreEqual({ 0x82 }, memory.at(8)); // -3 => 0x82C00000
+        Assert::AreEqual({ 0xC0 }, memory.at(9));
+
+        Assert::IsTrue(bookmark1.SetCurrentValue(L"3.14", sError));
+        Assert::IsTrue(bookmark2.SetCurrentValue(L"6.022", sError));
+        Assert::AreEqual(std::wstring(L"3.14"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"-2.0"), bookmark1.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"6.022"), bookmark2.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"-3.0"), bookmark2.GetPreviousValue());
+
+        g_pMemoryBookmarksViewModel = nullptr;
     }
 };
 

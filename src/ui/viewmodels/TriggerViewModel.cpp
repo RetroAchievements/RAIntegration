@@ -65,6 +65,8 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vOperandSizes.Add(ra::etoi(MemSize::TwentyFourBitBigEndian), L"24-bit BE");
     m_vOperandSizes.Add(ra::etoi(MemSize::ThirtyTwoBitBigEndian), L"32-bit BE");
     m_vOperandSizes.Add(ra::etoi(MemSize::BitCount), L"BitCount");
+    m_vOperandSizes.Add(ra::etoi(MemSize::Float), L"Float");
+    m_vOperandSizes.Add(ra::etoi(MemSize::MBF32), L"MBF32");
 
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Equals), L"=");
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::LessThan), L"<");

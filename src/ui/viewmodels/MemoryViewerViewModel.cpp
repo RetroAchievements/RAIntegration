@@ -827,10 +827,6 @@ bool MemoryViewerViewModel::OnChar(char c)
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
     pEmulatorContext.WriteMemoryByte(nAddress, nByte);
 
-    // if a bookmark exists for the modified address, update the current value
-    auto& pBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
-    pBookmarks.OnEditMemory(nAddress);
-
     // advance the cursor to the next nibble
     AdvanceCursor();
 

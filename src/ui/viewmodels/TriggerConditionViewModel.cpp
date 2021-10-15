@@ -195,6 +195,21 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
         case MemSize::ThirtyTwoBitBigEndian: sBuffer.push_back('G'); break;
         case MemSize::SixteenBitBigEndian:   sBuffer.push_back('I'); break;
         case MemSize::TwentyFourBitBigEndian:sBuffer.push_back('J'); break;
+
+        case MemSize::Float:
+            sBuffer.pop_back();
+            sBuffer.pop_back();
+            sBuffer.push_back('f');
+            sBuffer.push_back('F');
+            break;
+
+        case MemSize::MBF32:
+            sBuffer.pop_back();
+            sBuffer.pop_back();
+            sBuffer.push_back('f');
+            sBuffer.push_back('M');
+            break;
+
         default:
             assert(!"Unknown memory size");
             break;

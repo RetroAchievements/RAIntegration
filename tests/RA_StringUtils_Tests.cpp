@@ -385,7 +385,84 @@ public:
 
         Assert::IsTrue(StringContainsCaseInsensitive(input, std::wstring(L"E E")));
     }
+
+    void AssertParseUnsignedInt(const std::wstring& sInput, unsigned nExpected)
+    {
+        std::wstring sError;
+        unsigned nValue;
+        Assert::IsTrue(ra::ParseUnsignedInt(sInput, 0xFFFFFFFF, nValue, sError));
+        Assert::AreEqual(nExpected, nValue);
+        Assert::AreEqual(std::wstring(), sError);
+    }
+
+    void AssertParseUnsignedIntError(const std::wstring& sInput, unsigned nMaximum, const std::wstring& sExpectedError)
+    {
+        std::wstring sError;
+        unsigned nValue;
+        Assert::IsFalse(ra::ParseUnsignedInt(sInput, nMaximum, nValue, sError));
+        Assert::AreEqual(0U, nValue);
+        Assert::AreEqual(sExpectedError, sError);
+    }
+
+    void AssertParseUnsignedIntError(const std::wstring& sInput, const std::wstring& sExpectedError)
+    {
+        AssertParseUnsignedIntError(sInput, 0xFFFFFFFF, sExpectedError);
+    }
+
+    TEST_METHOD(TestParseUnsignedInt)
+    {
+        AssertParseUnsignedInt(L"0", 0);
+        AssertParseUnsignedInt(L"12345", 12345);
+        AssertParseUnsignedInt(L"4294967295", 4294967295);
+
+        AssertParseUnsignedIntError(L"-1", L"Negative values are not allowed");
+        AssertParseUnsignedIntError(L"0.0", L"Only values that can be represented as decimal are allowed");
+        AssertParseUnsignedIntError(L"0x00", L"Only values that can be represented as decimal are allowed");
+        AssertParseUnsignedIntError(L"banana", L"Only values that can be represented as decimal are allowed");
+        AssertParseUnsignedIntError(L"4294967296", L"Value cannot exceed 4294967295");
+
+        AssertParseUnsignedIntError(L"12345", 12344, L"Value cannot exceed 12344");
+    }
+
+    void AssertParseHex(const std::wstring& sInput, unsigned nExpected)
+    {
+        std::wstring sError;
+        unsigned nValue;
+        Assert::IsTrue(ra::ParseHex(sInput, 0xFFFFFFFF, nValue, sError));
+        Assert::AreEqual(nExpected, nValue);
+        Assert::AreEqual(std::wstring(), sError);
+    }
+
+    void AssertParseHexError(const std::wstring& sInput, unsigned nMaximum, const std::wstring& sExpectedError)
+    {
+        std::wstring sError;
+        unsigned nValue;
+        Assert::IsFalse(ra::ParseHex(sInput, nMaximum, nValue, sError));
+        Assert::AreEqual(0U, nValue);
+        Assert::AreEqual(sExpectedError, sError);
+    }
+
+    void AssertParseHexError(const std::wstring& sInput, const std::wstring& sExpectedError)
+    {
+        AssertParseHexError(sInput, 0xFFFFFFFF, sExpectedError);
+    }
+
+    TEST_METHOD(TestParseHex)
+    {
+        AssertParseHex(L"0", 0);
+        AssertParseHex(L"12345", 0x12345);
+        AssertParseHex(L"FFFFFFFF", 0xFFFFFFFF);
+        AssertParseHex(L"0x12", 0x12);
+
+        AssertParseHexError(L"-1", L"Negative values are not allowed");
+        AssertParseHexError(L"0.0", L"Only values that can be represented as hexadecimal are allowed");
+        AssertParseHexError(L"banana", L"Only values that can be represented as hexadecimal are allowed");
+        AssertParseHexError(L"100000000", L"Value cannot exceed 0xFFFFFFFF");
+
+        AssertParseHexError(L"0x12345", 0x12344, L"Value cannot exceed 0x12344");
+    }
 };
+
 
 } // namespace tests
 } // namespace services

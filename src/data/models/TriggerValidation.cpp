@@ -34,6 +34,8 @@ MemSize TriggerValidation::MapRcheevosMemSize(char nSize) noexcept
         case RC_MEMSIZE_16_BITS_BE: return MemSize::SixteenBitBigEndian;
         case RC_MEMSIZE_24_BITS_BE: return MemSize::TwentyFourBitBigEndian;
         case RC_MEMSIZE_32_BITS_BE: return MemSize::ThirtyTwoBitBigEndian;
+        case RC_MEMSIZE_FLOAT: return MemSize::Float;
+        case RC_MEMSIZE_MBF32: return MemSize::MBF32;
         default:
             assert(!"Unsupported operand size");
             return MemSize::EightBit;

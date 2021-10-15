@@ -1031,6 +1031,7 @@ public:
         Assert::AreEqual(5, pItem->GetPoints());
         Assert::AreEqual(AssetState::Inactive, pItem->GetState());
         Assert::AreEqual(5, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(std::wstring(L""), pItem->GetWarning());
 
         vmAchievement.SetName(L"New Title");
         Assert::AreEqual(std::wstring(L"New Title"), pItem->GetLabel());
@@ -1042,6 +1043,11 @@ public:
 
         vmAchievement.SetState(AssetState::Active);
         Assert::AreEqual(AssetState::Active, pItem->GetState());
+
+        vmAchievement.SetTrigger("A:0x1234");
+        vmAchievement.UpdateLocalCheckpoint();
+        Assert::IsFalse(vmAchievement.Validate());
+        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow."), pItem->GetWarning());
     }
 
     TEST_METHOD(TestSyncAddItem)

@@ -141,6 +141,34 @@ public:
 
 // ------------------------------------
 
+class ChangesColumnBinding : public ra::ui::win32::bindings::GridLookupColumnBinding
+{
+public:
+    ChangesColumnBinding(const IntModelProperty& pBoundProperty, const ra::ui::viewmodels::LookupItemViewModelCollection& vmItems) noexcept
+        : ra::ui::win32::bindings::GridLookupColumnBinding(pBoundProperty, vmItems)
+    {
+    }
+
+    bool DependsOn(const ra::ui::StringModelProperty& pProperty) const noexcept override
+    {
+        return pProperty == AssetModelBase::ValidationErrorProperty;
+    }
+
+    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+        const std::wstring& sLabel = m_vmItems.GetLabelForId(nValue);
+
+        const auto& sWarning = vmItems.GetItemValue(nIndex, AssetModelBase::ValidationErrorProperty);
+        if (sWarning.empty())
+            return sLabel;
+
+        return sLabel + L"\U000026A0"; // 26A0 - Warning Sign
+    }
+};
+
+// ------------------------------------
+
 AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     : DialogBase(vmAssetList),
       m_bindAssets(vmAssetList),
@@ -200,10 +228,10 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     pCategoryColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 70);
     m_bindAssets.BindColumn(4 + nOffset, std::move(pCategoryColumn));
 
-    auto pChangesColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
+    auto pChangesColumn = std::make_unique<ChangesColumnBinding>(
         AssetModelBase::ChangesProperty, vmAssetList.Changes());
     pChangesColumn->SetHeader(L"Changes");
-    pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 70);
+    pChangesColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 82);
     m_bindAssets.BindColumn(5 + nOffset, std::move(pChangesColumn));
 
     m_bindAssets.SetDoubleClickHandler([this](gsl::index nIndex)

@@ -51,6 +51,16 @@ void LeaderboardModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
         {
             HandleStateChanged(ra::itoe<AssetState>(args.tOldValue), ra::itoe<AssetState>(args.tNewValue));
         }
+        else if (args.Property == StartTriggerProperty || args.Property == SubmitTriggerProperty ||
+            args.Property == CancelTriggerProperty || args.Property == ValueDefinitionProperty)
+        {
+            if (IsActive())
+            {
+                const std::string sDefinition = GetDefinition();
+                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+                pRuntime.ActivateLeaderboard(GetID(), sDefinition);
+            }
+        }
     }
 
     AssetModelBase::OnValueChanged(args);
@@ -135,9 +145,7 @@ void LeaderboardModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
         const bool bRuntimeActive = (pLeaderboard != nullptr);
         if (!bRuntimeActive)
         {
-            std::string sDefinition = "STA:" + GetStartTrigger() + "::SUB:" + GetSubmitTrigger() +
-                "::CAN:" + GetCancelTrigger() + "::VAL:" + GetValueDefinition();
-
+            const std::string sDefinition = GetDefinition();
             pRuntime.ActivateLeaderboard(GetID(), sDefinition);
             pLeaderboard = pRuntime.GetLeaderboardDefinition(GetID());
         }
@@ -195,6 +203,12 @@ void LeaderboardModel::SetDefinition(const std::string& sDefinition)
 
         nIndex = nNext + 2;
     }
+}
+
+std::string LeaderboardModel::GetDefinition() const
+{
+    return "STA:" + GetStartTrigger() + "::SUB:" + GetSubmitTrigger() +
+        "::CAN:" + GetCancelTrigger() + "::VAL:" + GetValueDefinition();
 }
 
 void LeaderboardModel::Serialize(ra::services::TextWriter& pWriter) const

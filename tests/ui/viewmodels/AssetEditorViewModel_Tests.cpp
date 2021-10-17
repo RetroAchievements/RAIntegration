@@ -65,6 +65,11 @@ private:
             return GetValue(WaitingLabelProperty);
         }
 
+        const std::wstring& GetGroupsHeaderLabel() const
+        {
+            return GetValue(GroupsHeaderProperty);
+        }
+
         void SetAssetValidationError(const std::wstring& sValue)
         {
             SetValue(AssetValidationErrorProperty, sValue);
@@ -156,6 +161,7 @@ public:
         Assert::IsFalse(editor.HasMeasured());
         Assert::IsFalse(editor.HasAssetValidationError());
         Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
 
         editor.LoadAsset(nullptr);
 
@@ -173,6 +179,7 @@ public:
         Assert::IsFalse(editor.HasMeasured());
         Assert::IsFalse(editor.HasAssetValidationError());
         Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
     }
 
     TEST_METHOD(TestLoadAchievementTrigger)
@@ -474,6 +481,7 @@ public:
         Assert::IsTrue(editor.HasMeasured());
         Assert::IsFalse(editor.HasAssetValidationError());
         Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
 
         editor.LoadAsset(nullptr);
 
@@ -491,6 +499,7 @@ public:
         Assert::IsFalse(editor.HasMeasured());
         Assert::IsFalse(editor.HasAssetValidationError());
         Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
     }
 
     TEST_METHOD(TestLoadLeaderboardTrigger)
@@ -1093,6 +1102,65 @@ public:
         Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
     }
 
+    TEST_METHOD(TestValueUpdated)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetID(1234U);
+        leaderboard.SetStartTrigger("0x8000=0");
+        leaderboard.SetSubmitTrigger("0x8000=1");
+        leaderboard.SetCancelTrigger("0x8000=2");
+        leaderboard.SetValueDefinition("M:0xH1234");
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+        leaderboard.Activate();
+
+        editor.LoadAsset(&leaderboard);
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Value);
+
+        // make sure the record got loaded into the runtime
+        const auto* pLeaderboard = editor.mockRuntime.GetLeaderboardDefinition(1234U);
+        Expects(pLeaderboard != nullptr);
+
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual(0x1234U, pCondition->GetSourceValue());
+        Assert::AreEqual((int)TriggerOperatorType::None, (int)pCondition->GetOperator());
+
+        leaderboard.SetValueDefinition("M:0xH2222");
+
+        // make sure the value definition got updated
+        Assert::AreEqual(std::string("M:0xH2222"), leaderboard.GetValueDefinition());
+
+        // make sure the runtime record got updated
+        pLeaderboard = editor.mockRuntime.GetLeaderboardDefinition(1234U);
+        Expects(pLeaderboard != nullptr);
+        Assert::AreEqual(0x2222U, pLeaderboard->value.conditions->conditions->operand1.value.memref->address);
+
+        // make sure the UI picked up the updated value
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
+        Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
+        Assert::AreEqual(0x2222U, pCondition->GetSourceValue());
+        Assert::AreEqual((int)TriggerOperatorType::None, (int)pCondition->GetOperator());
+
+        // modify the UI
+        pCondition->SetSourceValue(0x3333U);
+
+        // make sure the value definition got updated
+        Assert::AreEqual(std::string("M:0xH3333"), leaderboard.GetValueDefinition());
+
+        // make sure the runtime record got updated
+        pLeaderboard = editor.mockRuntime.GetLeaderboardDefinition(1234U);
+        Expects(pLeaderboard != nullptr);
+        Assert::AreEqual(0x3333U, pLeaderboard->value.conditions->conditions->operand1.value.memref->address);
+    }
+
     TEST_METHOD(TestDoFrameUpdatesHitsFromActiveAchievement)
     {
         AssetEditorViewModelHarness editor;
@@ -1371,22 +1439,40 @@ public:
         leaderboard.SetStartTrigger("0xH1234=6.1.");
         leaderboard.SetSubmitTrigger("0xH2345!=99");
         leaderboard.SetCancelTrigger("0xH3456>3");
+        leaderboard.SetValueDefinition("M:0xH4444");
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();
 
         editor.LoadAsset(&leaderboard);
         Assert::AreEqual(std::string("0xH1234=6.1."), editor.Trigger().Serialize());
+        Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
+        Assert::IsFalse(editor.Trigger().IsValue());
         Assert::IsFalse(leaderboard.IsModified());
 
         editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Submit);
         Assert::AreEqual(std::string("0xH2345!=99"), editor.Trigger().Serialize());
+        Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
+        Assert::IsFalse(editor.Trigger().IsValue());
         Assert::IsFalse(leaderboard.IsModified());
 
         editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Cancel);
         Assert::AreEqual(std::string("0xH3456>3"), editor.Trigger().Serialize());
+        Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
+        Assert::IsFalse(editor.Trigger().IsValue());
+        Assert::IsFalse(leaderboard.IsModified());
+
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Value);
+        Assert::AreEqual(std::string("M:0xH4444"), editor.Trigger().Serialize());
+        Assert::AreEqual(std::wstring(L"Max of:"), editor.GetGroupsHeaderLabel());
+        Assert::IsTrue(editor.Trigger().IsValue());
+        Assert::IsFalse(leaderboard.IsModified());
+
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Start);
+        Assert::AreEqual(std::string("0xH1234=6.1."), editor.Trigger().Serialize());
+        Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
+        Assert::IsFalse(editor.Trigger().IsValue());
         Assert::IsFalse(leaderboard.IsModified());
     }
-
 };
 
 } // namespace tests

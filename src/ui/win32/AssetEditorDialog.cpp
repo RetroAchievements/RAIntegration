@@ -674,6 +674,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindVisible(IDC_RA_LBL_DISPLAY, AssetEditorViewModel::IsLeaderboardProperty);
     m_bindWindow.BindVisible(IDC_RA_DISPLAY, AssetEditorViewModel::IsLeaderboardProperty);
     m_bindWindow.BindVisible(IDC_RA_LBX_LBOARD_PARTS, AssetEditorViewModel::IsLeaderboardProperty);
+    m_bindWindow.BindLabel(IDC_RA_LBL_GROUPS, AssetEditorViewModel::GroupsHeaderProperty);
 
     auto pPartColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         ra::ui::viewmodels::LookupItemViewModel::LabelProperty);

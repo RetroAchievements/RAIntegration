@@ -25,6 +25,7 @@ const IntModelProperty AssetEditorViewModel::PointsProperty("AssetEditorViewMode
 const StringModelProperty AssetEditorViewModel::BadgeProperty("AssetEditorViewModel", "Badge", L"00000");
 const BoolModelProperty AssetEditorViewModel::IsLeaderboardProperty("AssetEditorViewModel", "IsLeaderboard", false);
 const IntModelProperty AssetEditorViewModel::SelectedLeaderboardPartProperty("AssetEditorViewModel", "SelectedLeaderboardPart", ra::etoi(AssetEditorViewModel::LeaderboardPart::Start));
+const StringModelProperty AssetEditorViewModel::GroupsHeaderProperty("AssetEditorViewModel", "GroupsHeader", L"Groups:");
 const IntModelProperty AssetEditorViewModel::ValueFormatProperty("AssetEditorViewModel", "ValueFormat", ra::etoi(ra::data::ValueFormat::Value));
 const BoolModelProperty AssetEditorViewModel::LowerIsBetterProperty("AssetEditorViewModel", "LowerIsBetter", false);
 const StringModelProperty AssetEditorViewModel::FormattedValueProperty("AssetEditorViewModel", "FormattedValue", L"0");
@@ -139,6 +140,9 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
         else
             SetValue(IDProperty, pAsset->GetID());
 
+        Trigger().SetIsValue(false); // UpdateLeaderboardTrigger will set this back to true if necessary
+        SetValue(GroupsHeaderProperty, GroupsHeaderProperty.GetDefaultValue());
+
         const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(pAsset);
         if (pLeaderboard != nullptr)
         {
@@ -220,6 +224,18 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
 
 void AssetEditorViewModel::UpdateLeaderboardTrigger()
 {
+    const auto nPart = GetSelectedLeaderboardPart();
+    if (nPart == LeaderboardPart::Value)
+    {
+        SetValue(GroupsHeaderProperty, L"Max of:");
+        Trigger().SetIsValue(true);
+    }
+    else
+    {
+        SetValue(GroupsHeaderProperty, GroupsHeaderProperty.GetDefaultValue());
+        Trigger().SetIsValue(false);
+    }
+
     const auto* pLeaderboardDefinition = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetLeaderboardDefinition(m_pAsset->GetID());
     if (pLeaderboardDefinition != nullptr)
     {
@@ -235,7 +251,7 @@ void AssetEditorViewModel::UpdateLeaderboardTrigger()
                 Trigger().InitializeFrom(pLeaderboardDefinition->cancel);
                 return;
             case LeaderboardPart::Value:
-                //Trigger().InitializeFrom(pLeaderboardDefinition->value.conditions);
+                Trigger().InitializeFrom(pLeaderboardDefinition->value);
                 return;
             default:
                 break;
@@ -313,8 +329,14 @@ void AssetEditorViewModel::OnDataModelStringValueChanged(const StringModelProper
 
 void AssetEditorViewModel::OnDataModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == ra::data::models::AchievementModel::TriggerProperty)
+    if (args.Property == ra::data::models::AchievementModel::TriggerProperty ||
+        args.Property == ra::data::models::LeaderboardModel::StartTriggerProperty ||
+        args.Property == ra::data::models::LeaderboardModel::SubmitTriggerProperty ||
+        args.Property == ra::data::models::LeaderboardModel::CancelTriggerProperty ||
+        args.Property == ra::data::models::LeaderboardModel::ValueDefinitionProperty)
+    {
         UpdateTriggerBinding();
+    }
     else if (args.Property == ra::data::models::AssetModelBase::StateProperty)
         SetState(ra::itoe<ra::data::models::AssetState>(args.tNewValue));
     else if (args.Property == ra::data::models::AssetModelBase::CategoryProperty)
@@ -490,36 +512,91 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
 
 void AssetEditorViewModel::OnTriggerChanged()
 {
+    const std::string& sTrigger = Trigger().Serialize();
+    int nSize = 0;
+
     auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(m_pAsset);
+    auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
+
+    // validate the new trigger before we update the asset. if it can't be deserialized, we can't commit it.
     if (pAchievement != nullptr)
     {
-        const std::string& sTrigger = Trigger().Serialize();
+        nSize = rc_trigger_size(sTrigger.c_str());
+    }
+    else if (pLeaderboard != nullptr)
+    {
+        const auto nSelectedPart = GetSelectedLeaderboardPart();
 
-        const int nSize = rc_trigger_size(sTrigger.c_str());
-        if (nSize < 0)
-        {
-            SetValue(AssetValidationErrorProperty, ra::Widen(rc_error_str(nSize)));
-
-            // if the achievement is active, we have to disable it
-            if (pAchievement->IsActive())
-                pAchievement->SetState(ra::data::models::AssetState::Inactive);
-
-            // we need to update the trigger to mark the asset as modified, and so any attempt to reset/revert
-            // the trigger will cause a PropertyChanged event. but we can't allow UpdateTriggerBinding to try
-            // to process it because the trigger is not valid.
-            m_bIgnoreTriggerUpdate = true;
-            pAchievement->SetTrigger(sTrigger);
-            m_bIgnoreTriggerUpdate = false;
-        }
+        std::string sDefinition = "STA:";
+        if (nSelectedPart == LeaderboardPart::Start)
+            sDefinition += sTrigger;
         else
+            sDefinition += pLeaderboard->GetStartTrigger();
+
+        sDefinition.append("::SUB:");
+        if (nSelectedPart == LeaderboardPart::Submit)
+            sDefinition += sTrigger;
+        else
+            sDefinition += pLeaderboard->GetSubmitTrigger();
+
+        sDefinition.append("::CAN:");
+        if (nSelectedPart == LeaderboardPart::Cancel)
+            sDefinition += sTrigger;
+        else
+            sDefinition += pLeaderboard->GetCancelTrigger();
+
+        sDefinition.append("::VAL:");
+        if (nSelectedPart == LeaderboardPart::Value)
+            sDefinition += sTrigger;
+        else
+            sDefinition += pLeaderboard->GetValueDefinition();
+
+        nSize = rc_lboard_size(sDefinition.c_str());
+    }
+
+    if (nSize < 0)
+    {
+        SetValue(AssetValidationErrorProperty, ra::Widen(rc_error_str(nSize)));
+
+        // if the achievement is active, we have to disable it
+        if (m_pAsset->IsActive())
+            m_pAsset->SetState(ra::data::models::AssetState::Inactive);
+
+        // we need to update the trigger to mark the asset as modified, and so any attempt to reset/revert
+        // the trigger will cause a PropertyChanged event. but we can't allow UpdateTriggerBinding to try
+        // to process it because the trigger is not valid.
+        m_bIgnoreTriggerUpdate = true;
+    }
+    else
+    {
+        SetValue(AssetValidationErrorProperty, L"");
+    }
+
+    if (pAchievement != nullptr)
+    {
+        pAchievement->SetTrigger(sTrigger);
+    }
+    else if (pLeaderboard != nullptr)
+    {
+        switch (GetSelectedLeaderboardPart())
         {
-            SetValue(AssetValidationErrorProperty, L"");
-
-            pAchievement->SetTrigger(sTrigger);
-
-            // if trigger has actually changed, the code will call back through UpdateTriggerBinding to update the UI
+            case LeaderboardPart::Start:
+                pLeaderboard->SetStartTrigger(sTrigger);
+                break;
+            case LeaderboardPart::Submit:
+                pLeaderboard->SetSubmitTrigger(sTrigger);
+                break;
+            case LeaderboardPart::Cancel:
+                pLeaderboard->SetCancelTrigger(sTrigger);
+                break;
+            case LeaderboardPart::Value:
+                pLeaderboard->SetValueDefinition(sTrigger);
+                break;
         }
     }
+
+    if (nSize < 0)
+        m_bIgnoreTriggerUpdate = false;
 }
 
 void AssetEditorViewModel::UpdateTriggerBinding()
@@ -546,6 +623,59 @@ void AssetEditorViewModel::UpdateTriggerBinding()
 
         SetValue(AssetValidationErrorProperty, L"");
         SetValue(HasMeasuredProperty, (pTrigger && pTrigger->measured_target != 0));
+    }
+    else
+    {
+        const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
+        if (pLeaderboard != nullptr)
+        {
+            const rc_lboard_t* pLeaderboardDefinition = nullptr;
+            if (pLeaderboard->IsActive())
+                pLeaderboardDefinition = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetLeaderboardDefinition(pLeaderboard->GetID());
+
+            if (pLeaderboardDefinition != nullptr)
+            {
+                switch (GetSelectedLeaderboardPart())
+                {
+                    case LeaderboardPart::Start:
+                        Trigger().UpdateFrom(pLeaderboardDefinition->start);
+                        break;
+                    case LeaderboardPart::Submit:
+                        Trigger().UpdateFrom(pLeaderboardDefinition->submit);
+                        break;
+                    case LeaderboardPart::Cancel:
+                        Trigger().UpdateFrom(pLeaderboardDefinition->cancel);
+                        break;
+                    case LeaderboardPart::Value:
+                        Trigger().UpdateFrom(pLeaderboardDefinition->value);
+                        break;
+                    default:
+                        break;
+                }
+            }
+            else
+            {
+                switch (GetSelectedLeaderboardPart())
+                {
+                    case LeaderboardPart::Start:
+                        Trigger().UpdateFrom(pLeaderboard->GetStartTrigger());
+                        break;
+                    case LeaderboardPart::Submit:
+                        Trigger().UpdateFrom(pLeaderboard->GetSubmitTrigger());
+                        break;
+                    case LeaderboardPart::Cancel:
+                        Trigger().UpdateFrom(pLeaderboard->GetCancelTrigger());
+                        break;
+                    case LeaderboardPart::Value:
+                        Trigger().UpdateFrom(pLeaderboard->GetValueDefinition());
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            SetValue(AssetValidationErrorProperty, L"");
+        }
     }
 
     if (AreDebugHighlightsEnabled())

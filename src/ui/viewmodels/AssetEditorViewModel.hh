@@ -292,6 +292,11 @@ public:
     /// </summary>
     void SetSelectedLeaderboardPart(LeaderboardPart nValue) { SetValue(SelectedLeaderboardPartProperty, ra::etoi(nValue)); }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the groups header.
+    /// </summary>
+    static const StringModelProperty GroupsHeaderProperty;
+
     // ===== Trigger =====
 
     /// <summary>

@@ -260,21 +260,6 @@ public:
         void SetCurrentValue(const std::wstring& value) { SetValue(CurrentValueProperty, value); }
 
         /// <summary>
-        /// The <see cref="ModelProperty" /> for the previous value of the address.
-        /// </summary>
-        static const StringModelProperty PreviousValueProperty;
-
-        /// <summary>
-        /// Gets the previous value of the address.
-        /// </summary>
-        const std::wstring& GetPreviousValue() const { return GetValue(PreviousValueProperty); }
-
-        /// <summary>
-        /// Sets the previous value of the address.
-        /// </summary>
-        void SetPreviousValue(const std::wstring& value) { SetValue(PreviousValueProperty, value); }
-
-        /// <summary>
         /// The <see cref="ModelProperty" /> for the whether the result is selected.
         /// </summary>
         static const BoolModelProperty IsSelectedProperty;
@@ -443,6 +428,8 @@ public:
     /// </summary>
     void BookmarkSelected();
 
+    std::wstring GetTooltip(const SearchResultViewModel& vmResult) const;
+
 protected:
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
@@ -461,8 +448,9 @@ private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);
     void ApplyContinuousFilter();
     void UpdateResults();
-    void UpdateResult(SearchResultViewModel& pRow, ra::services::SearchResults::Result& pResult, 
-        const ra::data::context::EmulatorContext& pEmulatorContext, bool bCapturePrevious);
+    void UpdateResult(SearchResultViewModel& pRow, const ra::services::SearchResults& pResults,
+        ra::services::SearchResults::Result& pResult,
+        const ra::data::context::EmulatorContext& pEmulatorContext);
 
     void AddNewPage();
     void ChangePage(size_t nNewPage);
@@ -493,7 +481,7 @@ private:
     std::vector<SearchResult> m_vSearchResults;
     std::set<unsigned int> m_vSelectedAddresses;
 
-    static bool TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue) noexcept;
+    static bool TestFilter(const ra::services::SearchResults::Result& pResult, const ra::services::SearchResults& pResults, unsigned int nPreviousValue) noexcept;
     void ApplyFilter(SearchResult& pResult, const SearchResult& pPreviousResult,
         ComparisonType nComparisonType, ra::services::SearchFilterType nValueType, unsigned int nValue, const std::wstring& sValue);
 };

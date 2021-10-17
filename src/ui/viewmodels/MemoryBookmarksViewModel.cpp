@@ -285,46 +285,9 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateCurrentValue()
     }
 }
 
-static std::wstring U32ToFloatString(unsigned nValue, char nFloatType)
-{
-    rc_typed_value_t value;
-    value.type = RC_VALUE_TYPE_UNSIGNED;
-    value.value.u32 = nValue;
-    rc_transform_memref_value(&value, nFloatType);
-
-    std::wstring sValue = ra::StringPrintf(L"%f", value.value.f32);
-    while (sValue.back() == L'0')
-        sValue.pop_back();
-    if (sValue.back() == L'.')
-        sValue.push_back(L'0');
-
-    return sValue;
-}
-
 std::wstring MemoryBookmarksViewModel::MemoryBookmarkViewModel::BuildCurrentValue() const
 {
-    switch (m_nSize)
-    {
-        case MemSize::Float:
-            return U32ToFloatString(m_nValue, RC_MEMSIZE_FLOAT);
-
-        case MemSize::MBF32:
-            return U32ToFloatString(m_nValue, RC_MEMSIZE_MBF32);
-
-        default:
-        {
-            if (GetFormat() == MemFormat::Dec)
-                return std::to_wstring(m_nValue);
-
-            const auto nBits = ra::data::MemSizeBits(m_nSize);
-            if (nBits <= 4)
-                return ra::StringPrintf(L"%X", m_nValue);
-
-            wchar_t format[5] = L"%08X";
-            format[2] = gsl::narrow_cast<wchar_t>(L'0' + (nBits / 4));
-            return ra::StringPrintf(format, m_nValue);
-        }
-    }
+    return ra::data::MemSizeFormat(m_nValue, m_nSize, GetFormat());
 }
 
 bool MemoryBookmarksViewModel::IsModified() const

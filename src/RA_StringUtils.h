@@ -833,6 +833,19 @@ GSL_SUPPRESS_F6 _NODISCARD bool StringContainsCaseInsensitive(_In_ const std::ws
                                                               _In_ const std::wstring& sMatch,
                                                               bool bMatchIsLowerCased = false) noexcept;
 
+/// <summary>
+/// Generates a DJB2 hash of the provided string.
+/// </summary>
+template<typename CharT, typename = std::enable_if_t<is_char_v<CharT>>>
+constexpr int StringHash(const std::basic_string<CharT>& sString) noexcept
+{
+    int nHash = 5381;
+    for (const auto c : sString)
+        nHash = ((nHash << 5) + nHash) + c; /* hash * 33 + c */
+
+    return nHash;
+}
+
 } // namespace ra
 
 #ifdef UNICODE

@@ -78,11 +78,12 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnViewModelIntValueChanged
     {
         int nWidth = 0;
         const auto& vmMemory = GetViewModel<MemorySearchViewModel>();
+        const auto nSize = vmMemory.ResultMemSize();
         constexpr int nCharWidth = 6;
         constexpr int nPadding = 6;
 
         // value column
-        auto nMaxChars = (ra::data::MemSizeBits(vmMemory.ResultMemSize()) + 3) / 4; // 4 bits per nibble
+        auto nMaxChars = (ra::data::MemSizeBits(nSize) + 3) / 4; // 4 bits per nibble
         if (nMaxChars == 0)
             nMaxChars = 16;
         nWidth = nCharWidth * (nMaxChars + 2) + nPadding * 2;
@@ -91,7 +92,7 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnViewModelIntValueChanged
         // address column
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         nMaxChars = (pEmulatorContext.TotalMemorySize() > 0x10000) ? 8 : 6; // 0x123456 or 0x1234
-        if (vmMemory.ResultMemSize() == MemSize::Nibble_Lower)
+        if (nSize == MemSize::Nibble_Lower)
             ++nMaxChars; // 0x1234L
         nWidth = (nCharWidth * nMaxChars) + nPadding * 2;
         m_vColumns.at(0)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
@@ -102,6 +103,25 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnViewModelIntValueChanged
     GridBinding::OnViewModelIntValueChanged(args);
 }
 
+// ------------------------------------
+
+class SearchResultValueColumnBinding : public ra::ui::win32::bindings::GridTextColumnBinding
+{
+public:
+    SearchResultValueColumnBinding(const StringModelProperty& pBoundProperty) noexcept
+        : ra::ui::win32::bindings::GridTextColumnBinding(pBoundProperty)
+    {
+    }
+
+    std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
+    {
+        const auto* pItem = dynamic_cast<const ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel*>(vmItems.GetViewModelAt(nIndex));
+        const auto& pMemorySearchViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryInspector.Search();
+        return pMemorySearchViewModel.GetTooltip(*pItem);
+    }
+};
+
+// ------------------------------------
 
 MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryInspector)
     : DialogBase(vmMemoryInspector),
@@ -165,7 +185,7 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     pAddressColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, 60);
     m_bindSearchResults.BindColumn(0, std::move(pAddressColumn));
 
-    auto pValueColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+    auto pValueColumn = std::make_unique<SearchResultValueColumnBinding>(
         MemorySearchViewModel::SearchResultViewModel::CurrentValueProperty);
     pValueColumn->SetHeader(L"Value");
     pValueColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, 50);
@@ -277,6 +297,7 @@ BOOL MemoryInspectorDialog::OnInitDialog()
 
     // Results
     m_bindSearchResults.SetControl(*this, IDC_RA_RESULTS);
+    m_bindSearchResults.InitializeTooltips(std::chrono::seconds(3));
 
     // Code Notes
     m_bindAddress.SetControl(*this, IDC_RA_ADDRESS);

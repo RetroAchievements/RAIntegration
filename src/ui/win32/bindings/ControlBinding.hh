@@ -155,7 +155,11 @@ protected:
             m_pDialog->QueueFunction(fAction);
     }
 
-    HWND GetDialogHwnd() const noexcept { return m_pDialog->m_hWnd; }
+    HWND GetDialogHwnd() const noexcept
+    {
+        Expects(m_pDialog != nullptr);
+        return m_pDialog->m_hWnd;
+    }
 
     void SubclassWndProc() noexcept;
 

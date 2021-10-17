@@ -116,6 +116,8 @@ public:
     std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
     {
         const auto* pItem = dynamic_cast<const ra::ui::viewmodels::MemorySearchViewModel::SearchResultViewModel*>(vmItems.GetViewModelAt(nIndex));
+        Expects(pItem != nullptr);
+
         const auto& pMemorySearchViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryInspector.Search();
         return pMemorySearchViewModel.GetTooltip(*pItem);
     }

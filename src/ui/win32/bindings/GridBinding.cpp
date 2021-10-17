@@ -752,7 +752,7 @@ INT_PTR CALLBACK GridBinding::WndProc(HWND hControl, UINT uMsg, WPARAM wParam, L
     return ControlBinding::WndProc(hControl, uMsg, wParam, lParam);
 }
 
-void GridBinding::InitializeTooltips(std::chrono::milliseconds nDisplayTime) noexcept
+void GridBinding::InitializeTooltips(std::chrono::milliseconds nDisplayTime)
 {
     const HWND hDialog = GetDialogHwnd();
     Expects(hDialog != nullptr);

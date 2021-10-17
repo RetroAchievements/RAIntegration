@@ -155,7 +155,7 @@ protected:
             m_pDialog->QueueFunction(fAction);
     }
 
-    HWND GetDialogHwnd() const noexcept
+    HWND GetDialogHwnd() const
     {
         Expects(m_pDialog != nullptr);
         return m_pDialog->m_hWnd;

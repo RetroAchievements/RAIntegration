@@ -42,7 +42,7 @@ public:
     void SetCopyHandler(std::function<void()> pHandler);
     void SetPasteHandler(std::function<void()> pHandler);
 
-    void InitializeTooltips(std::chrono::milliseconds nDisplayTime) noexcept;
+    void InitializeTooltips(std::chrono::milliseconds nDisplayTime);
 
     GSL_SUPPRESS_CON3 virtual LRESULT OnLvnItemChanging(const LPNMLISTVIEW pnmListView);
     GSL_SUPPRESS_CON3 virtual void OnLvnItemChanged(const LPNMLISTVIEW pnmListView);

@@ -159,12 +159,12 @@ public:
         return false;
     }
 
-    virtual std::wstring GetFormattedValue(const SearchResults&, const SearchResults::Result& pResult) const noexcept
+    virtual std::wstring GetFormattedValue(const SearchResults&, const SearchResults::Result& pResult) const
     {
         return L"0x" + ra::data::MemSizeFormat(pResult.nValue, pResult.nSize, MemFormat::Hex);
     }
 
-    virtual std::wstring GetFormattedValue(const SearchResults& pResults, ra::ByteAddress nAddress, MemSize nSize) const noexcept
+    virtual std::wstring GetFormattedValue(const SearchResults& pResults, ra::ByteAddress nAddress, MemSize nSize) const
     {
         SearchResults::Result pResult{ nAddress, 0, nSize };
         if (GetValue(pResults, pResult))
@@ -174,7 +174,7 @@ public:
     }
 
     virtual void UpdateValue(const SearchResults& pResults, SearchResults::Result& pResult,
-        _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const noexcept
+        _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const
     {
         pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, pResult.nSize);
 
@@ -651,12 +651,12 @@ public:
         }
     }
 
-    std::wstring GetFormattedValue(const SearchResults& pResults, const SearchResults::Result& pResult) const noexcept override
+    std::wstring GetFormattedValue(const SearchResults& pResults, const SearchResults::Result& pResult) const override
     {
         return GetFormattedValue(pResults, pResult.nAddress, GetMemSize());
     }
 
-    std::wstring GetFormattedValue(const SearchResults& pResults, ra::ByteAddress nAddress, MemSize) const noexcept
+    std::wstring GetFormattedValue(const SearchResults& pResults, ra::ByteAddress nAddress, MemSize) const override
     {
         std::array<unsigned char, 16> pBuffer;
         pResults.GetBytes(nAddress, &pBuffer.at(0), pBuffer.size());
@@ -668,7 +668,7 @@ public:
     }
 
     void UpdateValue(const SearchResults&, SearchResults::Result& pResult,
-        _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const noexcept override
+        _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const override
     {
         std::array<unsigned char, 16> pBuffer;
         pEmulatorContext.ReadMemory(pResult.nAddress, &pBuffer.at(0), pBuffer.size());
@@ -962,13 +962,13 @@ bool SearchResults::GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, s
     return false;
 }
 
-std::wstring SearchResults::GetFormattedValue(ra::ByteAddress nAddress, MemSize nSize) const noexcept
+std::wstring SearchResults::GetFormattedValue(ra::ByteAddress nAddress, MemSize nSize) const
 {
     return m_pImpl ? m_pImpl->GetFormattedValue(*this, nAddress, nSize) : L"";
 }
 
 void SearchResults::UpdateValue(SearchResults::Result& pResult, _Out_ std::wstring* sFormattedValue,
-    const ra::data::context::EmulatorContext& pEmulatorContext) const noexcept
+    const ra::data::context::EmulatorContext& pEmulatorContext) const
 {
     if (m_pImpl)
         return m_pImpl->UpdateValue(*this, pResult, sFormattedValue, pEmulatorContext);

@@ -260,7 +260,7 @@ void ModelCollectionBase::UpdateIndices()
         // remove the deleted items from the collection
         m_vItems.erase(m_vItems.begin() + m_nSize, m_vItems.end());
 
-        // update the indices of any items after the deleted items
+        // update the indices of any items after the deleted items so they don't also raise 'changed' events
         for (auto& pItem : m_vItems)
         {
             gsl::index nIndex = pItem->m_nCollectionIndex;
@@ -283,19 +283,14 @@ void ModelCollectionBase::UpdateIndices()
     // second pass, deal with new items
     std::vector<gsl::index> vNewIndices;
     gsl::index nIndex = 0;
-    for (; nIndex < gsl::narrow_cast<gsl::index>(m_vItems.size()); ++nIndex)
+    int nOffset = 0;
+    for (auto& pItem : m_vItems)
     {
-        auto& pItem = m_vItems.at(nIndex);
         if (pItem->m_nCollectionIndex == -1)
         {
-            // update the indices of any items after the new item
-            for (gsl::index nIndex2 = nIndex + 1; nIndex2 < gsl::narrow_cast<gsl::index>(m_vItems.size()); ++nIndex2)
-            {
-                auto& pItem2 = m_vItems.at(nIndex2);
-                if (pItem2->m_nCollectionIndex >= nIndex)
-                    pItem2->m_nCollectionIndex = pItem2->m_nCollectionIndex + 1;
-            }
+            ++nOffset;
 
+            // assign an index to the new item
             pItem->m_nCollectionIndex = nIndex;
 
             if (bWatching)
@@ -303,6 +298,13 @@ void ModelCollectionBase::UpdateIndices()
 
             vNewIndices.push_back(nIndex);
         }
+        else
+        {
+            // update the indices of any items after new items
+            pItem->m_nCollectionIndex += nOffset;
+        }
+
+        ++nIndex;
     }
 
     if (!vNewIndices.empty())

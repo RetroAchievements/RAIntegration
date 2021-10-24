@@ -55,15 +55,11 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
     sTriggerBuffer.resize(nSize);
     const auto* pTrigger = rc_parse_trigger(sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
 
-    unsigned nMaxAddress;
+    unsigned nMaxAddress = ra::to_unsigned(-1);
     if (ra::services::ServiceLocator::Exists<ra::data::context::EmulatorContext>())
     {
         const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
         nMaxAddress = gsl::narrow_cast<unsigned>(pEmulatorContext.TotalMemorySize()) - 1;
-    }
-    else
-    {
-        nMaxAddress = ra::to_unsigned(-1);
     }
 
     char sErrorBuffer[256];

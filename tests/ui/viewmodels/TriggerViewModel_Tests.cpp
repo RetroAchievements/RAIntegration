@@ -790,6 +790,33 @@ public:
         Assert::AreEqual(std::string("0xH1234=16_0x 0008=2312_0xX0004=117835012_0xH0002=2"), vmTrigger.Serialize());
     }
 
+    TEST_METHOD(TestNewConditionAddAddressChain)
+    {
+        std::array<uint8_t, 10> pMemory = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0xH1234=16");
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+        vmTrigger.Conditions().GetItemAt(0)->SetSelected(true);
+
+        vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+
+        vmTrigger.NewCondition();
+        vmTrigger.Conditions().GetItemAt(1)->SetType(TriggerConditionType::AddAddress);
+        vmTrigger.Conditions().GetItemAt(1)->SetSourceValue(2);
+        vmTrigger.NewCondition();
+        vmTrigger.Conditions().GetItemAt(2)->SetSourceValue(5);
+        vmTrigger.Conditions().GetItemAt(2)->SetTargetValue(6);
+
+        Assert::AreEqual({ 3U }, vmTrigger.Conditions().Count());
+        Assert::AreEqual(std::string("0xH1234=16_I:0xH0002_0xH0005=6"), vmTrigger.Serialize());
+        vmTrigger.UpdateFrom("0xH1234=16_I:0xH0002_0xH0005=6"); // force refresh to rebuild indirect chain
+
+        Assert::AreEqual(std::wstring(L"0x0007 (indirect)\r\n[No code note]"),
+            vmTrigger.Conditions().GetItemAt(2)->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
     TEST_METHOD(TestAddGroupNoAlts)
     {
         TriggerViewModelHarness vmTrigger;

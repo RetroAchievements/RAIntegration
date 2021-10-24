@@ -340,6 +340,7 @@ void TriggerViewModel::NewCondition()
     DeselectAllConditions();
 
     auto& vmCondition = m_vConditions.Add();
+    vmCondition.SetTriggerViewModel(this);
     vmCondition.SetIndex(gsl::narrow_cast<int>(m_vConditions.Count()));
 
     // assume the user wants to create a condition for the currently watched memory address.

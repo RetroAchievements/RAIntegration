@@ -73,6 +73,16 @@ private:
         Assert::AreEqual(sInput, sOutput);
     }
 
+    void ParseAndRegenerateValue(const std::string& sInput)
+    {
+        TriggerViewModel vmTrigger;
+        vmTrigger.SetIsValue(true);
+        Parse(vmTrigger, sInput);
+
+        const std::string sOutput = vmTrigger.Serialize();
+        Assert::AreEqual(sInput, sOutput);
+    }
+
     class TriggerMonitor : ViewModelBase::NotifyTarget
     {
     public:
@@ -222,6 +232,16 @@ public:
         ParseAndRegenerate("0xH1234=0xH2345S0xX5555=1.3.SR:0x face=678S0xL3333!=d0xL3333"); // several alts
         ParseAndRegenerate("S0xX5555=1.3.SR:0x face=678S0xL3333!=d0xL3333"); // only alts
         ParseAndRegenerate("0xH1234=0xH2345SI:0x 1234_A:0xH2345_0xH7777=345"); // addsource/addaddress chain
+    }
+
+    TEST_METHOD(TestParseAndRegenerateValue)
+    {
+        ParseAndRegenerateValue("A:0xH1234*10_M:0xH1235"); // multiplication
+        ParseAndRegenerateValue("M:0xH1234$M:0xX5555"); // one alt
+        ParseAndRegenerateValue("M:0xH1234$M:0xX5555$M:b0xL3333"); // several alts
+        ParseAndRegenerateValue("M:0xH1234$I:0x 1234_A:0xH2345_M:0xH7777"); // addsource/addaddress chain
+        ParseAndRegenerateValue("M:0xS2345"); // bit6
+        ParseAndRegenerateValue("M:0xS2345$M:0xS2346"); // bit6 in alts
     }
 
     TEST_METHOD(TestTriggerUpdateConditionModified)

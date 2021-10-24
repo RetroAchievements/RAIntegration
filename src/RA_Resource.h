@@ -107,6 +107,7 @@
 #define IDC_RA_LBL_DISPLAY              1202
 #define IDC_RA_DISPLAY                  1203
 #define IDC_RA_LBX_LBOARD_PARTS         1204
+#define IDC_RA_LBL_GROUPS               1205
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -189,7 +190,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        122
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1205
+#define _APS_NEXT_CONTROL_VALUE         1206
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

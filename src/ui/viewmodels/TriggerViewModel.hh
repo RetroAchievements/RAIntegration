@@ -89,6 +89,9 @@ public:
     void UpdateFrom(const std::string& sTrigger);
     rc_trigger_t* GetTriggerFromString() const noexcept { return m_pTrigger; }
 
+    void InitializeFrom(const rc_value_t& pValue);
+    void UpdateFrom(const rc_value_t& pValue);
+
     void CopyToClipboard();
 
     void RemoveSelectedConditions();
@@ -140,6 +143,9 @@ public:
 
     static bool BuildHitChainTooltip(std::wstring& sTooltip, const ViewModelCollection<TriggerConditionViewModel>& vmConditions, gsl::index nIndex);
 
+    bool IsValue() const noexcept { return m_bIsValue; }
+    void SetIsValue(bool bValue) noexcept { m_bIsValue = bValue; }
+
 protected:
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
@@ -156,6 +162,7 @@ private:
 
     void DeselectAllConditions();
     void UpdateIndicesAndEnsureSelectionVisible();
+    rc_trigger_t* ParseTrigger(const std::string& sTrigger);
 
     void UpdateGroupColors(const rc_trigger_t* pTrigger);
     void UpdateConditionColors(const rc_trigger_t* pTrigger);
@@ -192,6 +199,8 @@ private:
 
     std::string m_sTriggerBuffer;
     rc_trigger_t* m_pTrigger = nullptr;
+
+    bool m_bIsValue = false;
 };
 
 } // namespace viewmodels

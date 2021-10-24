@@ -167,7 +167,7 @@ void TriggerViewModel::SerializeAppend(std::string& sBuffer) const
         if (vmGroup != nullptr)
         {
             if (nGroup != 0)
-                sBuffer.push_back('S');
+                sBuffer.push_back(m_bIsValue ? '$' : 'S');
 
             sBuffer.append(vmGroup->GetSerialized(*this));
         }
@@ -415,7 +415,7 @@ void TriggerViewModel::InitializeGroups(const rc_trigger_t& pTrigger)
 
     auto& vmCoreGroup = m_vGroups.Add();
     vmCoreGroup.SetId(0);
-    vmCoreGroup.SetLabel(L"Core");
+    vmCoreGroup.SetLabel(m_bIsValue ? L"Value" : L"Core");
     vmCoreGroup.SetSelected(true);
     if (pTrigger.requirement)
         vmCoreGroup.m_pConditionSet = pTrigger.requirement;
@@ -434,17 +434,46 @@ void TriggerViewModel::InitializeGroups(const rc_trigger_t& pTrigger)
 
 void TriggerViewModel::InitializeFrom(const rc_trigger_t& pTrigger)
 {
+    m_bIsValue = false;
     m_pTrigger = nullptr;
     InitializeGroups(pTrigger);
 }
 
+rc_trigger_t* TriggerViewModel::ParseTrigger(const std::string& sTrigger)
+{
+    if (m_bIsValue)
+    {
+        const auto nSize = rc_value_size(sTrigger.c_str());
+        if (nSize > 0)
+        {
+            m_sTriggerBuffer.resize(nSize + sizeof(rc_trigger_t));
+            rc_value_t* pValue = rc_parse_value(m_sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
+            rc_trigger_t* pTrigger;
+            GSL_SUPPRESS_TYPE1 pTrigger = reinterpret_cast<rc_trigger_t*>(m_sTriggerBuffer.data() + nSize);
+            memset(pTrigger, 0, sizeof(rc_trigger_t));
+            pTrigger->requirement = pValue->conditions;
+            pTrigger->alternative = pValue->conditions->next;
+            return pTrigger;
+        }
+    }
+    else
+    {
+        const auto nSize = rc_trigger_size(sTrigger.c_str());
+        if (nSize > 0)
+        {
+            m_sTriggerBuffer.resize(nSize);
+            return rc_parse_trigger(m_sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
+        }
+    }
+
+    return nullptr;
+}
+
 void TriggerViewModel::InitializeFrom(const std::string& sTrigger, const ra::data::models::CapturedTriggerHits& pCapturedHits)
 {
-    const auto nSize = rc_trigger_size(sTrigger.c_str());
-    if (nSize > 0)
+    m_pTrigger = ParseTrigger(sTrigger);
+    if (m_pTrigger)
     {
-        m_sTriggerBuffer.resize(nSize);
-        m_pTrigger = rc_parse_trigger(m_sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
         pCapturedHits.Restore(m_pTrigger, sTrigger);
         InitializeGroups(*m_pTrigger);
     }
@@ -454,6 +483,17 @@ void TriggerViewModel::InitializeFrom(const std::string& sTrigger, const ra::dat
         memset(&pTrigger, 0, sizeof(pTrigger));
         InitializeFrom(pTrigger);
     }
+}
+
+void TriggerViewModel::InitializeFrom(const rc_value_t& pValue)
+{
+    m_bIsValue = true;
+    m_sTriggerBuffer.resize(sizeof(rc_trigger_t));
+    GSL_SUPPRESS_TYPE1 m_pTrigger = reinterpret_cast<rc_trigger_t*>(m_sTriggerBuffer.data());
+    memset(m_pTrigger, 0, sizeof(rc_trigger_t));
+    m_pTrigger->requirement = pValue.conditions;
+    m_pTrigger->alternative = pValue.conditions->next;
+    InitializeGroups(*m_pTrigger);
 }
 
 void TriggerViewModel::UpdateGroups(const rc_trigger_t& pTrigger)
@@ -515,11 +555,9 @@ void TriggerViewModel::UpdateFrom(const rc_trigger_t& pTrigger)
 
 void TriggerViewModel::UpdateFrom(const std::string& sTrigger)
 {
-    const auto nSize = rc_trigger_size(sTrigger.c_str());
-    if (nSize > 0)
+    m_pTrigger = ParseTrigger(sTrigger);
+    if (m_pTrigger)
     {
-        m_sTriggerBuffer.resize(nSize);
-        m_pTrigger = rc_parse_trigger(m_sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
         UpdateGroups(*m_pTrigger);
     }
     else
@@ -528,6 +566,17 @@ void TriggerViewModel::UpdateFrom(const std::string& sTrigger)
         memset(&pTrigger, 0, sizeof(pTrigger));
         UpdateGroups(pTrigger);
     }
+}
+
+void TriggerViewModel::UpdateFrom(const rc_value_t& pValue)
+{
+    m_pTrigger = nullptr;
+    m_sTriggerBuffer.resize(sizeof(rc_trigger_t));
+    GSL_SUPPRESS_TYPE1 m_pTrigger = reinterpret_cast<rc_trigger_t*>(m_sTriggerBuffer.data());
+    memset(m_pTrigger, 0, sizeof(rc_trigger_t));
+    m_pTrigger->requirement = pValue.conditions;
+    m_pTrigger->alternative = pValue.conditions->next;
+    UpdateGroups(*m_pTrigger);
 }
 
 void TriggerViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args)

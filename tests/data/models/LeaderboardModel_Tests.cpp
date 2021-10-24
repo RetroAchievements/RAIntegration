@@ -255,8 +255,107 @@ public:
         leaderboard.SetLowerIsBetter(true);
         Assert::AreEqual(AssetChanges::None, leaderboard.GetChanges());
     }
-};
 
+    TEST_METHOD(TestSetStartTrigger)
+    {
+        LeaderboardModelHarness leaderboard;
+        leaderboard.SetID(1U);
+        leaderboard.SetName(L"Title");
+        leaderboard.SetDescription(L"Desc");
+        leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
+        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetLowerIsBetter(true);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+        leaderboard.Activate();
+        Assert::AreEqual(AssetChanges::None, leaderboard.GetChanges());
+
+        // modify
+        leaderboard.SetStartTrigger("0xH5555=55");
+        Assert::AreEqual(AssetChanges::Modified, leaderboard.GetChanges());
+
+        // ensure runtime is updated
+        const auto* pLeaderboard = leaderboard.mockRuntime.GetLeaderboardDefinition(1U);
+        Assert::IsNotNull(pLeaderboard);
+        Ensures(pLeaderboard != nullptr);
+        Assert::AreEqual(0x5555U, pLeaderboard->start.requirement->conditions->operand1.value.memref->address);
+    }
+
+    TEST_METHOD(TestSetSubmitTrigger)
+    {
+        LeaderboardModelHarness leaderboard;
+        leaderboard.SetID(1U);
+        leaderboard.SetName(L"Title");
+        leaderboard.SetDescription(L"Desc");
+        leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
+        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetLowerIsBetter(true);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+        leaderboard.Activate();
+        Assert::AreEqual(AssetChanges::None, leaderboard.GetChanges());
+
+        // modify
+        leaderboard.SetSubmitTrigger("0xH5555=55");
+        Assert::AreEqual(AssetChanges::Modified, leaderboard.GetChanges());
+
+        // ensure runtime is updated
+        const auto* pLeaderboard = leaderboard.mockRuntime.GetLeaderboardDefinition(1U);
+        Assert::IsNotNull(pLeaderboard);
+        Ensures(pLeaderboard != nullptr);
+        Assert::AreEqual(0x5555U, pLeaderboard->submit.requirement->conditions->operand1.value.memref->address);
+    }
+
+    TEST_METHOD(TestSetCancelTrigger)
+    {
+        LeaderboardModelHarness leaderboard;
+        leaderboard.SetID(1U);
+        leaderboard.SetName(L"Title");
+        leaderboard.SetDescription(L"Desc");
+        leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
+        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetLowerIsBetter(true);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+        leaderboard.Activate();
+        Assert::AreEqual(AssetChanges::None, leaderboard.GetChanges());
+
+        // modify
+        leaderboard.SetCancelTrigger("0xH5555=55");
+        Assert::AreEqual(AssetChanges::Modified, leaderboard.GetChanges());
+
+        // ensure runtime is updated
+        const auto* pLeaderboard = leaderboard.mockRuntime.GetLeaderboardDefinition(1U);
+        Assert::IsNotNull(pLeaderboard);
+        Ensures(pLeaderboard != nullptr);
+        Assert::AreEqual(0x5555U, pLeaderboard->cancel.requirement->conditions->operand1.value.memref->address);
+    }
+
+    TEST_METHOD(TestSetValueDefinition)
+    {
+        LeaderboardModelHarness leaderboard;
+        leaderboard.SetID(1U);
+        leaderboard.SetName(L"Title");
+        leaderboard.SetDescription(L"Desc");
+        leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
+        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetLowerIsBetter(true);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+        leaderboard.Activate();
+        Assert::AreEqual(AssetChanges::None, leaderboard.GetChanges());
+
+        // modify
+        leaderboard.SetValueDefinition("M:0xH5555");
+        Assert::AreEqual(AssetChanges::Modified, leaderboard.GetChanges());
+
+        // ensure runtime is updated
+        const auto* pLeaderboard = leaderboard.mockRuntime.GetLeaderboardDefinition(1U);
+        Assert::IsNotNull(pLeaderboard);
+        Ensures(pLeaderboard != nullptr);
+        Assert::AreEqual(0x5555U, pLeaderboard->value.conditions->conditions->operand1.value.memref->address);
+    }
+};
 
 } // namespace tests
 } // namespace models

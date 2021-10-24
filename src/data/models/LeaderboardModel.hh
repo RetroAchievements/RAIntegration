@@ -142,6 +142,11 @@ public:
     /// </summary>
     void SetDefinition(const std::string& sDefinition);
 
+    /// <summary>
+    /// Constructs a compound definition from start/submit/cancel/value fields.
+    /// </summary>
+    std::string GetDefinition() const;
+
     void Activate() override;
     void Deactivate() override;
 

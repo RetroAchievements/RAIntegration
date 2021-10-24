@@ -51,7 +51,6 @@ const IntModelProperty MemorySearchViewModel::PredefinedFilterRangeViewModel::En
 const StringModelProperty MemorySearchViewModel::SearchResultViewModel::DescriptionProperty("SearchResultViewModel", "Description", L"");
 const StringModelProperty MemorySearchViewModel::SearchResultViewModel::AddressProperty("SearchResultViewModel", "Address", L"");
 const StringModelProperty MemorySearchViewModel::SearchResultViewModel::CurrentValueProperty("SearchResultViewModel", "CurrentValue", L"");
-const StringModelProperty MemorySearchViewModel::SearchResultViewModel::PreviousValueProperty("SearchResultViewModel", "PreviousValue", L"");
 const BoolModelProperty MemorySearchViewModel::SearchResultViewModel::IsSelectedProperty("SearchResultViewModel", "IsSelected", false);
 const IntModelProperty MemorySearchViewModel::SearchResultViewModel::RowColorProperty("SearchResultViewModel", "RowColor", 0);
 const IntModelProperty MemorySearchViewModel::SearchResultViewModel::DescriptionColorProperty("SearchResultViewModel", "DescriptionColor", 0);
@@ -322,25 +321,6 @@ void MemorySearchViewModel::OnFilterRangeChanged()
     SetPredefinedFilterRange(MEMORY_RANGE_CUSTOM);
 }
 
-static constexpr const wchar_t* MemSizeFormat(MemSize nSize) 
-{
-    switch (nSize)
-    {
-        case MemSize::Nibble_Lower:
-        case MemSize::Nibble_Upper:
-            return L"0x%01x";
-        default:
-        case MemSize::EightBit:
-            return L"0x%02x";
-        case MemSize::SixteenBit:
-        case MemSize::SixteenBitBigEndian:
-            return L"0x%04x";
-        case MemSize::ThirtyTwoBit:
-        case MemSize::ThirtyTwoBitBigEndian:
-            return L"0x%08x";
-    }
-}
-
 void MemorySearchViewModel::DoFrame()
 {
     if (m_vSearchResults.size() < 2)
@@ -357,8 +337,9 @@ void MemorySearchViewModel::DoFrame()
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
 
-    // only process the visible items
+    // NOTE: only processes the visible items
     ra::services::SearchResults::Result pResult;
+    std::wstring sFormattedValue;
 
     gsl::index nIndex = GetScrollOffset();
     for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++i)
@@ -368,7 +349,16 @@ void MemorySearchViewModel::DoFrame()
 
         pCurrentResults.pResults.GetMatchingAddress(nIndex++, pResult);
 
-        UpdateResult(*pRow, pResult, pEmulatorContext, false);
+        const auto nPreviousValue = pResult.nValue;
+        UpdateResult(*pRow, pCurrentResults.pResults, pResult, pEmulatorContext);
+
+        // when updating an existing result, check to see if it's been modified and update the tracker
+        if (!pRow->bHasBeenModified && pResult.nValue != nPreviousValue)
+        {
+            pCurrentResults.vModifiedAddresses.insert(pResult.nAddress);
+            pRow->bHasBeenModified = true;
+        }
+
         pRow->UpdateRowColor();
     }
 
@@ -783,7 +773,7 @@ void MemorySearchViewModel::UpdateResults()
 
         pRow->SetAddress(ra::Widen(sAddress));
 
-        UpdateResult(*pRow, pResult, pEmulatorContext, true);
+        UpdateResult(*pRow, pCurrentResults.pResults, pResult, pEmulatorContext);
 
         const auto pCodeNote = pGameContext.FindCodeNote(pResult.nAddress, pResult.nSize);
         if (!pCodeNote.empty())
@@ -824,87 +814,55 @@ void MemorySearchViewModel::UpdateResults()
     m_vResults.AddNotifyTarget(*this);
 }
 
-static void GetASCIIText(std::wstring& sText, const unsigned char* pBytes, size_t nBytes)
+void MemorySearchViewModel::UpdateResult(SearchResultViewModel& vmResult,
+    const ra::services::SearchResults& pResults,
+    ra::services::SearchResults::Result& pResult,
+    const ra::data::context::EmulatorContext& pEmulatorContext)
 {
-    sText.clear();
-    for (size_t i = 0; i < nBytes; ++i)
+    const auto nPreviousValue = pResult.nValue;
+    std::wstring sFormattedValue;
+
+    pResults.UpdateValue(pResult, &sFormattedValue, pEmulatorContext);
+    vmResult.SetCurrentValue(sFormattedValue);
+
+    switch (pResults.GetSearchType())
     {
-        wchar_t c = gsl::narrow_cast<wchar_t>(*pBytes++);
-        if (c == 0)
+        case ra::services::SearchType::AsciiText:
+            // TODO: implement for strings
+            vmResult.bMatchesFilter = true;
             break;
 
-        if (c < 0x20 || c > 0x7E)
-            c = L'\xFFFD';
-
-        sText.push_back(c);
+        default:
+            // when continuous filtering, the values should always match - don't bother testing
+            vmResult.bMatchesFilter = m_bIsContinuousFiltering || TestFilter(pResult, pResults, nPreviousValue);
+            break;
     }
 }
 
-void MemorySearchViewModel::UpdateResult(SearchResultViewModel& pRow, ra::services::SearchResults::Result& pResult,
-    const ra::data::context::EmulatorContext& pEmulatorContext, bool bCapturePrevious)
+std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmResult) const
 {
-    auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
-    const auto& pCompareResults = (pCurrentResults.pResults.GetFilterType() == ra::services::SearchFilterType::InitialValue) ?
-        m_vSearchResults.front().pResults : m_vSearchResults.at(m_nSelectedSearchResult - 1).pResults;
+    std::wstring sTooltip = ra::StringPrintf(L"%s\n%s | Current\n",
+        vmResult.GetAddress(), vmResult.GetCurrentValue());
 
-    switch (pCurrentResults.pResults.GetSearchType())
+    const auto& pCompareResults = m_vSearchResults.at(m_nSelectedSearchResult).pResults;
+    ra::ByteAddress nAddress = vmResult.nAddress;
+    MemSize nSize = pCompareResults.GetSize();
+
+    if (nSize == MemSize::Nibble_Lower)
     {
-        case ra::services::SearchType::AsciiText:
-        {
-            std::array<unsigned char, 16> pBuffer;
-            pEmulatorContext.ReadMemory(pResult.nAddress, &pBuffer.at(0), pBuffer.size());
-
-            std::wstring sText;
-            GetASCIIText(sText, pBuffer.data(), pBuffer.size());
-
-            pRow.SetCurrentValue(sText);
-
-            if (bCapturePrevious)
-            {
-                pCompareResults.GetBytes(pResult.nAddress, &pBuffer.at(0), pBuffer.size());
-                GetASCIIText(sText, pBuffer.data(), pBuffer.size());
-                pRow.SetPreviousValue(sText);
-            }
-            else if (!pRow.bHasBeenModified && pRow.GetCurrentValue() != pRow.GetPreviousValue())
-            {
-                pCurrentResults.vModifiedAddresses.insert(pResult.nAddress);
-                pRow.bHasBeenModified = true;
-            }
-
-            // TODO: implement for strings
-            pRow.bMatchesFilter = true;
-        }
-        break;
-
-        default:
-        {
-            unsigned int nPreviousValue = pResult.nValue;
-
-            const wchar_t* sValueFormat = MemSizeFormat(pResult.nSize);
-            pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, pResult.nSize);
-            pRow.SetCurrentValue(ra::StringPrintf(sValueFormat, pResult.nValue));
-
-            if (bCapturePrevious)
-            {
-                // when initially populating the results, also populate the previous value
-                pCompareResults.GetValue(pResult.nAddress, pResult.nSize, nPreviousValue);
-                pRow.SetPreviousValue(ra::StringPrintf(sValueFormat, nPreviousValue));
-            }
-            else
-            {
-                // when updating an existing result, only check to see if it's been modified
-                if (pResult.nValue != nPreviousValue && !pRow.bHasBeenModified)
-                {
-                    pCurrentResults.vModifiedAddresses.insert(pResult.nAddress);
-                    pRow.bHasBeenModified = true;
-                }
-            }
-
-            // when continuous filtering, the values should always match - don't bother testing
-            pRow.bMatchesFilter = m_bIsContinuousFiltering || TestFilter(pResult, pCurrentResults, nPreviousValue);
-        }
-        break;
+        if (nAddress & 1)
+            nSize = MemSize::Nibble_Upper;
+        nAddress >>= 1;
     }
+
+    sTooltip.append(pCompareResults.GetFormattedValue(nAddress, nSize));
+    sTooltip.append(L" | Last Filter\n");
+
+    const auto& pInitialResults = m_vSearchResults.front().pResults;
+    sTooltip.append(pInitialResults.GetFormattedValue(nAddress, nSize));
+    sTooltip.append(L" | Initial");
+
+    return sTooltip;
 }
 
 void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring&)
@@ -920,22 +878,23 @@ void MemorySearchViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
     }
 }
 
-bool MemorySearchViewModel::TestFilter(const ra::services::SearchResults::Result& pResult, const SearchResult& pCurrentResults, unsigned int nPreviousValue) noexcept
+bool MemorySearchViewModel::TestFilter(const ra::services::SearchResults::Result& pResult,
+    const ra::services::SearchResults& pResults, unsigned int nPreviousValue) noexcept
 {
-    switch (pCurrentResults.pResults.GetFilterType())
+    switch (pResults.GetFilterType())
     {
         case ra::services::SearchFilterType::Constant:
-            return pResult.Compare(pCurrentResults.pResults.GetFilterValue(), pCurrentResults.pResults.GetFilterComparison());
+            return pResult.Compare(pResults.GetFilterValue(), pResults.GetFilterComparison());
 
         case ra::services::SearchFilterType::InitialValue:
         case ra::services::SearchFilterType::LastKnownValue:
-            return pResult.Compare(nPreviousValue, pCurrentResults.pResults.GetFilterComparison());
+            return pResult.Compare(nPreviousValue, pResults.GetFilterComparison());
 
         case ra::services::SearchFilterType::LastKnownValuePlus:
-            return pResult.Compare(nPreviousValue + pCurrentResults.pResults.GetFilterValue(), pCurrentResults.pResults.GetFilterComparison());
+            return pResult.Compare(nPreviousValue + pResults.GetFilterValue(), pResults.GetFilterComparison());
 
         case ra::services::SearchFilterType::LastKnownValueMinus:
-            return pResult.Compare(nPreviousValue - pCurrentResults.pResults.GetFilterValue(), pCurrentResults.pResults.GetFilterComparison());
+            return pResult.Compare(nPreviousValue - pResults.GetFilterValue(), pResults.GetFilterComparison());
 
         default:
             return false;
@@ -1152,9 +1111,9 @@ void MemorySearchViewModel::BookmarkSelected()
         return;
 
     const MemSize nSize = m_vSearchResults.back().pResults.GetSize();
-    if (nSize == MemSize::Nibble_Lower)
+    if (nSize == MemSize::Text)
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"4-bit bookmarks are not supported");
+        ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"Text bookmarks are not supported");
         return;
     }
 
@@ -1167,7 +1126,18 @@ void MemorySearchViewModel::BookmarkSelected()
     int nCount = 0;
     for (const auto nAddress : m_vSelectedAddresses)
     {
-        vmBookmarks.AddBookmark(nAddress, nSize);
+        switch (nSize)
+        {
+            case MemSize::Nibble_Lower:
+            case MemSize::Nibble_Upper:
+                vmBookmarks.AddBookmark(nAddress >> 1, (nAddress & 1) ? MemSize::Nibble_Upper : MemSize::Nibble_Lower);
+                break;
+
+            default:
+                vmBookmarks.AddBookmark(nAddress, nSize);
+                break;
+        }
+
 
         if (++nCount == 100)
             break;

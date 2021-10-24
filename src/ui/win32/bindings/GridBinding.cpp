@@ -752,12 +752,15 @@ INT_PTR CALLBACK GridBinding::WndProc(HWND hControl, UINT uMsg, WPARAM wParam, L
     return ControlBinding::WndProc(hControl, uMsg, wParam, lParam);
 }
 
-void GridBinding::InitializeTooltips(std::chrono::milliseconds nDisplayTime) noexcept
+void GridBinding::InitializeTooltips(std::chrono::milliseconds nDisplayTime)
 {
+    const HWND hDialog = GetDialogHwnd();
+    Expects(hDialog != nullptr);
+
     m_hTooltip = CreateWindowEx(WS_EX_TOPMOST, TOOLTIPS_CLASS, nullptr,
         WS_POPUP | TTS_ALWAYSTIP | TTS_NOPREFIX,
         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
-        GetDialogHwnd(), nullptr, GetModuleHandle(nullptr), nullptr);
+        hDialog, nullptr, GetModuleHandle(nullptr), nullptr);
 
     if (m_hTooltip)
     {
@@ -765,7 +768,7 @@ void GridBinding::InitializeTooltips(std::chrono::milliseconds nDisplayTime) noe
         memset(&toolInfo, 0, sizeof(toolInfo));
         GSL_SUPPRESS_ES47 toolInfo.cbSize = TTTOOLINFO_V1_SIZE;
         toolInfo.uFlags = TTF_IDISHWND | TTF_SUBCLASS;
-        toolInfo.hwnd = GetDialogHwnd();
+        toolInfo.hwnd = hDialog;
         GSL_SUPPRESS_TYPE1 toolInfo.uId = reinterpret_cast<UINT_PTR>(m_hWnd);
         toolInfo.lpszText = LPSTR_TEXTCALLBACK;
         GSL_SUPPRESS_TYPE1 SendMessage(m_hTooltip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo));

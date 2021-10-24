@@ -400,27 +400,27 @@ public:
 
         memory.at(18) = 12;
         bookmarks.DoFrame();
-        Assert::AreEqual(std::wstring(L"0C"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0c"), bookmark.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"12"), bookmark.GetPreviousValue());
         Assert::AreEqual(1U, bookmark.GetChanges());
 
         bookmarks.DoFrame();
-        Assert::AreEqual(std::wstring(L"0C"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0c"), bookmark.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"12"), bookmark.GetPreviousValue());
         Assert::AreEqual(1U, bookmark.GetChanges());
 
         memory.at(18) = 15;
         bookmarks.DoFrame();
-        Assert::AreEqual(std::wstring(L"0F"), bookmark.GetCurrentValue());
-        Assert::AreEqual(std::wstring(L"0C"), bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0f"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0c"), bookmark.GetPreviousValue());
         Assert::AreEqual(2U, bookmark.GetChanges());
 
         bookmark.SetBehavior(MemoryBookmarksViewModel::BookmarkBehavior::Frozen);
 
         memory.at(18) = 16;
         bookmarks.DoFrame();
-        Assert::AreEqual(std::wstring(L"0F"), bookmark.GetCurrentValue());
-        Assert::AreEqual(std::wstring(L"0C"), bookmark.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"0f"), bookmark.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"0c"), bookmark.GetPreviousValue());
         Assert::AreEqual(2U, bookmark.GetChanges());
 
         Assert::AreEqual(15, (int)memory.at(18));
@@ -1140,25 +1140,25 @@ public:
 
         std::wstring sError;
         Assert::IsTrue(bookmark1.SetCurrentValue(L"1C", sError));
-        Assert::AreEqual(std::wstring(L"1C"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"1c"), bookmark1.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"00"), bookmark1.GetPreviousValue());
-        Assert::AreEqual(std::wstring(L"001C"), bookmark2.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"001c"), bookmark2.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0000"), bookmark2.GetPreviousValue());
         Assert::AreEqual(std::wstring(L"1"), bookmark3.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0"), bookmark3.GetPreviousValue());
 
         Assert::IsTrue(bookmark2.SetCurrentValue(L"1234", sError));
         Assert::AreEqual(std::wstring(L"34"), bookmark1.GetCurrentValue());
-        Assert::AreEqual(std::wstring(L"1C"), bookmark1.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"1c"), bookmark1.GetPreviousValue());
         Assert::AreEqual(std::wstring(L"1234"), bookmark2.GetCurrentValue());
-        Assert::AreEqual(std::wstring(L"001C"), bookmark2.GetPreviousValue());
+        Assert::AreEqual(std::wstring(L"001c"), bookmark2.GetPreviousValue());
         Assert::AreEqual(std::wstring(L"0"), bookmark3.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"1"), bookmark3.GetPreviousValue());
 
         Assert::IsTrue(bookmark3.SetCurrentValue(L"1", sError));
-        Assert::AreEqual(std::wstring(L"3C"), bookmark1.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"3c"), bookmark1.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"34"), bookmark1.GetPreviousValue());
-        Assert::AreEqual(std::wstring(L"123C"), bookmark2.GetCurrentValue());
+        Assert::AreEqual(std::wstring(L"123c"), bookmark2.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"1234"), bookmark2.GetPreviousValue());
         Assert::AreEqual(std::wstring(L"1"), bookmark3.GetCurrentValue());
         Assert::AreEqual(std::wstring(L"0"), bookmark3.GetPreviousValue());

@@ -138,6 +138,8 @@ constexpr unsigned int MemSizeBytes(MemSize nSize)
     }
 }
 
+std::wstring MemSizeFormat(unsigned nValue, MemSize nSize, MemFormat nFormat);
+
 } // namespace data
 } // namespace ra
 

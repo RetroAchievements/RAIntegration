@@ -354,12 +354,9 @@ AssetChanges AssetModelBase::GetAssetDefinitionState(const AssetDefinition& pAss
 
 void AssetModelBase::UpdateAssetDefinitionVersion(const AssetDefinition& pAsset, AssetChanges nState)
 {
-    const auto& sDefinition = GetAssetDefinition(pAsset, nState);
-
     // DJB2 hash the definition
-    int nHash = 5381;
-    for (const auto c : sDefinition)
-        nHash = ((nHash << 5) + nHash) + c; /* hash * 33 + c */
+    const auto& sDefinition = GetAssetDefinition(pAsset, nState);
+    int nHash = ra::StringHash(sDefinition);
 
     // inject the state into the two lowermost bits - we want the state in the checkpoints so it gets restored
     // when reverted. we can reconstruct the other properties from the state (see RevertTransaction).

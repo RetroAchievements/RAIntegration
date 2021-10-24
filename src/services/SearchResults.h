@@ -4,6 +4,8 @@
 
 #include "data\Types.hh"
 
+#include "data\context\EmulatorContext.hh"
+
 namespace ra {
 namespace services {
 
@@ -178,14 +180,25 @@ public:
     bool GetMatchingAddress(gsl::index nIndex, _Out_ Result& result) const;
 
     /// <summary>
-    /// Gets the value at the specified address.
-    /// </summary>
-    bool GetValue(ra::ByteAddress nAddress, MemSize nSize, _Out_ unsigned int& nValue) const noexcept;
-
-    /// <summary>
     /// Gets the raw bytes at the specified address.
     /// </summary>
     bool GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, size_t nCount) const noexcept;
+
+    /// <summary>
+    /// Gets a formatted value for the specified address.
+    /// </summary>
+    /// <param name="nAddress">Address of the start of the value.</param>
+    /// <param name="nSize">Size of the value.</param>
+    /// <returns>Formatted value.</returns>
+    std::wstring GetFormattedValue(ra::ByteAddress nAddress, MemSize nSize) const;
+
+    /// <summary>
+    /// Updates the current value of the provided result.
+    /// </summary>
+    /// <param name="pResult">The result to update.</param>
+    /// <param name="sFormattedValue">Pointer to a string to populate with a textual representation of the value.</param>
+    void UpdateValue(SearchResults::Result& pResult, _Out_ std::wstring* sFormattedValue,
+        const ra::data::context::EmulatorContext& pEmulatorContext) const;
 
     /// <summary>
     /// Gets the type of search performed.

@@ -159,6 +159,30 @@ public:
         return false;
     }
 
+    virtual std::wstring GetFormattedValue(const SearchResults&, const SearchResults::Result& pResult) const
+    {
+        return L"0x" + ra::data::MemSizeFormat(pResult.nValue, pResult.nSize, MemFormat::Hex);
+    }
+
+    virtual std::wstring GetFormattedValue(const SearchResults& pResults, ra::ByteAddress nAddress, MemSize nSize) const
+    {
+        SearchResults::Result pResult{ nAddress, 0, nSize };
+        if (GetValue(pResults, pResult))
+            return GetFormattedValue(pResults, pResult);
+
+        return L"";
+    }
+
+    virtual void UpdateValue(const SearchResults& pResults, SearchResults::Result& pResult,
+        _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const
+    {
+        pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, pResult.nSize);
+
+        if (sFormattedValue)
+            *sFormattedValue = GetFormattedValue(pResults, pResult);
+    }
+
+
 protected:
     static const std::vector<ra::ByteAddress>& GetMatchingAddresses(const SearchResults& srResults) noexcept
     {
@@ -610,6 +634,53 @@ public:
             nCompareType == ComparisonType::GreaterThanOrEqual ||
             nCompareType == ComparisonType::LessThanOrEqual);
     }
+
+    static void GetASCIIText(std::wstring& sText, const unsigned char* pBytes, size_t nBytes)
+    {
+        sText.clear();
+        for (size_t i = 0; i < nBytes; ++i)
+        {
+            wchar_t c = gsl::narrow_cast<wchar_t>(*pBytes++);
+            if (c == 0)
+                break;
+
+            if (c < 0x20 || c > 0x7E)
+                c = L'\xFFFD';
+
+            sText.push_back(c);
+        }
+    }
+
+    std::wstring GetFormattedValue(const SearchResults& pResults, const SearchResults::Result& pResult) const override
+    {
+        return GetFormattedValue(pResults, pResult.nAddress, GetMemSize());
+    }
+
+    std::wstring GetFormattedValue(const SearchResults& pResults, ra::ByteAddress nAddress, MemSize) const override
+    {
+        std::array<unsigned char, 16> pBuffer;
+        pResults.GetBytes(nAddress, &pBuffer.at(0), pBuffer.size());
+
+        std::wstring sText;
+        GetASCIIText(sText, pBuffer.data(), pBuffer.size());
+
+        return sText;
+    }
+
+    void UpdateValue(const SearchResults&, SearchResults::Result& pResult,
+        _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const override
+    {
+        std::array<unsigned char, 16> pBuffer;
+        pEmulatorContext.ReadMemory(pResult.nAddress, &pBuffer.at(0), pBuffer.size());
+
+        std::wstring sText;
+        GetASCIIText(sText, pBuffer.data(), pBuffer.size());
+
+        pResult.nValue = ra::StringHash(sText);
+
+        if (sFormattedValue)
+            sFormattedValue->swap(sText);
+    }
 };
 
 static FourBitSearchImpl s_pFourBitSearchImpl;
@@ -860,20 +931,6 @@ bool SearchResults::GetMatchingAddress(gsl::index nIndex, _Out_ SearchResults::R
     return m_pImpl->GetMatchingAddress(*this, nIndex, result);
 }
 
-bool SearchResults::GetValue(ra::ByteAddress nAddress, MemSize nSize, _Out_ unsigned int& nValue) const noexcept
-{
-    if (m_pImpl == nullptr)
-    {
-        nValue = 0U;
-        return false;
-    }
-
-    Result result{ nAddress, 0, nSize };
-    const auto ret = m_pImpl->GetValue(*this, result);
-    nValue = result.nValue;
-    return ret;
-}
-
 bool SearchResults::GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, size_t nCount) const noexcept
 {
     if (m_pImpl != nullptr)
@@ -903,6 +960,21 @@ bool SearchResults::GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, s
 
     memset(pBuffer, gsl::narrow_cast<int>(nCount), 0);
     return false;
+}
+
+std::wstring SearchResults::GetFormattedValue(ra::ByteAddress nAddress, MemSize nSize) const
+{
+    return m_pImpl ? m_pImpl->GetFormattedValue(*this, nAddress, nSize) : L"";
+}
+
+void SearchResults::UpdateValue(SearchResults::Result& pResult, _Out_ std::wstring* sFormattedValue,
+    const ra::data::context::EmulatorContext& pEmulatorContext) const
+{
+    if (m_pImpl)
+        return m_pImpl->UpdateValue(*this, pResult, sFormattedValue, pEmulatorContext);
+
+    if (sFormattedValue)
+        sFormattedValue->clear();
 }
 
 MemSize SearchResults::GetSize() const noexcept

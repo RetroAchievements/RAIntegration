@@ -128,7 +128,7 @@ private:
     };
 
     void AssertRow(MemorySearchViewModelHarness& search, gsl::index nRow, ra::ByteAddress nAddress,
-        const wchar_t* sAddress, const wchar_t* sCurrentValue, const wchar_t* sPreviousValue)
+        const wchar_t* sAddress, const wchar_t* sCurrentValue)
     {
         auto* pRow = search.Results().GetItemAt(nRow);
         Assert::IsNotNull(pRow);
@@ -136,7 +136,6 @@ private:
 
         Assert::AreEqual(std::wstring(sAddress), pRow->GetAddress());
         Assert::AreEqual(std::wstring(sCurrentValue), pRow->GetCurrentValue());
-        Assert::AreEqual(std::wstring(sPreviousValue), pRow->GetPreviousValue());
         Assert::AreEqual(nAddress, pRow->nAddress);
     }
 
@@ -289,7 +288,7 @@ public:
         Assert::AreEqual(std::wstring(L"= 12"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x000c", L"0x0c", L"0x0c");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x0c");
     }
 
     TEST_METHOD(TestApplyFilterEightBitConstantHex)
@@ -310,7 +309,7 @@ public:
         Assert::AreEqual(std::wstring(L"= 0x0C"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x000c", L"0x0c", L"0x0c");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x0c");
     }
 
     TEST_METHOD(TestApplyFilterEightBitConstantInvalid)
@@ -395,7 +394,7 @@ public:
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x000c", L"0x09", L"0x0c");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x09");
 
         search.memory.at(12) = 7;
         search.ApplyFilter();
@@ -408,7 +407,7 @@ public:
 
         Assert::AreEqual({ 1U }, search.Results().Count());
 
-        AssertRow(search, 0, 12U, L"0x000c", L"0x07", L"0x09");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x07");
     }
 
     TEST_METHOD(TestApplyFilterEightBitLastKnownNoChange)
@@ -429,7 +428,7 @@ public:
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x000c", L"0x09", L"0x0c");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x09");
 
         // if results don't change and filter does change, generate a new page
         search.SetComparisonType(ComparisonType::Equals);
@@ -441,7 +440,7 @@ public:
         Assert::AreEqual(std::wstring(L"= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x000c", L"0x09", L"0x09");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x09");
     }
 
     TEST_METHOD(TestApplyFilterEightBitLastKnownPlus)
@@ -465,7 +464,7 @@ public:
         Assert::AreEqual(std::wstring(L"= Last +2"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x000c", L"0x0e", L"0x0c");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x0e");
     }
 
     TEST_METHOD(TestApplyFilterEightBitLastKnownMinus)
@@ -489,7 +488,7 @@ public:
         Assert::AreEqual(std::wstring(L"= Last -2"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x000c", L"0x0a", L"0x0c");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x0a");
     }
 
     TEST_METHOD(TestApplyFilterEightBitCompareToInitialValue)
@@ -513,21 +512,21 @@ public:
         Assert::AreEqual(std::wstring(L"> Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 2U }, search.Results().Count());
-        AssertRow(search, 0, 10U, L"0x000a", L"0x14", L"0x0a");
-        AssertRow(search, 1, 20U, L"0x0014", L"0x1e", L"0x14");
+        AssertRow(search, 0, 10U, L"0x000a", L"0x14");
+        AssertRow(search, 1, 20U, L"0x0014", L"0x1e");
 
         // 15 is still greater than initial value (10), but less than current value (20).
         search.memory.at(10) = 15;
         search.ApplyFilter();
         Assert::AreEqual({ 2U }, search.Results().Count());
-        AssertRow(search, 0, 10U, L"0x000a", L"0x0f", L"0x0a");
-        AssertRow(search, 1, 20U, L"0x0014", L"0x1e", L"0x14");
+        AssertRow(search, 0, 10U, L"0x000a", L"0x0f");
+        AssertRow(search, 1, 20U, L"0x0014", L"0x1e");
 
         // 5 is less than initial value and should be filtered out.
         search.memory.at(10) = 5;
         search.ApplyFilter();
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 20U, L"0x0014", L"0x1e", L"0x14");
+        AssertRow(search, 0, 20U, L"0x0014", L"0x1e");
     }
 
     TEST_METHOD(TestApplyFilterAsciiTextConstant)
@@ -549,8 +548,8 @@ public:
         Assert::AreEqual(std::wstring(L"= sea"), search.GetFilterSummary());
 
         Assert::AreEqual({ 2U }, search.Results().Count());
-        AssertRow(search, 0, 10U, L"0x000a", L"seashells by the", L"seashells by the");
-        AssertRow(search, 1, 27U, L"0x001b", L"seash", L"seash");
+        AssertRow(search, 0, 10U, L"0x000a", L"seashells by the");
+        AssertRow(search, 1, 27U, L"0x001b", L"seash");
     }
 
     TEST_METHOD(TestApplyFilterMaxPages)
@@ -577,7 +576,7 @@ public:
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x000c", L"0x70", L"0x6f");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x70");
 
         // test initial value == 12 to check first buffered result
         // which should still be the initial capture, even if the history had to be cycled
@@ -594,7 +593,7 @@ public:
         Assert::AreEqual(std::wstring(L"= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x000c", L"0x0c", L"0x0c");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x0c");
     }
 
     TEST_METHOD(TestApplyFilterMaxPagesInitialValue)
@@ -621,7 +620,7 @@ public:
         Assert::AreEqual(std::wstring(L"!= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x000c", L"0x70", L"0x0c");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x70");
 
         // test initial value == 12 to check first buffered result. since every step along
         // the way was an initial value check, should still be the original initial value
@@ -638,7 +637,7 @@ public:
         Assert::AreEqual(std::wstring(L"= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x000c", L"0x0c", L"0x0c");
+        AssertRow(search, 0, 12U, L"0x000c", L"0x0c");
     }
 
     TEST_METHOD(TestDoFrameEightBit)
@@ -659,9 +658,9 @@ public:
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
 
         Assert::IsTrue(search.Results().Count() > 3);
-        AssertRow(search, 0, 0U, L"0x0000", L"0x00", L"0x00");
-        AssertRow(search, 1, 1U, L"0x0001", L"0x01", L"0x01");
-        AssertRow(search, 2, 2U, L"0x0002", L"0x09", L"0x02");
+        AssertRow(search, 0, 0U, L"0x0000", L"0x00");
+        AssertRow(search, 1, 1U, L"0x0001", L"0x01");
+        AssertRow(search, 2, 2U, L"0x0002", L"0x09");
     }
 
     TEST_METHOD(TestDoFrameSixteenBit)
@@ -682,9 +681,9 @@ public:
         Assert::AreEqual(MemSize::SixteenBit, search.ResultMemSize());
 
         Assert::IsTrue(search.Results().Count() > 3);
-        AssertRow(search, 0, 0U, L"0x0000", L"0x0100", L"0x0100");
-        AssertRow(search, 1, 1U, L"0x0001", L"0x0901", L"0x0201");
-        AssertRow(search, 2, 2U, L"0x0002", L"0x0309", L"0x0302");
+        AssertRow(search, 0, 0U, L"0x0000", L"0x0100");
+        AssertRow(search, 1, 1U, L"0x0001", L"0x0901");
+        AssertRow(search, 2, 2U, L"0x0002", L"0x0309");
     }
 
 
@@ -711,9 +710,9 @@ public:
         Assert::AreEqual(std::wstring(L"= Last +2"), search.GetFilterSummary());
 
         Assert::AreEqual({ 3U }, search.Results().Count());
-        AssertRow(search, 0, 12U, L"0x0006L", L"0x8", L"0x6");
-        AssertRow(search, 1, 13U, L"0x0006U", L"0x2", L"0x0");
-        AssertRow(search, 2, 24U, L"0x000cL", L"0xe", L"0xc");
+        AssertRow(search, 0, 12U, L"0x0006L", L"0x8");
+        AssertRow(search, 1, 13U, L"0x0006U", L"0x2");
+        AssertRow(search, 2, 24U, L"0x000cL", L"0xe");
     }
 
     TEST_METHOD(TestDoFrameFourBit)
@@ -734,9 +733,9 @@ public:
         Assert::AreEqual(MemSize::Nibble_Lower, search.ResultMemSize());
 
         Assert::IsTrue(search.Results().Count() > 3);
-        AssertRow(search, 0, 0U, L"0x0000L", L"0x0", L"0x0");
-        AssertRow(search, 1, 1U, L"0x0000U", L"0x0", L"0x0");
-        AssertRow(search, 2, 2U, L"0x0001L", L"0x9", L"0x1");
+        AssertRow(search, 0, 0U, L"0x0000L", L"0x0");
+        AssertRow(search, 1, 1U, L"0x0000U", L"0x0");
+        AssertRow(search, 2, 2U, L"0x0001L", L"0x9");
     }
 
     TEST_METHOD(TestNextPagePreviousPage)
@@ -760,7 +759,7 @@ public:
         Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
-        AssertRow(search, 2, 2U, L"0x0002", L"0x02", L"0x02");
+        AssertRow(search, 2, 2U, L"0x0002", L"0x02");
         Assert::IsTrue(search.CanFilter());
         Assert::IsFalse(search.CanGoToPreviousPage());
         Assert::IsFalse(search.CanGoToNextPage());
@@ -775,7 +774,7 @@ public:
         Assert::AreEqual({ 4U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"4"), search.GetResultCountText());
         Assert::AreEqual({ 4U }, search.Results().Count());
-        AssertRow(search, 2, 6U, L"0x0006", L"0x06", L"0x06");
+        AssertRow(search, 2, 6U, L"0x0006", L"0x06");
         Assert::IsTrue(search.CanFilter());
         Assert::IsTrue(search.CanGoToPreviousPage());
         Assert::IsFalse(search.CanGoToNextPage());
@@ -790,7 +789,7 @@ public:
         Assert::AreEqual({ 3U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"3"), search.GetResultCountText());
         Assert::AreEqual({ 3U }, search.Results().Count());
-        AssertRow(search, 2, 7U, L"0x0007", L"0x07", L"0x07");
+        AssertRow(search, 2, 7U, L"0x0007", L"0x07");
         Assert::IsTrue(search.CanFilter());
         Assert::IsTrue(search.CanGoToPreviousPage());
         Assert::IsFalse(search.CanGoToNextPage());
@@ -804,7 +803,7 @@ public:
         Assert::AreEqual({ 3U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"3"), search.GetResultCountText());
         Assert::AreEqual({ 3U }, search.Results().Count());
-        AssertRow(search, 2, 7U, L"0x0007", L"0x07", L"0x07");
+        AssertRow(search, 2, 7U, L"0x0007", L"0x07");
         Assert::IsTrue(search.CanFilter());
         Assert::IsTrue(search.CanGoToPreviousPage());
         Assert::IsFalse(search.CanGoToNextPage());
@@ -817,7 +816,7 @@ public:
         Assert::AreEqual({ 4U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"4"), search.GetResultCountText());
         Assert::AreEqual({ 4U }, search.Results().Count());
-        AssertRow(search, 2, 6U, L"0x0006", L"0x06", L"0x06");
+        AssertRow(search, 2, 6U, L"0x0006", L"0x06");
         Assert::IsTrue(search.CanFilter());
         Assert::IsTrue(search.CanGoToPreviousPage());
         Assert::IsTrue(search.CanGoToNextPage());
@@ -831,7 +830,7 @@ public:
         Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
-        AssertRow(search, 2, 2U, L"0x0002", L"0x02", L"0x02");
+        AssertRow(search, 2, 2U, L"0x0002", L"0x02");
         Assert::IsTrue(search.CanFilter());
         Assert::IsFalse(search.CanGoToPreviousPage());
         Assert::IsTrue(search.CanGoToNextPage());
@@ -846,7 +845,7 @@ public:
         Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
-        AssertRow(search, 2, 2U, L"0x0002", L"0x02", L"0x02");
+        AssertRow(search, 2, 2U, L"0x0002", L"0x02");
         Assert::IsTrue(search.CanFilter());
         Assert::IsFalse(search.CanGoToPreviousPage());
         Assert::IsTrue(search.CanGoToNextPage());
@@ -859,7 +858,7 @@ public:
         Assert::AreEqual({ 4U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"4"), search.GetResultCountText());
         Assert::AreEqual({ 4U }, search.Results().Count());
-        AssertRow(search, 2, 6U, L"0x0006", L"0x06", L"0x06");
+        AssertRow(search, 2, 6U, L"0x0006", L"0x06");
         Assert::IsTrue(search.CanFilter());
         Assert::IsTrue(search.CanGoToPreviousPage());
         Assert::IsTrue(search.CanGoToNextPage());
@@ -873,7 +872,7 @@ public:
         Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
-        AssertRow(search, 2, 2U, L"0x0002", L"0x02", L"0x02");
+        AssertRow(search, 2, 2U, L"0x0002", L"0x02");
         Assert::IsTrue(search.CanFilter());
         Assert::IsFalse(search.CanGoToPreviousPage());
         Assert::IsTrue(search.CanGoToNextPage());
@@ -889,7 +888,7 @@ public:
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 5U, L"0x0005", L"0x05", L"0x05");
+        AssertRow(search, 0, 5U, L"0x0005", L"0x05");
         Assert::IsTrue(search.CanFilter());
         Assert::IsTrue(search.CanGoToPreviousPage());
         Assert::IsFalse(search.CanGoToNextPage());
@@ -903,7 +902,7 @@ public:
         Assert::AreEqual(std::wstring(L"8"), search.GetResultCountText());
         Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
         Assert::AreEqual({ 8U }, search.Results().Count());
-        AssertRow(search, 2, 2U, L"0x0002", L"0x02", L"0x02");
+        AssertRow(search, 2, 2U, L"0x0002", L"0x02");
         Assert::IsTrue(search.CanFilter());
         Assert::IsFalse(search.CanGoToPreviousPage());
         Assert::IsTrue(search.CanGoToNextPage());
@@ -916,7 +915,7 @@ public:
         Assert::AreEqual({ 1U }, search.GetResultCount());
         Assert::AreEqual(std::wstring(L"1"), search.GetResultCountText());
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 5U, L"0x0005", L"0x05", L"0x05");
+        AssertRow(search, 0, 5U, L"0x0005", L"0x05");
         Assert::IsTrue(search.CanFilter());
         Assert::IsTrue(search.CanGoToPreviousPage());
         Assert::IsFalse(search.CanGoToNextPage());
@@ -949,7 +948,7 @@ public:
         Assert::AreEqual(std::wstring(L"2/3"), search.GetSelectedPage());
         Assert::AreEqual({ 4U }, search.GetResultCount());
         Assert::AreEqual({ 4U }, search.Results().Count());
-        AssertRow(search, 2, 6U, L"0x0006", L"0x06", L"0x06");
+        AssertRow(search, 2, 6U, L"0x0006", L"0x06");
 
         search.memory.at(6) = 9;
         search.DoFrame();
@@ -957,7 +956,7 @@ public:
         Assert::AreEqual(std::wstring(L"2/3"), search.GetSelectedPage());
         Assert::AreEqual({ 4U }, search.GetResultCount());
         Assert::AreEqual({ 4U }, search.Results().Count());
-        AssertRow(search, 2, 6U, L"0x0006", L"0x09", L"0x06");
+        AssertRow(search, 2, 6U, L"0x0006", L"0x09");
     }
 
     TEST_METHOD(TestExcludeSelectedEightBit)
@@ -1074,6 +1073,7 @@ public:
     {
         MemorySearchViewModelHarness search;
         search.InitializeMemory();
+        search.memory.at(30) = 0xFF;
         search.SetSearchType(ra::services::SearchType::FourBit);
         search.BeginNewSearch();
 
@@ -1084,30 +1084,67 @@ public:
         search.ApplyFilter();
         Assert::AreEqual({ 0 }, search.GetScrollOffset());
         Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
-        Assert::AreEqual({ 4U }, search.GetResultCount());
+        Assert::AreEqual({ 5U }, search.GetResultCount());
         Assert::AreEqual(MemSize::Nibble_Lower, search.ResultMemSize());
 
-        Assert::AreEqual({ 4U }, search.Results().Count());
+        Assert::AreEqual({ 5U }, search.Results().Count());
         search.Results().GetItemAt(2)->SetSelected(true);
         search.Results().GetItemAt(3)->SetSelected(true);
+
+        search.BookmarkSelected();
+        Assert::AreEqual({ 5U }, search.Results().Count());
+
+        const auto& pBookmarks = search.mockWindowManager.MemoryBookmarks.Bookmarks();
+        Assert::AreEqual({ 2U }, pBookmarks.Count());
+        Assert::AreEqual({ 30U }, pBookmarks.GetItemAt(0)->GetAddress());
+        Assert::AreEqual({ 30U }, pBookmarks.GetItemAt(1)->GetAddress());
+        Assert::AreEqual(MemSize::Nibble_Lower, pBookmarks.GetItemAt(0)->GetSize());
+        Assert::AreEqual(MemSize::Nibble_Upper, pBookmarks.GetItemAt(1)->GetSize());
+
+        Assert::IsTrue(search.Results().GetItemAt(2)->IsSelected());
+        Assert::IsTrue(search.Results().GetItemAt(3)->IsSelected());
+    }
+
+    TEST_METHOD(TestBookmarkSelectedText)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.memory.at(8) = 'T';
+        search.memory.at(9) = 'E';
+        search.memory.at(10) = 'S';
+        search.memory.at(11) = 'T';
+        search.SetSearchType(ra::services::SearchType::AsciiText);
+        search.BeginNewSearch();
+
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
+        search.SetFilterValue(L"TEST");
+
+        search.ApplyFilter();
+        Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
+        Assert::AreEqual({ 1U }, search.GetResultCount());
+        Assert::AreEqual(MemSize::Text, search.ResultMemSize());
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        search.Results().GetItemAt(0)->SetSelected(true);
 
         bool bSawDialog = false;
         search.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bSawDialog](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             bSawDialog = true;
-            Assert::AreEqual(std::wstring(L"4-bit bookmarks are not supported"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Text bookmarks are not supported"), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 
         search.BookmarkSelected();
         Assert::IsTrue(bSawDialog);
-        Assert::AreEqual({ 4U }, search.Results().Count());
+        Assert::AreEqual({ 1U }, search.Results().Count());
 
         const auto& pBookmarks = search.mockWindowManager.MemoryBookmarks.Bookmarks();
         Assert::AreEqual({ 0U }, pBookmarks.Count());
 
-        Assert::IsTrue(search.Results().GetItemAt(2)->IsSelected());
-        Assert::IsTrue(search.Results().GetItemAt(3)->IsSelected());
+        Assert::IsTrue(search.Results().GetItemAt(0)->IsSelected());
     }
 
     TEST_METHOD(TestPredefinedFilterRanges)
@@ -1275,12 +1312,12 @@ public:
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 6U }, search.Results().Count());
-        AssertRow(search, 0, 10U, L"0x000a", L"0x09", L"0x0a");
-        AssertRow(search, 1, 11U, L"0x000b", L"0x09", L"0x0b");
-        AssertRow(search, 2, 12U, L"0x000c", L"0x09", L"0x0c");
-        AssertRow(search, 3, 13U, L"0x000d", L"0x09", L"0x0d");
-        AssertRow(search, 4, 14U, L"0x000e", L"0x09", L"0x0e");
-        AssertRow(search, 5, 15U, L"0x000f", L"0x09", L"0x0f");
+        AssertRow(search, 0, 10U, L"0x000a", L"0x09");
+        AssertRow(search, 1, 11U, L"0x000b", L"0x09");
+        AssertRow(search, 2, 12U, L"0x000c", L"0x09");
+        AssertRow(search, 3, 13U, L"0x000d", L"0x09");
+        AssertRow(search, 4, 14U, L"0x000e", L"0x09");
+        AssertRow(search, 5, 15U, L"0x000f", L"0x09");
 
         search.memory.at(10) = 7;
         search.memory.at(11) = 7;
@@ -1297,11 +1334,11 @@ public:
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 5U }, search.Results().Count());
-        AssertRow(search, 0, 10U, L"0x000a", L"0x07", L"0x0a");
-        AssertRow(search, 1, 11U, L"0x000b", L"0x07", L"0x0b");
-        AssertRow(search, 2, 12U, L"0x000c", L"0x07", L"0x0c");
-        AssertRow(search, 3, 14U, L"0x000e", L"0x07", L"0x0e");
-        AssertRow(search, 4, 15U, L"0x000f", L"0x07", L"0x0f");
+        AssertRow(search, 0, 10U, L"0x000a", L"0x07");
+        AssertRow(search, 1, 11U, L"0x000b", L"0x07");
+        AssertRow(search, 2, 12U, L"0x000c", L"0x07");
+        AssertRow(search, 3, 14U, L"0x000e", L"0x07");
+        AssertRow(search, 4, 15U, L"0x000f", L"0x07");
 
         Assert::IsFalse(search.CanFilter());
         Assert::IsTrue(search.CanContinuousFilter());
@@ -1318,7 +1355,7 @@ public:
         Assert::AreEqual(std::wstring(L"!= Last Known"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 11U, L"0x000b", L"0x04", L"0x0b");
+        AssertRow(search, 0, 11U, L"0x000b", L"0x04");
 
         Assert::IsFalse(search.CanFilter());
         Assert::IsTrue(search.CanContinuousFilter());
@@ -1364,12 +1401,12 @@ public:
         Assert::AreEqual(std::wstring(L"!= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 6U }, search.Results().Count());
-        AssertRow(search, 0, 10U, L"0x000a", L"0x09", L"0x0a");
-        AssertRow(search, 1, 11U, L"0x000b", L"0x09", L"0x0b");
-        AssertRow(search, 2, 12U, L"0x000c", L"0x09", L"0x0c");
-        AssertRow(search, 3, 13U, L"0x000d", L"0x09", L"0x0d");
-        AssertRow(search, 4, 14U, L"0x000e", L"0x09", L"0x0e");
-        AssertRow(search, 5, 15U, L"0x000f", L"0x09", L"0x0f");
+        AssertRow(search, 0, 10U, L"0x000a", L"0x09");
+        AssertRow(search, 1, 11U, L"0x000b", L"0x09");
+        AssertRow(search, 2, 12U, L"0x000c", L"0x09");
+        AssertRow(search, 3, 13U, L"0x000d", L"0x09");
+        AssertRow(search, 4, 14U, L"0x000e", L"0x09");
+        AssertRow(search, 5, 15U, L"0x000f", L"0x09");
 
         search.memory.at(10) = 10;
         search.memory.at(12) = 7;
@@ -1385,10 +1422,10 @@ public:
         Assert::AreEqual(std::wstring(L"!= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 4U }, search.Results().Count());
-        AssertRow(search, 0, 11U, L"0x000b", L"0x09", L"0x0b");
-        AssertRow(search, 1, 12U, L"0x000c", L"0x07", L"0x0c");
-        AssertRow(search, 2, 13U, L"0x000d", L"0x09", L"0x0d");
-        AssertRow(search, 3, 15U, L"0x000f", L"0x07", L"0x0f");
+        AssertRow(search, 0, 11U, L"0x000b", L"0x09");
+        AssertRow(search, 1, 12U, L"0x000c", L"0x07");
+        AssertRow(search, 2, 13U, L"0x000d", L"0x09");
+        AssertRow(search, 3, 15U, L"0x000f", L"0x07");
 
         Assert::IsFalse(search.CanFilter());
         Assert::IsTrue(search.CanContinuousFilter());
@@ -1408,7 +1445,7 @@ public:
         Assert::AreEqual(std::wstring(L"!= Initial"), search.GetFilterSummary());
 
         Assert::AreEqual({ 1U }, search.Results().Count());
-        AssertRow(search, 0, 13U, L"0x000d", L"0x03", L"0x0d");
+        AssertRow(search, 0, 13U, L"0x000d", L"0x03");
 
         Assert::IsFalse(search.CanFilter());
         Assert::IsTrue(search.CanContinuousFilter());
@@ -1480,16 +1517,151 @@ public:
         search.DoFrame();
 
         Assert::IsTrue(search.Results().Count() > 3);
-        AssertRow(search, 0, 0U, L"0x0000", L"0x00", L"0x00");
-        AssertRow(search, 1, 1U, L"0x0001", L"0x01", L"0x01");
-        AssertRow(search, 2, 2U, L"0x0002", L"0x09", L"0x02");
+        AssertRow(search, 0, 0U, L"0x0000", L"0x00");
+        AssertRow(search, 1, 1U, L"0x0001", L"0x01");
+        AssertRow(search, 2, 2U, L"0x0002", L"0x09");
 
         search.SetScrollOffset(1U);
 
         Assert::IsTrue(search.Results().Count() > 3);
-        AssertRow(search, 0, 1U, L"0x0001", L"0x01", L"0x01");
-        AssertRow(search, 1, 2U, L"0x0002", L"0x09", L"0x02");
-        AssertRow(search, 2, 3U, L"0x0003", L"0x03", L"0x03");
+        AssertRow(search, 0, 1U, L"0x0001", L"0x01");
+        AssertRow(search, 1, 2U, L"0x0002", L"0x09");
+        AssertRow(search, 2, 3U, L"0x0003", L"0x03");
+    }
+
+    TEST_METHOD(TestGetTooltipEightBit)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.BeginNewSearch();
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
+        search.ApplyFilter();
+
+        const auto& vmResult = *search.Results().GetItemAt(2);
+        Assert::AreEqual(std::wstring(L"0x0002\n0x02 | Current\n0x02 | Last Filter\n0x02 | Initial"), search.GetTooltip(vmResult));
+
+        search.memory.at(2) = 9;
+        search.DoFrame();
+        Assert::AreEqual(std::wstring(L"0x0002\n0x09 | Current\n0x02 | Last Filter\n0x02 | Initial"), search.GetTooltip(vmResult));
+
+        search.memory.at(2) = 0x0c;
+        search.DoFrame();
+        Assert::AreEqual(std::wstring(L"0x0002\n0x0c | Current\n0x02 | Last Filter\n0x02 | Initial"), search.GetTooltip(vmResult));
+
+        search.SetComparisonType(ComparisonType::NotEqualTo);
+        search.ApplyFilter();
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        const auto& vmResult2 = *search.Results().GetItemAt(0);
+        Assert::AreEqual(std::wstring(L"0x0002\n0x0c | Current\n0x0c | Last Filter\n0x02 | Initial"), search.GetTooltip(vmResult2));
+
+        search.memory.at(2) = 0x35;
+        search.DoFrame();
+        Assert::AreEqual(std::wstring(L"0x0002\n0x35 | Current\n0x0c | Last Filter\n0x02 | Initial"), search.GetTooltip(vmResult2));
+    }
+
+    TEST_METHOD(TestGetTooltipFourBit)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.SetSearchType(ra::services::SearchType::FourBit);
+        search.BeginNewSearch();
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
+        search.ApplyFilter();
+
+        const auto& vmResult = *search.Results().GetItemAt(4);
+        Assert::AreEqual(std::wstring(L"0x0002L\n0x2 | Current\n0x2 | Last Filter\n0x2 | Initial"), search.GetTooltip(vmResult));
+
+        search.memory.at(2) = 9;
+        search.DoFrame();
+        Assert::AreEqual(std::wstring(L"0x0002L\n0x9 | Current\n0x2 | Last Filter\n0x2 | Initial"), search.GetTooltip(vmResult));
+
+        search.memory.at(2) = 0x0c;
+        search.DoFrame();
+        Assert::AreEqual(std::wstring(L"0x0002L\n0xc | Current\n0x2 | Last Filter\n0x2 | Initial"), search.GetTooltip(vmResult));
+
+        search.SetComparisonType(ComparisonType::NotEqualTo);
+        search.ApplyFilter();
+
+        Assert::AreEqual({ 1U }, search.Results().Count());
+        const auto& vmResult2 = *search.Results().GetItemAt(0);
+        Assert::AreEqual(std::wstring(L"0x0002L\n0xc | Current\n0xc | Last Filter\n0x2 | Initial"), search.GetTooltip(vmResult2));
+
+        search.memory.at(2) = 0x35;
+        search.DoFrame();
+        Assert::AreEqual(std::wstring(L"0x0002L\n0x5 | Current\n0xc | Last Filter\n0x2 | Initial"), search.GetTooltip(vmResult2));
+    }
+
+    TEST_METHOD(TestGetTooltipSixteenBit)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.SetSearchType(ra::services::SearchType::SixteenBit);
+        search.BeginNewSearch();
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
+        search.ApplyFilter();
+
+        const auto& vmResult = *search.Results().GetItemAt(2);
+        Assert::AreEqual(std::wstring(L"0x0002\n0x0302 | Current\n0x0302 | Last Filter\n0x0302 | Initial"), search.GetTooltip(vmResult));
+
+        search.memory.at(2) = 9;
+        search.DoFrame();
+        Assert::AreEqual(std::wstring(L"0x0002\n0x0309 | Current\n0x0302 | Last Filter\n0x0302 | Initial"), search.GetTooltip(vmResult));
+
+        search.memory.at(3) = 0x0c;
+        search.DoFrame();
+        Assert::AreEqual(std::wstring(L"0x0002\n0x0c09 | Current\n0x0302 | Last Filter\n0x0302 | Initial"), search.GetTooltip(vmResult));
+
+        search.SetComparisonType(ComparisonType::NotEqualTo);
+        search.ApplyFilter();
+
+        Assert::AreEqual({ 3U }, search.Results().Count()); // 01=0901 02=0c09 03=030c
+        const auto& vmResult2 = *search.Results().GetItemAt(1);
+        Assert::AreEqual(std::wstring(L"0x0002\n0x0c09 | Current\n0x0c09 | Last Filter\n0x0302 | Initial"), search.GetTooltip(vmResult2));
+
+        search.memory.at(2) = 0x35;
+        search.DoFrame();
+        Assert::AreEqual(std::wstring(L"0x0002\n0x0c35 | Current\n0x0c09 | Last Filter\n0x0302 | Initial"), search.GetTooltip(vmResult2));
+    }
+
+    TEST_METHOD(TestGetTooltipText)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.memory.at(2) = 'T';
+        search.memory.at(3) = 'E';
+        search.memory.at(4) = 'S';
+        search.memory.at(5) = 'T';
+        search.memory.at(6) = 0;
+        search.SetSearchType(ra::services::SearchType::AsciiText);
+        search.BeginNewSearch();
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
+        search.ApplyFilter();
+
+        const auto& vmResult = *search.Results().GetItemAt(2);
+        Assert::AreEqual(std::wstring(L"0x0002\nTEST | Current\nTEST | Last Filter\nTEST | Initial"), search.GetTooltip(vmResult));
+
+        search.memory.at(4) = 'X';
+        search.DoFrame();
+        Assert::AreEqual(std::wstring(L"0x0002\nTEXT | Current\nTEST | Last Filter\nTEST | Initial"), search.GetTooltip(vmResult));
+
+        search.memory.at(2) = 'N';
+        search.DoFrame();
+        Assert::AreEqual(std::wstring(L"0x0002\nNEXT | Current\nTEST | Last Filter\nTEST | Initial"), search.GetTooltip(vmResult));
+
+        search.SetComparisonType(ComparisonType::NotEqualTo);
+        search.ApplyFilter();
+
+        const auto& vmResult2 = *search.Results().GetItemAt(1); // 01=?NEXT 02=NEXT 03=EXT 04=XT
+        Assert::AreEqual(std::wstring(L"0x0002\nNEXT | Current\nNEXT | Last Filter\nTEST | Initial"), search.GetTooltip(vmResult2));
+
+        search.memory.at(4) = 'A';
+        search.DoFrame();
+        Assert::AreEqual(std::wstring(L"0x0002\nNEAT | Current\nNEXT | Last Filter\nTEST | Initial"), search.GetTooltip(vmResult2));
     }
 };
 

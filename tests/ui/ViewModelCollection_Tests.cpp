@@ -631,6 +631,74 @@ public:
         Assert::AreEqual((void*)&pItem5, (void*)vmCollection.GetItemAt(4));
     }
 
+    TEST_METHOD(TestMoveNewPropertyNotification)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        auto& pItem1 = vmCollection.Add(1, L"Test1");
+        auto& pItem2 = vmCollection.Add(2, L"Test2");
+        auto& pItem3 = vmCollection.Add(3, L"Test3");
+        auto& pItem4 = vmCollection.Add(4, L"Test4");
+        auto& pItem5 = vmCollection.Add(5, L"Test5");
+
+        NotifyTargetHarness oNotify;
+        vmCollection.AddNotifyTarget(oNotify);
+
+        // add a new item, then move it into slot 3, moving slots 3 and 4 forward one to accommodate
+        vmCollection.BeginUpdate();
+        auto& pItem6 = vmCollection.Add(6, L"Test6");
+        vmCollection.MoveItem(5, 3);
+        vmCollection.EndUpdate();
+
+        oNotify.AssertItemNotChanged(0);
+        oNotify.AssertItemNotChanged(1);
+        oNotify.AssertItemNotChanged(2);
+        oNotify.AssertItemAdded(3);
+        oNotify.AssertItemNotChanged(4);
+        oNotify.AssertItemNotChanged(5);
+
+        Assert::AreEqual((void*)&pItem1, (void*)vmCollection.GetItemAt(0));
+        Assert::AreEqual((void*)&pItem2, (void*)vmCollection.GetItemAt(1));
+        Assert::AreEqual((void*)&pItem3, (void*)vmCollection.GetItemAt(2));
+        Assert::AreEqual((void*)&pItem6, (void*)vmCollection.GetItemAt(3));
+        Assert::AreEqual((void*)&pItem4, (void*)vmCollection.GetItemAt(4));
+        Assert::AreEqual((void*)&pItem5, (void*)vmCollection.GetItemAt(5));
+    }
+
+    TEST_METHOD(TestMoveNewPropertyNotification2)
+    {
+        ViewModelCollection<TestViewModel> vmCollection;
+        auto& pItem1 = vmCollection.Add(1, L"Test1");
+        auto& pItem2 = vmCollection.Add(2, L"Test2");
+        auto& pItem3 = vmCollection.Add(3, L"Test3");
+        auto& pItem4 = vmCollection.Add(4, L"Test4");
+        auto& pItem5 = vmCollection.Add(5, L"Test5");
+
+        NotifyTargetHarness oNotify;
+        vmCollection.AddNotifyTarget(oNotify);
+
+        // add a new item, then move it into slot 2, moving slots 2, 3, and 4 forward one to accommodate
+        // then move the item in slot 4 to slot 1, moving slots 1, 2, and 3 forward one to accomodate
+        vmCollection.BeginUpdate();
+        auto& pItem6 = vmCollection.Add(6, L"Test6");
+        vmCollection.MoveItem(5, 2);
+        vmCollection.MoveItem(4, 1);
+        vmCollection.EndUpdate();
+
+        oNotify.AssertItemNotChanged(0);  // not moved
+        oNotify.AssertItemChanged(1);     // moved from 4->1
+        oNotify.AssertItemChanged(2);     // moved from 1->2
+        oNotify.AssertItemAdded(3);       // added
+        oNotify.AssertItemChanged(4);     // moved from 2->3 and moved by new item
+        oNotify.AssertItemNotChanged(5);  // only moved by new item
+
+        Assert::AreEqual((void*)&pItem1, (void*)vmCollection.GetItemAt(0));
+        Assert::AreEqual((void*)&pItem4, (void*)vmCollection.GetItemAt(1));
+        Assert::AreEqual((void*)&pItem2, (void*)vmCollection.GetItemAt(2));
+        Assert::AreEqual((void*)&pItem6, (void*)vmCollection.GetItemAt(3));
+        Assert::AreEqual((void*)&pItem3, (void*)vmCollection.GetItemAt(4));
+        Assert::AreEqual((void*)&pItem5, (void*)vmCollection.GetItemAt(5));
+    }
+
     TEST_METHOD(TestShiftItemsUp)
     {
         ViewModelCollection<TestViewModel> vmCollection;

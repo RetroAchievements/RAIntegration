@@ -442,7 +442,7 @@ public:
         Assert::AreEqual(std::wstring(), editor.GetAssetValidationError());
 
         Assert::IsTrue(editor.HasAssetValidationWarning());
-        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow."), editor.GetAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), editor.GetAssetValidationWarning());
 
         editor.LoadAsset(nullptr);
         Assert::IsFalse(editor.HasAssetValidationError());
@@ -619,7 +619,7 @@ public:
 
         achievement.UpdateLocalCheckpoint();
         Assert::IsTrue(editor.HasAssetValidationWarning());
-        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow."), editor.GetAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), editor.GetAssetValidationWarning());
     }
 
     TEST_METHOD(TestSyncState)

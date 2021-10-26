@@ -657,6 +657,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindVisible(IDC_RA_POINTS, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_CHK_AS_PERCENT, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_CHK_AS_PERCENT, AssetEditorViewModel::HasMeasuredProperty);
+    m_bindMeasuredAsPercent.BindCheck(TriggerViewModel::IsMeasuredTrackedAsPercentProperty);
     m_bindWindow.BindVisible(IDC_RA_LBL_BADGENAME, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_BADGENAME, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_BADGE_SPIN, AssetEditorViewModel::IsAchievementProperty);

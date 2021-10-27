@@ -2,14 +2,17 @@
 
 #include "data\context\GameContext.hh"
 
+#include "data\models\AchievementModel.hh"
+
 #include "services\AchievementRuntime.hh"
 
-#include "data\models\AchievementModel.hh"
+#include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 
 #include "tests\mocks\MockAudioSystem.hh"
+#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
@@ -60,10 +63,12 @@ public:
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulator;
         ra::data::context::mocks::MockSessionTracker mockSessionTracker;
         ra::data::context::mocks::MockUserContext mockUser;
         ra::services::AchievementRuntime runtime;
+        ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
         void SetGameId(unsigned int nGameId) noexcept { m_nGameId = nGameId; }
@@ -190,6 +195,38 @@ public:
         Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"1 achievements, 5 points"), pPopup->GetDescription());
         Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
+    }
+
+    TEST_METHOD(TestLoadGameTitleConsoleMismatch)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request& request, ra::api::FetchGameData::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+
+            response.Title = L"Game";
+            response.ConsoleId = ra::etoi(ConsoleID::MegaDrive);
+            return true;
+        });
+
+        game.mockConsoleContext.SetId(ConsoleID::MasterSystem);
+        game.mockConsoleContext.SetName(L"Master System");
+
+        bool bDialogShown = false;
+        game.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Identified game does not match expected console."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The game being loaded is associated to the Sega Genesis console, but the emulator has initialized "
+                "the Master System console. This is not allowed as the memory maps may not be compatible between consoles."), vmMessageBox.GetMessage());
+            bDialogShown = true;
+            return ra::ui::DialogResult::OK;
+        });
+
+        game.LoadGame(1U);
+
+        Assert::AreEqual(0U, game.GameId());
+        Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, game.GetMode());
+        Assert::AreEqual(std::wstring(L""), game.GameTitle());
     }
 
     TEST_METHOD(TestLoadGameNotify)

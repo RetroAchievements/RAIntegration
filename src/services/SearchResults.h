@@ -37,37 +37,64 @@ namespace impl {
 class MemBlock
 {
 public:
-    explicit MemBlock(_In_ unsigned int nAddress, _In_ unsigned int nSize) noexcept :
-        m_nAddress(nAddress),
-        m_nSize(nSize)
+    explicit MemBlock(_In_ unsigned int nAddress, _In_ unsigned int nSize, _In_ unsigned int nMaxAddresses) noexcept :
+        m_nFirstAddress(nAddress),
+        m_nBytesSize(nSize),
+        m_nMatchingAddresses(nMaxAddresses),
+        m_nMaxAddresses(nMaxAddresses)
     {
         if (nSize > sizeof(m_vBytes))
-            m_pBytes = new (std::nothrow) unsigned char[nSize];
+            m_pBytes = new (std::nothrow) uint8_t[nSize];
     }
 
-    MemBlock(const MemBlock& other) noexcept : MemBlock(other.m_nAddress, other.m_nSize)
+    MemBlock(const MemBlock& other) noexcept : MemBlock(other.m_nFirstAddress, other.m_nBytesSize, other.m_nMaxAddresses)
     {
-        if (m_nSize > sizeof(m_vBytes))
-            std::memcpy(m_pBytes, other.m_pBytes, m_nSize);
+        if (m_nBytesSize > sizeof(m_vBytes))
+            std::memcpy(m_pBytes, other.m_pBytes, m_nBytesSize);
         else
             std::memcpy(m_vBytes, other.m_vBytes, sizeof(m_vBytes));
+
+        m_nMatchingAddresses = other.m_nMatchingAddresses;
+        if (!AreAllAddressesMatching())
+        {
+            if ((m_nMatchingAddresses + 7) / 8 > sizeof(m_vAddresses))
+                std::memcpy(m_pAddresses, other.m_pAddresses, (m_nMatchingAddresses + 7) / 8);
+            else
+                std::memcpy(m_vAddresses, other.m_vAddresses, sizeof(m_vAddresses));
+        }
     }
 
     MemBlock& operator=(const MemBlock&) noexcept = delete;
 
     MemBlock(MemBlock&& other) noexcept :
-        m_nAddress(other.m_nAddress),
-        m_nSize(other.m_nSize)
+        m_nFirstAddress(other.m_nFirstAddress),
+        m_nBytesSize(other.m_nBytesSize),
+        m_nMatchingAddresses(other.m_nMatchingAddresses),
+        m_nMaxAddresses(other.m_nMaxAddresses)
     {
-        if (other.m_nSize > sizeof(m_vBytes))
+        if (other.m_nBytesSize > sizeof(m_vBytes))
         {
             m_pBytes = other.m_pBytes;
             other.m_pBytes = nullptr;
-            other.m_nSize = 0;
+            other.m_nBytesSize = 0;
         }
         else
         {
             std::memcpy(m_vBytes, other.m_vBytes, sizeof(m_vBytes));
+        }
+
+        if (!AreAllAddressesMatching())
+        {
+            if ((m_nMatchingAddresses + 7) / 8 > sizeof(m_vAddresses))
+            {
+                m_pAddresses = other.m_pAddresses;
+                other.m_pAddresses = nullptr;
+                other.m_nMatchingAddresses = 0;
+            }
+            else
+            {
+                std::memcpy(m_vAddresses, other.m_vAddresses, sizeof(m_vAddresses));
+            }
         }
     }
 
@@ -75,30 +102,73 @@ public:
 
     ~MemBlock() noexcept
     {
-        if (m_nSize > sizeof(m_vBytes))
+        if (m_nBytesSize > sizeof(m_vBytes))
             delete[] m_pBytes;
+        if (!AreAllAddressesMatching() && (m_nMatchingAddresses + 7) / 8 > sizeof(m_vAddresses))
+            delete[] m_pAddresses;
     }
 
-    unsigned char* GetBytes() noexcept { return (m_nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
-    const unsigned char* GetBytes() const noexcept { return (m_nSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
+    uint8_t* GetBytes() noexcept { return (m_nBytesSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
+    const uint8_t* GetBytes() const noexcept { return (m_nBytesSize > sizeof(m_vBytes)) ? m_pBytes : &m_vBytes[0]; }
 
-    unsigned char GetByte(std::size_t nIndex) noexcept { return GetBytes()[nIndex]; }
-    unsigned char GetByte(std::size_t nIndex) const noexcept { return GetBytes()[nIndex]; }
+    ra::ByteAddress GetFirstAddress() const noexcept { return m_nFirstAddress; }
+    unsigned int GetBytesSize() const noexcept { return m_nBytesSize; }
+    unsigned int GetMaxAddresses() const noexcept { return m_nMaxAddresses; }
 
-    ra::ByteAddress GetAddress() const noexcept { return m_nAddress; }
-    unsigned int GetSize() const noexcept { return m_nSize; }
+    bool ContainsAddress(ra::ByteAddress nAddress) const;
+
+    void SetMatchingAddresses(std::vector<ra::ByteAddress>& vAddresses, gsl::index nFirstIndex, gsl::index nLastIndex);
+    void CopyMatchingAddresses(const MemBlock& pSource);
+    void ExcludeMatchingAddress(ra::ByteAddress nAddress);
+    bool ContainsMatchingAddress(ra::ByteAddress nAddress) const;
+
+    unsigned int GetMatchingAddressCount() const noexcept { return m_nMatchingAddresses; }
+    ra::ByteAddress GetMatchingAddress(gsl::index nIndex) const;
+    bool AreAllAddressesMatching() const noexcept { return m_nMatchingAddresses == m_nMaxAddresses; }
+
+    const uint8_t* GetMatchingAddressPointer() const noexcept
+    {
+        if (AreAllAddressesMatching())
+            return nullptr;
+
+        const auto nAddressesSize = (m_nMaxAddresses + 7) / 8;
+        return (nAddressesSize > sizeof(m_vAddresses)) ? m_pAddresses : &m_vAddresses[0];
+    }
+
+    bool HasMatchingAddress(const uint8_t* pMatchingAddresses, ra::ByteAddress nAddress) const
+    {
+        if (!pMatchingAddresses)
+            return true;
+
+        const auto nIndex = nAddress - m_nFirstAddress;
+        if (nIndex >= m_nMaxAddresses)
+            return false;
+
+        const auto nBit = 1 << (nIndex & 7);
+        return (pMatchingAddresses[nIndex >> 3] & nBit);
+    }
 
 private:
+    uint8_t* AllocateMatchingAddresses();
+
     union // 8 bytes
     {
-        unsigned char m_vBytes[8]{};
-        unsigned char* m_pBytes;
+        uint8_t m_vBytes[8]{};
+        uint8_t* m_pBytes;
     };
 
-    ra::ByteAddress m_nAddress; // 4 bytes
-    unsigned int m_nSize;       // 4 bytes
+    union // 8 bytes
+    {
+        uint8_t m_vAddresses[8]{};
+        uint8_t* m_pAddresses;
+    };
+
+    unsigned int m_nBytesSize;         // 4 bytes
+    ra::ByteAddress m_nFirstAddress;   // 4 bytes
+    unsigned int m_nMatchingAddresses; // 4 bytes
+    unsigned int m_nMaxAddresses;      // 4 bytes
 };
-static_assert(sizeof(MemBlock) == 16, "sizeof(MemBlock) is incorrect");
+static_assert(sizeof(MemBlock) <= 32, "sizeof(MemBlock) is incorrect");
 
 class SearchImpl;
 
@@ -244,12 +314,6 @@ public:
     /// <param name="nAddress">The address to remove.</param>
     void ExcludeAddress(ra::ByteAddress nAddress) noexcept;
 
-    /// <summary>
-    /// Removes an address from the matching address list.
-    /// </summary>
-    /// <param name="nAddress">The index of the address to remove.</param>
-    void ExcludeMatchingAddress(gsl::index nIndex) noexcept;
-
 private:
     void MergeSearchResults(const SearchResults& srMemory, const SearchResults& srAddresses);
 
@@ -259,7 +323,6 @@ private:
     friend class impl::SearchImpl;
     impl::SearchImpl* m_pImpl = nullptr;
 
-    std::vector<ra::ByteAddress> m_vMatchingAddresses;
     ComparisonType m_nCompareType = ComparisonType::Equals;
     SearchFilterType m_nFilterType = SearchFilterType::None;
     unsigned int m_nFilterValue = 0U;

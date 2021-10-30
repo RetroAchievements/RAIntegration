@@ -15,6 +15,7 @@
 #include "api\SubmitLeaderboardEntry.hh"
 #include "api\UpdateCodeNote.hh"
 
+#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\SessionTracker.hh"
 #include "data\context\UserContext.hh"
@@ -97,9 +98,25 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     if (response.Failed())
     {
         m_vAssets.EndUpdate();
+        m_nGameId = 0;
 
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download game data",
                                                                   ra::Widen(response.ErrorMessage));
+        EndLoad();
+        return;
+    }
+
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    if (ra::itoe<ConsoleID>(response.ConsoleId) != pConsoleContext.Id())
+    {
+        m_vAssets.EndUpdate();
+        m_nGameId = 0;
+
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Identified game does not match expected console.",
+            ra::StringPrintf(L"The game being loaded is associated to the %s console, but the emulator has initialized "
+                "the %s console. This is not allowed as the memory maps may not be compatible between consoles.",
+                rc_console_name(response.ConsoleId), pConsoleContext.Name()));
+
         EndLoad();
         return;
     }

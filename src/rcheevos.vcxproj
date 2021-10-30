@@ -190,6 +190,7 @@
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <ClCompile Include="..\rcheevos\src\rcheevos\memref.c" />
+    <ClCompile Include="..\rcheevos\src\rcheevos\rc_validate.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\richpresence.c" />
     <ClInclude Include="..\rcheevos\src\rcheevos\rc_internal.h" />
     <ClInclude Include="..\rcheevos\src\rhash\md5.h" />

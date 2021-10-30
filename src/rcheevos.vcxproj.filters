@@ -130,6 +130,9 @@
     <ClCompile Include="..\rcheevos\src\rhash\md5.c">
       <Filter>rhash</Filter>
     </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rcheevos\rc_validate.c">
+      <Filter>rcheevos</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="lua">

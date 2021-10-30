@@ -191,7 +191,7 @@ public:
 
         for (const auto& pBlock : srResults.m_vBlocks)
         {
-            if (nIndex < pBlock.GetMatchingAddressCount())
+            if (nIndex < gsl::narrow_cast<gsl::index>(pBlock.GetMatchingAddressCount()))
             {
                 result.nAddress = pBlock.GetMatchingAddress(nIndex);
                 return GetValue(pBlock, result);

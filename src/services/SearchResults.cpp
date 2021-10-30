@@ -185,7 +185,7 @@ public:
     }
 
     // gets the nIndex'th search result
-    bool GetMatchingAddress(const SearchResults& srResults, gsl::index nIndex, _Out_ SearchResults::Result& result) const
+    bool GetMatchingAddress(const SearchResults& srResults, gsl::index nIndex, _Out_ SearchResults::Result& result) const noexcept
     {
         result.nSize = GetMemSize();
 
@@ -243,7 +243,7 @@ protected:
     // generic implementation for less used search types
     virtual void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept
+        std::vector<ra::ByteAddress>& vMatches) const
     {
         const auto nBlockAddress = pPreviousBlock.GetFirstAddress();
         const auto nStride = GetStride();
@@ -265,7 +265,7 @@ protected:
     // generic implementation for less used search types
     virtual void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept
+        std::vector<ra::ByteAddress>& vMatches) const
     {
         const auto* pBlockBytes = pPreviousBlock.GetBytes();
         const auto nBlockAddress = pPreviousBlock.GetFirstAddress();
@@ -293,29 +293,41 @@ protected:
     template<typename TSize, bool TIsConstantFilter, int TStride, ComparisonType TComparison>
     void ApplyCompareFilterLittleEndian(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept
+        std::vector<ra::ByteAddress>& vMatches) const
     {
+        const auto* pScan = pBytes;
+        if (pScan == nullptr)
+            return;
+
         ra::ByteAddress nAddress = pPreviousBlock.GetFirstAddress();
         constexpr int TBlockStride = TIsConstantFilter ? 0 : TStride;
-        const auto* pBlockBytes = pPreviousBlock.GetBytes();
+        const auto* pBlockBytes = TIsConstantFilter ? pScan : pPreviousBlock.GetBytes();
+        Expects(pBlockBytes != nullptr);
 
         const auto* pMatchingAddresses = pPreviousBlock.GetMatchingAddressPointer();
         if (!pMatchingAddresses)
         {
-            for (const auto* pScan = pBytes; pScan < pBytesStop; pScan += TStride, pBlockBytes += TBlockStride)
+            // all addresses in previous block match
+            for (; pScan < pBytesStop; pScan += TStride, pBlockBytes += TBlockStride)
             {
-                const unsigned int nValue1 = *(TSize*)pScan;
-                const unsigned int nValue2 = TIsConstantFilter ? nAdjustment : *(TSize*)pBlockBytes + nAdjustment;
-                if (CompareValues(nValue1, nValue2, TComparison))
-                    vMatches.push_back(nAddress);
+                GSL_SUPPRESS_TYPE1
+                {
+                    const unsigned int nValue1 = *(reinterpret_cast<const TSize*>(pScan));
+                    const unsigned int nValue2 = TIsConstantFilter ? nAdjustment :
+                        *(reinterpret_cast<const TSize*>(pBlockBytes)) + nAdjustment;
+
+                    if (CompareValues(nValue1, nValue2, TComparison))
+                        vMatches.push_back(nAddress);
+                }
 
                 ++nAddress;
             }
         }
         else
         {
+            // only a subset of addresses in the previous block match
             uint8_t nMask = 0x01;
-            for (const auto* pScan = pBytes; pScan < pBytesStop; pScan += TStride, pBlockBytes += TBlockStride)
+            for (; pScan < pBytesStop; pScan += TStride, pBlockBytes += TBlockStride)
             {
                 const bool bPreviousMatch = *pMatchingAddresses & nMask;
                 if (nMask == 0x80)
@@ -330,10 +342,15 @@ protected:
 
                 if (bPreviousMatch)
                 {
-                    const unsigned int nValue1 = *(TSize*)pScan;
-                    const unsigned int nValue2 = TIsConstantFilter ? nAdjustment : *(TSize*)pBlockBytes + nAdjustment;
-                    if (CompareValues(nValue1, nValue2, TComparison))
-                        vMatches.push_back(nAddress);
+                    GSL_SUPPRESS_TYPE1
+                    {
+                        const unsigned int nValue1 = *(reinterpret_cast<const TSize*>(pScan));
+                        const unsigned int nValue2 = TIsConstantFilter ? nAdjustment :
+                            *(reinterpret_cast<const TSize*>(pBlockBytes)) + nAdjustment;
+
+                        if (CompareValues(nValue1, nValue2, TComparison))
+                            vMatches.push_back(nAddress);
+                    }
                 }
 
                 ++nAddress;
@@ -356,7 +373,7 @@ protected:
     template<typename TSize, bool TIsConstantFilter, int TStride = 1>
     void ApplyCompareFilterLittleEndian(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept
+        std::vector<ra::ByteAddress>& vMatches) const
     {
         switch (nComparison)
         {
@@ -385,7 +402,7 @@ protected:
     template<typename TSize, bool TIsConstantFilter, int TStride = 1>
     void ApplyCompareFilterLittleEndian(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept
+        std::vector<ra::ByteAddress>& vMatches) const
     {
         if (TIsConstantFilter)
             SearchImpl::ApplyConstantFilter(pBytes, pBytesStop, pPreviousBlock, nComparison, nAdjustment, vMatches);
@@ -506,7 +523,7 @@ class FourBitSearchImpl : public SearchImpl
 
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept override
+        std::vector<ra::ByteAddress>& vMatches) const override
     {
         const auto nBlockAddress = pPreviousBlock.GetFirstAddress();
         const auto* pMatchingAddresses = pPreviousBlock.GetMatchingAddressPointer();
@@ -534,7 +551,7 @@ class FourBitSearchImpl : public SearchImpl
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept override
+        std::vector<ra::ByteAddress>& vMatches) const override
     {
         const auto* pBlockBytes = pPreviousBlock.GetBytes();
         const auto nBlockAddress = pPreviousBlock.GetFirstAddress();
@@ -592,7 +609,7 @@ class EightBitSearchImpl : public SearchImpl
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept override
+        std::vector<ra::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint8_t, true>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);
@@ -600,7 +617,7 @@ protected:
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept override
+        std::vector<ra::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint8_t, false>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);
@@ -623,7 +640,7 @@ public:
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept override
+        std::vector<ra::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint16_t, true>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);
@@ -631,7 +648,7 @@ protected:
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept override
+        std::vector<ra::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint16_t, false>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);
@@ -655,7 +672,7 @@ public:
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept override
+        std::vector<ra::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint32_t, true>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);
@@ -663,7 +680,7 @@ protected:
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept override
+        std::vector<ra::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint32_t, false>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);
@@ -694,7 +711,7 @@ public:
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept override
+        std::vector<ra::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint32_t, true, 4>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);
@@ -702,7 +719,7 @@ protected:
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept override
+        std::vector<ra::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint32_t, false, 4>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);
@@ -743,7 +760,7 @@ public:
 protected:
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept override
+        std::vector<ra::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint16_t, true, 2>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);
@@ -751,7 +768,7 @@ protected:
 
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
-        std::vector<ra::ByteAddress>& vMatches) const noexcept override
+        std::vector<ra::ByteAddress>& vMatches) const override
     {
         ApplyCompareFilterLittleEndian<uint16_t, false, 2>(pBytes, pBytesStop,
             pPreviousBlock, nComparison, nAdjustment, vMatches);
@@ -966,7 +983,7 @@ static SixteenBitBigEndianSearchImpl s_pSixteenBitBigEndianSearchImpl;
 static ThirtyTwoBitBigEndianSearchImpl s_pThirtyTwoBitBigEndianSearchImpl;
 static AsciiTextSearchImpl s_pAsciiTextSearchImpl;
 
-uint8_t* MemBlock::AllocateMatchingAddresses()
+uint8_t* MemBlock::AllocateMatchingAddresses() noexcept
 {
     const auto nAddressesSize = (m_nMaxAddresses + 7) / 8;
     if (nAddressesSize > sizeof(m_vAddresses))
@@ -988,6 +1005,7 @@ void MemBlock::SetMatchingAddresses(std::vector<ra::ByteAddress>& vAddresses, gs
     {
         const auto nAddressesSize = (m_nMaxAddresses + 7) / 8;
         unsigned char* pAddresses = AllocateMatchingAddresses();
+        Expects(pAddresses != nullptr);
 
         memset(pAddresses, 0, nAddressesSize);
         for (gsl::index nIndex = nFirstIndex; nIndex <= nLastIndex; ++nIndex)
@@ -1018,18 +1036,20 @@ void MemBlock::CopyMatchingAddresses(const MemBlock& pSource)
 void MemBlock::ExcludeMatchingAddress(ra::ByteAddress nAddress)
 {
     const auto nAddressesSize = (m_nMaxAddresses + 7) / 8;
-    unsigned char* pAddresses = NULL;
+    unsigned char* pAddresses = nullptr;
     const auto nIndex = nAddress - m_nFirstAddress;
     const auto nBit = 1 << (nIndex & 7);
 
     if (AreAllAddressesMatching())
     {
         pAddresses = AllocateMatchingAddresses();
+        Expects(pAddresses != nullptr);
         memset(pAddresses, 0xFF, nAddressesSize);
     }
     else
     {
         pAddresses = (nAddressesSize > sizeof(m_vAddresses)) ? m_pAddresses : &m_vAddresses[0];
+        Expects(pAddresses != nullptr);
         if (!(pAddresses[nIndex >> 3] & nBit))
             return;
     }
@@ -1038,7 +1058,7 @@ void MemBlock::ExcludeMatchingAddress(ra::ByteAddress nAddress)
     --m_nMatchingAddresses;
 }
 
-bool MemBlock::ContainsAddress(ra::ByteAddress nAddress) const
+bool MemBlock::ContainsAddress(ra::ByteAddress nAddress) const noexcept
 {
     if (nAddress < m_nFirstAddress)
         return false;
@@ -1060,11 +1080,12 @@ bool MemBlock::ContainsMatchingAddress(ra::ByteAddress nAddress) const
         return true;
 
     const uint8_t* pAddresses = GetMatchingAddressPointer();
+    Expects(pAddresses != nullptr);
     const auto nBit = 1 << (nIndex & 7);
     return (pAddresses[nIndex >> 3] & nBit);
 }
 
-ra::ByteAddress MemBlock::GetMatchingAddress(gsl::index nIndex) const
+ra::ByteAddress MemBlock::GetMatchingAddress(gsl::index nIndex) const noexcept
 {
     if (AreAllAddressesMatching())
         return m_nFirstAddress + gsl::narrow_cast<ra::ByteAddress>(nIndex);
@@ -1072,29 +1093,32 @@ ra::ByteAddress MemBlock::GetMatchingAddress(gsl::index nIndex) const
     const auto nAddressesSize = (m_nMaxAddresses + 7) / 8;
     const uint8_t* pAddresses = (nAddressesSize > sizeof(m_vAddresses)) ? m_pAddresses : &m_vAddresses[0];
     ra::ByteAddress nAddress = m_nFirstAddress;
-    ra::ByteAddress nStop = m_nFirstAddress + m_nMaxAddresses;
+    const ra::ByteAddress nStop = m_nFirstAddress + m_nMaxAddresses;
     uint8_t nMask = 0x01;
 
-    do
+    if (pAddresses != nullptr)
     {
-        if (*pAddresses & nMask)
+        do
         {
-            if (nIndex-- == 0)
-                return nAddress;
-        }
+            if (*pAddresses & nMask)
+            {
+                if (nIndex-- == 0)
+                    return nAddress;
+            }
 
-        if (nMask == 0x80)
-        {
-            nMask = 0x01;
-            pAddresses++;
-        }
-        else
-        {
-            nMask <<= 1;
-        }
+            if (nMask == 0x80)
+            {
+                nMask = 0x01;
+                pAddresses++;
+            }
+            else
+            {
+                nMask <<= 1;
+            }
 
-        nAddress++;
-    } while (nAddress < nStop);
+            nAddress++;
+        } while (nAddress < nStop);
+    }
 
     return 0;
 }
@@ -1289,7 +1313,7 @@ size_t SearchResults::MatchingAddressCount() const noexcept
     return nCount;
 }
 
-void SearchResults::ExcludeAddress(ra::ByteAddress nAddress) noexcept
+void SearchResults::ExcludeAddress(ra::ByteAddress nAddress)
 {
     if (m_nFilterType == SearchFilterType::None)
         return;
@@ -1304,7 +1328,7 @@ void SearchResults::ExcludeAddress(ra::ByteAddress nAddress) noexcept
     }
 }
 
-bool SearchResults::GetMatchingAddress(gsl::index nIndex, _Out_ SearchResults::Result& result) const
+bool SearchResults::GetMatchingAddress(gsl::index nIndex, _Out_ SearchResults::Result& result) const noexcept
 {
     if (m_pImpl == nullptr)
     {

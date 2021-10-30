@@ -115,7 +115,7 @@ public:
     unsigned int GetBytesSize() const noexcept { return m_nBytesSize; }
     unsigned int GetMaxAddresses() const noexcept { return m_nMaxAddresses; }
 
-    bool ContainsAddress(ra::ByteAddress nAddress) const;
+    bool ContainsAddress(ra::ByteAddress nAddress) const noexcept;
 
     void SetMatchingAddresses(std::vector<ra::ByteAddress>& vAddresses, gsl::index nFirstIndex, gsl::index nLastIndex);
     void CopyMatchingAddresses(const MemBlock& pSource);
@@ -123,7 +123,7 @@ public:
     bool ContainsMatchingAddress(ra::ByteAddress nAddress) const;
 
     unsigned int GetMatchingAddressCount() const noexcept { return m_nMatchingAddresses; }
-    ra::ByteAddress GetMatchingAddress(gsl::index nIndex) const;
+    ra::ByteAddress GetMatchingAddress(gsl::index nIndex) const noexcept;
     bool AreAllAddressesMatching() const noexcept { return m_nMatchingAddresses == m_nMaxAddresses; }
 
     const uint8_t* GetMatchingAddressPointer() const noexcept
@@ -135,7 +135,7 @@ public:
         return (nAddressesSize > sizeof(m_vAddresses)) ? m_pAddresses : &m_vAddresses[0];
     }
 
-    bool HasMatchingAddress(const uint8_t* pMatchingAddresses, ra::ByteAddress nAddress) const
+    bool HasMatchingAddress(const uint8_t* pMatchingAddresses, ra::ByteAddress nAddress) const noexcept
     {
         if (!pMatchingAddresses)
             return true;
@@ -149,7 +149,7 @@ public:
     }
 
 private:
-    uint8_t* AllocateMatchingAddresses();
+    uint8_t* AllocateMatchingAddresses() noexcept;
 
     union // 8 bytes
     {
@@ -247,7 +247,7 @@ public:
     /// </summary>
     /// <param name="result">The result.</param>
     /// <returns><c>true</c> if result was populated, <c>false</c> if the index was invalid.</returns>
-    bool GetMatchingAddress(gsl::index nIndex, _Out_ Result& result) const;
+    bool GetMatchingAddress(gsl::index nIndex, _Out_ Result& result) const noexcept;
 
     /// <summary>
     /// Gets the raw bytes at the specified address.
@@ -312,7 +312,7 @@ public:
     /// Removes an address from the matching address list.
     /// </summary>
     /// <param name="nAddress">The address to remove.</param>
-    void ExcludeAddress(ra::ByteAddress nAddress) noexcept;
+    void ExcludeAddress(ra::ByteAddress nAddress);
 
 private:
     void MergeSearchResults(const SearchResults& srMemory, const SearchResults& srAddresses);

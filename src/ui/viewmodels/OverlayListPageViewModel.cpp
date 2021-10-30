@@ -177,13 +177,13 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
             {
                 const auto nProgressBarWidth = (nWidth - nTextX - 12) * 2 / 3;
                 const auto nValue = std::min(pItem->GetProgressValue(), nTarget);
-                const auto nProgressBarFillWidth = gsl::narrow_cast<int>(((static_cast<long>(nProgressBarWidth) - 2) * nValue) / nTarget);
-                const auto nProgressBarPercent = gsl::narrow_cast<int>(static_cast<long>(nValue) * 100 / nTarget);
+                const auto nProgressBarFillWidth = gsl::narrow_cast<int>(((static_cast<long long>(nProgressBarWidth) - 2) * nValue) / nTarget);
 
                 pSurface.FillRectangle(nTextX + 12, nY + 1 + 26 + 25, nProgressBarWidth, 8, pTheme.ColorOverlayScrollBar());
                 pSurface.FillRectangle(nTextX + 12 + 2, nY + 1 + 26 + 25 + 2, nProgressBarFillWidth - 4, 8 - 4, pTheme.ColorOverlayScrollBarGripper());
 
                 const auto nProgressFont = pSurface.LoadFont(pTheme.FontOverlay(), 14, ra::ui::FontStyles::Normal);
+                const auto nProgressBarPercent = gsl::narrow_cast<int>(static_cast<long long>(nValue) * 100 / nTarget);
                 const std::wstring sProgress = pItem->IsProgressPercentage() ?
                     ra::StringPrintf(L"%d%%", nProgressBarPercent) :
                     ra::StringPrintf(L"%u/%u", nValue, nTarget);

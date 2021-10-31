@@ -39,6 +39,7 @@ const BoolModelProperty AssetListViewModel::CanCreateProperty("AssetListViewMode
 const BoolModelProperty AssetListViewModel::CanCloneProperty("AssetListViewModel", "CanClone", false);
 const IntModelProperty AssetListViewModel::FilterCategoryProperty("AssetListViewModel", "FilterCategory", ra::etoi(AssetListViewModel::FilterCategory::Core));
 const IntModelProperty AssetListViewModel::SpecialFilterProperty("AssetListViewModel", "SpecialFilter", ra::etoi(AssetListViewModel::SpecialFilter::All));
+const IntModelProperty AssetListViewModel::AssetTypeFilterProperty("AssetListViewModel", "AssetTypeFilter", ra::etoi(ra::data::models::AssetType::Achievement));
 const IntModelProperty AssetListViewModel::EnsureVisibleAssetIndexProperty("AssetListViewModel", "EnsureVisibleAssetIndex", -1);
 
 AssetListViewModel::AssetListViewModel() noexcept
@@ -57,10 +58,10 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Triggered), L"Triggered");
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Disabled), L"Disabled");
 
+    m_vCategories.Add(ra::etoi(FilterCategory::All), L"All");
     m_vCategories.Add(ra::etoi(FilterCategory::Core), L"Core");
     m_vCategories.Add(ra::etoi(FilterCategory::Unofficial), L"Unofficial");
     m_vCategories.Add(ra::etoi(FilterCategory::Local), L"Local");
-    m_vCategories.Add(ra::etoi(FilterCategory::All), L"All");
 
     m_vSpecialFilters.Add(ra::etoi(SpecialFilter::All), L"All");
     m_vSpecialFilters.Add(ra::etoi(SpecialFilter::Active), L"Active");
@@ -68,6 +69,10 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vSpecialFilters.Add(ra::etoi(SpecialFilter::Modified), L"Modified");
     m_vSpecialFilters.Add(ra::etoi(SpecialFilter::Unpublished), L"Unpublished");
     m_vSpecialFilters.Add(ra::etoi(SpecialFilter::Authored), L"Authored");
+
+    m_vAssetTypeFilters.Add(ra::etoi(ra::data::models::AssetType::None), L"All");
+    m_vAssetTypeFilters.Add(ra::etoi(ra::data::models::AssetType::Achievement), L"Achievements");
+    m_vAssetTypeFilters.Add(ra::etoi(ra::data::models::AssetType::Leaderboard), L"Leaderboards");
 
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::None), L"");
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::Modified), L"Modified");
@@ -329,10 +334,16 @@ void AssetListViewModel::UpdateTotals()
 
 void AssetListViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == FilterCategoryProperty || args.Property == SpecialFilterProperty)
+    if (args.Property == FilterCategoryProperty ||
+        args.Property == SpecialFilterProperty ||
+        args.Property == AssetTypeFilterProperty)
+    {
         ApplyFilter();
+    }
     else if (args.Property == GameIdProperty)
+    {
         UpdateButtons();
+    }
 
     WindowViewModelBase::OnValueChanged(args);
 }
@@ -404,6 +415,13 @@ bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& p
     {
         const auto nAssetCategory = ra::itoe<ra::data::models::AssetCategory>(ra::etoi(nFilterCategory));
         if (pAsset.GetCategory() != nAssetCategory)
+            return false;
+    }
+
+    const auto nAssetTypeFilter = GetAssetTypeFilter();
+    if (nAssetTypeFilter != ra::data::models::AssetType::None)
+    {
+        if (pAsset.GetType() != nAssetTypeFilter)
             return false;
     }
 

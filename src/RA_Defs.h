@@ -160,19 +160,6 @@ public:
 //};
 //using namespace RA;
 
-#ifdef _DEBUG
-#ifndef RA_UTEST
-#undef ASSERT
-#define ASSERT( x ) assert( x )
-#else
-#undef ASSERT
-#define ASSERT( x ) {}
-#endif
-#else
-#undef ASSERT
-#define ASSERT( x ) {}
-#endif
-
 #ifndef UNUSED
 #define UNUSED( x ) ( x );
 #endif

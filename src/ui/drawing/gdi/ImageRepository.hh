@@ -60,7 +60,7 @@ private:
     HBitmapMap m_mLocal;
     HBitmapMap m_mIcons;
 
-    HBitmapMap* GetBitmapMap(ImageType nType) noexcept;
+    GSL_SUPPRESS_F6 HBitmapMap* GetBitmapMap(ImageType nType) noexcept;
 
     mutable std::mutex m_oMutex;
     std::set<std::wstring> m_vRequestedImages;

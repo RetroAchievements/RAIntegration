@@ -123,7 +123,7 @@ std::wstring ImageRepository::GetFilename(ImageType nType, const std::string& sN
             sFilename += ra::Widen(sName);
             break;
         default:
-            ASSERT(!"Unsupported image type");
+            Expects(!"Unsupported image type");
             break;
     }
 
@@ -193,7 +193,7 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
             sUrl += "/Images/";
             break;
         default:
-            ASSERT(!"Unsupported image type");
+            Expects(!"Unsupported image type");
             return;
     }
     sUrl += sName;
@@ -262,7 +262,7 @@ HBITMAP ImageRepository::GetDefaultImage(ImageType nType)
             return GetImage(ImageType::UserPic, DefaultUserPic);
 
         default:
-            ASSERT(!"Unsupported image type");
+            Expects(!"Unsupported image type");
             return nullptr;
     }
 }
@@ -459,7 +459,7 @@ ImageRepository::HBitmapMap* ImageRepository::GetBitmapMap(ImageType nType) noex
             return &m_mIcons;
 
         default:
-            ASSERT(!"Unsupported image type");
+            Expects(!"Unsupported image type");
             return nullptr;
     }
 }
@@ -542,7 +542,7 @@ void ImageRepository::AddReference(const ImageReference& pImage)
         std::lock_guard<std::mutex> lock(m_oMutex);
 
         const HBitmapMap::iterator iter = mMap->find(pImage.Name());
-        ASSERT(iter != mMap->end()); // AddReference should only be called if an HBITMAP exists, which will be in the map
+        Expects(iter != mMap->end()); // AddReference should only be called if an HBITMAP exists, which will be in the map
         if (iter != mMap->end())
             ++iter->second.m_nReferences;
     }

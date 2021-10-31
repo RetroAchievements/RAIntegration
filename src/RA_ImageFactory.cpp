@@ -6,7 +6,7 @@
 _Use_decl_annotations_
 void DrawImage(HDC hDC, HBITMAP hBitmap, int nX, int nY, int nW, int nH)
 {
-    ASSERT(hBitmap != nullptr);
+    Expects(hBitmap != nullptr);
     HDC hdcMem = CreateCompatibleDC(hDC);
     if (hdcMem)
     {
@@ -29,7 +29,7 @@ void DrawImage(HDC hDC, HBITMAP hBitmap, int nX, int nY, int nW, int nH)
 _Use_decl_annotations_
 void DrawImageStretched(HDC hDC, HBITMAP hBitmap, const RECT& rcSource, const RECT& rcDest)
 {
-    ASSERT(hBitmap != nullptr);
+    Expects(hBitmap != nullptr);
     HDC hdcMem = CreateCompatibleDC(hDC);
     if (hdcMem)
     {
@@ -60,7 +60,7 @@ void DrawImageStretched(HDC hDC, HBITMAP hBitmap, const RECT& rcSource, const RE
 _Use_decl_annotations_
 void DrawImageTiled(HDC hDC, HBITMAP hBitmap, RECT& rcSource, const RECT& rcDest)
 {
-    ASSERT(hBitmap != nullptr);
+    Expects(hBitmap != nullptr);
     HDC hdcMem = CreateCompatibleDC(hDC);
     if (hdcMem)
     {

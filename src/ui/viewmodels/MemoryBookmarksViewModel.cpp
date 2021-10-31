@@ -41,6 +41,7 @@ const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::Behavi
 const IntModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::RowColorProperty("MemoryBookmarkViewModel", "RowColor", 0);
 const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadOnlyProperty("MemoryBookmarkViewModel", "IsReadOnly", false);
 const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsDirtyProperty("MemoryBookmarkViewModel", "IsDirty", false);
+const StringModelProperty MemoryBookmarksViewModel::FreezeButtonTextProperty("MemoryBookmarksViewModel", "FreezeButtonText", L"Freeze");
 
 MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
 {
@@ -65,6 +66,8 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
     m_vBehaviors.Add(ra::etoi(BookmarkBehavior::None), L"");
     m_vBehaviors.Add(ra::etoi(BookmarkBehavior::Frozen), L"Frozen");
     m_vBehaviors.Add(ra::etoi(BookmarkBehavior::PauseOnChange), L"Pause");
+
+    m_vBookmarks.AddNotifyTarget(*this);
 }
 
 void MemoryBookmarksViewModel::InitializeNotifyTargets()
@@ -652,22 +655,54 @@ int MemoryBookmarksViewModel::RemoveSelectedBookmarks()
     return nRemoved;
 }
 
+void MemoryBookmarksViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelProperty::ChangeArgs& args)
+{
+    if (args.Property == LookupItemViewModel::IsSelectedProperty)
+    {
+        if (!m_vBookmarks.IsUpdating())
+            UpdateFreezeButtonText();
+    }
+}
+
+void MemoryBookmarksViewModel::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs& args)
+{
+    if (args.Property == MemoryBookmarkViewModel::BehaviorProperty)
+    {
+        if (!m_vBookmarks.IsUpdating())
+            UpdateFreezeButtonText();
+    }
+}
+
+void MemoryBookmarksViewModel::OnEndViewModelCollectionUpdate()
+{
+    UpdateFreezeButtonText();
+}
+
+bool MemoryBookmarksViewModel::ShouldFreeze() const
+{
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
+    {
+        const auto& pBookmark = *m_vBookmarks.GetItemAt(nIndex);
+        if (pBookmark.IsSelected() && pBookmark.GetBehavior() != BookmarkBehavior::Frozen)
+            return true;
+    }
+
+    return false;
+}
+
+void MemoryBookmarksViewModel::UpdateFreezeButtonText()
+{
+    if (ShouldFreeze())
+        SetValue(FreezeButtonTextProperty, FreezeButtonTextProperty.GetDefaultValue());
+    else
+        SetValue(FreezeButtonTextProperty, L"Unfreeze");
+}
+
 void MemoryBookmarksViewModel::ToggleFreezeSelected()
 {
     m_vBookmarks.BeginUpdate();
 
-    bool bFreeze = false;
-    for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
-    {
-        const auto* pItem = m_vBookmarks.GetItemAt(nIndex);
-        if (pItem && pItem->IsSelected() && pItem->GetBehavior() != BookmarkBehavior::Frozen)
-        {
-            bFreeze = true;
-            break;
-        }
-    }
-
-    if (bFreeze)
+    if (ShouldFreeze())
     {
         for (gsl::index nIndex = m_vBookmarks.Count() - 1; nIndex >= 0; --nIndex)
         {

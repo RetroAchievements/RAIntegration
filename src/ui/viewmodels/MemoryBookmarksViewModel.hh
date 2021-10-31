@@ -19,7 +19,8 @@ namespace viewmodels {
 
 class MemoryBookmarksViewModel : public WindowViewModelBase,
     protected ra::data::context::GameContext::NotifyTarget,
-    protected ra::data::context::EmulatorContext::NotifyTarget
+    protected ra::data::context::EmulatorContext::NotifyTarget,
+    protected ra::ui::ViewModelCollectionBase::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 MemoryBookmarksViewModel() noexcept;
@@ -335,6 +336,9 @@ public:
     /// <returns>Number of bookmarks that were removed</returns>
     int RemoveSelectedBookmarks();
 
+    static const StringModelProperty FreezeButtonTextProperty;
+    const std::wstring& GetFreezeButtonText() const { return GetValue(FreezeButtonTextProperty); }
+
     /// <summary>
     /// Freezes the selected items. Or, if they're already all frozen, unfreezes them.
     /// </summary>
@@ -379,10 +383,18 @@ protected:
     // ra::data::context::EmulatorContext::NotifyTarget
     void OnByteWritten(ra::ByteAddress, uint8_t) override;
 
+    // ra::ui::ViewModelCollectionBase::NotifyTarget
+    void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
+    void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
+    void OnEndViewModelCollectionUpdate() override;
+
     bool IsModified() const;
     size_t m_nUnmodifiedBookmarkCount = 0;
 
 private:
+    bool ShouldFreeze() const;
+    void UpdateFreezeButtonText();
+
     ViewModelCollection<MemoryBookmarkViewModel> m_vBookmarks;
     LookupItemViewModelCollection m_vSizes;
     LookupItemViewModelCollection m_vFormats;

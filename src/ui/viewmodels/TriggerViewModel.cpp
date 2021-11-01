@@ -346,32 +346,12 @@ void TriggerViewModel::NewCondition()
     // assume the user wants to create a condition for the currently watched memory address.
     const auto& pMemoryInspector = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryInspector;
     const auto nAddress = pMemoryInspector.Viewer().GetAddress();
-    MemSize nSize = MemSize::EightBit;
 
     // if the code note specifies an explicit size, use it. otherwise, use the selected viewer mode size.
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    switch (pGameContext.FindCodeNoteSize(nAddress))
-    {
-        default: // no code note, or code note doesn't specify a size
-            nSize = pMemoryInspector.Viewer().GetSize();
-            break;
-
-        case 1:
-            nSize = MemSize::EightBit;
-            break;
-
-        case 2:
-            nSize = MemSize::SixteenBit;
-            break;
-
-        case 3:
-            nSize = MemSize::TwentyFourBit;
-            break;
-
-        case 4:
-            nSize = MemSize::ThirtyTwoBit;
-            break;
-    }
+    auto nSize = pGameContext.GetCodeNoteMemSize(nAddress);
+    if (nSize == MemSize::Unknown)
+        nSize = pMemoryInspector.Viewer().GetSize();
 
     vmCondition.SetSourceType(TriggerOperandType::Address);
     vmCondition.SetSourceSize(nSize);

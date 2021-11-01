@@ -582,7 +582,7 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
     const auto nSelectedAddress = GetAddress();
 
     const auto nMax = nFirstAddress + nVisibleLines * 16 - nAddress;
-    const auto nSize = std::min(pGameContext.FindCodeNoteSize(nAddress), nMax);
+    const auto nSize = std::min(pGameContext.GetCodeNoteBytes(nAddress), nMax);
     for (unsigned i = 0; i < nSize; ++i)
     {
         auto nNewColor = (nAddress == nSelectedAddress) ?

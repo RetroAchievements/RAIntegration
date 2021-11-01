@@ -205,10 +205,22 @@ public:
     /// <param name="nAddress">Address to query.</param>
     /// <returns>Number of bytes associated to the code note, or 0 if no note exists at the address.</returns>
     /// <remarks>Only works for the first byte of a multi-byte address.</remarks>
-    unsigned FindCodeNoteSize(ra::ByteAddress nAddress) const
+    unsigned GetCodeNoteBytes(ra::ByteAddress nAddress) const
     {
         const auto pIter = m_mCodeNotes.find(nAddress);
-        return (pIter == m_mCodeNotes.end()) ? 0 : pIter->second.AnnotatedSize;
+        return (pIter == m_mCodeNotes.end()) ? 0 : pIter->second.Bytes;
+    }
+
+    /// <summary>
+    /// Returns the number of bytes associated to the code note at the specified address.
+    /// </summary>
+    /// <param name="nAddress">Address to query.</param>
+    /// <returns>Number of bytes associated to the code note, or 0 if no note exists at the address.</returns>
+    /// <remarks>Only works for the first byte of a multi-byte address.</remarks>
+    MemSize GetCodeNoteMemSize(ra::ByteAddress nAddress) const
+    {
+        const auto pIter = m_mCodeNotes.find(nAddress);
+        return (pIter == m_mCodeNotes.end()) ? MemSize::Unknown : pIter->second.MemSize;
     }
 
     /// <summary>
@@ -314,11 +326,13 @@ protected:
         std::string Author;
         std::wstring Note;
         unsigned int Bytes;
-        unsigned int AnnotatedSize;
+        MemSize MemSize;
     };
     std::map<ra::ByteAddress, CodeNote> m_mCodeNotes;
 
 private:
+    static void ExtractSize(CodeNote& pNote);
+
     /// <summary>
     /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's
     /// impossible to create a set of <c>NotifyTarget</c> references.

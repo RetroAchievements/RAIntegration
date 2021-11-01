@@ -2295,7 +2295,7 @@ public:
         Assert::IsNull(pNote5b);
     }
 
-    void TestCodeNoteSize(const std::wstring& sNote, unsigned int nExpectedSize)
+    void TestCodeNoteSize(const std::wstring& sNote, unsigned int nExpectedBytes, MemSize nExpectedSize)
     {
         GameContextHarness game;
         game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
@@ -2320,62 +2320,63 @@ public:
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
         game.mockThreadPool.ExecuteNextTask();
 
-        Assert::AreEqual(nExpectedSize, game.FindCodeNoteSize(1234U), sNote.c_str());
+        Assert::AreEqual(nExpectedBytes, game.GetCodeNoteBytes(1234U), sNote.c_str());
+        Assert::AreEqual(nExpectedSize, game.GetCodeNoteMemSize(1234U), sNote.c_str());
     }
 
     TEST_METHOD(TestLoadCodeNotesSized)
     {
-        TestCodeNoteSize(L"", 0U);
-        TestCodeNoteSize(L"Test", 0U);
-        TestCodeNoteSize(L"16-bit Test", 2U);
-        TestCodeNoteSize(L"Test 16-bit", 2U);
-        TestCodeNoteSize(L"Test 16-bi", 0U);
-        TestCodeNoteSize(L"[16-bit] Test", 2U);
-        TestCodeNoteSize(L"[16 bit] Test", 2U);
-        TestCodeNoteSize(L"[16 Bit] Test", 2U);
-        TestCodeNoteSize(L"[24-bit] Test", 3U);
-        TestCodeNoteSize(L"[32-bit] Test", 4U);
-        TestCodeNoteSize(L"[32 bit] Test", 4U);
-        TestCodeNoteSize(L"[32bit] Test", 4U);
-        TestCodeNoteSize(L"Test [16-bit]", 2U);
-        TestCodeNoteSize(L"Test (16-bit)", 2U);
-        TestCodeNoteSize(L"Test (16 bits)", 2U);
-        TestCodeNoteSize(L"[64-bit] Test", 8U);
-        TestCodeNoteSize(L"[128-bit] Test", 16U);
-        TestCodeNoteSize(L"[17-bit] Test", 3U);
-        TestCodeNoteSize(L"[100-bit] Test", 13U);
-        TestCodeNoteSize(L"[0-bit] Test", 0U);
-        TestCodeNoteSize(L"[1-bit] Test", 1U);
-        TestCodeNoteSize(L"[4-bit] Test", 1U);
-        TestCodeNoteSize(L"[8-bit] Test", 1U);
-        TestCodeNoteSize(L"[9-bit] Test", 2U);
-        TestCodeNoteSize(L"bit", 0U);
-        TestCodeNoteSize(L"9bit", 2U);
-        TestCodeNoteSize(L"-bit", 0U);
+        TestCodeNoteSize(L"", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"Test", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"16-bit Test", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"Test 16-bit", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"Test 16-bi", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"[16-bit] Test", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"[16 bit] Test", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"[16 Bit] Test", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"[24-bit] Test", 3U, MemSize::TwentyFourBit);
+        TestCodeNoteSize(L"[32-bit] Test", 4U, MemSize::ThirtyTwoBit);
+        TestCodeNoteSize(L"[32 bit] Test", 4U, MemSize::ThirtyTwoBit);
+        TestCodeNoteSize(L"[32bit] Test", 4U, MemSize::ThirtyTwoBit);
+        TestCodeNoteSize(L"Test [16-bit]", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"Test (16-bit)", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"Test (16 bits)", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"[64-bit] Test", 8U, MemSize::Array);
+        TestCodeNoteSize(L"[128-bit] Test", 16U, MemSize::Array);
+        TestCodeNoteSize(L"[17-bit] Test", 3U, MemSize::TwentyFourBit);
+        TestCodeNoteSize(L"[100-bit] Test", 13U, MemSize::Array);
+        TestCodeNoteSize(L"[0-bit] Test", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"[1-bit] Test", 1U, MemSize::EightBit);
+        TestCodeNoteSize(L"[4-bit] Test", 1U, MemSize::EightBit);
+        TestCodeNoteSize(L"[8-bit] Test", 1U, MemSize::EightBit);
+        TestCodeNoteSize(L"[9-bit] Test", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"bit", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"9bit", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"-bit", 1U, MemSize::Unknown);
 
-        TestCodeNoteSize(L"8 BYTE Test", 8U);
-        TestCodeNoteSize(L"Test 8 BYTE", 8U);
-        TestCodeNoteSize(L"Test 8 BYT", 0U);
-        TestCodeNoteSize(L"[2 Byte] Test", 2U);
-        TestCodeNoteSize(L"[4 Byte] Test", 4U);
-        TestCodeNoteSize(L"[4 Byte - Float] Test", 4U);
-        TestCodeNoteSize(L"[8 Byte] Test", 8U);
-        TestCodeNoteSize(L"[100 Bytes] Test", 100U);
-        TestCodeNoteSize(L"[2 byte] Test", 2U);
-        TestCodeNoteSize(L"[2-byte] Test", 2U);
-        TestCodeNoteSize(L"Test (6 bytes)", 6U);
-        TestCodeNoteSize(L"[2byte] Test", 2U);
+        TestCodeNoteSize(L"8 BYTE Test", 8U, MemSize::Array);
+        TestCodeNoteSize(L"Test 8 BYTE", 8U, MemSize::Array);
+        TestCodeNoteSize(L"Test 8 BYT", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"[2 Byte] Test", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"[4 Byte] Test", 4U, MemSize::ThirtyTwoBit);
+        TestCodeNoteSize(L"[4 Byte - Float] Test", 4U, MemSize::ThirtyTwoBit);
+        TestCodeNoteSize(L"[8 Byte] Test", 8U, MemSize::Array);
+        TestCodeNoteSize(L"[100 Bytes] Test", 100U, MemSize::Array);
+        TestCodeNoteSize(L"[2 byte] Test", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"[2-byte] Test", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"Test (6 bytes)", 6U, MemSize::Array);
+        TestCodeNoteSize(L"[2byte] Test", 2U, MemSize::SixteenBit);
 
-        TestCodeNoteSize(L"42=bitten", 0U);
-        TestCodeNoteSize(L"42-bitten", 0U);
-        TestCodeNoteSize(L"bit by bit", 0U);
-        TestCodeNoteSize(L"bit1=chest", 0U);
+        TestCodeNoteSize(L"42=bitten", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"42-bitten", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"bit by bit", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"bit1=chest", 1U, MemSize::Unknown);
 
-        TestCodeNoteSize(L"Bite count (16-bit)", 2U);
-        TestCodeNoteSize(L"Number of bits collected (32 bits)", 4U);
+        TestCodeNoteSize(L"Bite count (16-bit)", 2U, MemSize::SixteenBit);
+        TestCodeNoteSize(L"Number of bits collected (32 bits)", 4U, MemSize::ThirtyTwoBit);
 
-        TestCodeNoteSize(L"100 32-bit pointers [400 bytes]", 400U);
-        TestCodeNoteSize(L"[400 bytes] 100 32-bit pointers", 400U);
+        TestCodeNoteSize(L"100 32-bit pointers [400 bytes]", 400U, MemSize::Array);
+        TestCodeNoteSize(L"[400 bytes] 100 32-bit pointers", 400U, MemSize::Array);
     }
 
     TEST_METHOD(TestFindCodeNoteSized)

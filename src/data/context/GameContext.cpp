@@ -871,37 +871,41 @@ void GameContext::RefreshCodeNotes()
     });
 }
 
-static unsigned int ExtractSize(const std::wstring& sNote)
+void GameContext::ExtractSize(CodeNote& pNote)
 {
     bool bIsBytes = false;
     int nBytesFromBits = 0;
 
-    // "Nbit" smallest possible note - and that's just the size annotation
-    if (sNote.length() < 4)
-        return 0;
+    // provide defaults in case no matches are found
+    pNote.Bytes = 1;
+    pNote.MemSize = MemSize::Unknown;
 
-    const size_t nStop = sNote.length() - 3;
+    // "Nbit" smallest possible note - and that's just the size annotation
+    if (pNote.Note.length() < 4)
+        return;
+
+    const size_t nStop = pNote.Note.length() - 3;
     for (size_t nIndex = 1; nIndex <= nStop; ++nIndex)
     {
-        wchar_t c = sNote.at(nIndex);
+        wchar_t c = pNote.Note.at(nIndex);
         if (c != L'b' && c != L'B')
             continue;
 
-        c = sNote.at(nIndex + 1);
+        c = pNote.Note.at(nIndex + 1);
         if (c == L'i' || c == L'I')
         {
             // already found one bit reference, give it precedence
             if (nBytesFromBits > 0)
                 continue;
 
-            c = sNote.at(nIndex + 2);
+            c = pNote.Note.at(nIndex + 2);
             if (c != L't' && c != L'T')
                 continue;
 
             // match "bits", but not "bite" even if there is a numeric prefix
             if (nIndex < nStop)
             {
-                c = sNote.at(nIndex + 3);
+                c = pNote.Note.at(nIndex + 3);
                 if (isalpha(c) && c != L's' && c != L'S')
                     continue;
             }
@@ -914,11 +918,11 @@ static unsigned int ExtractSize(const std::wstring& sNote)
             if (nIndex == nStop)
                 continue;
 
-            c = sNote.at(nIndex + 2);
+            c = pNote.Note.at(nIndex + 2);
             if (c != L't' && c != L'T')
                 continue;
 
-            c = sNote.at(nIndex + 3);
+            c = pNote.Note.at(nIndex + 3);
             if (c != L'e' && c != L'E')
                 continue;
 
@@ -932,13 +936,13 @@ static unsigned int ExtractSize(const std::wstring& sNote)
 
         // ignore single space or hyphen preceding "bit" or "byte"
         size_t nScan = nIndex - 1;
-        c = sNote.at(nScan);
+        c = pNote.Note.at(nScan);
         if (c == ' ' || c == '-')
         {
             if (nScan == 0)
                 continue;
 
-            c = sNote.at(--nScan);
+            c = pNote.Note.at(--nScan);
         }
 
         // extract the number
@@ -952,35 +956,38 @@ static unsigned int ExtractSize(const std::wstring& sNote)
                 break;
 
             nMultiplier *= 10;
-            c = sNote.at(--nScan);
+            c = pNote.Note.at(--nScan);
         }
 
-        // if a number was found, return it
+        // if a number was found, process it
         if (nBytes > 0)
         {
+            // convert bits to bytes, rounding up
+            pNote.Bytes = bIsBytes ? nBytes : (nBytes + 7) / 8;
+            switch (pNote.Bytes)
+            {
+                case 1: pNote.MemSize = MemSize::EightBit; break;
+                case 2: pNote.MemSize = MemSize::SixteenBit; break;
+                case 3: pNote.MemSize = MemSize::TwentyFourBit; break;
+                case 4: pNote.MemSize = MemSize::ThirtyTwoBit; break;
+                default: pNote.MemSize = MemSize::Array; break;
+            }
+
             // if "bytes" were found, we're done. if bits were found, it might be indicating
             // the size of individual elements. capture the bit value and keep searching.
             if (bIsBytes)
-                return nBytes;
-
-            // convert bits to bytes, rounding up
-            nBytesFromBits = (nBytes + 7) / 8;
+                return;
         }
     }
-
-    // did not find any byte reference, return the bit reference (if found)
-    if (nBytesFromBits > 0)
-        return nBytesFromBits;
-
-    // could not find annotation
-    return 0;
 }
 
 void GameContext::AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
 {
-    const unsigned int nSize = ExtractSize(sNote);
-    const unsigned int nBytes = (nSize == 0) ? 1 : nSize;
-    m_mCodeNotes.insert_or_assign(nAddress, CodeNote{ sAuthor, sNote, nBytes, nSize });
+    CodeNote note;
+    note.Author = sAuthor;
+    note.Note = sNote;
+    ExtractSize(note);
+    m_mCodeNotes.insert_or_assign(nAddress, std::move(note));
     OnCodeNoteChanged(nAddress, sNote);
 }
 

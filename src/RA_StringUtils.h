@@ -827,6 +827,16 @@ GSL_SUPPRESS_F6 _NODISCARD bool StringEndsWith(_In_ const CharT* restrict sStrin
 }
 
 /// <summary>
+/// Converts a string to lowercase.
+/// </summary>
+void StringMakeLowercase(_Inout_ std::wstring& sString);
+
+/// <summary>
+/// Converts a string to lowercase.
+/// </summary>
+void StringMakeLowercase(_Inout_ std::string& sString);
+
+/// <summary>
 /// Determines if <paramref name="sString" /> contains <paramref name="sMatch" />.
 /// </summary>
 GSL_SUPPRESS_F6 _NODISCARD bool StringContainsCaseInsensitive(_In_ const std::wstring& sString,

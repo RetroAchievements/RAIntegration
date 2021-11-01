@@ -112,9 +112,7 @@ void CodeNotesViewModel::ApplyFilter()
         return;
 
     std::wstring sFilterLower = sFilter;
-    std::transform(sFilterLower.begin(), sFilterLower.end(), sFilterLower.begin(), [](wchar_t c) noexcept {
-        return gsl::narrow_cast<wchar_t>(std::tolower(c));
-    });
+    ra::StringMakeLowercase(sFilterLower);
 
     m_vNotes.BeginUpdate();
 

@@ -86,10 +86,7 @@ static void RemoveRedundantFileExtension(std::wstring& sFilename, const std::str
         return;
 
     auto sExtension = sName.substr(nIndex);
-    std::transform(sExtension.begin(), sExtension.end(), sExtension.begin(), [](wchar_t c) noexcept
-    {
-        return gsl::narrow_cast<char>(std::tolower(c));
-    });
+    ra::StringMakeLowercase(sExtension);
 
     if (sExtension == ".jpg" || sExtension == ".gif" || sExtension == ".jpeg" || sExtension == ".png")
     {

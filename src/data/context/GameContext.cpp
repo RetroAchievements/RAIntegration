@@ -874,7 +874,7 @@ void GameContext::RefreshCodeNotes()
 void GameContext::ExtractSize(CodeNote& pNote)
 {
     bool bIsBytes = false;
-    int nBytesFromBits = 0;
+    bool bBytesFromBits = false;
 
     // provide defaults in case no matches are found
     pNote.Bytes = 1;
@@ -895,7 +895,7 @@ void GameContext::ExtractSize(CodeNote& pNote)
         if (c == L'i' || c == L'I')
         {
             // already found one bit reference, give it precedence
-            if (nBytesFromBits > 0)
+            if (bBytesFromBits)
                 continue;
 
             c = pNote.Note.at(nIndex + 2);
@@ -928,6 +928,36 @@ void GameContext::ExtractSize(CodeNote& pNote)
 
             // found "byte"
             bIsBytes = true;
+        }
+        else if (c == L'F' || c == 'f')
+        {
+            if (nIndex == 0)
+                continue;
+
+            c = pNote.Note.at(nIndex - 1);
+            if (c != 'm' && c != 'M')
+                continue;
+
+            // found "mbf", check for "mbf32" or "mbf40"
+            std::wstring sBits = pNote.Note.substr(nIndex + 2, 2);
+            if (nIndex + 4 < pNote.Note.length() && std::isdigit(pNote.Note.at(nIndex + 4)))
+                continue;
+
+            if (sBits == L"32")
+            {
+                pNote.Bytes = 4;
+                pNote.MemSize = MemSize::MBF32;
+                return;
+            }
+            else if (sBits == L"40")
+            {
+                // should be MBF40, but the runtime doesn't support 40-bit values. because of the way MBF40 is stored,
+                // it can be read as an MBF32 value with only the loss of the smallest 8-bits of precision.
+                pNote.MemSize = MemSize::MBF32;
+                pNote.Bytes = 5;
+                return;
+            }
+            continue;
         }
         else
         {
@@ -973,10 +1003,81 @@ void GameContext::ExtractSize(CodeNote& pNote)
                 default: pNote.MemSize = MemSize::Array; break;
             }
 
+            // find the next word after "bit(s) or byte(s)"
+            nScan = nIndex + 3;
+            while (nScan < pNote.Note.length() && isalpha(pNote.Note.at(nScan)))
+                nScan++;
+            while (nScan < pNote.Note.length())
+            {
+                c = pNote.Note.at(nScan);
+                if (c != ' ' && c != '-' && c != '(' && c != '[' && c != '<')
+                    break;
+                nScan++;
+            }
+
+            size_t nLength = 0;
+            while (nScan + nLength < pNote.Note.length() && isalpha(pNote.Note.at(nScan + nLength)))
+                nLength++;
+
+            if ((nLength >= 2 && nLength <= 5) || nLength == 9)
+            {
+                std::wstring sWord = pNote.Note.substr(nScan, nLength);
+                ra::StringMakeLowercase(sWord);
+
+                if (sWord == L"be" || sWord == L"bigendian")
+                {
+                    switch (pNote.Bytes)
+                    {
+                        case 2: pNote.MemSize = MemSize::SixteenBitBigEndian; break;
+                        case 3: pNote.MemSize = MemSize::TwentyFourBitBigEndian; break;
+                        case 4: pNote.MemSize = MemSize::ThirtyTwoBitBigEndian; break;
+                    }
+                }
+                else if (sWord == L"float")
+                {
+                    if (pNote.Bytes == 4)
+                        pNote.MemSize = MemSize::Float;
+                }
+                else if (sWord == L"mbf")
+                {
+                    if (pNote.Bytes == 4 || pNote.Bytes == 5)
+                        pNote.MemSize = MemSize::MBF32;
+                }
+            }
+
             // if "bytes" were found, we're done. if bits were found, it might be indicating
             // the size of individual elements. capture the bit value and keep searching.
             if (bIsBytes)
                 return;
+
+            bBytesFromBits = true;
+        }
+    }
+
+    // did not find a bytes annotation, look for float
+    if (pNote.Note.length() >= 5)
+    {
+        const size_t nStopFloat = pNote.Note.length() - 5;
+        for (size_t nIndex = 0; nIndex <= nStopFloat; ++nIndex)
+        {
+            const wchar_t c = pNote.Note.at(nIndex);
+            if (c == L'f' || c == L'F')
+            {
+                if (nIndex == 0 || !isalpha(pNote.Note.at(nIndex - 1)))
+                {
+                    std::wstring sWord = pNote.Note.substr(nIndex, 5);
+                    ra::StringMakeLowercase(sWord);
+                    if (sWord == L"float")
+                    {
+                        if (nIndex == nStopFloat || !isalpha(pNote.Note.at(nIndex + 5)))
+                        {
+                            pNote.Bytes = 4;
+                            pNote.MemSize = MemSize::Float;
+                            return;
+                        }
+                    }
+                }
+            }
         }
     }
 }

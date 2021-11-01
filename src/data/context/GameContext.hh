@@ -325,8 +325,8 @@ protected:
     {
         std::string Author;
         std::wstring Note;
-        unsigned int Bytes;
-        MemSize MemSize;
+        unsigned int Bytes = 1;
+        MemSize MemSize = MemSize::Unknown;
     };
     std::map<ra::ByteAddress, CodeNote> m_mCodeNotes;
 

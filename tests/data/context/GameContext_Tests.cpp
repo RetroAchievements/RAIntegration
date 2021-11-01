@@ -2354,18 +2354,47 @@ public:
         TestCodeNoteSize(L"9bit", 2U, MemSize::SixteenBit);
         TestCodeNoteSize(L"-bit", 1U, MemSize::Unknown);
 
+        TestCodeNoteSize(L"[16-bit BE] Test", 2U, MemSize::SixteenBitBigEndian);
+        TestCodeNoteSize(L"[24-bit BE] Test", 3U, MemSize::TwentyFourBitBigEndian);
+        TestCodeNoteSize(L"[32-bit BE] Test", 4U, MemSize::ThirtyTwoBitBigEndian);
+        TestCodeNoteSize(L"Test [32-bit BE]", 4U, MemSize::ThirtyTwoBitBigEndian);
+        TestCodeNoteSize(L"Test (32-bit BE)", 4U, MemSize::ThirtyTwoBitBigEndian);
+        TestCodeNoteSize(L"Test 32-bit BE", 4U, MemSize::ThirtyTwoBitBigEndian);
+        TestCodeNoteSize(L"[16-bit BigEndian] Test", 2U, MemSize::SixteenBitBigEndian);
+        TestCodeNoteSize(L"[16-bit-BE] Test", 2U, MemSize::SixteenBitBigEndian);
+        TestCodeNoteSize(L"[4-bit BE] Test", 1U, MemSize::EightBit);
+
         TestCodeNoteSize(L"8 BYTE Test", 8U, MemSize::Array);
         TestCodeNoteSize(L"Test 8 BYTE", 8U, MemSize::Array);
         TestCodeNoteSize(L"Test 8 BYT", 1U, MemSize::Unknown);
         TestCodeNoteSize(L"[2 Byte] Test", 2U, MemSize::SixteenBit);
         TestCodeNoteSize(L"[4 Byte] Test", 4U, MemSize::ThirtyTwoBit);
-        TestCodeNoteSize(L"[4 Byte - Float] Test", 4U, MemSize::ThirtyTwoBit);
+        TestCodeNoteSize(L"[4 Byte - Float] Test", 4U, MemSize::Float);
         TestCodeNoteSize(L"[8 Byte] Test", 8U, MemSize::Array);
         TestCodeNoteSize(L"[100 Bytes] Test", 100U, MemSize::Array);
         TestCodeNoteSize(L"[2 byte] Test", 2U, MemSize::SixteenBit);
         TestCodeNoteSize(L"[2-byte] Test", 2U, MemSize::SixteenBit);
         TestCodeNoteSize(L"Test (6 bytes)", 6U, MemSize::Array);
         TestCodeNoteSize(L"[2byte] Test", 2U, MemSize::SixteenBit);
+
+        TestCodeNoteSize(L"[float] Test", 4U, MemSize::Float);
+        TestCodeNoteSize(L"[float32] Test", 4U, MemSize::Float);
+        TestCodeNoteSize(L"Test float", 4U, MemSize::Float);
+        TestCodeNoteSize(L"Test floa", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"is floating", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"has floated", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"16-afloat", 1U, MemSize::Unknown);
+
+        TestCodeNoteSize(L"[MBF32] Test", 4U, MemSize::MBF32);
+        TestCodeNoteSize(L"[MBF40] Test", 5U, MemSize::MBF32);
+        TestCodeNoteSize(L"[MBF32 float] Test", 4U, MemSize::MBF32);
+        TestCodeNoteSize(L"[MBF80] Test", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"[MBF320] Test", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"[MBF-32] Test", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"[32-bit MBF] Test", 4U, MemSize::MBF32);
+        TestCodeNoteSize(L"[40-bit MBF] Test", 5U, MemSize::MBF32);
+        TestCodeNoteSize(L"[MBF] Test", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"Test MBF32", 4U, MemSize::MBF32);
 
         TestCodeNoteSize(L"42=bitten", 1U, MemSize::Unknown);
         TestCodeNoteSize(L"42-bitten", 1U, MemSize::Unknown);

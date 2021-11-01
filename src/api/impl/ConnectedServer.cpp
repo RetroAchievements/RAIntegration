@@ -397,9 +397,7 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
     if (nIndex != std::string::npos)
     {
         sExt = ra::Narrow(&sFilePath.at(nIndex + 1));
-        std::transform(sExt.begin(), sExt.end(), sExt.begin(), [](char c) noexcept {
-            return gsl::narrow_cast<char>(::tolower(c));
-        });
+        ra::StringMakeLowercase(sExt);
     }
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();

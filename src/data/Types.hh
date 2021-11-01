@@ -26,8 +26,8 @@ enum class MemSize : uint8_t
     MBF32,
 
     // extended sizes not supported by rcheevos
-    Text,
     Unknown,
+    Text,
     Array
 };
 

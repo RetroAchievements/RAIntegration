@@ -124,7 +124,15 @@ void MemoryInspectorViewModel::BookmarkCurrentAddress() const
     if (!pBookmarks.IsVisible())
         pBookmarks.Show();
 
-    pBookmarks.AddBookmark(GetCurrentAddress(), Viewer().GetSize());
+    const auto nAddress = GetCurrentAddress();
+
+    // if the code note specifies an explicit size, use it. otherwise, use the selected viewer mode size.
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    auto nSize = pGameContext.GetCodeNoteMemSize(nAddress);
+    if (nSize >= MemSize::Unknown)
+        nSize = Viewer().GetSize();
+
+    pBookmarks.AddBookmark(nAddress, nSize);
 }
 
 static std::wstring ShortenNote(const std::wstring& sNote)

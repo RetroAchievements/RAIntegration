@@ -95,6 +95,7 @@ bool TriggerViewModel::GroupViewModel::UpdateSerialized(const ViewModelCollectio
     if (sSerialized != m_sSerialized)
     {
         m_sSerialized.swap(sSerialized);
+        m_pConditionSet = nullptr;
         return true;
     }
 
@@ -735,29 +736,46 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
     int nIndex = 0;
     m_bHasHitChain = false;
 
-    if (pGroup != nullptr && pGroup->m_pConditionSet)
+    if (pGroup != nullptr)
     {
-        bool bIsIndirect = false;
-        rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
-        for (; pCondition != nullptr; pCondition = pCondition->next)
+        std::string sBuffer;
+        rc_condset_t* pConditions = pGroup->m_pConditionSet;
+        if (pConditions == nullptr)
         {
-            auto* vmCondition = m_vConditions.GetItemAt(gsl::narrow_cast<gsl::index>(nIndex));
-            if (vmCondition == nullptr)
+            const auto sTrigger = pGroup->GetSerialized(*this);
+            const auto nSize = rc_trigger_size(sTrigger.c_str());
+            if (nSize >= 0)
             {
-                vmCondition = &m_vConditions.Add();
-                Ensures(vmCondition != nullptr);
-                vmCondition->SetTriggerViewModel(this);
+                sBuffer.resize(nSize);
+                const auto pTrigger = rc_parse_trigger(sBuffer.data(), sTrigger.c_str(), NULL, 0);
+                pConditions = pTrigger->requirement;
             }
+        }
 
-            vmCondition->SetIndex(++nIndex);
-            vmCondition->InitializeFrom(*pCondition);
-            vmCondition->SetCurrentHits(pCondition->current_hits);
-            vmCondition->SetTotalHits(0);
+        if (pConditions)
+        {
+            bool bIsIndirect = false;
+            rc_condition_t* pCondition = pConditions->conditions;
+            for (; pCondition != nullptr; pCondition = pCondition->next)
+            {
+                auto* vmCondition = m_vConditions.GetItemAt(gsl::narrow_cast<gsl::index>(nIndex));
+                if (vmCondition == nullptr)
+                {
+                    vmCondition = &m_vConditions.Add();
+                    Ensures(vmCondition != nullptr);
+                    vmCondition->SetTriggerViewModel(this);
+                }
 
-            vmCondition->SetIndirect(bIsIndirect);
-            bIsIndirect = (pCondition->type == RC_CONDITION_ADD_ADDRESS);
+                vmCondition->SetIndex(++nIndex);
+                vmCondition->InitializeFrom(*pCondition);
+                vmCondition->SetCurrentHits(pCondition->current_hits);
+                vmCondition->SetTotalHits(0);
 
-            m_bHasHitChain |= (pCondition->type == RC_CONDITION_ADD_HITS || pCondition->type == RC_CONDITION_SUB_HITS);
+                vmCondition->SetIndirect(bIsIndirect);
+                bIsIndirect = (pCondition->type == RC_CONDITION_ADD_ADDRESS);
+
+                m_bHasHitChain |= (pCondition->type == RC_CONDITION_ADD_HITS || pCondition->type == RC_CONDITION_SUB_HITS);
+            }
         }
     }
 

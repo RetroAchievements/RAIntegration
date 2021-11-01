@@ -1102,6 +1102,96 @@ public:
         Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
     }
 
+    TEST_METHOD(TestTriggerUpdatedInvalidAlts)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("0=0SM:0xH1234=1.1.S0xH2345=1.2.");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.Activate();
+
+        editor.LoadAsset(&achievement);
+
+        // make sure the record got loaded into the runtime
+        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+
+        editor.Trigger().SetSelectedGroupIndex(2);
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        editor.Trigger().Conditions().GetItemAt(0)->SetType(ra::ui::viewmodels::TriggerConditionType::Measured);
+
+        // make sure the trigger definition got updated
+        Assert::AreEqual(std::string("0=0SM:0xH1234=1.1.SM:0xH2345=1.2."), achievement.GetTrigger());
+
+        // make sure the error got set
+        Assert::AreEqual(std::wstring(L"Multiple measured targets"), editor.GetAssetValidationError());
+        Assert::IsTrue(editor.HasAssetValidationError());
+
+        // make sure the achievement was disabled
+        Assert::AreEqual(AssetState::Inactive, achievement.GetState());
+        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Assert::IsNull(pTrigger);
+
+        // make sure the UI kept the change
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+
+        // select the other alt
+        editor.Trigger().SetSelectedGroupIndex(1);
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+        Assert::AreEqual(1U, pCondition->GetRequiredHits());
+        Assert::AreEqual(std::wstring(L"Multiple measured targets"), editor.GetAssetValidationError());
+        Assert::IsTrue(editor.HasAssetValidationError());
+
+        // select the broken alt
+        editor.Trigger().SetSelectedGroupIndex(2);
+        Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
+        pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+        Assert::AreEqual(2U, pCondition->GetRequiredHits());
+        Assert::AreEqual(std::wstring(L"Multiple measured targets"), editor.GetAssetValidationError());
+        Assert::IsTrue(editor.HasAssetValidationError());
+
+        // select the other alt
+        editor.Trigger().SetSelectedGroupIndex(1);
+        Assert::AreEqual(1U, pCondition->GetRequiredHits());
+
+        // fix the error
+        pCondition->SetRequiredHits(2);
+
+        // make sure the trigger definition got updated
+        Assert::AreEqual(std::string("0=0SM:0xH1234=1.2.SM:0xH2345=1.2."), achievement.GetTrigger());
+
+        // make sure the error got cleared
+        Assert::AreEqual(std::wstring(L""), editor.GetAssetValidationError());
+        Assert::IsFalse(editor.HasAssetValidationError());
+
+        // the achievement should have remained disabled
+        Assert::AreEqual(AssetState::Inactive, achievement.GetState());
+        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Assert::IsNull(pTrigger);
+
+        // make sure the UI kept the change
+        pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+        Assert::AreEqual(2U, pCondition->GetRequiredHits());
+
+        // select the other alt (was broken)
+        pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
+        Assert::AreEqual(2U, pCondition->GetRequiredHits());
+    }
+
     TEST_METHOD(TestValueUpdated)
     {
         AssetEditorViewModelHarness editor;

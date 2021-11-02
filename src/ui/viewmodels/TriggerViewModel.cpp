@@ -747,7 +747,7 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
             if (nSize >= 0)
             {
                 sBuffer.resize(nSize);
-                const auto pTrigger = rc_parse_trigger(sBuffer.data(), sTrigger.c_str(), NULL, 0);
+                const auto pTrigger = rc_parse_trigger(sBuffer.data(), sTrigger.c_str(), nullptr, 0);
                 pConditions = pTrigger->requirement;
             }
         }

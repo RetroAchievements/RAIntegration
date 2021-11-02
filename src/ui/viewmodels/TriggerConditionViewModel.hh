@@ -40,6 +40,7 @@ enum class TriggerOperandType : uint8_t
     Value = RC_OPERAND_CONST,           // a 32 bit unsigned integer
     Prior = RC_OPERAND_PRIOR,           // the last differing value at this address.
     BCD = RC_OPERAND_BCD,               // Address, but decoded from binary-coded-decimal
+    Float = RC_OPERAND_FP               // a 32-bit floating point value
 };
 
 enum class TriggerOperatorType : uint8_t
@@ -76,9 +77,10 @@ public:
     MemSize GetSourceSize() const { return ra::itoe<MemSize>(GetValue(SourceSizeProperty)); }
     void SetSourceSize(MemSize nValue) { SetValue(SourceSizeProperty, ra::etoi(nValue)); }
 
-    static const IntModelProperty SourceValueProperty;
-    unsigned int GetSourceValue() const { return ra::to_unsigned(GetValue(SourceValueProperty)); }
-    void SetSourceValue(unsigned int nValue) { SetValue(SourceValueProperty, ra::to_signed(nValue)); }
+    static const StringModelProperty SourceValueProperty;
+    const std::wstring& GetSourceValue() const { return GetValue(SourceValueProperty); }
+    void SetSourceValue(const std::wstring& sValue) { SetValue(SourceValueProperty, sValue); }
+    void SetSourceValue(unsigned int sValue);
 
     static const IntModelProperty OperatorProperty;
     TriggerOperatorType GetOperator() const { return ra::itoe<TriggerOperatorType>(GetValue(OperatorProperty)); }
@@ -94,9 +96,10 @@ public:
     MemSize GetTargetSize() const { return ra::itoe<MemSize>(GetValue(TargetSizeProperty)); }
     void SetTargetSize(MemSize nValue) { SetValue(TargetSizeProperty, ra::etoi(nValue)); }
 
-    static const IntModelProperty TargetValueProperty;
-    unsigned int GetTargetValue() const { return ra::to_unsigned(GetValue(TargetValueProperty)); }
-    void SetTargetValue(unsigned int nValue) { SetValue(TargetValueProperty, ra::to_signed(nValue)); }
+    static const StringModelProperty TargetValueProperty;
+    const std::wstring& GetTargetValue() const { return GetValue(TargetValueProperty); }
+    void SetTargetValue(const std::wstring& sValue) { SetValue(TargetValueProperty, sValue); }
+    void SetTargetValue(unsigned int sValue);
 
     static const BoolModelProperty HasHitsProperty;
     static const IntModelProperty CurrentHitsProperty;
@@ -126,7 +129,7 @@ public:
     void InitializeFrom(const struct rc_condition_t& pCondition);
     void SetTriggerViewModel(const ViewModelBase* pTriggerViewModel) noexcept { m_pTriggerViewModel = pTriggerViewModel; }
 
-    std::wstring GetTooltip(const IntModelProperty& nProperty) const;
+    std::wstring GetTooltip(const StringModelProperty& nProperty) const;
 
     bool IsModifying() const { return IsModifying(GetType()); }
 
@@ -141,15 +144,18 @@ private:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
-    void SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, unsigned int nValue) const;
+    void SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, const std::wstring& nValue) const;
 
     static std::wstring GetValueTooltip(unsigned int nValue);
     static std::wstring GetAddressTooltip(unsigned int nAddress, bool bIsIndirect);
+    ra::ByteAddress GetSourceAddress() const;
+    ra::ByteAddress GetTargetAddress() const;
 
     void SetOperand(const IntModelProperty& pTypeProperty, const IntModelProperty& pSizeProperty,
-        const IntModelProperty& pValueProperty, const rc_operand_t& operand);
+        const StringModelProperty& pValueProperty, const rc_operand_t& operand);
 
     static bool IsModifying(TriggerConditionType nType) noexcept;
+    static bool IsAddressType(TriggerOperandType nType) noexcept;
 
     const ViewModelBase* m_pTriggerViewModel = nullptr;
 };

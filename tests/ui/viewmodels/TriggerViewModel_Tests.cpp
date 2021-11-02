@@ -4,6 +4,7 @@
 
 #include "tests\ui\UIAsserts.hh"
 #include "tests\mocks\MockClipboard.hh"
+#include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
@@ -25,6 +26,7 @@ private:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockClipboard mockClipboard;
+        ra::services::mocks::MockConfiguration mockConfiguration;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
@@ -66,7 +68,7 @@ private:
 
     void ParseAndRegenerate(const std::string& sInput)
     {
-        TriggerViewModel vmTrigger;
+        TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, sInput);
 
         const std::string sOutput = vmTrigger.Serialize();
@@ -75,7 +77,7 @@ private:
 
     void ParseAndRegenerateValue(const std::string& sInput)
     {
-        TriggerViewModel vmTrigger;
+        TriggerViewModelHarness vmTrigger;
         vmTrigger.SetIsValue(true);
         Parse(vmTrigger, sInput);
 
@@ -142,7 +144,7 @@ public:
         Assert::AreEqual((int)TriggerConditionType::Trigger, vmTrigger.ConditionTypes().GetItemAt(13)->GetId());
         Assert::AreEqual(std::wstring(L"Trigger"), vmTrigger.ConditionTypes().GetItemAt(13)->GetLabel());
 
-        Assert::AreEqual({ 5U }, vmTrigger.OperandTypes().Count());
+        Assert::AreEqual({ 6U }, vmTrigger.OperandTypes().Count());
         Assert::AreEqual((int)TriggerOperandType::Address, vmTrigger.OperandTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Mem"), vmTrigger.OperandTypes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)TriggerOperandType::Value, vmTrigger.OperandTypes().GetItemAt(1)->GetId());
@@ -153,6 +155,8 @@ public:
         Assert::AreEqual(std::wstring(L"Prior"), vmTrigger.OperandTypes().GetItemAt(3)->GetLabel());
         Assert::AreEqual((int)TriggerOperandType::BCD, vmTrigger.OperandTypes().GetItemAt(4)->GetId());
         Assert::AreEqual(std::wstring(L"BCD"), vmTrigger.OperandTypes().GetItemAt(4)->GetLabel());
+        Assert::AreEqual((int)TriggerOperandType::Float, vmTrigger.OperandTypes().GetItemAt(5)->GetId());
+        Assert::AreEqual(std::wstring(L"Float"), vmTrigger.OperandTypes().GetItemAt(5)->GetLabel());
 
         Assert::AreEqual({ 20U }, vmTrigger.OperandSizes().Count());
         Assert::AreEqual((int)MemSize::Bit_0, vmTrigger.OperandSizes().GetItemAt(0)->GetId());
@@ -246,7 +250,7 @@ public:
 
     TEST_METHOD(TestTriggerUpdateConditionModified)
     {
-        TriggerViewModel vmTrigger;
+        TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=0xH2345S0xX5555=1");
 
         TriggerMonitor pMonitor(vmTrigger);
@@ -261,7 +265,7 @@ public:
 
     TEST_METHOD(TestTriggerUpdateConditionsAddedRemoved)
     {
-        TriggerViewModel vmTrigger;
+        TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=0xH2345S0xX5555=1");
 
         TriggerMonitor pMonitor(vmTrigger);
@@ -282,7 +286,7 @@ public:
 
     TEST_METHOD(TestTriggerUpdateConditionsAddedModified)
     {
-        TriggerViewModel vmTrigger;
+        TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=0xH2345S0xX5555=1");
 
         TriggerMonitor pMonitor(vmTrigger);
@@ -296,18 +300,18 @@ public:
 
     TEST_METHOD(TestTriggerUpdateSelectedGroupRemoved)
     {
-        TriggerViewModel vmTrigger;
+        TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=0xH2345S0xX5555=1");
 
         vmTrigger.SetSelectedGroupIndex(1);
         Assert::AreEqual({ 1 }, vmTrigger.Conditions().Count());
-        Assert::AreEqual({ 0x5555 }, vmTrigger.Conditions().GetItemAt(0)->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x5555"), vmTrigger.Conditions().GetItemAt(0)->GetSourceValue());
 
         vmTrigger.UpdateFrom("0xH1234=0xH2345");
 
         Assert::AreEqual(0, vmTrigger.GetSelectedGroupIndex());
         Assert::AreEqual({ 1 }, vmTrigger.Conditions().Count());
-        Assert::AreEqual({ 0x1234 }, vmTrigger.Conditions().GetItemAt(0)->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x1234"), vmTrigger.Conditions().GetItemAt(0)->GetSourceValue());
 
         // calling UpdateFrom does not change the version, so we can't use a monitor as it
         // won't get the event. but we can check the serialized value
@@ -316,7 +320,7 @@ public:
 
     TEST_METHOD(TestTriggerUpdateConditionsResetAndReapplied)
     {
-        TriggerViewModel vmTrigger;
+        TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=1");
 
         TriggerMonitor pMonitor(vmTrigger);

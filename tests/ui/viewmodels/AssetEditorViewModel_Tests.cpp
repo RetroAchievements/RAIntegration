@@ -892,6 +892,7 @@ public:
     TEST_METHOD(TestUpdateActiveTrigger)
     {
         AssetEditorViewModelHarness editor;
+        editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
         AchievementModel achievement;
         achievement.SetID(1234U);
         achievement.SetTrigger("0xH1234=1");
@@ -911,11 +912,11 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
-        Assert::AreEqual(0x1234U, pCondition->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
         Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
-        Assert::AreEqual(1U, pCondition->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"1"), pCondition->GetTargetValue());
 
         pCondition->SetTargetValue(2U);
 
@@ -933,16 +934,17 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
-        Assert::AreEqual(0x1234U, pCondition->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
         Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
-        Assert::AreEqual(2U, pCondition->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"2"), pCondition->GetTargetValue());
     }
 
     TEST_METHOD(TestUpdateInactiveTrigger)
     {
         AssetEditorViewModelHarness editor;
+        editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
         AchievementModel achievement;
         achievement.SetID(1234U);
         achievement.SetTrigger("0xH1234=1");
@@ -961,11 +963,11 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
-        Assert::AreEqual(0x1234U, pCondition->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
         Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
-        Assert::AreEqual(1U, pCondition->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"1"), pCondition->GetTargetValue());
 
         pCondition->SetTargetValue(2U);
 
@@ -982,16 +984,17 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
-        Assert::AreEqual(0x1234U, pCondition->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
         Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
-        Assert::AreEqual(2U, pCondition->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"2"), pCondition->GetTargetValue());
     }
 
     TEST_METHOD(TestTriggerUpdated)
     {
         AssetEditorViewModelHarness editor;
+        editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
         AchievementModel achievement;
         achievement.SetID(1234U);
         achievement.SetTrigger("0xH1234=1");
@@ -1011,11 +1014,11 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
-        Assert::AreEqual(0x1234U, pCondition->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
         Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
-        Assert::AreEqual(1U, pCondition->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"1"), pCondition->GetTargetValue());
 
         achievement.SetTrigger("0xH1234=2");
 
@@ -1033,16 +1036,17 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
-        Assert::AreEqual(0x1234U, pCondition->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::Equals, (int)pCondition->GetOperator());
         Assert::AreEqual(MemSize::ThirtyTwoBit, pCondition->GetTargetSize());
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
-        Assert::AreEqual(2U, pCondition->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"2"), pCondition->GetTargetValue());
     }
 
     TEST_METHOD(TestTriggerUpdatedInvalid)
     {
         AssetEditorViewModelHarness editor;
+        editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
         AchievementModel achievement;
         achievement.SetID(1234U);
         achievement.SetTrigger("M:0xH1234=1.1._0xH2345=1.2.");
@@ -1217,7 +1221,7 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
-        Assert::AreEqual(0x1234U, pCondition->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::None, (int)pCondition->GetOperator());
 
         leaderboard.SetValueDefinition("M:0xH2222");
@@ -1236,7 +1240,7 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(MemSize::EightBit, pCondition->GetSourceSize());
         Assert::AreEqual((int)TriggerOperandType::Address, (int)pCondition->GetSourceType());
-        Assert::AreEqual(0x2222U, pCondition->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x2222"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::None, (int)pCondition->GetOperator());
 
         // modify the UI

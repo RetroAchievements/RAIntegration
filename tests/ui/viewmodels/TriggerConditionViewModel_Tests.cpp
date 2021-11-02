@@ -56,7 +56,7 @@ private:
         Assert::IsNotNull(pTrigger);
         Ensures(pTrigger != nullptr);
 
-        TriggerConditionViewModel vmCondition;
+        TriggerConditionViewModelHarness vmCondition;
         vmCondition.InitializeFrom(*pTrigger->requirement->conditions);
 
         const std::string sOutput = vmCondition.Serialize();
@@ -71,11 +71,11 @@ public:
         Assert::AreEqual(TriggerConditionType::Standard, vmCondition.GetType());
         Assert::AreEqual(TriggerOperandType::Address, vmCondition.GetSourceType());
         Assert::AreEqual(MemSize::EightBit, vmCondition.GetSourceSize());
-        Assert::AreEqual({ 0U }, vmCondition.GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0"), vmCondition.GetSourceValue());
         Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
         Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetTargetType());
         Assert::AreEqual(MemSize::ThirtyTwoBit, vmCondition.GetTargetSize());
-        Assert::AreEqual({ 0U }, vmCondition.GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0"), vmCondition.GetTargetValue());
         Assert::AreEqual(0U, vmCondition.GetCurrentHits());
         Assert::AreEqual(0U, vmCondition.GetRequiredHits());
 

@@ -99,7 +99,8 @@ public:
     static const StringModelProperty TargetValueProperty;
     const std::wstring& GetTargetValue() const { return GetValue(TargetValueProperty); }
     void SetTargetValue(const std::wstring& sValue) { SetValue(TargetValueProperty, sValue); }
-    void SetTargetValue(unsigned int sValue);
+    void SetTargetValue(unsigned int nValue);
+    void SetTargetValue(float fValue);
 
     static const BoolModelProperty HasHitsProperty;
     static const IntModelProperty CurrentHitsProperty;
@@ -150,9 +151,9 @@ private:
     static std::wstring GetAddressTooltip(unsigned int nAddress, bool bIsIndirect);
     ra::ByteAddress GetSourceAddress() const;
     ra::ByteAddress GetTargetAddress() const;
-
     void SetOperand(const IntModelProperty& pTypeProperty, const IntModelProperty& pSizeProperty,
         const StringModelProperty& pValueProperty, const rc_operand_t& operand);
+    void ChangeOperandType(const StringModelProperty& sValueProperty, TriggerOperandType nOldType, TriggerOperandType nNewType);
 
     static bool IsModifying(TriggerConditionType nType) noexcept;
     static bool IsAddressType(TriggerOperandType nType) noexcept;

@@ -369,6 +369,7 @@ public:
         ParseAndRegenerate("0xH1234=p0xH1234"); // prior
         ParseAndRegenerate("0xH1234=b0xH1234"); // bcd
         ParseAndRegenerate("0xH1234=1234"); // value
+        ParseAndRegenerate("0xH1234=f12.34"); // float
     }
 
     TEST_METHOD(TestOperators)
@@ -736,7 +737,7 @@ public:
         TriggerConditionViewModelHarness condition;
         condition.SetSourceValue(0x1234U);
         condition.SetOperator(TriggerOperatorType::NotEquals);
-        condition.SetTargetValue(8);
+        condition.SetTargetValue(8U);
         Assert::AreEqual(std::string("0xH1234!=8"), condition.Serialize());
         Assert::IsFalse(condition.IsModifying());
 
@@ -767,6 +768,73 @@ public:
         Assert::AreEqual(TriggerOperatorType::Equals, condition.GetOperator());
         Assert::AreEqual(std::string("0xH1234=8"), condition.Serialize());
         Assert::IsFalse(condition.IsModifying());
+    }
+
+    TEST_METHOD(TestChangeOperand)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.SetSourceValue(0x1234U);
+        condition.SetOperator(TriggerOperatorType::NotEquals);
+        condition.SetTargetValue(8U);
+        Assert::AreEqual(std::string("0xH1234!=8"), condition.Serialize());
+
+        condition.SetTargetType(TriggerOperandType::Float);
+        Assert::AreEqual(TriggerOperandType::Float, condition.GetTargetType());
+        Assert::AreEqual(std::wstring(L"8.0"), condition.GetTargetValue());
+        Assert::AreEqual(std::string("0xH1234!=f8.0"), condition.Serialize());
+
+        condition.SetTargetValue(L"3.14");
+        Assert::AreEqual(std::string("0xH1234!=f3.14"), condition.Serialize());
+
+        condition.SetTargetType(TriggerOperandType::Value);
+        Assert::AreEqual(TriggerOperandType::Value, condition.GetTargetType());
+        Assert::AreEqual(std::wstring(L"0x03"), condition.GetTargetValue());
+        Assert::AreEqual(std::string("0xH1234!=3"), condition.Serialize());
+
+        condition.SetTargetType(TriggerOperandType::Address);
+        Assert::AreEqual(TriggerOperandType::Address, condition.GetTargetType());
+        Assert::AreEqual(std::wstring(L"0x0003"), condition.GetTargetValue());
+        Assert::AreEqual(std::string("0xH1234!=0xH0003"), condition.Serialize());
+
+        condition.SetTargetType(TriggerOperandType::Float);
+        Assert::AreEqual(TriggerOperandType::Float, condition.GetTargetType());
+        Assert::AreEqual(std::wstring(L"3.0"), condition.GetTargetValue());
+        Assert::AreEqual(std::string("0xH1234!=f3.0"), condition.Serialize());
+
+        condition.SetTargetType(TriggerOperandType::Address);
+        Assert::AreEqual(TriggerOperandType::Address, condition.GetTargetType());
+        Assert::AreEqual(std::wstring(L"0x0003"), condition.GetTargetValue());
+        Assert::AreEqual(std::string("0xH1234!=0xH0003"), condition.Serialize());
+    }
+
+    TEST_METHOD(TestSetOperandMismatch)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.SetSourceValue(0x1234U);
+        condition.SetOperator(TriggerOperatorType::NotEquals);
+        condition.SetTargetValue(8U);
+        Assert::AreEqual(std::string("0xH1234!=8"), condition.Serialize());
+
+        condition.SetTargetValue(L"3.14");
+        Assert::AreEqual(TriggerOperandType::Value, condition.GetTargetType());
+        Assert::AreEqual(std::wstring(L"3.14"), condition.GetTargetValue()); // value is not updated until trigger is reconstructed
+        Assert::AreEqual(std::string("0xH1234!=0"), condition.Serialize()); // serializer will choke and convert to 0
+
+        condition.SetTargetType(TriggerOperandType::Float);
+        condition.SetTargetValue(L"3.14");
+        Assert::AreEqual(TriggerOperandType::Float, condition.GetTargetType());
+        Assert::AreEqual(std::wstring(L"3.14"), condition.GetTargetValue());
+        Assert::AreEqual(std::string("0xH1234!=f3.14"), condition.Serialize());
+
+        condition.SetTargetValue(L"0x0F");
+        Assert::AreEqual(TriggerOperandType::Float, condition.GetTargetType());
+        Assert::AreEqual(std::wstring(L"0x0F"), condition.GetTargetValue()); // value is not updated until trigger is reconstructed
+        Assert::AreEqual(std::string("0xH1234!=f15.0"), condition.Serialize()); // apparently wcstof supports 0x prefix
+
+        condition.SetTargetValue(L"6");
+        Assert::AreEqual(TriggerOperandType::Float, condition.GetTargetType());
+        Assert::AreEqual(std::wstring(L"6"), condition.GetTargetValue()); // value is not updated until trigger is reconstructed
+        Assert::AreEqual(std::string("0xH1234!=f6.0"), condition.Serialize()); // serializer can handle this conversion
     }
 
     TEST_METHOD(TestIsComparisonVisible)

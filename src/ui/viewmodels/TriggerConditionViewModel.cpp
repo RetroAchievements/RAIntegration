@@ -161,7 +161,7 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
             else if (ra::ParseUnsignedInt(sValue, 0xFFFFFFFF, nValue, sError))
                 sBuffer.append(std::to_string(nValue));
             else
-                sBuffer.append(ra::Narrow(sValue));
+                sBuffer.push_back('0');
             return;
         }
 
@@ -170,18 +170,23 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
             float fValue = 0.0;
             std::wstring sError;
 
-            if (!ra::ParseFloat(sValue, fValue, sError))
+            if (ra::ParseFloat(sValue, fValue, sError))
             {
-                sBuffer.append(ra::Narrow(sValue));
-            }
-            else if ((int)fValue == (int)round(fValue))
-            {
-                sBuffer.append(std::to_string((int)fValue));
+                std::string sFloat = std::to_string(fValue);
+                if (sFloat.find('.') != std::string::npos)
+                {
+                    while (sFloat.back() == '0')
+                        sFloat.pop_back();
+                    if (sFloat.back() == '.')
+                        sFloat.push_back('0');
+                }
+
+                sBuffer.push_back('f');
+                sBuffer.append(sFloat);
             }
             else
             {
-                sBuffer.push_back('f');
-                sBuffer.append(std::to_string(fValue));
+                sBuffer.push_back('0');
             }
             return;
         }
@@ -253,29 +258,73 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
         if (ra::ParseHex(sValue, 0xFFFFFFFF, nValue, sError))
             sBuffer.append(ra::ByteAddressToString(nValue), 2);
         else
-            sBuffer.append(ra::Narrow(sValue));
+            sBuffer.push_back('0');
     }
 }
 
-static std::wstring FormatValue(unsigned int nValue, TriggerOperandType nType, MemSize nSize)
+std::wstring FormatValue(rc_typed_value_t& pValue, TriggerOperandType nType)
 {
-    Expects(nType != TriggerOperandType::Float);
+    switch (nType)
+    {
+        case TriggerOperandType::Value:
+        {
+            rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
+            const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+                return std::to_wstring(pValue.value.u32);
 
-    if (nType != TriggerOperandType::Value)
-        return ra::Widen(ra::ByteAddressToString(nValue));
+            return ra::StringPrintf(L"0x%02x", pValue.value.u32);
+        }
 
-    Expects(nSize != MemSize::Float);
+        case TriggerOperandType::Float:
+        {
+            rc_typed_value_convert(&pValue, RC_VALUE_TYPE_FLOAT);
+            auto sFloat = std::to_wstring(pValue.value.f32);
+            if (sFloat.find('.') != std::string::npos)
+            {
+                while (sFloat.back() == '0')
+                    sFloat.pop_back();
+                if (sFloat.back() == '.')
+                    sFloat.push_back('0');
+            }
+            return sFloat;
+        }
 
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
-        return std::to_wstring(nValue);
+        default:
+            rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
+            return ra::Widen(ra::ByteAddressToString(pValue.value.u32));
+            break;
+    }
+}
 
-    return ra::StringPrintf(L"0x%02x", nValue);
+void TriggerConditionViewModel::ChangeOperandType(const StringModelProperty& sValueProperty, TriggerOperandType nOldType, TriggerOperandType nNewType)
+{
+    const auto& sValue = GetValue(sValueProperty);
+    std::wstring sError;
+
+    rc_typed_value_t pValue;
+    if (nOldType == TriggerOperandType::Float)
+    {
+        pValue.type = RC_VALUE_TYPE_FLOAT;
+        ra::ParseFloat(sValue, pValue.value.f32, sError);
+    }
+    else
+    {
+        pValue.type = RC_VALUE_TYPE_UNSIGNED;
+        if (sValue.length() > 2 && sValue.at(1) == 'x')
+            ra::ParseHex(sValue, 0xFFFFFFFF, pValue.value.u32, sError);
+        else
+            ra::ParseUnsignedInt(sValue, 0xFFFFFFFF, pValue.value.u32, sError);
+    }
+
+    SetValue(sValueProperty, FormatValue(pValue, nNewType));
 }
 
 void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty,
     const IntModelProperty& pSizeProperty, const StringModelProperty& pValueProperty, const rc_operand_t& operand)
 {
+    rc_typed_value_t pValue;
+
     const auto nType = static_cast<TriggerOperandType>(operand.type);
     SetValue(pTypeProperty, ra::etoi(nType));
 
@@ -283,12 +332,14 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
     {
         case TriggerOperandType::Value:
             SetValue(pSizeProperty, ra::etoi(MemSize::ThirtyTwoBit));
-            SetValue(pValueProperty, FormatValue(operand.value.num, nType, MemSize::ThirtyTwoBit));
+            pValue.type = RC_VALUE_TYPE_UNSIGNED;
+            pValue.value.u32 = operand.value.num;
             break;
 
         case TriggerOperandType::Float:
             SetValue(pSizeProperty, ra::etoi(MemSize::Float));
-            SetValue(pValueProperty, std::to_wstring(operand.value.dbl));
+            pValue.type = RC_VALUE_TYPE_FLOAT;
+            pValue.value.f32 = gsl::narrow_cast<float>(operand.value.dbl);
             break;
 
         case TriggerOperandType::Address:
@@ -298,14 +349,17 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
         {
             const auto nSize = ra::data::models::TriggerValidation::MapRcheevosMemSize(operand.size);
             SetValue(pSizeProperty, ra::etoi(nSize));
-            SetValue(pValueProperty, ra::Widen(ra::ByteAddressToString(operand.value.memref->address)));
+            pValue.type = RC_VALUE_TYPE_UNSIGNED;
+            pValue.value.u32 = operand.value.memref->address;
             break;
         }
 
         default:
-            assert(!"Unknown operand type");
+            Expects(!"Unknown operand type");
             break;
     }
+
+    SetValue(pValueProperty, FormatValue(pValue, nType));
 }
 
 void TriggerConditionViewModel::InitializeFrom(const rc_condition_t& pCondition)
@@ -325,12 +379,16 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
 {
     if (args.Property == SourceTypeProperty)
     {
-        if (ra::itoe<TriggerOperandType>(args.tNewValue) == TriggerOperandType::Value)
+        const auto nOldType = ra::itoe<TriggerOperandType>(args.tOldValue);
+        const auto nNewType = ra::itoe<TriggerOperandType>(args.tNewValue);
+        ChangeOperandType(SourceValueProperty, nOldType, nNewType);
+
+        if (!IsAddressType(nNewType))
         {
             SetValue(HasSourceSizeProperty, false);
-            SetSourceSize(MemSize::ThirtyTwoBit);
+            SetSourceSize(nNewType == TriggerOperandType::Value ? MemSize::ThirtyTwoBit : MemSize::Float);
         }
-        else if (ra::itoe<TriggerOperandType>(args.tOldValue) == TriggerOperandType::Value)
+        else if (!IsAddressType(nOldType))
         {
             SetSourceSize(GetTargetSize());
             SetValue(HasSourceSizeProperty, true);
@@ -338,12 +396,16 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     }
     else if (args.Property == TargetTypeProperty)
     {
-        if (ra::itoe<TriggerOperandType>(args.tNewValue) == TriggerOperandType::Value)
+        const auto nOldType = ra::itoe<TriggerOperandType>(args.tOldValue);
+        const auto nNewType = ra::itoe<TriggerOperandType>(args.tNewValue);
+        ChangeOperandType(TargetValueProperty, nOldType, nNewType);
+
+        if (!IsAddressType(nNewType))
         {
             SetValue(HasTargetSizeProperty, false);
-            SetTargetSize(MemSize::ThirtyTwoBit);
+            SetTargetSize(nNewType == TriggerOperandType::Value ? MemSize::ThirtyTwoBit : MemSize::Float);
         }
-        else if (ra::itoe<TriggerOperandType>(args.tOldValue) == TriggerOperandType::Value)
+        else if (!IsAddressType(ra::itoe<TriggerOperandType>(args.tOldValue)))
         {
             SetTargetSize(GetSourceSize());
             SetValue(HasTargetSizeProperty, GetValue(HasTargetProperty));
@@ -386,7 +448,10 @@ void TriggerConditionViewModel::OnValueChanged(const BoolModelProperty::ChangeAr
 
 void TriggerConditionViewModel::SetSourceValue(unsigned int nValue)
 {
-    SetSourceValue(FormatValue(nValue, GetSourceType(), GetSourceSize()));
+    rc_typed_value_t pValue;
+    pValue.type = RC_VALUE_TYPE_UNSIGNED;
+    pValue.value.u32 = nValue;
+    SetValue(SourceValueProperty, FormatValue(pValue, GetSourceType()));
 }
 
 ra::ByteAddress TriggerConditionViewModel::GetSourceAddress() const
@@ -399,7 +464,18 @@ ra::ByteAddress TriggerConditionViewModel::GetSourceAddress() const
 
 void TriggerConditionViewModel::SetTargetValue(unsigned int nValue)
 {
-    SetTargetValue(FormatValue(nValue, GetTargetType(), GetTargetSize()));
+    rc_typed_value_t pValue;
+    pValue.type = RC_VALUE_TYPE_UNSIGNED;
+    pValue.value.u32 = nValue;
+    SetValue(TargetValueProperty, FormatValue(pValue, GetTargetType()));
+}
+
+void TriggerConditionViewModel::SetTargetValue(float fValue)
+{
+    rc_typed_value_t pValue;
+    pValue.type = RC_VALUE_TYPE_FLOAT;
+    pValue.value.f32 = fValue;
+    SetValue(TargetValueProperty, FormatValue(pValue, GetTargetType()));
 }
 
 ra::ByteAddress TriggerConditionViewModel::GetTargetAddress() const

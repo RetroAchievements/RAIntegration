@@ -205,32 +205,6 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged()
     SetChanges(GetChanges() + 1);
 }
 
-static unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept
-{
-    // this leverages the fact that Windows uses IEE754 floats
-    union u
-    {
-        float fValue;
-        unsigned nValue;
-    } uUnion;
-
-    uUnion.fValue = fValue;
-    if (nFloatType == MemSize::Float)
-        return uUnion.nValue;
-
-    // MBF32 puts the sign after the exponent, uses a 129 base instead of 127, and stores in big endian
-    unsigned nValue = ((uUnion.nValue & 0x007FFFFF)     ) | // mantissa is unmoved
-                      ((uUnion.nValue & 0x7F800000) << 1) | // exponent is shifted one bit left
-                      ((uUnion.nValue & 0x80000000) >> 8);  // sign is shifted eight bits right
-
-    nValue += 0x02000000; // adjust to 129 base
-
-    return ((nValue & 0xFF000000) >> 24) | // convert to big endian
-           ((nValue & 0x00FF0000) >>  8) |
-           ((nValue & 0x0000FF00) <<  8) |
-           ((nValue & 0x000000FF) << 24);
-}
-
 bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetCurrentValue(const std::wstring& sValue, _Out_ std::wstring& sError)
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
@@ -245,7 +219,7 @@ bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetCurrentValue(const st
             if (!ra::ParseFloat(sValue, fValue, sError))
                 return false;
 
-            nValue = FloatToU32(fValue, m_nSize);
+            nValue = ra::data::FloatToU32(fValue, m_nSize);
             break;
 
         default:

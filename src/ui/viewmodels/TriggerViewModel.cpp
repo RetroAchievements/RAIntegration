@@ -363,9 +363,22 @@ void TriggerViewModel::NewCondition()
     vmCondition.SetOperator(TriggerOperatorType::Equals);
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto nValue = pEmulatorContext.ReadMemory(nAddress, nSize);
+
     vmCondition.SetTargetSize(nSize);
-    vmCondition.SetTargetType(TriggerOperandType::Value);
-    vmCondition.SetTargetValue(pEmulatorContext.ReadMemory(nAddress, nSize));
+    switch (nSize)
+    {
+        case MemSize::Float:
+        case MemSize::MBF32:
+            vmCondition.SetTargetType(TriggerOperandType::Float);
+            vmCondition.SetTargetValue(ra::data::U32ToFloat(nValue, nSize));
+            break;
+
+        default:
+            vmCondition.SetTargetType(TriggerOperandType::Value);
+            vmCondition.SetTargetValue(nValue);
+            break;
+    }
 
     vmCondition.SetSelected(true);
 

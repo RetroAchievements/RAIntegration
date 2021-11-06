@@ -35,6 +35,12 @@ private:
             GSL_SUPPRESS_F6 mockWindowManager.AssetList.InitializeNotifyTargets();
         }
 
+
+        void SetDefaultComment()
+        {
+            SetComment(L"The achievement failed to trigger when I jumped.");
+        }
+
         void MockAchievements()
         {
             mockGameContext.SetGameId(1U);
@@ -179,6 +185,7 @@ public:
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         vmBrokenAchievements.MockAchievements();
         vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.SetDefaultComment();
 
         bool bDialogSeen = false;
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
@@ -200,6 +207,7 @@ public:
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         vmBrokenAchievements.MockAchievements();
         vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.SetDefaultComment();
         vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(true);
 
         bool bDialogSeen = false;
@@ -221,8 +229,8 @@ public:
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         vmBrokenAchievements.MockAchievements();
         vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.SetDefaultComment();
         vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(true);
-        vmBrokenAchievements.SetComment(L"Comment");
 
         bool bDialogSeen = false;
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
@@ -252,6 +260,7 @@ public:
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         vmBrokenAchievements.MockAchievements();
         vmBrokenAchievements.SetSelectedProblemId(2);
+        vmBrokenAchievements.SetDefaultComment();
         vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
 
         bool bDialogSeen = false;
@@ -273,6 +282,7 @@ public:
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         vmBrokenAchievements.MockAchievements();
         vmBrokenAchievements.SetSelectedProblemId(2);
+        vmBrokenAchievements.SetDefaultComment();
         vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
 
         bool bDialogSeen = false;
@@ -324,8 +334,8 @@ public:
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         vmBrokenAchievements.MockAchievements();
         vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.SetDefaultComment();
         vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
-        vmBrokenAchievements.SetComment(L"I tried.");
 
         bool bDialogSeen = false;
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
@@ -333,7 +343,7 @@ public:
             bDialogSeen = true;
 
             Assert::AreEqual(std::wstring(L"Are you sure that you want to create a triggered at the wrong time ticket for Title3?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Achievement ID: 3\nRetroAchievements Hash: HASH\nComment: I tried."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Achievement ID: 3\nRetroAchievements Hash: HASH\nComment: The achievement failed to trigger when I jumped."), vmMessageBox.GetMessage());
 
             return ra::ui::DialogResult::No;
         });
@@ -349,9 +359,9 @@ public:
         BrokenAchievementsViewModelHarness vmBrokenAchievements;
         vmBrokenAchievements.MockAchievements();
         vmBrokenAchievements.SetSelectedProblemId(2);
+        vmBrokenAchievements.SetDefaultComment();
         vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
         vmBrokenAchievements.Achievements().GetItemAt(4)->SetSelected(true);
-        vmBrokenAchievements.SetComment(L"I tried.");
 
         bool bDialogSeen = false;
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
@@ -359,7 +369,7 @@ public:
             bDialogSeen = true;
 
             Assert::AreEqual(std::wstring(L"Are you sure that you want to create 2 did not trigger tickets for GAME?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Achievement IDs: 3,5\nRetroAchievements Hash: HASH\nComment: I tried."), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Achievement IDs: 3,5\nRetroAchievements Hash: HASH\nComment: The achievement failed to trigger when I jumped."), vmMessageBox.GetMessage());
 
             return ra::ui::DialogResult::No;
         });
@@ -376,7 +386,7 @@ public:
         vmBrokenAchievements.MockAchievements();
         vmBrokenAchievements.SetSelectedProblemId(1);
         vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
-        vmBrokenAchievements.SetComment(L"I tried.");
+        vmBrokenAchievements.SetDefaultComment();
 
         bool bDialogSeen = false;
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
@@ -396,7 +406,7 @@ public:
         {
             Assert::AreEqual(1, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
-            Assert::AreEqual(std::string("I tried."), request.Comment);
+            Assert::AreEqual(std::string("The achievement failed to trigger when I jumped."), request.Comment);
             Assert::AreEqual({ 1U }, request.AchievementIds.size());
             Assert::IsTrue(request.AchievementIds.find(3U) != request.AchievementIds.end());
 
@@ -416,7 +426,7 @@ public:
         vmBrokenAchievements.SetSelectedProblemId(2);
         vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
         vmBrokenAchievements.Achievements().GetItemAt(4)->SetSelected(true);
-        vmBrokenAchievements.SetComment(L"I tried.");
+        vmBrokenAchievements.SetDefaultComment();
 
         bool bDialogSeen = false;
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
@@ -436,7 +446,7 @@ public:
         {
             Assert::AreEqual(2, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
-            Assert::AreEqual(std::string("I tried."), request.Comment);
+            Assert::AreEqual(std::string("The achievement failed to trigger when I jumped."), request.Comment);
             Assert::AreEqual({ 2U }, request.AchievementIds.size());
             Assert::IsTrue(request.AchievementIds.find(3U) != request.AchievementIds.end());
             Assert::IsTrue(request.AchievementIds.find(5U) != request.AchievementIds.end());
@@ -457,7 +467,8 @@ public:
         vmBrokenAchievements.SetSelectedProblemId(2);
         vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
         vmBrokenAchievements.Achievements().GetItemAt(4)->SetSelected(true);
-        vmBrokenAchievements.SetComment(L"I tried.");
+        vmBrokenAchievements.SetDefaultComment();
+
 
         bool bDialogSeen = false;
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
@@ -490,7 +501,8 @@ public:
         vmBrokenAchievements.MockAchievements();
         vmBrokenAchievements.SetSelectedProblemId(1);
         vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
-        vmBrokenAchievements.SetComment(L"I tried.");
+        vmBrokenAchievements.SetDefaultComment();
+
         vmBrokenAchievements.mockGameContext.Assets().FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
 
         vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([](const MessageBoxViewModel& vmMessageBox)
@@ -504,7 +516,7 @@ public:
         {
             Assert::AreEqual(1, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
-            Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\nNowhere, 2 Lives"), request.Comment);
+            Assert::AreEqual(std::string("The achievement failed to trigger when I jumped.\n\nRich Presence at time of trigger:\nNowhere, 2 Lives"), request.Comment);
             Assert::AreEqual({ 1U }, request.AchievementIds.size());
 
             response.Result = ra::api::ApiResult::Success;
@@ -522,7 +534,8 @@ public:
         vmBrokenAchievements.SetSelectedProblemId(1);
         vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
         vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
-        vmBrokenAchievements.SetComment(L"I tried.");
+        vmBrokenAchievements.SetDefaultComment();
+
         vmBrokenAchievements.mockGameContext.Assets().FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
         vmBrokenAchievements.mockGameContext.Assets().FindAchievement(3U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
 
@@ -537,7 +550,7 @@ public:
         {
             Assert::AreEqual(1, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
-            Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\nNowhere, 2 Lives"), request.Comment);
+            Assert::AreEqual(std::string("The achievement failed to trigger when I jumped.\n\nRich Presence at time of trigger:\nNowhere, 2 Lives"), request.Comment);
             Assert::AreEqual({ 2U }, request.AchievementIds.size());
 
             response.Result = ra::api::ApiResult::Success;
@@ -555,7 +568,8 @@ public:
         vmBrokenAchievements.SetSelectedProblemId(1);
         vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
         vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
-        vmBrokenAchievements.SetComment(L"I tried.");
+        vmBrokenAchievements.SetDefaultComment();
+
         vmBrokenAchievements.mockGameContext.Assets().FindAchievement(1U)->SetUnlockRichPresence(L"Nowhere, 2 Lives");
         vmBrokenAchievements.mockGameContext.Assets().FindAchievement(3U)->SetUnlockRichPresence(L"Somewhere, 2 Lives");
 
@@ -570,7 +584,7 @@ public:
         {
             Assert::AreEqual(1, ra::etoi(request.Problem));
             Assert::AreEqual(std::string("HASH"), request.GameHash);
-            Assert::AreEqual(std::string("I tried.\n\nRich Presence at time of trigger:\n1: Nowhere, 2 Lives\n3: Somewhere, 2 Lives"), request.Comment);
+            Assert::AreEqual(std::string("The achievement failed to trigger when I jumped.\n\nRich Presence at time of trigger:\n1: Nowhere, 2 Lives\n3: Somewhere, 2 Lives"), request.Comment);
             Assert::AreEqual({ 2U }, request.AchievementIds.size());
 
             response.Result = ra::api::ApiResult::Success;
@@ -611,6 +625,29 @@ public:
         // do reset problem type after everything is deselected
         vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(false);
         Assert::AreEqual(0, vmBrokenAchievements.GetSelectedProblemId());
+    }
+
+    TEST_METHOD(TestSubmitNoComment)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(2);
+        vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(true);
+
+        bool bDialogSeen = false;
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+
+            Assert::AreEqual(std::wstring(L"Please be more specific."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Any information that you can provide to help the developer reproduce the issue will make it easier to fix."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+
+        vmBrokenAchievements.mockServer.ExpectUncalled<ra::api::SubmitTicket>();
+
+        Assert::IsFalse(vmBrokenAchievements.Submit());
+        Assert::IsTrue(bDialogSeen);
     }
 };
 

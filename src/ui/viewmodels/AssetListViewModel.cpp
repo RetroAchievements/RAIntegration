@@ -634,7 +634,7 @@ void AssetListViewModel::DoUpdateButtons()
     }
     else
     {
-        SetValue(CanCreateProperty, !bHardcore);
+        SetValue(CanCreateProperty, true);
         SetValue(CanActivateProperty, m_vFilteredAssets.Count() > 0);
 
         for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
@@ -722,12 +722,12 @@ void AssetListViewModel::DoUpdateButtons()
     if (bHasInactiveSelection)
     {
         SetValue(ActivateButtonTextProperty, L"&Activate");
-        SetValue(CanCloneProperty, !bHardcore);
+        SetValue(CanCloneProperty, true);
     }
     else if (bHasActiveSelection)
     {
         SetValue(ActivateButtonTextProperty, L"De&activate");
-        SetValue(CanCloneProperty, !bHardcore);
+        SetValue(CanCloneProperty, true);
     }
     else
     {
@@ -1410,6 +1410,10 @@ void AssetListViewModel::CreateNew()
     if (!CanCreate())
         return;
 
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    if (!pEmulatorContext.WarnDisableHardcoreMode("create a new asset"))
+        return;
+
     RA_LOG_INFO("Creating new achievement");
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -1461,6 +1465,10 @@ void AssetListViewModel::CreateNew()
 void AssetListViewModel::CloneSelected()
 {
     if (!CanClone())
+        return;
+
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    if (!pEmulatorContext.WarnDisableHardcoreMode("clone an asset"))
         return;
 
     std::vector<ra::data::models::AssetModelBase*> vSelectedAssets;

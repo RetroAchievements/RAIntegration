@@ -549,11 +549,13 @@ public:
         bookmarks.AddBookmark(2345U, MemSize::EightBit);
         bookmarks.AddBookmark(4567U, MemSize::EightBit);
         bookmarks.AddBookmark(6789U, MemSize::EightBit);
+        Assert::AreEqual(std::wstring(L"Freeze"), bookmarks.GetFreezeButtonText());
 
         // no selected items are frozen - freeze them all
         bookmarks.Bookmarks().GetItemAt(1)->SetSelected(true);
         bookmarks.Bookmarks().GetItemAt(3)->SetSelected(true);
 
+        Assert::AreEqual(std::wstring(L"Freeze"), bookmarks.GetFreezeButtonText());
         bookmarks.ToggleFreezeSelected();
 
         Assert::AreEqual({ 4U }, bookmarks.Bookmarks().Count());
@@ -561,11 +563,13 @@ public:
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Bookmarks().GetItemAt(1)->GetBehavior());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(2)->GetBehavior());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Bookmarks().GetItemAt(3)->GetBehavior());
+        Assert::AreEqual(std::wstring(L"Unfreeze"), bookmarks.GetFreezeButtonText());
 
-        // some selected items are frozen - freeze the rest
+        // some selected items are frozen - freeze the rest (items 2 and 3 are selected)
         bookmarks.Bookmarks().GetItemAt(1)->SetSelected(false);
         bookmarks.Bookmarks().GetItemAt(2)->SetSelected(true);
 
+        Assert::AreEqual(std::wstring(L"Freeze"), bookmarks.GetFreezeButtonText());
         bookmarks.ToggleFreezeSelected();
 
         Assert::AreEqual({ 4U }, bookmarks.Bookmarks().Count());
@@ -573,11 +577,13 @@ public:
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Bookmarks().GetItemAt(1)->GetBehavior());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Bookmarks().GetItemAt(2)->GetBehavior());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Bookmarks().GetItemAt(3)->GetBehavior());
+        Assert::AreEqual(std::wstring(L"Unfreeze"), bookmarks.GetFreezeButtonText());
 
-        // all selected items are frozen - unfreeze them
+        // all selected items are frozen - unfreeze them (items 1 and 3 are selected)
         bookmarks.Bookmarks().GetItemAt(1)->SetSelected(true);
         bookmarks.Bookmarks().GetItemAt(2)->SetSelected(false);
 
+        Assert::AreEqual(std::wstring(L"Unfreeze"), bookmarks.GetFreezeButtonText());
         bookmarks.ToggleFreezeSelected();
 
         Assert::AreEqual({ 4U }, bookmarks.Bookmarks().Count());
@@ -585,6 +591,7 @@ public:
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(1)->GetBehavior());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::Frozen, bookmarks.Bookmarks().GetItemAt(2)->GetBehavior());
         Assert::AreEqual(MemoryBookmarksViewModel::BookmarkBehavior::None, bookmarks.Bookmarks().GetItemAt(3)->GetBehavior());
+        Assert::AreEqual(std::wstring(L"Freeze"), bookmarks.GetFreezeButtonText());
     }
 
     TEST_METHOD(TestClearAllChanges)

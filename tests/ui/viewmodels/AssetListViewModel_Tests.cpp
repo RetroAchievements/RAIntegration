@@ -527,14 +527,15 @@ public:
         Assert::AreEqual(std::wstring(L"Disabled"), vmAssetList.States().GetItemAt(6)->GetLabel());
 
         Assert::AreEqual({ 4U }, vmAssetList.Categories().Count());
-        Assert::AreEqual((int)AssetListViewModel::FilterCategory::Core, vmAssetList.Categories().GetItemAt(0)->GetId());
-        Assert::AreEqual(std::wstring(L"Core"), vmAssetList.Categories().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)AssetListViewModel::FilterCategory::Unofficial, vmAssetList.Categories().GetItemAt(1)->GetId());
-        Assert::AreEqual(std::wstring(L"Unofficial"), vmAssetList.Categories().GetItemAt(1)->GetLabel());
-        Assert::AreEqual((int)AssetListViewModel::FilterCategory::Local, vmAssetList.Categories().GetItemAt(2)->GetId());
-        Assert::AreEqual(std::wstring(L"Local"), vmAssetList.Categories().GetItemAt(2)->GetLabel());
-        Assert::AreEqual((int)AssetListViewModel::FilterCategory::All, vmAssetList.Categories().GetItemAt(3)->GetId());
-        Assert::AreEqual(std::wstring(L"All"), vmAssetList.Categories().GetItemAt(3)->GetLabel());
+        Assert::AreEqual((int)AssetListViewModel::FilterCategory::All, vmAssetList.Categories().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"All"), vmAssetList.Categories().GetItemAt(0)->GetLabel());
+        Assert::AreEqual((int)AssetListViewModel::FilterCategory::Core, vmAssetList.Categories().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Core"), vmAssetList.Categories().GetItemAt(1)->GetLabel());
+        Assert::AreEqual((int)AssetListViewModel::FilterCategory::Unofficial, vmAssetList.Categories().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Unofficial"), vmAssetList.Categories().GetItemAt(2)->GetLabel());
+        Assert::AreEqual((int)AssetListViewModel::FilterCategory::Local, vmAssetList.Categories().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"Local"), vmAssetList.Categories().GetItemAt(3)->GetLabel());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
 
         Assert::AreEqual({ 6U }, vmAssetList.SpecialFilters().Count());
         Assert::AreEqual((int)AssetListViewModel::SpecialFilter::All, vmAssetList.SpecialFilters().GetItemAt(0)->GetId());
@@ -549,6 +550,16 @@ public:
         Assert::AreEqual(std::wstring(L"Unpublished"), vmAssetList.SpecialFilters().GetItemAt(4)->GetLabel());
         Assert::AreEqual((int)AssetListViewModel::SpecialFilter::Authored, vmAssetList.SpecialFilters().GetItemAt(5)->GetId());
         Assert::AreEqual(std::wstring(L"Authored"), vmAssetList.SpecialFilters().GetItemAt(5)->GetLabel());
+        Assert::AreEqual(AssetListViewModel::SpecialFilter::All, vmAssetList.GetSpecialFilter());
+
+        Assert::AreEqual({ 3U }, vmAssetList.AssetTypeFilters().Count());
+        Assert::AreEqual((int)AssetType::None, vmAssetList.AssetTypeFilters().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L"All"), vmAssetList.AssetTypeFilters().GetItemAt(0)->GetLabel());
+        Assert::AreEqual((int)AssetType::Achievement, vmAssetList.AssetTypeFilters().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Achievements"), vmAssetList.AssetTypeFilters().GetItemAt(1)->GetLabel());
+        Assert::AreEqual((int)AssetType::Leaderboard, vmAssetList.AssetTypeFilters().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Leaderboards"), vmAssetList.AssetTypeFilters().GetItemAt(2)->GetLabel());
+        Assert::AreEqual(AssetType::Achievement, vmAssetList.GetAssetTypeFilter());
 
         Assert::AreEqual({ 5U }, vmAssetList.Changes().Count());
         Assert::AreEqual((int)AssetChanges::None, vmAssetList.Changes().GetItemAt(0)->GetId());
@@ -893,6 +904,39 @@ public:
         Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
         Assert::AreEqual(10, vmAssetList.GetTotalPoints());
         Assert::AreEqual(2, vmAssetList.FilteredAssets().GetItemAt(0)->GetId());
+    }
+
+    TEST_METHOD(TestChangeAssetTypeFilter)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetAssetTypeFilter(AssetType::None);
+
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 10, L"Ach2");
+        vmAssetList.AddLeaderboard();
+
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 3U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(15, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(AssetType::Achievement, vmAssetList.FilteredAssets().GetItemAt(0)->GetType());
+        Assert::AreEqual(AssetType::Achievement, vmAssetList.FilteredAssets().GetItemAt(1)->GetType());
+        Assert::AreEqual(AssetType::Leaderboard, vmAssetList.FilteredAssets().GetItemAt(2)->GetType());
+
+        vmAssetList.SetAssetTypeFilter(AssetType::Leaderboard);
+
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(0, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(AssetType::Leaderboard, vmAssetList.FilteredAssets().GetItemAt(0)->GetType());
+
+        vmAssetList.SetAssetTypeFilter(AssetType::Achievement);
+
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(15, vmAssetList.GetTotalPoints());
+        Assert::AreEqual(AssetType::Achievement, vmAssetList.FilteredAssets().GetItemAt(0)->GetType());
+        Assert::AreEqual(AssetType::Achievement, vmAssetList.FilteredAssets().GetItemAt(1)->GetType());
     }
 
     TEST_METHOD(TestSpecialFilterActive)
@@ -1764,6 +1808,7 @@ public:
         vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         vmAssetList.SetGameId(1U);
         vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetAssetTypeFilter(AssetType::Leaderboard);
         vmAssetList.AddLeaderboard();
         vmAssetList.mockGameContext.Assets().GetItemAt(0)->SetState(AssetState::Primed);
         const auto nLeaderboardId = vmAssetList.mockGameContext.Assets().GetItemAt(0)->GetID();

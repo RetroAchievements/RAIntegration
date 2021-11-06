@@ -174,6 +174,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
       m_bindAssets(vmAssetList),
       m_bindCategories(vmAssetList),
       m_bindSpecialFilters(vmAssetList),
+      m_bindAssetTypeFilters(vmAssetList),
       m_bindProcessingActive(vmAssetList),
       m_bindKeepActive(vmAssetList)
 {
@@ -186,6 +187,10 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindSpecialFilters.BindItems(vmAssetList.SpecialFilters(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
        ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
     m_bindSpecialFilters.BindSelectedItem(AssetListViewModel::SpecialFilterProperty);
+
+    m_bindAssetTypeFilters.BindItems(vmAssetList.AssetTypeFilters(), ra::ui::viewmodels::LookupItemViewModel::IdProperty,
+        ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
+    m_bindAssetTypeFilters.BindSelectedItem(AssetListViewModel::AssetTypeFilterProperty);
 
 #ifdef ASSET_ICONS
     constexpr int nOffset = 1;
@@ -293,6 +298,7 @@ BOOL AssetListDialog::OnInitDialog()
 
     m_bindCategories.SetControl(*this, IDC_RA_CATEGORY);
     m_bindSpecialFilters.SetControl(*this, IDC_RA_SPECIAL_FILTER);
+    m_bindAssetTypeFilters.SetControl(*this, IDC_RA_TYPE_FILTER);
 
 #ifdef ASSET_ICONS
     m_bindAssets.InitializeTooltips(std::chrono::milliseconds(500));

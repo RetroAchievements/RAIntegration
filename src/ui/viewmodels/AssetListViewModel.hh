@@ -12,7 +12,7 @@
 #include "data\models\AchievementModel.hh"
 #include "data\models\AssetModelBase.hh"
 
-//#define ASSET_ICONS
+#define ASSET_ICONS
 
 namespace ra {
 namespace ui {
@@ -123,6 +123,14 @@ public:
     }
 
     /// <summary>
+    /// Gets the list of asset type filters.
+    /// </summary>
+    const LookupItemViewModelCollection& AssetTypeFilters() const noexcept
+    {
+        return m_vAssetTypeFilters;
+    }
+
+    /// <summary>
     /// Gets the list of asset modification states.
     /// </summary>
     const LookupItemViewModelCollection& Changes() const noexcept
@@ -209,6 +217,21 @@ public:
     /// Sets the special filter.
     /// </summary>
     void SetSpecialFilter(SpecialFilter nValue) { SetValue(SpecialFilterProperty, ra::etoi(nValue)); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the asset type filter.
+    /// </summary>
+    static const IntModelProperty AssetTypeFilterProperty;
+
+    /// <summary>
+    /// Gets the asset type filter.
+    /// </summary>
+    ra::data::models::AssetType GetAssetTypeFilter() const { return ra::itoe<ra::data::models::AssetType>(GetValue(AssetTypeFilterProperty)); }
+
+    /// <summary>
+    /// Sets the asset type filter.
+    /// </summary>
+    void SetAssetTypeFilter(ra::data::models::AssetType nValue) { SetValue(AssetTypeFilterProperty, ra::etoi(nValue)); }
 
     class AssetSummaryViewModel : public LookupItemViewModel
     {
@@ -300,6 +323,7 @@ private:
     LookupItemViewModelCollection m_vStates;
     LookupItemViewModelCollection m_vCategories;
     LookupItemViewModelCollection m_vSpecialFilters;
+    LookupItemViewModelCollection m_vAssetTypeFilters;
     LookupItemViewModelCollection m_vChanges;
 };
 

@@ -175,9 +175,8 @@ public:
                     vmItems.SetItemValue(nIndex, *m_pBoundProperty, sValue);
                     return true;
                 }
-
-                _FALLTHROUGH;
             }
+            _FALLTHROUGH;
 
             default:
             {
@@ -196,7 +195,7 @@ public:
         }
     }
 
-    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
+    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const override
     {
         if (pProperty == *m_pTypeProperty)
             return true;

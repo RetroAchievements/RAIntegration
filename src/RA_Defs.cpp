@@ -119,6 +119,8 @@ float U32ToFloat(unsigned nValue, MemSize nFloatType) noexcept
         unsigned nValue;
     } uUnion;
 
+    uUnion.nValue = nValue;
+
     if (nFloatType != MemSize::Float)
     {
         nValue = ((nValue & 0xFF000000) >> 24) | // convert to big endian
@@ -131,9 +133,10 @@ float U32ToFloat(unsigned nValue, MemSize nFloatType) noexcept
         nValue = ((nValue & 0x007FFFFF)) | // mantissa is unmoved
             ((nValue & 0xFF000000) >> 1) | // exponent is shifted one bit right
             ((nValue & 0x00800000) << 8);  // sign is shifted eight bits left
+
+        uUnion.nValue = nValue;
     }
 
-    uUnion.nValue = nValue;
     return uUnion.fValue;
 }
 

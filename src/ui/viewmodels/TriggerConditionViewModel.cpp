@@ -302,7 +302,7 @@ void TriggerConditionViewModel::ChangeOperandType(const StringModelProperty& sVa
     const auto& sValue = GetValue(sValueProperty);
     std::wstring sError;
 
-    rc_typed_value_t pValue;
+    rc_typed_value_t pValue{};
     if (nOldType == TriggerOperandType::Float)
     {
         pValue.type = RC_VALUE_TYPE_FLOAT;
@@ -323,7 +323,7 @@ void TriggerConditionViewModel::ChangeOperandType(const StringModelProperty& sVa
 void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty,
     const IntModelProperty& pSizeProperty, const StringModelProperty& pValueProperty, const rc_operand_t& operand)
 {
-    rc_typed_value_t pValue;
+    rc_typed_value_t pValue{};
 
     const auto nType = static_cast<TriggerOperandType>(operand.type);
     SetValue(pTypeProperty, ra::etoi(nType));

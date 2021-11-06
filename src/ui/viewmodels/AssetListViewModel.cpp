@@ -913,6 +913,23 @@ void AssetListViewModel::ActivateSelected()
     }
     else // Activate
     {
+        bool bModifiedAssetSelected = false;
+        for (const auto* vmItem : vSelectedAssets)
+        {
+            if (vmItem && vmItem->GetChanges() != ra::data::models::AssetChanges::None)
+            {
+                bModifiedAssetSelected = true;
+                break;
+            }
+        }
+
+        if (bModifiedAssetSelected)
+        {
+            auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+            if (!pEmulatorContext.WarnDisableHardcoreMode("activate unpublished achievements"))
+                return;
+        }
+
         std::wstring sErrorMessage;
         if (SelectionContainsInvalidAsset(vSelectedAssets, sErrorMessage))
         {

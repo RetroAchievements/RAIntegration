@@ -24,7 +24,11 @@ enum class MemSize : uint8_t
     ThirtyTwoBitBigEndian,
     Float,
     MBF32,
-    Text
+
+    // extended sizes not supported by rcheevos
+    Unknown,
+    Text,
+    Array
 };
 
 enum class ComparisonType : uint8_t

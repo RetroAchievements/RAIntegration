@@ -404,6 +404,22 @@ std::string Tokenizer::ReadQuotedString()
     return sString;
 }
 
+_Use_decl_annotations_
+void StringMakeLowercase(std::wstring& sString)
+{
+    std::transform(sString.begin(), sString.end(), sString.begin(), [](wchar_t c) noexcept {
+        return gsl::narrow_cast<wchar_t>(std::tolower(c));
+    });
+}
+
+_Use_decl_annotations_
+void StringMakeLowercase(std::string& sString)
+{
+    std::transform(sString.begin(), sString.end(), sString.begin(), [](wchar_t c) noexcept {
+        return gsl::narrow_cast<char>(std::tolower(c));
+    });
+}
+
 #pragma warning(push)
 #pragma warning(disable : 5045)
 
@@ -417,9 +433,7 @@ GSL_SUPPRESS_F6 _NODISCARD bool StringContainsCaseInsensitive(_In_ const std::ws
     if (!bMatchIsLowerCased)
     {
         sMatchLower = sMatch;
-        std::transform(sMatchLower.begin(), sMatchLower.end(), sMatchLower.begin(), [](wchar_t c) noexcept {
-            return gsl::narrow_cast<wchar_t>(std::tolower(c));
-        });
+        StringMakeLowercase(sMatchLower);
 
         pMatch = sMatchLower.data();
     }

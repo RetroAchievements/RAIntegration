@@ -251,10 +251,7 @@ static bool IsSuspiciousProcessRunning()
                 if (tcslen_s(pe32.szExeFile) >= 15)
                 {
                     std::string sFilename = ra::Narrow(pe32.szExeFile);
-                    std::transform(sFilename.begin(), sFilename.end(), sFilename.begin(), [](char c) noexcept
-                    {
-                        return gsl::narrow_cast<char>(std::tolower(c));
-                    });
+                    ra::StringMakeLowercase(sFilename);
 
                     // cannot reliably detect injection without ObRegisterCallbacks, which requires Vista,
                     // instead just look for the default process names (it's better than nothing)

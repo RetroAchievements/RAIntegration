@@ -84,6 +84,10 @@ std::wstring ToString<MemSize>(const MemSize& t)
             return L"MBF32";
         case MemSize::Text:
             return L"Text";
+        case MemSize::Unknown:
+            return L"Unknown";
+        case MemSize::Array:
+            return L"Array";
         default:
             return std::to_wstring(ra::etoi(t));
     }

@@ -211,6 +211,11 @@ public:
     /// </summary>
     const std::wstring& GetFilterSummary() const { return GetValue(FilterSummaryProperty); }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the total memory size.
+    /// </summary>
+    static const IntModelProperty TotalMemorySizeProperty;
+
     class SearchResultViewModel : public ViewModelBase
     {
     public:
@@ -320,6 +325,11 @@ public:
     {
         return m_vResults;
     }
+
+    /// <summary>
+    /// Resets the results list.
+    /// </summary>
+    void ClearResults();
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the memory size of result items.

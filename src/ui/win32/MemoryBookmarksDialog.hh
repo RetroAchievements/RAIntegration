@@ -2,6 +2,8 @@
 #define RA_UI_WIN32_DLG_MEMORYBOOKMARKS_H
 #pragma once
 
+#include "data/context/EmulatorContext.hh"
+
 #include "ui/viewmodels/MemoryBookmarksViewModel.hh"
 #include "ui/win32/bindings/GridBinding.hh"
 #include "ui/win32/DialogBase.hh"
@@ -38,7 +40,18 @@ protected:
     BOOL OnCommand(WORD nCommand) override;
 
 private:
-    ra::ui::win32::bindings::GridBinding m_bindBookmarks;
+    class BookmarksGridBinding : public ra::ui::win32::bindings::GridBinding,
+        protected ra::data::context::EmulatorContext::NotifyTarget
+    {
+    public:
+        explicit BookmarksGridBinding(ViewModelBase& vmViewModel) noexcept;
+        ~BookmarksGridBinding() noexcept;
+
+    protected:
+        void OnTotalMemorySizeChanged() override;
+    };
+
+    BookmarksGridBinding m_bindBookmarks;
 };
 
 } // namespace win32

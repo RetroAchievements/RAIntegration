@@ -33,6 +33,7 @@ const StringModelProperty MemorySearchViewModel::FilterSummaryProperty("MemorySe
 const IntModelProperty MemorySearchViewModel::ResultCountProperty("MemorySearchViewModel", "ResultCount", 0);
 const StringModelProperty MemorySearchViewModel::ResultCountTextProperty("MemorySearchViewModel", "ResultCountText", L"0");
 const IntModelProperty MemorySearchViewModel::ResultMemSizeProperty("MemorySearchViewModel", "ResultMemSize", ra::etoi(MemSize::EightBit));
+const IntModelProperty MemorySearchViewModel::TotalMemorySizeProperty("MemorySearchViewModel", "TotalMemorySize", 0);
 const IntModelProperty MemorySearchViewModel::ScrollOffsetProperty("MemorySearchViewModel", "ScrollOffset", 0);
 const IntModelProperty MemorySearchViewModel::ScrollMaximumProperty("MemorySearchViewModel", "ScrollMaximum", 0);
 const StringModelProperty MemorySearchViewModel::SelectedPageProperty("MemorySearchViewModel", "SelectedPageProperty", L"0/0");
@@ -263,6 +264,7 @@ void MemorySearchViewModel::OnTotalMemorySizeChanged()
     m_vPredefinedFilterRanges.EndUpdate();
 
     SetValue(CanBeginNewSearchProperty, (nTotalBankSize > 0U));
+    SetValue(TotalMemorySizeProperty, nTotalBankSize);
 }
 
 void MemorySearchViewModel::OnPredefinedFilterRangeChanged()
@@ -446,6 +448,23 @@ bool MemorySearchViewModel::ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out
     }
 
     return (*ptr == '\0');
+}
+
+void MemorySearchViewModel::ClearResults()
+{
+    if (m_bIsContinuousFiltering)
+        ToggleContinuousFilter();
+
+    m_vSelectedAddresses.clear();
+    m_vSearchResults.clear();
+    m_vResults.Clear();
+
+    SetValue(FilterSummaryProperty, FilterSummaryProperty.GetDefaultValue());
+    SetValue(SelectedPageProperty, SelectedPageProperty.GetDefaultValue());
+    SetValue(ScrollOffsetProperty, 0);
+    SetValue(ScrollMaximumProperty, 0);
+    SetValue(ResultCountProperty, 0);
+    SetValue(ResultMemSizeProperty, ResultMemSizeProperty.GetDefaultValue());
 }
 
 void MemorySearchViewModel::BeginNewSearch()

@@ -17,6 +17,7 @@ public:
     GridAddressColumnBinding(const IntModelProperty& pBoundProperty) noexcept
         : m_pBoundProperty(&pBoundProperty)
     {
+        UpdateWidth();
     }
 
     std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
@@ -31,6 +32,9 @@ public:
     }
 
     bool HandleDoubleClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override;
+
+    void UpdateWidth();
+    static unsigned CalculateWidth();
 
 protected:
     const IntModelProperty* m_pBoundProperty = nullptr;

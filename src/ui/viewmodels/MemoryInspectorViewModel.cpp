@@ -323,6 +323,8 @@ void MemoryInspectorViewModel::OnActiveGameChanged()
         SetWindowTitle(L"Memory Inspector");
         SetValue(CanModifyNotesProperty, true);
     }
+
+    Search().ClearResults();
 }
 
 void MemoryInspectorViewModel::OnEndGameLoad()

@@ -466,7 +466,7 @@ public:
         MemoryInspectorViewModelHarness inspector;
         inspector.mockGameContext.SetGameId({ 3 });
 
-        std::array<uint8_t, 32> memory;
+        std::array<uint8_t, 32> memory{};
         for (size_t i = 0; i < memory.size(); ++i)
             memory.at(i) = gsl::narrow_cast<unsigned char>(i);
 

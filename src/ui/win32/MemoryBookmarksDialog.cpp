@@ -47,14 +47,14 @@ void MemoryBookmarksDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); 
 
 // ------------------------------------
 
-MemoryBookmarksDialog::BookmarksGridBinding::BookmarksGridBinding(ViewModelBase& vmViewModel) noexcept
+MemoryBookmarksDialog::BookmarksGridBinding::BookmarksGridBinding(ViewModelBase& vmViewModel)
     : ra::ui::win32::bindings::GridBinding(vmViewModel)
 {
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
     pEmulatorContext.AddNotifyTarget(*this);
 }
 
-MemoryBookmarksDialog::BookmarksGridBinding::~BookmarksGridBinding() noexcept
+MemoryBookmarksDialog::BookmarksGridBinding::~BookmarksGridBinding()
 {
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
     pEmulatorContext.RemoveNotifyTarget(*this);

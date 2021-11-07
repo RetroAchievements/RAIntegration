@@ -44,8 +44,12 @@ private:
         protected ra::data::context::EmulatorContext::NotifyTarget
     {
     public:
-        explicit BookmarksGridBinding(ViewModelBase& vmViewModel) noexcept;
-        ~BookmarksGridBinding() noexcept;
+        explicit BookmarksGridBinding(ViewModelBase& vmViewModel);
+        GSL_SUPPRESS_F6 ~BookmarksGridBinding();
+        BookmarksGridBinding(const BookmarksGridBinding&) noexcept = delete;
+        BookmarksGridBinding& operator=(const BookmarksGridBinding&) noexcept = delete;
+        BookmarksGridBinding(BookmarksGridBinding&&) noexcept = delete;
+        BookmarksGridBinding& operator=(BookmarksGridBinding&&) noexcept = delete;
 
     protected:
         void OnTotalMemorySizeChanged() override;

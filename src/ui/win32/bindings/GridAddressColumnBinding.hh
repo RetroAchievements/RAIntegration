@@ -14,7 +14,7 @@ namespace bindings {
 class GridAddressColumnBinding : public GridColumnBinding
 {
 public:
-    GridAddressColumnBinding(const IntModelProperty& pBoundProperty) noexcept
+    GridAddressColumnBinding(const IntModelProperty& pBoundProperty)
         : m_pBoundProperty(&pBoundProperty)
     {
         UpdateWidth();

@@ -454,6 +454,17 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
 
     RA_LOG_INFO("Hardcore enabled");
 
+    // Disable any modified assets
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
+    {
+        auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        if (pAsset != nullptr && pAsset->GetChanges() != ra::data::models::AssetChanges::None)
+        {
+            if (pAsset->IsActive())
+                pAsset->SetState(ra::data::models::AssetState::Inactive);
+        }
+    }
+
     // User has agreed to reset the emulator, or no game is loaded. Enabled hardcore!
     pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 

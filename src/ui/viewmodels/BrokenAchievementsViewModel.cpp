@@ -154,6 +154,7 @@ bool BrokenAchievementsViewModel::Submit()
     sBuggedIDs.pop_back(); // remove last comma
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto sComment = GetComment();
 
     const char* sProblemType = "";
     request.Problem = ra::itoe<ra::api::SubmitTicket::ProblemType>(GetSelectedProblemId());
@@ -171,6 +172,13 @@ bool BrokenAchievementsViewModel::Submit()
                 }
             }
 
+            if (sComment.length() < 20)
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Please be more specific.",
+                    L"Any information that you can provide to help the developer reproduce the issue will make it easier to fix.");
+                return false;
+            }
+
             sProblemType = " did not trigger";
             break;
 
@@ -186,7 +194,7 @@ bool BrokenAchievementsViewModel::Submit()
                 }
             }
 
-            if (GetComment().length() < 5)
+            if (sComment.length() < 20)
             {
                 ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::StringPrintf(
                     L"Please describe when the achievement%s did trigger.", request.AchievementIds.size() == 1 ? "" : "s"));
@@ -225,7 +233,7 @@ bool BrokenAchievementsViewModel::Submit()
         return false;
 
     request.GameHash = pGameContext.GameHash();
-    request.Comment = ra::Narrow(GetComment());
+    request.Comment = ra::Narrow(sComment);
 
     const std::wstring sRichPresence = GetRichPresence(pGameContext, request.AchievementIds);
     if (!sRichPresence.empty())

@@ -634,7 +634,7 @@ void AssetListViewModel::DoUpdateButtons()
     }
     else
     {
-        SetValue(CanCreateProperty, !bHardcore);
+        SetValue(CanCreateProperty, true);
         SetValue(CanActivateProperty, m_vFilteredAssets.Count() > 0);
 
         for (size_t i = 0; i < m_vFilteredAssets.Count(); ++i)
@@ -722,12 +722,12 @@ void AssetListViewModel::DoUpdateButtons()
     if (bHasInactiveSelection)
     {
         SetValue(ActivateButtonTextProperty, L"&Activate");
-        SetValue(CanCloneProperty, !bHardcore);
+        SetValue(CanCloneProperty, true);
     }
     else if (bHasActiveSelection)
     {
         SetValue(ActivateButtonTextProperty, L"De&activate");
-        SetValue(CanCloneProperty, !bHardcore);
+        SetValue(CanCloneProperty, true);
     }
     else
     {
@@ -913,6 +913,23 @@ void AssetListViewModel::ActivateSelected()
     }
     else // Activate
     {
+        bool bModifiedAssetSelected = false;
+        for (const auto* vmItem : vSelectedAssets)
+        {
+            if (vmItem && vmItem->GetChanges() != ra::data::models::AssetChanges::None)
+            {
+                bModifiedAssetSelected = true;
+                break;
+            }
+        }
+
+        if (bModifiedAssetSelected)
+        {
+            auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+            if (!pEmulatorContext.WarnDisableHardcoreMode("activate unpublished achievements"))
+                return;
+        }
+
         std::wstring sErrorMessage;
         if (SelectionContainsInvalidAsset(vSelectedAssets, sErrorMessage))
         {
@@ -1054,7 +1071,7 @@ void AssetListViewModel::SaveSelected()
     UpdateButtons();
 }
 
-#if RA_INTEGRATION_VERSION_MINOR < 79
+#if RA_INTEGRATION_VERSION_MINOR < 80
 static std::wstring ValidateCondSet(const rc_condset_t* pCondSet)
 {
     if (!pCondSet)
@@ -1062,18 +1079,16 @@ static std::wstring ValidateCondSet(const rc_condset_t* pCondSet)
 
     for (const auto* pCondition = pCondSet->conditions; pCondition != nullptr; pCondition = pCondition->next)
     {
-        if (pCondition->type == RC_CONDITION_RESET_NEXT_IF)
-            return L"ResetNextIf is pre-release functionality";
-        if (pCondition->type == RC_CONDITION_TRIGGER)
-            return L"Trigger is pre-release functionality";
-        if (pCondition->type == RC_CONDITION_SUB_HITS)
-            return L"SubHits is pre-release functionality";
-        if (pCondition->oper == RC_OPERATOR_MULT)
-            return L"Multiplication is pre-release functionality";
-        if (pCondition->oper == RC_OPERATOR_DIV)
-            return L"Division is pre-release functionality";
-        if (pCondition->oper == RC_OPERATOR_AND)
-            return L"Bitwise And is pre-release functionality";
+        if (pCondition->operand1.size == RC_MEMSIZE_16_BITS_BE || pCondition->operand2.size == RC_MEMSIZE_16_BITS_BE)
+            return L"BigEndian sizes are pre-release functionality";
+        if (pCondition->operand1.size == RC_MEMSIZE_24_BITS_BE || pCondition->operand2.size == RC_MEMSIZE_24_BITS_BE)
+            return L"BigEndian sizes are pre-release functionality";
+        if (pCondition->operand1.size == RC_MEMSIZE_32_BITS_BE || pCondition->operand2.size == RC_MEMSIZE_32_BITS_BE)
+            return L"BigEndian sizes are pre-release functionality";
+        if (pCondition->operand1.size == RC_MEMSIZE_FLOAT || pCondition->operand2.size == RC_MEMSIZE_FLOAT)
+            return L"Float size is pre-release functionality";
+        if (pCondition->operand1.size == RC_MEMSIZE_MBF32 || pCondition->operand2.size == RC_MEMSIZE_MBF32)
+            return L"MBF32 size is pre-release functionality";
     }
 
     return L"";
@@ -1088,6 +1103,9 @@ static std::wstring ValidateTriggerLogic(const std::string& sTrigger)
     std::string sBuffer;
     sBuffer.resize(nSize);
     const auto* pTrigger = rc_parse_trigger(sBuffer.data(), sTrigger.c_str(), nullptr, 0);
+
+    if (pTrigger->measured_as_percent)
+        return L"Measured as percent is pre-release functionality";
 
     std::wstring sError = ValidateCondSet(pTrigger->requirement);
     if (sError.empty())
@@ -1105,19 +1123,21 @@ static std::wstring ValidateTriggerLogic(const std::string& sTrigger)
 
     return sError;
 }
-#endif
 
-void AssetListViewModel::ValidateAchievementForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::AchievementModel& pAchievement) const
+void AssetListViewModel::ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const
 {
-#if RA_INTEGRATION_VERSION_MINOR < 79
     if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsCustomHost())
     {
         std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
         if (!sTriggerError.empty())
             sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
     }
-#endif
 }
+#else
+void AssetListViewModel::ValidateAchievementForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::AchievementModel& pAchievement) const
+{
+}
+#endif
 
 bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly)
 {
@@ -1410,6 +1430,10 @@ void AssetListViewModel::CreateNew()
     if (!CanCreate())
         return;
 
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    if (!pEmulatorContext.WarnDisableHardcoreMode("create a new asset"))
+        return;
+
     RA_LOG_INFO("Creating new achievement");
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -1461,6 +1485,10 @@ void AssetListViewModel::CreateNew()
 void AssetListViewModel::CloneSelected()
 {
     if (!CanClone())
+        return;
+
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    if (!pEmulatorContext.WarnDisableHardcoreMode("clone an asset"))
         return;
 
     std::vector<ra::data::models::AssetModelBase*> vSelectedAssets;

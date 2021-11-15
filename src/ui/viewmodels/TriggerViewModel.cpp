@@ -46,6 +46,7 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Delta), L"Delta");
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Prior), L"Prior");
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::BCD), L"BCD");
+    m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Float), L"Float");
 
     m_vOperandSizes.Add(ra::etoi(MemSize::Bit_0), L"Bit0");
     m_vOperandSizes.Add(ra::etoi(MemSize::Bit_1), L"Bit1");
@@ -362,9 +363,22 @@ void TriggerViewModel::NewCondition()
     vmCondition.SetOperator(TriggerOperatorType::Equals);
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto nValue = pEmulatorContext.ReadMemory(nAddress, nSize);
+
     vmCondition.SetTargetSize(nSize);
-    vmCondition.SetTargetType(TriggerOperandType::Value);
-    vmCondition.SetTargetValue(pEmulatorContext.ReadMemory(nAddress, nSize));
+    switch (nSize)
+    {
+        case MemSize::Float:
+        case MemSize::MBF32:
+            vmCondition.SetTargetType(TriggerOperandType::Float);
+            vmCondition.SetTargetValue(ra::data::U32ToFloat(nValue, nSize));
+            break;
+
+        default:
+            vmCondition.SetTargetType(TriggerOperandType::Value);
+            vmCondition.SetTargetValue(nValue);
+            break;
+    }
 
     vmCondition.SetSelected(true);
 
@@ -579,9 +593,22 @@ void TriggerViewModel::OnViewModelBoolValueChanged(gsl::index, const BoolModelPr
 
 void TriggerViewModel::ConditionsMonitor::OnViewModelIntValueChanged(gsl::index, const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property != TriggerConditionViewModel::CurrentHitsProperty &&
-        args.Property != TriggerConditionViewModel::TotalHitsProperty &&
-        args.Property != TriggerConditionViewModel::RowColorProperty)
+    if (args.Property == TriggerConditionViewModel::SourceTypeProperty ||
+        args.Property == TriggerConditionViewModel::SourceSizeProperty ||
+        args.Property == TriggerConditionViewModel::TargetTypeProperty ||
+        args.Property == TriggerConditionViewModel::TargetSizeProperty ||
+        args.Property == TriggerConditionViewModel::TypeProperty ||
+        args.Property == TriggerConditionViewModel::OperatorProperty ||
+        args.Property == TriggerConditionViewModel::RequiredHitsProperty)
+    {
+        UpdateCurrentGroup();
+    }
+}
+
+void TriggerViewModel::ConditionsMonitor::OnViewModelStringValueChanged(gsl::index, const StringModelProperty::ChangeArgs& args)
+{
+    if (args.Property == TriggerConditionViewModel::SourceValueProperty ||
+        args.Property == TriggerConditionViewModel::TargetValueProperty)
     {
         UpdateCurrentGroup();
     }

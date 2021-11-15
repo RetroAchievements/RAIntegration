@@ -23,11 +23,11 @@ const IntModelProperty TriggerConditionViewModel::IndexProperty("TriggerConditio
 const IntModelProperty TriggerConditionViewModel::TypeProperty("TriggerConditionViewModel", "Type", ra::etoi(TriggerConditionType::Standard));
 const IntModelProperty TriggerConditionViewModel::SourceTypeProperty("TriggerConditionViewModel", "SourceType", ra::etoi(TriggerOperandType::Address));
 const IntModelProperty TriggerConditionViewModel::SourceSizeProperty("TriggerConditionViewModel", "SourceSize", ra::etoi(MemSize::EightBit));
-const IntModelProperty TriggerConditionViewModel::SourceValueProperty("TriggerConditionViewModel", "SourceValue", 0);
+const StringModelProperty TriggerConditionViewModel::SourceValueProperty("TriggerConditionViewModel", "SourceValue", L"0");
 const IntModelProperty TriggerConditionViewModel::OperatorProperty("TriggerConditionViewModel", "Operator", ra::etoi(TriggerOperatorType::Equals));
 const IntModelProperty TriggerConditionViewModel::TargetTypeProperty("TriggerConditionViewModel", "TargetType", ra::etoi(TriggerOperandType::Value));
 const IntModelProperty TriggerConditionViewModel::TargetSizeProperty("TriggerConditionViewModel", "TargetSize", ra::etoi(MemSize::ThirtyTwoBit));
-const IntModelProperty TriggerConditionViewModel::TargetValueProperty("TriggerConditionViewModel", "TargetValue", 0);
+const StringModelProperty TriggerConditionViewModel::TargetValueProperty("TriggerConditionViewModel", "TargetValue", L"0");
 const IntModelProperty TriggerConditionViewModel::CurrentHitsProperty("TriggerConditionViewModel", "CurrentHits", 0);
 const IntModelProperty TriggerConditionViewModel::RequiredHitsProperty("TriggerConditionViewModel", "RequiredHits", 0);
 const IntModelProperty TriggerConditionViewModel::TotalHitsProperty("TriggerConditionViewModel", "TotalHits", 0);
@@ -144,7 +144,7 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
     }
 }
 
-void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, unsigned int nValue) const
+void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, TriggerOperandType nType, MemSize nSize, const std::wstring& sValue) const
 {
     switch (nType)
     {
@@ -152,8 +152,44 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
             break;
 
         case TriggerOperandType::Value:
-            sBuffer.append(std::to_string(nValue));
+        {
+            unsigned int nValue = 0;
+            std::wstring sError;
+
+            if (sValue.length() > 2 && sValue.at(1) == 'x' && ra::ParseHex(sValue, 0xFFFFFFFF, nValue, sError))
+                sBuffer.append(std::to_string(nValue));
+            else if (ra::ParseUnsignedInt(sValue, 0xFFFFFFFF, nValue, sError))
+                sBuffer.append(std::to_string(nValue));
+            else
+                sBuffer.push_back('0');
             return;
+        }
+
+        case TriggerOperandType::Float:
+        {
+            float fValue = 0.0;
+            std::wstring sError;
+
+            if (ra::ParseFloat(sValue, fValue, sError))
+            {
+                std::string sFloat = std::to_string(fValue);
+                if (sFloat.find('.') != std::string::npos)
+                {
+                    while (sFloat.back() == '0')
+                        sFloat.pop_back();
+                    if (sFloat.back() == '.')
+                        sFloat.push_back('0');
+                }
+
+                sBuffer.push_back('f');
+                sBuffer.append(sFloat);
+            }
+            else
+            {
+                sBuffer.push_back('0');
+            }
+            return;
+        }
 
         case TriggerOperandType::Delta:
             sBuffer.push_back('d');
@@ -215,12 +251,80 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
             break;
     }
 
-    sBuffer.append(ra::ByteAddressToString(nValue), 2);
+    {
+        unsigned int nValue = 0;
+        std::wstring sError;
+
+        if (ra::ParseHex(sValue, 0xFFFFFFFF, nValue, sError))
+            sBuffer.append(ra::ByteAddressToString(nValue), 2);
+        else
+            sBuffer.push_back('0');
+    }
+}
+
+std::wstring FormatValue(rc_typed_value_t& pValue, TriggerOperandType nType)
+{
+    switch (nType)
+    {
+        case TriggerOperandType::Value:
+        {
+            rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
+            const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+                return std::to_wstring(pValue.value.u32);
+
+            return ra::StringPrintf(L"0x%02x", pValue.value.u32);
+        }
+
+        case TriggerOperandType::Float:
+        {
+            rc_typed_value_convert(&pValue, RC_VALUE_TYPE_FLOAT);
+            auto sFloat = std::to_wstring(pValue.value.f32);
+            if (sFloat.find('.') != std::string::npos)
+            {
+                while (sFloat.back() == '0')
+                    sFloat.pop_back();
+                if (sFloat.back() == '.')
+                    sFloat.push_back('0');
+            }
+            return sFloat;
+        }
+
+        default:
+            rc_typed_value_convert(&pValue, RC_VALUE_TYPE_UNSIGNED);
+            return ra::Widen(ra::ByteAddressToString(pValue.value.u32));
+            break;
+    }
+}
+
+void TriggerConditionViewModel::ChangeOperandType(const StringModelProperty& sValueProperty, TriggerOperandType nOldType, TriggerOperandType nNewType)
+{
+    const auto& sValue = GetValue(sValueProperty);
+    std::wstring sError;
+
+    rc_typed_value_t pValue{};
+    if (nOldType == TriggerOperandType::Float)
+    {
+        pValue.type = RC_VALUE_TYPE_FLOAT;
+        ra::ParseFloat(sValue, pValue.value.f32, sError);
+    }
+    else
+    {
+        pValue.type = RC_VALUE_TYPE_UNSIGNED;
+        if (sValue.length() > 2 && sValue.at(1) == 'x')
+            ra::ParseHex(sValue, 0xFFFFFFFF, pValue.value.u32, sError);
+        else
+            ra::ParseUnsignedInt(sValue, 0xFFFFFFFF, pValue.value.u32, sError);
+    }
+
+    SetValue(sValueProperty, FormatValue(pValue, nNewType));
 }
 
 void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty,
-    const IntModelProperty& pSizeProperty, const IntModelProperty& pValueProperty, const rc_operand_t& operand)
+    const IntModelProperty& pSizeProperty, const StringModelProperty& pValueProperty, const rc_operand_t& operand)
 {
+    rc_typed_value_t pValue{};
+
     const auto nType = static_cast<TriggerOperandType>(operand.type);
     SetValue(pTypeProperty, ra::etoi(nType));
 
@@ -228,7 +332,14 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
     {
         case TriggerOperandType::Value:
             SetValue(pSizeProperty, ra::etoi(MemSize::ThirtyTwoBit));
-            SetValue(pValueProperty, operand.value.num);
+            pValue.type = RC_VALUE_TYPE_UNSIGNED;
+            pValue.value.u32 = operand.value.num;
+            break;
+
+        case TriggerOperandType::Float:
+            SetValue(pSizeProperty, ra::etoi(MemSize::Float));
+            pValue.type = RC_VALUE_TYPE_FLOAT;
+            pValue.value.f32 = gsl::narrow_cast<float>(operand.value.dbl);
             break;
 
         case TriggerOperandType::Address:
@@ -238,14 +349,17 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
         {
             const auto nSize = ra::data::models::TriggerValidation::MapRcheevosMemSize(operand.size);
             SetValue(pSizeProperty, ra::etoi(nSize));
-            SetValue(pValueProperty, operand.value.memref->address);
+            pValue.type = RC_VALUE_TYPE_UNSIGNED;
+            pValue.value.u32 = operand.value.memref->address;
             break;
         }
 
         default:
-            assert(!"Unknown operand type");
+            Expects(!"Unknown operand type");
             break;
     }
+
+    SetValue(pValueProperty, FormatValue(pValue, nType));
 }
 
 void TriggerConditionViewModel::InitializeFrom(const rc_condition_t& pCondition)
@@ -265,12 +379,16 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
 {
     if (args.Property == SourceTypeProperty)
     {
-        if (ra::itoe<TriggerOperandType>(args.tNewValue) == TriggerOperandType::Value)
+        const auto nOldType = ra::itoe<TriggerOperandType>(args.tOldValue);
+        const auto nNewType = ra::itoe<TriggerOperandType>(args.tNewValue);
+        ChangeOperandType(SourceValueProperty, nOldType, nNewType);
+
+        if (!IsAddressType(nNewType))
         {
             SetValue(HasSourceSizeProperty, false);
-            SetSourceSize(MemSize::ThirtyTwoBit);
+            SetSourceSize(nNewType == TriggerOperandType::Value ? MemSize::ThirtyTwoBit : MemSize::Float);
         }
-        else if (ra::itoe<TriggerOperandType>(args.tOldValue) == TriggerOperandType::Value)
+        else if (!IsAddressType(nOldType))
         {
             SetSourceSize(GetTargetSize());
             SetValue(HasSourceSizeProperty, true);
@@ -278,12 +396,16 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     }
     else if (args.Property == TargetTypeProperty)
     {
-        if (ra::itoe<TriggerOperandType>(args.tNewValue) == TriggerOperandType::Value)
+        const auto nOldType = ra::itoe<TriggerOperandType>(args.tOldValue);
+        const auto nNewType = ra::itoe<TriggerOperandType>(args.tNewValue);
+        ChangeOperandType(TargetValueProperty, nOldType, nNewType);
+
+        if (!IsAddressType(nNewType))
         {
             SetValue(HasTargetSizeProperty, false);
-            SetTargetSize(MemSize::ThirtyTwoBit);
+            SetTargetSize(nNewType == TriggerOperandType::Value ? MemSize::ThirtyTwoBit : MemSize::Float);
         }
-        else if (ra::itoe<TriggerOperandType>(args.tOldValue) == TriggerOperandType::Value)
+        else if (!IsAddressType(ra::itoe<TriggerOperandType>(args.tOldValue)))
         {
             SetTargetSize(GetSourceSize());
             SetValue(HasTargetSizeProperty, GetValue(HasTargetProperty));
@@ -319,35 +441,81 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
 void TriggerConditionViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
 {
     if (args.Property == HasTargetProperty)
-        SetValue(HasTargetSizeProperty, args.tNewValue && GetTargetType() != TriggerOperandType::Value);
+        SetValue(HasTargetSizeProperty, args.tNewValue && IsAddressType(GetTargetType()));
 
     ViewModelBase::OnValueChanged(args);
 }
 
-std::wstring TriggerConditionViewModel::GetTooltip(const IntModelProperty& nProperty) const
+void TriggerConditionViewModel::SetSourceValue(unsigned int nValue)
+{
+    rc_typed_value_t pValue;
+    pValue.type = RC_VALUE_TYPE_UNSIGNED;
+    pValue.value.u32 = nValue;
+    SetValue(SourceValueProperty, FormatValue(pValue, GetSourceType()));
+}
+
+ra::ByteAddress TriggerConditionViewModel::GetSourceAddress() const
+{
+    unsigned int nValue = 0;
+    std::wstring sError;
+    ra::ParseHex(GetSourceValue(), 0xFFFFFFFF, nValue, sError);
+    return nValue;
+}
+
+void TriggerConditionViewModel::SetTargetValue(unsigned int nValue)
+{
+    rc_typed_value_t pValue;
+    pValue.type = RC_VALUE_TYPE_UNSIGNED;
+    pValue.value.u32 = nValue;
+    SetValue(TargetValueProperty, FormatValue(pValue, GetTargetType()));
+}
+
+void TriggerConditionViewModel::SetTargetValue(float fValue)
+{
+    rc_typed_value_t pValue;
+    pValue.type = RC_VALUE_TYPE_FLOAT;
+    pValue.value.f32 = fValue;
+    SetValue(TargetValueProperty, FormatValue(pValue, GetTargetType()));
+}
+
+ra::ByteAddress TriggerConditionViewModel::GetTargetAddress() const
+{
+    unsigned int nValue = 0;
+    std::wstring sError;
+    ra::ParseHex(GetTargetValue(), 0xFFFFFFFF, nValue, sError);
+    return nValue;
+}
+
+std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nProperty) const
 {
     if (nProperty == SourceValueProperty)
     {
         const auto nType = GetSourceType();
         if (nType == TriggerOperandType::Value)
-            return GetValueTooltip(GetSourceValue());
+            return GetValueTooltip(GetSourceAddress());
+
+        if (nType == TriggerOperandType::Float)
+            return L"";
 
         if (IsIndirect())
-            return GetAddressTooltip(GetIndirectAddress(GetSourceValue()), true);
+            return GetAddressTooltip(GetIndirectAddress(GetSourceAddress()), true);
 
-        return GetAddressTooltip(GetSourceValue(), false);
+        return GetAddressTooltip(GetSourceAddress(), false);
     }
 
     if (nProperty == TargetValueProperty)
     {
         const auto nType = GetTargetType();
         if (nType == TriggerOperandType::Value)
-            return GetValueTooltip(GetTargetValue());
+            return GetValueTooltip(GetTargetAddress());
+
+        if (nType == TriggerOperandType::Float)
+            return L"";
 
         if (IsIndirect())
-            return GetAddressTooltip(GetIndirectAddress(GetTargetValue()), true);
+            return GetAddressTooltip(GetIndirectAddress(GetTargetAddress()), true);
 
-        return GetAddressTooltip(GetTargetValue(), false);
+        return GetAddressTooltip(GetTargetAddress(), false);
     }
 
     return L"";
@@ -501,6 +669,19 @@ bool TriggerConditionViewModel::IsModifying(TriggerConditionType nType) noexcept
 
         default:
             return false;
+    }
+}
+
+bool TriggerConditionViewModel::IsAddressType(TriggerOperandType nType) noexcept
+{
+    switch (nType)
+    {
+        case TriggerOperandType::Value:
+        case TriggerOperandType::Float:
+            return false;
+
+        default:
+            return true;
     }
 }
 

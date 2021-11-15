@@ -128,56 +128,79 @@ protected:
     const BoolModelProperty& m_pIsHiddenProperty;
 };
 
-class ValueColumnBinding : public ra::ui::win32::bindings::GridNumberColumnBinding
+class ValueColumnBinding : public ra::ui::win32::bindings::GridTextColumnBinding
 {
 public:
-    ValueColumnBinding(const IntModelProperty& pBoundProperty, const IntModelProperty& pTypeProperty) noexcept
-        : ra::ui::win32::bindings::GridNumberColumnBinding(pBoundProperty), m_pTypeProperty(&pTypeProperty)
+    ValueColumnBinding(const StringModelProperty& pBoundProperty, const IntModelProperty& pTypeProperty) noexcept
+        : ra::ui::win32::bindings::GridTextColumnBinding(pBoundProperty), m_pTypeProperty(&pTypeProperty)
     {
     }
 
-    std::wstring GetText(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
-    {
-        const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
-
-        if (IsAddressType(vmItems, nIndex))
-            return ra::Widen(ra::ByteAddressToString(nValue));
-
-        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
-            return std::to_wstring(ra::to_unsigned(nValue));
-
-        return ra::StringPrintf(L"0x%02x", nValue);
-    }
+    void SetMaximum(unsigned int nValue) noexcept { m_nMaximum = nValue; }
 
     bool SetText(ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex, const std::wstring& sValue) override
     {
-        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-        if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal) ||
-            ra::StringStartsWith(sValue, L"0x") || IsAddressType(vmItems, nIndex))
+        const auto nOperandType = ra::itoe<ra::ui::viewmodels::TriggerOperandType>(vmItems.GetItemValue(nIndex, *m_pTypeProperty));
+        switch (nOperandType)
         {
-            std::wstring sError;
-            unsigned int nValue = 0U;
-
-            if (!ParseHex(sValue, m_nMaximum, nValue, sError))
+            case ra::ui::viewmodels::TriggerOperandType::Float:
             {
-                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
-                return false;
+                std::wstring sError;
+                float fValue = 0.0;
+
+                if (!ParseFloat(sValue, fValue, sError))
+                {
+                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
+                    return false;
+                }
+
+                vmItems.SetItemValue(nIndex, *m_pBoundProperty, sValue);
+                return true;
             }
 
-            vmItems.SetItemValue(nIndex, *m_pBoundProperty, ra::to_signed(nValue));
-            return true;
-        }
+            case ra::ui::viewmodels::TriggerOperandType::Value:
+            {
+                const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                if (pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal))
+                {
+                    std::wstring sError;
+                    unsigned int nValue = 0U;
 
-        return GridNumberColumnBinding::SetText(vmItems, nIndex, sValue);
+                    if (!ParseUnsignedInt(sValue, m_nMaximum, nValue, sError))
+                    {
+                        ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
+                        return false;
+                    }
+
+                    vmItems.SetItemValue(nIndex, *m_pBoundProperty, sValue);
+                    return true;
+                }
+            }
+            _FALLTHROUGH;
+
+            default:
+            {
+                std::wstring sError;
+                unsigned int nValue = 0U;
+
+                if (!ParseHex(sValue, m_nMaximum, nValue, sError))
+                {
+                    ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Invalid Input", sError);
+                    return false;
+                }
+
+                vmItems.SetItemValue(nIndex, *m_pBoundProperty, sValue);
+                return true;
+            }
+        }
     }
 
-    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept override
+    bool DependsOn(const ra::ui::IntModelProperty& pProperty) const override
     {
         if (pProperty == *m_pTypeProperty)
             return true;
 
-        return GridNumberColumnBinding::DependsOn(pProperty);
+        return GridTextColumnBinding::DependsOn(pProperty);
     }
 
     std::wstring GetTooltip(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const override
@@ -195,7 +218,12 @@ public:
     {
         if (IsAddressType(vmItems, nIndex))
         {
-            auto nAddress = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+            unsigned int nAddress;
+            std::wstring sError;
+            auto sAddress = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
+            if (!ra::ParseHex(sAddress, 0xFFFFFFFF, nAddress, sError))
+                return false;
+
             if (vmItems.GetItemValue(nIndex, TriggerConditionViewModel::IsIndirectProperty))
             {
                 const auto* pConditionViewModel = dynamic_cast<const TriggerConditionViewModel*>(vmItems.GetViewModelAt(nIndex));
@@ -212,23 +240,25 @@ public:
             return true;
         }
 
-        return GridNumberColumnBinding::HandleRightClick(vmItems, nIndex);
+        return GridTextColumnBinding::HandleRightClick(vmItems, nIndex);
     }
 
 protected:
     bool IsAddressType(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) const
     {
         const auto nOperandType = ra::itoe<ra::ui::viewmodels::TriggerOperandType>(vmItems.GetItemValue(nIndex, *m_pTypeProperty));
-        return (nOperandType != ra::ui::viewmodels::TriggerOperandType::Value);
+        return (nOperandType != ra::ui::viewmodels::TriggerOperandType::Value &&
+            nOperandType != ra::ui::viewmodels::TriggerOperandType::Float);
     }
 
     const IntModelProperty* m_pTypeProperty = nullptr;
+    unsigned int m_nMaximum = 0xFFFFFFFF;
 };
 
 class TargetValueColumnBinding : public ValueColumnBinding
 {
 public:
-    TargetValueColumnBinding(const IntModelProperty& pBoundProperty, const IntModelProperty& pTypeProperty) noexcept
+    TargetValueColumnBinding(const StringModelProperty& pBoundProperty, const IntModelProperty& pTypeProperty) noexcept
         : ValueColumnBinding(pBoundProperty, pTypeProperty)
     {
     }

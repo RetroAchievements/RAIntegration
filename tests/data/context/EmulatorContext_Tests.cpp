@@ -2,6 +2,7 @@
 
 #include "data\context\EmulatorContext.hh"
 
+#include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
 
 #include "tests\mocks\MockAchievementRuntime.hh"
@@ -64,6 +65,20 @@ private:
         void MockVersions(const std::string& sClientVersion, const std::string& sServerVersion)
         {
             MockVersions(sClientVersion, sServerVersion, sServerVersion);
+        }
+
+        ra::data::models::AchievementModel& MockAchievement()
+        {
+            auto& pAch = mockGameContext.Assets().NewAchievement();
+            pAch.SetCategory(ra::data::models::AssetCategory::Core);
+            pAch.SetID(1U);
+            pAch.SetName(L"AchievementTitle");
+            pAch.SetDescription(L"AchievementDescription");
+            pAch.SetBadge(L"12345");
+            pAch.SetPoints(5);
+            pAch.SetState(ra::data::models::AssetState::Active);
+            pAch.UpdateServerCheckpoint();
+            return pAch;
         }
     };
 
@@ -1509,6 +1524,53 @@ public:
 
         for (int i = 0; i < nBookmarks; ++i)
             Assert::IsTrue(pBookmarks.Bookmarks().GetItemAt(i)->GetBehavior() == ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::None);
+    }
+
+    TEST_METHOD(TestEnableHardcoreModeDisablesModifiedAssets)
+    {
+        EmulatorContextHarness emulator;
+        emulator.MockVersions("0.57", "0.57");
+        emulator.mockGameContext.SetGameId(1U);
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            return ra::ui::DialogResult::Yes;
+        });
+
+        auto& ach0 = emulator.MockAchievement(); // 0 = Unmodified
+        ach0.SetState(ra::data::models::AssetState::Active);
+        auto& ach1 = emulator.MockAchievement(); // 1 = Modified
+        ach1.SetName(L"New Name");
+        ach1.SetState(ra::data::models::AssetState::Active);
+        auto& ach2 = emulator.MockAchievement(); // 2 = New
+        ach2.SetNew();
+        ach2.SetState(ra::data::models::AssetState::Active);
+        auto& ach3 = emulator.MockAchievement(); // 3 = Unpublished
+        ach3.SetName(L"Newer Name");
+        ach3.UpdateLocalCheckpoint();
+        ach3.SetState(ra::data::models::AssetState::Active);
+
+        Assert::AreEqual(ra::data::models::AssetChanges::None, emulator.mockGameContext.Assets().GetItemAt(0)->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::Modified, emulator.mockGameContext.Assets().GetItemAt(1)->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::New, emulator.mockGameContext.Assets().GetItemAt(2)->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, emulator.mockGameContext.Assets().GetItemAt(3)->GetChanges());
+
+        Assert::AreEqual(ra::data::models::AssetState::Active, emulator.mockGameContext.Assets().GetItemAt(0)->GetState());
+        Assert::AreEqual(ra::data::models::AssetState::Active, emulator.mockGameContext.Assets().GetItemAt(1)->GetState());
+        Assert::AreEqual(ra::data::models::AssetState::Active, emulator.mockGameContext.Assets().GetItemAt(2)->GetState());
+        Assert::AreEqual(ra::data::models::AssetState::Active, emulator.mockGameContext.Assets().GetItemAt(3)->GetState());
+
+        Assert::IsTrue(emulator.EnableHardcoreMode());
+
+        Assert::AreEqual(ra::data::models::AssetChanges::None, emulator.mockGameContext.Assets().GetItemAt(0)->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::Modified, emulator.mockGameContext.Assets().GetItemAt(1)->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::New, emulator.mockGameContext.Assets().GetItemAt(2)->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, emulator.mockGameContext.Assets().GetItemAt(3)->GetChanges());
+
+        Assert::AreEqual(ra::data::models::AssetState::Active, emulator.mockGameContext.Assets().GetItemAt(0)->GetState());
+        Assert::AreEqual(ra::data::models::AssetState::Inactive, emulator.mockGameContext.Assets().GetItemAt(1)->GetState());
+        Assert::AreEqual(ra::data::models::AssetState::Inactive, emulator.mockGameContext.Assets().GetItemAt(2)->GetState());
+        Assert::AreEqual(ra::data::models::AssetState::Inactive, emulator.mockGameContext.Assets().GetItemAt(3)->GetState());
     }
 };
 

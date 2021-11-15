@@ -639,6 +639,8 @@ static void OnStateRestored()
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pAssets.Count()); ++nIndex)
     {
         auto* pAsset = pAssets.GetItemAt(nIndex);
+        Expects(pAsset != nullptr);
+
         switch (pAsset->GetType())
         {
             case ra::data::models::AssetType::Achievement:

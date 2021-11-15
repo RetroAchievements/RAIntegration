@@ -299,6 +299,13 @@ bool LeaderboardModel::Deserialize(ra::Tokenizer& pTokenizer)
     return true;
 }
 
+std::string LeaderboardModel::FormatScore(int nValue) const
+{
+    char buffer[32];
+    rc_format_value(buffer, sizeof(buffer), nValue, ra::etoi(GetValueFormat()));
+    return std::string(buffer);
+}
+
 } // namespace models
 } // namespace data
 } // namespace ra

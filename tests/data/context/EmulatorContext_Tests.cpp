@@ -619,8 +619,9 @@ public:
         bool bWasReset = false;
         emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
-        auto& pLeaderboard = emulator.mockGameContext.NewLeaderboard(32U);
-        pLeaderboard.SetActive(true);
+        auto& pLeaderboard = emulator.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(32U);
+        pLeaderboard.SetState(ra::data::models::AssetState::Active);
         Assert::IsTrue(pLeaderboard.IsActive());
 
         bool bUnlocksRequested = false;
@@ -703,7 +704,8 @@ public:
             return true;
         });
 
-        const auto& pLeaderboard = emulator.mockGameContext.NewLeaderboard(32U);
+        auto& pLeaderboard = emulator.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(32U);
         Assert::IsFalse(pLeaderboard.IsActive());
 
         bool bWasReset = false;
@@ -848,7 +850,8 @@ public:
             return true;
         });
 
-        const auto& pLeaderboard = emulator.mockGameContext.NewLeaderboard(32U);
+        auto& pLeaderboard = emulator.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(32U);
         Assert::IsFalse(pLeaderboard.IsActive());
 
         bool bWasReset = false;

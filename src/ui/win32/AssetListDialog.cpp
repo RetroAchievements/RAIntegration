@@ -192,16 +192,12 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
         ra::ui::viewmodels::LookupItemViewModel::LabelProperty);
     m_bindAssetTypeFilters.BindSelectedItem(AssetListViewModel::AssetTypeFilterProperty);
 
-#ifdef ASSET_ICONS
     constexpr int nOffset = 1;
 
     auto pIconColumn = std::make_unique<IconColumnBinding>(AssetModelBase::TypeProperty);
     pIconColumn->SetHeader(L"Type");
     pIconColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 24);
     m_bindAssets.BindColumn(0, std::move(pIconColumn));
-#else
-    constexpr int nOffset = 0;
-#endif
 
     auto pIdColumn = std::make_unique<IdColumnBinding>(AssetListViewModel::AssetSummaryViewModel::IdProperty);
     pIdColumn->SetHeader(L"ID");
@@ -300,9 +296,7 @@ BOOL AssetListDialog::OnInitDialog()
     m_bindSpecialFilters.SetControl(*this, IDC_RA_SPECIAL_FILTER);
     m_bindAssetTypeFilters.SetControl(*this, IDC_RA_TYPE_FILTER);
 
-#ifdef ASSET_ICONS
     m_bindAssets.InitializeTooltips(std::chrono::milliseconds(500));
-#endif
 
     return DialogBase::OnInitDialog();
 }

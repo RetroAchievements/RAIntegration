@@ -449,7 +449,7 @@ static void ProcessAchievements()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardStarted:
             {
-                const auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
+                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
                 if (pLeaderboard)
                 {
                     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -458,13 +458,13 @@ static void ProcessAchievements()
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
                         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
                         const int nPopup = pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardStarted,
-                            L"Leaderboard attempt started", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
+                            L"Leaderboard attempt started", pLeaderboard->GetName(), pLeaderboard->GetDescription());
                     }
 
                     if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker) != ra::ui::viewmodels::PopupLocation::None)
                     {
                         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                        auto& pScoreTracker = pOverlayManager.AddScoreTracker(pLeaderboard->ID());
+                        auto& pScoreTracker = pOverlayManager.AddScoreTracker(pLeaderboard->GetID());
                         const auto sDisplayText = pLeaderboard->FormatScore(pChange.nValue);
                         pScoreTracker.SetDisplayText(ra::Widen(sDisplayText));
                     }
@@ -475,7 +475,7 @@ static void ProcessAchievements()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardUpdated:
             {
-                const auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
+                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
                 if (pLeaderboard)
                 {
                     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -492,7 +492,7 @@ static void ProcessAchievements()
 
             case ra::services::AchievementRuntime::ChangeType::LeaderboardCanceled:
             {
-                const auto* pLeaderboard = pGameContext.FindLeaderboard(pChange.nId);
+                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
                 if (pLeaderboard)
                 {
                     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -502,11 +502,11 @@ static void ProcessAchievements()
 
                         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
                         const int nPopup = pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardCanceled,
-                            L"Leaderboard attempt failed", ra::Widen(pLeaderboard->Title()), ra::Widen(pLeaderboard->Description()));
+                            L"Leaderboard attempt failed", pLeaderboard->GetName(), pLeaderboard->GetDescription());
                     }
 
                     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                    pOverlayManager.RemoveScoreTracker(pLeaderboard->ID());
+                    pOverlayManager.RemoveScoreTracker(pLeaderboard->GetID());
                 }
 
                 break;

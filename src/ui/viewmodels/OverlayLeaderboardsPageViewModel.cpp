@@ -26,22 +26,24 @@ void OverlayLeaderboardsPageViewModel::Refresh()
 
     // leaderboard list
     size_t nNumberOfLeaderboards = 0;
-
-    pGameContext.EnumerateLeaderboards([this, &nNumberOfLeaderboards](const RA_Leaderboard& pLeaderboard)
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
     {
-        ItemViewModel* pvmLeaderboard = m_vItems.GetItemAt(nNumberOfLeaderboards);
-        if (pvmLeaderboard == nullptr)
+        const auto* pLeaderboard = dynamic_cast<const ra::data::models::LeaderboardModel*>(pGameContext.Assets().GetItemAt(nIndex));
+        if (pLeaderboard != nullptr)
         {
-            pvmLeaderboard = &m_vItems.Add();
-            Ensures(pvmLeaderboard != nullptr);
-        }
+            ItemViewModel* pvmLeaderboard = m_vItems.GetItemAt(nNumberOfLeaderboards);
+            if (pvmLeaderboard == nullptr)
+            {
+                pvmLeaderboard = &m_vItems.Add();
+                Ensures(pvmLeaderboard != nullptr);
+            }
 
-        pvmLeaderboard->SetId(pLeaderboard.ID());
-        pvmLeaderboard->SetLabel(ra::Widen(pLeaderboard.Title()));
-        pvmLeaderboard->SetDetail(ra::Widen(pLeaderboard.Description()));
-        ++nNumberOfLeaderboards;
-        return true;
-    });
+            pvmLeaderboard->SetId(pLeaderboard->GetID());
+            pvmLeaderboard->SetLabel(pLeaderboard->GetName());
+            pvmLeaderboard->SetDetail(pLeaderboard->GetDescription());
+            ++nNumberOfLeaderboards;
+        }
+    }
 
     while (m_vItems.Count() > nNumberOfLeaderboards)
         m_vItems.RemoveAt(m_vItems.Count() - 1);
@@ -94,7 +96,7 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         return;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pLeaderboard = pGameContext.FindLeaderboard(vmItem.GetId());
+    const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(vmItem.GetId());
     if (pLeaderboard == nullptr)
         return;
 
@@ -111,7 +113,7 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
             return;
 
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const RA_Leaderboard* pLeaderboard = pGameContext.FindLeaderboard(nId);
+        const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(nId);
         if (!pLeaderboard)
             return;
 

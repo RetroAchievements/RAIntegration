@@ -3602,6 +3602,70 @@ public:
         Assert::AreEqual(1, pLocalBadges->GetReferenceCount(sBadge2, true));
     }
 
+    TEST_METHOD(TestCloneLeaderboard)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(22U);
+        vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::Leaderboard);
+        vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Core, L"Leaderboard1");
+        auto* vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Assert::IsNotNull(vmLeaderboard);
+        Ensures(vmLeaderboard != nullptr);
+        vmLeaderboard->SetDescription(L"Desc1");
+        vmLeaderboard->SetStartTrigger("0=1");
+        vmLeaderboard->SetSubmitTrigger("0xH1234=1");
+        vmLeaderboard->SetCancelTrigger("0xH1234=2");
+        vmLeaderboard->SetValueDefinition("0xH5555*2");
+        vmLeaderboard->SetValueFormat(ra::data::ValueFormat::Score);
+        vmLeaderboard->SetLowerIsBetter(true);
+
+        Assert::AreEqual({ 1U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
+        {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        vmAssetList.CloneSelected();
+
+        // new Local leaderboard should be created and focused
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+
+        const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+        Assert::AreEqual(std::wstring(L"Leaderboard1 (copy)"), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
+        Assert::AreEqual({ 111000001U }, pAsset->GetId());
+
+        const auto* pLeaderboard = vmAssetList.mockGameContext.Assets().FindLeaderboard(pAsset->GetId());
+        Expects(pLeaderboard != nullptr);
+        Assert::AreEqual(std::wstring(L"Desc1"), pLeaderboard->GetDescription());
+        Assert::AreEqual(std::string("0=1"), pLeaderboard->GetStartTrigger());
+        Assert::AreEqual(std::string("0xH1234=1"), pLeaderboard->GetSubmitTrigger());
+        Assert::AreEqual(std::string("0xH1234=2"), pLeaderboard->GetCancelTrigger());
+        Assert::AreEqual(std::string("0xH5555*2"), pLeaderboard->GetValueDefinition());
+        Assert::AreEqual(ra::data::ValueFormat::Score, pLeaderboard->GetValueFormat());
+        Assert::IsTrue(pLeaderboard->IsLowerBetter());
+
+        // and loaded in the editor, which should be shown (local achievement will always have ID 0)
+        Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsAssetLoaded());
+        Assert::IsTrue(bEditorShown);
+        bEditorShown = false;
+    }
+
     TEST_METHOD(TestResetSelectedAllUnmodified)
     {
         AssetListViewModelHarness vmAssetList;

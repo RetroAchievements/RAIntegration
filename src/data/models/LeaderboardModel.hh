@@ -123,6 +123,11 @@ public:
     void SetValueFormat(ValueFormat nValue) { SetValue(ValueFormatProperty, ra::etoi(nValue)); }
 
     /// <summary>
+    /// Converts a raw score into a display string.
+    /// </summary>
+    std::string FormatScore(int nValue) const;
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not lower values are better.
     /// </summary>
     static const BoolModelProperty LowerIsBetterProperty;

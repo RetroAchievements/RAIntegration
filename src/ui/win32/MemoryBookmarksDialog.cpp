@@ -47,6 +47,33 @@ void MemoryBookmarksDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); 
 
 // ------------------------------------
 
+MemoryBookmarksDialog::BookmarksGridBinding::BookmarksGridBinding(ViewModelBase& vmViewModel)
+    : ra::ui::win32::bindings::GridBinding(vmViewModel)
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    pEmulatorContext.AddNotifyTarget(*this);
+}
+
+MemoryBookmarksDialog::BookmarksGridBinding::~BookmarksGridBinding()
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    pEmulatorContext.RemoveNotifyTarget(*this);
+}
+
+void MemoryBookmarksDialog::BookmarksGridBinding::OnTotalMemorySizeChanged()
+{
+    for (auto& pColumn : m_vColumns)
+    {
+        auto* pAddressColumn = dynamic_cast<ra::ui::win32::bindings::GridAddressColumnBinding*>(pColumn.get());
+        if (pAddressColumn != nullptr)
+            pAddressColumn->UpdateWidth();
+    }
+
+    UpdateLayout();
+}
+
+// ------------------------------------
+
 class GridBookmarkValueColumnBinding : public ra::ui::win32::bindings::GridTextColumnBinding
 {
 public:
@@ -80,6 +107,8 @@ public:
         return true;
     }
 };
+
+// ------------------------------------
 
 class GridBookmarkFormatColumnBinding : public ra::ui::win32::bindings::GridLookupColumnBinding
 {
@@ -131,6 +160,8 @@ private:
         }
     }
 };
+
+// ------------------------------------
 
 MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryBookmarks)
     : DialogBase(vmMemoryBookmarks),

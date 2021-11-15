@@ -85,6 +85,8 @@ protected:
 
     // ViewModelBase::NotifyTarget
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    using ViewModelBase::NotifyTarget::OnViewModelBoolValueChanged;
+    using ViewModelBase::NotifyTarget::OnViewModelStringValueChanged;
 
     // ViewModelCollectionBase::NotifyTarget
     void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;

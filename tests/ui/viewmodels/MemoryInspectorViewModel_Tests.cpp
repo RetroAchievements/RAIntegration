@@ -461,6 +461,34 @@ public:
         Assert::IsTrue(inspector.CanModifyCodeNotes());
     }
 
+    TEST_METHOD(TestActiveGameChangedClearsSearchResults)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId({ 3 });
+
+        std::array<uint8_t, 32> memory{};
+        for (size_t i = 0; i < memory.size(); ++i)
+            memory.at(i) = gsl::narrow_cast<unsigned char>(i);
+
+        inspector.mockEmulatorContext.MockMemory(memory);
+        inspector.Search().BeginNewSearch();
+
+        inspector.Search().SetComparisonType(ComparisonType::GreaterThan);
+        inspector.Search().SetValueType(ra::services::SearchFilterType::InitialValue);
+
+        memory.at(10) = 20;
+        memory.at(20) = 30;
+        inspector.Search().ApplyFilter();
+        Assert::AreEqual({ 2U }, inspector.Search().GetResultCount());
+        Assert::AreEqual({ 2U }, inspector.Search().Results().Count());
+
+        inspector.mockGameContext.SetGameId({ 4 });
+        inspector.mockGameContext.NotifyActiveGameChanged();
+
+        Assert::AreEqual({ 0U }, inspector.Search().GetResultCount());
+        Assert::AreEqual({ 0U }, inspector.Search().Results().Count());
+    }
+
     TEST_METHOD(TestEndGameLoad)
     {
         MemoryInspectorViewModelHarness inspector;

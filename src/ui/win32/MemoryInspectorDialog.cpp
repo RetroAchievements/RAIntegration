@@ -74,7 +74,8 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnLvnItemChanged(const LPN
 
 void MemoryInspectorDialog::SearchResultsGridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args)
 {
-    if (args.Property == MemorySearchViewModel::ResultMemSizeProperty)
+    if (args.Property == MemorySearchViewModel::ResultMemSizeProperty ||
+        args.Property == MemorySearchViewModel::TotalMemorySizeProperty)
     {
         int nWidth = 0;
         const auto& vmMemory = GetViewModel<MemorySearchViewModel>();
@@ -90,11 +91,9 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnViewModelIntValueChanged
         m_vColumns.at(1)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
 
         // address column
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        nMaxChars = (pEmulatorContext.TotalMemorySize() > 0x10000) ? 8 : 6; // 0x123456 or 0x1234
+        nWidth = ra::ui::win32::bindings::GridAddressColumnBinding::CalculateWidth();
         if (nSize == MemSize::Nibble_Lower)
-            ++nMaxChars; // 0x1234L
-        nWidth = (nCharWidth * nMaxChars) + nPadding * 2;
+            nWidth += nCharWidth; // 0x1234L
         m_vColumns.at(0)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
 
         UpdateLayout();

@@ -144,6 +144,9 @@ constexpr unsigned int MemSizeBytes(MemSize nSize)
 
 std::wstring MemSizeFormat(unsigned nValue, MemSize nSize, MemFormat nFormat);
 
+unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept;
+float U32ToFloat(unsigned nValue, MemSize nFloatType) noexcept;
+
 } // namespace data
 } // namespace ra
 

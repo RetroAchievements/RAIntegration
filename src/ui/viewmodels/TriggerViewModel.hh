@@ -181,6 +181,7 @@ private:
 
     protected:
         void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
+        void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
         void OnViewModelAdded(gsl::index nIndex) override;
         void OnViewModelRemoved(gsl::index nIndex) override;
         void OnEndViewModelCollectionUpdate() override;

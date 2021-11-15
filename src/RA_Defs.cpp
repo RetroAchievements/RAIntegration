@@ -84,5 +84,61 @@ std::wstring MemSizeFormat(unsigned nValue, MemSize nSize, MemFormat nFormat)
     }
 }
 
+unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept
+{
+    // this leverages the fact that Windows uses IEE754 floats
+    union u
+    {
+        float fValue;
+        unsigned nValue;
+    } uUnion;
+
+    uUnion.fValue = fValue;
+    if (nFloatType == MemSize::Float)
+        return uUnion.nValue;
+
+    // MBF32 puts the sign after the exponent, uses a 129 base instead of 127, and stores in big endian
+    unsigned nValue = ((uUnion.nValue & 0x007FFFFF)) | // mantissa is unmoved
+        ((uUnion.nValue & 0x7F800000) << 1) | // exponent is shifted one bit left
+        ((uUnion.nValue & 0x80000000) >> 8);  // sign is shifted eight bits right
+
+    nValue += 0x02000000; // adjust to 129 base
+
+    return ((nValue & 0xFF000000) >> 24) | // convert to big endian
+        ((nValue & 0x00FF0000) >> 8) |
+        ((nValue & 0x0000FF00) << 8) |
+        ((nValue & 0x000000FF) << 24);
+}
+
+float U32ToFloat(unsigned nValue, MemSize nFloatType) noexcept
+{
+    // this leverages the fact that Windows uses IEE754 floats
+    union u
+    {
+        float fValue;
+        unsigned nValue;
+    } uUnion;
+
+    uUnion.nValue = nValue;
+
+    if (nFloatType != MemSize::Float)
+    {
+        nValue = ((nValue & 0xFF000000) >> 24) | // convert to big endian
+            ((nValue & 0x00FF0000) >> 8) |
+            ((nValue & 0x0000FF00) << 8) |
+            ((nValue & 0x000000FF) << 24);
+
+        // MBF32 puts the sign after the exponent, uses a 129 base instead of 127, and stores in big endian
+        nValue -= 0x02000000; // adjust to 129 base
+        nValue = ((nValue & 0x007FFFFF)) | // mantissa is unmoved
+            ((nValue & 0xFF000000) >> 1) | // exponent is shifted one bit right
+            ((nValue & 0x00800000) << 8);  // sign is shifted eight bits left
+
+        uUnion.nValue = nValue;
+    }
+
+    return uUnion.fValue;
+}
+
 } /* namespace data */
 } /* namespace ra */

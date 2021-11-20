@@ -49,6 +49,15 @@ static std::wstring U32ToFloatString(unsigned nValue, char nFloatType)
     value.value.u32 = nValue;
     rc_transform_memref_value(&value, nFloatType);
 
+    if (value.value.f32 < 0.000001)
+    {
+        if (value.value.f32 > 0.0)
+            return ra::StringPrintf(L"%e", value.value.f32);
+
+        if (value.value.f32 < 0.0 && value.value.f32 > -0.000001)
+            return ra::StringPrintf(L"%e", value.value.f32);
+    }
+
     std::wstring sValue = ra::StringPrintf(L"%f", value.value.f32);
     while (sValue.back() == L'0')
         sValue.pop_back();

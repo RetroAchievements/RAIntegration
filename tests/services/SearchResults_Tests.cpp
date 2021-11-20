@@ -1055,6 +1055,31 @@ public:
         Assert::AreEqual(0x1234AB55U, result.nValue);
     }
 
+    TEST_METHOD(TestInitializeFromResultsThirtyTwoBitBigEndianLessThanPrevious)
+    {
+        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(0U, 5U, ra::services::SearchType::ThirtyTwoBitBigEndian);
+        Assert::AreEqual({ 2U }, results1.MatchingAddressCount());
+
+        memory.at(4) = 0x55;
+        SearchResults results;
+        results.Initialize(results1, ComparisonType::LessThan, ra::services::SearchFilterType::LastKnownValue, L"");
+
+        Assert::AreEqual({ 1U }, results.MatchingAddressCount());
+        Assert::IsFalse(results.ContainsAddress(0U));
+        Assert::IsTrue(results.ContainsAddress(1U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(1U, result.nAddress);
+        Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, result.nSize);
+        Assert::AreEqual(0x1234AB55U, result.nValue);
+    }
+
     TEST_METHOD(TestInitializeFromResultsFourBitNotEqualsPrevious)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
@@ -1319,6 +1344,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(35U));
         Assert::IsFalse(results.ContainsAddress(36U));
 
+        // nValue for ASCII text is the first byte of the string. use FormattedValue to get the whole string
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
@@ -1329,6 +1355,70 @@ public:
         Assert::AreEqual(35U, result.nAddress);
         Assert::AreEqual(MemSize::Text, result.nSize);
         Assert::AreEqual({ '.' }, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromMemoryFloat)
+    {
+        std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::Float);
+        Assert::AreEqual({ 5U }, results.MatchingAddressCount());
+
+        Assert::IsTrue(results.ContainsAddress(0U));
+        Assert::IsTrue(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsTrue(results.ContainsAddress(3U));
+        Assert::IsTrue(results.ContainsAddress(4U));
+        Assert::IsFalse(results.ContainsAddress(5U));
+        Assert::IsFalse(results.ContainsAddress(6U));
+        Assert::IsFalse(results.ContainsAddress(7U));
+
+        // nValue is an IEE-754 encoded float
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(0U, result.nAddress);
+        Assert::AreEqual(MemSize::Float, result.nSize);
+        Assert::AreEqual(0xC0000000U, result.nValue);
+
+        Assert::IsTrue(results.GetMatchingAddress(4U, result));
+        Assert::AreEqual(4U, result.nAddress);
+        Assert::AreEqual(MemSize::Float, result.nSize);
+        Assert::AreEqual(0x41460000U, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromMemoryMBF32)
+    {
+        std::array<unsigned char, 8> memory{ 0x87, 0x46, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00 }; // 99.0, -0.5
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::MBF32);
+        Assert::AreEqual({ 5U }, results.MatchingAddressCount());
+
+        Assert::IsTrue(results.ContainsAddress(0U));
+        Assert::IsTrue(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsTrue(results.ContainsAddress(3U));
+        Assert::IsTrue(results.ContainsAddress(4U));
+        Assert::IsFalse(results.ContainsAddress(5U));
+        Assert::IsFalse(results.ContainsAddress(6U));
+        Assert::IsFalse(results.ContainsAddress(7U));
+
+        // nValue is an MBF32 encoded float
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(0U, result.nAddress);
+        Assert::AreEqual(MemSize::MBF32, result.nSize);
+        Assert::AreEqual(0x00004687U, result.nValue);
+
+        Assert::IsTrue(results.GetMatchingAddress(4U, result));
+        Assert::AreEqual(4U, result.nAddress);
+        Assert::AreEqual(MemSize::MBF32, result.nSize);
+        Assert::AreEqual(0x00008080U, result.nValue);
     }
 
     TEST_METHOD(TestInitializeFromResultsAsciiText)
@@ -1478,6 +1568,99 @@ public:
         Assert::AreEqual(30U, result.nAddress); // shore
     }
 
+    TEST_METHOD(TestInitializeFromResultsFloatEqualsConstant)
+    {
+        std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::Float);
+        Assert::AreEqual({ 5U }, results.MatchingAddressCount());
+
+        SearchResults results2;
+        results2.Initialize(results, ComparisonType::Equals, SearchFilterType::Constant, L"-2");
+        Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
+
+        // nValue is an IEE-754 encoded float
+        SearchResults::Result result;
+        Assert::IsTrue(results2.GetMatchingAddress(0U, result));
+        Assert::AreEqual(0U, result.nAddress);
+        Assert::AreEqual(MemSize::Float, result.nSize);
+        Assert::AreEqual(0xC0000000U, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromResultsFloatGreaterThanLast)
+    {
+        std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::Float);
+        Assert::AreEqual({ 5U }, results.MatchingAddressCount());
+
+        memory.at(3) = 0xBF; // -2.0 -> -1.0
+        memory.at(2) = 0x80;
+
+        SearchResults results2;
+        results2.Initialize(results, ComparisonType::GreaterThan, SearchFilterType::LastKnownValue, L"");
+        Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
+
+        // nValue is an IEE-754 encoded float
+        SearchResults::Result result;
+        Assert::IsTrue(results2.GetMatchingAddress(0U, result));
+        Assert::AreEqual(0U, result.nAddress);
+        Assert::AreEqual(MemSize::Float, result.nSize);
+        Assert::AreEqual(0xBF800000U, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromResultsMBF32EqualsConstant)
+    {
+        std::array<unsigned char, 8> memory{ 0x87, 0x46, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00 }; // 99.0, -0.5
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::MBF32);
+        Assert::AreEqual({ 5U }, results.MatchingAddressCount());
+
+        SearchResults results2;
+        results2.Initialize(results, ComparisonType::Equals, SearchFilterType::Constant, L"-0.5");
+        Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
+
+        // nValue is an MBF32 encoded float
+        SearchResults::Result result;
+        Assert::IsTrue(results2.GetMatchingAddress(0U, result));
+        Assert::AreEqual(4U, result.nAddress);
+        Assert::AreEqual(MemSize::MBF32, result.nSize);
+        Assert::AreEqual(0x00008080U, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromResultsMBF32GreaterThanLast)
+    {
+        std::array<unsigned char, 8> memory{ 0x87, 0x46, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00 }; // 99.0, -0.5
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::MBF32);
+        Assert::AreEqual({ 5U }, results.MatchingAddressCount());
+
+        memory.at(4) = 0x00; // -0.5 -> -0.0
+
+        SearchResults results2;
+        results2.Initialize(results, ComparisonType::GreaterThan, SearchFilterType::LastKnownValue, L"");
+        Assert::AreEqual({ 2U }, results2.MatchingAddressCount());
+
+        // nValue is an MBF32 encoded float
+        SearchResults::Result result;
+        Assert::IsTrue(results2.GetMatchingAddress(1U, result));
+        Assert::AreEqual(4U, result.nAddress);
+        Assert::AreEqual(MemSize::MBF32, result.nSize);
+        Assert::AreEqual(0x00008000U, result.nValue);
+    }
+
     TEST_METHOD(TestCopyConstructor)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
@@ -1571,6 +1754,38 @@ public:
         Assert::AreEqual(std::wstring(L"0xa"), results1.GetFormattedValue(3U, MemSize::Nibble_Upper));
         Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(4U, MemSize::Nibble_Lower));
         Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(4U, MemSize::Nibble_Upper));
+    }
+
+    TEST_METHOD(TestGetFormattedValueFloat)
+    {
+        std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(0U, 8U, ra::services::SearchType::Float);
+        Assert::AreEqual({ 5U }, results1.MatchingAddressCount());
+
+        Assert::AreEqual(std::wstring(L"-2.0"), results1.GetFormattedValue(0U, MemSize::Float));
+        Assert::AreEqual(std::wstring(L"12.375"), results1.GetFormattedValue(4U, MemSize::Float));
+        Assert::AreEqual(std::wstring(L"5.91191e-39"), results1.GetFormattedValue(2U, MemSize::Float));
+        Assert::AreEqual(std::wstring(L"8192.1875"), results1.GetFormattedValue(3U, MemSize::Float));
+    }
+
+    TEST_METHOD(TestGetFormattedValueMBF32)
+    {
+        std::array<unsigned char, 8> memory{ 0x87, 0x46, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00 }; // 99.0, -0.5
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(0U, 8U, ra::services::SearchType::MBF32);
+        Assert::AreEqual({ 5U }, results1.MatchingAddressCount());
+
+        Assert::AreEqual(std::wstring(L"99.0"), results1.GetFormattedValue(0U, MemSize::MBF32));
+        Assert::AreEqual(std::wstring(L"-0.5"), results1.GetFormattedValue(4U, MemSize::MBF32));
+        Assert::AreEqual(std::wstring(L"1.47513e-39"), results1.GetFormattedValue(2U, MemSize::MBF32));
+        Assert::AreEqual(std::wstring(L"1.73475e-18"), results1.GetFormattedValue(1U, MemSize::MBF32));
     }
 
     TEST_METHOD(TestMatchesFilterEightBitGreaterThanLast)

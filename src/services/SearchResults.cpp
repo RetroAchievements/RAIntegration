@@ -258,13 +258,52 @@ public:
         return L"";
     }
 
-    virtual void UpdateValue(const SearchResults& pResults, SearchResults::Result& pResult,
+    virtual bool UpdateValue(const SearchResults& pResults, SearchResults::Result& pResult,
         _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const
     {
+        unsigned int nPreviousValue = pResult.nValue;
         pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, pResult.nSize);
 
         if (sFormattedValue)
             *sFormattedValue = GetFormattedValue(pResults, pResult);
+
+        return (pResult.nValue != nPreviousValue);
+    }
+
+    virtual bool MatchesFilter(const SearchResults& pResults, const SearchResults& pPreviousResults,
+        SearchResults::Result& pResult) const
+    {
+        unsigned int nPreviousValue;
+        if (pResults.GetFilterType() == SearchFilterType::Constant)
+        {
+            nPreviousValue = pResults.GetFilterValue();
+        }
+        else
+        {
+            SearchResults::Result pPreviousResult{ pResult };
+            GetValue(pPreviousResults, pPreviousResult);
+
+            switch (pResults.GetFilterType())
+            {
+                case SearchFilterType::LastKnownValue:
+                case SearchFilterType::InitialValue:
+                    nPreviousValue = pPreviousResult.nValue;
+                    break;
+
+                case SearchFilterType::LastKnownValuePlus:
+                    nPreviousValue = pPreviousResult.nValue + pResults.GetFilterValue();
+                    break;
+
+                case SearchFilterType::LastKnownValueMinus:
+                    nPreviousValue = pPreviousResult.nValue - pResults.GetFilterValue();
+                    break;
+
+                default:
+                    return false;
+            }
+        }
+
+        return CompareValues(pResult.nValue, nPreviousValue, pResults.GetFilterComparison());
     }
 
 protected:
@@ -987,7 +1026,7 @@ public:
         return sText;
     }
 
-    void UpdateValue(const SearchResults&, SearchResults::Result& pResult,
+    bool UpdateValue(const SearchResults&, SearchResults::Result& pResult,
         _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const override
     {
         std::array<unsigned char, 16> pBuffer;
@@ -996,10 +1035,50 @@ public:
         std::wstring sText;
         GetASCIIText(sText, pBuffer.data(), pBuffer.size());
 
+        unsigned int nPreviousValue = pResult.nValue;
         pResult.nValue = ra::StringHash(sText);
 
         if (sFormattedValue)
             sFormattedValue->swap(sText);
+
+        return (pResult.nValue != nPreviousValue);
+    }
+
+    bool MatchesFilter(const SearchResults& pResults, const SearchResults& pPreviousResults,
+        SearchResults::Result& pResult) const override
+    {
+        std::wstring sPreviousValue;
+        if (pResults.GetFilterType() == SearchFilterType::Constant)
+            sPreviousValue = pResults.GetFilterString();
+        else
+            sPreviousValue = GetFormattedValue(pPreviousResults, pResult);
+
+        const std::wstring sValue = GetFormattedValue(pResults, pResult);
+        const int nResult = wcscmp(sValue.c_str(), sPreviousValue.c_str());
+
+        switch (pResults.GetFilterComparison())
+        {
+            case ComparisonType::Equals:
+                return (nResult == 0);
+
+            case ComparisonType::NotEqualTo:
+                return (nResult != 0);
+
+            case ComparisonType::GreaterThan:
+                return (nResult > 0);
+
+            case ComparisonType::LessThan:
+                return (nResult < 0);
+
+            case ComparisonType::GreaterThanOrEqual:
+                return (nResult >= 0);
+
+            case ComparisonType::LessThanOrEqual:
+                return (nResult <= 0);
+
+            default:
+                return false;
+        }
     }
 };
 
@@ -1217,11 +1296,6 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
     }
 }
 
-bool SearchResults::Result::Compare(unsigned int nPreviousValue, ComparisonType nCompareType) const noexcept
-{
-    return impl::CompareValues(nValue, nPreviousValue, nCompareType);
-}
-
 bool SearchResults::ContainsAddress(ra::ByteAddress nAddress) const
 {
     if (m_pImpl)
@@ -1334,6 +1408,16 @@ bool SearchResults::GetMatchingAddress(gsl::index nIndex, _Out_ SearchResults::R
     return m_pImpl->GetMatchingAddress(*this, nIndex, result);
 }
 
+bool SearchResults::GetMatchingAddress(const SearchResults::Result& pSrcResult, _Out_ SearchResults::Result& result) const noexcept
+{
+    memcpy(&result, &pSrcResult, sizeof(SearchResults::Result));
+
+    if (m_pImpl == nullptr)
+        return false;
+
+    return m_pImpl->GetValue(*this, result);
+}
+
 bool SearchResults::GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, size_t nCount) const noexcept
 {
     if (m_pImpl != nullptr)
@@ -1370,14 +1454,24 @@ std::wstring SearchResults::GetFormattedValue(ra::ByteAddress nAddress, MemSize 
     return m_pImpl ? m_pImpl->GetFormattedValue(*this, nAddress, nSize) : L"";
 }
 
-void SearchResults::UpdateValue(SearchResults::Result& pResult, _Out_ std::wstring* sFormattedValue,
-    const ra::data::context::EmulatorContext& pEmulatorContext) const
+bool SearchResults::UpdateValue(SearchResults::Result& pResult,
+    _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const
 {
     if (m_pImpl)
         return m_pImpl->UpdateValue(*this, pResult, sFormattedValue, pEmulatorContext);
 
     if (sFormattedValue)
         sFormattedValue->clear();
+
+    return false;
+}
+
+bool SearchResults::MatchesFilter(const SearchResults& pPreviousResults, SearchResults::Result& pResult) const
+{
+    if (m_pImpl)
+        return m_pImpl->MatchesFilter(*this, pPreviousResults, pResult);
+
+    return true;
 }
 
 MemSize SearchResults::GetSize() const noexcept

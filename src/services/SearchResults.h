@@ -220,9 +220,6 @@ public:
         ra::ByteAddress nAddress{};
         unsigned int nValue{};
         MemSize nSize{};
-
-        bool Compare(unsigned int nPreviousValue, ComparisonType nCompareType) const noexcept;
-        bool Compare(const std::wstring& sPreviousValue, ComparisonType nCompareType) const noexcept;
     };
 
     /// <summary>
@@ -231,6 +228,14 @@ public:
     /// <param name="result">The result.</param>
     /// <returns><c>true</c> if result was populated, <c>false</c> if the index was invalid.</returns>
     bool GetMatchingAddress(gsl::index nIndex, _Out_ Result& result) const noexcept;
+
+    /// <summary>
+    /// Gets and item from the results matching a result from another set of results.
+    /// </summary>
+    /// <param name="pSrcResult">The result to find a match for.</param>
+    /// <param name="result">The result.</param>
+    /// <returns><c>true</c> if result was populated, <c>false</c> if the index was invalid.</returns>
+    bool GetMatchingAddress(const SearchResults::Result& pSrcResult, _Out_ Result& result) const noexcept;
 
     /// <summary>
     /// Gets the raw bytes at the specified address.
@@ -249,9 +254,19 @@ public:
     /// Updates the current value of the provided result.
     /// </summary>
     /// <param name="pResult">The result to update.</param>
+    /// <param name="pPreviousResult">The previous value of the result.</param>
     /// <param name="sFormattedValue">Pointer to a string to populate with a textual representation of the value. [optional]</param>
-    void UpdateValue(SearchResults::Result& pResult, _Out_ std::wstring* sFormattedValue,
+    /// <returns><c>true</c> if the value changed, <c>false</c> if not.</returns>
+    bool UpdateValue(SearchResults::Result& pResult, _Out_ std::wstring* sFormattedValue,
         const ra::data::context::EmulatorContext& pEmulatorContext) const;
+
+    /// <summary>
+    /// Determines if a value compared to its previous value matches the filter.
+    /// </summary>
+    /// <param name="pPreviousResults">The previous results to compare against.</param>
+    /// <param name="pResult">The result to test.</param>
+    /// <returns><c>true</c> if the value still matches the filter, <c>false</c> if not.</returns>
+    bool MatchesFilter(const SearchResults& pPreviousResults, SearchResults::Result& pResult) const;
 
     /// <summary>
     /// Gets the type of search performed.

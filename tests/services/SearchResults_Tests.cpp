@@ -1572,6 +1572,114 @@ public:
         Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(4U, MemSize::Nibble_Lower));
         Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(4U, MemSize::Nibble_Upper));
     }
+
+    TEST_METHOD(TestMatchesFilterEightBitGreaterThanLast)
+    {
+        std::array<unsigned char, 5> memory{ 6, 12, 18, 24, 30 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1, results2;
+        results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
+
+        SearchResults::Result result1, result2, result3;
+        results1.GetMatchingAddress(0, result1);
+        results1.GetMatchingAddress(1, result2);
+        results1.GetMatchingAddress(2, result3);
+
+        results2.Initialize(results1, ComparisonType::GreaterThanOrEqual, SearchFilterType::LastKnownValue, L"");
+
+        Assert::IsTrue(results2.MatchesFilter(results1, result1));  // 12 >= 12 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result2));  // 18 >= 18 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result3));  // 24 >= 24 ?
+
+        result1.nValue = 15;
+        result2.nValue = 15;
+        result3.nValue = 30;
+
+        Assert::IsTrue(results2.MatchesFilter(results1, result1));  // 15 >= 12 ?
+        Assert::IsFalse(results2.MatchesFilter(results1, result2)); // 15 >= 18 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result3));  // 30 >= 24 ?
+    }
+
+    TEST_METHOD(TestMatchesFilterEightBitGreaterThanLastPlus)
+    {
+        std::array<unsigned char, 5> memory{ 6, 12, 18, 24, 30 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1, results2;
+        results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
+
+        SearchResults::Result result1, result2, result3;
+        results1.GetMatchingAddress(0, result1);
+        results1.GetMatchingAddress(1, result2);
+        results1.GetMatchingAddress(2, result3);
+
+        results2.Initialize(results1, ComparisonType::GreaterThanOrEqual, SearchFilterType::LastKnownValuePlus, L"4");
+
+        Assert::IsFalse(results2.MatchesFilter(results1, result1)); // 12 >= 12 + 4 ?
+        Assert::IsFalse(results2.MatchesFilter(results1, result2)); // 18 >= 18 + 4 ?
+        Assert::IsFalse(results2.MatchesFilter(results1, result3)); // 24 >= 24 + 4 ?
+
+        result1.nValue = 15;
+        result2.nValue = 22;
+        result3.nValue = 30;
+
+        Assert::IsFalse(results2.MatchesFilter(results1, result1)); // 15 >= 12 + 4 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result2));  // 22 >= 18 + 4 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result3));  // 30 >= 24 + 4 ?
+    }
+
+    TEST_METHOD(TestMatchesFilterEightBitGreaterThanLastMinus)
+    {
+        std::array<unsigned char, 5> memory{ 6, 12, 18, 24, 30 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1, results2;
+        results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
+
+        SearchResults::Result result1, result2, result3;
+        results1.GetMatchingAddress(0, result1);
+        results1.GetMatchingAddress(1, result2);
+        results1.GetMatchingAddress(2, result3);
+
+        results2.Initialize(results1, ComparisonType::GreaterThanOrEqual, SearchFilterType::LastKnownValueMinus, L"4");
+
+        Assert::IsTrue(results2.MatchesFilter(results1, result1));  // 12 >= 12 - 4 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result2));  // 18 >= 18 - 4 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result3));  // 24 >= 24 - 4 ?
+
+        result1.nValue = 10;
+        result2.nValue = 14;
+        result3.nValue = 18;
+
+        Assert::IsTrue(results2.MatchesFilter(results1, result1));  // 10 >= 12 - 4 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result2));  // 14 >= 18 - 4 ?
+        Assert::IsFalse(results2.MatchesFilter(results1, result3)); // 18 >= 24 - 4 ?
+    }
+
+    TEST_METHOD(TestMatchesFilterEightBitGreaterThanConstant)
+    {
+        std::array<unsigned char, 5> memory{ 6, 12, 18, 24, 30 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1, results2;
+        results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
+
+        SearchResults::Result result1, result2, result3;
+        results1.GetMatchingAddress(0, result1);
+        results1.GetMatchingAddress(1, result2);
+        results1.GetMatchingAddress(2, result3);
+
+        results2.Initialize(results1, ComparisonType::GreaterThanOrEqual, SearchFilterType::Constant, L"18");
+
+        Assert::IsFalse(results2.MatchesFilter(results1, result1)); // 12 >= 18 (12) ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result2));  // 18 >= 18 (18) ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result3));  // 24 >= 18 (24) ?
+    }
 };
 
 } // namespace tests

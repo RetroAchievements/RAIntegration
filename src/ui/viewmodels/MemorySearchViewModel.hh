@@ -459,7 +459,7 @@ private:
     void ApplyContinuousFilter();
     void UpdateResults();
     void UpdateResult(SearchResultViewModel& pRow, const ra::services::SearchResults& pResults,
-        ra::services::SearchResults::Result& pResult,
+        ra::services::SearchResults::Result& pResult, bool bForceFilterCheck,
         const ra::data::context::EmulatorContext& pEmulatorContext);
 
     void OnPredefinedFilterRangeChanged();
@@ -491,7 +491,6 @@ private:
     std::vector<SearchResult> m_vSearchResults;
     std::set<unsigned int> m_vSelectedAddresses;
 
-    static bool TestFilter(const ra::services::SearchResults::Result& pResult, const ra::services::SearchResults& pResults, unsigned int nPreviousValue) noexcept;
     bool ApplyFilter(SearchResult& pResult, const SearchResult& pPreviousResult,
         ComparisonType nComparisonType, ra::services::SearchFilterType nValueType, const std::wstring& sValue);
 };

@@ -2,8 +2,6 @@
 #define RA_DATA_GAMECONTEXT_HH
 #pragma once
 
-#include "RA_Leaderboard.h"
-
 #include "GameAssets.hh"
 
 #include <string>
@@ -91,40 +89,8 @@ public:
     /// </summary>
     void AwardAchievement(ra::AchievementID nAchievementId);
 
-    /// <summary>
-    /// Finds the leaderboard associated to the specified unique identifier.
-    /// </summary>
-    /// <returns>Pointer to leaderboard, <c>nullptr</c> if not found.</returns>
-    RA_Leaderboard* FindLeaderboard(ra::LeaderboardID nLeaderboardId) const noexcept
-    {
-        for (auto& pLeaderboard : m_vLeaderboards)
-        {
-            if (pLeaderboard->ID() == nLeaderboardId)
-                return pLeaderboard.get();
-        }
-
-        return nullptr;
-    }
-
-    void DeactivateLeaderboards() noexcept;
+    void DeactivateLeaderboards();
     void ActivateLeaderboards();
-
-    size_t LeaderboardCount() const noexcept { return m_vLeaderboards.size(); }
-
-    /// <summary>
-    /// Enumerates the leaderboard collection.
-    /// </summary>
-    /// <remarks>
-    /// <paramref name="callback" /> is called for each known leaderboard. If it returns <c>false</c> enumeration stops.
-    /// </remarks>
-    void EnumerateLeaderboards(std::function<bool(const RA_Leaderboard&)> callback) const
-    {
-        for (auto& pLeaderboard : m_vLeaderboards)
-        {
-            if (!callback(*pLeaderboard))
-                break;
-        }
-    }
 
     /// <summary>
     /// Submit a new score for the specified leaderboard.
@@ -318,8 +284,6 @@ protected:
     Mode m_nMode{};
     std::string m_sServerRichPresenceMD5;
     bool m_bRichPresenceFromFile = false;
-
-    std::vector<std::unique_ptr<RA_Leaderboard>> m_vLeaderboards;
 
     struct CodeNote
     {

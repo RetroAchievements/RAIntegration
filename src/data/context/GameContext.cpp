@@ -59,8 +59,6 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     m_mCodeNotes.clear();
     m_vAssets.ResetLocalId();
 
-    m_vLeaderboards.clear();
-
     m_vAssets.BeginUpdate();
 
     m_vAssets.Clear();
@@ -196,7 +194,6 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // leaderboards
     for (const auto& pLeaderboardData : response.Leaderboards)
     {
-#ifdef ASSET_ICONS
         auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
         vmLeaderboard->SetID(pLeaderboardData.Id);
         vmLeaderboard->SetName(ra::Widen(pLeaderboardData.Title));
@@ -207,12 +204,6 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         vmLeaderboard->CreateServerCheckpoint();
         vmLeaderboard->CreateLocalCheckpoint();
         m_vAssets.Append(std::move(vmLeaderboard));
-#endif
-
-        RA_Leaderboard& pLeaderboard = *m_vLeaderboards.emplace_back(std::make_unique<RA_Leaderboard>(pLeaderboardData.Id));
-        pLeaderboard.SetTitle(pLeaderboardData.Title);
-        pLeaderboard.SetDescription(pLeaderboardData.Description);
-        pLeaderboard.ParseFromString(pLeaderboardData.Definition.c_str(), pLeaderboardData.Format);
     }
 
     ActivateLeaderboards();
@@ -630,10 +621,14 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
     }
 }
 
-void GameContext::DeactivateLeaderboards() noexcept
+void GameContext::DeactivateLeaderboards()
 {
-    for (auto& pLeaderboard : m_vLeaderboards)
-        pLeaderboard->SetActive(false);
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Assets().Count()); ++nIndex)
+    {
+        auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(Assets().GetItemAt(nIndex));
+        if (pLeaderboard != nullptr)
+            pLeaderboard->SetState(ra::data::models::AssetState::Inactive);
+    }
 }
 
 void GameContext::ActivateLeaderboards()
@@ -641,8 +636,12 @@ void GameContext::ActivateLeaderboards()
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) // if not, simply ignore them.
     {
-        for (auto& pLeaderboard : m_vLeaderboards)
-            pLeaderboard->SetActive(true);
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Assets().Count()); ++nIndex)
+        {
+            auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(Assets().GetItemAt(nIndex));
+            if (pLeaderboard != nullptr && pLeaderboard->GetCategory() == ra::data::models::AssetCategory::Core)
+                pLeaderboard->SetState(ra::data::models::AssetState::Waiting);
+        }
     }
 }
 
@@ -652,12 +651,12 @@ void GameContext::ShowSimplifiedScoreboard(ra::LeaderboardID nLeaderboardId, int
     if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) == ra::ui::viewmodels::PopupLocation::None)
         return;
 
-    const auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
+    const auto* pLeaderboard = Assets().FindLeaderboard(nLeaderboardId);
     if (!pLeaderboard)
         return;
 
     ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
-    vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->Title()));
+    vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->GetName()));
 
     const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
     auto& pEntryViewModel = vmScoreboard.Entries().Add();
@@ -667,63 +666,74 @@ void GameContext::ShowSimplifiedScoreboard(ra::LeaderboardID nLeaderboardId, int
     pEntryViewModel.SetHighlighted(true);
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(
-        pLeaderboard->ID(), std::move(vmScoreboard));
+        pLeaderboard->GetID(), std::move(vmScoreboard));
 }
 
 void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int nScore) const
 {
-    const auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
+    const auto* pLeaderboard = Assets().FindLeaderboard(nLeaderboardId);
     if (pLeaderboard == nullptr)
         return;
 
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (pEmulatorContext.WasMemoryModified())
+    std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
+    vmPopup->SetDescription(ra::Widen(pLeaderboard->GetName()));
+    std::wstring sTitle = L"Leaderboard NOT Submitted";
+    bool bSubmit = true;
+
+    switch (pLeaderboard->GetCategory())
     {
-        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-        vmPopup->SetTitle(L"Leaderboard NOT Submitted");
-        vmPopup->SetDescription(ra::Widen(pLeaderboard->Title()));
-        vmPopup->SetErrorDetail(L"Error: RAM tampered with");
+        case ra::data::models::AssetCategory::Local:
+            sTitle.insert(0, L"Local ");
+            bSubmit = false;
+            break;
 
-        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
-        ShowSimplifiedScoreboard(nLeaderboardId, nScore);
-        return;
-    }
+        case ra::data::models::AssetCategory::Unofficial:
+            sTitle.insert(0, L"Unofficial ");
+            bSubmit = false;
+            break;
 
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
-    {
-        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-        vmPopup->SetTitle(L"Leaderboard NOT Submitted");
-        vmPopup->SetDescription(ra::Widen(pLeaderboard->Title()));
-        vmPopup->SetErrorDetail(L"Submission requires Hardcore mode");
-
-        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
-        ShowSimplifiedScoreboard(nLeaderboardId, nScore);
-        return;
+        default:
+            break;
     }
 
     if (m_nMode == Mode::CompatibilityTest)
     {
-        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-        vmPopup->SetTitle(L"Leaderboard NOT Submitted");
-        vmPopup->SetDescription(ra::Widen(pLeaderboard->Title()));
         vmPopup->SetDetail(L"Leaderboards are not submitted in test mode.");
-
-        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
-        ShowSimplifiedScoreboard(nLeaderboardId, nScore);
-        return;
+        bSubmit = false;
     }
 
-    if (pEmulatorContext.IsMemoryInsecure())
+    if (pLeaderboard->IsModified() || // actual modifications
+        (bSubmit && pLeaderboard->GetChanges() != ra::data::models::AssetChanges::None)) // unpublished changes
     {
-        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-        vmPopup->SetTitle(L"Leaderboard NOT Submitted");
-        vmPopup->SetDescription(ra::Widen(pLeaderboard->Title()));
-        vmPopup->SetErrorDetail(L"Error: RAM insecure");
+        sTitle.insert(0, L"Modified ");
+        bSubmit = false;
+    }
 
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    if (bSubmit && pEmulatorContext.WasMemoryModified())
+    {
+        vmPopup->SetErrorDetail(L"Error: RAM tampered with");
+        bSubmit = false;
+    }
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (bSubmit)
+    {
+        if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+        {
+            vmPopup->SetErrorDetail(L"Submission requires Hardcore mode");
+            bSubmit = false;
+        }
+        else if (pEmulatorContext.IsMemoryInsecure())
+        {
+            vmPopup->SetErrorDetail(L"Error: RAM insecure");
+            bSubmit = false;
+        }
+    }
+
+    if (!bSubmit)
+    {
+        vmPopup->SetTitle(sTitle);
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
         ShowSimplifiedScoreboard(nLeaderboardId, nScore);
@@ -731,18 +741,18 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
     }
 
     ra::api::SubmitLeaderboardEntry::Request request;
-    request.LeaderboardId = pLeaderboard->ID();
+    request.LeaderboardId = pLeaderboard->GetID();
     request.Score = nScore;
     request.GameHash = GameHash();
-    request.CallAsyncWithRetry([this, nLeaderboardId = pLeaderboard->ID()](const ra::api::SubmitLeaderboardEntry::Response& response)
+    request.CallAsyncWithRetry([this, nLeaderboardId = pLeaderboard->GetID()](const ra::api::SubmitLeaderboardEntry::Response& response)
     {
-        const auto* pLeaderboard = FindLeaderboard(nLeaderboardId);
+        const auto* pLeaderboard = Assets().FindLeaderboard(nLeaderboardId);
 
         if (!response.Succeeded())
         {
             std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
             vmPopup->SetTitle(L"Leaderboard NOT Submitted");
-            vmPopup->SetDescription(pLeaderboard ? ra::Widen(pLeaderboard->Title()) : ra::StringPrintf(L"Leaderboard %u", nLeaderboardId));
+            vmPopup->SetDescription(pLeaderboard ? pLeaderboard->GetName() : ra::StringPrintf(L"Leaderboard %u", nLeaderboardId));
             vmPopup->SetDetail(!response.ErrorMessage.empty() ? ra::StringPrintf(L"Error: %s", response.ErrorMessage) : L"Error submitting entry");
 
             ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
@@ -753,7 +763,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
             if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) != ra::ui::viewmodels::PopupLocation::None)
             {
                 ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
-                vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->Title()));
+                vmScoreboard.SetHeaderText(pLeaderboard->GetName());
 
                 const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
                 constexpr int nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
@@ -797,7 +807,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
                 }
 
                 ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(
-                    pLeaderboard->ID(), std::move(vmScoreboard));
+                    pLeaderboard->GetID(), std::move(vmScoreboard));
             }
         }
     });

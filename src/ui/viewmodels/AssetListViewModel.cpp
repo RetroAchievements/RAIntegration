@@ -44,11 +44,7 @@ const IntModelProperty AssetListViewModel::EnsureVisibleAssetIndexProperty("Asse
 
 AssetListViewModel::AssetListViewModel() noexcept
 {
-#ifdef ASSET_ICONS
     SetWindowTitle(L"Assets List");
-#else
-    SetWindowTitle(L"Achievements List");
-#endif
 
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Inactive), L"Inactive");
     m_vStates.Add(ra::etoi(ra::data::models::AssetState::Waiting), L"Waiting");
@@ -1540,6 +1536,28 @@ void AssetListViewModel::CloneSelected()
 
             vNewIDs.push_back(vmAchievement.GetID());
         }
+
+        const auto* pSourceLeaderboard = dynamic_cast<const ra::data::models::LeaderboardModel*>(pAsset);
+        if (pSourceLeaderboard != nullptr)
+        {
+            auto& vmLeaderboard = pGameContext.Assets().NewLeaderboard();
+            vmLeaderboard.SetCategory(ra::data::models::AssetCategory::Local);
+            vmLeaderboard.UpdateServerCheckpoint();
+
+            vmLeaderboard.SetName(pSourceLeaderboard->GetName() + L" (copy)");
+            vmLeaderboard.SetDescription(pSourceLeaderboard->GetDescription());
+            vmLeaderboard.SetStartTrigger(pSourceLeaderboard->GetStartTrigger());
+            vmLeaderboard.SetSubmitTrigger(pSourceLeaderboard->GetSubmitTrigger());
+            vmLeaderboard.SetCancelTrigger(pSourceLeaderboard->GetCancelTrigger());
+            vmLeaderboard.SetValueDefinition(pSourceLeaderboard->GetValueDefinition());
+            vmLeaderboard.SetValueFormat(pSourceLeaderboard->GetValueFormat());
+            vmLeaderboard.SetLowerIsBetter(pSourceLeaderboard->IsLowerBetter());
+            vmLeaderboard.SetNew();
+
+            EnsureAppearsInFilteredList(vmLeaderboard);
+
+            vNewIDs.push_back(vmLeaderboard.GetID());
+        }
     }
 
     // select the new items and deselect everything else
@@ -1550,7 +1568,8 @@ void AssetListViewModel::CloneSelected()
         if (pItem != nullptr)
         {
             if (std::find(vNewIDs.begin(), vNewIDs.end(), pItem->GetId()) != vNewIDs.end() &&
-                pItem->GetType() == ra::data::models::AssetType::Achievement)
+                (pItem->GetType() == ra::data::models::AssetType::Achievement ||
+                 pItem->GetType() == ra::data::models::AssetType::Leaderboard))
             {
                 nIndex = i;
                 pItem->SetSelected(true);

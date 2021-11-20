@@ -49,11 +49,6 @@ public:
 
     void SetRichPresenceFromFile(bool bValue) noexcept { m_bRichPresenceFromFile = bValue; }
 
-    RA_Leaderboard& NewLeaderboard(ra::LeaderboardID nLeaderboardId)
-    {
-        return *m_vLeaderboards.emplace_back(std::make_unique<RA_Leaderboard>(nLeaderboardId));
-    }
-
     bool SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote) override
     {
         // non-API part of SetCodeNote

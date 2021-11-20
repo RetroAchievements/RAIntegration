@@ -72,7 +72,6 @@
     <ClCompile Include="RA_Defs.cpp" />
     <ClCompile Include="RA_ImageFactory.cpp" />
     <ClCompile Include="RA_Json.cpp" />
-    <ClCompile Include="RA_Leaderboard.cpp" />
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="services\AchievementRuntime.cpp" />
@@ -217,7 +216,6 @@
     <ClInclude Include="ra_fwd.h" />
     <ClInclude Include="RA_ImageFactory.h" />
     <ClInclude Include="RA_Json.h" />
-    <ClInclude Include="RA_Leaderboard.h" />
     <ClInclude Include="RA_Log.h" />
     <ClInclude Include="ra_math.h" />
     <ClInclude Include="RA_md5factory.h" />

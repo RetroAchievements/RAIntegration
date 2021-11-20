@@ -62,12 +62,14 @@ public:
     TEST_METHOD(TestRefreshLeaderboards)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        auto& pLB1 = leaderboardsPage.mockGameContext.NewLeaderboard(1U);
-        pLB1.SetTitle("LeaderboardTitle");
-        pLB1.SetDescription("Trigger this");
-        auto& pLB2 = leaderboardsPage.mockGameContext.NewLeaderboard(2U);
-        pLB2.SetTitle("LeaderboardTitle2");
-        pLB2.SetDescription("Trigger this too");
+        auto& pLB1 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
+        pLB1.SetID(1U);
+        pLB1.SetName(L"LeaderboardTitle");
+        pLB1.SetDescription(L"Trigger this");
+        auto& pLB2 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
+        pLB2.SetID(2U);
+        pLB2.SetName(L"LeaderboardTitle2");
+        pLB2.SetDescription(L"Trigger this too");
         leaderboardsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
@@ -89,9 +91,10 @@ public:
     TEST_METHOD(TestFetchItemDetail)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        auto& pLB1 = leaderboardsPage.mockGameContext.NewLeaderboard(1U);
-        pLB1.SetTitle("LeaderboardTitle");
-        pLB1.SetDescription("Trigger this");
+        auto& pLB1 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
+        pLB1.SetID(1U);
+        pLB1.SetName(L"LeaderboardTitle");
+        pLB1.SetDescription(L"Trigger this");
 
         leaderboardsPage.mockUserContext.Initialize("User2", "ApiToken");
         leaderboardsPage.mockServer.HandleRequest<ra::api::FetchLeaderboardInfo>([](const ra::api::FetchLeaderboardInfo::Request& request, ra::api::FetchLeaderboardInfo::Response& response)

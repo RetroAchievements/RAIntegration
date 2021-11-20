@@ -89,11 +89,13 @@ public:
             return pAch;
         }
 
-        RA_Leaderboard& MockLeaderboard()
+        ra::data::models::LeaderboardModel& MockLeaderboard()
         {
-            auto& pLeaderboard = *m_vLeaderboards.emplace_back(std::make_unique<RA_Leaderboard>(1U));
-            pLeaderboard.SetTitle("LeaderboardTitle");
-            pLeaderboard.SetDescription("LeaderboardDescription");
+            auto& pLeaderboard = Assets().NewLeaderboard();
+            pLeaderboard.SetID(1U);
+            pLeaderboard.SetName(L"LeaderboardTitle");
+            pLeaderboard.SetDescription(L"LeaderboardDescription");
+            pLeaderboard.UpdateServerCheckpoint();
             return pLeaderboard;
         }
 
@@ -603,17 +605,17 @@ public:
 
         game.LoadGame(1U);
 
-        const auto* pLb1 = game.FindLeaderboard(7U);
+        const auto* pLb1 = game.Assets().FindLeaderboard(7U);
         Assert::IsNotNull(pLb1);
         Ensures(pLb1 != nullptr);
-        Assert::AreEqual(std::string("LB1"), pLb1->Title());
-        Assert::AreEqual(std::string("Desc1"), pLb1->Description());
+        Assert::AreEqual(std::wstring(L"LB1"), pLb1->GetName());
+        Assert::AreEqual(std::wstring(L"Desc1"), pLb1->GetDescription());
 
-        const auto* pLb2 = game.FindLeaderboard(8U);
+        const auto* pLb2 = game.Assets().FindLeaderboard(8U);
         Assert::IsNotNull(pLb2);
         Ensures(pLb2 != nullptr);
-        Assert::AreEqual(std::string("LB2"), pLb2->Title());
-        Assert::AreEqual(std::string("Desc2"), pLb2->Description());
+        Assert::AreEqual(std::wstring(L"LB2"), pLb2->GetName());
+        Assert::AreEqual(std::wstring(L"Desc2"), pLb2->GetDescription());
     }
 
     TEST_METHOD(TestLoadGameReplacesAchievements)
@@ -1848,6 +1850,51 @@ public:
         Assert::IsNotNull(vmScoreboard);
         Ensures(vmScoreboard != nullptr);
         Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
+        Assert::AreEqual({ 1U }, vmScoreboard->Entries().Count());
+
+        const auto* vmEntry = vmScoreboard->Entries().GetItemAt(0);
+        Assert::IsNotNull(vmEntry);
+        Ensures(vmEntry != nullptr);
+        Assert::AreEqual(0, vmEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"Player"), vmEntry->GetUserName());
+        Assert::AreEqual(std::wstring(L"1234"), vmEntry->GetScore());
+        Assert::IsTrue(vmEntry->IsHighlighted());
+    }
+
+    TEST_METHOD(TestSubmitLeaderboardEntryModified)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
+        game.mockUser.Initialize("Player", "ApiToken");
+        game.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
+        game.SetGameHash("hash");
+
+        game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
+
+        game.MockLeaderboard();
+        game.Assets().FindLeaderboard(1U)->SetName(L"Name2");
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        // SubmitLeaderboardEntry API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        // error message should be reported
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Modified Leaderboard NOT Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Name2"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Leaderboards are not submitted in test mode."), pPopup->GetDetail());
+        Assert::IsFalse(pPopup->IsDetailError());
+
+        // empty leaderboard should be displayed with the non-submitted score
+        const auto* vmScoreboard = game.mockOverlayManager.GetScoreboard(1U);
+        Assert::IsNotNull(vmScoreboard);
+        Ensures(vmScoreboard != nullptr);
+        Assert::AreEqual(std::wstring(L"Name2"), vmScoreboard->GetHeaderText());
         Assert::AreEqual({ 1U }, vmScoreboard->Entries().Count());
 
         const auto* vmEntry = vmScoreboard->Entries().GetItemAt(0);

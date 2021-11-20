@@ -19,6 +19,8 @@ enum class SearchType
     ThirtyTwoBitAligned,
     SixteenBitBigEndian,
     ThirtyTwoBitBigEndian,
+    Float,
+    MBF32,
     AsciiText,
 };
 
@@ -191,29 +193,9 @@ public:
     /// <param name="srSource">The result set to filter.</param>
     /// <param name="nCompareType">Type of comparison to apply.</param>
     /// <param name="nFilterType">Type of filter to apply.</param>
-    /// <param name="nFilterValue">Parameter for filter being applied.</param>
-    void Initialize(_In_ const SearchResults& srSource, _In_ ComparisonType nCompareType,
-        _In_ SearchFilterType nFilterType, _In_ unsigned int nFilterValue);
-
-    /// <summary>
-    /// Initializes a result set by comparing against another result set using the address filter from a third set.
-    /// </summary>
-    /// <param name="srSource">The result set to filter.</param>
-    /// <param name="srAddresses">The result set specifying which addresses to examine.</param>
-    /// <param name="nCompareType">Type of comparison to apply.</param>
-    /// <param name="nFilterType">Type of filter to apply.</param>
-    /// <param name="nFilterValue">Parameter for filter being applied.</param>
-    void Initialize(_In_ const SearchResults& srSource, _In_ const SearchResults& srAddresses,
-        _In_ ComparisonType nCompareType, _In_ SearchFilterType nFilterType, _In_ unsigned int nFilterValue);
-
-    /// <summary>
-    /// Initializes a result set by comparing against another result set.
-    /// </summary>
-    /// <param name="srSource">The result set to filter.</param>
-    /// <param name="nCompareType">Type of comparison to apply.</param>
-    /// <param name="nFilterType">Type of filter to apply.</param>
     /// <param name="sFilterValue">Parameter for filter being applied.</param>
-    void Initialize(_In_ const SearchResults& srSource, _In_ ComparisonType nCompareType,
+    /// <returns><c>true</c> if initialization was successful, <c>false</c> if the filter value was not supported</returns>
+    bool Initialize(_In_ const SearchResults& srSource, _In_ ComparisonType nCompareType,
         _In_ SearchFilterType nFilterType, _In_ const std::wstring& sFilterValue);
 
     /// <summary>
@@ -224,7 +206,8 @@ public:
     /// <param name="nCompareType">Type of comparison to apply.</param>
     /// <param name="nFilterType">Type of filter to apply.</param>
     /// <param name="sFilterValue">Parameter for filter being applied.</param>
-    void Initialize(_In_ const SearchResults& srSource, _In_ const SearchResults& srAddresses,
+    /// <returns><c>true</c> if initialization was successful, <c>false</c> if the filter value was not supported</returns>
+    bool Initialize(_In_ const SearchResults& srSource, _In_ const SearchResults& srAddresses,
         _In_ ComparisonType nCompareType, _In_ SearchFilterType nFilterType, _In_ const std::wstring& sFilterValue);
 
     /// <summary>
@@ -266,7 +249,7 @@ public:
     /// Updates the current value of the provided result.
     /// </summary>
     /// <param name="pResult">The result to update.</param>
-    /// <param name="sFormattedValue">Pointer to a string to populate with a textual representation of the value.</param>
+    /// <param name="sFormattedValue">Pointer to a string to populate with a textual representation of the value. [optional]</param>
     void UpdateValue(SearchResults::Result& pResult, _Out_ std::wstring* sFormattedValue,
         const ra::data::context::EmulatorContext& pEmulatorContext) const;
 

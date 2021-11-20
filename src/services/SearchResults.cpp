@@ -1,5 +1,6 @@
 #include "SearchResults.h"
 
+#include "RA_Defs.h"
 #include "RA_StringUtils.h"
 
 #include "ra_utility.h"
@@ -94,8 +95,33 @@ public:
     }
 
     // populates a vector of addresses that match the specified filter when applied to a previous search result
-    virtual void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious) const
+    virtual bool ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious) const
     {
+        // convert the filter string into a value
+        if (!srNew.GetFilterString().empty())
+        {
+            const wchar_t* pStart = srNew.GetFilterString().c_str();
+            wchar_t* pEnd;
+
+            // try decimal first
+            srNew.m_nFilterValue = std::wcstoul(pStart, &pEnd, 10);
+            if (pEnd && *pEnd)
+            {
+                // decimal parse failed, try hex
+                srNew.m_nFilterValue = std::wcstoul(pStart, &pEnd, 16);
+                if (*pEnd)
+                {
+                    // hex parse failed
+                    return false;
+                }
+            }
+        }
+        else if (srNew.GetFilterType() == SearchFilterType::Constant)
+        {
+            // constant cannot be empty string
+            return false;
+        }
+
         unsigned int nLargestBlock = 0U;
         for (auto& block : srPrevious.m_vBlocks)
         {
@@ -182,6 +208,8 @@ public:
                 vMatches.clear();
             }
         }
+
+        return true;
     }
 
     // gets the nIndex'th search result
@@ -815,7 +843,7 @@ public:
     MemSize GetMemSize() const noexcept override { return MemSize::Text; }
 
     // populates a vector of addresses that match the specified filter when applied to a previous search result
-    void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious) const override
+    bool ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious) const override
     {
         size_t nCompareLength = 16; // maximum length for generic search
         std::vector<unsigned char> vSearchText;
@@ -825,7 +853,7 @@ public:
         {
             // can't match 0 characters!
             if (srNew.GetFilterType() == SearchFilterType::Constant)
-                return;
+                return false;
         }
         else
         {
@@ -888,6 +916,8 @@ public:
                 vMatches.clear();
             }
         }
+
+        return true;
     }
 
     virtual void GetSearchText(std::vector<unsigned char>& vText, const std::wstring& sText) const
@@ -1200,38 +1230,6 @@ bool SearchResults::ContainsAddress(ra::ByteAddress nAddress) const
     return false;
 }
 
-_Use_decl_annotations_
-void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCompareType,
-    SearchFilterType nFilterType, unsigned int nFilterValue)
-{
-    m_nType = srSource.m_nType;
-    m_pImpl = srSource.m_pImpl;
-    m_nCompareType = nCompareType;
-    m_nFilterType = nFilterType;
-    m_nFilterValue = nFilterValue;
-
-    m_pImpl->ApplyFilter(*this, srSource);
-}
-
-_Use_decl_annotations_
-void SearchResults::Initialize(const SearchResults& srMemory, const SearchResults& srAddresses,
-    ComparisonType nCompareType, SearchFilterType nFilterType, unsigned int nFilterValue)
-{
-    if (&srMemory == &srAddresses)
-    {
-        Initialize(srMemory, nCompareType, nFilterType, nFilterValue);
-        return;
-    }
-
-    // create a new merged SearchResults object that has the matching addresses from srAddresses,
-    // and the memory blocks from srMemory.
-    SearchResults srMerge;
-    srMerge.MergeSearchResults(srMemory, srAddresses);
-
-    // then do a standard comparison against the merged SearchResults
-    Initialize(srMerge, nCompareType, nFilterType, nFilterValue);
-}
-
 void SearchResults::MergeSearchResults(const SearchResults& srMemory, const SearchResults& srAddresses)
 {
     m_vBlocks.reserve(srAddresses.m_vBlocks.size());
@@ -1273,7 +1271,7 @@ void SearchResults::MergeSearchResults(const SearchResults& srMemory, const Sear
 }
 
 _Use_decl_annotations_
-void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCompareType,
+bool SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCompareType,
     SearchFilterType nFilterType, const std::wstring& sFilterValue)
 {
     m_nType = srSource.m_nType;
@@ -1282,18 +1280,15 @@ void SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
     m_nFilterType = nFilterType;
     m_sFilterValue = sFilterValue;
 
-    m_pImpl->ApplyFilter(*this, srSource);
+    return m_pImpl->ApplyFilter(*this, srSource);
 }
 
 _Use_decl_annotations_
-void SearchResults::Initialize(const SearchResults& srMemory, const SearchResults& srAddresses,
+bool SearchResults::Initialize(const SearchResults& srMemory, const SearchResults& srAddresses,
     ComparisonType nCompareType, SearchFilterType nFilterType, const std::wstring& sFilterValue)
 {
     if (&srMemory == &srAddresses)
-    {
-        Initialize(srMemory, nCompareType, nFilterType, sFilterValue);
-        return;
-    }
+        return Initialize(srMemory, nCompareType, nFilterType, sFilterValue);
 
     // create a new merged SearchResults object that has the matching addresses from srAddresses,
     // and the memory blocks from srMemory.
@@ -1301,7 +1296,7 @@ void SearchResults::Initialize(const SearchResults& srMemory, const SearchResult
     srMerge.MergeSearchResults(srMemory, srAddresses);
 
     // then do a standard comparison against the merged SearchResults
-    Initialize(srMerge, nCompareType, nFilterType, sFilterValue);
+    return Initialize(srMerge, nCompareType, nFilterType, sFilterValue);
 }
 
 size_t SearchResults::MatchingAddressCount() const noexcept

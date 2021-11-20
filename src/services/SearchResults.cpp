@@ -97,7 +97,7 @@ public:
         return false;
     }
 
-    virtual bool ValidateFilterValue(SearchResults& srNew) const
+    virtual bool ValidateFilterValue(SearchResults& srNew) const noexcept(false)
     {
         // convert the filter string into a value
         if (!srNew.GetFilterString().empty())
@@ -267,7 +267,7 @@ public:
     virtual bool UpdateValue(const SearchResults& pResults, SearchResults::Result& pResult,
         _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const
     {
-        unsigned int nPreviousValue = pResult.nValue;
+        const unsigned int nPreviousValue = pResult.nValue;
         pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, pResult.nSize);
 
         if (sFormattedValue)
@@ -277,9 +277,9 @@ public:
     }
 
     virtual bool MatchesFilter(const SearchResults& pResults, const SearchResults& pPreviousResults,
-        SearchResults::Result& pResult) const
+        SearchResults::Result& pResult) const noexcept(false)
     {
-        unsigned int nPreviousValue;
+        unsigned int nPreviousValue = 0;
         if (pResults.GetFilterType() == SearchFilterType::Constant)
         {
             nPreviousValue = pResults.GetFilterValue();
@@ -712,7 +712,7 @@ public:
     unsigned int BuildValue(const unsigned char* ptr) const noexcept override
     {
         GSL_SUPPRESS_F6 Expects(ptr != nullptr);
-        return *reinterpret_cast<const uint16_t*>(ptr);
+        GSL_SUPPRESS_TYPE1 return *reinterpret_cast<const uint16_t*>(ptr);
     }
 
 protected:
@@ -743,7 +743,7 @@ public:
     unsigned int BuildValue(const unsigned char* ptr) const noexcept override
     {
         GSL_SUPPRESS_F6 Expects(ptr != nullptr);
-        return *reinterpret_cast<const unsigned int*>(ptr);
+        GSL_SUPPRESS_TYPE1 return *reinterpret_cast<const unsigned int*>(ptr);
     }
 
 protected:
@@ -924,7 +924,7 @@ public:
     // indicate that search results can be very wide
     MemSize GetMemSize() const noexcept override { return MemSize::Text; }
 
-    bool ValidateFilterValue(SearchResults& srNew) const override
+    bool ValidateFilterValue(SearchResults& srNew) const noexcept override
     {
         if (srNew.GetFilterString().empty())
         {
@@ -1080,7 +1080,7 @@ public:
         std::wstring sText;
         GetASCIIText(sText, pBuffer.data(), pBuffer.size());
 
-        unsigned int nPreviousValue = pResult.nValue;
+        const unsigned int nPreviousValue = pResult.nValue;
         pResult.nValue = ra::StringHash(sText);
 
         if (sFormattedValue)
@@ -1137,7 +1137,7 @@ public:
         return ra::data::MemSizeFormat(pResult.nValue, pResult.nSize, MemFormat::Dec);
     }
 
-    bool ValidateFilterValue(SearchResults& srNew) const override
+    bool ValidateFilterValue(SearchResults& srNew) const noexcept override
     {
         // convert the filter string into a value
         if (!srNew.GetFilterString().empty())
@@ -1163,23 +1163,27 @@ public:
         return true;
     }
 
+    GSL_SUPPRESS_TYPE1
     bool MatchesFilter(const SearchResults& pResults, const SearchResults& pPreviousResults,
-        SearchResults::Result& pResult) const override
+        SearchResults::Result& pResult) const noexcept override
     {
-        float fPreviousValue;
+        float fPreviousValue = 0.0;
         if (pResults.GetFilterType() == SearchFilterType::Constant)
         {
             const auto nFilterValue = pResults.GetFilterValue();
-            fPreviousValue = BuildFloatValue(reinterpret_cast<const unsigned char*>(&nFilterValue));
+            const auto* pFilterValue = reinterpret_cast<const unsigned char*>(&nFilterValue);
+            fPreviousValue = BuildFloatValue(pFilterValue);
         }
         else
         {
             SearchResults::Result pPreviousResult{ pResult };
             GetValue(pPreviousResults, pPreviousResult);
-            fPreviousValue = BuildFloatValue(reinterpret_cast<const unsigned char*>(&pPreviousResult.nValue));
+            const auto* pPreviousValue = reinterpret_cast<const unsigned char*>(&pPreviousResult.nValue);
+            fPreviousValue = BuildFloatValue(pPreviousValue);
         }
 
-        const auto fValue = BuildFloatValue(reinterpret_cast<const unsigned char*>(&pResult.nValue));
+        const auto* pValue = reinterpret_cast<const unsigned char*>(&pResult.nValue);
+        const auto fValue = BuildFloatValue(pValue);
         return CompareValues(fValue, fPreviousValue, pResults.GetFilterComparison());
     }
 
@@ -1187,7 +1191,7 @@ protected:
     virtual float BuildFloatValue(const unsigned char* ptr) const noexcept
     {
         GSL_SUPPRESS_F6 Expects(ptr != nullptr);
-        return *reinterpret_cast<const float*>(ptr);
+        GSL_SUPPRESS_TYPE1 return *reinterpret_cast<const float*>(ptr);
     }
 
     virtual unsigned int DeconstructFloatValue(float fValue) const noexcept
@@ -1195,6 +1199,7 @@ protected:
         return ra::data::FloatToU32(fValue, MemSize::Float);
     }
 
+    GSL_SUPPRESS_TYPE1
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
         std::vector<ra::ByteAddress>& vMatches) const override
@@ -1211,7 +1216,8 @@ protected:
         const auto nStride = GetStride();
         const auto* pMatchingAddresses = pPreviousBlock.GetMatchingAddressPointer();
 
-        const float fConstantValue = BuildFloatValue(reinterpret_cast<const unsigned char*>(&nConstantValue));
+        const auto* pConstantValue = reinterpret_cast<const unsigned char*>(&nConstantValue);
+        const float fConstantValue = BuildFloatValue(pConstantValue);
 
         for (const auto* pScan = pBytes; pScan < pBytesStop; pScan += nStride)
         {
@@ -1226,6 +1232,7 @@ protected:
         }
     }
 
+    GSL_SUPPRESS_TYPE1
     void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
         const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
         std::vector<ra::ByteAddress>& vMatches) const override
@@ -1243,7 +1250,8 @@ protected:
         const auto nStride = GetStride();
         const auto* pMatchingAddresses = pPreviousBlock.GetMatchingAddressPointer();
 
-        const float fAdjustment = BuildFloatValue(reinterpret_cast<const unsigned char*>(&nAdjustment));
+        const auto* pAdjustment = reinterpret_cast<const unsigned char*>(&nAdjustment);
+        const float fAdjustment = BuildFloatValue(pAdjustment);
 
         for (const auto* pScan = pBytes; pScan < pBytesStop; pScan += nStride, pBlockBytes += nStride)
         {
@@ -1266,6 +1274,7 @@ public:
     MemSize GetMemSize() const noexcept override { return MemSize::MBF32; }
 
 protected:
+    GSL_SUPPRESS_TYPE1
     float BuildFloatValue(const unsigned char* ptr) const noexcept override
     {
         GSL_SUPPRESS_F6 Expects(ptr != nullptr);

@@ -787,7 +787,6 @@ void MemorySearchViewModel::UpdateResult(SearchResultViewModel& vmResult,
     std::wstring sFormattedValue;
     if (pResults.UpdateValue(pResult, &sFormattedValue, pEmulatorContext) || bForceFilterCheck)
     {
-        ra::services::SearchResults::Result pPreviousResult;
         if (pResults.GetFilterType() == ra::services::SearchFilterType::InitialValue)
             vmResult.bMatchesFilter = pResults.MatchesFilter(m_vSearchResults.front().pResults, pResult);
         else
@@ -1007,7 +1006,7 @@ void MemorySearchViewModel::ExcludeSelected()
     if (m_vSelectedAddresses.empty())
         return;
 
-    SearchResult& pPreviousResult = m_vSearchResults.back();
+    const SearchResult& pPreviousResult = m_vSearchResults.back();
     SearchResult pResult{ pPreviousResult }; // clone previous item
 
     for (const auto nAddress : m_vSelectedAddresses)

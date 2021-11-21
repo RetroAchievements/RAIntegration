@@ -39,7 +39,7 @@ public:
     UploadBadge::Response UploadBadge(const UploadBadge::Request& request) override;
 
     static void ProcessGamePatchData(FetchGameData::Response &response, const ra::services::Http::Response& httpResponse);
-    static void ProcessCodeNotes(FetchCodeNotes::Response &response, const rapidjson::Value& CodeNotes);
+    static void ProcessCodeNotes(FetchCodeNotes::Response &response, const void* api_response);
 
 private:
     const std::string m_sHost;

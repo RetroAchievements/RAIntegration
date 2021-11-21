@@ -7,6 +7,8 @@
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
+#include <rc_api_editor.h>
+
 namespace ra {
 namespace api {
 namespace impl {
@@ -73,7 +75,9 @@ FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Req
         response.Result = ApiResult::Failed;
         response.ErrorMessage = ra::StringPrintf("Code notes for game %u not found in cache", request.GameId);
     }
-    else if (!LoadDocument(document, *pData.get()))
+
+    std::string sNotes;
+    if (!pData->GetLine(sNotes)) // ASSERT: entire JSON block is a single line
     {
         response.Result = ApiResult::Error;
         response.ErrorMessage =
@@ -82,7 +86,15 @@ FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Req
     else
     {
         response.Result = ApiResult::Success;
-        ConnectedServer::ProcessCodeNotes(response, document);
+        sNotes.insert(0, "{\"Success\": true,\"CodeNotes\":");
+        sNotes.push_back('}');
+
+        rc_api_fetch_code_notes_response_t api_response;
+        const auto nResult = rc_api_process_fetch_code_notes_response(&api_response, sNotes.c_str());
+        if (nResult == RC_OK)
+            ConnectedServer::ProcessCodeNotes(response, &api_response);
+
+        rc_api_destroy_fetch_code_notes_response(&api_response);
     }
 
     return response;

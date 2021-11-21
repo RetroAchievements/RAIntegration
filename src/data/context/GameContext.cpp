@@ -200,6 +200,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         vmLeaderboard->SetDescription(ra::Widen(pLeaderboardData.Description));
         vmLeaderboard->SetCategory(ra::data::models::AssetCategory::Core);
         vmLeaderboard->SetValueFormat(ra::itoe<ValueFormat>(pLeaderboardData.Format));
+        vmLeaderboard->SetLowerIsBetter(pLeaderboardData.LowerIsBetter);
         vmLeaderboard->SetDefinition(pLeaderboardData.Definition);
         vmLeaderboard->CreateServerCheckpoint();
         vmLeaderboard->CreateLocalCheckpoint();

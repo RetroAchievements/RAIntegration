@@ -429,6 +429,9 @@
     <ClCompile Include="data\models\TriggerValidation_Tests.cpp">
       <Filter>Tests\Data\Models</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\NewAssetViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

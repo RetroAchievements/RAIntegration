@@ -4,6 +4,7 @@
 #include "data\models\LocalBadgesModel.hh"
 
 #include "ui\viewmodels\AssetListViewModel.hh"
+#include "ui\viewmodels\NewAssetViewModel.hh"
 
 #include "services\impl\StringTextWriter.hh"
 
@@ -2989,6 +2990,236 @@ public:
         Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
         Assert::AreEqual({ 111000001U }, pAsset->GetId());
         Assert::AreEqual(0, pAsset->GetPoints());
+    }
+
+    TEST_METHOD(TestCreateNewAchievementFilterTypeAchievement)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockUserContext.Initialize("User1", "FOO");
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Core, L"Leaderboard1");
+        vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::Achievement);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
+        {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.CreateNew();
+
+        // new Local achievement should be created and focused
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(ra::data::models::AssetType::Achievement, vmAssetList.GetAssetTypeFilter());
+
+        const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+        Assert::AreEqual(std::wstring(), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
+        Assert::AreEqual({ 111000001U }, pAsset->GetId());
+        Assert::AreEqual(0, pAsset->GetPoints());
+
+        // and loaded in the editor, which should be shown (local achievement will always have ID 0)
+        Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsAssetLoaded());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsAchievement());
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsLeaderboard());
+        Assert::IsTrue(bEditorShown);
+    }
+
+    TEST_METHOD(TestCreateNewLeaderboardFilterTypeLeaderboard)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockUserContext.Initialize("User1", "FOO");
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Core, L"Leaderboard1");
+        vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::Leaderboard);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
+        {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.CreateNew();
+
+        // new Local leaderboard should be created and focused
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(ra::data::models::AssetType::Leaderboard, vmAssetList.GetAssetTypeFilter());
+
+        const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+        Assert::AreEqual(std::wstring(), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
+        Assert::AreEqual({ 111000001U }, pAsset->GetId());
+        Assert::AreEqual(0, pAsset->GetPoints());
+
+        // and loaded in the editor, which should be shown (local achievement will always have ID 0)
+        Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsAssetLoaded());
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsAchievement());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsLeaderboard());
+        Assert::IsTrue(bEditorShown);
+    }
+
+    TEST_METHOD(TestCreateNewAchievementFilterTypeAll)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockUserContext.Initialize("User1", "FOO");
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Core, L"Leaderboard1");
+        vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::None);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+
+        bool bPromptShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<NewAssetViewModel>([&bPromptShown](NewAssetViewModel& vmNewAsset)
+        {
+            bPromptShown = true;
+            vmNewAsset.NewAchievement();
+            return DialogResult::OK;
+        });
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
+        {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.CreateNew();
+
+        Assert::IsTrue(bPromptShown);
+
+        // new Local achievement should be created and focused
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(ra::data::models::AssetType::None, vmAssetList.GetAssetTypeFilter());
+
+        // and loaded in the editor, which should be shown (local achievement will always have ID 0)
+        Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsAssetLoaded());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsAchievement());
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsLeaderboard());
+        Assert::IsTrue(bEditorShown);
+    }
+
+    TEST_METHOD(TestCreateNewLeaderboardFilterTypeAll)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockUserContext.Initialize("User1", "FOO");
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Core, L"Leaderboard1");
+        vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::None);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+
+        bool bPromptShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<NewAssetViewModel>([&bPromptShown](NewAssetViewModel& vmNewAsset)
+        {
+            bPromptShown = true;
+            vmNewAsset.NewLeaderboard();
+            return DialogResult::OK;
+        });
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
+        {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.CreateNew();
+
+        Assert::IsTrue(bPromptShown);
+
+        // new Local leaderboard should be created and focused
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(ra::data::models::AssetType::None, vmAssetList.GetAssetTypeFilter());
+
+        // and loaded in the editor, which should be shown (local achievement will always have ID 0)
+        Assert::AreEqual({ 0U }, vmAssetList.mockWindowManager.AssetEditor.GetID());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsAssetLoaded());
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsAchievement());
+        Assert::IsTrue(vmAssetList.mockWindowManager.AssetEditor.IsLeaderboard());
+        Assert::IsTrue(bEditorShown);
+    }
+
+    TEST_METHOD(TestCreateNewCancelFilterTypeAll)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.mockUserContext.Initialize("User1", "FOO");
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Core, L"Leaderboard1");
+        vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::None);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+
+        bool bPromptShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<NewAssetViewModel>([&bPromptShown](NewAssetViewModel&)
+        {
+            bPromptShown = true;
+            return DialogResult::Cancel;
+        });
+
+        bool bEditorShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<AssetEditorViewModel>([&bEditorShown](AssetEditorViewModel&)
+        {
+            bEditorShown = true;
+            return DialogResult::None;
+        });
+
+        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.CreateNew();
+
+        Assert::IsTrue(bPromptShown);
+
+        // no new item should have been created. existing filters should be maintained
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(ra::data::models::AssetType::None, vmAssetList.GetAssetTypeFilter());
+
+        // editor should not be opened
+        Assert::IsFalse(bEditorShown);
     }
 
     TEST_METHOD(TestCloneSingle)

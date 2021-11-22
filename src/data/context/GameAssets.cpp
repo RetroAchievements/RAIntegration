@@ -42,6 +42,7 @@ ra::data::models::AchievementModel& GameAssets::NewAchievement()
 {
     auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
     vmAchievement->SetID(m_nNextLocalId++);
+    vmAchievement->SetPoints(0);
     vmAchievement->SetNew();
     vmAchievement->CreateServerCheckpoint();
     vmAchievement->CreateLocalCheckpoint();

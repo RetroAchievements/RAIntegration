@@ -11,6 +11,7 @@
 
 #include "ui\viewmodels\AssetUploadViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\NewAssetViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -1430,23 +1431,47 @@ void AssetListViewModel::CreateNew()
     if (!pEmulatorContext.WarnDisableHardcoreMode("create a new asset"))
         return;
 
-    RA_LOG_INFO("Creating new achievement");
+    auto nType = GetAssetTypeFilter();
+    if (nType == ra::data::models::AssetType::None)
+    {
+        ra::ui::viewmodels::NewAssetViewModel vmNewAsset;
+        if (vmNewAsset.ShowModal(*this) != DialogResult::OK)
+            return;
 
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+        nType = vmNewAsset.GetSelectedType();
+    }
 
     FilteredAssets().BeginUpdate();
 
-    auto& vmAchievement = pGameContext.Assets().NewAchievement();
-    vmAchievement.SetCategory(ra::data::models::AssetCategory::Local);
-    vmAchievement.SetPoints(0);
-    vmAchievement.SetAuthor(ra::Widen(pUserContext.GetUsername()));
-    vmAchievement.UpdateServerCheckpoint();
-    vmAchievement.SetNew();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    ra::data::models::AssetModelBase* pNewAsset = nullptr;
+    switch (nType)
+    {
+        case ra::data::models::AssetType::Achievement:
+            RA_LOG_INFO("Creating new achievement");
+            pNewAsset = &pGameContext.Assets().NewAchievement();
+            break;
 
-    EnsureAppearsInFilteredList(vmAchievement);
+        case ra::data::models::AssetType::Leaderboard:
+            RA_LOG_INFO("Creating new leaderboard");
+            pNewAsset = &pGameContext.Assets().NewLeaderboard();
+            break;
 
-    const auto nId = ra::to_signed(vmAchievement.GetID());
+        default:
+            break;
+    }
+
+    Expects(pNewAsset != nullptr);
+
+    const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+    pNewAsset->SetAuthor(ra::Widen(pUserContext.GetUsername()));
+    pNewAsset->SetCategory(ra::data::models::AssetCategory::Local);
+    pNewAsset->UpdateServerCheckpoint();
+    pNewAsset->SetNew();
+
+    EnsureAppearsInFilteredList(*pNewAsset);
+
+    const auto nId = ra::to_signed(pNewAsset->GetID());
 
     // select the new viewmodel, and deselect everything else
     gsl::index nIndex = -1;
@@ -1455,7 +1480,7 @@ void AssetListViewModel::CreateNew()
         auto* pItem = m_vFilteredAssets.GetItemAt(i);
         if (pItem != nullptr)
         {
-            if (pItem->GetId() == nId && pItem->GetType() == ra::data::models::AssetType::Achievement)
+            if (pItem->GetId() == nId && pItem->GetType() == nType)
             {
                 pItem->SetSelected(true);
                 nIndex = i;

@@ -109,6 +109,7 @@
     <ClCompile Include="ui\viewmodels\MemorySearchViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MemoryViewerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\MessageBoxViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\NewAssetViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayAchievementsPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayFriendsPageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.cpp" />
@@ -147,6 +148,7 @@
     <ClCompile Include="ui\win32\MemoryBookmarksDialog.cpp" />
     <ClCompile Include="ui\win32\MemoryInspectorDialog.cpp" />
     <ClCompile Include="ui\win32\MessageBoxDialog.cpp" />
+    <ClCompile Include="ui\win32\NewAssetDialog.cpp" />
     <ClCompile Include="ui\win32\OverlaySettingsDialog.cpp" />
     <ClCompile Include="ui\win32\OverlayWindow.cpp" />
     <ClCompile Include="ui\win32\ProgressDialog.cpp" />
@@ -285,6 +287,7 @@
     <ClInclude Include="ui\viewmodels\MemorySearchViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MemoryViewerViewModel.hh" />
     <ClInclude Include="ui\viewmodels\MessageBoxViewModel.hh" />
+    <ClInclude Include="ui\viewmodels\NewAssetViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayAchievementsPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayFriendsPageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\OverlayLeaderboardsPageViewModel.hh" />
@@ -335,6 +338,7 @@
     <ClInclude Include="ui\win32\MemoryBookmarksDialog.hh" />
     <ClInclude Include="ui\win32\MemoryInspectorDialog.hh" />
     <ClInclude Include="ui\win32\MessageBoxDialog.hh" />
+    <ClInclude Include="ui\win32\NewAssetDialog.hh" />
     <ClInclude Include="ui\win32\OverlaySettingsDialog.hh" />
     <ClInclude Include="ui\win32\OverlayWindow.hh" />
     <ClInclude Include="ui\win32\ProgressDialog.hh" />

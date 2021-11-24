@@ -1522,14 +1522,7 @@ public:
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
         {
             response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
-
-        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response& response)
-        {
-            response.UnlockedAchievements.insert(1U);
-            response.UnlockedAchievements.insert(2U);
-            response.Result = ra::api::ApiResult::Success;
+            response.AchievementsRemaining = 0;
             return true;
         });
 
@@ -1564,7 +1557,6 @@ public:
 
         game.mockThreadPool.ExecuteNextTask(); // award achievement 1
         game.mockThreadPool.ExecuteNextTask(); // award achievement 2
-        game.mockThreadPool.AdvanceTime(std::chrono::milliseconds(500)); // mastery unlock check is delayed
         game.mockThreadPool.ExecuteNextTask(); // check unlocks
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
@@ -1574,6 +1566,9 @@ public:
         Assert::AreEqual(std::wstring(L"Mastered GameName"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"2 achievements, 10 points"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Username | Play time: 1h18m"), pPopup->GetDetail());
+
+        pPopup = game.mockOverlayManager.GetMessage(4); // mastery should only have been shown once
+        Expects(pPopup == nullptr);
     }
 
     TEST_METHOD(TestAwardAchievementMasteryNonHardcore)
@@ -1588,14 +1583,7 @@ public:
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
         {
             response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
-
-        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response& response)
-        {
-            response.UnlockedAchievements.insert(1U);
-            response.UnlockedAchievements.insert(2U);
-            response.Result = ra::api::ApiResult::Success;
+            response.AchievementsRemaining = 0;
             return true;
         });
 
@@ -1630,7 +1618,6 @@ public:
 
         game.mockThreadPool.ExecuteNextTask(); // award achievement 1
         game.mockThreadPool.ExecuteNextTask(); // award achievement 2
-        game.mockThreadPool.AdvanceTime(std::chrono::milliseconds(500)); // mastery unlock check is delayed
         game.mockThreadPool.ExecuteNextTask(); // check unlocks
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
@@ -1640,6 +1627,9 @@ public:
         Assert::AreEqual(std::wstring(L"Completed GameName"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"2 achievements, 10 points"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Player | Play time: 102h03m"), pPopup->GetDetail());
+
+        pPopup = game.mockOverlayManager.GetMessage(4); // mastery should only have been shown once
+        Expects(pPopup == nullptr);
     }
 
     TEST_METHOD(TestAwardAchievementMasteryIncomplete)
@@ -1653,13 +1643,7 @@ public:
         game.mockServer.HandleRequest<ra::api::AwardAchievement>([](const ra::api::AwardAchievement::Request&, ra::api::AwardAchievement::Response& response)
         {
             response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
-
-        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response& response)
-        {
-            response.UnlockedAchievements.insert(2U);
-            response.Result = ra::api::ApiResult::Success;
+            response.AchievementsRemaining = 1;
             return true;
         });
 

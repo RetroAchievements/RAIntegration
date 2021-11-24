@@ -42,7 +42,46 @@ MemSize TriggerValidation::MapRcheevosMemSize(char nSize) noexcept
     }
 }
 
-bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sError)
+static bool ValidateLeaderboardCondSet(const rc_condset_t* pCondSet, std::wstring& sError)
+{
+    const auto* pCondition = pCondSet->conditions;
+    for (; pCondition; pCondition = pCondition->next)
+    {
+        switch (pCondition->type)
+        {
+            case RC_CONDITION_MEASURED:
+                sError = ra::StringPrintf(L"%s has no effect in leaderboard triggers", L"Measured");
+                return false;
+            case RC_CONDITION_MEASURED_IF:
+                sError = ra::StringPrintf(L"%s has no effect in leaderboard triggers", L"MeasuredIf");
+                return false;
+            case RC_CONDITION_TRIGGER:
+                sError = ra::StringPrintf(L"%s has no effect in leaderboard triggers", L"Trigger");
+                return false;
+            default:
+                break;
+        }
+    }
+
+    return true;
+}
+
+static bool ValidateLeaderboardTrigger(const rc_trigger_t* pTrigger, std::wstring& sError)
+{
+    if (!ValidateLeaderboardCondSet(pTrigger->requirement, sError))
+        return false;
+
+    const auto* pCondSet = pTrigger->alternative;
+    for (; pCondSet; pCondSet = pCondSet->next)
+    {
+        if (!ValidateLeaderboardCondSet(pCondSet, sError))
+            return false;
+    }
+
+    return true;
+}
+
+bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sError, AssetType nType)
 {
     const auto nSize = rc_trigger_size(sTrigger.c_str());
     if (nSize < 0)
@@ -65,6 +104,12 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
     char sErrorBuffer[256];
     if (rc_validate_trigger(pTrigger, sErrorBuffer, sizeof(sErrorBuffer), nMaxAddress))
     {
+        if (nType == AssetType::Leaderboard)
+        {
+            if (!ValidateLeaderboardTrigger(pTrigger, sError))
+                return false;
+        }
+
         sError.clear();
         return true;
     }

@@ -17,7 +17,15 @@ private:
     void AssertValidation(const std::string& sTrigger, const std::wstring& sExpectedError)
     {
         std::wstring sError;
-        const bool bResult = TriggerValidation::Validate(sTrigger, sError);
+        const bool bResult = TriggerValidation::Validate(sTrigger, sError, AssetType::Achievement);
+        Assert::AreEqual(sExpectedError, sError);
+        Assert::AreEqual(bResult, sExpectedError.empty());
+    }
+
+    void AssertLeaderboardValidation(const std::string& sTrigger, const std::wstring& sExpectedError)
+    {
+        std::wstring sError;
+        const bool bResult = TriggerValidation::Validate(sTrigger, sError, AssetType::Leaderboard);
         Assert::AreEqual(sExpectedError, sError);
         Assert::AreEqual(bResult, sExpectedError.empty());
     }
@@ -144,6 +152,24 @@ public:
         // AddAddress can use really big values for negative offsets, don't flag them.
         AssertValidation("I:0xX1234_0xHFFFFFF00>5", L"");
         AssertValidation("I:0xX1234_0xH1234>5_0xHFFFFFF00>5", L"Condition 3: Address FFFFFF00 out of range (max 1FFFF)");
+    }
+
+    TEST_METHOD(TestLeaderboardConditionTypes)
+    {
+        AssertLeaderboardValidation("0xH1234<99_0x2345<50", L"");
+        AssertLeaderboardValidation("P:0xH1234<99_0x2345<50", L"");
+        AssertLeaderboardValidation("R:0xH1234<99_0x2345<50", L"");
+        AssertLeaderboardValidation("M:0xH1234<99_0x2345<50", L"Measured has no effect in leaderboard triggers");
+        AssertLeaderboardValidation("Q:0xH1234<99_0x2345<50", L"MeasuredIf has no effect in leaderboard triggers");
+        AssertLeaderboardValidation("T:0xH1234<99_0x2345<50", L"Trigger has no effect in leaderboard triggers");
+        AssertLeaderboardValidation("A:0xH1234<99_0x2345<50", L"");
+        AssertLeaderboardValidation("B:0xH1234<99_0x2345<50", L"");
+        AssertLeaderboardValidation("I:0xH1234<99_0x2345<50", L"");
+        AssertLeaderboardValidation("C:0xH1234<99_0x2345<50.6.", L"");
+        AssertLeaderboardValidation("D:0xH1234<99_0x2345<50.6.", L"");
+        AssertLeaderboardValidation("Z:0xH1234<99_0x2345<50", L"");
+        AssertLeaderboardValidation("N:0xH1234<99_0x2345<50", L"");
+        AssertLeaderboardValidation("O:0xH1234<99_0x2345<50", L"");
     }
 };
 

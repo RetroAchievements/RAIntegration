@@ -3,6 +3,7 @@
 #pragma once
 
 #include "data\Types.hh"
+#include "data\models\AssetModelBase.hh"
 
 namespace ra {
 namespace data {
@@ -11,7 +12,7 @@ namespace models {
 class TriggerValidation
 {
 public:
-    static bool Validate(const std::string& sTrigger, std::wstring& sError);
+    static bool Validate(const std::string& sTrigger, std::wstring& sError, AssetType nType);
     static MemSize MapRcheevosMemSize(char nSize) noexcept;
 };
 

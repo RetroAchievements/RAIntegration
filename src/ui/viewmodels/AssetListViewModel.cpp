@@ -1121,17 +1121,69 @@ static std::wstring ValidateTriggerLogic(const std::string& sTrigger)
     return sError;
 }
 
+static std::wstring ValidateValueLogic(const std::string& sValue)
+{
+    const auto nSize = rc_value_size(sValue.c_str());
+    if (nSize < 0)
+        return ra::StringPrintf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
+
+    std::string sBuffer;
+    sBuffer.resize(nSize);
+    const auto* pValue = rc_parse_value(sBuffer.data(), sValue.c_str(), nullptr, 0);
+
+    std::wstring sError;
+    const auto* pCondSet = pValue->conditions;
+    while (pCondSet != nullptr)
+    {
+        sError = ValidateCondSet(pCondSet);
+        if (!sError.empty())
+            break;
+
+        pCondSet = pCondSet->next;
+    }
+
+    return sError;
+}
+
 void AssetListViewModel::ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const
 {
     if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsCustomHost())
     {
-        std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
+        const std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
         if (!sTriggerError.empty())
             sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
     }
 }
+
+void AssetListViewModel::ValidateLeaderboardForCore(std::wstring& sError, const ra::data::models::LeaderboardModel& pLeaderboard) const
+{
+    if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsCustomHost())
+    {
+        std::wstring sTriggerError = ValidateTriggerLogic(pLeaderboard.GetStartTrigger());
+        if (!sTriggerError.empty())
+            sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Start", sTriggerError));
+
+        sTriggerError = ValidateTriggerLogic(pLeaderboard.GetSubmitTrigger());
+        if (!sTriggerError.empty())
+            sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Submit", sTriggerError));
+
+        sTriggerError = ValidateTriggerLogic(pLeaderboard.GetCancelTrigger());
+        if (!sTriggerError.empty())
+            sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Cancel", sTriggerError));
+
+        const std::wstring sValueError = ValidateValueLogic(pLeaderboard.GetValueDefinition());
+        if (!sValueError.empty())
+            sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
+    }
+
+    sError.append(ra::StringPrintf(L"\n* %s: %s", pLeaderboard.GetName(), L"Leaderboards cannot be published at this time."));
+}
 #else
 void AssetListViewModel::ValidateAchievementForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::AchievementModel& pAchievement) const
+{
+}
+
+void AssetListViewModel::ValidateLeaderboardForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::LeaderboardModel& pAchievement) const
 {
 }
 #endif
@@ -1144,7 +1196,15 @@ bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::Ass
     {
         const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
         if (pAchievement != nullptr)
+        {
             ValidateAchievementForCore(sError, *pAchievement);
+        }
+        else
+        {
+            const auto* pLeaderboard = dynamic_cast<const ra::data::models::LeaderboardModel*>(pAsset);
+            if (pLeaderboard != nullptr)
+                ValidateLeaderboardForCore(sError, *pLeaderboard);
+        }
     }
 
     if (!sError.empty())

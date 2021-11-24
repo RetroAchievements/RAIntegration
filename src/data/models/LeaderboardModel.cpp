@@ -69,21 +69,21 @@ void LeaderboardModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 bool LeaderboardModel::ValidateAsset(std::wstring& sError)
 {
     const auto& sStartTrigger = GetLocalAssetDefinition(m_pStartTrigger);
-    if (!TriggerValidation::Validate(sStartTrigger, sError))
+    if (!TriggerValidation::Validate(sStartTrigger, sError, AssetType::Leaderboard))
     {
         sError.insert(0, L"Start: ");
         return false;
     }
 
     const auto& sSubmitTrigger = GetLocalAssetDefinition(m_pSubmitTrigger);
-    if (!TriggerValidation::Validate(sSubmitTrigger, sError))
+    if (!TriggerValidation::Validate(sSubmitTrigger, sError, AssetType::Leaderboard))
     {
         sError.insert(0, L"Submit: ");
         return false;
     }
 
     const auto& sCancelTrigger = GetLocalAssetDefinition(m_pCancelTrigger);
-    if (!TriggerValidation::Validate(sCancelTrigger, sError))
+    if (!TriggerValidation::Validate(sCancelTrigger, sError, AssetType::Leaderboard))
     {
         sError.insert(0, L"Cancel: ");
         return false;

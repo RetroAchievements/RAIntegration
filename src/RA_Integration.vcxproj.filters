@@ -381,6 +381,12 @@
     <ClCompile Include="data\models\TriggerValidation.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
+    <ClCompile Include="ui\win32\NewAssetDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\viewmodels\NewAssetViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -946,6 +952,12 @@
     </ClInclude>
     <ClInclude Include="data\models\TriggerValidation.hh">
       <Filter>Data\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\NewAssetDialog.hh">
+      <Filter>UI\Win32</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\NewAssetViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

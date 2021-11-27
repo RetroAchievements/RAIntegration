@@ -246,7 +246,7 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindAssets.BindItems(vmAssetList.FilteredAssets());
     m_bindAssets.BindIsSelected(AssetListViewModel::AssetSummaryViewModel::IsSelectedProperty);
 
-    m_bindWindow.BindLabel(IDC_RA_GAMEHASH, AssetListViewModel::GameIdProperty);
+    m_bindWindow.BindLabel(IDC_RA_ID, AssetListViewModel::GameIdProperty);
     m_bindWindow.BindLabel(IDC_RA_NUMACH, AssetListViewModel::AchievementCountProperty);
     m_bindWindow.BindLabel(IDC_RA_POINT_TOTAL, AssetListViewModel::TotalPointsProperty);
 
@@ -258,8 +258,8 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     m_bindWindow.BindEnabled(IDC_RA_DOWNLOAD_ACH, AssetListViewModel::CanResetProperty);
     m_bindWindow.BindLabel(IDC_RA_REVERTSELECTED, AssetListViewModel::RevertButtonTextProperty);
     m_bindWindow.BindEnabled(IDC_RA_REVERTSELECTED, AssetListViewModel::CanRevertProperty);
-    m_bindWindow.BindEnabled(IDC_RA_ADD_ACH, AssetListViewModel::CanCreateProperty);
-    m_bindWindow.BindEnabled(IDC_RA_CLONE_ACH, AssetListViewModel::CanCloneProperty);
+    m_bindWindow.BindEnabled(IDC_RA_NEW_ASSET, AssetListViewModel::CanCreateProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CLONE_ASSET, AssetListViewModel::CanCloneProperty);
 
     m_bindProcessingActive.BindCheck(AssetListViewModel::IsProcessingActiveProperty);
     m_bindKeepActive.BindCheck(AssetListViewModel::KeepActiveProperty);
@@ -267,8 +267,8 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_CATEGORY, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_SPECIAL_FILTER, Anchor::Top | Anchor::Left);
-    SetAnchor(IDC_RA_GAMEID, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_GAMEHASH, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_LBL_ID, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_ID, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_ACHIEVEMENTS, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_NUMACH, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_POINTS, Anchor::Top | Anchor::Right);
@@ -280,8 +280,8 @@ AssetListDialog::AssetListDialog(AssetListViewModel& vmAssetList)
     SetAnchor(IDC_RA_COMMIT_ACH, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_DOWNLOAD_ACH, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_REVERTSELECTED, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_ADD_ACH, Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_CLONE_ACH, Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_NEW_ASSET, Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_CLONE_ASSET, Anchor::Bottom | Anchor::Right);
 
     SetMinimumSize(640, 293);
 }
@@ -341,7 +341,7 @@ BOOL AssetListDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
-        case IDC_RA_ADD_ACH:
+        case IDC_RA_NEW_ASSET:
         {
             auto* vmAssets = dynamic_cast<AssetListViewModel*>(&m_vmWindow);
             if (vmAssets)
@@ -350,7 +350,7 @@ BOOL AssetListDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
-        case IDC_RA_CLONE_ACH:
+        case IDC_RA_CLONE_ASSET:
         {
             auto* vmAssets = dynamic_cast<AssetListViewModel*>(&m_vmWindow);
             if (vmAssets)

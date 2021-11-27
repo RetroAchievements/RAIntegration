@@ -11,6 +11,7 @@
 
 #include "ui\viewmodels\AssetUploadViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\NewAssetViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -1120,17 +1121,69 @@ static std::wstring ValidateTriggerLogic(const std::string& sTrigger)
     return sError;
 }
 
+static std::wstring ValidateValueLogic(const std::string& sValue)
+{
+    const auto nSize = rc_value_size(sValue.c_str());
+    if (nSize < 0)
+        return ra::StringPrintf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
+
+    std::string sBuffer;
+    sBuffer.resize(nSize);
+    const auto* pValue = rc_parse_value(sBuffer.data(), sValue.c_str(), nullptr, 0);
+
+    std::wstring sError;
+    const auto* pCondSet = pValue->conditions;
+    while (pCondSet != nullptr)
+    {
+        sError = ValidateCondSet(pCondSet);
+        if (!sError.empty())
+            break;
+
+        pCondSet = pCondSet->next;
+    }
+
+    return sError;
+}
+
 void AssetListViewModel::ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const
 {
     if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsCustomHost())
     {
-        std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
+        const std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
         if (!sTriggerError.empty())
             sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
     }
 }
+
+void AssetListViewModel::ValidateLeaderboardForCore(std::wstring& sError, const ra::data::models::LeaderboardModel& pLeaderboard) const
+{
+    if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsCustomHost())
+    {
+        std::wstring sTriggerError = ValidateTriggerLogic(pLeaderboard.GetStartTrigger());
+        if (!sTriggerError.empty())
+            sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Start", sTriggerError));
+
+        sTriggerError = ValidateTriggerLogic(pLeaderboard.GetSubmitTrigger());
+        if (!sTriggerError.empty())
+            sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Submit", sTriggerError));
+
+        sTriggerError = ValidateTriggerLogic(pLeaderboard.GetCancelTrigger());
+        if (!sTriggerError.empty())
+            sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Cancel", sTriggerError));
+
+        const std::wstring sValueError = ValidateValueLogic(pLeaderboard.GetValueDefinition());
+        if (!sValueError.empty())
+            sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
+    }
+
+    sError.append(ra::StringPrintf(L"\n* %s: %s", pLeaderboard.GetName(), L"Leaderboards cannot be published at this time."));
+}
 #else
 void AssetListViewModel::ValidateAchievementForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::AchievementModel& pAchievement) const
+{
+}
+
+void AssetListViewModel::ValidateLeaderboardForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::LeaderboardModel& pAchievement) const
 {
 }
 #endif
@@ -1143,7 +1196,15 @@ bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::Ass
     {
         const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
         if (pAchievement != nullptr)
+        {
             ValidateAchievementForCore(sError, *pAchievement);
+        }
+        else
+        {
+            const auto* pLeaderboard = dynamic_cast<const ra::data::models::LeaderboardModel*>(pAsset);
+            if (pLeaderboard != nullptr)
+                ValidateLeaderboardForCore(sError, *pLeaderboard);
+        }
     }
 
     if (!sError.empty())
@@ -1430,23 +1491,47 @@ void AssetListViewModel::CreateNew()
     if (!pEmulatorContext.WarnDisableHardcoreMode("create a new asset"))
         return;
 
-    RA_LOG_INFO("Creating new achievement");
+    auto nType = GetAssetTypeFilter();
+    if (nType == ra::data::models::AssetType::None)
+    {
+        ra::ui::viewmodels::NewAssetViewModel vmNewAsset;
+        if (vmNewAsset.ShowModal(*this) != DialogResult::OK)
+            return;
 
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+        nType = vmNewAsset.GetSelectedType();
+    }
 
     FilteredAssets().BeginUpdate();
 
-    auto& vmAchievement = pGameContext.Assets().NewAchievement();
-    vmAchievement.SetCategory(ra::data::models::AssetCategory::Local);
-    vmAchievement.SetPoints(0);
-    vmAchievement.SetAuthor(ra::Widen(pUserContext.GetUsername()));
-    vmAchievement.UpdateServerCheckpoint();
-    vmAchievement.SetNew();
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    ra::data::models::AssetModelBase* pNewAsset = nullptr;
+    switch (nType)
+    {
+        case ra::data::models::AssetType::Achievement:
+            RA_LOG_INFO("Creating new achievement");
+            pNewAsset = &pGameContext.Assets().NewAchievement();
+            break;
 
-    EnsureAppearsInFilteredList(vmAchievement);
+        case ra::data::models::AssetType::Leaderboard:
+            RA_LOG_INFO("Creating new leaderboard");
+            pNewAsset = &pGameContext.Assets().NewLeaderboard();
+            break;
 
-    const auto nId = ra::to_signed(vmAchievement.GetID());
+        default:
+            break;
+    }
+
+    Expects(pNewAsset != nullptr);
+
+    const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+    pNewAsset->SetAuthor(ra::Widen(pUserContext.GetUsername()));
+    pNewAsset->SetCategory(ra::data::models::AssetCategory::Local);
+    pNewAsset->UpdateServerCheckpoint();
+    pNewAsset->SetNew();
+
+    EnsureAppearsInFilteredList(*pNewAsset);
+
+    const auto nId = ra::to_signed(pNewAsset->GetID());
 
     // select the new viewmodel, and deselect everything else
     gsl::index nIndex = -1;
@@ -1455,7 +1540,7 @@ void AssetListViewModel::CreateNew()
         auto* pItem = m_vFilteredAssets.GetItemAt(i);
         if (pItem != nullptr)
         {
-            if (pItem->GetId() == nId && pItem->GetType() == ra::data::models::AssetType::Achievement)
+            if (pItem->GetId() == nId && pItem->GetType() == nType)
             {
                 pItem->SetSelected(true);
                 nIndex = i;

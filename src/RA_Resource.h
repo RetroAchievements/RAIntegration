@@ -109,6 +109,18 @@
 #define IDC_RA_LBX_LBOARD_PARTS         1204
 #define IDC_RA_LBL_GROUPS               1205
 #define IDC_RA_TYPE_FILTER              1206
+#define IDC_RA_LISTACHIEVEMENTS         1207
+#define IDC_RA_CLONE_ASSET              1208
+#define IDC_RA_NEW_ASSET                1209
+#define IDC_RA_NEW_ACHIEVEMENT          1210
+#define IDC_RA_NEW_LEADERBOARD          1211
+#define IDC_RA_REVERTSELECTED           1212
+#define IDC_RA_RESET_ACH                1213
+#define IDC_RA_CHKACHPROCESSINGACTIVE   1214
+#define IDC_RA_NUMACH                   1215
+#define IDC_RA_POINT_TOTAL              1216
+#define IDC_RA_GAMEHASH                 1217
+#define IDC_RA_ADDBOOKMARK              1218
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -121,29 +133,12 @@
 #define IDD_RA_ROMCHECKSUM              1510
 #define IDD_RA_OVERLAYSETTINGS          1511
 #define IDD_RA_PROGRESS                 1512
-#define IDC_RA_ADDBOOKMARK              1518
-#define IDC_RA_HELP                     1521
-#define IDC_RA_REVERTSELECTED           1523
-#define IDC_RA_RESET_ACH                1524
-#define IDC_RA_DEL_ACH                  1530
-#define IDC_RA_CHKACHPROCESSINGACTIVE   1531
-#define IDC_RA_GOTOWIKI                 1532
-#define IDC_RA_GAMEHASH                 1533
-#define IDC_RA_NUMACH                   1534
+#define IDD_RA_NEWASSET                 1513
 #define IDC_RA_PASSWORD                 1535
-#define IDC_RA_POINT_TOTAL              1535
 #define IDC_RA_SAVEPASSWORD             1536
-#define IDC_RA_ACTIVE_CORE              1537
-#define IDC_RA_ACTIVE_UNOFFICIAL        1538
-#define IDC_RA_ACTIVE_LOCAL             1539
-#define IDC_RA_LISTACHIEVEMENTS         1540
-#define IDC_RA_ADD_ACH                  1542
-#define IDC_RA_CLONE_ACH                1544
 #define IDC_RA_USERNAME                 1549
 #define IDC_RA_DOWNLOAD_ACH             1550
 #define IDC_RA_COMMIT_ACH               1551
-#define IDC_RA_PROMOTE_ACH              1552
-#define IDC_RA_WATCH                    1557
 #define IDC_RA_GAMETITLE                1563
 #define IDC_RA_KNOWNGAMES               1565
 #define IDC_RA_CHECKSUM                 1566
@@ -163,7 +158,6 @@
 #define IDC_RA_SCANNERFOUNDINFO         1597
 #define IDC_RA_ROMCHECKSUMTEXT          1598
 #define IDC_RA_COPYCHECKSUMCLIPBOARD    1599
-#define IDC_RA_ROMCHECKSUMHEADER        1606
 #define IDM_RA_MENUSTART                1700
 #define IDM_RA_RETROACHIEVEMENTS        1700
 #define IDM_RA_OVERLAYSETTINGS          1701
@@ -191,7 +185,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        122
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1207
+#define _APS_NEXT_CONTROL_VALUE         1219
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

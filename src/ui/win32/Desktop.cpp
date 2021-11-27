@@ -16,6 +16,7 @@
 #include "ui/win32/MessageBoxDialog.hh"
 #include "ui/win32/MemoryBookmarksDialog.hh"
 #include "ui/win32/MemoryInspectorDialog.hh"
+#include "ui/win32/NewAssetDialog.hh"
 #include "ui/win32/OverlaySettingsDialog.hh"
 #include "ui/win32/ProgressDialog.hh"
 #include "ui/win32/RichPresenceDialog.hh"
@@ -45,6 +46,7 @@ Desktop::Desktop() noexcept
     m_vDialogPresenters.emplace_back(new (std::nothrow) AssetEditorDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) FileDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) OverlaySettingsDialog::Presenter);
+    m_vDialogPresenters.emplace_back(new (std::nothrow) NewAssetDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) BrokenAchievementsDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) UnknownGameDialog::Presenter);
     m_vDialogPresenters.emplace_back(new (std::nothrow) ProgressDialog::Presenter);

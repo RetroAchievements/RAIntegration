@@ -15,6 +15,7 @@ public:
     struct Response : ApiResponseBase
     {
         unsigned int NewPlayerScore{ 0U };
+        unsigned int AchievementsRemaining{ 0U };
     };
 
     struct Request : ApiRequestBase

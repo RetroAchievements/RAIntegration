@@ -18,6 +18,7 @@
 #include <rapidjson\document.h>
 
 #include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
+#include <rc_api_editor.h>
 #include <rc_api_info.h>
 #include <rc_api_runtime.h>
 #include <rc_api_user.h>
@@ -460,7 +461,6 @@ Login::Response ConnectedServer::Login(const Login::Request& request)
 {
     Login::Response response;
 
-    std::string sPostData;
     rc_api_login_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
@@ -495,7 +495,6 @@ Login::Response ConnectedServer::Login(const Login::Request& request)
     }
 
     rc_api_destroy_request(&api_request);
-
     return response;
 }
 
@@ -513,7 +512,6 @@ StartSession::Response ConnectedServer::StartSession(const StartSession::Request
 {
     StartSession::Response response;
 
-    std::string sPostData;
     rc_api_start_session_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
@@ -539,7 +537,6 @@ StartSession::Response ConnectedServer::StartSession(const StartSession::Request
     }
 
     rc_api_destroy_request(&api_request);
-
     return response;
 }
 
@@ -547,7 +544,6 @@ Ping::Response ConnectedServer::Ping(const Ping::Request& request)
 {
     Ping::Response response;
 
-    std::string sPostData;
     rc_api_ping_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
@@ -580,7 +576,6 @@ Ping::Response ConnectedServer::Ping(const Ping::Request& request)
     }
 
     rc_api_destroy_request(&api_request);
-
     return response;
 }
 
@@ -588,7 +583,6 @@ FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlo
 {
     FetchUserUnlocks::Response response;
 
-    std::string sPostData;
     rc_api_fetch_user_unlocks_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
@@ -620,7 +614,6 @@ FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlo
     }
 
     rc_api_destroy_request(&api_request);
-
     return response;
 }
 
@@ -628,7 +621,6 @@ AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievem
 {
     AwardAchievement::Response response;
 
-    std::string sPostData;
     rc_api_award_achievement_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
@@ -655,6 +647,7 @@ AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievem
             {
                 response.Result = ApiResult::Success;
                 response.NewPlayerScore = api_response.new_player_score;
+                response.AchievementsRemaining = api_response.achievements_remaining;
             }
 
             rc_api_destroy_award_achievement_response(&api_response);
@@ -662,7 +655,6 @@ AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievem
     }
 
     rc_api_destroy_request(&api_request);
-
     return response;
 }
 
@@ -670,7 +662,6 @@ SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const S
 {
     SubmitLeaderboardEntry::Response response;
 
-    std::string sPostData;
     rc_api_submit_lboard_entry_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
@@ -716,7 +707,6 @@ SubmitLeaderboardEntry::Response ConnectedServer::SubmitLeaderboardEntry(const S
     }
 
     rc_api_destroy_request(&api_request);
-
     return response;
 }
 
@@ -764,7 +754,6 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
 {
     ResolveHash::Response response;
 
-    std::string sPostData;
     rc_api_resolve_hash_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
@@ -790,7 +779,6 @@ ResolveHash::Response ConnectedServer::ResolveHash(const ResolveHash::Request& r
     }
 
     rc_api_destroy_request(&api_request);
-
     return response;
 }
 
@@ -798,7 +786,6 @@ FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Requ
 {
     FetchGameData::Response response;
 
-    std::string sPostData;
     rc_api_fetch_game_data_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
 
@@ -843,7 +830,6 @@ FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Requ
     }
 
     rc_api_destroy_request(&api_request);
-
     return response;
 }
 
@@ -885,6 +871,7 @@ void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &res
             pLeaderboard.Description = pSrcLeaderboard->description;
             pLeaderboard.Definition = pSrcLeaderboard->definition;
             pLeaderboard.Format = pSrcLeaderboard->format;
+            pLeaderboard.LowerIsBetter = pSrcLeaderboard->lower_is_better;
         }
     }
 
@@ -894,75 +881,108 @@ void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &res
 FetchCodeNotes::Response ConnectedServer::FetchCodeNotes(const FetchCodeNotes::Request& request)
 {
     FetchCodeNotes::Response response;
-    rapidjson::Document document;
-    std::string sPostData;
 
-    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+    rc_api_fetch_code_notes_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
-    if (DoRequest(m_sHost, FetchCodeNotes::Name(), "codenotes2", sPostData, response, document))
+    api_params.game_id = request.GameId;
+
+    rc_api_request_t api_request;
+    if (rc_api_init_fetch_code_notes_request(&api_request, &api_params) == RC_OK)
     {
-        if (!document.HasMember("CodeNotes"))
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, FetchCodeNotes::Name(), httpResponse, response))
         {
-            response.Result = ApiResult::Error;
-            response.ErrorMessage = ra::StringPrintf("%s not found in response", "CodeNotes");
-        }
-        else
-        {
-            response.Result = ApiResult::Success;
+            rc_api_fetch_code_notes_response_t api_response;
+            const auto nResult = rc_api_process_fetch_code_notes_response(&api_response, httpResponse.Content().c_str());
 
-            const auto& CodeNotes = document["CodeNotes"];
-
-            // store a copy in the cache for offline mode
-            auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-            auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::CodeNotes, std::to_wstring(request.GameId));
-            if (pData != nullptr)
+            if (ValidateResponse(nResult, api_response.response, FetchCodeNotes::Name(), httpResponse.StatusCode(), response))
             {
-                rapidjson::Document codeNotes;
-                codeNotes.CopyFrom(CodeNotes, document.GetAllocator());
-                SaveDocument(codeNotes, *pData.get());
+                // store a copy in the cache for offline mode
+                auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+                auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::CodeNotes, std::to_wstring(request.GameId));
+                if (pData != nullptr)
+                {
+                    std::string sContent(httpResponse.Content());
+                    auto nIndex = sContent.find('[');
+                    sContent.erase(0, nIndex);
+                    nIndex = sContent.find_last_of(']');
+                    sContent.erase(nIndex + 1);
+                    pData->Write(sContent);
+                }
+
+                response.Result = ApiResult::Success;
+
+                ProcessCodeNotes(response, &api_response);
             }
 
-            // process it
-            ProcessCodeNotes(response, CodeNotes);
+            rc_api_destroy_fetch_code_notes_response(&api_response);
         }
     }
 
+    rc_api_destroy_request(&api_request);
     return response;
 }
 
-void ConnectedServer::ProcessCodeNotes(ra::api::FetchCodeNotes::Response &response, const rapidjson::Value& CodeNotes)
+#pragma warning(push)
+#pragma warning(disable : 5045)
+void ConnectedServer::ProcessCodeNotes(FetchCodeNotes::Response& response, const void* api_response)
 {
-    for (const auto& codeNote : CodeNotes.GetArray())
+    const rc_api_fetch_code_notes_response_t* fetch_code_notes_response =
+        static_cast<const rc_api_fetch_code_notes_response_t*>(api_response);
+    const rc_api_code_note_t* note = fetch_code_notes_response->notes;
+    const rc_api_code_note_t* stop = fetch_code_notes_response->notes + fetch_code_notes_response->num_notes;
+    for (; note < stop; ++note)
     {
         auto& pNote = response.Notes.emplace_back();
-        GetRequiredJsonField(pNote.Author, codeNote, "User", response);
-
-        std::string sAddress;
-        GetRequiredJsonField(sAddress, codeNote, "Address", response);
-        pNote.Address = ra::ByteAddressFromString(sAddress);
-
-        GetRequiredJsonField(pNote.Note, codeNote, "Note", response);
-
-        // empty notes were deleted on the server - don't bother including them in the response
-        if (pNote.Note.empty())
-            response.Notes.pop_back();
+        pNote.Author = note->author;
+        pNote.Address = note->address;
+        pNote.Note = ra::Widen(note->note);
     }
+}
+#pragma warning(pop)
+
+static void SetCodeNote(ApiResponseBase& response, const char* sApiName,
+    unsigned nGameId, ra::ByteAddress nAddress, const char* sNote)
+{
+    rc_api_update_code_note_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+
+    api_params.game_id = nGameId;
+    api_params.address = nAddress;
+    api_params.note = sNote;
+
+    rc_api_request_t api_request;
+    if (rc_api_init_update_code_note_request(&api_request, &api_params) == RC_OK)
+    {
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, sApiName, httpResponse, response))
+        {
+            rc_api_update_code_note_response_t api_response;
+            const auto nResult = rc_api_process_update_code_note_response(&api_response, httpResponse.Content().c_str());
+
+            if (ValidateResponse(nResult, api_response.response, sApiName, httpResponse.StatusCode(), response))
+            {
+                response.Result = ApiResult::Success;
+            }
+
+            rc_api_destroy_update_code_note_response(&api_response);
+        }
+    }
+
+    rc_api_destroy_request(&api_request);
 }
 
 UpdateCodeNote::Response ConnectedServer::UpdateCodeNote(const UpdateCodeNote::Request& request)
 {
     UpdateCodeNote::Response response;
-    rapidjson::Document document;
-    std::string sPostData;
 
-    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
-    AppendUrlParam(sPostData, "m", std::to_string(request.Address));
-    AppendUrlParam(sPostData, "n", ra::Narrow(request.Note));
-
-    if (DoRequest(m_sHost, UpdateCodeNote::Name(), "submitcodenote", sPostData, response, document))
-    {
-        response.Result = ApiResult::Success;
-    }
+    const std::string sNote = ra::Narrow(request.Note);
+    SetCodeNote(response, UpdateCodeNote::Name(), request.GameId, request.Address, sNote.c_str());
 
     return response;
 }
@@ -970,16 +990,8 @@ UpdateCodeNote::Response ConnectedServer::UpdateCodeNote(const UpdateCodeNote::R
 DeleteCodeNote::Response ConnectedServer::DeleteCodeNote(const DeleteCodeNote::Request& request)
 {
     DeleteCodeNote::Response response;
-    rapidjson::Document document;
-    std::string sPostData;
 
-    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
-    AppendUrlParam(sPostData, "m", std::to_string(request.Address));
-
-    if (DoRequest(m_sHost, DeleteCodeNote::Name(), "submitcodenote", sPostData, response, document))
-    {
-        response.Result = ApiResult::Success;
-    }
+    SetCodeNote(response, DeleteCodeNote::Name(), request.GameId, request.Address, nullptr);
 
     return response;
 }
@@ -987,30 +999,46 @@ DeleteCodeNote::Response ConnectedServer::DeleteCodeNote(const DeleteCodeNote::R
 UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchievement::Request& request)
 {
     UpdateAchievement::Response response;
-    rapidjson::Document document;
-    std::string sPostData;
 
-    AppendUrlParam(sPostData, "a", std::to_string(request.AchievementId));
-    AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
-    AppendUrlParam(sPostData, "n", ra::Narrow(request.Title));
-    AppendUrlParam(sPostData, "d", ra::Narrow(request.Description));
-    AppendUrlParam(sPostData, "m", request.Trigger);
-    AppendUrlParam(sPostData, "z", std::to_string(request.Points));
-    AppendUrlParam(sPostData, "f", std::to_string(request.Category));
-    AppendUrlParam(sPostData, "b", request.Badge);
+    rc_api_update_achievement_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    const std::string sPostCode = ra::StringPrintf("%sSECRET%uSEC%s%uRE2%u",
-        pUserContext.GetUsername(), request.AchievementId, request.Trigger, request.Points, request.Points * 3);
-    const std::string sPostCodeHash = RAGenerateMD5(sPostCode);
-    AppendUrlParam(sPostData, "h", sPostCodeHash);
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
 
-    if (DoRequest(m_sHost, UpdateAchievement::Name(), "uploadachievement", sPostData, response, document))
+    const std::string sTitle = ra::Narrow(request.Title);
+    const std::string sDescription = ra::Narrow(request.Description);
+
+    api_params.achievement_id = request.AchievementId;
+    api_params.game_id = request.GameId;
+    api_params.title = sTitle.c_str();
+    api_params.description = sDescription.c_str();
+    api_params.trigger = request.Trigger.c_str();
+    api_params.points = request.Points;
+    api_params.category = request.Category;
+    api_params.badge = request.Badge.c_str();
+
+    rc_api_request_t api_request;
+    if (rc_api_init_update_achievement_request(&api_request, &api_params) == RC_OK)
     {
-        response.Result = ApiResult::Success;
-        GetRequiredJsonField(response.AchievementId, document, "AchievementID", response);
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, UpdateAchievement::Name(), httpResponse, response))
+        {
+            rc_api_update_achievement_response_t api_response;
+            const auto nResult = rc_api_process_update_achievement_response(&api_response, httpResponse.Content().c_str());
+
+            if (ValidateResponse(nResult, api_response.response, UpdateAchievement::Name(), httpResponse.StatusCode(), response))
+            {
+                response.Result = ApiResult::Success;
+                response.AchievementId = api_response.achievement_id;
+            }
+
+            rc_api_destroy_update_achievement_response(&api_response);
+        }
     }
 
+    rc_api_destroy_request(&api_request);
     return response;
 }
 
@@ -1063,6 +1091,7 @@ FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const Fetch
         }
     }
 
+    rc_api_destroy_request(&api_request);
     return response;
 }
 
@@ -1114,6 +1143,7 @@ FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const Fetch
         }
     }
 
+    rc_api_destroy_request(&api_request);
     return response;
 }
 
@@ -1147,7 +1177,6 @@ LatestClient::Response ConnectedServer::LatestClient(const LatestClient::Request
 FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::Request& request)
 {
     FetchGamesList::Response response;
-    std::string sPostData;
 
     rc_api_fetch_games_list_request_t api_params;
     memset(&api_params, 0, sizeof(api_params));
@@ -1179,40 +1208,52 @@ FetchGamesList::Response ConnectedServer::FetchGamesList(const FetchGamesList::R
         }
     }
 
+    rc_api_destroy_request(&api_request);
     return response;
 }
 
 SubmitNewTitle::Response ConnectedServer::SubmitNewTitle(const SubmitNewTitle::Request& request)
 {
     SubmitNewTitle::Response response;
-    rapidjson::Document document;
-    std::string sPostData;
 
-    AppendUrlParam(sPostData, "c", std::to_string(request.ConsoleId));
-    AppendUrlParam(sPostData, "m", request.Hash);
-    AppendUrlParam(sPostData, "i", ra::Narrow(request.GameName));
+    rc_api_add_game_hash_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
 
-    if (request.GameId)
-        AppendUrlParam(sPostData, "g", std::to_string(request.GameId));
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
 
-    if (!request.Description.empty())
-        AppendUrlParam(sPostData, "d", ra::Narrow(request.Description));
+    const std::string sGameName = ra::Narrow(request.GameName);
+    const std::string sDescription = ra::Narrow(request.Description);
 
-    if (DoRequest(m_sHost, SubmitNewTitle::Name(), "submitgametitle", sPostData, response, document))
+    api_params.console_id = request.ConsoleId;
+    api_params.hash = request.Hash.c_str();
+    api_params.title = sGameName.c_str();
+    api_params.game_id = request.GameId;
+
+    if (!sDescription.empty())
+        api_params.hash_description = sDescription.c_str();
+
+    rc_api_request_t api_request;
+    if (rc_api_init_add_game_hash_request(&api_request, &api_params) == RC_OK)
     {
-        if (!document.HasMember("Response"))
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, SubmitNewTitle::Name(), httpResponse, response))
         {
-            response.Result = ApiResult::Error;
-            if (response.ErrorMessage.empty())
-                response.ErrorMessage = ra::StringPrintf("%s not found in response", "Response");
-        }
-        else
-        {
-            response.Result = ApiResult::Success;
-            GetRequiredJsonField(response.GameId, document["Response"], "GameID", response);
+            rc_api_add_game_hash_response_t api_response;
+            const auto nResult = rc_api_process_add_game_hash_response(&api_response, httpResponse.Content().c_str());
+
+            if (ValidateResponse(nResult, api_response.response, SubmitNewTitle::Name(), httpResponse.StatusCode(), response))
+            {
+                response.Result = ApiResult::Success;
+                response.GameId = api_response.game_id;
+            }
+
+            rc_api_destroy_add_game_hash_response(&api_response);
         }
     }
 
+    rc_api_destroy_request(&api_request);
     return response;
 }
 
@@ -1256,15 +1297,31 @@ SubmitTicket::Response ConnectedServer::SubmitTicket(const SubmitTicket::Request
 FetchBadgeIds::Response ConnectedServer::FetchBadgeIds(const FetchBadgeIds::Request&)
 {
     FetchBadgeIds::Response response;
-    rapidjson::Document document;
-    std::string sPostData;
 
-    if (DoRequest(m_sHost, FetchBadgeIds::Name(), "badgeiter", sPostData, response, document))
+    rc_api_fetch_badge_range_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
+
+    rc_api_request_t api_request;
+    if (rc_api_init_fetch_badge_range_request(&api_request, &api_params) == RC_OK)
     {
-        GetRequiredJsonField(response.FirstID, document, "FirstBadge", response);
-        GetRequiredJsonField(response.NextID, document, "NextBadge", response);
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, FetchBadgeIds::Name(), httpResponse, response))
+        {
+            rc_api_fetch_badge_range_response_t api_response;
+            const auto nResult = rc_api_process_fetch_badge_range_response(&api_response, httpResponse.Content().c_str());
+
+            if (ValidateResponse(nResult, api_response.response, FetchBadgeIds::Name(), httpResponse.StatusCode(), response))
+            {
+                response.Result = ApiResult::Success;
+                response.FirstID = api_response.first_badge_id;
+                response.NextID = api_response.next_badge_id;
+            }
+
+            rc_api_destroy_fetch_badge_range_response(&api_response);
+        }
     }
 
+    rc_api_destroy_request(&api_request);
     return response;
 }
 

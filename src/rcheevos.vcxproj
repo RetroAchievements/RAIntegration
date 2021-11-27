@@ -182,6 +182,7 @@
     <ClCompile Include="..\rcheevos\src\rapi\rc_api_common.c">
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rapi\rc_api_editor.c" />
     <ClCompile Include="..\rcheevos\src\rapi\rc_api_info.c" />
     <ClCompile Include="..\rcheevos\src\rapi\rc_api_runtime.c" />
     <ClCompile Include="..\rcheevos\src\rapi\rc_api_user.c" />

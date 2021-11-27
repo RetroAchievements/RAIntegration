@@ -296,6 +296,7 @@ protected:
 
 private:
     static void ExtractSize(CodeNote& pNote);
+    void CheckForMastery();
 
     /// <summary>
     /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's
@@ -306,6 +307,7 @@ private:
     GameAssets m_vAssets;
 
     std::atomic<int> m_nLoadCount = 0;
+    int m_nMasteryPopupId = 0;
 };
 
 } // namespace context

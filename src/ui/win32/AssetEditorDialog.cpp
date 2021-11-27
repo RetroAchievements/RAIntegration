@@ -868,6 +868,7 @@ BOOL AssetEditorDialog::OnInitDialog()
 
     m_bindErrorIcon.SetControl(*this, IDC_RA_ERROR_INDICATOR);
     m_bindMeasuredAsPercent.SetControl(*this, IDC_RA_CHK_AS_PERCENT);
+    m_bindLowerIsBetter.SetControl(*this, IDC_RA_CHK_LOWER_IS_BETTER);
     m_bindDebugHighlights.SetControl(*this, IDC_RA_CHK_HIGHLIGHTS);
     m_bindPauseOnReset.SetControl(*this, IDC_RA_CHK_PAUSE_ON_RESET);
     m_bindPauseOnTrigger.SetControl(*this, IDC_RA_CHK_PAUSE_ON_TRIGGER);

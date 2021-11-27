@@ -200,6 +200,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         vmLeaderboard->SetDescription(ra::Widen(pLeaderboardData.Description));
         vmLeaderboard->SetCategory(ra::data::models::AssetCategory::Core);
         vmLeaderboard->SetValueFormat(ra::itoe<ValueFormat>(pLeaderboardData.Format));
+        vmLeaderboard->SetLowerIsBetter(pLeaderboardData.LowerIsBetter);
         vmLeaderboard->SetDefinition(pLeaderboardData.Definition);
         vmLeaderboard->CreateServerCheckpoint();
         vmLeaderboard->CreateLocalCheckpoint();
@@ -375,65 +376,6 @@ void GameContext::DoFrame()
     }
 }
 
-void GameContext::AwardMastery() const
-{
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-
-    ra::api::FetchUserUnlocks::Request masteryRequest;
-    masteryRequest.GameId = m_nGameId;
-    masteryRequest.Hardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-    masteryRequest.CallAsync([this](const ra::api::FetchUserUnlocks::Response& response)
-    {
-        unsigned int nNumCoreAchievements = 0;
-        unsigned int nTotalCoreAchievementPoints = 0;
-
-        bool bActiveCoreAchievement = false;
-        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Assets().Count()); ++nIndex)
-        {
-            const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(Assets().GetItemAt(nIndex));
-            if (pAchievement != nullptr && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
-            {
-                if (response.UnlockedAchievements.find(pAchievement->GetID()) == response.UnlockedAchievements.end())
-                {
-                    bActiveCoreAchievement = true;
-                    break;
-                }
-
-                ++nNumCoreAchievements;
-                nTotalCoreAchievementPoints += pAchievement->GetPoints();
-            }
-        }
-
-        if (!bActiveCoreAchievement)
-        {
-            const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-            const bool bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-
-            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
-
-            const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(m_nGameId);
-            const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
-
-            auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-            const auto nPopup = pOverlayManager.QueueMessage(
-                ra::StringPrintf(L"%s %s", bHardcore ? L"Mastered" : L"Completed", m_sGameTitle),
-                ra::StringPrintf(L"%u achievements, %u points", nNumCoreAchievements, nTotalCoreAchievementPoints),
-                ra::StringPrintf(L"%s | Play time: %dh%02dm", pConfiguration.GetUsername(), nPlayTimeMinutes / 60, nPlayTimeMinutes % 60),
-                ra::ui::ImageType::Icon, m_sGameImage);
-
-            auto* pPopup = pOverlayManager.GetMessage(nPopup);
-            if (pPopup != nullptr)
-                pPopup->SetPopupType(ra::ui::viewmodels::Popup::Mastery);
-
-            if (pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot))
-            {
-                std::wstring sPath = ra::StringPrintf(L"%sGame%u.png", pConfiguration.GetScreenshotDirectory(), m_nGameId);
-                pOverlayManager.CaptureScreenshot(nPopup, sPath);
-            }
-        }
-    });
-}
-
 void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
 {
     auto* pAchievement = Assets().FindAchievement(nAchievementId);
@@ -541,12 +483,15 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
     request.AchievementId = nAchievementId;
     request.Hardcore = _RA_HardcoreModeIsActive();
     request.GameHash = GameHash();
-    request.CallAsyncWithRetry([nPopupId, nAchievementId](const ra::api::AwardAchievement::Response& response)
+    request.CallAsyncWithRetry([this, nPopupId, nAchievementId](const ra::api::AwardAchievement::Response& response)
     {
         if (response.Succeeded())
         {
             // success! update the player's score
             ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().SetScore(response.NewPlayerScore);
+
+            if (response.AchievementsRemaining == 0)
+                CheckForMastery();
         }
         else if (ra::StringStartsWith(response.ErrorMessage, "User already has "))
         {
@@ -591,32 +536,66 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
             }
         }
     });
+}
 
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Mastery) != ra::ui::viewmodels::PopupLocation::None)
+void GameContext::CheckForMastery()
+{
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Mastery) == ra::ui::viewmodels::PopupLocation::None)
+        return;
+
+    // if multiple achievements unlock the mastery at the same time, only show the popup once
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    if (m_nMasteryPopupId != 0 && pOverlayManager.GetMessage(m_nMasteryPopupId))
+        return;
+
+    // validate that all core assets are unlocked
+    const auto& pAssets = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().Assets();
+    unsigned nTotalCoreAchievementPoints = 0;
+    size_t nNumCoreAchievements = -0;
+    bool bActiveCoreAchievement = false;
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pAssets.Count()); ++nIndex)
     {
-        bool bHasCoreAchievement = false;
-        bool bActiveCoreAchievement = false;
-        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Assets().Count()); ++nIndex)
+        const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAssets.GetItemAt(nIndex));
+        if (pAchievement != nullptr && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
         {
-            const auto* pCheckAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(Assets().GetItemAt(nIndex));
-            if (pCheckAchievement != nullptr && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
-            {
-                bHasCoreAchievement = true;
+            ++nNumCoreAchievements;
+            nTotalCoreAchievementPoints += pAchievement->GetPoints();
 
-                if (pCheckAchievement->IsActive())
-                {
-                    bActiveCoreAchievement = true;
-                    break;
-                }
+            if (pAchievement->IsActive())
+            {
+                bActiveCoreAchievement = true;
+                break;
             }
         }
+    }
 
-        if (!bActiveCoreAchievement && bHasCoreAchievement)
+    // if they are, show the mastery notification
+    if (!bActiveCoreAchievement && nNumCoreAchievements > 0)
+    {
+        const bool bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+
+        const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(m_nGameId);
+        const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
+
+        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
+        vmMessage->SetTitle(ra::StringPrintf(L"%s %s", bHardcore ? L"Mastered" : L"Completed", m_sGameTitle));
+        vmMessage->SetDescription(ra::StringPrintf(L"%u achievements, %u points", nNumCoreAchievements, nTotalCoreAchievementPoints));
+        vmMessage->SetDetail(ra::StringPrintf(L"%s | Play time: %dh%02dm", pConfiguration.GetUsername(), nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
+        vmMessage->SetImage(ra::ui::ImageType::Icon, m_sGameImage);
+        vmMessage->SetPopupType(ra::ui::viewmodels::Popup::Mastery);
+
+        // if multiple achievements unlock the mastery at the same time, only show the popup once
+        if (m_nMasteryPopupId != 0 && pOverlayManager.GetMessage(m_nMasteryPopupId))
+            return;
+
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
+        m_nMasteryPopupId = pOverlayManager.QueueMessage(vmMessage);
+
+        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot))
         {
-            // delay mastery notification by 500ms to avoid race conditions where the get unlocks API returns
-            // before the last achievement was unlocked for the user.
-            ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>()
-                .ScheduleAsync(std::chrono::milliseconds(500), [this]() { AwardMastery(); });
+            std::wstring sPath = ra::StringPrintf(L"%sGame%u.png", pConfiguration.GetScreenshotDirectory(), m_nGameId);
+            pOverlayManager.CaptureScreenshot(m_nMasteryPopupId, sPath);
         }
     }
 }

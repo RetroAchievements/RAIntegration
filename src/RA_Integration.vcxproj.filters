@@ -959,6 +959,9 @@
     <ClInclude Include="ui\viewmodels\NewAssetViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
+    <ClInclude Include="api\UpdateLeaderboard.hh">
+      <Filter>API</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RA_Shared.rc">

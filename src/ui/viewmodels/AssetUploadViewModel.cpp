@@ -1,6 +1,7 @@
 #include "AssetUploadViewModel.hh"
 
 #include "api\UpdateAchievement.hh"
+#include "api\UpdateLeaderboard.hh"
 #include "api\UploadBadge.hh"
 
 #include "data\context\GameContext.hh"
@@ -25,6 +26,10 @@ void AssetUploadViewModel::QueueAsset(ra::data::models::AssetModelBase& pAsset)
     {
         case ra::data::models::AssetType::Achievement:
             QueueAchievement(*(dynamic_cast<ra::data::models::AchievementModel*>(&pAsset)));
+            break;
+
+        case ra::data::models::AssetType::Leaderboard:
+            QueueLeaderboard(*(dynamic_cast<ra::data::models::LeaderboardModel*>(&pAsset)));
             break;
 
         default:
@@ -64,6 +69,17 @@ void AssetUploadViewModel::QueueAchievement(ra::data::models::AchievementModel& 
     QueueTask([this, pAchievement = &pAchievement]()
     {
         UploadAchievement(*pAchievement);
+    });
+}
+
+void AssetUploadViewModel::QueueLeaderboard(ra::data::models::LeaderboardModel& pLeaderboard)
+{
+    auto& pItem = m_vUploadQueue.emplace_back();
+    pItem.pAsset = &pLeaderboard;
+
+    QueueTask([this, pLeaderboard = &pLeaderboard]()
+    {
+        UploadLeaderboard(*pLeaderboard);
     });
 }
 
@@ -162,6 +178,50 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
     for (auto& pScan : m_vUploadQueue)
     {
         if (pScan.pAsset == &pAchievement)
+        {
+            pScan.sErrorMessage = response.ErrorMessage;
+            pScan.nState = response.Succeeded() ? UploadState::Success : UploadState::Failed;
+            break;
+        }
+    }
+}
+
+void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel& pLeaderboard)
+{
+    ra::api::UpdateLeaderboard::Request request;
+    request.GameId = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId();
+    request.Title = pLeaderboard.GetName();
+    request.Description = pLeaderboard.GetDescription();
+    request.StartTrigger = pLeaderboard.GetStartTrigger();
+    request.SubmitTrigger = pLeaderboard.GetSubmitTrigger();
+    request.CancelTrigger = pLeaderboard.GetCancelTrigger();
+    request.ValueDefinition = pLeaderboard.GetValueDefinition();
+    request.Format = pLeaderboard.GetValueFormat();
+    request.LowerIsBetter = pLeaderboard.IsLowerBetter();
+
+    if (pLeaderboard.GetCategory() != ra::data::models::AssetCategory::Local)
+        request.LeaderboardId = pLeaderboard.GetID();
+
+    const auto& response = request.Call();
+
+    // update the achievement
+    if (response.Succeeded())
+    {
+        if (pLeaderboard.GetCategory() == ra::data::models::AssetCategory::Local)
+        {
+            pLeaderboard.SetCategory(ra::data::models::AssetCategory::Core);
+            pLeaderboard.SetID(response.LeaderboardId);
+        }
+
+        pLeaderboard.UpdateLocalCheckpoint();
+        pLeaderboard.UpdateServerCheckpoint();
+    }
+
+    // update the queue
+    std::lock_guard<std::mutex> pLock(m_pMutex);
+    for (auto& pScan : m_vUploadQueue)
+    {
+        if (pScan.pAsset == &pLeaderboard)
         {
             pScan.sErrorMessage = response.ErrorMessage;
             pScan.nState = response.Succeeded() ? UploadState::Success : UploadState::Failed;

@@ -1045,6 +1045,15 @@ void AssetListViewModel::SaveSelected()
         if (vSelectedAssets.empty())
             return;
 
+        for (const auto* pAsset : vSelectedAssets)
+        {
+            if (pAsset->GetType() == ra::data::models::AssetType::Leaderboard)
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Leaderboards cannot be demoted.");
+                return;
+            }
+        }
+
         ra::ui::viewmodels::MessageBoxViewModel vmMessageBox;
         vmMessageBox.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
         vmMessageBox.SetHeader(ra::StringPrintf(L"Are you sure you want to demote %d items to unofficial?", vSelectedAssets.size()));
@@ -1172,8 +1181,6 @@ void AssetListViewModel::ValidateLeaderboardForCore(std::wstring& sError, const 
         if (!sValueError.empty())
             sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
     }
-
-    sError.append(ra::StringPrintf(L"\n* %s: %s", pLeaderboard.GetName(), L"Leaderboards cannot be published at this time."));
 }
 #else
 void AssetListViewModel::ValidateAchievementForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::AchievementModel& pAchievement) const

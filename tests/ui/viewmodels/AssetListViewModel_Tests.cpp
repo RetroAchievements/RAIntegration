@@ -2742,6 +2742,48 @@ public:
         vmAssetList.AssertButtonState(SaveButtonState::SaveAllDisabled);
     }
 
+    TEST_METHOD(TestSaveSelectedDemoteLeaderboardToUnofficial)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Core, L"Leaderboard1");
+        vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::None);
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Leaderboards cannot be demoted."), vmMessageBox.GetMessage());
+            return DialogResult::OK;
+        });
+
+        const auto* pItem1 = vmAssetList.mockGameContext.Assets().GetItemAt(0);
+        Expects(pItem1 != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem1->GetChanges());
+
+        const auto* pItem2 = vmAssetList.mockGameContext.Assets().GetItemAt(1);
+        Expects(pItem2 != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem2->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Demote);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual(AssetChanges::None, pItem1->GetChanges());
+        Assert::AreEqual(AssetCategory::Core, pItem1->GetCategory());
+        Assert::AreEqual(AssetChanges::None, pItem2->GetChanges());
+        Assert::AreEqual(AssetCategory::Core, pItem2->GetCategory());
+
+        // item will have been moved to core, so nothing will be selected
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Demote);
+    }
+
     TEST_METHOD(TestSaveSelectedPublishLocal)
     {
         AssetListViewModelHarness vmAssetList;

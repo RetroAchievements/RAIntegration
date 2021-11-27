@@ -4,6 +4,7 @@
 
 #include "data\context\GameAssets.hh"
 #include "data\models\AchievementModel.hh"
+#include "data\models\LeaderboardModel.hh"
 
 #include "tests\data\DataAsserts.hh"
 #include "tests\ui\UIAsserts.hh"
@@ -23,6 +24,7 @@ namespace tests {
 using ra::data::models::AchievementModel;
 using ra::data::models::AssetCategory;
 using ra::data::models::AssetChanges;
+using ra::data::models::LeaderboardModel;
 
 TEST_CLASS(AssetUploadViewModel_Tests)
 {
@@ -99,11 +101,44 @@ private:
             if (nCategory != AssetCategory::Local)
                 vmAchievement->CreateServerCheckpoint();
 
+            // set name after creating the server checkpoint so the model appears Unpublished
             vmAchievement->SetName(sTitle);
 
             vmAchievement->CreateLocalCheckpoint();
 
             return dynamic_cast<AchievementModel&>(m_pAssets.Append(std::move(vmAchievement)));
+        }
+
+        LeaderboardModel& AddLeaderboard(AssetCategory nCategory, const std::wstring& sTitle,
+            const std::wstring& sDescription, const std::string& sStartTrigger, const std::string& sSubmitTrigger,
+            const std::string& sCancelTrigger, const std::string& sValueDefinition, ra::data::ValueFormat nFormat)
+        {
+            auto vmLeaderboard = std::make_unique<LeaderboardModel>();
+            if (nCategory == AssetCategory::Local)
+            {
+                vmLeaderboard->SetID(gsl::narrow_cast<unsigned>(m_pAssets.Count()) + ra::data::context::GameAssets::FirstLocalId);
+                vmLeaderboard->CreateServerCheckpoint();
+            }
+            else
+            {
+                vmLeaderboard->SetID(gsl::narrow_cast<unsigned>(m_pAssets.Count()) + 1);
+            }
+
+            vmLeaderboard->SetCategory(nCategory);
+            vmLeaderboard->SetName(sTitle);
+            vmLeaderboard->SetDescription(sDescription);
+            vmLeaderboard->SetStartTrigger(sStartTrigger);
+            vmLeaderboard->SetSubmitTrigger(sSubmitTrigger);
+            vmLeaderboard->SetCancelTrigger(sCancelTrigger);
+            vmLeaderboard->SetValueDefinition(sValueDefinition);
+            vmLeaderboard->SetValueFormat(nFormat);
+
+            if (nCategory != AssetCategory::Local)
+                vmLeaderboard->CreateServerCheckpoint();
+
+            vmLeaderboard->CreateLocalCheckpoint();
+
+            return dynamic_cast<LeaderboardModel&>(m_pAssets.Append(std::move(vmLeaderboard)));
         }
 
         void AssertSuccess(int nItems)
@@ -775,6 +810,48 @@ public:
         Assert::AreEqual(std::wstring(L"55555"), pAchievement2.GetBadge());
 
         vmUpload.AssertFailed(1, 1, L"* Title2: Timeout");
+    }
+
+    TEST_METHOD(TestSingleLocalLeaderboard)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        auto& pLeaderboard = vmUpload.AddLeaderboard(AssetCategory::Local, L"Title1", L"Desc1", "0xH1234=1", "0xH1234=2", "0xH1234=3", "0xH2345", ra::data::ValueFormat::Score);
+        Assert::AreEqual(AssetChanges::Unpublished, pLeaderboard.GetChanges());
+
+        vmUpload.QueueAsset(pLeaderboard);
+        Assert::AreEqual({ 1U }, vmUpload.TaskCount());
+
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateLeaderboard>([&bApiCalled]
+        (const ra::api::UpdateLeaderboard::Request& pRequest, ra::api::UpdateLeaderboard::Response& pResponse)
+        {
+            bApiCalled = true;
+            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
+            Assert::AreEqual(std::wstring(L"Title1"), pRequest.Title);
+            Assert::AreEqual(std::wstring(L"Desc1"), pRequest.Description);
+            Assert::AreEqual(std::string("0xH1234=1"), pRequest.StartTrigger);
+            Assert::AreEqual(std::string("0xH1234=2"), pRequest.SubmitTrigger);
+            Assert::AreEqual(std::string("0xH1234=3"), pRequest.CancelTrigger);
+            Assert::AreEqual(std::string("0xH2345"), pRequest.ValueDefinition);
+            Assert::AreEqual(ra::data::ValueFormat::Score, pRequest.Format);
+            Assert::IsFalse(pRequest.LowerIsBetter);
+            Assert::AreEqual(0U, pRequest.LeaderboardId);
+
+            pResponse.LeaderboardId = 7716U;
+            pResponse.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+
+        // published local leaderboard should be changed to core and have it's ID updated
+        Assert::AreEqual(AssetCategory::Core, pLeaderboard.GetCategory());
+        Assert::AreEqual(7716U, pLeaderboard.GetID());
+        Assert::AreEqual(AssetChanges::None, pLeaderboard.GetChanges());
+
+        vmUpload.AssertSuccess(1);
     }
 };
 

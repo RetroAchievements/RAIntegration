@@ -134,6 +134,11 @@ public:
         return HandleRequest<ra::api::FetchAchievementInfo>(request);
     }
 
+    UpdateLeaderboard::Response UpdateLeaderboard(const UpdateLeaderboard::Request& request) override
+    {
+        return HandleRequest<ra::api::UpdateLeaderboard>(request);
+    }
+
     FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) override
     {
         return HandleRequest<ra::api::FetchLeaderboardInfo>(request);

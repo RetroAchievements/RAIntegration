@@ -1095,6 +1095,63 @@ FetchAchievementInfo::Response ConnectedServer::FetchAchievementInfo(const Fetch
     return response;
 }
 
+UpdateLeaderboard::Response ConnectedServer::UpdateLeaderboard(const UpdateLeaderboard::Request& request)
+{
+    UpdateLeaderboard::Response response;
+
+    rc_api_update_leaderboard_request_t api_params;
+    memset(&api_params, 0, sizeof(api_params));
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    api_params.username = pUserContext.GetUsername().c_str();
+    api_params.api_token = pUserContext.GetApiToken().c_str();
+
+    const std::string sTitle = ra::Narrow(request.Title);
+    const std::string sDescription = ra::Narrow(request.Description);
+
+    api_params.leaderboard_id = request.LeaderboardId;
+    api_params.game_id = request.GameId;
+    api_params.title = sTitle.c_str();
+    api_params.description = sDescription.c_str();
+    api_params.start_trigger = request.StartTrigger.c_str();
+    api_params.submit_trigger = request.SubmitTrigger.c_str();
+    api_params.cancel_trigger = request.CancelTrigger.c_str();
+    api_params.value_definition = request.ValueDefinition.c_str();
+    api_params.lower_is_better = request.LowerIsBetter ? 1 : 0;
+    
+    switch (request.Format)
+    {
+        case ra::data::ValueFormat::Centiseconds: api_params.format = "MILLISECS"; break;
+        case ra::data::ValueFormat::Frames: api_params.format = "TIME"; break;
+        case ra::data::ValueFormat::Minutes: api_params.format = "MINUTES"; break;
+        case ra::data::ValueFormat::Score: api_params.format = "SCORE"; break;
+        case ra::data::ValueFormat::Seconds: api_params.format = "TIMESECS"; break;
+        default: api_params.format = "VALUE"; break;
+    }
+
+    rc_api_request_t api_request;
+    if (rc_api_init_update_leaderboard_request(&api_request, &api_params) == RC_OK)
+    {
+        ra::services::Http::Response httpResponse;
+        if (DoRequest(api_request, UpdateLeaderboard::Name(), httpResponse, response))
+        {
+            rc_api_update_leaderboard_response_t api_response;
+            const auto nResult = rc_api_process_update_leaderboard_response(&api_response, httpResponse.Content().c_str());
+
+            if (ValidateResponse(nResult, api_response.response, UpdateLeaderboard::Name(), httpResponse.StatusCode(), response))
+            {
+                response.Result = ApiResult::Success;
+                response.LeaderboardId = api_response.leaderboard_id;
+            }
+
+            rc_api_destroy_update_leaderboard_response(&api_response);
+        }
+    }
+
+    rc_api_destroy_request(&api_request);
+    return response;
+}
+
 FetchLeaderboardInfo::Response ConnectedServer::FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request)
 {
     FetchLeaderboardInfo::Response response;

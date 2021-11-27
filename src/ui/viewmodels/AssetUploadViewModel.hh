@@ -5,6 +5,7 @@
 #include "ProgressViewModel.hh"
 
 #include "data\models\AchievementModel.hh"
+#include "data\models\LeaderboardModel.hh"
 
 namespace ra {
 namespace ui {
@@ -17,6 +18,7 @@ public:
 
     void QueueAsset(ra::data::models::AssetModelBase& pAsset);
     void QueueAchievement(ra::data::models::AchievementModel& pAchievement);
+    void QueueLeaderboard(ra::data::models::LeaderboardModel& pLeaderboard);
 
     void ShowResults() const;
 
@@ -42,6 +44,7 @@ private:
 
     void UploadBadge(const std::wstring& sBadge);
     void UploadAchievement(ra::data::models::AchievementModel& pAchievement);
+    void UploadLeaderboard(ra::data::models::LeaderboardModel& pLeaderboard);
 
     std::vector<UploadItem> m_vUploadQueue;
     std::mutex m_pMutex;

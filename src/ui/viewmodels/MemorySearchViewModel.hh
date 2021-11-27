@@ -459,11 +459,8 @@ private:
     void ApplyContinuousFilter();
     void UpdateResults();
     void UpdateResult(SearchResultViewModel& pRow, const ra::services::SearchResults& pResults,
-        ra::services::SearchResults::Result& pResult,
+        ra::services::SearchResults::Result& pResult, bool bForceFilterCheck,
         const ra::data::context::EmulatorContext& pEmulatorContext);
-
-    void AddNewPage();
-    void ChangePage(size_t nNewPage);
 
     void OnPredefinedFilterRangeChanged();
     void OnFilterRangeChanged();
@@ -487,13 +484,15 @@ private:
         std::wstring sSummary;
     };
 
+    void AddNewPage(SearchResult&& pNewPage);
+    void ChangePage(size_t nNewPage);
+
     size_t m_nSelectedSearchResult = 0U;
     std::vector<SearchResult> m_vSearchResults;
     std::set<unsigned int> m_vSelectedAddresses;
 
-    static bool TestFilter(const ra::services::SearchResults::Result& pResult, const ra::services::SearchResults& pResults, unsigned int nPreviousValue) noexcept;
-    void ApplyFilter(SearchResult& pResult, const SearchResult& pPreviousResult,
-        ComparisonType nComparisonType, ra::services::SearchFilterType nValueType, unsigned int nValue, const std::wstring& sValue);
+    bool ApplyFilter(SearchResult& pResult, const SearchResult& pPreviousResult,
+        ComparisonType nComparisonType, ra::services::SearchFilterType nValueType, const std::wstring& sValue);
 };
 
 } // namespace viewmodels

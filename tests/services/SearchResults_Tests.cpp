@@ -314,7 +314,7 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results2;
-        results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, 0xABU);
+        results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"0xAB");
 
         Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
         Assert::IsFalse(results2.ContainsAddress(0U));
@@ -330,6 +330,25 @@ public:
         Assert::AreEqual(0xABU, result.nValue);
     }
 
+    TEST_METHOD(TestInitializeFromResultsEightBitEqualsInvalidConstant)
+    {
+        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
+        Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
+
+        SearchResults results2;
+        Assert::IsFalse(results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L""));
+        Assert::IsFalse(results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"Banana"));
+        Assert::IsFalse(results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"3.14"));
+        Assert::IsFalse(results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"$1234"));
+        Assert::IsTrue(results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"ABBA")); // can be read as hex
+        Assert::IsTrue(results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"0xAB"));
+    }
+
     TEST_METHOD(TestInitializeFromResultsEightBitEqualsConstantGap)
     {
         std::array<unsigned char, 6> memory{ 0x00, 0x12, 0x00, 0x00, 0x56, 0x00 };
@@ -341,13 +360,13 @@ public:
         Assert::AreEqual({ 6U }, results1.MatchingAddressCount());
 
         SearchResults results2;
-        results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, 0x00U);
+        results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"0");
         Assert::AreEqual({ 4U }, results2.MatchingAddressCount());
 
         memory.at(1) = 0x00; // not previously matched, should be ignored
         memory.at(3) = 0x01; // previously matched, should no longer match
         SearchResults results3;
-        results3.Initialize(results2, ComparisonType::Equals, ra::services::SearchFilterType::Constant, 0x00U);
+        results3.Initialize(results2, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"0");
 
         Assert::AreEqual({ 3U }, results3.MatchingAddressCount());
         Assert::IsTrue(results3.ContainsAddress(0U));
@@ -385,7 +404,7 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::Constant, 0xABU);
+        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::Constant, L"0xAB");
 
         Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -417,7 +436,7 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::Constant, 0x34U);
+        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::Constant, L"0x34");
 
         Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -449,7 +468,7 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::GreaterThan, ra::services::SearchFilterType::Constant, 0x34U);
+        results.Initialize(results1, ComparisonType::GreaterThan, ra::services::SearchFilterType::Constant, L"0x34");
 
         Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -476,7 +495,7 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::GreaterThanOrEqual, ra::services::SearchFilterType::Constant, 0x34U);
+        results.Initialize(results1, ComparisonType::GreaterThanOrEqual, ra::services::SearchFilterType::Constant, L"0x34");
 
         Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -508,7 +527,7 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::LessThan, ra::services::SearchFilterType::Constant, 0x34U);
+        results.Initialize(results1, ComparisonType::LessThan, ra::services::SearchFilterType::Constant, L"0x34");
 
         Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -535,7 +554,7 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         SearchResults results;
-        results.Initialize(results1, ComparisonType::LessThanOrEqual, ra::services::SearchFilterType::Constant, 0x34U);
+        results.Initialize(results1, ComparisonType::LessThanOrEqual, ra::services::SearchFilterType::Constant, L"0x34");
 
         Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -570,7 +589,7 @@ public:
         memory.at(1) = 0xAB;
         memory.at(3) = 0x12;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, 0xABU);
+        results.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"0xAB");
 
         Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -599,7 +618,7 @@ public:
         memory.at(1) = 0x14;
         memory.at(2) = 0x55;
         SearchResults results2;
-        results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results2.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 3U }, results2.MatchingAddressCount());
         Assert::IsTrue(results2.ContainsAddress(0U));
@@ -610,7 +629,7 @@ public:
 
         // no change - tests the "entire block matches" optimization
         SearchResults results3;
-        results3.Initialize(results2, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results3.Initialize(results2, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 3U }, results3.MatchingAddressCount());
         Assert::IsTrue(results3.ContainsAddress(0U));
@@ -628,7 +647,7 @@ public:
         // no change - tests the "entire block matches" optimization
         SearchResults results4;
         memory.at(3) = 0x99;
-        results4.Initialize(results3, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results4.Initialize(results3, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 2U }, results4.MatchingAddressCount());
         Assert::IsTrue(results4.ContainsAddress(0U));
@@ -656,7 +675,7 @@ public:
         memory.at(1) = 0x14;
         memory.at(2) = 0x55;
         SearchResults results2;
-        results2.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results2.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 2U }, results2.MatchingAddressCount());
         Assert::IsFalse(results2.ContainsAddress(0U));
@@ -678,7 +697,7 @@ public:
 
         // no change - tests the "entire block matches" optimization
         SearchResults results3;
-        results3.Initialize(results2, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results3.Initialize(results2, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
         Assert::AreEqual({ 0U }, results3.MatchingAddressCount());
     }
 
@@ -700,7 +719,7 @@ public:
         memory.at(99) = 0x99;
         memory.at(700) = 0x00;
         SearchResults results2;
-        results2.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results2.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 
         // expectation: results2 should allocate several smaller blocks instead of one large one
         Assert::AreEqual({ 5U }, results2.MatchingAddressCount());
@@ -750,7 +769,7 @@ public:
         memory.at(1) = 0x14;
         memory.at(2) = 0x36;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValuePlus, 2U);
+        results.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValuePlus, L"2");
 
         Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -784,7 +803,7 @@ public:
         memory.at(1) = 0x10;
         memory.at(2) = 0x32;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValueMinus, 2U);
+        results.Initialize(results1, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValueMinus, L"2");
 
         Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -818,7 +837,7 @@ public:
         memory.at(1) = 0x14;
         memory.at(2) = 0x37;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::GreaterThan, ra::services::SearchFilterType::LastKnownValuePlus, 2U);
+        results.Initialize(results1, ComparisonType::GreaterThan, ra::services::SearchFilterType::LastKnownValuePlus, L"2");
 
         Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -846,7 +865,7 @@ public:
 
         memory.at(2) = 0x55;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -878,7 +897,7 @@ public:
 
         memory.at(4) = 0x55;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -904,7 +923,7 @@ public:
         memory.at(1) = 0x55;
         memory.at(3) = 0x66;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsTrue(results.ContainsAddress(0U));
@@ -923,7 +942,7 @@ public:
 
         memory.at(2) = 0x99;
         SearchResults results2;
-        results2.Initialize(results, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results2.Initialize(results, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
         Assert::IsFalse(results2.ContainsAddress(0U));
@@ -948,7 +967,7 @@ public:
         memory.at(2) = 0x55;
         memory.at(4) = 0x66;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsTrue(results.ContainsAddress(0U));
@@ -967,7 +986,7 @@ public:
 
         memory.at(6) = 0x99;
         SearchResults results2;
-        results2.Initialize(results, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results2.Initialize(results, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
         Assert::IsFalse(results2.ContainsAddress(0U));
@@ -991,7 +1010,7 @@ public:
 
         memory.at(2) = 0x55;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -1023,7 +1042,32 @@ public:
 
         memory.at(4) = 0x55;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
+
+        Assert::AreEqual({ 1U }, results.MatchingAddressCount());
+        Assert::IsFalse(results.ContainsAddress(0U));
+        Assert::IsTrue(results.ContainsAddress(1U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(1U, result.nAddress);
+        Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, result.nSize);
+        Assert::AreEqual(0x1234AB55U, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromResultsThirtyTwoBitBigEndianLessThanPrevious)
+    {
+        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(0U, 5U, ra::services::SearchType::ThirtyTwoBitBigEndian);
+        Assert::AreEqual({ 2U }, results1.MatchingAddressCount());
+
+        memory.at(4) = 0x55;
+        SearchResults results;
+        results.Initialize(results1, ComparisonType::LessThan, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -1049,7 +1093,7 @@ public:
         memory.at(1) = 0x14;
         memory.at(2) = 0x55;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 3U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -1086,7 +1130,7 @@ public:
         Assert::AreEqual({ 6U }, results.MatchingAddressCount());
 
         SearchResults filtered1;
-        filtered1.Initialize(results, ComparisonType::Equals, ra::services::SearchFilterType::Constant, 1U);
+        filtered1.Initialize(results, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"1");
         Assert::AreEqual({ 1U }, filtered1.MatchingAddressCount());
 
         SearchResults::Result result;
@@ -1098,13 +1142,13 @@ public:
         // Nibble_Upper no longer matches, but Nibble_Lower does. Neither should not be returned.
         memory.at(1) = 0x21;
         SearchResults filtered2;
-        filtered2.Initialize(filtered1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, 1U);
+        filtered2.Initialize(filtered1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"1");
         Assert::AreEqual({ 0U }, filtered2.MatchingAddressCount());
 
         // Both nibbles match, only previously matched one should be returned
         memory.at(1) = 0x11;
         SearchResults filtered3;
-        filtered3.Initialize(filtered1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, 1U);
+        filtered3.Initialize(filtered1, ComparisonType::Equals, ra::services::SearchFilterType::Constant, L"1");
         Assert::AreEqual({ 1U }, filtered3.MatchingAddressCount());
 
         Assert::IsTrue(filtered3.GetMatchingAddress(0U, result));
@@ -1124,7 +1168,7 @@ public:
         Assert::AreEqual({ 5U }, results1.MatchingAddressCount());
 
         SearchResults results2;
-        results2.Initialize(results1, ComparisonType::GreaterThan, ra::services::SearchFilterType::Constant, 0x10U);
+        results2.Initialize(results1, ComparisonType::GreaterThan, ra::services::SearchFilterType::Constant, L"0x10");
         Assert::AreEqual({ 2U }, results2.MatchingAddressCount());
         Assert::IsFalse(results2.ContainsAddress(0U));
         Assert::IsTrue(results2.ContainsAddress(1U));
@@ -1137,7 +1181,7 @@ public:
         // Last Known Value would match indices 0, 3, and 4 as indices 1 and 2 were just changed
         // results2 limits search to indices 1 and 3, so only 3 should be matched
         SearchResults results3;
-        results3.Initialize(results1, results2, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results3.Initialize(results1, results2, ComparisonType::Equals, ra::services::SearchFilterType::LastKnownValue, L"");
         Assert::AreEqual({ 1U }, results3.MatchingAddressCount());
         Assert::IsFalse(results3.ContainsAddress(0U));
         Assert::IsFalse(results3.ContainsAddress(1U));
@@ -1169,7 +1213,7 @@ public:
         memory.at(1) = 0x14;
         memory.at(2) = 0x55;
         SearchResults results;
-        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 
         Assert::AreEqual({ 2U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
@@ -1300,6 +1344,7 @@ public:
         Assert::IsTrue(results.ContainsAddress(35U));
         Assert::IsFalse(results.ContainsAddress(36U));
 
+        // nValue for ASCII text is the first byte of the string. use FormattedValue to get the whole string
         SearchResults::Result result;
         Assert::IsTrue(results.GetMatchingAddress(0U, result));
         Assert::AreEqual(0U, result.nAddress);
@@ -1310,6 +1355,70 @@ public:
         Assert::AreEqual(35U, result.nAddress);
         Assert::AreEqual(MemSize::Text, result.nSize);
         Assert::AreEqual({ '.' }, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromMemoryFloat)
+    {
+        std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::Float);
+        Assert::AreEqual({ 5U }, results.MatchingAddressCount());
+
+        Assert::IsTrue(results.ContainsAddress(0U));
+        Assert::IsTrue(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsTrue(results.ContainsAddress(3U));
+        Assert::IsTrue(results.ContainsAddress(4U));
+        Assert::IsFalse(results.ContainsAddress(5U));
+        Assert::IsFalse(results.ContainsAddress(6U));
+        Assert::IsFalse(results.ContainsAddress(7U));
+
+        // nValue is an IEE-754 encoded float
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(0U, result.nAddress);
+        Assert::AreEqual(MemSize::Float, result.nSize);
+        Assert::AreEqual(0xC0000000U, result.nValue);
+
+        Assert::IsTrue(results.GetMatchingAddress(4U, result));
+        Assert::AreEqual(4U, result.nAddress);
+        Assert::AreEqual(MemSize::Float, result.nSize);
+        Assert::AreEqual(0x41460000U, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromMemoryMBF32)
+    {
+        std::array<unsigned char, 8> memory{ 0x87, 0x46, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00 }; // 99.0, -0.5
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::MBF32);
+        Assert::AreEqual({ 5U }, results.MatchingAddressCount());
+
+        Assert::IsTrue(results.ContainsAddress(0U));
+        Assert::IsTrue(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsTrue(results.ContainsAddress(3U));
+        Assert::IsTrue(results.ContainsAddress(4U));
+        Assert::IsFalse(results.ContainsAddress(5U));
+        Assert::IsFalse(results.ContainsAddress(6U));
+        Assert::IsFalse(results.ContainsAddress(7U));
+
+        // nValue is an MBF32 encoded float
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(0U, result.nAddress);
+        Assert::AreEqual(MemSize::MBF32, result.nSize);
+        Assert::AreEqual(0x00004687U, result.nValue);
+
+        Assert::IsTrue(results.GetMatchingAddress(4U, result));
+        Assert::AreEqual(4U, result.nAddress);
+        Assert::AreEqual(MemSize::MBF32, result.nSize);
+        Assert::AreEqual(0x00008080U, result.nValue);
     }
 
     TEST_METHOD(TestInitializeFromResultsAsciiText)
@@ -1459,6 +1568,99 @@ public:
         Assert::AreEqual(30U, result.nAddress); // shore
     }
 
+    TEST_METHOD(TestInitializeFromResultsFloatEqualsConstant)
+    {
+        std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::Float);
+        Assert::AreEqual({ 5U }, results.MatchingAddressCount());
+
+        SearchResults results2;
+        results2.Initialize(results, ComparisonType::Equals, SearchFilterType::Constant, L"-2");
+        Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
+
+        // nValue is an IEE-754 encoded float
+        SearchResults::Result result;
+        Assert::IsTrue(results2.GetMatchingAddress(0U, result));
+        Assert::AreEqual(0U, result.nAddress);
+        Assert::AreEqual(MemSize::Float, result.nSize);
+        Assert::AreEqual(0xC0000000U, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromResultsFloatGreaterThanLast)
+    {
+        std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::Float);
+        Assert::AreEqual({ 5U }, results.MatchingAddressCount());
+
+        memory.at(3) = 0xBF; // -2.0 -> -1.0
+        memory.at(2) = 0x80;
+
+        SearchResults results2;
+        results2.Initialize(results, ComparisonType::GreaterThan, SearchFilterType::LastKnownValue, L"");
+        Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
+
+        // nValue is an IEE-754 encoded float
+        SearchResults::Result result;
+        Assert::IsTrue(results2.GetMatchingAddress(0U, result));
+        Assert::AreEqual(0U, result.nAddress);
+        Assert::AreEqual(MemSize::Float, result.nSize);
+        Assert::AreEqual(0xBF800000U, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromResultsMBF32EqualsConstant)
+    {
+        std::array<unsigned char, 8> memory{ 0x87, 0x46, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00 }; // 99.0, -0.5
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::MBF32);
+        Assert::AreEqual({ 5U }, results.MatchingAddressCount());
+
+        SearchResults results2;
+        results2.Initialize(results, ComparisonType::Equals, SearchFilterType::Constant, L"-0.5");
+        Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
+
+        // nValue is an MBF32 encoded float
+        SearchResults::Result result;
+        Assert::IsTrue(results2.GetMatchingAddress(0U, result));
+        Assert::AreEqual(4U, result.nAddress);
+        Assert::AreEqual(MemSize::MBF32, result.nSize);
+        Assert::AreEqual(0x00008080U, result.nValue);
+    }
+
+    TEST_METHOD(TestInitializeFromResultsMBF32GreaterThanLast)
+    {
+        std::array<unsigned char, 8> memory{ 0x87, 0x46, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00 }; // 99.0, -0.5
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results;
+        results.Initialize(0U, memory.size(), ra::services::SearchType::MBF32);
+        Assert::AreEqual({ 5U }, results.MatchingAddressCount());
+
+        memory.at(4) = 0x00; // -0.5 -> -0.0
+
+        SearchResults results2;
+        results2.Initialize(results, ComparisonType::GreaterThan, SearchFilterType::LastKnownValue, L"");
+        Assert::AreEqual({ 2U }, results2.MatchingAddressCount());
+
+        // nValue is an MBF32 encoded float
+        SearchResults::Result result;
+        Assert::IsTrue(results2.GetMatchingAddress(1U, result));
+        Assert::AreEqual(4U, result.nAddress);
+        Assert::AreEqual(MemSize::MBF32, result.nSize);
+        Assert::AreEqual(0x00008000U, result.nValue);
+    }
+
     TEST_METHOD(TestCopyConstructor)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
@@ -1476,7 +1678,7 @@ public:
         memory.at(1) = 0x14;
         memory.at(2) = 0x55;
         SearchResults results2;
-        results2.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, 0U);
+        results2.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
         Assert::AreEqual({ 2U }, results2.MatchingAddressCount());
 
         SearchResults results3(results2);
@@ -1552,6 +1754,146 @@ public:
         Assert::AreEqual(std::wstring(L"0xa"), results1.GetFormattedValue(3U, MemSize::Nibble_Upper));
         Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(4U, MemSize::Nibble_Lower));
         Assert::AreEqual(std::wstring(L""), results1.GetFormattedValue(4U, MemSize::Nibble_Upper));
+    }
+
+    TEST_METHOD(TestGetFormattedValueFloat)
+    {
+        std::array<unsigned char, 8> memory{ 0x00, 0x00, 0x00, 0xC0, 0x00, 0x00, 0x46, 0x41 }; // -2.0, 12.375
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(0U, 8U, ra::services::SearchType::Float);
+        Assert::AreEqual({ 5U }, results1.MatchingAddressCount());
+
+        Assert::AreEqual(std::wstring(L"-2.0"), results1.GetFormattedValue(0U, MemSize::Float));
+        Assert::AreEqual(std::wstring(L"12.375"), results1.GetFormattedValue(4U, MemSize::Float));
+        Assert::AreEqual(std::wstring(L"5.91191e-39"), results1.GetFormattedValue(2U, MemSize::Float));
+        Assert::AreEqual(std::wstring(L"8192.1875"), results1.GetFormattedValue(3U, MemSize::Float));
+    }
+
+    TEST_METHOD(TestGetFormattedValueMBF32)
+    {
+        std::array<unsigned char, 8> memory{ 0x87, 0x46, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00 }; // 99.0, -0.5
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(0U, 8U, ra::services::SearchType::MBF32);
+        Assert::AreEqual({ 5U }, results1.MatchingAddressCount());
+
+        Assert::AreEqual(std::wstring(L"99.0"), results1.GetFormattedValue(0U, MemSize::MBF32));
+        Assert::AreEqual(std::wstring(L"-0.5"), results1.GetFormattedValue(4U, MemSize::MBF32));
+        Assert::AreEqual(std::wstring(L"1.47513e-39"), results1.GetFormattedValue(2U, MemSize::MBF32));
+        Assert::AreEqual(std::wstring(L"1.73475e-18"), results1.GetFormattedValue(1U, MemSize::MBF32));
+    }
+
+    TEST_METHOD(TestMatchesFilterEightBitGreaterThanLast)
+    {
+        std::array<unsigned char, 5> memory{ 6, 12, 18, 24, 30 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1, results2;
+        results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
+
+        SearchResults::Result result1, result2, result3;
+        results1.GetMatchingAddress(0, result1);
+        results1.GetMatchingAddress(1, result2);
+        results1.GetMatchingAddress(2, result3);
+
+        results2.Initialize(results1, ComparisonType::GreaterThanOrEqual, SearchFilterType::LastKnownValue, L"");
+
+        Assert::IsTrue(results2.MatchesFilter(results1, result1));  // 12 >= 12 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result2));  // 18 >= 18 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result3));  // 24 >= 24 ?
+
+        result1.nValue = 15;
+        result2.nValue = 15;
+        result3.nValue = 30;
+
+        Assert::IsTrue(results2.MatchesFilter(results1, result1));  // 15 >= 12 ?
+        Assert::IsFalse(results2.MatchesFilter(results1, result2)); // 15 >= 18 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result3));  // 30 >= 24 ?
+    }
+
+    TEST_METHOD(TestMatchesFilterEightBitGreaterThanLastPlus)
+    {
+        std::array<unsigned char, 5> memory{ 6, 12, 18, 24, 30 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1, results2;
+        results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
+
+        SearchResults::Result result1, result2, result3;
+        results1.GetMatchingAddress(0, result1);
+        results1.GetMatchingAddress(1, result2);
+        results1.GetMatchingAddress(2, result3);
+
+        results2.Initialize(results1, ComparisonType::GreaterThanOrEqual, SearchFilterType::LastKnownValuePlus, L"4");
+
+        Assert::IsFalse(results2.MatchesFilter(results1, result1)); // 12 >= 12 + 4 ?
+        Assert::IsFalse(results2.MatchesFilter(results1, result2)); // 18 >= 18 + 4 ?
+        Assert::IsFalse(results2.MatchesFilter(results1, result3)); // 24 >= 24 + 4 ?
+
+        result1.nValue = 15;
+        result2.nValue = 22;
+        result3.nValue = 30;
+
+        Assert::IsFalse(results2.MatchesFilter(results1, result1)); // 15 >= 12 + 4 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result2));  // 22 >= 18 + 4 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result3));  // 30 >= 24 + 4 ?
+    }
+
+    TEST_METHOD(TestMatchesFilterEightBitGreaterThanLastMinus)
+    {
+        std::array<unsigned char, 5> memory{ 6, 12, 18, 24, 30 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1, results2;
+        results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
+
+        SearchResults::Result result1, result2, result3;
+        results1.GetMatchingAddress(0, result1);
+        results1.GetMatchingAddress(1, result2);
+        results1.GetMatchingAddress(2, result3);
+
+        results2.Initialize(results1, ComparisonType::GreaterThanOrEqual, SearchFilterType::LastKnownValueMinus, L"4");
+
+        Assert::IsTrue(results2.MatchesFilter(results1, result1));  // 12 >= 12 - 4 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result2));  // 18 >= 18 - 4 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result3));  // 24 >= 24 - 4 ?
+
+        result1.nValue = 10;
+        result2.nValue = 14;
+        result3.nValue = 18;
+
+        Assert::IsTrue(results2.MatchesFilter(results1, result1));  // 10 >= 12 - 4 ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result2));  // 14 >= 18 - 4 ?
+        Assert::IsFalse(results2.MatchesFilter(results1, result3)); // 18 >= 24 - 4 ?
+    }
+
+    TEST_METHOD(TestMatchesFilterEightBitGreaterThanConstant)
+    {
+        std::array<unsigned char, 5> memory{ 6, 12, 18, 24, 30 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1, results2;
+        results1.Initialize(1U, 3U, ra::services::SearchType::EightBit);
+
+        SearchResults::Result result1, result2, result3;
+        results1.GetMatchingAddress(0, result1);
+        results1.GetMatchingAddress(1, result2);
+        results1.GetMatchingAddress(2, result3);
+
+        results2.Initialize(results1, ComparisonType::GreaterThanOrEqual, SearchFilterType::Constant, L"18");
+
+        Assert::IsFalse(results2.MatchesFilter(results1, result1)); // 12 >= 18 (12) ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result2));  // 18 >= 18 (18) ?
+        Assert::IsTrue(results2.MatchesFilter(results1, result3));  // 24 >= 18 (24) ?
     }
 };
 

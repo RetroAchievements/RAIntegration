@@ -16,37 +16,46 @@ class LeaderboardModel : public AssetModelBase
 {
 public:
     LeaderboardModel() noexcept;
-/*
+
+    enum class LeaderboardParts
+    {
+        None = 0x00,
+        Start = 0x01,
+        Submit = 0x02,
+        Cancel = 0x04,
+        Value = 0x08
+    };
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the emulator should be paused when the trigger is reset.
     /// </summary>
-    static const BoolModelProperty PauseOnResetProperty;
-
-    /// <summary>
-    /// Gets whether or not the emulator should be paused when the trigger is reset.
-    /// </summary>
-    bool IsPauseOnReset() const { return GetValue(PauseOnResetProperty); }
+    static const IntModelProperty PauseOnResetProperty;
 
     /// <summary>
     /// Sets whether or not the emulator should be paused when the trigger is reset.
     /// </summary>
-    void SetPauseOnReset(bool nValue) { SetValue(PauseOnResetProperty, nValue); }
+    LeaderboardParts GetPauseOnReset() const { return ra::itoe<LeaderboardParts>(GetValue(PauseOnResetProperty)); }
+
+    /// <summary>
+    /// Sets whether or not the emulator should be paused when the trigger is reset.
+    /// </summary>
+    void SetPauseOnReset(LeaderboardParts nValue) { SetValue(PauseOnResetProperty, ra::etoi(nValue)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the emulator should be paused when the achievement triggers.
     /// </summary>
-    static const BoolModelProperty PauseOnTriggerProperty;
+    static const IntModelProperty PauseOnTriggerProperty;
 
     /// <summary>
     /// Gets whether or not the emulator should be paused when the achievement triggers.
     /// </summary>
-    bool IsPauseOnTrigger() const { return GetValue(PauseOnTriggerProperty); }
+    LeaderboardParts GetPauseOnTrigger() const { return ra::itoe<LeaderboardParts>(GetValue(PauseOnTriggerProperty)); }
 
     /// <summary>
     /// Sets whether or not the emulator should be paused when the achievement triggers.
     /// </summary>
-    void SetPauseOnTrigger(bool nValue) { SetValue(PauseOnTriggerProperty, nValue); }
-*/
+    void SetPauseOnTrigger(LeaderboardParts nValue) { SetValue(PauseOnTriggerProperty, ra::etoi(nValue)); }
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the start trigger version.
     /// </summary>

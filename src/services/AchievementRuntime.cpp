@@ -270,15 +270,114 @@ static void map_event_to_change(const rc_runtime_event_t* pRuntimeEvent)
     g_pChanges->emplace_back(AchievementRuntime::Change{ nChangeType, pRuntimeEvent->id, pRuntimeEvent->value });
 }
 
+typedef struct LeaderboardPauseFlags
+{
+    ra::LeaderboardID nID;
+    ra::data::models::LeaderboardModel::LeaderboardParts nPauseOnReset;
+    ra::data::models::LeaderboardModel::LeaderboardParts nPauseOnTrigger;
+    ra::data::models::LeaderboardModel::LeaderboardParts nHasHits;
+} LeaderboardPauseFlags;
+
+static void GetLeaderboardPauseFlags(std::vector<LeaderboardPauseFlags>& vLeaderboardPauseFlags, const rc_runtime_t* pRuntime)
+{
+    const auto& vAssets = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().Assets();
+    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(vAssets.Count()); ++i)
+    {
+        const auto* pLeaderboard = dynamic_cast<const ra::data::models::LeaderboardModel*>(vAssets.GetItemAt(i));
+        if (pLeaderboard != nullptr)
+        {
+            LeaderboardPauseFlags pLeaderboardPauseFlags;
+            pLeaderboardPauseFlags.nPauseOnReset = pLeaderboard->GetPauseOnReset();
+            pLeaderboardPauseFlags.nPauseOnTrigger = pLeaderboard->GetPauseOnTrigger();
+            if (pLeaderboardPauseFlags.nPauseOnReset != ra::data::models::LeaderboardModel::LeaderboardParts::None ||
+                pLeaderboardPauseFlags.nPauseOnTrigger != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+            {
+                pLeaderboardPauseFlags.nID = pLeaderboard->GetID();
+
+                const auto* pLBoard = rc_runtime_get_lboard(pRuntime, pLeaderboardPauseFlags.nID);
+                if (pLBoard != nullptr)
+                {
+                    using namespace ra::bitwise_ops;
+
+                    pLeaderboardPauseFlags.nHasHits = ra::data::models::LeaderboardModel::LeaderboardParts::None;
+                    if (pLBoard->start.has_hits)
+                        pLeaderboardPauseFlags.nHasHits |= ra::data::models::LeaderboardModel::LeaderboardParts::Start;
+                    if (pLBoard->submit.has_hits)
+                        pLeaderboardPauseFlags.nHasHits |= ra::data::models::LeaderboardModel::LeaderboardParts::Submit;
+                    if (pLBoard->cancel.has_hits)
+                        pLeaderboardPauseFlags.nHasHits |= ra::data::models::LeaderboardModel::LeaderboardParts::Cancel;
+                    if (pLBoard->value.value.value)
+                        pLeaderboardPauseFlags.nHasHits |= ra::data::models::LeaderboardModel::LeaderboardParts::Value;
+
+                    pLeaderboardPauseFlags.nPauseOnReset &= pLeaderboardPauseFlags.nHasHits;
+                    if (pLeaderboardPauseFlags.nPauseOnReset != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+                        vLeaderboardPauseFlags.push_back(pLeaderboardPauseFlags);
+                }
+            }
+        }
+    }
+}
+
+static void CheckForLeaderboardPauseChanges(const std::vector<LeaderboardPauseFlags>& vLeaderboardPauseFlags,
+    const rc_runtime_t* pRuntime, std::vector<AchievementRuntime::Change>& changes)
+{
+    for (const auto& pLeaderboardPauseFlags : vLeaderboardPauseFlags)
+    {
+        const auto* pLBoard = rc_runtime_get_lboard(pRuntime, pLeaderboardPauseFlags.nID);
+        if (pLBoard != nullptr)
+        {
+            using namespace ra::bitwise_ops;
+
+            if (!pLBoard->start.has_hits &&
+                (pLeaderboardPauseFlags.nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Start) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+            {
+                changes.emplace_back(AchievementRuntime::Change
+                    { AchievementRuntime::ChangeType::LeaderboardStartReset, pLeaderboardPauseFlags.nID, 0 });
+            }
+
+            if (!pLBoard->submit.has_hits &&
+                (pLeaderboardPauseFlags.nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Submit) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+            {
+                changes.emplace_back(AchievementRuntime::Change
+                    { AchievementRuntime::ChangeType::LeaderboardSubmitReset, pLeaderboardPauseFlags.nID, 0 });
+            }
+
+            if (!pLBoard->cancel.has_hits &&
+                (pLeaderboardPauseFlags.nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Cancel) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+            {
+                changes.emplace_back(AchievementRuntime::Change
+                    { AchievementRuntime::ChangeType::LeaderboardCancelReset, pLeaderboardPauseFlags.nID, 0 });
+            }
+
+            if (!pLBoard->value.value.value &&
+                (pLeaderboardPauseFlags.nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Value) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+            {
+                changes.emplace_back(AchievementRuntime::Change
+                    { AchievementRuntime::ChangeType::LeaderboardValueReset, pLeaderboardPauseFlags.nID, 0 });
+            }
+        }
+    }
+}
+
 _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& changes)
 {
     if (!m_bInitialized || m_bPaused)
         return;
 
-    std::lock_guard<std::mutex> pLock(m_pMutex);
-    g_pChanges = &changes;
-    rc_runtime_do_frame(&m_pRuntime, map_event_to_change, rc_peek_callback, nullptr, nullptr);
-    g_pChanges = nullptr;
+    std::vector<LeaderboardPauseFlags> vLeaderboardPauseFlags;
+    if (m_pRuntime.lboard_count > 0)
+        GetLeaderboardPauseFlags(vLeaderboardPauseFlags, &m_pRuntime);
+
+    {
+        std::lock_guard<std::mutex> pLock(m_pMutex);
+
+        g_pChanges = &changes;
+        rc_runtime_do_frame(&m_pRuntime, map_event_to_change, rc_peek_callback, nullptr, nullptr);
+        g_pChanges = nullptr;
+    }
+
+    if (!vLeaderboardPauseFlags.empty())
+        CheckForLeaderboardPauseChanges(vLeaderboardPauseFlags, &m_pRuntime, changes);
 }
 
 _NODISCARD static _CONSTANT_FN ComparisonSizeToPrefix(_In_ char nSize) noexcept

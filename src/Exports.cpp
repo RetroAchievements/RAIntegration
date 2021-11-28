@@ -520,6 +520,58 @@ static void ProcessAchievements()
                 pOverlayManager.RemoveScoreTracker(pChange.nId);
                 break;
             }
+
+            case ra::services::AchievementRuntime::ChangeType::LeaderboardStartReset:
+            {
+                /* ASSERT: this event is only raised if the leaderboard is watching for it */
+                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
+                if (pLeaderboard)
+                {
+                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+                    pFrameEventQueue.QueuePauseOnReset(L"Start: " + pLeaderboard->GetName());
+                }
+
+                break;
+            }
+
+            case ra::services::AchievementRuntime::ChangeType::LeaderboardSubmitReset:
+            {
+                /* ASSERT: this event is only raised if the leaderboard is watching for it */
+                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
+                if (pLeaderboard)
+                {
+                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+                    pFrameEventQueue.QueuePauseOnReset(L"Submit: " + pLeaderboard->GetName());
+                }
+
+                break;
+            }
+
+            case ra::services::AchievementRuntime::ChangeType::LeaderboardCancelReset:
+            {
+                /* ASSERT: this event is only raised if the leaderboard is watching for it */
+                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
+                if (pLeaderboard)
+                {
+                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+                    pFrameEventQueue.QueuePauseOnReset(L"Cancel: " + pLeaderboard->GetName());
+                }
+
+                break;
+            }
+
+            case ra::services::AchievementRuntime::ChangeType::LeaderboardValueReset:
+            {
+                /* ASSERT: this event is only raised if the leaderboard is watching for it */
+                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
+                if (pLeaderboard)
+                {
+                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+                    pFrameEventQueue.QueuePauseOnReset(L"Value: " + pLeaderboard->GetName());
+                }
+
+                break;
+            }
         }
     }
 }

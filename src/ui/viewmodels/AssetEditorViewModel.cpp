@@ -222,6 +222,23 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
     }
 }
 
+static ra::data::models::LeaderboardModel::LeaderboardParts LeaderboardPartToParts(AssetEditorViewModel::LeaderboardPart nPart)
+{
+    switch (nPart)
+    {
+        case AssetEditorViewModel::LeaderboardPart::Start:
+            return ra::data::models::LeaderboardModel::LeaderboardParts::Start;
+        case AssetEditorViewModel::LeaderboardPart::Submit:
+            return ra::data::models::LeaderboardModel::LeaderboardParts::Submit;
+        case AssetEditorViewModel::LeaderboardPart::Cancel:
+            return ra::data::models::LeaderboardModel::LeaderboardParts::Cancel;
+        case AssetEditorViewModel::LeaderboardPart::Value:
+            return ra::data::models::LeaderboardModel::LeaderboardParts::Value;
+        default:
+            return ra::data::models::LeaderboardModel::LeaderboardParts::None;
+    }
+}
+
 void AssetEditorViewModel::UpdateLeaderboardTrigger()
 {
     const auto nPart = GetSelectedLeaderboardPart();
@@ -236,10 +253,24 @@ void AssetEditorViewModel::UpdateLeaderboardTrigger()
         Trigger().SetIsValue(false);
     }
 
+    const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
+    if (pLeaderboard != nullptr)
+    {
+        using namespace ra::bitwise_ops;
+
+        SetPauseOnReset((pLeaderboard->GetPauseOnReset() & LeaderboardPartToParts(nPart)) != ra::data::models::LeaderboardModel::LeaderboardParts::None);
+        SetPauseOnTrigger((pLeaderboard->GetPauseOnTrigger() & LeaderboardPartToParts(nPart)) != ra::data::models::LeaderboardModel::LeaderboardParts::None);
+    }
+    else
+    {
+        SetPauseOnReset(false);
+        SetPauseOnTrigger(false);
+    }
+
     const auto* pLeaderboardDefinition = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetLeaderboardDefinition(m_pAsset->GetID());
     if (pLeaderboardDefinition != nullptr)
     {
-        switch (GetSelectedLeaderboardPart())
+        switch (nPart)
         {
             case LeaderboardPart::Start:
                 Trigger().InitializeFrom(pLeaderboardDefinition->start);
@@ -257,28 +288,24 @@ void AssetEditorViewModel::UpdateLeaderboardTrigger()
                 break;
         }
     }
-    else
+    else if (pLeaderboard != nullptr)
     {
-        const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
-        if (pLeaderboard != nullptr)
+        switch (nPart)
         {
-            switch (GetSelectedLeaderboardPart())
-            {
-                case LeaderboardPart::Start:
-                    Trigger().InitializeFrom(pLeaderboard->GetStartTrigger(), pLeaderboard->GetStartCapturedHits());
-                    return;
-                case LeaderboardPart::Submit:
-                    Trigger().InitializeFrom(pLeaderboard->GetSubmitTrigger(), pLeaderboard->GetSubmitCapturedHits());
-                    return;
-                case LeaderboardPart::Cancel:
-                    Trigger().InitializeFrom(pLeaderboard->GetCancelTrigger(), pLeaderboard->GetCancelCapturedHits());
-                    return;
-                case LeaderboardPart::Value:
-                    Trigger().InitializeFrom(pLeaderboard->GetValueDefinition(), pLeaderboard->GetValueCapturedHits());
-                    return;
-                default:
-                    break;
-            }
+            case LeaderboardPart::Start:
+                Trigger().InitializeFrom(pLeaderboard->GetStartTrigger(), pLeaderboard->GetStartCapturedHits());
+                return;
+            case LeaderboardPart::Submit:
+                Trigger().InitializeFrom(pLeaderboard->GetSubmitTrigger(), pLeaderboard->GetSubmitCapturedHits());
+                return;
+            case LeaderboardPart::Cancel:
+                Trigger().InitializeFrom(pLeaderboard->GetCancelTrigger(), pLeaderboard->GetCancelCapturedHits());
+                return;
+            case LeaderboardPart::Value:
+                Trigger().InitializeFrom(pLeaderboard->GetValueDefinition(), pLeaderboard->GetValueCapturedHits());
+                return;
+            default:
+                break;
         }
     }
 
@@ -371,7 +398,35 @@ void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& a
         if (pLeaderboard != nullptr)
         {
             if (args.Property == LowerIsBetterProperty)
+            {
                 pLeaderboard->SetLowerIsBetter(args.tNewValue);
+            }
+            else if (args.Property == PauseOnResetProperty)
+            {
+                using namespace ra::bitwise_ops;
+
+                auto nPauseOnResetParts = pLeaderboard->GetPauseOnReset();
+                const auto nSelectedPart = LeaderboardPartToParts(GetSelectedLeaderboardPart());
+                if (args.tNewValue)
+                    nPauseOnResetParts |= nSelectedPart;
+                else
+                    nPauseOnResetParts &= ~nSelectedPart;
+
+                pLeaderboard->SetPauseOnReset(nPauseOnResetParts);
+            }
+            else if (args.Property == PauseOnTriggerProperty)
+            {
+                using namespace ra::bitwise_ops;
+
+                auto nPauseOnTriggerParts = pLeaderboard->GetPauseOnTrigger();
+                const auto nSelectedPart = LeaderboardPartToParts(GetSelectedLeaderboardPart());
+                if (args.tNewValue)
+                    nPauseOnTriggerParts |= nSelectedPart;
+                else
+                    nPauseOnTriggerParts &= ~nSelectedPart;
+
+                pLeaderboard->SetPauseOnTrigger(nPauseOnTriggerParts);
+            }
         }
     }
 

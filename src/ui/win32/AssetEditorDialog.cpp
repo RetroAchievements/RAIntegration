@@ -714,6 +714,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindLeaderboardParts.BindColumn(0, std::move(pPartColumn));
     m_bindLeaderboardParts.BindIsSelected(ra::ui::viewmodels::LookupItemViewModel::IsSelectedProperty);
     m_bindLeaderboardParts.BindItems(vmAssetEditor.LeaderboardParts());
+    m_bindLeaderboardParts.BindRowColor(AssetEditorViewModel::LeaderboardPartViewModel::ColorProperty);
 
     m_bindDebugHighlights.BindCheck(AssetEditorViewModel::DebugHighlightsEnabledProperty);
     m_bindPauseOnReset.BindCheck(AssetEditorViewModel::PauseOnResetProperty);

@@ -7,6 +7,7 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\EditorTheme.hh"
 #include "ui\ImageReference.hh"
 #include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -41,6 +42,7 @@ const StringModelProperty AssetEditorViewModel::AssetValidationWarningProperty("
 const BoolModelProperty AssetEditorViewModel::HasMeasuredProperty("AssetEditorViewModel", "HasMeasured", false);
 const StringModelProperty AssetEditorViewModel::MeasuredValueProperty("AssetEditorViewModel", "MeasuredValue", L"[Not Active]");
 const StringModelProperty AssetEditorViewModel::WaitingLabelProperty("AssetEditorViewModel", "WaitingLabel", L"Active");
+const IntModelProperty AssetEditorViewModel::LeaderboardPartViewModel::ColorProperty("LeaderboardPartViewModel", "Color", 0);
 
 AssetEditorViewModel::AssetEditorViewModel() noexcept
 {
@@ -758,6 +760,84 @@ void AssetEditorViewModel::UpdateAssetFrameValues()
     UpdateMeasuredValue();
 }
 
+static void UpdateLeaderboardPartColor(AssetEditorViewModel::LeaderboardPartViewModel& pPart,
+    const rc_trigger_t& pTrigger, const ra::ui::EditorTheme& pTheme, const ra::ui::Color nDefaultColor)
+{
+    switch (pTrigger.state)
+    {
+        case RC_TRIGGER_STATE_PAUSED:
+            pPart.SetColor(pTheme.ColorTriggerPauseTrue());
+            break;
+        case RC_TRIGGER_STATE_TRIGGERED:
+            pPart.SetColor(pTheme.ColorTriggerIsTrue());
+            break;
+        default:
+            if (pPart.m_nPreviousHits)
+            {
+                if (!pTrigger.has_hits)
+                    pPart.SetColor(pTheme.ColorTriggerResetTrue());
+                else
+                    pPart.SetColor(nDefaultColor);
+            }
+            else
+            {
+                pPart.SetColor(nDefaultColor);
+            }
+            break;
+    }
+
+    pPart.m_nPreviousHits = pTrigger.has_hits;
+}
+
+static bool AreAllLeaderboardValuesPaused(const rc_condset_t* pValue)
+{
+    for (; pValue != nullptr; pValue = pValue->next)
+    {
+        if (!pValue->has_pause)
+            return false;
+        if (!pValue->is_paused)
+            return false;
+    }
+
+    return true;
+}
+
+static void UpdateLeaderboardPartColors(ViewModelCollection<AssetEditorViewModel::LeaderboardPartViewModel>& vLeaderboardParts, const rc_lboard_t* pLeaderboard)
+{
+    const auto nDefaultColor = ra::ui::Color(ra::to_unsigned(AssetEditorViewModel::LeaderboardPartViewModel::ColorProperty.GetDefaultValue()));
+
+    if (pLeaderboard == nullptr)
+    {
+        // no leaderboard, or leaderboard not active, disable highlights
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(vLeaderboardParts.Count()); ++i)
+        {
+            auto* pLeaderboardPart = vLeaderboardParts.GetItemAt(i);
+            if (pLeaderboardPart != nullptr)
+                pLeaderboardPart->SetColor(nDefaultColor);
+        }
+
+        return;
+    }
+
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
+    if (pLeaderboard->state == RC_LBOARD_STATE_STARTED)
+        UpdateLeaderboardPartColor(*vLeaderboardParts.GetItemAt(0), pLeaderboard->start, pTheme, pTheme.ColorTriggerWasTrue());
+    else
+        UpdateLeaderboardPartColor(*vLeaderboardParts.GetItemAt(0), pLeaderboard->start, pTheme, nDefaultColor);
+
+    UpdateLeaderboardPartColor(*vLeaderboardParts.GetItemAt(1), pLeaderboard->submit, pTheme, nDefaultColor);
+    UpdateLeaderboardPartColor(*vLeaderboardParts.GetItemAt(2), pLeaderboard->cancel, pTheme, nDefaultColor);
+
+    auto nValueColor = nDefaultColor;
+    if (pLeaderboard->value.conditions != nullptr)
+    {
+        if (AreAllLeaderboardValuesPaused(pLeaderboard->value.conditions))
+            nValueColor = pTheme.ColorTriggerPauseTrue();
+    }
+
+    vLeaderboardParts.GetItemAt(3)->SetColor(nValueColor);
+}
+
 void AssetEditorViewModel::UpdateDebugHighlights()
 {
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
@@ -774,6 +854,8 @@ void AssetEditorViewModel::UpdateDebugHighlights()
             const auto* pLeaderboardDefinition = pRuntime.GetLeaderboardDefinition(m_pAsset->GetID());
             if (pLeaderboardDefinition == nullptr)
                 break;
+
+            UpdateLeaderboardPartColors(m_vLeaderboardParts, pLeaderboardDefinition);
 
             switch (GetSelectedLeaderboardPart())
             {

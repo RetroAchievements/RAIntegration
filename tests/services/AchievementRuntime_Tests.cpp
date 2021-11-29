@@ -963,7 +963,7 @@ public:
         pLeaderboard.SetID(6U);
 
         runtime.ActivateLeaderboard(6U, pDefinition);
-        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        const auto* pLboard = runtime.GetLeaderboardDefinition(6U);
         runtime.Process(vChanges);
         Assert::IsTrue(pLboard->start.has_hits);
         Assert::AreEqual({ 0U }, vChanges.size());
@@ -1002,7 +1002,7 @@ public:
         pLeaderboard.SetID(6U);
 
         runtime.ActivateLeaderboard(6U, pDefinition);
-        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        const auto* pLboard = runtime.GetLeaderboardDefinition(6U);
         runtime.Process(vChanges);
         Assert::IsTrue(pLboard->submit.has_hits);
         Assert::AreEqual({ 0U }, vChanges.size());
@@ -1041,7 +1041,7 @@ public:
         pLeaderboard.SetID(6U);
 
         runtime.ActivateLeaderboard(6U, pDefinition);
-        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        const auto* pLboard = runtime.GetLeaderboardDefinition(6U);
         runtime.Process(vChanges);
         Assert::IsTrue(pLboard->cancel.has_hits);
         Assert::AreEqual({ 0U }, vChanges.size());
@@ -1127,7 +1127,7 @@ public:
         pLeaderboard.SetID(6U);
 
         runtime.ActivateLeaderboard(6U, pDefinition);
-        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        const auto* pLboard = runtime.GetLeaderboardDefinition(6U);
         runtime.Process(vChanges);
         Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->start.state);
         Assert::AreEqual({ 0U }, vChanges.size());
@@ -1168,7 +1168,7 @@ public:
         pLeaderboard.SetID(6U);
 
         runtime.ActivateLeaderboard(6U, pDefinition);
-        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        const auto* pLboard = runtime.GetLeaderboardDefinition(6U);
         runtime.Process(vChanges);
         Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->submit.state);
         Assert::AreEqual({ 0U }, vChanges.size());
@@ -1207,7 +1207,7 @@ public:
         pLeaderboard.SetID(6U);
 
         runtime.ActivateLeaderboard(6U, pDefinition);
-        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        const auto* pLboard = runtime.GetLeaderboardDefinition(6U);
         runtime.Process(vChanges);
         Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->cancel.state);
         Assert::AreEqual({ 0U }, vChanges.size());

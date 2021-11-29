@@ -42,17 +42,17 @@ public:
     void SetPauseOnReset(LeaderboardParts nValue) { SetValue(PauseOnResetProperty, ra::etoi(nValue)); }
 
     /// <summary>
-    /// The <see cref="ModelProperty" /> for whether or not the emulator should be paused when the achievement triggers.
+    /// The <see cref="ModelProperty" /> for whether or not the emulator should be paused when a part triggers.
     /// </summary>
     static const IntModelProperty PauseOnTriggerProperty;
 
     /// <summary>
-    /// Gets whether or not the emulator should be paused when the achievement triggers.
+    /// Gets whether or not the emulator should be paused when a part triggers.
     /// </summary>
     LeaderboardParts GetPauseOnTrigger() const { return ra::itoe<LeaderboardParts>(GetValue(PauseOnTriggerProperty)); }
 
     /// <summary>
-    /// Sets whether or not the emulator should be paused when the achievement triggers.
+    /// Sets whether or not the emulator should be paused when a part triggers.
     /// </summary>
     void SetPauseOnTrigger(LeaderboardParts nValue) { SetValue(PauseOnTriggerProperty, ra::etoi(nValue)); }
 

@@ -226,7 +226,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
     }
 }
 
-static ra::data::models::LeaderboardModel::LeaderboardParts LeaderboardPartToParts(AssetEditorViewModel::LeaderboardPart nPart)
+static constexpr ra::data::models::LeaderboardModel::LeaderboardParts LeaderboardPartToParts(AssetEditorViewModel::LeaderboardPart nPart) noexcept
 {
     switch (nPart)
     {
@@ -793,7 +793,7 @@ static void UpdateLeaderboardPartColor(AssetEditorViewModel::LeaderboardPartView
     pPart.m_nPreviousHits = pTrigger.has_hits;
 }
 
-static bool AreAllLeaderboardValuesPaused(const rc_condset_t* pValue)
+static bool AreAllLeaderboardValuesPaused(const rc_condset_t* pValue) noexcept
 {
     for (; pValue != nullptr; pValue = pValue->next)
     {
@@ -832,14 +832,17 @@ static void UpdateLeaderboardPartColors(ViewModelCollection<AssetEditorViewModel
     UpdateLeaderboardPartColor(*vLeaderboardParts.GetItemAt(1), pLeaderboard->submit, pTheme, nDefaultColor);
     UpdateLeaderboardPartColor(*vLeaderboardParts.GetItemAt(2), pLeaderboard->cancel, pTheme, nDefaultColor);
 
-    auto nValueColor = nDefaultColor;
-    if (pLeaderboard->value.conditions != nullptr)
+    GSL_SUPPRESS_CON4
     {
-        if (AreAllLeaderboardValuesPaused(pLeaderboard->value.conditions))
-            nValueColor = pTheme.ColorTriggerPauseTrue();
-    }
+        auto nValueColor = nDefaultColor;
+        if (pLeaderboard->value.conditions != nullptr)
+        {
+            if (AreAllLeaderboardValuesPaused(pLeaderboard->value.conditions))
+                nValueColor = pTheme.ColorTriggerPauseTrue();
+        }
 
-    vLeaderboardParts.GetItemAt(3)->SetColor(nValueColor);
+        vLeaderboardParts.GetItemAt(3)->SetColor(nValueColor);
+    }
 }
 
 void AssetEditorViewModel::UpdateDebugHighlights()

@@ -735,6 +735,188 @@ public:
         Assert::IsNull(pScore);
     }
 
+    TEST_METHOD(TestDoAchievementsFrameLeaderboardStartPauseOnReset)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U);
+        auto& pLeaderboard = harness.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(1U);
+        pLeaderboard.SetName(L"Title");
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStartReset, 1U);
+        bool bWasPaused = false;
+        harness.mockEmulatorContext.SetPauseFunction([&bWasPaused] { bWasPaused = true; });
+
+        bool bMessageSeen = false;
+        harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bMessageSeen = true;
+            Assert::AreEqual(std::wstring(L"The following triggers have been reset:\n* Start: Title"), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+
+        _RA_DoAchievementsFrame();
+        harness.mockFrameEventQueue.DoFrame(); // UpdateUIForFrameChange isn't called in the unit test build
+
+        Assert::IsTrue(bMessageSeen);
+        Assert::IsTrue(bWasPaused);
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameLeaderboardSubmitPauseOnReset)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U);
+        auto& pLeaderboard = harness.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(1U);
+        pLeaderboard.SetName(L"Title");
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardSubmitReset, 1U);
+        bool bWasPaused = false;
+        harness.mockEmulatorContext.SetPauseFunction([&bWasPaused] { bWasPaused = true; });
+
+        bool bMessageSeen = false;
+        harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bMessageSeen = true;
+            Assert::AreEqual(std::wstring(L"The following triggers have been reset:\n* Submit: Title"), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+
+        _RA_DoAchievementsFrame();
+        harness.mockFrameEventQueue.DoFrame(); // UpdateUIForFrameChange isn't called in the unit test build
+
+        Assert::IsTrue(bMessageSeen);
+        Assert::IsTrue(bWasPaused);
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameLeaderboardCancelPauseOnReset)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U);
+        auto& pLeaderboard = harness.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(1U);
+        pLeaderboard.SetName(L"Title");
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardCancelReset, 1U);
+        bool bWasPaused = false;
+        harness.mockEmulatorContext.SetPauseFunction([&bWasPaused] { bWasPaused = true; });
+
+        bool bMessageSeen = false;
+        harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bMessageSeen = true;
+            Assert::AreEqual(std::wstring(L"The following triggers have been reset:\n* Cancel: Title"), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+
+        _RA_DoAchievementsFrame();
+        harness.mockFrameEventQueue.DoFrame(); // UpdateUIForFrameChange isn't called in the unit test build
+
+        Assert::IsTrue(bMessageSeen);
+        Assert::IsTrue(bWasPaused);
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameLeaderboardValuePauseOnReset)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U);
+        auto& pLeaderboard = harness.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(1U);
+        pLeaderboard.SetName(L"Title");
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardValueReset, 1U);
+        bool bWasPaused = false;
+        harness.mockEmulatorContext.SetPauseFunction([&bWasPaused] { bWasPaused = true; });
+
+        bool bMessageSeen = false;
+        harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bMessageSeen = true;
+            Assert::AreEqual(std::wstring(L"The following triggers have been reset:\n* Value: Title"), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+
+        _RA_DoAchievementsFrame();
+        harness.mockFrameEventQueue.DoFrame(); // UpdateUIForFrameChange isn't called in the unit test build
+
+        Assert::IsTrue(bMessageSeen);
+        Assert::IsTrue(bWasPaused);
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameLeaderboardStartPauseOnTriggered)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U);
+        auto& pLeaderboard = harness.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(1U);
+        pLeaderboard.SetName(L"Title");
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardStartTriggered, 1U);
+        bool bWasPaused = false;
+        harness.mockEmulatorContext.SetPauseFunction([&bWasPaused] { bWasPaused = true; });
+
+        bool bMessageSeen = false;
+        harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bMessageSeen = true;
+            Assert::AreEqual(std::wstring(L"The following triggers have triggered:\n* Start: Title"), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+
+        _RA_DoAchievementsFrame();
+        harness.mockFrameEventQueue.DoFrame(); // UpdateUIForFrameChange isn't called in the unit test build
+
+        Assert::IsTrue(bMessageSeen);
+        Assert::IsTrue(bWasPaused);
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameLeaderboardSubmitPauseOnTriggered)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U);
+        auto& pLeaderboard = harness.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(1U);
+        pLeaderboard.SetName(L"Title");
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardSubmitTriggered, 1U);
+        bool bWasPaused = false;
+        harness.mockEmulatorContext.SetPauseFunction([&bWasPaused] { bWasPaused = true; });
+
+        bool bMessageSeen = false;
+        harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bMessageSeen = true;
+            Assert::AreEqual(std::wstring(L"The following triggers have triggered:\n* Submit: Title"), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+
+        _RA_DoAchievementsFrame();
+        harness.mockFrameEventQueue.DoFrame(); // UpdateUIForFrameChange isn't called in the unit test build
+
+        Assert::IsTrue(bMessageSeen);
+        Assert::IsTrue(bWasPaused);
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameLeaderboardCancelPauseOnTriggered)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U);
+        auto& pLeaderboard = harness.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(1U);
+        pLeaderboard.SetName(L"Title");
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::LeaderboardCancelTriggered, 1U);
+        bool bWasPaused = false;
+        harness.mockEmulatorContext.SetPauseFunction([&bWasPaused] { bWasPaused = true; });
+
+        bool bMessageSeen = false;
+        harness.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bMessageSeen = true;
+            Assert::AreEqual(std::wstring(L"The following triggers have triggered:\n* Cancel: Title"), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::OK;
+        });
+
+        _RA_DoAchievementsFrame();
+        harness.mockFrameEventQueue.DoFrame(); // UpdateUIForFrameChange isn't called in the unit test build
+
+        Assert::IsTrue(bMessageSeen);
+        Assert::IsTrue(bWasPaused);
+    }
+
     TEST_METHOD(TestDoAchievementsFrameMultiple)
     {
         DoAchievementsFrameHarness harness;

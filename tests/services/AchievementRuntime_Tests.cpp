@@ -949,6 +949,289 @@ public:
 
         Assert::AreEqual(std::wstring(L"Parse error -6 (line 5): Invalid operator"), runtime.GetRichPresenceDisplayString());
     }
+
+    TEST_METHOD(TestProcessLeaderboardStartPauseOnReset)
+    {
+        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        std::vector<AchievementRuntime::Change> vChanges;
+        auto* pDefinition = "STA:0xH0000=0_0xH0000=9_R:0xH0001=1::SUB:0xH0000=1::CAN:0xH0000=2::VAL:0xH0000";
+
+        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(6U);
+
+        runtime.ActivateLeaderboard(6U, pDefinition);
+        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        runtime.Process(vChanges);
+        Assert::IsTrue(pLboard->start.has_hits);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        memory.at(1) = 1;
+        runtime.Process(vChanges);
+        Assert::IsFalse(pLboard->start.has_hits);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        pLeaderboard.SetPauseOnReset(ra::data::models::LeaderboardModel::LeaderboardParts::Start);
+
+        memory.at(1) = 0;
+        runtime.Process(vChanges);
+        Assert::IsTrue(pLboard->start.has_hits);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        memory.at(1) = 1;
+        runtime.Process(vChanges);
+        Assert::IsFalse(pLboard->start.has_hits);
+
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardStartReset, 6U);
+    }
+
+    TEST_METHOD(TestProcessLeaderboardSubmitPauseOnReset)
+    {
+        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        std::vector<AchievementRuntime::Change> vChanges;
+        auto* pDefinition = "STA:0xH0000=1::SUB:0xH0000=0_0xH0000=9_R:0xH0001=1::CAN:0xH0000=2::VAL:0xH0000";
+
+        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(6U);
+
+        runtime.ActivateLeaderboard(6U, pDefinition);
+        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        runtime.Process(vChanges);
+        Assert::IsTrue(pLboard->submit.has_hits);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        memory.at(1) = 1;
+        runtime.Process(vChanges);
+        Assert::IsFalse(pLboard->submit.has_hits);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        pLeaderboard.SetPauseOnReset(ra::data::models::LeaderboardModel::LeaderboardParts::Submit);
+
+        memory.at(1) = 0;
+        runtime.Process(vChanges);
+        Assert::IsTrue(pLboard->submit.has_hits);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        memory.at(1) = 1;
+        runtime.Process(vChanges);
+        Assert::IsFalse(pLboard->submit.has_hits);
+
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardSubmitReset, 6U);
+    }
+
+    TEST_METHOD(TestProcessLeaderboardCancelPauseOnReset)
+    {
+        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        std::vector<AchievementRuntime::Change> vChanges;
+        auto* pDefinition = "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=0_0xH0000=9_R:0xH0001=1::VAL:0xH0000";
+
+        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(6U);
+
+        runtime.ActivateLeaderboard(6U, pDefinition);
+        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        runtime.Process(vChanges);
+        Assert::IsTrue(pLboard->cancel.has_hits);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        memory.at(1) = 1;
+        runtime.Process(vChanges);
+        Assert::IsFalse(pLboard->cancel.has_hits);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        pLeaderboard.SetPauseOnReset(ra::data::models::LeaderboardModel::LeaderboardParts::Cancel);
+
+        memory.at(1) = 0;
+        runtime.Process(vChanges);
+        Assert::IsTrue(pLboard->cancel.has_hits);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        memory.at(1) = 1;
+        runtime.Process(vChanges);
+        Assert::IsFalse(pLboard->cancel.has_hits);
+
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardCancelReset, 6U);
+    }
+
+    TEST_METHOD(TestProcessLeaderboardValuePauseOnReset)
+    {
+        std::array<unsigned char, 2> memory{ 0x05, 0x00 };
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        std::vector<AchievementRuntime::Change> vChanges;
+        auto* pDefinition = "STA:0xH0000=0::SUB:0xH0000=2::CAN:0xH0000=3::VAL:Q:0xH0001=0_M:0xH0000";
+
+        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(6U);
+
+        runtime.ActivateLeaderboard(6U, pDefinition);
+        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        pLboard->state = RC_LBOARD_STATE_STARTED; // value not calculated if not started
+        runtime.Process(vChanges);
+        Assert::AreEqual(5U, pLboard->value.value.value);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardUpdated, 6U);
+        vChanges.clear();
+
+        memory.at(1) = 1;
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, pLboard->value.value.value);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardUpdated, 6U);
+        vChanges.clear();
+
+        pLeaderboard.SetPauseOnReset(ra::data::models::LeaderboardModel::LeaderboardParts::Value);
+
+        memory.at(1) = 0;
+        runtime.Process(vChanges);
+        Assert::AreEqual(5U, pLboard->value.value.value);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardUpdated, 6U);
+        vChanges.clear();
+
+        memory.at(1) = 1;
+        runtime.Process(vChanges);
+        Assert::AreEqual(0U, pLboard->value.value.value);
+
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 2U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardUpdated, 6U);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardValueReset, 6U);
+    }
+
+    TEST_METHOD(TestProcessLeaderboardStartPauseOnTrigger)
+    {
+        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        std::vector<AchievementRuntime::Change> vChanges;
+        auto* pDefinition = "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001";
+
+        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(6U);
+
+        runtime.ActivateLeaderboard(6U, pDefinition);
+        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        runtime.Process(vChanges);
+        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->start.state);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        memory.at(0) = 1;
+        runtime.Process(vChanges);
+        Assert::AreEqual((int)RC_TRIGGER_STATE_TRIGGERED, (int)pLboard->start.state);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardStarted, 6U);
+        vChanges.clear();
+
+        pLeaderboard.SetPauseOnTrigger(ra::data::models::LeaderboardModel::LeaderboardParts::Start);
+
+        memory.at(0) = 0;
+        runtime.Process(vChanges);
+        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->start.state);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        memory.at(0) = 1;
+        runtime.Process(vChanges);
+        Assert::AreEqual((int)RC_TRIGGER_STATE_TRIGGERED, (int)pLboard->start.state);
+
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardStartTriggered, 6U);
+    }
+
+    TEST_METHOD(TestProcessLeaderboardSubmitPauseOnTrigger)
+    {
+        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        std::vector<AchievementRuntime::Change> vChanges;
+        auto* pDefinition = "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001";
+
+        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(6U);
+
+        runtime.ActivateLeaderboard(6U, pDefinition);
+        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        runtime.Process(vChanges);
+        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->submit.state);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        memory.at(0) = 2;
+        runtime.Process(vChanges);
+        Assert::AreEqual((int)RC_TRIGGER_STATE_TRIGGERED, (int)pLboard->submit.state);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        pLeaderboard.SetPauseOnTrigger(ra::data::models::LeaderboardModel::LeaderboardParts::Submit);
+
+        memory.at(0) = 0;
+        runtime.Process(vChanges);
+        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->submit.state);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        memory.at(0) = 2;
+        runtime.Process(vChanges);
+        Assert::AreEqual((int)RC_TRIGGER_STATE_TRIGGERED, (int)pLboard->submit.state);
+
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardSubmitTriggered, 6U);
+    }
+
+    TEST_METHOD(TestProcessLeaderboardCancelPauseOnTrigger)
+    {
+        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        std::vector<AchievementRuntime::Change> vChanges;
+        auto* pDefinition = "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001";
+
+        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
+        pLeaderboard.SetID(6U);
+
+        runtime.ActivateLeaderboard(6U, pDefinition);
+        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
+        runtime.Process(vChanges);
+        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->cancel.state);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        memory.at(0) = 3;
+        runtime.Process(vChanges);
+        Assert::AreEqual((int)RC_TRIGGER_STATE_TRIGGERED, (int)pLboard->cancel.state);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        pLeaderboard.SetPauseOnTrigger(ra::data::models::LeaderboardModel::LeaderboardParts::Cancel);
+
+        memory.at(0) = 0;
+        runtime.Process(vChanges);
+        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->cancel.state);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        memory.at(0) = 3;
+        runtime.Process(vChanges);
+        Assert::AreEqual((int)RC_TRIGGER_STATE_TRIGGERED, (int)pLboard->cancel.state);
+
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardCancelTriggered, 6U);
+    }
 };
 
 } // namespace tests

@@ -132,6 +132,26 @@ std::wstring ToString<ra::data::ValueFormat>(const ra::data::ValueFormat& nForma
     }
 }
 
+template<>
+std::wstring ToString<ra::data::models::LeaderboardModel::LeaderboardParts>(const ra::data::models::LeaderboardModel::LeaderboardParts& nParts)
+{
+    switch (nParts)
+    {
+        case ra::data::models::LeaderboardModel::LeaderboardParts::None:
+            return L"None";
+        case ra::data::models::LeaderboardModel::LeaderboardParts::Start:
+            return L"Start";
+        case ra::data::models::LeaderboardModel::LeaderboardParts::Submit:
+            return L"Submit";
+        case ra::data::models::LeaderboardModel::LeaderboardParts::Cancel:
+            return L"Cancel";
+        case ra::data::models::LeaderboardModel::LeaderboardParts::Value:
+            return L"Value";
+        default:
+            return std::to_wstring(static_cast<int>(nParts));
+    }
+}
+
 #pragma warning(pop)
 
 } // namespace CppUnitTestFramework

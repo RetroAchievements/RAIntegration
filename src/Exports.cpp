@@ -572,6 +572,45 @@ static void ProcessAchievements()
 
                 break;
             }
+
+            case ra::services::AchievementRuntime::ChangeType::LeaderboardStartTriggered:
+            {
+                /* ASSERT: this event is only raised if the leaderboard is watching for it */
+                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
+                if (pLeaderboard)
+                {
+                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+                    pFrameEventQueue.QueuePauseOnTrigger(L"Start: " + pLeaderboard->GetName());
+                }
+
+                break;
+            }
+
+            case ra::services::AchievementRuntime::ChangeType::LeaderboardSubmitTriggered:
+            {
+                /* ASSERT: this event is only raised if the leaderboard is watching for it */
+                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
+                if (pLeaderboard)
+                {
+                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+                    pFrameEventQueue.QueuePauseOnTrigger(L"Submit: " + pLeaderboard->GetName());
+                }
+
+                break;
+            }
+
+            case ra::services::AchievementRuntime::ChangeType::LeaderboardCancelTriggered:
+            {
+                /* ASSERT: this event is only raised if the leaderboard is watching for it */
+                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
+                if (pLeaderboard)
+                {
+                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+                    pFrameEventQueue.QueuePauseOnTrigger(L"Cancel: " + pLeaderboard->GetName());
+                }
+
+                break;
+            }
         }
     }
 }

@@ -32,6 +32,7 @@ const BoolModelProperty AssetEditorViewModel::LowerIsBetterProperty("AssetEditor
 const StringModelProperty AssetEditorViewModel::FormattedValueProperty("AssetEditorViewModel", "FormattedValue", L"0");
 const BoolModelProperty AssetEditorViewModel::PauseOnResetProperty("AssetEditorViewModel", "PauseOnReset", false);
 const BoolModelProperty AssetEditorViewModel::PauseOnTriggerProperty("AssetEditorViewModel", "PauseOnTrigger", false);
+const BoolModelProperty AssetEditorViewModel::IsTriggerProperty("AssetEditorViewModel", "IsTrigger", true);
 const BoolModelProperty AssetEditorViewModel::DebugHighlightsEnabledProperty("AssetEditorViewModel", "DebugHighlightsEnabled", false);
 const BoolModelProperty AssetEditorViewModel::DecimalPreferredProperty("AssetEditorViewModel", "DecimalPreferred", false);
 const BoolModelProperty AssetEditorViewModel::IsAssetLoadedProperty("AssetEditorViewModel", "IsAssetLoaded", false);
@@ -164,6 +165,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
             SetWindowTitle(L"Achievement Editor");
             SetValue(IsLeaderboardProperty, false);
             SetValue(IsAchievementProperty, true);
+            SetValue(IsTriggerProperty, true);
 
             const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pAsset);
             if (pAchievement != nullptr)
@@ -246,11 +248,13 @@ void AssetEditorViewModel::UpdateLeaderboardTrigger()
     const auto nPart = GetSelectedLeaderboardPart();
     if (nPart == LeaderboardPart::Value)
     {
+        SetValue(IsTriggerProperty, false);
         SetValue(GroupsHeaderProperty, L"Max of:");
         Trigger().SetIsValue(true);
     }
     else
     {
+        SetValue(IsTriggerProperty, true);
         SetValue(GroupsHeaderProperty, GroupsHeaderProperty.GetDefaultValue());
         Trigger().SetIsValue(false);
     }

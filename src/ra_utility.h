@@ -182,7 +182,7 @@ _CONSTANT_FN& operator&=(_Inout_ Enum& a, _In_ Enum b) noexcept
 }
 
 template<typename Enum, typename = std::enable_if_t<std::is_enum_v<Enum>>>
-_NODISCARD _CONSTANT_FN operator~(_Inout_ Enum& a) noexcept
+_NODISCARD _CONSTANT_FN operator~(_In_ Enum a) noexcept
 {
     return (itoe<Enum>(~etoi(a)));
 }

@@ -347,6 +347,16 @@ public:
     void SetPauseOnTrigger(bool nValue) { SetValue(PauseOnTriggerProperty, nValue); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not a trigger is being edited.
+    /// </summary>
+    static const BoolModelProperty IsTriggerProperty;
+
+    /// <summary>
+    /// Gets whether or not a trigger is being edited.
+    /// </summary>
+    bool IsTrigger() const { return GetValue(IsTriggerProperty); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not condition truthiness should be color-highlighted.
     /// </summary>
     static const BoolModelProperty DebugHighlightsEnabledProperty;

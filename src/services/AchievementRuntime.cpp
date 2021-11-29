@@ -275,7 +275,6 @@ typedef struct LeaderboardPauseFlags
     ra::LeaderboardID nID;
     ra::data::models::LeaderboardModel::LeaderboardParts nPauseOnReset;
     ra::data::models::LeaderboardModel::LeaderboardParts nPauseOnTrigger;
-    ra::data::models::LeaderboardModel::LeaderboardParts nHasHits;
 } LeaderboardPauseFlags;
 
 static void GetLeaderboardPauseFlags(std::vector<LeaderboardPauseFlags>& vLeaderboardPauseFlags, const rc_runtime_t* pRuntime)
@@ -299,18 +298,30 @@ static void GetLeaderboardPauseFlags(std::vector<LeaderboardPauseFlags>& vLeader
                 {
                     using namespace ra::bitwise_ops;
 
-                    pLeaderboardPauseFlags.nHasHits = ra::data::models::LeaderboardModel::LeaderboardParts::None;
-                    if (pLBoard->start.has_hits)
-                        pLeaderboardPauseFlags.nHasHits |= ra::data::models::LeaderboardModel::LeaderboardParts::Start;
-                    if (pLBoard->submit.has_hits)
-                        pLeaderboardPauseFlags.nHasHits |= ra::data::models::LeaderboardModel::LeaderboardParts::Submit;
-                    if (pLBoard->cancel.has_hits)
-                        pLeaderboardPauseFlags.nHasHits |= ra::data::models::LeaderboardModel::LeaderboardParts::Cancel;
-                    if (pLBoard->value.value.value)
-                        pLeaderboardPauseFlags.nHasHits |= ra::data::models::LeaderboardModel::LeaderboardParts::Value;
-
-                    pLeaderboardPauseFlags.nPauseOnReset &= pLeaderboardPauseFlags.nHasHits;
                     if (pLeaderboardPauseFlags.nPauseOnReset != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+                    {
+                        if (!pLBoard->start.has_hits)
+                            pLeaderboardPauseFlags.nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Start;
+                        if (!pLBoard->submit.has_hits)
+                            pLeaderboardPauseFlags.nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Submit;
+                        if (!pLBoard->cancel.has_hits)
+                            pLeaderboardPauseFlags.nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Cancel;
+                        if (!pLBoard->value.value.value)
+                            pLeaderboardPauseFlags.nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Value;
+                    }
+
+                    if (pLeaderboardPauseFlags.nPauseOnTrigger != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+                    {
+                        if (pLBoard->start.state == RC_TRIGGER_STATE_TRIGGERED)
+                            pLeaderboardPauseFlags.nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Start;
+                        if (pLBoard->submit.state == RC_TRIGGER_STATE_TRIGGERED)
+                            pLeaderboardPauseFlags.nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Submit;
+                        if (pLBoard->cancel.state == RC_TRIGGER_STATE_TRIGGERED)
+                            pLeaderboardPauseFlags.nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Cancel;
+                    }
+
+                    const auto nMonitorFlags = pLeaderboardPauseFlags.nPauseOnReset | pLeaderboardPauseFlags.nPauseOnTrigger;
+                    if (nMonitorFlags != ra::data::models::LeaderboardModel::LeaderboardParts::None)
                         vLeaderboardPauseFlags.push_back(pLeaderboardPauseFlags);
                 }
             }
@@ -354,6 +365,27 @@ static void CheckForLeaderboardPauseChanges(const std::vector<LeaderboardPauseFl
             {
                 changes.emplace_back(AchievementRuntime::Change
                     { AchievementRuntime::ChangeType::LeaderboardValueReset, pLeaderboardPauseFlags.nID, 0 });
+            }
+
+            if (pLBoard->start.state == RC_TRIGGER_STATE_TRIGGERED &&
+                (pLeaderboardPauseFlags.nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Start) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+            {
+                changes.emplace_back(AchievementRuntime::Change
+                    { AchievementRuntime::ChangeType::LeaderboardStartTriggered, pLeaderboardPauseFlags.nID, 0 });
+            }
+
+            if (pLBoard->submit.state == RC_TRIGGER_STATE_TRIGGERED &&
+                (pLeaderboardPauseFlags.nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Submit) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+            {
+                changes.emplace_back(AchievementRuntime::Change
+                    { AchievementRuntime::ChangeType::LeaderboardSubmitTriggered, pLeaderboardPauseFlags.nID, 0 });
+            }
+
+            if (pLBoard->cancel.state == RC_TRIGGER_STATE_TRIGGERED &&
+                (pLeaderboardPauseFlags.nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Cancel) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
+            {
+                changes.emplace_back(AchievementRuntime::Change
+                    { AchievementRuntime::ChangeType::LeaderboardCancelTriggered, pLeaderboardPauseFlags.nID, 0 });
             }
         }
     }

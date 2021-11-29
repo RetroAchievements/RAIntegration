@@ -176,10 +176,9 @@ public:
         LeaderboardSubmitReset,
         LeaderboardCancelReset,
         LeaderboardValueReset,
-        LeaderboardStartPaused,
-        LeaderboardSubmitPaused,
-        LeaderboardCancelPaused,
-        LeaderboardValuePaused,
+        LeaderboardStartTriggered,
+        LeaderboardSubmitTriggered,
+        LeaderboardCancelTriggered,
     };
 
     struct Change

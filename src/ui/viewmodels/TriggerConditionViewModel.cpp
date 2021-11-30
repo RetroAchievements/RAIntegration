@@ -37,6 +37,7 @@ const BoolModelProperty TriggerConditionViewModel::HasSourceSizeProperty("Trigge
 const BoolModelProperty TriggerConditionViewModel::HasTargetProperty("TriggerConditionViewModel", "HasTarget", true);
 const BoolModelProperty TriggerConditionViewModel::HasTargetSizeProperty("TriggerConditionViewModel", "HasTargetSize", false);
 const BoolModelProperty TriggerConditionViewModel::HasHitsProperty("TriggerConditionViewModel", "HasHits", true);
+const BoolModelProperty TriggerConditionViewModel::CanEditHitsProperty("TriggerConditionViewModel", "CanEditHits", true);
 const IntModelProperty TriggerConditionViewModel::RowColorProperty("TriggerConditionViewModel", "RowColor", 0);
 
 std::string TriggerConditionViewModel::Serialize() const
@@ -136,7 +137,7 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
         SerializeAppendOperand(sBuffer, GetTargetType(), GetTargetSize(), GetTargetValue());
     }
 
-    if (GetValue(HasHitsProperty))
+    if (GetValue(HasHitsProperty) && GetValue(CanEditHitsProperty))
     {
         const auto nRequiredHits = GetRequiredHits();
         if (nRequiredHits > 0)
@@ -372,7 +373,15 @@ void TriggerConditionViewModel::InitializeFrom(const rc_condition_t& pCondition)
     SetOperator(static_cast<TriggerOperatorType>(pCondition.oper));
 
     SetCurrentHits(pCondition.current_hits);
-    SetRequiredHits(pCondition.required_hits);
+
+    // Values have an "infinite" hit target, display 0
+    SetRequiredHits(pCondition.required_hits == 0xFFFFFFFF ? 0 : pCondition.required_hits);
+}
+
+bool TriggerConditionViewModel::IsForValue() const noexcept
+{
+    const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
+    return (pTriggerViewModel && pTriggerViewModel->IsValue());
 }
 
 void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
@@ -414,6 +423,7 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     else if (args.Property == OperatorProperty)
     {
         SetValue(HasTargetProperty, ra::itoe<TriggerOperatorType>(args.tNewValue) != TriggerOperatorType::None);
+        UpdateHasHits();
     }
     else if (args.Property == TypeProperty)
     {
@@ -421,21 +431,37 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         const auto nNewType = ra::itoe<TriggerConditionType>(args.tNewValue);
         const auto bIsModifying = IsModifying(nNewType);
         if (bIsModifying != IsModifying(nOldType))
-        {
-            if (bIsModifying)
-            {
-                SetValue(HasHitsProperty, false);
-                SetOperator(TriggerOperatorType::None);
-            }
-            else
-            {
-                SetValue(HasHitsProperty, true);
-                SetOperator(TriggerOperatorType::Equals);
-            }
-        }
+            SetOperator(bIsModifying ? TriggerOperatorType::None : TriggerOperatorType::Equals);
+        else if (!bIsModifying && GetOperator() == TriggerOperatorType::None)
+            SetOperator(TriggerOperatorType::Equals);
+
+        UpdateHasHits();
     }
 
     ViewModelBase::OnValueChanged(args);
+}
+
+void TriggerConditionViewModel::UpdateHasHits()
+{
+    const auto nType = GetType();
+
+    if (IsModifying(nType))
+    {
+        SetValue(HasHitsProperty, false);
+        SetValue(CanEditHitsProperty, false);
+    }
+    else if (nType == TriggerConditionType::Measured && IsForValue())
+    {
+        // if Measured value is generated from hit count, show the hit count, but don't allow the target to be edited
+        SetValue(HasHitsProperty, GetOperator() != TriggerOperatorType::None);
+        SetValue(CanEditHitsProperty, false);
+        SetValue(RequiredHitsProperty, 0);
+    }
+    else
+    {
+        SetValue(HasHitsProperty, true);
+        SetValue(CanEditHitsProperty, true);
+    }
 }
 
 void TriggerConditionViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
@@ -695,6 +721,15 @@ bool TriggerConditionViewModel::IsComparisonVisible(const ViewModelBase& vmItem,
     switch (nComparison)
     {
         case TriggerOperatorType::None:
+            if (vmCondition->IsModifying())
+                return true;
+
+            // "None" can only be selected for the Measured flag when editing a value
+            if (vmCondition->GetType() == TriggerConditionType::Measured && vmCondition->IsForValue())
+                return true;
+
+            return false;
+
         case TriggerOperatorType::Multiply:
         case TriggerOperatorType::Divide:
         case TriggerOperatorType::BitwiseAnd:

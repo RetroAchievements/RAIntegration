@@ -41,6 +41,7 @@ private:
         bool HasTargetSize() const { return GetValue(HasTargetSizeProperty); }
         bool HasTarget() const { return GetValue(HasTargetProperty); }
         bool HasHits() const { return GetValue(HasHitsProperty); }
+        bool CanEditHits() const { return GetValue(CanEditHitsProperty); }
 
     private:
         std::string sBuffer;
@@ -58,6 +59,23 @@ private:
 
         TriggerConditionViewModelHarness vmCondition;
         vmCondition.InitializeFrom(*pTrigger->requirement->conditions);
+
+        const std::string sOutput = vmCondition.Serialize();
+        Assert::AreEqual(sInput, sOutput);
+    }
+
+    void ParseAndRegenerateValue(const std::string& sInput)
+    {
+        unsigned char pBuffer[512] = { 0 };
+        const auto nSize = rc_value_size(sInput.c_str());
+        Assert::IsTrue(nSize > 0 && nSize < sizeof(pBuffer));
+
+        const rc_value_t* pValue = rc_parse_value(pBuffer, sInput.c_str(), nullptr, 0);
+        Assert::IsNotNull(pValue);
+        Ensures(pValue != nullptr);
+
+        TriggerConditionViewModelHarness vmCondition;
+        vmCondition.InitializeFrom(*pValue->conditions->conditions);
 
         const std::string sOutput = vmCondition.Serialize();
         Assert::AreEqual(sInput, sOutput);
@@ -83,6 +101,7 @@ public:
         Assert::IsFalse(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
         Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
     }
 
     TEST_METHOD(TestHasSourceSize)
@@ -249,54 +268,107 @@ public:
         TriggerConditionViewModelHarness vmCondition;
         Assert::AreEqual(TriggerConditionType::Standard, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
 
         vmCondition.SetType(TriggerConditionType::AddAddress);
         Assert::AreEqual(TriggerConditionType::AddAddress, vmCondition.GetType());
         Assert::IsFalse(vmCondition.HasHits());
+        Assert::IsFalse(vmCondition.CanEditHits());
 
         vmCondition.SetType(TriggerConditionType::AddHits);
         Assert::AreEqual(TriggerConditionType::AddHits, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
 
         vmCondition.SetType(TriggerConditionType::AddSource);
         Assert::AreEqual(TriggerConditionType::AddSource, vmCondition.GetType());
         Assert::IsFalse(vmCondition.HasHits());
+        Assert::IsFalse(vmCondition.CanEditHits());
 
         vmCondition.SetType(TriggerConditionType::AndNext);
         Assert::AreEqual(TriggerConditionType::AndNext, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
 
         vmCondition.SetType(TriggerConditionType::Measured);
         Assert::AreEqual(TriggerConditionType::Measured, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
 
         vmCondition.SetType(TriggerConditionType::MeasuredIf);
         Assert::AreEqual(TriggerConditionType::MeasuredIf, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
 
         vmCondition.SetType(TriggerConditionType::OrNext);
         Assert::AreEqual(TriggerConditionType::OrNext, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
 
         vmCondition.SetType(TriggerConditionType::PauseIf);
         Assert::AreEqual(TriggerConditionType::PauseIf, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
 
         vmCondition.SetType(TriggerConditionType::ResetIf);
         Assert::AreEqual(TriggerConditionType::ResetIf, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
 
         vmCondition.SetType(TriggerConditionType::SubHits);
         Assert::AreEqual(TriggerConditionType::SubHits, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
 
         vmCondition.SetType(TriggerConditionType::SubSource);
         Assert::AreEqual(TriggerConditionType::SubSource, vmCondition.GetType());
         Assert::IsFalse(vmCondition.HasHits());
+        Assert::IsFalse(vmCondition.CanEditHits());
 
         vmCondition.SetType(TriggerConditionType::Trigger);
         Assert::AreEqual(TriggerConditionType::Trigger, vmCondition.GetType());
         Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
+    }
+
+    TEST_METHOD(TestHasHitsForValue)
+    {
+        TriggerConditionViewModelHarness vmCondition;
+        TriggerViewModel vmTrigger;
+        vmTrigger.SetIsValue(true);
+        vmCondition.SetTriggerViewModel(&vmTrigger);
+
+        Assert::AreEqual(TriggerConditionType::Standard, vmCondition.GetType());
+        Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
+
+        vmCondition.SetType(TriggerConditionType::Measured);
+        Assert::AreEqual(TriggerConditionType::Measured, vmCondition.GetType());
+        Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsFalse(vmCondition.CanEditHits());
+
+        vmCondition.SetOperator(TriggerOperatorType::None);
+        Assert::AreEqual(TriggerConditionType::Measured, vmCondition.GetType());
+        Assert::AreEqual(TriggerOperatorType::None, vmCondition.GetOperator());
+        Assert::IsFalse(vmCondition.HasHits());
+        Assert::IsFalse(vmCondition.CanEditHits());
+
+        vmCondition.SetType(TriggerConditionType::Standard);
+        Assert::AreEqual(TriggerConditionType::Standard, vmCondition.GetType());
+        Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsTrue(vmCondition.CanEditHits());
+
+        vmCondition.SetRequiredHits(5U);
+        Assert::AreEqual(5U, vmCondition.GetRequiredHits());
+
+        vmCondition.SetType(TriggerConditionType::Measured);
+        Assert::AreEqual(TriggerConditionType::Measured, vmCondition.GetType());
+        Assert::AreEqual(TriggerOperatorType::Equals, vmCondition.GetOperator());
+        Assert::IsTrue(vmCondition.HasHits());
+        Assert::IsFalse(vmCondition.CanEditHits());
+        Assert::AreEqual(0U, vmCondition.GetRequiredHits());
     }
 
     TEST_METHOD(TestSerializeHasHits)
@@ -408,6 +480,8 @@ public:
     {
         ParseAndRegenerate("0xH1234=5"); // none
         ParseAndRegenerate("R:0xH1234=5.100."); // 100
+        ParseAndRegenerateValue("M:0xH1234=5"); // measured without hit target
+        ParseAndRegenerateValue("M:0xH1234"); // measured without comparison
     }
 
     TEST_METHOD(TestTooltipAddress)
@@ -865,6 +939,40 @@ public:
         Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
         Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
     }
+
+    TEST_METHOD(TestIsComparisonVisibleMeasured)
+    {
+        TriggerConditionViewModelHarness condition;
+
+        condition.SetType(TriggerConditionType::Measured);
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Equals)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::NotEquals)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThan)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThanOrEqual)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThan)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThanOrEqual)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::None)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Multiply)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
+
+        TriggerViewModel vmTrigger;
+        vmTrigger.SetIsValue(true);
+        condition.SetTriggerViewModel(&vmTrigger);
+
+        // None operator is visible when associated to a Value trigger
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Equals)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::NotEquals)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThan)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::LessThanOrEqual)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThan)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThanOrEqual)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::None)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Multiply)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
+    }
+
 };
 
 } // namespace tests

@@ -124,10 +124,10 @@ public:
         Assert::AreEqual({ 4U }, editor.LeaderboardParts().Count());
         Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Start, editor.LeaderboardParts().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Start"), editor.LeaderboardParts().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Submit, editor.LeaderboardParts().GetItemAt(1)->GetId());
-        Assert::AreEqual(std::wstring(L"Submit"), editor.LeaderboardParts().GetItemAt(1)->GetLabel());
-        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Cancel, editor.LeaderboardParts().GetItemAt(2)->GetId());
-        Assert::AreEqual(std::wstring(L"Cancel"), editor.LeaderboardParts().GetItemAt(2)->GetLabel());
+        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Cancel, editor.LeaderboardParts().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Cancel"), editor.LeaderboardParts().GetItemAt(1)->GetLabel());
+        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Submit, editor.LeaderboardParts().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Submit"), editor.LeaderboardParts().GetItemAt(2)->GetLabel());
         Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Value, editor.LeaderboardParts().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Value"), editor.LeaderboardParts().GetItemAt(3)->GetLabel());
     }

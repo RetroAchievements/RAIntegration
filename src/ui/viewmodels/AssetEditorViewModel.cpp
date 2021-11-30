@@ -59,8 +59,8 @@ AssetEditorViewModel::AssetEditorViewModel() noexcept
     m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Minutes), L"Minutes");
 
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Start), L"Start");
-    m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Submit), L"Submit");
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Cancel), L"Cancel");
+    m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Submit), L"Submit");
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Value), L"Value");
     m_vLeaderboardParts.GetItemAt(0)->SetSelected(true);
     m_vLeaderboardParts.AddNotifyTarget(*this);

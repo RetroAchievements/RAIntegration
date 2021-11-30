@@ -448,12 +448,6 @@ void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstrin
     }
 }
 
-void AssetEditorDialog::DecimalPreferredBinding::OnValueChanged()
-{
-    m_pOwner->m_bindConditions.RefreshColumn(4); // source value
-    m_pOwner->m_bindConditions.RefreshColumn(8); // target value
-}
-
 bool AssetEditorDialog::ActiveCheckBoxBinding::IsActive() const
 {
     const auto& vmAssetEditor = GetViewModel<ra::ui::viewmodels::AssetEditorViewModel&>();
@@ -642,7 +636,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindPauseOnReset(vmAssetEditor),
     m_bindPauseOnTrigger(vmAssetEditor),
     m_bindActive(vmAssetEditor),
-    m_bindDecimalPreferred(this, vmAssetEditor),
+    m_bindDecimalPreferred(vmAssetEditor),
     m_bindGroups(vmAssetEditor.Trigger()),
     m_bindConditions(vmAssetEditor.Trigger())
 {

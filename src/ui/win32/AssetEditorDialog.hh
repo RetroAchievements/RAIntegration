@@ -61,19 +61,6 @@ private:
         void UpdateTextFromSource(const std::wstring& sText) override;
     };
 
-    class DecimalPreferredBinding : public ra::ui::win32::bindings::CheckBoxBinding
-    {
-    public:
-        DecimalPreferredBinding(AssetEditorDialog* pOwner, ViewModelBase& vmViewModel) noexcept
-            : ra::ui::win32::bindings::CheckBoxBinding(vmViewModel), m_pOwner(pOwner) {}
-
-    protected:
-        void OnValueChanged() override;
-
-    private:
-        AssetEditorDialog* m_pOwner;
-    };
-
     class ActiveCheckBoxBinding : public ra::ui::win32::bindings::ControlBinding
     {
     public:
@@ -144,7 +131,7 @@ private:
     ra::ui::win32::bindings::CheckBoxBinding m_bindPauseOnReset;
     ra::ui::win32::bindings::CheckBoxBinding m_bindPauseOnTrigger;
     ActiveCheckBoxBinding m_bindActive;
-    DecimalPreferredBinding m_bindDecimalPreferred;
+    ra::ui::win32::bindings::CheckBoxBinding m_bindDecimalPreferred;
 
     ra::ui::win32::bindings::GridBinding m_bindGroups;
     ConditionsGridBinding m_bindConditions;

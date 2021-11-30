@@ -1404,6 +1404,47 @@ public:
         Assert::IsFalse(editor.mockConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal));
     }
 
+    TEST_METHOD(TestDecimalPreferredUpdatesConditions)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("0xH1234=1_fF2222=f2.3");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.Activate();
+
+        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+        pTrigger->requirement->conditions->current_hits = 6U;
+
+        editor.LoadAsset(&achievement);
+        const auto* pCondition1 = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition1 != nullptr);
+        const auto* pCondition2 = editor.Trigger().Conditions().GetItemAt(1);
+        Expects(pCondition2 != nullptr);
+
+        Assert::IsFalse(editor.IsDecimalPreferred());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition1->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x01"), pCondition1->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x2222"), pCondition2->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"2.3"), pCondition2->GetTargetValue());
+
+        editor.SetDecimalPreferred(true);
+        Assert::IsTrue(editor.IsDecimalPreferred());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition1->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"1"), pCondition1->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x2222"), pCondition2->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"2.3"), pCondition2->GetTargetValue());
+
+        editor.SetDecimalPreferred(false);
+        Assert::IsFalse(editor.IsDecimalPreferred());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition1->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x01"), pCondition1->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x2222"), pCondition2->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"2.3"), pCondition2->GetTargetValue());
+    }
+
     TEST_METHOD(TestCaptureRestoreHits)
     {
         AssetEditorViewModelHarness editor;

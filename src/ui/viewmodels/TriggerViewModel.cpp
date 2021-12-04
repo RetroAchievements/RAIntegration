@@ -735,6 +735,13 @@ void TriggerViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)
     ViewModelBase::OnValueChanged(args);
 }
 
+void TriggerViewModel::UpdateConditions()
+{
+    auto* pGroup = m_vGroups.GetItemAt(GetSelectedGroupIndex());
+    if (pGroup != nullptr)
+        UpdateConditions(pGroup);
+}
+
 void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
 {
     m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);

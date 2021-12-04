@@ -147,36 +147,33 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
         if (GetSpecialFilter() != SpecialFilter::All)
             AddOrRemoveFilteredItem(nIndex);
 
-        const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
-        if (!ra::data::models::AssetModelBase::IsActive(nNewState))
+        // when an active achievement is deactivated, the challenge indicator needs
+        // to be hidden as no event will be raised. similarly, the leaderboard tracker
+        // needs to be hidden when a leaderboard is deactivated.
+        const auto nOldState = ra::itoe<ra::data::models::AssetState>(args.tOldValue);
+        if (nOldState == ra::data::models::AssetState::Primed)
         {
-            // when an active achievement is deactivated, the challenge indicator needs
-            // to be hidden as no event will be raised. similarly, the leaderboard tracker
-            // needs to be hidden when a leaderboard is deactivated.
-            const auto nOldState = ra::itoe<ra::data::models::AssetState>(args.tOldValue);
-            if (ra::data::models::AssetModelBase::IsActive(nOldState))
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+            const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+            switch (pAsset->GetType())
             {
-                const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-                const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-                switch (pAsset->GetType())
+                case ra::data::models::AssetType::Achievement:
                 {
-                    case ra::data::models::AssetType::Achievement:
-                    {
-                        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                        pOverlayManager.RemoveChallengeIndicator(pAsset->GetID());
-                        break;
-                    }
+                    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                    pOverlayManager.RemoveChallengeIndicator(pAsset->GetID());
+                    break;
+                }
 
-                    case ra::data::models::AssetType::Leaderboard:
-                    {
-                        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                        pOverlayManager.RemoveScoreTracker(pAsset->GetID());
-                        break;
-                    }
+                case ra::data::models::AssetType::Leaderboard:
+                {
+                    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+                    pOverlayManager.RemoveScoreTracker(pAsset->GetID());
+                    break;
                 }
             }
         }
 
+        const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
         if (nNewState == ra::data::models::AssetState::Triggered && KeepActive())
         {
             // if KeepActive is selected, set a Triggered achievement back to Waiting
@@ -1278,7 +1275,8 @@ void AssetListViewModel::ResetSelected()
     if (vmMessageBox.ShowModal() == DialogResult::No)
         return;
 
-    std::vector<ra::AchievementID> vActiveAchievementsBefore;
+    std::vector<ra::AchievementID> vPrimedAchievementsBefore;
+    std::vector<ra::LeaderboardID> vPrimedLeaderboardsBefore;
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     pGameContext.Assets().BeginUpdate();
@@ -1288,14 +1286,24 @@ void AssetListViewModel::ResetSelected()
     {
         RA_LOG_INFO("Resetting all assets");
 
-        // reset all - first remove any "new" items
+        // reset all - identify active assets and remove any "new" items
         for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()) - 1; nIndex >= 0; --nIndex)
         {
             auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
             if (pAsset != nullptr)
             {
-                if (pAsset->GetType() == ra::data::models::AssetType::Achievement && pAsset->IsActive())
-                    vActiveAchievementsBefore.push_back(pAsset->GetID());
+                if (pAsset->GetState() == ra::data::models::AssetState::Primed)
+                {
+                    switch (pAsset->GetType())
+                    {
+                        case ra::data::models::AssetType::Achievement:
+                            vPrimedAchievementsBefore.push_back(pAsset->GetID());
+                            break;
+                        case ra::data::models::AssetType::Leaderboard:
+                            vPrimedLeaderboardsBefore.push_back(pAsset->GetID());
+                            break;
+                    }
+                }
 
                 if (pAsset->GetChanges() == ra::data::models::AssetChanges::New)
                     pGameContext.Assets().RemoveAt(nIndex);
@@ -1317,8 +1325,18 @@ void AssetListViewModel::ResetSelected()
                 auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
                 if (pAsset->GetID() == nId && pAsset->GetType() == nType)
                 {
-                    if (nType == ra::data::models::AssetType::Achievement && pAsset->IsActive())
-                        vActiveAchievementsBefore.push_back(nId);
+                    if (pAsset->GetState() == ra::data::models::AssetState::Primed)
+                    {
+                        switch (nType)
+                        {
+                            case ra::data::models::AssetType::Achievement:
+                                vPrimedAchievementsBefore.push_back(pAsset->GetID());
+                                break;
+                            case ra::data::models::AssetType::Leaderboard:
+                                vPrimedLeaderboardsBefore.push_back(pAsset->GetID());
+                                break;
+                        }
+                    }
 
                     if (pAsset->GetChanges() == ra::data::models::AssetChanges::New)
                         pGameContext.Assets().RemoveAt(nIndex);
@@ -1355,13 +1373,24 @@ void AssetListViewModel::ResetSelected()
     pGameContext.Assets().EndUpdate();
 
     // if any achievements were deleted, disable their challenge indicators
-    for (auto nId : vActiveAchievementsBefore)
+    for (auto nId : vPrimedAchievementsBefore)
     {
         if (!pGameContext.Assets().FindAchievement(nId))
         {
             // when an active achievement is deleted, the challenge indicator needs to be hidden as no event will be raised
             auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
             pOverlayManager.RemoveChallengeIndicator(nId);
+        }
+    }
+
+    // if any leaderboards were deleted, disable their score trackers
+    for (auto nId : vPrimedLeaderboardsBefore)
+    {
+        if (!pGameContext.Assets().FindLeaderboard(nId))
+        {
+            // when an active leaderboard is deleted, the score tracker needs to be hidden as no event will be raised
+            auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+            pOverlayManager.RemoveScoreTracker(nId);
         }
     }
 }

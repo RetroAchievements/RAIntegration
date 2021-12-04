@@ -4201,7 +4201,7 @@ public:
         Assert::IsNull(vmAssetList.mockWindowManager.AssetEditor.GetAsset());
     }
 
-    TEST_METHOD(TestResetSelectedNoLongerExistsInFileActiveChallenge)
+    TEST_METHOD(TestResetSelectedNoLongerExistsInFilePrimedChallenge)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.MockGameId(22U);
@@ -4236,6 +4236,46 @@ public:
         Assert::IsTrue(bDialogShown);
 
         // RemoveChallengeIndicator only marks the item as to be destroyed.
+        // it still exists until the next Render()
+        Assert::IsTrue(pIndicator->IsDestroyPending());
+    }
+
+    TEST_METHOD(TestResetSelectedNoLongerExistsInFilePrimedLeaderboard)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Local, L"Leaderboard1");
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::Leaderboard);
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(ResetButtonState::Reset);
+
+        auto* vmAsset = vmAssetList.mockGameContext.Assets().GetItemAt(0);
+        Assert::IsNotNull(vmAsset);
+        Ensures(vmAsset != nullptr);
+        vmAsset->SetState(ra::data::models::AssetState::Primed);
+
+        vmAssetList.mockOverlayManager.AddScoreTracker(vmAsset->GetID());
+        const auto* pIndicator = vmAssetList.mockOverlayManager.GetScoreTracker(vmAsset->GetID());
+        Assert::IsNotNull(pIndicator);
+        Ensures(pIndicator != nullptr);
+        Assert::IsFalse(pIndicator->IsDestroyPending());
+
+        vmAssetList.MockUserFileContents("\n");
+
+        bool bDialogShown = false;
+        vmAssetList.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogShown](MessageBoxViewModel&)
+        {
+            bDialogShown = true;
+            return DialogResult::Yes;
+        });
+
+        vmAssetList.ResetSelected();
+
+        Assert::IsTrue(bDialogShown);
+
+        // RemoveScoreTracker only marks the item as to be destroyed.
         // it still exists until the next Render()
         Assert::IsTrue(pIndicator->IsDestroyPending());
     }

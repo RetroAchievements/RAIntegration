@@ -367,6 +367,8 @@ public:
         Expects(pGridBinding != nullptr);
         if (!pGridBinding->GetItems().GetItemValue(pInfo.nItemIndex, TriggerConditionViewModel::HasHitsProperty))
             return nullptr;
+        if (!pGridBinding->GetItems().GetItemValue(pInfo.nItemIndex, TriggerConditionViewModel::CanEditHitsProperty))
+            return nullptr;
 
         m_nEditingItemIndex = pInfo.nItemIndex;
         return GridNumberColumnBinding::CreateInPlaceEditor(hParent, pInfo);

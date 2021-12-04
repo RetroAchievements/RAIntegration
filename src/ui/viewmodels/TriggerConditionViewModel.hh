@@ -103,6 +103,7 @@ public:
     void SetTargetValue(float fValue);
 
     static const BoolModelProperty HasHitsProperty;
+    static const BoolModelProperty CanEditHitsProperty;
     static const IntModelProperty CurrentHitsProperty;
     unsigned int GetCurrentHits() const { return ra::to_unsigned(GetValue(CurrentHitsProperty)); }
     void SetCurrentHits(unsigned int nValue) { SetValue(CurrentHitsProperty, ra::to_signed(nValue)); }
@@ -157,6 +158,8 @@ private:
 
     static bool IsModifying(TriggerConditionType nType) noexcept;
     static bool IsAddressType(TriggerOperandType nType) noexcept;
+    void UpdateHasHits();
+    bool IsForValue() const noexcept;
 
     const ViewModelBase* m_pTriggerViewModel = nullptr;
 };

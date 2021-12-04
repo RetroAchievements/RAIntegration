@@ -677,6 +677,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindLabel(IDC_RA_MEASURED, AssetEditorViewModel::MeasuredValueProperty);
     m_bindWindow.BindVisible(IDC_RA_LBL_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
     m_bindWindow.BindVisible(IDC_RA_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_TRIGGER, AssetEditorViewModel::IsTriggerProperty);
 
     // achievement only fields
     m_bindBadge.BindText(AssetEditorViewModel::BadgeProperty);
@@ -714,6 +715,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindLeaderboardParts.BindColumn(0, std::move(pPartColumn));
     m_bindLeaderboardParts.BindIsSelected(ra::ui::viewmodels::LookupItemViewModel::IsSelectedProperty);
     m_bindLeaderboardParts.BindItems(vmAssetEditor.LeaderboardParts());
+    m_bindLeaderboardParts.BindRowColor(AssetEditorViewModel::LeaderboardPartViewModel::ColorProperty);
 
     m_bindDebugHighlights.BindCheck(AssetEditorViewModel::DebugHighlightsEnabledProperty);
     m_bindPauseOnReset.BindCheck(AssetEditorViewModel::PauseOnResetProperty);

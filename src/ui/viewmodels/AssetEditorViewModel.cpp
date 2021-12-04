@@ -7,6 +7,7 @@
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\EditorTheme.hh"
 #include "ui\ImageReference.hh"
 #include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -31,6 +32,7 @@ const BoolModelProperty AssetEditorViewModel::LowerIsBetterProperty("AssetEditor
 const StringModelProperty AssetEditorViewModel::FormattedValueProperty("AssetEditorViewModel", "FormattedValue", L"0");
 const BoolModelProperty AssetEditorViewModel::PauseOnResetProperty("AssetEditorViewModel", "PauseOnReset", false);
 const BoolModelProperty AssetEditorViewModel::PauseOnTriggerProperty("AssetEditorViewModel", "PauseOnTrigger", false);
+const BoolModelProperty AssetEditorViewModel::IsTriggerProperty("AssetEditorViewModel", "IsTrigger", true);
 const BoolModelProperty AssetEditorViewModel::DebugHighlightsEnabledProperty("AssetEditorViewModel", "DebugHighlightsEnabled", false);
 const BoolModelProperty AssetEditorViewModel::DecimalPreferredProperty("AssetEditorViewModel", "DecimalPreferred", false);
 const BoolModelProperty AssetEditorViewModel::IsAssetLoadedProperty("AssetEditorViewModel", "IsAssetLoaded", false);
@@ -41,6 +43,7 @@ const StringModelProperty AssetEditorViewModel::AssetValidationWarningProperty("
 const BoolModelProperty AssetEditorViewModel::HasMeasuredProperty("AssetEditorViewModel", "HasMeasured", false);
 const StringModelProperty AssetEditorViewModel::MeasuredValueProperty("AssetEditorViewModel", "MeasuredValue", L"[Not Active]");
 const StringModelProperty AssetEditorViewModel::WaitingLabelProperty("AssetEditorViewModel", "WaitingLabel", L"Active");
+const IntModelProperty AssetEditorViewModel::LeaderboardPartViewModel::ColorProperty("LeaderboardPartViewModel", "Color", 0);
 
 AssetEditorViewModel::AssetEditorViewModel() noexcept
 {
@@ -56,8 +59,8 @@ AssetEditorViewModel::AssetEditorViewModel() noexcept
     m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Minutes), L"Minutes");
 
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Start), L"Start");
-    m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Submit), L"Submit");
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Cancel), L"Cancel");
+    m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Submit), L"Submit");
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Value), L"Value");
     m_vLeaderboardParts.GetItemAt(0)->SetSelected(true);
     m_vLeaderboardParts.AddNotifyTarget(*this);
@@ -162,6 +165,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
             SetWindowTitle(L"Achievement Editor");
             SetValue(IsLeaderboardProperty, false);
             SetValue(IsAchievementProperty, true);
+            SetValue(IsTriggerProperty, true);
 
             const auto* pAchievement = dynamic_cast<ra::data::models::AchievementModel*>(pAsset);
             if (pAchievement != nullptr)
@@ -222,24 +226,57 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
     }
 }
 
+static constexpr ra::data::models::LeaderboardModel::LeaderboardParts LeaderboardPartToParts(AssetEditorViewModel::LeaderboardPart nPart) noexcept
+{
+    switch (nPart)
+    {
+        case AssetEditorViewModel::LeaderboardPart::Start:
+            return ra::data::models::LeaderboardModel::LeaderboardParts::Start;
+        case AssetEditorViewModel::LeaderboardPart::Submit:
+            return ra::data::models::LeaderboardModel::LeaderboardParts::Submit;
+        case AssetEditorViewModel::LeaderboardPart::Cancel:
+            return ra::data::models::LeaderboardModel::LeaderboardParts::Cancel;
+        case AssetEditorViewModel::LeaderboardPart::Value:
+            return ra::data::models::LeaderboardModel::LeaderboardParts::Value;
+        default:
+            return ra::data::models::LeaderboardModel::LeaderboardParts::None;
+    }
+}
+
 void AssetEditorViewModel::UpdateLeaderboardTrigger()
 {
     const auto nPart = GetSelectedLeaderboardPart();
     if (nPart == LeaderboardPart::Value)
     {
+        SetValue(IsTriggerProperty, false);
         SetValue(GroupsHeaderProperty, L"Max of:");
         Trigger().SetIsValue(true);
     }
     else
     {
+        SetValue(IsTriggerProperty, true);
         SetValue(GroupsHeaderProperty, GroupsHeaderProperty.GetDefaultValue());
         Trigger().SetIsValue(false);
+    }
+
+    const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
+    if (pLeaderboard != nullptr)
+    {
+        using namespace ra::bitwise_ops;
+
+        SetPauseOnReset((pLeaderboard->GetPauseOnReset() & LeaderboardPartToParts(nPart)) != ra::data::models::LeaderboardModel::LeaderboardParts::None);
+        SetPauseOnTrigger((pLeaderboard->GetPauseOnTrigger() & LeaderboardPartToParts(nPart)) != ra::data::models::LeaderboardModel::LeaderboardParts::None);
+    }
+    else
+    {
+        SetPauseOnReset(false);
+        SetPauseOnTrigger(false);
     }
 
     const auto* pLeaderboardDefinition = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetLeaderboardDefinition(m_pAsset->GetID());
     if (pLeaderboardDefinition != nullptr)
     {
-        switch (GetSelectedLeaderboardPart())
+        switch (nPart)
         {
             case LeaderboardPart::Start:
                 Trigger().InitializeFrom(pLeaderboardDefinition->start);
@@ -257,28 +294,24 @@ void AssetEditorViewModel::UpdateLeaderboardTrigger()
                 break;
         }
     }
-    else
+    else if (pLeaderboard != nullptr)
     {
-        const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
-        if (pLeaderboard != nullptr)
+        switch (nPart)
         {
-            switch (GetSelectedLeaderboardPart())
-            {
-                case LeaderboardPart::Start:
-                    Trigger().InitializeFrom(pLeaderboard->GetStartTrigger(), pLeaderboard->GetStartCapturedHits());
-                    return;
-                case LeaderboardPart::Submit:
-                    Trigger().InitializeFrom(pLeaderboard->GetSubmitTrigger(), pLeaderboard->GetSubmitCapturedHits());
-                    return;
-                case LeaderboardPart::Cancel:
-                    Trigger().InitializeFrom(pLeaderboard->GetCancelTrigger(), pLeaderboard->GetCancelCapturedHits());
-                    return;
-                case LeaderboardPart::Value:
-                    Trigger().InitializeFrom(pLeaderboard->GetValueDefinition(), pLeaderboard->GetValueCapturedHits());
-                    return;
-                default:
-                    break;
-            }
+            case LeaderboardPart::Start:
+                Trigger().InitializeFrom(pLeaderboard->GetStartTrigger(), pLeaderboard->GetStartCapturedHits());
+                return;
+            case LeaderboardPart::Submit:
+                Trigger().InitializeFrom(pLeaderboard->GetSubmitTrigger(), pLeaderboard->GetSubmitCapturedHits());
+                return;
+            case LeaderboardPart::Cancel:
+                Trigger().InitializeFrom(pLeaderboard->GetCancelTrigger(), pLeaderboard->GetCancelCapturedHits());
+                return;
+            case LeaderboardPart::Value:
+                Trigger().InitializeFrom(pLeaderboard->GetValueDefinition(), pLeaderboard->GetValueCapturedHits());
+                return;
+            default:
+                break;
         }
     }
 
@@ -371,7 +404,35 @@ void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& a
         if (pLeaderboard != nullptr)
         {
             if (args.Property == LowerIsBetterProperty)
+            {
                 pLeaderboard->SetLowerIsBetter(args.tNewValue);
+            }
+            else if (args.Property == PauseOnResetProperty)
+            {
+                using namespace ra::bitwise_ops;
+
+                auto nPauseOnResetParts = pLeaderboard->GetPauseOnReset();
+                const auto nSelectedPart = LeaderboardPartToParts(GetSelectedLeaderboardPart());
+                if (args.tNewValue)
+                    nPauseOnResetParts |= nSelectedPart;
+                else
+                    nPauseOnResetParts &= ~nSelectedPart;
+
+                pLeaderboard->SetPauseOnReset(nPauseOnResetParts);
+            }
+            else if (args.Property == PauseOnTriggerProperty)
+            {
+                using namespace ra::bitwise_ops;
+
+                auto nPauseOnTriggerParts = pLeaderboard->GetPauseOnTrigger();
+                const auto nSelectedPart = LeaderboardPartToParts(GetSelectedLeaderboardPart());
+                if (args.tNewValue)
+                    nPauseOnTriggerParts |= nSelectedPart;
+                else
+                    nPauseOnTriggerParts &= ~nSelectedPart;
+
+                pLeaderboard->SetPauseOnTrigger(nPauseOnTriggerParts);
+            }
         }
     }
 
@@ -703,6 +764,87 @@ void AssetEditorViewModel::UpdateAssetFrameValues()
     UpdateMeasuredValue();
 }
 
+static void UpdateLeaderboardPartColor(AssetEditorViewModel::LeaderboardPartViewModel& pPart,
+    const rc_trigger_t& pTrigger, const ra::ui::EditorTheme& pTheme, const ra::ui::Color nDefaultColor)
+{
+    switch (pTrigger.state)
+    {
+        case RC_TRIGGER_STATE_PAUSED:
+            pPart.SetColor(pTheme.ColorTriggerPauseTrue());
+            break;
+        case RC_TRIGGER_STATE_TRIGGERED:
+            pPart.SetColor(pTheme.ColorTriggerIsTrue());
+            break;
+        default:
+            if (pPart.m_nPreviousHits)
+            {
+                if (!pTrigger.has_hits)
+                    pPart.SetColor(pTheme.ColorTriggerResetTrue());
+                else
+                    pPart.SetColor(nDefaultColor);
+            }
+            else
+            {
+                pPart.SetColor(nDefaultColor);
+            }
+            break;
+    }
+
+    pPart.m_nPreviousHits = pTrigger.has_hits;
+}
+
+static bool AreAllLeaderboardValuesPaused(const rc_condset_t* pValue) noexcept
+{
+    for (; pValue != nullptr; pValue = pValue->next)
+    {
+        if (!pValue->has_pause)
+            return false;
+        if (!pValue->is_paused)
+            return false;
+    }
+
+    return true;
+}
+
+static void UpdateLeaderboardPartColors(ViewModelCollection<AssetEditorViewModel::LeaderboardPartViewModel>& vLeaderboardParts, const rc_lboard_t* pLeaderboard)
+{
+    const auto nDefaultColor = ra::ui::Color(ra::to_unsigned(AssetEditorViewModel::LeaderboardPartViewModel::ColorProperty.GetDefaultValue()));
+
+    if (pLeaderboard == nullptr)
+    {
+        // no leaderboard, or leaderboard not active, disable highlights
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(vLeaderboardParts.Count()); ++i)
+        {
+            auto* pLeaderboardPart = vLeaderboardParts.GetItemAt(i);
+            if (pLeaderboardPart != nullptr)
+                pLeaderboardPart->SetColor(nDefaultColor);
+        }
+
+        return;
+    }
+
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
+    if (pLeaderboard->state == RC_LBOARD_STATE_STARTED)
+        UpdateLeaderboardPartColor(*vLeaderboardParts.GetItemAt(0), pLeaderboard->start, pTheme, pTheme.ColorTriggerWasTrue());
+    else
+        UpdateLeaderboardPartColor(*vLeaderboardParts.GetItemAt(0), pLeaderboard->start, pTheme, nDefaultColor);
+
+    UpdateLeaderboardPartColor(*vLeaderboardParts.GetItemAt(1), pLeaderboard->submit, pTheme, nDefaultColor);
+    UpdateLeaderboardPartColor(*vLeaderboardParts.GetItemAt(2), pLeaderboard->cancel, pTheme, nDefaultColor);
+
+    GSL_SUPPRESS_CON4
+    {
+        auto nValueColor = nDefaultColor;
+        if (pLeaderboard->value.conditions != nullptr)
+        {
+            if (AreAllLeaderboardValuesPaused(pLeaderboard->value.conditions))
+                nValueColor = pTheme.ColorTriggerPauseTrue();
+        }
+
+        vLeaderboardParts.GetItemAt(3)->SetColor(nValueColor);
+    }
+}
+
 void AssetEditorViewModel::UpdateDebugHighlights()
 {
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
@@ -719,6 +861,8 @@ void AssetEditorViewModel::UpdateDebugHighlights()
             const auto* pLeaderboardDefinition = pRuntime.GetLeaderboardDefinition(m_pAsset->GetID());
             if (pLeaderboardDefinition == nullptr)
                 break;
+
+            UpdateLeaderboardPartColors(m_vLeaderboardParts, pLeaderboardDefinition);
 
             switch (GetSelectedLeaderboardPart())
             {

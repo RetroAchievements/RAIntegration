@@ -103,6 +103,7 @@ public:
         Assert::AreEqual(std::wstring(L"[Not Active]"), editor.GetMeasuredValue());
         Assert::IsTrue(editor.IsAchievement());
         Assert::IsFalse(editor.IsLeaderboard());
+        Assert::IsTrue(editor.IsTrigger());
         Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Start, (int)editor.GetSelectedLeaderboardPart());
         Assert::AreEqual(ra::data::ValueFormat::Value, editor.GetValueFormat());
 
@@ -123,10 +124,10 @@ public:
         Assert::AreEqual({ 4U }, editor.LeaderboardParts().Count());
         Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Start, editor.LeaderboardParts().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Start"), editor.LeaderboardParts().GetItemAt(0)->GetLabel());
-        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Submit, editor.LeaderboardParts().GetItemAt(1)->GetId());
-        Assert::AreEqual(std::wstring(L"Submit"), editor.LeaderboardParts().GetItemAt(1)->GetLabel());
-        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Cancel, editor.LeaderboardParts().GetItemAt(2)->GetId());
-        Assert::AreEqual(std::wstring(L"Cancel"), editor.LeaderboardParts().GetItemAt(2)->GetLabel());
+        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Cancel, editor.LeaderboardParts().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Cancel"), editor.LeaderboardParts().GetItemAt(1)->GetLabel());
+        Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Submit, editor.LeaderboardParts().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Submit"), editor.LeaderboardParts().GetItemAt(2)->GetLabel());
         Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Value, editor.LeaderboardParts().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Value"), editor.LeaderboardParts().GetItemAt(3)->GetLabel());
     }
@@ -158,6 +159,9 @@ public:
         Assert::IsFalse(editor.IsPauseOnReset());
         Assert::IsFalse(editor.IsPauseOnTrigger());
         Assert::IsTrue(editor.IsAssetLoaded());
+        Assert::IsTrue(editor.IsAchievement());
+        Assert::IsFalse(editor.IsLeaderboard());
+        Assert::IsTrue(editor.IsTrigger());
         Assert::IsFalse(editor.HasMeasured());
         Assert::IsFalse(editor.HasAssetValidationError());
         Assert::IsFalse(editor.HasAssetValidationWarning());
@@ -176,6 +180,9 @@ public:
         Assert::IsFalse(editor.IsPauseOnReset());
         Assert::IsFalse(editor.IsPauseOnTrigger());
         Assert::IsFalse(editor.IsAssetLoaded());
+        Assert::IsTrue(editor.IsAchievement());
+        Assert::IsFalse(editor.IsLeaderboard());
+        Assert::IsTrue(editor.IsTrigger());
         Assert::IsFalse(editor.HasMeasured());
         Assert::IsFalse(editor.HasAssetValidationError());
         Assert::IsFalse(editor.HasAssetValidationWarning());
@@ -478,6 +485,9 @@ public:
         Assert::IsFalse(editor.IsPauseOnReset());
         Assert::IsFalse(editor.IsPauseOnTrigger());
         Assert::IsTrue(editor.IsAssetLoaded());
+        Assert::IsFalse(editor.IsAchievement());
+        Assert::IsTrue(editor.IsLeaderboard());
+        Assert::IsTrue(editor.IsTrigger());
         Assert::IsTrue(editor.HasMeasured());
         Assert::IsFalse(editor.HasAssetValidationError());
         Assert::IsFalse(editor.HasAssetValidationWarning());
@@ -849,6 +859,110 @@ public:
         editor.SetPauseOnTrigger(false);
         Assert::IsFalse(editor.IsPauseOnTrigger());
         Assert::IsFalse(achievement.IsPauseOnTrigger());
+    }
+
+    TEST_METHOD(TestSyncPauseOnResetLeaderboardStart)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetPauseOnReset(LeaderboardModel::LeaderboardParts::Start);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Start);
+        Assert::IsTrue(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::Start, leaderboard.GetPauseOnReset());
+
+        editor.SetPauseOnReset(false);
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::None, leaderboard.GetPauseOnReset());
+
+        editor.SetPauseOnReset(true);
+        Assert::IsTrue(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::Start, leaderboard.GetPauseOnReset());
+
+        editor.SetPauseOnReset(false);
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::None, leaderboard.GetPauseOnReset());
+    }
+
+    TEST_METHOD(TestSyncPauseOnResetLeaderboardSubmit)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetPauseOnReset(LeaderboardModel::LeaderboardParts::Submit);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Submit);
+        Assert::IsTrue(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::Submit, leaderboard.GetPauseOnReset());
+
+        editor.SetPauseOnReset(false);
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::None, leaderboard.GetPauseOnReset());
+
+        editor.SetPauseOnReset(true);
+        Assert::IsTrue(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::Submit, leaderboard.GetPauseOnReset());
+
+        editor.SetPauseOnReset(false);
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::None, leaderboard.GetPauseOnReset());
+    }
+
+    TEST_METHOD(TestSyncPauseOnResetLeaderboardCancel)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetPauseOnReset(LeaderboardModel::LeaderboardParts::Cancel);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Cancel);
+        Assert::IsTrue(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::Cancel, leaderboard.GetPauseOnReset());
+
+        editor.SetPauseOnReset(false);
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::None, leaderboard.GetPauseOnReset());
+
+        editor.SetPauseOnReset(true);
+        Assert::IsTrue(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::Cancel, leaderboard.GetPauseOnReset());
+
+        editor.SetPauseOnReset(false);
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::None, leaderboard.GetPauseOnReset());
+    }
+
+    TEST_METHOD(TestSyncPauseOnResetLeaderboardValue)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetPauseOnReset(LeaderboardModel::LeaderboardParts::Value);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+        editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Value);
+        Assert::IsTrue(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::Value, leaderboard.GetPauseOnReset());
+
+        editor.SetPauseOnReset(false);
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::None, leaderboard.GetPauseOnReset());
+
+        editor.SetPauseOnReset(true);
+        Assert::IsTrue(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::Value, leaderboard.GetPauseOnReset());
+
+        editor.SetPauseOnReset(false);
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::AreEqual(LeaderboardModel::LeaderboardParts::None, leaderboard.GetPauseOnReset());
     }
 
     TEST_METHOD(TestSyncOneRecordAtATime)
@@ -1541,30 +1655,35 @@ public:
         Assert::AreEqual(std::string("0xH1234=6.1."), editor.Trigger().Serialize());
         Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
         Assert::IsFalse(editor.Trigger().IsValue());
+        Assert::IsTrue(editor.IsTrigger());
         Assert::IsFalse(leaderboard.IsModified());
 
         editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Submit);
         Assert::AreEqual(std::string("0xH2345!=99"), editor.Trigger().Serialize());
         Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
         Assert::IsFalse(editor.Trigger().IsValue());
+        Assert::IsTrue(editor.IsTrigger());
         Assert::IsFalse(leaderboard.IsModified());
 
         editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Cancel);
         Assert::AreEqual(std::string("0xH3456>3"), editor.Trigger().Serialize());
         Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
         Assert::IsFalse(editor.Trigger().IsValue());
+        Assert::IsTrue(editor.IsTrigger());
         Assert::IsFalse(leaderboard.IsModified());
 
         editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Value);
         Assert::AreEqual(std::string("M:0xH4444"), editor.Trigger().Serialize());
         Assert::AreEqual(std::wstring(L"Max of:"), editor.GetGroupsHeaderLabel());
         Assert::IsTrue(editor.Trigger().IsValue());
+        Assert::IsFalse(editor.IsTrigger());
         Assert::IsFalse(leaderboard.IsModified());
 
         editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Start);
         Assert::AreEqual(std::string("0xH1234=6.1."), editor.Trigger().Serialize());
         Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
         Assert::IsFalse(editor.Trigger().IsValue());
+        Assert::IsTrue(editor.IsTrigger());
         Assert::IsFalse(leaderboard.IsModified());
     }
 };

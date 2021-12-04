@@ -271,11 +271,28 @@ public:
         Value
     };
 
+    class LeaderboardPartViewModel : public LookupItemViewModel
+    {
+    public:
+        LeaderboardPartViewModel(int nId, const std::wstring& sLabel) noexcept
+            : LookupItemViewModel(nId, sLabel)
+        {
+        }
+
+        LeaderboardPart GetLeaderboardPart() const { return ra::itoe<LeaderboardPart>(GetValue(IDProperty)); }
+
+        static const IntModelProperty ColorProperty;
+        Color GetColor() const { return Color(ra::to_unsigned(GetValue(ColorProperty))); }
+        void SetColor(Color value) { SetValue(ColorProperty, ra::to_signed(value.ARGB)); }
+
+        bool m_nPreviousHits = false;
+    };
+
     /// <summary>
     /// Gets the list of leaderboard parts.
     /// </summary>
-    const LookupItemViewModelCollection& LeaderboardParts() const noexcept { return m_vLeaderboardParts; }
-    LookupItemViewModelCollection& LeaderboardParts() noexcept { return m_vLeaderboardParts; }
+    const ViewModelCollection<LeaderboardPartViewModel>& LeaderboardParts() const noexcept { return m_vLeaderboardParts; }
+    ViewModelCollection<LeaderboardPartViewModel>& LeaderboardParts() noexcept { return m_vLeaderboardParts; }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the selected leaderboard part.
@@ -328,6 +345,16 @@ public:
     /// Sets whether or not the emulator should be paused when the achievement triggers.
     /// </summary>
     void SetPauseOnTrigger(bool nValue) { SetValue(PauseOnTriggerProperty, nValue); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not a trigger is being edited.
+    /// </summary>
+    static const BoolModelProperty IsTriggerProperty;
+
+    /// <summary>
+    /// Gets whether or not a trigger is being edited.
+    /// </summary>
+    bool IsTrigger() const { return GetValue(IsTriggerProperty); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not condition truthiness should be color-highlighted.
@@ -424,7 +451,7 @@ protected:
     bool m_bIgnoreTriggerUpdate = false;
 
     LookupItemViewModelCollection m_vFormats;
-    LookupItemViewModelCollection m_vLeaderboardParts;
+    ViewModelCollection<LeaderboardPartViewModel> m_vLeaderboardParts;
 };
 
 } // namespace viewmodels

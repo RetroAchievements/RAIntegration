@@ -170,6 +170,15 @@ public:
         AchievementPrimed,
         AchievementActivated,
         AchievementUnprimed,
+
+        // runtime only changes
+        LeaderboardStartReset,
+        LeaderboardSubmitReset,
+        LeaderboardCancelReset,
+        LeaderboardValueReset,
+        LeaderboardStartTriggered,
+        LeaderboardSubmitTriggered,
+        LeaderboardCancelTriggered,
     };
 
     struct Change

@@ -107,7 +107,7 @@ void EmulatorContext::Initialize(EmulatorID nEmulatorId, const char* sClientName
                 const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
                 const auto sFileName = pDesktop.GetRunningExecutable();
                 const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
-                m_sClientName = pFileSystem.RemoveExtension(pFileSystem.GetFileName(sFileName));
+                m_sClientName = ra::Narrow(pFileSystem.RemoveExtension(pFileSystem.GetFileName(sFileName)));
             }
             m_nEmulatorId = EmulatorID::UnknownEmulator;
             break;

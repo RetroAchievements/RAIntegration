@@ -3,6 +3,7 @@
 #include "ui\EditorTheme.hh"
 
 #include "ui\viewmodels\AssetEditorViewModel.hh"
+#include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
@@ -12,8 +13,10 @@
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockFileSystem.hh"
+#include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockImageRepository.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -56,8 +59,10 @@ private:
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::services::mocks::MockFileSystem mockFileSystem;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::ui::mocks::MockDesktop mockDesktop;
+        ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::EditorTheme mockTheme;
 
         const std::wstring& GetWaitingLabel() const
@@ -1726,6 +1731,253 @@ public:
         Assert::IsFalse(editor.Trigger().IsValue());
         Assert::IsTrue(editor.IsTrigger());
         Assert::IsFalse(leaderboard.IsModified());
+    }
+
+    TEST_METHOD(TestSelectBadgeFileCancel)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        editor.LoadAsset(&achievement);
+        const std::wstring sBadge = achievement.GetBadge();
+
+        bool bDialogSeen = false;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel&)
+        {
+            bDialogSeen = true;
+
+            return DialogResult::Cancel;
+        });
+
+        std::wstring sMessage;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+        {
+            sMessage = vmMessage.GetMessage();
+            return DialogResult::OK;
+        });
+
+        editor.SelectBadgeFile();
+
+        Assert::AreEqual(sBadge, achievement.GetBadge());
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual(std::wstring(), sMessage);
+    }
+
+    TEST_METHOD(TestSelectBadgeFilePNG)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        editor.LoadAsset(&achievement);
+
+        bool bDialogSeen = false;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            bDialogSeen = true;
+
+            vmFileDialog.SetFileName(L"C:\\image.png");
+            return DialogResult::OK;
+        });
+
+        std::wstring sMessage;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+        {
+            sMessage = vmMessage.GetMessage();
+            return DialogResult::OK;
+        });
+
+        const std::string sFileContents("\x89PNG\x0D\x0A\x1A\x0D\x00\x00\x00\x0DIHDR", 16);
+
+        editor.mockFileSystem.MockFile(L"C:\\image.png", sFileContents);
+
+        editor.SelectBadgeFile();
+
+        Assert::AreEqual(std::wstring(L"REPO:C:\\image.png"), achievement.GetBadge());
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual(std::wstring(), sMessage);
+    }
+
+    TEST_METHOD(TestSelectBadgeFilePNGInvalid)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        editor.LoadAsset(&achievement);
+        const std::wstring sBadge = achievement.GetBadge();
+
+        bool bDialogSeen = false;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            bDialogSeen = true;
+
+            vmFileDialog.SetFileName(L"C:\\image.png");
+            return DialogResult::OK;
+        });
+
+        std::wstring sMessage;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+        {
+            sMessage = vmMessage.GetMessage();
+            return DialogResult::OK;
+        });
+
+        // this is from a BMP file, which the server doesn't support
+        const std::string sFileContents("BM\x36\xC4\x12\x00\x00\x00\x00\x00\x36\x04\x00\x00\x28\x00", 16);
+
+        editor.mockFileSystem.MockFile(L"C:\\image.png", sFileContents);
+
+        editor.SelectBadgeFile();
+
+        Assert::AreEqual(sBadge, achievement.GetBadge());
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual(std::wstring(L"File does not appear to be a valid png image."), sMessage);
+    }
+
+    TEST_METHOD(TestSelectBadgeFileGIF)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        editor.LoadAsset(&achievement);
+
+        bool bDialogSeen = false;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            bDialogSeen = true;
+
+            vmFileDialog.SetFileName(L"C:\\image.gif");
+            return DialogResult::OK;
+        });
+
+        std::wstring sMessage;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+        {
+            sMessage = vmMessage.GetMessage();
+            return DialogResult::OK;
+        });
+
+        const std::string sFileContents("GIF89a\x39\x61\x64\x00\x37\x00\xc7\x00\x00\x00\x00\x00", 16);
+
+        editor.mockFileSystem.MockFile(L"C:\\image.gif", sFileContents);
+
+        editor.SelectBadgeFile();
+
+        Assert::AreEqual(std::wstring(L"REPO:C:\\image.gif"), achievement.GetBadge());
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual(std::wstring(), sMessage);
+    }
+
+    TEST_METHOD(TestSelectBadgeFileGIFInvalid)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        editor.LoadAsset(&achievement);
+        const std::wstring sBadge = achievement.GetBadge();
+
+        bool bDialogSeen = false;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            bDialogSeen = true;
+
+            vmFileDialog.SetFileName(L"C:\\image.gif");
+            return DialogResult::OK;
+        });
+
+        std::wstring sMessage;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+        {
+            sMessage = vmMessage.GetMessage();
+            return DialogResult::OK;
+        });
+
+        // this is from a PNG file
+        const std::string sFileContents("\x89PNG\x0D\x0A\x1A\x0D\x00\x00\x00\x0DIHDR", 16);
+
+        editor.mockFileSystem.MockFile(L"C:\\image.gif", sFileContents);
+
+        editor.SelectBadgeFile();
+
+        Assert::AreEqual(sBadge, achievement.GetBadge());
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual(std::wstring(L"File does not appear to be a valid gif image."), sMessage);
+    }
+
+    TEST_METHOD(TestSelectBadgeFileJPG)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        editor.LoadAsset(&achievement);
+
+        bool bDialogSeen = false;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            bDialogSeen = true;
+
+            vmFileDialog.SetFileName(L"C:\\image.jpg");
+            return DialogResult::OK;
+        });
+
+        std::wstring sMessage;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+        {
+            sMessage = vmMessage.GetMessage();
+            return DialogResult::OK;
+        });
+
+        const std::string sFileContents("\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x00\x01\x00\x96", 16);
+
+        editor.mockFileSystem.MockFile(L"C:\\image.jpg", sFileContents);
+
+        editor.SelectBadgeFile();
+
+        Assert::AreEqual(std::wstring(L"REPO:C:\\image.jpg"), achievement.GetBadge());
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual(std::wstring(), sMessage);
+    }
+
+    TEST_METHOD(TestSelectBadgeFileJPGInvalid)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        editor.LoadAsset(&achievement);
+        const std::wstring sBadge = achievement.GetBadge();
+
+        bool bDialogSeen = false;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog)
+        {
+            bDialogSeen = true;
+
+            vmFileDialog.SetFileName(L"C:\\image.jpg");
+            return DialogResult::OK;
+        });
+
+        std::wstring sMessage;
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&sMessage](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+        {
+            sMessage = vmMessage.GetMessage();
+            return DialogResult::OK;
+        });
+
+        // this is from a PNG file
+        const std::string sFileContents("\x89PNG\x0D\x0A\x1A\x0D\x00\x00\x00\x0DIHDR", 16);
+
+        editor.mockFileSystem.MockFile(L"C:\\image.jpg", sFileContents);
+
+        editor.SelectBadgeFile();
+
+        Assert::AreEqual(sBadge, achievement.GetBadge());
+        Assert::IsTrue(bDialogSeen);
+        Assert::AreEqual(std::wstring(L"File does not appear to be a valid jpg image."), sMessage);
     }
 };
 

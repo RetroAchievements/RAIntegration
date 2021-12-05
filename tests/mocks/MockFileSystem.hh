@@ -187,20 +187,29 @@ public:
         return std::unique_ptr<TextWriter>(pWriter.release());
     }
 
-    std::string GetFileName(const std::string& sPath) const override
+    std::wstring GetFileName(const std::wstring& sPath) const override
     {
-        const auto nIndex = sPath.find_last_of("/\\");
+        const auto nIndex = sPath.find_last_of(L"/\\");
         if (nIndex != std::string::npos)
-            return std::string(sPath, nIndex + 1);
+            return std::wstring(sPath, nIndex + 1);
 
         return sPath;
     }
 
-    std::string RemoveExtension(const std::string& sPath) const override
+    std::wstring GetExtension(const std::wstring& sPath) const override
     {
-        const auto nIndex = sPath.find_last_of("/\\.");
+        const auto nIndex = sPath.find_last_of(L"/\\.");
         if (nIndex != std::string::npos && sPath.at(nIndex) == '.')
-            return std::string(sPath, 0, nIndex);
+            return std::wstring(sPath, nIndex + 1);
+
+        return L"";
+    }
+
+    std::wstring RemoveExtension(const std::wstring& sPath) const override
+    {
+        const auto nIndex = sPath.find_last_of(L"/\\.");
+        if (nIndex != std::string::npos && sPath.at(nIndex) == '.')
+            return std::wstring(sPath, 0, nIndex);
 
         return sPath;
     }

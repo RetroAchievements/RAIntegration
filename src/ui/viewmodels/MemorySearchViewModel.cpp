@@ -530,7 +530,7 @@ void MemorySearchViewModel::ApplyFilter()
     const std::wstring sEmptyString;
     const auto* sValue = GetValue(CanEditFilterValueProperty) ? &GetFilterValue() : &sEmptyString;
 
-    SearchResult& pPreviousResult = m_vSearchResults.back();
+    SearchResult& pPreviousResult = m_vSearchResults.at(m_nSelectedSearchResult);
     SearchResult pResult;
 
     if (!ApplyFilter(pResult, pPreviousResult, GetComparisonType(), GetValueType(), *sValue))
@@ -716,11 +716,10 @@ void MemorySearchViewModel::UpdateResults()
         if (!pCurrentResults.pResults.GetMatchingAddress(nIndex + nRow, pResult))
             break;
 
-        if (m_vResults.Count() <= nRow)
-            m_vResults.Add();
-
         auto* pRow = m_vResults.GetItemAt(nRow);
-        Expects(pRow != nullptr);
+        if (pRow == nullptr)
+            pRow = &m_vResults.Add();
+
         pRow->nAddress = pResult.nAddress;
 
         auto sAddress = ra::ByteAddressToString(pResult.nAddress);
@@ -785,6 +784,8 @@ void MemorySearchViewModel::UpdateResult(SearchResultViewModel& vmResult,
     bool bForceFilterCheck, const ra::data::context::EmulatorContext& pEmulatorContext)
 {
     std::wstring sFormattedValue;
+    pResult.nValue = vmResult.nCurrentValue;
+
     if (pResults.UpdateValue(pResult, &sFormattedValue, pEmulatorContext) || bForceFilterCheck)
     {
         if (pResults.GetFilterType() == ra::services::SearchFilterType::InitialValue)
@@ -793,6 +794,7 @@ void MemorySearchViewModel::UpdateResult(SearchResultViewModel& vmResult,
             vmResult.bMatchesFilter = pResults.MatchesFilter(m_vSearchResults.at(m_nSelectedSearchResult - 1).pResults, pResult);
 
         vmResult.SetCurrentValue(sFormattedValue);
+        vmResult.nCurrentValue = pResult.nValue;
     }
 }
 

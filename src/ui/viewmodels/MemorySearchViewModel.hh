@@ -310,6 +310,7 @@ public:
         void SetDescriptionColor(Color value) { SetValue(DescriptionColorProperty, ra::to_signed(value.ARGB)); }
 
         ra::ByteAddress nAddress = 0;
+        unsigned nCurrentValue = 0;
         bool bMatchesFilter = false;
         bool bHasBookmark = false;
         bool bHasCodeNote = false;

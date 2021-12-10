@@ -108,7 +108,7 @@ public:
 
         ra::data::models::LeaderboardModel& AddLeaderboard(AssetCategory nCategory,
             const std::wstring& sTitle, const std::wstring& sDescription, const std::string& sStart,
-            const std::string& sSubmit, const std::string& sCancel, const std::string& sValue, ValueFormat nFormat)
+            const std::string& sCancel, const std::string& sSubmit, const std::string& sValue, ValueFormat nFormat)
         {
             auto& pLeaderboard = NewLeaderboard();
             pLeaderboard.SetCategory(nCategory);
@@ -650,8 +650,8 @@ public:
         Assert::IsNotNull(pAsset2);
         Ensures(pAsset2 != nullptr);
         Assert::AreEqual(std::string("0xH2234=1"), pAsset2->GetStartTrigger());
-        Assert::AreEqual(std::string("0xH2234=2"), pAsset2->GetSubmitTrigger());
-        Assert::AreEqual(std::string("0xH2234=3"), pAsset2->GetCancelTrigger());
+        Assert::AreEqual(std::string("0xH2234=2"), pAsset2->GetCancelTrigger());
+        Assert::AreEqual(std::string("0xH2234=3"), pAsset2->GetSubmitTrigger());
         Assert::AreEqual(std::string("M:0xH2235"), pAsset2->GetValueDefinition());
         Assert::AreEqual(ValueFormat::Minutes, pAsset2->GetValueFormat());
         Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());

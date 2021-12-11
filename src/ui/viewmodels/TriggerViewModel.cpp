@@ -472,6 +472,12 @@ void TriggerViewModel::InitializeFrom(const std::string& sTrigger, const ra::dat
         pCapturedHits.Restore(m_pTrigger, sTrigger);
         InitializeGroups(*m_pTrigger);
     }
+    else if (m_bIsValue)
+    {
+        rc_value_t pValue;
+        memset(&pValue, 0, sizeof(pValue));
+        InitializeFrom(pValue);
+    }
     else
     {
         rc_trigger_t pTrigger;
@@ -487,7 +493,7 @@ void TriggerViewModel::InitializeFrom(const rc_value_t& pValue)
     GSL_SUPPRESS_TYPE1 m_pTrigger = reinterpret_cast<rc_trigger_t*>(m_sTriggerBuffer.data());
     memset(m_pTrigger, 0, sizeof(rc_trigger_t));
     m_pTrigger->requirement = pValue.conditions;
-    m_pTrigger->alternative = pValue.conditions->next;
+    m_pTrigger->alternative = (pValue.conditions) ? pValue.conditions->next : nullptr;
     InitializeGroups(*m_pTrigger);
 }
 

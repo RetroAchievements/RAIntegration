@@ -763,12 +763,17 @@ public:
         GameContextHarness game;
         game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
         {
+            response.Title = L"My Game";
+            response.ImageIcon = "3333";
+
             auto& ach1 = response.Achievements.emplace_back();
             ach1.Id = 5;
+            ach1.Points = 5;
             ach1.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
 
             auto& ach2 = response.Achievements.emplace_back();
             ach2.Id = 7;
+            ach2.Points = 10;
             ach2.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
             return true;
         });
@@ -800,6 +805,95 @@ public:
         Assert::IsNotNull(pAch2);
         Ensures(pAch2 != nullptr);
         Assert::IsFalse(pAch2->IsActive());
+
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Loaded My Game"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"2 achievements, 15 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"You have earned 1 achievements"), pPopup->GetDetail());
+        Assert::AreEqual(std::string("3333"), pPopup->GetImage().Name());
+    }
+
+    TEST_METHOD(TestLoadGameUserUnlocksUnofficial)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            response.Title = L"My Game";
+            response.ImageIcon = "3333";
+
+            auto& ach1 = response.Achievements.emplace_back();
+            ach1.Id = 5;
+            ach1.Points = 5;
+            ach1.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
+
+            auto& ach2 = response.Achievements.emplace_back();
+            ach2.Id = 7;
+            ach2.Points = 10;
+            ach2.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
+
+            auto& ach3 = response.Achievements.emplace_back();
+            ach3.Id = 9;
+            ach3.Points = 25;
+            ach3.CategoryId = ra::etoi(ra::data::models::AssetCategory::Unofficial);
+
+            auto& ach4 = response.Achievements.emplace_back();
+            ach4.Id = 11;
+            ach4.Points = 50;
+            ach4.CategoryId = ra::etoi(ra::data::models::AssetCategory::Unofficial);
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+            Assert::IsFalse(request.Hardcore);
+
+            response.UnlockedAchievements.insert(7U); // core achievement
+            response.UnlockedAchievements.insert(9U); // unofficial achievement
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
+        {
+            return true;
+        });
+
+        game.LoadGame(1U);
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
+
+        const auto* pAch1 = game.Assets().FindAchievement(5U);
+        Assert::IsNotNull(pAch1);
+        Ensures(pAch1 != nullptr);
+        Assert::IsTrue(pAch1->IsActive());
+
+        const auto* pAch2 = game.Assets().FindAchievement(7U);
+        Assert::IsNotNull(pAch2);
+        Ensures(pAch2 != nullptr);
+        Assert::IsFalse(pAch2->IsActive());
+
+        const auto* pAch3 = game.Assets().FindAchievement(9U);
+        Assert::IsNotNull(pAch3);
+        Ensures(pAch3 != nullptr);
+        Assert::IsFalse(pAch3->IsActive());
+
+        // unofficial achievement should not be activated even if it wasn't unlocked
+        // (expect unofficial achievements to not be unlocked)
+        const auto* pAch4 = game.Assets().FindAchievement(11U);
+        Assert::IsNotNull(pAch4);
+        Ensures(pAch4 != nullptr);
+        Assert::IsFalse(pAch4->IsActive());
+
+        // only core achievements should be tallied for the popup
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Loaded My Game"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"2 achievements, 15 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"You have earned 1 achievements"), pPopup->GetDetail());
+        Assert::AreEqual(std::string("3333"), pPopup->GetImage().Name());
     }
 
     TEST_METHOD(TestLoadGameUserUnlocksCompatibilityMode)

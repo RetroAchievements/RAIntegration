@@ -313,7 +313,9 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
     {
         vLockedAchievements.erase(nUnlockedAchievement);
         auto* pAchievement = Assets().FindAchievement(nUnlockedAchievement);
-        if (pAchievement != nullptr)
+
+        // only core achievements will be automatically activated. also, they're all we want to count
+        if (pAchievement != nullptr && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
         {
             pAchievement->SetState(ra::data::models::AssetState::Inactive);
             ++nUnlockedCoreAchievements;

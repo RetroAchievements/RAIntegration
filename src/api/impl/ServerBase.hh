@@ -94,6 +94,11 @@ public:
         return UnsupportedApi<FetchAchievementInfo::Response>(FetchAchievementInfo::Name());
     }
 
+    UpdateLeaderboard::Response UpdateLeaderboard(const UpdateLeaderboard::Request&) override
+    {
+        return UnsupportedApi<UpdateLeaderboard::Response>(UpdateLeaderboard::Name());
+    }
+
     FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request&) override
     {
         return UnsupportedApi<FetchLeaderboardInfo::Response>(FetchLeaderboardInfo::Name());

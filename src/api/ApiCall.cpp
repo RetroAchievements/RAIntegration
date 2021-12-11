@@ -29,6 +29,7 @@ UpdateCodeNote::Response UpdateCodeNote::Request::Call() const { return Server()
 DeleteCodeNote::Response DeleteCodeNote::Request::Call() const { return Server().DeleteCodeNote(*this); }
 UpdateAchievement::Response UpdateAchievement::Request::Call() const { return Server().UpdateAchievement(*this); }
 FetchAchievementInfo::Response FetchAchievementInfo::Request::Call() const { return Server().FetchAchievementInfo(*this); }
+UpdateLeaderboard::Response UpdateLeaderboard::Request::Call() const { return Server().UpdateLeaderboard(*this); }
 FetchLeaderboardInfo::Response FetchLeaderboardInfo::Request::Call() const { return Server().FetchLeaderboardInfo(*this); }
 LatestClient::Response LatestClient::Request::Call() const { return Server().LatestClient(*this); }
 FetchGamesList::Response FetchGamesList::Request::Call() const { return Server().FetchGamesList(*this); }

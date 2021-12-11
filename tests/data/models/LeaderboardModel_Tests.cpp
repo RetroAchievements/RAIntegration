@@ -198,7 +198,7 @@ public:
         leaderboard.SetID(1U);
         leaderboard.SetName(L"Title");
         leaderboard.SetDescription(L"Desc");
-        leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
+        leaderboard.SetDefinition("STA:0xH1234=1::CAN:0xH1234=2::SUB:0xH1234=3::VAL:0xH1234");
         leaderboard.SetValueFormat(nFormat);
         leaderboard.CreateServerCheckpoint();
         leaderboard.CreateLocalCheckpoint();

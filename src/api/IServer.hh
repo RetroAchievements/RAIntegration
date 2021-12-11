@@ -23,6 +23,7 @@
 #include "api/SubmitTicket.hh"
 #include "api/UpdateAchievement.hh"
 #include "api/UpdateCodeNote.hh"
+#include "api/UpdateLeaderboard.hh"
 #include "api/UploadBadge.hh"
 
 namespace ra {
@@ -51,6 +52,7 @@ public:
     virtual DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) = 0;
     virtual UpdateAchievement::Response UpdateAchievement(const UpdateAchievement::Request& request) = 0;
     virtual FetchAchievementInfo::Response FetchAchievementInfo(const FetchAchievementInfo::Request& request) = 0;
+    virtual UpdateLeaderboard::Response UpdateLeaderboard(const UpdateLeaderboard::Request& request) = 0;
     virtual FetchLeaderboardInfo::Response FetchLeaderboardInfo(const FetchLeaderboardInfo::Request& request) = 0;
 
     // === other functions ===

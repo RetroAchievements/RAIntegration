@@ -187,6 +187,7 @@
     <ClInclude Include="api\SubmitTicket.hh" />
     <ClInclude Include="api\UpdateAchievement.hh" />
     <ClInclude Include="api\UpdateCodeNote.hh" />
+    <ClInclude Include="api\UpdateLeaderboard.hh" />
     <ClInclude Include="api\UploadBadge.hh" />
     <ClInclude Include="data\AsyncObject.hh" />
     <ClInclude Include="data\context\ConsoleContext.hh" />

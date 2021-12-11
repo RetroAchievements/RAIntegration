@@ -216,8 +216,8 @@ std::string LeaderboardModel::GetDefinition() const
 void LeaderboardModel::Serialize(ra::services::TextWriter& pWriter) const
 {
     WriteQuoted(pWriter, GetLocalAssetDefinition(m_pStartTrigger));
-    WriteQuoted(pWriter, GetLocalAssetDefinition(m_pSubmitTrigger));
     WriteQuoted(pWriter, GetLocalAssetDefinition(m_pCancelTrigger));
+    WriteQuoted(pWriter, GetLocalAssetDefinition(m_pSubmitTrigger));
     WriteQuoted(pWriter, GetLocalAssetDefinition(m_pValueDefinition));
 
     switch (GetValueFormat())
@@ -243,13 +243,13 @@ bool LeaderboardModel::Deserialize(ra::Tokenizer& pTokenizer)
     if (!pTokenizer.Consume(':'))
         return false;
 
-    // field 3: submit trigger
-    std::string sSubmitTrigger = pTokenizer.ReadQuotedString();
+    // field 3: cancel trigger
+    std::string sCancelTrigger = pTokenizer.ReadQuotedString();
     if (!pTokenizer.Consume(':'))
         return false;
 
-    // field 4: cancel trigger
-    std::string sCancelTrigger = pTokenizer.ReadQuotedString();
+    // field 4: submit trigger
+    std::string sSubmitTrigger = pTokenizer.ReadQuotedString();
     if (!pTokenizer.Consume(':'))
         return false;
 

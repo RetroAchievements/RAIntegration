@@ -44,6 +44,9 @@ MemSize TriggerValidation::MapRcheevosMemSize(char nSize) noexcept
 
 static bool ValidateLeaderboardCondSet(const rc_condset_t* pCondSet, std::wstring& sError)
 {
+    if (!pCondSet)
+        return true;
+
     const auto* pCondition = pCondSet->conditions;
     for (; pCondition; pCondition = pCondition->next)
     {

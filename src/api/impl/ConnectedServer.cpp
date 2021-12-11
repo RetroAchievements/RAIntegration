@@ -393,13 +393,8 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
         return false;
     }
 
-    std::string sExt = "png";
-    const auto nIndex = sFilePath.find_last_of('.');
-    if (nIndex != std::string::npos)
-    {
-        sExt = ra::Narrow(&sFilePath.at(nIndex + 1));
-        ra::StringMakeLowercase(sExt);
-    }
+    std::string sExt = ra::Narrow(pFileSystem.GetExtension(sFilePath));
+    ra::StringMakeLowercase(sExt);
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     RA_LOG_INFO("%s Request: file=%s (%zu bytes)", sApiName, sFilePath, nFileSize);

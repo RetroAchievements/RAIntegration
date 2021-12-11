@@ -5,6 +5,7 @@
 
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
+#include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\EditorTheme.hh"
@@ -83,11 +84,38 @@ void AssetEditorViewModel::SelectBadgeFile()
     if (vmFile.ShowOpenFileDialog(*this) != DialogResult::OK)
         return;
 
+    const auto& pFileName = vmFile.GetFileName();
+    auto& pFileSystemService = ra::services::ServiceLocator::GetMutable<ra::services::IFileSystem>();
+    const auto pFile = pFileSystemService.OpenTextFile(pFileName);
+    if (!pFile)
+    {
+        ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::StringPrintf(L"Could not read %s", pFileName));
+        return;
+    }
+    byte pHeader[16]{};
+    pFile->GetBytes(pHeader, sizeof(pHeader));
+
+    auto sExtension = ra::Narrow(pFileSystemService.GetExtension(pFileName));
+    ra::StringMakeLowercase(sExtension);
+    bool bValid = false;
+    if (sExtension == "png")
+        bValid = (memcmp(&pHeader[1], "PNG", 3) == 0);
+    else if (sExtension == "gif")
+        bValid = (memcmp(&pHeader[0], "GIF8", 4) == 0);
+    else /* jpg/jpeg */
+        bValid = (memcmp(&pHeader[6], "JFIF", 5) == 0);
+
+    if (!bValid)
+    {
+        ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::StringPrintf(L"File does not appear to be a valid %s image.", sExtension));
+        return;
+    }
+
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-    const auto sBadgeName = pImageRepository.StoreImage(ImageType::Badge, vmFile.GetFileName());
+    const auto sBadgeName = pImageRepository.StoreImage(ImageType::Badge, pFileName);
     if (sBadgeName.empty())
     {
-        ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::StringPrintf(L"Error processing %s", vmFile.GetFileName()));
+        ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(ra::StringPrintf(L"Error processing %s", pFileName));
         return;
     }
 

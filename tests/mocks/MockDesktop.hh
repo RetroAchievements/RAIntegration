@@ -86,8 +86,8 @@ public:
 
     void ResetExpectedWindows() noexcept { m_bDialogShown = false; m_vHandlers.clear(); }
 
-    std::string GetRunningExecutable() const override { return m_sExecutable; }
-    void SetRunningExecutable(const std::string& sExecutable) { m_sExecutable = sExecutable; }
+    std::wstring GetRunningExecutable() const override { return m_sExecutable; }
+    void SetRunningExecutable(const std::wstring& sExecutable) { m_sExecutable = sExecutable; }
 
     std::string GetOSVersionString() const override { return "UnitTests"; }
 
@@ -112,7 +112,7 @@ private:
     std::vector<DialogHandler> m_vHandlers;
     mutable bool m_bDialogShown = false;
     mutable std::string m_sLastOpenedUrl;
-    std::string m_sExecutable;
+    std::wstring m_sExecutable;
     bool m_bDebuggerPresent = false;
 };
 

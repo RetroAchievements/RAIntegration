@@ -1017,7 +1017,7 @@ public:
     TEST_METHOD(TestInitializeUnknownEmulator)
     {
         EmulatorContextHarness emulator;
-        emulator.mockDesktop.SetRunningExecutable("C:\\Games\\Emulator\\RATest.exe");
+        emulator.mockDesktop.SetRunningExecutable(L"C:\\Games\\Emulator\\RATest.exe");
         emulator.Initialize(ra::itoe<EmulatorID>(9999), nullptr);
         Assert::AreEqual(ra::etoi(EmulatorID::UnknownEmulator), ra::etoi(emulator.GetEmulatorId()));
         Assert::AreEqual(std::string("RATest"), emulator.GetClientName());

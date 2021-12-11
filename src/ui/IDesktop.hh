@@ -51,7 +51,7 @@ public:
     /// <summary>
     /// Gets the path/filename of the currently running executable.
     /// </summary>
-    virtual std::string GetRunningExecutable() const = 0;
+    virtual std::wstring GetRunningExecutable() const = 0;
 
     /// <summary>
     /// Gets a string representing the current operating system and its version.

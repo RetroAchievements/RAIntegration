@@ -38,20 +38,29 @@ const std::wstring& WindowsFileSystem::MakeAbsolute(std::wstring& sBuffer, const
     return sBuffer;
 }
 
-std::string WindowsFileSystem::GetFileName(const std::string& sPath) const
+std::wstring WindowsFileSystem::GetFileName(const std::wstring& sPath) const
 {
-    const auto nIndex = sPath.find_last_of("/\\");
+    const auto nIndex = sPath.find_last_of(L"/\\");
     if (nIndex != std::string::npos)
-        return std::string(sPath, nIndex + 1);
+        return std::wstring(sPath, nIndex + 1);
 
     return sPath;
 }
 
-std::string WindowsFileSystem::RemoveExtension(const std::string& sPath) const
+std::wstring WindowsFileSystem::GetExtension(const std::wstring& sPath) const
 {
-    const auto nIndex = sPath.find_last_of("/\\.");
+    const auto nIndex = sPath.find_last_of(L"/\\.");
     if (nIndex != std::string::npos && sPath.at(nIndex) == '.')
-        return std::string(sPath, 0, nIndex);
+        return std::wstring(sPath, nIndex + 1);
+
+    return L"";
+}
+
+std::wstring WindowsFileSystem::RemoveExtension(const std::wstring& sPath) const
+{
+    const auto nIndex = sPath.find_last_of(L"/\\.");
+    if (nIndex != std::string::npos && sPath.at(nIndex) == '.')
+        return std::wstring(sPath, 0, nIndex);
 
     return sPath;
 }

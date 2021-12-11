@@ -28,7 +28,7 @@ public:
 
     HWND GetMainHWnd() const noexcept;
     void SetMainHWnd(HWND hWnd);
-    std::string GetRunningExecutable() const override;
+    std::wstring GetRunningExecutable() const override;
     std::string GetOSVersionString() const override { return GetWindowsVersionString(); }
     static std::string GetWindowsVersionString();
 

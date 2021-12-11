@@ -167,11 +167,11 @@ void Desktop::SetMainHWnd(HWND hWnd)
     g_RAMainWnd = hWnd;
 }
 
-std::string Desktop::GetRunningExecutable() const
+std::wstring Desktop::GetRunningExecutable() const
 {
-    char buffer[MAX_PATH];
-    GetModuleFileNameA(nullptr, buffer, sizeof(buffer));
-    return std::string(buffer);
+    wchar_t buffer[MAX_PATH];
+    GetModuleFileNameW(nullptr, buffer, sizeof(buffer)/sizeof(buffer[0]));
+    return std::wstring(buffer);
 }
 
 std::string Desktop::GetWindowsVersionString()

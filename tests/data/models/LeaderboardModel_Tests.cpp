@@ -355,6 +355,65 @@ public:
         Ensures(pLeaderboard != nullptr);
         Assert::AreEqual(0x5555U, pLeaderboard->value.conditions->conditions->operand1.value.memref->address);
     }
+
+    TEST_METHOD(TestValidateMissingField)
+    {
+        LeaderboardModelHarness leaderboard;
+        leaderboard.SetID(1U);
+        leaderboard.SetName(L"Title");
+        leaderboard.SetDescription(L"Desc");
+        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetLowerIsBetter(true);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        Assert::IsFalse(leaderboard.Validate());
+        Assert::AreEqual(std::wstring(L"No Start condition"), leaderboard.GetValidationError());
+
+        leaderboard.SetStartTrigger("0xH1234=1");
+        Assert::IsFalse(leaderboard.Validate());
+        Assert::AreEqual(std::wstring(L"No Cancel condition"), leaderboard.GetValidationError());
+
+        leaderboard.SetCancelTrigger("0xH1234=2");
+        Assert::IsFalse(leaderboard.Validate());
+        Assert::AreEqual(std::wstring(L"No Submit condition"), leaderboard.GetValidationError());
+
+        leaderboard.SetSubmitTrigger("0xH1234=3");
+        Assert::IsFalse(leaderboard.Validate());
+        Assert::AreEqual(std::wstring(L"No Value definition"), leaderboard.GetValidationError());
+
+        leaderboard.SetValueDefinition("0xH2345");
+        Assert::IsTrue(leaderboard.Validate());
+        Assert::AreEqual(std::wstring(), leaderboard.GetValidationError());
+    }
+
+    TEST_METHOD(TestValidateInvalidField)
+    {
+        LeaderboardModelHarness leaderboard;
+        leaderboard.SetID(1U);
+        leaderboard.SetName(L"Title");
+        leaderboard.SetDescription(L"Desc");
+        leaderboard.SetDefinition("STA:N:0xH1234=1::SUB:N:0xH1234=2::CAN:N:0xH1234=3::VAL:0xH1234");
+        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetLowerIsBetter(true);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        Assert::IsFalse(leaderboard.Validate());
+        Assert::AreEqual(std::wstring(L"Start: Final condition type expects another condition to follow"), leaderboard.GetValidationError());
+
+        leaderboard.SetStartTrigger("0xH1234=1");
+        Assert::IsFalse(leaderboard.Validate());
+        Assert::AreEqual(std::wstring(L"Cancel: Final condition type expects another condition to follow"), leaderboard.GetValidationError());
+
+        leaderboard.SetCancelTrigger("0xH1234=2");
+        Assert::IsFalse(leaderboard.Validate());
+        Assert::AreEqual(std::wstring(L"Submit: Final condition type expects another condition to follow"), leaderboard.GetValidationError());
+
+        leaderboard.SetSubmitTrigger("0xH1234=3");
+        Assert::IsTrue(leaderboard.Validate());
+        Assert::AreEqual(std::wstring(), leaderboard.GetValidationError());
+    }
 };
 
 } // namespace tests

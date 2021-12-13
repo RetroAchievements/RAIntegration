@@ -1207,7 +1207,18 @@ bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::Ass
         {
             const auto* pLeaderboard = dynamic_cast<const ra::data::models::LeaderboardModel*>(pAsset);
             if (pLeaderboard != nullptr)
+            {
+                if (pLeaderboard->GetStartTrigger().empty())
+                    sError.append(ra::StringPrintf(L"\n* %s: No Start condition", pLeaderboard->GetName()));
+                if (pLeaderboard->GetCancelTrigger().empty())
+                    sError.append(ra::StringPrintf(L"\n* %s: No Cancel condition", pLeaderboard->GetName()));
+                if (pLeaderboard->GetSubmitTrigger().empty())
+                    sError.append(ra::StringPrintf(L"\n* %s: No Submit condition", pLeaderboard->GetName()));
+                if (pLeaderboard->GetValueDefinition().empty())
+                    sError.append(ra::StringPrintf(L"\n* %s: No Value definition", pLeaderboard->GetName()));
+
                 ValidateLeaderboardForCore(sError, *pLeaderboard);
+            }
         }
     }
 

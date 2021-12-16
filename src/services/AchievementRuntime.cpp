@@ -967,9 +967,20 @@ void AchievementRuntime::OnTotalMemorySizeChanged()
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
     pEmulatorContext.RemoveNotifyTarget(*this);
 
+    // schedule the callback for 100ms from now in case more changes are coming.
+    // we've unsubscribed from the event, so the callback will only be called once.
     auto& pThreadPool = ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>();
     pThreadPool.ScheduleAsync(std::chrono::milliseconds(100), [this]()
     {
+        // re-validate the assets in case they have invalid memory references
+        auto& pGameAssets = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets();
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameAssets.Count()); ++nIndex)
+        {
+            auto* pAsset = pGameAssets.GetItemAt(nIndex);
+            if (pAsset != nullptr)
+                pAsset->Validate();
+        }
+
         DetectUnsupportedAchievements();
     });
 }
@@ -987,6 +998,7 @@ void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress) noexcept
 
 size_t AchievementRuntime::DetectUnsupportedAchievements()
 {
+    // if memory hasn't been registered yet, wait for it
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
     if (pEmulatorContext.TotalMemorySize() == 0)
     {

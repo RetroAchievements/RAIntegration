@@ -119,7 +119,7 @@ void AchievementModel::CommitTransaction()
 
 bool AchievementModel::ValidateAsset(std::wstring& sError)
 {
-    const auto& sTrigger = GetLocalAssetDefinition(m_pTrigger);
+    const auto& sTrigger = GetAssetDefinition(m_pTrigger);
     return TriggerValidation::Validate(sTrigger, sError, AssetType::Achievement);
 }
 

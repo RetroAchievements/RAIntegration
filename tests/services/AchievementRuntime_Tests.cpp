@@ -1,6 +1,7 @@
 #include "services\AchievementRuntime.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\data\DataAsserts.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -1231,6 +1232,63 @@ public:
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
         AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardCancelTriggered, 6U);
+    }
+
+    TEST_METHOD(TestDetectUnsupportedAchievements)
+    {
+        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+
+        AchievementRuntimeHarness runtime;
+        auto& pAch1 = runtime.mockGameContext.Assets().NewAchievement();
+        pAch1.SetTrigger("0xH0000=1");
+        pAch1.UpdateLocalCheckpoint();
+        pAch1.Activate();
+        auto& pAch2 = runtime.mockGameContext.Assets().NewAchievement();
+        pAch2.SetTrigger("0xH0002=1");
+        pAch1.UpdateLocalCheckpoint();
+        pAch2.Activate();
+        auto& pAch3 = runtime.mockGameContext.Assets().NewAchievement();
+        pAch3.SetTrigger("0xH0002=1");
+        pAch1.UpdateLocalCheckpoint();
+
+        Assert::AreEqual(ra::data::models::AssetState::Waiting, pAch1.GetState());
+        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
+        Assert::AreEqual(ra::data::models::AssetState::Waiting, pAch2.GetState());
+        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
+        Assert::AreEqual(ra::data::models::AssetState::Inactive, pAch3.GetState());
+        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
+
+        // no memory registered, can't detect yet
+        runtime.DetectUnsupportedAchievements();
+        Assert::AreEqual(ra::data::models::AssetState::Waiting, pAch1.GetState());
+        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
+        Assert::AreEqual(ra::data::models::AssetState::Waiting, pAch2.GetState());
+        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
+        Assert::AreEqual(ra::data::models::AssetState::Inactive, pAch3.GetState());
+        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
+
+        // unsupported achievements will be detected 100ms after the memory is registered
+        runtime.mockEmulatorContext.MockMemory(memory);
+        runtime.mockThreadPool.AdvanceTime(std::chrono::milliseconds(100));
+
+        // actually disable the achievements that were flagged
+        std::vector<AchievementRuntime::Change> vChanges;
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 2U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, pAch1.GetID());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementDisabled, pAch2.GetID());
+
+        // sync the state
+        pAch1.DoFrame();
+        pAch2.DoFrame();
+        pAch3.DoFrame();
+
+        Assert::AreEqual(ra::data::models::AssetState::Active, pAch1.GetState());
+        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
+        Assert::AreEqual(ra::data::models::AssetState::Disabled, pAch2.GetState());
+        Assert::AreEqual(std::wstring(L"Condition 1: Address 0002 out of range (max 0001)"), pAch2.GetValidationError());
+        Assert::AreEqual(ra::data::models::AssetState::Inactive, pAch3.GetState());
+        Assert::AreEqual(std::wstring(L"Condition 1: Address 0002 out of range (max 0001)"), pAch3.GetValidationError());
     }
 };
 

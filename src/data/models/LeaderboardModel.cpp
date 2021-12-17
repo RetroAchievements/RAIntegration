@@ -70,24 +70,46 @@ void LeaderboardModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 
 bool LeaderboardModel::ValidateAsset(std::wstring& sError)
 {
-    const auto& sStartTrigger = GetLocalAssetDefinition(m_pStartTrigger);
+    const auto& sStartTrigger = GetAssetDefinition(m_pStartTrigger);
+    if (sStartTrigger.empty())
+    {
+        sError = L"No Start condition";
+        return false;
+    }
     if (!TriggerValidation::Validate(sStartTrigger, sError, AssetType::Leaderboard))
     {
         sError.insert(0, L"Start: ");
         return false;
     }
 
-    const auto& sSubmitTrigger = GetLocalAssetDefinition(m_pSubmitTrigger);
+    const auto& sCancelTrigger = GetAssetDefinition(m_pCancelTrigger);
+    if (sCancelTrigger.empty())
+    {
+        sError = L"No Cancel condition";
+        return false;
+    }
+    if (!TriggerValidation::Validate(sCancelTrigger, sError, AssetType::Leaderboard))
+    {
+        sError.insert(0, L"Cancel: ");
+        return false;
+    }
+
+    const auto& sSubmitTrigger = GetAssetDefinition(m_pSubmitTrigger);
+    if (sSubmitTrigger.empty())
+    {
+        sError = L"No Submit condition";
+        return false;
+    }
     if (!TriggerValidation::Validate(sSubmitTrigger, sError, AssetType::Leaderboard))
     {
         sError.insert(0, L"Submit: ");
         return false;
     }
 
-    const auto& sCancelTrigger = GetLocalAssetDefinition(m_pCancelTrigger);
-    if (!TriggerValidation::Validate(sCancelTrigger, sError, AssetType::Leaderboard))
+    const auto& sValueDefinition = GetAssetDefinition(m_pValueDefinition);
+    if (sValueDefinition.empty())
     {
-        sError.insert(0, L"Cancel: ");
+        sError = L"No Value definition";
         return false;
     }
 

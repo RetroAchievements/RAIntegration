@@ -587,6 +587,10 @@ public:
         leaderboard.SetState(AssetState::Active);
         leaderboard.SetDescription(L"Do something cool");
         leaderboard.SetCategory(AssetCategory::Unofficial);
+        leaderboard.SetStartTrigger("0xH1234=1");
+        leaderboard.SetCancelTrigger("0xH1234=2");
+        leaderboard.SetSubmitTrigger("0xH1234=3");
+        leaderboard.SetValueDefinition("0xH2345");
         leaderboard.SetValueFormat(ra::data::ValueFormat::Centiseconds);
         leaderboard.SetLowerIsBetter(false);
         leaderboard.CreateServerCheckpoint();
@@ -644,6 +648,51 @@ public:
 
         Assert::AreEqual(std::string("0xH1234=6.1."), editor.Trigger().Serialize());
         Assert::IsFalse(leaderboard.IsModified());
+    }
+
+    TEST_METHOD(TestLoadNewLeaderboard)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetID(1110000001U);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.SetState(AssetState::Inactive);
+        leaderboard.SetCategory(AssetCategory::Local);
+        leaderboard.SetNew();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+
+        Assert::AreEqual(std::wstring(L"Leaderboard Editor"), editor.GetWindowTitle());
+        Assert::AreEqual(0U, editor.GetID());
+        Assert::AreEqual(std::wstring(L""), editor.GetName());
+        Assert::AreEqual(std::wstring(L""), editor.GetDescription());
+        Assert::AreEqual(AssetCategory::Local, editor.GetCategory());
+        Assert::AreEqual(AssetState::Inactive, editor.GetState());
+        Assert::AreEqual(ra::data::ValueFormat::Value, editor.GetValueFormat());
+        Assert::IsFalse(editor.IsLowerBetter());
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::IsFalse(editor.IsPauseOnTrigger());
+        Assert::IsTrue(editor.IsAssetLoaded());
+        Assert::IsFalse(editor.IsAchievement());
+        Assert::IsTrue(editor.IsLeaderboard());
+        Assert::IsTrue(editor.IsTrigger());
+        Assert::IsTrue(editor.HasMeasured());
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::IsTrue(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
+
+        editor.Trigger().Conditions().Add();
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::IsTrue(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
+
+        // warning is only updated when record is saved to prevent spam when constructing a record
+        leaderboard.Validate();
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::IsTrue(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"No Cancel condition"), editor.GetAssetValidationWarning());
     }
 
     TEST_METHOD(TestSyncId)

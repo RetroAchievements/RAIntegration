@@ -601,6 +601,14 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
     WindowViewModelBase::OnValueChanged(args);
 }
 
+static void AppendTrigger(std::string& sDefinition, const std::string& sTrigger)
+{
+    if (sTrigger.empty())
+        sDefinition += "0=1";
+    else
+        sDefinition += sTrigger;
+}
+
 void AssetEditorViewModel::OnTriggerChanged()
 {
     const std::string& sTrigger = Trigger().Serialize();
@@ -622,25 +630,25 @@ void AssetEditorViewModel::OnTriggerChanged()
         if (nSelectedPart == LeaderboardPart::Start)
             sDefinition += sTrigger;
         else
-            sDefinition += pLeaderboard->GetStartTrigger();
+            AppendTrigger(sDefinition, pLeaderboard->GetStartTrigger());
 
         sDefinition.append("::SUB:");
         if (nSelectedPart == LeaderboardPart::Submit)
             sDefinition += sTrigger;
         else
-            sDefinition += pLeaderboard->GetSubmitTrigger();
+            AppendTrigger(sDefinition, pLeaderboard->GetSubmitTrigger());
 
         sDefinition.append("::CAN:");
         if (nSelectedPart == LeaderboardPart::Cancel)
             sDefinition += sTrigger;
         else
-            sDefinition += pLeaderboard->GetCancelTrigger();
+            AppendTrigger(sDefinition, pLeaderboard->GetCancelTrigger());
 
         sDefinition.append("::VAL:");
         if (nSelectedPart == LeaderboardPart::Value)
             sDefinition += sTrigger;
         else
-            sDefinition += pLeaderboard->GetValueDefinition();
+            AppendTrigger(sDefinition, pLeaderboard->GetValueDefinition());
 
         nSize = rc_lboard_size(sDefinition.c_str());
     }

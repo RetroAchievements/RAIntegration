@@ -246,6 +246,45 @@ public:
         Assert::AreEqual(0, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", false));
         Assert::AreEqual(0, pLocalBadges.GetReferenceCount(L"local\\22-ABC.png", true));
     }
+
+    TEST_METHOD(TestValidate)
+    {
+        AchievementModelHarness achievement;
+        achievement.mockGameContext.SetGameId(22);
+        achievement.AddLocalBadgesModel();
+        achievement.SetBadge(L"12345.png");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        Assert::IsTrue(achievement.Validate());
+        Assert::AreEqual(std::wstring(), achievement.GetValidationError());
+
+        achievement.SetID(1U);
+        achievement.SetTrigger("A:0xH1234=1");
+
+        // Validation checks the uncommited state.
+        Assert::IsFalse(achievement.Validate());
+        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), achievement.GetValidationError());
+
+        // Validation checks the uncommited state.
+        achievement.UpdateLocalCheckpoint();
+        achievement.SetTrigger("0xH1234=1");
+
+        Assert::IsTrue(achievement.Validate());
+        Assert::AreEqual(std::wstring(), achievement.GetValidationError());
+
+        // Restoring the local checkpoint automatically updates the validation error.
+        achievement.RestoreLocalCheckpoint();
+        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), achievement.GetValidationError());
+
+        // Fixing the error does not automatically update the validation error.
+        achievement.SetTrigger("0xH1234=1");
+        Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), achievement.GetValidationError());
+
+        // Committing the fix does update the validation error.
+        achievement.UpdateLocalCheckpoint();
+        Assert::AreEqual(std::wstring(), achievement.GetValidationError());
+    }
 };
 
 

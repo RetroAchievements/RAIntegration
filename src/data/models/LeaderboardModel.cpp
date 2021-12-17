@@ -71,6 +71,7 @@ void LeaderboardModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 bool LeaderboardModel::ValidateAsset(std::wstring& sError)
 {
     const auto& sStartTrigger = GetAssetDefinition(m_pStartTrigger);
+
     if (sStartTrigger.empty())
     {
         sError = L"No Start condition";

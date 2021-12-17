@@ -73,6 +73,7 @@ private:
 
         const std::string sOutput = vmTrigger.Serialize();
         Assert::AreEqual(sInput, sOutput);
+        Assert::IsFalse(vmTrigger.IsValue());
     }
 
     void ParseAndRegenerateValue(const std::string& sInput)
@@ -83,6 +84,7 @@ private:
 
         const std::string sOutput = vmTrigger.Serialize();
         Assert::AreEqual(sInput, sOutput);
+        Assert::IsTrue(vmTrigger.IsValue());
     }
 
     class TriggerMonitor : ViewModelBase::NotifyTarget
@@ -225,6 +227,7 @@ public:
 
     TEST_METHOD(TestParseAndRegenerateCoreOnly)
     {
+        ParseAndRegenerate(""); // no conditions
         ParseAndRegenerate("0xH1234=0xH2345"); // one condition
         ParseAndRegenerate("0xH1234=0xH2345_0xX5555=1.3._R:0x face=678"); // several conditions
         ParseAndRegenerate("I:0x 1234_A:0xH2345_0xH7777=345"); // addsource/addaddress chain
@@ -240,6 +243,7 @@ public:
 
     TEST_METHOD(TestParseAndRegenerateValue)
     {
+        ParseAndRegenerateValue(""); // empty
         ParseAndRegenerateValue("A:0xH1234*10_M:0xH1235"); // multiplication
         ParseAndRegenerateValue("M:0xH1234$M:0xX5555"); // one alt
         ParseAndRegenerateValue("M:0xH1234$M:0xX5555$M:b0xL3333"); // several alts

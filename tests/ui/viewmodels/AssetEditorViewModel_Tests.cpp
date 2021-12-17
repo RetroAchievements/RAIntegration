@@ -433,7 +433,7 @@ public:
         Assert::IsFalse(editor.HasMeasured());
     }
 
-    TEST_METHOD(TestLoadAchievementValidationError)
+    TEST_METHOD(TestLoadAchievementValidationWarning)
     {
         AssetEditorViewModelHarness editor;
         AchievementModel achievement;
@@ -457,6 +457,121 @@ public:
         Assert::AreEqual(std::wstring(L"Final condition type expects another condition to follow"), editor.GetAssetValidationWarning());
 
         editor.LoadAsset(nullptr);
+        Assert::IsFalse(editor.mockDesktop.WasDialogShown());
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationError());
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationWarning());
+    }
+
+    TEST_METHOD(TestLoadAchievementValidationError)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetName(L"Test Achievement");
+        achievement.SetID(1234U);
+        achievement.SetState(AssetState::Active);
+        achievement.SetDescription(L"Do something cool");
+        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetPoints(10);
+        achievement.SetBadge(L"58329");
+        achievement.SetTrigger("M:0x1234=10");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&achievement);
+        editor.SetAssetValidationError(L"Multiple Measured"); // not really, just fake it
+
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Multiple Measured"), editor.GetAssetValidationError());
+
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationWarning());
+
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Discard changes?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The currently loaded asset has an error that cannot be saved. If you switch to another asset, your changes will be lost."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::Yes;
+        });
+
+        editor.LoadAsset(nullptr);
+        Assert::IsTrue(editor.mockDesktop.WasDialogShown());
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationError());
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationWarning());
+    }
+
+    TEST_METHOD(TestLoadAchievementValidationErrorCancel)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetName(L"Test Achievement");
+        achievement.SetID(1234U);
+        achievement.SetState(AssetState::Active);
+        achievement.SetDescription(L"Do something cool");
+        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetPoints(10);
+        achievement.SetBadge(L"58329");
+        achievement.SetTrigger("M:0x1234=10");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&achievement);
+        editor.SetAssetValidationError(L"Multiple Measured"); // not really, just fake it
+
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Multiple Measured"), editor.GetAssetValidationError());
+
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationWarning());
+
+        editor.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Discard changes?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The currently loaded asset has an error that cannot be saved. If you switch to another asset, your changes will be lost."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::No;
+        });
+
+        editor.LoadAsset(nullptr);
+        Assert::IsTrue(editor.mockDesktop.WasDialogShown());
+
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Multiple Measured"), editor.GetAssetValidationError());
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationWarning());
+        Assert::IsTrue(editor.GetAsset() == &achievement);
+    }
+
+    TEST_METHOD(TestLoadAchievementValidationErrorDeleted)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetName(L"Test Achievement");
+        achievement.SetID(1234U);
+        achievement.SetState(AssetState::Active);
+        achievement.SetDescription(L"Do something cool");
+        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetPoints(10);
+        achievement.SetBadge(L"58329");
+        achievement.SetTrigger("M:0x1234=10");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&achievement);
+        editor.SetAssetValidationError(L"Multiple Measured"); // not really, just fake it
+
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Multiple Measured"), editor.GetAssetValidationError());
+
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationWarning());
+
+        achievement.SetDeleted();
+
+        editor.LoadAsset(nullptr);
+        Assert::IsFalse(editor.mockDesktop.WasDialogShown());
         Assert::IsFalse(editor.HasAssetValidationError());
         Assert::AreEqual(std::wstring(), editor.GetAssetValidationError());
         Assert::IsFalse(editor.HasAssetValidationWarning());
@@ -472,6 +587,10 @@ public:
         leaderboard.SetState(AssetState::Active);
         leaderboard.SetDescription(L"Do something cool");
         leaderboard.SetCategory(AssetCategory::Unofficial);
+        leaderboard.SetStartTrigger("0xH1234=1");
+        leaderboard.SetCancelTrigger("0xH1234=2");
+        leaderboard.SetSubmitTrigger("0xH1234=3");
+        leaderboard.SetValueDefinition("0xH2345");
         leaderboard.SetValueFormat(ra::data::ValueFormat::Centiseconds);
         leaderboard.SetLowerIsBetter(false);
         leaderboard.CreateServerCheckpoint();
@@ -529,6 +648,51 @@ public:
 
         Assert::AreEqual(std::string("0xH1234=6.1."), editor.Trigger().Serialize());
         Assert::IsFalse(leaderboard.IsModified());
+    }
+
+    TEST_METHOD(TestLoadNewLeaderboard)
+    {
+        AssetEditorViewModelHarness editor;
+        LeaderboardModel leaderboard;
+        leaderboard.SetID(1110000001U);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.SetState(AssetState::Inactive);
+        leaderboard.SetCategory(AssetCategory::Local);
+        leaderboard.SetNew();
+        leaderboard.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&leaderboard);
+
+        Assert::AreEqual(std::wstring(L"Leaderboard Editor"), editor.GetWindowTitle());
+        Assert::AreEqual(0U, editor.GetID());
+        Assert::AreEqual(std::wstring(L""), editor.GetName());
+        Assert::AreEqual(std::wstring(L""), editor.GetDescription());
+        Assert::AreEqual(AssetCategory::Local, editor.GetCategory());
+        Assert::AreEqual(AssetState::Inactive, editor.GetState());
+        Assert::AreEqual(ra::data::ValueFormat::Value, editor.GetValueFormat());
+        Assert::IsFalse(editor.IsLowerBetter());
+        Assert::IsFalse(editor.IsPauseOnReset());
+        Assert::IsFalse(editor.IsPauseOnTrigger());
+        Assert::IsTrue(editor.IsAssetLoaded());
+        Assert::IsFalse(editor.IsAchievement());
+        Assert::IsTrue(editor.IsLeaderboard());
+        Assert::IsTrue(editor.IsTrigger());
+        Assert::IsTrue(editor.HasMeasured());
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::IsTrue(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"Groups:"), editor.GetGroupsHeaderLabel());
+
+        editor.Trigger().Conditions().Add();
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::IsTrue(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"No Start condition"), editor.GetAssetValidationWarning());
+
+        // warning is only updated when record is saved to prevent spam when constructing a record
+        leaderboard.Validate();
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::IsTrue(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(L"No Cancel condition"), editor.GetAssetValidationWarning());
     }
 
     TEST_METHOD(TestSyncId)

@@ -127,7 +127,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
     if (m_pAsset == pAsset)
         return;
 
-    if (HasAssetValidationError())
+    if (HasAssetValidationError() && m_pAsset->GetChanges() != ra::data::models::AssetChanges::Deleted)
     {
         if (ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Discard changes?",
             L"The currently loaded asset has an error that cannot be saved. If you switch to another asset, your changes will be lost.",
@@ -138,13 +138,13 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
 
         m_pAsset->RemoveNotifyTarget(*this);
         m_pAsset->RestoreLocalCheckpoint();
-
-        SetValue(AssetValidationErrorProperty, L"");
     }
     else if (m_pAsset)
     {
         m_pAsset->RemoveNotifyTarget(*this);
     }
+
+    SetValue(AssetValidationErrorProperty, L"");
 
     // null out internal pointer while binding to prevent change triggers
     m_pAsset = nullptr;
@@ -601,6 +601,14 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
     WindowViewModelBase::OnValueChanged(args);
 }
 
+static void AppendTrigger(std::string& sDefinition, const std::string& sTrigger)
+{
+    if (sTrigger.empty())
+        sDefinition += "0=1";
+    else
+        sDefinition += sTrigger;
+}
+
 void AssetEditorViewModel::OnTriggerChanged()
 {
     const std::string& sTrigger = Trigger().Serialize();
@@ -622,25 +630,25 @@ void AssetEditorViewModel::OnTriggerChanged()
         if (nSelectedPart == LeaderboardPart::Start)
             sDefinition += sTrigger;
         else
-            sDefinition += pLeaderboard->GetStartTrigger();
+            AppendTrigger(sDefinition, pLeaderboard->GetStartTrigger());
 
         sDefinition.append("::SUB:");
         if (nSelectedPart == LeaderboardPart::Submit)
             sDefinition += sTrigger;
         else
-            sDefinition += pLeaderboard->GetSubmitTrigger();
+            AppendTrigger(sDefinition, pLeaderboard->GetSubmitTrigger());
 
         sDefinition.append("::CAN:");
         if (nSelectedPart == LeaderboardPart::Cancel)
             sDefinition += sTrigger;
         else
-            sDefinition += pLeaderboard->GetCancelTrigger();
+            AppendTrigger(sDefinition, pLeaderboard->GetCancelTrigger());
 
         sDefinition.append("::VAL:");
         if (nSelectedPart == LeaderboardPart::Value)
             sDefinition += sTrigger;
         else
-            sDefinition += pLeaderboard->GetValueDefinition();
+            AppendTrigger(sDefinition, pLeaderboard->GetValueDefinition());
 
         nSize = rc_lboard_size(sDefinition.c_str());
     }

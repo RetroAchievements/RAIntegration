@@ -122,12 +122,12 @@ void AssetEditorViewModel::SelectBadgeFile()
     SetBadge(ra::Widen(sBadgeName));
 }
 
-void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset)
+void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, bool bForce)
 {
     if (m_pAsset == pAsset)
         return;
 
-    if (HasAssetValidationError() && m_pAsset->GetChanges() != ra::data::models::AssetChanges::Deleted)
+    if (!bForce && HasAssetValidationError() && m_pAsset->GetChanges() != ra::data::models::AssetChanges::Deleted)
     {
         if (ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Discard changes?",
             L"The currently loaded asset has an error that cannot be saved. If you switch to another asset, your changes will be lost.",

@@ -413,7 +413,7 @@ public:
 
     // ===== Functions =====
 
-    void LoadAsset(ra::data::models::AssetModelBase* pAsset);
+    void LoadAsset(ra::data::models::AssetModelBase* pAsset, bool bForce = false);
     const ra::data::models::AssetModelBase* GetAsset() const noexcept { return m_pAsset; }
 
     void DoFrame();

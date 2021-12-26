@@ -7,6 +7,7 @@
 
 #include "ui\OverlayTheme.hh"
 #include "ui\viewmodels\OverlayManager.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 namespace ra {
 namespace ui {
@@ -27,6 +28,49 @@ void OverlayListPageViewModel::Refresh()
     m_bDetail = false;
     SetTitle(m_sTitle);
     m_nImagesPending = 99;
+}
+
+bool OverlayListPageViewModel::AssetAppearsInFilter(const ra::data::models::AssetModelBase& pAsset)
+{
+    const auto nType = pAsset.GetType();
+    const auto nId = ra::to_signed(pAsset.GetID());
+
+    const auto& pAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
+    const auto& vFilteredAssets = pAssetList.FilteredAssets();
+    for (gsl::index nIndex = 0; nIndex < ra::to_signed(vFilteredAssets.Count()); ++nIndex)
+    {
+        const auto* vmAsset = vFilteredAssets.GetItemAt(nIndex);
+        if (vmAsset && vmAsset->GetId() == nId && vmAsset->GetType() == nType)
+            return true;
+    }
+
+    return false;
+}
+
+OverlayListPageViewModel::ItemViewModel& OverlayListPageViewModel::GetNextItem(size_t* nIndex)
+{
+    Expects(nIndex != nullptr);
+
+    ItemViewModel* pvmItem = m_vItems.GetItemAt((*nIndex)++);
+    if (pvmItem == nullptr)
+    {
+        pvmItem = &m_vItems.Add();
+        Ensures(pvmItem != nullptr);
+    }
+
+    return *pvmItem;
+}
+
+void OverlayListPageViewModel::SetHeader(OverlayListPageViewModel::ItemViewModel& vmItem, const std::wstring& sHeader)
+{
+    vmItem.SetId(0);
+    vmItem.SetLabel(sHeader);
+    vmItem.SetDetail(L"");
+    vmItem.SetDisabled(false);
+    vmItem.Image.ChangeReference(ra::ui::ImageType::None, "");
+    vmItem.SetProgressValue(0U);
+    vmItem.SetProgressMaximum(0U);
+    vmItem.SetProgressPercentage(true);
 }
 
 void OverlayListPageViewModel::EnsureSelectedItemIndexValid()

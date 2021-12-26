@@ -19,6 +19,7 @@ const IntModelProperty LeaderboardModel::ValueFormatProperty("LeaderboardModel",
 const IntModelProperty LeaderboardModel::PauseOnResetProperty("LeaderboardModel", "PauseOnReset", ra::etoi(LeaderboardModel::LeaderboardParts::None));
 const IntModelProperty LeaderboardModel::PauseOnTriggerProperty("LeaderboardModel", "PauseOnTrigger", ra::etoi(LeaderboardModel::LeaderboardParts::None));
 const BoolModelProperty LeaderboardModel::LowerIsBetterProperty("LeaderboardModel", "LowerIsBetter", false);
+const BoolModelProperty LeaderboardModel::IsHiddenProperty("LeaderboardModel", "Hidden", false);
 
 LeaderboardModel::LeaderboardModel() noexcept
 {

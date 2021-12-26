@@ -25,32 +25,6 @@ const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel
 const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::ModifiedDateProperty("AchievementViewModel", "ModifiedDate", L"");
 const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::WonByProperty("AchievementViewModel", "WonBy", L"");
 
-OverlayListPageViewModel::ItemViewModel& OverlayAchievementsPageViewModel::GetNextItem(size_t* nIndex)
-{
-    Expects(nIndex != nullptr);
-
-    ItemViewModel* pvmAchievement = m_vItems.GetItemAt((*nIndex)++);
-    if (pvmAchievement == nullptr)
-    {
-        pvmAchievement = &m_vItems.Add();
-        Ensures(pvmAchievement != nullptr);
-    }
-
-    return *pvmAchievement;
-}
-
-static void SetHeader(OverlayListPageViewModel::ItemViewModel& vmItem, const std::wstring& sHeader)
-{
-    vmItem.SetId(0);
-    vmItem.SetLabel(sHeader);
-    vmItem.SetDetail(L"");
-    vmItem.SetDisabled(false);
-    vmItem.Image.ChangeReference(ra::ui::ImageType::None, "");
-    vmItem.SetProgressValue(0U);
-    vmItem.SetProgressMaximum(0U);
-    vmItem.SetProgressPercentage(true);
-}
-
 static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, const ra::data::models::AchievementModel& vmAchievement)
 {
     vmItem.SetId(vmAchievement.GetID());
@@ -103,22 +77,6 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, cons
         vmItem.SetProgressMaximum(0U);
         vmItem.SetProgressPercentage(false);
     }
-}
-
-static bool AppearsInFilter(const ra::data::models::AchievementModel* vmAchievement)
-{
-    Expects(vmAchievement != nullptr);
-
-    const auto nId = ra::to_signed(vmAchievement->GetID());
-    const auto& vFilteredAssets = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList.FilteredAssets();
-    for (gsl::index nIndex = 0; nIndex < ra::to_signed(vFilteredAssets.Count()); ++nIndex)
-    {
-        const auto* pAsset = vFilteredAssets.GetItemAt(nIndex);
-        if (pAsset && pAsset->GetId() == nId && pAsset->GetType() == ra::data::models::AssetType::Achievement)
-            return true;
-    }
-
-    return false;
 }
 
 void OverlayAchievementsPageViewModel::Refresh()
@@ -204,12 +162,12 @@ void OverlayAchievementsPageViewModel::Refresh()
         switch (vmAchievement->GetCategory())
         {
             case ra::data::models::AssetCategory::Local:
-                if (AppearsInFilter(vmAchievement))
+                if (AssetAppearsInFilter(*vmAchievement))
                     vLocalAchievements.push_back(vmAchievement);
                 break;
 
             case ra::data::models::AssetCategory::Unofficial:
-                if (AppearsInFilter(vmAchievement))
+                if (AssetAppearsInFilter(*vmAchievement))
                     vUnofficialAchievements.push_back(vmAchievement);
                 break;
 

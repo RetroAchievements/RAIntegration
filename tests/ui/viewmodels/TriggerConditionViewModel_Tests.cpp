@@ -844,6 +844,28 @@ public:
         Assert::IsFalse(condition.IsModifying());
     }
 
+    TEST_METHOD(TestSwitchBetweenValueAndAddress)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.SetSourceValue(0x1234U);
+        condition.SetOperator(TriggerOperatorType::NotEquals);
+        condition.SetTargetValue(8U);
+        Assert::AreEqual(std::string("0xH1234!=8"), condition.Serialize());
+        Assert::IsFalse(condition.HasTargetSize());
+
+        // change to address switches size to match source
+        condition.SetTargetType(TriggerOperandType::Delta);
+        Assert::IsTrue(condition.HasTargetSize());
+        Assert::AreEqual(MemSize::EightBit, condition.GetTargetSize());
+        Assert::AreEqual(std::string("0xH1234!=d0xH0008"), condition.Serialize());
+
+        // change to value sets size back to 32-bit
+        condition.SetTargetType(TriggerOperandType::Value);
+        Assert::IsFalse(condition.HasTargetSize());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, condition.GetTargetSize());
+        Assert::AreEqual(std::string("0xH1234!=8"), condition.Serialize());
+    }
+
     TEST_METHOD(TestChangeOperand)
     {
         TriggerConditionViewModelHarness condition;

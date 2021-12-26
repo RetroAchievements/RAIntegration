@@ -92,6 +92,9 @@ public:
     void InitializeFrom(const rc_value_t& pValue);
     void UpdateFrom(const rc_value_t& pValue);
 
+    void SuspendConditionMonitor() const noexcept;
+    void ResumeConditionMonitor() const;
+
     void CopyToClipboard();
 
     void RemoveSelectedConditions();
@@ -180,6 +183,9 @@ private:
             m_vmTrigger = &vmTrigger;
         }
 
+        void BeginUpdate() noexcept { ++m_nUpdateCount; }
+        void EndUpdate();
+
     protected:
         void OnViewModelIntValueChanged(gsl::index nIndex, const IntModelProperty::ChangeArgs& args) override;
         void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
@@ -190,9 +196,12 @@ private:
         void UpdateCurrentGroup();
 
         TriggerViewModel* m_vmTrigger;
+
+        int m_nUpdateCount = 0;
+        bool m_bUpdatePending = false;
     };
 
-    ConditionsMonitor m_pConditionsMonitor;
+    mutable ConditionsMonitor m_pConditionsMonitor;
 
     LookupItemViewModelCollection m_vConditionTypes;
     LookupItemViewModelCollection m_vOperandTypes;

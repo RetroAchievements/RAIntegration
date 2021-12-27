@@ -998,6 +998,55 @@ public:
         Assert::AreEqual(0x2099CD66U, result.nValue);
     }
 
+    TEST_METHOD(TestInitializeFromResultsThirtyTwoBitAlignedNotEqualPreviousLargeMemory)
+    {
+        auto memory = std::make_unique<unsigned char[]>(BIG_BLOCK_SIZE);
+        for (unsigned int i = 0; i < BIG_BLOCK_SIZE; ++i)
+            GSL_SUPPRESS_BOUNDS4 memory[i] = (i % 256);
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory.get(), BIG_BLOCK_SIZE);
+
+        SearchResults results;
+        results.Initialize(0U, BIG_BLOCK_SIZE, ra::services::SearchType::ThirtyTwoBitAligned);
+        Assert::AreEqual({ BIG_BLOCK_SIZE / 4 }, results.MatchingAddressCount());
+
+        memory[0x000002] = 0x55;
+        memory[0x010003] = 0x66;
+        SearchResults results1;
+        results1.Initialize(results, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
+
+        Assert::AreEqual({ 2U }, results1.MatchingAddressCount());
+        Assert::IsTrue(results1.ContainsAddress(0x000000U));
+        Assert::IsTrue(results1.ContainsAddress(0x010000U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results1.GetMatchingAddress(0U, result));
+        Assert::AreEqual(0x000000U, result.nAddress);
+        Assert::AreEqual(MemSize::ThirtyTwoBit, result.nSize);
+        Assert::AreEqual(0x03550100U, result.nValue);
+        Assert::IsTrue(results1.MatchesFilter(results, result));
+
+        Assert::IsTrue(results1.GetMatchingAddress(1U, result));
+        Assert::AreEqual(0x010000U, result.nAddress);
+        Assert::AreEqual(MemSize::ThirtyTwoBit, result.nSize);
+        Assert::AreEqual(0x66020100U, result.nValue);
+        Assert::IsTrue(results1.MatchesFilter(results, result));
+
+        memory[0x010001] = 0x99;
+        SearchResults results2;
+        results2.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
+
+        Assert::AreEqual({ 1U }, results2.MatchingAddressCount());
+        Assert::IsFalse(results2.ContainsAddress(0x000000U));
+        Assert::IsTrue(results2.ContainsAddress(0x010000U));
+
+        Assert::IsTrue(results2.GetMatchingAddress(0U, result));
+        Assert::AreEqual(0x010000U, result.nAddress);
+        Assert::AreEqual(MemSize::ThirtyTwoBit, result.nSize);
+        Assert::AreEqual(0x66029900U, result.nValue);
+        Assert::IsTrue(results2.MatchesFilter(results1, result));
+    }
+
     TEST_METHOD(TestInitializeFromResultsSixteenBitBigEndianNotEqualPrevious)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };

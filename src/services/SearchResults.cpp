@@ -228,7 +228,7 @@ public:
             if (nIndex < gsl::narrow_cast<gsl::index>(pBlock.GetMatchingAddressCount()))
             {
                 result.nAddress = pBlock.GetMatchingAddress(nIndex);
-                return GetValue(pBlock, result);
+                return GetValueFromMemBlock(pBlock, result);
             }
 
             nIndex -= pBlock.GetMatchingAddressCount();
@@ -237,16 +237,23 @@ public:
         return false;
     }
 
-    // gets the value associated with the address and size in the search result structure
-    bool GetValue(const SearchResults& srResults, SearchResults::Result& result) const noexcept
+    /// <summary>
+    /// Gets a value from the search results using the provided virtual address (in result.nAddress)
+    /// </summary>
+    /// <param name="srResults">The search results to read from.</param>
+    /// <param name="result">Contains the size and virtual address of the memory to read.</param>
+    /// <returns><c>true</c> if the memory was available in the block, <c>false</c> if not.</returns>
+    /// <remarks>Sets result.nValue to the value from the captured memory, and changes result.nAddress to a real address</remarks>
+    bool GetValueAtVirtualAddress(const SearchResults& srResults, SearchResults::Result& result) const noexcept
     {
         for (const auto& block : srResults.m_vBlocks)
         {
-            if (GetValue(block, result))
+            if (GetValueFromMemBlock(block, result))
                 return true;
         }
 
         result.nValue = 0;
+        result.nAddress = ConvertToRealAddress(result.nAddress);
         return false;
     }
 
@@ -255,15 +262,17 @@ public:
         return L"0x" + ra::data::MemSizeFormat(pResult.nValue, pResult.nSize, MemFormat::Hex);
     }
 
+    // gets the formatted value for the search result at the specified real address
     virtual std::wstring GetFormattedValue(const SearchResults& pResults, ra::ByteAddress nAddress, MemSize nSize) const
     {
         SearchResults::Result pResult{ ConvertFromRealAddress(nAddress), 0, nSize };
-        if (GetValue(pResults, pResult))
+        if (GetValueAtVirtualAddress(pResults, pResult))
             return GetFormattedValue(pResults, pResult);
 
         return L"";
     }
 
+    // updates the provided result with the current value at the provided real address
     virtual bool UpdateValue(const SearchResults& pResults, SearchResults::Result& pResult,
         _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const
     {
@@ -276,6 +285,13 @@ public:
         return (pResult.nValue != nPreviousValue);
     }
 
+    /// <summary>
+    /// Determines if the provided search result would appear in pResults if it were freshly populated from pPreviousResults
+    /// </summary>
+    /// <param name="pResults">The filtered results.</param>
+    /// <param name="pPreviousResults">The results that pResults was constructed from.</param>
+    /// <param name="pResult">A result to check, contains the current value and real address of the memory to check.</param>
+    /// <returns><c>true</c> if the memory result would be included in pResults, <c>false</c> if not.</returns>
     virtual bool MatchesFilter(const SearchResults& pResults, const SearchResults& pPreviousResults,
         SearchResults::Result& pResult) const noexcept(false)
     {
@@ -287,7 +303,8 @@ public:
         else
         {
             SearchResults::Result pPreviousResult{ pResult };
-            GetValue(pPreviousResults, pPreviousResult);
+            pPreviousResult.nAddress = ConvertFromRealAddress(pResult.nAddress);
+            GetValueAtVirtualAddress(pPreviousResults, pPreviousResult);
 
             switch (pResults.GetFilterType())
             {
@@ -504,8 +521,14 @@ protected:
         return srResults.m_vBlocks;
     }
 
-    // Gets a value from a memory block using a virtual address (in result.nAddress)
-    virtual bool GetValue(const impl::MemBlock& block, SearchResults::Result& result) const noexcept
+    /// <summary>
+    /// Gets a value from a memory block using the provided virtual address (in result.nAddress)
+    /// </summary>
+    /// <param name="block">The memory block to read from.</param>
+    /// <param name="result">Contains the size and virtual address of the memory to read.</param>
+    /// <returns><c>true</c> if the memory was available in the block, <c>false</c> if not.</returns>
+    /// <remarks>Sets result.nValue to the value from the captured memory, and changes result.nAddress to a real address</remarks>
+    virtual bool GetValueFromMemBlock(const impl::MemBlock& block, SearchResults::Result& result) const noexcept
     {
         if (result.nAddress < block.GetFirstAddress())
             return false;
@@ -660,7 +683,7 @@ class FourBitSearchImpl : public SearchImpl
     }
 
 protected:
-    bool GetValue(const impl::MemBlock& block, SearchResults::Result& result) const noexcept override
+    bool GetValueFromMemBlock(const impl::MemBlock& block, SearchResults::Result& result) const noexcept override
     {
         if (result.nAddress & 1)
             result.nSize = MemSize::Nibble_Upper;
@@ -802,12 +825,14 @@ protected:
     }
 
 
-    bool GetValue(const impl::MemBlock& block, SearchResults::Result& result) const noexcept override
+    bool GetValueFromMemBlock(const impl::MemBlock& block, SearchResults::Result& result) const noexcept override
     {
-        result.nAddress *= 4;
+        const unsigned int nOffset = (result.nAddress - block.GetFirstAddress()) * 4;
+        if (nOffset + 3 >= block.GetBytesSize())
+            return false;
 
-        const unsigned int nOffset = result.nAddress - (block.GetFirstAddress() * 4);
         result.nValue = BuildValue(block.GetBytes() + nOffset);
+        result.nAddress *= 4;
 
         return true;
     }
@@ -851,12 +876,14 @@ protected:
     }
 
 
-    bool GetValue(const impl::MemBlock& block, SearchResults::Result& result) const noexcept override
+    bool GetValueFromMemBlock(const impl::MemBlock& block, SearchResults::Result& result) const noexcept override
     {
-        result.nAddress *= 2;
+        const unsigned int nOffset = (result.nAddress - block.GetFirstAddress()) * 2;
+        if (nOffset + 1 >= block.GetBytesSize())
+            return false;
 
-        const unsigned int nOffset = result.nAddress - (block.GetFirstAddress() * 2);
         result.nValue = BuildValue(block.GetBytes() + nOffset);
+        result.nAddress *= 2;
 
         return true;
     }
@@ -1177,7 +1204,7 @@ public:
         else
         {
             SearchResults::Result pPreviousResult{ pResult };
-            GetValue(pPreviousResults, pPreviousResult);
+            GetValueAtVirtualAddress(pPreviousResults, pPreviousResult);
             const auto* pPreviousValue = reinterpret_cast<const unsigned char*>(&pPreviousResult.nValue);
             fPreviousValue = BuildFloatValue(pPreviousValue);
         }
@@ -1432,6 +1459,15 @@ ra::ByteAddress MemBlock::GetMatchingAddress(gsl::index nIndex) const noexcept
             {
                 nMask = 0x01;
                 pAddresses++;
+
+                while (!*pAddresses)
+                {
+                    nAddress += 8;
+                    if (nAddress >= nStop)
+                        break;
+
+                    pAddresses++;
+                }
             }
             else
             {
@@ -1638,7 +1674,7 @@ bool SearchResults::GetMatchingAddress(const SearchResults::Result& pSrcResult, 
     if (m_pImpl == nullptr)
         return false;
 
-    return m_pImpl->GetValue(*this, result);
+    return m_pImpl->GetValueAtVirtualAddress(*this, result);
 }
 
 bool SearchResults::GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, size_t nCount) const noexcept

@@ -1000,7 +1000,8 @@ public:
 
     TEST_METHOD(TestInitializeFromResultsThirtyTwoBitAlignedNotEqualPreviousLargeMemory)
     {
-        auto memory = std::make_unique<unsigned char[]>(BIG_BLOCK_SIZE);
+        // WHY is the std::move necessary here, but not in other LargeMemory tests? (C26414)
+        auto memory = std::move(std::make_unique<unsigned char[]>(BIG_BLOCK_SIZE));
         for (unsigned int i = 0; i < BIG_BLOCK_SIZE; ++i)
             GSL_SUPPRESS_BOUNDS4 memory[i] = (i % 256);
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
@@ -1010,8 +1011,8 @@ public:
         results.Initialize(0U, BIG_BLOCK_SIZE, ra::services::SearchType::ThirtyTwoBitAligned);
         Assert::AreEqual({ BIG_BLOCK_SIZE / 4 }, results.MatchingAddressCount());
 
-        memory[0x000002] = 0x55;
-        memory[0x010003] = 0x66;
+        GSL_SUPPRESS_BOUNDS4 memory[0x000002] = 0x55;
+        GSL_SUPPRESS_BOUNDS4 memory[0x010003] = 0x66;
         SearchResults results1;
         results1.Initialize(results, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 
@@ -1032,7 +1033,7 @@ public:
         Assert::AreEqual(0x66020100U, result.nValue);
         Assert::IsTrue(results1.MatchesFilter(results, result));
 
-        memory[0x010001] = 0x99;
+        GSL_SUPPRESS_BOUNDS4 memory[0x010001] = 0x99;
         SearchResults results2;
         results2.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
 

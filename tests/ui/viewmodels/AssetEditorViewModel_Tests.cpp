@@ -2,6 +2,7 @@
 
 #include "ui\EditorTheme.hh"
 
+#include "ui\BindingBase.hh"
 #include "ui\viewmodels\AssetEditorViewModel.hh"
 #include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -80,8 +81,24 @@ private:
             SetValue(AssetValidationErrorProperty, sValue);
         }
 
+        int GetTriggerVersion()
+        {
+            TriggerVersionBinding binding(Trigger());
+            return binding.GetVersion();
+        }
+
     private:
         ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> m_pMockThemeOverride;
+
+        class TriggerVersionBinding : public ui::BindingBase
+        {
+        public:
+            TriggerVersionBinding(TriggerViewModel& vmTrigger) noexcept : ui::BindingBase(vmTrigger)
+            {
+            }
+
+            int GetVersion() const { return GetValue(TriggerViewModel::VersionProperty); }
+        };
     };
 
 
@@ -1509,6 +1526,41 @@ public:
         Expects(pCondition != nullptr);
         Assert::AreEqual(TriggerConditionType::Measured, pCondition->GetType());
         Assert::AreEqual(2U, pCondition->GetRequiredHits());
+    }
+
+    TEST_METHOD(TestTriggerUpdatedValueToDelta)
+    {
+        // When a condition changes from value to delta, two properties are changed (type and size)
+        // Expect a single change notification and make sure the condition is referenced by the updated condition
+
+        AssetEditorViewModelHarness editor;
+        editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        AchievementModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("0xH1234=1");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.Activate();
+
+        editor.LoadAsset(&achievement);
+
+        editor.Trigger().SetSelectedGroupIndex(0);
+        auto& condition = *editor.Trigger().Conditions().GetItemAt(0);
+        auto& group = *editor.Trigger().Groups().GetItemAt(0);
+        const auto initialVersion = editor.GetTriggerVersion();
+        Assert::IsNotNull(group.m_pConditionSet);
+
+        // change to address switches size to match source
+        condition.SetTargetType(TriggerOperandType::Delta);
+        Assert::AreEqual(std::string("0xH1234=d0xH0001"), achievement.GetTrigger());
+        Assert::AreEqual(initialVersion + 1, editor.GetTriggerVersion());
+        Assert::IsNotNull(group.m_pConditionSet);
+
+        // change to value sets size back to 32-bit
+        condition.SetTargetType(TriggerOperandType::Value);
+        Assert::AreEqual(std::string("0xH1234=1"), achievement.GetTrigger());
+        Assert::AreEqual(initialVersion + 2, editor.GetTriggerVersion());
+        Assert::IsNotNull(group.m_pConditionSet);
     }
 
     TEST_METHOD(TestValueUpdated)

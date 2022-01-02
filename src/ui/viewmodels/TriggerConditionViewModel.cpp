@@ -386,6 +386,11 @@ bool TriggerConditionViewModel::IsForValue() const noexcept
 
 void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 {
+    // suspend the condition monitor so it only handles one change event regardless of how many properties we change
+    const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
+    if (pTriggerViewModel != nullptr)
+        pTriggerViewModel->SuspendConditionMonitor();
+
     if (args.Property == SourceTypeProperty)
     {
         const auto nOldType = ra::itoe<TriggerOperandType>(args.tOldValue);
@@ -439,6 +444,10 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
     }
 
     ViewModelBase::OnValueChanged(args);
+
+    // resume after calling base, as that's where the ConditionMonitor will handle the current event
+    if (pTriggerViewModel != nullptr)
+        pTriggerViewModel->ResumeConditionMonitor();
 }
 
 void TriggerConditionViewModel::UpdateHasHits()
@@ -583,6 +592,8 @@ unsigned int TriggerConditionViewModel::GetIndirectAddress(unsigned int nAddress
     memset(&oEvalState, 0, sizeof(oEvalState));
     rc_typed_value_t value = {};
     oEvalState.peek = rc_peek_callback;
+
+    Expects(pGroup->m_pConditionSet != nullptr);
 
     gsl::index nConditionIndex = 0;
     rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;

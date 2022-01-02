@@ -639,12 +639,43 @@ void TriggerViewModel::ConditionsMonitor::OnEndViewModelCollectionUpdate()
 
 void TriggerViewModel::ConditionsMonitor::UpdateCurrentGroup()
 {
+    if (m_nUpdateCount > 0)
+    {
+        m_bUpdatePending = true;
+        return;
+    }
+
     auto* pGroup = m_vmTrigger->m_vGroups.GetItemAt(m_vmTrigger->GetSelectedGroupIndex());
     if (pGroup)
     {
         if (pGroup->UpdateSerialized(m_vmTrigger->m_vConditions))
             m_vmTrigger->UpdateVersion();
     }
+}
+
+void TriggerViewModel::ConditionsMonitor::EndUpdate()
+{
+    if (m_nUpdateCount > 0)
+    {
+        if (--m_nUpdateCount == 0)
+        {
+            if (m_bUpdatePending)
+            {
+                m_bUpdatePending = false;
+                UpdateCurrentGroup();
+            }
+        }
+    }
+}
+
+void TriggerViewModel::SuspendConditionMonitor() const noexcept
+{
+    m_pConditionsMonitor.BeginUpdate();
+}
+
+void TriggerViewModel::ResumeConditionMonitor() const
+{
+    m_pConditionsMonitor.EndUpdate();
 }
 
 void TriggerViewModel::UpdateVersion()

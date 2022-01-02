@@ -578,6 +578,38 @@ public:
         Assert::AreEqual(std::wstring(), editor.GetAssetValidationWarning());
     }
 
+    TEST_METHOD(TestLoadAchievementForcedValidationError)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetName(L"Test Achievement");
+        achievement.SetID(1234U);
+        achievement.SetState(AssetState::Active);
+        achievement.SetDescription(L"Do something cool");
+        achievement.SetCategory(AssetCategory::Unofficial);
+        achievement.SetPoints(10);
+        achievement.SetBadge(L"58329");
+        achievement.SetTrigger("M:0x1234=10");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&achievement);
+        editor.SetAssetValidationError(L"Multiple Measured"); // not really, just fake it
+
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Multiple Measured"), editor.GetAssetValidationError());
+
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationWarning());
+
+        editor.LoadAsset(nullptr, true);
+        Assert::IsFalse(editor.mockDesktop.WasDialogShown());
+        Assert::IsFalse(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationError());
+        Assert::IsFalse(editor.HasAssetValidationWarning());
+        Assert::AreEqual(std::wstring(), editor.GetAssetValidationWarning());
+    }
+
     TEST_METHOD(TestLoadLeaderboard)
     {
         AssetEditorViewModelHarness editor;

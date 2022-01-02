@@ -46,7 +46,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 {
     // remove the current asset from the asset editor
     auto& vmWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
-    vmWindowManager.AssetEditor.LoadAsset(nullptr);
+    vmWindowManager.AssetEditor.LoadAsset(nullptr, true);
 
     // reset the runtime
     auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();

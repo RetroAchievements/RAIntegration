@@ -924,6 +924,24 @@ public:
         Assert::AreEqual(1, vmTrigger.GetVersion());
     }
 
+    TEST_METHOD(TestAddGroupNoAltsValue)
+    {
+        TriggerViewModelHarness vmTrigger;
+        vmTrigger.SetIsValue(true);
+        Parse(vmTrigger, "");
+        Assert::AreEqual({ 1U }, vmTrigger.Groups().Count());
+
+        vmTrigger.AddGroup();
+        Assert::AreEqual({ 2U }, vmTrigger.Groups().Count());
+
+        Assert::AreEqual(std::wstring(L"Value"), vmTrigger.Groups().GetItemAt(0)->GetLabel());
+        Assert::AreEqual(std::wstring(L"Alt 1"), vmTrigger.Groups().GetItemAt(1)->GetLabel());
+
+        Assert::AreEqual(1, vmTrigger.GetSelectedGroupIndex());
+        Assert::AreEqual(1, vmTrigger.GetEnsureVisibleGroupIndex());
+        Assert::AreEqual(1, vmTrigger.GetVersion());
+    }
+
     TEST_METHOD(TestRemoveGroupCore)
     {
         TriggerViewModelHarness vmTrigger;

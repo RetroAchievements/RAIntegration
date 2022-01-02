@@ -810,7 +810,7 @@ void TriggerViewModel::AddGroup()
 {
     const int nGroups = gsl::narrow_cast<int>(m_vGroups.Count());
 
-    if (nGroups == 1)
+    if (nGroups == 1 && !m_bIsValue)
     {
         // only a core group, add two alt groups
         AddAltGroup(m_vGroups, nGroups, nullptr);

@@ -189,7 +189,7 @@ public:
                     return false;
                 }
 
-                vmItems.SetItemValue(nIndex, *m_pBoundProperty, sValue);
+                vmItems.SetItemValue(nIndex, *m_pBoundProperty, ra::StringPrintf(L"0x%02x", nValue));
                 return true;
             }
         }

@@ -42,6 +42,7 @@ public:
             std::string Definition;
             int Format{ 0 };
             bool LowerIsBetter{ false };
+            bool Hidden{ false };
         };
         std::vector<Leaderboard> Leaderboards;
     };

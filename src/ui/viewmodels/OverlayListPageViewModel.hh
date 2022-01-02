@@ -3,6 +3,8 @@
 
 #include "OverlayViewModel.hh"
 
+#include "data\models\AssetModelBase.hh"
+
 #include "ui\ViewModelCollection.hh"
 #include "ui\viewmodels\LookupItemViewModel.hh"
 
@@ -161,6 +163,10 @@ protected:
     bool m_bDetail = false;
     std::wstring m_sTitle;
     std::wstring m_sDetailTitle;
+
+    ItemViewModel& GetNextItem(size_t* nIndex);
+    static void SetHeader(OverlayListPageViewModel::ItemViewModel& vmItem, const std::wstring& sHeader);
+    static bool AssetAppearsInFilter(const ra::data::models::AssetModelBase& pAsset);
 
     ra::ui::ViewModelCollection<ItemViewModel> m_vItems;
 

@@ -86,8 +86,6 @@ protected:
     std::map<ra::AchievementID, AchievementViewModel> m_vAchievementDetails;
 
 private:
-    ItemViewModel& GetNextItem(size_t* nIndex);
-
     void RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, _UNUSED int nWidth, int nHeight) const override;
 
     std::wstring m_sSummary;

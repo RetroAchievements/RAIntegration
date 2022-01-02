@@ -13,6 +13,14 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
+static void SetLeaderboard(OverlayListPageViewModel::ItemViewModel& vmItem, const ra::data::models::LeaderboardModel& vmLeaderboard)
+{
+    vmItem.SetId(vmLeaderboard.GetID());
+    vmItem.SetLabel(vmLeaderboard.GetName());
+    vmItem.SetDetail(vmLeaderboard.GetDescription());
+    vmItem.SetDisabled(vmLeaderboard.GetState() == ra::data::models::AssetState::Disabled);
+}
+
 void OverlayLeaderboardsPageViewModel::Refresh()
 {
     m_sTitle = L"Leaderboards";
@@ -25,27 +33,112 @@ void OverlayLeaderboardsPageViewModel::Refresh()
     SetListTitle(pGameContext.GameTitle());
 
     // leaderboard list
-    size_t nNumberOfLeaderboards = 0;
+    std::vector<const ra::data::models::LeaderboardModel*> vActiveLeaderboards;
+    std::vector<const ra::data::models::LeaderboardModel*> vLocalLeaderboards;
+    std::vector<const ra::data::models::LeaderboardModel*> vCoreLeaderboards;
+    std::vector<const ra::data::models::LeaderboardModel*> vUnsupportedLeaderboards;
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
     {
         const auto* pLeaderboard = dynamic_cast<const ra::data::models::LeaderboardModel*>(pGameContext.Assets().GetItemAt(nIndex));
-        if (pLeaderboard != nullptr)
+        if (pLeaderboard != nullptr && !pLeaderboard->IsHidden())
         {
-            ItemViewModel* pvmLeaderboard = m_vItems.GetItemAt(nNumberOfLeaderboards);
-            if (pvmLeaderboard == nullptr)
+            switch (pLeaderboard->GetState())
             {
-                pvmLeaderboard = &m_vItems.Add();
-                Ensures(pvmLeaderboard != nullptr);
+                case ra::data::models::AssetState::Primed:
+                    vActiveLeaderboards.push_back(pLeaderboard);
+                    continue;
+
+                case ra::data::models::AssetState::Disabled:
+                    vUnsupportedLeaderboards.push_back(pLeaderboard);
+                    continue;
+
+                default:
+                    break;
             }
 
-            pvmLeaderboard->SetId(pLeaderboard->GetID());
-            pvmLeaderboard->SetLabel(pLeaderboard->GetName());
-            pvmLeaderboard->SetDetail(pLeaderboard->GetDescription());
-            ++nNumberOfLeaderboards;
+            switch (pLeaderboard->GetCategory())
+            {
+                case ra::data::models::AssetCategory::Core:
+                    vCoreLeaderboards.push_back(pLeaderboard);
+                    break;
+
+                default:
+                    if (AssetAppearsInFilter(*pLeaderboard))
+                        vLocalLeaderboards.push_back(pLeaderboard);
+                    break;
+            }
         }
     }
 
-    while (m_vItems.Count() > nNumberOfLeaderboards)
+    size_t nIndex = 0;
+    size_t nNumberOfLeaderboards = 0;
+
+    if (!vActiveLeaderboards.empty())
+    {
+        auto& pvmHeader = GetNextItem(&nIndex);
+        SetHeader(pvmHeader, L"Active Leaderboards");
+
+        for (const auto* vmLeaderboard : vActiveLeaderboards)
+        {
+            auto& pvmLeaderboard = GetNextItem(&nIndex);
+            SetLeaderboard(pvmLeaderboard, *vmLeaderboard);
+        }
+
+        nNumberOfLeaderboards += vActiveLeaderboards.size();
+    }
+
+    if (!vLocalLeaderboards.empty())
+    {
+        if (nIndex > 0 || !vCoreLeaderboards.empty() || !vUnsupportedLeaderboards.empty())
+        {
+            auto& pvmHeader = GetNextItem(&nIndex);
+            SetHeader(pvmHeader, L"Inactive Local Leaderboards");
+        }
+
+        for (const auto* vmLeaderboard : vLocalLeaderboards)
+        {
+            auto& pvmLeaderboard = GetNextItem(&nIndex);
+            SetLeaderboard(pvmLeaderboard, *vmLeaderboard);
+        }
+
+        nNumberOfLeaderboards += vLocalLeaderboards.size();
+    }
+
+    if (!vCoreLeaderboards.empty())
+    {
+        if (nIndex > 0 || !vUnsupportedLeaderboards.empty())
+        {
+            auto& pvmHeader = GetNextItem(&nIndex);
+            SetHeader(pvmHeader, L"Inactive Leaderboards");
+        }
+
+        for (const auto* vmLeaderboard : vCoreLeaderboards)
+        {
+            auto& pvmLeaderboard = GetNextItem(&nIndex);
+            SetLeaderboard(pvmLeaderboard, *vmLeaderboard);
+        }
+
+        nNumberOfLeaderboards += vCoreLeaderboards.size();
+    }
+
+    if (!vUnsupportedLeaderboards.empty())
+    {
+        if (nIndex > 0)
+        {
+            auto& pvmHeader = GetNextItem(&nIndex);
+            SetHeader(pvmHeader, L"Unsupported Leaderboards");
+        }
+
+        for (const auto* vmLeaderboard : vUnsupportedLeaderboards)
+        {
+            auto& pvmLeaderboard = GetNextItem(&nIndex);
+            SetLeaderboard(pvmLeaderboard, *vmLeaderboard);
+        }
+
+        nNumberOfLeaderboards += vUnsupportedLeaderboards.size();
+    }
+
+    while (m_vItems.Count() > nIndex)
         m_vItems.RemoveAt(m_vItems.Count() - 1);
 
     // summary

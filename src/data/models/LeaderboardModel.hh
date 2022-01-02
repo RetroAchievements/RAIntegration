@@ -152,6 +152,21 @@ public:
     void SetLowerIsBetter(bool nValue) { SetValue(LowerIsBetterProperty, nValue); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the leaderboard should not be displayed in the overlay.
+    /// </summary>
+    static const BoolModelProperty IsHiddenProperty;
+
+    /// <summary>
+    /// Gets whether or not the leaderboard should not be displayed in the overlay.
+    /// </summary>
+    bool IsHidden() const { return GetValue(IsHiddenProperty); }
+
+    /// <summary>
+    /// Sets whether or not the leaderboard should not be displayed in the overlay.
+    /// </summary>
+    void SetHidden(bool nValue) { SetValue(IsHiddenProperty, nValue); }
+
+    /// <summary>
     /// Populates the start/submit/cancel/value fields from a compound definition.
     /// </summary>
     void SetDefinition(const std::string& sDefinition);

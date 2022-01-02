@@ -867,6 +867,7 @@ void ConnectedServer::ProcessGamePatchData(ra::api::FetchGameData::Response &res
             pLeaderboard.Definition = pSrcLeaderboard->definition;
             pLeaderboard.Format = pSrcLeaderboard->format;
             pLeaderboard.LowerIsBetter = pSrcLeaderboard->lower_is_better;
+            pLeaderboard.Hidden = pSrcLeaderboard->hidden;
         }
     }
 

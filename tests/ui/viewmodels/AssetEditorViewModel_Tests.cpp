@@ -1563,6 +1563,63 @@ public:
         Assert::IsNotNull(group.m_pConditionSet);
     }
 
+    TEST_METHOD(TestTriggerUnmodifiedUpdate)
+    {
+        AssetEditorViewModelHarness editor;
+        editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        AchievementModel achievement;
+        achievement.SetID(1234U);
+        achievement.SetTrigger("0xH1234=1_0xH1235=2");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+        achievement.Activate();
+
+        editor.LoadAsset(&achievement);
+
+        // make sure the record got loaded into the runtime
+        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+
+        Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
+        editor.Trigger().Conditions().GetItemAt(1)->SetSelected(true);
+        editor.Trigger().MoveSelectedConditionsUp();
+
+        // make sure the trigger definition got updated
+        Assert::AreEqual(std::string("0xH1235=2_0xH1234=1"), achievement.GetTrigger());
+        Assert::IsNotNull(editor.Trigger().Groups().GetItemAt(0)->m_pConditionSet);
+
+        // make sure the UI picked up the updated value
+        Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
+        const auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(std::wstring(L"0x1235"), pCondition->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"2"), pCondition->GetTargetValue());
+        pCondition = editor.Trigger().Conditions().GetItemAt(1);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"1"), pCondition->GetTargetValue());
+
+        // second attempt to move will not actually do anything
+        Assert::IsTrue(editor.Trigger().Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsFalse(editor.Trigger().Conditions().GetItemAt(1)->IsSelected());
+        editor.Trigger().MoveSelectedConditionsUp();
+
+        // make sure the trigger definition did not update
+        Assert::AreEqual(std::string("0xH1235=2_0xH1234=1"), achievement.GetTrigger());
+        Assert::IsNotNull(editor.Trigger().Groups().GetItemAt(0)->m_pConditionSet);
+
+        // make sure the UI did not update
+        Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
+        pCondition = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(std::wstring(L"0x1235"), pCondition->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"2"), pCondition->GetTargetValue());
+        pCondition = editor.Trigger().Conditions().GetItemAt(1);
+        Expects(pCondition != nullptr);
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"1"), pCondition->GetTargetValue());
+    }
+
     TEST_METHOD(TestValueUpdated)
     {
         AssetEditorViewModelHarness editor;

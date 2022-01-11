@@ -302,15 +302,17 @@ public:
     /// Determines whether the specified address appears in the matching address list.
     /// </summary>
     /// <param name="nAddress">The n address.</param>
-    /// <returns><c>true</c> if the specified address is in the matching address list; otherwise,
+    /// <returns><c>true</c> if the specified address is in the matching address list; otherwise
     /// <c>false</c>.</returns>
     bool ContainsAddress(ra::ByteAddress nAddress) const;
 
     /// <summary>
-    /// Removes an address from the matching address list.
+    /// Removes an entry from the matching address list.
     /// </summary>
-    /// <param name="nAddress">The address to remove.</param>
-    void ExcludeAddress(ra::ByteAddress nAddress);
+    /// <param name="pResult">The result to remove.</param>
+    /// <returns><c>true</c> if the specified address was removed from the matching address list;
+    /// otherwise <c>false</c>.</returns>
+    bool ExcludeResult(const SearchResults::Result& pResult);
 
 private:
     void MergeSearchResults(const SearchResults& srMemory, const SearchResults& srAddresses);

@@ -1010,9 +1010,27 @@ void MemorySearchViewModel::ExcludeSelected()
 
     const SearchResult& pPreviousResult = m_vSearchResults.back();
     SearchResult pResult{ pPreviousResult }; // clone previous item
+    ra::services::SearchResults::Result pItem {};
 
-    for (const auto nAddress : m_vSelectedAddresses)
-        pResult.pResults.ExcludeAddress(nAddress);
+    const auto nSize = pPreviousResult.pResults.GetSize();
+    if (nSize == MemSize::Nibble_Lower)
+    {
+        for (const auto nAddress : m_vSelectedAddresses)
+        {
+            pItem.nAddress = nAddress >> 1;
+            pItem.nSize = (nAddress & 1) ? MemSize::Nibble_Upper : MemSize::Nibble_Lower;
+            pResult.pResults.ExcludeResult(pItem);
+        }
+    }
+    else
+    {
+        pItem.nSize = nSize;
+        for (const auto nAddress : m_vSelectedAddresses)
+        {
+            pItem.nAddress = nAddress;
+            pResult.pResults.ExcludeResult(pItem);
+        }
+    }
 
     // attempt to keep scroll offset after filtering.
     // adjust for any items removed above the first visible address.

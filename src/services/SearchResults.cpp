@@ -97,6 +97,15 @@ public:
         return false;
     }
 
+    // Removes the result associated to the specified real address from the collection of matched addresses.
+    virtual bool ExcludeResult(SearchResults& srResults, const SearchResults::Result& pResult) const
+    {
+        if (pResult.nAddress & (GetStride() - 1))
+            return false;
+
+        return ExcludeAddress(srResults, ConvertFromRealAddress(pResult.nAddress));
+    }
+
     virtual bool ValidateFilterValue(SearchResults& srNew) const noexcept(false)
     {
         // convert the filter string into a value
@@ -521,6 +530,21 @@ protected:
         return srResults.m_vBlocks;
     }
 
+    // Removes the result associated to the specified virtual address from the collection of matched addresses.
+    static bool ExcludeAddress(SearchResults& srResults, ra::ByteAddress nAddress)
+    {
+        for (auto& pBlock : srResults.m_vBlocks)
+        {
+            if (pBlock.ContainsAddress(nAddress))
+            {
+                pBlock.ExcludeMatchingAddress(nAddress);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Gets a value from a memory block using the provided virtual address (in result.nAddress)
     /// </summary>
@@ -620,6 +644,15 @@ class FourBitSearchImpl : public SearchImpl
         }
 
         return false;
+    }
+
+    bool ExcludeResult(SearchResults& srResults, const SearchResults::Result& pResult) const override
+    {
+        auto nAddress = pResult.nAddress << 1;
+        if (pResult.nSize == MemSize::Nibble_Upper)
+            nAddress |= 1;
+
+        return ExcludeAddress(srResults, nAddress);
     }
 
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
@@ -1641,19 +1674,12 @@ size_t SearchResults::MatchingAddressCount() const noexcept
     return nCount;
 }
 
-void SearchResults::ExcludeAddress(ra::ByteAddress nAddress)
+bool SearchResults::ExcludeResult(const SearchResults::Result& pResult)
 {
-    if (m_nFilterType == SearchFilterType::None)
-        return;
+    if (m_nFilterType != SearchFilterType::None && m_pImpl != nullptr)
+        return m_pImpl->ExcludeResult(*this, pResult);
 
-    for (auto& pBlock : m_vBlocks)
-    {
-        if (pBlock.ContainsAddress(nAddress))
-        {
-            pBlock.ExcludeMatchingAddress(nAddress);
-            break;
-        }
-    }
+    return false;
 }
 
 bool SearchResults::GetMatchingAddress(gsl::index nIndex, _Out_ SearchResults::Result& result) const noexcept

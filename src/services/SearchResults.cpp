@@ -1603,10 +1603,12 @@ void SearchResults::MergeSearchResults(const SearchResults& srMemory, const Sear
 
     for (const auto pSrcBlock : srAddresses.m_vBlocks)
     {
-        unsigned int nSize = pSrcBlock.GetBytesSize();
-        ra::ByteAddress nAddress = pSrcBlock.GetFirstAddress();
-        const auto nMaxAddresses = pSrcBlock.GetMaxAddresses();
-        auto& pNewBlock = m_vBlocks.emplace_back(nAddress, nSize, nMaxAddresses);
+        // copy the block from the srAddresses collection, then update the memory from the srMemory collection.
+        // this creates a new block with the memory from the srMemory collection and the addresses from the
+        // srAddresses collection.
+        auto& pNewBlock = m_vBlocks.emplace_back(pSrcBlock);
+        unsigned int nSize = pNewBlock.GetBytesSize();
+        ra::ByteAddress nAddress = pNewBlock.GetFirstAddress();
         unsigned char* pWrite = pNewBlock.GetBytes();
 
         for (const auto pMemBlock : srMemory.m_vBlocks)

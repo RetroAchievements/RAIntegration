@@ -1008,8 +1008,8 @@ void MemorySearchViewModel::ExcludeSelected()
     if (m_vSelectedAddresses.empty())
         return;
 
-    const SearchResult& pPreviousResult = m_vSearchResults.back();
-    SearchResult pResult{ pPreviousResult }; // clone previous item
+    const auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
+    SearchResult pResult{ pCurrentResults }; // clone current item
 
     for (const auto nAddress : m_vSelectedAddresses)
         pResult.pResults.ExcludeAddress(nAddress);

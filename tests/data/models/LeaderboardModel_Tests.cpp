@@ -192,6 +192,44 @@ public:
         Assert::IsNull(pLeaderboard);
     }
 
+    TEST_METHOD(TestDeserialize)
+    {
+        LeaderboardModelHarness leaderboard;
+
+        const std::string sSerialized = ":\"0xH1234=1\":\"0xH1234=2\":\"0xH1234=3\":\"0xH1234\":FRAMES:Title:Desc";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Consume(':');
+
+        Assert::IsTrue(leaderboard.Deserialize(pTokenizer));
+
+        Assert::AreEqual(std::string("0xH1234=1"), leaderboard.GetStartTrigger());
+        Assert::AreEqual(std::string("0xH1234=2"), leaderboard.GetCancelTrigger());
+        Assert::AreEqual(std::string("0xH1234=3"), leaderboard.GetSubmitTrigger());
+        Assert::AreEqual(std::string("0xH1234"), leaderboard.GetValueDefinition());
+        Assert::AreEqual(ValueFormat::Frames, leaderboard.GetValueFormat());
+        Assert::AreEqual(std::wstring(L"Title"), leaderboard.GetName());
+        Assert::AreEqual(std::wstring(L"Desc"), leaderboard.GetDescription());
+    }
+
+    TEST_METHOD(TestDeserializeEmpty)
+    {
+        LeaderboardModelHarness leaderboard;
+
+        const std::string sSerialized = ":\"\":\"\":\"\":\"\":::";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Consume(':');
+
+        Assert::IsTrue(leaderboard.Deserialize(pTokenizer));
+
+        Assert::AreEqual(std::string(), leaderboard.GetStartTrigger());
+        Assert::AreEqual(std::string(), leaderboard.GetCancelTrigger());
+        Assert::AreEqual(std::string(), leaderboard.GetSubmitTrigger());
+        Assert::AreEqual(std::string(), leaderboard.GetValueDefinition());
+        Assert::AreEqual(ValueFormat::Value, leaderboard.GetValueFormat());
+        Assert::AreEqual(std::wstring(), leaderboard.GetName());
+        Assert::AreEqual(std::wstring(), leaderboard.GetDescription());
+    }
+
     void TestSerializeValueFormat(ValueFormat nFormat, const std::string& sFormat)
     {
         LeaderboardModelHarness leaderboard;

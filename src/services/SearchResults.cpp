@@ -97,6 +97,15 @@ public:
         return false;
     }
 
+    // Removes the result associated to the specified real address from the collection of matched addresses.
+    virtual bool ExcludeResult(SearchResults& srResults, const SearchResults::Result& pResult) const
+    {
+        if (pResult.nAddress & (GetStride() - 1))
+            return false;
+
+        return ExcludeAddress(srResults, ConvertFromRealAddress(pResult.nAddress));
+    }
+
     virtual bool ValidateFilterValue(SearchResults& srNew) const noexcept(false)
     {
         // convert the filter string into a value
@@ -521,6 +530,21 @@ protected:
         return srResults.m_vBlocks;
     }
 
+    // Removes the result associated to the specified virtual address from the collection of matched addresses.
+    static bool ExcludeAddress(SearchResults& srResults, ra::ByteAddress nAddress)
+    {
+        for (auto& pBlock : srResults.m_vBlocks)
+        {
+            if (pBlock.ContainsAddress(nAddress))
+            {
+                pBlock.ExcludeMatchingAddress(nAddress);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Gets a value from a memory block using the provided virtual address (in result.nAddress)
     /// </summary>
@@ -620,6 +644,15 @@ class FourBitSearchImpl : public SearchImpl
         }
 
         return false;
+    }
+
+    bool ExcludeResult(SearchResults& srResults, const SearchResults::Result& pResult) const override
+    {
+        auto nAddress = pResult.nAddress << 1;
+        if (pResult.nSize == MemSize::Nibble_Upper)
+            nAddress |= 1;
+
+        return ExcludeAddress(srResults, nAddress);
     }
 
     void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
@@ -1570,10 +1603,12 @@ void SearchResults::MergeSearchResults(const SearchResults& srMemory, const Sear
 
     for (const auto pSrcBlock : srAddresses.m_vBlocks)
     {
-        unsigned int nSize = pSrcBlock.GetBytesSize();
-        ra::ByteAddress nAddress = pSrcBlock.GetFirstAddress();
-        const auto nMaxAddresses = pSrcBlock.GetMaxAddresses();
-        auto& pNewBlock = m_vBlocks.emplace_back(nAddress, nSize, nMaxAddresses);
+        // copy the block from the srAddresses collection, then update the memory from the srMemory collection.
+        // this creates a new block with the memory from the srMemory collection and the addresses from the
+        // srAddresses collection.
+        auto& pNewBlock = m_vBlocks.emplace_back(pSrcBlock);
+        unsigned int nSize = pNewBlock.GetBytesSize();
+        ra::ByteAddress nAddress = pNewBlock.GetFirstAddress();
         unsigned char* pWrite = pNewBlock.GetBytes();
 
         for (const auto pMemBlock : srMemory.m_vBlocks)
@@ -1641,19 +1676,12 @@ size_t SearchResults::MatchingAddressCount() const noexcept
     return nCount;
 }
 
-void SearchResults::ExcludeAddress(ra::ByteAddress nAddress)
+bool SearchResults::ExcludeResult(const SearchResults::Result& pResult)
 {
-    if (m_nFilterType == SearchFilterType::None)
-        return;
+    if (m_nFilterType != SearchFilterType::None && m_pImpl != nullptr)
+        return m_pImpl->ExcludeResult(*this, pResult);
 
-    for (auto& pBlock : m_vBlocks)
-    {
-        if (pBlock.ContainsAddress(nAddress))
-        {
-            pBlock.ExcludeMatchingAddress(nAddress);
-            break;
-        }
-    }
+    return false;
 }
 
 bool SearchResults::GetMatchingAddress(gsl::index nIndex, _Out_ SearchResults::Result& result) const noexcept

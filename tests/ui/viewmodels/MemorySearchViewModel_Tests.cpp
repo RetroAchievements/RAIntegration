@@ -1132,6 +1132,50 @@ public:
         Assert::AreEqual({ 16U }, search.GetResultCount());
     }
 
+    TEST_METHOD(TestExcludeSelectedEightBitPrevious)
+    {
+        MemorySearchViewModelHarness search;
+        search.InitializeMemory();
+        search.BeginNewSearch();
+
+        search.SetComparisonType(ComparisonType::LessThan);
+        search.SetValueType(ra::services::SearchFilterType::Constant);
+        search.SetFilterValue(L"5");
+
+        search.ApplyFilter();
+        Assert::AreEqual({ 0 }, search.GetScrollOffset());
+        Assert::AreEqual(std::wstring(L"1/1"), search.GetSelectedPage());
+        Assert::AreEqual({ 5U }, search.GetResultCount());
+        Assert::AreEqual(MemSize::EightBit, search.ResultMemSize());
+
+        search.SetComparisonType(ComparisonType::Equals);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
+        search.ApplyFilter();
+        Assert::AreEqual(std::wstring(L"2/2"), search.GetSelectedPage());
+        Assert::AreEqual({ 5U }, search.GetResultCount());
+
+        search.memory.at(3) = 4;
+        search.ApplyFilter();
+        Assert::AreEqual(std::wstring(L"3/3"), search.GetSelectedPage());
+        Assert::AreEqual({ 4U }, search.GetResultCount()); // 0,1,2,4
+
+        search.PreviousPage();
+        Assert::AreEqual(std::wstring(L"2/3"), search.GetSelectedPage());
+        Assert::AreEqual({ 5U }, search.GetResultCount()); // 0,1,2,3,4
+
+        Assert::IsFalse(search.HasSelection());
+        search.Results().GetItemAt(2)->SetSelected(true); // 2
+        Assert::IsTrue(search.HasSelection());
+
+        search.ExcludeSelected();
+        Assert::AreEqual({ 4U }, search.Results().Count());
+        Assert::IsFalse(search.HasSelection());
+        Assert::AreEqual(0U, search.Results().GetItemAt(0)->nAddress);
+        Assert::AreEqual(1U, search.Results().GetItemAt(1)->nAddress);
+        Assert::AreEqual(3U, search.Results().GetItemAt(2)->nAddress);
+        Assert::AreEqual(4U, search.Results().GetItemAt(3)->nAddress);
+    }
+
     TEST_METHOD(TestBookmarkSelected)
     {
         MemorySearchViewModelHarness search;

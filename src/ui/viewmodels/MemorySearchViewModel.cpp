@@ -1008,11 +1008,11 @@ void MemorySearchViewModel::ExcludeSelected()
     if (m_vSelectedAddresses.empty())
         return;
 
-    const SearchResult& pPreviousResult = m_vSearchResults.back();
-    SearchResult pResult{ pPreviousResult }; // clone previous item
+    const auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
+    SearchResult pResult{ pCurrentResults }; // clone current item
     ra::services::SearchResults::Result pItem {};
 
-    const auto nSize = pPreviousResult.pResults.GetSize();
+    const auto nSize = pCurrentResults.pResults.GetSize();
     if (nSize == MemSize::Nibble_Lower)
     {
         for (const auto nAddress : m_vSelectedAddresses)

@@ -1257,7 +1257,8 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
-        results1.ExcludeAddress(1U);
+        SearchResults::Result excludeResult{ 1U, 0U, MemSize::EightBit };
+        results1.ExcludeResult(excludeResult);
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         memory.at(1) = 0x14;
@@ -1272,7 +1273,7 @@ public:
         Assert::IsFalse(results.ContainsAddress(3U));
         Assert::IsFalse(results.ContainsAddress(4U));
 
-        results.ExcludeAddress(1U);
+        results.ExcludeResult(excludeResult);
         Assert::AreEqual({ 1U }, results.MatchingAddressCount());
         Assert::IsFalse(results.ContainsAddress(0U));
         Assert::IsFalse(results.ContainsAddress(1U));
@@ -1285,6 +1286,105 @@ public:
         Assert::AreEqual(2U, result.nAddress);
         Assert::AreEqual(MemSize::EightBit, result.nSize);
         Assert::AreEqual(0x55U, result.nValue);
+    }
+
+    TEST_METHOD(TestExcludeAddressFourBit)
+    {
+        std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(1U, 3U, ra::services::SearchType::FourBit);
+        Assert::AreEqual({ 6U }, results1.MatchingAddressCount());
+
+        // exclude doesn't do anything to unfiltered results
+        SearchResults::Result excludeResult{ 1U, 0U, MemSize::Nibble_Lower };
+        results1.ExcludeResult(excludeResult);
+        Assert::AreEqual({ 6U }, results1.MatchingAddressCount());
+
+        memory.at(1) = 0x14;
+        memory.at(2) = 0x65;
+        SearchResults results;
+        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
+
+        Assert::AreEqual({ 3U }, results.MatchingAddressCount());
+        Assert::IsFalse(results.ContainsAddress(0U));
+        Assert::IsTrue(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsFalse(results.ContainsAddress(3U));
+        Assert::IsFalse(results.ContainsAddress(4U));
+
+        results.ExcludeResult(excludeResult);
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
+        Assert::IsFalse(results.ContainsAddress(0U));
+        Assert::IsFalse(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsFalse(results.ContainsAddress(3U));
+        Assert::IsFalse(results.ContainsAddress(4U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(2U, result.nAddress);
+        Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
+        Assert::AreEqual(0x5U, result.nValue);
+
+        excludeResult.nAddress = 2;
+        excludeResult.nSize = MemSize::Nibble_Upper;
+        results.ExcludeResult(excludeResult);
+        Assert::AreEqual({ 1U }, results.MatchingAddressCount());
+        Assert::IsFalse(results.ContainsAddress(0U));
+        Assert::IsFalse(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsFalse(results.ContainsAddress(3U));
+        Assert::IsFalse(results.ContainsAddress(4U));
+
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(2U, result.nAddress);
+        Assert::AreEqual(MemSize::Nibble_Lower, result.nSize);
+        Assert::AreEqual(0x5U, result.nValue);
+    }
+
+    TEST_METHOD(TestExcludeAddressSixteenBitAligned)
+    {
+        std::array<unsigned char, 6> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56, 0x88 };
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        mockEmulatorContext.MockMemory(memory);
+
+        SearchResults results1;
+        results1.Initialize(0U, 5U, ra::services::SearchType::SixteenBitAligned);
+        Assert::AreEqual({ 2U }, results1.MatchingAddressCount());
+
+        // exclude doesn't do anything to unfiltered results
+        SearchResults::Result excludeResult{ 0U, 0U, MemSize::EightBit };
+        results1.ExcludeResult(excludeResult);
+        Assert::AreEqual({ 2U }, results1.MatchingAddressCount());
+
+        memory.at(1) = 0x14;
+        memory.at(2) = 0x55;
+        SearchResults results;
+        results.Initialize(results1, ComparisonType::NotEqualTo, ra::services::SearchFilterType::LastKnownValue, L"");
+
+        Assert::AreEqual({ 2U }, results.MatchingAddressCount());
+        Assert::IsTrue(results.ContainsAddress(0U));
+        Assert::IsFalse(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsFalse(results.ContainsAddress(3U));
+        Assert::IsFalse(results.ContainsAddress(4U));
+
+        results.ExcludeResult(excludeResult);
+        Assert::AreEqual({ 1U }, results.MatchingAddressCount());
+        Assert::IsFalse(results.ContainsAddress(0U));
+        Assert::IsFalse(results.ContainsAddress(1U));
+        Assert::IsTrue(results.ContainsAddress(2U));
+        Assert::IsFalse(results.ContainsAddress(3U));
+        Assert::IsFalse(results.ContainsAddress(4U));
+
+        SearchResults::Result result;
+        Assert::IsTrue(results.GetMatchingAddress(0U, result));
+        Assert::AreEqual(2U, result.nAddress);
+        Assert::AreEqual(MemSize::SixteenBit, result.nSize);
+        Assert::AreEqual(0xAB55U, result.nValue);
     }
 
     TEST_METHOD(TestInitializeFromMemoryEightBitLargeMemory)
@@ -1722,7 +1822,8 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
-        results1.ExcludeAddress(0U);
+        SearchResults::Result excludeResult{ 0U, 0U, MemSize::EightBit };
+        results1.ExcludeResult(excludeResult);
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         memory.at(1) = 0x14;

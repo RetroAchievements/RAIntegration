@@ -294,7 +294,7 @@ bool LeaderboardModel::Deserialize(ra::Tokenizer& pTokenizer)
 
     // field 8: description
     std::string sDescription;
-    if (!ReadPossiblyQuoted(pTokenizer, sDescription))
+    if (!pTokenizer.EndOfString() && !ReadPossiblyQuoted(pTokenizer, sDescription))
         return false;
 
     // line is valid

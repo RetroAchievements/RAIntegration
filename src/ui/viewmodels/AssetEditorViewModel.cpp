@@ -695,7 +695,18 @@ void AssetEditorViewModel::OnTriggerChanged()
     }
 
     if (nSize < 0)
+    {
         m_bIgnoreTriggerUpdate = false;
+    }
+    else
+    {
+        auto* pGroup = Trigger().Groups().GetItemAt(Trigger().GetSelectedGroupIndex());
+        if (pGroup && pGroup->m_pConditionSet == nullptr)
+        {
+            // if the trigger didn't actually change, UpdateTriggerBinding won't get called, forcibly do so now.
+            UpdateTriggerBinding();
+        }
+    }
 }
 
 void AssetEditorViewModel::UpdateTriggerBinding()

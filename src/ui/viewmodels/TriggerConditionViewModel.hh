@@ -136,6 +136,8 @@ public:
     bool IsModifying() const { return IsModifying(GetType()); }
 
     static bool IsComparisonVisible(const ViewModelBase& vmItem, int nValue);
+    static std::wstring FormatValue(unsigned nValue, TriggerOperandType nType);
+    static std::wstring FormatValue(float fValue, TriggerOperandType nType);
 
     static const IntModelProperty RowColorProperty;
     Color GetRowColor() const { return Color(ra::to_unsigned(GetValue(RowColorProperty))); }

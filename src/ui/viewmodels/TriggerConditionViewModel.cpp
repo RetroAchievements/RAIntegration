@@ -263,7 +263,7 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
     }
 }
 
-std::wstring FormatValue(rc_typed_value_t& pValue, TriggerOperandType nType)
+static std::wstring FormatTypedValue(rc_typed_value_t& pValue, TriggerOperandType nType)
 {
     switch (nType)
     {
@@ -298,6 +298,22 @@ std::wstring FormatValue(rc_typed_value_t& pValue, TriggerOperandType nType)
     }
 }
 
+std::wstring TriggerConditionViewModel::FormatValue(unsigned nValue, TriggerOperandType nType)
+{
+    rc_typed_value_t pValue;
+    pValue.type = RC_VALUE_TYPE_UNSIGNED;
+    pValue.value.u32 = nValue;
+    return FormatTypedValue(pValue, nType);
+}
+
+std::wstring TriggerConditionViewModel::FormatValue(float fValue, TriggerOperandType nType)
+{
+    rc_typed_value_t pValue;
+    pValue.type = RC_VALUE_TYPE_FLOAT;
+    pValue.value.f32 = fValue;
+    return FormatTypedValue(pValue, nType);
+}
+
 void TriggerConditionViewModel::ChangeOperandType(const StringModelProperty& sValueProperty, TriggerOperandType nOldType, TriggerOperandType nNewType)
 {
     const auto& sValue = GetValue(sValueProperty);
@@ -318,7 +334,7 @@ void TriggerConditionViewModel::ChangeOperandType(const StringModelProperty& sVa
             ra::ParseUnsignedInt(sValue, 0xFFFFFFFF, pValue.value.u32, sError);
     }
 
-    SetValue(sValueProperty, FormatValue(pValue, nNewType));
+    SetValue(sValueProperty, FormatTypedValue(pValue, nNewType));
 }
 
 void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty,
@@ -360,7 +376,7 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
             break;
     }
 
-    SetValue(pValueProperty, FormatValue(pValue, nType));
+    SetValue(pValueProperty, FormatTypedValue(pValue, nType));
 }
 
 void TriggerConditionViewModel::InitializeFrom(const rc_condition_t& pCondition)
@@ -483,10 +499,7 @@ void TriggerConditionViewModel::OnValueChanged(const BoolModelProperty::ChangeAr
 
 void TriggerConditionViewModel::SetSourceValue(unsigned int nValue)
 {
-    rc_typed_value_t pValue;
-    pValue.type = RC_VALUE_TYPE_UNSIGNED;
-    pValue.value.u32 = nValue;
-    SetValue(SourceValueProperty, FormatValue(pValue, GetSourceType()));
+    SetValue(SourceValueProperty, FormatValue(nValue, GetSourceType()));
 }
 
 ra::ByteAddress TriggerConditionViewModel::GetSourceAddress() const
@@ -499,18 +512,12 @@ ra::ByteAddress TriggerConditionViewModel::GetSourceAddress() const
 
 void TriggerConditionViewModel::SetTargetValue(unsigned int nValue)
 {
-    rc_typed_value_t pValue;
-    pValue.type = RC_VALUE_TYPE_UNSIGNED;
-    pValue.value.u32 = nValue;
-    SetValue(TargetValueProperty, FormatValue(pValue, GetTargetType()));
+    SetValue(TargetValueProperty, FormatValue(nValue, GetTargetType()));
 }
 
 void TriggerConditionViewModel::SetTargetValue(float fValue)
 {
-    rc_typed_value_t pValue;
-    pValue.type = RC_VALUE_TYPE_FLOAT;
-    pValue.value.f32 = fValue;
-    SetValue(TargetValueProperty, FormatValue(pValue, GetTargetType()));
+    SetValue(TargetValueProperty, FormatValue(fValue, GetTargetType()));
 }
 
 ra::ByteAddress TriggerConditionViewModel::GetTargetAddress() const

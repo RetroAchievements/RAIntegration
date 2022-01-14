@@ -995,6 +995,73 @@ public:
         Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
     }
 
+    TEST_METHOD(TestFormatValueNumber)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+
+        Assert::AreEqual(std::wstring(L"0"), TriggerConditionViewModel::FormatValue(0U, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"1"), TriggerConditionViewModel::FormatValue(1U, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"10"), TriggerConditionViewModel::FormatValue(10U, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"100"), TriggerConditionViewModel::FormatValue(100U, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"1000000000"), TriggerConditionViewModel::FormatValue(1000000000U, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"4294967295"), TriggerConditionViewModel::FormatValue(0xFFFFFFFFU, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"12"), TriggerConditionViewModel::FormatValue(12.34f, TriggerOperandType::Value));
+
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
+
+        Assert::AreEqual(std::wstring(L"0x00"), TriggerConditionViewModel::FormatValue(0U, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x01"), TriggerConditionViewModel::FormatValue(1U, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x0a"), TriggerConditionViewModel::FormatValue(10U, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x64"), TriggerConditionViewModel::FormatValue(100U, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x3b9aca00"), TriggerConditionViewModel::FormatValue(1000000000U, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"0xffffffff"), TriggerConditionViewModel::FormatValue(0xFFFFFFFFU, TriggerOperandType::Value));
+        Assert::AreEqual(std::wstring(L"0x0c"), TriggerConditionViewModel::FormatValue(12.34f, TriggerOperandType::Value));
+    }
+
+    TEST_METHOD(TestFormatValueFloat)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+
+        Assert::AreEqual(std::wstring(L"0.0"), TriggerConditionViewModel::FormatValue(0.0f, TriggerOperandType::Float));
+        Assert::AreEqual(std::wstring(L"1.0"), TriggerConditionViewModel::FormatValue(1.0f, TriggerOperandType::Float));
+        Assert::AreEqual(std::wstring(L"1.23"), TriggerConditionViewModel::FormatValue(1.23f, TriggerOperandType::Float));
+        Assert::AreEqual(std::wstring(L"-3.14159"), TriggerConditionViewModel::FormatValue(-3.14159f, TriggerOperandType::Float));
+        Assert::AreEqual(std::wstring(L"960.75"), TriggerConditionViewModel::FormatValue(960.75f, TriggerOperandType::Float));
+
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
+
+        Assert::AreEqual(std::wstring(L"0.0"), TriggerConditionViewModel::FormatValue(0.0f, TriggerOperandType::Float));
+        Assert::AreEqual(std::wstring(L"1.0"), TriggerConditionViewModel::FormatValue(1.0f, TriggerOperandType::Float));
+        Assert::AreEqual(std::wstring(L"1.23"), TriggerConditionViewModel::FormatValue(1.23f, TriggerOperandType::Float));
+        Assert::AreEqual(std::wstring(L"-3.14159"), TriggerConditionViewModel::FormatValue(-3.14159f, TriggerOperandType::Float));
+        Assert::AreEqual(std::wstring(L"960.75"), TriggerConditionViewModel::FormatValue(960.75f, TriggerOperandType::Float));
+    }
+
+    TEST_METHOD(TestFormatValueAddress)
+    {
+        TriggerConditionViewModelHarness condition;
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+
+        Assert::AreEqual(std::wstring(L"0x0000"), TriggerConditionViewModel::FormatValue(0U, TriggerOperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Address));
+        Assert::AreEqual(std::wstring(L"0xc3500"), TriggerConditionViewModel::FormatValue(800000U, TriggerOperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Delta));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Prior));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::BCD));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660.25f, TriggerOperandType::Address));
+
+        condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
+
+        Assert::AreEqual(std::wstring(L"0x0000"), TriggerConditionViewModel::FormatValue(0U, TriggerOperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Address));
+        Assert::AreEqual(std::wstring(L"0xc3500"), TriggerConditionViewModel::FormatValue(800000U, TriggerOperandType::Address));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Delta));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Prior));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::BCD));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660.25f, TriggerOperandType::Address));
+    }
 };
 
 } // namespace tests

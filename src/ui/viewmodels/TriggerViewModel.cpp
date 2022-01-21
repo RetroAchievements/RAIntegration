@@ -47,6 +47,7 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Prior), L"Prior");
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::BCD), L"BCD");
     m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Float), L"Float");
+    m_vOperandTypes.Add(ra::etoi(TriggerOperandType::Inverted), L"Invert");
 
     m_vOperandSizes.Add(ra::etoi(MemSize::Bit_0), L"Bit0");
     m_vOperandSizes.Add(ra::etoi(MemSize::Bit_1), L"Bit1");

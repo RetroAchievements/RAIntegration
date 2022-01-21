@@ -70,6 +70,8 @@ std::wstring ToString<ra::ui::viewmodels::TriggerOperandType>(
             return L"BCD";
         case ra::ui::viewmodels::TriggerOperandType::Float:
             return L"Float";
+        case ra::ui::viewmodels::TriggerOperandType::Inverted:
+            return L"Inverted";
         default:
             return std::to_wstring(static_cast<int>(nOperandType));
     }

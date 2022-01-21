@@ -40,7 +40,8 @@ enum class TriggerOperandType : uint8_t
     Value = RC_OPERAND_CONST,           // a 32 bit unsigned integer
     Prior = RC_OPERAND_PRIOR,           // the last differing value at this address.
     BCD = RC_OPERAND_BCD,               // Address, but decoded from binary-coded-decimal
-    Float = RC_OPERAND_FP               // a 32-bit floating point value
+    Float = RC_OPERAND_FP,              // a 32-bit floating point value
+    Inverted = RC_OPERAND_INVERTED      // the bitwise compliment of the current value at the address
 };
 
 enum class TriggerOperatorType : uint8_t
@@ -136,6 +137,7 @@ public:
     bool IsModifying() const { return IsModifying(GetType()); }
 
     static bool IsComparisonVisible(const ViewModelBase& vmItem, int nValue);
+    static bool IsOperandTypeVisible(const ViewModelBase& vmItem, int nValue);
     static std::wstring FormatValue(unsigned nValue, TriggerOperandType nType);
     static std::wstring FormatValue(float fValue, TriggerOperandType nType);
 

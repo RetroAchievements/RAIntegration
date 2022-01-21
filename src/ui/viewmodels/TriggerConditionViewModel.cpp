@@ -735,7 +735,7 @@ bool TriggerConditionViewModel::IsAddressType(TriggerOperandType nType) noexcept
 }
 
 
-bool TriggerConditionViewModel::IsOperandTypeVisible(const ViewModelBase& vmItem, int nValue)
+bool TriggerConditionViewModel::IsOperandTypeVisible(const ViewModelBase& vmItem, int nValue) noexcept
 {
     const auto* vmCondition = dynamic_cast<const TriggerConditionViewModel*>(&vmItem);
     if (vmCondition == nullptr)

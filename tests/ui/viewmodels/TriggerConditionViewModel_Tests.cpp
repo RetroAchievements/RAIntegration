@@ -762,6 +762,36 @@ public:
         Assert::AreEqual(std::wstring(L"0x0008 (indirect)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
+    TEST_METHOD(TestTooltipDoubleIndirectAddressValue)
+    {
+        IndirectAddressTriggerViewModelHarness vmTrigger;
+        vmTrigger.SetIsValue(true);
+        vmTrigger.Parse("I:0xH0001_I:0xH0002_M:0xH0003=4");
+        vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+
+        const auto* pCondition1 = vmTrigger.Conditions().GetItemAt(0);
+        Expects(pCondition1 != nullptr);
+        const auto* pCondition2 = vmTrigger.Conditions().GetItemAt(1);
+        Expects(pCondition2 != nullptr);
+        const auto* pCondition3 = vmTrigger.Conditions().GetItemAt(2);
+        Expects(pCondition3 != nullptr);
+
+        Assert::IsFalse(pCondition1->IsIndirect());
+        Assert::IsTrue(pCondition2->IsIndirect());
+        Assert::IsTrue(pCondition3->IsIndirect());
+
+        // $0001 = 1, 1+2 = $0003, $0003 = 3, 3+3 = $0006
+        Assert::AreEqual(std::wstring(L"0x0001\r\n[No code note]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect)\r\n[No code note]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0006 (indirect)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        // $0001 = 3, 3+2 = $0005, $0005 = 5, 5+3 = $0008
+        vmTrigger.SetMemory({ 1 }, 3);
+        Assert::AreEqual(std::wstring(L"0x0001\r\n[No code note]"), pCondition1->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\n[No code note]"), pCondition2->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+        Assert::AreEqual(std::wstring(L"0x0008 (indirect)\r\n[No code note]"), pCondition3->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
     TEST_METHOD(TestIsModifying)
     {
         TriggerConditionViewModelHarness condition;

@@ -587,11 +587,19 @@ unsigned int TriggerConditionViewModel::GetIndirectAddress(unsigned int nAddress
     if (pGroup == nullptr)
         return nAddress;
 
+    rc_condition_t* pCondition = nullptr;
+
     const auto* pTrigger = pTriggerViewModel->GetTriggerFromString();
     if (pTrigger != nullptr)
     {
         // if the trigger is managed by the viewmodel (not the runtime) then we need to update the memrefs
         rc_update_memref_values(pTrigger->memrefs, rc_peek_callback, nullptr);
+        pCondition = pTrigger->requirement->conditions;
+    }
+    else
+    {
+        Expects(pGroup->m_pConditionSet != nullptr);
+        pCondition = pGroup->m_pConditionSet->conditions;
     }
 
     bool bIsIndirect = false;
@@ -600,10 +608,7 @@ unsigned int TriggerConditionViewModel::GetIndirectAddress(unsigned int nAddress
     rc_typed_value_t value = {};
     oEvalState.peek = rc_peek_callback;
 
-    Expects(pGroup->m_pConditionSet != nullptr);
-
     gsl::index nConditionIndex = 0;
-    rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
     for (; pCondition != nullptr; pCondition = pCondition->next)
     {
         auto* vmCondition = pTriggerViewModel->Conditions().GetItemAt(nConditionIndex++);

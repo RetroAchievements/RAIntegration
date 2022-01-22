@@ -923,7 +923,12 @@ void TriggerViewModel::DoFrame()
         for (; pCondition != nullptr; pCondition = pCondition->next)
         {
             auto* vmCondition = m_vConditions.GetItemAt(nConditionIndex++);
-            Expects(vmCondition != nullptr);
+            if (vmCondition == nullptr)
+            {
+                // assume the trigger is being updated on another thread and we'll
+                // resynchronize the hit counts on the next frame
+                break;
+            }
 
             vmCondition->SetCurrentHits(pCondition->current_hits);
 

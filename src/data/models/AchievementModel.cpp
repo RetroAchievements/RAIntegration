@@ -251,6 +251,7 @@ bool AchievementModel::Deserialize(ra::Tokenizer& pTokenizer)
         // unquoted trigger requires special parsing because flags also use colons
         const char* pTrigger = pTokenizer.GetPointer(pTokenizer.CurrentPosition());
         const char* pScan = pTrigger;
+        Expects(pScan != nullptr);
         while (*pScan && (*pScan != ':' || strchr("ABCMNOPRTabcmnoprt", pScan[-1]) != nullptr))
             pScan++;
 

@@ -340,7 +340,10 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
             {
                 auto* vmBookmark = m_vBookmarks.GetItemAt(nIndex);
                 if (vmBookmark == nullptr)
+                {
                     vmBookmark = &m_vBookmarks.Add();
+                    Ensures(vmBookmark != nullptr);
+                }
                 ++nIndex;
 
                 vmBookmark->BeginInitialization();

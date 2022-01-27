@@ -166,6 +166,7 @@ void FileDialog::Presenter::DoShowModal(ra::ui::WindowViewModelBase& oViewModel,
         if (!sDefaultExtension.empty())
         {
             const wchar_t* pStart = pPair.first.data();
+            Expects(pStart != nullptr);
             while (*pStart)
             {
                 while (*pStart && *pStart != '.')

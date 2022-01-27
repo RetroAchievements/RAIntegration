@@ -794,6 +794,7 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
     {
         auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        Expects(pAsset != nullptr);
         switch (pAsset->GetType())
         {
             case ra::data::models::AssetType::Achievement:

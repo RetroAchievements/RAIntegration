@@ -3400,6 +3400,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         const auto* pLocalBadges = vmAssetList.AddLocalBadgesModel();
+        Expects(pLocalBadges != nullptr);
         const std::wstring sLocalBadgeName = L"local\\1234.png";
 
         vmAssetList.SetGameId(22U);
@@ -3687,6 +3688,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
         const auto* pLocalBadges = vmAssetList.AddLocalBadgesModel();
+        Expects(pLocalBadges != nullptr);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
         const std::wstring sBadge1 = L"local\\ABCD.png";
@@ -3777,6 +3779,7 @@ public:
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetGameId(22U);
         const auto* pLocalBadges = vmAssetList.AddLocalBadgesModel();
+        Expects(pLocalBadges != nullptr);
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
         const std::wstring sBadge1 = L"local\\ABCD.png";
@@ -4727,6 +4730,7 @@ public:
         const std::wstring sBadge1 = L"local\\ABCD.png";
         const std::wstring sBadge2 = L"local\\EFGH.png";
         const auto* pLocalBadges = vmAssetList.AddLocalBadgesModel();
+        Expects(pLocalBadges != nullptr);
         vmAssetList.AddAchievement(AssetCategory::Local, 5, L"Test1", L"Desc1", sBadge1, "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Local, 7, L"Test2", L"Desc2", sBadge2, "0xH1234=1");
 

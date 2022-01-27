@@ -718,7 +718,10 @@ void MemorySearchViewModel::UpdateResults()
 
         auto* pRow = m_vResults.GetItemAt(nRow);
         if (pRow == nullptr)
+        {
             pRow = &m_vResults.Add();
+            Ensures(pRow != nullptr);
+        }
 
         pRow->nAddress = pResult.nAddress;
 

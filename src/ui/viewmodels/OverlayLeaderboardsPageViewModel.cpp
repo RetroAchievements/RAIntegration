@@ -80,6 +80,9 @@ void OverlayLeaderboardsPageViewModel::Refresh()
 
         for (const auto* vmLeaderboard : vActiveLeaderboards)
         {
+            if (vmLeaderboard == nullptr)
+                continue;
+
             auto& pvmLeaderboard = GetNextItem(&nIndex);
             SetLeaderboard(pvmLeaderboard, *vmLeaderboard);
         }
@@ -97,6 +100,9 @@ void OverlayLeaderboardsPageViewModel::Refresh()
 
         for (const auto* vmLeaderboard : vLocalLeaderboards)
         {
+            if (vmLeaderboard == nullptr)
+                continue;
+
             auto& pvmLeaderboard = GetNextItem(&nIndex);
             SetLeaderboard(pvmLeaderboard, *vmLeaderboard);
         }
@@ -114,6 +120,9 @@ void OverlayLeaderboardsPageViewModel::Refresh()
 
         for (const auto* vmLeaderboard : vCoreLeaderboards)
         {
+            if (vmLeaderboard == nullptr)
+                continue;
+
             auto& pvmLeaderboard = GetNextItem(&nIndex);
             SetLeaderboard(pvmLeaderboard, *vmLeaderboard);
         }
@@ -131,6 +140,9 @@ void OverlayLeaderboardsPageViewModel::Refresh()
 
         for (const auto* vmLeaderboard : vUnsupportedLeaderboards)
         {
+            if (vmLeaderboard == nullptr)
+                continue;
+
             auto& pvmLeaderboard = GetNextItem(&nIndex);
             SetLeaderboard(pvmLeaderboard, *vmLeaderboard);
         }

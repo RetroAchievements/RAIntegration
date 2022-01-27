@@ -45,8 +45,9 @@ jobs:
     - name: Install MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
     - name: Install ATL
-      run: "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vs_installer.exe" modify --quiet --installpath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --channelid VisualStudio.17.Release --productid Microsoft.VisualStudio.Product.Enterprise --add Microsoft.VisualStudio.Component.VC.ATL
-
+      run: |
+        choco install visualstudio2022-workload-nativedesktop --add Microsoft.VisualStudio.Component.VC.ATL
+        type C:\ProgramData\chocolatey\logs\chocolatey.log
     - name: Install VSTest
       uses: Malcolmnixon/Setup-VSTest@v4
     - name: Build
@@ -66,8 +67,6 @@ jobs:
         submodules: recursive
     - name: Install MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
-    - name: Install ATL
-      run: "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vs_installer.exe" modify --quiet --installpath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --channelid VisualStudio.17.Release --productid Microsoft.VisualStudio.Product.Enterprise --add Microsoft.VisualStudio.Component.VC.ATLMFC
     - name: Install VSTest
       uses: Malcolmnixon/Setup-VSTest@v4
     - name: Build

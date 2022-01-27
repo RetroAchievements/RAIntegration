@@ -21,7 +21,7 @@ namespace gdi {
 inline constexpr const char* DefaultBadge{ "00000" };
 inline constexpr const char* DefaultUserPic{ "_User" };
 
-static CComPtr<IWICImagingFactory> g_pIWICFactory;
+static IWICImagingFactory* g_pIWICFactory = nullptr;
 
 bool ImageRepository::Initialize()
 {
@@ -73,7 +73,8 @@ ImageRepository::~ImageRepository() noexcept
         DeleteBitmap(userPic.second.m_hBitmap);
     m_mUserPics.clear();
 
-    g_pIWICFactory.Release();
+    if (g_pIWICFactory != nullptr)
+        g_pIWICFactory->Release();
 
     if (m_bShutdownCOM)
         CoUninitialize();
@@ -269,7 +270,7 @@ static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOri
     pToRenderBitmapSource = nullptr;
 
     // Create a BitmapScaler
-    CComPtr<IWICBitmapScaler> pScaler;
+    IWICBitmapScaler* pScaler = nullptr;
     auto hr = g_pIWICFactory->CreateBitmapScaler(&pScaler);
 
     // Initialize the bitmap scaler from the original bitmap map bits
@@ -284,7 +285,7 @@ static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOri
     // Convert the bitmap into 32bppBGR, a convenient pixel format for GDI rendering 
     if (SUCCEEDED(hr))
     {
-        CComPtr<IWICFormatConverter> pConverter;
+        IWICFormatConverter* pConverter = nullptr;
         hr = g_pIWICFactory->CreateFormatConverter(&pConverter);
 
         // Format convert to 32bppBGR
@@ -299,14 +300,19 @@ static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOri
 
             // Store the converted bitmap as ppToRenderBitmapSource 
             if (SUCCEEDED(hr))
+            {
                 GSL_SUPPRESS_TYPE1
                 pConverter->QueryInterface(IID_IWICBitmapSource, reinterpret_cast<void**>(&pToRenderBitmapSource));
+            }
         }
 
-        pConverter.Release();
+        if (pConverter != nullptr)
+            pConverter->Release();
     }
 
-    pScaler.Release();
+    if (pScaler != nullptr)
+        pScaler->Release();
+
     return hr;
 }
 
@@ -395,7 +401,7 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, unsigned in
         return nullptr;
 
     // Decode the source image to IWICBitmapSource
-    CComPtr<IWICBitmapDecoder> pDecoder;
+    IWICBitmapDecoder* pDecoder = nullptr;
     HRESULT hr = g_pIWICFactory->CreateDecoderFromFilename(ra::Widen(sFilename).c_str(), // Image to be decoded
                                                            nullptr,      // Do not prefer a particular vendor
                                                            GENERIC_READ, // Desired read access to the file
@@ -403,12 +409,12 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, unsigned in
                                                            &pDecoder);                     // Pointer to the decoder
 
     // Retrieve the first frame of the image from the decoder
-    CComPtr<IWICBitmapFrameDecode> pFrame;
+    IWICBitmapFrameDecode* pFrame = nullptr;
     if (SUCCEEDED(hr))
         hr = pDecoder->GetFrame(0, &pFrame);
 
     // Retrieve IWICBitmapSource from the frame
-    CComPtr<IWICBitmapSource> pOriginalBitmapSource;
+    IWICBitmapSource* pOriginalBitmapSource = nullptr;
     if (SUCCEEDED(hr))
     {
         GSL_SUPPRESS_TYPE1
@@ -421,7 +427,7 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, unsigned in
     }
 
     // Scale the original IWICBitmapSource to the client rect size and convert the pixel format
-    CComPtr<IWICBitmapSource> pToRenderBitmapSource;
+    IWICBitmapSource* pToRenderBitmapSource = nullptr;
     if (SUCCEEDED(hr))
         hr = ConvertBitmapSource({0, 0, to_signed(nWidth), to_signed(nHeight)}, pOriginalBitmapSource,
                                  *&pToRenderBitmapSource);
@@ -431,10 +437,17 @@ HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, unsigned in
     if (SUCCEEDED(hr))
         hr = CreateDIBFromBitmapSource(pToRenderBitmapSource, hBitmap);
 
-    pToRenderBitmapSource.Release();
-    pOriginalBitmapSource.Release();
-    pFrame.Release();
-    pDecoder.Release();
+    if (pToRenderBitmapSource != nullptr)
+        pToRenderBitmapSource->Release();
+
+    if (pOriginalBitmapSource != nullptr)
+        pOriginalBitmapSource->Release();
+
+    if (pFrame != nullptr)
+        pFrame->Release();
+
+    if (pDecoder != nullptr)
+        pDecoder->Release();
 
     return hBitmap;
 }
@@ -596,11 +609,11 @@ bool GDISurfaceFactory::SaveImage(const ISurface& pSurface, const std::wstring& 
         return false;
 
     // create a PNG encoder
-    CComPtr<IWICBitmapEncoder> pEncoder;
+    IWICBitmapEncoder* pEncoder = nullptr;
     HRESULT hr = g_pIWICFactory->CreateEncoder(GUID_ContainerFormatPng, nullptr, &pEncoder);
 
     // open the file stream
-    CComPtr<IWICStream> pStream;
+    IWICStream* pStream = nullptr;
     if (SUCCEEDED(hr))
         hr = g_pIWICFactory->CreateStream(&pStream);
 
@@ -611,7 +624,7 @@ bool GDISurfaceFactory::SaveImage(const ISurface& pSurface, const std::wstring& 
         hr = pEncoder->Initialize(pStream, WICBitmapEncoderNoCache);
 
     // convert the image to a WICBitmap
-    CComPtr<IWICBitmapFrameEncode> pFrameEncode;
+    IWICBitmapFrameEncode* pFrameEncode = nullptr;
     if (SUCCEEDED(hr))
         hr = pEncoder->CreateNewFrame(&pFrameEncode, nullptr);
 
@@ -626,7 +639,7 @@ bool GDISurfaceFactory::SaveImage(const ISurface& pSurface, const std::wstring& 
     if (SUCCEEDED(hr))
         hr = pFrameEncode->SetPixelFormat(&pixelFormat);
 
-    CComPtr<IWICBitmap> pWicBitmap;
+    IWICBitmap* pWicBitmap = nullptr;
     if (SUCCEEDED(hr))
         hr = g_pIWICFactory->CreateBitmapFromHBITMAP(pGDIBitmapSurface->GetHBitmap(), nullptr, WICBitmapIgnoreAlpha, &pWicBitmap);
 
@@ -642,6 +655,18 @@ bool GDISurfaceFactory::SaveImage(const ISurface& pSurface, const std::wstring& 
 
     if (!SUCCEEDED(hr))
         RA_LOG_WARN("Error %08x saving %s", hr, sPath);
+
+    if (pWicBitmap != nullptr)
+        pWicBitmap->Release();
+
+    if (pFrameEncode != nullptr)
+        pFrameEncode->Release();
+
+    if (pStream != nullptr)
+        pStream->Release();
+
+    if (pEncoder != nullptr)
+        pEncoder->Release();
 
     return SUCCEEDED(hr);
 }

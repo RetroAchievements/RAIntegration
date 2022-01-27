@@ -44,13 +44,13 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
 
 static void ShowFolder(FileDialogViewModel& vmFileDialog, HWND hParentWnd)
 {
-    CComPtr<IFileDialog> pFileDialog;
+    IFileDialog* pFileDialog = nullptr;
     if (SUCCEEDED(CoCreateInstance(CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pFileDialog))))
     {
         pFileDialog->SetTitle(vmFileDialog.GetWindowTitle().c_str());
 
         const std::wstring& sInitialLocation = vmFileDialog.GetInitialDirectory();
-        CComPtr<IShellItem> pShellItem;
+        IShellItem* pShellItem = nullptr;
         if (!sInitialLocation.empty())
         {
             LPITEMIDLIST pItemIdList = nullptr;
@@ -60,7 +60,7 @@ static void ShowFolder(FileDialogViewModel& vmFileDialog, HWND hParentWnd)
                 if (SHCreateShellItem(nullptr, nullptr, pItemIdList, &pShellItem) == 0)
                 {
                     pFileDialog->SetFolder(pShellItem);
-                    pShellItem.Release();
+                    pShellItem->Release();
                 }
             }
         }
@@ -70,6 +70,8 @@ static void ShowFolder(FileDialogViewModel& vmFileDialog, HWND hParentWnd)
             pFileDialog->SetOptions(dwOptions | FOS_PICKFOLDERS);
 
         const HRESULT hr = pFileDialog->Show(hParentWnd);
+        pFileDialog->Release();
+
         if (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED))
         {
             vmFileDialog.SetDialogResult(ra::ui::DialogResult::Cancel);
@@ -87,7 +89,7 @@ static void ShowFolder(FileDialogViewModel& vmFileDialog, HWND hParentWnd)
                     vmFileDialog.SetDialogResult(ra::ui::DialogResult::OK);
                 }
 
-                pShellItem.Release();
+                pShellItem->Release();
             }
 
             return;

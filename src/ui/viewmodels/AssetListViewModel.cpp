@@ -501,8 +501,6 @@ bool AssetListViewModel::AddOrRemoveFilteredItem(const ra::data::models::AssetMo
     {
         if (nIndex >= 0)
         {
-            const bool bIsSelected = m_vFilteredAssets.GetItemValue(nIndex, AssetSummaryViewModel::IsSelectedProperty);
-
             m_vFilteredAssets.RemoveAt(nIndex);
             return true;
         }
@@ -617,7 +615,6 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasUnofficial = false;
     bool bHasCore = false;
     bool bHasLocal = false;
-    const bool bHardcore = _RA_HardcoreModeIsActive();
 
     const bool bGameLoaded = (GetGameId() != 0);
     if (!bGameLoaded)

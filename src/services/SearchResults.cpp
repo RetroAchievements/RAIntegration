@@ -1709,7 +1709,6 @@ bool SearchResults::GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, s
 {
     if (m_pImpl != nullptr)
     {
-        const unsigned int nPadding = m_pImpl->GetPadding();
         for (auto& block : m_vBlocks)
         {
             if (block.GetFirstAddress() > nAddress)

@@ -457,7 +457,7 @@ static void ProcessAchievements()
                     {
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
                         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                        const int nPopup = pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardStarted,
+                        pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardStarted,
                             L"Leaderboard attempt started", pLeaderboard->GetName(), pLeaderboard->GetDescription());
                     }
 
@@ -501,7 +501,7 @@ static void ProcessAchievements()
                         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lbcancel.wav");
 
                         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                        const int nPopup = pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardCanceled,
+                        pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardCanceled,
                             L"Leaderboard attempt failed", pLeaderboard->GetName(), pLeaderboard->GetDescription());
                     }
 

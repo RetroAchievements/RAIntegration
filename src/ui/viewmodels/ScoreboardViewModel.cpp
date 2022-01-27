@@ -37,7 +37,6 @@ void ScoreboardViewModel::BeginAnimation()
     m_fAnimationProgress = 0.0;
 
     const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
-    const auto nHeight = CalculateScoreboardHeight(pTheme);
     const auto nWidth = CalculateScoreboardWidth(pTheme);
 
     // bottom margin 10px

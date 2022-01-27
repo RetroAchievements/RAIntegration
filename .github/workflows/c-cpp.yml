@@ -16,6 +16,8 @@ jobs:
         submodules: recursive
     - name: Install MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
+    - name: Install ATL
+      run: choco install visualstudio2022-workload-vctools
     - name: Build
       run: msbuild.exe RA_Integration.sln -t:RA_Integration -p:Configuration=Release -p:Platform=Win32
 

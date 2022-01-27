@@ -45,7 +45,7 @@ jobs:
     - name: Install MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
     - name: Install ATL
-      cmd: '"C:/Program Files (x86)/Microsoft Visual Studio/Installer/vs_installer.exe" modify --quiet --installpath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --channelid VisualStudio.17.Release --productid Microsoft.VisualStudio.Product.Enterprise --add Microsoft.VisualStudio.Component.VC.ATL'
+      run: "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vs_installer.exe" modify --quiet --installpath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --channelid VisualStudio.17.Release --productid Microsoft.VisualStudio.Product.Enterprise --add Microsoft.VisualStudio.Component.VC.ATL
 
     - name: Install VSTest
       uses: Malcolmnixon/Setup-VSTest@v4
@@ -67,7 +67,7 @@ jobs:
     - name: Install MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
     - name: Install ATL
-      cmd: '"C:/Program Files (x86)/Microsoft Visual Studio/Installer/vs_installer.exe" modify --quiet --installpath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --channelid VisualStudio.17.Release --productid Microsoft.VisualStudio.Product.Enterprise --add Microsoft.VisualStudio.Component.VC.ATLMFC'
+      run: "C:/Program Files (x86)/Microsoft Visual Studio/Installer/vs_installer.exe" modify --quiet --installpath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --channelid VisualStudio.17.Release --productid Microsoft.VisualStudio.Product.Enterprise --add Microsoft.VisualStudio.Component.VC.ATLMFC
     - name: Install VSTest
       uses: Malcolmnixon/Setup-VSTest@v4
     - name: Build

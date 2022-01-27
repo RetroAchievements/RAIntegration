@@ -270,6 +270,9 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
     // just reset to the server state. otherwise, delete the item.
     for (auto* pAsset : vRemainingAssetsToReload)
     {
+        if (pAsset == nullptr)
+            continue;
+
         if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
         {
             for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(Count()) - 1; nIndex >= 0; --nIndex)

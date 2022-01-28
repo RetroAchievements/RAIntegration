@@ -16,9 +16,9 @@ jobs:
         submodules: recursive
     - name: Install MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
-    - name: Install ATL
+    - name: Install VC Tools
       run: |
-        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" modify --quiet --installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --add Microsoft.VisualStudio.ComponentGroup.VC.Tools.x86.x64
+        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" modify --quiet --installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --add Microsoft.VisualStudio.ComponentGroup.VC.ATLMFC
       shell: cmd
     - name: Build
       run: msbuild.exe RA_Integration.sln -t:RA_Integration -p:Configuration=Release -p:Platform=Win32

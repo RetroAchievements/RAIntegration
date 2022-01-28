@@ -20,8 +20,7 @@ jobs:
       run: msbuild.exe RA_Integration.sln -t:RA_Integration -p:Configuration=Release -p:Platform=Win32
 
   Win64-DLL:
-    if: ${{ false }}  # disable for now
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
     - name: Checkout
       uses: actions/checkout@v2
@@ -33,7 +32,6 @@ jobs:
       run: msbuild.exe RA_Integration.sln -t:RA_Integration -p:Configuration=Release -p:Platform=x64
 
   Win32-Tests:
-    if: ${{ false }}  # disable for now
     runs-on: windows-latest
     steps:
     - name: Checkout
@@ -42,10 +40,6 @@ jobs:
         submodules: recursive
     - name: Install MSBuild
       uses: microsoft/setup-msbuild@v1.0.2
-    - name: Install ATL
-      run: |
-        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" --help
-        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" modify --installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --add Microsoft.VisualStudio.ComponentGroup.VC.Tools.x86.x64
     - name: Install VSTest
       uses: Malcolmnixon/Setup-VSTest@v4
     - name: Build
@@ -57,7 +51,6 @@ jobs:
       run: vstest.console bin\Win32\Release\tests\RA_Interface\RA_Interface.Tests.dll
 
   Win64-Tests:
-    if: ${{ false }}  # disable for now
     runs-on: windows-latest
     steps:
     - name: Checkout
@@ -76,7 +69,6 @@ jobs:
       run: vstest.console bin\x64\Release\tests\RA_Interface\RA_Interface.Tests.dll
 
   Win32-Analysis:
-    if: ${{ false }}  # disable for now
     runs-on: windows-latest
     steps:
     - name: Checkout
@@ -89,7 +81,6 @@ jobs:
       run: msbuild.exe RA_Integration.sln -p:Configuration=Analysis -p:Platform=Win32 /WarnAsError
 
   Win64-Analysis:
-    if: ${{ false }}  # disable for now
     runs-on: windows-latest
     steps:
     - name: Checkout

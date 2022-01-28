@@ -16,7 +16,9 @@
 #include "windows_nodefines.h"
 #include <ShlObj.h> // CommCtrl
 #include <WindowsX.h>
-#include <atlbase.h> // atldef.h (Windows.h), atlcore.h (tchar.h), Shlwapi.h
+#include <Windows.h>
+#include <tchar.h>
+#include <Shlwapi.h>
 #include <direct.h>
 #include <io.h>
 #include <wincodec.h>

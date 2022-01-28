@@ -25,10 +25,9 @@ std::wstring ToString<std::chrono::milliseconds>(const std::chrono::milliseconds
     return std::to_wstring(t.count()) + L"ms";
 }
 
-#ifndef RA_ANALYSIS
+#ifdef RA_V141_XP
 // this has to be defined when compiling against v141_xp, but not when compiling against v142.
-// since it's impractical to detect the selected platform toolset, just key off the fact that
-// the Analysis builds have to use the newer toolset.
+// since it's impractical to detect the selected platform toolset, use a compilation flag
 
 template<>
 std::wstring ToString<__int64>(const __int64& t)

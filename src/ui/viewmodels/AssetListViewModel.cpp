@@ -134,6 +134,7 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
     {
         const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
         const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        Expects(pAsset != nullptr);
         const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
         if (pAchievement != nullptr && GetFilteredAssetIndex(*pAsset) >= 0)
         {
@@ -155,6 +156,7 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
         {
             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
             const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+            Expects(pAsset != nullptr);
             switch (pAsset->GetType())
             {
                 case ra::data::models::AssetType::Achievement:
@@ -179,7 +181,8 @@ void AssetListViewModel::OnDataModelIntValueChanged(gsl::index nIndex, const Int
             // if KeepActive is selected, set a Triggered achievement back to Waiting
             auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
             auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-            pAsset->SetState(ra::data::models::AssetState::Waiting);
+            if (pAsset != nullptr)
+                pAsset->SetState(ra::data::models::AssetState::Waiting);
 
             // SetState is re-entrant - we don't want to do any further processing with the previous new value
             return;
@@ -501,8 +504,6 @@ bool AssetListViewModel::AddOrRemoveFilteredItem(const ra::data::models::AssetMo
     {
         if (nIndex >= 0)
         {
-            const bool bIsSelected = m_vFilteredAssets.GetItemValue(nIndex, AssetSummaryViewModel::IsSelectedProperty);
-
             m_vFilteredAssets.RemoveAt(nIndex);
             return true;
         }
@@ -617,7 +618,6 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasUnofficial = false;
     bool bHasCore = false;
     bool bHasLocal = false;
-    const bool bHardcore = _RA_HardcoreModeIsActive();
 
     const bool bGameLoaded = (GetGameId() != 0);
     if (!bGameLoaded)
@@ -975,6 +975,9 @@ void AssetListViewModel::SaveSelected()
             std::string sMessage;
             for (const auto* pAsset : vSelectedAssets)
             {
+                if (pAsset == nullptr)
+                    continue;
+
                 if (!sMessage.empty())
                     sMessage.push_back(',');
                 sMessage.append(std::to_string(pAsset->GetID()));
@@ -1028,7 +1031,10 @@ void AssetListViewModel::SaveSelected()
             return;
 
         for (auto* pAsset : vSelectedAssets)
-            pAsset->SetCategory(ra::data::models::AssetCategory::Core);
+        {
+            if (pAsset != nullptr)
+                pAsset->SetCategory(ra::data::models::AssetCategory::Core);
+        }
 
         RA_LOG_INFO("Promoting %u items", vSelectedAssets.size());
         Publish(vSelectedAssets);
@@ -1047,7 +1053,7 @@ void AssetListViewModel::SaveSelected()
 
         for (const auto* pAsset : vSelectedAssets)
         {
-            if (pAsset->GetType() == ra::data::models::AssetType::Leaderboard)
+            if (pAsset != nullptr && pAsset->GetType() == ra::data::models::AssetType::Leaderboard)
             {
                 ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Leaderboards cannot be demoted.");
                 return;
@@ -1063,7 +1069,10 @@ void AssetListViewModel::SaveSelected()
             return;
 
         for (auto* pAsset : vSelectedAssets)
-            pAsset->SetCategory(ra::data::models::AssetCategory::Unofficial);
+        {
+            if (pAsset != nullptr)
+                pAsset->SetCategory(ra::data::models::AssetCategory::Unofficial);
+        }
 
         RA_LOG_INFO("Demoting %u items", vSelectedAssets.size());
         Publish(vSelectedAssets);
@@ -1336,12 +1345,15 @@ void AssetListViewModel::ResetSelected()
         // reset selection, remove "new" items and get the AssetViewModel for the others
         for (auto* pItem : vSelectedAssets)
         {
+            if (pItem == nullptr)
+                continue;
+
             const auto nType = pItem->GetType();
             const auto nId = ra::to_unsigned(pItem->GetId());
             for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()) - 1; nIndex >= 0; --nIndex)
             {
                 auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-                if (pAsset->GetID() == nId && pAsset->GetType() == nType)
+                if (pAsset != nullptr && pAsset->GetID() == nId && pAsset->GetType() == nType)
                 {
                     if (pAsset->GetState() == ra::data::models::AssetState::Primed)
                     {
@@ -1371,6 +1383,9 @@ void AssetListViewModel::ResetSelected()
             std::string sMessage;
             for (const auto* pAsset : vAssetsToReset)
             {
+                if (pAsset == nullptr)
+                    continue;
+
                 if (!sMessage.empty())
                     sMessage.push_back(',');
                 sMessage.append(std::to_string(pAsset->GetID()));
@@ -1482,6 +1497,9 @@ void AssetListViewModel::RevertSelected()
     std::string sMessage;
     for (const auto* pAsset : vAssetsToReset)
     {
+        if (pAsset == nullptr)
+            continue;
+
         if (!sMessage.empty())
             sMessage.push_back(',');
         sMessage.append(std::to_string(pAsset->GetID()));
@@ -1635,6 +1653,9 @@ void AssetListViewModel::CloneSelected()
         std::string sMessage;
         for (const auto* pAsset : vSelectedAssets)
         {
+            if (pAsset == nullptr)
+                continue;
+
             if (!sMessage.empty())
                 sMessage.push_back(',');
             sMessage.append(std::to_string(pAsset->GetID()));

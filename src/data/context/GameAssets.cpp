@@ -126,7 +126,7 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
         BeginUpdate();
         for (auto* pAsset : vAssetsToReload)
         {
-            if (pAsset->GetCategory() != ra::data::models::AssetCategory::Local)
+            if (pAsset != nullptr && pAsset->GetCategory() != ra::data::models::AssetCategory::Local)
                 pAsset->RestoreServerCheckpoint();
         }
         EndUpdate();
@@ -202,7 +202,7 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
             for (auto pIter = vRemainingAssetsToReload.begin(); pIter != vRemainingAssetsToReload.end(); ++pIter)
             {
                 auto* pAssetToReset = *pIter;
-                if (pAssetToReset->GetID() == nId && pAssetToReset->GetType() == nType)
+                if (pAssetToReset != nullptr && pAssetToReset->GetID() == nId && pAssetToReset->GetType() == nType)
                 {
                     pAsset = pAssetToReset;
                     vRemainingAssetsToReload.erase(pIter);
@@ -261,12 +261,18 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
 
     // assign IDs for any assets where one was not available
     for (auto* pAsset : vUnnumberedAssets)
-        pAsset->SetID(m_nNextLocalId++);
+    {
+        if (pAsset != nullptr)
+            pAsset->SetID(m_nNextLocalId++);
+    }
 
     // any items still in the source list no longer exist in the file. if the item is on the server,
     // just reset to the server state. otherwise, delete the item.
     for (auto* pAsset : vRemainingAssetsToReload)
     {
+        if (pAsset == nullptr)
+            continue;
+
         if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
         {
             for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(Count()) - 1; nIndex >= 0; --nIndex)

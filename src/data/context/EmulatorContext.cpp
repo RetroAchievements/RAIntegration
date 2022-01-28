@@ -239,12 +239,14 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
             sMinimumVersion = response.MinimumVersion;
             nMinimumVersion = ParseVersion(response.MinimumVersion.c_str());
 
+#ifndef RA_UTEST
             const unsigned long long nServerVersion = ParseVersion(m_sLatestVersion.c_str());
             const unsigned long long nLocalVersion = ParseVersion(m_sVersion.c_str());
             RA_LOG_INFO("Client %s date: server %s, current %s",
                    (nLocalVersion >= nServerVersion) ? "up to" : "out of",
                    m_sLatestVersion,
                    m_sVersion);
+#endif
         }
 
         if (m_nEmulatorId == EmulatorID::RA_Gens)
@@ -607,7 +609,6 @@ bool EmulatorContext::HasInvalidRegions() const noexcept
 
 bool EmulatorContext::IsValidAddress(ra::ByteAddress nAddress) const noexcept
 {
-    const ra::ByteAddress nOriginalAddress = nAddress;
     for (const auto& pBlock : m_vMemoryBlocks)
     {
         if (nAddress < pBlock.size)

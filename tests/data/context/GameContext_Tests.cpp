@@ -480,6 +480,7 @@ public:
         // local achievement data for 7 should be merged with server achievement data
         pAch = game.Assets().FindAchievement(7U);
         Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
         Assert::AreEqual(std::wstring(L"Ach2b"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc2b"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth2"), pAch->GetAuthor()); // author not merged
@@ -491,6 +492,7 @@ public:
         // no server achievement, assign FirstLocalId
         pAch = game.Assets().FindAchievement(GameAssets::FirstLocalId);
         Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
         Assert::AreEqual(std::wstring(L"Ach3"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc3"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth3"), pAch->GetAuthor());
@@ -502,6 +504,7 @@ public:
         // no server achievement, assign next local id
         pAch = game.Assets().FindAchievement(GameAssets::FirstLocalId + 1);
         Assert::IsNotNull(pAch);
+        Ensures(pAch != nullptr);
         Assert::AreEqual(std::wstring(L"Ach4"), pAch->GetName());
         Assert::AreEqual(std::wstring(L"Desc4"), pAch->GetDescription());
         Assert::AreEqual(std::wstring(L"Auth4"), pAch->GetAuthor());

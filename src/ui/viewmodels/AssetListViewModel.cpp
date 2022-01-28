@@ -1083,7 +1083,7 @@ void AssetListViewModel::SaveSelected()
     UpdateButtons();
 }
 
-#if RA_INTEGRATION_VERSION_MINOR < 80
+#if RA_INTEGRATION_VERSION_MAJOR < 1 && RA_INTEGRATION_VERSION_MINOR < 80
 static std::wstring ValidateCondSet(const rc_condset_t* pCondSet)
 {
     if (!pCondSet)

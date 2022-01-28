@@ -204,6 +204,10 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
             sBuffer.push_back('b');
             break;
 
+        case TriggerOperandType::Inverted:
+            sBuffer.push_back('~');
+            break;
+
         default:
             assert(!"Unknown operand type");
             break;
@@ -363,6 +367,7 @@ void TriggerConditionViewModel::SetOperand(const IntModelProperty& pTypeProperty
         case TriggerOperandType::Delta:
         case TriggerOperandType::Prior:
         case TriggerOperandType::BCD:
+        case TriggerOperandType::Inverted:
         {
             const auto nSize = ra::data::models::TriggerValidation::MapRcheevosMemSize(operand.size);
             SetValue(pSizeProperty, ra::etoi(nSize));
@@ -723,6 +728,24 @@ bool TriggerConditionViewModel::IsAddressType(TriggerOperandType nType) noexcept
         case TriggerOperandType::Value:
         case TriggerOperandType::Float:
             return false;
+
+        default:
+            return true;
+    }
+}
+
+
+bool TriggerConditionViewModel::IsOperandTypeVisible(const ViewModelBase& vmItem, int nValue) noexcept
+{
+    const auto* vmCondition = dynamic_cast<const TriggerConditionViewModel*>(&vmItem);
+    if (vmCondition == nullptr)
+        return false;
+
+    const auto nOperandType = ra::itoe<TriggerOperandType>(nValue);
+    switch (nOperandType)
+    {
+        case TriggerOperandType::Inverted:
+            return vmCondition->IsForValue();
 
         default:
             return true;

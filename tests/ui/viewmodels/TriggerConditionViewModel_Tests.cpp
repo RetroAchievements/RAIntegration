@@ -128,6 +128,11 @@ public:
         Assert::IsTrue(vmCondition.HasSourceSize());
         Assert::AreEqual(MemSize::EightBit, vmCondition.GetSourceSize());
 
+        vmCondition.SetSourceType(TriggerOperandType::Inverted);
+        Assert::AreEqual(TriggerOperandType::Inverted, vmCondition.GetSourceType());
+        Assert::IsTrue(vmCondition.HasSourceSize());
+        Assert::AreEqual(MemSize::EightBit, vmCondition.GetSourceSize());
+
         vmCondition.SetSourceType(TriggerOperandType::Value);
         Assert::AreEqual(TriggerOperandType::Value, vmCondition.GetSourceType());
         Assert::IsFalse(vmCondition.HasSourceSize());
@@ -230,6 +235,16 @@ public:
         Assert::IsFalse(vmCondition.HasTarget());
         Assert::AreEqual(MemSize::EightBit, vmCondition.GetTargetSize()); // size copied from source
 
+        vmCondition.SetTargetType(TriggerOperandType::Value);
+        Assert::IsFalse(vmCondition.HasTargetSize());
+        Assert::IsFalse(vmCondition.HasTarget());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, vmCondition.GetTargetSize()); // value always 32-bit
+
+        vmCondition.SetTargetType(TriggerOperandType::Inverted);
+        Assert::IsFalse(vmCondition.HasTargetSize());
+        Assert::IsFalse(vmCondition.HasTarget());
+        Assert::AreEqual(MemSize::EightBit, vmCondition.GetTargetSize()); // size copied from source
+
         vmCondition.SetOperator(TriggerOperatorType::NotEquals);
         Assert::IsTrue(vmCondition.HasTargetSize());
         Assert::IsTrue(vmCondition.HasTarget());
@@ -256,6 +271,10 @@ public:
 
         vmCondition.SetTargetType(TriggerOperandType::Prior);
         Assert::AreEqual(TriggerOperandType::Prior, vmCondition.GetTargetType());
+        Assert::IsTrue(vmCondition.HasTargetSize());
+
+        vmCondition.SetTargetType(TriggerOperandType::Inverted);
+        Assert::AreEqual(TriggerOperandType::Inverted, vmCondition.GetTargetType());
         Assert::IsTrue(vmCondition.HasTargetSize());
 
         vmCondition.SetTargetType(TriggerOperandType::Value);
@@ -440,6 +459,7 @@ public:
         ParseAndRegenerate("0xH1234=d0xH1234"); // delta
         ParseAndRegenerate("0xH1234=p0xH1234"); // prior
         ParseAndRegenerate("0xH1234=b0xH1234"); // bcd
+        ParseAndRegenerate("0xH1234=~0xH1234"); // inverted
         ParseAndRegenerate("0xH1234=1234"); // value
         ParseAndRegenerate("0xH1234=f12.34"); // float
     }
@@ -1050,6 +1070,7 @@ public:
         Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Delta));
         Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Prior));
         Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::BCD));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Inverted));
         Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660.25f, TriggerOperandType::Address));
 
         condition.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, false);
@@ -1059,6 +1080,7 @@ public:
         Assert::AreEqual(std::wstring(L"0xc3500"), TriggerConditionViewModel::FormatValue(800000U, TriggerOperandType::Address));
         Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Delta));
         Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Prior));
+        Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Inverted));
         Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::BCD));
         Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660.25f, TriggerOperandType::Address));
     }

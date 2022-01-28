@@ -105,18 +105,27 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     }
 
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
-    if (ra::itoe<ConsoleID>(response.ConsoleId) != pConsoleContext.Id())
+    const auto nServerConsoleId = ra::itoe<ConsoleID>(response.ConsoleId);
+    if (nServerConsoleId != pConsoleContext.Id())
     {
-        m_vAssets.EndUpdate();
-        m_nGameId = 0;
+        if (nServerConsoleId == ConsoleID::GB && pConsoleContext.Id() == ConsoleID::GBC)
+        {
+            // GB memory map is just a subset of GBC, and GBC runs GB games, so allow loading a
+            // GB game in GBC context.
+        }
+        else
+        {
+            m_vAssets.EndUpdate();
+            m_nGameId = 0;
 
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Identified game does not match expected console.",
-            ra::StringPrintf(L"The game being loaded is associated to the %s console, but the emulator has initialized "
-                "the %s console. This is not allowed as the memory maps may not be compatible between consoles.",
-                rc_console_name(response.ConsoleId), pConsoleContext.Name()));
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Identified game does not match expected console.",
+                ra::StringPrintf(L"The game being loaded is associated to the %s console, but the emulator has initialized "
+                    "the %s console. This is not allowed as the memory maps may not be compatible between consoles.",
+                    rc_console_name(response.ConsoleId), pConsoleContext.Name()));
 
-        EndLoad();
-        return;
+            EndLoad();
+            return;
+        }
     }
 
     // start fetching the code notes

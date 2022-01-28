@@ -449,6 +449,7 @@ rc_trigger_t* TriggerViewModel::ParseTrigger(const std::string& sTrigger)
             memset(pTrigger, 0, sizeof(rc_trigger_t));
             pTrigger->requirement = pValue->conditions;
             pTrigger->alternative = pValue->conditions->next;
+            pTrigger->memrefs = pValue->memrefs;
             return pTrigger;
         }
     }
@@ -495,6 +496,7 @@ void TriggerViewModel::InitializeFrom(const rc_value_t& pValue)
     memset(m_pTrigger, 0, sizeof(rc_trigger_t));
     m_pTrigger->requirement = pValue.conditions;
     m_pTrigger->alternative = (pValue.conditions) ? pValue.conditions->next : nullptr;
+    m_pTrigger->memrefs = pValue.memrefs;
     InitializeGroups(*m_pTrigger);
 }
 

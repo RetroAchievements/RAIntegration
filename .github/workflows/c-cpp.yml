@@ -18,7 +18,8 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
     - name: Install ATL
       run: |
-        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" --add Microsoft.VisualStudio.Component.VC.ATLMFC
+        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" --help
+        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" modify --installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --add Microsoft.VisualStudio.ComponentGroup.VC.Tools.x86.x64
     - name: Build
       run: msbuild.exe RA_Integration.sln -t:RA_Integration -p:Configuration=Release -p:Platform=Win32
 
@@ -36,6 +37,7 @@ jobs:
       run: msbuild.exe RA_Integration.sln -t:RA_Integration -p:Configuration=Release -p:Platform=x64
 
   Win32-Tests:
+    if: ${{ false }}  # disable for now
     runs-on: windows-latest
     steps:
     - name: Checkout
@@ -46,8 +48,8 @@ jobs:
       uses: microsoft/setup-msbuild@v1.0.2
     - name: Install ATL
       run: |
-        dir "C:\Program Files (x86)\Microsoft Visual Studio"
-        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" --add Microsoft.VisualStudio.ComponentGroup.VC.Tools.x86.x64
+        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" --help
+        "C:\Program Files (x86)\Microsoft Visual Studio\Installer\vs_installer.exe" modify --installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --add Microsoft.VisualStudio.ComponentGroup.VC.Tools.x86.x64
     - name: Install VSTest
       uses: Malcolmnixon/Setup-VSTest@v4
     - name: Build

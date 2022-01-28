@@ -42,6 +42,7 @@ BrowseCallbackProc(_In_ HWND hwnd, _In_ UINT uMsg, _In_ _UNUSED LPARAM lParam, _
     return 0;
 }
 
+GSL_SUPPRESS_F23
 static void ShowFolder(FileDialogViewModel& vmFileDialog, HWND hParentWnd)
 {
     IFileDialog* pFileDialog = nullptr;
@@ -166,8 +167,7 @@ void FileDialog::Presenter::DoShowModal(ra::ui::WindowViewModelBase& oViewModel,
         if (!sDefaultExtension.empty())
         {
             const wchar_t* pStart = pPair.first.data();
-            Expects(pStart != nullptr);
-            while (*pStart)
+            while (pStart != nullptr && *pStart)
             {
                 while (*pStart && *pStart != '.')
                     ++pStart;
@@ -176,6 +176,7 @@ void FileDialog::Presenter::DoShowModal(ra::ui::WindowViewModelBase& oViewModel,
                     break;
 
                 const wchar_t* pEnd = ++pStart;
+                Expects(pEnd != nullptr);
                 while (*pEnd && *pEnd != ';')
                     ++pEnd;
 

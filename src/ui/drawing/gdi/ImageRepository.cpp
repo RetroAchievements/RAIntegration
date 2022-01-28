@@ -265,6 +265,7 @@ HBITMAP ImageRepository::GetDefaultImage(ImageType nType)
     }
 }
 
+GSL_SUPPRESS_F23
 static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOriginalBitmapSource, _Inout_ IWICBitmapSource*& pToRenderBitmapSource)
 {
     pToRenderBitmapSource = nullptr;
@@ -291,11 +292,11 @@ static HRESULT ConvertBitmapSource(_In_ RECT rcDest, _In_ IWICBitmapSource* pOri
         // Format convert to 32bppBGR
         if (SUCCEEDED(hr))
         {
-            hr = pConverter->Initialize(static_cast<IWICBitmapSource*>(pScaler), // Input bitmap to convert
+            hr = pConverter->Initialize(pScaler,            // Input bitmap to convert
                 GUID_WICPixelFormat32bppBGR,                // &GUID_WICPixelFormat32bppBGR,
                 WICBitmapDitherTypeNone,                    // Specified dither pattern
                 nullptr,                                    // Specify a particular palette 
-                0.f,                                        // Alpha threshold
+                0.0f,                                       // Alpha threshold
                 WICBitmapPaletteTypeCustom);                // Palette translation type
 
             // Store the converted bitmap as ppToRenderBitmapSource 
@@ -395,6 +396,7 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource* pToRenderBitmapS
     return hr;
 }
 
+GSL_SUPPRESS_F23
 HBITMAP ImageRepository::LoadLocalPNG(const std::wstring& sFilename, unsigned int nWidth, unsigned int nHeight)
 {
     if (g_pIWICFactory == nullptr)
@@ -596,6 +598,7 @@ bool ImageRepository::HasReferencedImageChanged(ImageReference& pImage) const
     return (pImage.m_nData != hBitmapBefore);
 }
 
+GSL_SUPPRESS_F23
 bool GDISurfaceFactory::SaveImage(const ISurface& pSurface, const std::wstring& sPath) const
 {
     if (g_pIWICFactory == nullptr)

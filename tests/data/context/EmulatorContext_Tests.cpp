@@ -85,7 +85,7 @@ private:
     class EmulatorContextNotifyHarness : public EmulatorContext::NotifyTarget
     {
     public:
-        void OnByteWritten(ra::ByteAddress nAddress, uint8_t nValue)
+        void OnByteWritten(ra::ByteAddress nAddress, uint8_t nValue) noexcept override
         {
             nLastByteWrittenAddress = nAddress;
             nLastByteWritten = nValue;

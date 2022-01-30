@@ -790,14 +790,15 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) co
 
 void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) const
 {
+    auto nBlockAddress = nAddress;
     for (const auto& pBlock : m_vMemoryBlocks)
     {
-        if (nAddress < pBlock.size)
+        if (nBlockAddress < pBlock.size)
         {
             if (!pBlock.write)
                 return;
 
-            pBlock.write(nAddress, nValue);
+            pBlock.write(nBlockAddress, nValue);
             m_bMemoryModified = true;
 
             // create a copy of the list of pointers in case it's modified by one of the callbacks
@@ -811,7 +812,7 @@ void EmulatorContext::WriteMemoryByte(ra::ByteAddress nAddress, uint8_t nValue) 
             return;
         }
 
-        nAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
+        nBlockAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
     }
 }
 

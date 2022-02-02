@@ -264,6 +264,66 @@ public:
         Assert::AreEqual(1234U, bookmark.GetAddress());
         Assert::AreEqual(MemSize::EightBit, bookmark.GetSize());
         Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
+        Assert::IsFalse(bookmark.IsCustomDescription());
+    }
+
+    TEST_METHOD(TestLoadBookmarksDescriptionFromFile)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
+            "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10,\"Description\":\"desc\"}]}");
+
+        bookmarks.mockGameContext.NotifyActiveGameChanged();
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::AreEqual(std::wstring(L"desc"), bookmark.GetDescription());
+        Assert::AreEqual(1234U, bookmark.GetAddress());
+        Assert::AreEqual(MemSize::EightBit, bookmark.GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
+        Assert::IsTrue(bookmark.IsCustomDescription());
+    }
+
+    TEST_METHOD(TestLoadBookmarksDescriptionFromFileAndCodeNotes)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
+            "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10,\"Description\":\"desc\"}]}");
+
+        bookmarks.mockGameContext.NotifyActiveGameChanged();
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::AreEqual(std::wstring(L"desc"), bookmark.GetDescription());
+        Assert::AreEqual(1234U, bookmark.GetAddress());
+        Assert::AreEqual(MemSize::EightBit, bookmark.GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
+        Assert::IsTrue(bookmark.IsCustomDescription());
+    }
+
+    TEST_METHOD(TestLoadBookmarksDescriptionFromFileMatchesCodeNote)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
+            "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10,\"Description\":\"Note description\"}]}");
+
+        bookmarks.mockGameContext.NotifyActiveGameChanged();
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        const auto& bookmark = *bookmarks.Bookmarks().GetItemAt(0);
+        Assert::AreEqual(std::wstring(L"Note description"), bookmark.GetDescription());
+        Assert::AreEqual(1234U, bookmark.GetAddress());
+        Assert::AreEqual(MemSize::EightBit, bookmark.GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark.GetFormat());
+        Assert::IsFalse(bookmark.IsCustomDescription());
     }
 
     TEST_METHOD(TestLoadSaveBookmarkSizes)
@@ -370,6 +430,92 @@ public:
         Assert::IsFalse(bookmarks.IsModified());
         const std::string& sContents = bookmarks.mockLocalStorage.GetStoredData(ra::services::StorageItemType::Bookmarks, L"3");
         Assert::AreEqual(std::string("{\"Bookmarks\":[{\"MemAddr\":\"0xH04d2\",\"Decimal\":true}]}"), sContents);
+    }
+
+    TEST_METHOD(TestCodeNoteChanged)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
+            "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10}]}");
+
+        bookmarks.mockGameContext.NotifyActiveGameChanged();
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        const auto* bookmark = bookmarks.Bookmarks().GetItemAt(0);
+        Expects(bookmark != nullptr);
+        Assert::AreEqual(std::wstring(L"Note description"), bookmark->GetDescription());
+        Assert::AreEqual(1234U, bookmark->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, bookmark->GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark->GetFormat());
+        Assert::IsFalse(bookmark->IsCustomDescription());
+
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"New description");
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        bookmark = bookmarks.Bookmarks().GetItemAt(0);
+        Expects(bookmark != nullptr);
+        Assert::AreEqual(std::wstring(L"New description"), bookmark->GetDescription());
+        Assert::AreEqual(1234U, bookmark->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, bookmark->GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark->GetFormat());
+        Assert::IsFalse(bookmark->IsCustomDescription());
+    }
+
+    TEST_METHOD(TestCodeNoteChangedCustomDescription)
+    {
+        MemoryBookmarksViewModelHarness bookmarks;
+        bookmarks.SetIsVisible(true);
+        bookmarks.mockGameContext.SetGameId(3U);
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"Note description");
+        bookmarks.mockLocalStorage.MockStoredData(ra::services::StorageItemType::Bookmarks, L"3",
+            "{\"Bookmarks\":[{\"Address\":1234,\"Size\":10,\"Description\":\"My Description\"}]}");
+
+        bookmarks.mockGameContext.NotifyActiveGameChanged();
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        const auto* bookmark = bookmarks.Bookmarks().GetItemAt(0);
+        Expects(bookmark != nullptr);
+        Assert::AreEqual(std::wstring(L"My Description"), bookmark->GetDescription());
+        Assert::AreEqual(1234U, bookmark->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, bookmark->GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark->GetFormat());
+        Assert::IsTrue(bookmark->IsCustomDescription());
+
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"New description");
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        bookmark = bookmarks.Bookmarks().GetItemAt(0);
+        Expects(bookmark != nullptr);
+        Assert::AreEqual(std::wstring(L"My Description"), bookmark->GetDescription());
+        Assert::AreEqual(1234U, bookmark->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, bookmark->GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark->GetFormat());
+        Assert::IsTrue(bookmark->IsCustomDescription());
+
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"My Description");
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        bookmark = bookmarks.Bookmarks().GetItemAt(0);
+        Expects(bookmark != nullptr);
+        Assert::AreEqual(std::wstring(L"My Description"), bookmark->GetDescription());
+        Assert::AreEqual(1234U, bookmark->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, bookmark->GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark->GetFormat());
+        Assert::IsFalse(bookmark->IsCustomDescription());
+
+        bookmarks.mockGameContext.SetCodeNote(1234U, L"New description");
+
+        Assert::AreEqual({ 1U }, bookmarks.Bookmarks().Count());
+        bookmark = bookmarks.Bookmarks().GetItemAt(0);
+        Expects(bookmark != nullptr);
+        Assert::AreEqual(std::wstring(L"New description"), bookmark->GetDescription());
+        Assert::AreEqual(1234U, bookmark->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, bookmark->GetSize());
+        Assert::AreEqual((int)MemFormat::Hex, (int)bookmark->GetFormat());
+        Assert::IsFalse(bookmark->IsCustomDescription());
     }
 
     TEST_METHOD(TestDoFrame)

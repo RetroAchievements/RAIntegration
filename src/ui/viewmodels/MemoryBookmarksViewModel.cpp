@@ -318,8 +318,18 @@ void MemoryBookmarksViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const
     for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vBookmarks.Count(); ++nIndex)
     {
         auto* pBookmark = m_vBookmarks.GetItemAt(nIndex);
-        if (pBookmark && pBookmark->GetAddress() == nAddress && !pBookmark->IsCustomDescription())
-            pBookmark->SetDescription(sNewNote);
+        if (pBookmark && pBookmark->GetAddress() == nAddress)
+        {
+            if (!pBookmark->IsCustomDescription())
+            {
+                pBookmark->SetDescription(sNewNote);
+            }
+            else
+            {
+                if (pBookmark->GetDescription() == sNewNote)
+                    pBookmark->SetIsCustomDescription(false);
+            }
+        }
     }
 }
 
@@ -403,14 +413,17 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                     vmBookmark->SetAddress(bookmark["Address"].GetUint());
                 }
 
+                const auto* pNote = pGameContext.FindCodeNote(vmBookmark->GetAddress());
+
                 std::wstring sDescription;
                 if (bookmark.HasMember("Description"))
                 {
                     sDescription = ra::Widen(bookmark["Description"].GetString());
+                    vmBookmark->SetIsCustomDescription(!pNote || sDescription != *pNote);
                 }
                 else
                 {
-                    const auto* pNote = pGameContext.FindCodeNote(vmBookmark->GetAddress());
+                    vmBookmark->SetIsCustomDescription(false);
                     if (pNote)
                         sDescription = *pNote;
                 }

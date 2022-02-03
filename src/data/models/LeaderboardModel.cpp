@@ -258,6 +258,7 @@ void LeaderboardModel::Serialize(ra::services::TextWriter& pWriter) const
 
     WritePossiblyQuoted(pWriter, GetLocalValue(NameProperty));
     WritePossiblyQuoted(pWriter, GetLocalValue(DescriptionProperty));
+    WriteNumber(pWriter, IsLowerBetter() ? 1 : 0);
 }
 
 bool LeaderboardModel::Deserialize(ra::Tokenizer& pTokenizer)
@@ -297,6 +298,11 @@ bool LeaderboardModel::Deserialize(ra::Tokenizer& pTokenizer)
     if (!pTokenizer.EndOfString() && !ReadPossiblyQuoted(pTokenizer, sDescription))
         return false;
 
+    // field 9: lower is better
+    uint32_t nLowerIsBetter = 0;
+    if (!pTokenizer.EndOfString() && !ReadNumber(pTokenizer, nLowerIsBetter))
+        return false;
+
     // line is valid
     SetName(ra::Widen(sTitle));
     SetDescription(ra::Widen(sDescription));
@@ -304,6 +310,7 @@ bool LeaderboardModel::Deserialize(ra::Tokenizer& pTokenizer)
     SetSubmitTrigger(sSubmitTrigger);
     SetCancelTrigger(sCancelTrigger);
     SetValueDefinition(sValueDefinition);
+    SetLowerIsBetter(nLowerIsBetter != 0);
 
     if (sFormat == "VALUE")
         SetValueFormat(ValueFormat::Value);

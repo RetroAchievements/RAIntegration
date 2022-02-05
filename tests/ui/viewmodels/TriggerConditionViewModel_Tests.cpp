@@ -1,5 +1,6 @@
 #include "CppUnitTest.h"
 
+#include "ui\EditorTheme.hh"
 #include "ui\viewmodels\TriggerConditionViewModel.hh"
 #include "ui\viewmodels\TriggerViewModel.hh"
 
@@ -1113,6 +1114,104 @@ public:
         Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::Inverted));
         Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660U, TriggerOperandType::BCD));
         Assert::AreEqual(std::wstring(L"0x1234"), TriggerConditionViewModel::FormatValue(4660.25f, TriggerOperandType::Address));
+    }
+
+    TEST_METHOD(TestUpdateRowColor)
+    {
+        TriggerConditionViewModelHarness condition;
+        ra::ui::EditorTheme pTheme;
+        ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> pThemeOverride(&pTheme);
+        const auto nDefaultColor = ra::to_unsigned(TriggerConditionViewModel::RowColorProperty.GetDefaultValue());
+
+        const std::string sInput = "R:0xH0000=1_P:0xH0001=1_0xH0002=1(2)_0xH0003=1";
+        const auto nSize = rc_trigger_size(sInput.c_str());
+        std::string sBuffer;
+        sBuffer.resize(nSize);
+
+        const rc_trigger_t* pTrigger = rc_parse_trigger(sBuffer.data(), sInput.c_str(), nullptr, 0);
+        Assert::IsNotNull(pTrigger);
+        Ensures(pTrigger != nullptr);
+
+        // ResetIf
+        rc_condition_t* pCondition = pTrigger->requirement->conditions;
+        Expects(pCondition != nullptr);
+        condition.InitializeFrom(*pCondition);
+
+        pCondition->is_true = 0;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 1;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(pTheme.ColorTriggerResetTrue().ARGB, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 0;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
+
+        // PauseIf
+        pCondition = pCondition->next;
+        Expects(pCondition != nullptr);
+        condition.InitializeFrom(*pCondition);
+
+        pCondition->is_true = 0;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 1;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(pTheme.ColorTriggerPauseTrue().ARGB, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 0;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
+
+        // Condition with hit target
+        pCondition = pCondition->next;
+        Expects(pCondition != nullptr);
+        condition.InitializeFrom(*pCondition);
+
+        pCondition->is_true = 0;
+        pCondition->current_hits = 0;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 1;
+        pCondition->current_hits = 1;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(pTheme.ColorTriggerBecomingTrue().ARGB, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 0;
+        pCondition->current_hits = 1;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 1;
+        pCondition->current_hits = 2;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(pTheme.ColorTriggerIsTrue().ARGB, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 0;
+        pCondition->current_hits = 2;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(pTheme.ColorTriggerWasTrue().ARGB, condition.GetRowColor().ARGB);
+
+        // Simple condition
+        pCondition = pCondition->next;
+        Expects(pCondition != nullptr);
+        condition.InitializeFrom(*pCondition);
+
+        pCondition->is_true = 0;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 1;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(pTheme.ColorTriggerIsTrue().ARGB, condition.GetRowColor().ARGB);
+
+        pCondition->is_true = 0;
+        condition.UpdateRowColor(pCondition);
+        Assert::AreEqual(nDefaultColor, condition.GetRowColor().ARGB);
     }
 };
 

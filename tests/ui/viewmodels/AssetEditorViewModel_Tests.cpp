@@ -2284,6 +2284,60 @@ public:
         Assert::IsTrue(bDialogSeen);
         Assert::AreEqual(std::wstring(L"File does not appear to be a valid jpg image."), sMessage);
     }
+
+    TEST_METHOD(TestChangingGroupUpdatesDebugHighlights)
+    {
+        AssetEditorViewModelHarness editor;
+        const auto nDefaultColor = ra::to_unsigned(TriggerConditionViewModel::RowColorProperty.GetDefaultValue());
+
+        AchievementModel achievement;
+        achievement.SetTrigger("0=1S0=1S1=1");
+        editor.mockRuntime.ActivateAchievement(achievement.GetID(), achievement.GetTrigger()); // must be in runtime to apply colors
+        editor.LoadAsset(&achievement);
+
+        auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(achievement.GetID());
+        Expects(pTrigger != nullptr);
+        pTrigger->alternative->next->conditions->is_true = 1; // simulate evaluation of 1=1 being true
+
+        Assert::AreEqual(0, editor.Trigger().GetSelectedGroupIndex());
+        Assert::AreEqual(nDefaultColor, editor.Trigger().Conditions().GetItemAt(0)->GetRowColor().ARGB);
+
+        editor.Trigger().SetSelectedGroupIndex(2);
+        Assert::AreEqual(2, editor.Trigger().GetSelectedGroupIndex());
+        Assert::AreEqual(nDefaultColor, editor.Trigger().Conditions().GetItemAt(0)->GetRowColor().ARGB);
+
+        editor.Trigger().SetSelectedGroupIndex(1);
+        Assert::AreEqual(1, editor.Trigger().GetSelectedGroupIndex());
+        Assert::AreEqual(nDefaultColor, editor.Trigger().Conditions().GetItemAt(0)->GetRowColor().ARGB);
+
+        editor.SetDebugHighlightsEnabled(true);
+        Assert::AreEqual(1, editor.Trigger().GetSelectedGroupIndex());
+        Assert::AreEqual(nDefaultColor, editor.Trigger().Conditions().GetItemAt(0)->GetRowColor().ARGB);
+
+        editor.Trigger().SetSelectedGroupIndex(2);
+        Assert::AreEqual(2, editor.Trigger().GetSelectedGroupIndex());
+        Assert::AreEqual(editor.mockTheme.ColorTriggerIsTrue().ARGB, editor.Trigger().Conditions().GetItemAt(0)->GetRowColor().ARGB);
+
+        editor.Trigger().SetSelectedGroupIndex(1);
+        Assert::AreEqual(1, editor.Trigger().GetSelectedGroupIndex());
+        Assert::AreEqual(nDefaultColor, editor.Trigger().Conditions().GetItemAt(0)->GetRowColor().ARGB);
+
+        editor.Trigger().SetSelectedGroupIndex(2);
+        Assert::AreEqual(2, editor.Trigger().GetSelectedGroupIndex());
+        Assert::AreEqual(editor.mockTheme.ColorTriggerIsTrue().ARGB, editor.Trigger().Conditions().GetItemAt(0)->GetRowColor().ARGB);
+
+        editor.SetDebugHighlightsEnabled(false);
+        Assert::AreEqual(2, editor.Trigger().GetSelectedGroupIndex());
+        Assert::AreEqual(nDefaultColor, editor.Trigger().Conditions().GetItemAt(0)->GetRowColor().ARGB);
+
+        editor.Trigger().SetSelectedGroupIndex(1);
+        Assert::AreEqual(1, editor.Trigger().GetSelectedGroupIndex());
+        Assert::AreEqual(nDefaultColor, editor.Trigger().Conditions().GetItemAt(0)->GetRowColor().ARGB);
+
+        editor.Trigger().SetSelectedGroupIndex(2);
+        Assert::AreEqual(2, editor.Trigger().GetSelectedGroupIndex());
+        Assert::AreEqual(nDefaultColor, editor.Trigger().Conditions().GetItemAt(0)->GetRowColor().ARGB);
+    }
 };
 
 } // namespace tests

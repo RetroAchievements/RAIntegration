@@ -702,6 +702,65 @@ public:
         Assert::AreEqual(std::wstring(L"0x000b (indirect)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
+    TEST_METHOD(TestTooltipIndirectAddressWithAltCodeNote)
+    {
+        IndirectAddressTriggerViewModelHarness vmTrigger;
+        vmTrigger.Parse("I:0xH0001_0xH0002=3S0=0S1=1");
+        vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        vmTrigger.mockGameContext.SetCodeNote({ 3U }, L"This is a note.");
+
+        const auto* pCondition = vmTrigger.Conditions().GetItemAt(1);
+        Expects(pCondition != nullptr);
+        Assert::IsTrue(pCondition->IsIndirect());
+
+        // $0001 = 1, 1+2 = $0003
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        // $0001 = 3, 3+2 = $0005
+        vmTrigger.SetMemory({ 1 }, 3);
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipIndirectAddressInAlt1CodeNote)
+    {
+        IndirectAddressTriggerViewModelHarness vmTrigger;
+        vmTrigger.Parse("0=0SI:0xH0001_0xH0002=3S1=1");
+        vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        vmTrigger.mockGameContext.SetCodeNote({ 3U }, L"This is a note.");
+        vmTrigger.SetSelectedGroupIndex(1);
+
+        const auto* pCondition = vmTrigger.Conditions().GetItemAt(1);
+        Expects(pCondition != nullptr);
+        Assert::IsTrue(pCondition->IsIndirect());
+
+        // $0001 = 1, 1+2 = $0003
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        // $0001 = 3, 3+2 = $0005
+        vmTrigger.SetMemory({ 1 }, 3);
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipIndirectAddressInAlt2CodeNote)
+    {
+        IndirectAddressTriggerViewModelHarness vmTrigger;
+        vmTrigger.Parse("0=0S1=1SI:0xH0001_0xH0002=3");
+        vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        vmTrigger.mockGameContext.SetCodeNote({ 3U }, L"This is a note.");
+        vmTrigger.SetSelectedGroupIndex(2);
+
+        const auto* pCondition = vmTrigger.Conditions().GetItemAt(1);
+        Expects(pCondition != nullptr);
+        Assert::IsTrue(pCondition->IsIndirect());
+
+        // $0001 = 1, 1+2 = $0003
+        Assert::AreEqual(std::wstring(L"0x0003 (indirect)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        // $0001 = 3, 3+2 = $0005
+        vmTrigger.SetMemory({ 1 }, 3);
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\n[No code note]"), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
     TEST_METHOD(TestTooltipDoubleIndirectAddress)
     {
         IndirectAddressTriggerViewModelHarness vmTrigger;

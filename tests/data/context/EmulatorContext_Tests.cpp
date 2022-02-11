@@ -82,6 +82,19 @@ private:
         }
     };
 
+    class EmulatorContextNotifyHarness : public EmulatorContext::NotifyTarget
+    {
+    public:
+        void OnByteWritten(ra::ByteAddress nAddress, uint8_t nValue) noexcept override
+        {
+            nLastByteWrittenAddress = nAddress;
+            nLastByteWritten = nValue;
+        }
+
+        ra::ByteAddress nLastByteWrittenAddress = 0xFFFFFFFFU;
+        uint8_t nLastByteWritten = 0xFF;
+    };
+
 public:
     TEST_METHOD(TestClientName)
     {
@@ -1340,6 +1353,42 @@ public:
         // the others should have their original values
         for (uint8_t i = gsl::narrow_cast<uint8_t>(emulator.TotalMemorySize()); i < memory.size(); ++i)
             Assert::AreEqual(i, memory.at(i));
+    }
+
+    TEST_METHOD(TestWriteMemoryByteEvents)
+    {
+        InitializeMemory();
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
+        emulator.AddMemoryBlock(1, 10, &ReadMemory2, &WriteMemory2);
+        Assert::AreEqual({ 30U }, emulator.TotalMemorySize());
+
+        EmulatorContextNotifyHarness notify;
+        emulator.AddNotifyTarget(notify);
+
+        // write to first block
+        uint8_t nByte = 0xCE;
+        emulator.WriteMemoryByte(6U, nByte);
+        Assert::AreEqual(6U, notify.nLastByteWrittenAddress);
+        Assert::AreEqual(nByte, notify.nLastByteWritten);
+
+        // write to second block
+        nByte = 0xEE;
+        emulator.WriteMemoryByte(26U, nByte);
+        Assert::AreEqual(26U, notify.nLastByteWrittenAddress);
+        Assert::AreEqual(nByte, notify.nLastByteWritten);
+
+        // write to invalid address
+        emulator.WriteMemoryByte(36U, nByte + 3);
+        Assert::AreEqual(26U, notify.nLastByteWrittenAddress);
+        Assert::AreEqual(nByte, notify.nLastByteWritten);
+
+        // write partial value
+        nByte = 0xC4;
+        emulator.WriteMemory(6U, MemSize::Nibble_Lower, 0x04);
+        Assert::AreEqual(6U, notify.nLastByteWrittenAddress);
+        Assert::AreEqual(nByte, notify.nLastByteWritten);
     }
 
     TEST_METHOD(TestWriteMemory)

@@ -414,6 +414,11 @@ void AssetEditorViewModel::OnViewModelIntValueChanged(const IntModelProperty::Ch
 {
     if (args.Property == TriggerViewModel::VersionProperty)
         OnTriggerChanged();
+    else if (args.Property == TriggerViewModel::SelectedGroupIndexProperty)
+    {
+        if (AreDebugHighlightsEnabled())
+            UpdateDebugHighlights();
+    }
 }
 
 void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)

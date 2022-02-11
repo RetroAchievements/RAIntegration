@@ -588,7 +588,8 @@ unsigned int TriggerConditionViewModel::GetIndirectAddress(unsigned int nAddress
     if (pTriggerViewModel == nullptr)
         return nAddress;
 
-    const auto* pGroup = pTriggerViewModel->Groups().GetItemAt(pTriggerViewModel->GetSelectedGroupIndex());
+    const auto nIndex = pTriggerViewModel->GetSelectedGroupIndex();
+    const auto* pGroup = pTriggerViewModel->Groups().GetItemAt(nIndex);
     if (pGroup == nullptr)
         return nAddress;
 
@@ -599,7 +600,23 @@ unsigned int TriggerConditionViewModel::GetIndirectAddress(unsigned int nAddress
     {
         // if the trigger is managed by the viewmodel (not the runtime) then we need to update the memrefs
         rc_update_memref_values(pTrigger->memrefs, rc_peek_callback, nullptr);
-        pCondition = pTrigger->requirement->conditions;
+
+        // find the condset associated to the selected group
+        if (nIndex == 0)
+        {
+            pCondition = pTrigger->requirement->conditions;
+        }
+        else
+        {
+            rc_condset_t* pAlt = pTrigger->alternative;
+            for (int i = 1; pAlt && i < nIndex; ++i)
+                pAlt = pAlt->next;
+
+            if (!pAlt)
+                return nAddress;
+
+            pCondition = pAlt->conditions;
+        }
     }
     else
     {

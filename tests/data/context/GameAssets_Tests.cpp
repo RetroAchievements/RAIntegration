@@ -622,7 +622,7 @@ public:
 
         gameAssets.SaveAllAssets();
 
-        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGameName\nL%u:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2\n", GameAssets::FirstLocalId + 1);
+        const auto& sExpected = ra::StringPrintf("0.0.0.0\nGameName\nL%u:\"0xH2234=1\":\"0xH2234=2\":\"0xH2234=3\":\"M:0xH2235\":MINUTES:LB2:Desc2:0\n", GameAssets::FirstLocalId + 1);
         Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 

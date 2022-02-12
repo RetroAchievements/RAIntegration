@@ -230,6 +230,9 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, b
         SetValue(IsAssetLoadedProperty, true);
 
         UpdateMeasuredValue();
+
+        if (AreDebugHighlightsEnabled())
+            UpdateDebugHighlights();
     }
     else
     {
@@ -416,7 +419,7 @@ void AssetEditorViewModel::OnViewModelIntValueChanged(const IntModelProperty::Ch
         OnTriggerChanged();
     else if (args.Property == TriggerViewModel::SelectedGroupIndexProperty)
     {
-        if (AreDebugHighlightsEnabled())
+        if (m_pAsset && AreDebugHighlightsEnabled())
             UpdateDebugHighlights();
     }
 }

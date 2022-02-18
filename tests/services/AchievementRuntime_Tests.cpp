@@ -230,6 +230,51 @@ public:
         AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 6U);
     }
 
+    TEST_METHOD(TestReactivateAchievementPaused)
+    {
+        std::array<unsigned char, 1> memory{ 0x00 };
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        const char* pTriggerDefinition = "0xH0000=1";
+        rc_trigger_t* pTrigger;
+
+        std::vector<AchievementRuntime::Change> vChanges;
+        runtime.ActivateAchievement(6U, pTriggerDefinition);
+        pTrigger = runtime.GetAchievementTrigger(6U);
+        Assert::IsNotNull(pTrigger);
+        Assert::AreEqual(static_cast<int>(RC_TRIGGER_STATE_WAITING), static_cast<int>(pTrigger->state));
+
+        runtime.Process(vChanges);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 6U);
+        Assert::AreEqual(static_cast<int>(RC_TRIGGER_STATE_ACTIVE), static_cast<int>(pTrigger->state));
+        vChanges.clear();
+
+        runtime.SetPaused(true);
+        Assert::IsTrue(runtime.IsPaused());
+
+        runtime.DeactivateAchievement(6U);
+        Assert::IsNull(runtime.GetAchievementTrigger(6U));
+
+        // activating a previously active achievement should resurrect it, even if paused
+        runtime.ActivateAchievement(6U, pTriggerDefinition);
+        pTrigger = runtime.GetAchievementTrigger(6U);
+        Assert::IsNotNull(pTrigger);
+        Assert::AreEqual(static_cast<int>(RC_TRIGGER_STATE_WAITING), static_cast<int>(pTrigger->state));
+
+        // achievement should not become active when paused
+        runtime.SetPaused(true);
+        Assert::IsTrue(runtime.IsPaused());
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        // processing re-enabled, achievement should become active
+        runtime.SetPaused(false);
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 6U);
+    }
+
     TEST_METHOD(TestMonitorAchievementReset)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};

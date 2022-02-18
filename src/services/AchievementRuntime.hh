@@ -233,7 +233,7 @@ public:
     /// <summary>
     /// Sets whether achievement processing should be temporarily suspended.
     /// </summary>
-    void SetPaused(bool bValue);
+    void SetPaused(bool bValue) { m_bPaused = bValue; }
 
     /// <summary>
     /// Resets any active achievements and disables them until their triggers are false.
@@ -262,7 +262,6 @@ private:
 
     void EnsureInitialized() noexcept;
 
-    std::map<unsigned int, std::string> m_vQueuedAchievements;
     int m_nRichPresenceParseResult = RC_OK;
     int m_nRichPresenceErrorLine = 0;
     bool m_bInitialized = false;

@@ -1601,7 +1601,7 @@ void SearchResults::MergeSearchResults(const SearchResults& srMemory, const Sear
     m_nFilterType = srAddresses.m_nFilterType;
     m_nFilterValue = srAddresses.m_nFilterValue;
 
-    for (const auto pSrcBlock : srAddresses.m_vBlocks)
+    for (const auto& pSrcBlock : srAddresses.m_vBlocks)
     {
         // copy the block from the srAddresses collection, then update the memory from the srMemory collection.
         // this creates a new block with the memory from the srMemory collection and the addresses from the
@@ -1611,7 +1611,7 @@ void SearchResults::MergeSearchResults(const SearchResults& srMemory, const Sear
         ra::ByteAddress nAddress = pNewBlock.GetFirstAddress();
         unsigned char* pWrite = pNewBlock.GetBytes();
 
-        for (const auto pMemBlock : srMemory.m_vBlocks)
+        for (const auto& pMemBlock : srMemory.m_vBlocks)
         {
             if (nAddress >= pMemBlock.GetFirstAddress() && nAddress < pMemBlock.GetFirstAddress() + pMemBlock.GetBytesSize())
             {

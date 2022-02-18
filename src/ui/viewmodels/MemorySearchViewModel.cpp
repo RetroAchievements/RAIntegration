@@ -637,13 +637,15 @@ void MemorySearchViewModel::ApplyContinuousFilter()
     // for 10000 results, only filter every 100ms
     // for 50000 results, only filter every 500ms
     // for 100000 results, only filter every second
+    // up to a max of one filter every ten seconds at 1000000 or more results
     const auto nResults = pResult.pResults.MatchingAddressCount();
     if (nResults > 1000)
     {
         const auto tNow = ra::services::ServiceLocator::Get<ra::services::IClock>().UpTime();
         const auto nElapsed = std::chrono::duration_cast<std::chrono::milliseconds>(tNow - m_tLastContinuousFilter);
+        const auto nElapsedMilliseconds = gsl::narrow_cast<size_t>(nElapsed.count());
 
-        if (gsl::narrow_cast<size_t>(nElapsed.count()) < nResults / 100)
+        if (nElapsedMilliseconds < 10000 && nElapsedMilliseconds < nResults / 100)
             return;
 
         m_tLastContinuousFilter = tNow;

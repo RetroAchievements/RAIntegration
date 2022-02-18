@@ -233,7 +233,7 @@ public:
     /// <summary>
     /// Sets whether achievement processing should be temporarily suspended.
     /// </summary>
-    void SetPaused(bool bValue) { m_bPaused = bValue; }
+    void SetPaused(bool bValue) noexcept { m_bPaused = bValue; }
 
     /// <summary>
     /// Resets any active achievements and disables them until their triggers are false.

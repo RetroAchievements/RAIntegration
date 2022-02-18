@@ -895,7 +895,7 @@ void AssetListViewModel::ActivateSelected()
         if (bCoreAssetSelected)
         {
             auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-            if (!pEmulatorContext.WarnDisableHardcoreMode("deactivate core achievements"))
+            if (!pEmulatorContext.WarnDisableHardcoreMode("deactivate core assets"))
                 return;
         }
 
@@ -920,7 +920,7 @@ void AssetListViewModel::ActivateSelected()
         if (bModifiedAssetSelected)
         {
             auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-            if (!pEmulatorContext.WarnDisableHardcoreMode("activate unpublished achievements"))
+            if (!pEmulatorContext.WarnDisableHardcoreMode("activate unpublished assets"))
                 return;
         }
 

@@ -1725,7 +1725,7 @@ public:
         vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::No);
         vmAssetList.ActivateSelected();
         vmAssetList.ForceUpdateButtons();
-        Assert::AreEqual(std::string("deactivate core achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        Assert::AreEqual(std::string("deactivate core assets"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
         Assert::AreEqual(AssetState::Active, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
         Assert::AreEqual(std::wstring(L"De&activate"), vmAssetList.GetActivateButtonText());
         Assert::IsTrue(vmAssetList.CanActivate());
@@ -1734,7 +1734,7 @@ public:
         vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
         vmAssetList.ActivateSelected();
         vmAssetList.ForceUpdateButtons();
-        Assert::AreEqual(std::string("deactivate core achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        Assert::AreEqual(std::string("deactivate core assets"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
         Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
         Assert::AreEqual(std::wstring(L"&Activate"), vmAssetList.GetActivateButtonText());
         Assert::IsTrue(vmAssetList.CanActivate());

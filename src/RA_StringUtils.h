@@ -62,7 +62,7 @@ _NODISCARD inline const std::string ToString(_In_ const T& value)
     }
     else
     {
-        static_assert(false, "No ToString implementation for type");
+        static_assert(std::is_arithmetic_v<T>, "No ToString implementation for type");
         return std::string();
     }
 }
@@ -132,7 +132,7 @@ _NODISCARD inline const std::wstring ToWString(_In_ const T& value)
     }
     else
     {
-        static_assert(false, "No ToWString implementation for type");
+        static_assert(std::is_arithmetic_v<T>, "No ToWString implementation for type");
         return std::wstring();
     }
 }
@@ -585,7 +585,7 @@ _NODISCARD inline auto StringPrintf(_In_z_ _Printf_format_string_ const CharT* c
     }
     else
     {
-        static_assert(false, "unsupported character type");
+        static_assert(std::is_same_v<CharT, char>, "unsupported character type");
         return std::string();
     }
 }

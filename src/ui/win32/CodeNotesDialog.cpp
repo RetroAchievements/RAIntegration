@@ -103,9 +103,12 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_FILTER_VALUE, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_APPLY_FILTER, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Top);
+    SetAnchor(IDC_RA_RESULT_COUNT, Anchor::Top | Anchor::Left);
+    SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_RESET_FILTER, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_LBX_ADDRESSES, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
+
+    SetMinimumSize(327, 200);
 }
 
 BOOL CodeNotesDialog::OnInitDialog()

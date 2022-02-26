@@ -272,16 +272,16 @@ BEGIN
 END
 
 IDD_RA_CODENOTES DIALOGEX 0, 0, 287, 230
-STYLE DS_SETFONT | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 CAPTION "Code Notes"
 FONT 8, "MS Shell Dlg", 400, 0, 0x0
 BEGIN
     LTEXT           "Search:",IDC_STATIC,6,6,33,11
     EDITTEXT        IDC_RA_FILTER_VALUE,37,4,194,14,ES_AUTOHSCROLL
     PUSHBUTTON      "Filter",IDC_RA_APPLY_FILTER,233,4,50,14
-    LTEXT           "Results:",IDC_STATIC,6,24,33,8
-    LTEXT           "0/0",IDC_RA_RESULT_COUNT,37,24,49,8
-    PUSHBUTTON      "Bookmark Selected",IDC_RA_ADDBOOKMARK,90,21,70,14,BS_MULTILINE
+    LTEXT           "Results:",IDC_STATIC,6,24,36,8
+    LTEXT           "99999/99999",IDC_RA_RESULT_COUNT,37,24,42,8
+    PUSHBUTTON      "Bookmark Selected",IDC_RA_ADDBOOKMARK,162,21,70,14
     PUSHBUTTON      "Reset",IDC_RA_RESET_FILTER,233,21,50,14
     CONTROL         "",IDC_RA_LBX_ADDRESSES,"SysListView32",LVS_REPORT | LVS_SINGLESEL | LVS_ALIGNLEFT | LVS_NOSORTHEADER | WS_CLIPCHILDREN | WS_BORDER,4,37,279,189
 END
@@ -330,7 +330,8 @@ BEGIN
     PUSHBUTTON      "&Cancel",IDCANCEL,136,16,60,14
 END
 
-///////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////
 //
 // DESIGNINFO
 //
@@ -528,7 +529,7 @@ BEGIN
         HORZGUIDE, 107
         HORZGUIDE, 123
     END
-    
+
     IDD_RA_NEWASSET, DIALOG
     BEGIN
         LEFTMARGIN, 4
@@ -552,7 +553,7 @@ END
 2 TEXTINCLUDE 
 BEGIN
     "#include ""winresrc.h""\r\n"
-    "#define IDC_STATIC -1"\r\n
+    "#define IDC_STATIC -1\r\n"
     "\0"
 END
 

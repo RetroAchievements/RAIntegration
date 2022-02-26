@@ -42,16 +42,9 @@ int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::st
     std::lock_guard<std::mutex> pLock(m_pMutex);
     EnsureInitialized();
 
-    if (m_bPaused)
-    {
-        // If processing is paused, just queue the achievement. Once processing is unpaused, if the trigger
-        // is not false, the achievement will be moved to the active list. This ensures achievements don't
-        // trigger immediately upon loading the game due to uninitialized memory.
-        m_vQueuedAchievements.insert_or_assign(nId, sTrigger);
-        rc_runtime_deactivate_achievement(&m_pRuntime, nId);
-        return RC_OK;
-    }
-
+    // When an achievement is activated, it's set to Waiting. The state of the achievement must evaluate
+    // to false for at least one frame before it is promoted to Active. This ensures achievements don't
+    // trigger from uninitialized (or randomly initialized) memory when first starting a game.
     return rc_runtime_activate_achievement(&m_pRuntime, nId, sTrigger.c_str(), nullptr, 0);
 }
 
@@ -201,21 +194,6 @@ std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
     }
 
     return std::wstring(L"No Rich Presence defined.");
-}
-
-void AchievementRuntime::SetPaused(bool bValue) 
-{ 
-    if (!bValue && m_bPaused && !m_vQueuedAchievements.empty())
-    {
-        m_bPaused = false;
-
-        for (const auto pPair : m_vQueuedAchievements)
-            ActivateAchievement(pPair.first, pPair.second);
-
-        m_vQueuedAchievements.clear();
-    }
-
-    m_bPaused = bValue; 
 }
 
 static std::vector<AchievementRuntime::Change>* g_pChanges;

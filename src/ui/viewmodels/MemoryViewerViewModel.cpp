@@ -217,17 +217,25 @@ void MemoryViewerViewModel::UpdateColors()
     });
 
     // flag invalid regions
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (pEmulatorContext.HasInvalidRegions())
-    {
-        for (int i = 0; i < nVisibleLines * 16; ++i)
-            m_pInvalid[i] = pEmulatorContext.IsValidAddress(nFirstAddress + i) ? 0 : 1;
-    }
+    UpdateInvalidRegions();
 
     // update cursor
     UpdateHighlight(GetAddress(), NibblesPerWord() / 2, 0);
 
     m_nNeedsRedraw |= REDRAW_MEMORY;
+}
+
+void MemoryViewerViewModel::UpdateInvalidRegions()
+{
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    if (pEmulatorContext.HasInvalidRegions())
+    {
+        const auto nVisibleLines = GetNumVisibleLines();
+        const auto nFirstAddress = GetFirstAddress();
+
+        for (int i = 0; i < nVisibleLines * 16; ++i)
+            m_pInvalid[i] = pEmulatorContext.IsValidAddress(nFirstAddress + i) ? 0 : 1;
+    }
 }
 
 void MemoryViewerViewModel::UpdateHighlight(ra::ByteAddress nAddress, int nNewLength, int nOldLength)
@@ -646,6 +654,11 @@ void MemoryViewerViewModel::OnTotalMemorySizeChanged()
         if (GetFirstAddress() > nMaxFirstAddress)
             SetFirstAddress(nMaxFirstAddress);
     }
+
+    if (pEmulatorContext.HasInvalidRegions())
+        UpdateInvalidRegions();
+    else
+        memset(m_pInvalid, 0, MaxLines * 16);
 
     m_pSurface.reset();
     m_nNeedsRedraw = REDRAW_ALL;

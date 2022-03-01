@@ -451,7 +451,7 @@ bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& p
             break;
 
         case SpecialFilter::Authored:
-            if (pAsset.GetAuthor() != ra::Widen(ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername()))
+            if (pAsset.GetAuthor() != ra::Widen(ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName()))
                 return false;
             break;
     }
@@ -1589,7 +1589,7 @@ void AssetListViewModel::CreateNew()
     Expects(pNewAsset != nullptr);
 
     const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-    pNewAsset->SetAuthor(ra::Widen(pUserContext.GetUsername()));
+    pNewAsset->SetAuthor(ra::Widen(pUserContext.GetDisplayName()));
     pNewAsset->SetCategory(ra::data::models::AssetCategory::Local);
     pNewAsset->UpdateServerCheckpoint();
     pNewAsset->SetNew();

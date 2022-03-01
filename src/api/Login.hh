@@ -16,6 +16,7 @@ public:
     {
         std::string Username;
         std::string ApiToken;
+        std::string DisplayName;
         unsigned int Score{ 0U };
         unsigned int NumUnreadMessages{ 0U };
     };

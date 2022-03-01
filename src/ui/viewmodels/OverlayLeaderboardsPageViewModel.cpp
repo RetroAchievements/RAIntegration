@@ -222,7 +222,7 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         if (!pLeaderboard)
             return;
 
-        const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
+        const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
         auto& vmLeaderboard = pIter->second;
         for (const auto& pEntry : response.Entries)
         {

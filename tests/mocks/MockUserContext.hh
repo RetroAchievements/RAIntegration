@@ -19,6 +19,16 @@ public:
     {
     }
 
+    void Initialize(const std::string& sUsername, const std::string& sDisplayName, const std::string& sApiToken)
+    {
+        UserContext::Initialize(sUsername, sDisplayName, sApiToken);
+    }
+
+    void Initialize(const std::string& sUsername, const std::string& sApiToken)
+    {
+        UserContext::Initialize(sUsername, sUsername + "_", sApiToken);
+    }
+
     void Logout() noexcept override
     {
         m_sUsername.clear();

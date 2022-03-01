@@ -761,7 +761,7 @@ public:
         pAch1.SetBadge(L"BADGE_URI");
         pAch1.SetState(AssetState::Active);
 
-        achievementsPage.mockUserContext.Initialize("User2", "ApiToken");
+        achievementsPage.mockUserContext.Initialize("user2", "User2", "ApiToken");
         achievementsPage.mockServer.HandleRequest<ra::api::FetchAchievementInfo>([](const ra::api::FetchAchievementInfo::Request& request, ra::api::FetchAchievementInfo::Response& response)
         {
             Assert::AreEqual(1U, request.AchievementId);

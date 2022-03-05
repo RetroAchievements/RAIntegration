@@ -219,6 +219,7 @@ private:
 
     void UpdateColor(ra::ByteAddress nAddress);
     void UpdateColors();
+    void UpdateInvalidRegions();
     void UpdateHighlight(ra::ByteAddress nAddress, int nNewLength, int nOldLength);
 
     int NibblesPerWord() const;

@@ -142,7 +142,9 @@ static std::wstring ShortenNote(const std::wstring& sNote)
 
 void MemoryInspectorViewModel::SaveCurrentAddressNote()
 {
-    const auto& sNewNote = GetCurrentAddressNote();
+    // create a copy of the note. it's less efficient, but using a reference allows the value to be
+    // changed out from under us while the confirmation dialog is open.
+    const std::wstring sNewNote = GetCurrentAddressNote();
     const auto nAddress = GetCurrentAddress();
 
     std::string sAuthor;

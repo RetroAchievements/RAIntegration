@@ -233,6 +233,8 @@ public:
         ParseAndRegenerate("0xH1234=0xH2345"); // one condition
         ParseAndRegenerate("0xH1234=0xH2345_0xX5555=1.3._R:0x face=678"); // several conditions
         ParseAndRegenerate("I:0x 1234_A:0xH2345_0xH7777=345"); // addsource/addaddress chain
+        ParseAndRegenerate("M:0xH1234>3"); // measured (not as percent)
+        ParseAndRegenerate("Q:0xH1234>3"); // measured (as percent)
     }
 
     TEST_METHOD(TestParseAndRegenerateWithAlts)

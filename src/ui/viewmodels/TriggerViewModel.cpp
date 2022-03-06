@@ -402,7 +402,7 @@ void TriggerViewModel::InitializeGroups(const rc_trigger_t& pTrigger)
     m_vGroups.RemoveNotifyTarget(*this);
     m_vGroups.BeginUpdate();
 
-    SetMeasuredTrackedAsPercent(m_pTrigger != nullptr ? m_pTrigger->measured_as_percent : false);
+    SetMeasuredTrackedAsPercent(pTrigger.measured_as_percent);
 
     // this will not update the conditions collection because OnValueChange ignores it when m_vGroups.IsUpdating
     SetSelectedGroupIndex(0);

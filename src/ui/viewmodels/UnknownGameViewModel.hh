@@ -2,6 +2,8 @@
 #define RA_UI_UNKNOWNGAMEVIEWMODEL_H
 #pragma once
 
+#include "RAInterface\RA_Consoles.h"
+
 #include "data\AsyncObject.hh"
 
 #include "ui\WindowViewModelBase.hh"
@@ -177,6 +179,11 @@ public:
 protected:
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
+    void CheckForPreviousAssociation();
+
+    static unsigned DecodeID(const std::string& sEncoded, const std::wstring& sHash, ConsoleID nConsoleId);
+    static std::string EncodeID(unsigned nId, const std::wstring& sHash, ConsoleID nConsoleId);
 
     LookupItemViewModelCollection m_vGameTitles;
     bool m_bSelectingGame = false;

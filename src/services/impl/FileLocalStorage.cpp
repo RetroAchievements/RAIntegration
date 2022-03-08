@@ -117,6 +117,12 @@ std::wstring FileLocalStorage::GetPath(StorageItemType nType, const std::wstring
             sPath.append(L"-Bookmarks.json");
             break;
 
+        case StorageItemType::HashMapping:
+            sPath.append(RA_DIR_DATA);
+            sPath.append(sKey);
+            sPath.append(L".txt");
+            break;
+
         default:
             assert(!"unhandled StorageItemType");
             sPath.append(RA_DIR_DATA);

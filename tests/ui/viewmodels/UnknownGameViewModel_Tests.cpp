@@ -8,6 +8,7 @@
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 
@@ -30,6 +31,7 @@ private:
         ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
+        ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::ui::mocks::MockDesktop mockDesktop;
 
         void MockGameTitles()
@@ -365,6 +367,9 @@ public:
         vmUnknownGame.SetSelectedGameId(40U);
         vmUnknownGame.SetChecksum(L"CHECKSUM");
 
+        Assert::AreEqual(std::string(),
+            vmUnknownGame.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, L"CHECKSUM"));
+
         vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
@@ -375,6 +380,9 @@ public:
         Assert::IsTrue(vmUnknownGame.BeginTest());
         Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
         Assert::IsTrue(vmUnknownGame.GetTestMode());
+
+        Assert::AreEqual(std::string("b745f623\n"),
+            vmUnknownGame.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, L"CHECKSUM"));
     }
 
     TEST_METHOD(TestBeginTestExistingGameCancel)
@@ -386,6 +394,9 @@ public:
         vmUnknownGame.SetSelectedGameId(40U);
         vmUnknownGame.SetChecksum(L"CHECKSUM");
 
+        Assert::AreEqual(std::string(),
+            vmUnknownGame.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, L"CHECKSUM"));
+
         vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
@@ -394,6 +405,37 @@ public:
         });
 
         Assert::IsFalse(vmUnknownGame.BeginTest());
+
+        Assert::AreEqual(std::string(),
+            vmUnknownGame.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, L"CHECKSUM"));
+    }
+
+    TEST_METHOD(TestBeginTestExistingGameRemembered)
+    {
+        UnknownGameViewModelHarness vmUnknownGame;
+        vmUnknownGame.mockConsoleContext.SetId(ConsoleID::VIC20);
+        vmUnknownGame.mockLocalStorage.MockStoredData(ra::services::StorageItemType::HashMapping, L"CHECKSUM", "b745f623\n");
+        vmUnknownGame.MockGameTitles();
+        vmUnknownGame.SetNewGameName(L"TestGame");
+
+        Assert::AreEqual(0, vmUnknownGame.GetSelectedGameId());
+        vmUnknownGame.SetChecksum(L"CHECKSUM");
+
+        Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
+
+        vmUnknownGame.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Play 'Game 40' in compatability test mode?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Achievements and leaderboards for the game will be loaded, but you will not be able to earn them."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::Yes;
+        });
+
+        Assert::IsTrue(vmUnknownGame.BeginTest());
+        Assert::AreEqual(40, vmUnknownGame.GetSelectedGameId());
+        Assert::IsTrue(vmUnknownGame.GetTestMode());
+
+        Assert::AreEqual(std::string("b745f623\n"),
+            vmUnknownGame.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, L"CHECKSUM"));
     }
 
     TEST_METHOD(TestInitializeTestCompatibilityMode)

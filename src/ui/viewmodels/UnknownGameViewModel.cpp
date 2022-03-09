@@ -97,7 +97,7 @@ void UnknownGameViewModel::CheckForPreviousAssociation()
     if (sMapping && sMapping->GetLine(sLine))
     {
         const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
-        unsigned nId = DecodeID(sLine, sHash, pConsoleContext.Id());
+        const unsigned nId = DecodeID(sLine, sHash, pConsoleContext.Id());
         if (nId > 0)
         {
             const auto& sGameName = m_vGameTitles.GetLabelForId(nId);

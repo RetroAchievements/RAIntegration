@@ -237,6 +237,7 @@ void TriggerViewModel::PasteFromClipboard()
     rc_init_parse_state_memrefs(&parse, &first_memref);
     std::string sTrigger = ra::Narrow(sClipboardText);
     const char* memaddr = sTrigger.c_str();
+    Expects(memaddr != nullptr);
     rc_parse_condset(&memaddr, &parse, IsValue());
 
     const auto nSize = parse.offset;

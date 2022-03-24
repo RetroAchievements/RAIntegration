@@ -40,7 +40,7 @@ public:
     const std::string& GetApiToken() const noexcept { return m_sApiToken; }
 
     /// <summary>
-    /// Gets the username of the current user.
+    /// Gets the display name of the current user.
     /// </summary>
     const std::string& GetDisplayName() const noexcept { return m_sDisplayName; }
 

@@ -117,6 +117,7 @@ public:
         Assert::AreEqual(storage.GetPath(ra::services::StorageItemType::Badge, L"12345"), std::wstring(L".\\RACache\\Badge\\12345.png"));
         Assert::AreEqual(storage.GetPath(ra::services::StorageItemType::UserPic, L"12345"), std::wstring(L".\\RACache\\UserPic\\12345.png"));
         Assert::AreEqual(storage.GetPath(ra::services::StorageItemType::Bookmarks, L"12345"), std::wstring(L".\\RACache\\Bookmarks\\12345-Bookmarks.json"));
+        Assert::AreEqual(storage.GetPath(ra::services::StorageItemType::HashMapping, L"0123456789abcdef0123456789abcdef"), std::wstring(L".\\RACache\\Data\\0123456789abcdef0123456789abcdef.txt"));
     }
 
     TEST_METHOD(TestReadTextNonExistant)

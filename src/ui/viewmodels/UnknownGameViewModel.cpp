@@ -9,6 +9,7 @@
 #include "data\context\GameContext.hh"
 
 #include "services\IClipboard.hh"
+#include "services\ILocalStorage.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
@@ -65,6 +66,8 @@ void UnknownGameViewModel::InitializeGameTitles()
 
         SetValue(IsAssociateEnabledProperty, true);
         SetValue(IsSelectedGameEnabledProperty, true);
+
+        CheckForPreviousAssociation();
     });
 }
 
@@ -77,6 +80,59 @@ void UnknownGameViewModel::InitializeTestCompatibilityMode()
     SetChecksum(ra::Widen(pGameContext.GameHash()));
 
     SetValue(IsSelectedGameEnabledProperty, false);
+}
+
+void UnknownGameViewModel::CheckForPreviousAssociation()
+{
+    if (m_vGameTitles.Count() == 0)
+        return;
+
+    const auto& sHash = GetChecksum();
+    if (sHash.empty())
+        return;
+
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto sMapping = pLocalStorage.ReadText(ra::services::StorageItemType::HashMapping, sHash);
+    std::string sLine;
+    if (sMapping && sMapping->GetLine(sLine))
+    {
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        const unsigned nId = DecodeID(sLine, sHash, pConsoleContext.Id());
+        if (nId > 0)
+        {
+            const auto& sGameName = m_vGameTitles.GetLabelForId(nId);
+            if (!sGameName.empty())
+                SetSelectedGameId(nId);
+        }
+    }
+}
+
+static constexpr unsigned GenerateMask(const std::wstring& sHash, ConsoleID nConsoleId)
+{
+    // use longs to multiply to something more than 32-bits, then truncated and invert several bits
+    return gsl::narrow_cast<unsigned>(
+        ra::to_unsigned(gsl::narrow_cast<long>(sHash.back())) *  // 7 bits
+        ra::to_unsigned(gsl::narrow_cast<long>(sHash.front())) * // 7 bits
+        (ra::etoi(nConsoleId) + 1) *                             // 7 bits
+        49999                                                    // 16 bits
+        ) ^ ~0x52a761cf;
+}
+
+unsigned UnknownGameViewModel::DecodeID(const std::string& sLine, const std::wstring& sHash, ConsoleID nConsoleId)
+{
+    std::wstring sError;
+    unsigned nEncodedId;
+
+    if (ra::ParseHex(ra::Widen(sLine), 0xFFFFFFFF, nEncodedId, sError))
+        return nEncodedId ^ GenerateMask(sHash, nConsoleId);
+
+    return 0;
+}
+
+std::string UnknownGameViewModel::EncodeID(unsigned nId, const std::wstring& sHash, ConsoleID nConsoleId)
+{
+    const auto nEncodedId = nId ^ GenerateMask(sHash, nConsoleId);
+    return ra::StringPrintf("%08x", nEncodedId);
 }
 
 bool UnknownGameViewModel::Associate()
@@ -148,6 +204,12 @@ bool UnknownGameViewModel::BeginTest()
     if (vmMessageBox.ShowModal(*this) == DialogResult::No)
         return false;
 
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    auto sValue = EncodeID(nGameId, GetChecksum(), pConsoleContext.Id());
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto sMapping = pLocalStorage.WriteText(ra::services::StorageItemType::HashMapping, GetChecksum());
+    sMapping->WriteLine(sValue);
+
     SetTestMode(true);
     return true;
 }
@@ -158,6 +220,10 @@ void UnknownGameViewModel::OnValueChanged(const StringModelProperty::ChangeArgs&
     {
         // user is entering a custom name, make sure <New Game> is selected
         SetSelectedGameId(0);
+    }
+    else if (args.Property == ChecksumProperty)
+    {
+        CheckForPreviousAssociation();
     }
 
     WindowViewModelBase::OnValueChanged(args);

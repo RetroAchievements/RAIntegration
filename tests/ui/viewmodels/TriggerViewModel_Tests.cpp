@@ -429,7 +429,75 @@ public:
         Assert::IsTrue(bDialogShown);
     }
 
-    TEST_METHOD(TestPasteFromClipboardNonTrigger)
+    TEST_METHOD(TestPasteFromClipboardTrigger)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "A:0xH1235*100");
+        Assert::AreEqual({1U}, vmTrigger.Conditions().Count());
+
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+                bDialogShown = true;
+
+                Assert::AreEqual(std::wstring(L"Paste failed."), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"Clipboard did not contain valid value conditions."),
+                                 vmMessageBox.GetMessage());
+
+                return DialogResult::OK;
+            });
+
+        // Triggers allow conditions without flags
+        vmTrigger.mockClipboard.SetText(L"0xH1234=7");
+        vmTrigger.PasteFromClipboard();
+
+        Assert::IsFalse(bDialogShown);
+
+        // Values do not allow conditions without flags
+        vmTrigger.SetIsValue(true);
+        bDialogShown = false;
+
+        vmTrigger.mockClipboard.SetText(L"0xH1234=7");
+        vmTrigger.PasteFromClipboard();
+
+        Assert::IsTrue(bDialogShown);
+    }
+
+    TEST_METHOD(TestPasteFromClipboardValue)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "A:0xH1235*100");
+        Assert::AreEqual({1U}, vmTrigger.Conditions().Count());
+
+        // Measured requires a comparison for triggers
+        bool bDialogShown = false;
+        vmTrigger.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+                bDialogShown = true;
+
+                Assert::AreEqual(std::wstring(L"Paste failed."), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"Clipboard did not contain valid trigger conditions."),
+                                 vmMessageBox.GetMessage());
+
+                return DialogResult::OK;
+            });
+
+        vmTrigger.mockClipboard.SetText(L"M:0xH1234");
+        vmTrigger.PasteFromClipboard();
+
+        Assert::IsTrue(bDialogShown);
+
+        // Measured does not require a comparison for values
+        vmTrigger.SetIsValue(true);
+        bDialogShown = false;
+
+        vmTrigger.mockClipboard.SetText(L"M:0xH1234");
+        vmTrigger.PasteFromClipboard();
+
+        Assert::IsFalse(bDialogShown);
+    }
+
+    TEST_METHOD(TestPasteFromClipboardInvalidSyntax)
     {
         TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=16");
@@ -477,7 +545,7 @@ public:
         Assert::IsTrue(bDialogShown);
     }
 
-    TEST_METHOD(TestPasteFromClipboard)
+    TEST_METHOD(TestPasteFromClipboardMultipleConditions)
     {
         TriggerViewModelHarness vmTrigger;
         Parse(vmTrigger, "0xH1234=16");

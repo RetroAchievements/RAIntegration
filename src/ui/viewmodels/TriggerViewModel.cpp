@@ -1,6 +1,7 @@
 #include "TriggerViewModel.hh"
 
 #include <rcheevos.h>
+#include <rcheevos/src/rcheevos/rc_internal.h>
 
 #include "RA_StringUtils.h"
 
@@ -228,28 +229,45 @@ void TriggerViewModel::PasteFromClipboard()
         return;
     }
 
+    // have to use internal parsing functions to decode conditions without full trigger/value
+    // restriction validation (full validation will occur after new conditions are added)
+    rc_parse_state_t parse;
+    rc_init_parse_state(&parse, nullptr, nullptr, 0);
+    rc_memref_t* first_memref;
+    rc_init_parse_state_memrefs(&parse, &first_memref);
     std::string sTrigger = ra::Narrow(sClipboardText);
-    const auto nSize = rc_trigger_size(sTrigger.c_str());
-    if (nSize < 0)
+    const char* memaddr = sTrigger.c_str();
+    Expects(memaddr != nullptr);
+    rc_parse_condset(&memaddr, &parse, IsValue());
+
+    const auto nSize = parse.offset;
+    if (nSize > 0 && *memaddr == 'S')
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Paste failed.", L"Clipboard did not contain valid trigger conditions.");
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+            L"Paste failed.", L"Clipboard contained multiple groups.");
+        return;
+    }
+
+    if (nSize <= 0 || *memaddr != '\0')
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Paste failed.",
+            ra::StringPrintf(L"Clipboard did not contain valid %s conditions.", IsValue() ? "value" : "trigger"));
         return;
     }
 
     std::string sTriggerBuffer;
     sTriggerBuffer.resize(nSize);
-    const rc_trigger_t* pTrigger = rc_parse_trigger(sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
-    if (pTrigger->alternative)
-    {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Paste failed.", L"Clipboard contained multiple groups.");
-        return;
-    }
+    rc_init_parse_state(&parse, sTriggerBuffer.data(), nullptr, 0);
+    rc_init_parse_state_memrefs(&parse, &first_memref);
+    memaddr = sTrigger.c_str();
+    const rc_condset_t* pCondSet = rc_parse_condset(&memaddr, &parse, IsValue());
+    Expects(pCondSet != nullptr);
 
     m_vConditions.BeginUpdate();
 
     DeselectAllConditions();
 
-    for (const rc_condition_t* pCondition = pTrigger->requirement->conditions;
+    for (const rc_condition_t* pCondition = pCondSet->conditions;
         pCondition != nullptr; pCondition = pCondition->next)
     {
         auto& vmCondition = m_vConditions.Add();

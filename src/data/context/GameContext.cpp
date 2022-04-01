@@ -655,7 +655,7 @@ void GameContext::ShowSimplifiedScoreboard(ra::LeaderboardID nLeaderboardId, int
     ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
     vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->GetName()));
 
-    const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
+    const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
     auto& pEntryViewModel = vmScoreboard.Entries().Add();
     pEntryViewModel.SetRank(0);
     pEntryViewModel.SetScore(ra::Widen(pLeaderboard->FormatScore(nScore)));
@@ -762,7 +762,7 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
                 ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
                 vmScoreboard.SetHeaderText(pLeaderboard->GetName());
 
-                const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
+                const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
                 constexpr int nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
                 bool bSeenPlayer = false;
 
@@ -1224,7 +1224,7 @@ bool GameContext::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNot
         if (response.Succeeded())
         {
             const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-            AddCodeNote(nAddress, pUserContext.GetUsername(), sNote);
+            AddCodeNote(nAddress, pUserContext.GetDisplayName(), sNote);
             return true;
         }
 

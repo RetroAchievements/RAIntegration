@@ -542,7 +542,7 @@ std::wstring EmulatorContext::GetAppTitle(const std::string& sMessage) const
     if (pUserContext.IsLoggedIn())
     {
         builder.Append(" - ");
-        builder.Append(pUserContext.GetUsername());
+        builder.Append(pUserContext.GetDisplayName());
     }
 
     const auto& sHostName = ra::services::ServiceLocator::Get<ra::services::IConfiguration>().GetHostName();

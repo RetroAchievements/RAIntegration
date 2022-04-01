@@ -216,7 +216,7 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
     if (response.Succeeded())
     {
         // initialize the user context
-        pUserContext.Initialize(response.Username, response.ApiToken);
+        pUserContext.Initialize(response.Username, response.DisplayName, response.ApiToken);
         pUserContext.SetScore(response.Score);
 
         // load the session information
@@ -228,7 +228,7 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
 
         std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
         vmMessage->SetTitle(ra::StringPrintf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
-            response.Username.c_str()));
+            response.DisplayName.c_str()));
         vmMessage->SetDescription((response.NumUnreadMessages == 1)
             ? L"You have 1 new message"
             : ra::StringPrintf(L"You have %u new messages", response.NumUnreadMessages));
@@ -291,7 +291,7 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
 API const char* CCONV _RA_UserName()
 {
     auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    return pUserContext.GetUsername().c_str();
+    return pUserContext.GetDisplayName().c_str();
 }
 
 API void CCONV _RA_SetConsoleID(unsigned int nConsoleId)

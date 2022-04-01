@@ -151,6 +151,7 @@ public:
             bLoggedIn = true;
 
             response.Username = "User";
+            response.DisplayName = "UserDisplay";
             response.ApiToken = "ApiToken";
             response.Score = 12345U;
             response.Result = ra::api::ApiResult::Success;
@@ -167,6 +168,7 @@ public:
         // user context
         Assert::IsTrue(harness.mockUserContext.IsLoggedIn());
         Assert::AreEqual(std::string("User"), harness.mockUserContext.GetUsername());
+        Assert::AreEqual(std::string("UserDisplay"), harness.mockUserContext.GetDisplayName());
         Assert::AreEqual(std::string("ApiToken"), harness.mockUserContext.GetApiToken());
         Assert::AreEqual(12345U, harness.mockUserContext.GetScore());
 
@@ -178,7 +180,7 @@ public:
         const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Welcome User"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Welcome UserDisplay"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
@@ -188,7 +190,7 @@ public:
         Assert::IsTrue(bWasMenuRebuilt);
 
         // titlebar
-        Assert::AreEqual(std::wstring(L"RATests - 0.1 - User []"), harness.mockWindowManager.Emulator.GetWindowTitle());
+        Assert::AreEqual(std::wstring(L"RATests - 0.1 - UserDisplay []"), harness.mockWindowManager.Emulator.GetWindowTitle());
     }
 
     TEST_METHOD(TestAttemptLoginSuccessWithMessages)
@@ -198,6 +200,7 @@ public:
         harness.mockServer.HandleRequest<api::Login>([](const ra::api::Login::Request&, ra::api::Login::Response& response)
         {
             response.Username = "User";
+            response.DisplayName = "UserDisplay";
             response.ApiToken = "ApiToken";
             response.NumUnreadMessages = 3;
             response.Score = 0U;
@@ -213,7 +216,7 @@ public:
         const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Welcome User"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Welcome UserDisplay"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"You have 3 new messages"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"0 points"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
@@ -230,6 +233,7 @@ public:
         harness.mockServer.HandleRequest<api::Login>([](const ra::api::Login::Request&, ra::api::Login::Response& response)
         {
             response.Username = "User";
+            response.DisplayName = "UserDisplay";
             response.ApiToken = "ApiToken";
             response.Score = 12345U;
             response.Result = ra::api::ApiResult::Success;
@@ -246,7 +250,7 @@ public:
         const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
-        Assert::AreEqual(std::wstring(L"Welcome back User"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Welcome back UserDisplay"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
@@ -349,8 +353,8 @@ public:
     TEST_METHOD(TestUserNameLoggedIn)
     {
         MockUserContext mockUserContext;
-        mockUserContext.Initialize("Test", "ABCDEFG");
-        Assert::AreEqual(_RA_UserName(), "Test");
+        mockUserContext.Initialize("Test", "TestDisplay", "ABCDEFG");
+        Assert::AreEqual(_RA_UserName(), "TestDisplay");
     }
 
 private:

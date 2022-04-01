@@ -487,7 +487,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         vmAchievement.SetWonBy(ra::StringPrintf(L"Won by %u of %u (%1.0f%%)", response.EarnedBy, response.NumPlayers,
             (static_cast<double>(response.EarnedBy) * 100) / response.NumPlayers));
 
-        const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
+        const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
         for (const auto& pWinner : response.Entries)
         {
             auto& vmWinner = vmAchievement.RecentWinners.Add();

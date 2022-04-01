@@ -152,7 +152,7 @@ void OverlayViewModel::CreateRenderImage()
         m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayHeader(), ra::ui::FontStyles::Normal);
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    const auto sUserName = ra::Widen(pUserContext.GetUsername());
+    const auto sUserName = ra::Widen(pUserContext.GetDisplayName());
     const auto szUsername = m_pSurface->MeasureText(nFont, sUserName);
 
     const auto sPoints = ra::StringPrintf(L"%u Points", pUserContext.GetScore());

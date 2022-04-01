@@ -992,8 +992,8 @@ public:
 
         Assert::AreEqual(std::wstring(L"RASnes9X - 0.57"), emulator.GetAppTitle(""));
 
-        emulator.mockUserContext.Initialize("User", "Token");
-        Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 - User"), emulator.GetAppTitle(""));
+        emulator.mockUserContext.Initialize("User", "UserDisplay", "Token");
+        Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 - UserDisplay"), emulator.GetAppTitle(""));
 
         emulator.mockUserContext.Logout();
         Assert::AreEqual(std::wstring(L"RASnes9X - 0.57"), emulator.GetAppTitle(""));
@@ -1022,9 +1022,9 @@ public:
         EmulatorContextHarness emulator;
         emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
         emulator.mockConfiguration.SetHostName("localhost");
-        emulator.mockUserContext.Initialize("User", "Token");
+        emulator.mockUserContext.Initialize("User", "UserDisplay", "Token");
         emulator.SetClientVersion("0.57");
-        Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 - Test - User [localhost]"), emulator.GetAppTitle("Test"));
+        Assert::AreEqual(std::wstring(L"RASnes9X - 0.57 - Test - UserDisplay [localhost]"), emulator.GetAppTitle("Test"));
     }
 
     TEST_METHOD(TestInitializeUnknownEmulator)

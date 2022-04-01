@@ -1030,7 +1030,7 @@ public:
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
-        vmAssetList.mockUserContext.Initialize("Me", "ABCDEFGH");
+        vmAssetList.mockUserContext.Initialize("me", "Me", "ABCDEFGH");
 
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach2");

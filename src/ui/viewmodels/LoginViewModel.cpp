@@ -68,7 +68,7 @@ bool LoginViewModel::Login() const
 
     // initialize the user context
     auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-    pUserContext.Initialize(response.Username, response.ApiToken);
+    pUserContext.Initialize(response.Username, response.DisplayName, response.ApiToken);
     pUserContext.SetScore(response.Score);
 
     // load the session information

@@ -395,7 +395,7 @@ public:
         pLB1.SetName(L"LeaderboardTitle");
         pLB1.SetDescription(L"Trigger this");
 
-        leaderboardsPage.mockUserContext.Initialize("User2", "ApiToken");
+        leaderboardsPage.mockUserContext.Initialize("user2", "User2", "ApiToken");
         leaderboardsPage.mockServer.HandleRequest<ra::api::FetchLeaderboardInfo>([](const ra::api::FetchLeaderboardInfo::Request& request, ra::api::FetchLeaderboardInfo::Response& response)
         {
             Assert::AreEqual(1U, request.LeaderboardId);

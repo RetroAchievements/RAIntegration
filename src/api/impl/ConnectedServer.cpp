@@ -481,6 +481,7 @@ Login::Response ConnectedServer::Login(const Login::Request& request)
                 response.Result = ApiResult::Success;
                 response.Username = api_response.username;
                 response.ApiToken = api_response.api_token;
+                response.DisplayName = api_response.display_name;
                 response.Score = api_response.score;
                 response.NumUnreadMessages = api_response.num_unread_messages;
             }

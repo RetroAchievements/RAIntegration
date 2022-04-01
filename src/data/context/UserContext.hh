@@ -21,9 +21,10 @@ public:
     /// <summary>
     /// Sets the username and API token for the current user.
     /// </summary>
-    void Initialize(const std::string& sUsername, const std::string& sApiToken)
+    void Initialize(const std::string& sUsername, const std::string& sDisplayName, const std::string& sApiToken)
     {
         m_sUsername = sUsername;
+        m_sDisplayName = sDisplayName;
         m_sApiToken = sApiToken;
         m_nScore = 0U;
     }
@@ -37,6 +38,11 @@ public:
     /// Gets the API token for the current user.
     /// </summary>
     const std::string& GetApiToken() const noexcept { return m_sApiToken; }
+
+    /// <summary>
+    /// Gets the display name of the current user.
+    /// </summary>
+    const std::string& GetDisplayName() const noexcept { return m_sDisplayName; }
 
     /// <summary>
     /// Determines whether the current user is logged in.
@@ -70,6 +76,7 @@ public:
 
 protected:
     std::string m_sUsername;
+    std::string m_sDisplayName;
     std::string m_sApiToken;
     unsigned int m_nScore{ 0U };
     bool m_bDisableLogin{ false };

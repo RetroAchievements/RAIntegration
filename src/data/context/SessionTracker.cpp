@@ -244,16 +244,33 @@ std::wstring SessionTracker::GetCurrentActivity() const
 
     if (IsInspectingMemory())
     {
-        if (!pGameContext.Assets().HasCoreAssets())
-            return L"Developing Achievements";
-
         if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
             return L"Testing Compatibility";
 
         if (_RA_HardcoreModeIsActive())
             return L"Inspecting Memory in Hardcore mode";
 
-        return L"Fixing Achievements";
+        std::wstring sMessage = L"Inspecting Memory";
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++i)
+        {
+            const auto* pAsset = pGameContext.Assets().GetItemAt(i);
+            if (pAsset)
+            {
+                if (pAsset->GetType() == ra::data::models::AssetType::LocalBadges)
+                    continue;
+
+                if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
+                {
+                    sMessage = L"Developing Achievements";
+                    break;
+                }
+
+                if (pAsset->GetChanges() != ra::data::models::AssetChanges::None)
+                    sMessage = L"Fixing Achievements";
+            }
+        }
+
+        return sMessage;
     }
 
     if (pGameContext.HasRichPresence() && !pGameContext.IsRichPresenceFromFile())

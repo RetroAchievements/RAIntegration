@@ -3,6 +3,7 @@
 #include "Exports.hh"
 
 #include "RA_BuildVer.h"
+#include "RA_Resource.h"
 
 #include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockClock.hh"
@@ -948,6 +949,90 @@ public:
         Assert::IsNotNull(pScore4);
         Ensures(pScore4 != nullptr);
         Assert::AreEqual(std::wstring(L"5678"), pScore4->GetDisplayText());
+    }
+
+private:
+    void AssertMenuItem(const RA_MenuItem* pItem, LPARAM nId, const wchar_t* sLabel, bool bChecked = false)
+    {
+        Assert::AreEqual(nId, pItem->nID);
+
+        if (sLabel == nullptr)
+            Assert::IsNull(pItem->sLabel);
+        else
+            Assert::AreEqual(std::wstring(sLabel), std::wstring(pItem->sLabel));
+
+        Assert::AreEqual(bChecked ? 1 : 0, pItem->bChecked);
+    }
+
+    TEST_METHOD(TestGetPopupMenuItemsNotLoggedIn)
+    {
+        ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::data::context::mocks::MockUserContext mockUserContext;
+
+        RA_MenuItem menu[32];
+        Assert::AreEqual(1, _RA_GetPopupMenuItems(menu));
+        AssertMenuItem(&menu[0], IDM_RA_FILES_LOGIN, L"&Login");
+    }
+
+    TEST_METHOD(TestGetPopupMenuItemsLoggedIn)
+    {
+        ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::data::context::mocks::MockUserContext mockUserContext;
+        mockUserContext.Initialize("User", "TOKEN");
+
+        RA_MenuItem menu[32];
+        Assert::AreEqual(19, _RA_GetPopupMenuItems(menu));
+        AssertMenuItem(&menu[0], IDM_RA_FILES_LOGOUT, L"Log&out");
+        AssertMenuItem(&menu[1], 0, nullptr);
+        AssertMenuItem(&menu[2], IDM_RA_OPENUSERPAGE, L"Open my &User Page");
+        AssertMenuItem(&menu[3], IDM_RA_OPENGAMEPAGE, L"Open this &Game's Page");
+        AssertMenuItem(&menu[4], 0, nullptr);
+        AssertMenuItem(&menu[5], IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
+        AssertMenuItem(&menu[6], IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
+        AssertMenuItem(&menu[7], 0, nullptr);
+        AssertMenuItem(&menu[8], IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
+        AssertMenuItem(&menu[9], IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
+        AssertMenuItem(&menu[10], 0, nullptr);
+        AssertMenuItem(&menu[11], IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        AssertMenuItem(&menu[12], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        AssertMenuItem(&menu[13], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        AssertMenuItem(&menu[14], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        AssertMenuItem(&menu[15], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        AssertMenuItem(&menu[16], 0, nullptr);
+        AssertMenuItem(&menu[17], IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
+        AssertMenuItem(&menu[18], IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+    }
+
+    TEST_METHOD(TestGetPopupMenuItemsChecked)
+    {
+        ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::data::context::mocks::MockUserContext mockUserContext;
+        mockUserContext.Initialize("User", "TOKEN");
+        mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
+        mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
+
+        RA_MenuItem menu[32];
+        Assert::AreEqual(19, _RA_GetPopupMenuItems(menu));
+        AssertMenuItem(&menu[0], IDM_RA_FILES_LOGOUT, L"Log&out");
+        AssertMenuItem(&menu[1], 0, nullptr);
+        AssertMenuItem(&menu[2], IDM_RA_OPENUSERPAGE, L"Open my &User Page");
+        AssertMenuItem(&menu[3], IDM_RA_OPENGAMEPAGE, L"Open this &Game's Page");
+        AssertMenuItem(&menu[4], 0, nullptr);
+        AssertMenuItem(&menu[5], IDM_RA_HARDCORE_MODE, L"&Hardcore Mode", true);
+        AssertMenuItem(&menu[6], IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning", true);
+        AssertMenuItem(&menu[7], 0, nullptr);
+        AssertMenuItem(&menu[8], IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards", true);
+        AssertMenuItem(&menu[9], IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
+        AssertMenuItem(&menu[10], 0, nullptr);
+        AssertMenuItem(&menu[11], IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        AssertMenuItem(&menu[12], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        AssertMenuItem(&menu[13], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        AssertMenuItem(&menu[14], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        AssertMenuItem(&menu[15], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        AssertMenuItem(&menu[16], 0, nullptr);
+        AssertMenuItem(&menu[17], IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
+        AssertMenuItem(&menu[18], IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
     }
 };
 

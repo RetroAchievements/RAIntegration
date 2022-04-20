@@ -45,6 +45,10 @@ extern "C" {
     // Allocates and configures a popup menu, to be called, embedded and managed by the app.
     API HMENU CCONV _RA_CreatePopupMenu();
 
+    // Gets items for building a popup menu to be embedded and managed by the app.
+    struct RA_MenuItem;
+    API int CCONV _RA_GetPopupMenuItems(RA_MenuItem* pItems);
+
     // Check all achievement sets for changes, and displays a dlg box to warn lost changes.
     API int CCONV _RA_ConfirmLoadNewRom(int bQuittingApp);
 

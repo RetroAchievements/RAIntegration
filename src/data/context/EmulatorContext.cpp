@@ -144,10 +144,10 @@ void EmulatorContext::UpdateUserAgent()
     }
 
     size_t nOffset = 0;
-    if (!m_sVersion.empty() && (m_sVersion[0] == 'v' || m_sVersion[0] == 'V'))
+    if (!m_sVersion.empty() && (m_sVersion.at(0) == 'v' || m_sVersion.at(0) == 'V'))
     {
         /* version string starts with a "v". assume it's part of a prefix (i.e. "v1.2", or "version 1.2") and ignore it */
-        while (nOffset < m_sVersion.length() && (isalpha(m_sVersion[nOffset]) || isspace(m_sVersion[nOffset])))
+        while (nOffset < m_sVersion.length() && (isalpha(m_sVersion.at(nOffset)) || isspace(m_sVersion.at(nOffset))))
             ++nOffset;
     }
 
@@ -172,6 +172,8 @@ void EmulatorContext::UpdateUserAgent()
 
 static unsigned long long ParseVersion(const char* sVersion)
 {
+    Expects(sVersion != nullptr);
+
     while (isalpha(*sVersion) || isspace(*sVersion))
         ++sVersion;
 
@@ -309,7 +311,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
 
     // remove leading prefix and any trailing ".0"s off the client version
     std::string sClientVersion = m_sVersion;
-    while (isalpha(sClientVersion[0]) || isspace(sClientVersion[0]))
+    while (!sClientVersion.empty() && (isalpha(sClientVersion.at(0)) || isspace(sClientVersion.at(0))))
         sClientVersion.erase(0, 1);
     while (ra::StringEndsWith(sClientVersion, ".0"))
         sClientVersion.resize(sClientVersion.length() - 2);

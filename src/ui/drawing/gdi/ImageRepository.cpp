@@ -234,8 +234,11 @@ std::string ImageRepository::StoreImage(ImageType nType, const std::wstring& sPa
     if (!pFileSystem.DirectoryExists(sDirectory))
         pFileSystem.CreateDirectory(sDirectory);
 
+    auto sExtension = pFileSystem.GetExtension(sPath);
+    ra::StringMakeLowercase(sExtension);
+
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    sFileMD5 = ra::StringPrintf("local\\%u-%s", pGameContext.GameId(), sFileMD5);
+    sFileMD5 = ra::StringPrintf("local\\%u-%s.%s", pGameContext.GameId(), sFileMD5, sExtension);
 
     std::wstring sFilename = GetFilename(nType, sFileMD5);
 

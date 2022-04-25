@@ -8,7 +8,9 @@
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
+#include "services\impl\FileLocalStorage.hh"
 
+#include "ui\IDesktop.hh"
 #include "ui\viewmodels\AssetUploadViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\NewAssetViewModel.hh"
@@ -70,6 +72,7 @@ AssetListViewModel::AssetListViewModel() noexcept
     m_vAssetTypeFilters.Add(ra::etoi(ra::data::models::AssetType::None), L"All");
     m_vAssetTypeFilters.Add(ra::etoi(ra::data::models::AssetType::Achievement), L"Achievements");
     m_vAssetTypeFilters.Add(ra::etoi(ra::data::models::AssetType::Leaderboard), L"Leaderboards");
+    m_vAssetTypeFilters.Add(ra::etoi(ra::data::models::AssetType::RichPresence), L"Rich Presence");
 
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::None), L"");
     m_vChanges.Add(ra::etoi(ra::data::models::AssetChanges::Modified), L"Modified");
@@ -541,6 +544,17 @@ void AssetListViewModel::OpenEditor(const AssetSummaryViewModel* pAsset)
         vmAsset = pGameContext.Assets().FindAsset(pAsset->GetType(), pAsset->GetId());
     }
 
+    if (vmAsset && vmAsset->GetType() == ra::data::models::AssetType::RichPresence)
+    {
+        const auto& pLocalStorage = dynamic_cast<const ra::services::impl::FileLocalStorage&>(ra::services::ServiceLocator::Get<ra::services::ILocalStorage>());
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+        const auto sFilePath = pLocalStorage.GetPath(ra::services::StorageItemType::RichPresence, std::to_wstring(pGameContext.GameId()));
+        auto sUrl = ra::StringPrintf("file://localhost/%s", sFilePath);
+        std::replace(sUrl.begin(), sUrl.end(), '\\', '/');
+        ra::services::ServiceLocator::Get<ra::ui::IDesktop>().OpenUrl(sUrl);
+        return;
+    }
+
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.AssetEditor.LoadAsset(vmAsset);
 
@@ -618,6 +632,8 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasUnofficial = false;
     bool bHasCore = false;
     bool bHasLocal = false;
+    bool bHasRichPresenceSelection = false;
+    bool bHasNonRichPresenceSelection = false;
 
     const bool bGameLoaded = (GetGameId() != 0);
     if (!bGameLoaded)
@@ -691,6 +707,16 @@ void AssetListViewModel::DoUpdateButtons()
                             bHasNonNewSelection = true;
                             break;
                     }
+
+                    switch (pItem->GetType())
+                    {
+                        case ra::data::models::AssetType::RichPresence:
+                            bHasRichPresenceSelection = true;
+                            break;
+                        default:
+                            bHasNonRichPresenceSelection = true;
+                            break;
+                    }
                 }
                 else
                 {
@@ -711,6 +737,30 @@ void AssetListViewModel::DoUpdateButtons()
                 }
             }
         }
+    }
+
+    if (bHasRichPresenceSelection)
+    {
+        SetValue(CanCreateProperty, true);
+        SetValue(CanCloneProperty, false);
+
+        SetValue(ActivateButtonTextProperty, L"&Activate");
+        SetValue(CanActivateProperty, false);
+
+        SetValue(SaveButtonTextProperty, L"&Save");
+        SetValue(CanSaveProperty, false);
+
+        SetValue(ResetButtonTextProperty, L"&Reset");
+        SetValue(CanResetProperty, false);
+
+        SetValue(RevertButtonTextProperty, L"Re&vert");
+
+        std::vector<AssetSummaryViewModel> vSelectedAssets;
+        SetValue(CanRevertProperty,
+                 (!bHasNonRichPresenceSelection &&
+                  m_vFilteredAssets.GetItemAt(0)->GetCategory() == ra::data::models::AssetCategory::Core));
+
+        return;
     }
 
     if (bHasInactiveSelection)
@@ -1458,7 +1508,7 @@ void AssetListViewModel::RevertSelected()
     if (bCoreAssetSelected)
     {
         auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        if (!pEmulatorContext.WarnDisableHardcoreMode("revert core achievements"))
+        if (!pEmulatorContext.WarnDisableHardcoreMode("revert core assets"))
             return;
     }
 

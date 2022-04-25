@@ -106,21 +106,11 @@ public:
     /// Gets whether or not the loaded game has a rich presence script.
     /// </summary>
     virtual bool HasRichPresence() const;
-    
-    /// <summary>
-    /// Gets whether or not the loaded game has a rich presence script.
-    /// </summary>
-    bool IsRichPresenceFromFile() const noexcept { return m_bRichPresenceFromFile; }
 
     /// <summary>
     /// Gets the current rich presence display string.
     /// </summary>
     virtual std::wstring GetRichPresenceDisplayString() const;
-    
-    /// <summary>
-    /// Reloads the rich presence script.
-    /// </summary>
-    void ReloadRichPresenceScript();
 
     /// <summary>
     /// Returns the note associated with the specified address.
@@ -266,8 +256,6 @@ private:
 protected:
     void RefreshUnlocks(bool bUnpause, int nPopup);
     void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup);
-    void AwardMastery() const;
-    void LoadRichPresenceScript(const std::string& sRichPresenceScript);
     void RefreshCodeNotes();
     void AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote);
     void ShowSimplifiedScoreboard(ra::LeaderboardID nLeaderboardId, int nScore) const;
@@ -282,8 +270,6 @@ protected:
     std::string m_sGameHash;
     std::string m_sGameImage;
     Mode m_nMode{};
-    std::string m_sServerRichPresenceMD5;
-    bool m_bRichPresenceFromFile = false;
 
     struct CodeNote
     {

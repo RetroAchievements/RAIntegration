@@ -7,6 +7,7 @@
 
 #include "data\models\AchievementModel.hh"
 #include "data\models\LeaderboardModel.hh"
+#include "data\models\RichPresenceModel.hh"
 
 namespace ra {
 namespace data {
@@ -73,6 +74,22 @@ public:
     /// Creates a new leaderboard asset.
     /// </summary>
     ra::data::models::LeaderboardModel& NewLeaderboard();
+
+    /// <summary>
+    /// Finds the rich presence asset.
+    /// </summary>
+    ra::data::models::RichPresenceModel* FindRichPresence()
+    {
+        return dynamic_cast<ra::data::models::RichPresenceModel*>(FindAsset(ra::data::models::AssetType::RichPresence, 0));
+    }
+
+    /// <summary>
+    /// Finds the rich presence asset.
+    /// </summary>
+    const ra::data::models::RichPresenceModel* FindRichPresence() const
+    {
+        return dynamic_cast<const ra::data::models::RichPresenceModel*>(FindAsset(ra::data::models::AssetType::RichPresence, 0));
+    }
 
     /// <summary>
     /// Determines if any Core assets exist.

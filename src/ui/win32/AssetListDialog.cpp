@@ -63,6 +63,10 @@ public:
         if (nId >= ra::data::context::GameAssets::FirstLocalId)
             return L"0";
 
+        const auto nType = vmItems.GetItemValue(nIndex, ra::data::models::AssetModelBase::TypeProperty);
+        if (nType == ra::etoi(ra::data::models::AssetType::RichPresence))
+            return L"";
+
         return std::to_wstring(nId);
     }
 };
@@ -111,11 +115,10 @@ public:
             case ra::data::models::AssetType::Leaderboard:
                 return L"\U0001F4CA"; // 1F4CA - Bar Chart
 
-            //case ra::data::models::AssetType::RichPresence:
+            case ra::data::models::AssetType::RichPresence:
             //    return L"\U0001F4C4"; // 1F4C4 - Document
             //    return L"\U0001F4CD"; // 1F4CD - Round Pushpin
-            //    return L"\U0001F4DC"; // 1F4DC - Scroll
-            //    return L"\U0001F522"; // 1F5FA - World Map
+                return L"\U0001F4DC"; // 1F4DC - Scroll
 
             default:
                 return std::to_wstring(ra::etoi(nType));
@@ -132,6 +135,9 @@ public:
 
             case ra::data::models::AssetType::Leaderboard:
                 return L"Leaderboard";
+
+            case ra::data::models::AssetType::RichPresence:
+                return L"Rich Presence";
 
             default:
                 return std::to_wstring(ra::etoi(nType));

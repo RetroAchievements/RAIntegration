@@ -56,6 +56,7 @@ protected:
 
 private:
     void ScheduleUpdateDisplayString();
+    void UpdateWindowTitle();
 
     enum class MonitorState
     {

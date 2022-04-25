@@ -161,6 +161,13 @@ bool BrokenAchievementsViewModel::Submit()
     switch (request.Problem)
     {
         case ra::api::SubmitTicket::ProblemType::DidNotTrigger:
+            if (request.AchievementIds.size() > 5)
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Too many achievements selected.",
+                    L"You cannot report more than 5 achievements at a time for not triggering. Please provide separate details for each achievement that did not trigger for you.");
+                return false;
+            }
+
             if (nUnachievedSelected == 0)
             {
                 if (ra::ui::viewmodels::MessageBoxViewModel::ShowWarningMessage(L"Submit anyway?",

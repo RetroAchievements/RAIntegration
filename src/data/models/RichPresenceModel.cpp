@@ -42,11 +42,24 @@ void RichPresenceModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
             if (IsActive())
             {
                 const std::string sScript = GetScript();
-                pRuntime.ActivateRichPresence(sScript);
+                if (!pRuntime.ActivateRichPresence(sScript))
+                {
+                    SetState(AssetState::Disabled);
+
+                    // if this was triggered as a result of the State changing to Active, and we changed the State
+                    // to Disabled, swallow the event for the State changing to Active as it's no longer accurate.
+                    if (args.Property == StateProperty)
+                        return;
+                }
             }
-            else
+            else if (GetState() != AssetState::Disabled)
             {
                 pRuntime.ActivateRichPresence("");
+            }
+            else if (args.Property == ScriptProperty)
+            {
+                // State is Disabled, Script changed. Try to reactivate
+                SetState(AssetState::Active);
             }
         }
         else if (args.Property == ChangesProperty && args.tNewValue == 0)
@@ -121,6 +134,8 @@ void RichPresenceModel::ReloadRichPresenceScript()
     if (ra::StringStartsWith(sRichPresence, "\xef\xbb\xbf"))
         sRichPresence.erase(0, 3);
 
+    BeginUpdate();
+
     SetScript(sRichPresence);
 
     UpdateLocalCheckpoint();
@@ -131,6 +146,8 @@ void RichPresenceModel::ReloadRichPresenceScript()
         SetCategory(ra::data::models::AssetCategory::Local);
         UpdateLocalCheckpoint();
     }
+
+    EndUpdate();
 }
 
 void RichPresenceModel::WriteRichPresenceScript()

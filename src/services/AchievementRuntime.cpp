@@ -157,7 +157,7 @@ int AchievementRuntime::ActivateLeaderboard(unsigned int nId, const std::string&
     return rc_runtime_activate_lboard(&m_pRuntime, nId, sDefinition.c_str(), nullptr, 0);
 }
 
-void AchievementRuntime::ActivateRichPresence(const std::string& sScript)
+bool AchievementRuntime::ActivateRichPresence(const std::string& sScript)
 {
     std::lock_guard<std::mutex> pLock(m_pMutex);
     EnsureInitialized();
@@ -174,6 +174,8 @@ void AchievementRuntime::ActivateRichPresence(const std::string& sScript)
         if (m_nRichPresenceParseResult != RC_OK)
             m_nRichPresenceParseResult = rc_richpresence_size_lines(sScript.c_str(), &m_nRichPresenceErrorLine);
     }
+
+    return (m_nRichPresenceParseResult == RC_OK);
 }
 
 std::wstring AchievementRuntime::GetRichPresenceDisplayString() const

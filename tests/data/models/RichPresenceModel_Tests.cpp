@@ -85,6 +85,29 @@ public:
         Assert::AreEqual(std::wstring(L"New test"), richPresence.mockRuntime.GetRichPresenceDisplayString());
     }
 
+    TEST_METHOD(TestActivateInvalid)
+    {
+        RichPresenceModelHarness richPresence;
+        richPresence.SetScript("Test\n");
+        richPresence.CreateServerCheckpoint();
+        richPresence.CreateLocalCheckpoint();
+
+        Assert::AreEqual(std::string("Test\n"), richPresence.GetScript());
+
+        Assert::AreEqual(AssetState::Inactive, richPresence.GetState());
+        Assert::AreEqual(std::wstring(L"No Rich Presence defined."), richPresence.mockRuntime.GetRichPresenceDisplayString());
+
+        richPresence.Activate();
+
+        Assert::AreEqual(AssetState::Disabled, richPresence.GetState());
+        Assert::AreEqual(std::wstring(L"Parse error -18 (line 1): Missing display string"), richPresence.mockRuntime.GetRichPresenceDisplayString());
+
+        richPresence.SetScript("Display:\nTest\n");
+
+        Assert::AreEqual(AssetState::Active, richPresence.GetState());
+        Assert::AreEqual(std::wstring(L"Test"), richPresence.mockRuntime.GetRichPresenceDisplayString());
+    }
+
     TEST_METHOD(TestNormalizeScript)
     {
         RichPresenceModelHarness richPresence;

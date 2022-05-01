@@ -76,6 +76,7 @@ public:
         Assert::IsNotNull((const void*)_RA_InstallSharedFunctions);
         Assert::IsNotNull((const void*)_RA_SetForceRepaint);
         Assert::IsNotNull((const void*)_RA_CreatePopupMenu);
+        Assert::IsNotNull((const void*)_RA_GetPopupMenuItems);
         Assert::IsNotNull((const void*)_RA_InvokeDialog);
         Assert::IsNotNull((const void*)_RA_SetUserAgentDetail);
         Assert::IsNotNull((const void*)_RA_AttemptLogin);
@@ -118,6 +119,7 @@ public:
         Assert::IsNull((const void*)_RA_InstallSharedFunctions);
         Assert::IsNull((const void*)_RA_SetForceRepaint);
         Assert::IsNull((const void*)_RA_CreatePopupMenu);
+        Assert::IsNull((const void*)_RA_GetPopupMenuItems);
         Assert::IsNull((const void*)_RA_InvokeDialog);
         Assert::IsNull((const void*)_RA_SetUserAgentDetail);
         Assert::IsNull((const void*)_RA_AttemptLogin);

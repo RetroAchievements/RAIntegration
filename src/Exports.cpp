@@ -202,6 +202,37 @@ API HMENU CCONV _RA_CreatePopupMenu()
     return hMenu;
 }
 
+API int CCONV _RA_GetPopupMenuItems(RA_MenuItem *pItems)
+{
+    // have to keep a static variable here to hold label references
+    static ra::ui::viewmodels::LookupItemViewModelCollection vmMenuItems;
+
+    vmMenuItems.Clear();
+    ra::ui::viewmodels::IntegrationMenuViewModel::BuildMenu(vmMenuItems);
+
+    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(vmMenuItems.Count()); ++i)
+    {
+        const auto* pItem = vmMenuItems.GetItemAt(i);
+        Expects(pItem != nullptr);
+
+        const int nId = pItem->GetId();
+        pItems[i].nID = nId;
+
+        if (nId == 0)
+        {
+            pItems[i].sLabel = nullptr;
+            pItems[i].bChecked = 0;
+        }
+        else
+        {
+            pItems[i].sLabel = pItem->GetLabel().c_str();
+            pItems[i].bChecked = pItem->IsSelected() ? 1 : 0;
+        }
+    }
+
+    return gsl::narrow_cast<int>(vmMenuItems.Count());
+}
+
 API void CCONV _RA_InvokeDialog(LPARAM nID)
 {
     ra::ui::viewmodels::IntegrationMenuViewModel::ActivateMenuItem(gsl::narrow_cast<int>(nID));

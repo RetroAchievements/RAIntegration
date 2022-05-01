@@ -128,6 +128,13 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
             sUrl.resize(nIndex);
         }
 
+        const auto nPortIndex = sUrl.find(':');
+        if (nPortIndex != std::string::npos)
+        {
+            nPort = atoi(&sUrl.at(nPortIndex + 1));
+            sUrl.resize(nPortIndex);
+        }
+
         // specify the server
         auto sHostName = ra::Widen(sUrl);
         HINTERNET hConnect = WinHttpConnect(hSession, sHostName.c_str(), nPort, 0);

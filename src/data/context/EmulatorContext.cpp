@@ -142,7 +142,16 @@ void EmulatorContext::UpdateUserAgent()
     {
         sUserAgent.append("UnknownClient/");
     }
-    sUserAgent.append(m_sVersion);
+
+    size_t nOffset = 0;
+    if (!m_sVersion.empty() && (m_sVersion.at(0) == 'v' || m_sVersion.at(0) == 'V'))
+    {
+        /* version string starts with a "v". assume it's part of a prefix (i.e. "v1.2", or "version 1.2") and ignore it */
+        while (nOffset < m_sVersion.length() && (isalpha(m_sVersion.at(nOffset)) || isspace(m_sVersion.at(nOffset))))
+            ++nOffset;
+    }
+
+    sUserAgent.append(m_sVersion, nOffset);
     sUserAgent.append(" (");
 
     const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
@@ -163,6 +172,11 @@ void EmulatorContext::UpdateUserAgent()
 
 static unsigned long long ParseVersion(const char* sVersion)
 {
+    Expects(sVersion != nullptr);
+
+    while (isalpha(*sVersion) || isspace(*sVersion))
+        ++sVersion;
+
     char* pPart{};
     const auto major = strtoull(sVersion, &pPart, 10);
     Expects(pPart != nullptr);
@@ -295,8 +309,10 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
     if (nLocalVersion >= nServerVersion)
         return true;
 
-    // remove any trailing ".0"s off the client version
+    // remove leading prefix and any trailing ".0"s off the client version
     std::string sClientVersion = m_sVersion;
+    while (!sClientVersion.empty() && (isalpha(sClientVersion.at(0)) || isspace(sClientVersion.at(0))))
+        sClientVersion.erase(0, 1);
     while (ra::StringEndsWith(sClientVersion, ".0"))
         sClientVersion.resize(sClientVersion.length() - 2);
     if (sClientVersion.find('.') == std::string::npos)

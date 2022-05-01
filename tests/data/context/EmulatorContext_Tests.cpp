@@ -513,6 +513,24 @@ public:
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
     }
 
+    TEST_METHOD(TestValidateClientVersionWithPrefix)
+    {
+        EmulatorContextHarness emulator;
+        emulator.Initialize(EmulatorID::RA_Snes9x, nullptr);
+        emulator.mockConfiguration.SetHostName("host");
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        emulator.MockVersions("v1.0", "1.0.1.0");
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"A new version of RASnes9X is available to download at host.\n\n- Current version: 1.0\n- New version: 1.0.1\n\nPress OK to logout and download the new version, or Cancel to disable hardcore mode and proceed."), vmMessageBox.GetMessage());
+            return ra::ui::DialogResult::Cancel;
+        });
+
+        Assert::IsTrue(emulator.ValidateClientVersion());
+        Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
+    }
+
     static void ReplaceIntegrationVersion(std::string& sVersion)
     {
         const auto nIndex = sVersion.find("Integration/") + 12;
@@ -540,8 +558,15 @@ public:
         ReplaceIntegrationVersion(sVersion);
         Assert::AreEqual(std::string("RAppleWin/1.1.1 (UnitTests) Integration/VERSION"), sVersion);
 
+        emulator.Initialize(EmulatorID::RA_Libretro, nullptr);
+        emulator.SetClientVersion("v1.3.8");
+
+        sVersion = emulator.mockHttpRequester.GetUserAgent();
+        ReplaceIntegrationVersion(sVersion);
+        Assert::AreEqual(std::string("RALibRetro/1.3.8 (UnitTests) Integration/VERSION"), sVersion);
+
         emulator.Initialize(EmulatorID::UnknownEmulator, "CustomName");
-        emulator.SetClientVersion("3.1a");
+        emulator.SetClientVersion("ver 3.1a");
 
         sVersion = emulator.mockHttpRequester.GetUserAgent();
         ReplaceIntegrationVersion(sVersion);
@@ -981,6 +1006,9 @@ public:
 
         emulator.SetClientVersion("1.0.12.0");
         Assert::AreEqual(std::wstring(L"RASnes9X - 1.0"), emulator.GetAppTitle(""));
+
+        emulator.SetClientVersion("v2.5.6");
+        Assert::AreEqual(std::wstring(L"RASnes9X - v2.5"), emulator.GetAppTitle(""));
     }
 
     TEST_METHOD(TestGetAppTitleUserName)

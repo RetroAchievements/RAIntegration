@@ -561,7 +561,10 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
             else if (nOldState == ra::data::models::AssetState::Waiting)
                 SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
 
-            UpdateAssetFrameValues();
+            if (ra::data::models::AssetModelBase::IsActive(nNewState))
+                UpdateAssetFrameValues();
+            else
+                UpdateMeasuredValue();
         }
         else if (args.Property == CategoryProperty)
         {

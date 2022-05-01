@@ -72,6 +72,11 @@ private:
             ach5.SetID(5U);
             ach5.SetName(L"Title5");
             ach5.SetState(ra::data::models::AssetState::Active);
+            auto& ach6 = mockGameContext.Assets().NewAchievement();
+            ach6.SetCategory(ra::data::models::AssetCategory::Core);
+            ach6.SetID(6U);
+            ach6.SetName(L"Title6");
+            ach6.SetState(ra::data::models::AssetState::Active);
 
             Assert::IsTrue(InitializeAchievements());
         }
@@ -453,6 +458,74 @@ public:
 
             response.Result = ra::api::ApiResult::Success;
             response.TicketsCreated = 2;
+            return true;
+        });
+
+        Assert::IsTrue(vmBrokenAchievements.Submit());
+        Assert::IsTrue(bDialogSeen);
+    }
+
+    TEST_METHOD(TestSubmitMultipleAchievementsDidNotTriggerLimit)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(2);
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(3)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(4)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(5)->SetSelected(true);
+        vmBrokenAchievements.SetDefaultComment();
+
+        bool bDialogSeen = false;
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>(
+            [&bDialogSeen](const MessageBoxViewModel& vmMessageBox) {
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"Too many achievements selected."), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"You cannot report more than 5 achievements at a time for not triggering. Please provide separate details for each achievement that did not trigger for you."), vmMessageBox.GetMessage());
+                return ra::ui::DialogResult::OK;
+            });
+
+        vmBrokenAchievements.mockServer.ExpectUncalled<ra::api::SubmitTicket>();
+
+        Assert::IsFalse(vmBrokenAchievements.Submit());
+        Assert::IsTrue(bDialogSeen);
+    }
+
+    TEST_METHOD(TestSubmitMultipleAchievementsWrongTimeNoLimit)
+    {
+        BrokenAchievementsViewModelHarness vmBrokenAchievements;
+        vmBrokenAchievements.MockAchievements();
+        vmBrokenAchievements.SetSelectedProblemId(1);
+        vmBrokenAchievements.Achievements().GetItemAt(0)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(1)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(2)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(3)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(4)->SetSelected(true);
+        vmBrokenAchievements.Achievements().GetItemAt(5)->SetSelected(true);
+        vmBrokenAchievements.SetDefaultComment();
+
+        bool bDialogSeen = false;
+        vmBrokenAchievements.mockDesktop.ExpectWindow<MessageBoxViewModel>([&bDialogSeen](const MessageBoxViewModel& vmMessageBox)
+        {
+            if (vmMessageBox.GetButtons() == MessageBoxViewModel::Buttons::OK)
+            {
+                bDialogSeen = true;
+                Assert::AreEqual(std::wstring(L"6 tickets created"), vmMessageBox.GetHeader());
+                return ra::ui::DialogResult::OK;
+            }
+
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmBrokenAchievements.mockServer.HandleRequest<ra::api::SubmitTicket>([](const ra::api::SubmitTicket::Request& request, ra::api::SubmitTicket::Response& response)
+        {
+            Assert::AreEqual(1, ra::etoi(request.Problem));
+            Assert::AreEqual({ 6U }, request.AchievementIds.size());
+
+            response.Result = ra::api::ApiResult::Success;
+            response.TicketsCreated = 6;
             return true;
         });
 

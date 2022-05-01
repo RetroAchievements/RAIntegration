@@ -131,7 +131,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
         const auto nPortIndex = sUrl.find(':');
         if (nPortIndex != std::string::npos)
         {
-            nPort = atoi(&sUrl.at(nPortIndex + 1));
+            nPort = gsl::narrow_cast<INTERNET_PORT>(atoi(&sUrl.at(nPortIndex + 1)));
             sUrl.resize(nPortIndex);
         }
 

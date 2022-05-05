@@ -632,7 +632,7 @@ void AssetListViewModel::DoUpdateButtons()
     bool bHasUnofficial = false;
     bool bHasCore = false;
     bool bHasLocal = false;
-    bool bHasRichPresenceSelection = false;
+    gsl::index nRichPresenceSelectionIndex = -1;
     bool bHasNonRichPresenceSelection = false;
 
     const bool bGameLoaded = (GetGameId() != 0);
@@ -711,7 +711,7 @@ void AssetListViewModel::DoUpdateButtons()
                     switch (pItem->GetType())
                     {
                         case ra::data::models::AssetType::RichPresence:
-                            bHasRichPresenceSelection = true;
+                            nRichPresenceSelectionIndex = i;
                             break;
                         default:
                             bHasNonRichPresenceSelection = true;
@@ -739,7 +739,7 @@ void AssetListViewModel::DoUpdateButtons()
         }
     }
 
-    if (bHasRichPresenceSelection)
+    if (nRichPresenceSelectionIndex != -1)
     {
         SetValue(CanCreateProperty, true);
         SetValue(CanCloneProperty, false);
@@ -758,7 +758,7 @@ void AssetListViewModel::DoUpdateButtons()
         std::vector<AssetSummaryViewModel> vSelectedAssets;
         SetValue(CanRevertProperty,
                  (!bHasNonRichPresenceSelection &&
-                  m_vFilteredAssets.GetItemAt(0)->GetCategory() == ra::data::models::AssetCategory::Core));
+                  m_vFilteredAssets.GetItemAt(nRichPresenceSelectionIndex)->GetCategory() == ra::data::models::AssetCategory::Core));
 
         return;
     }

@@ -954,7 +954,7 @@ public:
 private:
     void AssertMenuItem(const RA_MenuItem* pItem, LPARAM nId, const wchar_t* sLabel, bool bChecked = false)
     {
-        Assert::AreEqual(nId, pItem->nID);
+        Assert::AreEqual((int)nId, (int)pItem->nID);
 
         if (sLabel == nullptr)
             Assert::IsNull(pItem->sLabel);

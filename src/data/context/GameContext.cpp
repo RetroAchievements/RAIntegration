@@ -22,6 +22,7 @@
 
 #include "data\models\AchievementModel.hh"
 #include "data\models\LocalBadgesModel.hh"
+#include "data\models\RichPresenceModel.hh"
 
 #include "services\AchievementRuntime.hh"
 #include "services\IAudioSystem.hh"
@@ -55,7 +56,6 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     // reset the GameContext
     m_nMode = nMode;
     m_sGameTitle.clear();
-    m_bRichPresenceFromFile = false;
     m_mCodeNotes.clear();
     m_vAssets.ResetLocalId();
 
@@ -143,23 +143,11 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
     // rich presence
     {
-        // normalize for MD5 calulation (unix line endings, must end with a line ending)
-        std::string sRichPresence = response.RichPresence;
-        sRichPresence.erase(std::remove(sRichPresence.begin(), sRichPresence.end(), '\r'), sRichPresence.end());
-        if (!sRichPresence.empty() && sRichPresence.back() != '\n')
-            sRichPresence.push_back('\n');
-
-        LoadRichPresenceScript(sRichPresence);
-        m_sServerRichPresenceMD5 = RAGenerateMD5(sRichPresence);
-    }
-
-    if (!response.RichPresence.empty())
-    {
-        // TODO: this file is written so devs can modify the rich presence without having to restart
-        // the game. if the user doesn't have dev permission, there's no reason to write it.
-        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-        auto pRich = pLocalStorage.WriteText(ra::services::StorageItemType::RichPresence, std::to_wstring(nGameId));
-        pRich->Write(response.RichPresence);
+        auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
+        pRichPresence->SetScript(response.RichPresence);
+        pRichPresence->CreateServerCheckpoint();
+        pRichPresence->CreateLocalCheckpoint();
+        m_vAssets.Append(std::move(pRichPresence));
     }
 
     // achievements
@@ -232,6 +220,22 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 #ifndef RA_UTEST
     DoFrame();
 #endif
+
+    // activate rich presence (or remove if not defined)
+    auto* pRichPresence = m_vAssets.FindRichPresence();
+    if (pRichPresence)
+    {
+        if (pRichPresence->GetScript().empty() && !pRichPresence->IsModified())
+        {
+            const auto nIndex = m_vAssets.FindItemIndex(ra::data::models::AssetModelBase::TypeProperty,
+                                                        ra::etoi(ra::data::models::AssetType::RichPresence));
+            m_vAssets.RemoveAt(nIndex);
+        }
+        else
+        {
+            pRichPresence->Activate();
+        }
+    }
 
     // show "game loaded" popup
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
@@ -810,11 +814,6 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
     });
 }
 
-void GameContext::LoadRichPresenceScript(const std::string& sRichPresenceScript)
-{
-    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().ActivateRichPresence(sRichPresenceScript);
-}
-
 bool GameContext::HasRichPresence() const
 {
     return ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().HasRichPresence();
@@ -823,32 +822,6 @@ bool GameContext::HasRichPresence() const
 std::wstring GameContext::GetRichPresenceDisplayString() const
 {
     return ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetRichPresenceDisplayString();
-}
-
-void GameContext::ReloadRichPresenceScript()
-{
-    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pRich = pLocalStorage.ReadText(ra::services::StorageItemType::RichPresence, std::to_wstring(GameId()));
-
-    std::string sRichPresence;
-    if (pRich != nullptr)
-    {
-        std::string sLine;
-        while (pRich->GetLine(sLine))
-        {
-            sRichPresence.append(sLine);
-            sRichPresence.append("\n");
-        }
-
-        // remove UTF-8 BOM if present
-        if (ra::StringStartsWith(sRichPresence, "\xef\xbb\xbf"))
-            sRichPresence.erase(0, 3);
-    }
-
-    const auto sFileRichPresenceMD5 = RAGenerateMD5(sRichPresence);
-    m_bRichPresenceFromFile = (sFileRichPresenceMD5 != m_sServerRichPresenceMD5);
-
-    LoadRichPresenceScript(sRichPresence);
 }
 
 void GameContext::RefreshCodeNotes()

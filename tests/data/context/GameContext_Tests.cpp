@@ -73,7 +73,29 @@ public:
 
         void SetGameId(unsigned int nGameId) noexcept { m_nGameId = nGameId; }
 
-        void SetRichPresenceFromFile(bool bValue) noexcept { m_bRichPresenceFromFile = bValue; }
+        void SetRichPresenceFromFile(bool bValue)
+        {
+            auto* pRichPresence = GetRichPresence();
+            Expects(pRichPresence != nullptr);
+
+            if (bValue)
+                pRichPresence->SetScript("Display:\nThis differs\n");
+            else
+                pRichPresence->SetScript("Display:\nTest\n");
+        }
+
+        void ReloadRichPresenceScript()
+        {
+            auto* pRichPresence = GetRichPresence();
+            Expects(pRichPresence != nullptr);
+            pRichPresence->ReloadRichPresenceScript();
+        }
+
+        bool IsRichPresenceFromFile() const
+        {
+            const auto* pRichPresence = Assets().FindRichPresence();
+            return pRichPresence != nullptr && pRichPresence->GetChanges() != ra::data::models::AssetChanges::None;
+        }
 
         ra::data::models::AchievementModel& MockAchievement()
         {
@@ -110,6 +132,23 @@ public:
         }
 
     private:
+        ra::data::models::RichPresenceModel* GetRichPresence()
+        {
+            auto* pRichPresence = Assets().FindRichPresence();
+            if (!pRichPresence)
+            {
+                auto pNewRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
+                pNewRichPresence->SetScript("Display:\nTest\n");
+                pNewRichPresence->CreateServerCheckpoint();
+                pNewRichPresence->CreateLocalCheckpoint();
+                Assets().Append(std::move(pNewRichPresence));
+
+                pRichPresence = Assets().FindRichPresence();
+            }
+
+            return pRichPresence;
+        }
+
         ra::services::ServiceLocator::ServiceOverride<ra::data::context::GameContext> m_OverrideGameContext;
         ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_OverrideRuntime;
     };
@@ -364,12 +403,18 @@ public:
         game.LoadGame(1U);
 
         Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::string("Display:\nHello, World"),
+        Assert::AreEqual(std::string("Display:\nHello, World\n"),
             game.mockStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
         Assert::IsFalse(game.IsRichPresenceFromFile());
+
+        const auto* pRichPresence = game.Assets().FindRichPresence();
+        Assert::IsNotNull(pRichPresence);
+        Ensures(pRichPresence != nullptr);
+        Assert::AreEqual(ra::data::models::AssetCategory::Core, pRichPresence->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetChanges::None, pRichPresence->GetChanges());
     }
 
-    TEST_METHOD(TestLoadGameResetsRichPresenceFromFile)
+    TEST_METHOD(TestLoadGameDoesNotOverwriteRichPresenceFromFile)
     {
         GameContextHarness game;
         game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
@@ -378,13 +423,63 @@ public:
             return true;
         });
 
-        game.SetRichPresenceFromFile(true);
+        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom File\n");
         game.LoadGame(1U);
 
         Assert::IsTrue(game.HasRichPresence());
-        Assert::AreEqual(std::string("Display:\nHello, World"),
+        Assert::AreEqual(std::string("Display:\nFrom File\n"),
             game.mockStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
+        Assert::IsTrue(game.IsRichPresenceFromFile());
+
+        const auto* pRichPresence = game.Assets().FindRichPresence();
+        Assert::IsNotNull(pRichPresence);
+        Ensures(pRichPresence != nullptr);
+        Assert::AreEqual(ra::data::models::AssetCategory::Core, pRichPresence->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, pRichPresence->GetChanges());
+    }
+
+    TEST_METHOD(TestLoadGameNoRichPresence)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>(
+            [](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response) {
+                response.RichPresence = "";
+                return true;
+            });
+
+        game.LoadGame(1U);
+
+        Assert::IsFalse(game.HasRichPresence());
+        Assert::AreEqual(std::string(),
+                         game.mockStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
         Assert::IsFalse(game.IsRichPresenceFromFile());
+
+        const auto* pRichPresence = game.Assets().FindRichPresence();
+        Assert::IsNull(pRichPresence);
+    }
+
+    TEST_METHOD(TestLoadGameRichPresenceOnlyFromFile)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>(
+            [](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response) {
+                response.RichPresence = "";
+                return true;
+            });
+
+        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom File\n");
+        game.LoadGame(1U);
+
+        Assert::IsTrue(game.HasRichPresence());
+        Assert::AreEqual(std::string("Display:\nFrom File\n"),
+                         game.mockStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
+        Assert::IsTrue(game.IsRichPresenceFromFile());
+
+        const auto* pRichPresence = game.Assets().FindRichPresence();
+        Assert::IsNotNull(pRichPresence);
+        Ensures(pRichPresence != nullptr);
+        Assert::AreEqual(ra::data::models::AssetCategory::Local, pRichPresence->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, pRichPresence->GetChanges());
     }
 
     TEST_METHOD(TestLoadGameAchievements)
@@ -1083,7 +1178,7 @@ public:
         Assert::IsFalse(game.IsRichPresenceFromFile());
 
         /* replace written server RP with empty file */
-        game.mockStorage.DeleteStoredData(ra::services::StorageItemType::RichPresence, L"1");
+        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "");
         game.ReloadRichPresenceScript();
 
         Assert::IsFalse(game.HasRichPresence());

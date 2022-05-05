@@ -273,7 +273,8 @@ std::wstring SessionTracker::GetCurrentActivity() const
         return sMessage;
     }
 
-    if (pGameContext.HasRichPresence() && !pGameContext.IsRichPresenceFromFile())
+    if (pGameContext.HasRichPresence() &&
+        pGameContext.Assets().FindRichPresence()->GetChanges() == ra::data::models::AssetChanges::None)
     {
         const auto sRPResponse = pGameContext.GetRichPresenceDisplayString();
         if (!sRPResponse.empty())

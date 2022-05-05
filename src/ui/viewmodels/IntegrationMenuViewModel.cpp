@@ -277,7 +277,9 @@ void IntegrationMenuViewModel::ShowMemoryBookmarks()
 void IntegrationMenuViewModel::ShowRichPresenceMonitor()
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    pGameContext.ReloadRichPresenceScript();
+    auto* pRichPresence = pGameContext.Assets().FindRichPresence();
+    if (pRichPresence != nullptr)
+        pRichPresence->ReloadRichPresenceScript();
 
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.RichPresenceMonitor.Show();

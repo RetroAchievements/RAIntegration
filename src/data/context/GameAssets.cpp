@@ -6,6 +6,7 @@
 #include "GameContext.hh"
 
 #include "data\models\LocalBadgesModel.hh"
+#include "data\models\RichPresenceModel.hh"
 
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
@@ -76,6 +77,9 @@ bool GameAssets::HasCoreAssets() const
 
                 default:
                     // Core, Bonus, or something else that's been published
+                    if (pAsset->GetType() == ra::data::models::AssetType::RichPresence)
+                        break;
+
                     return true;
             }
         }
@@ -118,6 +122,10 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
 
+    auto* pRichPresence = dynamic_cast<ra::data::models::RichPresenceModel*>(FindAsset(ra::data::models::AssetType::RichPresence, 0));
+    if (pRichPresence != nullptr)
+        pRichPresence->ReloadRichPresenceScript();
+
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::UserAchievements, std::to_wstring(pGameContext.GameId()));
     if (pData == nullptr)
@@ -148,9 +156,16 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                 if (pAsset->GetChanges() != ra::data::models::AssetChanges::None ||
                     pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
                 {
-                    // ignore LocalBadges container
-                    if (pAsset->GetType() == ra::data::models::AssetType::LocalBadges)
-                        continue;
+                    switch (pAsset->GetType())
+                    {
+                        // ignore LocalBadges container
+                        case ra::data::models::AssetType::LocalBadges:
+                            continue;
+
+                        // ignore RichPresence model (it's not actually stored in the XXX-User file)
+                        case ra::data::models::AssetType::RichPresence:
+                            continue;
+                    }
 
                     vRemainingAssetsToReload.push_back(pAsset);
                 }

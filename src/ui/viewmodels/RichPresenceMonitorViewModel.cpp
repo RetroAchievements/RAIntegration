@@ -36,6 +36,8 @@ static time_t GetRichPresenceModified()
 
 void RichPresenceMonitorViewModel::StartMonitoring()
 {
+    UpdateWindowTitle();
+
     switch (m_nState)
     {
         default:
@@ -106,8 +108,12 @@ void RichPresenceMonitorViewModel::ScheduleUpdateDisplayString()
             const time_t tRichPresenceFileTime = GetRichPresenceModified();
             if (tRichPresenceFileTime != m_tRichPresenceFileTime)
             {
-                ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().ReloadRichPresenceScript();
+                auto* pRichPresence = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets().FindRichPresence();
+                if (pRichPresence)
+                    pRichPresence->ReloadRichPresenceScript();
                 m_tRichPresenceFileTime = tRichPresenceFileTime;
+
+                UpdateWindowTitle();
             }
 
             UpdateDisplayString();
@@ -146,10 +152,23 @@ void RichPresenceMonitorViewModel::UpdateDisplayString()
     }
 }
 
+void RichPresenceMonitorViewModel::UpdateWindowTitle()
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pRichPresence = pGameContext.Assets().FindRichPresence();
+    if (pRichPresence && pRichPresence->GetChanges() != ra::data::models::AssetChanges::None)
+        SetWindowTitle(L"Rich Presence Monitor (local)");
+    else
+        SetWindowTitle(L"Rich Presence Monitor");
+}
+
 void RichPresenceMonitorViewModel::OnActiveGameChanged()
 {
     if (IsVisible())
+    {
+        UpdateWindowTitle();
         UpdateDisplayString();
+    }
 }
 
 void RichPresenceMonitorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& args)

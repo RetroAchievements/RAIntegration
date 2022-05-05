@@ -45,9 +45,31 @@ public:
     /// <summary>
     /// Sets the rich presence display string.
     /// </summary>
-    void SetRichPresenceDisplayString(std::wstring sValue) { m_sRichPresenceDisplayString = sValue; }
+    void SetRichPresenceDisplayString(std::wstring sValue)
+    {
+        if (Assets().FindRichPresence() == nullptr)
+        {
+            auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
+            pRichPresence->SetScript(ra::StringPrintf("Display:\n%s\n", sValue));
+            pRichPresence->CreateServerCheckpoint();
+            pRichPresence->CreateLocalCheckpoint();
+            Assets().Append(std::move(pRichPresence));
+        }
 
-    void SetRichPresenceFromFile(bool bValue) noexcept { m_bRichPresenceFromFile = bValue; }
+        m_sRichPresenceDisplayString = sValue;
+    }
+
+    void SetRichPresenceFromFile(bool bValue)
+    {
+        auto* pRichPresence = Assets().FindRichPresence();
+        if (pRichPresence)
+        {
+            if (bValue)
+                pRichPresence->SetScript("Display:\nThis differs\n");
+            else
+                pRichPresence->SetScript(ra::StringPrintf("Display:\n%s\n", m_sRichPresenceDisplayString));
+        }
+    }
 
     bool SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote) override
     {

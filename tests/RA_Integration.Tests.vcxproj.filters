@@ -432,6 +432,12 @@
     <ClCompile Include="..\src\ui\viewmodels\NewAssetViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\data\models\RichPresenceModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
+    <ClCompile Include="data\models\RichPresenceModel_Tests.cpp">
+      <Filter>Tests\Data\Models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

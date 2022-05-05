@@ -2,10 +2,12 @@
 
 #include "data\models\LeaderboardModel.hh"
 #include "data\models\LocalBadgesModel.hh"
+#include "data\models\RichPresenceModel.hh"
 
 #include "ui\viewmodels\AssetListViewModel.hh"
 #include "ui\viewmodels\NewAssetViewModel.hh"
 
+#include "services\impl\FileLocalStorage.hh"
 #include "services\impl\StringTextWriter.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
@@ -17,6 +19,7 @@
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
@@ -98,7 +101,8 @@ private:
         Activate,
         Deactivate,
         ActivateAll,
-        Disabled
+        ActivateDisabled,
+        ActivateAllDisabled
     };
 
     enum class SaveButtonState
@@ -128,7 +132,8 @@ private:
         RevertAll,
         Delete,
         DeleteAll,
-        Disabled
+        RevertDisabled,
+        RevertAllDisabled
     };
 
     enum class CreateButtonState
@@ -184,8 +189,13 @@ private:
                     Assert::IsTrue(CanActivate());
                     break;
 
-                case ActivateButtonState::Disabled:
+                case ActivateButtonState::ActivateAllDisabled:
                     Assert::AreEqual(std::wstring(L"&Activate All"), GetValue(ActivateButtonTextProperty));
+                    Assert::IsFalse(CanActivate());
+                    break;
+
+                case ActivateButtonState::ActivateDisabled:
+                    Assert::AreEqual(std::wstring(L"&Activate"), GetValue(ActivateButtonTextProperty));
                     Assert::IsFalse(CanActivate());
                     break;
             }
@@ -292,7 +302,12 @@ private:
                     Assert::IsTrue(CanRevert());
                     break;
 
-                case RevertButtonState::Disabled:
+                case RevertButtonState::RevertDisabled:
+                    Assert::AreEqual(std::wstring(L"Re&vert"), GetValue(RevertButtonTextProperty));
+                    Assert::IsFalse(CanRevert());
+                    break;
+
+                case RevertButtonState::RevertAllDisabled:
                     Assert::AreEqual(std::wstring(L"Re&vert All"), GetValue(RevertButtonTextProperty));
                     Assert::IsFalse(CanRevert());
                     break;
@@ -406,6 +421,15 @@ private:
         void AddLeaderboard()
         {
             AddLeaderboard(AssetCategory::Core, L"Lboard1");
+        }
+
+        void AddRichPresence(const std::string& sScript)
+        {
+            auto vmRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
+            vmRichPresence->SetScript(sScript);
+            vmRichPresence->CreateServerCheckpoint();
+            vmRichPresence->CreateLocalCheckpoint();
+            mockGameContext.Assets().Append(std::move(vmRichPresence));
         }
 
         void ForceUpdateButtons()
@@ -553,13 +577,15 @@ public:
         Assert::AreEqual(std::wstring(L"Authored"), vmAssetList.SpecialFilters().GetItemAt(5)->GetLabel());
         Assert::AreEqual(AssetListViewModel::SpecialFilter::All, vmAssetList.GetSpecialFilter());
 
-        Assert::AreEqual({ 3U }, vmAssetList.AssetTypeFilters().Count());
+        Assert::AreEqual({ 4U }, vmAssetList.AssetTypeFilters().Count());
         Assert::AreEqual((int)AssetType::None, vmAssetList.AssetTypeFilters().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"All"), vmAssetList.AssetTypeFilters().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)AssetType::Achievement, vmAssetList.AssetTypeFilters().GetItemAt(1)->GetId());
         Assert::AreEqual(std::wstring(L"Achievements"), vmAssetList.AssetTypeFilters().GetItemAt(1)->GetLabel());
         Assert::AreEqual((int)AssetType::Leaderboard, vmAssetList.AssetTypeFilters().GetItemAt(2)->GetId());
         Assert::AreEqual(std::wstring(L"Leaderboards"), vmAssetList.AssetTypeFilters().GetItemAt(2)->GetLabel());
+        Assert::AreEqual((int)AssetType::RichPresence, vmAssetList.AssetTypeFilters().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"Rich Presence"), vmAssetList.AssetTypeFilters().GetItemAt(3)->GetLabel());
         Assert::AreEqual(AssetType::Achievement, vmAssetList.GetAssetTypeFilter());
 
         Assert::AreEqual({ 5U }, vmAssetList.Changes().Count());
@@ -1165,8 +1191,8 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::ResetAllDisabled, RevertButtonState::Disabled,
+            ActivateButtonState::ActivateAllDisabled, SaveButtonState::SaveAllDisabled,
+            ResetButtonState::ResetAllDisabled, RevertButtonState::RevertAllDisabled,
             CreateButtonState::Disabled, CloneButtonState::Disabled
         );
 
@@ -1176,8 +1202,8 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
-            ResetButtonState::ResetAllDisabled, RevertButtonState::Disabled,
+            ActivateButtonState::ActivateAllDisabled, SaveButtonState::SaveAllDisabled,
+            ResetButtonState::ResetAllDisabled, RevertButtonState::RevertAllDisabled,
             CreateButtonState::Disabled, CloneButtonState::Disabled
         );
     }
@@ -1192,7 +1218,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::ActivateAllDisabled, SaveButtonState::SaveAllDisabled,
             ResetButtonState::ResetAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
@@ -1379,7 +1405,7 @@ public:
         vmAssetList.ForceUpdateButtons();
 
         vmAssetList.AssertButtonState(
-            ActivateButtonState::Disabled, SaveButtonState::SaveAllDisabled,
+            ActivateButtonState::ActivateAllDisabled, SaveButtonState::SaveAllDisabled,
             ResetButtonState::ResetAll, RevertButtonState::RevertAll,
             CreateButtonState::Enabled, CloneButtonState::Disabled
         );
@@ -4845,7 +4871,7 @@ public:
         vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
         vmAssetList.RevertSelected();
 
-        Assert::AreEqual(std::string("revert core achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        Assert::AreEqual(std::string("revert core assets"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
         Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
     }
 
@@ -4868,7 +4894,7 @@ public:
         vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::No);
         vmAssetList.RevertSelected();
 
-        Assert::AreEqual(std::string("revert core achievements"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        Assert::AreEqual(std::string("revert core assets"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
         Assert::AreEqual(AssetChanges::Modified, pAsset->GetChanges());
     }
 
@@ -4992,6 +5018,94 @@ public:
         Assert::AreEqual(0U, vmAssetList.mockWindowManager.AssetEditor.GetID());
         Assert::AreEqual(std::string("edit assets"), vmAssetList.mockEmulatorContext.GetDisableHardcoreWarningMessage());
         Assert::IsTrue(vmAssetList.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestOpenEditorRichPresence)
+    {
+        AssetListViewModelHarness vmAssetList;
+        ra::services::mocks::MockFileSystem mockFileSystem;
+        ra::services::impl::FileLocalStorage storage(mockFileSystem);
+        ra::services::ServiceLocator::ServiceOverride<ra::services::ILocalStorage> storageOverride(&storage);
+
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        vmAssetList.mockEmulatorContext.MockDisableHardcoreWarning(ra::ui::DialogResult::Yes);
+        vmAssetList.SetGameId(22U);
+        vmAssetList.AddRichPresence("Display\nTest\n");
+        vmAssetList.SetAssetTypeFilter(AssetType::RichPresence);
+
+        Assert::AreEqual({ 1U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+
+        auto* pItem = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pItem != nullptr);
+        pItem->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+        vmAssetList.OpenEditor(pItem);
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+
+        Assert::AreEqual(std::string("file://localhost/./RACache/Data/0-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
+    }
+
+    TEST_METHOD(TestUpdateButtonsRichPresenceSelection)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetAssetTypeFilter(AssetType::RichPresence);
+        vmAssetList.AddRichPresence("Display:\nTest\n");
+
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::ActivateDisabled, SaveButtonState::SaveDisabled,
+            ResetButtonState::ResetDisabled, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Disabled
+        );
+    }
+
+    TEST_METHOD(TestUpdateButtonsRichPresenceAndOtherSelection)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.SetAssetTypeFilter(AssetType::None);
+        vmAssetList.AddRichPresence("Display:\nTest\n");
+        vmAssetList.AddThreeAchievements();
+
+        Assert::AreEqual({ 3U }, vmAssetList.FilteredAssets().Count());
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::ActivateDisabled, SaveButtonState::SaveDisabled,
+            ResetButtonState::ResetDisabled, RevertButtonState::RevertDisabled,
+            CreateButtonState::Enabled, CloneButtonState::Disabled
+        );
+    }
+    
+    TEST_METHOD(TestUpdateButtonsRichPresenceLocalSelection)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.SetAssetTypeFilter(AssetType::RichPresence);
+        vmAssetList.AddRichPresence("Display:\nTest\n");
+        vmAssetList.mockGameContext.Assets().FindRichPresence()->SetCategory(AssetCategory::Local);
+
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::ActivateDisabled, SaveButtonState::SaveDisabled,
+            ResetButtonState::ResetDisabled, RevertButtonState::RevertDisabled,
+            CreateButtonState::Enabled, CloneButtonState::Disabled
+        );
     }
 };
 

@@ -44,8 +44,18 @@ void RichPresenceMonitorViewModel::StartMonitoring()
         case MonitorState::None:
             // not monitoring - start doing so.
             m_nState = MonitorState::Active;
-            UpdateDisplayString();
             m_tRichPresenceFileTime = GetRichPresenceModified();
+            if (m_tRichPresenceFileTime)
+            {
+                auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+                auto* pRichPresence = pGameContext.Assets().FindRichPresence();
+                if (pRichPresence != nullptr)
+                {
+                    pRichPresence->ReloadRichPresenceScript();
+                    pRichPresence->Activate();
+                }
+            }
+            UpdateDisplayString();
             ScheduleUpdateDisplayString();
             break;
 

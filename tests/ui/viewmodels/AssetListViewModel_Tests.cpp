@@ -493,6 +493,12 @@ private:
 
         bool SelectionContainsInvalidAsset(const std::vector<ra::data::models::AssetModelBase*>& vSelectedAssets, _Out_ std::wstring& sErrorMessage) const override
         {
+            if (vSelectedAssets.empty() && !m_mValidationErrors.empty())
+            {
+                sErrorMessage = m_mValidationErrors.begin()->second;
+                return true;
+            }
+
             for (const auto* pAsset : vSelectedAssets)
             {
                 Expects(pAsset != nullptr);
@@ -2186,6 +2192,36 @@ public:
         vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
         vmAssetList.SetValidationError(pItem->GetID(), L"Error message goes here.");
         vmAssetList.ForceUpdateButtons();
+
+        bool bMessageSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)
+        {
+            bMessageSeen = true;
+            Assert::AreEqual(std::wstring(L"Unable to save"), vmMessage.GetHeader());
+            Assert::AreEqual(std::wstring(L"Error message goes here."), vmMessage.GetMessage());
+
+            return DialogResult::OK;
+        });
+
+        Assert::AreEqual(AssetChanges::Modified, pItem->GetChanges());
+        vmAssetList.SaveSelected();
+        Assert::IsTrue(bMessageSeen);
+        Assert::AreEqual(AssetChanges::Modified, pItem->GetChanges());
+    }
+
+    TEST_METHOD(TestSaveSelectedInvalidAll)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(1U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
+
+        auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        pItem->SetName(L"Test1b");
+        vmAssetList.SetValidationError(pItem->GetID(), L"Error message goes here.");
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::SaveAll);
 
         bool bMessageSeen = false;
         vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessage)

@@ -438,6 +438,56 @@ public:
         Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, pRichPresence->GetChanges());
     }
 
+    TEST_METHOD(TestLoadGameRichPresenceUpdatedFromServer)
+    {
+        GameContextHarness game;
+        game.mockStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1", "{\"RichPresencePatch\": \"Display:\\nOld\\n\"}");
+        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nOld\n");
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            response.RichPresence = "Display:\nHello, World";
+            return true;
+        });
+
+        game.LoadGame(1U);
+
+        Assert::IsTrue(game.HasRichPresence());
+        Assert::AreEqual(std::string("Display:\nHello, World\n"),
+            game.mockStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
+        Assert::IsFalse(game.IsRichPresenceFromFile());
+
+        const auto* pRichPresence = game.Assets().FindRichPresence();
+        Assert::IsNotNull(pRichPresence);
+        Ensures(pRichPresence != nullptr);
+        Assert::AreEqual(ra::data::models::AssetCategory::Core, pRichPresence->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetChanges::None, pRichPresence->GetChanges());
+    }
+
+    TEST_METHOD(TestLoadGameRichPresenceUpdatedFromServerLocalModifications)
+    {
+        GameContextHarness game;
+        game.mockStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1", "{\"RichPresencePatch\": \"Display:\\nOld\\n\"}");
+        game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nLocal\n");
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            response.RichPresence = "Display:\nHello, World";
+            return true;
+        });
+
+        game.LoadGame(1U);
+
+        Assert::IsTrue(game.HasRichPresence());
+        Assert::AreEqual(std::string("Display:\nLocal\n"),
+            game.mockStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
+        Assert::IsTrue(game.IsRichPresenceFromFile());
+
+        const auto* pRichPresence = game.Assets().FindRichPresence();
+        Assert::IsNotNull(pRichPresence);
+        Ensures(pRichPresence != nullptr);
+        Assert::AreEqual(ra::data::models::AssetCategory::Core, pRichPresence->GetCategory());
+        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, pRichPresence->GetChanges());
+    }
+
     TEST_METHOD(TestLoadGameNoRichPresence)
     {
         GameContextHarness game;

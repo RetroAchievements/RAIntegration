@@ -594,11 +594,19 @@ void EmulatorContext::AddMemoryBlock(gsl::index nIndex, size_t nBytes,
         pBlock.size = nBytes;
         pBlock.read = pReader;
         pBlock.write = pWriter;
+        pBlock.readBlock = nullptr;
 
         m_nTotalMemorySize += nBytes;
 
         OnTotalMemorySizeChanged();
     }
+}
+
+void EmulatorContext::AddMemoryBlockReader(gsl::index nIndex,
+    EmulatorContext::MemoryReadBlockFunction* pReader)
+{
+    if (nIndex < gsl::narrow_cast<gsl::index>(m_vMemoryBlocks.size()))
+        m_vMemoryBlocks.at(nIndex).readBlock = pReader;
 }
 
 void EmulatorContext::OnTotalMemorySizeChanged()
@@ -678,46 +686,49 @@ void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], si
         }
 
         const size_t nBlockRemaining = pBlock.size - nAddress;
-
-        if (!pBlock.read)
-        {
-            ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().InvalidateAddress(nOriginalAddress);
-            if (nCount <= nBlockRemaining)
-                break;
-
-            memset(pBuffer, 0, nBlockRemaining);
-            pBuffer += nBlockRemaining;
-            nCount -= nBlockRemaining;
-            nAddress = 0;
-            continue;
-        }
-
         size_t nToRead = std::min(nCount, nBlockRemaining);
         nCount -= nToRead;
 
-        while (nToRead >= 8) // unrolled loop to read 8-byte chunks
+        if (pBlock.readBlock)
         {
-            *pBuffer++ = pBlock.read(nAddress++);
-            *pBuffer++ = pBlock.read(nAddress++);
-            *pBuffer++ = pBlock.read(nAddress++);
-            *pBuffer++ = pBlock.read(nAddress++);
-            *pBuffer++ = pBlock.read(nAddress++);
-            *pBuffer++ = pBlock.read(nAddress++);
-            *pBuffer++ = pBlock.read(nAddress++);
-            *pBuffer++ = pBlock.read(nAddress++);
-            nToRead -= 8;
-        }
+            const size_t nRead = pBlock.readBlock(nAddress, pBuffer, gsl::narrow_cast<uint32_t>(nToRead));
+            if (nRead < nToRead)
+                memset(pBuffer + nRead, 0, nToRead - nRead);
 
-        switch (nToRead) // partial Duff's device to read remaining bytes
+            pBuffer += nToRead;
+        }
+        else if (!pBlock.read)
         {
-            case 7: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-            case 6: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-            case 5: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-            case 4: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-            case 3: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-            case 2: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-            case 1: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
-            default: break;
+            ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().InvalidateAddress(nOriginalAddress);
+            memset(pBuffer, 0, nToRead);
+            pBuffer += nToRead;
+        }
+        else
+        {
+            while (nToRead >= 8) // unrolled loop to read 8-byte chunks
+            {
+                *pBuffer++ = pBlock.read(nAddress++);
+                *pBuffer++ = pBlock.read(nAddress++);
+                *pBuffer++ = pBlock.read(nAddress++);
+                *pBuffer++ = pBlock.read(nAddress++);
+                *pBuffer++ = pBlock.read(nAddress++);
+                *pBuffer++ = pBlock.read(nAddress++);
+                *pBuffer++ = pBlock.read(nAddress++);
+                *pBuffer++ = pBlock.read(nAddress++);
+                nToRead -= 8;
+            }
+
+            switch (nToRead) // partial Duff's device to read remaining bytes
+            {
+                case 7: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+                case 6: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+                case 5: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+                case 4: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+                case 3: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+                case 2: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+                case 1: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
+                default: break;
+            }
         }
 
         if (nCount == 0)

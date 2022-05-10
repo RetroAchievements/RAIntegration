@@ -174,12 +174,18 @@ public:
     const wchar_t* GetCancelButtonText() const noexcept { return m_sCancelButtonText; }
 
     typedef uint8_t(MemoryReadFunction)(uint32_t nAddress);
+    typedef uint32_t(MemoryReadBlockFunction)(uint32_t nAddress, uint8_t* pBuffer, uint32_t nBytes);
     typedef void (MemoryWriteFunction)(uint32_t nAddress, uint8_t nValue);
 
     /// <summary>
     /// Specifies functions to read and write memory in the emulator.
     /// </summary>
     void AddMemoryBlock(gsl::index nIndex, size_t nBytes, MemoryReadFunction* pReader, MemoryWriteFunction* pWriter);
+
+    /// <summary>
+    /// Specifies functions to read chunks of memory in the emulator.
+    /// </summary>
+    void AddMemoryBlockReader(gsl::index nIndex, MemoryReadBlockFunction* pReader);
 
     /// <summary>
     /// Clears all registered memory blocks so they can be rebuilt.
@@ -301,6 +307,7 @@ protected:
         size_t size;
         MemoryReadFunction* read;
         MemoryWriteFunction* write;
+        MemoryReadBlockFunction* readBlock;
     };
 
     std::vector<MemoryBlock> m_vMemoryBlocks;

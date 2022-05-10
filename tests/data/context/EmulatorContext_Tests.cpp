@@ -1079,6 +1079,18 @@ public:
     static uint8_t ReadMemory2(uint32_t nAddress) noexcept { return memory.at(gsl::narrow_cast<size_t>(nAddress) + 20); }
     static uint8_t ReadMemory3(uint32_t nAddress) noexcept { return memory.at(gsl::narrow_cast<size_t>(nAddress) + 30); }
 
+    static uint32_t ReadMemoryBlock0(uint32_t nAddress, uint8_t* pBuffer, uint32_t nBytes) noexcept
+    {
+        memcpy(pBuffer, &memory.at(nAddress), nBytes);
+        return nBytes;
+    }
+
+    static uint32_t ReadMemoryBlock1(uint32_t nAddress, uint8_t* pBuffer, uint32_t nBytes) noexcept
+    {
+        memcpy(pBuffer, &memory.at(gsl::narrow_cast<size_t>(nAddress)) + 10, nBytes);
+        return nBytes;
+    }
+
     static void WriteMemory0(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(nAddress) = nValue; }
     static void WriteMemory1(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(gsl::narrow_cast<size_t>(nAddress) + 10) = nValue; }
     static void WriteMemory2(uint32_t nAddress, uint8_t nValue) noexcept { memory.at(gsl::narrow_cast<size_t>(nAddress) + 20) = nValue; }
@@ -1239,6 +1251,56 @@ public:
         Assert::AreEqual(7, static_cast<int>(emulator.ReadMemory(4U, MemSize::Nibble_Lower)));
         Assert::AreEqual(5, static_cast<int>(emulator.ReadMemory(4U, MemSize::Nibble_Upper)));
         Assert::AreEqual(0x57, static_cast<int>(emulator.ReadMemory(4U, MemSize::EightBit)));
+    }
+
+    TEST_METHOD(TestReadMemoryBlock)
+    {
+        for (int i = 0; i < memory.size(); i++)
+            memory.at(i) = gsl::narrow_cast<uint8_t>(i);
+
+        memory.at(4) = 0xA8;
+        memory.at(5) = 0x00;
+        memory.at(6) = 0x37;
+        memory.at(7) = 0x2E;
+
+        memory.at(14) = 0x57;
+
+        EmulatorContextHarness emulator;
+        emulator.AddMemoryBlock(0, 20, &ReadMemory1, &WriteMemory0); // purposefully use ReadMemory1 to detect using byte reader for non-byte reads
+        emulator.AddMemoryBlockReader(0, &ReadMemoryBlock0);
+
+        // ReadMemory calls ReadMemoryByte for small sizes - should call ReadMemory1 ($4 => $14)
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_0)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_1)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_2)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_3)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_4)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_5)));
+        Assert::AreEqual(1, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_6)));
+        Assert::AreEqual(0, static_cast<int>(emulator.ReadMemory(4U, MemSize::Bit_7)));
+        Assert::AreEqual(5, static_cast<int>(emulator.ReadMemory(4U, MemSize::BitCount)));
+        Assert::AreEqual(7, static_cast<int>(emulator.ReadMemory(4U, MemSize::Nibble_Lower)));
+        Assert::AreEqual(5, static_cast<int>(emulator.ReadMemory(4U, MemSize::Nibble_Upper)));
+        Assert::AreEqual(0x57, static_cast<int>(emulator.ReadMemory(4U, MemSize::EightBit)));
+
+        // sizes larger than 8 bits should use the block reader ($4 => $4)
+        Assert::AreEqual(0xA8, static_cast<int>(emulator.ReadMemory(4U, MemSize::SixteenBit)));
+        Assert::AreEqual(0x2E37, static_cast<int>(emulator.ReadMemory(6U, MemSize::SixteenBit)));
+        Assert::AreEqual(0x2E3700, static_cast<int>(emulator.ReadMemory(5U, MemSize::TwentyFourBit)));
+        Assert::AreEqual(0x2E3700A8, static_cast<int>(emulator.ReadMemory(4U, MemSize::ThirtyTwoBit)));
+        Assert::AreEqual(0x372E, static_cast<int>(emulator.ReadMemory(6U, MemSize::SixteenBitBigEndian)));
+        Assert::AreEqual(0x00372E, static_cast<int>(emulator.ReadMemory(5U, MemSize::TwentyFourBitBigEndian)));
+        Assert::AreEqual(0xA800372EU, emulator.ReadMemory(4U, MemSize::ThirtyTwoBitBigEndian));
+
+        // test the block reader directly
+        uint8_t buffer[16];
+        emulator.ReadMemory(0U, buffer, sizeof(buffer));
+        for (int i = 0; i < sizeof(buffer); i++)
+            Assert::AreEqual(buffer[i], memory.at(i));
+
+        emulator.ReadMemory(4U, buffer, 1);
+        Assert::AreEqual(buffer[0], memory.at(4));
+        Assert::AreEqual(buffer[1], memory.at(1));
     }
 
     TEST_METHOD(TestReadMemoryByteInvalidAddressDisablesAchievement)

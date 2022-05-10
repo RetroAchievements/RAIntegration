@@ -345,6 +345,12 @@ API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, 
         static_cast<ra::data::context::EmulatorContext::MemoryWriteFunction*>(pWriter));
 }
 
+API void CCONV _RA_InstallMemoryBankBlockReader(int nBankID, void* pReader)
+{
+    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().AddMemoryBlockReader(
+        nBankID, static_cast<ra::data::context::EmulatorContext::MemoryReadBlockFunction*>(pReader));
+}
+
 API void CCONV _RA_ClearMemoryBanks()
 {
     ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().ClearMemoryBlocks();

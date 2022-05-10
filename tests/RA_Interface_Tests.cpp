@@ -83,6 +83,7 @@ public:
         Assert::IsNotNull((const void*)_RA_SetConsoleID);
         Assert::IsNotNull((const void*)_RA_ClearMemoryBanks);
         Assert::IsNotNull((const void*)_RA_InstallMemoryBank);
+        Assert::IsNotNull((const void*)_RA_InstallMemoryBankBlockReader);
         Assert::IsNotNull((const void*)_RA_Shutdown);
         Assert::IsNotNull((const void*)_RA_IsOverlayFullyVisible);
         Assert::IsNotNull((const void*)_RA_SetPaused);
@@ -126,6 +127,7 @@ public:
         Assert::IsNull((const void*)_RA_SetConsoleID);
         Assert::IsNull((const void*)_RA_ClearMemoryBanks);
         Assert::IsNull((const void*)_RA_InstallMemoryBank);
+        Assert::IsNull((const void*)_RA_InstallMemoryBankBlockReader);
         Assert::IsNull((const void*)_RA_Shutdown);
         Assert::IsNull((const void*)_RA_IsOverlayFullyVisible);
         Assert::IsNull((const void*)_RA_SetPaused);

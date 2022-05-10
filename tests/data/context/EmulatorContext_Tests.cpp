@@ -1255,7 +1255,7 @@ public:
 
     TEST_METHOD(TestReadMemoryBlock)
     {
-        for (int i = 0; i < memory.size(); i++)
+        for (size_t i = 0; i < memory.size(); i++)
             memory.at(i) = gsl::narrow_cast<uint8_t>(i);
 
         memory.at(4) = 0xA8;
@@ -1295,7 +1295,7 @@ public:
         // test the block reader directly
         uint8_t buffer[16];
         emulator.ReadMemory(0U, buffer, sizeof(buffer));
-        for (int i = 0; i < sizeof(buffer); i++)
+        for (size_t i = 0; i < sizeof(buffer); i++)
             Assert::AreEqual(buffer[i], memory.at(i));
 
         emulator.ReadMemory(4U, buffer, 1);

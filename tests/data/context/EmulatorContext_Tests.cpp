@@ -1296,11 +1296,11 @@ public:
         uint8_t buffer[16];
         emulator.ReadMemory(0U, buffer, sizeof(buffer));
         for (size_t i = 0; i < sizeof(buffer); i++)
-            Assert::AreEqual(buffer[i], memory.at(i));
+            Assert::AreEqual(gsl::at(buffer, i), memory.at(i));
 
         emulator.ReadMemory(4U, buffer, 1);
-        Assert::AreEqual(buffer[0], memory.at(4));
-        Assert::AreEqual(buffer[1], memory.at(1));
+        Assert::AreEqual(gsl::at(buffer, 0), memory.at(4));
+        Assert::AreEqual(gsl::at(buffer, 1), memory.at(1));
     }
 
     TEST_METHOD(TestReadMemoryByteInvalidAddressDisablesAchievement)

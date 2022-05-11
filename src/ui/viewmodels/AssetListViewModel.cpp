@@ -408,7 +408,7 @@ void AssetListViewModel::EnsureAppearsInFilteredList(const ra::data::models::Ass
         SetSpecialFilter(ra::ui::viewmodels::AssetListViewModel::SpecialFilter::All);
 }
 
-bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& pAsset)
+bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& pAsset) const
 {
     const auto nFilterCategory = GetFilterCategory();
     if (nFilterCategory != FilterCategory::All)
@@ -909,15 +909,31 @@ bool AssetListViewModel::SelectionContainsInvalidAsset(const std::vector<ra::dat
     if (pWindowManager.AssetEditor.HasAssetValidationError())
     {
         const auto* vmInvalidAsset = pWindowManager.AssetEditor.GetAsset();
-        for (const auto* vmItem : vSelectedAssets)
-        {
-            if (vmItem == vmInvalidAsset)
-            {
-                sErrorMessage = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
-                    pWindowManager.AssetEditor.GetAssetValidationError());
 
-                return true;
+        bool bInvalidAssetInSelection = false;
+        if (vSelectedAssets.empty())
+        {
+            // no selection, all assets will be saved. if there's an invalid one, abort.
+            bInvalidAssetInSelection = true;
+        }
+        else
+        {
+            for (const auto* vmItem : vSelectedAssets)
+            {
+                if (vmItem == vmInvalidAsset)
+                {
+                    bInvalidAssetInSelection = true;
+                    break;
+                }
             }
+        }
+
+        if (bInvalidAssetInSelection)
+        {
+            sErrorMessage = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
+                                             pWindowManager.AssetEditor.GetAssetValidationError());
+
+            return true;
         }
     }
 

@@ -3290,6 +3290,89 @@ public:
         Assert::IsFalse(bEditorShown);
     }
 
+    TEST_METHOD(TestCreateNewRichPresenceFilterTypeRichPresence)
+    {
+        AssetListViewModelHarness vmAssetList;
+        ra::services::mocks::MockFileSystem mockFileSystem;
+        ra::services::impl::FileLocalStorage storage(mockFileSystem);
+        ra::services::ServiceLocator::ServiceOverride<ra::services::ILocalStorage> storageOverride(&storage);
+
+        vmAssetList.mockUserContext.Initialize("User1", "FOO");
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Core, L"Leaderboard1");
+        vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::RichPresence);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::AreEqual({ 2U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 0U }, vmAssetList.FilteredAssets().Count());
+
+        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.CreateNew();
+
+        // new Local rich presence should be created and focused
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(ra::data::models::AssetType::RichPresence, vmAssetList.GetAssetTypeFilter());
+
+        const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+        Assert::AreEqual(std::wstring(L"Rich Presence"), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::New, pAsset->GetChanges());
+        Assert::AreEqual({ 0 }, pAsset->GetId());
+        Assert::AreEqual(0, pAsset->GetPoints());
+
+        // and loaded externally
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+        Assert::AreEqual(std::string("file://localhost/./RACache/Data/22-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
+    }
+
+    TEST_METHOD(TestCreateNewRichPresenceFilterTypeRichPresenceExisting)
+    {
+        AssetListViewModelHarness vmAssetList;
+        ra::services::mocks::MockFileSystem mockFileSystem;
+        ra::services::impl::FileLocalStorage storage(mockFileSystem);
+        ra::services::ServiceLocator::ServiceOverride<ra::services::ILocalStorage> storageOverride(&storage);
+
+        vmAssetList.mockUserContext.Initialize("User1", "FOO");
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
+        vmAssetList.AddLeaderboard(ra::data::models::AssetCategory::Core, L"Leaderboard1");
+        vmAssetList.AddRichPresence("Display\nTest\n");
+        vmAssetList.SetAssetTypeFilter(ra::data::models::AssetType::RichPresence);
+        vmAssetList.ForceUpdateButtons();
+
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+
+        Assert::IsTrue(vmAssetList.CanCreate());
+        vmAssetList.CreateNew();
+
+        // existing Local rich presence should be focused
+        Assert::AreEqual({ 3U }, vmAssetList.mockGameContext.Assets().Count());
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual(ra::data::models::AssetType::RichPresence, vmAssetList.GetAssetTypeFilter());
+
+        const auto* pAsset = vmAssetList.FilteredAssets().GetItemAt(0);
+        Expects(pAsset != nullptr);
+        Assert::IsTrue(pAsset->IsSelected());
+        Assert::AreEqual(std::wstring(L"Rich Presence"), pAsset->GetLabel());
+        Assert::AreEqual(AssetCategory::Core, pAsset->GetCategory());
+        Assert::AreEqual(AssetState::Inactive, pAsset->GetState());
+        Assert::AreEqual(AssetChanges::None, pAsset->GetChanges());
+        Assert::AreEqual({ 0 }, pAsset->GetId());
+        Assert::AreEqual(0, pAsset->GetPoints());
+
+        // and loaded externally
+        Assert::IsFalse(vmAssetList.mockWindowManager.AssetEditor.IsVisible());
+        Assert::AreEqual(std::string("file://localhost/./RACache/Data/22-Rich.txt"), vmAssetList.mockDesktop.LastOpenedUrl());
+    }
+
     TEST_METHOD(TestCloneSingle)
     {
         AssetListViewModelHarness vmAssetList;

@@ -88,6 +88,19 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     pLocalBadges->CreateLocalCheckpoint();
     m_vAssets.Append(std::move(pLocalBadges));
 
+    // capture the old rich presence data so we can tell if it changed on the server
+    std::string sOldRichPresence = "[NONE]";
+    {
+        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(nGameId));
+        if (pData != nullptr)
+        {
+            rapidjson::Document pDocument;
+            if (LoadDocument(pDocument, *pData) && pDocument.HasMember("RichPresencePatch"))
+                sOldRichPresence = pDocument["RichPresencePatch"].GetString();
+        }
+    }
+
     // download the game data
     ra::api::FetchGameData::Request request;
     request.GameId = nGameId;
@@ -225,7 +238,20 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     auto* pRichPresence = m_vAssets.FindRichPresence();
     if (pRichPresence)
     {
-        if (pRichPresence->GetScript().empty() && !pRichPresence->IsModified())
+        // if the server value differs from the local value, the model will appear as Unpublished
+        if (pRichPresence->GetChanges() != ra::data::models::AssetChanges::None)
+        {
+            // populate another model with the old script so the string gets normalized correctly
+            ra::data::models::RichPresenceModel pOldRichPresenceModel;
+            pOldRichPresenceModel.SetScript(sOldRichPresence);
+
+            // if the old value matches the current value, then the value on the server changed and
+            // there are no local modifications. revert to the server state.
+            if (pRichPresence->GetScript() == pOldRichPresenceModel.GetScript())
+                pRichPresence->RestoreServerCheckpoint();
+        }
+
+        if (pRichPresence->GetScript().empty() && pRichPresence->GetChanges() == ra::data::models::AssetChanges::None)
         {
             const auto nIndex = m_vAssets.FindItemIndex(ra::data::models::AssetModelBase::TypeProperty,
                                                         ra::etoi(ra::data::models::AssetType::RichPresence));

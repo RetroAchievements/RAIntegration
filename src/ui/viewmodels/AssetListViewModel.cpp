@@ -408,7 +408,7 @@ void AssetListViewModel::EnsureAppearsInFilteredList(const ra::data::models::Ass
         SetSpecialFilter(ra::ui::viewmodels::AssetListViewModel::SpecialFilter::All);
 }
 
-bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& pAsset)
+bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& pAsset) const
 {
     const auto nFilterCategory = GetFilterCategory();
     if (nFilterCategory != FilterCategory::All)
@@ -909,15 +909,31 @@ bool AssetListViewModel::SelectionContainsInvalidAsset(const std::vector<ra::dat
     if (pWindowManager.AssetEditor.HasAssetValidationError())
     {
         const auto* vmInvalidAsset = pWindowManager.AssetEditor.GetAsset();
-        for (const auto* vmItem : vSelectedAssets)
-        {
-            if (vmItem == vmInvalidAsset)
-            {
-                sErrorMessage = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
-                    pWindowManager.AssetEditor.GetAssetValidationError());
 
-                return true;
+        bool bInvalidAssetInSelection = false;
+        if (vSelectedAssets.empty())
+        {
+            // no selection, all assets will be saved. if there's an invalid one, abort.
+            bInvalidAssetInSelection = true;
+        }
+        else
+        {
+            for (const auto* vmItem : vSelectedAssets)
+            {
+                if (vmItem == vmInvalidAsset)
+                {
+                    bInvalidAssetInSelection = true;
+                    break;
+                }
             }
+        }
+
+        if (bInvalidAssetInSelection)
+        {
+            sErrorMessage = ra::StringPrintf(L"The following errors must be corrected:\n* %s",
+                                             pWindowManager.AssetEditor.GetAssetValidationError());
+
+            return true;
         }
     }
 
@@ -1617,6 +1633,7 @@ void AssetListViewModel::CreateNew()
     }
 
     FilteredAssets().BeginUpdate();
+    bool bUpdateAsset = true;
 
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     ra::data::models::AssetModelBase* pNewAsset = nullptr;
@@ -1632,17 +1649,36 @@ void AssetListViewModel::CreateNew()
             pNewAsset = &pGameContext.Assets().NewLeaderboard();
             break;
 
+        case ra::data::models::AssetType::RichPresence:
+            pNewAsset = pGameContext.Assets().FindRichPresence();
+            if (pNewAsset != nullptr)
+            {
+                bUpdateAsset = false;
+            }
+            else
+            {
+                RA_LOG_INFO("Creating rich presence");
+                auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
+                pRichPresence->CreateServerCheckpoint();
+                pRichPresence->CreateLocalCheckpoint();
+                pNewAsset = &pGameContext.Assets().Append(std::move(pRichPresence));
+            }
+            break;
+
         default:
             break;
     }
 
     Expects(pNewAsset != nullptr);
 
-    const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-    pNewAsset->SetAuthor(ra::Widen(pUserContext.GetDisplayName()));
-    pNewAsset->SetCategory(ra::data::models::AssetCategory::Local);
-    pNewAsset->UpdateServerCheckpoint();
-    pNewAsset->SetNew();
+    if (bUpdateAsset)
+    {
+        const auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+        pNewAsset->SetAuthor(ra::Widen(pUserContext.GetDisplayName()));
+        pNewAsset->SetCategory(ra::data::models::AssetCategory::Local);
+        pNewAsset->UpdateServerCheckpoint();
+        pNewAsset->SetNew();
+    }
 
     EnsureAppearsInFilteredList(*pNewAsset);
 

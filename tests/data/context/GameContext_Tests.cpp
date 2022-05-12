@@ -488,6 +488,25 @@ public:
         Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, pRichPresence->GetChanges());
     }
 
+    TEST_METHOD(TestLoadGameRichPresenceNotOnServer)
+    {
+        GameContextHarness game;
+        game.mockStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1", "{\"RichPresencePatch\": null}");
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
+        {
+            return true;
+        });
+
+        game.LoadGame(1U);
+
+        Assert::IsFalse(game.HasRichPresence());
+        Assert::IsFalse(game.mockStorage.HasStoredData(ra::services::StorageItemType::RichPresence, L"1"));
+        Assert::IsFalse(game.IsRichPresenceFromFile());
+
+        const auto* pRichPresence = game.Assets().FindRichPresence();
+        Assert::IsNull(pRichPresence);
+    }
+
     TEST_METHOD(TestLoadGameNoRichPresence)
     {
         GameContextHarness game;

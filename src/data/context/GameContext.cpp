@@ -96,7 +96,7 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         if (pData != nullptr)
         {
             rapidjson::Document pDocument;
-            if (LoadDocument(pDocument, *pData) && pDocument.HasMember("RichPresencePatch"))
+            if (LoadDocument(pDocument, *pData) && pDocument.HasMember("RichPresencePatch") && pDocument["RichPresencePatch"].IsString())
                 sOldRichPresence = pDocument["RichPresencePatch"].GetString();
         }
     }

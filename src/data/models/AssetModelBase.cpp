@@ -42,7 +42,7 @@ static void WriteEscapedString(ra::services::TextWriter& pWriter, const std::bas
     std::basic_string<CharT> sEscaped;
     sEscaped.reserve(sText.length() + nToEscape + 2);
     sEscaped.push_back('"');
-    for (CharT c : sText)
+    for (const CharT c : sText)
     {
         if (c == '"' || c == '\\')
             sEscaped.push_back('\\');

@@ -65,9 +65,11 @@ extern "C" {
     API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize);
 
     // On or immediately after a new ROM is loaded, for each memory bank found
-    //  pReader is typedef unsigned char (_RAMByteReadFn)( size_t nOffset );
-    //  pWriter is typedef void (_RAMByteWriteFn)( unsigned int nOffs, unsigned int nVal );
+    //  pReader is typedef unsigned char (_RAMByteReadFn)( unsigned nOffset );
+    //  pBlockReader is typedef unsigned (_RAMBlockReadFn)( unsigned nOffset, unsigned char* pBuffer, unsigned nCount );
+    //  pWriter is typedef void (_RAMByteWriteFn)( unsigned int nOffs, unsigned char nVal );
     API void CCONV _RA_InstallMemoryBank(int nBankID, void* pReader, void* pWriter, int nBankSize);
+    API void CCONV _RA_InstallMemoryBankBlockReader(int nBankID, void* pBlockReader);
 
     // Call before installing any memory banks
     API void CCONV _RA_ClearMemoryBanks();

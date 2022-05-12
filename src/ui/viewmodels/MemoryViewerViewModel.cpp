@@ -872,14 +872,19 @@ void MemoryViewerViewModel::DoFrame()
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     pEmulatorContext.ReadMemory(nAddress, pMemory, gsl::narrow_cast<size_t>(nVisibleLines) * 16);
 
-    for (auto nIndex = 0; nIndex < nVisibleLines * 16; ++nIndex)
+    constexpr int nStride = 8;
+    for (int nIndex = 0; nIndex < nVisibleLines * 16; nIndex += nStride)
     {
-        if (m_pMemory[nIndex] != pMemory[nIndex])
-        {
-            m_pMemory[nIndex] = pMemory[nIndex];
-            m_pColor[nIndex] |= STALE_COLOR;
-            m_nNeedsRedraw |= REDRAW_MEMORY;
-        }
+        if (memcmp(&m_pMemory[nIndex], &pMemory[nIndex], nStride) == 0)
+            continue;
+
+        // STALE_COLOR causes the cell to be redrawn even if the color didn't actually change
+        // use branchless logic for additional performance. the compiler should unroll the loop.
+        for (int i = 0; i < nStride; i++)
+            m_pColor[nIndex + i] |= STALE_COLOR * (m_pMemory[nIndex + i] != pMemory[nIndex + i]);
+
+        memcpy(&m_pMemory[nIndex], &pMemory[nIndex], nStride);
+        m_nNeedsRedraw |= REDRAW_MEMORY;
     }
 
     if (m_nNeedsRedraw)

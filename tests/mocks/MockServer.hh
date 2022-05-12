@@ -34,10 +34,11 @@ public:
             std::string(TApi::Name()),
             [fHandler = std::move(fHandler)](const void* restrict pRequest, void* restrict pResponse) 
         {
-                const gsl::not_null<const typename TApi::Request* const> pTRequest{
-                    gsl::make_not_null(static_cast<const typename TApi::Request*>(pRequest))};
-                const gsl::not_null<typename TApi::Response* const> pTResponse{
-                    gsl::make_not_null(static_cast<typename TApi::Response*>(pResponse))};
+                const auto* pTRequest = static_cast<const typename TApi::Request*>(pRequest);
+                auto* pTResponse = static_cast<typename TApi::Response*>(pResponse);
+                if (!pTRequest || !pTResponse)
+                    return false;
+
                 return fHandler(*pTRequest, *pTResponse);
         });
     }

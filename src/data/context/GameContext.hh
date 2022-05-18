@@ -103,16 +103,6 @@ public:
     void RefreshUnlocks() { RefreshUnlocks(false, 0); }
 
     /// <summary>
-    /// Gets whether or not the loaded game has a rich presence script.
-    /// </summary>
-    virtual bool HasRichPresence() const;
-
-    /// <summary>
-    /// Gets the current rich presence display string.
-    /// </summary>
-    virtual std::wstring GetRichPresenceDisplayString() const;
-
-    /// <summary>
     /// Returns the note associated with the specified address.
     /// </summary>    
     /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>

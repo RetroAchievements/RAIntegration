@@ -263,6 +263,17 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
         }
     }
 
+    // modified assets should start in the inactive state
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+    {
+        auto* pAsset = m_vAssets.GetItemAt(nIndex);
+        if (pAsset != nullptr && pAsset->GetChanges() != ra::data::models::AssetChanges::None)
+        {
+            if (pAsset->IsActive())
+                pAsset->SetState(ra::data::models::AssetState::Inactive);
+        }
+    }
+
     // show "game loaded" popup
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
     const auto nPopup = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
@@ -378,7 +389,13 @@ void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchieveme
         if (pAchievement && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
         {
             if (!pAchievement->IsActive() && pAchievement->GetState() != ra::data::models::AssetState::Disabled)
-                pAchievement->SetState(ra::data::models::AssetState::Waiting);
+            {
+                // modified assets should start in the inactive state
+                if (pAchievement->GetChanges() != ra::data::models::AssetChanges::None)
+                    pAchievement->SetState(ra::data::models::AssetState::Inactive);
+                else
+                    pAchievement->SetState(ra::data::models::AssetState::Waiting);
+            }
 
 #ifndef RA_UTEST
             if (!pAchievement->GetBadge().empty())
@@ -838,16 +855,6 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
             }
         }
     });
-}
-
-bool GameContext::HasRichPresence() const
-{
-    return ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().HasRichPresence();
-}
-
-std::wstring GameContext::GetRichPresenceDisplayString() const
-{
-    return ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetRichPresenceDisplayString();
 }
 
 void GameContext::RefreshCodeNotes()

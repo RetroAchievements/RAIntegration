@@ -44,9 +44,23 @@ public:
             pMap->second.erase(sKey);
     }
 
-    std::chrono::system_clock::time_point GetLastModified(_UNUSED StorageItemType nType,
-                                                          _UNUSED const std::wstring& sKey) noexcept override
+    void MockLastModified(StorageItemType nType, const std::wstring& sKey,
+        std::chrono::system_clock::time_point tLastModified)
     {
+        m_mLastModified[nType][sKey] = tLastModified;
+    }
+
+    std::chrono::system_clock::time_point GetLastModified(StorageItemType nType,
+                                                          const std::wstring& sKey) override
+    {
+        const auto pMap = m_mLastModified.find(nType);
+        if (pMap != m_mLastModified.end())
+        {
+            const auto pIter = pMap->second.find(sKey);
+            if (pIter != pMap->second.end())
+                return pIter->second;    
+        }
+
         return std::chrono::system_clock::time_point();
     }
 
@@ -104,6 +118,7 @@ private:
 
     ra::services::ServiceLocator::ServiceOverride<ra::services::ILocalStorage> m_Override;
     mutable std::unordered_map<StorageItemType, std::unordered_map<std::wstring, std::string>> m_mStoredData;
+    mutable std::unordered_map<StorageItemType, std::unordered_map<std::wstring, std::chrono::system_clock::time_point>> m_mLastModified;
 };
 
 } // namespace mocks

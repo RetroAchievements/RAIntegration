@@ -38,22 +38,23 @@ public:
 
     void NotifyGameLoad() { BeginLoad(); EndLoad(); }
 
-    bool HasRichPresence() const noexcept override { return !m_sRichPresenceDisplayString.empty(); }
-
-    std::wstring GetRichPresenceDisplayString() const override { return m_sRichPresenceDisplayString; }
-
     /// <summary>
     /// Sets the rich presence display string.
     /// </summary>
     void SetRichPresenceDisplayString(std::wstring sValue)
     {
-        if (Assets().FindRichPresence() == nullptr)
+        auto* richPresence = Assets().FindRichPresence();
+        if (richPresence == nullptr)
         {
             auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
             pRichPresence->SetScript(ra::StringPrintf("Display:\n%s\n", sValue));
             pRichPresence->CreateServerCheckpoint();
             pRichPresence->CreateLocalCheckpoint();
             Assets().Append(std::move(pRichPresence));
+        }
+        else
+        {
+            richPresence->SetScript(ra::StringPrintf("Display:\n%s\n", sValue));
         }
 
         m_sRichPresenceDisplayString = sValue;

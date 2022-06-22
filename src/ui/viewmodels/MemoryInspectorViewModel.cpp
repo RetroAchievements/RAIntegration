@@ -326,7 +326,11 @@ void MemoryInspectorViewModel::OnActiveGameChanged()
         SetValue(CanModifyNotesProperty, true);
     }
 
-    Search().ClearResults();
+    if (pGameContext.GameId() != m_nGameId)
+    {
+        m_nGameId = pGameContext.GameId();
+        Search().ClearResults();
+    }
 }
 
 void MemoryInspectorViewModel::OnEndGameLoad()

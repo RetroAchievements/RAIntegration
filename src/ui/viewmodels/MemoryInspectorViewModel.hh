@@ -132,6 +132,7 @@ private:
 
     MemorySearchViewModel m_pSearch;
     MemoryViewerViewModel m_pViewer;
+    unsigned m_nGameId = 0;
     bool m_bTyping = false;
 };
 

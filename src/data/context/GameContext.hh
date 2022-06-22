@@ -72,10 +72,13 @@ public:
     /// </summary>
     void SetMode(Mode nMode)
     {
-        m_nMode = nMode;
+        if (m_nMode != nMode)
+        {
+            m_nMode = nMode;
 
-        if (m_nGameId != 0)
-            OnActiveGameChanged();
+            if (m_nGameId != 0)
+                OnActiveGameChanged();
+        }
     }
 
     /// <summary>

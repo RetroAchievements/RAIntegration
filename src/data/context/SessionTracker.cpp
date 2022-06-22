@@ -10,6 +10,7 @@
 
 #include "data\context\GameContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
@@ -273,10 +274,11 @@ std::wstring SessionTracker::GetCurrentActivity() const
         return sMessage;
     }
 
-    if (pGameContext.HasRichPresence() &&
-        pGameContext.Assets().FindRichPresence()->GetChanges() == ra::data::models::AssetChanges::None)
+    const auto* pRichPresence = pGameContext.Assets().FindRichPresence();
+    if (pRichPresence && pRichPresence->GetChanges() == ra::data::models::AssetChanges::None)
     {
-        const auto sRPResponse = pGameContext.GetRichPresenceDisplayString();
+        const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        const auto sRPResponse = pRuntime.GetRichPresenceDisplayString();
         if (!sRPResponse.empty())
             return sRPResponse;
     }

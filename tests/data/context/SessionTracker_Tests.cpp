@@ -346,6 +346,7 @@ public:
     {
         SessionTrackerHarness tracker;
         tracker.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
+        tracker.mockGameContext.Assets().FindRichPresence()->Activate();
         Assert::AreEqual(std::wstring(L"Level 10"), tracker.GetActivity());
     }
 
@@ -355,6 +356,7 @@ public:
         tracker.mockGameContext.SetGameTitle(L"GameTitle");
         tracker.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
         tracker.mockGameContext.SetRichPresenceFromFile(true);
+        tracker.mockGameContext.Assets().FindRichPresence()->Activate();
         Assert::AreEqual(std::wstring(L"Playing GameTitle"), tracker.GetActivity());
     }
 
@@ -363,6 +365,7 @@ public:
         SessionTrackerHarness tracker;
         tracker.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
         tracker.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
+        tracker.mockGameContext.Assets().FindRichPresence()->Activate();
         Assert::AreEqual(std::wstring(L"Level 10"), tracker.GetActivity());
     }
 

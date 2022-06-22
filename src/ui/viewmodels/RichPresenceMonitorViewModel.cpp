@@ -4,6 +4,8 @@
 
 #include "data\context\GameContext.hh"
 
+#include "services\AchievementRuntime.hh"
+#include "services\IConfiguration.hh"
 #include "services\ILocalStorage.hh"
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
@@ -52,7 +54,16 @@ void RichPresenceMonitorViewModel::StartMonitoring()
                 if (pRichPresence != nullptr)
                 {
                     pRichPresence->ReloadRichPresenceScript();
-                    pRichPresence->Activate();
+
+                    if (pRichPresence->GetChanges() != ra::data::models::AssetChanges::None &&
+                        ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(ra::services::Feature::Hardcore))
+                    {
+                        pRichPresence->Deactivate();
+                    }
+                    else
+                    {
+                        pRichPresence->Activate();
+                    }
                 }
             }
             UpdateDisplayString();
@@ -138,28 +149,36 @@ void RichPresenceMonitorViewModel::UpdateDisplayString()
     if (pGameContext.GameId() == 0)
     {
         SetDisplayString(L"No game loaded.");
-
-        if (m_nState == MonitorState::Active)
-            m_nState = MonitorState::Static;
-    }
-    else if (!pGameContext.HasRichPresence())
-    {
-        SetDisplayString(DisplayStringProperty.GetDefaultValue());
-
-        if (m_nState == MonitorState::Active)
-            m_nState = MonitorState::Static;
     }
     else
     {
-        std::wstring sDisplayString = ra::Widen(pGameContext.GetRichPresenceDisplayString());
-        SetDisplayString(sDisplayString);
-
-        if (m_nState == MonitorState::Static)
+        const auto* pRichPresence = pGameContext.Assets().FindRichPresence();
+        if (!pRichPresence)
         {
-            m_nState = MonitorState::Active;
-            ScheduleUpdateDisplayString();
+            SetDisplayString(DisplayStringProperty.GetDefaultValue());
+        }
+        else if (pRichPresence->GetState() != ra::data::models::AssetState::Active)
+        {
+            SetDisplayString(L"Rich Presence not active.");
+        }
+        else
+        {
+            auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+            const std::wstring sDisplayString = ra::Widen(pRuntime.GetRichPresenceDisplayString());
+            SetDisplayString(sDisplayString);
+
+            if (m_nState == MonitorState::Static)
+            {
+                m_nState = MonitorState::Active;
+                ScheduleUpdateDisplayString();
+            }
+
+            return;
         }
     }
+
+    if (m_nState == MonitorState::Active)
+        m_nState = MonitorState::Static;
 }
 
 void RichPresenceMonitorViewModel::UpdateWindowTitle()

@@ -91,6 +91,16 @@ public:
             pRichPresence->ReloadRichPresenceScript();
         }
 
+        bool HasRichPresence() const
+        {
+            return Assets().FindRichPresence() != nullptr;
+        }
+
+        std::wstring GetRichPresenceDisplayString() const
+        {
+            return runtime.GetRichPresenceDisplayString();
+        }
+
         bool IsRichPresenceFromFile() const
         {
             const auto* pRichPresence = Assets().FindRichPresence();
@@ -412,6 +422,7 @@ public:
         Ensures(pRichPresence != nullptr);
         Assert::AreEqual(ra::data::models::AssetCategory::Core, pRichPresence->GetCategory());
         Assert::AreEqual(ra::data::models::AssetChanges::None, pRichPresence->GetChanges());
+        Assert::IsTrue(pRichPresence->IsActive());
     }
 
     TEST_METHOD(TestLoadGameDoesNotOverwriteRichPresenceFromFile)
@@ -436,6 +447,7 @@ public:
         Ensures(pRichPresence != nullptr);
         Assert::AreEqual(ra::data::models::AssetCategory::Core, pRichPresence->GetCategory());
         Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, pRichPresence->GetChanges());
+        Assert::IsFalse(pRichPresence->IsActive());
     }
 
     TEST_METHOD(TestLoadGameRichPresenceUpdatedFromServer)
@@ -461,6 +473,7 @@ public:
         Ensures(pRichPresence != nullptr);
         Assert::AreEqual(ra::data::models::AssetCategory::Core, pRichPresence->GetCategory());
         Assert::AreEqual(ra::data::models::AssetChanges::None, pRichPresence->GetChanges());
+        Assert::IsTrue(pRichPresence->IsActive());
     }
 
     TEST_METHOD(TestLoadGameRichPresenceUpdatedFromServerLocalModifications)
@@ -486,6 +499,7 @@ public:
         Ensures(pRichPresence != nullptr);
         Assert::AreEqual(ra::data::models::AssetCategory::Core, pRichPresence->GetCategory());
         Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, pRichPresence->GetChanges());
+        Assert::IsFalse(pRichPresence->IsActive());
     }
 
     TEST_METHOD(TestLoadGameRichPresenceNotOnServer)
@@ -549,6 +563,7 @@ public:
         Ensures(pRichPresence != nullptr);
         Assert::AreEqual(ra::data::models::AssetCategory::Local, pRichPresence->GetCategory());
         Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, pRichPresence->GetChanges());
+        Assert::IsFalse(pRichPresence->IsActive());
     }
 
     TEST_METHOD(TestLoadGameAchievements)
@@ -1174,6 +1189,70 @@ public:
         Assert::IsTrue(pAch2->IsActive());
     }
 
+    TEST_METHOD(TestLoadGameUserUnlocksLocalModifications)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
+        {
+            response.Title = L"My Game";
+            response.ImageIcon = "3333";
+
+            auto& ach1 = response.Achievements.emplace_back();
+            ach1.Id = 5;
+            ach1.Points = 5;
+            ach1.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
+
+            auto& ach2 = response.Achievements.emplace_back();
+            ach2.Id = 7;
+            ach2.Points = 10;
+            ach2.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response&)
+        {
+            Assert::AreEqual(1U, request.GameId);
+            Assert::IsFalse(request.Hardcore);
+
+            return true;
+        });
+
+        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
+        {
+            return true;
+        });
+
+        game.mockStorage.MockStoredData(ra::services::StorageItemType::UserAchievements, L"1",
+            "Version\n"
+            "Game\n"
+            "7:1=2:Ach2b:Desc2b::::Auth2b:25:1234554321:1234555555:::54321\n"
+        );
+
+        game.LoadGame(1U);
+        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
+        game.mockThreadPool.ExecuteNextTask();
+
+        const auto* pAch1 = game.Assets().FindAchievement(5U);
+        Assert::IsNotNull(pAch1);
+        Ensures(pAch1 != nullptr);
+        Assert::AreEqual(ra::data::models::AssetChanges::None, pAch1->GetChanges());
+        Assert::IsTrue(pAch1->IsActive());
+
+        const auto* pAch2 = game.Assets().FindAchievement(7U);
+        Assert::IsNotNull(pAch2);
+        Ensures(pAch2 != nullptr);
+        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, pAch2->GetChanges());
+        Assert::IsFalse(pAch2->IsActive()); // should not be active because it's modified
+
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Loaded My Game"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"2 achievements, 15 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"You have earned 0 achievements"), pPopup->GetDetail());
+        Assert::AreEqual(std::string("3333"), pPopup->GetImage().Name());
+    }
+
     TEST_METHOD(TestLoadGamePausesRuntime)
     {
         GameContextHarness game;
@@ -1250,7 +1329,7 @@ public:
         game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "");
         game.ReloadRichPresenceScript();
 
-        Assert::IsFalse(game.HasRichPresence());
+        Assert::IsTrue(game.HasRichPresence());
         Assert::AreEqual(std::wstring(L"No Rich Presence defined."), game.GetRichPresenceDisplayString());
         Assert::IsTrue(game.IsRichPresenceFromFile());
     }

@@ -458,6 +458,7 @@ public:
         harness.MockAchievement(1U);
         harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementTriggered, 1U);
         harness.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        harness.mockGameContext.Assets().FindRichPresence()->Activate();
 
         _RA_DoAchievementsFrame();
 

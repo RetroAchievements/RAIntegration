@@ -708,6 +708,8 @@ void MemorySearchViewModel::UpdateResults()
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    Expects(pCodeNotes != nullptr);
 
     m_vResults.RemoveNotifyTarget(*this);
     m_vResults.BeginUpdate();
@@ -745,7 +747,7 @@ void MemorySearchViewModel::UpdateResults()
 
         UpdateResult(*pRow, pCurrentResults.pResults, pResult, true, pEmulatorContext);
 
-        const auto pCodeNote = pGameContext.FindCodeNote(pResult.nAddress, pResult.nSize);
+        const auto pCodeNote = pCodeNotes->FindCodeNote(pResult.nAddress, pResult.nSize);
         if (!pCodeNote.empty())
         {
             pRow->bHasCodeNote = true;

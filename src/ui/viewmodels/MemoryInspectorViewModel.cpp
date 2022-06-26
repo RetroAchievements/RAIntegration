@@ -108,7 +108,8 @@ void MemoryInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeA
 void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddress)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pNote = pGameContext.FindCodeNote(nNewAddress);
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nNewAddress) : nullptr;
     SetCurrentAddressNote(pNote ? *pNote : std::wstring());
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
@@ -128,7 +129,8 @@ void MemoryInspectorViewModel::BookmarkCurrentAddress() const
 
     // if the code note specifies an explicit size, use it. otherwise, use the selected viewer mode size.
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    auto nSize = pGameContext.GetCodeNoteMemSize(nAddress);
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    auto nSize = (pCodeNotes != nullptr) ? pCodeNotes->GetCodeNoteMemSize(nAddress) : MemSize::Unknown;
     if (nSize >= MemSize::Unknown)
         nSize = Viewer().GetSize();
 
@@ -149,7 +151,10 @@ void MemoryInspectorViewModel::SaveCurrentAddressNote()
 
     std::string sAuthor;
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    const auto* pNote = pGameContext.FindCodeNote(nAddress, sAuthor);
+    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (pCodeNotes == nullptr)
+        return;
+    const auto* pNote = pCodeNotes->FindCodeNote(nAddress, sAuthor);
     bool bUpdated = false;
 
     if (pNote == nullptr)
@@ -162,7 +167,7 @@ void MemoryInspectorViewModel::SaveCurrentAddressNote()
         else
         {
             // new note - just add it
-            bUpdated = pGameContext.SetCodeNote(nAddress, sNewNote);
+            bUpdated = pCodeNotes->SetCodeNote(nAddress, sNewNote);
         }
     }
     else if (*pNote == sNewNote)
@@ -193,7 +198,7 @@ void MemoryInspectorViewModel::SaveCurrentAddressNote()
         vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
         if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
         {
-            bUpdated = pGameContext.SetCodeNote(nAddress, sNewNote);
+            bUpdated = pCodeNotes->SetCodeNote(nAddress, sNewNote);
         }
     }
 
@@ -214,7 +219,10 @@ void MemoryInspectorViewModel::DeleteCurrentAddressNote()
 
     std::string sAuthor;
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    const auto* pNote = pGameContext.FindCodeNote(nAddress, sAuthor);
+    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (pCodeNotes == nullptr)
+        return;
+    const auto* pNote = pCodeNotes->FindCodeNote(nAddress, sAuthor);
 
     if (pNote == nullptr)
     {
@@ -231,7 +239,7 @@ void MemoryInspectorViewModel::DeleteCurrentAddressNote()
     vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
     if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
     {
-        if (pGameContext.DeleteCodeNote(nAddress))
+        if (pCodeNotes->DeleteCodeNote(nAddress))
         {
             ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().Beep();
             SetCurrentAddressNote(L"");
@@ -250,7 +258,10 @@ bool MemoryInspectorViewModel::NextNote()
     const auto nCurrentAddress = GetCurrentAddress();
     ra::ByteAddress nNewAddress = nCurrentAddress;
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    pGameContext.EnumerateCodeNotes([this, nCurrentAddress, &nNewAddress](ra::ByteAddress nAddress)
+    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (pCodeNotes == nullptr)
+        return false;
+    pCodeNotes->EnumerateCodeNotes([this, nCurrentAddress, &nNewAddress](ra::ByteAddress nAddress)
     {
         if (nAddress > nCurrentAddress)
         {
@@ -275,7 +286,10 @@ bool MemoryInspectorViewModel::PreviousNote()
     const auto nCurrentAddress = GetCurrentAddress();
     ra::ByteAddress nNewAddress = nCurrentAddress;
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    pGameContext.EnumerateCodeNotes([this, nCurrentAddress, &nNewAddress](ra::ByteAddress nAddress)
+    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (pCodeNotes == nullptr)
+        return false;
+    pCodeNotes->EnumerateCodeNotes([this, nCurrentAddress, &nNewAddress](ra::ByteAddress nAddress)
     {
         if (nAddress >= nCurrentAddress)
             return false;
@@ -333,7 +347,10 @@ void MemoryInspectorViewModel::OnEndGameLoad()
 {
     ra::ByteAddress nFirstAddress = 0U;
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    pGameContext.EnumerateCodeNotes([&nFirstAddress](ra::ByteAddress nAddress)
+    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (pCodeNotes == nullptr)
+        return;
+    pCodeNotes->EnumerateCodeNotes([&nFirstAddress](ra::ByteAddress nAddress)
     {
         nFirstAddress = nAddress;
         return false;

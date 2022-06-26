@@ -390,6 +390,9 @@
     <ClCompile Include="data\models\RichPresenceModel.cpp">
       <Filter>Data\Models</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\CodeNotesModel.cpp">
+      <Filter>Data\Models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -966,6 +969,9 @@
       <Filter>API</Filter>
     </ClInclude>
     <ClInclude Include="data\models\RichPresenceModel.hh">
+      <Filter>Data\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="data\models\CodeNotesModel.hh">
       <Filter>Data\Models</Filter>
     </ClInclude>
   </ItemGroup>

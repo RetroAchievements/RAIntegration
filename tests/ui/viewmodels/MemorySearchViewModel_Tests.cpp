@@ -81,6 +81,8 @@ private:
         GSL_SUPPRESS_F6 MemorySearchViewModelHarness() : MemorySearchViewModel()
         {
             InitializeNotifyTargets();
+
+            mockGameContext.InitializeCodeNotes();
         }
 
         ra::data::context::mocks::MockConsoleContext mockConsoleContext;

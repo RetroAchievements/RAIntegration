@@ -765,6 +765,7 @@ public:
     TEST_METHOD(TestTooltipDoubleIndirectAddress)
     {
         IndirectAddressTriggerViewModelHarness vmTrigger;
+        vmTrigger.mockGameContext.InitializeCodeNotes();
         vmTrigger.Parse("I:0xH0001_I:0xH0002_0xH0003=4");
         vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
 

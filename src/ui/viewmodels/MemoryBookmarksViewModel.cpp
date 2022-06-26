@@ -139,7 +139,8 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Str
             m_bModified = true;
 
             const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-            const auto* pNote = pGameContext.FindCodeNote(m_nAddress);
+            const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+            const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(m_nAddress) : nullptr;
 
             bool bIsCustomDescription = false;
             if (pNote)
@@ -413,7 +414,8 @@ void MemoryBookmarksViewModel::LoadBookmarks(ra::services::TextReader& sBookmark
                     vmBookmark->SetAddress(bookmark["Address"].GetUint());
                 }
 
-                const auto* pNote = pGameContext.FindCodeNote(vmBookmark->GetAddress());
+                const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+                const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(vmBookmark->GetAddress()) : nullptr;
 
                 std::wstring sDescription;
                 if (bookmark.HasMember("Description"))
@@ -617,7 +619,8 @@ void MemoryBookmarksViewModel::AddBookmark(ra::ByteAddress nAddress, MemSize nSi
     vmBookmark->SetFormat(pConfiguration.IsFeatureEnabled(ra::services::Feature::PreferDecimal) ? MemFormat::Dec : MemFormat::Hex);
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pNote = pGameContext.FindCodeNote(nAddress);
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nAddress) : nullptr;
     if (pNote)
         vmBookmark->SetDescription(*pNote);
 

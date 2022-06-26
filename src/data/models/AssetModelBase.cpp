@@ -569,6 +569,8 @@ const char* AssetModelBase::GetAssetTypeString(AssetType nType) noexcept
         case AssetType::Achievement: return "Achievement";
         case AssetType::Leaderboard: return "Leaderboard";
         case AssetType::LocalBadges: return "LocalBadges";
+        case AssetType::RichPresence: return "RichPresence";
+        case AssetType::CodeNotes: return "CodeNotes";
         default: return "Unknown";
     }
 }

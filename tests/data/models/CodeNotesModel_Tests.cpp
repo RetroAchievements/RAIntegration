@@ -47,6 +47,37 @@ private:
         {
             m_nGameId = nGameId;
         }
+
+        using CodeNotesModel::AddCodeNote;
+
+        void AssertNoNote(ra::ByteAddress nAddress)
+        {
+            const auto* pNote = FindCodeNote(nAddress);
+            if (pNote != nullptr)
+                Assert::Fail(ra::StringPrintf(L"Note found for address %04X: %s", nAddress, *pNote).c_str());
+        }
+
+        void AssertNote(ra::ByteAddress nAddress, const std::wstring& sExpected)
+        {
+            const auto* pNote = FindCodeNote(nAddress);
+            Assert::IsNotNull(pNote, ra::StringPrintf(L"Note not found for address %04X", nAddress).c_str());
+            Ensures(pNote != nullptr);
+            Assert::AreEqual(sExpected, *pNote);
+        }
+
+        void AssertNote(ra::ByteAddress nAddress, const std::wstring& sExpected, MemSize nExpectedSize, size_t nExpectedBytes = 0)
+        {
+            AssertNote(nAddress, sExpected);
+
+            Assert::AreEqual(nExpectedSize, GetCodeNoteMemSize(nAddress),
+                ra::StringPrintf(L"Size for address %04X", nAddress).c_str());
+
+            if (nExpectedBytes)
+            {
+                Assert::AreEqual(nExpectedBytes, GetCodeNoteBytes(nAddress),
+                    ra::StringPrintf(L"Bytes for address %04X", nAddress).c_str());
+            }
+        }
     };
 
 public:
@@ -80,22 +111,13 @@ public:
         notes.Refresh(1U);
         Assert::AreEqual(3U, notes.mNewNotes.size());
 
-        const auto* pNote1 = notes.FindCodeNote(1234U);
-        Assert::IsNotNull(pNote1);
-        Ensures(pNote1 != nullptr);
-        Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+        notes.AssertNote(1234U, L"Note1");
         Assert::AreEqual(std::wstring(L"Note1"), notes.mNewNotes[1234U]);
 
-        const auto* pNote2 = notes.FindCodeNote(2345U);
-        Assert::IsNotNull(pNote2);
-        Ensures(pNote2 != nullptr);
-        Assert::AreEqual(std::wstring(L"Note2"), *pNote2);
+        notes.AssertNote(2345U, L"Note2");
         Assert::AreEqual(std::wstring(L"Note2"), notes.mNewNotes[2345U]);
 
-        const auto* pNote3 = notes.FindCodeNote(3456U);
-        Assert::IsNotNull(pNote3);
-        Ensures(pNote3 != nullptr);
-        Assert::AreEqual(std::wstring(L"Note3"), *pNote3);
+        notes.AssertNote(3456U, L"Note3");
         Assert::AreEqual(std::wstring(L"Note3"), notes.mNewNotes[3456U]);
 
         const auto* pNote4 = notes.FindCodeNote(4567U);
@@ -385,10 +407,7 @@ public:
 
         Assert::IsTrue(notes.SetCodeNote(1234, L"Note1"));
 
-        const auto* pNote1 = notes.FindCodeNote(1234U);
-        Assert::IsNotNull(pNote1);
-        Ensures(pNote1 != nullptr);
-        Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+        notes.AssertNote(1234U, L"Note1");
         Assert::AreEqual(std::wstring(L"Note1"), notes.mNewNotes[1234U]);
     }
 
@@ -408,7 +427,7 @@ public:
     {
         int nCalls = 0;
         CodeNotesModelHarness notes;
-        notes.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response& response)
+        notes.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response&)
         {
             Assert::AreEqual(1U, request.GameId);
             return true;
@@ -423,16 +442,10 @@ public:
         notes.Refresh(1U);
         Assert::IsTrue(notes.SetCodeNote(1234, L"Note1"));
 
-        const auto* pNote1 = notes.FindCodeNote(1234U);
-        Assert::IsNotNull(pNote1);
-        Ensures(pNote1 != nullptr);
-        Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+        notes.AssertNote(1234U, L"Note1");
 
         Assert::IsTrue(notes.SetCodeNote(1234, L"Note1b"));
-        const auto* pNote1b = notes.FindCodeNote(1234U);
-        Assert::IsNotNull(pNote1b);
-        Ensures(pNote1b != nullptr);
-        Assert::AreEqual(std::wstring(L"Note1b"), *pNote1b);
+        notes.AssertNote(1234U, L"Note1b");
         Assert::AreEqual(std::wstring(L"Note1b"), notes.mNewNotes[1234U]);
 
         Assert::AreEqual(2, nCalls);
@@ -459,10 +472,7 @@ public:
         notes.SetGameId(1U);
         Assert::IsTrue(notes.SetCodeNote(1234, L"Note1"));
 
-        const auto* pNote1 = notes.FindCodeNote(1234U);
-        Assert::IsNotNull(pNote1);
-        Ensures(pNote1 != nullptr);
-        Assert::AreEqual(std::wstring(L"Note1"), *pNote1);
+        notes.AssertNote(1234U, L"Note1");
 
         Assert::IsTrue(notes.DeleteCodeNote(1234));
         const auto* pNote1b = notes.FindCodeNote(1234U);
@@ -481,6 +491,193 @@ public:
         Assert::IsTrue(notes.DeleteCodeNote(1234));
         const auto* pNote1 = notes.FindCodeNote(1234U);
         Assert::IsNull(pNote1);
+    }
+
+    TEST_METHOD(TestCodeNotePointer1)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sNote =
+            L"Bomb Timer Pointer (24-bit)\n"
+            L"+03 - Bombs Defused\n"
+            L"+04 - Bomb Timer";
+        notes.AddCodeNote(1234, "Author", sNote);
+
+        notes.AssertNote(1234U, sNote, MemSize::TwentyFourBit); // full note for pointer address
+
+        // extracted notes for offset fields (note: pointer base default is $0000)
+        notes.AssertNote(3U, L"Bombs Defused", MemSize::Unknown, 1);
+        notes.AssertNote(4U, L"Bomb Timer", MemSize::Unknown, 1);
+    }
+
+    TEST_METHOD(TestCodeNotePointer2)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sNote =
+            L"Pointer [32bit]\n"
+            L"+0x1BC | Equipment - Head - String[24 Bytes]\n"
+            L"---DEFAULT_HEAD = Barry's Head\n"
+            L"---FRAGGER_HEAD = Fragger Helmet";
+        notes.AddCodeNote(1234, "Author", sNote);
+
+        notes.AssertNote(1234U, sNote, MemSize::ThirtyTwoBit); // full note for pointer address
+
+        // extracted notes for offset fields (note: pointer base default is $0000)
+        notes.AssertNote(0x1BCU, L"Equipment - Head - String[24 Bytes]\n"
+            L"---DEFAULT_HEAD = Barry's Head\n"
+            L"---FRAGGER_HEAD = Fragger Helmet", MemSize::Array, 24);
+    }
+
+    TEST_METHOD(TestCodeNotePointer3)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sNote =
+            L"[32-bit] Pointer for Races (only exists during Race Game)\n"
+            L"+0x7F47 = [8-bit] Acorns collected in current track\n"
+            L"+0x8000 = [8-bit] Current lap\n"
+            L"+0x8033 = [16-bit] Total race time";
+        notes.AddCodeNote(1234, "Author", sNote);
+
+        notes.AssertNote(1234U, sNote, MemSize::ThirtyTwoBit); // full note for pointer address
+
+        // extracted notes for offset fields (note: pointer base default is $0000)
+        notes.AssertNote(0x7F47U, L"[8-bit] Acorns collected in current track", MemSize::EightBit);
+        notes.AssertNote(0x8000U, L"[8-bit] Current lap", MemSize::EightBit);
+        notes.AssertNote(0x8033U, L"[16-bit] Total race time", MemSize::SixteenBit);
+    }
+
+    TEST_METHOD(TestCodeNotePointer4)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sNote =
+            L"Pointer (16bit because negative)\n\n"
+            L"Circuit:\n"
+            L"+0x1B56E = Current Position\n"
+            L"+0x1B57E = Total Racers\n\n"
+            L"Free Run:\n"
+            L"+0x1B5BE = Seconds 0x\n"
+            L"+0x1B5CE = Lap";
+        notes.AddCodeNote(1234, "Author", sNote);
+
+        notes.AssertNote(1234U, sNote, MemSize::SixteenBit); // full note for pointer address
+
+        // extracted notes for offset fields (note: pointer base default is $0000)
+        notes.AssertNote(0x1B56EU, L"Current Position", MemSize::Unknown, 1);
+        notes.AssertNote(0x1B57EU, L"Total Racers\n\nFree Run:", MemSize::Unknown, 1);
+        notes.AssertNote(0x1B5BEU, L"Seconds 0x", MemSize::Unknown, 1);
+        notes.AssertNote(0x1B5CEU, L"Lap", MemSize::Unknown, 1);
+    }
+
+    TEST_METHOD(TestCodeNotePointer5)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sNote =
+            L"Pointer\n"
+            L"[OFFSETS]\n"
+            L"+2 = EXP (32-bit)\n"
+            L"+5 = Base Level (8-bit)\n"
+            L"+6 = Job Level (8-bit)\n"
+            L"+20 = Stat Points (16-bit)\n"
+            L"+22 = Skill Points (8-bit)";
+        notes.AddCodeNote(1234, "Author", sNote);
+
+        notes.AssertNote(1234U, sNote, MemSize::Unknown, 1); // full note for pointer address
+
+        // extracted notes for offset fields (note: pointer base default is $0000)
+        notes.AssertNote(2, L"EXP (32-bit)", MemSize::ThirtyTwoBit);
+        notes.AssertNote(5, L"Base Level (8-bit)", MemSize::EightBit);
+        notes.AssertNote(6, L"Job Level (8-bit)", MemSize::EightBit);
+        notes.AssertNote(20, L"Stat Points (16-bit)", MemSize::SixteenBit);
+        notes.AssertNote(22, L"Skill Points (8-bit)", MemSize::EightBit);
+    }
+
+    TEST_METHOD(TestCodeNotePointerNested)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sNote =
+            L"Pointer [32bit]\n"
+            L"+0x428 | Pointer - Award - Tee Hee Two (32bit)\n"
+            L"--- +0x24C | Flag\n"
+            L"+0x438 | Pointer - Award - Pretty Woman (32bit)\n"
+            L"--- +0x24C | Flag";
+        notes.AddCodeNote(1234, "Author", sNote);
+
+        notes.AssertNote(1234U, sNote, MemSize::ThirtyTwoBit); // full note for pointer address
+
+        // extracted notes for offset fields (note: pointer base default is $0000)
+        notes.AssertNote(0x428U, L"Pointer - Award - Tee Hee Two (32bit)\n--- +0x24C | Flag", MemSize::ThirtyTwoBit);
+        notes.AssertNote(0x438U, L"Pointer - Award - Pretty Woman (32bit)\n--- +0x24C | Flag", MemSize::ThirtyTwoBit);
+    }
+
+    TEST_METHOD(TestCodeNotePointerNonPrefixedOffsets)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sNote =
+            L"[24-bit] Mech stats pointer (health...)\n"
+            L"+07 = Jump Jet {8-bit}\n"
+            L"+5C = Right Leg Health {16-bit}\n"
+            L"+5E = Left Leg Health {16-bit}";
+        notes.AddCodeNote(1234, "Author", sNote);
+
+        // offset parse failure results in a non-pointer note
+        notes.AssertNote(1234U, sNote, MemSize::TwentyFourBit);
+        notes.AssertNoNote(0x07U);
+        notes.AssertNoNote(0x5CU);
+        notes.AssertNoNote(0x5EU);
+    }
+
+    TEST_METHOD(TestCodeNotePointerOverwrite)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sNote =
+            L"Pointer (16bit because negative)\n"
+            L"+0x1B56E = Current Position\n"
+            L"+0x1B57E = Total Racers\n"
+            L"+0x1B56E = Seconds 0x\n"
+            L"+0x1B5CE = Lap";
+        notes.AddCodeNote(1234, "Author", sNote);
+
+        notes.AssertNote(1234U, sNote, MemSize::SixteenBit); // full note for pointer address
+
+        // extracted notes for offset fields (note: pointer base default is $0000)
+        // both note for 0x1B56E exist in the array, but only the first is returned
+        notes.AssertNote(0x1B56EU, L"Current Position", MemSize::Unknown, 1);
+        notes.AssertNote(0x1B57EU, L"Total Racers", MemSize::Unknown, 1);
+        notes.AssertNote(0x1B5CEU, L"Lap", MemSize::Unknown, 1);
+    }
+
+    TEST_METHOD(TestFindCodeNoteSizedPointer)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sNote =
+            L"Pointer\n"
+            L"+1 = Unknown\n"
+            L"+2 = Small (8-bit)\n"
+            L"+4 = Medium (16-bit)\n"
+            L"+6 = Large (32-bit)\n"
+            L"+10 = Very Large (8 bytes)";
+        notes.AddCodeNote(1234, "Author", sNote);
+
+        Assert::AreEqual(std::wstring(), notes.FindCodeNote(0, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Unknown [indirect]"), notes.FindCodeNote(1, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Small (8-bit) [indirect]"), notes.FindCodeNote(2, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [1/2] [indirect]"), notes.FindCodeNote(4, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [2/2] [indirect]"), notes.FindCodeNote(5, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [1/4] [indirect]"), notes.FindCodeNote(6, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [4/4] [indirect]"), notes.FindCodeNote(9, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [1/8] [indirect]"), notes.FindCodeNote(10, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [8/8] [indirect]"), notes.FindCodeNote(17, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(), notes.FindCodeNote(18, MemSize::EightBit));
+
+        Assert::AreEqual(std::wstring(L"Unknown [partial] [indirect]"), notes.FindCodeNote(0, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Unknown [partial] [indirect]"), notes.FindCodeNote(1, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Small (8-bit) [partial] [indirect]"), notes.FindCodeNote(2, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [indirect]"), notes.FindCodeNote(4, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [partial] [indirect]"), notes.FindCodeNote(5, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindCodeNote(6, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindCodeNote(9, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [partial] [indirect]"), notes.FindCodeNote(10, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [partial] [indirect]"), notes.FindCodeNote(17, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(), notes.FindCodeNote(18, MemSize::SixteenBit));
     }
 };
 

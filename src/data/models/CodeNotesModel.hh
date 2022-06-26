@@ -38,8 +38,8 @@ public:
     /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
     const std::wstring* FindCodeNote(ra::ByteAddress nAddress) const
     {
-        const auto pIter = m_mCodeNotes.find(nAddress);
-        return (pIter != m_mCodeNotes.end()) ? &pIter->second.Note : nullptr;
+        const auto* pNote = FindCodeNoteInternal(nAddress);
+        return (pNote != nullptr) ? &pNote->Note : nullptr;
     }
     
     /// <summary>
@@ -65,15 +65,8 @@ public:
     /// <param name="nAddress">The address to look up.</param>
     /// <param name="sAuthor">The author associated to the address.</param>
     /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
-    const std::wstring* FindCodeNote(ra::ByteAddress nAddress, _Inout_ std::string& sAuthor) const
-    {
-        const auto pIter = m_mCodeNotes.find(nAddress);
-        if (pIter == m_mCodeNotes.end())
-            return nullptr;
-
-        sAuthor = pIter->second.Author;
-        return &pIter->second.Note;
-    }
+    /// <remarks>Does not find notes derived from pointers</remarks>
+    const std::wstring* FindCodeNote(ra::ByteAddress nAddress, _Inout_ std::string& sAuthor) const;
 
     /// <summary>
     /// Returns the number of bytes associated to the code note at the specified address.
@@ -83,8 +76,8 @@ public:
     /// <remarks>Only works for the first byte of a multi-byte address.</remarks>
     unsigned GetCodeNoteBytes(ra::ByteAddress nAddress) const
     {
-        const auto pIter = m_mCodeNotes.find(nAddress);
-        return (pIter == m_mCodeNotes.end()) ? 0 : pIter->second.Bytes;
+        const auto* pNote = FindCodeNoteInternal(nAddress);
+        return (pNote == nullptr) ? 0 : pNote->Bytes;
     }
 
     /// <summary>
@@ -95,8 +88,8 @@ public:
     /// <remarks>Only works for the first byte of a multi-byte address.</remarks>
     MemSize GetCodeNoteMemSize(ra::ByteAddress nAddress) const
     {
-        const auto pIter = m_mCodeNotes.find(nAddress);
-        return (pIter == m_mCodeNotes.end()) ? MemSize::Unknown : pIter->second.MemSize;
+        const auto* pNote = FindCodeNoteInternal(nAddress);
+        return (pNote == nullptr) ? MemSize::Unknown : pNote->MemSize;
     }
 
     /// <summary>
@@ -107,11 +100,10 @@ public:
     /// </remarks>
     void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress)> callback) const
     {
-        for (auto& pCodeNote : m_mCodeNotes)
+        EnumerateCodeNotes([callback](ra::ByteAddress nAddress, const CodeNote&)
         {
-            if (!callback(pCodeNote.first))
-                break;
-        }
+            return callback(nAddress);
+        });
     }
 
     /// <summary>
@@ -122,11 +114,10 @@ public:
     /// </remarks>
     void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)> callback) const
     {
-        for (auto& pCodeNote : m_mCodeNotes)
+        EnumerateCodeNotes([callback](ra::ByteAddress nAddress, const CodeNote& pCodeNote)
         {
-            if (!callback(pCodeNote.first, pCodeNote.second.Bytes, pCodeNote.second.Note))
-                break;
-        }
+            return callback(nAddress, pCodeNote.Bytes, pCodeNote.Note);
+        });
     }
 
     /// <summary>
@@ -156,16 +147,37 @@ protected:
     void AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote);
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);
 
+    struct PointerData;
+
     struct CodeNote
     {
         std::string Author;
         std::wstring Note;
         unsigned int Bytes = 1;
         MemSize MemSize = MemSize::Unknown;
+        std::unique_ptr<PointerData> PointerData;
+    };
+
+    struct OffsetCodeNote : public CodeNote
+    {
+        int Offset = 0;
+    };
+
+    struct PointerData
+    {
+        ra::ByteAddress PointerValue = 0;
+        unsigned int OffsetRange = 0;
+        std::vector<OffsetCodeNote> OffsetNotes;
     };
 
     std::map<ra::ByteAddress, CodeNote> m_mCodeNotes;
+
+    const CodeNote* FindCodeNoteInternal(ra::ByteAddress nAddress) const;
+    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNote& pCodeNote)> callback) const;
+    static std::wstring BuildCodeNoteSized(ra::ByteAddress nAddress, unsigned nCheckBytes, ra::ByteAddress nNoteAddress, const CodeNote& pNote);
+
     unsigned int m_nGameId = 0;
+    bool m_bHasPointers = false;
 
     CodeNoteChangedFunction m_fCodeNoteChanged;
 

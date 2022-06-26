@@ -143,6 +143,8 @@ public:
 	void Serialize(ra::services::TextWriter&) const noexcept override {}
 	bool Deserialize(ra::Tokenizer&) noexcept override { return true; }
 
+    void DoFrame() override;
+
 protected:
     void AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote);
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);
@@ -174,7 +176,6 @@ protected:
 
     const CodeNote* FindCodeNoteInternal(ra::ByteAddress nAddress) const;
     void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNote& pCodeNote)> callback) const;
-    static std::wstring BuildCodeNoteSized(ra::ByteAddress nAddress, unsigned nCheckBytes, ra::ByteAddress nNoteAddress, const CodeNote& pNote);
 
     unsigned int m_nGameId = 0;
     bool m_bHasPointers = false;
@@ -182,6 +183,7 @@ protected:
     CodeNoteChangedFunction m_fCodeNoteChanged;
 
 private:
+    static std::wstring BuildCodeNoteSized(ra::ByteAddress nAddress, unsigned nCheckBytes, ra::ByteAddress nNoteAddress, const CodeNote& pNote);
     static void ExtractSize(CodeNote& pNote);
 };
 

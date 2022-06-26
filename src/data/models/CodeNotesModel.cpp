@@ -6,6 +6,7 @@
 #include "api\FetchCodeNotes.hh"
 #include "api\UpdateCodeNote.hh"
 
+#include "data\context\EmulatorContext.hh"
 #include "data\context\UserContext.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -327,18 +328,32 @@ void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sA
                 {
                     CodeNote pointerNote;
                     pointerNote.Author = sAuthor;
-                    pointerNote.PointerData = std::move(pointerData);
 
-                    // extract pointer size from first line
+                    // extract pointer size from first line (assume 32-bit if not specified)
                     pointerNote.Note = sFirstLine;
                     ExtractSize(pointerNote);
+                    if (pointerNote.MemSize == MemSize::Unknown)
+                        pointerNote.MemSize = MemSize::ThirtyTwoBit;
+
+                    // capture the initial value of the pointer
+                    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+                    const auto nPointerValue = pEmulatorContext.ReadMemory(nAddress, pointerNote.MemSize);
+                    pointerData->PointerValue = nPointerValue;
+                    pointerNote.PointerData = std::move(pointerData);
 
                     // assign entire note to pointer note
                     pointerNote.Note = sNote;
                     m_mCodeNotes.insert_or_assign(nAddress, std::move(pointerNote));
                     m_bHasPointers = true;
 
-                    OnCodeNoteChanged(nAddress, sNote);
+                    if (m_fCodeNoteChanged)
+                    {
+                        m_fCodeNoteChanged(nAddress, sNote);
+
+                        for (const auto& pNote : m_mCodeNotes[nAddress].PointerData->OffsetNotes)
+                            m_fCodeNoteChanged(nPointerValue + pNote.Offset, pNote.Note);
+                    }
+
                     return;
                 }
 
@@ -472,7 +487,7 @@ std::wstring CodeNotesModel::FindCodeNote(ra::ByteAddress nAddress, MemSize nSiz
                         // exact match
                         return BuildCodeNoteSized(nAddress, nCheckBytes, nAddress, pNote) + L" [indirect]";
                     }
-                    else if (pNote.Offset + pNote.Bytes - 1 >= nOffset && pNote.Offset <= nLastOffset)
+                    else if (pNote.Offset + ra::to_signed(pNote.Bytes) - 1 >= nOffset && pNote.Offset <= nLastOffset)
                     {
                         // overlap
                         return BuildCodeNoteSized(nAddress, nCheckBytes, pIter2.second.PointerData->PointerValue + pNote.Offset, pNote) + L" [indirect]";
@@ -623,6 +638,36 @@ void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddr
     {
         if (!callback(pIter.first, *pIter.second))
             break;
+    }
+}
+
+void CodeNotesModel::DoFrame()
+{
+    if (!m_bHasPointers)
+        return;
+
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+
+    for (auto& pNote : m_mCodeNotes)
+    {
+        if (!pNote.second.PointerData)
+            continue;
+
+        const auto nNewAddress = pEmulatorContext.ReadMemory(pNote.first, pNote.second.MemSize);
+        const auto nOldAddress = pNote.second.PointerData->PointerValue;
+        if (nNewAddress == nOldAddress)
+            continue;
+
+        pNote.second.PointerData->PointerValue = nNewAddress;
+
+        if (m_fCodeNoteChanged)
+        {
+            for (const auto& pOffset : pNote.second.PointerData->OffsetNotes)
+                m_fCodeNoteChanged(nOldAddress + pOffset.Offset, L"");
+
+            for (const auto& pOffset : pNote.second.PointerData->OffsetNotes)
+                m_fCodeNoteChanged(nNewAddress + pOffset.Offset, pOffset.Note);
+        }
     }
 }
 

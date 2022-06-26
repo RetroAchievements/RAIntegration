@@ -6,6 +6,7 @@
 #include "tests\data\DataAsserts.hh"
 
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -24,7 +25,8 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
-        ra::data::context::mocks::MockUserContext mockUser;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
 
@@ -41,6 +43,13 @@ private:
                 []() {});
 
             mockThreadPool.ExecuteNextTask(); // FetchCodeNotes is async
+        }
+
+        void MonitorCodeNoteChanges()
+        {
+            m_fCodeNoteChanged = [this](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
+                mNewNotes[nAddress] = sNewNote;
+            };
         }
 
         void SetGameId(unsigned nGameId)
@@ -580,7 +589,7 @@ public:
             L"+22 = Skill Points (8-bit)";
         notes.AddCodeNote(1234, "Author", sNote);
 
-        notes.AssertNote(1234U, sNote, MemSize::Unknown, 1); // full note for pointer address
+        notes.AssertNote(1234U, sNote, MemSize::ThirtyTwoBit, 1); // full note for pointer address (assume 32-bit if not specified)
 
         // extracted notes for offset fields (note: pointer base default is $0000)
         notes.AssertNote(2, L"EXP (32-bit)", MemSize::ThirtyTwoBit);
@@ -679,8 +688,78 @@ public:
         Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [partial] [indirect]"), notes.FindCodeNote(17, MemSize::SixteenBit));
         Assert::AreEqual(std::wstring(), notes.FindCodeNote(18, MemSize::SixteenBit));
     }
-};
 
+    TEST_METHOD(TestDoFrame)
+    {
+        CodeNotesModelHarness notes;
+        notes.MonitorCodeNoteChanges();
+
+        std::array<unsigned char, 32> memory;
+        for (uint8_t i = 0; i < memory.size(); i++)
+            memory[i] = i;
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory[0] = 16; // start with initial value for pointer
+
+        const std::wstring sNote =
+            L"Pointer (8-bit)\n"
+            L"+1 = Small (8-bit)\n"
+            L"+2 = Medium (16-bit)\n"
+            L"+4 = Large (32-bit)";
+        notes.AddCodeNote(0x0000, "Author", sNote);
+
+        // should receive notifications for the pointer note, and for each subnote
+        Assert::AreEqual(4U, notes.mNewNotes.size());
+        Assert::AreEqual(sNote, notes.mNewNotes[0x00]);
+        Assert::AreEqual(std::wstring(L"Small (8-bit)"), notes.mNewNotes[0x11]);
+        Assert::AreEqual(std::wstring(L"Medium (16-bit)"), notes.mNewNotes[0x12]);
+        Assert::AreEqual(std::wstring(L"Large (32-bit)"), notes.mNewNotes[0x14]);
+
+        notes.AssertNoNote(0x02U);
+        notes.AssertNote(0x12U, L"Medium (16-bit)", MemSize::SixteenBit, 2);
+
+        // calling DoFrame after updating the pointer should nofity about all the affected subnotes
+        notes.mNewNotes.clear();
+        memory[0] = 8;
+        notes.DoFrame();
+
+        Assert::AreEqual(6U, notes.mNewNotes.size());
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x11]);
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x12]);
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x14]);
+        Assert::AreEqual(std::wstring(L"Small (8-bit)"), notes.mNewNotes[0x09]);
+        Assert::AreEqual(std::wstring(L"Medium (16-bit)"), notes.mNewNotes[0x0A]);
+        Assert::AreEqual(std::wstring(L"Large (32-bit)"), notes.mNewNotes[0x0C]);
+
+        notes.AssertNoNote(0x02U);
+        notes.AssertNoNote(0x12U);
+        notes.AssertNote(0x0AU, L"Medium (16-bit)", MemSize::SixteenBit, 2);
+
+        // small change to pointer causes notification addresses to overlap. Make sure the final event
+        // for the overlapping address is the new note value.
+        notes.mNewNotes.clear();
+        memory[0] = 6;
+        notes.DoFrame();
+
+        // Note on 0x0A changes from "Medium (16-bit)" to "Large (32-bit)". The change event is actually
+        // raised twice - the first to clear it out, and the second with the updated value. All we care
+        // about is that the updated value is seen later (will be the final value captured in mNewNotes)
+        Assert::AreEqual(5U, notes.mNewNotes.size());
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x09]);
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x0C]);
+        Assert::AreEqual(std::wstring(L"Small (8-bit)"), notes.mNewNotes[0x07]);
+        Assert::AreEqual(std::wstring(L"Medium (16-bit)"), notes.mNewNotes[0x08]);
+        Assert::AreEqual(std::wstring(L"Large (32-bit)"), notes.mNewNotes[0x0A]);
+
+        notes.AssertNoNote(0x02U);
+        notes.AssertNoNote(0x12U);
+        notes.AssertNote(0x0AU, L"Large (32-bit)", MemSize::ThirtyTwoBit, 4);
+
+        // no change to pointer should not raise any events
+        notes.mNewNotes.clear();
+        notes.DoFrame();
+        Assert::AreEqual(0U, notes.mNewNotes.size());
+    }
+};
 
 } // namespace tests
 } // namespace models

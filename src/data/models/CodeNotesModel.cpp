@@ -333,7 +333,10 @@ void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sA
                     pointerNote.Note = sFirstLine;
                     ExtractSize(pointerNote);
                     if (pointerNote.MemSize == MemSize::Unknown)
+                    {
                         pointerNote.MemSize = MemSize::ThirtyTwoBit;
+                        pointerNote.Bytes = 4;
+                    }
 
                     // capture the initial value of the pointer
                     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
@@ -398,6 +401,27 @@ ra::ByteAddress CodeNotesModel::FindCodeNoteStart(ra::ByteAddress nAddress) cons
                 return pIter->first;
 
         } while (pIter != m_mCodeNotes.begin());
+    }
+
+    // also check for derived code notes
+    if (m_bHasPointers)
+    {
+        for (const auto& pCodeNote : m_mCodeNotes)
+        {
+            if (pCodeNote.second.PointerData == nullptr)
+                continue;
+
+            if (nAddress >= pCodeNote.second.PointerData->PointerValue &&
+                nAddress < pCodeNote.second.PointerData->PointerValue + pCodeNote.second.PointerData->OffsetRange)
+            {
+                const auto nOffset = ra::to_signed(nAddress - pCodeNote.second.PointerData->PointerValue);
+                for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
+                {
+                    if (pOffsetNote.Offset <= nOffset && pOffsetNote.Offset + pOffsetNote.Bytes > nOffset)
+                        return pCodeNote.second.PointerData->PointerValue + pOffsetNote.Offset;
+                }
+            }
+        }
     }
 
     return 0xFFFFFFFF;
@@ -584,19 +608,22 @@ const CodeNotesModel::CodeNote* CodeNotesModel::FindCodeNoteInternal(ra::ByteAdd
     if (pIter != m_mCodeNotes.end())
         return &pIter->second;
 
-    for (const auto& pCodeNote : m_mCodeNotes)
+    if (m_bHasPointers)
     {
-        if (pCodeNote.second.PointerData == nullptr)
-            continue;
-
-        if (nAddress >= pCodeNote.second.PointerData->PointerValue &&
-            nAddress < pCodeNote.second.PointerData->PointerValue + pCodeNote.second.PointerData->OffsetRange)
+        for (const auto& pCodeNote : m_mCodeNotes)
         {
-            const auto nOffset = ra::to_signed(nAddress - pCodeNote.second.PointerData->PointerValue);
-            for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
+            if (pCodeNote.second.PointerData == nullptr)
+                continue;
+
+            if (nAddress >= pCodeNote.second.PointerData->PointerValue &&
+                nAddress < pCodeNote.second.PointerData->PointerValue + pCodeNote.second.PointerData->OffsetRange)
             {
-                if (pOffsetNote.Offset == nOffset)
-                    return &pOffsetNote;
+                const auto nOffset = ra::to_signed(nAddress - pCodeNote.second.PointerData->PointerValue);
+                for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
+                {
+                    if (pOffsetNote.Offset == nOffset)
+                        return &pOffsetNote;
+                }
             }
         }
     }
@@ -604,9 +631,119 @@ const CodeNotesModel::CodeNote* CodeNotesModel::FindCodeNoteInternal(ra::ByteAdd
     return nullptr;
 }
 
-void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNote& pCodeNote)> callback) const
+ra::ByteAddress CodeNotesModel::GetIndirectSource(ra::ByteAddress nAddress) const
 {
-    if (!m_bHasPointers)
+    if (m_bHasPointers)
+    {
+        for (const auto& pCodeNote : m_mCodeNotes)
+        {
+            if (pCodeNote.second.PointerData == nullptr)
+                continue;
+
+            if (nAddress >= pCodeNote.second.PointerData->PointerValue &&
+                nAddress < pCodeNote.second.PointerData->PointerValue + pCodeNote.second.PointerData->OffsetRange)
+            {
+                const auto nOffset = ra::to_signed(nAddress - pCodeNote.second.PointerData->PointerValue);
+                for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
+                {
+                    if (pOffsetNote.Offset == nOffset)
+                        return pCodeNote.first;
+                }
+            }
+        }
+    }
+
+    return 0xFFFFFFFF;
+}
+
+ra::ByteAddress CodeNotesModel::GetNextNoteAddress(ra::ByteAddress nAfterAddress, bool bIncludeDerived) const
+{
+    ra::ByteAddress nBestAddress = 0xFFFFFFFF;
+
+    // lower_bound will return the item if it's an exact match, or the *next* item otherwise
+    auto pIter = m_mCodeNotes.lower_bound(nAfterAddress + 1);
+    if (pIter != m_mCodeNotes.end())
+        nBestAddress = pIter->first;
+
+    if (m_bHasPointers && bIncludeDerived)
+    {
+        for (const auto& pNote : m_mCodeNotes)
+        {
+            if (!pNote.second.PointerData)
+                continue;
+
+            if (pNote.second.PointerData->PointerValue > nBestAddress)
+                continue;
+
+            if (pNote.second.PointerData->PointerValue + pNote.second.PointerData->OffsetRange < nAfterAddress)
+                continue;
+
+            for (const auto& pOffset : pNote.second.PointerData->OffsetNotes)
+            {
+                const auto pOffsetAddress = pNote.second.PointerData->PointerValue + pOffset.Offset;
+                if (pOffsetAddress > nAfterAddress)
+                {
+                    nBestAddress = std::min(nBestAddress, pOffsetAddress);
+                    break;
+                }
+            }
+        }
+    }
+
+    return nBestAddress;
+}
+
+ra::ByteAddress CodeNotesModel::GetPreviousNoteAddress(ra::ByteAddress nBeforeAddress, bool bIncludeDerived) const
+{
+    unsigned nBestAddress = 0xFFFFFFFF;
+
+    // lower_bound will return the item if it's an exact match, or the *next* item otherwise
+    auto pIter = m_mCodeNotes.lower_bound(nBeforeAddress - 1);
+    if (pIter != m_mCodeNotes.end() && pIter->first == nBeforeAddress - 1)
+    {
+        // exact match for 1 byte lower, return it.
+        return pIter->first;
+    }
+
+    if (pIter != m_mCodeNotes.begin())
+    {
+        // found next lower item, claim it
+        --pIter;
+        nBestAddress = pIter->first;
+    }
+
+    if (m_bHasPointers && bIncludeDerived)
+    {
+        // scan pointed-at addresses to see if there's anything between the next lower item and nBeforeAddress
+        for (const auto& pNote : m_mCodeNotes)
+        {
+            if (!pNote.second.PointerData)
+                continue;
+
+            if (pNote.second.PointerData->PointerValue > nBestAddress)
+                continue;
+
+            if (pNote.second.PointerData->PointerValue + pNote.second.PointerData->OffsetRange < nBeforeAddress)
+                continue;
+
+            for (const auto& pOffset : pNote.second.PointerData->OffsetNotes)
+            {
+                const auto pOffsetAddress = pNote.second.PointerData->PointerValue + pOffset.Offset;
+                if (pOffsetAddress >= nBeforeAddress)
+                    break;
+
+                if (pOffsetAddress > nBestAddress || nBestAddress == 0xFFFFFFFF)
+                    nBestAddress = pOffsetAddress;
+            }
+        }
+    }
+
+    return nBestAddress;
+}
+
+void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNote& pCodeNote)> callback, bool bIncludeDerived) const
+{
+    if (!bIncludeDerived || !m_bHasPointers)
     {
         // no pointers, just iterate over the normal code notes
         for (const auto& pIter : m_mCodeNotes)

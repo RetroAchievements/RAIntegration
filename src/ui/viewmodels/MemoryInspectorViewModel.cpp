@@ -22,6 +22,7 @@ const StringModelProperty MemoryInspectorViewModel::CurrentAddressBitsProperty("
 const IntModelProperty MemoryInspectorViewModel::CurrentAddressValueProperty("MemoryInspectorViewModel", "CurrentAddressValue", 0);
 const BoolModelProperty MemoryInspectorViewModel::CanModifyNotesProperty("MemoryInspectorViewModel", "CanModifyNotes", true);
 const BoolModelProperty MemoryInspectorViewModel::CurrentBitsVisibleProperty("MemoryInspectorViewModel", "CurrentBitsVisibleProperty", true);
+const BoolModelProperty MemoryInspectorViewModel::IsCurrentAddressNoteEditableProperty("MemoryInspectorViewModel", "IsCurrentAddressNoteEditable", true);
 
 MemoryInspectorViewModel::MemoryInspectorViewModel()
 {
@@ -30,6 +31,7 @@ MemoryInspectorViewModel::MemoryInspectorViewModel()
     m_pViewer.AddNotifyTarget(*this);
 
     SetValue(CanModifyNotesProperty, false);
+    SetValue(IsCurrentAddressNoteEditableProperty, false);
 }
 
 void MemoryInspectorViewModel::InitializeNotifyTargets()
@@ -110,7 +112,25 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddre
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nNewAddress) : nullptr;
-    SetCurrentAddressNote(pNote ? *pNote : std::wstring());
+    if (pNote)
+    {
+        const auto nIndirectSource = pCodeNotes->GetIndirectSource(nNewAddress);
+        if (nIndirectSource != 0xFFFFFFFF)
+        {
+            SetCurrentAddressNote(ra::StringPrintf(L"[Indirect from %s]\r\n%s", ra::ByteAddressToString(nIndirectSource), *pNote));
+            SetValue(IsCurrentAddressNoteEditableProperty, false);
+        }
+        else
+        {
+            SetCurrentAddressNote(*pNote);
+            SetValue(IsCurrentAddressNoteEditableProperty, CanModifyNotes());
+        }
+    }
+    else
+    {
+        SetCurrentAddressNote(L"");
+        SetValue(IsCurrentAddressNoteEditableProperty, CanModifyNotes());
+    }
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto nValue = pEmulatorContext.ReadMemoryByte(nNewAddress);
@@ -259,18 +279,12 @@ bool MemoryInspectorViewModel::NextNote()
     ra::ByteAddress nNewAddress = nCurrentAddress;
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (pCodeNotes == nullptr)
-        return false;
-    pCodeNotes->EnumerateCodeNotes([this, nCurrentAddress, &nNewAddress](ra::ByteAddress nAddress)
+    if (pCodeNotes != nullptr)
     {
-        if (nAddress > nCurrentAddress)
-        {
-            nNewAddress = nAddress;
-            return false;
-        }
-
-        return true;
-    });
+        nNewAddress = pCodeNotes->GetNextNoteAddress(nCurrentAddress, true);
+        if (nNewAddress == 0xFFFFFFFF)
+            nNewAddress = nCurrentAddress;
+    }
 
     if (nNewAddress != nCurrentAddress)
     {
@@ -287,16 +301,12 @@ bool MemoryInspectorViewModel::PreviousNote()
     ra::ByteAddress nNewAddress = nCurrentAddress;
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (pCodeNotes == nullptr)
-        return false;
-    pCodeNotes->EnumerateCodeNotes([this, nCurrentAddress, &nNewAddress](ra::ByteAddress nAddress)
+    if (pCodeNotes != nullptr)
     {
-        if (nAddress >= nCurrentAddress)
-            return false;
-
-        nNewAddress = nAddress;
-        return true;
-    });
+        nNewAddress = pCodeNotes->GetPreviousNoteAddress(nCurrentAddress, true);
+        if (nNewAddress == 0xFFFFFFFF)
+            nNewAddress = nCurrentAddress;
+    }
 
     if (nNewAddress != nCurrentAddress)
     {
@@ -340,22 +350,16 @@ void MemoryInspectorViewModel::OnActiveGameChanged()
         SetValue(CanModifyNotesProperty, true);
     }
 
+    SetValue(IsCurrentAddressNoteEditableProperty, CanModifyNotes());
+
     Search().ClearResults();
 }
 
 void MemoryInspectorViewModel::OnEndGameLoad()
 {
-    ra::ByteAddress nFirstAddress = 0U;
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (pCodeNotes == nullptr)
-        return;
-    pCodeNotes->EnumerateCodeNotes([&nFirstAddress](ra::ByteAddress nAddress)
-    {
-        nFirstAddress = nAddress;
-        return false;
-    });
-
+    const auto nFirstAddress = (pCodeNotes != nullptr) ? pCodeNotes->FirstCodeNoteAddress() : 0U;
     SetCurrentAddress(nFirstAddress);
 }
 

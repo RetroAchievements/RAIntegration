@@ -93,18 +93,28 @@ public:
     }
 
     /// <summary>
-    /// Enumerates the code notes
+    /// Returns the address of the real code note from which an indirect code note was derived.
     /// </summary>
-    /// <remarks>
-    /// <paramref name="callback" /> is called for each known code note. If it returns <c>false</c> enumeration stops.
-    /// </remarks>
-    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress)> callback) const
-    {
-        EnumerateCodeNotes([callback](ra::ByteAddress nAddress, const CodeNote&)
-        {
-            return callback(nAddress);
-        });
-    }
+    /// <returns>
+    ///  Returns 0xFFFFFFFF if not found, or not an indirect note.
+    /// </returns>
+    ra::ByteAddress GetIndirectSource(ra::ByteAddress nAddress) const;
+
+    /// <summary>
+    /// Returns the address of the next code note after the provided address.
+    /// </summary>
+    /// <returns>
+    ///  Returns 0xFFFFFFFF if not found.
+    /// </returns>
+    ra::ByteAddress GetNextNoteAddress(ra::ByteAddress nAfterAddress, bool bIncludeDerived = false) const;
+
+    /// <summary>
+    /// Returns the address of the next code note before the provided address.
+    /// </summary>
+    /// <returns>
+    ///  Returns 0xFFFFFFFF if not found.
+    /// </returns>
+    ra::ByteAddress GetPreviousNoteAddress(ra::ByteAddress nBeforeAddress, bool bIncludeDerived = false) const;
 
     /// <summary>
     /// Enumerates the code notes
@@ -112,12 +122,12 @@ public:
     /// <remarks>
     /// <paramref name="callback" /> is called for each known code note. If it returns <c>false</c> enumeration stops.
     /// </remarks>
-    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)> callback) const
+    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)> callback, bool bIncludeDerived = false) const
     {
         EnumerateCodeNotes([callback](ra::ByteAddress nAddress, const CodeNote& pCodeNote)
         {
             return callback(nAddress, pCodeNote.Bytes, pCodeNote.Note);
-        });
+        }, bIncludeDerived);
     }
 
     /// <summary>
@@ -139,6 +149,14 @@ public:
     /// Returns the number of known code notes
     /// </summary>
     size_t CodeNoteCount() const noexcept { return m_mCodeNotes.size(); }
+
+    /// <summary>
+    /// Gets the address of the first code note.
+    /// </summary>
+    ra::ByteAddress FirstCodeNoteAddress() const
+    {
+        return (m_mCodeNotes.size() == 0) ? 0U : m_mCodeNotes.begin()->first;
+    }
 
 	void Serialize(ra::services::TextWriter&) const noexcept override {}
 	bool Deserialize(ra::Tokenizer&) noexcept override { return true; }
@@ -167,6 +185,7 @@ protected:
 
     struct PointerData
     {
+        ra::ByteAddress RawPointerValue = 0;
         ra::ByteAddress PointerValue = 0;
         unsigned int OffsetRange = 0;
         std::vector<OffsetCodeNote> OffsetNotes;
@@ -175,7 +194,7 @@ protected:
     std::map<ra::ByteAddress, CodeNote> m_mCodeNotes;
 
     const CodeNote* FindCodeNoteInternal(ra::ByteAddress nAddress) const;
-    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNote& pCodeNote)> callback) const;
+    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNote& pCodeNote)> callback, bool bIncludeDerived) const;
 
     unsigned int m_nGameId = 0;
     bool m_bHasPointers = false;

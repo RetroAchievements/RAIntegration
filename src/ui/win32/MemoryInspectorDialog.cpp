@@ -223,9 +223,9 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
         return true;
     });
     m_bindNoteText.BindText(MemoryInspectorViewModel::CurrentAddressNoteProperty);
-    m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, MemoryInspectorViewModel::CanModifyNotesProperty);
-    m_bindWindow.BindEnabled(IDC_RA_ADD_NOTE, MemoryInspectorViewModel::CanModifyNotesProperty);
-    m_bindWindow.BindEnabled(IDC_RA_DELETE_NOTE, MemoryInspectorViewModel::CanModifyNotesProperty);
+    m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, MemoryInspectorViewModel::IsCurrentAddressNoteEditableProperty);
+    m_bindWindow.BindEnabled(IDC_RA_ADD_NOTE, MemoryInspectorViewModel::IsCurrentAddressNoteEditableProperty);
+    m_bindWindow.BindEnabled(IDC_RA_DELETE_NOTE, MemoryInspectorViewModel::IsCurrentAddressNoteEditableProperty);
 
     // Memory Viewer
     m_bindViewer8Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(MemSize::EightBit));

@@ -74,7 +74,7 @@ private:
             Assert::AreEqual(sExpected, *pNote);
         }
 
-        void AssertNote(ra::ByteAddress nAddress, const std::wstring& sExpected, MemSize nExpectedSize, size_t nExpectedBytes = 0)
+        void AssertNote(ra::ByteAddress nAddress, const std::wstring& sExpected, MemSize nExpectedSize, unsigned nExpectedBytes = 0)
         {
             AssertNote(nAddress, sExpected);
 
@@ -118,7 +118,7 @@ public:
         });
 
         notes.Refresh(1U);
-        Assert::AreEqual(3U, notes.mNewNotes.size());
+        Assert::AreEqual({3U}, notes.mNewNotes.size());
 
         notes.AssertNote(1234U, L"Note1");
         Assert::AreEqual(std::wstring(L"Note1"), notes.mNewNotes[1234U]);
@@ -135,7 +135,7 @@ public:
         notes.Refresh(0U);
         const auto* pNote5 = notes.FindCodeNote(1234U);
         Assert::IsNull(pNote5);
-        Assert::AreEqual(0U, notes.mNewNotes.size());
+        Assert::AreEqual({0U}, notes.mNewNotes.size());
     }
 
     void TestCodeNoteSize(const std::wstring& sNote, unsigned int nExpectedBytes, MemSize nExpectedSize)
@@ -589,7 +589,7 @@ public:
             L"+22 = Skill Points (8-bit)";
         notes.AddCodeNote(1234, "Author", sNote);
 
-        notes.AssertNote(1234U, sNote, MemSize::ThirtyTwoBit, 1); // full note for pointer address (assume 32-bit if not specified)
+        notes.AssertNote(1234U, sNote, MemSize::ThirtyTwoBit, 4); // full note for pointer address (assume 32-bit if not specified)
 
         // extracted notes for offset fields (note: pointer base default is $0000)
         notes.AssertNote(2, L"EXP (32-bit)", MemSize::ThirtyTwoBit);
@@ -708,7 +708,7 @@ public:
         notes.AddCodeNote(0x0000, "Author", sNote);
 
         // should receive notifications for the pointer note, and for each subnote
-        Assert::AreEqual(4U, notes.mNewNotes.size());
+        Assert::AreEqual({4U}, notes.mNewNotes.size());
         Assert::AreEqual(sNote, notes.mNewNotes[0x00]);
         Assert::AreEqual(std::wstring(L"Small (8-bit)"), notes.mNewNotes[0x11]);
         Assert::AreEqual(std::wstring(L"Medium (16-bit)"), notes.mNewNotes[0x12]);
@@ -722,7 +722,7 @@ public:
         memory[0] = 8;
         notes.DoFrame();
 
-        Assert::AreEqual(6U, notes.mNewNotes.size());
+        Assert::AreEqual({6U}, notes.mNewNotes.size());
         Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x11]);
         Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x12]);
         Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x14]);
@@ -743,7 +743,7 @@ public:
         // Note on 0x0A changes from "Medium (16-bit)" to "Large (32-bit)". The change event is actually
         // raised twice - the first to clear it out, and the second with the updated value. All we care
         // about is that the updated value is seen later (will be the final value captured in mNewNotes)
-        Assert::AreEqual(5U, notes.mNewNotes.size());
+        Assert::AreEqual({5U}, notes.mNewNotes.size());
         Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x09]);
         Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x0C]);
         Assert::AreEqual(std::wstring(L"Small (8-bit)"), notes.mNewNotes[0x07]);
@@ -757,7 +757,71 @@ public:
         // no change to pointer should not raise any events
         notes.mNewNotes.clear();
         notes.DoFrame();
-        Assert::AreEqual(0U, notes.mNewNotes.size());
+        Assert::AreEqual({0U}, notes.mNewNotes.size());
+    }
+
+    TEST_METHOD(TestFindCodeNoteStartPointer)
+    {
+        CodeNotesModelHarness notes;
+        notes.MonitorCodeNoteChanges();
+
+        std::array<unsigned char, 32> memory;
+        for (uint8_t i = 0; i < memory.size(); i++)
+            memory[i] = i;
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory[0] = 16; // start with initial value for pointer
+
+        const std::wstring sNote =
+            L"Pointer (8-bit)\n"
+            L"+1 = Small (8-bit)\n"
+            L"+2 = Medium (16-bit)\n"
+            L"+4 = Large (32-bit)";
+        notes.AddCodeNote(0x0000, "Author", sNote);
+
+        // indirect notes are at 0x11 (byte), 0x12 (word), and 0x14 (dword)
+        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(0x10));
+        Assert::AreEqual(0x11U, notes.FindCodeNoteStart(0x11));
+        Assert::AreEqual(0x12U, notes.FindCodeNoteStart(0x12));
+        Assert::AreEqual(0x12U, notes.FindCodeNoteStart(0x13));
+        Assert::AreEqual(0x14U, notes.FindCodeNoteStart(0x14));
+        Assert::AreEqual(0x14U, notes.FindCodeNoteStart(0x15));
+        Assert::AreEqual(0x14U, notes.FindCodeNoteStart(0x16));
+        Assert::AreEqual(0x14U, notes.FindCodeNoteStart(0x17));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(0x18));
+    }
+
+    TEST_METHOD(TestGetIndirectSource)
+    {
+        CodeNotesModelHarness notes;
+        notes.MonitorCodeNoteChanges();
+
+        std::array<unsigned char, 32> memory;
+        for (uint8_t i = 0; i < memory.size(); i++)
+            memory[i] = i;
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory[0] = 16; // start with initial value for pointer
+
+        const std::wstring sNote =
+            L"Pointer (8-bit)\n"
+            L"+1 = Small (8-bit)\n"
+            L"+2 = Medium (16-bit)\n"
+            L"+4 = Large (32-bit)";
+        notes.AddCodeNote(0x0000, "Author", sNote);
+        notes.AddCodeNote(0x0008, "Author", L"Not indirect");
+
+        // indirect notes are at 0x11 (byte), 0x12 (word), and 0x14 (dword)
+        Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x10));
+        Assert::AreEqual(0x0U, notes.GetIndirectSource(0x11));
+        Assert::AreEqual(0x0U, notes.GetIndirectSource(0x12));
+        Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x13));
+        Assert::AreEqual(0x0U, notes.GetIndirectSource(0x14));
+        Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x15));
+        Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x16));
+        Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x17));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(0x18));
+
+        // non-indirect
+        Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x08));
     }
 };
 

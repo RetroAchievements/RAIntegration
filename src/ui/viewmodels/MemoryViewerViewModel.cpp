@@ -221,7 +221,7 @@ void MemoryViewerViewModel::UpdateColors()
             }
 
             return true;
-        });
+        }, true);
     }
 
     // flag invalid regions

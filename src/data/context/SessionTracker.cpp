@@ -257,7 +257,7 @@ std::wstring SessionTracker::GetCurrentActivity() const
             const auto* pAsset = pGameContext.Assets().GetItemAt(i);
             if (pAsset)
             {
-                if (pAsset->IsHidden())
+                if (!pAsset->IsShownInList())
                     continue;
 
                 if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)

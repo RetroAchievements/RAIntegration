@@ -69,8 +69,6 @@ private:
         GSL_SUPPRESS_F6 MemoryBookmarksViewModelHarness()
         {
             InitializeNotifyTargets();
-
-            auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
         }
 
         using MemoryBookmarksViewModel::IsModified;

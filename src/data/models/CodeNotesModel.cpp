@@ -417,7 +417,7 @@ ra::ByteAddress CodeNotesModel::FindCodeNoteStart(ra::ByteAddress nAddress) cons
                 const auto nOffset = ra::to_signed(nAddress - pCodeNote.second.PointerData->PointerValue);
                 for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
                 {
-                    if (pOffsetNote.Offset <= nOffset && pOffsetNote.Offset + pOffsetNote.Bytes > nOffset)
+                    if (pOffsetNote.Offset <= nOffset && pOffsetNote.Offset + ra::to_signed(pOffsetNote.Bytes) > nOffset)
                         return pCodeNote.second.PointerData->PointerValue + pOffsetNote.Offset;
                 }
             }
@@ -631,7 +631,7 @@ const CodeNotesModel::CodeNote* CodeNotesModel::FindCodeNoteInternal(ra::ByteAdd
     return nullptr;
 }
 
-ra::ByteAddress CodeNotesModel::GetIndirectSource(ra::ByteAddress nAddress) const
+ra::ByteAddress CodeNotesModel::GetIndirectSource(ra::ByteAddress nAddress) const noexcept
 {
     if (m_bHasPointers)
     {
@@ -661,7 +661,7 @@ ra::ByteAddress CodeNotesModel::GetNextNoteAddress(ra::ByteAddress nAfterAddress
     ra::ByteAddress nBestAddress = 0xFFFFFFFF;
 
     // lower_bound will return the item if it's an exact match, or the *next* item otherwise
-    auto pIter = m_mCodeNotes.lower_bound(nAfterAddress + 1);
+    const auto pIter = m_mCodeNotes.lower_bound(nAfterAddress + 1);
     if (pIter != m_mCodeNotes.end())
         nBestAddress = pIter->first;
 

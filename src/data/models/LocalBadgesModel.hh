@@ -18,7 +18,7 @@ public:
 	LocalBadgesModel(LocalBadgesModel&&) noexcept = delete;
 	LocalBadgesModel& operator=(LocalBadgesModel&&) noexcept = delete;
 
-	bool IsHidden() const override { return true; }
+	bool IsShownInList() const noexcept override { return false; }
 
 	void AddReference(const std::wstring& sBadgeName, bool bCommitted);
 	void RemoveReference(const std::wstring& sBadgeName, bool bCommitted);

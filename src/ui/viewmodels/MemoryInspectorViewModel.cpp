@@ -278,7 +278,7 @@ bool MemoryInspectorViewModel::NextNote()
     const auto nCurrentAddress = GetCurrentAddress();
     ra::ByteAddress nNewAddress = nCurrentAddress;
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes != nullptr)
     {
         nNewAddress = pCodeNotes->GetNextNoteAddress(nCurrentAddress, true);
@@ -300,7 +300,7 @@ bool MemoryInspectorViewModel::PreviousNote()
     const auto nCurrentAddress = GetCurrentAddress();
     ra::ByteAddress nNewAddress = nCurrentAddress;
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes != nullptr)
     {
         nNewAddress = pCodeNotes->GetPreviousNoteAddress(nCurrentAddress, true);

@@ -20,7 +20,7 @@ public:
 	CodeNotesModel(CodeNotesModel&&) noexcept = delete;
 	CodeNotesModel& operator=(CodeNotesModel&&) noexcept = delete;
 
-    bool IsHidden() const override { return true; }
+    bool IsShownInList() const noexcept override { return false; }
 
     typedef std::function<void(ra::ByteAddress nAddress, const std::wstring& sNewNote)> CodeNoteChangedFunction;
 
@@ -98,7 +98,7 @@ public:
     /// <returns>
     ///  Returns 0xFFFFFFFF if not found, or not an indirect note.
     /// </returns>
-    ra::ByteAddress GetIndirectSource(ra::ByteAddress nAddress) const;
+    ra::ByteAddress GetIndirectSource(ra::ByteAddress nAddress) const noexcept;
 
     /// <summary>
     /// Returns the address of the next code note after the provided address.
@@ -153,7 +153,7 @@ public:
     /// <summary>
     /// Gets the address of the first code note.
     /// </summary>
-    ra::ByteAddress FirstCodeNoteAddress() const
+    ra::ByteAddress FirstCodeNoteAddress() const noexcept
     {
         return (m_mCodeNotes.size() == 0) ? 0U : m_mCodeNotes.begin()->first;
     }

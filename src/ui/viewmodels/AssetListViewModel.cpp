@@ -425,7 +425,7 @@ bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& p
             return false;
     }
 
-    if (pAsset.IsHidden())
+    if (!pAsset.IsShownInList())
         return false;
 
     switch (GetSpecialFilter())

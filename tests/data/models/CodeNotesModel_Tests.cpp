@@ -32,7 +32,7 @@ private:
 
         std::map<unsigned, std::wstring> mNewNotes;
 
-        void Refresh(unsigned nGameId)
+        void InitializeCodeNotes(unsigned nGameId)
         {
             mNewNotes.clear();
 
@@ -52,7 +52,7 @@ private:
             };
         }
 
-        void SetGameId(unsigned nGameId)
+        void SetGameId(unsigned nGameId) noexcept
         {
             m_nGameId = nGameId;
         }
@@ -117,7 +117,7 @@ public:
             return true;
         });
 
-        notes.Refresh(1U);
+        notes.InitializeCodeNotes(1U);
         Assert::AreEqual({3U}, notes.mNewNotes.size());
 
         notes.AssertNote(1234U, L"Note1");
@@ -132,7 +132,7 @@ public:
         const auto* pNote4 = notes.FindCodeNote(4567U);
         Assert::IsNull(pNote4);
 
-        notes.Refresh(0U);
+        notes.InitializeCodeNotes(0U);
         const auto* pNote5 = notes.FindCodeNote(1234U);
         Assert::IsNull(pNote5);
         Assert::AreEqual({0U}, notes.mNewNotes.size());
@@ -149,7 +149,7 @@ public:
             return true;
         });
 
-        notes.Refresh(1U);
+        notes.InitializeCodeNotes(1U);
 
         Assert::AreEqual(nExpectedBytes, notes.GetCodeNoteBytes(1234U), sNote.c_str());
         Assert::AreEqual(nExpectedSize, notes.GetCodeNoteMemSize(1234U), sNote.c_str());
@@ -254,7 +254,7 @@ public:
             return true;
         });
 
-        notes.Refresh(1U);
+        notes.InitializeCodeNotes(1U);
 
         Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(100, MemSize::EightBit));
         Assert::AreEqual(std::wstring(L""), notes.FindCodeNote(999, MemSize::EightBit));
@@ -325,7 +325,7 @@ public:
             return true;
         });
 
-        notes.Refresh(1U);
+        notes.InitializeCodeNotes(1U);
 
         Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(100));
 
@@ -372,7 +372,7 @@ public:
             return true;
         });
 
-        notes.Refresh(1U);
+        notes.InitializeCodeNotes(1U);
 
         Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(999));
         Assert::AreEqual(1000U, notes.FindCodeNoteStart(1000));
@@ -411,7 +411,7 @@ public:
             return true;
         });
 
-        notes.Refresh(1U);
+        notes.InitializeCodeNotes(1U);
         notes.mNewNotes.clear();
 
         Assert::IsTrue(notes.SetCodeNote(1234, L"Note1"));
@@ -425,7 +425,7 @@ public:
         CodeNotesModelHarness notes;
         notes.mockServer.ExpectUncalled<ra::api::UpdateCodeNote>();
 
-        notes.Refresh(0U);
+        notes.InitializeCodeNotes(0U);
         Assert::IsFalse(notes.SetCodeNote(1234, L"Note1"));
 
         const auto* pNote1 = notes.FindCodeNote(1234U);
@@ -448,7 +448,7 @@ public:
             return true;
         });
 
-        notes.Refresh(1U);
+        notes.InitializeCodeNotes(1U);
         Assert::IsTrue(notes.SetCodeNote(1234, L"Note1"));
 
         notes.AssertNote(1234U, L"Note1");
@@ -694,11 +694,11 @@ public:
         CodeNotesModelHarness notes;
         notes.MonitorCodeNoteChanges();
 
-        std::array<unsigned char, 32> memory;
+        std::array<unsigned char, 32> memory{};
         for (uint8_t i = 0; i < memory.size(); i++)
-            memory[i] = i;
+            memory.at(i) = i;
         notes.mockEmulatorContext.MockMemory(memory);
-        memory[0] = 16; // start with initial value for pointer
+        memory.at(0) = 16; // start with initial value for pointer
 
         const std::wstring sNote =
             L"Pointer (8-bit)\n"
@@ -719,7 +719,7 @@ public:
 
         // calling DoFrame after updating the pointer should nofity about all the affected subnotes
         notes.mNewNotes.clear();
-        memory[0] = 8;
+        memory.at(0) = 8;
         notes.DoFrame();
 
         Assert::AreEqual({6U}, notes.mNewNotes.size());
@@ -737,7 +737,7 @@ public:
         // small change to pointer causes notification addresses to overlap. Make sure the final event
         // for the overlapping address is the new note value.
         notes.mNewNotes.clear();
-        memory[0] = 6;
+        memory.at(0) = 6;
         notes.DoFrame();
 
         // Note on 0x0A changes from "Medium (16-bit)" to "Large (32-bit)". The change event is actually
@@ -765,11 +765,11 @@ public:
         CodeNotesModelHarness notes;
         notes.MonitorCodeNoteChanges();
 
-        std::array<unsigned char, 32> memory;
+        std::array<unsigned char, 32> memory{};
         for (uint8_t i = 0; i < memory.size(); i++)
-            memory[i] = i;
+            memory.at(i) = i;
         notes.mockEmulatorContext.MockMemory(memory);
-        memory[0] = 16; // start with initial value for pointer
+        memory.at(0) = 16; // start with initial value for pointer
 
         const std::wstring sNote =
             L"Pointer (8-bit)\n"
@@ -795,11 +795,11 @@ public:
         CodeNotesModelHarness notes;
         notes.MonitorCodeNoteChanges();
 
-        std::array<unsigned char, 32> memory;
+        std::array<unsigned char, 32> memory{};
         for (uint8_t i = 0; i < memory.size(); i++)
-            memory[i] = i;
+            memory.at(i) = i;
         notes.mockEmulatorContext.MockMemory(memory);
-        memory[0] = 16; // start with initial value for pointer
+        memory.at(0) = 16; // start with initial value for pointer
 
         const std::wstring sNote =
             L"Pointer (8-bit)\n"

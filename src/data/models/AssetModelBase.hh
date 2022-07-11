@@ -20,6 +20,7 @@ enum class AssetType
     Leaderboard,
     RichPresence,
     LocalBadges,
+    CodeNotes,
 };
 
 enum class AssetCategory
@@ -243,6 +244,12 @@ public:
     /// Marks the asset as to be removed from local.
     /// </summary>
     void SetDeleted();
+
+    /// <summary>
+    /// Gets whether the asset should not be displayed in the asset list.
+    /// </summary>
+    /// <returns><c>true</c> to not display the asset in the asset list, <c>false</c> otherwise.</returns>
+    virtual bool IsShownInList() const noexcept { return true; }
 
     /// <summary>
     /// Determines if the local checkpoint differs from the server checkpoint. Ignores any changes

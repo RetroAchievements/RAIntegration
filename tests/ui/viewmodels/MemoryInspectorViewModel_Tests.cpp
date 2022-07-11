@@ -46,6 +46,8 @@ private:
                 memory.at(i) = gsl::narrow_cast<unsigned char>(i);
 
             mockEmulatorContext.MockMemory(memory);
+
+            mockGameContext.InitializeCodeNotes();
         }
 
         ~MemoryInspectorViewModelHarness()
@@ -61,6 +63,12 @@ private:
 
         bool CanModifyCodeNotes() const { return GetValue(CanModifyNotesProperty); }
         bool CurrentBitsVisible() const { return GetValue(CurrentBitsVisibleProperty); }
+
+        const std::wstring* FindCodeNote(ra::ByteAddress nAddress) const
+        {
+            const auto* pCodeNotes = mockGameContext.Assets().FindCodeNotes();
+            return (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nAddress) : nullptr;
+        }
     };
 
 
@@ -198,6 +206,7 @@ public:
     TEST_METHOD(TestNextNote)
     {
         MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId({ 3 });
         inspector.mockGameContext.SetCodeNote({ 8 }, L"Eight");
         inspector.mockGameContext.SetCodeNote({ 12 }, L"Twelve");
         inspector.mockGameContext.SetCodeNote({ 16 }, L"Sixteen");
@@ -222,6 +231,7 @@ public:
     TEST_METHOD(TestPreviousNote)
     {
         MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId({ 3 });
         inspector.mockGameContext.SetCodeNote({ 8 }, L"Eight");
         inspector.mockGameContext.SetCodeNote({ 12 }, L"Twelve");
         inspector.mockGameContext.SetCodeNote({ 16 }, L"Sixteen");
@@ -251,7 +261,7 @@ public:
         inspector.SaveCurrentAddressNote();
         Assert::IsFalse(inspector.mockDesktop.WasDialogShown());
 
-        const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
+        const auto* pNote = inspector.FindCodeNote({ 0 });
         Assert::IsNotNull(pNote);
         Ensures(pNote != nullptr);
         Assert::AreEqual(std::wstring(L"Test"), *pNote);
@@ -266,7 +276,7 @@ public:
         inspector.SaveCurrentAddressNote();
         Assert::IsFalse(inspector.mockDesktop.WasDialogShown());
 
-        const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
+        const auto* pNote = inspector.FindCodeNote({ 0 });
         Assert::IsNull(pNote);
         Assert::IsFalse(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
     }
@@ -274,13 +284,14 @@ public:
     TEST_METHOD(TestSaveCurrentAddressNoteUnchanged)
     {
         MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId({ 3 });
         inspector.mockGameContext.SetCodeNote({ 0 }, L"Test");
         inspector.SetCurrentAddressNote(L"Test");
 
         inspector.SaveCurrentAddressNote();
         Assert::IsFalse(inspector.mockDesktop.WasDialogShown());
 
-        const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
+        const auto* pNote = inspector.FindCodeNote({ 0 });
         Assert::IsNotNull(pNote);
         Ensures(pNote != nullptr);
         Assert::AreEqual(std::wstring(L"Test"), *pNote);
@@ -290,6 +301,7 @@ public:
     TEST_METHOD(TestSaveCurrentAddressNoteOverwrite)
     {
         MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId({ 3 });
         inspector.mockGameContext.SetCodeNote({ 0 }, L"Test");
         inspector.SetCurrentAddressNote(L"Test2");
 
@@ -307,7 +319,7 @@ public:
         inspector.SaveCurrentAddressNote();
         Assert::IsTrue(bWindowSeen);
 
-        const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
+        const auto* pNote = inspector.FindCodeNote({ 0 });
         Assert::IsNotNull(pNote);
         Ensures(pNote != nullptr);
         Assert::AreEqual(std::wstring(L"Test2"), *pNote);
@@ -318,6 +330,7 @@ public:
     TEST_METHOD(TestSaveCurrentAddressNoteOverwriteCancel)
     {
         MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId({ 3 });
         inspector.mockGameContext.SetCodeNote({ 0 }, L"Test");
         inspector.SetCurrentAddressNote(L"Test2");
 
@@ -335,7 +348,7 @@ public:
         inspector.SaveCurrentAddressNote();
         Assert::IsTrue(bWindowSeen);
 
-        const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
+        const auto* pNote = inspector.FindCodeNote({ 0 });
         Assert::IsNotNull(pNote);
         Ensures(pNote != nullptr);
         Assert::AreEqual(std::wstring(L"Test"), *pNote);
@@ -350,6 +363,7 @@ public:
             sLongNote += L"Test" + std::to_wstring(i) + L" ";
 
         MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId({ 3 });
         inspector.mockGameContext.SetCodeNote({ 0 }, sLongNote);
         inspector.SetCurrentAddressNote(L"Test");
 
@@ -379,7 +393,7 @@ public:
         inspector.DeleteCurrentAddressNote();
         Assert::IsFalse(inspector.mockDesktop.WasDialogShown());
 
-        const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
+        const auto* pNote = inspector.FindCodeNote({ 0 });
         Assert::IsNull(pNote);
         Assert::IsFalse(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
     }
@@ -387,6 +401,7 @@ public:
     TEST_METHOD(TestDeleteCurrentAddressNoteConfirm)
     {
         MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId({ 3 });
         inspector.mockGameContext.SetCodeNote({ 0 }, L"Test");
         inspector.SetCurrentAddressNote(L"Test");
 
@@ -404,7 +419,7 @@ public:
         inspector.DeleteCurrentAddressNote();
         Assert::IsTrue(bWindowSeen);
 
-        const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
+        const auto* pNote = inspector.FindCodeNote({ 0 });
         Assert::IsNull(pNote);
         Assert::AreEqual(std::wstring(L""), inspector.GetCurrentAddressNote()); // text should be updated
         Assert::IsTrue(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
@@ -413,6 +428,7 @@ public:
     TEST_METHOD(TestDeleteCurrentAddressNoteDecline)
     {
         MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId({ 3 });
         inspector.mockGameContext.SetCodeNote({ 0 }, L"Test");
         inspector.SetCurrentAddressNote(L"Test");
 
@@ -430,7 +446,7 @@ public:
         inspector.DeleteCurrentAddressNote();
         Assert::IsTrue(bWindowSeen);
 
-        const auto* pNote = inspector.mockGameContext.FindCodeNote({ 0 });
+        const auto* pNote = inspector.FindCodeNote({ 0 });
         Assert::IsNotNull(pNote);
         Ensures(pNote != nullptr);
         Assert::AreEqual(std::wstring(L"Test"), *pNote);
@@ -492,6 +508,7 @@ public:
     TEST_METHOD(TestEndGameLoad)
     {
         MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId({ 3 });
         inspector.mockGameContext.SetCodeNote({ 3U }, L"Test");
         inspector.mockGameContext.SetCodeNote({ 5U }, L"Test2");
 

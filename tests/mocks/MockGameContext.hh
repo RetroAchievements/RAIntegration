@@ -72,22 +72,74 @@ public:
         }
     }
 
-    bool SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote) override
+    void InitializeCodeNotes()
     {
-        // non-API part of SetCodeNote
-        AddCodeNote(nAddress, "Author", sNote);
+        const auto nIndex = Assets().FindItemIndex(ra::data::models::AssetModelBase::TypeProperty,
+                                                   ra::etoi(ra::data ::models::AssetType::CodeNotes));
+        if (nIndex != -1)
+            Assets().RemoveAt(nIndex);
+
+        auto pCodeNotes = std::make_unique<MockCodeNotesModel>();
+        pCodeNotes->Initialize(1U,
+            [this](ra::ByteAddress nAddress, const std::wstring& sNote) {
+                OnCodeNoteChanged(nAddress, sNote);
+            });
+        Assets().Append(std::move(pCodeNotes));
+    }
+
+    bool SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
+    {
+        auto* pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
+        if (pCodeNotes == nullptr)
+        {
+            InitializeCodeNotes();
+            pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
+            Expects(pCodeNotes != nullptr);
+        }
+
+        pCodeNotes->SetCodeNote(nAddress, sNote);
         return true;
     }
 
-    bool DeleteCodeNote(ra::ByteAddress nAddress) override
+    bool DeleteCodeNote(ra::ByteAddress nAddress)
     {
-        // non-API part of DeleteCodeNote
-        m_mCodeNotes.erase(nAddress);
-        OnCodeNoteChanged(nAddress, L"");
+        auto* pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
+        if (pCodeNotes == nullptr)
+        {
+            InitializeCodeNotes();
+            pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
+            Expects(pCodeNotes != nullptr);
+        }
+
+        pCodeNotes->DeleteCodeNote(nAddress);
         return true;
     }
 
 private:
+    class MockCodeNotesModel : public ra::data::models::CodeNotesModel
+    {
+    public:
+        void Initialize(unsigned nGameId, CodeNoteChangedFunction fCodeNoteChanged)
+        {
+            m_nGameId = nGameId;
+            m_fCodeNoteChanged = fCodeNoteChanged;
+        }
+
+        bool SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote) override
+        {
+            // non-API part of SetCodeNote
+            AddCodeNote(nAddress, "Author", sNote);
+            return true;
+        }
+
+        bool DeleteCodeNote(ra::ByteAddress nAddress) override
+        {
+            m_mCodeNotes.erase(nAddress);
+            OnCodeNoteChanged(nAddress, L"");
+            return true;
+        }
+    };
+
     ra::services::ServiceLocator::ServiceOverride<ra::data::context::GameContext> m_Override;
 
     std::wstring m_sRichPresenceDisplayString;

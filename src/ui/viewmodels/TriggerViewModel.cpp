@@ -370,7 +370,8 @@ void TriggerViewModel::NewCondition()
 
     // if the code note specifies an explicit size, use it. otherwise, use the selected viewer mode size.
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    auto nSize = pGameContext.GetCodeNoteMemSize(nAddress);
+    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    auto nSize = (pCodeNotes != nullptr) ? pCodeNotes->GetCodeNoteMemSize(nAddress) : MemSize::Unknown;
     if (nSize >= MemSize::Unknown)
         nSize = pMemoryInspector.Viewer().GetSize();
 

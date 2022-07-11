@@ -150,13 +150,17 @@ static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
 
     if (bCheckBookmarks)
     {
-        const auto nNoteStart = pGameContext.FindCodeNoteStart(nAddress);
-        if (nNoteStart != 0xFFFFFFFF)
+        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+        if (pCodeNotes != nullptr)
         {
-            if (nNoteStart == nAddress)
-                return MemoryViewerViewModel::TextColor::HasNote;
-            else
-                return MemoryViewerViewModel::TextColor::HasSurrogateNote;
+            const auto nNoteStart = pCodeNotes->FindCodeNoteStart(nAddress);
+            if (nNoteStart != 0xFFFFFFFF)
+            {
+                if (nNoteStart == nAddress)
+                    return MemoryViewerViewModel::TextColor::HasNote;
+                else
+                    return MemoryViewerViewModel::TextColor::HasSurrogateNote;
+            }
         }
     }
 
@@ -176,45 +180,49 @@ void MemoryViewerViewModel::UpdateColors()
         m_pColor[i] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(GetColor(nFirstAddress + i, pBookmarksViewModel, pGameContext, false)));
 
     // apply code notes
-    const auto nStopAddress = nFirstAddress + nVisibleLines * 16;
-    pGameContext.EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring&) {
-        if (nAddress + nBytes <= nFirstAddress)
-            return true;
-        if (nAddress >= nStopAddress)
-            return false;
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (pCodeNotes != nullptr)
+    {
+        const auto nStopAddress = nFirstAddress + nVisibleLines * 16;
+        pCodeNotes->EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring&) {
+            if (nAddress + nBytes <= nFirstAddress)
+                return true;
+            if (nAddress >= nStopAddress)
+                return false;
 
-        uint8_t* pOffset = m_pColor;
-        Expects(pOffset != nullptr);
-        if (nAddress < nFirstAddress)
-        {
-            nBytes -= (nFirstAddress - nAddress);
-            nAddress = nFirstAddress;
-
-            // so first processed surrogate will be nFirstAddress
-            --pOffset;
-            ++nBytes;
-        }
-        else
-        {
-            pOffset += (nAddress - nFirstAddress);
-            if ((*pOffset & 0x0F) == ra::etoi(TextColor::Default))
-                *pOffset |= ra::etoi(TextColor::HasNote);
-        }
-
-        if (nBytes > 1)
-        {
-            nBytes = std::min(nBytes, nStopAddress - nAddress + 1);
-            for (unsigned i = 1; i < nBytes; ++i)
+            uint8_t* pOffset = m_pColor;
+            Expects(pOffset != nullptr);
+            if (nAddress < nFirstAddress)
             {
-                ++pOffset;
+                nBytes -= (nFirstAddress - nAddress);
+                nAddress = nFirstAddress;
 
-                if ((*pOffset & 0x0F) == ra::etoi(TextColor::Default))
-                    *pOffset |= ra::etoi(TextColor::HasSurrogateNote);
+                // so first processed surrogate will be nFirstAddress
+                --pOffset;
+                ++nBytes;
             }
-        }
+            else
+            {
+                pOffset += (nAddress - nFirstAddress);
+                if ((*pOffset & 0x0F) == ra::etoi(TextColor::Default))
+                    *pOffset |= ra::etoi(TextColor::HasNote);
+            }
 
-        return true;
-    });
+            if (nBytes > 1)
+            {
+                nBytes = std::min(nBytes, nStopAddress - nAddress + 1);
+                for (unsigned i = 1; i < nBytes; ++i)
+                {
+                    ++pOffset;
+
+                    if ((*pOffset & 0x0F) == ra::etoi(TextColor::Default))
+                        *pOffset |= ra::etoi(TextColor::HasSurrogateNote);
+                }
+            }
+
+            return true;
+        }, true);
+    }
 
     // flag invalid regions
     UpdateInvalidRegions();
@@ -586,11 +594,13 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
 
     const auto& pBookmarksViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    Expects(pCodeNotes != nullptr);
 
     const auto nSelectedAddress = GetAddress();
 
     const auto nMax = nFirstAddress + nVisibleLines * 16 - nAddress;
-    const auto nSize = std::min(pGameContext.GetCodeNoteBytes(nAddress), nMax);
+    const auto nSize = std::min(pCodeNotes->GetCodeNoteBytes(nAddress), nMax);
     for (unsigned i = 0; i < nSize; ++i)
     {
         auto nNewColor = (nAddress == nSelectedAddress) ?

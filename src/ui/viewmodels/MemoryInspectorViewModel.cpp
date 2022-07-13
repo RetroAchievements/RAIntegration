@@ -352,7 +352,11 @@ void MemoryInspectorViewModel::OnActiveGameChanged()
 
     SetValue(IsCurrentAddressNoteEditableProperty, CanModifyNotes());
 
-    Search().ClearResults();
+    if (pGameContext.GameId() != m_nGameId)
+    {
+        m_nGameId = pGameContext.GameId();
+        Search().ClearResults();
+    }
 }
 
 void MemoryInspectorViewModel::OnEndGameLoad()

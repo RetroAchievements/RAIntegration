@@ -80,9 +80,21 @@ public:
     /// </summary>
     void SetCurrentAddressNote(const std::wstring& sValue) { SetValue(CurrentAddressNoteProperty, sValue); }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the current address note is editable.
+    /// </summary>
+    static const BoolModelProperty IsCurrentAddressNoteEditableProperty;
+
+    /// <summary>
+    /// Gets whether or not the current address note is editable.
+    /// </summary>
+    const bool IsCurrentAddressNoteEditable() const { return GetValue(IsCurrentAddressNoteEditableProperty); }
+
     void SaveCurrentAddressNote();
     void DeleteCurrentAddressNote();
     static const BoolModelProperty CanModifyNotesProperty;
+    const bool CanModifyNotes() const { return GetValue(CanModifyNotesProperty); }
+
 
     void OpenNotesList();
 

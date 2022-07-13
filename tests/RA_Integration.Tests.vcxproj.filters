@@ -438,6 +438,12 @@
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp">
       <Filter>Tests\Data\Models</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\CodeNotesModel_Tests.cpp">
+      <Filter>Tests\Data\Models</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\data\models\CodeNotesModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

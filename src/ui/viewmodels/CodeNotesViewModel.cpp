@@ -70,31 +70,35 @@ void CodeNotesViewModel::ResetFilter()
     gsl::index nIndex = 0;
 
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    pGameContext.EnumerateCodeNotes([this, &nIndex](ra::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)
+    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (pCodeNotes != nullptr)
     {
-        std::wstring sAddress;
-        if (nBytes <= 4)
-            sAddress = ra::Widen(ra::ByteAddressToString(nAddress));
-        else
-            sAddress = ra::StringPrintf(L"%s\n- %s", ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nAddress + nBytes - 1));
-
-        auto* vmNote = m_vNotes.GetItemAt(nIndex);
-        if (vmNote)
+        pCodeNotes->EnumerateCodeNotes([this, &nIndex](ra::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)
         {
-            vmNote->SetLabel(sAddress);
-            vmNote->SetNote(sNote);
-            vmNote->SetSelected(false);
-        }
-        else
-        {
-            vmNote = &m_vNotes.Add(sAddress, sNote);
-        }
-        vmNote->nAddress = nAddress;
-        vmNote->nBytes = nBytes;
+            std::wstring sAddress;
+            if (nBytes <= 4)
+                sAddress = ra::Widen(ra::ByteAddressToString(nAddress));
+            else
+                sAddress = ra::StringPrintf(L"%s\n- %s", ra::ByteAddressToString(nAddress), ra::ByteAddressToString(nAddress + nBytes - 1));
 
-        ++nIndex;
-        return true;
-    });
+            auto* vmNote = m_vNotes.GetItemAt(nIndex);
+            if (vmNote)
+            {
+                vmNote->SetLabel(sAddress);
+                vmNote->SetNote(sNote);
+                vmNote->SetSelected(false);
+            }
+            else
+            {
+                vmNote = &m_vNotes.Add(sAddress, sNote);
+            }
+            vmNote->nAddress = nAddress;
+            vmNote->nBytes = nBytes;
+
+            ++nIndex;
+            return true;
+        });
+    }
 
     for (gsl::index i = ra::to_signed(m_vNotes.Count()) - 1; i >= nIndex; --i)
         m_vNotes.RemoveAt(i);
@@ -134,7 +138,11 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::
     if (pGameContext.IsGameLoading())
         return;
 
-    m_nUnfilteredNotesCount = pGameContext.CodeNoteCount();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (pCodeNotes == nullptr)
+        return;
+
+    m_nUnfilteredNotesCount = pCodeNotes->CodeNoteCount();
 
     bool bMatchesFilter = false;
     if (!sNewNote.empty())

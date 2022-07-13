@@ -425,7 +425,7 @@ bool AssetListViewModel::MatchesFilter(const ra::data::models::AssetModelBase& p
             return false;
     }
 
-    if (pAsset.GetType() == ra::data::models::AssetType::LocalBadges)
+    if (!pAsset.IsShownInList())
         return false;
 
     switch (GetSpecialFilter())

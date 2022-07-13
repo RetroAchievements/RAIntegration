@@ -687,9 +687,10 @@ unsigned int TriggerConditionViewModel::GetIndirectAddress(unsigned int nAddress
 std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned int nAddress, bool bIsIndirect)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     std::wstring sAddress;
 
-    const auto nStartAddress = pGameContext.FindCodeNoteStart(nAddress);
+    const auto nStartAddress = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNoteStart(nAddress) : 0xFFFFFFFF;
     if (nStartAddress != nAddress && nStartAddress != 0xFFFFFFFF)
     {
         sAddress = ra::StringPrintf(L"%s [%s+%d]", ra::ByteAddressToString(nAddress),
@@ -703,7 +704,7 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned int nAddress,
     if (bIsIndirect)
         sAddress.append(L" (indirect)");
 
-    const auto* pNote = (nStartAddress != 0xFFFFFFFF) ? pGameContext.FindCodeNote(nStartAddress) : nullptr;
+    const auto* pNote = (nStartAddress != 0xFFFFFFFF) ? pCodeNotes->FindCodeNote(nStartAddress) : nullptr;
     if (!pNote)
         return ra::StringPrintf(L"%s\r\n[No code note]", sAddress);
 

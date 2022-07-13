@@ -6,6 +6,7 @@
 #include "data\Types.hh"
 
 #include "data\models\AchievementModel.hh"
+#include "data\models\CodeNotesModel.hh"
 #include "data\models\LeaderboardModel.hh"
 #include "data\models\RichPresenceModel.hh"
 
@@ -89,6 +90,22 @@ public:
     const ra::data::models::RichPresenceModel* FindRichPresence() const
     {
         return dynamic_cast<const ra::data::models::RichPresenceModel*>(FindAsset(ra::data::models::AssetType::RichPresence, 0));
+    }
+
+    /// <summary>
+    /// Finds the code notes asset.
+    /// </summary>
+    ra::data::models::CodeNotesModel* FindCodeNotes()
+    {
+        return dynamic_cast<ra::data::models::CodeNotesModel*>(FindAsset(ra::data::models::AssetType::CodeNotes, 0));
+    }
+
+    /// <summary>
+    /// Finds the code notes asset.
+    /// </summary>
+    const ra::data::models::CodeNotesModel* FindCodeNotes() const
+    {
+        return dynamic_cast<const ra::data::models::CodeNotesModel*>(FindAsset(ra::data::models::AssetType::CodeNotes, 0));
     }
 
     /// <summary>

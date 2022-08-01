@@ -561,7 +561,9 @@ std::wstring EmulatorContext::GetAppTitle(const std::string& sMessage) const
         builder.Append(pUserContext.GetDisplayName());
     }
 
-    const auto& sHostName = ra::services::ServiceLocator::Get<ra::services::IConfiguration>().GetHostName();
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    const auto& sHostName =
+        pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline) ? "OFFLINE": pConfiguration.GetHostName();
     if (sHostName != "retroachievements.org")
     {
         builder.Append(" [");

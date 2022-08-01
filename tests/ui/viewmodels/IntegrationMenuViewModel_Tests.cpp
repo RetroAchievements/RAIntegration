@@ -128,8 +128,20 @@ public:
 
         menu.BuildMenu();
 
-        menu.AssertMenuSize(1);
+        menu.AssertMenuSize(13);
         menu.AssertMenuItem(0, IDM_RA_FILES_LOGIN, L"&Login");
+        menu.AssertMenuSeparator(1);
+        menu.AssertMenuItem(2, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
+        menu.AssertMenuItem(3, IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
+        menu.AssertMenuSeparator(4);
+        menu.AssertMenuItem(5, IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
+        menu.AssertMenuItem(6, IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
+        menu.AssertMenuSeparator(7);
+        menu.AssertMenuItem(8, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        menu.AssertMenuItem(9, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        menu.AssertMenuItem(10, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        menu.AssertMenuItem(11, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        menu.AssertMenuItem(12, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
     }
 
     TEST_METHOD(TestBuildMenuLoggedIn)
@@ -159,6 +171,29 @@ public:
         menu.AssertMenuSeparator(16);
         menu.AssertMenuItem(17, IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
         menu.AssertMenuItem(18, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+    }
+
+    TEST_METHOD(TestBuildMenuOffline)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        menu.BuildMenu();
+
+        menu.AssertMenuSize(13);
+        menu.AssertMenuItem(0, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
+        menu.AssertMenuItem(1, IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
+        menu.AssertMenuSeparator(2);
+        menu.AssertMenuItem(3, IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
+        menu.AssertMenuItem(4, IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
+        menu.AssertMenuSeparator(5);
+        menu.AssertMenuItem(6, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        menu.AssertMenuItem(7, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        menu.AssertMenuItem(8, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        menu.AssertMenuItem(9, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        menu.AssertMenuItem(10, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        menu.AssertMenuSeparator(11);
+        menu.AssertMenuItem(12, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
     }
 
     TEST_METHOD(TestLoginHardcoreValidClient)

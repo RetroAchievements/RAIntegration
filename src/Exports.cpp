@@ -106,6 +106,8 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
 
     if (bOffline)
     {
+        ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>()
+            .SetFeatureEnabled(ra::services::Feature::Offline, true);
         ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().DisableLogin();
     }
     else

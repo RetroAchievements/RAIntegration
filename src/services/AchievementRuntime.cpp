@@ -37,6 +37,15 @@ void AchievementRuntime::ResetRuntime() noexcept
     }
 }
 
+void AchievementRuntime::ResetActiveAchievements() noexcept
+{
+    if (m_bInitialized)
+    {
+        rc_runtime_reset(&m_pRuntime);
+        RA_LOG_INFO("Runtime reset");
+    }
+}
+
 int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::string& sTrigger)
 {
     std::lock_guard<std::mutex> pLock(m_pMutex);

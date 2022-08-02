@@ -5,7 +5,9 @@
 #include "RA_Log.h"
 #include "RA_Resource.h"
 
+#include "api\IServer.hh"
 #include "api\Login.hh"
+#include "api\impl\OfflineServer.hh"
 
 #include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
@@ -113,6 +115,8 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
         ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>()
             .SetFeatureEnabled(ra::services::Feature::Offline, true);
         ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().DisableLogin();
+
+        ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<ra::api::impl::OfflineServer>());
     }
     else
     {

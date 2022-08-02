@@ -100,6 +100,15 @@ FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Req
     return response;
 }
 
+LatestClient::Response OfflineServer::LatestClient(const LatestClient::Request& request)
+{
+    // all versions are newer than 0.0.0.0, and are therefore valid/allowed
+    LatestClient::Response response;
+    response.LatestVersion = response.MinimumVersion = "0.0.0.0";
+    response.Result = ApiResult::Success;
+    return response;
+}
+
 } // namespace impl
 } // namespace api
 } // namespace ra

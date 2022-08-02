@@ -16,6 +16,8 @@ public:
 
     FetchGameData::Response FetchGameData(const FetchGameData::Request& request) override;
     FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override;
+
+    LatestClient::Response LatestClient(const LatestClient::Request& request) override;
 };
 
 } // namespace impl

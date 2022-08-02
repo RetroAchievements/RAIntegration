@@ -15,6 +15,7 @@
 
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
+#include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -24,6 +25,8 @@
 
 namespace ra {
 namespace services {
+
+static constexpr const wchar_t* KNOWN_HASHES_KEY = L"Hashes";
 
 unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
 {
@@ -53,9 +56,26 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sHash)
 {
     if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot load achievements",
-            L"You must be logged in to load achievements. Please reload the game after logging in.");
-        return 0U;
+        if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(
+                ra::services::Feature::Offline))
+        {
+            LoadKnownHashes(m_mKnownHashes);
+
+            if (m_mKnownHashes.find(sHash) == m_mKnownHashes.end())
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                    L"Cannot load achievements",
+                    L"This game was not previously identified and requires a connection to identify it.");
+                return 0U;
+            }
+        }
+        else
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                L"Cannot load achievements",
+                L"You must be logged in to load achievements. Please reload the game after logging in.");
+            return 0U;
+        }
     }
 
     unsigned int nGameId = 0U;
@@ -138,9 +158,14 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
     {
         if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
         {
-            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Cannot load achievements",
-                L"You must be logged in to load achievements. Please reload the game after logging in.");
-            return;
+            if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(
+                    ra::services::Feature::Offline))
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                    L"Cannot load achievements",
+                    L"You must be logged in to load achievements. Please reload the game after logging in.");
+                return;
+            }
         }
 
         RA_LOG_INFO("Loading game %u", nGameId);
@@ -212,6 +237,82 @@ void GameIdentifier::IdentifyAndActivateGame(const BYTE* pROM, size_t nROMSize)
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.SetGameTitle(sEstimatedGameTitle);
     }
+}
+
+static std::string CreateChecksum(const std::string sHash, unsigned nID)
+{
+    for (const char c : sHash)
+    {
+        nID *= (c >> 4);
+        nID ^= c;
+        nID ^= (nID >> 16);
+    }
+
+    std::string result;
+    result.push_back(((nID / 26) % 26) + 'A');
+    result.push_back((nID % 26) + 'A');
+    return result;
+}
+
+void GameIdentifier::LoadKnownHashes(std::map<std::string, unsigned>& mHashes)
+{
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pFile = pLocalStorage.ReadText(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY);
+    if (pFile != nullptr)
+    {
+        std::string sLine;
+        while (pFile->GetLine(sLine))
+        {
+            ra::Tokenizer pTokenizer(sLine);
+            auto sHash = pTokenizer.ReadTo('=');
+            pTokenizer.Advance(); // '='
+            auto nID = pTokenizer.ReadNumber();
+            pTokenizer.Advance(); // '|'
+            auto sChecksum = pTokenizer.ReadTo('\0');
+
+            if (sChecksum == CreateChecksum(sHash, nID))
+                mHashes[sHash] = nID;
+        }
+    }
+}
+
+void GameIdentifier::SaveKnownHashes(std::map<std::string, unsigned>& mHashes)
+{
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pFile = pLocalStorage.WriteText(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY);
+    if (pFile != nullptr)
+    {
+        std::string sLine;
+        for (const auto& pPair : mHashes)
+        {
+            const auto sChecksum = CreateChecksum(pPair.first, pPair.second);
+            sLine = ra::StringPrintf("%s=%u|%s", pPair.first, pPair.second, sChecksum);
+            pFile->WriteLine(sLine);
+        }
+    }
+}
+
+void GameIdentifier::SaveKnownHashes() const
+{
+    if (m_mKnownHashes.empty())
+        return;
+
+    bool bChanged = false;
+    std::map<std::string, unsigned> mHashes;
+    LoadKnownHashes(mHashes);
+
+    for (const auto& pPair : m_mKnownHashes)
+    {
+        const auto pIter = mHashes.find(pPair.first);
+        if (pIter == mHashes.end() || pIter->second != pPair.second)
+        {
+            mHashes[pPair.first] = pPair.second;
+            bChanged = true;
+        }
+    }
+
+    if (bChanged)
+        SaveKnownHashes(mHashes);
 }
 
 } // namespace services

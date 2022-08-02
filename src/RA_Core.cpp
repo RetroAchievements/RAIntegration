@@ -7,6 +7,7 @@
 #include "data\context\SessionTracker.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\GameIdentifier.hh"
 #include "services\IConfiguration.hh"
 #include "services\IThreadPool.hh"
 #include "services\Initialization.hh"
@@ -104,6 +105,12 @@ API int CCONV _RA_Shutdown()
 
         // notify the background threads as soon as possible so they start to wind down
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(false);
+
+        if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>()
+            .IsFeatureEnabled(ra::services::Feature::Offline))
+        {
+            ra::services::ServiceLocator::Get<ra::services::GameIdentifier>().SaveKnownHashes();
+        }
 
         ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
 

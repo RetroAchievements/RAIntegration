@@ -104,17 +104,18 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
     }
 #endif
 
+    // Set the client version and User-Agent string
+    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().SetClientVersion(sClientVer);
+
     if (bOffline)
     {
+        RA_LOG_INFO("Initializing offline mode");
         ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>()
             .SetFeatureEnabled(ra::services::Feature::Offline, true);
         ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().DisableLogin();
     }
     else
     {
-        // Set the client version and User-Agent string
-        ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().SetClientVersion(sClientVer);
-
         // validate version (async call)
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]
         {

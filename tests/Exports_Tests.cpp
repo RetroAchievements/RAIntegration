@@ -971,8 +971,20 @@ private:
         ra::data::context::mocks::MockUserContext mockUserContext;
 
         RA_MenuItem menu[32];
-        Assert::AreEqual(1, _RA_GetPopupMenuItems(menu));
+        Assert::AreEqual(13, _RA_GetPopupMenuItems(menu));
         AssertMenuItem(&menu[0], IDM_RA_FILES_LOGIN, L"&Login");
+        AssertMenuItem(&menu[1], 0, nullptr);
+        AssertMenuItem(&menu[2], IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
+        AssertMenuItem(&menu[3], IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
+        AssertMenuItem(&menu[4], 0, nullptr);
+        AssertMenuItem(&menu[5], IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
+        AssertMenuItem(&menu[6], IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
+        AssertMenuItem(&menu[7], 0, nullptr);
+        AssertMenuItem(&menu[8], IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        AssertMenuItem(&menu[9], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        AssertMenuItem(&menu[10], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        AssertMenuItem(&menu[11], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        AssertMenuItem(&menu[12], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
     }
 
     TEST_METHOD(TestGetPopupMenuItemsLoggedIn)

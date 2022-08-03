@@ -239,21 +239,6 @@ void GameIdentifier::IdentifyAndActivateGame(const BYTE* pROM, size_t nROMSize)
     }
 }
 
-static std::string CreateChecksum(const std::string sHash, unsigned nID)
-{
-    for (const char c : sHash)
-    {
-        nID *= (c >> 4);
-        nID ^= c;
-        nID ^= (nID >> 16);
-    }
-
-    std::string result;
-    result.push_back(((nID / 26) % 26) + 'A');
-    result.push_back((nID % 26) + 'A');
-    return result;
-}
-
 void GameIdentifier::LoadKnownHashes(std::map<std::string, unsigned>& mHashes)
 {
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
@@ -265,13 +250,12 @@ void GameIdentifier::LoadKnownHashes(std::map<std::string, unsigned>& mHashes)
         {
             ra::Tokenizer pTokenizer(sLine);
             auto sHash = pTokenizer.ReadTo('=');
-            pTokenizer.Advance(); // '='
-            auto nID = pTokenizer.ReadNumber();
-            pTokenizer.Advance(); // '|'
-            auto sChecksum = pTokenizer.ReadTo('\0');
-
-            if (sChecksum == CreateChecksum(sHash, nID))
+            if (sHash.length() == 32)
+            {
+                pTokenizer.Advance(); // '='
+                auto nID = pTokenizer.ReadNumber();
                 mHashes[sHash] = nID;
+            }
         }
     }
 }
@@ -285,8 +269,7 @@ void GameIdentifier::SaveKnownHashes(std::map<std::string, unsigned>& mHashes)
         std::string sLine;
         for (const auto& pPair : mHashes)
         {
-            const auto sChecksum = CreateChecksum(pPair.first, pPair.second);
-            sLine = ra::StringPrintf("%s=%u|%s", pPair.first, pPair.second, sChecksum);
+            sLine = ra::StringPrintf("%s=%u", pPair.first, pPair.second);
             pFile->WriteLine(sLine);
         }
     }

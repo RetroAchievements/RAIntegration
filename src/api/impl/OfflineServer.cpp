@@ -29,6 +29,22 @@ Logout::Response OfflineServer::Logout(const Logout::Request&) noexcept
     return response;
 }
 
+AwardAchievement::Response OfflineServer::AwardAchievement(const AwardAchievement::Request&) noexcept
+{
+    AwardAchievement::Response response;
+    response.Result = ApiResult::Failed;
+    response.ErrorMessage = "Achievements are not actually unlocked in offline mode";
+    return response;
+}
+
+SubmitLeaderboardEntry::Response OfflineServer::SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request&) noexcept
+{
+    SubmitLeaderboardEntry::Response response;
+    response.Result = ApiResult::Failed;
+    response.ErrorMessage = "Leaderboard entries are not actually submitted in offline mode";
+    return response;
+}
+
 FetchGameData::Response OfflineServer::FetchGameData(const FetchGameData::Request& request)
 {
     FetchGameData::Response response;
@@ -100,7 +116,7 @@ FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Req
     return response;
 }
 
-LatestClient::Response OfflineServer::LatestClient(const LatestClient::Request& request)
+LatestClient::Response OfflineServer::LatestClient(const LatestClient::Request&)
 {
     // all versions are newer than 0.0.0.0, and are therefore valid/allowed
     LatestClient::Response response;

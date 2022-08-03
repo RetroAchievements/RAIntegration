@@ -112,9 +112,16 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
     if (bOffline)
     {
         RA_LOG_INFO("Initializing offline mode");
-        ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>()
-            .SetFeatureEnabled(ra::services::Feature::Offline, true);
-        ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().DisableLogin();
+        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+        pConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+        const auto& sUsername = pConfiguration.GetUsername();
+        if (sUsername.empty())
+            pUserContext.Initialize("Player", "Player", "");
+        else
+            pUserContext.Initialize(sUsername, sUsername, "");
+        pUserContext.DisableLogin();
 
         ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<ra::api::impl::OfflineServer>());
     }
@@ -745,10 +752,14 @@ API int CCONV _RA_CaptureState(char* pBuffer, int nBufferSize)
 
 static bool CanRestoreState()
 {
-    if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
-        return false;
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
-    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+    if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
+    {
+        if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
+            return false;
+    }
+
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
         // save state is being allowed by app (user should have been warned!)

@@ -13,6 +13,8 @@ public:
 
     Login::Response Login(const Login::Request& request) override;
     Logout::Response Logout(const Logout::Request&) noexcept override;
+    AwardAchievement::Response AwardAchievement(const AwardAchievement::Request&) noexcept override;
+    SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request&) noexcept override;
 
     FetchGameData::Response FetchGameData(const FetchGameData::Request& request) override;
     FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override;

@@ -6,6 +6,7 @@
 #include "data\context\GameContext.hh"
 
 #include "services\IAudioSystem.hh"
+#include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
@@ -339,15 +340,16 @@ void MemoryInspectorViewModel::OnActiveGameChanged()
         SetWindowTitle(L"Memory Inspector [no game loaded]");
         SetValue(CanModifyNotesProperty, false);
     }
-    else if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
-    {
-        SetWindowTitle(L"Memory Inspector [compatibility mode]");
-        SetValue(CanModifyNotesProperty, true);
-    }
     else
     {
-        SetWindowTitle(L"Memory Inspector");
-        SetValue(CanModifyNotesProperty, true);
+        if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
+            SetWindowTitle(L"Memory Inspector [compatibility mode]");
+        else
+            SetWindowTitle(L"Memory Inspector");
+
+        const bool bOffline = ra::services::ServiceLocator::Get<ra::services::IConfiguration>().
+            IsFeatureEnabled(ra::services::Feature::Offline);
+        SetValue(CanModifyNotesProperty, !bOffline);
     }
 
     SetValue(IsCurrentAddressNoteEditableProperty, CanModifyNotes());

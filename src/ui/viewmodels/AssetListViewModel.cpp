@@ -635,6 +635,9 @@ void AssetListViewModel::DoUpdateButtons()
     gsl::index nRichPresenceSelectionIndex = -1;
     bool bHasNonRichPresenceSelection = false;
 
+    const bool bOffline = ra::services::ServiceLocator::Get<ra::services::IConfiguration>().
+        IsFeatureEnabled(ra::services::Feature::Offline);
+
     const bool bGameLoaded = (GetGameId() != 0);
     if (!bGameLoaded)
     {
@@ -788,17 +791,17 @@ void AssetListViewModel::DoUpdateButtons()
     else if (bHasUnpublishedSelection)
     {
         SetValue(SaveButtonTextProperty, L"Publi&sh");
-        SetValue(CanSaveProperty, true);
+        SetValue(CanSaveProperty, !bOffline);
     }
     else if (bHasUnofficialSelection)
     {
         SetValue(SaveButtonTextProperty, L"Pro&mote");
-        SetValue(CanSaveProperty, true);
+        SetValue(CanSaveProperty, !bOffline);
     }
     else if (bHasCoreSelection)
     {
         SetValue(SaveButtonTextProperty, L"De&mote");
-        SetValue(CanSaveProperty, true);
+        SetValue(CanSaveProperty, !bOffline);
     }
     else if (bHasSelection)
     {
@@ -813,12 +816,12 @@ void AssetListViewModel::DoUpdateButtons()
     else if (bHasUnpublished)
     {
         SetValue(SaveButtonTextProperty, L"Publi&sh All");
-        SetValue(CanSaveProperty, true);
+        SetValue(CanSaveProperty, !bOffline);
     }
     else if (bHasUnofficial)
     {
         SetValue(SaveButtonTextProperty, L"Pro&mote All");
-        SetValue(CanSaveProperty, true);
+        SetValue(CanSaveProperty, !bOffline);
     }
     else
     {

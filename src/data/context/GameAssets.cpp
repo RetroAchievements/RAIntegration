@@ -399,6 +399,9 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
             case ra::data::models::AssetType::Leaderboard:
                 pData->Write("L");
                 break;
+
+            case ra::data::models::AssetType::RichPresence:
+                continue;
         }
 
         pData->Write(std::to_string(pItem->GetID()));

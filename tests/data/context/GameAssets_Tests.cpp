@@ -7,6 +7,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 
@@ -28,6 +29,7 @@ public:
     {
     public:
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
 
         GameAssetsHarness() noexcept
@@ -159,6 +161,19 @@ public:
         ra::data::models::LocalBadgesModel& GetLocalBadgesModel()
         {
             return *(dynamic_cast<ra::data::models::LocalBadgesModel*>(FindAsset(ra::data::models::AssetType::LocalBadges, 0)));
+        }
+
+        void AddRichPresenceModel()
+        {
+            auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
+            pRichPresence->CreateServerCheckpoint();
+            pRichPresence->CreateLocalCheckpoint();
+            Append(std::move(pRichPresence));
+        }
+
+        ra::data::models::RichPresenceModel& GetRichPresenceModel()
+        {
+            return *(dynamic_cast<ra::data::models::RichPresenceModel*>(FindAsset(ra::data::models::AssetType::RichPresence, 0)));
         }
     };
 
@@ -656,6 +671,25 @@ public:
         Assert::AreEqual(ValueFormat::Minutes, pAsset2->GetValueFormat());
         Assert::AreEqual(AssetCategory::Local, pAsset->GetCategory());
         Assert::AreEqual(AssetChanges::Unpublished, pAsset2->GetChanges());
+    }
+
+    TEST_METHOD(TestSaveUnpublishedRichPresence)
+    {
+        GameAssetsHarness gameAssets;
+        gameAssets.AddAchievement(AssetCategory::Local, 5, L"Ach2", L"Desc2", L"22222", "2=2");
+        gameAssets.AddRichPresenceModel();
+
+        auto& pRichPresence = gameAssets.GetRichPresenceModel();
+        pRichPresence.SetScript("Display:\nThe Best!");
+        pRichPresence.UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pRichPresence.GetChanges());
+
+        gameAssets.SaveAllAssets();
+
+        const auto& sExpected = ra::StringPrintf(
+            "0.0.0.0\nGameName\n%u:\"2=2\":Ach2:Desc2::::Auth2:5:::::22222\n",
+            GameAssets::FirstLocalId);
+        Assert::AreEqual(sExpected, gameAssets.GetUserFile());
     }
 };
 

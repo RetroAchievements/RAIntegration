@@ -82,6 +82,31 @@ API void CCONV _RA_UpdateHWnd(HWND hMainHWND)
 }
 #endif
 
+static void InitializeOfflineMode()
+{
+    RA_LOG_INFO("Initializing offline mode");
+    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+    pConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+    ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<ra::api::impl::OfflineServer>());
+
+    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+    const auto& sUsername = pConfiguration.GetUsername();
+    if (sUsername.empty())
+    {
+        pUserContext.Initialize("Player", "Player", "");
+    }
+    else
+    {
+        pUserContext.Initialize(sUsername, sUsername, "");
+
+        auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
+        pSessionTracker.Initialize(sUsername);
+    }
+
+    pUserContext.DisableLogin();
+}
+
 static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEmulatorID,
     [[maybe_unused]] const char* sClientName, const char* sClientVer, bool bOffline)
 {
@@ -111,19 +136,7 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
 
     if (bOffline)
     {
-        RA_LOG_INFO("Initializing offline mode");
-        auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-        pConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
-
-        auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-        const auto& sUsername = pConfiguration.GetUsername();
-        if (sUsername.empty())
-            pUserContext.Initialize("Player", "Player", "");
-        else
-            pUserContext.Initialize(sUsername, sUsername, "");
-        pUserContext.DisableLogin();
-
-        ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<ra::api::impl::OfflineServer>());
+        InitializeOfflineMode();
     }
     else
     {

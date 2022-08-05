@@ -555,10 +555,11 @@ std::wstring EmulatorContext::GetAppTitle(const std::string& sMessage) const
     }
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    if (pUserContext.IsLoggedIn())
+    const auto& sDisplayName = pUserContext.GetDisplayName();
+    if (!sDisplayName.empty())
     {
         builder.Append(" - ");
-        builder.Append(pUserContext.GetDisplayName());
+        builder.Append(sDisplayName);
     }
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();

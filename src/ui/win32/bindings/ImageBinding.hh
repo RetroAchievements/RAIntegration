@@ -66,12 +66,12 @@ private:
     {
         if (m_hWnd)
         {
+            // load the image or placeholder
+            UpdateImage();
+
+            // if it's the placeholder, request the actual image
             auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-            if (pImageRepository.IsImageAvailable(m_pImageReference.Type(), m_pImageReference.Name()))
-            {
-                UpdateImage();
-            }
-            else
+            if (!pImageRepository.IsImageAvailable(m_pImageReference.Type(), m_pImageReference.Name()))
             {
                 pImageRepository.AddNotifyTarget(*this);
                 pImageRepository.FetchImage(m_pImageReference.Type(), m_pImageReference.Name());

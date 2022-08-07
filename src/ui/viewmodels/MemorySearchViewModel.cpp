@@ -1144,36 +1144,43 @@ void MemorySearchViewModel::ExportResults() const
 
 void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile) const
 {
+    const auto& pResults = m_vSearchResults.at(m_nSelectedSearchResult).pResults;
     const auto& pCompareResults = m_vSearchResults.at(m_nSelectedSearchResult - 1).pResults;
     const auto& pInitialResults = m_vSearchResults.front().pResults;
+    ra::services::SearchResults::Result pResult;
 
     sFile.WriteLine("Address,Value,PreviousValue,InitialValue");
 
     if (pCompareResults.GetSize() == MemSize::Nibble_Lower)
     {
-        for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vResults.Count(); ++nIndex)
+        for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < pResults.MatchingAddressCount(); ++nIndex)
         {
-            const auto& vmResult = *m_vResults.GetItemAt(nIndex);
+            if (!pResults.GetMatchingAddress(nIndex, pResult))
+                continue;
 
-            const auto nSize = (vmResult.nAddress & 1) ? MemSize::Nibble_Upper : MemSize::Nibble_Lower;
-            const auto nAddress = vmResult.nAddress >> 1;
+            const auto nSize = (pResult.nAddress & 1) ? MemSize::Nibble_Upper : MemSize::Nibble_Lower;
+            const auto nAddress = pResult.nAddress >> 1;
 
-            sFile.WriteLine(ra::StringPrintf(L"%s,%s,%s,%s", vmResult.GetAddress(), vmResult.GetCurrentValue(),
-                                             pCompareResults.GetFormattedValue(nAddress, nSize),
-                                             pInitialResults.GetFormattedValue(nAddress, nSize)));
+            sFile.WriteLine(ra::StringPrintf(L"%s%s,%s,%s,%s",
+                ra::ByteAddressToString(nAddress), (pResult.nAddress & 1) ? "U" : "L",
+                pResults.GetFormattedValue(nAddress, nSize), pCompareResults.GetFormattedValue(nAddress, nSize),
+                pInitialResults.GetFormattedValue(nAddress, nSize)));
         }
     }
     else
     {
         const auto nSize = pCompareResults.GetSize();
 
-        for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vResults.Count(); ++nIndex)
+        for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < pResults.MatchingAddressCount(); ++nIndex)
         {
-            const auto& vmResult = *m_vResults.GetItemAt(nIndex);
-            const auto nAddress = vmResult.nAddress;
-            sFile.WriteLine(ra::StringPrintf(L"%s,%s,%s,%s", vmResult.GetAddress(), vmResult.GetCurrentValue(),
-                                             pCompareResults.GetFormattedValue(nAddress, nSize),
-                                             pInitialResults.GetFormattedValue(nAddress, nSize)));
+            if (!pResults.GetMatchingAddress(nIndex, pResult))
+                continue;
+
+            const auto nAddress = pResult.nAddress;
+            sFile.WriteLine(ra::StringPrintf(L"%s,%s,%s,%s",
+                ra::ByteAddressToString(nAddress), pResults.GetFormattedValue(nAddress, nSize),
+                pCompareResults.GetFormattedValue(nAddress, nSize),
+                pInitialResults.GetFormattedValue(nAddress, nSize)));
         }
     }
 }

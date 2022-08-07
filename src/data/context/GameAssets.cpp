@@ -77,10 +77,20 @@ bool GameAssets::HasCoreAssets() const
 
                 default:
                     // Core, Bonus, or something else that's been published
-                    if (pAsset->GetType() == ra::data::models::AssetType::RichPresence)
-                        break;
 
-                    return true;
+                    // we really only care about published achievements and
+                    // leaderboards. if a set only has published rich presence
+                    // or code notes, don't consider it a published set.
+                    switch (pAsset->GetType())
+                    {
+                        case ra::data::models::AssetType::Achievement:
+                        case ra::data::models::AssetType::Leaderboard:
+                            return true;
+
+                        default:
+                            break;
+                    }
+                    break;
             }
         }
     }

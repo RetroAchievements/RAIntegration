@@ -4,8 +4,10 @@
 #include "data\context\EmulatorContext.hh"
 
 #include "services\IClock.hh"
+#include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -1106,6 +1108,74 @@ void MemorySearchViewModel::BookmarkSelected()
 
     if (nCount == 100)
         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"Can only create 100 new bookmarks at a time.");
+}
+
+void MemorySearchViewModel::ExportResults() const
+{
+    if (m_vResults.Count() == 0 || m_nSelectedSearchResult == 0)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Nothing to export");
+        return;
+    }
+
+    ra::ui::viewmodels::FileDialogViewModel vmFileDialog;
+    vmFileDialog.SetWindowTitle(L"Export Search Results");
+    vmFileDialog.AddFileType(L"CSV File", L"*.csv");
+    vmFileDialog.SetDefaultExtension(L"csv");
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-SearchResults.csv", pGameContext.GameId()));
+
+    if (vmFileDialog.ShowSaveFileDialog() == ra::ui::DialogResult::OK)
+    {
+        const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+        auto pTextWriter = pFileSystem.CreateTextFile(vmFileDialog.GetFileName());
+        if (pTextWriter == nullptr)
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                ra::StringPrintf(L"Could not create %s", vmFileDialog.GetFileName()));
+        }
+        else
+        {
+            SaveResults(*pTextWriter);
+        }
+    }
+}
+
+void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile) const
+{
+    const auto& pCompareResults = m_vSearchResults.at(m_nSelectedSearchResult - 1).pResults;
+    const auto& pInitialResults = m_vSearchResults.front().pResults;
+
+    sFile.WriteLine("Address,Value,PreviousValue,InitialValue");
+
+    if (pCompareResults.GetSize() == MemSize::Nibble_Lower)
+    {
+        for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vResults.Count(); ++nIndex)
+        {
+            const auto& vmResult = *m_vResults.GetItemAt(nIndex);
+
+            const auto nSize = (vmResult.nAddress & 1) ? MemSize::Nibble_Upper : MemSize::Nibble_Lower;
+            const auto nAddress = vmResult.nAddress >> 1;
+
+            sFile.WriteLine(ra::StringPrintf(L"%s,%s,%s,%s", vmResult.GetAddress(), vmResult.GetCurrentValue(),
+                                             pCompareResults.GetFormattedValue(nAddress, nSize),
+                                             pInitialResults.GetFormattedValue(nAddress, nSize)));
+        }
+    }
+    else
+    {
+        const auto nSize = pCompareResults.GetSize();
+
+        for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vResults.Count(); ++nIndex)
+        {
+            const auto& vmResult = *m_vResults.GetItemAt(nIndex);
+            const auto nAddress = vmResult.nAddress;
+            sFile.WriteLine(ra::StringPrintf(L"%s,%s,%s,%s", vmResult.GetAddress(), vmResult.GetCurrentValue(),
+                                             pCompareResults.GetFormattedValue(nAddress, nSize),
+                                             pInitialResults.GetFormattedValue(nAddress, nSize)));
+        }
+    }
 }
 
 } // namespace viewmodels

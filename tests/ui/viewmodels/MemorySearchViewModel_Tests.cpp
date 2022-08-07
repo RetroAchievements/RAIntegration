@@ -1,5 +1,6 @@
 #include "CppUnitTest.h"
 
+#include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MemorySearchViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
@@ -10,6 +11,7 @@
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
@@ -90,6 +92,7 @@ private:
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::services::mocks::MockFileSystem mockFileSystem;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
@@ -1807,6 +1810,152 @@ public:
         search.memory.at(4) = 'A';
         search.DoFrame();
         Assert::AreEqual(std::wstring(L"0x0002\nNEAT | Current\nNEXT | Last Filter\nTEST | Initial"), search.GetTooltip(vmResult2));
+    }
+
+    TEST_METHOD(TestExportResults)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockGameContext.SetGameId(3);
+        search.InitializeMemory();
+        search.BeginNewSearch();
+
+        search.SetComparisonType(ComparisonType::NotEqualTo);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
+        search.memory.at(5) = 8;
+        search.memory.at(12) = 9;
+
+        search.ApplyFilter();
+        Assert::AreEqual({2U}, search.Results().Count());
+        AssertRow(search, 0, 5U, L"0x0005", L"0x08");
+        AssertRow(search, 1, 12U, L"0x000c", L"0x09");
+
+        search.memory.at(5) = 5;
+        search.memory.at(12) = 7;
+        search.ApplyFilter();
+        Assert::AreEqual({2U}, search.Results().Count());
+        AssertRow(search, 0, 5U, L"0x0005", L"0x05");
+        AssertRow(search, 1, 12U, L"0x000c", L"0x07");
+
+        bool bDialogSeen = false;
+        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog) {
+                bDialogSeen = true;
+
+                Assert::AreEqual(std::wstring(L"Export Search Results"), vmFileDialog.GetWindowTitle());
+                Assert::AreEqual({1U}, vmFileDialog.GetFileTypes().size());
+                Assert::AreEqual(std::wstring(L"csv"), vmFileDialog.GetDefaultExtension());
+                Assert::AreEqual(std::wstring(L"3-SearchResults.csv"), vmFileDialog.GetFileName());
+
+                vmFileDialog.SetFileName(L"E:\\Data\\3-SearchResults.csv");
+
+                return DialogResult::OK;
+            });
+
+        search.ExportResults();
+
+        Assert::IsTrue(bDialogSeen);
+        const std::string& sContents = search.mockFileSystem.GetFileContents(L"E:\\Data\\3-SearchResults.csv");
+        Assert::AreEqual(std::string("Address,Value,PreviousValue,InitialValue\n0x0005,0x05,0x08,0x05\n0x000c,0x07,0x09,0x0c\n"),
+                         sContents);
+    }
+
+    TEST_METHOD(TestExportResultsCancel)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockGameContext.SetGameId(3);
+        search.InitializeMemory();
+        search.BeginNewSearch();
+
+        search.SetComparisonType(ComparisonType::NotEqualTo);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
+        search.memory.at(12) = 9;
+
+        search.ApplyFilter();
+        Assert::AreEqual({1U}, search.Results().Count());
+        AssertRow(search, 0, 12U, L"0x000c", L"0x09");
+
+        search.memory.at(12) = 7;
+        search.ApplyFilter();
+        Assert::AreEqual({1U}, search.Results().Count());
+        AssertRow(search, 0, 12U, L"0x000c", L"0x07");
+
+        bool bDialogSeen = false;
+        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog) {
+                bDialogSeen = true;
+
+                Assert::AreEqual(std::wstring(L"Export Search Results"), vmFileDialog.GetWindowTitle());
+                Assert::AreEqual({1U}, vmFileDialog.GetFileTypes().size());
+                Assert::AreEqual(std::wstring(L"csv"), vmFileDialog.GetDefaultExtension());
+                Assert::AreEqual(std::wstring(L"3-SearchResults.csv"), vmFileDialog.GetFileName());
+
+                vmFileDialog.SetFileName(L"E:\\Data\\3-SearchResults.csv");
+
+                return DialogResult::Cancel;
+            });
+
+        search.ExportResults();
+
+        Assert::IsTrue(bDialogSeen);
+        const std::string& sContents = search.mockFileSystem.GetFileContents(L"E:\\Data\\3-SearchResults.csv");
+        Assert::AreEqual(std::string(), sContents);
+    }
+
+    TEST_METHOD(TestExportResultsNone)
+    {
+        MemorySearchViewModelHarness search;
+        search.mockGameContext.SetGameId(3);
+        search.InitializeMemory();
+
+        bool bMessageSeen = false;
+        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+                bMessageSeen = true;
+                Assert::AreEqual(std::wstring(L"Nothing to export"), vmMessageBox.GetMessage());
+                return ra::ui::DialogResult::OK;
+            });
+
+        bool bDialogSeen = false;
+        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel&) {
+                bDialogSeen = true;
+                return DialogResult::Cancel;
+            });
+
+        // search not started
+        search.ExportResults();
+
+        Assert::IsTrue(bMessageSeen);
+        Assert::IsFalse(bDialogSeen);
+        bMessageSeen = false;
+
+        // start search. no filter applied. no results
+        search.BeginNewSearch();
+
+        search.ExportResults();
+        Assert::IsTrue(bMessageSeen);
+        Assert::IsFalse(bDialogSeen);
+        bMessageSeen = false;
+
+        // filter applied. one result
+        search.memory.at(12) = 9;
+        search.SetComparisonType(ComparisonType::NotEqualTo);
+        search.SetValueType(ra::services::SearchFilterType::LastKnownValue);
+        search.ApplyFilter();
+        Assert::AreEqual({1U}, search.Results().Count());
+
+        search.ExportResults();
+        Assert::IsFalse(bMessageSeen);
+        Assert::IsTrue(bDialogSeen);
+        bDialogSeen = false;
+
+        // filter applied again. no results remaining
+        search.ApplyFilter();
+        Assert::AreEqual({0U}, search.Results().Count());
+
+        search.ExportResults();
+        Assert::IsTrue(bMessageSeen);
+        Assert::IsFalse(bDialogSeen);
     }
 };
 

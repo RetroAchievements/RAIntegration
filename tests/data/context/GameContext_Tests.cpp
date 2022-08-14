@@ -2780,6 +2780,12 @@ public:
         game.SetMode(GameContext::Mode::Normal);
         Assert::AreEqual(GameContext::Mode::Normal, game.GetMode());
         Assert::IsTrue(notifyHarness.m_bNotified);
+
+        // not changing mode should not notify again
+        notifyHarness.m_bNotified = false;
+        game.SetMode(GameContext::Mode::Normal);
+        Assert::AreEqual(GameContext::Mode::Normal, game.GetMode());
+        Assert::IsFalse(notifyHarness.m_bNotified);
     }
 };
 

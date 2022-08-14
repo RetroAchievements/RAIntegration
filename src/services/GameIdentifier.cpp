@@ -56,8 +56,8 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sHash)
 {
     if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
     {
-        if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(
-                ra::services::Feature::Offline))
+        if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().
+                IsFeatureEnabled(ra::services::Feature::Offline))
         {
             LoadKnownHashes(m_mKnownHashes);
 
@@ -158,8 +158,8 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
     {
         if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
         {
-            if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(
-                    ra::services::Feature::Offline))
+            if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().
+                    IsFeatureEnabled(ra::services::Feature::Offline))
             {
                 ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
                     L"Cannot load achievements",

@@ -33,6 +33,7 @@ public:
     void Logout() noexcept override
     {
         m_sUsername.clear();
+        m_sDisplayName.clear();
         m_sApiToken.clear();
         m_nScore = 0U;
     }

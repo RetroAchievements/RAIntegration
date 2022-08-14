@@ -26,6 +26,7 @@ void UserContext::Logout()
     if (response.Succeeded())
     {
         m_sUsername.clear();
+        m_sDisplayName.clear();
         m_sApiToken.clear();
         m_nScore = 0U;
 

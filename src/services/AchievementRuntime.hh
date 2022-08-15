@@ -239,7 +239,7 @@ public:
     /// <summary>
     /// Resets any active achievements and disables them until their triggers are false.
     /// </summary>
-    void ResetActiveAchievements() noexcept;
+    void ResetActiveAchievements();
 
     void InvalidateAddress(ra::ByteAddress nAddress) noexcept;
 

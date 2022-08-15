@@ -29,7 +29,7 @@ Logout::Response OfflineServer::Logout(const Logout::Request&) noexcept
     return response;
 }
 
-AwardAchievement::Response OfflineServer::AwardAchievement(const AwardAchievement::Request&) noexcept
+AwardAchievement::Response OfflineServer::AwardAchievement(const AwardAchievement::Request&)
 {
     AwardAchievement::Response response;
     response.Result = ApiResult::Failed;
@@ -37,7 +37,7 @@ AwardAchievement::Response OfflineServer::AwardAchievement(const AwardAchievemen
     return response;
 }
 
-SubmitLeaderboardEntry::Response OfflineServer::SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request&) noexcept
+SubmitLeaderboardEntry::Response OfflineServer::SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request&)
 {
     SubmitLeaderboardEntry::Response response;
     response.Result = ApiResult::Failed;

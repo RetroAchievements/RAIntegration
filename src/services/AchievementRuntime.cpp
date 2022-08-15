@@ -37,7 +37,8 @@ void AchievementRuntime::ResetRuntime() noexcept
     }
 }
 
-void AchievementRuntime::ResetActiveAchievements() noexcept
+GSL_SUPPRESS_F6
+void AchievementRuntime::ResetActiveAchievements()
 {
     if (m_bInitialized)
     {

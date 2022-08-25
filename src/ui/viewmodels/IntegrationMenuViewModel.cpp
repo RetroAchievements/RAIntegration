@@ -26,26 +26,48 @@ namespace viewmodels {
 
 void IntegrationMenuViewModel::BuildMenu(LookupItemViewModelCollection& vmMenu)
 {
-    if (ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    if (pUserContext.IsLoggedIn())
         BuildMenuLoggedIn(vmMenu);
-    else
+    else if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(ra::services::Feature::Offline))
+        BuildMenuOffline(vmMenu);
+    else if (!pUserContext.IsLoginDisabled())
         BuildMenuLoggedOut(vmMenu);
+    else
+        BuildMenuOffline(vmMenu);
 }
 
 void IntegrationMenuViewModel::BuildMenuLoggedOut(LookupItemViewModelCollection& vmMenu)
 {
     vmMenu.Add(IDM_RA_FILES_LOGIN, L"&Login");
+    vmMenu.Add(0, L"-----");
+    AddCommonMenuItems(vmMenu);
 }
 
 void IntegrationMenuViewModel::BuildMenuLoggedIn(LookupItemViewModelCollection& vmMenu)
 {
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-
     vmMenu.Add(IDM_RA_FILES_LOGOUT, L"Log&out");
     vmMenu.Add(0, L"-----");
     vmMenu.Add(IDM_RA_OPENUSERPAGE, L"Open my &User Page");
     vmMenu.Add(IDM_RA_OPENGAMEPAGE, L"Open this &Game's Page");
     vmMenu.Add(0, L"-----");
+    AddCommonMenuItems(vmMenu);
+    vmMenu.Add(0, L"-----");
+    vmMenu.Add(IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
+    vmMenu.Add(IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+}
+
+void IntegrationMenuViewModel::BuildMenuOffline(LookupItemViewModelCollection& vmMenu)
+{
+    AddCommonMenuItems(vmMenu);
+    vmMenu.Add(0, L"-----");
+    vmMenu.Add(IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+}
+
+void IntegrationMenuViewModel::AddCommonMenuItems(LookupItemViewModelCollection& vmMenu)
+{
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+
     vmMenu.Add(IDM_RA_HARDCORE_MODE, L"&Hardcore Mode").SetSelected(pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
     vmMenu.Add(IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning").SetSelected(pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning));
     vmMenu.Add(0, L"-----");
@@ -57,9 +79,6 @@ void IntegrationMenuViewModel::BuildMenuLoggedIn(LookupItemViewModelCollection& 
     vmMenu.Add(IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
     vmMenu.Add(IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
     vmMenu.Add(IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
-    vmMenu.Add(0, L"-----");
-    vmMenu.Add(IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
-    vmMenu.Add(IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
 }
 
 void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)

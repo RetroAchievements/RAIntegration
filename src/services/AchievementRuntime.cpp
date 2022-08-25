@@ -37,6 +37,16 @@ void AchievementRuntime::ResetRuntime() noexcept
     }
 }
 
+GSL_SUPPRESS_F6
+void AchievementRuntime::ResetActiveAchievements()
+{
+    if (m_bInitialized)
+    {
+        rc_runtime_reset(&m_pRuntime);
+        RA_LOG_INFO("Runtime reset");
+    }
+}
+
 int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::string& sTrigger)
 {
     std::lock_guard<std::mutex> pLock(m_pMutex);
@@ -804,10 +814,6 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
     if (sLoadStateFilename == nullptr)
         return false;
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    if (!pUserContext.IsLoggedIn())
-        return false;
-
     std::wstring sAchievementStateFile = ra::Widen(sLoadStateFilename) + L".rap";
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     auto pFile = pFileSystem.OpenTextFile(sAchievementStateFile);
@@ -879,10 +885,6 @@ bool AchievementRuntime::LoadProgressFromBuffer(const char* pBuffer)
     // reset the runtime state, then apply state from file
     rc_runtime_reset(&m_pRuntime);
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    if (!pUserContext.IsLoggedIn())
-        return false;
-
     const unsigned char* pBytes;
     GSL_SUPPRESS_TYPE1 pBytes = reinterpret_cast<const unsigned char*>(pBuffer);
     if (rc_runtime_deserialize_progress(&m_pRuntime, pBytes, nullptr) == RC_OK)
@@ -898,8 +900,7 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
     if (sSaveStateFilename == nullptr)
         return;
 
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    if (!pUserContext.IsLoggedIn())
+    if (!m_bInitialized)
         return;
 
     std::wstring sAchievementStateFile = ra::Widen(sSaveStateFilename) + L".rap";
@@ -923,8 +924,7 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
 
 int AchievementRuntime::SaveProgressToBuffer(char* pBuffer, int nBufferSize) const
 {
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    if (!pUserContext.IsLoggedIn())
+    if (!m_bInitialized)
         return 0;
 
     std::lock_guard<std::mutex> pLock(m_pMutex);

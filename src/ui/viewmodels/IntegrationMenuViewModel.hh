@@ -18,6 +18,8 @@ public:
 private:
     static void BuildMenuLoggedIn(LookupItemViewModelCollection& vmMenu);
     static void BuildMenuLoggedOut(LookupItemViewModelCollection& vmMenu);
+    static void BuildMenuOffline(LookupItemViewModelCollection& vmMenu);
+    static void AddCommonMenuItems(LookupItemViewModelCollection& vmMenu);
 
     static void Login();
     static void Logout();

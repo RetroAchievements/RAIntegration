@@ -528,6 +528,12 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
         bSubmit = false;
     }
 
+    if (bSubmit && pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
+    {
+        vmPopup->SetTitle(L"Offline Achievement Unlocked");
+        bSubmit = false;
+    }
+
     int nPopupId = -1;
 
     ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
@@ -777,6 +783,11 @@ void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int n
         else if (pEmulatorContext.IsMemoryInsecure())
         {
             vmPopup->SetErrorDetail(L"Error: RAM insecure");
+            bSubmit = false;
+        }
+        else if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
+        {
+            vmPopup->SetDetail(L"Leaderboards are not submitted in offline mode.");
             bSubmit = false;
         }
     }

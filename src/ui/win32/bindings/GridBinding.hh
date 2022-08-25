@@ -74,6 +74,7 @@ public:
     virtual void EnsureVisible(gsl::index nIndex) noexcept(false);
 
 protected:
+    void SuspendRedraw() noexcept;
     void UpdateLayout();
     virtual void UpdateAllItems();
     virtual void UpdateItems(gsl::index nColumn);
@@ -109,7 +110,6 @@ protected:
 private:
     void UpdateRow(gsl::index nIndex, bool bExisting);
     void UpdateSelectedItemStates();
-    void SuspendRedraw() noexcept;
 
     bool m_bShowGridLines = false;
     bool m_bHasScrollbar = false;

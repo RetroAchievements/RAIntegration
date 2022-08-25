@@ -555,13 +555,16 @@ std::wstring EmulatorContext::GetAppTitle(const std::string& sMessage) const
     }
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    if (pUserContext.IsLoggedIn())
+    const auto& sDisplayName = pUserContext.GetDisplayName();
+    if (!sDisplayName.empty())
     {
         builder.Append(" - ");
-        builder.Append(pUserContext.GetDisplayName());
+        builder.Append(sDisplayName);
     }
 
-    const auto& sHostName = ra::services::ServiceLocator::Get<ra::services::IConfiguration>().GetHostName();
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    const auto& sHostName =
+        pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline) ? "OFFLINE": pConfiguration.GetHostName();
     if (sHostName != "retroachievements.org")
     {
         builder.Append(" [");

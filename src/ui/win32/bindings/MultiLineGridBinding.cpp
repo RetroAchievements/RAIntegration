@@ -58,6 +58,8 @@ void MultiLineGridBinding::OnViewModelAdded(gsl::index nIndex)
 
     if (!m_vmItems->IsUpdating())
         OnEndViewModelCollectionUpdate();
+    else
+        SuspendRedraw();
 }
 
 void MultiLineGridBinding::OnViewModelRemoved(gsl::index nIndex)
@@ -66,6 +68,8 @@ void MultiLineGridBinding::OnViewModelRemoved(gsl::index nIndex)
 
     if (!m_vmItems->IsUpdating())
         OnEndViewModelCollectionUpdate();
+    else
+        SuspendRedraw();
 }
 
 void MultiLineGridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)

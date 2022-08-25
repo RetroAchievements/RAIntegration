@@ -5,7 +5,9 @@
 #include "RA_Log.h"
 #include "RA_Resource.h"
 
+#include "api\IServer.hh"
 #include "api\Login.hh"
+#include "api\impl\OfflineServer.hh"
 
 #include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
@@ -80,6 +82,31 @@ API void CCONV _RA_UpdateHWnd(HWND hMainHWND)
 }
 #endif
 
+static void InitializeOfflineMode()
+{
+    RA_LOG_INFO("Initializing offline mode");
+    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+    pConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+    ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<ra::api::impl::OfflineServer>());
+
+    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+    const auto& sUsername = pConfiguration.GetUsername();
+    if (sUsername.empty())
+    {
+        pUserContext.Initialize("Player", "Player", "");
+    }
+    else
+    {
+        pUserContext.Initialize(sUsername, sUsername, "");
+
+        auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
+        pSessionTracker.Initialize(sUsername);
+    }
+
+    pUserContext.DisableLogin();
+}
+
 static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEmulatorID,
     [[maybe_unused]] const char* sClientName, const char* sClientVer, bool bOffline)
 {
@@ -104,15 +131,15 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
     }
 #endif
 
+    // Set the client version and User-Agent string
+    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().SetClientVersion(sClientVer);
+
     if (bOffline)
     {
-        ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().DisableLogin();
+        InitializeOfflineMode();
     }
     else
     {
-        // Set the client version and User-Agent string
-        ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().SetClientVersion(sClientVer);
-
         // validate version (async call)
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync([]
         {
@@ -738,10 +765,14 @@ API int CCONV _RA_CaptureState(char* pBuffer, int nBufferSize)
 
 static bool CanRestoreState()
 {
-    if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
-        return false;
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
 
-    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+    if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
+    {
+        if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
+            return false;
+    }
+
     if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
     {
         // save state is being allowed by app (user should have been warned!)

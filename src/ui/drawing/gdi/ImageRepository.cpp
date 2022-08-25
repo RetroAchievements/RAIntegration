@@ -173,8 +173,11 @@ void ImageRepository::FetchImage(ImageType nType, const std::string& sName)
         m_vRequestedImages.emplace(sFilename);
     }
 
-    // fetch it
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
+        return;
+
+    // fetch it
     std::string sUrl;
     switch (nType)
     {

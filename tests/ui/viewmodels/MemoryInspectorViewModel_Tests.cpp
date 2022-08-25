@@ -477,6 +477,30 @@ public:
         Assert::IsTrue(inspector.CanModifyCodeNotes());
     }
 
+    TEST_METHOD(TestActiveGameChangedOffline)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+        Assert::AreEqual(std::wstring(L"Memory Inspector [no game loaded]"), inspector.GetWindowTitle());
+        Assert::IsFalse(inspector.CanModifyCodeNotes());
+
+        inspector.mockGameContext.SetGameId({3});
+        inspector.mockGameContext.NotifyActiveGameChanged();
+        Assert::AreEqual(std::wstring(L"Memory Inspector"), inspector.GetWindowTitle());
+        Assert::IsFalse(inspector.CanModifyCodeNotes());
+
+        inspector.mockGameContext.SetGameId({0});
+        inspector.mockGameContext.NotifyActiveGameChanged();
+        Assert::AreEqual(std::wstring(L"Memory Inspector [no game loaded]"), inspector.GetWindowTitle());
+        Assert::IsFalse(inspector.CanModifyCodeNotes());
+
+        inspector.mockGameContext.SetGameId({5});
+        inspector.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
+        inspector.mockGameContext.NotifyActiveGameChanged();
+        Assert::AreEqual(std::wstring(L"Memory Inspector [compatibility mode]"), inspector.GetWindowTitle());
+        Assert::IsFalse(inspector.CanModifyCodeNotes());
+    }
+
     TEST_METHOD(TestActiveGameChangedClearsSearchResults)
     {
         MemoryInspectorViewModelHarness inspector;

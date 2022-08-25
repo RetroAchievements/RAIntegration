@@ -17,6 +17,7 @@ enum class Feature
     NonHardcoreWarning,
     AchievementTriggeredScreenshot,
     MasteryNotificationScreenshot,
+    Offline,
 };
 
 

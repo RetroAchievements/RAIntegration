@@ -115,12 +115,33 @@ private:
         HICON m_hWarningIcon = nullptr;
     };
 
+    class PointBinding : public ra::ui::win32::bindings::ComboBoxBinding
+    {
+    public:
+        PointBinding(ViewModelBase& vmViewModel) noexcept;
+        ~PointBinding() = default;
+        PointBinding(const PointBinding&) noexcept = delete;
+        PointBinding& operator=(const PointBinding&) noexcept = delete;
+        PointBinding(PointBinding&&) noexcept = delete;
+        PointBinding& operator=(PointBinding&&) noexcept = delete;
+
+        void OnValueChanged() override;
+
+    protected:
+        void PopulateComboBox() override;
+        void UpdateSelectedItem() override;
+
+    private:
+        int m_nCustomPoints = -1;
+        int m_nCustomPointsIndex = -1;
+    };
+
     ra::ui::win32::bindings::NumericTextBoxBinding m_bindID;
     ra::ui::win32::bindings::TextBoxBinding m_bindName;
     ra::ui::win32::bindings::TextBoxBinding m_bindDescription;
     BadgeNameBinding m_bindBadge;
     ra::ui::win32::bindings::ImageBinding m_bindBadgeImage;
-    ra::ui::win32::bindings::NumericTextBoxBinding m_bindPoints;
+    PointBinding m_bindPoints;
     ra::ui::win32::bindings::ComboBoxBinding m_bindFormats;
     ra::ui::win32::bindings::GridBinding m_bindLeaderboardParts;
     ra::ui::win32::bindings::CheckBoxBinding m_bindLowerIsBetter;

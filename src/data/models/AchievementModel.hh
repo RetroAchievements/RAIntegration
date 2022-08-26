@@ -130,7 +130,7 @@ public:
     const CapturedTriggerHits& GetCapturedHits() const noexcept { return m_pCapturedTriggerHits; }
     void ResetCapturedHits() noexcept { m_pCapturedTriggerHits.Reset(); }
 
-    static const std::array<int, 10>& ValidPoints()
+    static const std::array<int, 10>& ValidPoints() noexcept
     {
         return s_vValidPoints;
     }

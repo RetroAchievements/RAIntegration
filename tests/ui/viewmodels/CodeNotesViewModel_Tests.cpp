@@ -8,6 +8,7 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -25,6 +26,7 @@ private:
     public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::ui::mocks::MockDesktop mockDesktop;

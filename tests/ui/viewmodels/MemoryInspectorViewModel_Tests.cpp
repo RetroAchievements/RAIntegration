@@ -1,16 +1,21 @@
 #include "CppUnitTest.h"
 
+#include "api\DeleteCodeNote.hh"
+#include "api\UpdateCodeNote.hh"
+
 #include "ui\viewmodels\MemoryInspectorViewModel.hh"
 
 #include "tests\ui\UIAsserts.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
-#include "tests\mocks\MockAudioSystem.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockUserContext.hh"
+#include "tests\mocks\MockServer.hh"
+#include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -26,11 +31,13 @@ private:
     class MemoryInspectorViewModelHarness : public MemoryInspectorViewModel
     {
     public:
+        ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
-        ra::services::mocks::MockAudioSystem mockAudioSystem;
+        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
@@ -47,6 +54,8 @@ private:
 
             mockEmulatorContext.MockMemory(memory);
 
+            mockUserContext.SetUsername("Author");
+
             mockGameContext.InitializeCodeNotes();
         }
 
@@ -61,7 +70,6 @@ private:
         MemoryInspectorViewModelHarness(MemoryInspectorViewModelHarness&&) noexcept = delete;
         MemoryInspectorViewModelHarness& operator=(MemoryInspectorViewModelHarness&&) noexcept = delete;
 
-        bool CanModifyCodeNotes() const { return GetValue(CanModifyNotesProperty); }
         bool CurrentBitsVisible() const { return GetValue(CurrentBitsVisibleProperty); }
 
         const std::wstring* FindCodeNote(ra::ByteAddress nAddress) const
@@ -69,6 +77,41 @@ private:
             const auto* pCodeNotes = mockGameContext.Assets().FindCodeNotes();
             return (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nAddress) : nullptr;
         }
+
+        void PreparePublish(ra::ByteAddress nAddress, std::wstring sNote)
+        {
+            mockServer.HandleRequest<ra::api::UpdateCodeNote>([this]
+                (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
+            {
+                m_nPublishedAddress = pRequest.Address;
+
+                pResponse.Result = ra::api::ApiResult::Success;
+                return true;
+            });
+
+            mockServer.HandleRequest<ra::api::DeleteCodeNote>([this]
+                (const ra::api::DeleteCodeNote::Request& pRequest, ra::api::DeleteCodeNote::Response& pResponse)
+            {
+                m_nPublishedAddress = pRequest.Address;
+
+                pResponse.Result = ra::api::ApiResult::Success;
+                return true;
+            });
+
+            mockThreadPool.SetSynchronous(true);
+
+            SetValue(CanModifyNotesProperty, true);
+
+            mockGameContext.Assets().FindCodeNotes()->SetCodeNote(nAddress, sNote);
+            SetCurrentAddress(nAddress);
+
+            Assert::AreEqual(sNote, GetCurrentAddressNote());
+        }
+
+        ra::ByteAddress GetPublishedAddress() const noexcept { return m_nPublishedAddress; }
+
+    private:
+        ra::ByteAddress m_nPublishedAddress = 0U;
     };
 
 
@@ -81,7 +124,7 @@ public:
         Assert::AreEqual(std::wstring(L"0x0000"), inspector.GetCurrentAddressText());
         Assert::AreEqual(std::wstring(), inspector.GetCurrentAddressNote());
         Assert::AreEqual(std::wstring(L"0 0 0 0 0 0 0 0"), inspector.GetCurrentAddressBits());
-        Assert::IsFalse(inspector.CanModifyCodeNotes());
+        Assert::IsFalse(inspector.CanModifyNotes());
 
         Assert::AreEqual({ 0U }, inspector.Viewer().GetAddress());
     }
@@ -253,91 +296,42 @@ public:
         Assert::AreEqual(std::wstring(L"Eight"), inspector.GetCurrentAddressNote());
     }
 
-    TEST_METHOD(TestSaveCurrentAddressNoteNew)
+    TEST_METHOD(TestPublishCurrentAddressNoteNew)
     {
         MemoryInspectorViewModelHarness inspector;
-        inspector.SetCurrentAddressNote(L"Test");
+        inspector.PreparePublish(0x12, L"Test");
 
-        inspector.SaveCurrentAddressNote();
-        Assert::IsFalse(inspector.mockDesktop.WasDialogShown());
+        Assert::IsTrue(inspector.CanPublishCurrentAddressNote());
+        inspector.PublishCurrentAddressNote();
 
-        const auto* pNote = inspector.FindCodeNote({ 0 });
-        Assert::IsNotNull(pNote);
-        Ensures(pNote != nullptr);
-        Assert::AreEqual(std::wstring(L"Test"), *pNote);
-        Assert::IsTrue(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
+        Assert::AreEqual(0x12U, inspector.GetPublishedAddress());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
     }
 
-    TEST_METHOD(TestSaveCurrentAddressNoteNewBlank)
+    TEST_METHOD(TestPublishCurrentAddressNoteDelete)
     {
         MemoryInspectorViewModelHarness inspector;
-        inspector.SetCurrentAddressNote(L"");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetServerCodeNote(0x12, L"Test");
+        inspector.PreparePublish(0x12, L"");
 
-        inspector.SaveCurrentAddressNote();
-        Assert::IsFalse(inspector.mockDesktop.WasDialogShown());
+        Assert::IsTrue(inspector.CanPublishCurrentAddressNote());
+        inspector.PublishCurrentAddressNote();
 
-        const auto* pNote = inspector.FindCodeNote({ 0 });
-        Assert::IsNull(pNote);
-        Assert::IsFalse(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
+        Assert::AreEqual(0x12U, inspector.GetPublishedAddress());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
     }
 
-    TEST_METHOD(TestSaveCurrentAddressNoteUnchanged)
+    TEST_METHOD(TestPublishCurrentAddressNoteCancel)
     {
         MemoryInspectorViewModelHarness inspector;
-        inspector.mockGameContext.SetGameId({ 3 });
-        inspector.mockGameContext.SetCodeNote({ 0 }, L"Test");
-        inspector.SetCurrentAddressNote(L"Test");
-
-        inspector.SaveCurrentAddressNote();
-        Assert::IsFalse(inspector.mockDesktop.WasDialogShown());
-
-        const auto* pNote = inspector.FindCodeNote({ 0 });
-        Assert::IsNotNull(pNote);
-        Ensures(pNote != nullptr);
-        Assert::AreEqual(std::wstring(L"Test"), *pNote);
-        Assert::IsFalse(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
-    }
-
-    TEST_METHOD(TestSaveCurrentAddressNoteOverwrite)
-    {
-        MemoryInspectorViewModelHarness inspector;
-        inspector.mockGameContext.SetGameId({ 3 });
-        inspector.mockGameContext.SetCodeNote({ 0 }, L"Test");
-        inspector.SetCurrentAddressNote(L"Test2");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetServerCodeNote(0x12, L"Test");
+        inspector.mockUserContext.SetUsername("Me");
+        inspector.PreparePublish(0x12, L"Test2");
 
         bool bWindowSeen = false;
         inspector.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Overwrite note for address 0x0000?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Are you sure you want to replace Author's note:\n\nTest\n\nWith your note:\n\nTest2"), vmMessageBox.GetMessage());
-            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
-
-            bWindowSeen = true;
-            return ra::ui::DialogResult::Yes;
-        });
-
-        inspector.SaveCurrentAddressNote();
-        Assert::IsTrue(bWindowSeen);
-
-        const auto* pNote = inspector.FindCodeNote({ 0 });
-        Assert::IsNotNull(pNote);
-        Ensures(pNote != nullptr);
-        Assert::AreEqual(std::wstring(L"Test2"), *pNote);
-        Assert::AreEqual(std::wstring(L"Test2"), inspector.GetCurrentAddressNote()); // text should not be reset
-        Assert::IsTrue(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
-    }
-
-    TEST_METHOD(TestSaveCurrentAddressNoteOverwriteCancel)
-    {
-        MemoryInspectorViewModelHarness inspector;
-        inspector.mockGameContext.SetGameId({ 3 });
-        inspector.mockGameContext.SetCodeNote({ 0 }, L"Test");
-        inspector.SetCurrentAddressNote(L"Test2");
-
-        bool bWindowSeen = false;
-        inspector.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"Overwrite note for address 0x0000?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Overwrite note for address 0x0012?"), vmMessageBox.GetHeader());
             Assert::AreEqual(std::wstring(L"Are you sure you want to replace Author's note:\n\nTest\n\nWith your note:\n\nTest2"), vmMessageBox.GetMessage());
             Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
 
@@ -345,136 +339,91 @@ public:
             return ra::ui::DialogResult::No;
         });
 
-        inspector.SaveCurrentAddressNote();
+        Assert::IsTrue(inspector.CanPublishCurrentAddressNote());
+        inspector.PublishCurrentAddressNote();
+
+        Assert::AreEqual(0U, inspector.GetPublishedAddress());
+        Assert::IsTrue(inspector.CanPublishCurrentAddressNote());
         Assert::IsTrue(bWindowSeen);
-
-        const auto* pNote = inspector.FindCodeNote({ 0 });
-        Assert::IsNotNull(pNote);
-        Ensures(pNote != nullptr);
-        Assert::AreEqual(std::wstring(L"Test"), *pNote);
-        Assert::AreEqual(std::wstring(L"Test"), inspector.GetCurrentAddressNote()); // text should be reset
-        Assert::IsFalse(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
     }
-
-    TEST_METHOD(TestSaveCurrentAddressNoteOverwriteLong)
+    
+    TEST_METHOD(TestRevertCurrentAddressNoteApprove)
     {
-        std::wstring sLongNote;
-        for (int i = 0; i < 48; ++i)
-            sLongNote += L"Test" + std::to_wstring(i) + L" ";
-
         MemoryInspectorViewModelHarness inspector;
-        inspector.mockGameContext.SetGameId({ 3 });
-        inspector.mockGameContext.SetCodeNote({ 0 }, sLongNote);
-        inspector.SetCurrentAddressNote(L"Test");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetServerCodeNote(0x12, L"Test");
+        inspector.mockUserContext.SetUsername("Me");
+        inspector.PreparePublish(0x12, L"Test2");
 
         bool bWindowSeen = false;
         inspector.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Overwrite note for address 0x0000?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Are you sure you want to replace Author's note:\n\n" \
-                "Test0 Test1 Test2 Test3 Test4 Test5 Test6 Test7 Test8 Test9 Test10 Test11 Test12 Test13 " \
-                "Test14 Test15 Test16 Test17 Test18 Test19 Test20 Test21 Test22 Test23 Test24 Test25 " \
-                "Test26 Test27 Test28 Test29 Test30 Test31 Test32 Test33 Test34 Test35 Test36 Test..." \
-                "\n\nWith your note:\n\nTest"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Revert note for address 0x0012?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"This will discard all local work and revert the note to the last state retrieved from the server."), vmMessageBox.GetMessage());
             Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
 
             bWindowSeen = true;
             return ra::ui::DialogResult::Yes;
         });
 
-        inspector.SaveCurrentAddressNote();
+        Assert::IsTrue(inspector.CanRevertCurrentAddressNote());
+        inspector.RevertCurrentAddressNote();
+
         Assert::IsTrue(bWindowSeen);
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"Test"), inspector.GetCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"Test"), *inspector.mockGameContext.Assets().FindCodeNotes()->FindCodeNote(0x12));
+        Assert::IsFalse(inspector.mockGameContext.Assets().FindCodeNotes()->IsNoteModified(0x12));
     }
 
-    TEST_METHOD(TestDeleteCurrentAddressNoteBlank)
+    TEST_METHOD(TestRevertCurrentAddressNoteCancel)
     {
         MemoryInspectorViewModelHarness inspector;
-
-        inspector.DeleteCurrentAddressNote();
-        Assert::IsFalse(inspector.mockDesktop.WasDialogShown());
-
-        const auto* pNote = inspector.FindCodeNote({ 0 });
-        Assert::IsNull(pNote);
-        Assert::IsFalse(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
-    }
-
-    TEST_METHOD(TestDeleteCurrentAddressNoteConfirm)
-    {
-        MemoryInspectorViewModelHarness inspector;
-        inspector.mockGameContext.SetGameId({ 3 });
-        inspector.mockGameContext.SetCodeNote({ 0 }, L"Test");
-        inspector.SetCurrentAddressNote(L"Test");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetServerCodeNote(0x12, L"Test");
+        inspector.mockUserContext.SetUsername("Me");
+        inspector.PreparePublish(0x12, L"Test2");
 
         bool bWindowSeen = false;
         inspector.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Delete note for address 0x0000?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Are you sure you want to delete Author's note:\n\nTest"), vmMessageBox.GetMessage());
-            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
-
-            bWindowSeen = true;
-            return ra::ui::DialogResult::Yes;
-        });
-
-        inspector.DeleteCurrentAddressNote();
-        Assert::IsTrue(bWindowSeen);
-
-        const auto* pNote = inspector.FindCodeNote({ 0 });
-        Assert::IsNull(pNote);
-        Assert::AreEqual(std::wstring(L""), inspector.GetCurrentAddressNote()); // text should be updated
-        Assert::IsTrue(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
-    }
-
-    TEST_METHOD(TestDeleteCurrentAddressNoteDecline)
-    {
-        MemoryInspectorViewModelHarness inspector;
-        inspector.mockGameContext.SetGameId({ 3 });
-        inspector.mockGameContext.SetCodeNote({ 0 }, L"Test");
-        inspector.SetCurrentAddressNote(L"Test");
-
-        bool bWindowSeen = false;
-        inspector.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::AreEqual(std::wstring(L"Delete note for address 0x0000?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Are you sure you want to delete Author's note:\n\nTest"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Revert note for address 0x0012?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"This will discard all local work and revert the note to the last state retrieved from the server."), vmMessageBox.GetMessage());
             Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
 
             bWindowSeen = true;
             return ra::ui::DialogResult::No;
         });
 
-        inspector.DeleteCurrentAddressNote();
-        Assert::IsTrue(bWindowSeen);
+        Assert::IsTrue(inspector.CanRevertCurrentAddressNote());
+        inspector.RevertCurrentAddressNote();
 
-        const auto* pNote = inspector.FindCodeNote({ 0 });
-        Assert::IsNotNull(pNote);
-        Ensures(pNote != nullptr);
-        Assert::AreEqual(std::wstring(L"Test"), *pNote);
-        Assert::AreEqual(std::wstring(L"Test"), inspector.GetCurrentAddressNote()); // text should not be updated
-        Assert::IsFalse(inspector.mockAudioSystem.WasAudioFilePlayed(ra::services::mocks::MockAudioSystem::BEEP));
+        Assert::IsTrue(bWindowSeen);
+        Assert::IsTrue(inspector.CanRevertCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"Test2"), inspector.GetCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"Test2"), *inspector.mockGameContext.Assets().FindCodeNotes()->FindCodeNote(0x12));
+        Assert::IsTrue(inspector.mockGameContext.Assets().FindCodeNotes()->IsNoteModified(0x12));
     }
 
     TEST_METHOD(TestActiveGameChanged)
     {
         MemoryInspectorViewModelHarness inspector;
         Assert::AreEqual(std::wstring(L"Memory Inspector [no game loaded]"), inspector.GetWindowTitle());
-        Assert::IsFalse(inspector.CanModifyCodeNotes());
+        Assert::IsFalse(inspector.CanModifyNotes());
 
         inspector.mockGameContext.SetGameId({ 3 });
         inspector.mockGameContext.NotifyActiveGameChanged();
         Assert::AreEqual(std::wstring(L"Memory Inspector"), inspector.GetWindowTitle());
-        Assert::IsTrue(inspector.CanModifyCodeNotes());
+        Assert::IsTrue(inspector.CanModifyNotes());
 
         inspector.mockGameContext.SetGameId({ 0 });
         inspector.mockGameContext.NotifyActiveGameChanged();
         Assert::AreEqual(std::wstring(L"Memory Inspector [no game loaded]"), inspector.GetWindowTitle());
-        Assert::IsFalse(inspector.CanModifyCodeNotes());
+        Assert::IsFalse(inspector.CanModifyNotes());
 
         inspector.mockGameContext.SetGameId({ 5 });
         inspector.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
         inspector.mockGameContext.NotifyActiveGameChanged();
         Assert::AreEqual(std::wstring(L"Memory Inspector [compatibility mode]"), inspector.GetWindowTitle());
-        Assert::IsTrue(inspector.CanModifyCodeNotes());
+        Assert::IsTrue(inspector.CanModifyNotes());
     }
 
     TEST_METHOD(TestActiveGameChangedOffline)
@@ -482,23 +431,23 @@ public:
         MemoryInspectorViewModelHarness inspector;
         inspector.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
         Assert::AreEqual(std::wstring(L"Memory Inspector [no game loaded]"), inspector.GetWindowTitle());
-        Assert::IsFalse(inspector.CanModifyCodeNotes());
+        Assert::IsFalse(inspector.CanModifyNotes());
 
         inspector.mockGameContext.SetGameId({3});
         inspector.mockGameContext.NotifyActiveGameChanged();
         Assert::AreEqual(std::wstring(L"Memory Inspector"), inspector.GetWindowTitle());
-        Assert::IsFalse(inspector.CanModifyCodeNotes());
+        Assert::IsTrue(inspector.CanModifyNotes());
 
         inspector.mockGameContext.SetGameId({0});
         inspector.mockGameContext.NotifyActiveGameChanged();
         Assert::AreEqual(std::wstring(L"Memory Inspector [no game loaded]"), inspector.GetWindowTitle());
-        Assert::IsFalse(inspector.CanModifyCodeNotes());
+        Assert::IsFalse(inspector.CanModifyNotes());
 
         inspector.mockGameContext.SetGameId({5});
         inspector.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
         inspector.mockGameContext.NotifyActiveGameChanged();
         Assert::AreEqual(std::wstring(L"Memory Inspector [compatibility mode]"), inspector.GetWindowTitle());
-        Assert::IsFalse(inspector.CanModifyCodeNotes());
+        Assert::IsTrue(inspector.CanModifyNotes());
     }
 
     TEST_METHOD(TestActiveGameChangedClearsSearchResults)

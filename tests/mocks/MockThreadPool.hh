@@ -21,7 +21,14 @@ public:
 
     void RunAsync(std::function<void()>&& f) override
     {
-        m_vTasks.emplace(f);
+        if (m_bSynchronous)
+        {
+            f();
+        }
+        else
+        {
+            m_vTasks.emplace(f);
+        }
     }
 
     void ScheduleAsync(std::chrono::milliseconds nDelay, std::function<void()>&& f) override
@@ -88,10 +95,19 @@ public:
 
     bool IsShutdownRequested() const noexcept override { return false; }
 
+    /// <summary>
+    /// Specifies whether non-scheduled tasks should be immediately executed when queued.
+    /// </summary>
+    void SetSynchronous(bool bValue)
+    {
+        m_bSynchronous = bValue;
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::services::IThreadPool> m_Override;
 
     std::queue<std::function<void()>> m_vTasks;
+    bool m_bSynchronous = false;
 
     struct DelayedTask
     {

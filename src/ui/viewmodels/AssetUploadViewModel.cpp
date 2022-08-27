@@ -1,14 +1,18 @@
 #include "AssetUploadViewModel.hh"
 
+#include "api\DeleteCodeNote.hh"
 #include "api\UpdateAchievement.hh"
+#include "api\UpdateCodeNote.hh"
 #include "api\UpdateLeaderboard.hh"
 #include "api\UploadBadge.hh"
 
 #include "data\context\GameContext.hh"
+#include "data\context\UserContext.hh"
 
 #include "ui\ImageReference.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
+#include "RA_Defs.h"
 #include "RA_Log.h"
 
 namespace ra {
@@ -30,6 +34,10 @@ void AssetUploadViewModel::QueueAsset(ra::data::models::AssetModelBase& pAsset)
 
         case ra::data::models::AssetType::Leaderboard:
             QueueLeaderboard(*(dynamic_cast<ra::data::models::LeaderboardModel*>(&pAsset)));
+            break;
+
+        case ra::data::models::AssetType::CodeNotes:
+            QueueCodeNotes(*(dynamic_cast<ra::data::models::CodeNotesModel*>(&pAsset)));
             break;
 
         default:
@@ -80,6 +88,83 @@ void AssetUploadViewModel::QueueLeaderboard(ra::data::models::LeaderboardModel& 
     QueueTask([this, pLeaderboard = &pLeaderboard]()
     {
         UploadLeaderboard(*pLeaderboard);
+    });
+}
+
+void AssetUploadViewModel::QueueCodeNotes(ra::data::models::CodeNotesModel& pNotes)
+{
+    pNotes.EnumerateModifiedCodeNotes([this, pNotes = &pNotes](ra::ByteAddress nAddress)
+    {
+        QueueCodeNote(*pNotes, nAddress);
+        return true;
+    });
+}
+
+static std::wstring ShortenNote(const std::wstring& sNote)
+{
+    return sNote.length() > 256 ? (sNote.substr(0, 253) + L"...") : sNote;
+}
+
+void AssetUploadViewModel::QueueCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::ByteAddress nAddress)
+{
+    const auto* pOriginalAuthor = pNotes.GetServerCodeNoteAuthor(nAddress);
+    if (pOriginalAuthor != nullptr && !pOriginalAuthor->empty())
+    {
+        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+        if (pUserContext.GetDisplayName() != *pOriginalAuthor)
+        {
+            // author changed - confirm overwrite
+            std::wstring sEmpty;
+            const auto* pOriginalNote = pNotes.GetServerCodeNote(nAddress);
+            if (pOriginalNote == nullptr)
+                pOriginalNote = &sEmpty;
+
+            const auto* pNote = pNotes.FindCodeNote(nAddress);
+            if (pNote == nullptr)
+                pNote = &sEmpty;
+
+            ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
+            if (!pNote->empty())
+            {
+                vmPrompt.SetHeader(
+                    ra::StringPrintf(L"Overwrite note for address %s?", ra::ByteAddressToString(nAddress)));
+
+                if (pOriginalNote->length() > 256 || pNote->length() > 256)
+                {
+                    const auto sNewNoteShort = ShortenNote(*pNote);
+                    const auto sOldNoteShort = ShortenNote(*pOriginalNote);
+                    vmPrompt.SetMessage(
+                        ra::StringPrintf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
+                                         *pOriginalAuthor, sOldNoteShort, sNewNoteShort));
+                }
+                else
+                {
+                    vmPrompt.SetMessage(
+                        ra::StringPrintf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
+                                         *pOriginalAuthor, *pOriginalNote, *pNote));
+                }
+            }
+            else
+            {
+                const auto pNoteShort = ShortenNote(*pOriginalNote);
+                vmPrompt.SetHeader(ra::StringPrintf(L"Delete note for address %s?", ra::ByteAddressToString(nAddress)));
+                vmPrompt.SetMessage(ra::StringPrintf(L"Are you sure you want to delete %s's note:\n\n%s", *pOriginalAuthor, pNoteShort));
+            }
+
+            vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+            vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+            if (vmPrompt.ShowModal() != ra::ui::DialogResult::Yes)
+                return;
+        }
+    }
+
+    auto& pItem = m_vUploadQueue.emplace_back();
+    pItem.pAsset = &pNotes;
+    pItem.nExtra = ra::to_signed(nAddress);
+
+    QueueTask([this, pNotes = &pNotes, nAddress]()
+    {
+        UploadCodeNote(*pNotes, nAddress);
     });
 }
 
@@ -225,6 +310,59 @@ void AssetUploadViewModel::UploadLeaderboard(ra::data::models::LeaderboardModel&
         {
             pScan.sErrorMessage = response.ErrorMessage;
             pScan.nState = response.Succeeded() ? UploadState::Success : UploadState::Failed;
+            break;
+        }
+    }
+}
+
+void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNotes, ra::ByteAddress nAddress)
+{
+    std::string sErrorMessage;
+    UploadState nState = UploadState::Failed;
+
+    const auto* pNote = pNotes.FindCodeNote(nAddress);
+    if (pNote == nullptr || pNote->empty())
+    {
+        ra::api::DeleteCodeNote::Request request;
+        request.GameId = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId();
+        request.Address = nAddress;
+
+        const auto& response = request.Call();
+
+        if (response.Succeeded())
+        {
+            pNotes.SetServerCodeNote(nAddress, L"");
+            nState = UploadState::Success;
+        }
+
+        sErrorMessage = response.ErrorMessage;
+    }
+    else
+    {
+        ra::api::UpdateCodeNote::Request request;
+        request.GameId = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().GameId();
+        request.Address = nAddress;
+        request.Note = *pNote;
+
+        const auto& response = request.Call();
+
+        if (response.Succeeded())
+        {
+            pNotes.SetServerCodeNote(nAddress, *pNote);
+            nState = UploadState::Success;
+        }
+
+        sErrorMessage = response.ErrorMessage;
+    }
+
+    // update the queue
+    std::lock_guard<std::mutex> pLock(m_pMutex);
+    for (auto& pScan : m_vUploadQueue)
+    {
+        if (pScan.pAsset == &pNotes && pScan.nExtra == gsl::narrow_cast<int>(nAddress))
+        {
+            pScan.sErrorMessage = sErrorMessage;
+            pScan.nState = nState;
             break;
         }
     }

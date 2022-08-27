@@ -4,11 +4,12 @@
 
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
+#include "data\context\UserContext.hh"
 
-#include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\AssetUploadViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -23,7 +24,9 @@ const StringModelProperty MemoryInspectorViewModel::CurrentAddressBitsProperty("
 const IntModelProperty MemoryInspectorViewModel::CurrentAddressValueProperty("MemoryInspectorViewModel", "CurrentAddressValue", 0);
 const BoolModelProperty MemoryInspectorViewModel::CanModifyNotesProperty("MemoryInspectorViewModel", "CanModifyNotes", true);
 const BoolModelProperty MemoryInspectorViewModel::CurrentBitsVisibleProperty("MemoryInspectorViewModel", "CurrentBitsVisibleProperty", true);
-const BoolModelProperty MemoryInspectorViewModel::IsCurrentAddressNoteEditableProperty("MemoryInspectorViewModel", "IsCurrentAddressNoteEditable", true);
+const BoolModelProperty MemoryInspectorViewModel::CanEditCurrentAddressNoteProperty("MemoryInspectorViewModel", "CanEditCurrentAddressNote", true);
+const BoolModelProperty MemoryInspectorViewModel::CanRevertCurrentAddressNoteProperty("MemoryInspectorViewModel", "CanRevertCurrentAddressNote", false);
+const BoolModelProperty MemoryInspectorViewModel::CanPublishCurrentAddressNoteProperty("MemoryInspectorViewModel", "CanPublishCurrentAddressNote", false);
 
 MemoryInspectorViewModel::MemoryInspectorViewModel()
 {
@@ -32,7 +35,7 @@ MemoryInspectorViewModel::MemoryInspectorViewModel()
     m_pViewer.AddNotifyTarget(*this);
 
     SetValue(CanModifyNotesProperty, false);
-    SetValue(IsCurrentAddressNoteEditableProperty, false);
+    SetValue(CanEditCurrentAddressNoteProperty, false);
 }
 
 void MemoryInspectorViewModel::InitializeNotifyTargets()
@@ -72,10 +75,12 @@ void MemoryInspectorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs
                 (args.tNewValue & 0x01)));
         }
     }
-    else if (args.Property == CurrentAddressProperty && !m_bTyping)
+    else if (args.Property == CurrentAddressProperty && !m_bSyncingAddress)
     {
+        m_bSyncingAddress = true;
         const auto nAddress = static_cast<ra::ByteAddress>(args.tNewValue);
         SetValue(CurrentAddressTextProperty, ra::Widen(ra::ByteAddressToString(nAddress)));
+        m_bSyncingAddress = false;
 
         OnCurrentAddressChanged(nAddress);
     }
@@ -93,45 +98,134 @@ void MemoryInspectorViewModel::OnViewModelIntValueChanged(const IntModelProperty
 
 void MemoryInspectorViewModel::OnValueChanged(const StringModelProperty::ChangeArgs& args)
 {
-    if (args.Property == CurrentAddressTextProperty)
+    if (args.Property == CurrentAddressTextProperty && !m_bSyncingAddress)
     {
         const auto nAddress = ra::ByteAddressFromString(ra::Narrow(args.tNewValue));
 
         // ignore change event for current address so text field is not modified
-        m_bTyping = true;
+        m_bSyncingAddress = true;
         SetCurrentAddress(nAddress);
-        m_bTyping = false;
+        m_bSyncingAddress = false;
 
         OnCurrentAddressChanged(nAddress);
     }
+    else if (args.Property == CurrentAddressNoteProperty && !m_bSyncingCodeNote)
+    {
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+        auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+        if (pCodeNotes != nullptr)
+        {
+            const auto nAddress = GetCurrentAddress();
+            pCodeNotes->SetCodeNote(nAddress, args.tNewValue);
+
+            // don't immediately save, the user may be about to publish. instead, set a flag to
+            // do the save when the address changes.
+            UpdateNoteButtons();
+        }
+    }
 
     WindowViewModelBase::OnValueChanged(args);
+}
+
+void MemoryInspectorViewModel::SaveNotes()
+{
+    if (m_nSavedNoteAddress == 0xFFFFFFFF)
+        return;
+
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (pCodeNotes != nullptr)
+    {
+        std::wstring sEmpty;
+        const auto* pNote = pCodeNotes->FindCodeNote(m_nSavedNoteAddress);
+        if (pNote == nullptr)
+            pNote = &sEmpty;
+
+        if (*pNote != m_sSavedNote)
+        {
+            m_sSavedNote = *pNote;
+
+            std::vector<ra::data::models::AssetModelBase*> vAssets;
+            vAssets.push_back(pCodeNotes);
+            pGameContext.Assets().SaveAssets(vAssets);
+
+            UpdateNoteButtons();
+        }
+    }
+}
+
+void MemoryInspectorViewModel::UpdateNoteButtons()
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (pCodeNotes == nullptr || !CanModifyNotes())
+    {
+        SetValue(CanEditCurrentAddressNoteProperty, false);
+        SetValue(CanPublishCurrentAddressNoteProperty, false);
+        SetValue(CanRevertCurrentAddressNoteProperty, false);
+    }
+    else
+    {
+        const auto nAddress = GetCurrentAddress();
+        if (pCodeNotes->GetIndirectSource(nAddress) != 0xFFFFFFFF)
+        {
+            SetValue(CanEditCurrentAddressNoteProperty, false);
+            SetValue(CanPublishCurrentAddressNoteProperty, false);
+            SetValue(CanRevertCurrentAddressNoteProperty, false);
+        }
+        else
+        {
+            const bool bOffline = ra::services::ServiceLocator::Get<ra::services::IConfiguration>()
+                .IsFeatureEnabled(ra::services::Feature::Offline);
+            const auto bModified = pCodeNotes->IsNoteModified(nAddress);
+
+            SetValue(CanEditCurrentAddressNoteProperty, true);
+            SetValue(CanPublishCurrentAddressNoteProperty, !bOffline && bModified);
+            SetValue(CanRevertCurrentAddressNoteProperty, bModified);
+        }
+    }
+}
+
+void MemoryInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
+{
+    if (nAddress == GetCurrentAddress())
+        SetCurrentAddressNote(sNewNote);
+}
+
+void MemoryInspectorViewModel::SetCurrentAddressNote(const std::wstring& sValue)
+{
+    m_bSyncingCodeNote = true;
+    SetValue(CurrentAddressNoteProperty, sValue);
+    m_bSyncingCodeNote = false;
 }
 
 void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddress)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+
+    if (m_nSavedNoteAddress != 0xFFFFFFFF)
+        SaveNotes();
+
+    m_nSavedNoteAddress = nNewAddress;
     const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nNewAddress) : nullptr;
     if (pNote)
     {
+        m_sSavedNote = *pNote;
+
         const auto nIndirectSource = pCodeNotes->GetIndirectSource(nNewAddress);
         if (nIndirectSource != 0xFFFFFFFF)
-        {
             SetCurrentAddressNote(ra::StringPrintf(L"[Indirect from %s]\r\n%s", ra::ByteAddressToString(nIndirectSource), *pNote));
-            SetValue(IsCurrentAddressNoteEditableProperty, false);
-        }
         else
-        {
             SetCurrentAddressNote(*pNote);
-            SetValue(IsCurrentAddressNoteEditableProperty, CanModifyNotes());
-        }
     }
     else
     {
+        m_sSavedNote.clear();
         SetCurrentAddressNote(L"");
-        SetValue(IsCurrentAddressNoteEditableProperty, CanModifyNotes());
     }
+
+    UpdateNoteButtons();
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto nValue = pEmulatorContext.ReadMemoryByte(nNewAddress);
@@ -158,113 +252,63 @@ void MemoryInspectorViewModel::BookmarkCurrentAddress() const
     pBookmarks.AddBookmark(nAddress, nSize);
 }
 
-static std::wstring ShortenNote(const std::wstring& sNote)
+void MemoryInspectorViewModel::PublishCurrentAddressNote()
 {
-    return sNote.length() > 256 ? (sNote.substr(0, 253) + L"...") : sNote;
-}
+    if (!CanPublishCurrentAddressNote())
+        return;
 
-void MemoryInspectorViewModel::SaveCurrentAddressNote()
-{
-    // create a copy of the note. it's less efficient, but using a reference allows the value to be
-    // changed out from under us while the confirmation dialog is open.
-    const std::wstring sNewNote = GetCurrentAddressNote();
-    const auto nAddress = GetCurrentAddress();
-
-    std::string sAuthor;
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes == nullptr)
         return;
-    const auto* pNote = pCodeNotes->FindCodeNote(nAddress, sAuthor);
-    bool bUpdated = false;
 
-    if (pNote == nullptr)
+    // disable buttons while publishing
+    SetValue(CanPublishCurrentAddressNoteProperty, false);
+
+    const auto nAddress = GetCurrentAddress();
+
+    ra::ui::viewmodels::AssetUploadViewModel vmAssetUpload;
+    vmAssetUpload.QueueCodeNote(*pCodeNotes, nAddress);
+    vmAssetUpload.ShowModal(*this);
+
+    if (pCodeNotes->IsNoteModified(nAddress))
     {
-        if (sNewNote.empty())
-        {
-            // unmodified - do nothing
-            return;
-        }
-        else
-        {
-            // new note - just add it
-            bUpdated = pCodeNotes->SetCodeNote(nAddress, sNewNote);
-        }
-    }
-    else if (*pNote == sNewNote)
-    {
-        // unmodified - do nothing
-        return;
+        // if canceled, re-enable buttons
+        SetValue(CanPublishCurrentAddressNoteProperty, true);
     }
     else
     {
-        // value changed - confirm overwrite
+        // if we flagged the text as modified to be written on address change, do so now
+        SaveNotes();
+    }
+}
+
+void MemoryInspectorViewModel::RevertCurrentAddressNote()
+{
+    if (!CanRevertCurrentAddressNote())
+        return;
+
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    if (pCodeNotes == nullptr)
+        return;
+
+    const auto nAddress = GetCurrentAddress();
+    const auto* pOriginalNote = pCodeNotes->GetServerCodeNote(nAddress);
+    if (pOriginalNote != nullptr)
+    {
         ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
-        vmPrompt.SetHeader(ra::StringPrintf(L"Overwrite note for address %s?", ra::ByteAddressToString(nAddress)));
-
-        if (sNewNote.length() > 256 || pNote->length() > 256)
-        {
-            const auto sNewNoteShort = ShortenNote(sNewNote);
-            const auto sOldNoteShort = ShortenNote(*pNote);
-            vmPrompt.SetMessage(ra::StringPrintf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
-                sAuthor, sOldNoteShort, sNewNoteShort));
-        }
-        else
-        {
-            vmPrompt.SetMessage(ra::StringPrintf(L"Are you sure you want to replace %s's note:\n\n%s\n\nWith your note:\n\n%s",
-                sAuthor, *pNote, sNewNote));
-        }
-
+        vmPrompt.SetHeader(ra::StringPrintf(L"Revert note for address %s?", ra::ByteAddressToString(nAddress)));
+        vmPrompt.SetMessage(L"This will discard all local work and revert the note to the last state retrieved from the server.");
         vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
-        vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
-        if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
-        {
-            bUpdated = pCodeNotes->SetCodeNote(nAddress, sNewNote);
-        }
-    }
+        if (vmPrompt.ShowModal() == DialogResult::No)
+            return;
 
-    if (bUpdated)
-    {
-        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().Beep();
-    }
-    else
-    {
-        // update failed, revert to previous text
-        SetCurrentAddressNote(pNote ? *pNote : std::wstring());
-    }
-}
+        // make a copy as the original note will be destroyed when we eliminate the modification
+        const std::wstring pOriginalNoteCopy = *pOriginalNote;
+        pCodeNotes->SetCodeNote(nAddress, pOriginalNoteCopy);
 
-void MemoryInspectorViewModel::DeleteCurrentAddressNote()
-{
-    const auto nAddress = GetCurrentAddress();
-
-    std::string sAuthor;
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (pCodeNotes == nullptr)
-        return;
-    const auto* pNote = pCodeNotes->FindCodeNote(nAddress, sAuthor);
-
-    if (pNote == nullptr)
-    {
-        // no note - do nothing
-        return;
-    }
-
-    const auto pNoteShort = ShortenNote(*pNote);
-
-    ra::ui::viewmodels::MessageBoxViewModel vmPrompt;
-    vmPrompt.SetHeader(ra::StringPrintf(L"Delete note for address %s?", ra::ByteAddressToString(nAddress)));
-    vmPrompt.SetMessage(ra::StringPrintf(L"Are you sure you want to delete %s's note:\n\n%s", sAuthor, pNoteShort));
-    vmPrompt.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
-    vmPrompt.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
-    if (vmPrompt.ShowModal() == ra::ui::DialogResult::Yes)
-    {
-        if (pCodeNotes->DeleteCodeNote(nAddress))
-        {
-            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().Beep();
-            SetCurrentAddressNote(L"");
-        }
+        UpdateNoteButtons();
     }
 }
 
@@ -334,6 +378,9 @@ void MemoryInspectorViewModel::ToggleBit(int nBit)
 
 void MemoryInspectorViewModel::OnActiveGameChanged()
 {
+    m_nSavedNoteAddress = 0xFFFFFFFF;
+    m_sSavedNote.clear();
+
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     if (pGameContext.GameId() == 0)
     {
@@ -347,12 +394,10 @@ void MemoryInspectorViewModel::OnActiveGameChanged()
         else
             SetWindowTitle(L"Memory Inspector");
 
-        const bool bOffline = ra::services::ServiceLocator::Get<ra::services::IConfiguration>().
-            IsFeatureEnabled(ra::services::Feature::Offline);
-        SetValue(CanModifyNotesProperty, !bOffline);
+        SetValue(CanModifyNotesProperty, true);
     }
 
-    SetValue(IsCurrentAddressNoteEditableProperty, CanModifyNotes());
+    UpdateNoteButtons();
 
     if (pGameContext.GameId() != m_nGameId)
     {

@@ -28,6 +28,11 @@ public:
     {
         UserContext::Initialize(sUsername, sUsername + "_", sApiToken);
     }
+
+    void SetUsername(const std::string& sUsername) 
+    { 
+        UserContext::Initialize(sUsername, sUsername, "APITOKEN");
+    }
 #pragma warning(pop)
 
     void Logout() noexcept override

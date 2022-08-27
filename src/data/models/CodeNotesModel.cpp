@@ -50,7 +50,20 @@ void CodeNotesModel::Refresh(unsigned int nGameId, CodeNoteChangedFunction fCode
         else
         {
             for (const auto& pNote : response.Notes)
+            {
+                {
+                    std::unique_lock<std::mutex> lock(m_oMutex);
+                    auto pIter = m_mOriginalCodeNotes.find(pNote.Address);
+                    if (pIter != m_mOriginalCodeNotes.end())
+                    {
+                        pIter->second.first = pNote.Author;
+                        pIter->second.second = pNote.Note;
+                        continue;
+                    }
+                }
+
                 AddCodeNote(pNote.Address, pNote.Author, pNote.Note);
+            }
         }
 
         callback();
@@ -346,13 +359,16 @@ void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sA
 
                     // assign entire note to pointer note
                     pointerNote.Note = sNote;
-                    m_mCodeNotes.insert_or_assign(nAddress, std::move(pointerNote));
+                    {
+                        std::unique_lock<std::mutex> lock(m_oMutex);
+                        m_mCodeNotes.insert_or_assign(nAddress, std::move(pointerNote));
+                    }
                     m_bHasPointers = true;
+
+                    OnCodeNoteChanged(nAddress, sNote);
 
                     if (m_fCodeNoteChanged)
                     {
-                        m_fCodeNoteChanged(nAddress, sNote);
-
                         for (const auto& pNote : m_mCodeNotes[nAddress].PointerData->OffsetNotes)
                             m_fCodeNoteChanged(nPointerValue + pNote.Offset, pNote.Note);
                     }
@@ -369,13 +385,21 @@ void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sA
     note.Author = sAuthor;
     note.Note = sNote;
     ExtractSize(note);
-    m_mCodeNotes.insert_or_assign(nAddress, std::move(note));
+    {
+        std::unique_lock<std::mutex> lock(m_oMutex);
+        m_mCodeNotes.insert_or_assign(nAddress, std::move(note));
+    }
 
     OnCodeNoteChanged(nAddress, sNote);
 }
 
 void CodeNotesModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
 {
+    SetValue(ra::data::models::AssetModelBase::ChangesProperty,
+             m_mOriginalCodeNotes.empty() ?
+                 ra::etoi(ra::data::models::AssetChanges::None) :
+                 ra::etoi(ra::data::models::AssetChanges::Unpublished));
+
     if (m_fCodeNoteChanged != nullptr)
         m_fCodeNoteChanged(nAddress, sNewNote);
 }
@@ -536,70 +560,70 @@ const std::wstring* CodeNotesModel::FindCodeNote(ra::ByteAddress nAddress, _Inou
     return nullptr;
 }
 
-bool CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
+void CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
 {
-    if (m_nGameId == 0)
-        return false;
+    std::string sOriginalAuthor;
 
-    ra::api::UpdateCodeNote::Request request;
-    request.GameId = m_nGameId;
-    request.Address = nAddress;
-    request.Note = sNote;
-
-    do
     {
-        auto response = request.Call();
-        if (response.Succeeded())
+        std::unique_lock<std::mutex> lock(m_oMutex);
+
+        const auto pIter = m_mCodeNotes.find(nAddress);
+        if (pIter != m_mCodeNotes.end())
         {
-            const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-            AddCodeNote(nAddress, pUserContext.GetDisplayName(), sNote);
-            return true;
+            if (pIter->second.Note == sNote)
+            {
+                // the note at this address is unchanged
+                return;
+            }
+        }
+        else if (sNote.empty())
+        {
+            // the note at this address is unchanged
+            return;
         }
 
-        ra::ui::viewmodels::MessageBoxViewModel vmMessage;
-        vmMessage.SetHeader(ra::StringPrintf(L"Error saving note for address %s", ra::ByteAddressToString(nAddress)));
-        vmMessage.SetMessage(ra::Widen(response.ErrorMessage));
-        vmMessage.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::RetryCancel);
-        if (vmMessage.ShowModal() == ra::ui::DialogResult::Cancel)
-            break;
-
-    } while (true);
-
-    return false;
-}
-
-bool CodeNotesModel::DeleteCodeNote(ra::ByteAddress nAddress)
-{
-    if (m_mCodeNotes.find(nAddress) == m_mCodeNotes.end())
-        return true;
-
-    if (m_nGameId == 0)
-        return false;
-
-    ra::api::DeleteCodeNote::Request request;
-    request.GameId = m_nGameId;
-    request.Address = nAddress;
-
-    do
-    {
-        auto response = request.Call();
-        if (response.Succeeded())
+        const auto pIter2 = m_mOriginalCodeNotes.find(nAddress);
+        if (pIter2 == m_mOriginalCodeNotes.end())
         {
-            m_mCodeNotes.erase(nAddress);
-            OnCodeNoteChanged(nAddress, L"");
-            return true;
+            // note wasn't previously modified
+            if (pIter != m_mCodeNotes.end())
+            {
+                // capture the original value
+                m_mOriginalCodeNotes.insert_or_assign(nAddress,
+                    std::make_pair(pIter->second.Author, pIter->second.Note));
+            }
+            else
+            {
+                // add a dummy original value so it appears modified
+                m_mOriginalCodeNotes.insert_or_assign(nAddress, std::make_pair("", L""));
+            }
+        }
+        else if (pIter2->second.second == sNote)
+        {
+            // note restored to original value. assign the note back to the original author
+            // and discard the modification tracker
+            sOriginalAuthor = pIter2->second.first;
+
+            m_mOriginalCodeNotes.erase(pIter2);
         }
 
-        ra::ui::viewmodels::MessageBoxViewModel vmMessage;
-        vmMessage.SetHeader(ra::StringPrintf(L"Error deleting note for address %s", ra::ByteAddressToString(nAddress)));
-        vmMessage.SetMessage(ra::Widen(response.ErrorMessage));
-        vmMessage.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::RetryCancel);
-        if (vmMessage.ShowModal() == ra::ui::DialogResult::Cancel)
-            break;
+        if (sNote.empty())
+            m_mCodeNotes.erase(pIter);
+    }
 
-    } while (true);
-
-    return false;
+    if (sNote.empty())
+    {
+        OnCodeNoteChanged(nAddress, sNote);
+    }
+    else if (!sOriginalAuthor.empty())
+    {
+        AddCodeNote(nAddress, sOriginalAuthor, sNote);
+    }
+    else
+    {
+        const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+        AddCodeNote(nAddress, pUserContext.GetDisplayName(), sNote);
+    }
 }
 
 const CodeNotesModel::CodeNote* CodeNotesModel::FindCodeNoteInternal(ra::ByteAddress nAddress) const
@@ -806,6 +830,87 @@ void CodeNotesModel::DoFrame()
                 m_fCodeNoteChanged(nNewAddress + pOffset.Offset, pOffset.Note);
         }
     }
+}
+
+void CodeNotesModel::SetServerCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
+{
+    // remove the original entry - we're setting a new original entry
+    const auto pIter = m_mOriginalCodeNotes.find(nAddress);
+    if (pIter != m_mOriginalCodeNotes.end())
+        m_mOriginalCodeNotes.erase(pIter);
+
+    // if we're just committing the current value, we're done
+    const auto pIter2 = m_mCodeNotes.find(nAddress);
+    if (pIter2 != m_mCodeNotes.end() && pIter2->second.Note == sNote)
+    {
+        if (m_mOriginalCodeNotes.empty())
+            SetValue(ra::data::models::AssetModelBase::ChangesProperty, ra::etoi(ra::data::models::AssetChanges::None));
+        return;
+    }
+
+    // update the current value
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    AddCodeNote(nAddress, pUserContext.GetDisplayName(), sNote);
+}
+
+const std::wstring* CodeNotesModel::GetServerCodeNote(ra::ByteAddress nAddress) const
+{
+    const auto pIter = m_mOriginalCodeNotes.find(nAddress);
+    if (pIter != m_mOriginalCodeNotes.end())
+        return &pIter->second.second;
+
+    return nullptr;
+}
+
+const std::string* CodeNotesModel::GetServerCodeNoteAuthor(ra::ByteAddress nAddress) const
+{
+    const auto pIter = m_mOriginalCodeNotes.find(nAddress);
+    if (pIter != m_mOriginalCodeNotes.end())
+        return &pIter->second.first;
+
+    return nullptr;
+}
+
+void CodeNotesModel::Serialize(ra::services::TextWriter& pWriter) const
+{
+    bool first = true;
+
+    for (const auto& pIter : m_mOriginalCodeNotes)
+    {
+        // "N0" of first note will be written by GameAssets
+        if (first)
+        {
+            first = false;
+            pWriter.Write(":");
+        }
+        else
+        {
+            pWriter.WriteLine();
+            pWriter.Write("N0:");
+        }
+
+        pWriter.Write(ra::ByteAddressToString(pIter.first));
+
+        const auto pNote = m_mCodeNotes.find(pIter.first);
+        if (pNote != m_mCodeNotes.end())
+            WriteQuoted(pWriter, pNote->second.Note);
+        else
+            WriteQuoted(pWriter, "");
+    }
+}
+
+bool CodeNotesModel::Deserialize(ra::Tokenizer& pTokenizer)
+{
+    const auto sAddress = pTokenizer.ReadTo(':');
+    pTokenizer.Consume(':');
+    const auto nAddress = ra::ByteAddressFromString(sAddress);
+
+    std::wstring sNote;
+    if (!ReadQuoted(pTokenizer, sNote))
+        return false;
+
+    SetCodeNote(nAddress, sNote);
+    return true;
 }
 
 } // namespace models

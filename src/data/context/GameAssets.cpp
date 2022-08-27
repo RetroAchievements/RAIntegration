@@ -208,6 +208,11 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                 nType = ra::data::models::AssetType::Leaderboard;
                 pTokenizer.Consume('L');
                 break;
+
+            case 'N':
+                nType = ra::data::models::AssetType::CodeNotes;
+                pTokenizer.Consume('N');
+                break;
         }
 
         nId = pTokenizer.ReadNumber();
@@ -270,7 +275,15 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                     mLeaderboard->CreateServerCheckpoint();
 
                     pAsset = &Append(std::move(mLeaderboard));
+                    break;
                 }
+
+                case ra::data::models::AssetType::CodeNotes:
+                    pAsset = FindCodeNotes();
+                    if (pAsset)
+                        pAsset->Deserialize(pTokenizer);
+
+                    continue;
             }
 
             if (pAsset)
@@ -408,6 +421,10 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
 
             case ra::data::models::AssetType::Leaderboard:
                 pData->Write("L");
+                break;
+
+            case ra::data::models::AssetType::CodeNotes:
+                pData->Write("N");
                 break;
 
             case ra::data::models::AssetType::RichPresence:

@@ -4,6 +4,9 @@
 
 #include "ControlBinding.hh"
 
+#include "services\IThreadPool.hh"
+#include "services\ServiceLocator.hh"
+
 namespace ra {
 namespace ui {
 namespace win32 {
@@ -29,6 +32,7 @@ public:
         None = 0,  // one way from source
         LostFocus, // update source when control loses focus
         KeyPress,  // update source after each key press
+        Typing,    // update source 500ms after a key press
     };
 
     void BindText(const StringModelProperty& pSourceProperty, UpdateMode nUpdateMode = UpdateMode::LostFocus)
@@ -49,6 +53,8 @@ public:
     {
         if (m_pTextUpdateMode == UpdateMode::KeyPress)
             UpdateSource();
+        else if (m_pTextUpdateMode == UpdateMode::Typing)
+            UpdateSourceDelayed();
     }
 
     void BindKey(unsigned int nKey, std::function<bool()> pHandler)
@@ -115,6 +121,19 @@ protected:
     virtual void UpdateSourceFromText(const std::wstring& sText)
     {
         SetValue(*m_pTextBoundProperty, sText);
+    }
+
+    void UpdateSourceDelayed()
+    {
+        static int nVersion = 0;
+        int nCapturedVersion = ++nVersion;
+
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(
+            std::chrono::milliseconds(300), [this, nCapturedVersion]()
+            {
+                if (nCapturedVersion == nVersion)
+                    UpdateSource();
+            });
     }
 
     UpdateMode m_pTextUpdateMode = UpdateMode::None;

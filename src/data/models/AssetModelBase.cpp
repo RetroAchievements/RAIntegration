@@ -29,8 +29,17 @@ static size_t CharactersNeedingEscaped(const std::basic_string<CharT>& sText) no
     size_t nToEscape = 0;
     for (auto c : sText)
     {
-        if (c == ':' || c == '"' || c == '\\')
-            ++nToEscape;
+        switch (c)
+        {
+            case ':':
+            case '"':
+            case '\\':
+            case '\n':
+            case '\r':
+            case '\t':
+                ++nToEscape;
+                break;
+        }
     }
 
     return nToEscape;
@@ -44,9 +53,28 @@ static void WriteEscapedString(ra::services::TextWriter& pWriter, const std::bas
     sEscaped.push_back('"');
     for (const CharT c : sText)
     {
-        if (c == '"' || c == '\\')
-            sEscaped.push_back('\\');
-        sEscaped.push_back(c);
+        switch (c)
+        {
+            case '"':
+            case '\\':
+                sEscaped.push_back('\\');
+                _FALLTHROUGH;
+            default:
+                sEscaped.push_back(c);
+                break;
+            case '\r':
+                sEscaped.push_back('\\');
+                sEscaped.push_back('r');
+                break;
+            case '\n':
+                sEscaped.push_back('\\');
+                sEscaped.push_back('n');
+                break;
+            case '\t':
+                sEscaped.push_back('\\');
+                sEscaped.push_back('t');
+                break;
+        }
     }
     sEscaped.push_back('"');
     pWriter.Write(sEscaped);

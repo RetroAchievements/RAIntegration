@@ -306,6 +306,7 @@ public:
 
         Assert::AreEqual(0x12U, inspector.GetPublishedAddress());
         Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
     }
 
     TEST_METHOD(TestPublishCurrentAddressNoteDelete)
@@ -319,6 +320,7 @@ public:
 
         Assert::AreEqual(0x12U, inspector.GetPublishedAddress());
         Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
     }
 
     TEST_METHOD(TestPublishCurrentAddressNoteCancel)
@@ -344,6 +346,7 @@ public:
 
         Assert::AreEqual(0U, inspector.GetPublishedAddress());
         Assert::IsTrue(inspector.CanPublishCurrentAddressNote());
+        Assert::IsTrue(inspector.CanRevertCurrentAddressNote());
         Assert::IsTrue(bWindowSeen);
     }
     

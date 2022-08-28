@@ -175,6 +175,10 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                         // ignore RichPresence model (it's not actually stored in the XXX-User file)
                         case ra::data::models::AssetType::RichPresence:
                             continue;
+
+                        // ignore CodeNotes model (it's actually a collection of notes)
+                        case ra::data::models::AssetType::CodeNotes:
+                            continue;
                     }
 
                     vRemainingAssetsToReload.push_back(pAsset);

@@ -845,6 +845,7 @@ void CodeNotesModel::SetServerCodeNote(ra::ByteAddress nAddress, const std::wstr
     {
         if (m_mOriginalCodeNotes.empty())
             SetValue(ra::data::models::AssetModelBase::ChangesProperty, ra::etoi(ra::data::models::AssetChanges::None));
+        OnCodeNoteChanged(nAddress, sNote);
         return;
     }
 

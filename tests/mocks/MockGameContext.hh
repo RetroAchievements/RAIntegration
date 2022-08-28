@@ -97,7 +97,7 @@ public:
             Expects(pCodeNotes != nullptr);
         }
 
-        pCodeNotes->SetCodeNote(nAddress, sNote);
+        pCodeNotes->SetServerCodeNote(nAddress, sNote);
         return true;
     }
 

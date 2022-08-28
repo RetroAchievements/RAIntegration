@@ -280,6 +280,8 @@ void MemoryInspectorViewModel::PublishCurrentAddressNote()
     {
         // if we flagged the text as modified to be written on address change, do so now
         SaveNotes();
+
+        UpdateNoteButtons();
     }
 }
 

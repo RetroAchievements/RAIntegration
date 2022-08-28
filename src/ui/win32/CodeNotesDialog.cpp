@@ -79,12 +79,14 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
         CodeNotesViewModel::CodeNoteViewModel::LabelProperty);
     pAddressColumn->SetHeader(L"Address");
     pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 64);
+    pAddressColumn->SetTextColorProperty(CodeNotesViewModel::CodeNoteViewModel::BookmarkColorProperty);
     m_bindNotes.BindColumn(0, std::move(pAddressColumn));
 
     auto pDescriptionColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         CodeNotesViewModel::CodeNoteViewModel::NoteProperty);
     pDescriptionColumn->SetHeader(L"Note");
     pDescriptionColumn->SetWidth(GridColumnBinding::WidthType::Fill, 40);
+    pDescriptionColumn->SetTextColorProperty(CodeNotesViewModel::CodeNoteViewModel::BookmarkColorProperty);
     m_bindNotes.BindColumn(1, std::move(pDescriptionColumn));
 
     m_bindNotes.BindItems(vmCodeNotes.Notes());

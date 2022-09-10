@@ -7,6 +7,9 @@ using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
 namespace services {
+
+bool ServiceLocator::IsInitialized() noexcept { return true; }
+
 namespace mocks {
 
 const std::wstring MockAudioSystem::BEEP = L"BEEP";

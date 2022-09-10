@@ -15,7 +15,10 @@ namespace bindings {
 GridBinding::~GridBinding()
 {
     if (m_vmItems != nullptr)
-        m_vmItems->RemoveNotifyTarget(*this);
+    {
+        if (ra::services::ServiceLocator::IsInitialized())
+            m_vmItems->RemoveNotifyTarget(*this);
+    }
 
     if (m_hTooltip)
     {

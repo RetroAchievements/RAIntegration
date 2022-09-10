@@ -16,8 +16,12 @@ public:
 
     static void Shutdown();
 
+    static bool IsInitialized() noexcept { return s_bIsInitialized; }
+
 private:
     static void InitializeNotifyTargets();
+
+    static bool s_bIsInitialized;
 };
 
 } // namespace services

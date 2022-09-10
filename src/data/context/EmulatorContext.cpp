@@ -28,9 +28,40 @@ namespace ra {
 namespace data {
 namespace context {
 
+static std::string FormatAddressLarge(ra::ByteAddress nAddress)
+{
+    std::string sAddress;
+    sAddress.resize(10);
+    sprintf_s(sAddress.data(), 11, "0x%08x", nAddress);
+    return sAddress;
+}
+
+static std::string FormatAddressMedium(ra::ByteAddress nAddress)
+{
+    if (nAddress & 0xFF000000)
+        return FormatAddressMedium(nAddress);
+
+    std::string sAddress;
+    sAddress.resize(8);
+    sprintf_s(sAddress.data(), 9, "0x%06x", nAddress);
+    return sAddress;
+}
+
+static std::string FormatAddressSmall(ra::ByteAddress nAddress)
+{
+    if (nAddress & 0xFFFF0000)
+        return FormatAddressMedium(nAddress);
+
+    std::string sAddress;
+    sAddress.resize(6);
+    sprintf_s(sAddress.data(), 7, "0x%04x", nAddress);
+    return sAddress;
+}
+
 void EmulatorContext::Initialize(EmulatorID nEmulatorId, const char* sClientName)
 {
     m_nEmulatorId = nEmulatorId;
+    m_fFormatAddress = FormatAddressSmall;
 
     switch (nEmulatorId)
     {
@@ -585,6 +616,17 @@ std::string EmulatorContext::GetGameTitle() const
     return std::string(buffer.data());
 }
 
+void EmulatorContext::ClearMemoryBlocks()
+{
+    m_vMemoryBlocks.clear();
+
+    if (m_nTotalMemorySize != 0U)
+    {
+        m_nTotalMemorySize = 0U;
+        OnTotalMemorySizeChanged();
+    }
+}
+
 void EmulatorContext::AddMemoryBlock(gsl::index nIndex, size_t nBytes,
     EmulatorContext::MemoryReadFunction* pReader, EmulatorContext::MemoryWriteFunction* pWriter)
 {
@@ -614,6 +656,13 @@ void EmulatorContext::AddMemoryBlockReader(gsl::index nIndex,
 
 void EmulatorContext::OnTotalMemorySizeChanged()
 {
+    if (m_nTotalMemorySize <= 0x10000)
+        m_fFormatAddress = FormatAddressSmall;
+    else if (m_nTotalMemorySize <= 0x1000000)
+        m_fFormatAddress = FormatAddressMedium;
+    else
+        m_fFormatAddress = FormatAddressLarge;
+
     // create a copy of the list of pointers in case it's modified by one of the callbacks
     NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
     for (NotifyTarget* target : vNotifyTargets)

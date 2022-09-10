@@ -53,7 +53,7 @@ void CodeNotesModel::Refresh(unsigned int nGameId, CodeNoteChangedFunction fCode
             {
                 {
                     std::unique_lock<std::mutex> lock(m_oMutex);
-                    auto pIter = m_mOriginalCodeNotes.find(pNote.Address);
+                    const auto pIter = m_mOriginalCodeNotes.find(pNote.Address);
                     if (pIter != m_mOriginalCodeNotes.end())
                     {
                         pIter->second.first = pNote.Author;

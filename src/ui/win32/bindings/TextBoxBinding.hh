@@ -126,7 +126,7 @@ protected:
     void UpdateSourceDelayed()
     {
         static int nVersion = 0;
-        int nCapturedVersion = ++nVersion;
+        const int nCapturedVersion = ++nVersion;
 
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(
             std::chrono::milliseconds(300), [this, nCapturedVersion]()

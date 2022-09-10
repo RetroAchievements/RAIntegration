@@ -164,7 +164,7 @@ protected:
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
-    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);
+    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
 
 private:
     static const IntModelProperty CurrentAddressValueProperty;

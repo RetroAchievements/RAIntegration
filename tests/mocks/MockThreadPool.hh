@@ -98,7 +98,7 @@ public:
     /// <summary>
     /// Specifies whether non-scheduled tasks should be immediately executed when queued.
     /// </summary>
-    void SetSynchronous(bool bValue)
+    void SetSynchronous(bool bValue) noexcept
     {
         m_bSynchronous = bValue;
     }

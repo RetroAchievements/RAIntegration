@@ -35,7 +35,7 @@ private:
 
         ra::ui::EditorTheme editorTheme;
 
-        CodeNotesViewModelHarness() : m_themeOverride(&editorTheme) {}
+        CodeNotesViewModelHarness() noexcept : m_themeOverride(&editorTheme) {}
 
         void PopulateNotes()
         {

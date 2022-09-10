@@ -157,7 +157,7 @@ void MemoryInspectorViewModel::SaveNotes()
 void MemoryInspectorViewModel::UpdateNoteButtons()
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes == nullptr || !CanModifyNotes())
     {
         SetValue(CanEditCurrentAddressNoteProperty, false);

@@ -131,8 +131,7 @@ protected:
         ComboBox_DeleteString(m_hWnd, nIndex);
     }
 
-private:
-    void PopulateComboBox()
+    virtual void PopulateComboBox()
     {
         const auto nCount = ra::to_signed(m_pViewModelCollection->Count());
         for (gsl::index nIndex = 0; nIndex < nCount; ++nIndex)
@@ -143,7 +142,7 @@ private:
         }
     }
 
-    void UpdateSelectedItem()
+    virtual void UpdateSelectedItem()
     {
         if (m_pViewModelCollection)
         {
@@ -159,8 +158,10 @@ private:
             ComboBox_SetCurSel(m_hWnd, m_nSelectedIndex);
     }
 
-    const IntModelProperty* m_pSelectedIdProperty = nullptr;
     const ViewModelCollectionBase* m_pViewModelCollection = nullptr;
+    const IntModelProperty* m_pSelectedIdProperty = nullptr;
+
+private:
     ViewModelCollectionBase* m_pMutableViewModelCollection = nullptr;
     const IntModelProperty* m_pItemIdProperty = nullptr;
     const StringModelProperty* m_pItemTextProperty = nullptr;

@@ -74,10 +74,12 @@ void IntegrationMenuViewModel::AddCommonMenuItems(LookupItemViewModelCollection&
     vmMenu.Add(IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards").SetSelected(pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards));
     vmMenu.Add(IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
     vmMenu.Add(0, L"-----");
+    vmMenu.Add(IDM_RA_FILES_OPENALL, L"&Open All");
     vmMenu.Add(IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
     vmMenu.Add(IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
     vmMenu.Add(IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
     vmMenu.Add(IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+    vmMenu.Add(IDM_RA_FILES_CODENOTES, L"Code &Notes");
     vmMenu.Add(IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
 }
 
@@ -133,8 +135,16 @@ void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)
             ShowMemoryBookmarks();
             break;
 
+        case IDM_RA_FILES_CODENOTES:
+            ShowCodeNotes();
+            break;
+
         case IDM_RA_PARSERICHPRESENCE:
             ShowRichPresenceMonitor();
+            break;
+
+        case IDM_RA_FILES_OPENALL:
+            ShowAllEditors();
             break;
 
         case IDM_RA_REPORTBROKENACHIEVEMENTS:
@@ -293,6 +303,16 @@ void IntegrationMenuViewModel::ShowMemoryBookmarks()
     }
 }
 
+void IntegrationMenuViewModel::ShowCodeNotes()
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    if (pEmulatorContext.WarnDisableHardcoreMode("view code notes"))
+    {
+        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+        pWindowManager.CodeNotes.Show();
+    }
+}
+
 void IntegrationMenuViewModel::ShowRichPresenceMonitor()
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -302,6 +322,27 @@ void IntegrationMenuViewModel::ShowRichPresenceMonitor()
 
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.RichPresenceMonitor.Show();
+}
+
+void IntegrationMenuViewModel::ShowAllEditors()
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    if (pEmulatorContext.WarnDisableHardcoreMode("use development tools"))
+    {
+        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+
+        pWindowManager.AssetList.Show();
+        pWindowManager.AssetEditor.Show();
+        pWindowManager.MemoryInspector.Show();
+        pWindowManager.MemoryBookmarks.Show();
+        pWindowManager.CodeNotes.Show();
+    }
+    else
+    {
+        ShowAssetList();
+    }
+
+    ShowRichPresenceMonitor();
 }
 
 void IntegrationMenuViewModel::ReportBrokenAchievements()

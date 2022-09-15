@@ -734,8 +734,9 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindEnabled(IDC_RA_BADGENAME, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_BADGE_SPIN, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_UPLOAD_BADGE, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_HIGHLIGHTS, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_RESET, AssetEditorViewModel::IsAssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_TRIGGER, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_TRIGGER, AssetEditorViewModel::IsTriggerProperty);
     m_bindWindow.BindEnabled(IDC_RA_LBX_GROUPS, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADD_GROUP, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_DELETE_GROUP, AssetEditorViewModel::IsAssetLoadedProperty);
@@ -751,7 +752,6 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindLabel(IDC_RA_MEASURED, AssetEditorViewModel::MeasuredValueProperty);
     m_bindWindow.BindVisible(IDC_RA_LBL_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
     m_bindWindow.BindVisible(IDC_RA_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
-    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_TRIGGER, AssetEditorViewModel::IsTriggerProperty);
 
     // achievement only fields
     m_bindBadge.BindText(AssetEditorViewModel::BadgeProperty);

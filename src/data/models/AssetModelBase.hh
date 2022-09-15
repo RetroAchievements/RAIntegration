@@ -25,6 +25,7 @@ enum class AssetType
 
 enum class AssetCategory
 {
+    None = -1,
     Local = 0,
     Core = 3,
     Unofficial = 5,

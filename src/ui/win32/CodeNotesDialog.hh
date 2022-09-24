@@ -2,6 +2,8 @@
 #define RA_UI_WIN32_DLG_CODENOTES_H
 #pragma once
 
+#include "data/context/EmulatorContext.hh"
+
 #include "ui/viewmodels/CodeNotesViewModel.hh"
 
 #include "ui/win32/bindings/MultiLineGridBinding.hh"
@@ -41,7 +43,22 @@ protected:
     BOOL OnCommand(WORD nCommand) override;
 
 private:
-    ra::ui::win32::bindings::MultiLineGridBinding m_bindNotes;
+    class CodeNotesGridBinding : public ra::ui::win32::bindings::MultiLineGridBinding,
+        protected ra::data::context::EmulatorContext::NotifyTarget
+    {
+    public:
+        explicit CodeNotesGridBinding(ViewModelBase& vmViewModel);
+        GSL_SUPPRESS_F6 ~CodeNotesGridBinding();
+        CodeNotesGridBinding(const CodeNotesGridBinding&) noexcept = delete;
+        CodeNotesGridBinding& operator=(const CodeNotesGridBinding&) noexcept = delete;
+        CodeNotesGridBinding(CodeNotesGridBinding&&) noexcept = delete;
+        CodeNotesGridBinding& operator=(CodeNotesGridBinding&&) noexcept = delete;
+
+    protected:
+        void OnTotalMemorySizeChanged() override;
+    };
+
+    CodeNotesGridBinding m_bindNotes;
     ra::ui::win32::bindings::TextBoxBinding m_bindFilterValue;
 };
 

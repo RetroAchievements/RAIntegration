@@ -7,6 +7,7 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
+#include "ui\win32\bindings\GridAddressColumnBinding.hh"
 #include "ui\win32\bindings\GridTextColumnBinding.hh"
 
 using ra::ui::viewmodels::CodeNotesViewModel;
@@ -49,6 +50,40 @@ void CodeNotesDialog::Presenter::OnClosed() noexcept { m_pDialog.reset(); }
 
 // ------------------------------------
 
+CodeNotesDialog::CodeNotesGridBinding::CodeNotesGridBinding(ViewModelBase& vmViewModel)
+    : ra::ui::win32::bindings::MultiLineGridBinding(vmViewModel)
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    pEmulatorContext.AddNotifyTarget(*this);
+}
+
+CodeNotesDialog::CodeNotesGridBinding::~CodeNotesGridBinding()
+{
+    if (ra::services::ServiceLocator::Exists<ra::data::context::EmulatorContext>())
+    {
+        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        pEmulatorContext.RemoveNotifyTarget(*this);
+    }
+}
+
+void CodeNotesDialog::CodeNotesGridBinding::OnTotalMemorySizeChanged()
+{
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vColumns.size()); ++nIndex)
+    {
+        auto* pAddressColumn = dynamic_cast<ra::ui::win32::bindings::GridTextColumnBinding*>(m_vColumns.at(nIndex).get());
+        if (pAddressColumn != nullptr && pAddressColumn->GetHeader() == L"Address")
+        {
+            pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels,
+                ra::ui::win32::bindings::GridAddressColumnBinding::CalculateWidth() + 12);
+            RefreshColumn(nIndex);
+        }
+    }
+
+    UpdateLayout();
+}
+
+// ------------------------------------
+
 CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
     : DialogBase(vmCodeNotes),
     m_bindNotes(vmCodeNotes),
@@ -78,7 +113,8 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
     auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
         CodeNotesViewModel::CodeNoteViewModel::LabelProperty);
     pAddressColumn->SetHeader(L"Address");
-    pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 64);
+    pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels,
+        ra::ui::win32::bindings::GridAddressColumnBinding::CalculateWidth() + 12);
     pAddressColumn->SetTextColorProperty(CodeNotesViewModel::CodeNoteViewModel::BookmarkColorProperty);
     m_bindNotes.BindColumn(0, std::move(pAddressColumn));
 

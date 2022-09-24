@@ -22,7 +22,10 @@ public:
     GSL_SUPPRESS_F6 ~ComboBoxBinding() noexcept
     {
         if (m_pMutableViewModelCollection)
-            m_pMutableViewModelCollection->RemoveNotifyTarget(*this);
+        {
+            if (ra::services::ServiceLocator::IsInitialized())
+                m_pMutableViewModelCollection->RemoveNotifyTarget(*this);
+        }
     }
 
     ComboBoxBinding(const ComboBoxBinding&) noexcept = delete;

@@ -2,6 +2,7 @@
 #define RA_UI_BINDINGBASE_H
 #pragma once
 
+#include "services/ServiceLocator.hh"
 #include "ui/ViewModelBase.hh"
 
 namespace ra {
@@ -12,7 +13,8 @@ class BindingBase : protected ViewModelBase::NotifyTarget
 public:
     ~BindingBase() noexcept
     {
-        m_vmViewModel.RemoveNotifyTarget(*this);
+        if (ra::services::ServiceLocator::IsInitialized())
+            m_vmViewModel.RemoveNotifyTarget(*this);
     }
     BindingBase(const BindingBase&) noexcept = delete;
     BindingBase& operator=(const BindingBase&) noexcept = delete;

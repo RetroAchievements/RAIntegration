@@ -13,11 +13,10 @@ std::string ByteAddressToString(ByteAddress nAddr)
 {
 #ifndef RA_UTEST
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (pEmulatorContext.TotalMemorySize() > 0x10000)
-        return ra::StringPrintf("0x%06x", nAddr);
-    else
+    return pEmulatorContext.FormatAddress(nAddr);
+#else
+    return ra::StringPrintf("0x%04x", nAddr);
 #endif
-        return ra::StringPrintf("0x%04x", nAddr);
 }
 
 _Use_decl_annotations_

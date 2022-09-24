@@ -97,27 +97,27 @@ void __gsl_contract_handler(const char* const file, unsigned int line, const cha
 
 API int CCONV _RA_Shutdown()
 {
-    // if _RA_Init wasn't called, the services won't have been registered, so there's nothing to shut down
-    if (ra::services::ServiceLocator::Exists<ra::services::IThreadPool>())
+    // if the services haven't been registered, there's nothing to shut down
+    if (!ra::services::Initialization::IsInitialized())
+        return 0;
+
+    // detach any client-registered functions
+    _RA_InstallSharedFunctionsExt(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+
+    // notify the background threads as soon as possible so they start to wind down
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(false);
+
+    if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>()
+        .IsFeatureEnabled(ra::services::Feature::Offline))
     {
-        // detach any client-registered functions
-        _RA_InstallSharedFunctionsExt(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
-
-        // notify the background threads as soon as possible so they start to wind down
-        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().Shutdown(false);
-
-        if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>()
-            .IsFeatureEnabled(ra::services::Feature::Offline))
-        {
-            ra::services::ServiceLocator::Get<ra::services::GameIdentifier>().SaveKnownHashes();
-        }
-
-        ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
-
-        ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>().EndSession();
-
-        ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().LoadGame(0U);
+        ra::services::ServiceLocator::Get<ra::services::GameIdentifier>().SaveKnownHashes();
     }
+
+    ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
+
+    ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>().EndSession();
+
+    ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().LoadGame(0U);
 
     if (ra::services::ServiceLocator::Exists<ra::ui::viewmodels::WindowManager>())
     {

@@ -33,7 +33,9 @@ private:
     static void ShowAssetEditor();
     static void ShowMemoryInspector();
     static void ShowMemoryBookmarks();
+    static void ShowCodeNotes();
     static void ShowRichPresenceMonitor();
+    static void ShowAllEditors();
     static void ReportBrokenAchievements();
     static void ShowGameHash();
 };

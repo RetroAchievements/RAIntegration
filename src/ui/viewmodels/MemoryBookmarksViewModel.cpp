@@ -11,6 +11,7 @@
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
 #include "services\ILocalStorage.hh"
+#include "services\SearchResults.h"
 #include "services\ServiceLocator.hh"
 
 #include "ui\viewmodels\FileDialogViewModel.hh"
@@ -43,6 +44,8 @@ const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadO
 const BoolModelProperty MemoryBookmarksViewModel::MemoryBookmarkViewModel::IsDirtyProperty("MemoryBookmarkViewModel", "IsDirty", false);
 const StringModelProperty MemoryBookmarksViewModel::FreezeButtonTextProperty("MemoryBookmarksViewModel", "FreezeButtonText", L"Freeze");
 
+constexpr int MaxTextBookmarkLength = 8;
+
 MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
 {
     SetWindowTitle(L"Memory Bookmarks");
@@ -59,6 +62,7 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
     m_vSizes.Add(ra::etoi(MemSize::Nibble_Upper), L"Upper4");
     m_vSizes.Add(ra::etoi(MemSize::Float), L"Float");
     m_vSizes.Add(ra::etoi(MemSize::MBF32), L"MBF32");
+    m_vSizes.Add(ra::etoi(MemSize::Text), L"ASCII");
 
     m_vFormats.Add(ra::etoi(MemFormat::Hex), L"Hex");
     m_vFormats.Add(ra::etoi(MemFormat::Dec), L"Dec");
@@ -93,7 +97,17 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Int
     else if (args.Property == MemoryBookmarkViewModel::SizeProperty)
     {
         m_nSize = ra::itoe<MemSize>(args.tNewValue);
-        SetReadOnly(m_nSize == MemSize::BitCount);
+        switch (m_nSize)
+        {
+            case MemSize::BitCount:
+            case MemSize::Text:
+                SetReadOnly(true);
+                break;
+
+            default:
+                SetReadOnly(false);
+                break;
+        }
 
         if (m_bInitialized)
         {
@@ -162,6 +176,20 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::OnValueChanged(const Str
 unsigned MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadValue() const
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    if (m_nSize == MemSize::Text)
+    {
+        // only have 32 bits to store the value in. generate a hash for the string
+        std::array<uint8_t, MaxTextBookmarkLength + 1> pBuffer;
+        pEmulatorContext.ReadMemory(m_nAddress, &pBuffer.at(0), pBuffer.size() - 1);
+        pBuffer.at(pBuffer.size() - 1) = '\0';
+
+        const char* pText;
+        GSL_SUPPRESS_TYPE1 pText = reinterpret_cast<char*>(&pBuffer.at(0));
+        std::string sText(pText);
+
+        return ra::StringHash(sText);
+    }
+
     return pEmulatorContext.ReadMemory(m_nAddress, m_nSize);
 }
 
@@ -265,6 +293,13 @@ void MemoryBookmarksViewModel::MemoryBookmarkViewModel::UpdateCurrentValue()
 
 std::wstring MemoryBookmarksViewModel::MemoryBookmarkViewModel::BuildCurrentValue() const
 {
+    if (m_nSize == MemSize::Text)
+    {
+        ra::services::SearchResults pResults;
+        pResults.Initialize(m_nAddress, MaxTextBookmarkLength, ra::services::SearchType::AsciiText);
+        return pResults.GetFormattedValue(m_nAddress, MemSize::Text);
+    }
+
     return ra::data::MemSizeFormat(m_nValue, m_nSize, GetFormat());
 }
 
@@ -505,7 +540,8 @@ void MemoryBookmarksViewModel::OnByteWritten(ra::ByteAddress nAddress, uint8_t)
         if (nAddress < nBookmarkAddress)
             continue;
 
-        const auto nBytes = ra::data::MemSizeBytes(pBookmark.GetSize());
+        const auto nSize = pBookmark.GetSize();
+        const auto nBytes = (nSize == MemSize::Text) ? MaxTextBookmarkLength : ra::data::MemSizeBytes(nSize);
         if (nAddress >= nBookmarkAddress + nBytes)
             continue;
 

@@ -91,7 +91,7 @@ public:
     HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override
     {
         const auto& vmItems = static_cast<ra::ui::win32::bindings::GridBinding*>(pInfo.pGridBinding)->GetItems();
-        if (vmItems.GetItemValue(pInfo.nColumnIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadOnlyProperty))
+        if (vmItems.GetItemValue(pInfo.nItemIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadOnlyProperty))
             return nullptr;
 
         return ra::ui::win32::bindings::GridTextColumnBinding::CreateInPlaceEditor(hParent, pInfo);
@@ -159,6 +159,7 @@ private:
         {
             case MemSize::Float:
             case MemSize::MBF32:
+            case MemSize::Text:
                 return true;
 
             default:

@@ -2046,6 +2046,19 @@ public:
         Assert::IsTrue(results2.MatchesFilter(results1, result2));  // 18 >= 18 (18) ?
         Assert::IsTrue(results2.MatchesFilter(results1, result3));  // 24 >= 18 (24) ?
     }
+
+    TEST_METHOD(TestInitializeFromMemoryAsciiEmpty)
+    {
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        Assert::AreEqual({0U}, mockEmulatorContext.TotalMemorySize());
+
+        SearchResults results;
+        results.Initialize(0U, 16, ra::services::SearchType::AsciiText);
+
+        Assert::AreEqual({0U}, results.MatchingAddressCount());
+
+        Assert::AreEqual(std::wstring(), results.GetFormattedValue(0U, MemSize::Text));
+    }
 };
 
 } // namespace tests

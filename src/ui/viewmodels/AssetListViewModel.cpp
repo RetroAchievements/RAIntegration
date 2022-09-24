@@ -102,6 +102,21 @@ void AssetListViewModel::OnActiveGameChanged()
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     SetGameId(pGameContext.GameId());
+
+    switch (pGameContext.Assets().MostPublishedAssetCategory())
+    {
+        case ra::data::models::AssetCategory::Core:
+            SetFilterCategory(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Core);
+            break;
+
+        case ra::data::models::AssetCategory::Unofficial:
+            SetFilterCategory(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Unofficial);
+            break;
+
+        case ra::data::models::AssetCategory::Local:
+            SetFilterCategory(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local);
+            break;
+    }
 }
 
 void AssetListViewModel::OnDataModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)

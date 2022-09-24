@@ -125,7 +125,7 @@ public:
         Assert::AreEqual(std::wstring(L"[Not Active]"), editor.GetMeasuredValue());
         Assert::IsTrue(editor.IsAchievement());
         Assert::IsFalse(editor.IsLeaderboard());
-        Assert::IsTrue(editor.IsTrigger());
+        Assert::IsFalse(editor.IsTrigger());
         Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Start, (int)editor.GetSelectedLeaderboardPart());
         Assert::AreEqual(ra::data::ValueFormat::Value, editor.GetValueFormat());
 
@@ -204,7 +204,7 @@ public:
         Assert::IsFalse(editor.IsAssetLoaded());
         Assert::IsTrue(editor.IsAchievement());
         Assert::IsFalse(editor.IsLeaderboard());
-        Assert::IsTrue(editor.IsTrigger());
+        Assert::IsFalse(editor.IsTrigger());
         Assert::IsFalse(editor.HasMeasured());
         Assert::IsFalse(editor.HasAssetValidationError());
         Assert::IsFalse(editor.HasAssetValidationWarning());

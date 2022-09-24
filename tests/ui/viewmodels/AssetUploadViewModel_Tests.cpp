@@ -1,6 +1,7 @@
 #include "CppUnitTest.h"
 
 #include "ui\viewmodels\AssetUploadViewModel.hh"
+#include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "data\context\GameAssets.hh"
 #include "data\models\AchievementModel.hh"
@@ -13,6 +14,7 @@
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
+#include "tests\mocks\MockUserContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -36,6 +38,7 @@ private:
 
         ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::mocks::MockDesktop mockDesktop;
@@ -141,9 +144,23 @@ private:
             return dynamic_cast<LeaderboardModel&>(m_pAssets.Append(std::move(vmLeaderboard)));
         }
 
+        ra::data::models::CodeNotesModel& CodeNotes()
+        {
+            auto* pNotes = m_pAssets.FindCodeNotes();
+            if (pNotes == nullptr)
+            {
+                auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
+                m_pAssets.Append(std::move(pCodeNotes));
+                pNotes = m_pAssets.FindCodeNotes();
+            }
+
+            return *pNotes;
+        }
+
         void AssertSuccess(int nItems)
         {
             bool bDialogSeen = false;
+            mockDesktop.ResetExpectedWindows();
             mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen, nItems](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
             {
                 bDialogSeen = true;
@@ -852,6 +869,276 @@ public:
         Assert::AreEqual(AssetChanges::None, pLeaderboard.GetChanges());
 
         vmUpload.AssertSuccess(1);
+    }
+
+    TEST_METHOD(TestSingleCodeNoteNew)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.CodeNotes().SetCodeNote(0x1234, L"This is a note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        Assert::AreEqual({ 1U }, vmUpload.TaskCount());
+        Assert::IsFalse(vmUpload.mockDesktop.WasDialogShown());
+
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateCodeNote>([&bApiCalled]
+                (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
+        {
+            bApiCalled = true;
+            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
+            Assert::AreEqual(0x1234U, pRequest.Address);
+            Assert::AreEqual(std::wstring(L"This is a note."), pRequest.Note);
+
+            pResponse.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.AssertSuccess(1);
+    }
+
+    TEST_METHOD(TestSingleCodeNoteDeleted)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.CodeNotes().SetServerCodeNote(0x1234, L"This is a note.");
+        vmUpload.CodeNotes().SetCodeNote(0x1234, L"");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        Assert::AreEqual({ 1U }, vmUpload.TaskCount());
+        Assert::IsFalse(vmUpload.mockDesktop.WasDialogShown());
+
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::DeleteCodeNote>([&bApiCalled]
+                (const ra::api::DeleteCodeNote::Request& pRequest, ra::api::DeleteCodeNote::Response& pResponse)
+        {
+            bApiCalled = true;
+            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
+            Assert::AreEqual(0x1234U, pRequest.Address);
+
+            pResponse.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.AssertSuccess(1);
+    }
+
+    TEST_METHOD(TestSingleCodeNoteDifferentAuthor)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.SetUsername("Author");
+        vmUpload.CodeNotes().SetServerCodeNote(0x1234, L"Test");
+        vmUpload.mockUserContext.SetUsername("Me");
+        vmUpload.CodeNotes().SetCodeNote(0x1234, L"Test2");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+
+        bool bWindowSeen = false;
+        vmUpload.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Overwrite note for address 0x1234?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Are you sure you want to replace Author's note:\n\nTest\n\nWith your note:\n\nTest2"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+
+            bWindowSeen = true;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        Assert::IsTrue(bWindowSeen);
+        Assert::AreEqual({ 1U }, vmUpload.TaskCount());
+
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateCodeNote>([&bApiCalled]
+                (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
+        {
+            bApiCalled = true;
+            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
+            Assert::AreEqual(0x1234U, pRequest.Address);
+            Assert::AreEqual(std::wstring(L"Test2"), pRequest.Note);
+
+            pResponse.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.AssertSuccess(1);
+    }
+
+    TEST_METHOD(TestSingleCodeNoteDeletedDifferentAuthor)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.SetUsername("Author");
+        vmUpload.CodeNotes().SetServerCodeNote(0x1234, L"Test");
+        vmUpload.mockUserContext.SetUsername("Me");
+        vmUpload.CodeNotes().SetCodeNote(0x1234, L"");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+
+        bool bWindowSeen = false;
+        vmUpload.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Delete note for address 0x1234?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Are you sure you want to delete Author's note:\n\nTest"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+
+            bWindowSeen = true;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        Assert::IsTrue(bWindowSeen);
+        Assert::AreEqual({ 1U }, vmUpload.TaskCount());
+
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::DeleteCodeNote>([&bApiCalled]
+                (const ra::api::DeleteCodeNote::Request& pRequest, ra::api::DeleteCodeNote::Response& pResponse)
+        {
+            bApiCalled = true;
+            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
+            Assert::AreEqual(0x1234U, pRequest.Address);
+
+            pResponse.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.AssertSuccess(1);
+    }
+
+    TEST_METHOD(TestSingleCodeNoteDifferentAuthorCancel)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.SetUsername("Author");
+        vmUpload.CodeNotes().SetServerCodeNote(0x1234, L"Test");
+        vmUpload.mockUserContext.SetUsername("Me");
+        vmUpload.CodeNotes().SetCodeNote(0x1234, L"Test2");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+
+        bool bWindowSeen = false;
+        vmUpload.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Overwrite note for address 0x1234?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Are you sure you want to replace Author's note:\n\nTest\n\nWith your note:\n\nTest2"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+
+            bWindowSeen = true;
+            return ra::ui::DialogResult::No;
+        });
+
+        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        Assert::IsTrue(bWindowSeen);
+        Assert::AreEqual({ 0U }, vmUpload.TaskCount());
+
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+    }
+
+    TEST_METHOD(TestSingleCodeNoteDifferentLong)
+    {
+        std::wstring sLongNote;
+        for (int i = 0; i < 48; ++i)
+            sLongNote += L"Test" + std::to_wstring(i) + L" ";
+
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.mockUserContext.SetUsername("Author");
+        vmUpload.CodeNotes().SetServerCodeNote(0x1234, sLongNote);
+        vmUpload.mockUserContext.SetUsername("Me");
+        vmUpload.CodeNotes().SetCodeNote(0x1234, L"Test");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+
+        bool bWindowSeen = false;
+        vmUpload.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Overwrite note for address 0x1234?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"Are you sure you want to replace Author's note:\n\n" \
+                "Test0 Test1 Test2 Test3 Test4 Test5 Test6 Test7 Test8 Test9 Test10 Test11 Test12 Test13 " \
+                "Test14 Test15 Test16 Test17 Test18 Test19 Test20 Test21 Test22 Test23 Test24 Test25 " \
+                "Test26 Test27 Test28 Test29 Test30 Test31 Test32 Test33 Test34 Test35 Test36 Test..." \
+                "\n\nWith your note:\n\nTest"), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+
+            bWindowSeen = true;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        Assert::IsTrue(bWindowSeen);
+        Assert::AreEqual({ 1U }, vmUpload.TaskCount());
+
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateCodeNote>([&bApiCalled]
+                (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
+        {
+            bApiCalled = true;
+            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
+            Assert::AreEqual(0x1234U, pRequest.Address);
+            Assert::AreEqual(std::wstring(L"Test"), pRequest.Note);
+
+            pResponse.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.AssertSuccess(1);
+    }
+
+    TEST_METHOD(TestMultipleCodeNotes)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        vmUpload.CodeNotes().SetCodeNote(0x1234, L"This is a note.");
+        vmUpload.CodeNotes().SetCodeNote(0x1235, L"This is another note.");
+        Assert::AreEqual(AssetChanges::Unpublished, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.QueueAsset(vmUpload.CodeNotes());
+        Assert::AreEqual({ 2U }, vmUpload.TaskCount());
+
+        int nApiCount = 0;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateCodeNote>([&nApiCount]
+                (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
+        {
+            nApiCount++;
+            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
+            if (pRequest.Address == 0x1234U)
+            {
+                Assert::AreEqual(0x1234U, pRequest.Address);
+                Assert::AreEqual(std::wstring(L"This is a note."), pRequest.Note);
+            }
+            else
+            {
+                Assert::AreEqual(0x1235U, pRequest.Address);
+                Assert::AreEqual(std::wstring(L"This is another note."), pRequest.Note);
+            }
+
+            pResponse.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        vmUpload.DoUpload();
+
+        Assert::AreEqual(2, nApiCount);
+        Assert::AreEqual(AssetChanges::None, vmUpload.CodeNotes().GetChanges());
+
+        vmUpload.AssertSuccess(2);
     }
 };
 

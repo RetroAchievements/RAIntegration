@@ -51,7 +51,7 @@ public:
     /// <summary>
     /// Sets the current address.
     /// </summary>
-    void SetCurrentAddress(const ra::ByteAddress sValue) { SetValue(CurrentAddressProperty, sValue); }
+    void SetCurrentAddress(const ra::ByteAddress nValue) { SetValue(CurrentAddressProperty, nValue); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the current address as a string.
@@ -78,23 +78,50 @@ public:
     /// <summary>
     /// Sets the current address's note.
     /// </summary>
-    void SetCurrentAddressNote(const std::wstring& sValue) { SetValue(CurrentAddressNoteProperty, sValue); }
+    void SetCurrentAddressNote(const std::wstring& sValue);
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the current address note is editable.
     /// </summary>
-    static const BoolModelProperty IsCurrentAddressNoteEditableProperty;
+    static const BoolModelProperty CanEditCurrentAddressNoteProperty;
 
     /// <summary>
     /// Gets whether or not the current address note is editable.
     /// </summary>
-    const bool IsCurrentAddressNoteEditable() const { return GetValue(IsCurrentAddressNoteEditableProperty); }
+    const bool CanEditCurrentAddressNote() const { return GetValue(CanEditCurrentAddressNoteProperty); }
 
-    void SaveCurrentAddressNote();
-    void DeleteCurrentAddressNote();
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the current address note is modified.
+    /// </summary>
+    static const BoolModelProperty CanRevertCurrentAddressNoteProperty;
+
+    /// <summary>
+    /// Gets whether or not the current address note is modified.
+    /// </summary>
+    const bool CanRevertCurrentAddressNote() const { return GetValue(CanRevertCurrentAddressNoteProperty); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not notes can be modified.
+    /// </summary>
     static const BoolModelProperty CanModifyNotesProperty;
+
+    /// <summary>
+    /// Gets whether or not notes can be modified.
+    /// </summary>
     const bool CanModifyNotes() const { return GetValue(CanModifyNotesProperty); }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the current address note can be published.
+    /// </summary>
+    static const BoolModelProperty CanPublishCurrentAddressNoteProperty;
+
+    /// <summary>
+    /// Gets whether or not the current address note can be published.
+    /// </summary>
+    const bool CanPublishCurrentAddressNote() const { return GetValue(CanPublishCurrentAddressNoteProperty); }
+
+    void PublishCurrentAddressNote();
+    void RevertCurrentAddressNote();
 
     void OpenNotesList();
 
@@ -137,15 +164,22 @@ protected:
     // GameContext::NotifyTarget
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
+    void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
 
 private:
     static const IntModelProperty CurrentAddressValueProperty;
     void OnCurrentAddressChanged(ra::ByteAddress nNewAddress);
 
+    void UpdateNoteButtons();
+    void SaveNotes();
+
     MemorySearchViewModel m_pSearch;
     MemoryViewerViewModel m_pViewer;
     unsigned m_nGameId = 0;
-    bool m_bTyping = false;
+    bool m_bSyncingAddress = false;
+    bool m_bSyncingCodeNote = false;
+    ra::ByteAddress m_nSavedNoteAddress = 0xFFFFFFFF;
+    std::wstring m_sSavedNote;
 };
 
 } // namespace viewmodels

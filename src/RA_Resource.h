@@ -40,8 +40,8 @@
 #define IDC_RA_RESET_FILTER             1135
 #define IDC_RA_RESULT_COUNT             1136
 #define IDC_RA_NOTE_TEXT                1137
-#define IDC_RA_ADD_NOTE                 1138
-#define IDC_RA_DELETE_NOTE              1139
+#define IDC_RA_PUBLISH_NOTE             1138
+#define IDC_RA_REVERT_NOTE              1139
 #define IDC_RA_RESULTS                  1140
 #define IDC_RA_SEARCHRANGES             1141
 #define IDC_RA_SEARCHRANGE              1142
@@ -127,7 +127,6 @@
 #define IDD_RA_LOGIN                    1504
 #define IDD_RA_GAMETITLESEL             1505
 #define IDD_RA_CODENOTES                1506
-#define IDD_RA_LEADERBOARDEDITOR        1507
 #define IDD_RA_REPORTBROKENACHIEVEMENTS 1508
 #define IDD_RA_GAMELIBRARY              1509
 #define IDD_RA_ROMCHECKSUM              1510
@@ -167,7 +166,7 @@
 #define IDM_RA_FILES_LOGIN              1706
 #define IDM_RA_FILES_LOGOUT             1707
 #define IDM_RA_FILES_ACHIEVEMENTEDITOR  1708
-#define IDM_RA_FILES_LEADERBOARDEDITOR  1709
+#define IDM_RA_FILES_CODENOTES          1709
 #define IDM_RA_HARDCORE_MODE            1710
 #define IDM_RA_REPORTBROKENACHIEVEMENTS 1711
 #define IDM_RA_GETROMCHECKSUM           1712
@@ -177,6 +176,7 @@
 #define IDM_RA_PARSERICHPRESENCE        1716
 #define IDM_RA_TOGGLELEADERBOARDS       1717
 #define IDM_RA_NON_HARDCORE_WARNING     1718
+#define IDM_RA_FILES_OPENALL            1719
 #define IDM_RA_MENUEND                  1739
 
 // Next default values for new objects

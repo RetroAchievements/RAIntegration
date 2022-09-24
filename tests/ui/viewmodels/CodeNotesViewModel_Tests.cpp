@@ -1,5 +1,6 @@
 #include "CppUnitTest.h"
 
+#include "ui\EditorTheme.hh"
 #include "ui\viewmodels\CodeNotesViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
@@ -8,6 +9,7 @@
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -25,10 +27,15 @@ private:
     public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
+
+        ra::ui::EditorTheme editorTheme;
+
+        CodeNotesViewModelHarness() noexcept : m_themeOverride(&editorTheme) {}
 
         void PopulateNotes()
         {
@@ -61,6 +68,9 @@ private:
                 memory.at(i) = i;
             mockEmulatorContext.MockMemory(memory);
         }
+
+    private:
+        ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> m_themeOverride;
     };
 
     void AssertRow(CodeNotesViewModelHarness& notes, gsl::index nRow, ra::ByteAddress nAddress,
@@ -443,6 +453,33 @@ public:
         Assert::AreEqual(MemSize::SixteenBit, pBookmarks.GetItemAt(2)->GetSize());
         Assert::AreEqual({ 0x0040U }, pBookmarks.GetItemAt(3)->GetAddress());
         Assert::AreEqual(MemSize::EightBit, pBookmarks.GetItemAt(3)->GetSize());
+    }
+
+    TEST_METHOD(TestModifiedIndicator)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.PopulateNotes();
+        Assert::AreEqual({ 0U }, notes.Notes().Count());
+
+        notes.SetIsVisible(true);
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        AssertRow(notes, 4, 0x0016, L"0x0016", L"[32-bit] Score");
+        auto* pRow = notes.Notes().GetItemAt(4);
+        Assert::IsNotNull(pRow);
+        Ensures(pRow != nullptr);
+        Assert::AreEqual(0xFF000000, pRow->GetBookmarkColor().ARGB);
+
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed");
+        AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed");
+        Assert::AreEqual(0xFFC04040, pRow->GetBookmarkColor().ARGB);
+
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"[32-bit] Score");
+        AssertRow(notes, 4, 0x0016, L"0x0016", L"[32-bit] Score");
+        Assert::AreEqual(0xFF000000, pRow->GetBookmarkColor().ARGB);
     }
 };
 

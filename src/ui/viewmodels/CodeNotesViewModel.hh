@@ -85,6 +85,23 @@ public:
         /// </summary>
         void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
 
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the bookmark color.
+        /// </summary>
+        static const IntModelProperty BookmarkColorProperty;
+
+        /// <summary>
+        /// Gets the bookmark color.
+        /// </summary>
+        Color GetBookmarkColor() const { return Color(ra::to_unsigned(GetValue(BookmarkColorProperty))); }
+
+        /// <summary>
+        /// Sets the bookmark color.
+        /// </summary>
+        void SetBookmarkColor(Color value) { SetValue(BookmarkColorProperty, ra::to_signed(value.ARGB)); }
+
+        void SetModified(bool bModified);
+
         ra::ByteAddress nAddress = 0;
         unsigned int nBytes = 1;
     };

@@ -97,7 +97,7 @@ public:
             Expects(pCodeNotes != nullptr);
         }
 
-        pCodeNotes->SetCodeNote(nAddress, sNote);
+        pCodeNotes->SetServerCodeNote(nAddress, sNote);
         return true;
     }
 
@@ -111,7 +111,7 @@ public:
             Expects(pCodeNotes != nullptr);
         }
 
-        pCodeNotes->DeleteCodeNote(nAddress);
+        pCodeNotes->SetCodeNote(nAddress, L"");
         return true;
     }
 
@@ -123,20 +123,6 @@ private:
         {
             m_nGameId = nGameId;
             m_fCodeNoteChanged = fCodeNoteChanged;
-        }
-
-        bool SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote) override
-        {
-            // non-API part of SetCodeNote
-            AddCodeNote(nAddress, "Author", sNote);
-            return true;
-        }
-
-        bool DeleteCodeNote(ra::ByteAddress nAddress) override
-        {
-            m_mCodeNotes.erase(nAddress);
-            OnCodeNoteChanged(nAddress, L"");
-            return true;
         }
     };
 

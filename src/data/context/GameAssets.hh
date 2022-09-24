@@ -111,7 +111,16 @@ public:
     /// <summary>
     /// Determines if any Core assets exist.
     /// </summary>
-    bool HasCoreAssets() const;
+    bool HasCoreAssets() const
+    {
+        return (MostPublishedAssetCategory() == ra::data::models::AssetCategory::Core);
+    }
+
+    /// <summary>
+    /// Determines the most published asset category.
+    /// </summary>
+    /// <remarks>Core > Unpublished > Local > None</remarks>
+    ra::data::models::AssetCategory MostPublishedAssetCategory() const;
 
     /// <summary>
     /// Writes the local assets files.

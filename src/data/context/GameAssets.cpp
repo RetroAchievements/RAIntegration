@@ -175,6 +175,10 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                         // ignore RichPresence model (it's not actually stored in the XXX-User file)
                         case ra::data::models::AssetType::RichPresence:
                             continue;
+
+                        // ignore CodeNotes model (it's actually a collection of notes)
+                        case ra::data::models::AssetType::CodeNotes:
+                            continue;
                     }
 
                     vRemainingAssetsToReload.push_back(pAsset);
@@ -207,6 +211,11 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
             case 'L':
                 nType = ra::data::models::AssetType::Leaderboard;
                 pTokenizer.Consume('L');
+                break;
+
+            case 'N':
+                nType = ra::data::models::AssetType::CodeNotes;
+                pTokenizer.Consume('N');
                 break;
         }
 
@@ -270,7 +279,15 @@ void GameAssets::ReloadAssets(const std::vector<ra::data::models::AssetModelBase
                     mLeaderboard->CreateServerCheckpoint();
 
                     pAsset = &Append(std::move(mLeaderboard));
+                    break;
                 }
+
+                case ra::data::models::AssetType::CodeNotes:
+                    pAsset = FindCodeNotes();
+                    if (pAsset)
+                        pAsset->Deserialize(pTokenizer);
+
+                    continue;
             }
 
             if (pAsset)
@@ -408,6 +425,10 @@ void GameAssets::SaveAssets(const std::vector<ra::data::models::AssetModelBase*>
 
             case ra::data::models::AssetType::Leaderboard:
                 pData->Write("L");
+                break;
+
+            case ra::data::models::AssetType::CodeNotes:
+                pData->Write("N");
                 break;
 
             case ra::data::models::AssetType::RichPresence:

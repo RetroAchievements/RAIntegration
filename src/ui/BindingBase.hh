@@ -43,9 +43,13 @@ protected:
     /// <param name="bValue">The value to set.</param>
     void SetValue(const BoolModelProperty& pProperty, bool bValue)
     {
-        m_vmViewModel.RemoveNotifyTarget(*this);
+        if (m_nSetDepth++ == 0)
+            m_vmViewModel.RemoveNotifyTarget(*this);
+
         m_vmViewModel.SetValue(pProperty, bValue);
-        m_vmViewModel.AddNotifyTarget(*this);
+
+        if (--m_nSetDepth == 0)
+            m_vmViewModel.AddNotifyTarget(*this);
     }
 
     /// <summary>
@@ -65,9 +69,13 @@ protected:
     /// <param name="sValue">The value to set.</param>
     void SetValue(const StringModelProperty& pProperty, const std::wstring& sValue)
     {
-        m_vmViewModel.RemoveNotifyTarget(*this);
+        if (m_nSetDepth++ == 0)
+            m_vmViewModel.RemoveNotifyTarget(*this);
+
         m_vmViewModel.SetValue(pProperty, sValue);
-        m_vmViewModel.AddNotifyTarget(*this);
+
+        if (--m_nSetDepth == 0)
+            m_vmViewModel.AddNotifyTarget(*this);
     }
 
     /// <summary>
@@ -87,9 +95,13 @@ protected:
     /// <param name="nValue">The value to set.</param>
     void SetValue(const IntModelProperty& pProperty, int nValue)
     {
-        m_vmViewModel.RemoveNotifyTarget(*this);
+        if (m_nSetDepth++ == 0)
+            m_vmViewModel.RemoveNotifyTarget(*this);
+
         m_vmViewModel.SetValue(pProperty, nValue);
-        m_vmViewModel.AddNotifyTarget(*this);
+
+        if (--m_nSetDepth == 0)
+            m_vmViewModel.AddNotifyTarget(*this);
     }
 
 protected:
@@ -98,6 +110,7 @@ protected:
 
 private:
     ra::ui::ViewModelBase& m_vmViewModel;
+    int m_nSetDepth = 0;
 };
 
 } // namespace ui

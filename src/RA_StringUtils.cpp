@@ -394,6 +394,12 @@ std::string Tokenizer::ReadQuotedString()
                 case 'n':
                     sString.push_back('\n');
                     break;
+                case 'r':
+                    sString.push_back('\r');
+                    break;
+                case 't':
+                    sString.push_back('\t');
+                    break;
                 default:
                     sString.push_back(c2);
                     break;

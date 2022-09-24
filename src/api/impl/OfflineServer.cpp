@@ -90,6 +90,7 @@ FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Req
     {
         response.Result = ApiResult::Failed;
         response.ErrorMessage = ra::StringPrintf("Code notes for game %u not found in cache", request.GameId);
+        return response;
     }
 
     std::string sNotes;

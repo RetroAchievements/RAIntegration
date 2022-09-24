@@ -191,6 +191,18 @@ void EditorTheme::LoadFromFile()
         }
     }
 
+    if (document.HasMember("CodeNotes"))
+    {
+        const rapidjson::Value& codeNotes = document["CodeNotes"];
+
+        if (codeNotes.HasMember("Colors"))
+        {
+            const rapidjson::Value& colors = codeNotes["Colors"];
+
+            ReadColor(m_colorModified, colors, "Modified");
+        }
+    }
+
     if (document.HasMember("TriggerColors"))
     {
         const rapidjson::Value& triggerColors = document["TriggerColors"];

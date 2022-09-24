@@ -40,8 +40,8 @@
 #define IDC_RA_RESET_FILTER             1135
 #define IDC_RA_RESULT_COUNT             1136
 #define IDC_RA_NOTE_TEXT                1137
-#define IDC_RA_ADD_NOTE                 1138
-#define IDC_RA_DELETE_NOTE              1139
+#define IDC_RA_PUBLISH_NOTE             1138
+#define IDC_RA_REVERT_NOTE              1139
 #define IDC_RA_RESULTS                  1140
 #define IDC_RA_SEARCHRANGES             1141
 #define IDC_RA_SEARCHRANGE              1142

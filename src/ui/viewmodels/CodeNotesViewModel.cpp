@@ -7,6 +7,7 @@
 
 #include "services\ServiceLocator.hh"
 
+#include "ui\EditorTheme.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
@@ -20,6 +21,13 @@ const StringModelProperty CodeNotesViewModel::FilterValueProperty("CodeNotesView
 const StringModelProperty CodeNotesViewModel::CodeNoteViewModel::LabelProperty("CodeNoteViewModel", "Label", L"");
 const StringModelProperty CodeNotesViewModel::CodeNoteViewModel::NoteProperty("CodeNoteViewModel", "Note", L"");
 const BoolModelProperty CodeNotesViewModel::CodeNoteViewModel::IsSelectedProperty("CodeNoteViewModel", "IsSelected", false);
+const IntModelProperty CodeNotesViewModel::CodeNoteViewModel::BookmarkColorProperty("CodeNoteViewModel", "BookmarkColor", 0);
+
+void CodeNotesViewModel::CodeNoteViewModel::SetModified(bool bValue)
+{
+    const auto& pEditorTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
+    SetBookmarkColor(bValue ? pEditorTheme.ColorModified() : pEditorTheme.ColorNormal());
+}
 
 CodeNotesViewModel::CodeNotesViewModel() noexcept
 {
@@ -73,7 +81,7 @@ void CodeNotesViewModel::ResetFilter()
     auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes != nullptr)
     {
-        pCodeNotes->EnumerateCodeNotes([this, &nIndex](ra::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)
+        pCodeNotes->EnumerateCodeNotes([this, &nIndex, pCodeNotes](ra::ByteAddress nAddress, unsigned int nBytes, const std::wstring& sNote)
         {
             std::wstring sAddress;
             if (nBytes <= 4)
@@ -94,6 +102,7 @@ void CodeNotesViewModel::ResetFilter()
             }
             vmNote->nAddress = nAddress;
             vmNote->nBytes = nBytes;
+            vmNote->SetModified(pCodeNotes->IsNoteModified(nAddress));
 
             ++nIndex;
             return true;
@@ -165,6 +174,7 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::
             {
                 /* existing note was updated */
                 pNote->SetNote(sNewNote);
+                pNote->SetModified(pCodeNotes->IsNoteModified(nAddress));
             }
             else
             {
@@ -186,6 +196,7 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::
     {
         m_vNotes.BeginUpdate();
         auto& pNote = m_vNotes.Add(ra::Widen(ra::ByteAddressToString(nAddress)), sNewNote);
+        pNote.SetModified(pCodeNotes->IsNoteModified(nAddress));
         pNote.nAddress = nAddress;
         pNote.nBytes = 1; // this will be updated when the filter is reset
         m_vNotes.MoveItem(m_vNotes.Count() - 1, nIndex);

@@ -8,6 +8,7 @@
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockUserContext.hh"
 #include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -24,6 +25,7 @@ private:
     {
     public:
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
 
         void Parse(const std::string& sInput)
@@ -590,6 +592,7 @@ private:
     public:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
 
         void Parse(const std::string& sInput)

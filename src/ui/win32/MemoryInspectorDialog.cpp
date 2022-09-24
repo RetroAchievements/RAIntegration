@@ -222,10 +222,10 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
         vmMemoryInspector->NextNote();
         return true;
     });
-    m_bindNoteText.BindText(MemoryInspectorViewModel::CurrentAddressNoteProperty);
-    m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, MemoryInspectorViewModel::IsCurrentAddressNoteEditableProperty);
-    m_bindWindow.BindEnabled(IDC_RA_ADD_NOTE, MemoryInspectorViewModel::IsCurrentAddressNoteEditableProperty);
-    m_bindWindow.BindEnabled(IDC_RA_DELETE_NOTE, MemoryInspectorViewModel::IsCurrentAddressNoteEditableProperty);
+    m_bindNoteText.BindText(MemoryInspectorViewModel::CurrentAddressNoteProperty, ra::ui::win32::bindings::TextBoxBinding::UpdateMode::Typing);
+    m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, MemoryInspectorViewModel::CanEditCurrentAddressNoteProperty);
+    m_bindWindow.BindEnabled(IDC_RA_PUBLISH_NOTE, MemoryInspectorViewModel::CanPublishCurrentAddressNoteProperty);
+    m_bindWindow.BindEnabled(IDC_RA_REVERT_NOTE, MemoryInspectorViewModel::CanRevertCurrentAddressNoteProperty);
 
     // Memory Viewer
     m_bindViewer8Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(MemSize::EightBit));
@@ -265,8 +265,8 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     SetAnchor(IDC_RA_VIEW_CODENOTES, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_NOTE_TEXT, Anchor::Top | Anchor::Left | Anchor::Right);
-    SetAnchor(IDC_RA_ADD_NOTE, Anchor::Top | Anchor::Right);
-    SetAnchor(IDC_RA_DELETE_NOTE, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_PUBLISH_NOTE, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_REVERT_NOTE, Anchor::Top | Anchor::Right);
 
     SetAnchor(IDC_RA_MEMVIEW_8BIT, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_MEMVIEW_16BIT, Anchor::Top | Anchor::Left);
@@ -404,20 +404,20 @@ BOOL MemoryInspectorDialog::OnCommand(WORD nCommand)
             return TRUE;
         }
 
-        case IDC_RA_ADD_NOTE:
+        case IDC_RA_PUBLISH_NOTE:
         {
             auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
             if (vmMemoryInspector)
-                vmMemoryInspector->SaveCurrentAddressNote();
+                vmMemoryInspector->PublishCurrentAddressNote();
 
             return TRUE;
         }
 
-        case IDC_RA_DELETE_NOTE:
+        case IDC_RA_REVERT_NOTE:
         {
             auto* vmMemoryInspector = dynamic_cast<MemoryInspectorViewModel*>(&m_vmWindow);
             if (vmMemoryInspector)
-                vmMemoryInspector->DeleteCurrentAddressNote();
+                vmMemoryInspector->RevertCurrentAddressNote();
 
             return TRUE;
         }

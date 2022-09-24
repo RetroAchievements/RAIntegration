@@ -637,6 +637,54 @@ public:
         Assert::AreEqual(std::wstring(L"Deleted"), vmAssetList.Changes().GetItemAt(4)->GetLabel());
     }
 
+    TEST_METHOD(TestLoadGameNoAchievements)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(1U);
+
+        Assert::AreEqual(1U, vmAssetList.GetGameId());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual({0U}, vmAssetList.FilteredAssets().Count());
+
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.MockGameId(2U);
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual({0U}, vmAssetList.FilteredAssets().Count());
+    }
+
+    TEST_METHOD(TestLoadGameCoreAchievements)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.AddAchievement(AssetCategory::Core, 10, L"Ach1");
+        vmAssetList.MockGameId(1U);
+
+        Assert::AreEqual(1U, vmAssetList.GetGameId());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+    }
+
+    TEST_METHOD(TestLoadGameUnofficialAchievements)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 10, L"Ach1");
+        vmAssetList.MockGameId(1U);
+
+        Assert::AreEqual(1U, vmAssetList.GetGameId());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Unofficial, vmAssetList.GetFilterCategory());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+    }
+
+    TEST_METHOD(TestLoadGameLocalAchievements)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.AddAchievement(AssetCategory::Local, 10, L"Ach1");
+        vmAssetList.MockGameId(1U);
+
+        Assert::AreEqual(1U, vmAssetList.GetGameId());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+    }
+
     TEST_METHOD(TestAddRemoveCoreAchievement)
     {
         AssetListViewModelHarness vmAssetList;

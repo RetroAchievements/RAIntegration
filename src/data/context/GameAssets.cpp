@@ -62,40 +62,53 @@ ra::data::models::LeaderboardModel& GameAssets::NewLeaderboard()
     return dynamic_cast<ra::data::models::LeaderboardModel&>(AddItem(std::move(vmLeaderboard)));
 }
 
-bool GameAssets::HasCoreAssets() const
+ra::data::models::AssetCategory GameAssets::MostPublishedAssetCategory() const
 {
+    bool bHasLocalAssets = false;
+    bool bHasUnpublishedAssets = false;
+
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Count()); ++nIndex)
     {
         const auto* pAsset = GetItemAt(nIndex);
-        if (pAsset != nullptr)
+        if (pAsset == nullptr)
+            continue;
+
+        // we really only care about published achievements and
+        // leaderboards. if a set only has published rich presence
+        // or code notes, don't consider it a published set.
+        switch (pAsset->GetType())
         {
-            switch (pAsset->GetCategory())
-            {
-                case ra::data::models::AssetCategory::Local:
-                case ra::data::models::AssetCategory::Unofficial:
-                    break;
+            case ra::data::models::AssetType::Achievement:
+            case ra::data::models::AssetType::Leaderboard:
+                break;
 
-                default:
-                    // Core, Bonus, or something else that's been published
+            default:
+                continue;
+        }
 
-                    // we really only care about published achievements and
-                    // leaderboards. if a set only has published rich presence
-                    // or code notes, don't consider it a published set.
-                    switch (pAsset->GetType())
-                    {
-                        case ra::data::models::AssetType::Achievement:
-                        case ra::data::models::AssetType::Leaderboard:
-                            return true;
+        switch (pAsset->GetCategory())
+        {
+            case ra::data::models::AssetCategory::Local:
+                bHasLocalAssets = true;
+                break;
 
-                        default:
-                            break;
-                    }
-                    break;
-            }
+            case ra::data::models::AssetCategory::Unofficial:
+                bHasUnpublishedAssets = true;
+                break;
+
+            default:
+                // Core, Bonus, or something else that's been published
+                return ra::data::models::AssetCategory::Core;
         }
     }
 
-    return false;
+    if (bHasUnpublishedAssets)
+        return ra::data::models::AssetCategory::Unofficial;
+
+    if (bHasLocalAssets)
+        return ra::data::models::AssetCategory::Local;
+
+    return ra::data::models::AssetCategory::None;
 }
 
 void GameAssets::OnItemsAdded(const std::vector<gsl::index>& vNewIndices)

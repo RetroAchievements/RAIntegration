@@ -101,6 +101,7 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBitBigEndian), L"32-bit BE");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::Float), L"Float");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::MBF32), L"MBF32");
+    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::MBF32LE), L"MBF32 LE");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::AsciiText), L"ASCII Text");
 
     m_vComparisonTypes.Add(ra::etoi(ComparisonType::Equals), L"=");
@@ -709,7 +710,6 @@ void MemorySearchViewModel::UpdateResults()
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    Expects(pCodeNotes != nullptr);
 
     m_vResults.RemoveNotifyTarget(*this);
     m_vResults.BeginUpdate();
@@ -747,7 +747,7 @@ void MemorySearchViewModel::UpdateResults()
 
         UpdateResult(*pRow, pCurrentResults.pResults, pResult, true, pEmulatorContext);
 
-        const auto pCodeNote = pCodeNotes->FindCodeNote(pResult.nAddress, pResult.nSize);
+        const auto pCodeNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(pResult.nAddress, pResult.nSize) : std::wstring(L"");
         if (!pCodeNote.empty())
         {
             pRow->bHasCodeNote = true;

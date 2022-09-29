@@ -159,6 +159,7 @@ private:
         {
             case MemSize::Float:
             case MemSize::MBF32:
+            case MemSize::MBF32LE:
             case MemSize::Text:
                 return true;
 
@@ -198,7 +199,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     auto pSizeColumn = std::make_unique<ra::ui::win32::bindings::GridLookupColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::SizeProperty, vmMemoryBookmarks.Sizes());
     pSizeColumn->SetHeader(L"Size");
-    pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 56);
+    pSizeColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 62);
     pSizeColumn->SetAlignment(ra::ui::RelativePosition::Far);
     pSizeColumn->SetReadOnly(false);
     m_bindBookmarks.BindColumn(2, std::move(pSizeColumn));

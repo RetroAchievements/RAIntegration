@@ -84,7 +84,7 @@ public:
 
         Assert::AreEqual({ 0U }, bookmarks.Bookmarks().Count());
 
-        Assert::AreEqual({ 13U }, bookmarks.Sizes().Count());
+        Assert::AreEqual({ 14U }, bookmarks.Sizes().Count());
         Assert::AreEqual((int)MemSize::EightBit, bookmarks.Sizes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L" 8-bit"), bookmarks.Sizes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)MemSize::SixteenBit, bookmarks.Sizes().GetItemAt(1)->GetId());
@@ -109,8 +109,10 @@ public:
         Assert::AreEqual(std::wstring(L"Float"), bookmarks.Sizes().GetItemAt(10)->GetLabel());
         Assert::AreEqual((int)MemSize::MBF32, bookmarks.Sizes().GetItemAt(11)->GetId());
         Assert::AreEqual(std::wstring(L"MBF32"), bookmarks.Sizes().GetItemAt(11)->GetLabel());
-        Assert::AreEqual((int)MemSize::Text, bookmarks.Sizes().GetItemAt(12)->GetId());
-        Assert::AreEqual(std::wstring(L"ASCII"), bookmarks.Sizes().GetItemAt(12)->GetLabel());
+        Assert::AreEqual((int)MemSize::MBF32LE, bookmarks.Sizes().GetItemAt(12)->GetId());
+        Assert::AreEqual(std::wstring(L"MBF32 LE"), bookmarks.Sizes().GetItemAt(12)->GetLabel());
+        Assert::AreEqual((int)MemSize::Text, bookmarks.Sizes().GetItemAt(13)->GetId());
+        Assert::AreEqual(std::wstring(L"ASCII"), bookmarks.Sizes().GetItemAt(13)->GetLabel());
 
         Assert::AreEqual({ 2U }, bookmarks.Formats().Count());
         Assert::AreEqual((int)MemFormat::Hex, bookmarks.Formats().GetItemAt(0)->GetId());

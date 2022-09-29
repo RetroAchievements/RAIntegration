@@ -146,7 +146,6 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
             {
                 pNote.Bytes = 4;
                 pNote.MemSize = MemSize::MBF32;
-                return;
             }
             else if (sBits == L"40")
             {
@@ -154,9 +153,32 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
                 // it can be read as an MBF32 value with only the loss of the smallest 8-bits of precision.
                 pNote.MemSize = MemSize::MBF32;
                 pNote.Bytes = 5;
-                return;
             }
-            continue;
+            else
+            {
+                continue;
+            }
+
+            // check for LE (little endian)
+            nIndex += 4;
+            while (nIndex < pNote.Note.length() && (pNote.Note.at(nIndex) == ' ' || pNote.Note.at(nIndex) == '-'))
+                ++nIndex;
+            if (nIndex + 1 < pNote.Note.length())
+            {
+                c = pNote.Note.at(nIndex);
+                if (c == 'L' || c == 'l')
+                {
+                    c = pNote.Note.at(++nIndex);
+                    if (c == 'E' || c == 'e')
+                    {
+                        nIndex++;
+                        if (nIndex == pNote.Note.length() || !std::isalpha(pNote.Note.at(nIndex)))
+                            pNote.MemSize = MemSize::MBF32LE;
+                    }
+                }
+            }
+
+            return;
         }
         else
         {

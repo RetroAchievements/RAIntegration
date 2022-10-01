@@ -39,7 +39,7 @@ static std::string FormatAddressLarge(ra::ByteAddress nAddress)
 static std::string FormatAddressMedium(ra::ByteAddress nAddress)
 {
     if (nAddress & 0xFF000000)
-        return FormatAddressMedium(nAddress);
+        return FormatAddressLarge(nAddress);
 
     std::string sAddress;
     sAddress.resize(8);

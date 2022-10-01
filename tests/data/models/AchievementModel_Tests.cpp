@@ -341,7 +341,7 @@ public:
         achievement.SetTrigger(sTrigger);
 
         Assert::IsFalse(achievement.Validate());
-        Assert::AreEqual(std::wstring(L"Serialized length exceeds database limit: 65536/65535"), achievement.GetValidationError());
+        Assert::AreEqual(std::wstring(L"Serialized length exceeds limit: 65536/65535"), achievement.GetValidationError());
     }
 };
 

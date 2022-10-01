@@ -135,7 +135,7 @@ public:
         return s_vValidPoints;
     }
 
-    static constexpr int MaxSerializedLength = 65535;
+    static constexpr size_t MaxSerializedLength = 65535;
 
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;

@@ -99,11 +99,11 @@ bool LeaderboardModel::ValidateAsset(std::wstring& sError)
         return false;
     }
 
-    const int nSerializedSize = sStartTrigger.length() + sCancelTrigger.length() +
+    const size_t nSerializedSize = sStartTrigger.length() + sCancelTrigger.length() +
         sSubmitTrigger.length() + sValueDefinition.length() + 16; // "STA:SUB:CAN:VAL:"
     if (nSerializedSize > MaxSerializedLength)
     {
-        sError = ra::StringPrintf(L"Serialized length exceeds database limit: %d/%d", nSerializedSize, MaxSerializedLength);
+        sError = ra::StringPrintf(L"Serialized length exceeds limit: %d/%d", nSerializedSize, MaxSerializedLength);
         return false;
     }
 

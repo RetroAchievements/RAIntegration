@@ -196,6 +196,8 @@ public:
         m_pCapturedValueDefinitionHits.Reset();
     }
 
+    static constexpr int MaxSerializedLength = 65535;
+
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
 

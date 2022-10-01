@@ -72,15 +72,9 @@ void LeaderboardModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
 bool LeaderboardModel::ValidateAsset(std::wstring& sError)
 {
     const auto& sStartTrigger = GetAssetDefinition(m_pStartTrigger);
-
     if (sStartTrigger.empty())
     {
         sError = L"No Start condition";
-        return false;
-    }
-    if (!TriggerValidation::Validate(sStartTrigger, sError, AssetType::Leaderboard))
-    {
-        sError.insert(0, L"Start: ");
         return false;
     }
 
@@ -90,11 +84,6 @@ bool LeaderboardModel::ValidateAsset(std::wstring& sError)
         sError = L"No Cancel condition";
         return false;
     }
-    if (!TriggerValidation::Validate(sCancelTrigger, sError, AssetType::Leaderboard))
-    {
-        sError.insert(0, L"Cancel: ");
-        return false;
-    }
 
     const auto& sSubmitTrigger = GetAssetDefinition(m_pSubmitTrigger);
     if (sSubmitTrigger.empty())
@@ -102,16 +91,37 @@ bool LeaderboardModel::ValidateAsset(std::wstring& sError)
         sError = L"No Submit condition";
         return false;
     }
-    if (!TriggerValidation::Validate(sSubmitTrigger, sError, AssetType::Leaderboard))
-    {
-        sError.insert(0, L"Submit: ");
-        return false;
-    }
 
     const auto& sValueDefinition = GetAssetDefinition(m_pValueDefinition);
     if (sValueDefinition.empty())
     {
         sError = L"No Value definition";
+        return false;
+    }
+
+    const int nSerializedSize = sStartTrigger.length() + sCancelTrigger.length() +
+        sSubmitTrigger.length() + sValueDefinition.length() + 16; // "STA:SUB:CAN:VAL:"
+    if (nSerializedSize > MaxSerializedLength)
+    {
+        sError = ra::StringPrintf(L"Serialized length exceeds database limit: %d/%d", nSerializedSize, MaxSerializedLength);
+        return false;
+    }
+
+    if (!TriggerValidation::Validate(sStartTrigger, sError, AssetType::Leaderboard))
+    {
+        sError.insert(0, L"Start: ");
+        return false;
+    }
+
+    if (!TriggerValidation::Validate(sCancelTrigger, sError, AssetType::Leaderboard))
+    {
+        sError.insert(0, L"Cancel: ");
+        return false;
+    }
+
+    if (!TriggerValidation::Validate(sSubmitTrigger, sError, AssetType::Leaderboard))
+    {
+        sError.insert(0, L"Submit: ");
         return false;
     }
 

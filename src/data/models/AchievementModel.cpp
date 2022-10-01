@@ -129,6 +129,12 @@ bool AchievementModel::ValidateAsset(std::wstring& sError)
     }
 
     const auto& sTrigger = GetAssetDefinition(m_pTrigger);
+    if (sTrigger.length() > MaxSerializedLength)
+    {
+        sError = ra::StringPrintf(L"Serialized length exceeds database limit: %d/%d", sTrigger.length(), MaxSerializedLength);
+        return false;
+    }
+
     return TriggerValidation::Validate(sTrigger, sError, AssetType::Achievement);
 }
 

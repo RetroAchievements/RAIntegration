@@ -511,9 +511,16 @@ private:
 
         void ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const override
         {
-            const auto pIter = m_mValidationErrors.find(pAchievement.GetID());
-            if (pIter != m_mValidationErrors.end())
-                sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), pIter->second));
+            if (m_mValidationErrors.empty())
+            {
+                AssetListViewModel::ValidateAchievementForCore(sError, pAchievement);
+            }
+            else
+            {
+                const auto pIter = m_mValidationErrors.find(pAchievement.GetID());
+                if (pIter != m_mValidationErrors.end())
+                    sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), pIter->second));
+            }
         }
 
         void SetPublishServerError(ra::AchievementID nId, const std::string& sError)
@@ -2839,6 +2846,38 @@ public:
         Assert::AreEqual({ 1U }, vmAssetList.PublishedAssets.size());      // tried to publish
         Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
         Assert::AreEqual(AssetCategory::Unofficial, pItem->GetCategory()); // didn't change category
+    }
+
+    TEST_METHOD(TestSaveSelectedPromoteToCoreParseError)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "P:P:0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Promote to core aborted."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The following items could not be published:\n* Test1: Parse Error -2: Invalid memory operand"), vmMessageBox.GetMessage());
+            return DialogResult::OK;
+        });
+
+        const auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Promote);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 0U }, vmAssetList.PublishedAssets.size());
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+        Assert::AreEqual(AssetCategory::Unofficial, pItem->GetCategory());
     }
 
     TEST_METHOD(TestSaveSelectedDemoteToUnofficial)

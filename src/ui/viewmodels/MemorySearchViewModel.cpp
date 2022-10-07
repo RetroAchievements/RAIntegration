@@ -1070,12 +1070,6 @@ void MemorySearchViewModel::BookmarkSelected()
         return;
 
     const MemSize nSize = m_vSearchResults.back().pResults.GetSize();
-    if (nSize == MemSize::Text)
-    {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"Text bookmarks are not supported");
-        return;
-    }
-
     auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     if (!vmBookmarks.IsVisible())
         vmBookmarks.Show();

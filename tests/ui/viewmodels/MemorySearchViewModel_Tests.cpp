@@ -1276,21 +1276,13 @@ public:
         Assert::AreEqual({ 1U }, search.Results().Count());
         search.Results().GetItemAt(0)->SetSelected(true);
 
-        bool bSawDialog = false;
-        search.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bSawDialog](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            bSawDialog = true;
-            Assert::AreEqual(std::wstring(L"Text bookmarks are not supported"), vmMessageBox.GetMessage());
-            return ra::ui::DialogResult::OK;
-        });
-
         search.BookmarkSelected();
-        Assert::IsTrue(bSawDialog);
         Assert::AreEqual({ 1U }, search.Results().Count());
 
         const auto& pBookmarks = search.mockWindowManager.MemoryBookmarks.Bookmarks();
-        Assert::AreEqual({ 0U }, pBookmarks.Count());
-
+        Assert::AreEqual({ 1U }, pBookmarks.Count());
+        Assert::AreEqual({ 8U }, pBookmarks.GetItemAt(0)->GetAddress());
+        Assert::AreEqual(MemSize::Text, pBookmarks.GetItemAt(0)->GetSize());
         Assert::IsTrue(search.Results().GetItemAt(0)->IsSelected());
     }
 

@@ -298,7 +298,7 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
         ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
 
         // update the client title-bar to include the user name
-        _RA_UpdateAppTitle();
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator.UpdateWindowTitle();
     }
     else if (!response.ErrorMessage.empty())
     {
@@ -408,9 +408,9 @@ API int CCONV _RA_OnLoadNewRom(const BYTE* pROM, unsigned int nROMSize)
 
 API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 {
-    auto sTitle = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().GetAppTitle(sMessage ? sMessage : "");
     auto& vmEmulator = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator;
-    vmEmulator.SetWindowTitle(sTitle);
+    vmEmulator.SetAppTitleMessage(sMessage);
+    vmEmulator.UpdateWindowTitle();
 }
 
 API int _RA_IsOverlayFullyVisible()

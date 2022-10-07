@@ -111,6 +111,7 @@
     <ClCompile Include="ui\viewmodels\BrokenAchievementsViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\ChallengeIndicatorViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\CodeNotesViewModel.cpp" />
+    <ClCompile Include="ui\viewmodels\EmulatorViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\FileDialogViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\GameChecksumViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\IntegrationMenuViewModel.cpp" />

@@ -1167,24 +1167,22 @@ void AssetListViewModel::SaveSelected()
     UpdateButtons();
 }
 
-#if RA_INTEGRATION_VERSION_MAJOR < 1 && RA_INTEGRATION_VERSION_MINOR < 80
+#define MAKE_VERSION(major, minor, patch) (major * 10000 + minor * 100 + patch)
+#define RA_INTEGRATION_VERSION_LESS_THAN(major, minor, patch) (MAKE_VERSION(RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_PATCH) < MAKE_VERSION(major, minor, patch))
+
 static std::wstring ValidateCondSet(const rc_condset_t* pCondSet)
 {
-    if (!pCondSet)
+    if (!pCondSet) // there may not be a core group, that's okay.
         return L"";
 
     for (const auto* pCondition = pCondSet->conditions; pCondition != nullptr; pCondition = pCondition->next)
     {
-        if (pCondition->operand1.size == RC_MEMSIZE_16_BITS_BE || pCondition->operand2.size == RC_MEMSIZE_16_BITS_BE)
-            return L"BigEndian sizes are pre-release functionality";
-        if (pCondition->operand1.size == RC_MEMSIZE_24_BITS_BE || pCondition->operand2.size == RC_MEMSIZE_24_BITS_BE)
-            return L"BigEndian sizes are pre-release functionality";
-        if (pCondition->operand1.size == RC_MEMSIZE_32_BITS_BE || pCondition->operand2.size == RC_MEMSIZE_32_BITS_BE)
-            return L"BigEndian sizes are pre-release functionality";
-        if (pCondition->operand1.size == RC_MEMSIZE_FLOAT || pCondition->operand2.size == RC_MEMSIZE_FLOAT)
-            return L"Float size is pre-release functionality";
-        if (pCondition->operand1.size == RC_MEMSIZE_MBF32 || pCondition->operand2.size == RC_MEMSIZE_MBF32)
-            return L"MBF32 size is pre-release functionality";
+        /* rc_condition_t validation goes here */
+#if RA_INTEGRATION_VERSION_LESS_THAN(1,0,5)
+#define VALIDATE_PRERELEASE_FUNCTIONALITY
+//        if (pCondition->operand1.size == RC_MEMSIZE_MBF32_LE || pCondition->operand2.size == RC_MEMSIZE_MBF32_LE)
+//            return L"MBF32 LE size is pre-release functionality";
+#endif
     }
 
     return L"";
@@ -1196,12 +1194,10 @@ static std::wstring ValidateTriggerLogic(const std::string& sTrigger)
     if (nSize < 0)
         return ra::StringPrintf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
 
+#ifdef VALIDATE_PRERELEASE_FUNCTIONALITY
     std::string sBuffer;
     sBuffer.resize(nSize);
     const auto* pTrigger = rc_parse_trigger(sBuffer.data(), sTrigger.c_str(), nullptr, 0);
-
-    if (pTrigger->measured_as_percent)
-        return L"Measured as percent is pre-release functionality";
 
     std::wstring sError = ValidateCondSet(pTrigger->requirement);
     if (sError.empty())
@@ -1218,6 +1214,9 @@ static std::wstring ValidateTriggerLogic(const std::string& sTrigger)
     }
 
     return sError;
+#else
+    return L"";
+#endif
 }
 
 static std::wstring ValidateValueLogic(const std::string& sValue)
@@ -1226,6 +1225,7 @@ static std::wstring ValidateValueLogic(const std::string& sValue)
     if (nSize < 0)
         return ra::StringPrintf(L"Parse Error %d: %s", nSize, rc_error_str(nSize));
 
+#ifdef VALIDATE_PRERELEASE_FUNCTIONALITY
     std::string sBuffer;
     sBuffer.resize(nSize);
     const auto* pValue = rc_parse_value(sBuffer.data(), sValue.c_str(), nullptr, 0);
@@ -1242,48 +1242,36 @@ static std::wstring ValidateValueLogic(const std::string& sValue)
     }
 
     return sError;
+#else
+    return L"";
+#endif
 }
 
 void AssetListViewModel::ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const
 {
-    if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsCustomHost())
-    {
-        const std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
-        if (!sTriggerError.empty())
-            sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
-    }
+    const std::wstring sTriggerError = ValidateTriggerLogic(pAchievement.GetTrigger());
+    if (!sTriggerError.empty())
+        sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), sTriggerError));
 }
 
 void AssetListViewModel::ValidateLeaderboardForCore(std::wstring& sError, const ra::data::models::LeaderboardModel& pLeaderboard) const
 {
-    if (!ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsCustomHost())
-    {
-        std::wstring sTriggerError = ValidateTriggerLogic(pLeaderboard.GetStartTrigger());
-        if (!sTriggerError.empty())
-            sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Start", sTriggerError));
+    std::wstring sTriggerError = ValidateTriggerLogic(pLeaderboard.GetStartTrigger());
+    if (!sTriggerError.empty())
+        sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Start", sTriggerError));
 
-        sTriggerError = ValidateTriggerLogic(pLeaderboard.GetSubmitTrigger());
-        if (!sTriggerError.empty())
-            sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Submit", sTriggerError));
+    sTriggerError = ValidateTriggerLogic(pLeaderboard.GetSubmitTrigger());
+    if (!sTriggerError.empty())
+        sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Submit", sTriggerError));
 
-        sTriggerError = ValidateTriggerLogic(pLeaderboard.GetCancelTrigger());
-        if (!sTriggerError.empty())
-            sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Cancel", sTriggerError));
+    sTriggerError = ValidateTriggerLogic(pLeaderboard.GetCancelTrigger());
+    if (!sTriggerError.empty())
+        sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Cancel", sTriggerError));
 
-        const std::wstring sValueError = ValidateValueLogic(pLeaderboard.GetValueDefinition());
-        if (!sValueError.empty())
-            sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
-    }
+    const std::wstring sValueError = ValidateValueLogic(pLeaderboard.GetValueDefinition());
+    if (!sValueError.empty())
+        sError.append(ra::StringPrintf(L"\n* %s: %s: %s", pLeaderboard.GetName(), L"Value", sValueError));
 }
-#else
-void AssetListViewModel::ValidateAchievementForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::AchievementModel& pAchievement) const
-{
-}
-
-void AssetListViewModel::ValidateLeaderboardForCore(_UNUSED std::wstring& sError, _UNUSED const ra::data::models::LeaderboardModel& pAchievement) const
-{
-}
-#endif
 
 bool AssetListViewModel::ValidateAssetsForCore(std::vector<ra::data::models::AssetModelBase*>& vAssets, bool bCoreOnly)
 {

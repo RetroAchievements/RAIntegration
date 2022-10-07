@@ -410,7 +410,6 @@ API void CCONV _RA_UpdateAppTitle(const char* sMessage)
 {
     auto& vmEmulator = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator;
     vmEmulator.SetAppTitleMessage(sMessage);
-    vmEmulator.UpdateWindowTitle();
 }
 
 API int _RA_IsOverlayFullyVisible()

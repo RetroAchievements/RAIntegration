@@ -132,6 +132,7 @@ protected:
     GSL_SUPPRESS_F6 void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) noexcept override;
 
     void RestoreSizeAndPosition();
+    void UpdateAppTitle();
 
 private:
     std::unordered_map<int, int> m_mLabelBindings;

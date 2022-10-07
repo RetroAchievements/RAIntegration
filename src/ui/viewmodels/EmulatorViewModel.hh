@@ -22,6 +22,8 @@ public:
         UpdateWindowTitle();
     }
 
+    bool IsAppTitleManaged() const noexcept { return m_bAppTitleManaged; }
+
     void UpdateWindowTitle();
 
 private:

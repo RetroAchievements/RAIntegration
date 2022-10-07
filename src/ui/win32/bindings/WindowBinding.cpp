@@ -26,7 +26,7 @@ void WindowBinding::SetHWND(DialogBase* pDialog, HWND hWnd)
     if (m_hWnd)
     {
         // immediately push values from the viewmodel to the UI
-        SetWindowTextW(m_hWnd, GetValue(WindowViewModelBase::WindowTitleProperty).c_str());
+        UpdateAppTitle();
 
         for (auto& pIter : m_mLabelBindings)
         {
@@ -93,6 +93,13 @@ void WindowBinding::SetHWND(DialogBase* pDialog, HWND hWnd)
 
         RestoreSizeAndPosition();
     }
+}
+
+void WindowBinding::UpdateAppTitle()
+{
+    const auto& pEmulatorViewModel = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().Emulator;
+    if (pEmulatorViewModel.IsAppTitleManaged())
+        SetWindowTextW(m_hWnd, GetValue(WindowViewModelBase::WindowTitleProperty).c_str());
 }
 
 void WindowBinding::SetInitialPosition(RelativePosition nDefaultHorizontalLocation, RelativePosition nDefaultVerticalLocation, const char* sSizeAndPositionKey)
@@ -278,7 +285,7 @@ void WindowBinding::OnViewModelStringValueChanged(const StringModelProperty::Cha
 {
     if (args.Property == WindowViewModelBase::WindowTitleProperty)
     {
-        SetWindowTextW(m_hWnd, args.tNewValue.c_str());
+        UpdateAppTitle();
         return;
     }
 

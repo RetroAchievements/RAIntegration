@@ -1611,14 +1611,15 @@ void SearchResults::MergeSearchResults(const SearchResults& srMemory, const Sear
         // srAddresses collection.
         auto& pNewBlock = m_vBlocks.emplace_back(pSrcBlock);
         unsigned int nSize = pNewBlock.GetBytesSize();
-        ra::ByteAddress nAddress = pNewBlock.GetFirstAddress();
+        ra::ByteAddress nAddress = m_pImpl->ConvertToRealAddress(pNewBlock.GetFirstAddress());
         unsigned char* pWrite = pNewBlock.GetBytes();
 
         for (const auto& pMemBlock : srMemory.m_vBlocks)
         {
-            if (nAddress >= pMemBlock.GetFirstAddress() && nAddress < pMemBlock.GetFirstAddress() + pMemBlock.GetBytesSize())
+            const auto nBlockFirstAddress = m_pImpl->ConvertToRealAddress(pMemBlock.GetFirstAddress());
+            if (nAddress >= nBlockFirstAddress && nAddress < nBlockFirstAddress + pMemBlock.GetBytesSize())
             {
-                const auto nOffset = nAddress - pMemBlock.GetFirstAddress();
+                const auto nOffset = nAddress - nBlockFirstAddress;
                 const auto nAvailable = pMemBlock.GetBytesSize() - nOffset;
                 if (nAvailable >= nSize)
                 {

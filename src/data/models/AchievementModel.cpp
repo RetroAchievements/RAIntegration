@@ -20,6 +20,8 @@ const BoolModelProperty AchievementModel::PauseOnTriggerProperty("AchievementMod
 const IntModelProperty AchievementModel::TriggerProperty("AchievementModel", "Trigger", 0);
 const StringModelProperty AchievementModel::UnlockRichPresenceProperty("AchievementModel", "UnlockRichPresence", L"");
 
+const std::array<int, 10> AchievementModel::s_vValidPoints = {0, 1, 2, 3, 4, 5, 10, 25, 50, 100};
+
 AchievementModel::AchievementModel() noexcept
 {
     GSL_SUPPRESS_F6 SetValue(TypeProperty, ra::etoi(AssetType::Achievement));
@@ -119,7 +121,20 @@ void AchievementModel::CommitTransaction()
 
 bool AchievementModel::ValidateAsset(std::wstring& sError)
 {
+    const auto pIter = std::find(s_vValidPoints.begin(), s_vValidPoints.end(), GetPoints());
+    if (pIter == s_vValidPoints.end())
+    {
+        sError = L"Invalid point value";
+        return false;
+    }
+
     const auto& sTrigger = GetAssetDefinition(m_pTrigger);
+    if (sTrigger.length() > MaxSerializedLength)
+    {
+        sError = ra::StringPrintf(L"Serialized length exceeds limit: %d/%d", sTrigger.length(), MaxSerializedLength);
+        return false;
+    }
+
     return TriggerValidation::Validate(sTrigger, sError, AssetType::Achievement);
 }
 

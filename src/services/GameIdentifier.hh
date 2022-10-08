@@ -36,7 +36,15 @@ public:
     /// <param name="nGameId">Unique identifier of the game to activate.</param>
     void ActivateGame(unsigned int nGameId);
 
+    /// <summary>
+    /// Flushes the known hashes to disk.
+    /// </summary>
+    void SaveKnownHashes() const;
+
 private:
+    static void LoadKnownHashes(std::map<std::string, unsigned>& mHashes);
+    static void SaveKnownHashes(std::map<std::string, unsigned>& mHashes);
+
     std::string m_sPendingHash;
     unsigned int m_nPendingGameId{};
     ra::data::context::GameContext::Mode m_nPendingMode{};

@@ -56,17 +56,23 @@ MemoryBookmarksDialog::BookmarksGridBinding::BookmarksGridBinding(ViewModelBase&
 
 MemoryBookmarksDialog::BookmarksGridBinding::~BookmarksGridBinding()
 {
-    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    pEmulatorContext.RemoveNotifyTarget(*this);
+    if (ra::services::ServiceLocator::Exists<ra::data::context::EmulatorContext>())
+    {
+        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        pEmulatorContext.RemoveNotifyTarget(*this);
+    }
 }
 
 void MemoryBookmarksDialog::BookmarksGridBinding::OnTotalMemorySizeChanged()
 {
-    for (auto& pColumn : m_vColumns)
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vColumns.size()); ++nIndex)
     {
-        auto* pAddressColumn = dynamic_cast<ra::ui::win32::bindings::GridAddressColumnBinding*>(pColumn.get());
+        auto* pAddressColumn = dynamic_cast<ra::ui::win32::bindings::GridAddressColumnBinding*>(m_vColumns.at(nIndex).get());
         if (pAddressColumn != nullptr)
+        {
             pAddressColumn->UpdateWidth();
+            RefreshColumn(nIndex);
+        }
     }
 
     UpdateLayout();
@@ -85,7 +91,7 @@ public:
     HWND CreateInPlaceEditor(HWND hParent, InPlaceEditorInfo& pInfo) override
     {
         const auto& vmItems = static_cast<ra::ui::win32::bindings::GridBinding*>(pInfo.pGridBinding)->GetItems();
-        if (vmItems.GetItemValue(pInfo.nColumnIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadOnlyProperty))
+        if (vmItems.GetItemValue(pInfo.nItemIndex, MemoryBookmarksViewModel::MemoryBookmarkViewModel::ReadOnlyProperty))
             return nullptr;
 
         return ra::ui::win32::bindings::GridTextColumnBinding::CreateInPlaceEditor(hParent, pInfo);
@@ -153,6 +159,7 @@ private:
         {
             case MemSize::Float:
             case MemSize::MBF32:
+            case MemSize::Text:
                 return true;
 
             default:
@@ -184,7 +191,7 @@ MemoryBookmarksDialog::MemoryBookmarksDialog(MemoryBookmarksViewModel& vmMemoryB
     auto pAddressColumn = std::make_unique<ra::ui::win32::bindings::GridAddressColumnBinding>(
         MemoryBookmarksViewModel::MemoryBookmarkViewModel::AddressProperty);
     pAddressColumn->SetHeader(L"Address");
-    pAddressColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 60);
+    pAddressColumn->UpdateWidth();
     pAddressColumn->SetAlignment(ra::ui::RelativePosition::Far);
     m_bindBookmarks.BindColumn(1, std::move(pAddressColumn));
 

@@ -1765,6 +1765,31 @@ public:
         game.mockThreadPool.ExecuteNextTask();
     }
 
+    TEST_METHOD(TestAwardAchievementOffline)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered, ra::ui::viewmodels::PopupLocation::BottomLeft);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+        game.mockServer.ExpectUncalled<ra::api::AwardAchievement>();
+
+        game.MockAchievement();
+        game.AwardAchievement(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Offline Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
+        Assert::IsFalse(pPopup->IsDetailError());
+        Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
+
+        // AwardAchievement API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+    }
+
     TEST_METHOD(TestAwardAchievementDuplicate)
     {
         GameContextHarness game;
@@ -2670,6 +2695,50 @@ public:
         Assert::IsTrue(vmEntry->IsHighlighted());
     }
 
+    TEST_METHOD(TestSubmitLeaderboardEntryOffline)
+    {
+        GameContextHarness game;
+        game.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
+        game.mockUser.Initialize("player", "Player", "");
+        game.SetGameHash("hash");
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        game.mockServer.ExpectUncalled<ra::api::SubmitLeaderboardEntry>();
+
+        game.MockLeaderboard();
+        game.SubmitLeaderboardEntry(1U, 1234U);
+
+        // SubmitLeaderboardEntry API call is async, try to execute it - expect no tasks queued
+        game.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        // error message should be reported
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Leaderboard NOT Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Leaderboards are not submitted in offline mode."), pPopup->GetDetail());
+        Assert::IsFalse(pPopup->IsDetailError());
+
+        // empty leaderboard should be displayed with the non-submitted score
+        const auto* vmScoreboard = game.mockOverlayManager.GetScoreboard(1U);
+        Assert::IsNotNull(vmScoreboard);
+        Ensures(vmScoreboard != nullptr);
+        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), vmScoreboard->GetHeaderText());
+        Assert::AreEqual({ 1U }, vmScoreboard->Entries().Count());
+
+        const auto* vmEntry = vmScoreboard->Entries().GetItemAt(0);
+        Assert::IsNotNull(vmEntry);
+        Ensures(vmEntry != nullptr);
+        Assert::AreEqual(0, vmEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"Player"), vmEntry->GetUserName());
+        Assert::AreEqual(std::wstring(L"1234"), vmEntry->GetScore());
+        Assert::IsTrue(vmEntry->IsHighlighted());
+    }
+
     TEST_METHOD(TestSetModeNotify)
     {
         class NotifyHarness : public GameContext::NotifyTarget
@@ -2711,6 +2780,12 @@ public:
         game.SetMode(GameContext::Mode::Normal);
         Assert::AreEqual(GameContext::Mode::Normal, game.GetMode());
         Assert::IsTrue(notifyHarness.m_bNotified);
+
+        // not changing mode should not notify again
+        notifyHarness.m_bNotified = false;
+        game.SetMode(GameContext::Mode::Normal);
+        Assert::AreEqual(GameContext::Mode::Normal, game.GetMode());
+        Assert::IsFalse(notifyHarness.m_bNotified);
     }
 };
 

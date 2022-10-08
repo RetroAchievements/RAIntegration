@@ -285,6 +285,64 @@ public:
         achievement.UpdateLocalCheckpoint();
         Assert::AreEqual(std::wstring(), achievement.GetValidationError());
     }
+
+    TEST_METHOD(TestValidatePoints)
+    {
+        AchievementModelHarness achievement;
+        achievement.mockGameContext.SetGameId(22);
+        achievement.AddLocalBadgesModel();
+        achievement.SetBadge(L"12345.png");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        Assert::IsTrue(achievement.Validate());
+        Assert::AreEqual(std::wstring(), achievement.GetValidationError());
+
+        const std::array<int, 10> vValidPoints = {0, 1, 2, 3, 4, 5, 10, 25, 50, 100};
+
+        for (int i = -100; i <= 500; i++)
+        {
+            achievement.SetPoints(i);
+
+            const auto pIter = std::find(vValidPoints.begin(), vValidPoints.end(), i);
+            if (pIter == vValidPoints.end())
+            {
+                Assert::IsFalse(achievement.Validate());
+                Assert::AreEqual(std::wstring(L"Invalid point value"), achievement.GetValidationError());
+            }
+            else
+            {
+                Assert::IsTrue(achievement.Validate());
+                Assert::AreEqual(std::wstring(), achievement.GetValidationError());
+            }
+        }
+    }
+    
+    TEST_METHOD(TestValidateLength)
+    {
+        AchievementModelHarness achievement;
+        achievement.mockGameContext.SetGameId(22);
+        achievement.AddLocalBadgesModel();
+        achievement.SetBadge(L"12345.png");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        std::string sTrigger;
+        for (int i = 0; i < 65535/12 - 1; i++)
+            sTrigger.append(ra::StringPrintf("0xH00%04X=0_", i));
+        sTrigger.append("0xX00FFF0=12345");
+        Assert::AreEqual({65535U}, sTrigger.length());
+        achievement.SetTrigger(sTrigger);
+
+        Assert::IsTrue(achievement.Validate());
+        Assert::AreEqual(std::wstring(), achievement.GetValidationError());
+
+        sTrigger.append("6"); // 65536 bytes
+        achievement.SetTrigger(sTrigger);
+
+        Assert::IsFalse(achievement.Validate());
+        Assert::AreEqual(std::wstring(L"Serialized length exceeds limit: 65536/65535"), achievement.GetValidationError());
+    }
 };
 
 

@@ -128,8 +128,22 @@ public:
 
         menu.BuildMenu();
 
-        menu.AssertMenuSize(1);
+        menu.AssertMenuSize(15);
         menu.AssertMenuItem(0, IDM_RA_FILES_LOGIN, L"&Login");
+        menu.AssertMenuSeparator(1);
+        menu.AssertMenuItem(2, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
+        menu.AssertMenuItem(3, IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
+        menu.AssertMenuSeparator(4);
+        menu.AssertMenuItem(5, IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
+        menu.AssertMenuItem(6, IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
+        menu.AssertMenuSeparator(7);
+        menu.AssertMenuItem(8, IDM_RA_FILES_OPENALL, L"&Open All");
+        menu.AssertMenuItem(9, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        menu.AssertMenuItem(10, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        menu.AssertMenuItem(11, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        menu.AssertMenuItem(12, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        menu.AssertMenuItem(13, IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        menu.AssertMenuItem(14, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
     }
 
     TEST_METHOD(TestBuildMenuLoggedIn)
@@ -139,7 +153,7 @@ public:
 
         menu.BuildMenu();
 
-        menu.AssertMenuSize(19);
+        menu.AssertMenuSize(21);
         menu.AssertMenuItem(0, IDM_RA_FILES_LOGOUT, L"Log&out");
         menu.AssertMenuSeparator(1);
         menu.AssertMenuItem(2, IDM_RA_OPENUSERPAGE, L"Open my &User Page");
@@ -151,14 +165,41 @@ public:
         menu.AssertMenuItem(8, IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
         menu.AssertMenuItem(9, IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
         menu.AssertMenuSeparator(10);
-        menu.AssertMenuItem(11, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
-        menu.AssertMenuItem(12, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
-        menu.AssertMenuItem(13, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
-        menu.AssertMenuItem(14, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        menu.AssertMenuItem(15, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
-        menu.AssertMenuSeparator(16);
-        menu.AssertMenuItem(17, IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
-        menu.AssertMenuItem(18, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+        menu.AssertMenuItem(11, IDM_RA_FILES_OPENALL, L"&Open All");
+        menu.AssertMenuItem(12, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        menu.AssertMenuItem(13, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        menu.AssertMenuItem(14, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        menu.AssertMenuItem(15, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        menu.AssertMenuItem(16, IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        menu.AssertMenuItem(17, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        menu.AssertMenuSeparator(18);
+        menu.AssertMenuItem(19, IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
+        menu.AssertMenuItem(20, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+    }
+
+    TEST_METHOD(TestBuildMenuOffline)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        menu.BuildMenu();
+
+        menu.AssertMenuSize(15);
+        menu.AssertMenuItem(0, IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
+        menu.AssertMenuItem(1, IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
+        menu.AssertMenuSeparator(2);
+        menu.AssertMenuItem(3, IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
+        menu.AssertMenuItem(4, IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
+        menu.AssertMenuSeparator(5);
+        menu.AssertMenuItem(6, IDM_RA_FILES_OPENALL, L"&Open All");
+        menu.AssertMenuItem(7, IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        menu.AssertMenuItem(8, IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        menu.AssertMenuItem(9, IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        menu.AssertMenuItem(10, IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        menu.AssertMenuItem(11, IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        menu.AssertMenuItem(12, IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        menu.AssertMenuSeparator(13);
+        menu.AssertMenuItem(14, IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
     }
 
     TEST_METHOD(TestLoginHardcoreValidClient)
@@ -477,6 +518,24 @@ public:
         menu.AssertShowWindow<ra::ui::viewmodels::MemoryBookmarksViewModel>(IDM_RA_FILES_MEMORYBOOKMARKS, false, "view memory bookmarks", DialogResult::None);
     }
 
+    TEST_METHOD(TestShowCodeNotesHardcore)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.AssertShowWindow<ra::ui::viewmodels::CodeNotesViewModel>(IDM_RA_FILES_CODENOTES, true, "view code notes", DialogResult::Yes);
+    }
+
+    TEST_METHOD(TestShowCodeNotesHardcoreAbort)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.AssertShowWindow<ra::ui::viewmodels::CodeNotesViewModel>(IDM_RA_FILES_CODENOTES, true, "view code notes", DialogResult::No);
+    }
+
+    TEST_METHOD(TestShowCodeNotesNonHardcore)
+    {
+        IntegrationMenuViewModelHarness menu;
+        menu.AssertShowWindow<ra::ui::viewmodels::CodeNotesViewModel>(IDM_RA_FILES_CODENOTES, false, "view code notes", DialogResult::None);
+    }
+
     TEST_METHOD(TestShowRichPresenceMonitorHardcore)
     {
         IntegrationMenuViewModelHarness menu;
@@ -487,6 +546,192 @@ public:
     {
         IntegrationMenuViewModelHarness menu;
         menu.AssertShowWindow<ra::ui::viewmodels::RichPresenceMonitorViewModel>(IDM_RA_PARSERICHPRESENCE, false, "", DialogResult::None);
+    }
+
+    TEST_METHOD(TestOpenAllHardcore)
+    {
+        IntegrationMenuViewModelHarness menu;
+
+        menu.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+
+        bool bAssetsShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::AssetListViewModel>([&bAssetsShown](ra::ui::viewmodels::AssetListViewModel&)
+        {
+            bAssetsShown = true;
+            return DialogResult::None;
+        });
+
+
+        bool bAssetShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::AssetEditorViewModel>([&bAssetShown](ra::ui::viewmodels::AssetEditorViewModel&)
+        {
+            bAssetShown = true;
+            return DialogResult::None;
+        });
+
+        bool bInspectorShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::MemoryInspectorViewModel>([&bInspectorShown](ra::ui::viewmodels::MemoryInspectorViewModel&)
+        {
+            bInspectorShown = true;
+            return DialogResult::None;
+        });
+
+        bool bBookmarksShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::MemoryBookmarksViewModel>([&bBookmarksShown](ra::ui::viewmodels::MemoryBookmarksViewModel&)
+        {
+            bBookmarksShown = true;
+            return DialogResult::None;
+        });
+
+        bool bNotesShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::CodeNotesViewModel>([&bNotesShown](ra::ui::viewmodels::CodeNotesViewModel&)
+        {
+            bNotesShown = true;
+            return DialogResult::None;
+        });
+
+        bool bRichPresenceShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::RichPresenceMonitorViewModel>([&bRichPresenceShown](ra::ui::viewmodels::RichPresenceMonitorViewModel&)
+        {
+            bRichPresenceShown = true;
+            return DialogResult::None;
+        });
+
+        menu.mockEmulatorContext.MockDisableHardcoreWarning(DialogResult::Yes);
+
+        menu.ActivateMenuItem(IDM_RA_FILES_OPENALL);
+
+        Assert::AreEqual(std::string("use development tools"), menu.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        Assert::IsTrue(bAssetsShown);
+        Assert::IsTrue(bAssetShown);
+        Assert::IsTrue(bInspectorShown);
+        Assert::IsTrue(bBookmarksShown);
+        Assert::IsTrue(bNotesShown);
+        Assert::IsTrue(bRichPresenceShown);
+    }
+
+    TEST_METHOD(TestOpenAllHardcoreAbort)
+    {
+        IntegrationMenuViewModelHarness menu;
+
+        menu.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+
+        bool bAssetsShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::AssetListViewModel>([&bAssetsShown](ra::ui::viewmodels::AssetListViewModel&)
+        {
+            bAssetsShown = true;
+            return DialogResult::None;
+        });
+
+
+        bool bAssetShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::AssetEditorViewModel>([&bAssetShown](ra::ui::viewmodels::AssetEditorViewModel&)
+        {
+            bAssetShown = true;
+            return DialogResult::None;
+        });
+
+        bool bInspectorShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::MemoryInspectorViewModel>([&bInspectorShown](ra::ui::viewmodels::MemoryInspectorViewModel&)
+        {
+            bInspectorShown = true;
+            return DialogResult::None;
+        });
+
+        bool bBookmarksShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::MemoryBookmarksViewModel>([&bBookmarksShown](ra::ui::viewmodels::MemoryBookmarksViewModel&)
+        {
+            bBookmarksShown = true;
+            return DialogResult::None;
+        });
+
+        bool bNotesShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::CodeNotesViewModel>([&bNotesShown](ra::ui::viewmodels::CodeNotesViewModel&)
+        {
+            bNotesShown = true;
+            return DialogResult::None;
+        });
+
+        bool bRichPresenceShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::RichPresenceMonitorViewModel>([&bRichPresenceShown](ra::ui::viewmodels::RichPresenceMonitorViewModel&)
+        {
+            bRichPresenceShown = true;
+            return DialogResult::None;
+        });
+
+        menu.mockEmulatorContext.MockDisableHardcoreWarning(DialogResult::No);
+
+        menu.ActivateMenuItem(IDM_RA_FILES_OPENALL);
+
+        Assert::AreEqual(std::string("use development tools"), menu.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        Assert::IsTrue(bAssetsShown);
+        Assert::IsFalse(bAssetShown);
+        Assert::IsFalse(bInspectorShown);
+        Assert::IsFalse(bBookmarksShown);
+        Assert::IsFalse(bNotesShown);
+        Assert::IsTrue(bRichPresenceShown);
+    }
+
+    TEST_METHOD(TestOpenAllNonHardcore)
+    {
+        IntegrationMenuViewModelHarness menu;
+
+        menu.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+
+        bool bAssetsShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::AssetListViewModel>([&bAssetsShown](ra::ui::viewmodels::AssetListViewModel&)
+        {
+            bAssetsShown = true;
+            return DialogResult::None;
+        });
+
+
+        bool bAssetShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::AssetEditorViewModel>([&bAssetShown](ra::ui::viewmodels::AssetEditorViewModel&)
+        {
+            bAssetShown = true;
+            return DialogResult::None;
+        });
+
+        bool bInspectorShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::MemoryInspectorViewModel>([&bInspectorShown](ra::ui::viewmodels::MemoryInspectorViewModel&)
+        {
+            bInspectorShown = true;
+            return DialogResult::None;
+        });
+
+        bool bBookmarksShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::MemoryBookmarksViewModel>([&bBookmarksShown](ra::ui::viewmodels::MemoryBookmarksViewModel&)
+        {
+            bBookmarksShown = true;
+            return DialogResult::None;
+        });
+
+        bool bNotesShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::CodeNotesViewModel>([&bNotesShown](ra::ui::viewmodels::CodeNotesViewModel&)
+        {
+            bNotesShown = true;
+            return DialogResult::None;
+        });
+
+        bool bRichPresenceShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::RichPresenceMonitorViewModel>([&bRichPresenceShown](ra::ui::viewmodels::RichPresenceMonitorViewModel&)
+        {
+            bRichPresenceShown = true;
+            return DialogResult::None;
+        });
+
+        menu.mockEmulatorContext.MockDisableHardcoreWarning(DialogResult::None);
+
+        menu.ActivateMenuItem(IDM_RA_FILES_OPENALL);
+
+        Assert::AreEqual(std::string(), menu.mockEmulatorContext.GetDisableHardcoreWarningMessage());
+        Assert::IsTrue(bAssetsShown);
+        Assert::IsTrue(bAssetShown);
+        Assert::IsTrue(bInspectorShown);
+        Assert::IsTrue(bBookmarksShown);
+        Assert::IsTrue(bNotesShown);
+        Assert::IsTrue(bRichPresenceShown);
     }
 
     TEST_METHOD(TestReportBrokenAchievements)

@@ -65,6 +65,8 @@ AssetEditorViewModel::AssetEditorViewModel() noexcept
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Value), L"Value");
     m_vLeaderboardParts.GetItemAt(0)->SetSelected(true);
     m_vLeaderboardParts.AddNotifyTarget(*this);
+
+    SetValue(IsTriggerProperty, false);
 }
 
 AssetEditorViewModel::~AssetEditorViewModel()
@@ -237,6 +239,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, b
     else
     {
         SetValue(IsAssetLoadedProperty, false);
+        SetValue(IsTriggerProperty, false);
         SetValue(HasMeasuredProperty, false);
 
         SetName(NameProperty.GetDefaultValue());

@@ -625,6 +625,80 @@ void AssetEditorDialog::ErrorIconBinding::UpdateImage()
     }
 }
 
+AssetEditorDialog::PointBinding::PointBinding(ViewModelBase& vmViewModel) noexcept
+    : ra::ui::win32::bindings::ComboBoxBinding(vmViewModel)
+{
+    static ra::ui::viewmodels::LookupItemViewModelCollection s_vDummy;
+    m_pViewModelCollection = &s_vDummy;
+}
+
+void AssetEditorDialog::PointBinding::PopulateComboBox()
+{
+    for (const int nPoints : AchievementModel::ValidPoints())
+    {
+        ComboBox_AddString(m_hWnd, std::to_wstring(nPoints).c_str());
+    }
+}
+
+void AssetEditorDialog::PointBinding::UpdateSelectedItem()
+{
+    if (!m_hWnd)
+        return;
+
+    const auto nPoints = GetValue(*m_pSelectedIdProperty);
+
+    if (m_nCustomPointsIndex != -1)
+    {
+        if (nPoints == m_nCustomPoints)
+            return;
+
+        ComboBox_DeleteString(m_hWnd, m_nCustomPointsIndex);
+        m_nCustomPointsIndex = -1;
+        m_nCustomPoints = -1;
+    }
+
+    for (size_t nIndex = 0; nIndex < AchievementModel::ValidPoints().size(); ++nIndex)
+    {
+        if (AchievementModel::ValidPoints().at(nIndex) == nPoints)
+        {
+            ComboBox_SetCurSel(m_hWnd, nIndex);
+            return;
+        }
+    }
+
+    for (size_t nIndex = AchievementModel::ValidPoints().size(); nIndex > 0; --nIndex)
+    {
+        if (AchievementModel::ValidPoints().at(nIndex - 1) < nPoints)
+        {
+            m_nCustomPoints = nPoints;
+            ComboBox_InsertString(m_hWnd, nIndex, std::to_wstring(nPoints).c_str());
+
+            m_nCustomPointsIndex = gsl::narrow_cast<int>(nIndex);
+            ComboBox_SetCurSel(m_hWnd, nIndex);
+            break;
+        }
+    }
+}
+
+void AssetEditorDialog::PointBinding::OnValueChanged()
+{
+    const auto nIndex = ComboBox_GetCurSel(m_hWnd);
+    if (m_nCustomPointsIndex == -1 || nIndex < m_nCustomPointsIndex)
+    {
+        const auto nPoints = AchievementModel::ValidPoints().at(nIndex);
+        SetValue(*m_pSelectedIdProperty, nPoints);
+    }
+    else if (nIndex > m_nCustomPointsIndex)
+    {
+        const auto nPoints = AchievementModel::ValidPoints().at(gsl::narrow_cast<size_t>(nIndex) - 1);
+        SetValue(*m_pSelectedIdProperty, nPoints);
+    }
+    else
+    {
+        SetValue(*m_pSelectedIdProperty, m_nCustomPoints);
+    }
+}
+
 AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     : DialogBase(vmAssetEditor),
     m_bindID(vmAssetEditor),
@@ -660,8 +734,9 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindEnabled(IDC_RA_BADGENAME, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_BADGE_SPIN, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_UPLOAD_BADGE, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_HIGHLIGHTS, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_RESET, AssetEditorViewModel::IsAssetLoadedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_TRIGGER, AssetEditorViewModel::IsAssetLoadedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_TRIGGER, AssetEditorViewModel::IsTriggerProperty);
     m_bindWindow.BindEnabled(IDC_RA_LBX_GROUPS, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_ADD_GROUP, AssetEditorViewModel::IsAssetLoadedProperty);
     m_bindWindow.BindEnabled(IDC_RA_DELETE_GROUP, AssetEditorViewModel::IsAssetLoadedProperty);
@@ -677,13 +752,12 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindLabel(IDC_RA_MEASURED, AssetEditorViewModel::MeasuredValueProperty);
     m_bindWindow.BindVisible(IDC_RA_LBL_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
     m_bindWindow.BindVisible(IDC_RA_MEASURED, AssetEditorViewModel::HasMeasuredProperty);
-    m_bindWindow.BindEnabled(IDC_RA_CHK_PAUSE_ON_TRIGGER, AssetEditorViewModel::IsTriggerProperty);
 
     // achievement only fields
     m_bindBadge.BindText(AssetEditorViewModel::BadgeProperty);
     m_bindBadge.SetWrapAround(true);
     m_bindBadgeImage.BindImage(AssetEditorViewModel::BadgeProperty, ra::ui::ImageType::Badge);
-    m_bindPoints.BindValue(AssetEditorViewModel::PointsProperty);
+    m_bindPoints.BindSelectedItem(AssetEditorViewModel::PointsProperty);
     m_bindWindow.BindVisible(IDC_RA_LBL_POINTS, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_POINTS, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_CHK_AS_PERCENT, AssetEditorViewModel::IsAchievementProperty);

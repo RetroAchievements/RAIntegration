@@ -46,6 +46,13 @@ processorArchitecture='*' publicKeyToken='6595b64144ccf1df' language='*'\"")
 namespace ra {
 namespace services {
 
+bool Initialization::s_bIsInitialized = false;
+
+bool ServiceLocator::IsInitialized() noexcept
+{
+    return Initialization::IsInitialized();
+}
+
 static void LogHeader(_In_ const ra::services::ILogger& pLogger,
                       _In_ const ra::services::IFileSystem& pFileSystem,
                       _In_ const ra::services::IClock& pClock)
@@ -183,6 +190,8 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
     ra::services::ServiceLocator::Provide<ra::api::IServer>(std::move(pServer));
 
     InitializeNotifyTargets();
+
+    s_bIsInitialized = true;
 }
 
 void Initialization::InitializeNotifyTargets()
@@ -197,8 +206,7 @@ void Initialization::InitializeNotifyTargets()
 
 void Initialization::Shutdown()
 {
-    // if RegisterServices was not called, there's nothing to Shutdown
-    if (!ra::services::ServiceLocator::Exists<ra::services::IThreadPool>())
+    if (!s_bIsInitialized)
         return;
 
     ra::services::ServiceLocator::GetMutable<ra::ui::IDesktop>().Shutdown();
@@ -210,6 +218,16 @@ void Initialization::Shutdown()
     // ImageReference destructors will try to use the IImageRepository if they think it still exists.
     // explicitly deregister it to prevent exceptions when closing down the application.
     ra::services::ServiceLocator::Provide<ra::ui::IImageRepository>(nullptr);
+
+    // GridBinding subclass destructors may try to use the EmulatorContext if they think it still exists.
+    // explicitly deregister it to prevent exceptions when closing down the application.
+    ra::services::ServiceLocator::Provide<ra::data::context::EmulatorContext>(nullptr);
+
+    // clear out the IThreadPool and IConfiguration services to indicate things have been de-initialized
+    ra::services::ServiceLocator::Provide<ra::services::IThreadPool>(nullptr);
+    ra::services::ServiceLocator::Provide<ra::services::IConfiguration>(nullptr);
+
+    s_bIsInitialized = false;
 }
 
 } // namespace services

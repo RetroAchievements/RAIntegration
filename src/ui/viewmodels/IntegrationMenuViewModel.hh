@@ -18,6 +18,8 @@ public:
 private:
     static void BuildMenuLoggedIn(LookupItemViewModelCollection& vmMenu);
     static void BuildMenuLoggedOut(LookupItemViewModelCollection& vmMenu);
+    static void BuildMenuOffline(LookupItemViewModelCollection& vmMenu);
+    static void AddCommonMenuItems(LookupItemViewModelCollection& vmMenu);
 
     static void Login();
     static void Logout();
@@ -31,7 +33,9 @@ private:
     static void ShowAssetEditor();
     static void ShowMemoryInspector();
     static void ShowMemoryBookmarks();
+    static void ShowCodeNotes();
     static void ShowRichPresenceMonitor();
+    static void ShowAllEditors();
     static void ReportBrokenAchievements();
     static void ShowGameHash();
 };

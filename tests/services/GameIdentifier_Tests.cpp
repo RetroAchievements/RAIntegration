@@ -29,6 +29,7 @@ namespace tests {
 static std::array<BYTE, 16> ROM = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 };
 static std::array<BYTE, 16> ROM2 = { 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17 };
 static std::string ROM_HASH = "190c4c105786a2121d85018939108a6c";
+static std::wstring KNOWN_HASHES_KEY = L"Hashes";
 
 class GameIdentifierHarness : public GameIdentifier
 {
@@ -80,11 +81,11 @@ public:
     ra::ui::mocks::MockDesktop mockDesktop;
     ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
     ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
+    ra::services::mocks::MockLocalStorage mockLocalStorage;
 
 private:
     ra::services::mocks::MockAudioSystem mockAudioSystem;
     ra::services::mocks::MockClock mockClock;
-    ra::services::mocks::MockLocalStorage mockLocalStorage;
     ra::services::mocks::MockThreadPool mockThreadPool;
 };
 
@@ -643,6 +644,164 @@ public:
         // it should still be reloaded.
         Assert::IsTrue(identifier.mockGameContext.WasLoaded());
     }
+
+    TEST_METHOD(TestSaveKnownHashesNone)
+    {
+        GameIdentifierHarness identifier;
+        identifier.SaveKnownHashes();
+
+        Assert::IsFalse(identifier.mockLocalStorage.HasStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY));
+    }
+
+    TEST_METHOD(TestSaveKnownHashesNew)
+    {
+        GameIdentifierHarness identifier;
+        identifier.mockUserContext.Initialize("User", "ApiToken");
+
+        identifier.mockServer.HandleRequest<ra::api::ResolveHash>(
+            [](const ra::api::ResolveHash::Request&, ra::api::ResolveHash::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            response.GameId = 32U;
+            return true;
+        });
+        Assert::AreEqual(32U, identifier.IdentifyHash(ROM_HASH));
+
+        identifier.SaveKnownHashes();
+
+        Assert::IsTrue(identifier.mockLocalStorage.HasStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY));
+        Assert::AreEqual(ra::StringPrintf("%s=%u\n", ROM_HASH, 32U),
+            identifier.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY));
+    }
+
+    TEST_METHOD(TestSaveKnownHashesUnchanged)
+    {
+        GameIdentifierHarness identifier;
+        identifier.mockUserContext.Initialize("User", "ApiToken");
+        const auto sFileContents = ra::StringPrintf("%s=%u\ninvalid=0\n", ROM_HASH, 32U);
+        identifier.mockLocalStorage.MockStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY, sFileContents);
+                            
+        identifier.mockServer.HandleRequest<ra::api::ResolveHash>(
+            [](const ra::api::ResolveHash::Request&, ra::api::ResolveHash::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            response.GameId = 32U;
+            return true;
+        });
+        Assert::AreEqual(32U, identifier.IdentifyHash(ROM_HASH));
+
+        identifier.SaveKnownHashes();
+
+        // invalid entry would be removed if the file were updated
+        Assert::AreEqual(sFileContents,
+            identifier.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY));
+    }
+
+    TEST_METHOD(TestSaveKnownHashesIDChanged)
+    {
+        GameIdentifierHarness identifier;
+        identifier.mockUserContext.Initialize("User", "ApiToken");
+        const auto sFileContents = ra::StringPrintf("%s=%u\ninvalid=0\n", ROM_HASH, 32U);
+        identifier.mockLocalStorage.MockStoredData(
+            ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY, sFileContents);
+
+        identifier.mockServer.HandleRequest<ra::api::ResolveHash>(
+            [](const ra::api::ResolveHash::Request&, ra::api::ResolveHash::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            response.GameId = 35U;
+            return true;
+        });
+        Assert::AreEqual(35U, identifier.IdentifyHash(ROM_HASH));
+
+        identifier.SaveKnownHashes();
+
+        // invalid entry will be discarded
+        Assert::AreEqual(
+            ra::StringPrintf("%s=%u\n", ROM_HASH, 35U),
+            identifier.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY));
+    }
+
+    TEST_METHOD(TestSaveKnownHashesAdded)
+    {
+        GameIdentifierHarness identifier;
+        const std::string sAlternateHash = "abcdef01234567899876543210fedcba";
+        identifier.mockUserContext.Initialize("User", "ApiToken");
+        const auto sFileContents = ra::StringPrintf("%s=%u\ninvalid=0\n", sAlternateHash, 32U);
+        identifier.mockLocalStorage.MockStoredData(
+            ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY, sFileContents);
+
+        identifier.mockServer.HandleRequest<ra::api::ResolveHash>(
+            [](const ra::api::ResolveHash::Request&, ra::api::ResolveHash::Response& response)
+        {
+            response.Result = ra::api::ApiResult::Success;
+            response.GameId = 35U;
+            return true;
+        });
+        Assert::AreEqual(35U, identifier.IdentifyHash(ROM_HASH));
+
+        identifier.SaveKnownHashes();
+
+        // invalid entry will be discarded
+        Assert::AreEqual(
+            ra::StringPrintf("%s=%u\n%s=%u\n", ROM_HASH, 35U, sAlternateHash, 32U),
+            identifier.mockLocalStorage.GetStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY));
+    }
+
+    TEST_METHOD(TestIdentifyGameOfflineUnknown)
+    {
+        GameIdentifierHarness identifier;
+        identifier.mockUserContext.Logout();
+        identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        bool bDialogShown = false;
+        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Cannot load achievements"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"This game was not previously identified and requires a connection to identify it."),
+                vmMessageBox.GetMessage());
+            bDialogShown = true;
+            return ra::ui::DialogResult::OK;
+        });
+
+        Assert::AreEqual(0U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+    }
+
+    TEST_METHOD(TestIdentifyGameOffline)
+    {
+        GameIdentifierHarness identifier;
+        identifier.mockUserContext.Logout();
+        identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        const auto sFileContents = ra::StringPrintf("%s=%u\n", ROM_HASH, 32U);
+        identifier.mockLocalStorage.MockStoredData(ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY, sFileContents);
+
+        Assert::AreEqual(32U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+        Assert::IsFalse(identifier.mockDesktop.WasDialogShown());
+    }
+
+    TEST_METHOD(TestActivateGamePendingOffline)
+    {
+        GameIdentifierHarness identifier;
+        identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        identifier.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        const auto sFileContents = ra::StringPrintf("%s=%u\n", ROM_HASH, 32U);
+        identifier.mockLocalStorage.MockStoredData(
+            ra::services::StorageItemType::HashMapping, KNOWN_HASHES_KEY, sFileContents);
+
+        Assert::AreEqual(32U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+        identifier.ActivateGame(32U);
+
+        Assert::AreEqual(32U, identifier.mockGameContext.GameId());
+        Assert::AreEqual(ROM_HASH, identifier.mockGameContext.GameHash());
+        Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(32U, identifier.mockSessionTracker.CurrentSessionGameId());
+        Assert::IsNull(identifier.mockOverlayManager.GetMessage(1U));
+        Assert::IsTrue(identifier.mockGameContext.WasLoaded());
+    }
+
 };
 
 } // namespace tests

@@ -26,40 +26,61 @@ namespace viewmodels {
 
 void IntegrationMenuViewModel::BuildMenu(LookupItemViewModelCollection& vmMenu)
 {
-    if (ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    if (pUserContext.IsLoggedIn())
         BuildMenuLoggedIn(vmMenu);
-    else
+    else if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(ra::services::Feature::Offline))
+        BuildMenuOffline(vmMenu);
+    else if (!pUserContext.IsLoginDisabled())
         BuildMenuLoggedOut(vmMenu);
+    else
+        BuildMenuOffline(vmMenu);
 }
 
 void IntegrationMenuViewModel::BuildMenuLoggedOut(LookupItemViewModelCollection& vmMenu)
 {
     vmMenu.Add(IDM_RA_FILES_LOGIN, L"&Login");
+    vmMenu.Add(0, L"-----");
+    AddCommonMenuItems(vmMenu);
 }
 
 void IntegrationMenuViewModel::BuildMenuLoggedIn(LookupItemViewModelCollection& vmMenu)
 {
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-
     vmMenu.Add(IDM_RA_FILES_LOGOUT, L"Log&out");
     vmMenu.Add(0, L"-----");
     vmMenu.Add(IDM_RA_OPENUSERPAGE, L"Open my &User Page");
     vmMenu.Add(IDM_RA_OPENGAMEPAGE, L"Open this &Game's Page");
     vmMenu.Add(0, L"-----");
+    AddCommonMenuItems(vmMenu);
+    vmMenu.Add(0, L"-----");
+    vmMenu.Add(IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
+    vmMenu.Add(IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+}
+
+void IntegrationMenuViewModel::BuildMenuOffline(LookupItemViewModelCollection& vmMenu)
+{
+    AddCommonMenuItems(vmMenu);
+    vmMenu.Add(0, L"-----");
+    vmMenu.Add(IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+}
+
+void IntegrationMenuViewModel::AddCommonMenuItems(LookupItemViewModelCollection& vmMenu)
+{
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+
     vmMenu.Add(IDM_RA_HARDCORE_MODE, L"&Hardcore Mode").SetSelected(pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
     vmMenu.Add(IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning").SetSelected(pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning));
     vmMenu.Add(0, L"-----");
     vmMenu.Add(IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards").SetSelected(pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards));
     vmMenu.Add(IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
     vmMenu.Add(0, L"-----");
+    vmMenu.Add(IDM_RA_FILES_OPENALL, L"&Open All");
     vmMenu.Add(IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
     vmMenu.Add(IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
     vmMenu.Add(IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
     vmMenu.Add(IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+    vmMenu.Add(IDM_RA_FILES_CODENOTES, L"Code &Notes");
     vmMenu.Add(IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
-    vmMenu.Add(0, L"-----");
-    vmMenu.Add(IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
-    vmMenu.Add(IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
 }
 
 void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)
@@ -114,8 +135,16 @@ void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)
             ShowMemoryBookmarks();
             break;
 
+        case IDM_RA_FILES_CODENOTES:
+            ShowCodeNotes();
+            break;
+
         case IDM_RA_PARSERICHPRESENCE:
             ShowRichPresenceMonitor();
+            break;
+
+        case IDM_RA_FILES_OPENALL:
+            ShowAllEditors();
             break;
 
         case IDM_RA_REPORTBROKENACHIEVEMENTS:
@@ -274,6 +303,16 @@ void IntegrationMenuViewModel::ShowMemoryBookmarks()
     }
 }
 
+void IntegrationMenuViewModel::ShowCodeNotes()
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    if (pEmulatorContext.WarnDisableHardcoreMode("view code notes"))
+    {
+        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+        pWindowManager.CodeNotes.Show();
+    }
+}
+
 void IntegrationMenuViewModel::ShowRichPresenceMonitor()
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -283,6 +322,27 @@ void IntegrationMenuViewModel::ShowRichPresenceMonitor()
 
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     pWindowManager.RichPresenceMonitor.Show();
+}
+
+void IntegrationMenuViewModel::ShowAllEditors()
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    if (pEmulatorContext.WarnDisableHardcoreMode("use development tools"))
+    {
+        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+
+        pWindowManager.AssetList.Show();
+        pWindowManager.AssetEditor.Show();
+        pWindowManager.MemoryInspector.Show();
+        pWindowManager.MemoryBookmarks.Show();
+        pWindowManager.CodeNotes.Show();
+    }
+    else
+    {
+        ShowAssetList();
+    }
+
+    ShowRichPresenceMonitor();
 }
 
 void IntegrationMenuViewModel::ReportBrokenAchievements()

@@ -64,6 +64,11 @@ public:
     }
 
     /// <summary>
+    /// Gets whether or not services have been initialized
+    /// </summary>
+    static bool IsInitialized() noexcept;
+
+    /// <summary>
     /// Provides a temporary implementation of an interface for the duration of the scope of the ServiceOverride.
     /// The original implementation will be restored when the <see cref="ServiceOverride"/> goes out of scope.
     /// </summary>

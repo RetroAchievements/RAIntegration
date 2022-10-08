@@ -29,6 +29,22 @@ Logout::Response OfflineServer::Logout(const Logout::Request&) noexcept
     return response;
 }
 
+AwardAchievement::Response OfflineServer::AwardAchievement(const AwardAchievement::Request&)
+{
+    AwardAchievement::Response response;
+    response.Result = ApiResult::Failed;
+    response.ErrorMessage = "Achievements are not actually unlocked in offline mode";
+    return response;
+}
+
+SubmitLeaderboardEntry::Response OfflineServer::SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request&)
+{
+    SubmitLeaderboardEntry::Response response;
+    response.Result = ApiResult::Failed;
+    response.ErrorMessage = "Leaderboard entries are not actually submitted in offline mode";
+    return response;
+}
+
 FetchGameData::Response OfflineServer::FetchGameData(const FetchGameData::Request& request)
 {
     FetchGameData::Response response;
@@ -74,6 +90,7 @@ FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Req
     {
         response.Result = ApiResult::Failed;
         response.ErrorMessage = ra::StringPrintf("Code notes for game %u not found in cache", request.GameId);
+        return response;
     }
 
     std::string sNotes;
@@ -97,6 +114,15 @@ FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Req
         rc_api_destroy_fetch_code_notes_response(&api_response);
     }
 
+    return response;
+}
+
+LatestClient::Response OfflineServer::LatestClient(const LatestClient::Request&)
+{
+    // all versions are newer than 0.0.0.0, and are therefore valid/allowed
+    LatestClient::Response response;
+    response.LatestVersion = response.MinimumVersion = "0.0.0.0";
+    response.Result = ApiResult::Success;
     return response;
 }
 

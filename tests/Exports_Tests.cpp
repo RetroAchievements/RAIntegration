@@ -971,8 +971,22 @@ private:
         ra::data::context::mocks::MockUserContext mockUserContext;
 
         RA_MenuItem menu[32];
-        Assert::AreEqual(1, _RA_GetPopupMenuItems(menu));
+        Assert::AreEqual(15, _RA_GetPopupMenuItems(menu));
         AssertMenuItem(&menu[0], IDM_RA_FILES_LOGIN, L"&Login");
+        AssertMenuItem(&menu[1], 0, nullptr);
+        AssertMenuItem(&menu[2], IDM_RA_HARDCORE_MODE, L"&Hardcore Mode");
+        AssertMenuItem(&menu[3], IDM_RA_NON_HARDCORE_WARNING, L"Non-Hardcore &Warning");
+        AssertMenuItem(&menu[4], 0, nullptr);
+        AssertMenuItem(&menu[5], IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
+        AssertMenuItem(&menu[6], IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
+        AssertMenuItem(&menu[7], 0, nullptr);
+        AssertMenuItem(&menu[8], IDM_RA_FILES_OPENALL, L"&Open All");
+        AssertMenuItem(&menu[9], IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        AssertMenuItem(&menu[10], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        AssertMenuItem(&menu[11], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        AssertMenuItem(&menu[12], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        AssertMenuItem(&menu[13], IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        AssertMenuItem(&menu[14], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
     }
 
     TEST_METHOD(TestGetPopupMenuItemsLoggedIn)
@@ -982,7 +996,7 @@ private:
         mockUserContext.Initialize("User", "TOKEN");
 
         RA_MenuItem menu[32];
-        Assert::AreEqual(19, _RA_GetPopupMenuItems(menu));
+        Assert::AreEqual(21, _RA_GetPopupMenuItems(menu));
         AssertMenuItem(&menu[0], IDM_RA_FILES_LOGOUT, L"Log&out");
         AssertMenuItem(&menu[1], 0, nullptr);
         AssertMenuItem(&menu[2], IDM_RA_OPENUSERPAGE, L"Open my &User Page");
@@ -994,14 +1008,16 @@ private:
         AssertMenuItem(&menu[8], IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards");
         AssertMenuItem(&menu[9], IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
         AssertMenuItem(&menu[10], 0, nullptr);
-        AssertMenuItem(&menu[11], IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
-        AssertMenuItem(&menu[12], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
-        AssertMenuItem(&menu[13], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
-        AssertMenuItem(&menu[14], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        AssertMenuItem(&menu[15], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
-        AssertMenuItem(&menu[16], 0, nullptr);
-        AssertMenuItem(&menu[17], IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
-        AssertMenuItem(&menu[18], IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+        AssertMenuItem(&menu[11], IDM_RA_FILES_OPENALL, L"&Open All");
+        AssertMenuItem(&menu[12], IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        AssertMenuItem(&menu[13], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        AssertMenuItem(&menu[14], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        AssertMenuItem(&menu[15], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        AssertMenuItem(&menu[16], IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        AssertMenuItem(&menu[17], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        AssertMenuItem(&menu[18], 0, nullptr);
+        AssertMenuItem(&menu[19], IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
+        AssertMenuItem(&menu[20], IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
     }
 
     TEST_METHOD(TestGetPopupMenuItemsChecked)
@@ -1014,7 +1030,7 @@ private:
         mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
 
         RA_MenuItem menu[32];
-        Assert::AreEqual(19, _RA_GetPopupMenuItems(menu));
+        Assert::AreEqual(21, _RA_GetPopupMenuItems(menu));
         AssertMenuItem(&menu[0], IDM_RA_FILES_LOGOUT, L"Log&out");
         AssertMenuItem(&menu[1], 0, nullptr);
         AssertMenuItem(&menu[2], IDM_RA_OPENUSERPAGE, L"Open my &User Page");
@@ -1026,14 +1042,16 @@ private:
         AssertMenuItem(&menu[8], IDM_RA_TOGGLELEADERBOARDS, L"Enable &Leaderboards", true);
         AssertMenuItem(&menu[9], IDM_RA_OVERLAYSETTINGS, L"O&verlay Settings");
         AssertMenuItem(&menu[10], 0, nullptr);
-        AssertMenuItem(&menu[11], IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
-        AssertMenuItem(&menu[12], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
-        AssertMenuItem(&menu[13], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
-        AssertMenuItem(&menu[14], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
-        AssertMenuItem(&menu[15], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
-        AssertMenuItem(&menu[16], 0, nullptr);
-        AssertMenuItem(&menu[17], IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
-        AssertMenuItem(&menu[18], IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+        AssertMenuItem(&menu[11], IDM_RA_FILES_OPENALL, L"&Open All");
+        AssertMenuItem(&menu[12], IDM_RA_FILES_ACHIEVEMENTS, L"Assets Li&st");
+        AssertMenuItem(&menu[13], IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
+        AssertMenuItem(&menu[14], IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
+        AssertMenuItem(&menu[15], IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+        AssertMenuItem(&menu[16], IDM_RA_FILES_CODENOTES, L"Code &Notes");
+        AssertMenuItem(&menu[17], IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
+        AssertMenuItem(&menu[18], 0, nullptr);
+        AssertMenuItem(&menu[19], IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
+        AssertMenuItem(&menu[20], IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
     }
 };
 

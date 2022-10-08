@@ -130,6 +130,13 @@ public:
     const CapturedTriggerHits& GetCapturedHits() const noexcept { return m_pCapturedTriggerHits; }
     void ResetCapturedHits() noexcept { m_pCapturedTriggerHits.Reset(); }
 
+    static const std::array<int, 10>& ValidPoints() noexcept
+    {
+        return s_vValidPoints;
+    }
+
+    static constexpr size_t MaxSerializedLength = 65535;
+
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
@@ -139,6 +146,8 @@ protected:
     bool ValidateAsset(std::wstring& sErrorMessage) override;
 
 private:
+    static const std::array<int, 10> s_vValidPoints;
+
     void HandleStateChanged(AssetState nOldState, AssetState nNewState);
 
     AssetDefinition m_pTrigger;

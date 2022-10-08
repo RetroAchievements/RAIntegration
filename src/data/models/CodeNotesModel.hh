@@ -136,14 +136,7 @@ public:
     /// <param name="nAddress">The address to set the note for.</param>
     /// <param name="sNote">The new note for the address.</param>
     /// <returns><c>true</c> if the note was updated, </c>false</c> if an error occurred.</returns>
-    virtual bool SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote);
-
-    /// <summary>
-    /// Deletes the note associated with the specified address.
-    /// </summary>
-    /// <param name="nAddress">The address to delete the note for.</param>
-    /// <returns><c>true</c> if the note was deleted, </c>false</c> if an error occurred.</returns>
-    virtual bool DeleteCodeNote(ra::ByteAddress nAddress);
+    void SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote);
 
     /// <summary>
     /// Returns the number of known code notes
@@ -158,8 +151,35 @@ public:
         return (m_mCodeNotes.size() == 0) ? 0U : m_mCodeNotes.begin()->first;
     }
 
-	void Serialize(ra::services::TextWriter&) const noexcept override {}
-	bool Deserialize(ra::Tokenizer&) noexcept override { return true; }
+    /// <summary>
+    /// Enumerates the modified code notes
+    /// </summary>
+    /// <remarks>
+    /// <paramref name="callback" /> is called for each known code note. If it returns <c>false</c> enumeration stops.
+    /// </remarks>
+    void EnumerateModifiedCodeNotes(std::function<bool(ra::ByteAddress nAddress)> callback) const
+    {
+        for (const auto& pair : m_mOriginalCodeNotes)
+        {
+            if (!callback(pair.first))
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Gets whether or not the note for specified address has been modified.
+    /// </summary>
+    bool IsNoteModified(ra::ByteAddress nAddress) const
+    {
+        return m_mOriginalCodeNotes.find(nAddress) != m_mOriginalCodeNotes.end();
+    }
+
+    void SetServerCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote);
+    const std::wstring* GetServerCodeNote(ra::ByteAddress nAddress) const;
+    const std::string* GetServerCodeNoteAuthor(ra::ByteAddress nAddress) const;
+
+	void Serialize(ra::services::TextWriter&) const override;
+    bool Deserialize(ra::Tokenizer&) override;
 
     void DoFrame() override;
 
@@ -192,6 +212,7 @@ protected:
     };
 
     std::map<ra::ByteAddress, CodeNote> m_mCodeNotes;
+    std::map<ra::ByteAddress, std::pair<std::string, std::wstring>> m_mOriginalCodeNotes;
 
     const CodeNote* FindCodeNoteInternal(ra::ByteAddress nAddress) const;
     void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNote& pCodeNote)> callback, bool bIncludeDerived) const;
@@ -204,6 +225,8 @@ protected:
 private:
     static std::wstring BuildCodeNoteSized(ra::ByteAddress nAddress, unsigned nCheckBytes, ra::ByteAddress nNoteAddress, const CodeNote& pNote);
     static void ExtractSize(CodeNote& pNote);
+
+    mutable std::mutex m_oMutex;
 };
 
 } // namespace models

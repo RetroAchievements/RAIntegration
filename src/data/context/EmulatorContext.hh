@@ -190,16 +190,7 @@ public:
     /// <summary>
     /// Clears all registered memory blocks so they can be rebuilt.
     /// </summary>
-    void ClearMemoryBlocks()
-    {
-        m_vMemoryBlocks.clear();
-
-        if (m_nTotalMemorySize != 0U)
-        {
-            m_nTotalMemorySize = 0U;
-            OnTotalMemorySizeChanged();
-        }
-    }
+    void ClearMemoryBlocks();
 
     /// <summary>
     /// Gets the total amount of emulator-exposed memory.
@@ -240,6 +231,11 @@ public:
     /// Writes memory to the emulator.
     /// </summary>
     void WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint32_t nValue) const;
+
+    /// <summary>
+    /// Converts an address to a displayable string.
+    /// </summary>
+    std::string FormatAddress(ra::ByteAddress nAddress) const { return m_fFormatAddress(nAddress); }
 
     /// <summary>
     /// Gets whether or not memory has been modified.
@@ -301,6 +297,8 @@ protected:
     std::function<void()> m_fUnpauseEmulator;
     std::function<void(char*)> m_fGetGameTitle;
     std::function<void()> m_fRebuildMenu;
+
+    std::function<std::string(ra::ByteAddress)> m_fFormatAddress;
 
     struct MemoryBlock
     {

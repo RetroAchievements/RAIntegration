@@ -2,6 +2,8 @@
 
 #include "data\models\CodeNotesModel.hh"
 
+#include "services\impl\StringTextWriter.hh"
+
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 
@@ -86,6 +88,15 @@ private:
                 Assert::AreEqual(nExpectedBytes, GetCodeNoteBytes(nAddress),
                     ra::StringPrintf(L"Bytes for address %04X", nAddress).c_str());
             }
+        }
+
+        void AssertSerialize(const std::string& sExpected)
+        {
+            std::string sSerialized = "N0";
+            ra::services::impl::StringTextWriter pTextWriter(sSerialized);
+            Serialize(pTextWriter);
+
+            Assert::AreEqual(sExpected, sSerialized);
         }
     };
 
@@ -414,50 +425,10 @@ public:
         notes.InitializeCodeNotes(1U);
         notes.mNewNotes.clear();
 
-        Assert::IsTrue(notes.SetCodeNote(1234, L"Note1"));
+        notes.SetCodeNote(1234, L"Note1");
 
         notes.AssertNote(1234U, L"Note1");
         Assert::AreEqual(std::wstring(L"Note1"), notes.mNewNotes[1234U]);
-    }
-
-    TEST_METHOD(TestSetCodeNoteGameNotLoaded)
-    {
-        CodeNotesModelHarness notes;
-        notes.mockServer.ExpectUncalled<ra::api::UpdateCodeNote>();
-
-        notes.InitializeCodeNotes(0U);
-        Assert::IsFalse(notes.SetCodeNote(1234, L"Note1"));
-
-        const auto* pNote1 = notes.FindCodeNote(1234U);
-        Assert::IsNull(pNote1);
-    }
-
-    TEST_METHOD(TestUpdateCodeNote)
-    {
-        int nCalls = 0;
-        CodeNotesModelHarness notes;
-        notes.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request& request, ra::api::FetchCodeNotes::Response&)
-        {
-            Assert::AreEqual(1U, request.GameId);
-            return true;
-        });
-        notes.mockServer.HandleRequest<ra::api::UpdateCodeNote>([&nCalls](const ra::api::UpdateCodeNote::Request&, ra::api::UpdateCodeNote::Response& response)
-        {
-            ++nCalls;
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
-
-        notes.InitializeCodeNotes(1U);
-        Assert::IsTrue(notes.SetCodeNote(1234, L"Note1"));
-
-        notes.AssertNote(1234U, L"Note1");
-
-        Assert::IsTrue(notes.SetCodeNote(1234, L"Note1b"));
-        notes.AssertNote(1234U, L"Note1b");
-        Assert::AreEqual(std::wstring(L"Note1b"), notes.mNewNotes[1234U]);
-
-        Assert::AreEqual(2, nCalls);
     }
 
     TEST_METHOD(TestDeleteCodeNote)
@@ -479,11 +450,11 @@ public:
         });
 
         notes.SetGameId(1U);
-        Assert::IsTrue(notes.SetCodeNote(1234, L"Note1"));
+        notes.SetCodeNote(1234, L"Note1");
 
         notes.AssertNote(1234U, L"Note1");
 
-        Assert::IsTrue(notes.DeleteCodeNote(1234));
+        notes.SetCodeNote(1234, L"");
         const auto* pNote1b = notes.FindCodeNote(1234U);
         Assert::IsNull(pNote1b);
 
@@ -497,7 +468,7 @@ public:
 
         notes.SetGameId(1U);
 
-        Assert::IsTrue(notes.DeleteCodeNote(1234));
+        notes.SetCodeNote(1234, L"");
         const auto* pNote1 = notes.FindCodeNote(1234U);
         Assert::IsNull(pNote1);
     }
@@ -822,6 +793,125 @@ public:
 
         // non-indirect
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x08));
+    }
+    
+    TEST_METHOD(TestSetServerCodeNote)
+    {
+        CodeNotesModelHarness notes;
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+
+        notes.SetCodeNote(0x1234, L"This is a note.");
+        Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
+        notes.AssertNote(0x1234, std::wstring(L"This is a note."));
+
+        notes.SetServerCodeNote(0x1234, L"This is a note.");
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+        notes.AssertNote(0x1234, std::wstring(L"This is a note."));
+
+        notes.SetCodeNote(0x1234, L"This is a new note.");
+        Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
+        notes.AssertNote(0x1234, std::wstring(L"This is a new note."));
+
+        notes.SetServerCodeNote(0x1234, L"This is a newer note.");
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+        notes.AssertNote(0x1234, std::wstring(L"This is a newer note."));
+    }
+
+    TEST_METHOD(TestSerialize)
+    {
+        CodeNotesModelHarness notes;
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+
+        notes.SetCodeNote(0x1234, L"This is a note.");
+        Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
+        notes.AssertSerialize("N0:0x1234:\"This is a note.\"");
+
+        notes.SetCodeNote(0x1234, L"");
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+    }
+
+    TEST_METHOD(TestSerializeEscaped)
+    {
+        CodeNotesModelHarness notes;
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+
+        notes.SetCodeNote(0x1234, L"16-bit pointer\n+2:\ta\n+4:\tb\n");
+        notes.SetCodeNote(0x0099, L"This string is \"quoted\".");
+        Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
+        notes.AssertSerialize("N0:0x0099:\"This string is \\\"quoted\\\".\"\n"
+                              "N0:0x1234:\"16-bit pointer\\n+2:\\ta\\n+4:\\tb\\n\"");
+    }
+
+    TEST_METHOD(TestSerializeDeleted)
+    {
+        CodeNotesModelHarness notes;
+        notes.SetServerCodeNote(0x1234, L"This is a note.");
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+
+        notes.SetCodeNote(0x1234, L"");
+        Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
+        notes.AssertSerialize("N0:0x1234:\"\"");
+
+        notes.SetCodeNote(0x1234, L"This is a note.");
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+    }
+
+    TEST_METHOD(TestDeserialize)
+    {
+        CodeNotesModelHarness notes;
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+
+        const std::string sSerialized = ":0x1234:\"This is a note.\"";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Consume(':');
+
+        Assert::IsTrue(notes.Deserialize(pTokenizer));
+        Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
+        notes.AssertNote(0x1234, std::wstring(L"This is a note."));
+    }
+
+    TEST_METHOD(TestDeserializeEscaped)
+    {
+        CodeNotesModelHarness notes;
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+
+        const std::string sSerialized = ":0x1234:\"16-bit pointer\\n+2:\\t\\\"a\\\"\\n+4:\\tb\\n\"";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Consume(':');
+
+        Assert::IsTrue(notes.Deserialize(pTokenizer));
+        Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
+        notes.AssertNote(0x1234, std::wstring(L"16-bit pointer\n+2:\t\"a\"\n+4:\tb\n"));
+    }
+
+    TEST_METHOD(TestDeserializeUnchanged)
+    {
+        CodeNotesModelHarness notes;
+        notes.SetServerCodeNote(0x1234, L"This is a note.");
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+
+        const std::string sSerialized = ":0x1234:\"This is a note.\"";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Consume(':');
+
+        Assert::IsTrue(notes.Deserialize(pTokenizer));
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+        notes.AssertNote(0x1234, std::wstring(L"This is a note."));
+    }
+
+    TEST_METHOD(TestDeserializeDeleted)
+    {
+        CodeNotesModelHarness notes;
+        notes.SetServerCodeNote(0x1234, L"This is a note.");
+        Assert::AreEqual(AssetChanges::None, notes.GetChanges());
+
+        const std::string sSerialized = ":0x1234:\"\"";
+        ra::Tokenizer pTokenizer(sSerialized);
+        pTokenizer.Consume(':');
+
+        Assert::IsTrue(notes.Deserialize(pTokenizer));
+        Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
+        notes.AssertNoNote(0x1234);
     }
 };
 

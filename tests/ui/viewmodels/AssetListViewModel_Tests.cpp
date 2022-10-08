@@ -112,10 +112,15 @@ private:
         Promote,
         Demote,
         SaveDisabled,
+        PublishDisabled,
+        PromoteDisabled,
+        DemoteDisabled,
         SaveAll,
         PublishAll,
         PromoteAll,
-        SaveAllDisabled
+        SaveAllDisabled,
+        PublishAllDisabled,
+        PromoteAllDisabled,
     };
 
     enum class ResetButtonState
@@ -230,6 +235,21 @@ private:
                     Assert::IsFalse(CanSave());
                     break;
 
+                case SaveButtonState::PublishDisabled:
+                    Assert::AreEqual(std::wstring(L"Publi&sh"), GetValue(SaveButtonTextProperty));
+                    Assert::IsFalse(CanSave());
+                    break;
+
+                case SaveButtonState::PromoteDisabled:
+                    Assert::AreEqual(std::wstring(L"Pro&mote"), GetValue(SaveButtonTextProperty));
+                    Assert::IsFalse(CanSave());
+                    break;
+
+                case SaveButtonState::DemoteDisabled:
+                    Assert::AreEqual(std::wstring(L"De&mote"), GetValue(SaveButtonTextProperty));
+                    Assert::IsFalse(CanSave());
+                    break;
+
                 case SaveButtonState::SaveAll:
                     Assert::AreEqual(std::wstring(L"&Save All"), GetValue(SaveButtonTextProperty));
                     Assert::IsTrue(CanSave());
@@ -247,6 +267,16 @@ private:
 
                 case SaveButtonState::SaveAllDisabled:
                     Assert::AreEqual(std::wstring(L"&Save All"), GetValue(SaveButtonTextProperty));
+                    Assert::IsFalse(CanSave());
+                    break;
+
+                case SaveButtonState::PublishAllDisabled:
+                    Assert::AreEqual(std::wstring(L"Publi&sh All"), GetValue(SaveButtonTextProperty));
+                    Assert::IsFalse(CanSave());
+                    break;
+
+                case SaveButtonState::PromoteAllDisabled:
+                    Assert::AreEqual(std::wstring(L"Pro&mote All"), GetValue(SaveButtonTextProperty));
                     Assert::IsFalse(CanSave());
                     break;
             }
@@ -481,9 +511,16 @@ private:
 
         void ValidateAchievementForCore(std::wstring& sError, const ra::data::models::AchievementModel& pAchievement) const override
         {
-            const auto pIter = m_mValidationErrors.find(pAchievement.GetID());
-            if (pIter != m_mValidationErrors.end())
-                sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), pIter->second));
+            if (m_mValidationErrors.empty())
+            {
+                AssetListViewModel::ValidateAchievementForCore(sError, pAchievement);
+            }
+            else
+            {
+                const auto pIter = m_mValidationErrors.find(pAchievement.GetID());
+                if (pIter != m_mValidationErrors.end())
+                    sError.append(ra::StringPrintf(L"\n* %s: %s", pAchievement.GetName(), pIter->second));
+            }
         }
 
         void SetPublishServerError(ra::AchievementID nId, const std::string& sError)
@@ -605,6 +642,54 @@ public:
         Assert::AreEqual(std::wstring(L"New"), vmAssetList.Changes().GetItemAt(3)->GetLabel());
         Assert::AreEqual((int)AssetChanges::Deleted, vmAssetList.Changes().GetItemAt(4)->GetId());
         Assert::AreEqual(std::wstring(L"Deleted"), vmAssetList.Changes().GetItemAt(4)->GetLabel());
+    }
+
+    TEST_METHOD(TestLoadGameNoAchievements)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(1U);
+
+        Assert::AreEqual(1U, vmAssetList.GetGameId());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual({0U}, vmAssetList.FilteredAssets().Count());
+
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
+        vmAssetList.MockGameId(2U);
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual({0U}, vmAssetList.FilteredAssets().Count());
+    }
+
+    TEST_METHOD(TestLoadGameCoreAchievements)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.AddAchievement(AssetCategory::Core, 10, L"Ach1");
+        vmAssetList.MockGameId(1U);
+
+        Assert::AreEqual(1U, vmAssetList.GetGameId());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Core, vmAssetList.GetFilterCategory());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+    }
+
+    TEST_METHOD(TestLoadGameUnofficialAchievements)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 10, L"Ach1");
+        vmAssetList.MockGameId(1U);
+
+        Assert::AreEqual(1U, vmAssetList.GetGameId());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Unofficial, vmAssetList.GetFilterCategory());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
+    }
+
+    TEST_METHOD(TestLoadGameLocalAchievements)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.AddAchievement(AssetCategory::Local, 10, L"Ach1");
+        vmAssetList.MockGameId(1U);
+
+        Assert::AreEqual(1U, vmAssetList.GetGameId());
+        Assert::AreEqual(AssetListViewModel::FilterCategory::Local, vmAssetList.GetFilterCategory());
+        Assert::AreEqual({1U}, vmAssetList.FilteredAssets().Count());
     }
 
     TEST_METHOD(TestAddRemoveCoreAchievement)
@@ -1316,6 +1401,26 @@ public:
         );
     }
 
+    TEST_METHOD(TestUpdateButtonsUnofficialSelection)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.AddThreeAchievements();
+
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(0)->IsSelected());
+        Assert::AreEqual(AssetChanges::None, vmAssetList.FilteredAssets().GetItemAt(0)->GetChanges());
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::Promote,
+            ResetButtonState::Reset, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
+    }
+
     TEST_METHOD(TestUpdateButtonsChangeSelectionUpdatesButtons)
     {
         AssetListViewModelHarness vmAssetList;
@@ -1646,6 +1751,73 @@ public:
 
         vmAssetList.AssertButtonState(
             ActivateButtonState::Activate, SaveButtonState::Demote,
+            ResetButtonState::Reset, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
+    }
+
+    TEST_METHOD(TestUpdateButtonsInactiveSingleSelectionOffline)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        Assert::AreEqual({2U}, vmAssetList.FilteredAssets().Count());
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        Assert::IsFalse(vmAssetList.FilteredAssets().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(1)->IsSelected());
+        Assert::AreEqual(AssetState::Inactive, vmAssetList.FilteredAssets().GetItemAt(1)->GetState());
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::DemoteDisabled,
+            ResetButtonState::Reset, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
+    }
+
+    TEST_METHOD(TestUpdateButtonsUnpublishedSelectionOffline)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Core);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.mockGameContext.Assets().GetItemAt(2)->SetName(L"Modified");
+        vmAssetList.mockGameContext.Assets().GetItemAt(2)->UpdateLocalCheckpoint();
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        Assert::AreEqual({ 2U }, vmAssetList.FilteredAssets().Count());
+        vmAssetList.FilteredAssets().GetItemAt(1)->SetSelected(true);
+        Assert::IsFalse(vmAssetList.FilteredAssets().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(1)->IsSelected());
+        Assert::AreEqual(AssetChanges::Unpublished, vmAssetList.FilteredAssets().GetItemAt(1)->GetChanges());
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::PublishDisabled,
+            ResetButtonState::Reset, RevertButtonState::Revert,
+            CreateButtonState::Enabled, CloneButtonState::Enabled
+        );
+    }
+
+    TEST_METHOD(TestUpdateButtonsUnofficialSelectionOffline)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.SetGameId(1U);
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+        vmAssetList.AddThreeAchievements();
+        vmAssetList.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        Assert::AreEqual({ 1U }, vmAssetList.FilteredAssets().Count());
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        Assert::IsTrue(vmAssetList.FilteredAssets().GetItemAt(0)->IsSelected());
+        Assert::AreEqual(AssetChanges::None, vmAssetList.FilteredAssets().GetItemAt(0)->GetChanges());
+        vmAssetList.ForceUpdateButtons();
+
+        vmAssetList.AssertButtonState(
+            ActivateButtonState::Activate, SaveButtonState::PromoteDisabled,
             ResetButtonState::Reset, RevertButtonState::Revert,
             CreateButtonState::Enabled, CloneButtonState::Enabled
         );
@@ -2674,6 +2846,38 @@ public:
         Assert::AreEqual({ 1U }, vmAssetList.PublishedAssets.size());      // tried to publish
         Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
         Assert::AreEqual(AssetCategory::Unofficial, pItem->GetCategory()); // didn't change category
+    }
+
+    TEST_METHOD(TestSaveSelectedPromoteToCoreParseError)
+    {
+        AssetListViewModelHarness vmAssetList;
+        vmAssetList.MockGameId(22U);
+        vmAssetList.AddAchievement(AssetCategory::Unofficial, 5, L"Test1", L"Desc1", L"12345", "P:P:0xH1234=1");
+        vmAssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Unofficial);
+
+        bool bDialogSeen = false;
+        vmAssetList.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            bDialogSeen = true;
+            Assert::AreEqual(std::wstring(L"Promote to core aborted."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The following items could not be published:\n* Test1: Parse Error -2: Invalid memory operand"), vmMessageBox.GetMessage());
+            return DialogResult::OK;
+        });
+
+        const auto* pItem = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
+        Expects(pItem != nullptr);
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+
+        vmAssetList.FilteredAssets().GetItemAt(0)->SetSelected(true);
+        vmAssetList.ForceUpdateButtons();
+        vmAssetList.AssertButtonState(SaveButtonState::Promote);
+        vmAssetList.SaveSelected();
+
+        Assert::IsTrue(bDialogSeen);
+
+        Assert::AreEqual({ 0U }, vmAssetList.PublishedAssets.size());
+        Assert::AreEqual(AssetChanges::None, pItem->GetChanges());
+        Assert::AreEqual(AssetCategory::Unofficial, pItem->GetCategory());
     }
 
     TEST_METHOD(TestSaveSelectedDemoteToUnofficial)

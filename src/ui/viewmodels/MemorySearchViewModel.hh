@@ -461,7 +461,7 @@ protected:
     // GameContext::NotifyTarget
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote) override;
 
-    void SaveResults(ra::services::TextWriter& sFile) const;
+    void SaveResults(ra::services::TextWriter& sFile, std::function<bool(int)> pProgressCallback) const;
 
 private:
     bool ParseFilterRange(_Out_ ra::ByteAddress& nStart, _Out_ ra::ByteAddress& nEnd);

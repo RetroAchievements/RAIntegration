@@ -757,24 +757,6 @@ bool TriggerConditionViewModel::IsAddressType(TriggerOperandType nType) noexcept
     }
 }
 
-
-bool TriggerConditionViewModel::IsOperandTypeVisible(const ViewModelBase& vmItem, int nValue) noexcept
-{
-    const auto* vmCondition = dynamic_cast<const TriggerConditionViewModel*>(&vmItem);
-    if (vmCondition == nullptr)
-        return false;
-
-    const auto nOperandType = ra::itoe<TriggerOperandType>(nValue);
-    switch (nOperandType)
-    {
-        case TriggerOperandType::Inverted:
-            return vmCondition->IsForValue();
-
-        default:
-            return true;
-    }
-}
-
 bool TriggerConditionViewModel::IsComparisonVisible(const ViewModelBase& vmItem, int nValue)
 {
     const auto* vmCondition = dynamic_cast<const TriggerConditionViewModel*>(&vmItem);

@@ -10,6 +10,25 @@ namespace viewmodels {
 
 class EmulatorViewModel : public WindowViewModelBase
 {
+public:
+    /// <summary>
+    /// Sets the additional text to display in the application title bar.
+    /// </summary>
+    void SetAppTitleMessage(const std::string& sValue)
+    {
+        m_bAppTitleManaged = true;
+        m_sAppTitleMessage = sValue;
+
+        UpdateWindowTitle();
+    }
+
+    bool IsAppTitleManaged() const noexcept { return m_bAppTitleManaged; }
+
+    void UpdateWindowTitle();
+
+private:
+    bool m_bAppTitleManaged = false;
+    std::string m_sAppTitleMessage;
 };
 
 } // namespace viewmodels

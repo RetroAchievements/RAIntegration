@@ -11,6 +11,7 @@
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 namespace ra {
 namespace data {
@@ -35,9 +36,8 @@ void UserContext::Logout()
         pOverlayManager.HideOverlay();
 
         ra::services::ServiceLocator::Get<ra::services::IConfiguration>().Save();
-#ifndef RA_UTEST
-        _RA_UpdateAppTitle();
-#endif
+
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator.UpdateWindowTitle();
         ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
 
         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"You are now logged out.");

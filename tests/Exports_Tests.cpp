@@ -3,6 +3,7 @@
 #include "Exports.hh"
 
 #include "RA_BuildVer.h"
+#include "RA_Emulators.h"
 #include "RA_Resource.h"
 
 #include "tests\mocks\MockAudioSystem.hh"
@@ -164,6 +165,65 @@ public:
 
         Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
 
+        _RA_AttemptLogin(true);
+
+        // user context
+        Assert::IsTrue(harness.mockUserContext.IsLoggedIn());
+        Assert::AreEqual(std::string("User"), harness.mockUserContext.GetUsername());
+        Assert::AreEqual(std::string("UserDisplay"), harness.mockUserContext.GetDisplayName());
+        Assert::AreEqual(std::string("ApiToken"), harness.mockUserContext.GetApiToken());
+        Assert::AreEqual(12345U, harness.mockUserContext.GetScore());
+
+        // session context
+        Assert::AreEqual(std::wstring(L"User"), harness.mockSessionTracker.GetUsername());
+
+        // popup notification and sound
+        Assert::IsTrue(harness.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\login.wav"));
+        const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Ensures(pPopup != nullptr);
+        Assert::AreEqual(std::wstring(L"Welcome UserDisplay"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
+
+        // menu
+        Assert::IsTrue(bWasMenuRebuilt);
+
+        // titlebar (should not be updated unless _RA_UpdateAppTitle was called first)
+        Assert::AreEqual(std::wstring(L"Window"), harness.mockWindowManager.Emulator.GetWindowTitle());
+    }
+
+    TEST_METHOD(TestAttemptLoginSuccessTitlebar)
+    {
+        AttemptLoginHarness harness;
+
+        bool bWasMenuRebuilt = false;
+        harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
+        harness.mockEmulatorContext.MockClient("RATests", "0.1.2.0");
+
+        bool bLoggedIn = false;
+        harness.mockServer.HandleRequest<api::Login>([&bLoggedIn](const ra::api::Login::Request& request, ra::api::Login::Response& response)
+        {
+            Assert::AreEqual(std::string("User"), request.Username);
+            Assert::AreEqual(std::string("ApiToken"), request.ApiToken);
+            bLoggedIn = true;
+
+            response.Username = "User";
+            response.DisplayName = "UserDisplay";
+            response.ApiToken = "ApiToken";
+            response.Score = 12345U;
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        harness.mockConfiguration.SetUsername("User");
+        harness.mockConfiguration.SetApiToken("ApiToken");
+
+        Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
+
+        _RA_UpdateAppTitle(""); // enable automatic update of titlebar
         _RA_AttemptLogin(true);
 
         // user context
@@ -1052,6 +1112,29 @@ private:
         AssertMenuItem(&menu[18], 0, nullptr);
         AssertMenuItem(&menu[19], IDM_RA_REPORTBROKENACHIEVEMENTS, L"&Report Achievement Problem");
         AssertMenuItem(&menu[20], IDM_RA_GETROMCHECKSUM, L"View Game H&ash");
+    }
+
+    TEST_METHOD(TestUpdateAppTitle)
+    {
+        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        ra::data::context::mocks::MockUserContext mockUserContext;
+        ra::services::mocks::MockConfiguration mockConfiguration;
+
+        mockUserContext.Initialize("User", "TOKEN");
+        mockEmulatorContext.MockClient("MyClient", "1.2.3");
+        mockConfiguration.SetHostName("retroachievements.org");
+
+        Assert::AreEqual(std::wstring(L"Window"), mockWindowManager.Emulator.GetWindowTitle());
+
+        _RA_UpdateAppTitle("");
+        Assert::AreEqual(std::wstring(L"MyClient - 1.2 - User_"), mockWindowManager.Emulator.GetWindowTitle());
+
+        _RA_UpdateAppTitle("MyGame");
+        Assert::AreEqual(std::wstring(L"MyClient - 1.2 - MyGame - User_"), mockWindowManager.Emulator.GetWindowTitle());
+
+        _RA_UpdateAppTitle("");
+        Assert::AreEqual(std::wstring(L"MyClient - 1.2 - User_"), mockWindowManager.Emulator.GetWindowTitle());
     }
 };
 

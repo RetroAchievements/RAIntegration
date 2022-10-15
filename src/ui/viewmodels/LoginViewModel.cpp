@@ -13,6 +13,7 @@
 #include "services\IConfiguration.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\WindowManager.hh"
 
 namespace ra {
 namespace ui {
@@ -79,9 +80,7 @@ bool LoginViewModel::Login() const
         std::wstring(L"Successfully logged in as ") + ra::Widen(response.Username));
 
     ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
-#ifndef RA_UTEST
-    _RA_UpdateAppTitle();
-#endif
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator.UpdateWindowTitle();
 
     return true;
 }

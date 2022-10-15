@@ -9,6 +9,7 @@
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockUserContext.hh"
+#include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 using ra::api::mocks::MockServer;
@@ -37,6 +38,7 @@ private:
         MockUserContext mockUserContext;
         MockEmulatorContext mockEmulatorContext;
         MockSessionTracker mockSessionTracker;
+        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
     };
 
 public:
@@ -98,6 +100,7 @@ public:
         vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
         {
             response.Username = "User";
+            response.DisplayName = "UserDisplay";
             response.ApiToken = "ApiToken";
             response.Score = 12345;
             response.Result = ra::api::ApiResult::Success;
@@ -133,6 +136,58 @@ public:
 
         // emulator should have been notified to rebuild the RetroAchievements menu
         Assert::IsTrue(bWasMenuRebuilt);
+
+        // app title should not be updated as _RA_UpdateAppTitle was not previously called
+        Assert::AreEqual(std::wstring(L"Window"), vmLogin.mockWindowManager.Emulator.GetWindowTitle());
+    }
+
+    TEST_METHOD(TestLoginSuccessfulAppTitle)
+    {
+        LoginViewModelHarness vmLogin;
+        vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
+        {
+            response.Username = "User";
+            response.DisplayName = "UserDisplay";
+            response.ApiToken = "ApiToken";
+            response.Score = 12345;
+            response.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+        vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Successfully logged in as User"), vmMessageBox.GetMessage());
+            Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
+            return DialogResult::OK;
+        });
+        bool bWasMenuRebuilt = false;
+        vmLogin.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt] { bWasMenuRebuilt = true; });
+        vmLogin.mockEmulatorContext.MockClient("RATests", "0.1.2.0");
+        vmLogin.mockWindowManager.Emulator.SetAppTitleMessage("Test");
+
+        vmLogin.SetUsername(L"user");
+        vmLogin.SetPassword(L"Pa$$w0rd");
+        Assert::IsTrue(vmLogin.Login());
+        Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
+
+        // expect case of username to be corrected by API response
+        Assert::AreEqual(std::string("User"), vmLogin.mockConfiguration.GetUsername());
+
+        // API token should not be set unless "remember me" is checked
+        Assert::AreEqual(std::string(""), vmLogin.mockConfiguration.GetApiToken());
+
+        // values should also be updated in UserContext, including API token and score
+        Assert::AreEqual(std::string("User"), vmLogin.mockUserContext.GetUsername());
+        Assert::AreEqual(std::string("ApiToken"), vmLogin.mockUserContext.GetApiToken());
+        Assert::AreEqual(12345U, vmLogin.mockUserContext.GetScore());
+
+        // session tracker should know user name
+        Assert::AreEqual(std::wstring(L"User"), vmLogin.mockSessionTracker.GetUsername());
+
+        // emulator should have been notified to rebuild the RetroAchievements menu
+        Assert::IsTrue(bWasMenuRebuilt);
+
+        // app title should be updated as _RA_UpdateAppTitle was previously called
+        Assert::AreEqual(std::wstring(L"RATests - 0.1 - Test - UserDisplay []"), vmLogin.mockWindowManager.Emulator.GetWindowTitle());
     }
 
     TEST_METHOD(TestLoginInvalidPassword)

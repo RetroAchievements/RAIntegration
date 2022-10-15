@@ -44,6 +44,10 @@ RichPresenceDialog::RichPresenceDialog(ra::ui::viewmodels::RichPresenceMonitorVi
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Far, "Rich Presence Monitor");
     m_bindWindow.BindLabel(IDC_RA_RICHPRESENCERESULTTEXT,
                            ra::ui::viewmodels::RichPresenceMonitorViewModel::DisplayStringProperty);
+
+    using namespace ra::bitwise_ops;
+    SetAnchor(IDC_RA_RICHPRESENCERESULTTEXT, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetMinimumSize(240, 90);
 }
 
 RichPresenceDialog::~RichPresenceDialog() noexcept

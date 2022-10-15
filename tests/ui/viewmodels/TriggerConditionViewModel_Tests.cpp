@@ -454,6 +454,7 @@ public:
         ParseAndRegenerate("0xK1234=0xK2345"); // bitcount
         ParseAndRegenerate("fF1234=fF2345"); // float
         ParseAndRegenerate("fM1234=fM2345"); // mbf32
+        ParseAndRegenerate("fL1234=fL2345"); // mbf32le
     }
 
     TEST_METHOD(TestOperandTypes)

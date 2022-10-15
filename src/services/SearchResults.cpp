@@ -1352,6 +1352,30 @@ protected:
     }
 };
 
+class MBF32LESearchImpl : public FloatSearchImpl
+{
+public:
+    MemSize GetMemSize() const noexcept override { return MemSize::MBF32LE; }
+
+protected:
+    GSL_SUPPRESS_TYPE1
+    float BuildFloatValue(const unsigned char* ptr) const noexcept override
+    {
+        GSL_SUPPRESS_F6 Expects(ptr != nullptr);
+        rc_typed_value_t value;
+        value.type = RC_VALUE_TYPE_UNSIGNED;
+        value.value.u32 = *reinterpret_cast<const unsigned int*>(ptr);
+        rc_transform_memref_value(&value, RC_MEMSIZE_MBF32_LE);
+
+        return value.value.f32;
+    }
+
+    unsigned int DeconstructFloatValue(float fValue) const noexcept override
+    {
+        return ra::data::FloatToU32(fValue, MemSize::MBF32LE);
+    }
+};
+
 
 static FourBitSearchImpl s_pFourBitSearchImpl;
 static EightBitSearchImpl s_pEightBitSearchImpl;
@@ -1364,6 +1388,7 @@ static ThirtyTwoBitBigEndianSearchImpl s_pThirtyTwoBitBigEndianSearchImpl;
 static AsciiTextSearchImpl s_pAsciiTextSearchImpl;
 static FloatSearchImpl s_pFloatSearchImpl;
 static MBF32SearchImpl s_pMBF32SearchImpl;
+static MBF32LESearchImpl s_pMBF32LESearchImpl;
 
 uint8_t* MemBlock::AllocateMatchingAddresses() noexcept
 {
@@ -1565,6 +1590,9 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
             break;
         case SearchType::MBF32:
             m_pImpl = &ra::services::impl::s_pMBF32SearchImpl;
+            break;
+        case SearchType::MBF32LE:
+            m_pImpl = &ra::services::impl::s_pMBF32LESearchImpl;
             break;
     }
 

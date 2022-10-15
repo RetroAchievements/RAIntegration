@@ -62,6 +62,7 @@ MemoryBookmarksViewModel::MemoryBookmarksViewModel() noexcept
     m_vSizes.Add(ra::etoi(MemSize::Nibble_Upper), L"Upper4");
     m_vSizes.Add(ra::etoi(MemSize::Float), L"Float");
     m_vSizes.Add(ra::etoi(MemSize::MBF32), L"MBF32");
+    m_vSizes.Add(ra::etoi(MemSize::MBF32LE), L"MBF32 LE");
     m_vSizes.Add(ra::etoi(MemSize::Text), L"ASCII");
 
     m_vFormats.Add(ra::etoi(MemFormat::Hex), L"Hex");
@@ -244,6 +245,7 @@ bool MemoryBookmarksViewModel::MemoryBookmarkViewModel::SetCurrentValue(const st
     {
         case MemSize::Float:
         case MemSize::MBF32:
+        case MemSize::MBF32LE:
             float fValue;
             if (!ra::ParseFloat(sValue, fValue, sError))
                 return false;

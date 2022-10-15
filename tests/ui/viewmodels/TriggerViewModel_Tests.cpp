@@ -164,7 +164,7 @@ public:
         Assert::AreEqual((int)TriggerOperandType::Inverted, vmTrigger.OperandTypes().GetItemAt(6)->GetId());
         Assert::AreEqual(std::wstring(L"Invert"), vmTrigger.OperandTypes().GetItemAt(6)->GetLabel());
 
-        Assert::AreEqual({ 20U }, vmTrigger.OperandSizes().Count());
+        Assert::AreEqual({ 21U }, vmTrigger.OperandSizes().Count());
         Assert::AreEqual((int)MemSize::Bit_0, vmTrigger.OperandSizes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Bit0"), vmTrigger.OperandSizes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)MemSize::Bit_1, vmTrigger.OperandSizes().GetItemAt(1)->GetId());
@@ -205,6 +205,8 @@ public:
         Assert::AreEqual(std::wstring(L"Float"), vmTrigger.OperandSizes().GetItemAt(18)->GetLabel());
         Assert::AreEqual((int)MemSize::MBF32, vmTrigger.OperandSizes().GetItemAt(19)->GetId());
         Assert::AreEqual(std::wstring(L"MBF32"), vmTrigger.OperandSizes().GetItemAt(19)->GetLabel());
+        Assert::AreEqual((int)MemSize::MBF32LE, vmTrigger.OperandSizes().GetItemAt(20)->GetId());
+        Assert::AreEqual(std::wstring(L"MBF32 LE"), vmTrigger.OperandSizes().GetItemAt(20)->GetLabel());
 
         Assert::AreEqual({ 10U }, vmTrigger.OperatorTypes().Count());
         Assert::AreEqual((int)TriggerOperatorType::Equals, vmTrigger.OperatorTypes().GetItemAt(0)->GetId());

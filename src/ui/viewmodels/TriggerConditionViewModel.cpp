@@ -251,6 +251,13 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
             sBuffer.push_back('M');
             break;
 
+        case MemSize::MBF32LE:
+            sBuffer.pop_back();
+            sBuffer.pop_back();
+            sBuffer.push_back('f');
+            sBuffer.push_back('L');
+            break;
+
         default:
             assert(!"Unknown memory size");
             break;

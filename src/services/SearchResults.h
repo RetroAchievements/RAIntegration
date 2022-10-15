@@ -21,6 +21,7 @@ enum class SearchType
     ThirtyTwoBitBigEndian,
     Float,
     MBF32,
+    MBF32LE,
     AsciiText,
 };
 

@@ -70,6 +70,7 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vOperandSizes.Add(ra::etoi(MemSize::BitCount), L"BitCount");
     m_vOperandSizes.Add(ra::etoi(MemSize::Float), L"Float");
     m_vOperandSizes.Add(ra::etoi(MemSize::MBF32), L"MBF32");
+    m_vOperandSizes.Add(ra::etoi(MemSize::MBF32LE), L"MBF32 LE");
 
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Equals), L"=");
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::LessThan), L"<");
@@ -390,6 +391,7 @@ void TriggerViewModel::NewCondition()
     {
         case MemSize::Float:
         case MemSize::MBF32:
+        case MemSize::MBF32LE:
             vmCondition.SetTargetType(TriggerOperandType::Float);
             vmCondition.SetTargetValue(ra::data::U32ToFloat(nValue, nSize));
             break;

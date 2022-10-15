@@ -76,6 +76,9 @@ std::wstring MemSizeFormat(unsigned nValue, MemSize nSize, MemFormat nFormat)
         case MemSize::MBF32:
             return U32ToFloatString(nValue, RC_MEMSIZE_MBF32);
 
+        case MemSize::MBF32LE:
+            return U32ToFloatString(nValue, RC_MEMSIZE_MBF32_LE);
+
         default:
             if (nFormat == MemFormat::Dec)
                 return std::to_wstring(nValue);
@@ -112,6 +115,9 @@ unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept
 
     nValue += 0x02000000; // adjust to 129 base
 
+    if (nFloatType == MemSize::MBF32LE)
+        return nValue;
+
     return ((nValue & 0xFF000000) >> 24) | // convert to big endian
         ((nValue & 0x00FF0000) >> 8) |
         ((nValue & 0x0000FF00) << 8) |
@@ -131,10 +137,13 @@ float U32ToFloat(unsigned nValue, MemSize nFloatType) noexcept
 
     if (nFloatType != MemSize::Float)
     {
-        nValue = ((nValue & 0xFF000000) >> 24) | // convert to big endian
-            ((nValue & 0x00FF0000) >> 8) |
-            ((nValue & 0x0000FF00) << 8) |
-            ((nValue & 0x000000FF) << 24);
+        if (nFloatType == MemSize::MBF32)
+        {
+            nValue = ((nValue & 0xFF000000) >> 24) | // convert to big endian
+                ((nValue & 0x00FF0000) >> 8) |
+                ((nValue & 0x0000FF00) << 8) |
+                ((nValue & 0x000000FF) << 24);
+        }
 
         // MBF32 puts the sign after the exponent, uses a 129 base instead of 127, and stores in big endian
         nValue -= 0x02000000; // adjust to 129 base

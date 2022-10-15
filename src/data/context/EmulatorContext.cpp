@@ -834,6 +834,7 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) co
         }
         case MemSize::Float:
         case MemSize::MBF32:
+        case MemSize::MBF32LE:
         case MemSize::ThirtyTwoBit:
         {
             uint8_t buffer[4];
@@ -917,6 +918,7 @@ void EmulatorContext::WriteMemory(ra::ByteAddress nAddress, MemSize nSize, uint3
         case MemSize::ThirtyTwoBit:
         case MemSize::Float: // assumes the value has already been encoded into a 32-bit value
         case MemSize::MBF32: // assumes the value has already been encoded into a 32-bit value
+        case MemSize::MBF32LE: // assumes the value has already been encoded into a 32-bit value
             WriteMemoryByte(nAddress, nValue & 0xFF);
             nValue >>= 8;
             WriteMemoryByte(++nAddress, nValue & 0xFF);

@@ -824,7 +824,6 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
         TriggerConditionViewModel::SourceTypeProperty, vmAssetEditor.Trigger().OperandTypes());
     pSourceTypeColumn->SetHeader(L"Type");
     pSourceTypeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_TYPE);
-    pSourceTypeColumn->SetVisibilityFilter(TriggerConditionViewModel::IsOperandTypeVisible);
     pSourceTypeColumn->SetReadOnly(false);
     m_bindConditions.BindColumn(2, std::move(pSourceTypeColumn));
 
@@ -854,7 +853,6 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
         TriggerConditionViewModel::HasTargetProperty, vmAssetEditor.Trigger().OperandTypes());
     pTargetTypeColumn->SetHeader(L"Type");
     pTargetTypeColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Pixels, COLUMN_WIDTH_TYPE);
-    pTargetTypeColumn->SetVisibilityFilter(TriggerConditionViewModel::IsOperandTypeVisible);
     pTargetTypeColumn->SetReadOnly(false);
     m_bindConditions.BindColumn(6, std::move(pTargetTypeColumn));
 

@@ -52,6 +52,11 @@ public:
     /// </summary>
     const int GetProgress() const { return GetValue(ProgressProperty); }
 
+    /// <summary>
+    /// Sets the current progress (0-100).
+    /// </summary>
+    void SetProgress(int nValue) { SetValue(ProgressProperty, nValue); }
+
     void QueueTask(std::function<void()>&& fTaskHandler);
 
     const size_t TaskCount() const noexcept { return m_vTasks.size(); }

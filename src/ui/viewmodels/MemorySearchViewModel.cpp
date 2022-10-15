@@ -4,9 +4,12 @@
 #include "data\context\EmulatorContext.hh"
 
 #include "services\IClock.hh"
+#include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\ProgressViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 #include "RA_Defs.h"
@@ -1100,6 +1103,117 @@ void MemorySearchViewModel::BookmarkSelected()
 
     if (nCount == 100)
         ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"Can only create 100 new bookmarks at a time.");
+}
+
+void MemorySearchViewModel::ExportResults() const
+{
+    if (m_vResults.Count() == 0 || m_nSelectedSearchResult == 0)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Nothing to export");
+        return;
+    }
+
+    ra::ui::viewmodels::FileDialogViewModel vmFileDialog;
+    vmFileDialog.SetWindowTitle(L"Export Search Results");
+    vmFileDialog.AddFileType(L"CSV File", L"*.csv");
+    vmFileDialog.SetDefaultExtension(L"csv");
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-SearchResults.csv", pGameContext.GameId()));
+
+    if (vmFileDialog.ShowSaveFileDialog() == ra::ui::DialogResult::OK)
+    {
+        const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+        auto pTextWriter = pFileSystem.CreateTextFile(vmFileDialog.GetFileName());
+        if (pTextWriter == nullptr)
+        {
+            ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+                ra::StringPrintf(L"Could not create %s", vmFileDialog.GetFileName()));
+        }
+        else
+        {
+            const auto& pResults = m_vSearchResults.at(m_nSelectedSearchResult).pResults;
+            const auto nResults = pResults.MatchingAddressCount();
+            if (pResults.MatchingAddressCount() > 500)
+            {
+                ra::ui::viewmodels::ProgressViewModel vmProgress;
+                vmProgress.SetMessage(ra::StringPrintf(L"Exporting %d search results", nResults));
+                vmProgress.QueueTask([this, &pTextWriter, &vmProgress]() {
+                    SaveResults(*pTextWriter, [&vmProgress](int nProgress) {
+                        vmProgress.SetProgress(nProgress);
+                        return (vmProgress.GetDialogResult() == ra::ui::DialogResult::None);
+                    });
+                });
+
+                vmProgress.ShowModal(ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryInspector);
+            }
+            else
+            {
+                SaveResults(*pTextWriter, nullptr);
+            }
+        }
+    }
+}
+
+void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile, std::function<bool(int)> pProgressCallback) const
+{
+    const auto& pResults = m_vSearchResults.at(m_nSelectedSearchResult).pResults;
+    const auto& pCompareResults = m_vSearchResults.at(m_nSelectedSearchResult - 1).pResults;
+    const auto& pInitialResults = m_vSearchResults.front().pResults;
+    ra::services::SearchResults::Result pResult;
+
+    const auto nResults = pResults.MatchingAddressCount();
+
+    const int nPerPercentage = (nResults > 100) ? gsl::narrow_cast<int>(nResults / 100) : 1;
+
+    sFile.WriteLine("Address,Value,PreviousValue,InitialValue");
+
+    if (pCompareResults.GetSize() == MemSize::Nibble_Lower)
+    {
+        for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < pResults.MatchingAddressCount(); ++nIndex)
+        {
+            if (!pResults.GetMatchingAddress(nIndex, pResult))
+                continue;
+
+            const auto nSize = (pResult.nAddress & 1) ? MemSize::Nibble_Upper : MemSize::Nibble_Lower;
+            const auto nAddress = pResult.nAddress >> 1;
+
+            sFile.WriteLine(ra::StringPrintf(L"%s%s,%s,%s,%s",
+                ra::ByteAddressToString(nAddress), (pResult.nAddress & 1) ? "U" : "L",
+                pResults.GetFormattedValue(nAddress, nSize),
+                pCompareResults.GetFormattedValue(nAddress, nSize),
+                pInitialResults.GetFormattedValue(nAddress, nSize)));
+
+            if (pProgressCallback != nullptr && nIndex % nPerPercentage == 0)
+            {
+                if (!pProgressCallback(gsl::narrow_cast<int>(nIndex / nPerPercentage)))
+                    break;
+            }
+        }
+    }
+    else
+    {
+        const auto nSize = pCompareResults.GetSize();
+
+        for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < nResults; ++nIndex)
+        {
+            if (!pResults.GetMatchingAddress(nIndex, pResult))
+                continue;
+
+            const auto nAddress = pResult.nAddress;
+            sFile.WriteLine(ra::StringPrintf(L"%s,%s,%s,%s",
+                ra::ByteAddressToString(nAddress),
+                pResults.GetFormattedValue(nAddress, nSize),
+                pCompareResults.GetFormattedValue(nAddress, nSize),
+                pInitialResults.GetFormattedValue(nAddress, nSize)));
+
+            if (pProgressCallback != nullptr && nIndex % nPerPercentage == 0)
+            {
+                if (!pProgressCallback(gsl::narrow_cast<int>(nIndex / nPerPercentage)))
+                    break;
+            }
+        }
+    }
 }
 
 } // namespace viewmodels

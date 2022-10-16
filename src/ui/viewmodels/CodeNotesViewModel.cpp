@@ -148,7 +148,7 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::
         return;
 
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
-    if (pCodeNotes == nullptr)
+    if (pCodeNotes == nullptr || pCodeNotes->GetIndirectSource(nAddress) != 0xFFFFFFFF)
         return;
 
     m_nUnfilteredNotesCount = pCodeNotes->CodeNoteCount();

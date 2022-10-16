@@ -249,6 +249,40 @@ public:
         AssertRow(notes, 8, 0x0030, L"0x0030", L"Item 1 Quantity");
     }
 
+    TEST_METHOD(TestUpdateNoteIndirectUnfiltered)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.PopulateNotes();
+        Assert::AreEqual({ 0U }, notes.Notes().Count());
+
+        const wchar_t* sPointerNote =
+            L"Pointer\n"
+            L"+8 = Unknown\n"        // no note at $0008
+            L"+16 = Small (16-bit)"; // note would exist at $0010
+
+        notes.SetIsVisible(true);
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        // This creates an indirect note at $0008, which would bring the total
+        // note count to 15. Make sure it's not added to the list.
+        notes.mockGameContext.SetCodeNote(0x0022, sPointerNote);
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        // indirect 0+8 = 8, would be first element.
+        // indirect 0+16 would be $0010.
+        // this one assert ensures the first item is not the indirect 8, or the note from the indirect 16
+        AssertRow(notes, 0, 0x0010, L"0x0010", L"Score X000");
+
+        // also validate the pointer note itself and that it wasn't duplicated
+        AssertRow(notes, 7, 0x0022, L"0x0022", sPointerNote);
+        AssertRow(notes, 8, 0x0030, L"0x0030", L"Item 1 Quantity");
+    }
+
     TEST_METHOD(TestUpdateNoteFilterStillApplies)
     {
         CodeNotesViewModelHarness notes;

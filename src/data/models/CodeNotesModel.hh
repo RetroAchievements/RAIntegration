@@ -139,7 +139,7 @@ public:
     void SetCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote);
 
     /// <summary>
-    /// Returns the number of known code notes
+    /// Returns the number of known code notes (not including indirect notes).
     /// </summary>
     size_t CodeNoteCount() const noexcept { return m_mCodeNotes.size(); }
 

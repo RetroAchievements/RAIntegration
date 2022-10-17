@@ -452,15 +452,19 @@ public:
         });
 
         notes.SetGameId(1U);
-        notes.SetCodeNote(1234, L"Note1");
+        notes.SetCodeNote(1234U, L"Note1");
+        notes.SetServerCodeNote(1234U, L"Note1");
 
         notes.AssertNote(1234U, L"Note1");
 
-        notes.SetCodeNote(1234, L"");
-        const auto* pNote1b = notes.FindCodeNote(1234U);
-        Assert::IsNull(pNote1b);
+        // setting a note to blank does not actually delete it until it's committed
+        notes.SetCodeNote(1234U, L"");
+        notes.AssertNote(1234U, L"");
+        Assert::IsTrue(notes.IsNoteModified(1234U));
 
-        Assert::AreEqual(std::wstring(), notes.mNewNotes[1234U]);
+        // committed deleted note should no longer exist
+        notes.SetServerCodeNote(1234U, L"");
+        notes.AssertNoNote(1234U);
     }
 
     TEST_METHOD(TestDeleteCodeNoteNonExistant)
@@ -913,6 +917,13 @@ public:
 
         Assert::IsTrue(notes.Deserialize(pTokenizer));
         Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
+
+        // uncommitted deleted note still exists
+        notes.AssertNote(0x1234U, L"");
+        Assert::IsTrue(notes.IsNoteModified(0x1234U));
+
+        // committed deleted note does not exist
+        notes.SetServerCodeNote(0x1234U, L"");
         notes.AssertNoNote(0x1234);
     }
 };

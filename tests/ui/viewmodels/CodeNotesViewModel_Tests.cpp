@@ -369,13 +369,26 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.DeleteCodeNote(0x0022);
+        // non-committed deleted note should still be visible in list (as [Deleted])
+        auto* pCodeNotes = notes.mockGameContext.Assets().FindCodeNotes();
+        Assert::IsNotNull(pCodeNotes);
+        Ensures(pCodeNotes != nullptr);
+        pCodeNotes->SetCodeNote(0x0022, L"");
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        AssertRow(notes, 7, 0x0022, L"0x0022", L"[Deleted]");
+        AssertRow(notes, 8, 0x0030, L"0x0030", L"Item 1 Quantity");
+
+        // committed deleted note should be removed from the list
+        pCodeNotes->SetServerCodeNote(0x0022, L"");
 
         Assert::AreEqual({ 13U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"13/13"), notes.GetResultCount());
 
-        AssertRow(notes, 6, 0x0020, L"0x0020", L"[16-bit] Max HP");
         AssertRow(notes, 7, 0x0030, L"0x0030", L"Item 1 Quantity");
     }
 
@@ -395,7 +408,20 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.DeleteCodeNote(0x0031);
+        // non-committed deleted note will no longer matches filter (but still gets counted)
+        auto* pCodeNotes = notes.mockGameContext.Assets().FindCodeNotes();
+        Assert::IsNotNull(pCodeNotes);
+        Ensures(pCodeNotes != nullptr);
+        pCodeNotes->SetCodeNote(0x0031, L"");
+
+        Assert::AreEqual({ 5U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L"5/14"), notes.GetResultCount());
+        AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1 Quantity");
+        AssertRow(notes, 2, 0x0032, L"0x0032", L"Item 3 Quantity");
+
+        // committed deleted note no longer exists
+        pCodeNotes->SetServerCodeNote(0x0031, L"");
+
         Assert::AreEqual({ 5U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"5/13"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1 Quantity");
@@ -418,7 +444,19 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.DeleteCodeNote(0x0022);
+        // non-committed deleted note not matching filter still gets counted
+        auto* pCodeNotes = notes.mockGameContext.Assets().FindCodeNotes();
+        Assert::IsNotNull(pCodeNotes);
+        Ensures(pCodeNotes != nullptr);
+        pCodeNotes->SetCodeNote(0x0022, L"");
+
+        Assert::AreEqual({ 6U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
+        AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1 Quantity");
+
+        // committed deleted note no longer exists
+        pCodeNotes->SetServerCodeNote(0x0022, L"");
+
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/13"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1 Quantity");

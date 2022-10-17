@@ -176,6 +176,12 @@ void CodeNotesViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::
                 pNote->SetNote(sNewNote);
                 pNote->SetModified(pCodeNotes->IsNoteModified(nAddress));
             }
+            else if (pCodeNotes->IsNoteModified(nAddress) && GetFilterValue().empty())
+            {
+                /* note was deleted */
+                pNote->SetNote(L"[Deleted]");
+                pNote->SetModified(true);
+            }
             else
             {
                 /* existing note was deleted or does not match filter */

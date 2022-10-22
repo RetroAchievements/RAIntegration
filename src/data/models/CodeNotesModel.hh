@@ -69,6 +69,12 @@ public:
     const std::wstring* FindCodeNote(ra::ByteAddress nAddress, _Inout_ std::string& sAuthor) const;
 
     /// <summary>
+    /// Returns the note associated with the specified address.
+    /// </summary>
+    /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
+    const std::wstring* FindIndirectCodeNote(ra::ByteAddress nAddress, unsigned nOffset) const;
+
+    /// <summary>
     /// Returns the number of bytes associated to the code note at the specified address.
     /// </summary>
     /// <param name="nAddress">Address to query.</param>

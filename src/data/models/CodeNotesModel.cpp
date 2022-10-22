@@ -6,6 +6,7 @@
 #include "api\FetchCodeNotes.hh"
 #include "api\UpdateCodeNote.hh"
 
+#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\UserContext.hh"
 
@@ -303,6 +304,24 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
     }
 }
 
+static unsigned ReadPointer(const ra::data::context::EmulatorContext& pEmulatorContext,
+    ra::ByteAddress nPointerAddress, MemSize nSize)
+{
+    auto nAddress = pEmulatorContext.ReadMemory(nPointerAddress, nSize);
+
+    // assume anything annotated as a 32-bit pointer is proving a real (non-translated) address and
+    // attempt to do the translation ourself.
+    if (nSize == MemSize::ThirtyTwoBit)
+    {
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        const auto nConvertedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
+        if (nConvertedAddress != 0xFFFFFFFF)
+            nAddress = nConvertedAddress;
+    }
+
+    return nAddress;
+}
+
 void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sAuthor, const std::wstring& sNote)
 {
     auto nIndex = sNote.find(L'\n');
@@ -321,7 +340,8 @@ void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sA
             {
                 OffsetCodeNote offsetNote;
                 const auto nNextIndex = sNote.find(L"\n+", nIndex);
-                const auto sNextNote = sNote.substr(nIndex, nNextIndex - nIndex);
+                auto sNextNote = sNote.substr(nIndex, nNextIndex - nIndex);
+                ra::Trim(sNextNote);
 
                 wchar_t* pEnd = nullptr;
 
@@ -375,7 +395,7 @@ void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sA
 
                     // capture the initial value of the pointer
                     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-                    const auto nPointerValue = pEmulatorContext.ReadMemory(nAddress, pointerNote.MemSize);
+                    const auto nPointerValue = ReadPointer(pEmulatorContext, nAddress, pointerNote.MemSize);
                     pointerData->PointerValue = nPointerValue;
                     pointerNote.PointerData = std::move(pointerData);
 
@@ -670,6 +690,31 @@ const CodeNotesModel::CodeNote* CodeNotesModel::FindCodeNoteInternal(ra::ByteAdd
     return nullptr;
 }
 
+const std::wstring* CodeNotesModel::FindIndirectCodeNote(ra::ByteAddress nAddress, unsigned nOffset) const
+{
+    if (!m_bHasPointers)
+        return nullptr;
+
+    for (const auto& pCodeNote : m_mCodeNotes)
+    {
+        if (pCodeNote.second.PointerData == nullptr)
+            continue;
+
+        if (nAddress == pCodeNote.first)
+        {
+            for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
+            {
+                if (pOffsetNote.Offset == ra::to_signed(nOffset))
+                    return &pOffsetNote.Note;
+            }
+
+            break;
+        }
+    }
+
+    return nullptr;
+}
+
 ra::ByteAddress CodeNotesModel::GetIndirectSource(ra::ByteAddress nAddress) const noexcept
 {
     if (m_bHasPointers)
@@ -829,7 +874,8 @@ void CodeNotesModel::DoFrame()
         if (!pNote.second.PointerData)
             continue;
 
-        const auto nNewAddress = pEmulatorContext.ReadMemory(pNote.first, pNote.second.MemSize);
+        auto nNewAddress = ReadPointer(pEmulatorContext, pNote.first, pNote.second.MemSize);
+
         const auto nOldAddress = pNote.second.PointerData->PointerValue;
         if (nNewAddress == nOldAddress)
             continue;

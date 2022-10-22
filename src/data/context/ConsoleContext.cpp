@@ -24,6 +24,7 @@ ConsoleContext::ConsoleContext(ConsoleID nId) noexcept
             auto& pMemoryRegion = m_vRegions.emplace_back();
             pMemoryRegion.StartAddress = pRegion.start_address;
             pMemoryRegion.EndAddress = pRegion.end_address;
+            pMemoryRegion.RealAddress = pRegion.real_address;
             pMemoryRegion.Description = pRegion.description;
 
             switch (pRegion.type)
@@ -76,6 +77,22 @@ const ConsoleContext::MemoryRegion* ConsoleContext::GetMemoryRegion(ra::ByteAddr
 
     return nullptr;
 }
+
+ra::ByteAddress ConsoleContext::ByteAddressFromRealAddress(ra::ByteAddress nRealAddress) const
+{
+    for (const auto& pRegion : m_vRegions)
+    {
+        if (pRegion.RealAddress < nRealAddress)
+        {
+            const auto nRegionSize = pRegion.EndAddress - pRegion.StartAddress;
+            if (nRealAddress < pRegion.RealAddress + nRegionSize)
+                return (nRealAddress - pRegion.RealAddress) + pRegion.StartAddress;
+        }
+    }
+
+    return 0xFFFFFFFF;
+}
+
 
 } // namespace context
 } // namespace data

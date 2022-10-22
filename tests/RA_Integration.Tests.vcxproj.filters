@@ -447,6 +447,9 @@
     <ClCompile Include="..\src\ui\viewmodels\EmulatorViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="data\context\ConsoleContext_Tests.cpp">
+      <Filter>Tests\Data\Context</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

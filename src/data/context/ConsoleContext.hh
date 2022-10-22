@@ -79,6 +79,7 @@ public:
     {
         ra::ByteAddress StartAddress = 0U;
         ra::ByteAddress EndAddress = 0U;
+        ra::ByteAddress RealAddress = 0U;
         AddressType Type = AddressType::Unknown;
         std::string Description;
     };
@@ -93,6 +94,12 @@ public:
     /// </summary>
     /// <returns>Matching <see cref="MemoryRegion"/>, <c>nullptr</c> if not found.
     const MemoryRegion* GetMemoryRegion(ra::ByteAddress nAddress) const;
+
+    /// <summary>
+    /// Converts a real address into the "RetroAchievements" address where the data should be.
+    /// </summary>
+    /// <returns>Converted address, or <c>0xFFFFFFFF</c> if conversion could not be completed.
+    ra::ByteAddress ByteAddressFromRealAddress(ra::ByteAddress nRealAddress) const;
 
 protected:
     ConsoleID m_nId{};

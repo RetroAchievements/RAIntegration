@@ -7,6 +7,7 @@
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 
+#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockServer.hh"
@@ -27,6 +28,7 @@ private:
     {
     public:
         ra::api::mocks::MockServer mockServer;
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
@@ -88,6 +90,14 @@ private:
                 Assert::AreEqual(nExpectedBytes, GetCodeNoteBytes(nAddress),
                     ra::StringPrintf(L"Bytes for address %04X", nAddress).c_str());
             }
+        }
+
+        void AssertIndirectNote(ra::ByteAddress nAddress, unsigned nOffset, const std::wstring& sExpected)
+        {
+            const auto* pNote = FindIndirectCodeNote(nAddress, nOffset);
+            Assert::IsNotNull(pNote, ra::StringPrintf(L"Note not found for address %04X + %u", nAddress, nOffset).c_str());
+            Ensures(pNote != nullptr);
+            Assert::AreEqual(sExpected, *pNote);
         }
 
         void AssertSerialize(const std::string& sExpected)
@@ -557,12 +567,12 @@ public:
     {
         CodeNotesModelHarness notes;
         const std::wstring sNote =
-            L"Pointer\n"
-            L"[OFFSETS]\n"
-            L"+2 = EXP (32-bit)\n"
-            L"+5 = Base Level (8-bit)\n"
-            L"+6 = Job Level (8-bit)\n"
-            L"+20 = Stat Points (16-bit)\n"
+            L"Pointer\r\n"
+            L"[OFFSETS]\r\n"
+            L"+2 = EXP (32-bit)\r\n"
+            L"+5 = Base Level (8-bit)\r\n"
+            L"+6 = Job Level (8-bit)\r\n"
+            L"+20 = Stat Points (16-bit)\r\n"
             L"+22 = Skill Points (8-bit)";
         notes.AddCodeNote(1234, "Author", sNote);
 
@@ -664,6 +674,26 @@ public:
         Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [partial] [indirect]"), notes.FindCodeNote(10, MemSize::SixteenBit));
         Assert::AreEqual(std::wstring(L"Very Large (8 bytes) [partial] [indirect]"), notes.FindCodeNote(17, MemSize::SixteenBit));
         Assert::AreEqual(std::wstring(), notes.FindCodeNote(18, MemSize::SixteenBit));
+    }
+
+    TEST_METHOD(TestFindIndirectCodeNote)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sNote =
+            L"Pointer\r\n"
+            L"[OFFSETS]\r\n"
+            L"+2 = EXP (32-bit)\r\n"
+            L"+5 = Base Level (8-bit)\r\n"
+            L"+6 = Job Level (8-bit)\r\n"
+            L"+20 = Stat Points (16-bit)\r\n"
+            L"+22 = Skill Points (8-bit)";
+        notes.AddCodeNote(1234, "Author", sNote);
+
+        notes.AssertIndirectNote(1234U, 5, L"Base Level (8-bit)");
+        notes.AssertIndirectNote(1234U, 22, L"Skill Points (8-bit)");
+        Assert::IsNull(notes.FindIndirectCodeNote(1234U, 0)); // no offset
+        Assert::IsNull(notes.FindIndirectCodeNote(1234U, 21)); // unknown offset
+        Assert::IsNull(notes.FindIndirectCodeNote(1235U, 5)); // wrong base address
     }
 
     TEST_METHOD(TestEnumerateCodeNotes)
@@ -833,6 +863,53 @@ public:
         notes.mNewNotes.clear();
         notes.DoFrame();
         Assert::AreEqual({0U}, notes.mNewNotes.size());
+    }
+
+    TEST_METHOD(TestDoFrameRealAddressConversion)
+    {
+        CodeNotesModelHarness notes;
+        notes.MonitorCodeNoteChanges();
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+
+        std::array<unsigned char, 32> memory{};
+        for (uint8_t i = 4; i < memory.size(); i++)
+            memory.at(i) = i;
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory.at(0) = 0x90; // start with initial value for pointer (real address = 0x90, RA address = 0x10)
+
+        const std::wstring sNote =
+            L"Pointer (32-bit)\n" // only 32-bit pointers are eligible for real address conversion
+            L"+1 = Small (8-bit)\n"
+            L"+2 = Medium (16-bit)\n"
+            L"+4 = Large (32-bit)";
+        notes.AddCodeNote(0x0000, "Author", sNote);
+
+        // should receive notifications for the pointer note, and for each subnote
+        Assert::AreEqual({4U}, notes.mNewNotes.size());
+        Assert::AreEqual(sNote, notes.mNewNotes[0x00]);
+        Assert::AreEqual(std::wstring(L"Small (8-bit)"), notes.mNewNotes[0x11]);
+        Assert::AreEqual(std::wstring(L"Medium (16-bit)"), notes.mNewNotes[0x12]);
+        Assert::AreEqual(std::wstring(L"Large (32-bit)"), notes.mNewNotes[0x14]);
+
+        notes.AssertNoNote(0x02U);
+        notes.AssertNote(0x12U, L"Medium (16-bit)", MemSize::SixteenBit, 2);
+
+        // calling DoFrame after updating the pointer should notify about all the affected subnotes
+        notes.mNewNotes.clear();
+        memory.at(0) = 0x88;
+        notes.DoFrame();
+
+        Assert::AreEqual({6U}, notes.mNewNotes.size());
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x11]);
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x12]);
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x14]);
+        Assert::AreEqual(std::wstring(L"Small (8-bit)"), notes.mNewNotes[0x09]);
+        Assert::AreEqual(std::wstring(L"Medium (16-bit)"), notes.mNewNotes[0x0A]);
+        Assert::AreEqual(std::wstring(L"Large (32-bit)"), notes.mNewNotes[0x0C]);
+
+        notes.AssertNoNote(0x02U);
+        notes.AssertNoNote(0x12U);
+        notes.AssertNote(0x0AU, L"Medium (16-bit)", MemSize::SixteenBit, 2);
     }
 
     TEST_METHOD(TestFindCodeNoteStartPointer)

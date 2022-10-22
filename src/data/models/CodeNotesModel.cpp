@@ -628,16 +628,9 @@ void CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& s
 
             m_mOriginalCodeNotes.erase(pIter2);
         }
-
-        if (sNote.empty())
-            m_mCodeNotes.erase(pIter);
     }
 
-    if (sNote.empty())
-    {
-        OnCodeNoteChanged(nAddress, sNote);
-    }
-    else if (!sOriginalAuthor.empty())
+    if (!sOriginalAuthor.empty())
     {
         AddCodeNote(nAddress, sOriginalAuthor, sNote);
     }
@@ -865,6 +858,9 @@ void CodeNotesModel::SetServerCodeNote(ra::ByteAddress nAddress, const std::wstr
     const auto pIter2 = m_mCodeNotes.find(nAddress);
     if (pIter2 != m_mCodeNotes.end() && pIter2->second.Note == sNote)
     {
+        if (sNote.empty())
+            m_mCodeNotes.erase(pIter2);
+
         if (m_mOriginalCodeNotes.empty())
             SetValue(ra::data::models::AssetModelBase::ChangesProperty, ra::etoi(ra::data::models::AssetChanges::None));
         OnCodeNoteChanged(nAddress, sNote);

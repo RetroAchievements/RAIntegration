@@ -49,7 +49,10 @@ public:
     virtual std::wstring GetTooltip(_UNUSED const ra::ui::ViewModelCollectionBase& vmItems, _UNUSED gsl::index nIndex) const { return L""; }
 
     virtual bool DependsOn(const ra::ui::BoolModelProperty&) const noexcept(false) { return false; }
-    virtual bool DependsOn(const ra::ui::IntModelProperty&) const noexcept(false) { return false; }
+    virtual bool DependsOn(const ra::ui::IntModelProperty& pProperty) const noexcept(false)
+    {
+        return (m_pTextColorProperty != nullptr && pProperty == *m_pTextColorProperty);
+    }
     virtual bool DependsOn(const ra::ui::StringModelProperty&) const noexcept(false) { return false; }
 
     ra::ui::RelativePosition GetAlignment() const noexcept { return m_nAlignment; }

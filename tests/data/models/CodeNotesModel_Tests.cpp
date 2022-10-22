@@ -662,6 +662,104 @@ public:
         Assert::AreEqual(std::wstring(), notes.FindCodeNote(18, MemSize::SixteenBit));
     }
 
+    TEST_METHOD(TestEnumerateCodeNotes)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sPointerNote =
+            L"Pointer\n"
+            L"+8 = Unknown\n"
+            L"+16 = Small (8-bit)";
+        notes.AddCodeNote(1234, "Author", sPointerNote);
+        notes.AddCodeNote(20, "Author", L"After [32-bit]");
+        notes.AddCodeNote(4, "Author", L"Before");
+        notes.AddCodeNote(12, "Author", L"In the middle");
+
+        int i = 0;
+        notes.EnumerateCodeNotes([&i, &sPointerNote](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
+            switch (i++)
+            {
+                case 0:
+                    Assert::AreEqual({4U}, nAddress);
+                    Assert::AreEqual(1U, nBytes);
+                    Assert::AreEqual(std::wstring(L"Before"), sNote);
+                    break;
+                case 1:
+                    Assert::AreEqual({12U}, nAddress);
+                    Assert::AreEqual(1U, nBytes);
+                    Assert::AreEqual(std::wstring(L"In the middle"), sNote);
+                    break;
+                case 2:
+                    Assert::AreEqual({20U}, nAddress);
+                    Assert::AreEqual(4U, nBytes);
+                    Assert::AreEqual(std::wstring(L"After [32-bit]"), sNote);
+                    break;
+                case 3:
+                    Assert::AreEqual({1234U}, nAddress);
+                    Assert::AreEqual(4U, nBytes); // unspecified size on pointer assumed to be 32-bit
+                    Assert::AreEqual(sPointerNote, sNote);
+                    break;
+                case 4:
+                    Assert::Fail(L"Too many notes");
+                    break;
+            }
+            return true;
+        }, false);
+    }
+
+    TEST_METHOD(TestEnumerateCodeNotesWithIndirect)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sPointerNote =
+            L"Pointer\n"
+            L"+8 = Unknown\n"
+            L"+16 = Small (16-bit)";
+        notes.AddCodeNote(1234, "Author", sPointerNote);
+        notes.AddCodeNote(20, "Author", L"After [32-bit]");
+        notes.AddCodeNote(4, "Author", L"Before");
+        notes.AddCodeNote(12, "Author", L"In the middle");
+
+        int i = 0;
+        notes.EnumerateCodeNotes([&i, &sPointerNote](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
+            switch (i++)
+            {
+                case 0:
+                    Assert::AreEqual({4U}, nAddress);
+                    Assert::AreEqual(1U, nBytes);
+                    Assert::AreEqual(std::wstring(L"Before"), sNote);
+                    break;
+                case 1:
+                    Assert::AreEqual({8U}, nAddress);
+                    Assert::AreEqual(1U, nBytes);
+                    Assert::AreEqual(std::wstring(L"Unknown"), sNote);
+                    break;
+                case 2:
+                    Assert::AreEqual({12U}, nAddress);
+                    Assert::AreEqual(1U, nBytes);
+                    Assert::AreEqual(std::wstring(L"In the middle"), sNote);
+                    break;
+                case 3:
+                    Assert::AreEqual({16U}, nAddress);
+                    Assert::AreEqual(2U, nBytes);
+                    Assert::AreEqual(std::wstring(L"Small (16-bit)"), sNote);
+                    break;
+                case 4:
+                    Assert::AreEqual({20U}, nAddress);
+                    Assert::AreEqual(4U, nBytes);
+                    Assert::AreEqual(std::wstring(L"After [32-bit]"), sNote);
+                    break;
+                case 5:
+                    Assert::AreEqual({1234U}, nAddress);
+                    Assert::AreEqual(4U, nBytes); // unspecified size on pointer assumed to be 32-bit
+                    Assert::AreEqual(sPointerNote, sNote);
+                    break;
+                case 6:
+                    Assert::Fail(L"Too many notes");
+                    break;
+            }
+            return true;
+        }, true);
+    }
+
     TEST_METHOD(TestDoFrame)
     {
         CodeNotesModelHarness notes;

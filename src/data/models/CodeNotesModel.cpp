@@ -309,7 +309,7 @@ static unsigned ReadPointer(const ra::data::context::EmulatorContext& pEmulatorC
 {
     auto nAddress = pEmulatorContext.ReadMemory(nPointerAddress, nSize);
 
-    // assume anything annotated as a 32-bit pointer is proving a real (non-translated) address and
+    // assume anything annotated as a 32-bit pointer is providing a real (non-translated) address and
     // attempt to do the translation ourself.
     if (nSize == MemSize::ThirtyTwoBit)
     {
@@ -690,7 +690,7 @@ const CodeNotesModel::CodeNote* CodeNotesModel::FindCodeNoteInternal(ra::ByteAdd
     return nullptr;
 }
 
-const std::wstring* CodeNotesModel::FindIndirectCodeNote(ra::ByteAddress nAddress, unsigned nOffset) const
+const std::wstring* CodeNotesModel::FindIndirectCodeNote(ra::ByteAddress nAddress, unsigned nOffset) const noexcept
 {
     if (!m_bHasPointers)
         return nullptr;
@@ -874,7 +874,7 @@ void CodeNotesModel::DoFrame()
         if (!pNote.second.PointerData)
             continue;
 
-        auto nNewAddress = ReadPointer(pEmulatorContext, pNote.first, pNote.second.MemSize);
+        const auto nNewAddress = ReadPointer(pEmulatorContext, pNote.first, pNote.second.MemSize);
 
         const auto nOldAddress = pNote.second.PointerData->PointerValue;
         if (nNewAddress == nOldAddress)

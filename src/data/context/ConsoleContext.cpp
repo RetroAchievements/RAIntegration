@@ -78,7 +78,7 @@ const ConsoleContext::MemoryRegion* ConsoleContext::GetMemoryRegion(ra::ByteAddr
     return nullptr;
 }
 
-ra::ByteAddress ConsoleContext::ByteAddressFromRealAddress(ra::ByteAddress nRealAddress) const
+ra::ByteAddress ConsoleContext::ByteAddressFromRealAddress(ra::ByteAddress nRealAddress) const noexcept
 {
     for (const auto& pRegion : m_vRegions)
     {

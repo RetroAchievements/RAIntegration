@@ -99,7 +99,7 @@ public:
     /// Converts a real address into the "RetroAchievements" address where the data should be.
     /// </summary>
     /// <returns>Converted address, or <c>0xFFFFFFFF</c> if conversion could not be completed.
-    ra::ByteAddress ByteAddressFromRealAddress(ra::ByteAddress nRealAddress) const;
+    ra::ByteAddress ByteAddressFromRealAddress(ra::ByteAddress nRealAddress) const noexcept;
 
 protected:
     ConsoleID m_nId{};

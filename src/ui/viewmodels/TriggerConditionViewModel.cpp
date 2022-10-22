@@ -553,7 +553,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
 
         if (IsIndirect())
         {
-            ra::ByteAddress nPointerAddress;
+            ra::ByteAddress nPointerAddress = 0;
             const auto nOffset = GetSourceAddress();
             const auto nIndirectAddress = GetIndirectAddress(nOffset, &nPointerAddress);
             return GetAddressTooltip(nIndirectAddress, nPointerAddress, nOffset);
@@ -573,7 +573,7 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
 
         if (IsIndirect())
         {
-            ra::ByteAddress nPointerAddress;
+            ra::ByteAddress nPointerAddress = 0;
             const auto nOffset = GetTargetAddress();
             const auto nIndirectAddress = GetIndirectAddress(nOffset, &nPointerAddress);
             return GetAddressTooltip(nIndirectAddress, nPointerAddress, nOffset);
@@ -721,7 +721,6 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::ByteAddress nAddre
 
     if (nOffset)
     {
-        const auto nStartAddress = nAddress - nOffset;
         sAddress = ra::StringPrintf(L"%s (indirect)", ra::ByteAddressToString(nAddress));
 
         if (nPointerAddress != 0xFFFFFFFF)

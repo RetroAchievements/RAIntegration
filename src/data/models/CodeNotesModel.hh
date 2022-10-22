@@ -72,7 +72,7 @@ public:
     /// Returns the note associated with the specified address.
     /// </summary>
     /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
-    const std::wstring* FindIndirectCodeNote(ra::ByteAddress nAddress, unsigned nOffset) const;
+    const std::wstring* FindIndirectCodeNote(ra::ByteAddress nAddress, unsigned nOffset) const noexcept;
 
     /// <summary>
     /// Returns the number of bytes associated to the code note at the specified address.

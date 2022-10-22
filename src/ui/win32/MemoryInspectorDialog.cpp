@@ -77,29 +77,33 @@ void MemoryInspectorDialog::SearchResultsGridBinding::OnViewModelIntValueChanged
     if (args.Property == MemorySearchViewModel::ResultMemSizeProperty ||
         args.Property == MemorySearchViewModel::TotalMemorySizeProperty)
     {
-        int nWidth = 0;
-        const auto& vmMemory = GetViewModel<MemorySearchViewModel>();
-        const auto nSize = vmMemory.ResultMemSize();
-        constexpr int nCharWidth = 6;
-        constexpr int nPadding = 6;
-
-        // value column
-        auto nMaxChars = (ra::data::MemSizeBits(nSize) + 3) / 4; // 4 bits per nibble
-        if (nMaxChars == 0)
-            nMaxChars = 16;
-        nWidth = nCharWidth * (nMaxChars + 2) + nPadding * 2;
-        m_vColumns.at(1)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
-
-        // address column
-        nWidth = ra::ui::win32::bindings::GridAddressColumnBinding::CalculateWidth();
-        if (nSize == MemSize::Nibble_Lower)
-            nWidth += nCharWidth; // 0x1234L
-        m_vColumns.at(0)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
-
+        UpdateColumnWidths();
         UpdateLayout();
     }
 
     GridBinding::OnViewModelIntValueChanged(args);
+}
+
+void MemoryInspectorDialog::SearchResultsGridBinding::UpdateColumnWidths()
+{
+    int nWidth = 0;
+    const auto& vmMemory = GetViewModel<MemorySearchViewModel>();
+    const auto nSize = vmMemory.ResultMemSize();
+    constexpr int nCharWidth = 6;
+    constexpr int nPadding = 6;
+
+    // value column
+    auto nMaxChars = (ra::data::MemSizeBits(nSize) + 3) / 4; // 4 bits per nibble
+    if (nMaxChars == 0)
+        nMaxChars = 16;
+    nWidth = nCharWidth * (nMaxChars + 2) + nPadding * 2;
+    m_vColumns.at(1)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
+
+    // address column
+    nWidth = ra::ui::win32::bindings::GridAddressColumnBinding::CalculateWidth();
+    if (nSize == MemSize::Nibble_Lower)
+        nWidth += nCharWidth; // 0x1234L
+    m_vColumns.at(0)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);
 }
 
 // ------------------------------------
@@ -199,6 +203,8 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     pDescriptionColumn->SetWidth(ra::ui::win32::bindings::GridColumnBinding::WidthType::Fill, 40);
     pDescriptionColumn->SetTextColorProperty(MemorySearchViewModel::SearchResultViewModel::DescriptionColorProperty);
     m_bindSearchResults.BindColumn(2, std::move(pDescriptionColumn));
+
+    m_bindSearchResults.UpdateColumnWidths();
 
     m_bindSearchResults.BindItems(vmMemoryInspector.Search().Results());
     m_bindSearchResults.BindRowColor(MemorySearchViewModel::SearchResultViewModel::RowColorProperty);

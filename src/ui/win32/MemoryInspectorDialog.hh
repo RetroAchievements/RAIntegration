@@ -66,6 +66,8 @@ private:
         void OnLvnItemChanged(const LPNMLISTVIEW pnmListView) override;
 
         void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
+
+        void UpdateColumnWidths();
     };
 
     SearchResultsGridBinding m_bindSearchResults;

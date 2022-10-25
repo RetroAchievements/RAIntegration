@@ -23,6 +23,7 @@ enum class SearchType
     MBF32,
     MBF32LE,
     AsciiText,
+    BitCount,
 };
 
 enum class SearchFilterType

@@ -94,7 +94,9 @@ void MemoryInspectorDialog::SearchResultsGridBinding::UpdateColumnWidths()
 
     // value column
     auto nMaxChars = (ra::data::MemSizeBits(nSize) + 3) / 4; // 4 bits per nibble
-    if (nMaxChars == 0)
+    if (nSize == MemSize::BitCount)
+        nMaxChars = 9;
+    else if (nMaxChars == 0)
         nMaxChars = 16;
     nWidth = nCharWidth * (nMaxChars + 2) + nPadding * 2;
     m_vColumns.at(1)->SetWidth(GridColumnBinding::WidthType::Pixels, nWidth);

@@ -978,6 +978,64 @@ protected:
     }
 };
 
+class BitCountSearchImpl : public SearchImpl
+{
+protected:
+    // captured value (result.nValue) is actually the raw byte
+    MemSize GetMemSize() const noexcept override { return MemSize::BitCount; }
+
+    unsigned int BuildValue(const unsigned char* ptr) const noexcept override
+    {
+        GSL_SUPPRESS_F6 Expects(ptr != nullptr);
+        return GetBitCount(ptr[0]);
+    }
+
+    bool UpdateValue(const SearchResults& pResults, SearchResults::Result& pResult,
+        _Out_ std::wstring* sFormattedValue, const ra::data::context::EmulatorContext& pEmulatorContext) const override
+    {
+        const unsigned int nPreviousValue = pResult.nValue;
+        pResult.nValue = pEmulatorContext.ReadMemory(pResult.nAddress, MemSize::EightBit);
+
+        if (sFormattedValue)
+            *sFormattedValue = GetFormattedValue(pResults, pResult);
+
+        return (pResult.nValue != nPreviousValue);
+    }
+
+    std::wstring GetFormattedValue(const SearchResults&, const SearchResults::Result& pResult) const override
+    {
+        return ra::StringPrintf(L"%u (%c%c%c%c%c%c%c%c)", GetBitCount(pResult.nValue),
+            (pResult.nValue & 0x80) ? '1' : '0',
+            (pResult.nValue & 0x40) ? '1' : '0',
+            (pResult.nValue & 0x20) ? '1' : '0',
+            (pResult.nValue & 0x10) ? '1' : '0',
+            (pResult.nValue & 0x08) ? '1' : '0',
+            (pResult.nValue & 0x04) ? '1' : '0',
+            (pResult.nValue & 0x02) ? '1' : '0',
+            (pResult.nValue & 0x01) ? '1' : '0');
+    }
+
+private:
+    bool GetValueFromMemBlock(const impl::MemBlock& block, SearchResults::Result& result) const noexcept override
+    {
+        if (result.nAddress < block.GetFirstAddress())
+            return false;
+
+        const unsigned int nOffset = result.nAddress - block.GetFirstAddress();
+        if (nOffset >= block.GetBytesSize() - GetPadding())
+            return false;
+
+        result.nValue = *(block.GetBytes() + nOffset);
+        return true;
+    }
+
+    static unsigned int GetBitCount(unsigned nValue) noexcept
+    {
+        static const std::array<unsigned,16> vBits = { 0,1,1,2,1,2,2,3,1,2,2,3,2,3,3,4 };
+        return vBits.at(nValue & 0x0F) + vBits.at((nValue >> 4) & 0x0F);
+    }
+};
+
 class AsciiTextSearchImpl : public SearchImpl
 {
 public:
@@ -1385,6 +1443,7 @@ static SixteenBitAlignedSearchImpl s_pSixteenBitAlignedSearchImpl;
 static ThirtyTwoBitAlignedSearchImpl s_pThirtyTwoBitAlignedSearchImpl;
 static SixteenBitBigEndianSearchImpl s_pSixteenBitBigEndianSearchImpl;
 static ThirtyTwoBitBigEndianSearchImpl s_pThirtyTwoBitBigEndianSearchImpl;
+static BitCountSearchImpl s_pBitCountSearchImpl;
 static AsciiTextSearchImpl s_pAsciiTextSearchImpl;
 static FloatSearchImpl s_pFloatSearchImpl;
 static MBF32SearchImpl s_pMBF32SearchImpl;
@@ -1581,6 +1640,9 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
             break;
         case SearchType::ThirtyTwoBitBigEndian:
             m_pImpl = &ra::services::impl::s_pThirtyTwoBitBigEndianSearchImpl;
+            break;
+        case SearchType::BitCount:
+            m_pImpl = &ra::services::impl::s_pBitCountSearchImpl;
             break;
         case SearchType::AsciiText:
             m_pImpl = &ra::services::impl::s_pAsciiTextSearchImpl;

@@ -66,6 +66,38 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
         Assert::AreEqual({ 0U }, vmRichPresence.mockThreadPool.PendingTasks());
     }
 
+    TEST_METHOD(TestUpdateDisplayStringParseError)
+    {
+        RichPresenceMonitorViewModelHarness vmRichPresence;
+
+        vmRichPresence.UpdateDisplayString();
+        Assert::AreEqual(std::wstring(L"No game loaded."), vmRichPresence.GetDisplayString());
+        Assert::AreEqual({ 0U }, vmRichPresence.mockThreadPool.PendingTasks());
+
+        vmRichPresence.mockGameContext.SetGameId(1);
+        vmRichPresence.UpdateDisplayString();
+        Assert::AreEqual(std::wstring(L"No Rich Presence defined."), vmRichPresence.GetDisplayString());
+        Assert::AreEqual({ 0U }, vmRichPresence.mockThreadPool.PendingTasks());
+
+        vmRichPresence.mockGameContext.SetRichPresenceDisplayString(L"Hello, world!");
+        vmRichPresence.mockGameContext.Assets().FindRichPresence()->SetScript(
+            "Lookup:a\n0=Zero\n1One\n\nDisplay:@a(0xH1234)");
+        vmRichPresence.mockGameContext.Assets().FindRichPresence()->Activate();
+        vmRichPresence.UpdateDisplayString();
+        Assert::AreEqual(std::wstring(L"Parse error -16 (line 3): Missing value expression"), vmRichPresence.GetDisplayString());
+        Assert::AreEqual({ 0U }, vmRichPresence.mockThreadPool.PendingTasks());
+
+        vmRichPresence.mockGameContext.Assets().FindRichPresence()->SetScript("Display:Not Fixed");
+        vmRichPresence.UpdateDisplayString();
+        Assert::AreEqual(std::wstring(L"Parse error -18 (line 2): Missing display string"), vmRichPresence.GetDisplayString());
+        Assert::AreEqual({ 0U }, vmRichPresence.mockThreadPool.PendingTasks());
+
+        vmRichPresence.mockGameContext.Assets().FindRichPresence()->SetScript("Display:\nFixed");
+        vmRichPresence.UpdateDisplayString();
+        Assert::AreEqual(std::wstring(L"Fixed"), vmRichPresence.GetDisplayString());
+        Assert::AreEqual({ 0U }, vmRichPresence.mockThreadPool.PendingTasks());
+    }
+
     TEST_METHOD(TestStartMonitoringNoGame)
     {
         RichPresenceMonitorViewModelHarness vmRichPresence;

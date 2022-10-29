@@ -552,9 +552,14 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
             return L"";
 
         if (IsIndirect())
-            return GetAddressTooltip(GetIndirectAddress(GetSourceAddress()), true);
+        {
+            ra::ByteAddress nPointerAddress = 0;
+            const auto nOffset = GetSourceAddress();
+            const auto nIndirectAddress = GetIndirectAddress(nOffset, &nPointerAddress);
+            return GetAddressTooltip(nIndirectAddress, nPointerAddress, nOffset);
+        }
 
-        return GetAddressTooltip(GetSourceAddress(), false);
+        return GetAddressTooltip(GetSourceAddress(), 0, 0);
     }
 
     if (nProperty == TargetValueProperty)
@@ -567,9 +572,14 @@ std::wstring TriggerConditionViewModel::GetTooltip(const StringModelProperty& nP
             return L"";
 
         if (IsIndirect())
-            return GetAddressTooltip(GetIndirectAddress(GetTargetAddress()), true);
+        {
+            ra::ByteAddress nPointerAddress = 0;
+            const auto nOffset = GetTargetAddress();
+            const auto nIndirectAddress = GetIndirectAddress(nOffset, &nPointerAddress);
+            return GetAddressTooltip(nIndirectAddress, nPointerAddress, nOffset);
+        }
 
-        return GetAddressTooltip(GetTargetAddress(), false);
+        return GetAddressTooltip(GetTargetAddress(), 0, 0);
     }
 
     return L"";
@@ -589,8 +599,11 @@ static bool IsIndirectMemref(const rc_operand_t& operand) noexcept
     return rc_operand_is_memref(&operand) && operand.value.memref->value.is_indirect;
 }
 
-unsigned int TriggerConditionViewModel::GetIndirectAddress(unsigned int nAddress) const
+ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nAddress, ra::ByteAddress* pPointerAddress) const
 {
+    if (pPointerAddress != nullptr)
+        *pPointerAddress = 0xFFFFFFFF;
+
     const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
     if (pTriggerViewModel == nullptr)
         return nAddress;
@@ -678,6 +691,10 @@ unsigned int TriggerConditionViewModel::GetIndirectAddress(unsigned int nAddress
                 rc_evaluate_condition_value(&value, pCondition, &oEvalState);
                 rc_typed_value_convert(&value, RC_VALUE_TYPE_UNSIGNED);
                 oEvalState.add_address = value.value.u32;
+
+                if (pPointerAddress != nullptr && rc_operand_is_memref(&pCondition->operand1))
+                    *pPointerAddress = (bIsIndirect) ? 0xFFFFFFFF : pCondition->operand1.value.memref->address;
+
                 bIsIndirect = true;
             }
         }
@@ -691,29 +708,46 @@ unsigned int TriggerConditionViewModel::GetIndirectAddress(unsigned int nAddress
     return nAddress;
 }
 
-std::wstring TriggerConditionViewModel::GetAddressTooltip(unsigned int nAddress, bool bIsIndirect)
+std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::ByteAddress nAddress,
+    ra::ByteAddress nPointerAddress, ra::ByteAddress nOffset)
 {
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+    const std::wstring* pNote = nullptr;
     std::wstring sAddress;
 
-    const auto nStartAddress = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNoteStart(nAddress) : 0xFFFFFFFF;
-    if (nStartAddress != nAddress && nStartAddress != 0xFFFFFFFF)
+    if (pCodeNotes == nullptr)
+        return ra::StringPrintf(L"%s%s\r\n[No code note]", ra::ByteAddressToString(nAddress), nOffset ? L" (indirect)" : L"");
+
+    if (nOffset)
     {
-        sAddress = ra::StringPrintf(L"%s [%s+%d]", ra::ByteAddressToString(nAddress),
-            ra::ByteAddressToString(nStartAddress), nAddress - nStartAddress);
+        sAddress = ra::StringPrintf(L"%s (indirect)", ra::ByteAddressToString(nAddress));
+
+        if (nPointerAddress != 0xFFFFFFFF)
+            pNote = pCodeNotes->FindIndirectCodeNote(nPointerAddress, nOffset);
+        else
+            pNote = pCodeNotes->FindCodeNote(nAddress);
     }
     else
     {
         sAddress = ra::Widen(ra::ByteAddressToString(nAddress));
+        pNote = pCodeNotes->FindCodeNote(nAddress);
     }
 
-    if (bIsIndirect)
-        sAddress.append(L" (indirect)");
-
-    const auto* pNote = (nStartAddress != 0xFFFFFFFF) ? pCodeNotes->FindCodeNote(nStartAddress) : nullptr;
     if (!pNote)
-        return ra::StringPrintf(L"%s\r\n[No code note]", sAddress);
+    {
+        const auto nStartAddress = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNoteStart(nAddress) : 0xFFFFFFFF;
+        if (nStartAddress != nAddress && nStartAddress != 0xFFFFFFFF)
+        {
+            sAddress = ra::StringPrintf(L"%s [%s+%d]%s", ra::ByteAddressToString(nAddress),
+                                        ra::ByteAddressToString(nStartAddress), nAddress - nStartAddress,
+                                        nOffset ? L" (indirect)" : L"");
+            pNote = pCodeNotes->FindCodeNote(nStartAddress);
+        }
+
+        if (!pNote)
+            return ra::StringPrintf(L"%s\r\n[No code note]", sAddress);
+    }
 
     // limit the tooltip to the first 20 lines of the code note
     size_t nLines = 0;

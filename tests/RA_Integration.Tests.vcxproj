@@ -453,6 +453,7 @@
     <ClCompile Include="..\src\ui\viewmodels\MessageBoxViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
     <ClCompile Include="..\src\ui\WindowViewModelBase.cpp" />
+    <ClCompile Include="data\context\ConsoleContext_Tests.cpp" />
     <ClCompile Include="data\context\EmulatorContext_Tests.cpp" />
     <ClCompile Include="data\context\GameAssets_Tests.cpp" />
     <ClCompile Include="data\context\GameContext_Tests.cpp" />

@@ -157,23 +157,30 @@ void RichPresenceMonitorViewModel::UpdateDisplayString()
         {
             SetDisplayString(DisplayStringProperty.GetDefaultValue());
         }
-        else if (pRichPresence->GetState() != ra::data::models::AssetState::Active)
-        {
-            SetDisplayString(L"Rich Presence not active.");
-        }
         else
         {
-            auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-            const std::wstring sDisplayString = ra::Widen(pRuntime.GetRichPresenceDisplayString());
-            SetDisplayString(sDisplayString);
-
-            if (m_nState == MonitorState::Static)
+            switch (pRichPresence->GetState())
             {
-                m_nState = MonitorState::Active;
-                ScheduleUpdateDisplayString();
-            }
+                case ra::data::models::AssetState::Active:
+                case ra::data::models::AssetState::Disabled: // parse error, still display it
+                {
+                    auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+                    const std::wstring sDisplayString = ra::Widen(pRuntime.GetRichPresenceDisplayString());
+                    SetDisplayString(sDisplayString);
 
-            return;
+                    if (m_nState == MonitorState::Static)
+                    {
+                        m_nState = MonitorState::Active;
+                        ScheduleUpdateDisplayString();
+                    }
+
+                    return;
+                }
+
+                default:
+                    SetDisplayString(L"Rich Presence not active.");
+                    break;
+            }
         }
     }
 

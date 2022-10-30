@@ -15,11 +15,17 @@
       "HeaderSelected": "#FF8080"
     }
   },
+  "CodeNotes": {
+    "Colors": {
+      "Normal": "#000000",
+      "Modified": "#C04040"
+    }
+  },
   "TriggerColors": {
     "IsTrue": "#C0FFC0",
     "WasTrue": "#C0C0FF",
     "BecomingTrue": "#C0FFFF",
     "ResetTrue": "#FFFFC0",
-    "PauseTrue": "#FFC0C0",
+    "PauseTrue": "#FFC0C0"
   }
 }

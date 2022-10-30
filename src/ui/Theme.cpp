@@ -199,7 +199,8 @@ void EditorTheme::LoadFromFile()
         {
             const rapidjson::Value& colors = codeNotes["Colors"];
 
-            ReadColor(m_colorModified, colors, "Modified");
+            ReadColor(m_colorNoteNormal, colors, "Normal");
+            ReadColor(m_colorNoteModified, colors, "Modified");
         }
     }
 

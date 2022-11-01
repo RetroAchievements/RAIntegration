@@ -129,6 +129,10 @@ void TriggerConditionViewModel::SerializeAppend(std::string& sBuffer) const
                 sBuffer.push_back('&');
                 break;
 
+            case TriggerOperatorType::BitwiseXor:
+                sBuffer.push_back('^');
+                break;
+
             default:
                 assert(!"Unknown comparison");
                 break;
@@ -820,6 +824,7 @@ bool TriggerConditionViewModel::IsComparisonVisible(const ViewModelBase& vmItem,
         case TriggerOperatorType::Multiply:
         case TriggerOperatorType::Divide:
         case TriggerOperatorType::BitwiseAnd:
+        case TriggerOperatorType::BitwiseXor:
             return vmCondition->IsModifying();
 
         default:

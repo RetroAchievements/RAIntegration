@@ -208,7 +208,7 @@ public:
         Assert::AreEqual((int)MemSize::MBF32LE, vmTrigger.OperandSizes().GetItemAt(20)->GetId());
         Assert::AreEqual(std::wstring(L"MBF32 LE"), vmTrigger.OperandSizes().GetItemAt(20)->GetLabel());
 
-        Assert::AreEqual({ 10U }, vmTrigger.OperatorTypes().Count());
+        Assert::AreEqual({ 11U }, vmTrigger.OperatorTypes().Count());
         Assert::AreEqual((int)TriggerOperatorType::Equals, vmTrigger.OperatorTypes().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"="), vmTrigger.OperatorTypes().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)TriggerOperatorType::LessThan, vmTrigger.OperatorTypes().GetItemAt(1)->GetId());
@@ -229,6 +229,8 @@ public:
         Assert::AreEqual(std::wstring(L"/"), vmTrigger.OperatorTypes().GetItemAt(8)->GetLabel());
         Assert::AreEqual((int)TriggerOperatorType::BitwiseAnd, vmTrigger.OperatorTypes().GetItemAt(9)->GetId());
         Assert::AreEqual(std::wstring(L"&"), vmTrigger.OperatorTypes().GetItemAt(9)->GetLabel());
+        Assert::AreEqual((int)TriggerOperatorType::BitwiseXor, vmTrigger.OperatorTypes().GetItemAt(10)->GetId());
+        Assert::AreEqual(std::wstring(L"^"), vmTrigger.OperatorTypes().GetItemAt(10)->GetLabel());
     }
 
     TEST_METHOD(TestParseAndRegenerateCoreOnly)
@@ -258,6 +260,8 @@ public:
         ParseAndRegenerateValue("M:0xH1234$I:0x 1234_A:0xH2345_M:0xH7777"); // addsource/addaddress chain
         ParseAndRegenerateValue("M:0xS2345"); // bit6
         ParseAndRegenerateValue("M:0xS2345$M:0xS2346"); // bit6 in alts
+        ParseAndRegenerateValue("A:0xH1234&31_M:0"); // bitwise and
+        ParseAndRegenerateValue("A:0xH1234^129_M:0"); // bitwise or
     }
 
     TEST_METHOD(TestTriggerUpdateConditionModified)

@@ -7,6 +7,7 @@
 #include "ui\IDesktop.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
+#include "tests\data\DataAsserts.hh"
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -210,26 +211,35 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
     {
         RichPresenceMonitorViewModelHarness vmRichPresence;
 
+        auto tNow = std::chrono::system_clock::now();
+        auto tThen = tNow - std::chrono::minutes(5);
+        vmRichPresence.mockLocalStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nHello, world!\n");
+        vmRichPresence.mockLocalStorage.MockLastModified(ra::services::StorageItemType::RichPresence, L"1", tThen);
+        vmRichPresence.mockGameContext.SetRichPresenceDisplayString(L"Server");
+
         // with no game loaded, message should be static and no callback registered
         vmRichPresence.SetIsVisible(true);
         Assert::AreEqual(std::wstring(L"No game loaded."), vmRichPresence.GetDisplayString());
         Assert::AreEqual({ 0U }, vmRichPresence.mockThreadPool.PendingTasks());
+        auto* pRichPresence = vmRichPresence.mockGameContext.Assets().FindRichPresence();
+        Expects(pRichPresence != nullptr);
 
         // without a callback, display string is not automatically updated
         vmRichPresence.mockGameContext.SetGameId(1);
-        vmRichPresence.mockGameContext.SetRichPresenceDisplayString(L"Hello, world!");
-        vmRichPresence.mockGameContext.Assets().FindRichPresence()->Activate();
         vmRichPresence.mockThreadPool.AdvanceTime(std::chrono::seconds(1));
         Assert::AreEqual(std::wstring(L"No game loaded."), vmRichPresence.GetDisplayString());
         Assert::AreEqual({ 0U }, vmRichPresence.mockThreadPool.PendingTasks());
+        Assert::AreEqual(ra::data::models::AssetState::Inactive, pRichPresence->GetState());
 
-        // explicit Update causes callback to be scheduled
+        // if game changes while monitor is loaded, it will reload and activate the script
         vmRichPresence.mockGameContext.NotifyActiveGameChanged();
+        Assert::AreEqual(ra::data::models::AssetState::Active, pRichPresence->GetState());
         Assert::AreEqual(std::wstring(L"Hello, world!"), vmRichPresence.GetDisplayString());
         Assert::AreEqual({ 1U }, vmRichPresence.mockThreadPool.PendingTasks());
 
         // now callback will be called regularly
-        vmRichPresence.mockGameContext.SetRichPresenceDisplayString(L"Hello, world 2!");
+        vmRichPresence.mockLocalStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nHello, world 2!\n");
+        vmRichPresence.mockLocalStorage.MockLastModified(ra::services::StorageItemType::RichPresence, L"1", tNow);
         vmRichPresence.mockThreadPool.AdvanceTime(std::chrono::seconds(1));
         Assert::AreEqual(std::wstring(L"Hello, world 2!"), vmRichPresence.GetDisplayString());
         Assert::AreEqual({ 1U }, vmRichPresence.mockThreadPool.PendingTasks());

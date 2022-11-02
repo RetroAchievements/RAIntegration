@@ -202,8 +202,8 @@ void RichPresenceMonitorViewModel::OnActiveGameChanged()
 {
     if (IsVisible())
     {
-        UpdateWindowTitle();
-        UpdateDisplayString();
+        m_nState = MonitorState::None;
+        StartMonitoring();
     }
 }
 

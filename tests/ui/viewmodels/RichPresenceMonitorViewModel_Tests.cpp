@@ -211,8 +211,8 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
     {
         RichPresenceMonitorViewModelHarness vmRichPresence;
 
-        auto tNow = std::chrono::system_clock::now();
-        auto tThen = tNow - std::chrono::minutes(5);
+        const auto tNow = std::chrono::system_clock::now();
+        const auto tThen = tNow - std::chrono::minutes(5);
         vmRichPresence.mockLocalStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nHello, world!\n");
         vmRichPresence.mockLocalStorage.MockLastModified(ra::services::StorageItemType::RichPresence, L"1", tThen);
         vmRichPresence.mockGameContext.SetRichPresenceDisplayString(L"Server");
@@ -221,7 +221,7 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
         vmRichPresence.SetIsVisible(true);
         Assert::AreEqual(std::wstring(L"No game loaded."), vmRichPresence.GetDisplayString());
         Assert::AreEqual({ 0U }, vmRichPresence.mockThreadPool.PendingTasks());
-        auto* pRichPresence = vmRichPresence.mockGameContext.Assets().FindRichPresence();
+        const auto* pRichPresence = vmRichPresence.mockGameContext.Assets().FindRichPresence();
         Expects(pRichPresence != nullptr);
 
         // without a callback, display string is not automatically updated

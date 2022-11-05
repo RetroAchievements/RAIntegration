@@ -37,7 +37,8 @@ public:
     Color ColorHeaderSelected() const noexcept { return m_colorHeaderSelected; }
 
     // ===== code notes =====
-    Color ColorModified() const noexcept { return m_colorModified; }
+    Color ColorNoteNormal() const noexcept { return m_colorNoteNormal; }
+    Color ColorNoteModified() const noexcept { return m_colorNoteModified; }
 
     // ===== triggers =====
 
@@ -67,7 +68,8 @@ private:
     Color m_colorHeader{ 255, 128, 128, 128 };
     Color m_colorHeaderSelected{ 255, 255, 96, 96 };
 
-    Color m_colorModified { 255, 192, 64, 64 };
+    Color m_colorNoteNormal{ 255, 0, 0, 0 };
+    Color m_colorNoteModified { 255, 192, 64, 64 };
 
     Color m_colorTriggerIsTrue{ 255, 192, 255, 192 };
     Color m_colorTriggerWasTrue{ 255, 192, 192, 255 };

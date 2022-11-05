@@ -26,7 +26,7 @@ const IntModelProperty CodeNotesViewModel::CodeNoteViewModel::BookmarkColorPrope
 void CodeNotesViewModel::CodeNoteViewModel::SetModified(bool bValue)
 {
     const auto& pEditorTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
-    SetBookmarkColor(bValue ? pEditorTheme.ColorModified() : pEditorTheme.ColorNormal());
+    SetBookmarkColor(bValue ? pEditorTheme.ColorNoteModified() : pEditorTheme.ColorNoteNormal());
 }
 
 CodeNotesViewModel::CodeNotesViewModel() noexcept

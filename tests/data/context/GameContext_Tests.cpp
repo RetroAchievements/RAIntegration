@@ -447,6 +447,8 @@ public:
         Ensures(pRichPresence != nullptr);
         Assert::AreEqual(ra::data::models::AssetCategory::Core, pRichPresence->GetCategory());
         Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, pRichPresence->GetChanges());
+
+        // modified rich presence should not be active unless monitor is opened
         Assert::IsFalse(pRichPresence->IsActive());
     }
 

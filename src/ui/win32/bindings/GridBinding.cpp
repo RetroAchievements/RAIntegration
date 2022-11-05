@@ -348,6 +348,9 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
             m_bForceRepaintItems = true;
         }
     }
+
+    if (!m_vmItems->IsUpdating())
+        OnEndViewModelCollectionUpdate();
 }
 
 void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args)

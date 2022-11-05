@@ -55,7 +55,8 @@ enum class TriggerOperatorType : uint8_t
     None = RC_OPERATOR_NONE,
     Multiply = RC_OPERATOR_MULT,
     Divide = RC_OPERATOR_DIV,
-    BitwiseAnd = RC_OPERATOR_AND
+    BitwiseAnd = RC_OPERATOR_AND,
+    BitwiseXor = RC_OPERATOR_XOR
 };
 
 class TriggerConditionViewModel : public ViewModelBase

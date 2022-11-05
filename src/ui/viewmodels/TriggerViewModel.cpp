@@ -82,6 +82,7 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Multiply), L"*");
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::Divide), L"/");
     m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::BitwiseAnd), L"&");
+    m_vOperatorTypes.Add(ra::etoi(TriggerOperatorType::BitwiseXor), L"^");
 }
 
 std::string TriggerViewModel::Serialize() const

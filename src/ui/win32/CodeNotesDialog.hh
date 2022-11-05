@@ -6,6 +6,7 @@
 
 #include "ui/viewmodels/CodeNotesViewModel.hh"
 
+#include "ui/win32/bindings/CheckBoxBinding.hh"
 #include "ui/win32/bindings/MultiLineGridBinding.hh"
 #include "ui/win32/bindings/TextBoxBinding.hh"
 
@@ -60,6 +61,7 @@ private:
 
     CodeNotesGridBinding m_bindNotes;
     ra::ui::win32::bindings::TextBoxBinding m_bindFilterValue;
+    ra::ui::win32::bindings::CheckBoxBinding m_bindUnpublished;
 };
 
 } // namespace win32

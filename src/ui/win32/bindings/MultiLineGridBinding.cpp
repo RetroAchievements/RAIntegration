@@ -29,6 +29,11 @@ gsl::index MultiLineGridBinding::GetIndexForLine(gsl::index nLine) const
                 break;
             if (--nIndex == 0)
                 break;
+
+            const auto& pItemMetrics2 = m_vItemMetrics.at(nIndex);
+            if (gsl::narrow_cast<gsl::index>(pItemMetrics2.nFirstLine) + ra::to_signed(pItemMetrics2.nNumLines) <= nLine)
+                break; // unexpected! requested line is not in metrics - bail
+
         }
         else if (gsl::narrow_cast<gsl::index>(pItemMetrics.nFirstLine) + ra::to_signed(pItemMetrics.nNumLines) <= nLine)
         {
@@ -74,6 +79,8 @@ void MultiLineGridBinding::OnViewModelRemoved(gsl::index nIndex)
 
 void MultiLineGridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args)
 {
+    bool bRebuildAll = false;
+
     for (gsl::index nColumn = 0; nColumn < ra::to_signed(m_vColumns.size()); ++nColumn)
     {
         const auto* pColumn = m_vColumns.at(nColumn).get();
@@ -96,23 +103,29 @@ void MultiLineGridBinding::OnViewModelStringValueChanged(gsl::index nIndex, cons
                 pColumnLineBreaks.swap(vLineBreaks);
             }
 
-            pItemMetrics.nNumLines = 1;
+            unsigned nLinesNeeded = 1;
             for (const auto& pPair : pItemMetrics.mColumnLineOffsets)
             {
-                if (pPair.second.size() + 1 > pItemMetrics.nNumLines)
-                    pItemMetrics.nNumLines = gsl::narrow_cast<unsigned int>(pPair.second.size()) + 1;
+                if (pPair.second.size() + 1 > nLinesNeeded)
+                    nLinesNeeded = gsl::narrow_cast<unsigned int>(pPair.second.size()) + 1;
             }
 
             if (!m_vmItems->IsUpdating())
-                OnEndViewModelCollectionUpdate();
+            {
+                if (nLinesNeeded != pItemMetrics.nNumLines)
+                    bRebuildAll = true;
+                else
+                    UpdateCell(nIndex, nColumn);
+            }
         }
     }
+
+    if (bRebuildAll)
+        OnEndViewModelCollectionUpdate();
 }
 
 void MultiLineGridBinding::OnEndViewModelCollectionUpdate()
 {
-    UpdateLineOffsets();
-
     InvokeOnUIThread([this]() {
         GridBinding::UpdateAllItems();
         GridBinding::OnEndViewModelCollectionUpdate();
@@ -137,9 +150,6 @@ void MultiLineGridBinding::UpdateLineBreaks(gsl::index nIndex, gsl::index nColum
         auto& pItemMetrics = m_vItemMetrics.at(nIndex);
         auto& pColumnLineBreaks = pItemMetrics.mColumnLineOffsets[gsl::narrow_cast<int>(nColumn)];
         pColumnLineBreaks.swap(vLineBreaks);
-
-        if (pColumnLineBreaks.size() + 1 > pItemMetrics.nNumLines)
-            pItemMetrics.nNumLines = gsl::narrow_cast<unsigned int>(pColumnLineBreaks.size()) + 1;
     }
 }
 
@@ -179,17 +189,6 @@ void MultiLineGridBinding::GetLineBreaks(const std::wstring& sText, size_t nChar
     }
 }
 
-void MultiLineGridBinding::UpdateLineOffsets()
-{
-    gsl::index nLine = 0;
-    for (gsl::index nIndex = 0; nIndex < ra::to_signed(m_vmItems->Count()); ++nIndex)
-    {
-        auto& pItemMetrics = m_vItemMetrics.at(nIndex);
-        pItemMetrics.nFirstLine = gsl::narrow_cast<unsigned int>(nLine);
-        nLine += pItemMetrics.nNumLines;
-    }
-}
-
 void MultiLineGridBinding::UpdateAllItems()
 {
     m_vItemMetrics.clear();
@@ -206,76 +205,99 @@ void MultiLineGridBinding::UpdateAllItems()
         }
     }
 
-    UpdateLineOffsets();
-
     GridBinding::UpdateAllItems();
 }
 
 void MultiLineGridBinding::UpdateItems(gsl::index nColumn)
 {
     const auto& pColumn = *m_vColumns.at(nColumn);
-    const auto nItems = ListView_GetItemCount(m_hWnd);
+    const unsigned nItems = ra::to_unsigned(ListView_GetItemCount(m_hWnd));
     std::wstring sText;
+
+    unsigned nLine = 0;
+    for (gsl::index i = 0; ra::to_unsigned(i) < m_vmItems->Count(); ++i)
+    {
+        auto& pItemMetrics = m_vItemMetrics.at(i);
+
+        pItemMetrics.nFirstLine = nLine;
+        pItemMetrics.nNumLines = 1;
+        for (const auto& pPair : pItemMetrics.mColumnLineOffsets)
+        {
+            if (pPair.second.size() + 1 > pItemMetrics.nNumLines)
+                pItemMetrics.nNumLines = gsl::narrow_cast<unsigned int>(pPair.second.size()) + 1;
+        }
+
+        sText = pColumn.GetText(*m_vmItems, i);
+        UpdateCellContents(pItemMetrics, nColumn, sText, nItems);
+        nLine += pItemMetrics.nNumLines;
+    }
+
+    if (nItems > nLine)
+    {
+        for (int i = ra::to_signed(nItems) - 1; i >= ra::to_signed(nLine); --i)
+            ListView_DeleteItem(m_hWnd, i);
+    }
+}
+
+void MultiLineGridBinding::UpdateCell(gsl::index nIndex, gsl::index nColumnIndex)
+{
+    const auto& pColumn = *m_vColumns.at(nColumnIndex);
+    auto sText = pColumn.GetText(*m_vmItems, nIndex);
+    const auto& pItemMetrics = m_vItemMetrics.at(nIndex);
+
+    const auto nLines = pItemMetrics.nFirstLine + pItemMetrics.nNumLines;
+    UpdateCellContents(pItemMetrics, nColumnIndex, sText, nLines);
+}
+
+void MultiLineGridBinding::UpdateCellContents(const ItemMetrics& pItemMetrics,
+    gsl::index nColumn, std::wstring& sText, const unsigned int nAvailableLines)
+{
+    auto nLine = pItemMetrics.nFirstLine;
 
     LV_ITEMW item{};
     item.mask = LVIF_TEXT;
+    item.iItem = gsl::narrow_cast<int>(nLine);
     item.iSubItem = gsl::narrow_cast<int>(nColumn);
+    item.pszText = &sText.at(0);
 
-    gsl::index nLine = 0;
-    for (gsl::index i = 0; ra::to_unsigned(i) < m_vmItems->Count(); ++i)
+    if (pItemMetrics.nNumLines > 1)
     {
-        sText = pColumn.GetText(*m_vmItems, i);
-        item.pszText = sText.data();
-        item.iItem = gsl::narrow_cast<int>(nLine);
-
-        const auto& pItemMetrics = m_vItemMetrics.at(i);
-        if (pItemMetrics.nNumLines > 1)
+        unsigned int nItemLine = 1;
+        const auto pIter = pItemMetrics.mColumnLineOffsets.find(gsl::narrow_cast<int>(nColumn));
+        if (pIter != pItemMetrics.mColumnLineOffsets.end())
         {
-            unsigned int nItemLine = 1;
-            const auto pIter = pItemMetrics.mColumnLineOffsets.find(gsl::narrow_cast<int>(nColumn));
-            if (pIter != pItemMetrics.mColumnLineOffsets.end())
+            size_t nStop = 0;
+            for (auto nIndex : pIter->second)
             {
-                size_t nStop = 0;
-                for (auto nIndex : pIter->second)
-                {
-                    auto nIndex2 = gsl::narrow_cast<size_t>(nIndex) - 1;
-                    while (nIndex2 > nStop && isspace(sText.at(nIndex2 - 1)))
-                        --nIndex2;
-                    sText.at(nIndex2) = '\0';
+                auto nIndex2 = gsl::narrow_cast<size_t>(nIndex) - 1;
+                while (nIndex2 > nStop && isspace(sText.at(nIndex2 - 1)))
+                    --nIndex2;
+                sText.at(nIndex2) = '\0';
 
-                    GSL_SUPPRESS_TYPE1
-                    SNDMSG(m_hWnd, (nLine < nItems) ? LVM_SETITEMW : LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
-
-                    item.pszText = nIndex < sText.length() ? &sText.at(nIndex) : &sText.at(nIndex2);
-                    item.iItem = gsl::narrow_cast<int>(++nLine);
-                    ++nItemLine;
-
-                    nStop = nIndex;
-                }
-            }
-
-            for (unsigned int nIndex = nItemLine; nIndex < pItemMetrics.nNumLines; ++nIndex)
-            {
                 GSL_SUPPRESS_TYPE1
-                SNDMSG(m_hWnd, (nLine < nItems) ? LVM_SETITEMW : LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
+                SNDMSG(m_hWnd, (nLine < nAvailableLines) ? LVM_SETITEMW : LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
 
-                sText.at(0) = '\0';
-                item.pszText = sText.data();
+                item.pszText = nIndex < sText.length() ? &sText.at(nIndex) : &sText.at(nIndex2);
                 item.iItem = gsl::narrow_cast<int>(++nLine);
+                ++nItemLine;
+
+                nStop = nIndex;
             }
         }
 
-        GSL_SUPPRESS_TYPE1
-        SNDMSG(m_hWnd, (nLine < nItems) ? LVM_SETITEMW : LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
+        for (unsigned int nIndex = nItemLine; nIndex < pItemMetrics.nNumLines; ++nIndex)
+        {
+            GSL_SUPPRESS_TYPE1
+            SNDMSG(m_hWnd, (nLine < nAvailableLines) ? LVM_SETITEMW : LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
 
-        ++nLine;
+            sText.at(0) = '\0';
+            item.pszText = sText.data();
+            item.iItem = gsl::narrow_cast<int>(++nLine);
+        }
     }
 
-    if (gsl::narrow_cast<gsl::index>(nItems) > nLine)
-    {
-        for (gsl::index i = gsl::narrow_cast<gsl::index>(nItems) - 1; i >= nLine; --i)
-            ListView_DeleteItem(m_hWnd, i);
-    }
+    GSL_SUPPRESS_TYPE1
+    SNDMSG(m_hWnd, (nLine < nAvailableLines) ? LVM_SETITEMW : LVM_INSERTITEMW, 0, reinterpret_cast<LPARAM>(&item));
 }
 
 LRESULT MultiLineGridBinding::OnLvnItemChanging(const LPNMLISTVIEW pnmListView)

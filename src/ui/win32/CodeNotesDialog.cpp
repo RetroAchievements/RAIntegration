@@ -87,7 +87,8 @@ void CodeNotesDialog::CodeNotesGridBinding::OnTotalMemorySizeChanged()
 CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
     : DialogBase(vmCodeNotes),
     m_bindNotes(vmCodeNotes),
-    m_bindFilterValue(vmCodeNotes)
+    m_bindFilterValue(vmCodeNotes),
+    m_bindUnpublished(vmCodeNotes)
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Code Notes");
 
@@ -107,6 +108,8 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
         vmCodeNotes->ResetFilter();
         return true;
     });
+
+    m_bindUnpublished.BindCheck(CodeNotesViewModel::OnlyUnpublishedFilterProperty);
 
     m_bindWindow.BindLabel(IDC_RA_RESULT_COUNT, CodeNotesViewModel::ResultCountProperty);
 
@@ -138,13 +141,19 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
         }
     });
 
+    m_bindWindow.BindEnabled(IDC_RA_PUBLISH_NOTE, CodeNotesViewModel::IsSelectionUnpublishedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_REVERT_NOTE, CodeNotesViewModel::IsSelectionUnpublishedProperty);
+
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_FILTER_VALUE, Anchor::Top | Anchor::Left | Anchor::Right);
     SetAnchor(IDC_RA_APPLY_FILTER, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_RESULT_COUNT, Anchor::Top | Anchor::Left);
-    SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_CHK_UNPUBLISHED, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_RESET_FILTER, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_LBX_ADDRESSES, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_ADDBOOKMARK, Anchor::Bottom | Anchor::Left);
+    SetAnchor(IDC_RA_PUBLISH_NOTE, Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_REVERT_NOTE, Anchor::Bottom | Anchor::Right);
 
     SetMinimumSize(327, 200);
 }
@@ -153,6 +162,7 @@ BOOL CodeNotesDialog::OnInitDialog()
 {
     m_bindNotes.SetControl(*this, IDC_RA_LBX_ADDRESSES);
     m_bindFilterValue.SetControl(*this, IDC_RA_FILTER_VALUE);
+    m_bindUnpublished.SetControl(*this, IDC_RA_CHK_UNPUBLISHED);
 
     auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmCodeNotes->Notes().Count()); ++nIndex)
@@ -197,6 +207,24 @@ BOOL CodeNotesDialog::OnCommand(WORD nCommand)
             const auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
             if (vmCodeNotes)
                 vmCodeNotes->BookmarkSelected();
+
+            return TRUE;
+        }
+
+        case IDC_RA_PUBLISH_NOTE:
+        {
+            auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
+            if (vmCodeNotes)
+                vmCodeNotes->PublishSelected();
+
+            return TRUE;
+        }
+
+        case IDC_RA_REVERT_NOTE:
+        {
+            auto* vmCodeNotes = dynamic_cast<CodeNotesViewModel*>(&m_vmWindow);
+            if (vmCodeNotes)
+                vmCodeNotes->RevertSelected();
 
             return TRUE;
         }

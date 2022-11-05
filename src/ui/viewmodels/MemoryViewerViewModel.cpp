@@ -138,7 +138,7 @@ int MemoryViewerViewModel::NibblesPerWord() const
 
 static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
     const ra::ui::viewmodels::MemoryBookmarksViewModel& pBookmarksViewModel,
-    const ra::data::context::GameContext& pGameContext, bool bCheckBookmarks = true)
+    const ra::data::context::GameContext& pGameContext, bool bCheckNotes = true)
 {
     if (pBookmarksViewModel.HasBookmark(nAddress))
     {
@@ -148,7 +148,7 @@ static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
         return MemoryViewerViewModel::TextColor::HasBookmark;
     }
 
-    if (bCheckBookmarks)
+    if (bCheckNotes)
     {
         const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
         if (pCodeNotes != nullptr)
@@ -156,10 +156,12 @@ static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
             const auto nNoteStart = pCodeNotes->FindCodeNoteStart(nAddress);
             if (nNoteStart != 0xFFFFFFFF)
             {
-                if (nNoteStart == nAddress)
-                    return MemoryViewerViewModel::TextColor::HasNote;
-                else
+                if (nNoteStart != nAddress)
                     return MemoryViewerViewModel::TextColor::HasSurrogateNote;
+
+                const auto* pNote = pCodeNotes->FindCodeNote(nAddress);
+                if (pNote != nullptr && !pNote->empty())
+                    return MemoryViewerViewModel::TextColor::HasNote;
             }
         }
     }
@@ -581,7 +583,7 @@ void MemoryViewerViewModel::OnActiveGameChanged()
     m_bReadOnly = (pGameContext.GameId() == 0);
 }
 
-void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring&)
+void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNote)
 {
     const auto nFirstAddress = GetFirstAddress();
     if (nAddress < nFirstAddress)
@@ -608,13 +610,34 @@ void MemoryViewerViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const st
             GetColor(nAddress, pBookmarksViewModel, pGameContext, false);
 
         if (nNewColor == TextColor::Default)
-            nNewColor = (i == 0) ? TextColor::HasNote : TextColor::HasSurrogateNote;
+        {
+            if (i != 0)
+                nNewColor = TextColor::HasSurrogateNote;
+            else if (!sNote.empty())
+                nNewColor = TextColor::HasNote;
+        }
 
         if ((m_pColor[nOffset] & 0x0F) != ra::etoi(nNewColor))
         {
             m_pColor[nOffset] = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(nNewColor));
             m_nNeedsRedraw |= REDRAW_MEMORY;
         }
+
+        ++nAddress;
+        ++nOffset;
+    }
+
+    // if the note size shrunk, clear out he surrogate indicators
+    const auto nNextAddress = pCodeNotes->GetNextNoteAddress(nAddress);
+    const auto nMaxOffset = ra::to_unsigned(nVisibleLines) * 16;
+    while (nAddress < nNextAddress && nOffset < nMaxOffset)
+    {
+        if (ra::itoe<TextColor>(m_pColor[nOffset] & 0x0F) != TextColor::HasSurrogateNote)
+            break;
+
+        const auto nNewColor = GetColor(nAddress, pBookmarksViewModel, pGameContext, false);
+        m_pColor[nOffset] = STALE_COLOR | gsl::narrow_cast<uint8_t>(nNewColor);
+        m_nNeedsRedraw |= REDRAW_MEMORY;
 
         ++nAddress;
         ++nOffset;

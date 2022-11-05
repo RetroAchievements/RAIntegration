@@ -122,6 +122,7 @@
 #define IDC_RA_GAMEHASH                 1217
 #define IDC_RA_ADDBOOKMARK              1218
 #define IDC_RA_RESULTS_EXPORT           1219
+#define IDC_RA_CHK_UNPUBLISHED          1220
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503

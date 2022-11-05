@@ -13,7 +13,8 @@ namespace ui {
 namespace viewmodels {
 
 class CodeNotesViewModel : public WindowViewModelBase,
-    protected ra::data::context::GameContext::NotifyTarget
+    protected ra::data::context::GameContext::NotifyTarget,
+    protected ra::ui::ViewModelCollectionBase::NotifyTarget
 {
 public:
     GSL_SUPPRESS_F6 CodeNotesViewModel() noexcept;
@@ -101,9 +102,13 @@ public:
         void SetBookmarkColor(Color value) { SetValue(BookmarkColorProperty, ra::to_signed(value.ARGB)); }
 
         void SetModified(bool bModified);
+        bool IsModified() const { return m_bModified; }
 
         ra::ByteAddress nAddress = 0;
         unsigned int nBytes = 1;
+
+    private:
+        bool m_bModified = false;
     };
 
     /// <summary>
@@ -148,11 +153,39 @@ public:
     /// </summary>
     void SetFilterValue(const std::wstring& sValue) { SetValue(FilterValueProperty, sValue); }
 
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not to limit results to unpublished notes.
+    /// </summary>
+    static const BoolModelProperty OnlyUnpublishedFilterProperty;
+
+    /// <summary>
+    /// Gets whether or not to limit results to unpublished notes.
+    /// </summary>
+    const bool OnlyUnpublishedFilter() const { return GetValue(OnlyUnpublishedFilterProperty); }
+
+    /// <summary>
+    /// Sets whether or not to limit results to unpublished notes.
+    /// </summary>
+    void SetOnlyUnpublishedFilter(bool bValue) { SetValue(OnlyUnpublishedFilterProperty, bValue); }
+
     void ResetFilter();
 
     void ApplyFilter();
 
     void BookmarkSelected() const;
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the current selection includes unpublished items.
+    /// </summary>
+    static const BoolModelProperty IsSelectionUnpublishedProperty;
+
+    /// <summary>
+    /// Gets whether or not the current selection includes unpublished items.
+    /// </summary>
+    const bool IsSelectionUnpublished() const { return GetValue(IsSelectionUnpublishedProperty); }
+
+    void PublishSelected();
+    void RevertSelected();
 
 protected:
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
@@ -162,7 +195,14 @@ protected:
     void OnEndGameLoad() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;
 
+    // ra::ui::ViewModelCollectionBase::NotifyTarget
+    void OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModelProperty::ChangeArgs& args) override;
+    void OnEndViewModelCollectionUpdate() override;
+
 private:
+    void OnSelectedItemsChanged();
+    void GetSelectedModifiedNoteAddresses(std::vector<ra::ByteAddress>& vAddresses);
+
     ViewModelCollection<CodeNoteViewModel> m_vNotes;
     size_t m_nUnfilteredNotesCount = 0U;
 

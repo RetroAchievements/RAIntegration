@@ -43,6 +43,8 @@ namespace context {
 
 void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 {
+    OnBeforeActiveGameChanged();
+
     // remove the current asset from the asset editor
     auto& vmWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
     vmWindowManager.AssetEditor.LoadAsset(nullptr, true);
@@ -295,6 +297,17 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
     EndLoad();
     OnActiveGameChanged();
+}
+
+void GameContext::OnBeforeActiveGameChanged()
+{
+    // create a copy of the list of pointers in case it's modified by one of the callbacks
+    NotifyTargetSet vNotifyTargets(m_vNotifyTargets);
+    for (NotifyTarget* target : vNotifyTargets)
+    {
+        Expects(target != nullptr);
+        target->OnBeforeActiveGameChanged();
+    }
 }
 
 void GameContext::OnActiveGameChanged()

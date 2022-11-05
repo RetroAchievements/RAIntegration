@@ -310,6 +310,7 @@ void MemoryInspectorViewModel::RevertCurrentAddressNote()
         const std::wstring pOriginalNoteCopy = *pOriginalNote;
         pCodeNotes->SetCodeNote(nAddress, pOriginalNoteCopy);
 
+        SaveNotes();
         UpdateNoteButtons();
     }
 }
@@ -376,6 +377,17 @@ void MemoryInspectorViewModel::ToggleBit(int nBit)
 
     // update the local value, which will cause the bits string to get updated
     SetValue(CurrentAddressValueProperty, nValue);
+}
+
+void MemoryInspectorViewModel::OnBeforeActiveGameChanged()
+{
+    if (m_nSavedNoteAddress != 0xFFFFFFFF)
+    {
+        SaveNotes();
+
+        m_nSavedNoteAddress = 0xFFFFFFFF;
+        m_sSavedNote.clear();
+    }
 }
 
 void MemoryInspectorViewModel::OnActiveGameChanged()

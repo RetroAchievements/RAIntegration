@@ -31,6 +31,7 @@ public:
 protected:
     void UpdateAllItems() override;
     void UpdateItems(gsl::index nColumn) override;
+    void UpdateCell(gsl::index nIndex, gsl::index nColumnIndex) override;
 
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override;
     void OnViewModelAdded(gsl::index nIndex) override;
@@ -41,7 +42,6 @@ private:
     gsl::index GetIndexForLine(gsl::index nLine) const;
     void UpdateLineBreaks(gsl::index nIndex, gsl::index nColumn, const ra::ui::win32::bindings::GridColumnBinding* pColumn, size_t nChars);
     static void GetLineBreaks(const std::wstring& sText, size_t nChars, std::vector<unsigned int>& vLineBreaks);
-    void UpdateLineOffsets();
     int GetMaxCharsForColumn(gsl::index nColumn) const;
 
     struct ItemMetrics
@@ -51,7 +51,11 @@ private:
         std::map<int, std::vector<unsigned int>> mColumnLineOffsets;
     };
 
+    void UpdateCellContents(const ItemMetrics& pItemMetrics, gsl::index nColumn,
+        std::wstring& sText, const unsigned int nAvailableLines);
+
     std::vector<ItemMetrics> m_vItemMetrics;
+    bool m_bItemMetricsStale = false;
     gsl::index m_nLastClickedItem = 0;
 };
 

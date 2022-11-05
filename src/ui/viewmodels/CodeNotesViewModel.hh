@@ -102,7 +102,7 @@ public:
         void SetBookmarkColor(Color value) { SetValue(BookmarkColorProperty, ra::to_signed(value.ARGB)); }
 
         void SetModified(bool bModified);
-        bool IsModified() const { return m_bModified; }
+        bool IsModified() const noexcept { return m_bModified; }
 
         ra::ByteAddress nAddress = 0;
         unsigned int nBytes = 1;

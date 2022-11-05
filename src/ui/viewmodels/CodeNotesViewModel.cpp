@@ -402,10 +402,12 @@ void CodeNotesViewModel::RevertSelected()
     for (const auto nAddress : vNotesToRevert)
     {
         const auto* pOriginalNote = pCodeNotes->GetServerCodeNote(nAddress);
-
-        // make a copy as the original note will be destroyed when we eliminate the modification
-        const std::wstring pOriginalNoteCopy = *pOriginalNote;
-        pCodeNotes->SetCodeNote(nAddress, pOriginalNoteCopy);
+        if (pOriginalNote)
+        {
+            // make a copy as the original note will be destroyed when we eliminate the modification
+            const std::wstring pOriginalNoteCopy = *pOriginalNote;
+            pCodeNotes->SetCodeNote(nAddress, pOriginalNoteCopy);
+        }
     }
 
     std::vector<ra::data::models::AssetModelBase*> vAssets;

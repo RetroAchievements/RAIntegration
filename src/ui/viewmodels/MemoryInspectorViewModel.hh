@@ -179,6 +179,7 @@ private:
     unsigned m_nGameId = 0;
     bool m_bSyncingAddress = false;
     bool m_bSyncingCodeNote = false;
+    bool m_bNoteIsIndirect = false;
     ra::ByteAddress m_nSavedNoteAddress = 0xFFFFFFFF;
     std::wstring m_sSavedNote;
 };

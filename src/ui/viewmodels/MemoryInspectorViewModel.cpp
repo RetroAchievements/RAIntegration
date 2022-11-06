@@ -166,8 +166,7 @@ void MemoryInspectorViewModel::UpdateNoteButtons()
     }
     else
     {
-        const auto nAddress = GetCurrentAddress();
-        if (pCodeNotes->GetIndirectSource(nAddress) != 0xFFFFFFFF)
+        if (m_bNoteIsIndirect)
         {
             SetValue(CanEditCurrentAddressNoteProperty, false);
             SetValue(CanPublishCurrentAddressNoteProperty, false);
@@ -177,6 +176,7 @@ void MemoryInspectorViewModel::UpdateNoteButtons()
         {
             const bool bOffline = ra::services::ServiceLocator::Get<ra::services::IConfiguration>()
                 .IsFeatureEnabled(ra::services::Feature::Offline);
+            const auto nAddress = GetCurrentAddress();
             const auto bModified = pCodeNotes->IsNoteModified(nAddress);
 
             SetValue(CanEditCurrentAddressNoteProperty, true);
@@ -189,7 +189,41 @@ void MemoryInspectorViewModel::UpdateNoteButtons()
 void MemoryInspectorViewModel::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)
 {
     if (nAddress == GetCurrentAddress())
-        SetCurrentAddressNote(sNewNote);
+    {
+        // call the override that asks for an author to see if there's a non-indirect note at
+        // the address. if so, use it.
+        std::string sAuthor;
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
+        Expects(pCodeNotes != nullptr);
+        const auto* pDirectNote = pCodeNotes->FindCodeNote(nAddress, sAuthor);
+        if (pDirectNote)
+        {
+            // non indirect note found. normally, this will match sNewNote, but sometimes sNewNote
+            // will be for an indirect note sharing the addres, so always use the direct note
+            m_bNoteIsIndirect = false;
+            SetCurrentAddressNote(*pDirectNote);
+        }
+        else
+        {
+            // no direct note at address
+            if (sNewNote.length() == 0)
+            {
+                // empty note notification is probably a deleted note, but check to be sure
+                const auto* pIndirectNote = pCodeNotes->FindCodeNote(nAddress);
+                m_bNoteIsIndirect = (pIndirectNote != nullptr);
+            }
+            else
+            {
+                // non-empty note. must be indirect
+                m_bNoteIsIndirect = true;
+            }
+
+            SetCurrentAddressNote(sNewNote);
+        }
+
+        UpdateNoteButtons();
+    }
 }
 
 void MemoryInspectorViewModel::SetCurrentAddressNote(const std::wstring& sValue)
@@ -208,12 +242,29 @@ void MemoryInspectorViewModel::OnCurrentAddressChanged(ra::ByteAddress nNewAddre
         SaveNotes();
 
     m_nSavedNoteAddress = nNewAddress;
-    const auto* pNote = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNote(nNewAddress) : nullptr;
+    m_bNoteIsIndirect = false;
+    const std::wstring* pNote = nullptr;
+    if (pCodeNotes != nullptr)
+    {
+        pNote = pCodeNotes->FindCodeNote(nNewAddress);
+        if (pNote)
+        {
+            // found a note. call the override that asks for an author to
+            // see if there's a non-indirect note at the address. if so, use it.
+            std::string sAuthor;
+            const auto* pDirectNote = pCodeNotes->FindCodeNote(nNewAddress, sAuthor);
+            if (pDirectNote != nullptr)
+                pNote = pDirectNote;
+            else
+                m_bNoteIsIndirect = true;
+        }
+    }
+
     if (pNote)
     {
         m_sSavedNote = *pNote;
 
-        const auto nIndirectSource = pCodeNotes->GetIndirectSource(nNewAddress);
+        const auto nIndirectSource = m_bNoteIsIndirect ? pCodeNotes->GetIndirectSource(nNewAddress) : 0xFFFFFFFF;
         if (nIndirectSource != 0xFFFFFFFF)
             SetCurrentAddressNote(ra::StringPrintf(L"[Indirect from %s]\r\n%s", ra::ByteAddressToString(nIndirectSource), *pNote));
         else

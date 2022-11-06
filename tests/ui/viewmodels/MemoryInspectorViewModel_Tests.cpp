@@ -134,12 +134,18 @@ public:
     TEST_METHOD(TestSetCurrentAddress)
     {
         MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
         inspector.SetCurrentAddress({ 3U });
 
         Assert::AreEqual({ 3U }, inspector.GetCurrentAddress());
         Assert::AreEqual(std::wstring(L"0x0003"), inspector.GetCurrentAddressText());
         Assert::AreEqual(std::wstring(), inspector.GetCurrentAddressNote());
         Assert::AreEqual(std::wstring(L"0 0 0 0 0 0 1 1"), inspector.GetCurrentAddressBits());
+        Assert::IsTrue(inspector.CanEditCurrentAddressNote());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
 
         Assert::AreEqual({ 3U }, inspector.Viewer().GetAddress());
     }
@@ -147,14 +153,97 @@ public:
     TEST_METHOD(TestSetCurrentAddressText)
     {
         MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
         inspector.SetCurrentAddressText(L"3");
 
         Assert::AreEqual({ 3U }, inspector.GetCurrentAddress());
         Assert::AreEqual(std::wstring(L"3"), inspector.GetCurrentAddressText()); /* don't update text when user types in partial address */
         Assert::AreEqual(std::wstring(), inspector.GetCurrentAddressNote());
         Assert::AreEqual(std::wstring(L"0 0 0 0 0 0 1 1"), inspector.GetCurrentAddressBits());
+        Assert::IsTrue(inspector.CanEditCurrentAddressNote());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
 
         Assert::AreEqual({ 3U }, inspector.Viewer().GetAddress());
+    }
+
+    TEST_METHOD(TestSetCurrentAddressWithNote)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+
+        inspector.SetCurrentAddress({ 3U });
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetServerCodeNote({3U}, L"Note on 3");
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({3U}, L"Note on 3");
+
+        Assert::AreEqual({ 3U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x0003"), inspector.GetCurrentAddressText());
+        Assert::AreEqual(std::wstring(L"Note on 3"), inspector.GetCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"0 0 0 0 0 0 1 1"), inspector.GetCurrentAddressBits());
+        Assert::IsTrue(inspector.CanEditCurrentAddressNote());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
+
+        // update note directly as SetCurrentNoteAddress doesn't cause UpdateNoteButtons to be called
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetCodeNote({3U}, L"Modified Note on 3");
+
+        Assert::IsTrue(inspector.CanEditCurrentAddressNote());
+        Assert::IsTrue(inspector.CanPublishCurrentAddressNote());
+        Assert::IsTrue(inspector.CanRevertCurrentAddressNote());
+    }
+
+    TEST_METHOD(TestSetCurrentAddressWithNoteIndirect)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.mockGameContext.SetGameId(1);
+        inspector.mockGameContext.NotifyActiveGameChanged(); // enable note support
+        inspector.mockGameContext.Assets().FindCodeNotes()->SetServerCodeNote({3U}, L"[8-bit Pointer]\n+1 Test");
+
+        inspector.SetCurrentAddress({ 3U });
+
+        Assert::AreEqual({ 3U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x0003"), inspector.GetCurrentAddressText());
+        Assert::AreEqual(std::wstring(L"[8-bit Pointer]\n+1 Test"), inspector.GetCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"0 0 0 0 0 0 1 1"), inspector.GetCurrentAddressBits());
+        Assert::IsTrue(inspector.CanEditCurrentAddressNote());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
+
+        inspector.SetCurrentAddress({ 4U });
+
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x0004"), inspector.GetCurrentAddressText());
+        Assert::AreEqual(std::wstring(L"[Indirect from 0x0003]\r\nTest"), inspector.GetCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"0 0 0 0 0 1 0 0"), inspector.GetCurrentAddressBits());
+        Assert::IsFalse(inspector.CanEditCurrentAddressNote());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
+
+        inspector.mockEmulatorContext.WriteMemoryByte({3U}, 2);
+        inspector.mockGameContext.Assets().FindCodeNotes()->DoFrame();
+        
+        Assert::AreEqual({ 4U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x0004"), inspector.GetCurrentAddressText());
+        Assert::AreEqual(std::wstring(), inspector.GetCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"0 0 0 0 0 1 0 0"), inspector.GetCurrentAddressBits());
+        Assert::IsTrue(inspector.CanEditCurrentAddressNote());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
+
+        // $3 = 2 + 1 = 3, so 3 is currently indirectly pointing it itself
+        // expect to find the original note, not the indirect one
+        inspector.SetCurrentAddress({ 3U });
+
+        Assert::AreEqual({ 3U }, inspector.GetCurrentAddress());
+        Assert::AreEqual(std::wstring(L"0x0003"), inspector.GetCurrentAddressText());
+        Assert::AreEqual(std::wstring(L"[8-bit Pointer]\n+1 Test"), inspector.GetCurrentAddressNote());
+        Assert::AreEqual(std::wstring(L"0 0 0 0 0 0 1 0"), inspector.GetCurrentAddressBits());
+        Assert::IsTrue(inspector.CanEditCurrentAddressNote());
+        Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
+        Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
     }
 
     TEST_METHOD(TestSetViewerAddress)

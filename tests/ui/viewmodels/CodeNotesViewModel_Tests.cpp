@@ -2,13 +2,17 @@
 
 #include "ui\EditorTheme.hh"
 #include "ui\viewmodels\CodeNotesViewModel.hh"
+#include "ui\viewmodels\MessageBoxViewModel.hh"
 
+#include "tests\ui\UIAsserts.hh"
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
+#include "tests\mocks\MockServer.hh"
+#include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
@@ -25,11 +29,13 @@ private:
     class CodeNotesViewModelHarness : public CodeNotesViewModel
     {
     public:
+        ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
+        ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
@@ -69,8 +75,34 @@ private:
             mockEmulatorContext.MockMemory(memory);
         }
 
+        void PreparePublish()
+        {
+            mockServer.HandleRequest<ra::api::UpdateCodeNote>([this]
+                (const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse)
+            {
+                m_nPublishedAddresses.push_back(pRequest.Address);
+
+                pResponse.Result = ra::api::ApiResult::Success;
+                return true;
+            });
+
+            mockServer.HandleRequest<ra::api::DeleteCodeNote>([this]
+                (const ra::api::DeleteCodeNote::Request& pRequest, ra::api::DeleteCodeNote::Response& pResponse)
+            {
+                m_nPublishedAddresses.push_back(pRequest.Address);
+
+                pResponse.Result = ra::api::ApiResult::Success;
+                return true;
+            });
+
+            mockThreadPool.SetSynchronous(true);
+        }
+
+        const std::vector<ra::ByteAddress>& GetPublishedAddresses() const noexcept { return m_nPublishedAddresses; }
+
     private:
         ra::services::ServiceLocator::ServiceOverride<ra::ui::EditorTheme> m_themeOverride;
+        std::vector<ra::ByteAddress> m_nPublishedAddresses;
     };
 
     void AssertRow(CodeNotesViewModelHarness& notes, gsl::index nRow, ra::ByteAddress nAddress,
@@ -552,6 +584,267 @@ public:
         notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"[32-bit] Score");
         AssertRow(notes, 4, 0x0016, L"0x0016", L"[32-bit] Score");
         Assert::AreEqual(0xFF000000, pRow->GetBookmarkColor().ARGB);
+    }
+    
+    TEST_METHOD(TestModifiedFilter)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.PopulateNotes();
+        notes.SetIsVisible(true);
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0031, L"Changed 49");
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0004, L"Changed 4");
+
+        notes.SetOnlyUnpublishedFilter(true);
+        notes.ApplyFilter();
+
+        Assert::AreEqual({ 3U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"3/15"), notes.GetResultCount());
+
+        AssertRow(notes, 0, 0x0004, L"0x0004", L"Changed 4");
+        AssertRow(notes, 1, 0x0016, L"0x0016", L"Changed 20");
+        AssertRow(notes, 2, 0x0031, L"0x0031", L"Changed 49");
+    }
+
+    TEST_METHOD(TestRevertSingleApprove)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.PopulateNotes();
+        notes.SetIsVisible(true);
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0031, L"Changed 49");
+
+        notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
+        notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
+        notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
+        notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
+
+        Assert::IsTrue(notes.IsSelectionUnpublished());
+
+        bool bWindowSeen = false;
+        notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Revert note for address 0x0016?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"This will discard all local work and revert the notes to the last state retrieved from the server."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+
+            bWindowSeen = true;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        notes.RevertSelected();
+        Assert::IsTrue(bWindowSeen);
+
+        AssertRow(notes, 4, 0x0016, L"0x0016", L"[32-bit] Score");
+        Assert::IsFalse(notes.IsSelectionUnpublished());
+    }
+
+    TEST_METHOD(TestRevertSingleReject)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.PopulateNotes();
+        notes.SetIsVisible(true);
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0031, L"Changed 49");
+
+        notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
+        notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
+        notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
+        notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
+
+        Assert::IsTrue(notes.IsSelectionUnpublished());
+
+        bool bWindowSeen = false;
+        notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            bWindowSeen = true;
+            return ra::ui::DialogResult::No;
+        });
+
+        notes.RevertSelected();
+        Assert::IsTrue(bWindowSeen);
+
+        AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
+        Assert::IsTrue(notes.IsSelectionUnpublished());
+    }
+
+    TEST_METHOD(TestRevertMultiple)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.PopulateNotes();
+        notes.SetIsVisible(true);
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0040, L"Changed 64");
+
+        notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
+        notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
+        notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
+        notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
+
+        Assert::IsTrue(notes.IsSelectionUnpublished());
+
+        bool bWindowSeen = false;
+        notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Revert 2 notes?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"This will discard all local work and revert the notes to the last state retrieved from the server."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+
+            bWindowSeen = true;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        notes.RevertSelected();
+        Assert::IsTrue(bWindowSeen);
+
+        AssertRow(notes, 4, 0x0016, L"0x0016", L"[32-bit] Score");
+        AssertRow(notes, 13, 0x0040, L"0x0040\n- 0x0049", L"[10 bytes] Inventory");
+        Assert::IsFalse(notes.IsSelectionUnpublished());
+    }
+
+    TEST_METHOD(TestPublishSingle)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.PopulateNotes();
+        notes.PreparePublish();
+        notes.SetIsVisible(true);
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0031, L"Changed 49");
+
+        notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
+        notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
+        notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
+        notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
+
+        Assert::IsTrue(notes.IsSelectionUnpublished());
+
+        bool bWindowSeen = false;
+        notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            bWindowSeen = true;
+            return ra::ui::DialogResult::No;
+        });
+
+        notes.PublishSelected();
+        Assert::IsFalse(bWindowSeen);
+
+        AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
+        Assert::IsFalse(notes.IsSelectionUnpublished());
+
+        Assert::AreEqual({1}, notes.GetPublishedAddresses().size());
+        Assert::AreEqual({0x0016}, notes.GetPublishedAddresses().at(0));
+    }
+
+    TEST_METHOD(TestPublishMultipleApprove)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.PopulateNotes();
+        notes.PreparePublish();
+        notes.SetIsVisible(true);
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0040, L"Changed 64");
+
+        notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
+        notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
+        notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
+        notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
+
+        Assert::IsTrue(notes.IsSelectionUnpublished());
+
+        bool bWindowSeen = false;
+        notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Publish 2 notes?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The selected modified notes will be uploaded to the server."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+
+            bWindowSeen = true;
+            return ra::ui::DialogResult::Yes;
+        });
+
+        notes.PublishSelected();
+        Assert::IsTrue(bWindowSeen);
+
+        AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
+        AssertRow(notes, 13, 0x0040, L"0x0040", L"Changed 64");
+        Assert::IsFalse(notes.IsSelectionUnpublished());
+
+        Assert::AreEqual({2}, notes.GetPublishedAddresses().size());
+        Assert::AreEqual({0x0016}, notes.GetPublishedAddresses().at(0));
+        Assert::AreEqual({0x0040}, notes.GetPublishedAddresses().at(1));
+    }
+
+    TEST_METHOD(TestPublishMultipleReject)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.PopulateNotes();
+        notes.PreparePublish();
+        notes.SetIsVisible(true);
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0040, L"Changed 64");
+
+        notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
+        notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
+        notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
+        notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
+
+        Assert::IsTrue(notes.IsSelectionUnpublished());
+
+        bool bWindowSeen = false;
+        notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Publish 2 notes?"), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"The selected modified notes will be uploaded to the server."), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+
+            bWindowSeen = true;
+            return ra::ui::DialogResult::No;
+        });
+
+        notes.PublishSelected();
+        Assert::IsTrue(bWindowSeen);
+
+        AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
+        AssertRow(notes, 13, 0x0040, L"0x0040", L"Changed 64");
+        Assert::IsTrue(notes.IsSelectionUnpublished());
+
+        Assert::AreEqual({0}, notes.GetPublishedAddresses().size());
     }
 };
 

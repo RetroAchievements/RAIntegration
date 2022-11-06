@@ -78,6 +78,7 @@ protected:
     void UpdateLayout();
     virtual void UpdateAllItems();
     virtual void UpdateItems(gsl::index nColumn);
+    virtual void UpdateCell(gsl::index nIndex, gsl::index nColumnIndex);
     void CheckForScrollBar();
     int GetVisibleItemIndex(int iItem);
     gsl::index GetRealItemIndex(gsl::index iItem) const;

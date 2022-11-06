@@ -321,11 +321,6 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
         return;
     }
 
-    std::wstring sText;
-    LV_ITEMW item{};
-    item.mask = LVIF_TEXT;
-    item.iItem = gsl::narrow_cast<int>(nIndex);
-
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
@@ -337,12 +332,7 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
             if (m_nSortIndex == ra::to_signed(nColumnIndex))
                 m_nSortIndex = -1;
 
-            item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
-            sText = pColumn.GetText(*m_vmItems, nIndex);
-            item.pszText = sText.data();
-
-            GSL_SUPPRESS_TYPE1
-            SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
+            UpdateCell(nIndex, nColumnIndex);
 
             ListView_RedrawItems(m_hWnd, nIndex, nIndex);
             m_bForceRepaintItems = true;
@@ -358,11 +348,6 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
     if (m_pIsSelectedProperty && *m_pIsSelectedProperty == args.Property)
         ListView_SetItemState(m_hWnd, nIndex, args.tNewValue ? LVIS_SELECTED : 0, LVIS_SELECTED);
 
-    std::wstring sText;
-    LV_ITEMW item{};
-    item.mask = LVIF_TEXT;
-    item.iItem = gsl::narrow_cast<int>(nIndex);
-
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
@@ -374,12 +359,7 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
             if (m_nSortIndex == ra::to_signed(nColumnIndex))
                 m_nSortIndex = -1;
 
-            item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
-            sText = pColumn.GetText(*m_vmItems, nIndex);
-            item.pszText = sText.data();
-
-            GSL_SUPPRESS_TYPE1
-            SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
+            UpdateCell(nIndex, nColumnIndex);
 
             ListView_RedrawItems(m_hWnd, nIndex, nIndex);
             m_bForceRepaintItems = true;
@@ -392,11 +372,6 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
     // when virtualizing, only the visible items have view models. adjust the index accordingly.
     nIndex = GetRealItemIndex(nIndex);
 
-    std::wstring sText;
-    LV_ITEMW item{};
-    item.mask = LVIF_TEXT;
-    item.iItem = gsl::narrow_cast<int>(nIndex);
-
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
@@ -408,17 +383,28 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
             if (m_nSortIndex == ra::to_signed(nColumnIndex))
                 m_nSortIndex = -1;
 
-            item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
-            sText = pColumn.GetText(*m_vmItems, nIndex);
-            item.pszText = sText.data();
-
-            GSL_SUPPRESS_TYPE1
-            SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
+            UpdateCell(nIndex, nColumnIndex);
 
             ListView_RedrawItems(m_hWnd, nIndex, nIndex);
             m_bForceRepaintItems = true;
         }
     }
+}
+
+void GridBinding::UpdateCell(gsl::index nIndex, gsl::index nColumnIndex)
+{
+    std::wstring sText;
+    LV_ITEMW item{};
+    item.mask = LVIF_TEXT;
+    item.iItem = gsl::narrow_cast<int>(nIndex);
+    item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
+
+    const auto& pColumn = *m_vColumns.at(nColumnIndex);
+    sText = pColumn.GetText(*m_vmItems, nIndex);
+    item.pszText = sText.data();
+
+    GSL_SUPPRESS_TYPE1
+    SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
 }
 
 void GridBinding::EnsureVisible(gsl::index nIndex)

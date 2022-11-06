@@ -115,6 +115,7 @@ public:
         NotifyTarget(NotifyTarget&&) noexcept = default;
         NotifyTarget& operator=(NotifyTarget&&) noexcept = default;
 
+        virtual void OnBeforeActiveGameChanged() noexcept(false) {}
         virtual void OnActiveGameChanged() noexcept(false) {}
         virtual void OnBeginGameLoad() noexcept(false) {}
         virtual void OnEndGameLoad() noexcept(false) {}
@@ -134,6 +135,7 @@ protected:
     void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup);
     void ShowSimplifiedScoreboard(ra::LeaderboardID nLeaderboardId, int nScore) const;
 
+    void OnBeforeActiveGameChanged();
     void OnActiveGameChanged();
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);
     void BeginLoad();

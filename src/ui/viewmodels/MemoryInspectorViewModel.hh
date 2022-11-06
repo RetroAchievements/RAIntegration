@@ -162,6 +162,7 @@ protected:
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override;
 
     // GameContext::NotifyTarget
+    void OnBeforeActiveGameChanged() override;
     void OnActiveGameChanged() override;
     void OnEndGameLoad() override;
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote) override;

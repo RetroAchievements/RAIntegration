@@ -5,6 +5,7 @@
 
 #include "data\context\GameContext.hh"
 
+#include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\EditorTheme.hh"
@@ -19,7 +20,8 @@ namespace viewmodels {
 const StringModelProperty CodeNotesViewModel::ResultCountProperty("CodeNotesViewModel", "ResultCount", L"0/0");
 const StringModelProperty CodeNotesViewModel::FilterValueProperty("CodeNotesViewModel", "FilterValue", L"");
 const BoolModelProperty CodeNotesViewModel::OnlyUnpublishedFilterProperty("CodeNotesViewModel", "OnlyUnpublishedFilter", false);
-const BoolModelProperty CodeNotesViewModel::IsSelectionUnpublishedProperty("CodeNotesViewModel", "IsSelectionUnpublished", false);
+const BoolModelProperty CodeNotesViewModel::CanRevertCurrentAddressNoteProperty("CodeNotesViewModel", "CanRevertCurrentAddressNote", false);
+const BoolModelProperty CodeNotesViewModel::CanPublishCurrentAddressNoteProperty("CodeNotesViewModel", "CanPublishCurrentAddressNote", false);
 
 const StringModelProperty CodeNotesViewModel::CodeNoteViewModel::LabelProperty("CodeNoteViewModel", "Label", L"");
 const StringModelProperty CodeNotesViewModel::CodeNoteViewModel::NoteProperty("CodeNoteViewModel", "Note", L"");
@@ -282,7 +284,11 @@ void CodeNotesViewModel::OnSelectedItemsChanged()
         }
     }
 
-    SetValue(IsSelectionUnpublishedProperty, bHasModifiedSelectedItem);
+    const bool bOffline = ra::services::ServiceLocator::Get<ra::services::IConfiguration>()
+        .IsFeatureEnabled(ra::services::Feature::Offline);
+
+    SetValue(CanPublishCurrentAddressNoteProperty, bHasModifiedSelectedItem && !bOffline);
+    SetValue(CanRevertCurrentAddressNoteProperty, bHasModifiedSelectedItem);
 }
 
 void CodeNotesViewModel::BookmarkSelected() const
@@ -340,6 +346,9 @@ void CodeNotesViewModel::GetSelectedModifiedNoteAddresses(std::vector<ra::ByteAd
 
 void CodeNotesViewModel::PublishSelected()
 {
+    if (!CanPublishCurrentAddressNote())
+        return;
+
     std::vector<ra::ByteAddress> vNotesToPublish;
     GetSelectedModifiedNoteAddresses(vNotesToPublish);
 

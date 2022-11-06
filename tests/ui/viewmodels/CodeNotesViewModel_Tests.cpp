@@ -630,7 +630,8 @@ public:
         notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
         notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
 
-        Assert::IsTrue(notes.IsSelectionUnpublished());
+        Assert::IsTrue(notes.CanPublishCurrentAddressNote());
+        Assert::IsTrue(notes.CanRevertCurrentAddressNote());
 
         bool bWindowSeen = false;
         notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -647,7 +648,8 @@ public:
         Assert::IsTrue(bWindowSeen);
 
         AssertRow(notes, 4, 0x0016, L"0x0016", L"[32-bit] Score");
-        Assert::IsFalse(notes.IsSelectionUnpublished());
+        Assert::IsFalse(notes.CanPublishCurrentAddressNote());
+        Assert::IsFalse(notes.CanRevertCurrentAddressNote());
     }
 
     TEST_METHOD(TestRevertSingleReject)
@@ -668,7 +670,8 @@ public:
         notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
         notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
 
-        Assert::IsTrue(notes.IsSelectionUnpublished());
+        Assert::IsTrue(notes.CanPublishCurrentAddressNote());
+        Assert::IsTrue(notes.CanRevertCurrentAddressNote());
 
         bool bWindowSeen = false;
         notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel&)
@@ -681,7 +684,8 @@ public:
         Assert::IsTrue(bWindowSeen);
 
         AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
-        Assert::IsTrue(notes.IsSelectionUnpublished());
+        Assert::IsTrue(notes.CanPublishCurrentAddressNote());
+        Assert::IsTrue(notes.CanRevertCurrentAddressNote());
     }
 
     TEST_METHOD(TestRevertMultiple)
@@ -702,7 +706,8 @@ public:
         notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
         notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
 
-        Assert::IsTrue(notes.IsSelectionUnpublished());
+        Assert::IsTrue(notes.CanPublishCurrentAddressNote());
+        Assert::IsTrue(notes.CanRevertCurrentAddressNote());
 
         bool bWindowSeen = false;
         notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -720,7 +725,8 @@ public:
 
         AssertRow(notes, 4, 0x0016, L"0x0016", L"[32-bit] Score");
         AssertRow(notes, 13, 0x0040, L"0x0040\n- 0x0049", L"[10 bytes] Inventory");
-        Assert::IsFalse(notes.IsSelectionUnpublished());
+        Assert::IsFalse(notes.CanPublishCurrentAddressNote());
+        Assert::IsFalse(notes.CanRevertCurrentAddressNote());
     }
 
     TEST_METHOD(TestPublishSingle)
@@ -742,7 +748,8 @@ public:
         notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
         notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
 
-        Assert::IsTrue(notes.IsSelectionUnpublished());
+        Assert::IsTrue(notes.CanPublishCurrentAddressNote());
+        Assert::IsTrue(notes.CanRevertCurrentAddressNote());
 
         bool bWindowSeen = false;
         notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel&)
@@ -755,10 +762,49 @@ public:
         Assert::IsFalse(bWindowSeen);
 
         AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
-        Assert::IsFalse(notes.IsSelectionUnpublished());
+        Assert::IsFalse(notes.CanPublishCurrentAddressNote());
+        Assert::IsFalse(notes.CanRevertCurrentAddressNote());
 
         Assert::AreEqual({1}, notes.GetPublishedAddresses().size());
         Assert::AreEqual({0x0016}, notes.GetPublishedAddresses().at(0));
+    }
+
+    TEST_METHOD(TestPublishSingleOffline)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+        notes.PopulateNotes();
+        notes.PreparePublish();
+        notes.SetIsVisible(true);
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0016, L"Changed 20");
+        notes.mockGameContext.Assets().FindCodeNotes()->SetCodeNote(0x0031, L"Changed 49");
+
+        notes.Notes().GetItemAt(0)->SetSelected(true); // 0x10
+        notes.Notes().GetItemAt(4)->SetSelected(true); // 0x16
+        notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
+        notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
+
+        Assert::IsFalse(notes.CanPublishCurrentAddressNote());
+        Assert::IsTrue(notes.CanRevertCurrentAddressNote());
+
+        bool bWindowSeen = false;
+        notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            bWindowSeen = true;
+            return ra::ui::DialogResult::No;
+        });
+
+        notes.PublishSelected();
+        Assert::IsFalse(bWindowSeen);
+
+        AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
+        Assert::IsFalse(notes.CanPublishCurrentAddressNote());
+        Assert::IsTrue(notes.CanRevertCurrentAddressNote());
     }
 
     TEST_METHOD(TestPublishMultipleApprove)
@@ -780,7 +826,8 @@ public:
         notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
         notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
 
-        Assert::IsTrue(notes.IsSelectionUnpublished());
+        Assert::IsTrue(notes.CanPublishCurrentAddressNote());
+        Assert::IsTrue(notes.CanRevertCurrentAddressNote());
 
         bool bWindowSeen = false;
         notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -798,7 +845,8 @@ public:
 
         AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
         AssertRow(notes, 13, 0x0040, L"0x0040", L"Changed 64");
-        Assert::IsFalse(notes.IsSelectionUnpublished());
+        Assert::IsFalse(notes.CanPublishCurrentAddressNote());
+        Assert::IsFalse(notes.CanRevertCurrentAddressNote());
 
         Assert::AreEqual({2}, notes.GetPublishedAddresses().size());
         Assert::AreEqual({0x0016}, notes.GetPublishedAddresses().at(0));
@@ -824,7 +872,8 @@ public:
         notes.Notes().GetItemAt(7)->SetSelected(true); // 0x22
         notes.Notes().GetItemAt(13)->SetSelected(true); // 0x40
 
-        Assert::IsTrue(notes.IsSelectionUnpublished());
+        Assert::IsTrue(notes.CanPublishCurrentAddressNote());
+        Assert::IsTrue(notes.CanRevertCurrentAddressNote());
 
         bool bWindowSeen = false;
         notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
@@ -842,7 +891,8 @@ public:
 
         AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
         AssertRow(notes, 13, 0x0040, L"0x0040", L"Changed 64");
-        Assert::IsTrue(notes.IsSelectionUnpublished());
+        Assert::IsTrue(notes.CanPublishCurrentAddressNote());
+        Assert::IsTrue(notes.CanRevertCurrentAddressNote());
 
         Assert::AreEqual({0}, notes.GetPublishedAddresses().size());
     }

@@ -177,12 +177,22 @@ public:
     /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the current selection includes unpublished items.
     /// </summary>
-    static const BoolModelProperty IsSelectionUnpublishedProperty;
+    static const BoolModelProperty CanRevertCurrentAddressNoteProperty;
 
     /// <summary>
     /// Gets whether or not the current selection includes unpublished items.
     /// </summary>
-    const bool IsSelectionUnpublished() const { return GetValue(IsSelectionUnpublishedProperty); }
+    const bool CanRevertCurrentAddressNote() const { return GetValue(CanRevertCurrentAddressNoteProperty); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the current selection can be published.
+    /// </summary>
+    static const BoolModelProperty CanPublishCurrentAddressNoteProperty;
+
+    /// <summary>
+    /// Gets whether or notthe current selection can be published.
+    /// </summary>
+    const bool CanPublishCurrentAddressNote() const { return GetValue(CanPublishCurrentAddressNoteProperty); }
 
     void PublishSelected();
     void RevertSelected();

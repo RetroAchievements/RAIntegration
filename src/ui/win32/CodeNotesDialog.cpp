@@ -141,8 +141,8 @@ CodeNotesDialog::CodeNotesDialog(CodeNotesViewModel& vmCodeNotes)
         }
     });
 
-    m_bindWindow.BindEnabled(IDC_RA_PUBLISH_NOTE, CodeNotesViewModel::IsSelectionUnpublishedProperty);
-    m_bindWindow.BindEnabled(IDC_RA_REVERT_NOTE, CodeNotesViewModel::IsSelectionUnpublishedProperty);
+    m_bindWindow.BindEnabled(IDC_RA_PUBLISH_NOTE, CodeNotesViewModel::CanPublishCurrentAddressNoteProperty);
+    m_bindWindow.BindEnabled(IDC_RA_REVERT_NOTE, CodeNotesViewModel::CanRevertCurrentAddressNoteProperty);
 
     using namespace ra::bitwise_ops;
     SetAnchor(IDC_RA_FILTER_VALUE, Anchor::Top | Anchor::Left | Anchor::Right);

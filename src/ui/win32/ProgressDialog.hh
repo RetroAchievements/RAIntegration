@@ -38,6 +38,7 @@ public:
 protected:
     BOOL OnInitDialog() override;
     BOOL OnCommand(WORD nCommand) override;
+    void DoCloseWindow() override;
 
 private:
     ra::ui::win32::bindings::ProgressBarBinding m_bindProgress;

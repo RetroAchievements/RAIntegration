@@ -44,7 +44,15 @@ void ProgressViewModel::BeginTasks()
         {
             ra::data::AsyncKeepAlive pKeepAlive(*pAsyncHandle);
             if (!pAsyncHandle->IsDestroyed())
+            {
+                ++m_vActiveThreads;
                 ProcessQueue();
+                if (--m_vActiveThreads == 0)
+                {
+                    if (m_bQueueComplete)
+                        OnComplete();
+                }
+            }
         });
     }
 }
@@ -85,10 +93,6 @@ void ProgressViewModel::ProcessQueue()
         {
             pTask->fTaskHandler();
             pTask->nState = TaskState::Done;
-        }
-        else if (m_bQueueComplete)
-        {
-            OnComplete();
         }
     } while (true);
 }

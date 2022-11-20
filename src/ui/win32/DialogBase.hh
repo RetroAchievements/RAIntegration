@@ -111,6 +111,8 @@ protected:
     /// <param name="oNewPosition">The new size of the client area.</param>
     virtual void OnSize(_In_ const ra::ui::Size& oNewSize);
 
+    virtual void DoCloseWindow() noexcept(false);
+
     ra::ui::win32::bindings::WindowBinding m_bindWindow;
 
     ra::ui::WindowViewModelBase& m_vmWindow;
@@ -188,7 +190,6 @@ private:
 
     void InitializeAnchors() noexcept;
     void UpdateAnchoredControls();
-    void DoCloseWindow() noexcept;
 };
 
 } // namespace win32

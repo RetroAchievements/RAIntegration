@@ -61,6 +61,8 @@ public:
 
     const size_t TaskCount() const noexcept { return m_vTasks.size(); }
 
+    bool IsProcessingTasks() const noexcept { return m_vActiveThreads != 0; }
+
 protected:
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
@@ -87,6 +89,7 @@ private:
     std::vector<std::unique_ptr<TaskItem>> m_vTasks;
     std::mutex m_pMutex;
     bool m_bQueueComplete = false;
+    int m_vActiveThreads = 0;
 };
 
 } // namespace viewmodels

@@ -516,7 +516,7 @@ BOOL DialogBase::OnCommand(WORD nCommand)
     }
 }
 
-void DialogBase::DoCloseWindow() noexcept
+void DialogBase::DoCloseWindow()
 {
     if (::IsWindowVisible(m_hWnd))
     {
@@ -532,7 +532,7 @@ void DialogBase::SetDialogResult(DialogResult nResult)
     m_vmWindow.SetDialogResult(nResult);
 
     // make sure the dialog is closed on the UI thread
-    QueueFunction([this]() noexcept
+    QueueFunction([this]()
     {
         DoCloseWindow();
     });

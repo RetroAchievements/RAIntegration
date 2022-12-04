@@ -63,6 +63,7 @@ BOOL ProgressDialog::OnCommand(WORD nCommand)
     switch (nCommand)
     {
         case IDCLOSE:
+        case IDCANCEL:
         {
             auto* vmProgress = dynamic_cast<ProgressViewModel*>(&m_vmWindow);
             if (vmProgress)
@@ -73,6 +74,15 @@ BOOL ProgressDialog::OnCommand(WORD nCommand)
     }
 
     return DialogBase::OnCommand(nCommand);
+}
+
+void ProgressDialog::DoCloseWindow()
+{
+    const auto* vmProgress = dynamic_cast<ProgressViewModel*>(&m_vmWindow);
+    if (vmProgress && vmProgress->IsProcessingTasks())
+        SetDialogResult(ra::ui::DialogResult::Cancel);
+    else
+        DialogBase::DoCloseWindow();
 }
 
 } // namespace win32

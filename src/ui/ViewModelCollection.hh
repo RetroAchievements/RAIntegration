@@ -59,7 +59,7 @@ public:
         }
     }
 
-    void RemoveNotifyTarget(NotifyTarget& pTarget)
+    void RemoveNotifyTarget(NotifyTarget& pTarget) noexcept(false)
     {
 #ifdef RA_UTEST
         Expects(!m_bDisposed);

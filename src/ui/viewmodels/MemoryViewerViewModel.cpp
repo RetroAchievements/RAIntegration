@@ -835,18 +835,33 @@ bool MemoryViewerViewModel::OnChar(char c)
             return false;
     }
 
-    auto nIndex = GetAddress() - GetFirstAddress();
+    auto nAddress = GetAddress();
+    auto nFirstAddress = GetFirstAddress();
+    const auto nVisibleLines = GetNumVisibleLines();
+    const auto nMaxAddress = nFirstAddress + nVisibleLines * 16;
 
+    // make sure the cursor is on screen (same logic as in OnValueChanged(AddressProperty))
+    if (nAddress < nFirstAddress || nAddress >= nMaxAddress)
+    {
+        nFirstAddress = (nAddress & ~0x0F) - ((nVisibleLines / 2) * 16);
+        SetFirstAddress(nFirstAddress);
+
+        nFirstAddress = GetFirstAddress();
+    }
+
+    // adjust for 16-bit and 32-bit views
     const auto nNibblesPerWord = NibblesPerWord();
     auto nSelectedNibble = (nNibblesPerWord - m_nSelectedNibble - 1);
     while (nSelectedNibble > 1)
     {
-        ++nIndex;
+        ++nAddress;
         nSelectedNibble -= 2;
     }
 
+    auto nIndex = nAddress - nFirstAddress;
     if (m_pInvalid[nIndex])
     {
+        // can't update "--"
         AdvanceCursor();
         return true;
     }
@@ -866,8 +881,6 @@ bool MemoryViewerViewModel::OnChar(char c)
     m_pMemory[nIndex] = nByte;
     m_pColor[nIndex] |= STALE_COLOR;
     m_nNeedsRedraw |= REDRAW_MEMORY;
-
-    const auto nAddress = GetFirstAddress() + nIndex;
 
     // push the updated value to the emulator
     auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();

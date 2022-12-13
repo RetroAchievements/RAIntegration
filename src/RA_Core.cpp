@@ -141,6 +141,9 @@ API int CCONV _RA_Shutdown()
 
         if (pWindowManager.CodeNotes.IsVisible())
             pDesktop.CloseWindow(pWindowManager.CodeNotes);
+
+        if (pWindowManager.PointerFinder.IsVisible())
+            pDesktop.CloseWindow(pWindowManager.PointerFinder);
     }
 
     ra::services::Initialization::Shutdown();

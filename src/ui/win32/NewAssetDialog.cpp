@@ -14,10 +14,10 @@ bool NewAssetDialog::Presenter::IsSupported(const ra::ui::WindowViewModelBase& v
 
 void NewAssetDialog::Presenter::ShowModal(ra::ui::WindowViewModelBase& vmViewModel, HWND hParentWnd)
 {
-    auto* vmGameChecksum = dynamic_cast<ra::ui::viewmodels::NewAssetViewModel*>(&vmViewModel);
-    Expects(vmGameChecksum != nullptr);
+    auto* vmNewAsset = dynamic_cast<ra::ui::viewmodels::NewAssetViewModel*>(&vmViewModel);
+    Expects(vmNewAsset != nullptr);
 
-    NewAssetDialog oDialog(*vmGameChecksum);
+    NewAssetDialog oDialog(*vmNewAsset);
     oDialog.CreateModalWindow(MAKEINTRESOURCE(IDD_RA_NEWASSET), this, hParentWnd);
 }
 
@@ -28,8 +28,8 @@ void NewAssetDialog::Presenter::ShowWindow(ra::ui::WindowViewModelBase& oViewMod
 
 // ------------------------------------
 
-NewAssetDialog::NewAssetDialog(ra::ui::viewmodels::NewAssetViewModel& vmGameChecksum) noexcept
-    : DialogBase(vmGameChecksum)
+NewAssetDialog::NewAssetDialog(ra::ui::viewmodels::NewAssetViewModel& vmNewAsset) noexcept
+    : DialogBase(vmNewAsset)
 {
 }
 

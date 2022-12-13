@@ -116,6 +116,21 @@ void MemoryViewerViewModel::InitializeNotifyTargets()
     m_pBookmarkMonitor.reset(new MemoryBookmarkMonitor(*this));
 }
 
+void MemoryViewerViewModel::InitializeFixedViewer(ra::ByteAddress nAddress)
+{
+    const auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
+
+    m_bReadOnly = true;
+    m_bAddressFixed = true;
+
+    if (nAddress >= m_nTotalMemorySize)
+        nAddress = m_nTotalMemorySize - 1;
+
+    SetFirstAddress(nAddress & ~0x0F);
+    SetValue(AddressProperty, nAddress);
+}
+
 void MemoryViewerViewModel::DetachNotifyTargets() noexcept
 {
     m_pBookmarkMonitor.reset();
@@ -306,6 +321,27 @@ void MemoryViewerViewModel::UpdateSelectedNibble(int nNewNibble)
     }
 }
 
+void MemoryViewerViewModel::SetAddress(ra::ByteAddress nValue)
+{
+    if (m_bAddressFixed)
+        return;
+
+    int nSignedValue = ra::to_signed(nValue);
+    if (m_nTotalMemorySize > 0)
+    {
+        if (nSignedValue < 0)
+            nSignedValue = 0;
+        else if (nSignedValue >= gsl::narrow_cast<int>(m_nTotalMemorySize))
+            nSignedValue = gsl::narrow_cast<int>(m_nTotalMemorySize) - 1;
+
+        SetValue(AddressProperty, nSignedValue);
+    }
+    else
+    {
+        SetValue(PendingAddressProperty, gsl::narrow_cast<int>(nValue));
+    }
+}
+
 void MemoryViewerViewModel::SetFirstAddress(ra::ByteAddress value)
 {
     int nSignedValue = ra::to_signed(value);
@@ -393,6 +429,9 @@ void MemoryViewerViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& a
 
 void MemoryViewerViewModel::AdvanceCursor()
 {
+    if (m_bAddressFixed)
+        return;
+
     const auto nNibblesPerWord = NibblesPerWord();
     if (m_nSelectedNibble < nNibblesPerWord - 1)
     {
@@ -418,6 +457,9 @@ void MemoryViewerViewModel::AdvanceCursor()
 
 void MemoryViewerViewModel::RetreatCursor()
 {
+    if (m_bAddressFixed)
+        return;
+
     const auto nAddress = GetAddress();
     const auto nFirstAddress = GetFirstAddress();
 
@@ -450,6 +492,9 @@ void MemoryViewerViewModel::RetreatCursor()
 
 void MemoryViewerViewModel::AdvanceCursorWord()
 {
+    if (m_bAddressFixed)
+        return;
+
     const auto nAddress = GetAddress();
     const auto nBytesPerWord = NibblesPerWord() / 2;
     const auto nNewAddress = (nAddress + nBytesPerWord) & ~(nBytesPerWord - 1);
@@ -470,6 +515,9 @@ void MemoryViewerViewModel::AdvanceCursorWord()
 
 void MemoryViewerViewModel::RetreatCursorWord()
 {
+    if (m_bAddressFixed)
+        return;
+
     const auto nAddress = GetAddress();
     if (m_nSelectedNibble > 0)
     {
@@ -502,6 +550,9 @@ void MemoryViewerViewModel::RetreatCursorWord()
 
 void MemoryViewerViewModel::AdvanceCursorLine()
 {
+    if (m_bAddressFixed)
+        return;
+
     const auto nAddress = GetAddress();
     if (nAddress < m_nTotalMemorySize - 16)
     {
@@ -518,6 +569,9 @@ void MemoryViewerViewModel::AdvanceCursorLine()
 
 void MemoryViewerViewModel::RetreatCursorLine()
 {
+    if (m_bAddressFixed)
+        return;
+
     const auto nAddress = GetAddress();
     if (nAddress > 15)
     {
@@ -534,6 +588,9 @@ void MemoryViewerViewModel::RetreatCursorLine()
 
 void MemoryViewerViewModel::AdvanceCursorPage()
 {
+    if (m_bAddressFixed)
+        return;
+
     const auto nVisibleLines = GetNumVisibleLines();
     const auto nAddress = GetAddress();
     if (nAddress < m_nTotalMemorySize - 16)
@@ -555,6 +612,9 @@ void MemoryViewerViewModel::AdvanceCursorPage()
 
 void MemoryViewerViewModel::RetreatCursorPage()
 {
+    if (m_bAddressFixed)
+        return;
+
     const auto nAddress = GetAddress();
     if (nAddress > 15)
     {
@@ -749,6 +809,9 @@ void MemoryViewerViewModel::UpdateColor(ra::ByteAddress nAddress)
 
 void MemoryViewerViewModel::OnClick(int nX, int nY)
 {
+    if (m_bAddressFixed)
+        return;
+
     const int nRow = nY / m_szChar.Height;
     if (nRow == 0)
         return;

@@ -435,6 +435,7 @@
     <ClCompile Include="..\src\ui\viewmodels\OverlayRecentGamesPageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlaySettingsViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\OverlayViewModel.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\PointerFinderViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupViewModelBase.cpp" />
@@ -511,6 +512,7 @@
     <ClCompile Include="ui\viewmodels\UnknownGameViewModel_Tests.cpp" />
     <ClCompile Include="ui\WindowViewModelBase_Tests.cpp" />
     <ClInclude Include="..\src\pch.h" />
+    <ClInclude Include="..\src\ui\viewmodels\PointerFinderViewModel.hh" />
     <ClInclude Include="api\ApiAsserts.hh" />
     <ClInclude Include="data\DataAsserts.hh" />
     <ClInclude Include="mocks\MockAchievementRuntime.hh" />

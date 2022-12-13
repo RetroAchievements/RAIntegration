@@ -123,6 +123,27 @@
 #define IDC_RA_ADDBOOKMARK              1218
 #define IDC_RA_RESULTS_EXPORT           1219
 #define IDC_RA_CHK_UNPUBLISHED          1220
+#define IDC_RA_GBX_STATE_1              1221
+#define IDC_RA_LBL_ADDRESS_1            1222
+#define IDC_RA_ADDRESS_1                1223
+#define IDC_RA_CAPTURE_1                1224
+#define IDC_RA_MEMVIEWER_1              1225
+#define IDC_RA_GBX_STATE_2              1226
+#define IDC_RA_LBL_ADDRESS_2            1227
+#define IDC_RA_ADDRESS_2                1228
+#define IDC_RA_CAPTURE_2                1229
+#define IDC_RA_MEMVIEWER_2              1230
+#define IDC_RA_GBX_STATE_3              1231
+#define IDC_RA_LBL_ADDRESS_3            1232
+#define IDC_RA_ADDRESS_3                1233
+#define IDC_RA_CAPTURE_3                1234
+#define IDC_RA_MEMVIEWER_3              1235
+#define IDC_RA_GBX_STATE_4              1236
+#define IDC_RA_LBL_ADDRESS_4            1237
+#define IDC_RA_ADDRESS_4                1238
+#define IDC_RA_CAPTURE_4                1239
+#define IDC_RA_MEMVIEWER_4              1240
+
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
 #define IDD_RA_ACHIEVEMENTEDITOR        1503
@@ -135,6 +156,7 @@
 #define IDD_RA_OVERLAYSETTINGS          1511
 #define IDD_RA_PROGRESS                 1512
 #define IDD_RA_NEWASSET                 1513
+#define IDD_RA_POINTERFINDER            1514
 #define IDC_RA_PASSWORD                 1535
 #define IDC_RA_SAVEPASSWORD             1536
 #define IDC_RA_USERNAME                 1549
@@ -179,6 +201,7 @@
 #define IDM_RA_TOGGLELEADERBOARDS       1717
 #define IDM_RA_NON_HARDCORE_WARNING     1718
 #define IDM_RA_FILES_OPENALL            1719
+#define IDM_RA_FILES_POINTERFINDER      1720
 #define IDM_RA_MENUEND                  1739
 
 // Next default values for new objects
@@ -187,7 +210,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        122
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1220
+#define _APS_NEXT_CONTROL_VALUE         1241
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

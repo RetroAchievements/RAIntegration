@@ -60,6 +60,7 @@ protected:
     void OnSizeChanged(const ra::ui::Size& pNewSize) override;
 
 private:
+    bool HandleNavigation(UINT nChar);
     bool m_bSuppressMemoryViewerInvalidate = false;
 
     ra::ui::viewmodels::MemoryViewerViewModel& m_pViewModel;

@@ -450,6 +450,9 @@
     <ClCompile Include="data\context\ConsoleContext_Tests.cpp">
       <Filter>Tests\Data\Context</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\ui\viewmodels\PointerFinderViewModel.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />
@@ -540,6 +543,9 @@
       <Filter>Tests\UI\ViewModels</Filter>
     </ClInclude>
     <ClInclude Include="..\src\data\models\LeaderboardModel.hh">
+      <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ui\viewmodels\PointerFinderViewModel.hh">
       <Filter>Code</Filter>
     </ClInclude>
   </ItemGroup>

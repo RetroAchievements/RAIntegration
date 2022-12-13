@@ -33,6 +33,7 @@ private:
     static void ShowAssetEditor();
     static void ShowMemoryInspector();
     static void ShowMemoryBookmarks();
+    static void ShowPointerFinder();
     static void ShowCodeNotes();
     static void ShowRichPresenceMonitor();
     static void ShowAllEditors();

@@ -32,6 +32,8 @@ public:
     void InitializeNotifyTargets();
     void DetachNotifyTargets() noexcept;
 
+    void InitializeFixedViewer(const ra::ByteAddress nAddress);
+
     void DoFrame();
 
     bool NeedsRedraw() const noexcept { return (m_nNeedsRedraw != 0); }
@@ -93,23 +95,17 @@ public:
     /// <summary>
     /// Sets the address of the selected byte.
     /// </summary>
-    void SetAddress(ByteAddress value)
-    {
-        int nSignedValue = ra::to_signed(value);
-        if (m_nTotalMemorySize > 0)
-        {
-            if (nSignedValue < 0)
-                nSignedValue = 0;
-            else if (nSignedValue >= gsl::narrow_cast<int>(m_nTotalMemorySize))
-                nSignedValue = gsl::narrow_cast<int>(m_nTotalMemorySize) - 1;
+    void SetAddress(ByteAddress value);
 
-            SetValue(AddressProperty, nSignedValue);
-        }
-        else
-        {
-            SetValue(PendingAddressProperty, gsl::narrow_cast<int>(value));
-        }
-    }
+    /// <summary>
+    /// Gets whether or not the address is fixed.
+    /// </summary>
+    bool IsAddressFixed() const noexcept { return m_bAddressFixed; }
+
+    /// <summary>
+    /// Sets whether or not the address is fixed.
+    /// </summary>
+    void SetAddressFixed(bool bValue) noexcept { m_bAddressFixed = bValue; }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for address of the first visible byte.
@@ -124,7 +120,7 @@ public:
     /// <summary>
     /// Sets the address of the first visible byte.
     /// </summary>
-    void SetFirstAddress(ByteAddress value);
+    void SetFirstAddress(ByteAddress nValue);
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the number of visible lines.
@@ -198,6 +194,7 @@ protected:
     int m_nSelectedNibble = 0;
     ra::ByteAddress m_nTotalMemorySize = 0;
     bool m_bReadOnly = true;
+    bool m_bAddressFixed = false;
     bool m_bHasFocus = false;
 
     static constexpr int REDRAW_MEMORY = 1;

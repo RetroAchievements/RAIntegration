@@ -79,6 +79,7 @@ void IntegrationMenuViewModel::AddCommonMenuItems(LookupItemViewModelCollection&
     vmMenu.Add(IDM_RA_FILES_ACHIEVEMENTEDITOR, L"Assets &Editor");
     vmMenu.Add(IDM_RA_FILES_MEMORYFINDER, L"&Memory Inspector");
     vmMenu.Add(IDM_RA_FILES_MEMORYBOOKMARKS, L"Memory &Bookmarks");
+    vmMenu.Add(IDM_RA_FILES_POINTERFINDER, L"Pointer &Finder");
     vmMenu.Add(IDM_RA_FILES_CODENOTES, L"Code &Notes");
     vmMenu.Add(IDM_RA_PARSERICHPRESENCE, L"Rich &Presence Monitor");
 }
@@ -133,6 +134,10 @@ void IntegrationMenuViewModel::ActivateMenuItem(int nMenuItemId)
 
         case IDM_RA_FILES_MEMORYBOOKMARKS:
             ShowMemoryBookmarks();
+            break;
+
+        case IDM_RA_FILES_POINTERFINDER:
+            ShowPointerFinder();
             break;
 
         case IDM_RA_FILES_CODENOTES:
@@ -300,6 +305,16 @@ void IntegrationMenuViewModel::ShowMemoryBookmarks()
     {
         auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
         pWindowManager.MemoryBookmarks.Show();
+    }
+}
+
+void IntegrationMenuViewModel::ShowPointerFinder()
+{
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    if (pEmulatorContext.WarnDisableHardcoreMode("find pointers"))
+    {
+        auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
+        pWindowManager.PointerFinder.Show();
     }
 }
 

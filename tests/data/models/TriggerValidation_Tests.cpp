@@ -2,7 +2,7 @@
 
 #include "data\models\TriggerValidation.hh"
 
-#include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\mocks\MockConsoleContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -127,31 +127,23 @@ public:
 
     TEST_METHOD(TestAddressRange)
     {
-        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
-
-        // no range registered, don't invalidate
-        AssertValidation("0xH1234>0xH1235", L"");
-
-        mockEmulatorContext.AddMemoryBlock(0, 0x10000, nullptr, nullptr);
-
         // basic checks for each side
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext(NES, L"NES");
+        Assert::AreEqual(0xFFFFU, mockConsoleContext.MaxAddress());
         AssertValidation("0xH1234>0xH1235", L"");
         AssertValidation("0xH12345>0xH1235", L"Condition 1: Address 12345 out of range (max FFFF)");
         AssertValidation("0xH1234>0xH12345", L"Condition 1: Address 12345 out of range (max FFFF)");
         AssertValidation("0xH12345>0xH12345", L"Condition 1: Address 12345 out of range (max FFFF)");
         AssertValidation("0xX1234>h12345", L"");
 
-        // support for multiple memory blocks and edge addresses
-        mockEmulatorContext.AddMemoryBlock(1, 0x10000, nullptr, nullptr);
-        AssertValidation("0xH1234>0xH1235", L"");
-        AssertValidation("0xH12345>0xH1235", L"");
+        // edge cases
         AssertValidation("0xH0000>5", L"");
-        AssertValidation("0xH1FFFF>5", L"");
-        AssertValidation("0xH20000>5", L"Condition 1: Address 20000 out of range (max 1FFFF)");
+        AssertValidation("0xHFFFF>5", L"");
+        AssertValidation("0xH10000>5", L"Condition 1: Address 10000 out of range (max FFFF)");
 
         // AddAddress can use really big values for negative offsets, don't flag them.
         AssertValidation("I:0xX1234_0xHFFFFFF00>5", L"");
-        AssertValidation("I:0xX1234_0xH1234>5_0xHFFFFFF00>5", L"Condition 3: Address FFFFFF00 out of range (max 1FFFF)");
+        AssertValidation("I:0xX1234_0xH1234>5_0xHFFFFFF00>5", L"Condition 3: Address FFFFFF00 out of range (max FFFF)");
     }
 
     TEST_METHOD(TestLeaderboardConditionTypes)

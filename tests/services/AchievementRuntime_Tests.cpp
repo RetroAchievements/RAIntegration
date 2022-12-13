@@ -2,6 +2,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
+#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -1281,7 +1282,9 @@ public:
 
     TEST_METHOD(TestDetectUnsupportedAchievements)
     {
-        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext(Atari2600, L"Atari 2600");
+        Assert::AreEqual(0x7FU, mockConsoleContext.MaxAddress());
+        std::array<unsigned char, 128> memory{};
 
         AchievementRuntimeHarness runtime;
         auto& pAch1 = runtime.mockGameContext.Assets().NewAchievement();
@@ -1289,11 +1292,11 @@ public:
         pAch1.UpdateLocalCheckpoint();
         pAch1.Activate();
         auto& pAch2 = runtime.mockGameContext.Assets().NewAchievement();
-        pAch2.SetTrigger("0xH0002=1");
+        pAch2.SetTrigger("0xH0100=1");
         pAch1.UpdateLocalCheckpoint();
         pAch2.Activate();
         auto& pAch3 = runtime.mockGameContext.Assets().NewAchievement();
-        pAch3.SetTrigger("0xH0002=1");
+        pAch3.SetTrigger("0xH0100=1");
         pAch1.UpdateLocalCheckpoint();
 
         Assert::AreEqual(ra::data::models::AssetState::Waiting, pAch1.GetState());
@@ -1331,9 +1334,9 @@ public:
         Assert::AreEqual(ra::data::models::AssetState::Active, pAch1.GetState());
         Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
         Assert::AreEqual(ra::data::models::AssetState::Disabled, pAch2.GetState());
-        Assert::AreEqual(std::wstring(L"Condition 1: Address 0002 out of range (max 0001)"), pAch2.GetValidationError());
+        Assert::AreEqual(std::wstring(L"Condition 1: Address 0100 out of range (max 007F)"), pAch2.GetValidationError());
         Assert::AreEqual(ra::data::models::AssetState::Inactive, pAch3.GetState());
-        Assert::AreEqual(std::wstring(L"Condition 1: Address 0002 out of range (max 0001)"), pAch3.GetValidationError());
+        Assert::AreEqual(std::wstring(L"Condition 1: Address 0100 out of range (max 007F)"), pAch3.GetValidationError());
     }
 };
 

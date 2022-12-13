@@ -2,7 +2,7 @@
 
 #include "RA_StringUtils.h"
 
-#include "data/context/EmulatorContext.hh"
+#include "data/context/ConsoleContext.hh"
 
 #include "services/ServiceLocator.hh"
 
@@ -99,10 +99,10 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
     const auto* pTrigger = rc_parse_trigger(sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
 
     unsigned nMaxAddress = ra::to_unsigned(-1);
-    if (ra::services::ServiceLocator::Exists<ra::data::context::EmulatorContext>())
+    if (ra::services::ServiceLocator::Exists<ra::data::context::ConsoleContext>())
     {
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-        nMaxAddress = gsl::narrow_cast<unsigned>(pEmulatorContext.TotalMemorySize()) - 1;
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        nMaxAddress = pConsoleContext.MaxAddress();
     }
 
     char sErrorBuffer[256];

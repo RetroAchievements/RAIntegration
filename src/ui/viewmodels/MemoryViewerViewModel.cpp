@@ -2,6 +2,7 @@
 
 #include "RA_Defs.h"
 
+#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
@@ -118,8 +119,8 @@ void MemoryViewerViewModel::InitializeNotifyTargets()
 
 void MemoryViewerViewModel::InitializeFixedViewer(ra::ByteAddress nAddress)
 {
-    const auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-    m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
+    const auto& pConsoleContext = ra::services::ServiceLocator::GetMutable<ra::data::context::ConsoleContext>();
+    m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pConsoleContext.MemoryRegions().at(pConsoleContext.MemoryRegions().size() - 1).EndAddress + 1);
 
     m_bReadOnly = true;
     m_bAddressFixed = true;

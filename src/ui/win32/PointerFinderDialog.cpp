@@ -1,10 +1,16 @@
 #include "PointerFinderDialog.hh"
 
+#include "RA_Defs.h"
 #include "RA_Log.h"
 #include "RA_Resource.h"
 
+#include "ui/viewmodels/WindowManager.hh"
+
+#include "ui/win32/bindings/GridTextColumnBinding.hh"
+
 using ra::ui::viewmodels::MemoryViewerViewModel;
 using ra::ui::viewmodels::PointerFinderViewModel;
+using ra::ui::win32::bindings::GridColumnBinding;
 
 namespace ra {
 namespace ui {
@@ -60,8 +66,34 @@ void PointerFinderDialog::PointerFinderStateBinding::OnViewModelStringValueChang
 
 // ------------------------------------
 
-PointerFinderDialog::PointerFinderDialog(ra::ui::viewmodels::PointerFinderViewModel& vmPointerFinder)
+class PointerAddressGridColumnBinding : public bindings::GridTextColumnBinding
+{
+public:
+    PointerAddressGridColumnBinding(const StringModelProperty& pBoundProperty)
+        : bindings::GridTextColumnBinding(pBoundProperty)
+    {
+    }
+
+    bool HandleDoubleClick(const ra::ui::ViewModelCollectionBase& vmItems, gsl::index nIndex) override
+    {
+        if (!vmItems.GetItemValue(nIndex, PointerFinderViewModel::PotentialPointerViewModel::OffsetProperty).empty())
+        {
+            const auto* pItem = dynamic_cast<const PointerFinderViewModel::PotentialPointerViewModel*>(vmItems.GetViewModelAt(nIndex));
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector.SetCurrentAddress(pItem->GetRawAddress());
+
+            return true;
+        }
+
+        return false;
+    }
+};
+
+// ------------------------------------
+
+PointerFinderDialog::PointerFinderDialog(PointerFinderViewModel& vmPointerFinder)
     : DialogBase(vmPointerFinder),
+      m_bindSearchType(vmPointerFinder),
+      m_bindResults(vmPointerFinder),
       m_bindViewer1(vmPointerFinder.States().at(0)),
       m_bindViewer2(vmPointerFinder.States().at(1)),
       m_bindViewer3(vmPointerFinder.States().at(2)),
@@ -70,6 +102,47 @@ PointerFinderDialog::PointerFinderDialog(ra::ui::viewmodels::PointerFinderViewMo
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Pointer Finder");
 
     // Results
+    m_bindWindow.BindLabel(IDC_RA_RESULT_COUNT, PointerFinderViewModel::ResultCountTextProperty);
+    m_bindSearchType.BindItems(vmPointerFinder.SearchTypes());
+    m_bindSearchType.BindSelectedItem(PointerFinderViewModel::SearchTypeProperty);
+
+    auto pAddressColumn = std::make_unique<PointerAddressGridColumnBinding>(
+        PointerFinderViewModel::PotentialPointerViewModel::PointerAddressProperty);
+    pAddressColumn->SetHeader(L"Address");
+    pAddressColumn->SetWidth(GridColumnBinding::WidthType::Fill, 72);
+    m_bindResults.BindColumn(0, std::move(pAddressColumn));
+
+    auto pOffsetColumn = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        PointerFinderViewModel::PotentialPointerViewModel::OffsetProperty);
+    pOffsetColumn->SetHeader(L"Offset");
+    pOffsetColumn->SetWidth(GridColumnBinding::WidthType::Pixels, 80);
+    m_bindResults.BindColumn(1, std::move(pOffsetColumn));
+
+    auto pValue1Column = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        PointerFinderViewModel::PotentialPointerViewModel::PointerValue1Property);
+    pValue1Column->SetHeader(L"State 1");
+    pValue1Column->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
+    m_bindResults.BindColumn(2, std::move(pValue1Column));
+
+    auto pValue2Column = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        PointerFinderViewModel::PotentialPointerViewModel::PointerValue2Property);
+    pValue2Column->SetHeader(L"State 2");
+    pValue2Column->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
+    m_bindResults.BindColumn(3, std::move(pValue2Column));
+
+    auto pValue3Column = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        PointerFinderViewModel::PotentialPointerViewModel::PointerValue3Property);
+    pValue3Column->SetHeader(L"State 3");
+    pValue3Column->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
+    m_bindResults.BindColumn(4, std::move(pValue3Column));
+
+    auto pValue4Column = std::make_unique<ra::ui::win32::bindings::GridTextColumnBinding>(
+        PointerFinderViewModel::PotentialPointerViewModel::PointerValue4Property);
+    pValue4Column->SetHeader(L"State 4");
+    pValue4Column->SetWidth(GridColumnBinding::WidthType::Pixels, 72);
+    m_bindResults.BindColumn(5, std::move(pValue4Column));
+
+    m_bindResults.BindItems(vmPointerFinder.PotentialPointers());
 
     // States
     m_bindViewer1.BindAddress(IDC_RA_ADDRESS_1);
@@ -120,6 +193,9 @@ PointerFinderDialog::PointerFinderDialog(ra::ui::viewmodels::PointerFinderViewMo
 
 BOOL PointerFinderDialog::OnInitDialog()
 {
+    m_bindSearchType.SetControl(*this, IDC_RA_SEARCHTYPE);
+    m_bindResults.SetControl(*this, IDC_RA_RESULTS);
+
     m_bindViewer1.OnInitDialog(*this, IDC_RA_MEMVIEWER_1);
     m_bindViewer2.OnInitDialog(*this, IDC_RA_MEMVIEWER_2);
     m_bindViewer3.OnInitDialog(*this, IDC_RA_MEMVIEWER_3);
@@ -132,6 +208,14 @@ BOOL PointerFinderDialog::OnCommand(WORD nCommand)
 {
     switch (nCommand)
     {
+        case IDC_RA_RESET_FILTER: {
+            auto* vmPointerFinder = dynamic_cast<PointerFinderViewModel*>(&m_vmWindow);
+            if (vmPointerFinder)
+                vmPointerFinder->Find();
+
+            return TRUE;
+        }
+
         case IDC_RA_CAPTURE_1: {
             auto* vmPointerFinder = dynamic_cast<PointerFinderViewModel*>(&m_vmWindow);
             if (vmPointerFinder)

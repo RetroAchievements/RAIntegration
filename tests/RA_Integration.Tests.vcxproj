@@ -505,6 +505,7 @@
     <ClCompile Include="ui\viewmodels\OverlayManager_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlayRecentGamesPageViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\OverlaySettingsViewModel_Tests.cpp" />
+    <ClCompile Include="ui\viewmodels\PointerFinderViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\ProgressViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel_Tests.cpp" />
     <ClCompile Include="ui\viewmodels\TriggerConditionViewModel_Tests.cpp" />

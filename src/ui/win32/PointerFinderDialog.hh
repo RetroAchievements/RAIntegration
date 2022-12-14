@@ -7,6 +7,8 @@
 #include "ui/win32/DialogBase.hh"
 #include "ui/win32/IDialogPresenter.hh"
 
+#include "ui/win32/bindings/ComboBoxBinding.hh"
+#include "ui/win32/bindings/GridBinding.hh"
 #include "ui/win32/bindings/TextBoxBinding.hh"
 #include "ui/win32/bindings/MemoryViewerControlBinding.hh"
 
@@ -83,6 +85,8 @@ private:
         int m_idcButton = 0;
     };
 
+    bindings::ComboBoxBinding m_bindSearchType;
+    bindings::GridBinding m_bindResults;
     PointerFinderStateBinding m_bindViewer1;
     PointerFinderStateBinding m_bindViewer2;
     PointerFinderStateBinding m_bindViewer3;

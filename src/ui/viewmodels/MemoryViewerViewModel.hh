@@ -190,7 +190,8 @@ protected:
     uint8_t* m_pColor;
     uint8_t* m_pInvalid;
 
-    ra::ui::Size m_szChar;
+    static ra::ui::Size s_szChar;
+
     int m_nSelectedNibble = 0;
     ra::ByteAddress m_nTotalMemorySize = 0;
     bool m_bReadOnly = true;
@@ -222,11 +223,11 @@ private:
     int NibblesPerWord() const;
     void UpdateSelectedNibble(int nNewNibble);
 
-    std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
-    std::unique_ptr<ra::ui::drawing::ISurface> m_pFontSurface;
     std::unique_ptr<uint8_t[]> m_pBuffer;
 
-    int m_nFont = 0;
+    std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
+    static std::unique_ptr<ra::ui::drawing::ISurface> s_pFontSurface;
+    static int s_nFont;
 
     class MemoryBookmarkMonitor;
     friend class MemoryBookmarkMonitor;

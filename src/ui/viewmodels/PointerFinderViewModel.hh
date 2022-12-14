@@ -60,6 +60,11 @@ public:
     /// </summary>
     const std::wstring& GetResultCountText() const { return GetValue(ResultCountTextProperty); }
 
+    /// <summary>
+    /// Bookmarks the currently item from the search results.
+    /// </summary>
+    void BookmarkSelected();
+
     class StateViewModel : public ViewModelBase
     {
     public:
@@ -240,6 +245,21 @@ public:
         }
         
         ra::ByteAddress GetRawAddress() const { return m_nAddress; }
+        
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the whether the result is selected.
+        /// </summary>
+        static const BoolModelProperty IsSelectedProperty;
+
+        /// <summary>
+        /// Gets whether the result is selected.
+        /// </summary>
+        bool IsSelected() const { return GetValue(IsSelectedProperty); }
+
+        /// <summary>
+        /// Sets whether the result is selected.
+        /// </summary>
+        void SetSelected(bool bValue) { SetValue(IsSelectedProperty, bValue); }
 
     private:
         friend class PointerFinderViewModel;

@@ -6,6 +6,7 @@
 #include "data/context/GameContext.hh"
 
 #include "ui/viewmodels/MessageBoxViewModel.hh"
+#include "ui/viewmodels/WindowManager.hh"
 
 namespace ra {
 namespace ui {
@@ -24,6 +25,7 @@ const StringModelProperty PointerFinderViewModel::PotentialPointerViewModel::Poi
 const StringModelProperty PointerFinderViewModel::PotentialPointerViewModel::PointerValue2Property("PotentialPointerViewModel", "PointerValue2", L"");
 const StringModelProperty PointerFinderViewModel::PotentialPointerViewModel::PointerValue3Property("PotentialPointerViewModel", "PointerValue3", L"");
 const StringModelProperty PointerFinderViewModel::PotentialPointerViewModel::PointerValue4Property("PotentialPointerViewModel", "PointerValue4", L"");
+const BoolModelProperty PointerFinderViewModel::PotentialPointerViewModel::IsSelectedProperty("PotentialPointerViewModel", "IsSelected", false);
 
 void PointerFinderViewModel::StateViewModel::DoFrame()
 {
@@ -261,6 +263,34 @@ void PointerFinderViewModel::Find()
 
     if (!bPerformedSearch)
         ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Cannot find.", L"At least two unique addresses must be captured before potential pointers can be located.");
+}
+
+void PointerFinderViewModel::BookmarkSelected()
+{
+    auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
+    if (!vmBookmarks.IsVisible())
+        vmBookmarks.Show();
+
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vResults.Count()); nIndex++)
+    {
+        const auto* pItem = m_vResults.GetItemAt(nIndex);
+        Expects(pItem != nullptr);
+        if (pItem->IsSelected())
+        {
+            MemSize nSize = MemSize::ThirtyTwoBit;
+            switch (GetSearchType())
+            {
+                case ra::services::SearchType::SixteenBit:
+                case ra::services::SearchType::SixteenBitAligned:
+                case ra::services::SearchType::SixteenBitBigEndian:
+                    nSize = MemSize::SixteenBit;
+                    break;
+            }
+
+            vmBookmarks.AddBookmark(pItem->m_nAddress, nSize);
+            break;
+        }
+    }
 }
 
 } // namespace viewmodels

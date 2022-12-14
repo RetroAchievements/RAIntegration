@@ -23,6 +23,10 @@ constexpr uint8_t STALE_COLOR = 0x80;
 constexpr uint8_t HIGHLIGHTED_COLOR = STALE_COLOR | gsl::narrow_cast<uint8_t>(ra::etoi(MemoryViewerViewModel::TextColor::Selected));
 constexpr int ADDRESS_COLUMN_WIDTH = 10;
 
+std::unique_ptr<ra::ui::drawing::ISurface> MemoryViewerViewModel::s_pFontSurface;
+ra::ui::Size MemoryViewerViewModel::s_szChar;
+int MemoryViewerViewModel::s_nFont = 0;
+
 class MemoryViewerViewModel::MemoryBookmarkMonitor : protected ViewModelCollectionBase::NotifyTarget
 {
 public:
@@ -813,14 +817,14 @@ void MemoryViewerViewModel::OnClick(int nX, int nY)
     if (m_bAddressFixed)
         return;
 
-    const int nRow = nY / m_szChar.Height;
+    const int nRow = nY / s_szChar.Height;
     if (nRow == 0)
         return;
 
-    int nColumn = nX / m_szChar.Width;
+    int nColumn = nX / s_szChar.Width;
     if (nColumn < ADDRESS_COLUMN_WIDTH)
     {
-        if (nColumn < ADDRESS_COLUMN_WIDTH - 1 || (nX % m_szChar.Width) < (m_szChar.Width / 2))
+        if (nColumn < ADDRESS_COLUMN_WIDTH - 1 || (nX % s_szChar.Width) < (s_szChar.Width / 2))
             return;
 
         ++nColumn;
@@ -836,8 +840,8 @@ void MemoryViewerViewModel::OnClick(int nX, int nY)
     if (nNewNibble == nNibblesPerWord)
     {
         // when clicking between data, adjust to the nearest data
-        const int nMargin = nX % m_szChar.Width;
-        if (nMargin < m_szChar.Width / 2)
+        const int nMargin = nX % s_szChar.Width;
+        if (nMargin < s_szChar.Width / 2)
         {
             nNewNibble--;
         }
@@ -865,10 +869,10 @@ void MemoryViewerViewModel::OnClick(int nX, int nY)
 
 void MemoryViewerViewModel::OnResized(_UNUSED int nWidth, int nHeight)
 {
-    if (m_pFontSurface == nullptr)
+    if (s_pFontSurface == nullptr)
         BuildFontSurface();
 
-    SetNumVisibleLines((nHeight / m_szChar.Height) - 1);
+    SetNumVisibleLines((nHeight / s_szChar.Height) - 1);
 }
 
 bool MemoryViewerViewModel::OnChar(char c)
@@ -1006,15 +1010,15 @@ void MemoryViewerViewModel::BuildFontSurface()
 
     const auto& pEditorTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
 
-    m_nFont = pSurface->LoadFont(pEditorTheme.FontMemoryViewer(), pEditorTheme.FontSizeMemoryViewer(), ra::ui::FontStyles::Normal);
-    m_szChar = pSurface->MeasureText(m_nFont, L"0");
-    m_szChar.Height--; // don't need space for dangly bits
+    s_nFont = pSurface->LoadFont(pEditorTheme.FontMemoryViewer(), pEditorTheme.FontSizeMemoryViewer(), ra::ui::FontStyles::Normal);
+    s_szChar = pSurface->MeasureText(s_nFont, L"0");
+    s_szChar.Height--; // don't need space for dangly bits
 
-    m_pFontSurface = pSurfaceFactory.CreateSurface(m_szChar.Width * gsl::narrow_cast<int>(g_sHexChars.size()), m_szChar.Height * ra::etoi(TextColor::NumColors));
-    m_pFontSurface->FillRectangle(0, 0, m_pFontSurface->GetWidth(), m_pFontSurface->GetHeight(), pEditorTheme.ColorBackground());
+    s_pFontSurface = pSurfaceFactory.CreateSurface(s_szChar.Width * gsl::narrow_cast<int>(g_sHexChars.size()), s_szChar.Height * ra::etoi(TextColor::NumColors));
+    s_pFontSurface->FillRectangle(0, 0, s_pFontSurface->GetWidth(), s_pFontSurface->GetHeight(), pEditorTheme.ColorBackground());
 
-    m_pFontSurface->FillRectangle(0, m_szChar.Height * ra::etoi(TextColor::Cursor),
-        m_pFontSurface->GetWidth(), m_szChar.Height, pEditorTheme.ColorCursor());
+    s_pFontSurface->FillRectangle(0, s_szChar.Height * ra::etoi(TextColor::Cursor),
+        s_pFontSurface->GetWidth(), s_szChar.Height, pEditorTheme.ColorCursor());
 
     std::wstring sHexChar = L"0";
     ra::ui::Color nColor(0);
@@ -1034,7 +1038,7 @@ void MemoryViewerViewModel::BuildFontSurface()
         for (int j = 0; j < gsl::narrow_cast<int>(g_sHexChars.size()); ++j)
         {
             sHexChar.at(0) = g_sHexChars.at(j);
-            m_pFontSurface->WriteText(j * m_szChar.Width, i * m_szChar.Height - 1, m_nFont, nColor, sHexChar);
+            s_pFontSurface->WriteText(j * s_szChar.Width, i * s_szChar.Height - 1, s_nFont, nColor, sHexChar);
         }
     }
 }
@@ -1052,11 +1056,11 @@ void MemoryViewerViewModel::UpdateRenderImage()
 
     if (m_pSurface == nullptr)
     {
-        if (m_pFontSurface == nullptr)
+        if (s_pFontSurface == nullptr)
             BuildFontSurface();
 
-        const int nWidth = (16 * 3 + 1 + 8) * m_szChar.Width;
-        const int nHeight = (GetNumVisibleLines() + 1) * m_szChar.Height;
+        const int nWidth = (16 * 3 + 1 + 8) * s_szChar.Width;
+        const int nHeight = (GetNumVisibleLines() + 1) * s_szChar.Height;
         m_pSurface = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>().CreateSurface(nWidth, nHeight);
 
         // background
@@ -1064,7 +1068,7 @@ void MemoryViewerViewModel::UpdateRenderImage()
         m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), pEditorTheme.ColorBackground());
 
         // separator
-        m_pSurface->FillRectangle(9 * m_szChar.Width, m_szChar.Height, 1, nHeight, pEditorTheme.ColorSeparator());
+        m_pSurface->FillRectangle(9 * s_szChar.Width, s_szChar.Height, 1, nHeight, pEditorTheme.ColorSeparator());
 
         nNeedsRedraw = REDRAW_ALL;
 
@@ -1101,13 +1105,13 @@ void MemoryViewerViewModel::RenderMemory()
         TextColor nColorUpper = ra::itoe<TextColor>(nColor);
         TextColor nColorLower = nColorUpper;
 
-        const int nY = ((i / 16) + 1) * m_szChar.Height;
+        const int nY = ((i / 16) + 1) * s_szChar.Height;
 
-        int nX = (((i & 0x0F) / nBytesPerWord) * nWordSpacing + ADDRESS_COLUMN_WIDTH) * m_szChar.Width;
+        int nX = (((i & 0x0F) / nBytesPerWord) * nWordSpacing + ADDRESS_COLUMN_WIDTH) * s_szChar.Width;
         if (nBytesPerWord > 1)
         {
             const int nByteOffset = ((nBytesPerWord - 1) - (i % nBytesPerWord));
-            nX += (nByteOffset * 2) * m_szChar.Width;
+            nX += (nByteOffset * 2) * s_szChar.Width;
 
             if (nColorUpper == TextColor::Selected && m_bHasFocus && !m_bReadOnly)
             {
@@ -1135,13 +1139,13 @@ void MemoryViewerViewModel::RenderMemory()
         {
             constexpr int INVALID_CHAR = 16;
             WriteChar(nX, nY, nColorUpper, INVALID_CHAR);
-            WriteChar(nX + m_szChar.Width, nY, nColorLower, INVALID_CHAR);
+            WriteChar(nX + s_szChar.Width, nY, nColorLower, INVALID_CHAR);
         }
         else
         {
             const auto nValue = m_pMemory[i];
             WriteChar(nX, nY, nColorUpper, nValue >> 4);
-            WriteChar(nX + m_szChar.Width, nY, nColorLower, nValue & 0x0F);
+            WriteChar(nX + s_szChar.Width, nY, nColorLower, nValue & 0x0F);
         }
     }
 }
@@ -1150,7 +1154,7 @@ void MemoryViewerViewModel::RenderMemory()
 
 void MemoryViewerViewModel::WriteChar(int nX, int nY, TextColor nColor, int hexChar)
 {
-    m_pSurface->DrawSurface(nX, nY, *m_pFontSurface, hexChar * m_szChar.Width, ra::etoi(nColor) * m_szChar.Height, m_szChar.Width, m_szChar.Height);
+    m_pSurface->DrawSurface(nX, nY, *s_pFontSurface, hexChar * s_szChar.Width, ra::etoi(nColor) * s_szChar.Height, s_szChar.Width, s_szChar.Height);
 }
 
 void MemoryViewerViewModel::RenderAddresses()
@@ -1158,10 +1162,10 @@ void MemoryViewerViewModel::RenderAddresses()
     auto nVisibleLines = GetNumVisibleLines();
     const auto nCursorAddress = GetAddress() & ~0x0F;
     auto nFirstAddress = GetFirstAddress();
-    int nY = m_szChar.Height - 1;
+    int nY = s_szChar.Height - 1;
 
     const auto& pEditorTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
-    m_pSurface->FillRectangle(0, m_szChar.Height, m_szChar.Width * 8, nVisibleLines * m_szChar.Height, pEditorTheme.ColorBackground());
+    m_pSurface->FillRectangle(0, s_szChar.Height, s_szChar.Width * 8, nVisibleLines * s_szChar.Height, pEditorTheme.ColorBackground());
 
     if (nFirstAddress + nVisibleLines * 16 > m_nTotalMemorySize)
         nVisibleLines = (m_nTotalMemorySize - nFirstAddress) / 16;
@@ -1174,8 +1178,8 @@ void MemoryViewerViewModel::RenderAddresses()
         const auto sAddress = ra::StringPrintf(sFormat, nFirstAddress);
         nFirstAddress += 16;
 
-        m_pSurface->WriteText(0, nY, m_nFont, nColor, sAddress);
-        nY += m_szChar.Height;
+        m_pSurface->WriteText(0, nY, s_nFont, nColor, sAddress);
+        nY += s_szChar.Height;
     }
 }
 
@@ -1184,8 +1188,8 @@ void MemoryViewerViewModel::RenderHeader()
     const auto nCursorAddress = ra::to_signed(GetAddress() & 0x0F);
 
     const auto& pEditorTheme = ra::services::ServiceLocator::Get<ra::ui::EditorTheme>();
-    auto nX = ADDRESS_COLUMN_WIDTH * m_szChar.Width;
-    m_pSurface->FillRectangle(nX, 0, 16 * 3 * m_szChar.Width, m_szChar.Height, pEditorTheme.ColorBackground());
+    auto nX = ADDRESS_COLUMN_WIDTH * s_szChar.Width;
+    m_pSurface->FillRectangle(nX, 0, 16 * 3 * s_szChar.Width, s_szChar.Height, pEditorTheme.ColorBackground());
 
     const auto nNibblesPerWord = NibblesPerWord();
     std::wstring sValue(nNibblesPerWord, ' ');
@@ -1193,8 +1197,8 @@ void MemoryViewerViewModel::RenderHeader()
     {
         const auto nColor = (nCursorAddress == i) ? pEditorTheme.ColorHeaderSelected() : pEditorTheme.ColorHeader();
         sValue.at(gsl::narrow_cast<size_t>(nNibblesPerWord) - 1) = g_sHexChars.at(i);
-        m_pSurface->WriteText(nX, -2, m_nFont, nColor, sValue);
-        nX += m_szChar.Width * (nNibblesPerWord + 1);
+        m_pSurface->WriteText(nX, -2, s_nFont, nColor, sValue);
+        nX += s_szChar.Width * (nNibblesPerWord + 1);
     }
 }
 

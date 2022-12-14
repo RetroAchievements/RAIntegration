@@ -6,6 +6,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 
+#include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -28,6 +29,7 @@ private:
         ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::services::mocks::MockConfiguration mockConfiguration;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
@@ -430,6 +432,55 @@ public:
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 1U }, vmPointerFinder.PotentialPointers().Count());
         vmPointerFinder.AssertRow(0, L"No pointers found.", L"", L"", L"", L"", L"");
+    }
+
+    TEST_METHOD(TestBookmarkSelected)
+    {
+        PointerFinderViewModelHarness vmPointerFinder;
+        vmPointerFinder.mockGameContext.SetGameId(1U);
+        vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
+
+        // no results - bookmarks window will still be shown
+        vmPointerFinder.BookmarkSelected();
+        Assert::IsTrue(vmPointerFinder.mockWindowManager.MemoryBookmarks.IsVisible());
+        vmPointerFinder.mockDesktop.ResetExpectedWindows();
+
+        const auto& pBookmarks = vmPointerFinder.mockWindowManager.MemoryBookmarks.Bookmarks();
+        Assert::AreEqual({ 0U }, pBookmarks.Count());
+
+        // initialize results
+        std::array<unsigned char, 256> pMemory{};
+        pMemory[0x08] = 0x1c;
+        pMemory[0x70] = 0x1c;
+        pMemory[0x9c] = 0x18;
+        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+
+        vmPointerFinder.States().at(0).SetAddress(L"0x18");
+        vmPointerFinder.States().at(0).ToggleCapture();
+
+        pMemory[0x08] = 0x34;
+        pMemory[0x70] = 0x34;
+        pMemory[0x9c] = 0x30;
+
+        vmPointerFinder.States().at(1).SetAddress(L"0x30");
+        vmPointerFinder.States().at(1).ToggleCapture();
+        vmPointerFinder.Find();
+
+        Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
+        Assert::AreEqual({ 3U }, vmPointerFinder.PotentialPointers().Count());
+        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L"");
+        vmPointerFinder.AssertRow(1, L"0x0070", L"+0x04", L"001c", L"0034", L"", L"");
+        vmPointerFinder.AssertRow(2, L"0x009c", L"+0x00", L"0018", L"0030", L"", L"");
+
+        // no selection
+        vmPointerFinder.BookmarkSelected();
+        Assert::AreEqual({ 0U }, pBookmarks.Count());
+
+        // selection
+        vmPointerFinder.PotentialPointers().GetItemAt(1)->SetSelected(true);
+        vmPointerFinder.BookmarkSelected();
+        Assert::AreEqual({ 1U }, pBookmarks.Count());
+        Assert::AreEqual({ 0x0070U }, pBookmarks.GetItemAt(0)->GetAddress());
     }
 };
 

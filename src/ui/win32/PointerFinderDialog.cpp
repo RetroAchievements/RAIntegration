@@ -143,6 +143,7 @@ PointerFinderDialog::PointerFinderDialog(PointerFinderViewModel& vmPointerFinder
     m_bindResults.BindColumn(5, std::move(pValue4Column));
 
     m_bindResults.BindItems(vmPointerFinder.PotentialPointers());
+    m_bindResults.BindIsSelected(PointerFinderViewModel::PotentialPointerViewModel::IsSelectedProperty);
 
     // States
     m_bindViewer1.BindAddress(IDC_RA_ADDRESS_1);
@@ -160,35 +161,35 @@ PointerFinderDialog::PointerFinderDialog(PointerFinderViewModel& vmPointerFinder
     SetAnchor(IDC_RA_RESULT_COUNT, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_RESET_FILTER, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_APPLY_FILTER, Anchor::Top | Anchor::Left);
-    SetAnchor(IDC_RA_RESULTS_BOOKMARK, Anchor::Top | Anchor::Left | Anchor::Bottom);
-    SetAnchor(IDC_RA_RESULTS_EXPORT, Anchor::Top | Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_RESULTS_BOOKMARK, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_RESULTS_EXPORT, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_RESULTS, Anchor::Top | Anchor::Left | Anchor::Bottom | Anchor::Right);
 
     SetAnchor(IDC_RA_GBX_STATE_1, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_LBL_ADDRESS_1, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_ADDRESS_1, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_CAPTURE_1, Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_LBL_ADDRESS_1, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_ADDRESS_1, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_CAPTURE_1, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_MEMVIEWER_1, Anchor::Left | Anchor::Bottom | Anchor::Right);
 
     SetAnchor(IDC_RA_GBX_STATE_2, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_LBL_ADDRESS_2, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_ADDRESS_2, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_CAPTURE_2, Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_LBL_ADDRESS_2, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_ADDRESS_2, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_CAPTURE_2, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_MEMVIEWER_2, Anchor::Left | Anchor::Bottom | Anchor::Right);
 
     SetAnchor(IDC_RA_GBX_STATE_3, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_LBL_ADDRESS_3, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_ADDRESS_3, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_CAPTURE_3, Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_LBL_ADDRESS_3, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_ADDRESS_3, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_CAPTURE_3, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_MEMVIEWER_3, Anchor::Left | Anchor::Bottom | Anchor::Right);
 
     SetAnchor(IDC_RA_GBX_STATE_4, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_LBL_ADDRESS_4, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_ADDRESS_4, Anchor::Left | Anchor::Bottom | Anchor::Right);
-    SetAnchor(IDC_RA_CAPTURE_4, Anchor::Left | Anchor::Bottom | Anchor::Right);
+    SetAnchor(IDC_RA_LBL_ADDRESS_4, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_ADDRESS_4, Anchor::Left | Anchor::Bottom);
+    SetAnchor(IDC_RA_CAPTURE_4, Anchor::Left | Anchor::Bottom);
     SetAnchor(IDC_RA_MEMVIEWER_4, Anchor::Left | Anchor::Bottom | Anchor::Right);
 
-    SetMinimumSize(603, 580);
+    SetMinimumSize(616, 583);
 }
 
 BOOL PointerFinderDialog::OnInitDialog()
@@ -212,6 +213,14 @@ BOOL PointerFinderDialog::OnCommand(WORD nCommand)
             auto* vmPointerFinder = dynamic_cast<PointerFinderViewModel*>(&m_vmWindow);
             if (vmPointerFinder)
                 vmPointerFinder->Find();
+
+            return TRUE;
+        }
+
+        case IDC_RA_RESULTS_BOOKMARK: {
+            auto* vmPointerFinder = dynamic_cast<PointerFinderViewModel*>(&m_vmWindow);
+            if (vmPointerFinder)
+                vmPointerFinder->BookmarkSelected();
 
             return TRUE;
         }

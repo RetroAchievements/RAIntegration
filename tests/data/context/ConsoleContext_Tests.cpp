@@ -36,6 +36,7 @@ public:
 
         Assert::AreEqual(25, (int)context.Id());
         Assert::AreEqual(std::wstring(L"Atari 2600"), context.Name());
+        Assert::AreEqual(0x7FU, context.MaxAddress());
 
         const auto& vRegions = context.MemoryRegions();
         Assert::AreEqual({1}, vRegions.size());
@@ -59,6 +60,7 @@ public:
 
         Assert::AreEqual(5, (int)context.Id());
         Assert::AreEqual(std::wstring(L"GameBoy Advance"), context.Name());
+        Assert::AreEqual(0x00047FFFU, context.MaxAddress());
 
         const auto& vRegions = context.MemoryRegions();
         Assert::AreEqual({2}, vRegions.size());
@@ -88,6 +90,7 @@ public:
 
         Assert::AreEqual(41, (int)context.Id());
         Assert::AreEqual(std::wstring(L"PlayStation Portable"), context.Name());
+        Assert::AreEqual(0x01FFFFFFU, context.MaxAddress());
 
         const auto& vRegions = context.MemoryRegions();
         Assert::AreEqual({2}, vRegions.size());

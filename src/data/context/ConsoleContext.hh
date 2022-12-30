@@ -101,11 +101,17 @@ public:
     /// <returns>Converted address, or <c>0xFFFFFFFF</c> if conversion could not be completed.
     ra::ByteAddress ByteAddressFromRealAddress(ra::ByteAddress nRealAddress) const noexcept;
 
+    /// <summary>
+    /// Gets the maximum valid address for the console.
+    /// </summary>
+    ra::ByteAddress MaxAddress() const noexcept { return m_nMaxAddress; }
+
 protected:
     ConsoleID m_nId{};
     std::wstring m_sName;
 
     std::vector<MemoryRegion> m_vRegions;
+    ra::ByteAddress m_nMaxAddress = 0;
 };
 
 } // namespace context

@@ -13,6 +13,7 @@ ConsoleContext::ConsoleContext(ConsoleID nId) noexcept
 {
     m_nId = nId;
     m_sName = ra::Widen(rc_console_name(ra::etoi(nId)));
+    m_nMaxAddress = 0;
 
     const auto* pRegions = rc_console_memory_regions(ra::etoi(nId));
     if (pRegions)
@@ -54,6 +55,8 @@ ConsoleContext::ConsoleContext(ConsoleID nId) noexcept
                     pMemoryRegion.Type = AddressType::Unknown;
                     break;
             }
+
+            m_nMaxAddress = std::max(m_nMaxAddress, pRegion.end_address);
         }
     }
 }

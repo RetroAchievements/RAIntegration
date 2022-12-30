@@ -258,7 +258,7 @@ void MultiLineGridBinding::UpdateCellContents(const ItemMetrics& pItemMetrics,
     item.mask = LVIF_TEXT;
     item.iItem = gsl::narrow_cast<int>(nLine);
     item.iSubItem = gsl::narrow_cast<int>(nColumn);
-    item.pszText = &sText.at(0);
+    item.pszText = sText.data();
 
     if (pItemMetrics.nNumLines > 1)
     {

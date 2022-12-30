@@ -1802,6 +1802,53 @@ public:
         viewer.SetFirstAddress(0x60U);
         Assert::AreEqual({ 0x5CU }, viewer.GetAddress());
     }
+
+    TEST_METHOD(TestOnCharOffscreen)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.MockRender();
+        viewer.SetAddress(20U); // set address first, as it updates FirstAddress
+        viewer.SetFirstAddress(64U); // showing $0040-$00BF (8 lines)
+        viewer.SetReadOnly(false);
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        Assert::AreEqual({ 20U }, viewer.GetAddress());
+        Assert::AreEqual({ 64U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 8U }, viewer.GetNumVisibleLines());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // cursor should be moved onscreen and '6' should be set as upper nibble of selected byte
+        Assert::IsTrue(viewer.OnChar('6'));
+        Assert::AreEqual({ 20U }, viewer.GetAddress());
+        Assert::AreEqual({ 0U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x64U }, viewer.mockEmulatorContext.ReadMemoryByte(20U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(20U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // jump to a later address, scroll it below the visible window
+        viewer.SetAddress(0xE3U);
+        viewer.SetFirstAddress(64U); // showing $0040-$00BF (8 lines)
+        Assert::AreEqual({ 0xE3U }, viewer.GetAddress());
+        Assert::AreEqual({ 64U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 8U }, viewer.GetNumVisibleLines());
+        Assert::AreEqual({ 0U }, viewer.GetSelectedNibble());
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        viewer.OnChar('0');
+        Assert::AreEqual({ 0xE3U }, viewer.GetAddress());
+        Assert::AreEqual({ 0x80U }, viewer.GetFirstAddress());
+        Assert::AreEqual({ 1U }, viewer.GetSelectedNibble());
+        Assert::AreEqual({ 0x03U }, viewer.mockEmulatorContext.ReadMemoryByte(0xE3U));
+        Assert::AreEqual({ COLOR_RED | COLOR_REDRAW }, viewer.GetColor(0xE3U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+    }
 };
 
 } // namespace tests

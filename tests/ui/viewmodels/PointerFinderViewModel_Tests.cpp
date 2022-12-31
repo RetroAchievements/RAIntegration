@@ -293,20 +293,20 @@ public:
         pMemory[0x1d] = 0x46;
         vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
-        vmPointerFinder.States().at(0).SetAddress(L"0x18");
+        vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
 
         pMemory[0x08] = 0x34;
         pMemory[0x34] = 0x55;
         pMemory[0x35] = 0x46;
 
-        vmPointerFinder.States().at(1).SetAddress(L"0x30");
+        vmPointerFinder.States().at(1).SetAddress(L"0x38");
         vmPointerFinder.States().at(1).ToggleCapture();
         vmPointerFinder.Find();
 
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 1U }, vmPointerFinder.PotentialPointers().Count());
-        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L"");
+        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
     }
     
     TEST_METHOD(TestFindOffsetNegative)
@@ -321,20 +321,20 @@ public:
         pMemory[0x1d] = 0x46;
         vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
-        vmPointerFinder.States().at(0).SetAddress(L"0x20");
+        vmPointerFinder.States().at(0).SetAddress(L"0x18");
         vmPointerFinder.States().at(0).ToggleCapture();
 
         pMemory[0x08] = 0x34;
         pMemory[0x34] = 0x55;
         pMemory[0x35] = 0x46;
 
-        vmPointerFinder.States().at(1).SetAddress(L"0x38");
+        vmPointerFinder.States().at(1).SetAddress(L"0x30");
         vmPointerFinder.States().at(1).ToggleCapture();
         vmPointerFinder.Find();
 
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 1U }, vmPointerFinder.PotentialPointers().Count());
-        vmPointerFinder.AssertRow(0, L"0x0008", L"+0xFFFFFFFC", L"001c", L"0034", L"", L"");
+        vmPointerFinder.AssertRow(0, L"0x0008", L"+0xFFFFFFFC", L"001c", L"0034", L"", L""); // 1c-04=>18, 34-04=>30
     }
 
     TEST_METHOD(TestFindOffsetMultiplePointers)
@@ -348,27 +348,27 @@ public:
         pMemory[0x1c] = 0x55;
         pMemory[0x1d] = 0x46;
         pMemory[0x70] = 0x1c;
-        pMemory[0x9c] = 0x18;
+        pMemory[0x9c] = 0x20;
         vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
-        vmPointerFinder.States().at(0).SetAddress(L"0x18");
+        vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
 
         pMemory[0x08] = 0x34;
         pMemory[0x34] = 0x55;
         pMemory[0x35] = 0x46;
         pMemory[0x70] = 0x34;
-        pMemory[0x9c] = 0x30;
+        pMemory[0x9c] = 0x38;
 
-        vmPointerFinder.States().at(1).SetAddress(L"0x30");
+        vmPointerFinder.States().at(1).SetAddress(L"0x38");
         vmPointerFinder.States().at(1).ToggleCapture();
         vmPointerFinder.Find();
 
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 3U }, vmPointerFinder.PotentialPointers().Count());
-        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L"");
-        vmPointerFinder.AssertRow(1, L"0x0070", L"+0x04", L"001c", L"0034", L"", L"");
-        vmPointerFinder.AssertRow(2, L"0x009c", L"+0x00", L"0018", L"0030", L"", L"");
+        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(1, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(2, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
     }
     
     TEST_METHOD(TestFindOffsetMultipleStates)
@@ -380,34 +380,34 @@ public:
         std::array<unsigned char, 256> pMemory{};
         pMemory[0x08] = 0x1c;
         pMemory[0x70] = 0x1c;
-        pMemory[0x9c] = 0x18;
-        pMemory[0xa4] = 0x18;
+        pMemory[0x9c] = 0x20;
+        pMemory[0xa4] = 0x20;
         vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
-        vmPointerFinder.States().at(0).SetAddress(L"0x18");
+        vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
 
         pMemory[0x70] = 0x20; // pointer at $70 not valid
-        vmPointerFinder.States().at(1).SetAddress(L"0x18");
+        vmPointerFinder.States().at(1).SetAddress(L"0x20");
         vmPointerFinder.States().at(1).ToggleCapture();
 
         pMemory[0x08] = 0x34; // all pointers valid
         pMemory[0x70] = 0x34;
-        pMemory[0x9c] = 0x30;
-        pMemory[0xa4] = 0x30;
+        pMemory[0x9c] = 0x38;
+        pMemory[0xa4] = 0x38;
 
-        vmPointerFinder.States().at(2).SetAddress(L"0x30");
+        vmPointerFinder.States().at(2).SetAddress(L"0x38");
         vmPointerFinder.States().at(2).ToggleCapture();
 
         pMemory[0x9c] = 0x20; // pointer at $9c not valid
-        vmPointerFinder.States().at(3).SetAddress(L"0x30");
+        vmPointerFinder.States().at(3).SetAddress(L"0x38");
         vmPointerFinder.States().at(3).ToggleCapture();
 
         vmPointerFinder.Find();
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 2U }, vmPointerFinder.PotentialPointers().Count());
-        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"001c", L"0034", L"0034");
-        vmPointerFinder.AssertRow(1, L"0x00a4", L"+0x00", L"0018", L"0018", L"0030", L"0030");
+        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"001c", L"0034", L"0034"); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(1, L"0x00a4", L"+0x00", L"0020", L"0020", L"0038", L"0038"); // 20+00=>20, 38+00=>38
     }
 
     TEST_METHOD(TestFindOffsetNoMatches)
@@ -452,25 +452,25 @@ public:
         std::array<unsigned char, 256> pMemory{};
         pMemory[0x08] = 0x1c;
         pMemory[0x70] = 0x1c;
-        pMemory[0x9c] = 0x18;
+        pMemory[0x9c] = 0x20;
         vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
-        vmPointerFinder.States().at(0).SetAddress(L"0x18");
+        vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
 
         pMemory[0x08] = 0x34;
         pMemory[0x70] = 0x34;
-        pMemory[0x9c] = 0x30;
+        pMemory[0x9c] = 0x38;
 
-        vmPointerFinder.States().at(1).SetAddress(L"0x30");
+        vmPointerFinder.States().at(1).SetAddress(L"0x38");
         vmPointerFinder.States().at(1).ToggleCapture();
         vmPointerFinder.Find();
 
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 3U }, vmPointerFinder.PotentialPointers().Count());
-        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L"");
-        vmPointerFinder.AssertRow(1, L"0x0070", L"+0x04", L"001c", L"0034", L"", L"");
-        vmPointerFinder.AssertRow(2, L"0x009c", L"+0x00", L"0018", L"0030", L"", L"");
+        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(1, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(2, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
 
         // no selection
         vmPointerFinder.BookmarkSelected();

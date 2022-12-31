@@ -14,6 +14,7 @@ enum class SearchType
     FourBit,
     EightBit,
     SixteenBit,
+    TwentyFourBit,
     ThirtyTwoBit,
     SixteenBitAligned,
     ThirtyTwoBitAligned,

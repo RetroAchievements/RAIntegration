@@ -109,6 +109,7 @@ PointerFinderViewModel::PointerFinderViewModel()
     SetWindowTitle(L"Pointer Finder");
 
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::SixteenBit), L"16-bit");
+    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::TwentyFourBit), L"24-bit");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBit), L"32-bit");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::SixteenBitAligned), L"16-bit (aligned)");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBitAligned), L"32-bit (aligned)");
@@ -222,7 +223,7 @@ void PointerFinderViewModel::Find()
                         pPointer = &m_vResults.Add();
                         pPointer->m_nAddress = pResult.nAddress;
                         pPointer->SetPointerAddress(ra::Widen(ra::ByteAddressToString(pResult.nAddress)));
-                        const auto nOffset = (pResult.nValue - nAddressJ);
+                        const auto nOffset = (nAddressJ - pResult.nValue);
                         pPointer->SetOffset(ra::StringPrintf(L"+0x%02X", nOffset));
 
                         pPointer->SetPointerValue(i, FormatValue(*pStateI.CapturedMemory(), pResult.nAddress));

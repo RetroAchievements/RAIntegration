@@ -789,6 +789,20 @@ protected:
     }
 };
 
+class TwentyFourBitSearchImpl : public SearchImpl
+{
+public:
+    MemSize GetMemSize() const noexcept override { return MemSize::TwentyFourBit; }
+
+    unsigned int GetPadding() const noexcept override { return 2U; }
+
+    unsigned int BuildValue(const unsigned char* ptr) const noexcept override
+    {
+        GSL_SUPPRESS_F6 Expects(ptr != nullptr);
+        GSL_SUPPRESS_TYPE1 return *reinterpret_cast<const unsigned int*>(ptr) & 0x00FFFFFF;
+    }
+};
+
 class ThirtyTwoBitSearchImpl : public SearchImpl
 {
 public:
@@ -1437,6 +1451,7 @@ protected:
 static FourBitSearchImpl s_pFourBitSearchImpl;
 static EightBitSearchImpl s_pEightBitSearchImpl;
 static SixteenBitSearchImpl s_pSixteenBitSearchImpl;
+static TwentyFourBitSearchImpl s_pTwentyFourBitSearchImpl;
 static ThirtyTwoBitSearchImpl s_pThirtyTwoBitSearchImpl;
 static SixteenBitAlignedSearchImpl s_pSixteenBitAlignedSearchImpl;
 static ThirtyTwoBitAlignedSearchImpl s_pThirtyTwoBitAlignedSearchImpl;
@@ -1624,6 +1639,9 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
             break;
         case SearchType::SixteenBit:
             m_pImpl = &ra::services::impl::s_pSixteenBitSearchImpl;
+            break;
+        case SearchType::TwentyFourBit:
+            m_pImpl = &ra::services::impl::s_pTwentyFourBitSearchImpl;
             break;
         case SearchType::ThirtyTwoBit:
             m_pImpl = &ra::services::impl::s_pThirtyTwoBitSearchImpl;

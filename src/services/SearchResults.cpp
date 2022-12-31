@@ -1816,20 +1816,21 @@ bool SearchResults::GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, s
     {
         for (auto& block : m_vBlocks)
         {
-            if (block.GetFirstAddress() > nAddress)
+            const auto nFirstAddress = m_pImpl->ConvertToRealAddress(block.GetFirstAddress());
+            if (nFirstAddress > nAddress)
                 break;
 
-            const int nRemaining = ra::to_signed(block.GetFirstAddress() + block.GetBytesSize() - nAddress);
+            const int nRemaining = ra::to_signed(nFirstAddress + block.GetBytesSize() - nAddress);
             if (nRemaining < 0)
                 continue;
 
             if (ra::to_unsigned(nRemaining) >= nCount)
             {
-                memcpy(pBuffer, block.GetBytes() + (nAddress - block.GetFirstAddress()), nCount);
+                memcpy(pBuffer, block.GetBytes() + (nAddress - nFirstAddress), nCount);
                 return true;
             }
 
-            memcpy(pBuffer, block.GetBytes() + (nAddress - block.GetFirstAddress()), nRemaining);
+            memcpy(pBuffer, block.GetBytes() + (nAddress - nFirstAddress), nRemaining);
             nCount -= nRemaining;
             pBuffer += nRemaining;
             nAddress += nRemaining;

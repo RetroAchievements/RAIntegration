@@ -58,7 +58,7 @@ void PointerFinderDialog::PointerFinderStateBinding::OnViewModelBoolValueChanged
     }
 }
 
-void PointerFinderDialog::PointerFinderStateBinding::OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args)
+void PointerFinderDialog::PointerFinderStateBinding::OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept
 {
     if (args.Property == PointerFinderViewModel::StateViewModel::CaptureButtonTextProperty)
         SetDlgItemTextW(m_hWnd, m_idcButton, args.tNewValue.c_str());
@@ -69,7 +69,7 @@ void PointerFinderDialog::PointerFinderStateBinding::OnViewModelStringValueChang
 class PointerAddressGridColumnBinding : public bindings::GridTextColumnBinding
 {
 public:
-    PointerAddressGridColumnBinding(const StringModelProperty& pBoundProperty)
+    PointerAddressGridColumnBinding(const StringModelProperty& pBoundProperty) noexcept
         : bindings::GridTextColumnBinding(pBoundProperty)
     {
     }
@@ -79,6 +79,7 @@ public:
         if (!vmItems.GetItemValue(nIndex, PointerFinderViewModel::PotentialPointerViewModel::OffsetProperty).empty())
         {
             const auto* pItem = dynamic_cast<const PointerFinderViewModel::PotentialPointerViewModel*>(vmItems.GetViewModelAt(nIndex));
+            Expects(pItem != nullptr);
             ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector.SetCurrentAddress(pItem->GetRawAddress());
 
             return true;
@@ -221,6 +222,14 @@ BOOL PointerFinderDialog::OnCommand(WORD nCommand)
             auto* vmPointerFinder = dynamic_cast<PointerFinderViewModel*>(&m_vmWindow);
             if (vmPointerFinder)
                 vmPointerFinder->BookmarkSelected();
+
+            return TRUE;
+        }
+
+        case IDC_RA_RESULTS_EXPORT: {
+            const auto* vmPointerFinder = dynamic_cast<PointerFinderViewModel*>(&m_vmWindow);
+            if (vmPointerFinder)
+                vmPointerFinder->ExportResults();
 
             return TRUE;
         }

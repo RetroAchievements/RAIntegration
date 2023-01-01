@@ -5,6 +5,9 @@
 #include "data/context/ConsoleContext.hh"
 #include "data/context/GameContext.hh"
 
+#include "services/IFileSystem.hh"
+
+#include "ui/viewmodels/FileDialogViewModel.hh"
 #include "ui/viewmodels/MessageBoxViewModel.hh"
 #include "ui/viewmodels/WindowManager.hh"
 
@@ -183,7 +186,7 @@ void PointerFinderViewModel::Find()
 
             // compare the two memory states
             ra::services::SearchResults pResults;
-            auto pReadMemory = [srSecond = pStateJ.CapturedMemory()](ra::ByteAddress nAddress, uint8_t* pBuffer, size_t nBufferSize) {
+            auto pReadMemory = [srSecond = pStateJ.CapturedMemory()](ra::ByteAddress nAddress, uint8_t* pBuffer, size_t nBufferSize) noexcept {
                 srSecond->GetBytes(nAddress, pBuffer, nBufferSize);
             };
             if (nAddressI > nAddressJ)
@@ -291,6 +294,67 @@ void PointerFinderViewModel::BookmarkSelected()
             vmBookmarks.AddBookmark(pItem->m_nAddress, nSize);
             break;
         }
+    }
+}
+
+void PointerFinderViewModel::ExportResults() const
+{
+    if (m_vResults.Count() == 0)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Nothing to export");
+        return;
+    }
+
+    ra::ui::viewmodels::FileDialogViewModel vmFileDialog;
+    vmFileDialog.SetWindowTitle(L"Export Pointer Results");
+    vmFileDialog.AddFileType(L"CSV File", L"*.csv");
+    vmFileDialog.SetDefaultExtension(L"csv");
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    vmFileDialog.SetFileName(ra::StringPrintf(L"%u-Pointers.csv", pGameContext.GameId()));
+
+    if (vmFileDialog.ShowSaveFileDialog() != ra::ui::DialogResult::OK)
+        return;
+
+    const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+    auto pTextWriter = pFileSystem.CreateTextFile(vmFileDialog.GetFileName());
+    if (pTextWriter == nullptr)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+            ra::StringPrintf(L"Could not create %s", vmFileDialog.GetFileName()));
+        return;
+    }
+
+    pTextWriter->Write("Address,Offset");
+    for (size_t i = 0; i < m_vStates.size(); i++)
+    {
+        const auto& pStateI = m_vStates.at(i);
+        if (pStateI.CanCapture())
+            continue;
+
+        pTextWriter->Write(",State");
+        pTextWriter->Write(std::to_string(i + 1));
+    }
+    pTextWriter->WriteLine();
+
+    for (gsl::index nIndex = 0; ra::to_unsigned(nIndex) < m_vResults.Count(); ++nIndex)
+    {
+        const auto* pRow = m_vResults.GetItemAt(nIndex);
+        Expects(pRow != nullptr);
+        pTextWriter->Write(pRow->GetPointerAddress());
+        pTextWriter->Write(",");
+        pTextWriter->Write(pRow->GetOffset());
+
+        for (gsl::index nState = 0; nState < gsl::narrow_cast<gsl::index>(m_vStates.size()); nState++)
+        {
+            const auto& sValue = pRow->GetPointerValue(nState);
+            if (!sValue.empty()) {
+                pTextWriter->Write(",");
+                pTextWriter->Write(sValue);
+            }
+        }
+
+        pTextWriter->WriteLine();
     }
 }
 

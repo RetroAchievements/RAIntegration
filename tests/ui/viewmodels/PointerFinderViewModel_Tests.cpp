@@ -2,6 +2,7 @@
 
 #include "ui\viewmodels\PointerFinderViewModel.hh"
 
+#include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
 #include "tests\RA_UnitTestHelpers.h"
@@ -9,6 +10,7 @@
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockWindowManager.hh"
@@ -30,6 +32,7 @@ private:
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::services::mocks::MockFileSystem mockFileSystem;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
@@ -260,17 +263,17 @@ public:
         vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
 
         std::array<unsigned char, 256> pMemory{};
-        pMemory[0x08] = 0x1c;
-        pMemory[0x1c] = 0x55;
-        pMemory[0x1d] = 0x46;
+        pMemory.at(0x08) = 0x1c;
+        pMemory.at(0x1c) = 0x55;
+        pMemory.at(0x1d) = 0x46;
         vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x1c");
         vmPointerFinder.States().at(0).ToggleCapture();
 
-        pMemory[0x08] = 0x34;
-        pMemory[0x34] = 0x55;
-        pMemory[0x35] = 0x46;
+        pMemory.at(0x08) = 0x34;
+        pMemory.at(0x34) = 0x55;
+        pMemory.at(0x35) = 0x46;
 
         vmPointerFinder.States().at(1).SetAddress(L"0x34");
         vmPointerFinder.States().at(1).ToggleCapture();
@@ -288,17 +291,17 @@ public:
         vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
 
         std::array<unsigned char, 256> pMemory{};
-        pMemory[0x08] = 0x1c;
-        pMemory[0x1c] = 0x55;
-        pMemory[0x1d] = 0x46;
+        pMemory.at(0x08) = 0x1c;
+        pMemory.at(0x1c) = 0x55;
+        pMemory.at(0x1d) = 0x46;
         vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
 
-        pMemory[0x08] = 0x34;
-        pMemory[0x34] = 0x55;
-        pMemory[0x35] = 0x46;
+        pMemory.at(0x08) = 0x34;
+        pMemory.at(0x34) = 0x55;
+        pMemory.at(0x35) = 0x46;
 
         vmPointerFinder.States().at(1).SetAddress(L"0x38");
         vmPointerFinder.States().at(1).ToggleCapture();
@@ -316,17 +319,17 @@ public:
         vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
 
         std::array<unsigned char, 256> pMemory{};
-        pMemory[0x08] = 0x1c;
-        pMemory[0x1c] = 0x55;
-        pMemory[0x1d] = 0x46;
+        pMemory.at(0x08) = 0x1c;
+        pMemory.at(0x1c) = 0x55;
+        pMemory.at(0x1d) = 0x46;
         vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x18");
         vmPointerFinder.States().at(0).ToggleCapture();
 
-        pMemory[0x08] = 0x34;
-        pMemory[0x34] = 0x55;
-        pMemory[0x35] = 0x46;
+        pMemory.at(0x08) = 0x34;
+        pMemory.at(0x34) = 0x55;
+        pMemory.at(0x35) = 0x46;
 
         vmPointerFinder.States().at(1).SetAddress(L"0x30");
         vmPointerFinder.States().at(1).ToggleCapture();
@@ -344,21 +347,21 @@ public:
         vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
 
         std::array<unsigned char, 256> pMemory{};
-        pMemory[0x08] = 0x1c;
-        pMemory[0x1c] = 0x55;
-        pMemory[0x1d] = 0x46;
-        pMemory[0x70] = 0x1c;
-        pMemory[0x9c] = 0x20;
+        pMemory.at(0x08) = 0x1c;
+        pMemory.at(0x1c) = 0x55;
+        pMemory.at(0x1d) = 0x46;
+        pMemory.at(0x70) = 0x1c;
+        pMemory.at(0x9c) = 0x20;
         vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
 
-        pMemory[0x08] = 0x34;
-        pMemory[0x34] = 0x55;
-        pMemory[0x35] = 0x46;
-        pMemory[0x70] = 0x34;
-        pMemory[0x9c] = 0x38;
+        pMemory.at(0x08) = 0x34;
+        pMemory.at(0x34) = 0x55;
+        pMemory.at(0x35) = 0x46;
+        pMemory.at(0x70) = 0x34;
+        pMemory.at(0x9c) = 0x38;
 
         vmPointerFinder.States().at(1).SetAddress(L"0x38");
         vmPointerFinder.States().at(1).ToggleCapture();
@@ -378,28 +381,28 @@ public:
         vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
 
         std::array<unsigned char, 256> pMemory{};
-        pMemory[0x08] = 0x1c;
-        pMemory[0x70] = 0x1c;
-        pMemory[0x9c] = 0x20;
-        pMemory[0xa4] = 0x20;
+        pMemory.at(0x08) = 0x1c;
+        pMemory.at(0x70) = 0x1c;
+        pMemory.at(0x9c) = 0x20;
+        pMemory.at(0xa4) = 0x20;
         vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
 
-        pMemory[0x70] = 0x20; // pointer at $70 not valid
+        pMemory.at(0x70) = 0x20; // pointer at $70 not valid
         vmPointerFinder.States().at(1).SetAddress(L"0x20");
         vmPointerFinder.States().at(1).ToggleCapture();
 
-        pMemory[0x08] = 0x34; // all pointers valid
-        pMemory[0x70] = 0x34;
-        pMemory[0x9c] = 0x38;
-        pMemory[0xa4] = 0x38;
+        pMemory.at(0x08) = 0x34; // all pointers valid
+        pMemory.at(0x70) = 0x34;
+        pMemory.at(0x9c) = 0x38;
+        pMemory.at(0xa4) = 0x38;
 
         vmPointerFinder.States().at(2).SetAddress(L"0x38");
         vmPointerFinder.States().at(2).ToggleCapture();
 
-        pMemory[0x9c] = 0x20; // pointer at $9c not valid
+        pMemory.at(0x9c) = 0x20; // pointer at $9c not valid
         vmPointerFinder.States().at(3).SetAddress(L"0x38");
         vmPointerFinder.States().at(3).ToggleCapture();
 
@@ -417,13 +420,13 @@ public:
         vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
 
         std::array<unsigned char, 256> pMemory{};
-        pMemory[0x08] = 0x1c;
+        pMemory.at(0x08) = 0x1c;
         vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x18");
         vmPointerFinder.States().at(0).ToggleCapture();
 
-        pMemory[0x08] = 0x38;
+        pMemory.at(0x08) = 0x38;
 
         vmPointerFinder.States().at(1).SetAddress(L"0x30");
         vmPointerFinder.States().at(1).ToggleCapture();
@@ -450,17 +453,17 @@ public:
 
         // initialize results
         std::array<unsigned char, 256> pMemory{};
-        pMemory[0x08] = 0x1c;
-        pMemory[0x70] = 0x1c;
-        pMemory[0x9c] = 0x20;
+        pMemory.at(0x08) = 0x1c;
+        pMemory.at(0x70) = 0x1c;
+        pMemory.at(0x9c) = 0x20;
         vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
 
         vmPointerFinder.States().at(0).SetAddress(L"0x20");
         vmPointerFinder.States().at(0).ToggleCapture();
 
-        pMemory[0x08] = 0x34;
-        pMemory[0x70] = 0x34;
-        pMemory[0x9c] = 0x38;
+        pMemory.at(0x08) = 0x34;
+        pMemory.at(0x70) = 0x34;
+        pMemory.at(0x9c) = 0x38;
 
         vmPointerFinder.States().at(1).SetAddress(L"0x38");
         vmPointerFinder.States().at(1).ToggleCapture();
@@ -481,6 +484,139 @@ public:
         vmPointerFinder.BookmarkSelected();
         Assert::AreEqual({ 1U }, pBookmarks.Count());
         Assert::AreEqual({ 0x0070U }, pBookmarks.GetItemAt(0)->GetAddress());
+    }
+
+    TEST_METHOD(TestExportResults)
+    {
+        PointerFinderViewModelHarness vmPointerFinder;
+        vmPointerFinder.mockGameContext.SetGameId(3U);
+        vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
+
+        // initialize results
+        std::array<unsigned char, 256> pMemory{};
+        pMemory.at(0x08) = 0x1c;
+        pMemory.at(0x70) = 0x1c;
+        pMemory.at(0x9c) = 0x20;
+        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+
+        vmPointerFinder.States().at(0).SetAddress(L"0x20");
+        vmPointerFinder.States().at(0).ToggleCapture();
+
+        pMemory.at(0x08) = 0x34;
+        pMemory.at(0x70) = 0x34;
+        pMemory.at(0x9c) = 0x38;
+
+        vmPointerFinder.States().at(1).SetAddress(L"0x38");
+        vmPointerFinder.States().at(1).ToggleCapture();
+        vmPointerFinder.Find();
+
+        Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
+        Assert::AreEqual({ 3U }, vmPointerFinder.PotentialPointers().Count());
+        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(1, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(2, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
+
+        bool bDialogSeen = false;
+        vmPointerFinder.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog) {
+                bDialogSeen = true;
+
+                Assert::AreEqual(std::wstring(L"Export Pointer Results"), vmFileDialog.GetWindowTitle());
+                Assert::AreEqual({1U}, vmFileDialog.GetFileTypes().size());
+                Assert::AreEqual(std::wstring(L"csv"), vmFileDialog.GetDefaultExtension());
+                Assert::AreEqual(std::wstring(L"3-Pointers.csv"), vmFileDialog.GetFileName());
+
+                vmFileDialog.SetFileName(L"E:\\Data\\3-Pointers.csv");
+
+                return DialogResult::OK;
+            });
+
+        vmPointerFinder.ExportResults();
+
+        Assert::IsTrue(bDialogSeen);
+        const std::string& sContents = vmPointerFinder.mockFileSystem.GetFileContents(L"E:\\Data\\3-Pointers.csv");
+        Assert::AreEqual(std::string("Address,Offset,State1,State2\n0x0008,+0x04,001c,0034\n0x0070,+0x04,001c,0034\n0x009c,+0x00,0020,0038\n"),
+                         sContents);
+    }
+
+    TEST_METHOD(TestExportResultsCancel)
+    {
+        PointerFinderViewModelHarness vmPointerFinder;
+        vmPointerFinder.mockGameContext.SetGameId(3U);
+        vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
+
+        // initialize results
+        std::array<unsigned char, 256> pMemory{};
+        pMemory.at(0x08) = 0x1c;
+        pMemory.at(0x70) = 0x1c;
+        pMemory.at(0x9c) = 0x20;
+        vmPointerFinder.mockEmulatorContext.MockMemory(pMemory);
+
+        vmPointerFinder.States().at(0).SetAddress(L"0x20");
+        vmPointerFinder.States().at(0).ToggleCapture();
+
+        pMemory.at(0x08) = 0x34;
+        pMemory.at(0x70) = 0x34;
+        pMemory.at(0x9c) = 0x38;
+
+        vmPointerFinder.States().at(1).SetAddress(L"0x38");
+        vmPointerFinder.States().at(1).ToggleCapture();
+        vmPointerFinder.Find();
+
+        Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
+        Assert::AreEqual({ 3U }, vmPointerFinder.PotentialPointers().Count());
+        vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(1, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        vmPointerFinder.AssertRow(2, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
+
+        bool bDialogSeen = false;
+        vmPointerFinder.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel& vmFileDialog) {
+                bDialogSeen = true;
+
+                Assert::AreEqual(std::wstring(L"Export Pointer Results"), vmFileDialog.GetWindowTitle());
+                Assert::AreEqual({1U}, vmFileDialog.GetFileTypes().size());
+                Assert::AreEqual(std::wstring(L"csv"), vmFileDialog.GetDefaultExtension());
+                Assert::AreEqual(std::wstring(L"3-Pointers.csv"), vmFileDialog.GetFileName());
+
+                vmFileDialog.SetFileName(L"E:\\Data\\3-Pointers.csv");
+
+                return DialogResult::Cancel;
+            });
+
+        vmPointerFinder.ExportResults();
+
+        Assert::IsTrue(bDialogSeen);
+        const std::string& sContents = vmPointerFinder.mockFileSystem.GetFileContents(L"E:\\Data\\3-Pointers.csv");
+        Assert::AreEqual(std::string(), sContents);
+    }
+
+    TEST_METHOD(TestExportResultsNone)
+    {
+        PointerFinderViewModelHarness vmPointerFinder;
+        vmPointerFinder.mockGameContext.SetGameId(3U);
+        vmPointerFinder.SetSearchType(ra::services::SearchType::SixteenBitAligned);
+
+        bool bMessageSeen = false;
+        vmPointerFinder.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bMessageSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+                bMessageSeen = true;
+                Assert::AreEqual(std::wstring(L"Nothing to export"), vmMessageBox.GetMessage());
+                return ra::ui::DialogResult::OK;
+            });
+
+        bool bDialogSeen = false;
+        vmPointerFinder.mockDesktop.ExpectWindow<ra::ui::viewmodels::FileDialogViewModel>(
+            [&bDialogSeen](ra::ui::viewmodels::FileDialogViewModel&) {
+                bDialogSeen = true;
+                return DialogResult::Cancel;
+            });
+
+        // search not started
+        vmPointerFinder.ExportResults();
+
+        Assert::IsTrue(bMessageSeen);
+        Assert::IsFalse(bDialogSeen);
     }
 };
 

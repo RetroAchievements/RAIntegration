@@ -50,6 +50,8 @@ public:
 
     void Find();
 
+    void ExportResults() const;
+
     /// <summary>
     /// The <see cref="ModelProperty" /> for the string representation of the number of results found. />.
     /// </summary>
@@ -105,7 +107,7 @@ public:
 
         void ToggleCapture();
 
-        const ra::services::SearchResults* CapturedMemory() const { return m_pCapture.get(); }
+        const ra::services::SearchResults* CapturedMemory() const noexcept { return m_pCapture.get(); }
 
         MemoryViewerViewModel& Viewer() noexcept { return m_pViewer; }
         const MemoryViewerViewModel& Viewer() const noexcept { return m_pViewer; }
@@ -244,7 +246,7 @@ public:
             }
         }
         
-        ra::ByteAddress GetRawAddress() const { return m_nAddress; }
+        ra::ByteAddress GetRawAddress() const noexcept { return m_nAddress; }
         
         /// <summary>
         /// The <see cref="ModelProperty" /> for the whether the result is selected.

@@ -48,7 +48,7 @@ private:
     class PointerFinderStateBinding : public bindings::ControlBinding
     {
     public:
-        explicit PointerFinderStateBinding(viewmodels::PointerFinderViewModel::StateViewModel& vmState)
+        explicit PointerFinderStateBinding(viewmodels::PointerFinderViewModel::StateViewModel& vmState) noexcept
             : bindings::ControlBinding(vmState), 
               m_bindViewer(vmState.Viewer()), 
               m_bindAddress(vmState)
@@ -61,7 +61,7 @@ private:
             m_idcAddress = idcAddress;
         }
 
-        void BindButton(int idcButton)
+        void BindButton(int idcButton) noexcept
         {
             m_idcButton = idcButton;
         }
@@ -75,7 +75,7 @@ private:
 
     protected:
         void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override;
-        void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) override;
+        void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override;
 
     private:
         bindings::TextBoxBinding m_bindAddress;

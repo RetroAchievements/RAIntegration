@@ -14,6 +14,7 @@ enum class SearchType
     FourBit,
     EightBit,
     SixteenBit,
+    TwentyFourBit,
     ThirtyTwoBit,
     SixteenBitAligned,
     ThirtyTwoBitAligned,
@@ -190,7 +191,7 @@ public:
     void Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchType nType);
 
     /// <summary>
-    /// Initializes a result set by comparing against another result set.
+    /// Initializes a result set by comparing current memory against another result set.
     /// </summary>
     /// <param name="srSource">The result set to filter.</param>
     /// <param name="nCompareType">Type of comparison to apply.</param>
@@ -201,7 +202,7 @@ public:
         _In_ SearchFilterType nFilterType, _In_ const std::wstring& sFilterValue);
 
     /// <summary>
-    /// Initializes a result set by comparing against another result set using the address filter from a third set.
+    /// Initializes a result set by comparing current memory against another result set using the address filter from a third set.
     /// </summary>
     /// <param name="srSource">The result set to filter.</param>
     /// <param name="srAddresses">The result set specifying which addresses to examine.</param>
@@ -210,6 +211,18 @@ public:
     /// <param name="sFilterValue">Parameter for filter being applied.</param>
     /// <returns><c>true</c> if initialization was successful, <c>false</c> if the filter value was not supported</returns>
     bool Initialize(_In_ const SearchResults& srSource, _In_ const SearchResults& srAddresses,
+        _In_ ComparisonType nCompareType, _In_ SearchFilterType nFilterType, _In_ const std::wstring& sFilterValue);
+
+    /// <summary>
+    /// Initializes a result set by comparing provided memory against another result set.
+    /// </summary>
+    /// <param name="srFirst">The result set to filter.</param>
+    /// <param name="pReadMemory">A function that provides current values of memory.</param>
+    /// <param name="nCompareType">Type of comparison to apply.</param>
+    /// <param name="nFilterType">Type of filter to apply.</param>
+    /// <param name="sFilterValue">Parameter for filter being applied.</param>
+    /// <returns><c>true</c> if initialization was successful, <c>false</c> if the filter value was not supported</returns>
+    bool Initialize(_In_ const SearchResults& srFirst, _In_ std::function<void(ra::ByteAddress,uint8_t*,size_t)> pReadMemory,
         _In_ ComparisonType nCompareType, _In_ SearchFilterType nFilterType, _In_ const std::wstring& sFilterValue);
 
     /// <summary>

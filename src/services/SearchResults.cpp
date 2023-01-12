@@ -137,7 +137,7 @@ public:
     }
 
     // populates a vector of addresses that match the specified filter when applied to a previous search result
-    virtual void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious) const
+    virtual void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious, std::function<void(ra::ByteAddress,uint8_t*,size_t)> pReadMemory) const
     {
         unsigned int nLargestBlock = 0U;
         for (auto& block : srPrevious.m_vBlocks)
@@ -148,7 +148,6 @@ public:
 
         std::vector<unsigned char> vMemory(nLargestBlock);
         std::vector<ra::ByteAddress> vMatches;
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
 
         unsigned int nAdjustment = 0;
         switch (srNew.GetFilterType())
@@ -165,7 +164,8 @@ public:
 
         for (auto& block : srPrevious.m_vBlocks)
         {
-            pEmulatorContext.ReadMemory(ConvertToRealAddress(block.GetFirstAddress()), vMemory.data(), block.GetBytesSize());
+            const auto nRealAddress = ConvertToRealAddress(block.GetFirstAddress());
+            pReadMemory(nRealAddress, vMemory.data(), block.GetBytesSize());
 
             const auto nStop = block.GetBytesSize() - GetPadding();
 
@@ -789,6 +789,20 @@ protected:
     }
 };
 
+class TwentyFourBitSearchImpl : public SearchImpl
+{
+public:
+    MemSize GetMemSize() const noexcept override { return MemSize::TwentyFourBit; }
+
+    unsigned int GetPadding() const noexcept override { return 2U; }
+
+    unsigned int BuildValue(const unsigned char* ptr) const noexcept override
+    {
+        GSL_SUPPRESS_F6 Expects(ptr != nullptr);
+        GSL_SUPPRESS_TYPE1 return *reinterpret_cast<const unsigned int*>(ptr) & 0x00FFFFFF;
+    }
+};
+
 class ThirtyTwoBitSearchImpl : public SearchImpl
 {
 public:
@@ -1055,7 +1069,7 @@ public:
     }
 
     // populates a vector of addresses that match the specified filter when applied to a previous search result
-    void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious) const override
+    void ApplyFilter(SearchResults& srNew, const SearchResults& srPrevious,  std::function<void(ra::ByteAddress,uint8_t*,size_t)> pReadMemory) const override
     {
         size_t nCompareLength = 16; // maximum length for generic search
         std::vector<unsigned char> vSearchText;
@@ -1073,11 +1087,10 @@ public:
 
         std::vector<unsigned char> vMemory(nLargestBlock);
         std::vector<ra::ByteAddress> vMatches;
-        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
 
         for (auto& block : GetBlocks(srPrevious))
         {
-            pEmulatorContext.ReadMemory(block.GetFirstAddress(), vMemory.data(), block.GetBytesSize());
+            pReadMemory(block.GetFirstAddress(), vMemory.data(), block.GetBytesSize());
 
             const auto nStop = block.GetBytesSize() - 1;
             const auto nFilterComparison = srNew.GetFilterComparison();
@@ -1438,6 +1451,7 @@ protected:
 static FourBitSearchImpl s_pFourBitSearchImpl;
 static EightBitSearchImpl s_pEightBitSearchImpl;
 static SixteenBitSearchImpl s_pSixteenBitSearchImpl;
+static TwentyFourBitSearchImpl s_pTwentyFourBitSearchImpl;
 static ThirtyTwoBitSearchImpl s_pThirtyTwoBitSearchImpl;
 static SixteenBitAlignedSearchImpl s_pSixteenBitAlignedSearchImpl;
 static ThirtyTwoBitAlignedSearchImpl s_pThirtyTwoBitAlignedSearchImpl;
@@ -1626,6 +1640,9 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
         case SearchType::SixteenBit:
             m_pImpl = &ra::services::impl::s_pSixteenBitSearchImpl;
             break;
+        case SearchType::TwentyFourBit:
+            m_pImpl = &ra::services::impl::s_pTwentyFourBitSearchImpl;
+            break;
         case SearchType::ThirtyTwoBit:
             m_pImpl = &ra::services::impl::s_pThirtyTwoBitSearchImpl;
             break;
@@ -1729,11 +1746,11 @@ void SearchResults::MergeSearchResults(const SearchResults& srMemory, const Sear
 }
 
 _Use_decl_annotations_
-bool SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCompareType,
-    SearchFilterType nFilterType, const std::wstring& sFilterValue)
+bool SearchResults::Initialize(const SearchResults& srFirst, std::function<void(ra::ByteAddress,uint8_t*,size_t)> pReadMemory,
+    ComparisonType nCompareType, SearchFilterType nFilterType, const std::wstring& sFilterValue)
 {
-    m_nType = srSource.m_nType;
-    m_pImpl = srSource.m_pImpl;
+    m_nType = srFirst.m_nType;
+    m_pImpl = srFirst.m_pImpl;
     m_nCompareType = nCompareType;
     m_nFilterType = nFilterType;
     m_sFilterValue = sFilterValue;
@@ -1741,8 +1758,20 @@ bool SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCo
     if (!m_pImpl->ValidateFilterValue(*this))
         return false;
 
-    m_pImpl->ApplyFilter(*this, srSource);
+    m_pImpl->ApplyFilter(*this, srFirst, pReadMemory);
     return true;
+}
+
+_Use_decl_annotations_
+bool SearchResults::Initialize(const SearchResults& srSource, ComparisonType nCompareType,
+    SearchFilterType nFilterType, const std::wstring& sFilterValue)
+{
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    auto pReadMemory = [&pEmulatorContext](ra::ByteAddress nAddress, uint8_t* pBuffer, size_t nBufferSize) {
+        pEmulatorContext.ReadMemory(nAddress, pBuffer, nBufferSize);
+    };
+
+    return Initialize(srSource, pReadMemory, nCompareType, nFilterType, sFilterValue);
 }
 
 _Use_decl_annotations_
@@ -1805,20 +1834,21 @@ bool SearchResults::GetBytes(ra::ByteAddress nAddress, unsigned char* pBuffer, s
     {
         for (auto& block : m_vBlocks)
         {
-            if (block.GetFirstAddress() > nAddress)
+            const auto nFirstAddress = m_pImpl->ConvertToRealAddress(block.GetFirstAddress());
+            if (nFirstAddress > nAddress)
                 break;
 
-            const int nRemaining = ra::to_signed(block.GetFirstAddress() + block.GetBytesSize() - nAddress);
+            const int nRemaining = ra::to_signed(nFirstAddress + block.GetBytesSize() - nAddress);
             if (nRemaining < 0)
                 continue;
 
             if (ra::to_unsigned(nRemaining) >= nCount)
             {
-                memcpy(pBuffer, block.GetBytes() + (nAddress - block.GetFirstAddress()), nCount);
+                memcpy(pBuffer, block.GetBytes() + (nAddress - nFirstAddress), nCount);
                 return true;
             }
 
-            memcpy(pBuffer, block.GetBytes() + (nAddress - block.GetFirstAddress()), nRemaining);
+            memcpy(pBuffer, block.GetBytes() + (nAddress - nFirstAddress), nRemaining);
             nCount -= nRemaining;
             pBuffer += nRemaining;
             nAddress += nRemaining;

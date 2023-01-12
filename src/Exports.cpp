@@ -709,6 +709,8 @@ static void UpdateUIForFrameChange()
     TALLY_PERFORMANCE(PerformanceCheckpoint::AssetEditorDoFrame);
     pWindowManager.AssetEditor.DoFrame();
 
+    pWindowManager.PointerFinder.DoFrame();
+
     auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
     pFrameEventQueue.DoFrame();
 }

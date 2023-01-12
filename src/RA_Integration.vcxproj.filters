@@ -396,6 +396,12 @@
     <ClCompile Include="ui\viewmodels\EmulatorViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
+    <ClCompile Include="ui\viewmodels\PointerFinderViewModel.cpp">
+      <Filter>UI\ViewModels</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\win32\PointerFinderDialog.cpp">
+      <Filter>UI\Win32</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -976,6 +982,12 @@
     </ClInclude>
     <ClInclude Include="data\models\CodeNotesModel.hh">
       <Filter>Data\Models</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\viewmodels\PointerFinderViewModel.hh">
+      <Filter>UI\ViewModels</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\win32\PointerFinderDialog.hh">
+      <Filter>UI\Win32</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

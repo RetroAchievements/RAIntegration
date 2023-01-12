@@ -115,24 +115,44 @@ void MemoryViewerControlBinding::SetHWND(DialogBase& pDialog, HWND hControl)
 
 void MemoryViewerControlBinding::ScrollUp()
 {
+    if (m_pViewModel.IsAddressFixed())
+        return;
+
     m_pViewModel.SetFirstAddress(m_pViewModel.GetFirstAddress() - 32);
     Invalidate();
 }
 
 void MemoryViewerControlBinding::ScrollDown()
 {
+    if (m_pViewModel.IsAddressFixed())
+        return;
+
     m_pViewModel.SetFirstAddress(m_pViewModel.GetFirstAddress() + 32);
     Invalidate();
 }
 
 bool MemoryViewerControlBinding::OnKeyDown(UINT nChar)
 {
-    const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
-    const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
     bool bHandled = false;
 
     // multiple properties may change while navigating, we'll do a single Invalidate after we're done
     m_bSuppressMemoryViewerInvalidate = true;
+
+    if (!m_pViewModel.IsAddressFixed())
+        bHandled = HandleNavigation(nChar);
+
+    m_bSuppressMemoryViewerInvalidate = false;
+
+    if (bHandled)
+        Invalidate();
+
+    return bHandled;
+}
+
+bool MemoryViewerControlBinding::HandleNavigation(UINT nChar)
+{
+    const bool bShiftHeld = (GetKeyState(VK_SHIFT) < 0);
+    const bool bControlHeld = (GetKeyState(VK_CONTROL) < 0);
 
     switch (nChar)
     {
@@ -141,42 +161,36 @@ bool MemoryViewerControlBinding::OnKeyDown(UINT nChar)
                 m_pViewModel.AdvanceCursorWord();
             else
                 m_pViewModel.AdvanceCursor();
-            bHandled = true;
-            break;
+            return true;
 
         case VK_LEFT:
             if (bShiftHeld || bControlHeld)
                 m_pViewModel.RetreatCursorWord();
             else
                 m_pViewModel.RetreatCursor();
-            bHandled = true;
-            break;
+            return true;
 
         case VK_DOWN:
             if (bControlHeld)
                 m_pViewModel.SetFirstAddress(m_pViewModel.GetFirstAddress() + 0x10);
             else
                 m_pViewModel.AdvanceCursorLine();
-            bHandled = true;
-            break;
+            return true;
 
         case VK_UP:
             if (bControlHeld)
                 m_pViewModel.SetFirstAddress(m_pViewModel.GetFirstAddress() - 0x10);
             else
                 m_pViewModel.RetreatCursorLine();
-            bHandled = true;
-            break;
+            return true;
 
         case VK_PRIOR: // Page up (!)
             m_pViewModel.RetreatCursorPage();
-            bHandled = true;
-            break;
+            return true;
 
         case VK_NEXT: // Page down (!)
             m_pViewModel.AdvanceCursorPage();
-            bHandled = true;
-            break;
+            return true;
 
         case VK_HOME:
             if (bControlHeld)
@@ -188,8 +202,7 @@ bool MemoryViewerControlBinding::OnKeyDown(UINT nChar)
             {
                 m_pViewModel.SetAddress(m_pViewModel.GetAddress() & ~0x0F);
             }
-            bHandled = true;
-            break;
+            return true;
 
         case VK_END:
             if (bControlHeld)
@@ -217,16 +230,11 @@ bool MemoryViewerControlBinding::OnKeyDown(UINT nChar)
                         break;
                 }
             }
-            bHandled = true;
-            break;
+            return true;
+
+        default:
+            return false;
     }
-
-    m_bSuppressMemoryViewerInvalidate = false;
-
-    if (bHandled)
-        Invalidate();
-
-    return bHandled;
 }
 
 bool MemoryViewerControlBinding::OnEditInput(UINT c)
@@ -244,6 +252,9 @@ bool MemoryViewerControlBinding::OnEditInput(UINT c)
 
 void MemoryViewerControlBinding::OnClick(POINT point)
 {
+    if (m_pViewModel.IsAddressFixed())
+        return;
+
     // multiple properties may change while typing, we'll do a single Invalidate after we're done
     m_bSuppressMemoryViewerInvalidate = true;
     m_pViewModel.OnClick(point.x, point.y);

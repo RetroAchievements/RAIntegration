@@ -7,6 +7,7 @@
 #include "EmulatorViewModel.hh"
 #include "MemoryBookmarksViewModel.hh"
 #include "MemoryInspectorViewModel.hh"
+#include "PointerFinderViewModel.hh"
 #include "RichPresenceMonitorViewModel.hh"
 
 namespace ra {
@@ -22,6 +23,7 @@ public:
     MemoryBookmarksViewModel MemoryBookmarks;
     MemoryInspectorViewModel MemoryInspector;
     CodeNotesViewModel CodeNotes;
+    PointerFinderViewModel PointerFinder;
 };
 
 } // namespace viewmodels

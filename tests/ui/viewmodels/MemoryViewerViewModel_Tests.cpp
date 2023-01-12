@@ -39,8 +39,8 @@ private:
         {
             InitializeNotifyTargets();
 
-            m_szChar.Width = CHAR_WIDTH;
-            m_szChar.Height = CHAR_HEIGHT;
+            s_szChar.Width = CHAR_WIDTH;
+            s_szChar.Height = CHAR_HEIGHT;
         }
 
         ~MemoryViewerViewModelHarness()

@@ -38,6 +38,7 @@ OverlaySettingsDialog::OverlaySettingsDialog(ra::ui::viewmodels::OverlaySettings
       m_bindDisplayLeaderboardValue(vmSettings),
       m_bindDisplayLeaderboardScoreboards(vmSettings),
       m_bindChallengeNotifications(vmSettings),
+      m_bindProgressTrackers(vmSettings),
       m_bindScreenshotLocation(vmSettings),
       m_bindInformationLocation(vmSettings)
 {
@@ -63,6 +64,8 @@ OverlaySettingsDialog::OverlaySettingsDialog(ra::ui::viewmodels::OverlaySettings
 
     m_bindChallengeNotifications.BindItems(vmSettings.PopupLocationsNoMiddle());
     m_bindChallengeNotifications.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::ActiveChallengeLocationProperty);
+    m_bindProgressTrackers.BindItems(vmSettings.PopupLocationsNoMiddle());
+    m_bindProgressTrackers.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::ProgressTrackerLocationProperty);
 
     m_bindInformationLocation.BindItems(vmSettings.PopupLocations());
     m_bindInformationLocation.BindSelectedItem(ra::ui::viewmodels::OverlaySettingsViewModel::MessageLocationProperty);
@@ -81,6 +84,7 @@ BOOL OverlaySettingsDialog::OnInitDialog()
     m_bindDisplayLeaderboardValue.SetControl(*this, IDC_RA_DISPLAY_LBOARD_VALUE);
     m_bindDisplayLeaderboardScoreboards.SetControl(*this, IDC_RA_DISPLAY_LBOARD_SCOREBOARD);
     m_bindChallengeNotifications.SetControl(*this, IDC_RA_DISPLAY_CHALLENGE_INDICATOR);
+    m_bindProgressTrackers.SetControl(*this, IDC_RA_DISPLAY_PROGRESS_INDICATOR);
     m_bindInformationLocation.SetControl(*this, IDC_RA_DISPLAY_INFORMATION);
 
     m_bindScreenshotLocation.SetControl(*this, IDC_RA_SCREENSHOT_LOCATION);

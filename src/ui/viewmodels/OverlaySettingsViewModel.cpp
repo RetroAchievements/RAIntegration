@@ -19,6 +19,7 @@ const IntModelProperty OverlaySettingsViewModel::LeaderboardCanceledLocationProp
 const IntModelProperty OverlaySettingsViewModel::LeaderboardTrackerLocationProperty("OverlaySettingsViewModel", "LeaderboardTrackerLocation", ra::etoi(PopupLocation::BottomRight));
 const IntModelProperty OverlaySettingsViewModel::LeaderboardScoreboardLocationProperty("OverlaySettingsViewModel", "LeaderboardScoreboardLocation", ra::etoi(PopupLocation::BottomRight));
 const IntModelProperty OverlaySettingsViewModel::ActiveChallengeLocationProperty("OverlaySettingsViewModel", "ActiveChallengeLocation", ra::etoi(PopupLocation::BottomRight));
+const IntModelProperty OverlaySettingsViewModel::ProgressTrackerLocationProperty("OverlaySettingsViewModel", "ProgressLocation", ra::etoi(PopupLocation::BottomRight));
 const StringModelProperty OverlaySettingsViewModel::ScreenshotLocationProperty("OverlaySettingsViewModel", "ScreenshotLocation", L"");
 
 OverlaySettingsViewModel::OverlaySettingsViewModel() noexcept
@@ -58,6 +59,7 @@ void OverlaySettingsViewModel::Initialize()
     SetLeaderboardScoreboardLocation(pConfiguration.GetPopupLocation(Popup::LeaderboardScoreboard));
 
     SetActiveChallengeLocation(pConfiguration.GetPopupLocation(Popup::Challenge));
+    SetProgressTrackerLocation(pConfiguration.GetPopupLocation(Popup::Progress));
 
     SetScreenshotLocation(pConfiguration.GetScreenshotDirectory());
 }
@@ -76,6 +78,7 @@ void OverlaySettingsViewModel::Commit()
     pConfiguration.SetPopupLocation(Popup::LeaderboardTracker, GetLeaderboardTrackerLocation());
     pConfiguration.SetPopupLocation(Popup::LeaderboardScoreboard, GetLeaderboardScoreboardLocation());
     pConfiguration.SetPopupLocation(Popup::Challenge, GetActiveChallengeLocation());
+    pConfiguration.SetPopupLocation(Popup::Progress, GetProgressTrackerLocation());
 
     std::wstring sLocation = ScreenshotLocation();
     if (!sLocation.empty() && sLocation.back() != '\\')

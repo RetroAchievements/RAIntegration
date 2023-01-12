@@ -176,6 +176,21 @@ public:
     void SetActiveChallengeLocation(PopupLocation nValue) { SetValue(ActiveChallengeLocationProperty, ra::etoi(nValue)); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for where the progress trackers should be displayed.
+    /// </summary>
+    static const IntModelProperty ProgressTrackerLocationProperty;
+
+    /// <summary>
+    /// Gets the location where progress trackers should be displayed.
+    /// </summary>
+    PopupLocation GetProgressTrackerLocation() const { return ra::itoe<PopupLocation>(GetValue(ProgressTrackerLocationProperty)); }
+
+    /// <summary>
+    /// Sets the location where progress trackers should be displayed.
+    /// </summary>
+    void SetProgressTrackerLocation(PopupLocation nValue) { SetValue(ProgressTrackerLocationProperty, ra::etoi(nValue)); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the location to write screenshots.
     /// </summary>
     static const StringModelProperty ScreenshotLocationProperty;

@@ -145,6 +145,23 @@ private:
         Assert::Fail(pString.c_str());
     }
 
+    static void AssertChange(const std::vector<AchievementRuntime::Change>& vChanges, AchievementRuntime::ChangeType nType, unsigned nId, int nValue, int nValue2)
+    {
+        for (const auto& pChange : vChanges)
+        {
+            if (pChange.nId == nId && pChange.nType == nType)
+            {
+                Assert::AreEqual(nValue, pChange.nValue);
+                Assert::AreEqual(nValue2, pChange.nValue2);
+                return;
+            }
+        }
+
+        const auto pString = ra::StringPrintf(L"Could not find change notification for %s:%d",
+            Microsoft::VisualStudio::CppUnitTestFramework::ToString<AchievementRuntime::ChangeType>(nType), nId);
+        Assert::Fail(pString.c_str());
+    }
+
 public:
     TEST_METHOD(TestActivateAchievement)
     {
@@ -322,6 +339,61 @@ public:
         memory.at(0) = 0;
         runtime.Process(vChanges);
         runtime.Process(vChanges);
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 4U);
+        vChanges.clear();
+    }
+
+    TEST_METHOD(TestMonitorAchievementMeasured)
+    {
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        auto* pTrigger = "M:0xH0002=100";
+        runtime.ActivateAchievement(4U, pTrigger);
+        runtime.GetAchievementTrigger(4U)->state = RC_TRIGGER_STATE_ACTIVE;
+
+        // value did not change, expect no event from initialization
+        std::vector<AchievementRuntime::Change> vChanges;
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        // change value, expect notification
+        memory.at(2) = 75;
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementProgressChanged, 4U, 75, 100);
+        vChanges.clear();
+
+        // watch for notification, no change, no notification
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        // disable achievement, no notification
+        runtime.DeactivateAchievement(4U);
+        memory.at(2) = 76;
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 0U }, vChanges.size());
+
+        // enable achievement, expect activation event, but not progress notification
+        runtime.ActivateAchievement(4U, pTrigger);
+        memory.at(2) = 77;
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 4U);
+        vChanges.clear();
+
+        // change value, expect notification
+        memory.at(2) = 78;
+        runtime.Process(vChanges);
+        Assert::AreEqual({ 1U }, vChanges.size());
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementProgressChanged, 4U, 78, 100);
+        vChanges.clear();
+
+        // trigger achievement, expect trigger notification, but not progress notification
+        memory.at(2) = 100;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
         AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 4U);

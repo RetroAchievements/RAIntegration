@@ -180,6 +180,7 @@ public:
         LeaderboardStartTriggered,
         LeaderboardSubmitTriggered,
         LeaderboardCancelTriggered,
+        AchievementProgressChanged,
     };
 
     struct Change
@@ -187,6 +188,7 @@ public:
         ChangeType nType;
         unsigned int nId;
         int nValue;
+        int nValue2;
     };
 
     /// <summary>
@@ -262,6 +264,8 @@ private:
     int m_nRichPresenceParseResult = RC_OK;
     int m_nRichPresenceErrorLine = 0;
     bool m_bInitialized = false;
+
+    std::map<unsigned, unsigned> m_mMeasuredValues;
 };
 
 } // namespace services

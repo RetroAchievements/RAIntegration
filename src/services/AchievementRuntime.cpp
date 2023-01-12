@@ -14,10 +14,13 @@
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
+#include <rcheevos\src\rcheevos\rc_internal.h>
 #include <rcheevos\src\rhash\md5.h>
 
 namespace ra {
 namespace services {
+
+static constexpr unsigned MEASURED_UNKNOWN = 0xFFFFFFFF;
 
 void AchievementRuntime::EnsureInitialized() noexcept
 {
@@ -55,7 +58,15 @@ int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::st
     // When an achievement is activated, it's set to Waiting. The state of the achievement must evaluate
     // to false for at least one frame before it is promoted to Active. This ensures achievements don't
     // trigger from uninitialized (or randomly initialized) memory when first starting a game.
-    return rc_runtime_activate_achievement(&m_pRuntime, nId, sTrigger.c_str(), nullptr, 0);
+    const auto nResult = rc_runtime_activate_achievement(&m_pRuntime, nId, sTrigger.c_str(), nullptr, 0);
+    if (nResult != RC_OK)
+        return nResult;
+
+    unsigned value, target;
+    if (rc_runtime_get_achievement_measured(&m_pRuntime, nId, &value, &target))
+        m_mMeasuredValues[nId] = MEASURED_UNKNOWN;
+
+    return RC_OK;
 }
 
 rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId, const std::string& sTrigger)
@@ -93,6 +104,9 @@ void AchievementRuntime::DeactivateAchievement(ra::AchievementID nId)
     // we want to keep it so the user can examine the hit counts after an incorrect trigger
     // so we're just going to detach it (memory is still held by m_pRuntime.triggers[i].buffer
     DetachAchievementTrigger(nId);
+
+    // only track measured values for active achievements
+    m_mMeasuredValues.erase(nId);
 }
 
 rc_trigger_t* AchievementRuntime::DetachAchievementTrigger(ra::AchievementID nId)
@@ -156,6 +170,13 @@ void AchievementRuntime::UpdateAchievementId(ra::AchievementID nOldId, ra::Achie
     {
         if (m_pRuntime.triggers[i].id == nOldId)
             m_pRuntime.triggers[i].id = nNewId;
+    }
+
+    const auto pIter = m_mMeasuredValues.find(nOldId);
+    if (pIter != m_mMeasuredValues.end())
+    {
+        m_mMeasuredValues[nNewId] = pIter->second;
+        m_mMeasuredValues.erase(nOldId);
     }
 }
 
@@ -257,7 +278,7 @@ static void map_event_to_change(const rc_runtime_event_t* pRuntimeEvent)
             return;
     }
 
-    g_pChanges->emplace_back(AchievementRuntime::Change{ nChangeType, pRuntimeEvent->id, pRuntimeEvent->value });
+    g_pChanges->emplace_back(AchievementRuntime::Change{ nChangeType, pRuntimeEvent->id, pRuntimeEvent->value, 0 });
 }
 
 typedef struct LeaderboardPauseFlags
@@ -333,49 +354,85 @@ static void CheckForLeaderboardPauseChanges(const std::vector<LeaderboardPauseFl
                 (pLeaderboardPauseFlags.nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Start) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardStartReset, pLeaderboardPauseFlags.nID, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardStartReset, pLeaderboardPauseFlags.nID, 0, 0 });
             }
 
             if (!pLBoard->submit.has_hits &&
                 (pLeaderboardPauseFlags.nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Submit) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardSubmitReset, pLeaderboardPauseFlags.nID, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardSubmitReset, pLeaderboardPauseFlags.nID, 0, 0 });
             }
 
             if (!pLBoard->cancel.has_hits &&
                 (pLeaderboardPauseFlags.nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Cancel) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardCancelReset, pLeaderboardPauseFlags.nID, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardCancelReset, pLeaderboardPauseFlags.nID, 0, 0 });
             }
 
             if (!pLBoard->value.value.value &&
                 (pLeaderboardPauseFlags.nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Value) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardValueReset, pLeaderboardPauseFlags.nID, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardValueReset, pLeaderboardPauseFlags.nID, 0, 0 });
             }
 
             if (pLBoard->start.state == RC_TRIGGER_STATE_TRIGGERED &&
                 (pLeaderboardPauseFlags.nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Start) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardStartTriggered, pLeaderboardPauseFlags.nID, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardStartTriggered, pLeaderboardPauseFlags.nID, 0, 0 });
             }
 
             if (pLBoard->submit.state == RC_TRIGGER_STATE_TRIGGERED &&
                 (pLeaderboardPauseFlags.nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Submit) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardSubmitTriggered, pLeaderboardPauseFlags.nID, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardSubmitTriggered, pLeaderboardPauseFlags.nID, 0, 0 });
             }
 
             if (pLBoard->cancel.state == RC_TRIGGER_STATE_TRIGGERED &&
                 (pLeaderboardPauseFlags.nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Cancel) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardCancelTriggered, pLeaderboardPauseFlags.nID, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardCancelTriggered, pLeaderboardPauseFlags.nID, 0, 0 });
+            }
+        }
+    }
+}
+
+static void CheckForMeasuredChanges(std::map<unsigned, unsigned>& mMeasuredValues,
+    const rc_runtime_t* pRuntime, std::vector<AchievementRuntime::Change>& changes)
+{
+    for (auto& pair : mMeasuredValues)
+    {
+        unsigned value, target;
+        if (rc_runtime_get_achievement_measured(pRuntime, pair.first, &value, &target))
+        {
+            if (value != pair.second)
+            {
+                // value changed. ignore if previous was unknown
+                if (pair.second != MEASURED_UNKNOWN)
+                {
+                    bool bTriggered = false;
+                    for (const auto& change : changes)
+                    {
+                        if (change.nId == pair.first && change.nType == AchievementRuntime::ChangeType::AchievementTriggered)
+                        {
+                            bTriggered = true;
+                            break;
+                        }
+                    }
+
+                    if (!bTriggered)
+                    {
+                        changes.emplace_back(AchievementRuntime::Change
+                            { AchievementRuntime::ChangeType::AchievementProgressChanged, pair.first, ra::to_signed(value), ra::to_signed(target) });
+                    }
+                }
+
+                pair.second = value;
             }
         }
     }
@@ -400,51 +457,21 @@ _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& cha
 
     if (!vLeaderboardPauseFlags.empty())
         CheckForLeaderboardPauseChanges(vLeaderboardPauseFlags, &m_pRuntime, changes);
+
+    if (!m_mMeasuredValues.empty())
+        CheckForMeasuredChanges(m_mMeasuredValues, &m_pRuntime, changes);
 }
 
-_NODISCARD static _CONSTANT_FN ComparisonSizeToPrefix(_In_ char nSize) noexcept
+_NODISCARD static char ComparisonSizeFromPrefix(_In_ char cPrefix) noexcept
 {
-    switch (nSize)
-    {
-        case RC_MEMSIZE_BIT_0:        return "M";
-        case RC_MEMSIZE_BIT_1:        return "N";
-        case RC_MEMSIZE_BIT_2:        return "O";
-        case RC_MEMSIZE_BIT_3:        return "P";
-        case RC_MEMSIZE_BIT_4:        return "Q";
-        case RC_MEMSIZE_BIT_5:        return "R";
-        case RC_MEMSIZE_BIT_6:        return "S";
-        case RC_MEMSIZE_BIT_7:        return "T";
-        case RC_MEMSIZE_LOW:          return "L";
-        case RC_MEMSIZE_HIGH:         return "U";
-        case RC_MEMSIZE_8_BITS:       return "H";
-        case RC_MEMSIZE_24_BITS:      return "W";
-        case RC_MEMSIZE_32_BITS:      return "X";
-        default:
-        case RC_MEMSIZE_16_BITS:      return " ";
-    }
-}
+    char buffer[] = "0xH0";
+    const char* ptr = buffer;
+    buffer[2] = cPrefix;
 
-_NODISCARD static constexpr char ComparisonSizeFromPrefix(_In_ char cPrefix) noexcept
-{
-    switch (cPrefix)
-    {
-        case 'm': case 'M': return RC_MEMSIZE_BIT_0;
-        case 'n': case 'N': return RC_MEMSIZE_BIT_1;
-        case 'o': case 'O': return RC_MEMSIZE_BIT_2;
-        case 'p': case 'P': return RC_MEMSIZE_BIT_3;
-        case 'q': case 'Q': return RC_MEMSIZE_BIT_4;
-        case 'r': case 'R': return RC_MEMSIZE_BIT_5;
-        case 's': case 'S': return RC_MEMSIZE_BIT_6;
-        case 't': case 'T': return RC_MEMSIZE_BIT_7;
-        case 'l': case 'L': return RC_MEMSIZE_LOW;
-        case 'u': case 'U': return RC_MEMSIZE_HIGH;
-        case 'h': case 'H': return RC_MEMSIZE_8_BITS;
-        case 'w': case 'W': return RC_MEMSIZE_24_BITS;
-        case 'x': case 'X': return RC_MEMSIZE_32_BITS;
-        default:
-        case ' ':
-            return RC_MEMSIZE_16_BITS;
-    }
+    char size = RC_MEMSIZE_16_BITS;
+    unsigned address = 0;
+    rc_parse_memref(&ptr, &size, &address);
+    return size;
 }
 
 static bool IsMemoryOperand(int nOperandType) noexcept
@@ -454,6 +481,8 @@ static bool IsMemoryOperand(int nOperandType) noexcept
         case RC_OPERAND_ADDRESS:
         case RC_OPERAND_DELTA:
         case RC_OPERAND_PRIOR:
+        case RC_OPERAND_BCD:
+        case RC_OPERAND_INVERTED:
             return true;
 
         default:

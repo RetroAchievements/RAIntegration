@@ -325,13 +325,13 @@ void OverlayManager::RemoveChallengeIndicator(ra::AchievementID nAchievementId)
         RequestRender();
 }
 
-void OverlayManager::UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName, unsigned nValue, unsigned nTarget)
+void OverlayManager::UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName, unsigned nValue, unsigned nTarget, bool bAsPercent)
 {
     if (m_vmProgressTracker == nullptr)
         m_vmProgressTracker.reset(new ProgressTrackerViewModel());
 
     m_vmProgressTracker->SetImage(imageType, sImageName);
-    m_vmProgressTracker->SetProgress(nValue, nTarget);
+    m_vmProgressTracker->SetProgress(nValue, nTarget, bAsPercent);
     m_vmProgressTracker->BeginAnimation();
 
     RequestRender();

@@ -706,10 +706,13 @@ static void ProcessAchievements()
 
     if (vmMeasuredAchievement)
     {
+        const auto* pTrigger = pRuntime.GetAchievementTrigger(vmMeasuredAchievement->GetID());
+        const auto bAsPercent = (pTrigger != nullptr && pTrigger->measured_as_percent);
+
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge,
             ra::StringPrintf("%s_lock", vmMeasuredAchievement->GetBadge()),
-            nMeasuredAchievementValue, nMeasuredAchievementTarget);
+            nMeasuredAchievementValue, nMeasuredAchievementTarget, bAsPercent);
     }
 }
 

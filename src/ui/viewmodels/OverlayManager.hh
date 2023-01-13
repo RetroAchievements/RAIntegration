@@ -269,7 +269,11 @@ public:
         return nullptr;
     }
 
-    void UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName, unsigned nValue, unsigned nTarget);
+    /// <summary>
+    /// Updates the progress tracker indicator
+    /// </summary>
+    void UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName,
+        unsigned nValue, unsigned nTarget, bool bAsPercent);
 
     /// <summary>
     /// Clears all popups.

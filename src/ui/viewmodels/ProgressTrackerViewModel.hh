@@ -24,12 +24,13 @@ public:
     }
 
     /// <summary>
-    /// Sets the percentage of the image to highlight (0.0 - 1.0)
+    /// Sets the percentage of the image to highlight
     /// </summary>
-    void SetProgress(unsigned nValue, unsigned nTarget) noexcept
+    void SetProgress(unsigned nValue, unsigned nTarget, bool bAsPercent) noexcept
     {
         m_nValue = nValue;
         m_nTarget = nTarget;
+        m_bAsPercent = bAsPercent;
     }
 
     /// <summary>
@@ -49,6 +50,7 @@ private:
     ra::ui::ImageReference m_hImage;
     unsigned m_nValue = 0;
     unsigned m_nTarget = 0;
+    bool m_bAsPercent = false;
 
     double m_fAnimationProgress = TOTAL_ANIMATION_TIME;
     

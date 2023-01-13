@@ -28,6 +28,17 @@ bool ProgressTrackerViewModel::UpdateRenderImage(double fElapsed)
 
     if (m_pSurface == nullptr)
     {
+        std::wstring sText;
+        if (m_bAsPercent)
+        {
+            const auto nProgressPercent = gsl::narrow_cast<int>(static_cast<long long>(m_nValue) * 100 / m_nTarget);
+            sText = ra::StringPrintf(L"%d%%", nProgressPercent);
+        }
+        else
+        {
+            sText = ra::StringPrintf(L"%u/%u", m_nValue, m_nTarget);
+        }
+
         const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
         const auto nShadowOffset = pTheme.ShadowOffset();
         constexpr int nImageSize = 32;
@@ -39,7 +50,6 @@ bool ProgressTrackerViewModel::UpdateRenderImage(double fElapsed)
         const auto& pOverlayTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
 
         const auto nFontSubtitle = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupDetail(), ra::ui::FontStyles::Normal);
-        std::wstring sText = ra::StringPrintf(L"%u/%u", m_nValue, m_nTarget);
         const auto szText = pSurface->MeasureText(nFontSubtitle, sText);
 
         const auto nWidth = 4 + nImageSize + 6 + szText.Width + nShadowOffset + 4 + nShadowOffset;

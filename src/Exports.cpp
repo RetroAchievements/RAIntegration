@@ -441,6 +441,8 @@ static void ProcessAchievements()
 
     const ra::data::models::AchievementModel* vmMeasuredAchievement = nullptr;
     float fMeasuredAchievementPercent = 0.0;
+    unsigned nMeasuredAchievementValue = 0;
+    unsigned nMeasuredAchievementTarget = 0;
 
     TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeEvents);
     for (const auto& pChange : vChanges)
@@ -690,6 +692,8 @@ static void ProcessAchievements()
                          if (fProgress > fMeasuredAchievementPercent)
                          {
                              fMeasuredAchievementPercent = fProgress;
+                             nMeasuredAchievementValue = pChange.nValue;
+                             nMeasuredAchievementTarget = pChange.nValue2;
                              vmMeasuredAchievement = vmAchievement;
                          }
                      }
@@ -703,7 +707,9 @@ static void ProcessAchievements()
     if (vmMeasuredAchievement)
     {
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-        pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge, ra::Narrow(vmMeasuredAchievement->GetBadge()), fMeasuredAchievementPercent);
+        pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge,
+            ra::StringPrintf("%s_lock", vmMeasuredAchievement->GetBadge()),
+            nMeasuredAchievementValue, nMeasuredAchievementTarget);
     }
 }
 

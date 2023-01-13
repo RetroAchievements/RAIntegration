@@ -19,7 +19,6 @@ public:
     void SetImage(ra::ui::ImageType nImageType, const std::string& sImageName)
     {
         m_hImage.ChangeReference(nImageType, sImageName);
-        m_hImageGrayscale.ChangeReference(nImageType, sImageName + "_lock");
         m_pSurface.reset();
         SetRenderLocationY(-1); // force redraw when position calculated
     }
@@ -27,7 +26,11 @@ public:
     /// <summary>
     /// Sets the percentage of the image to highlight (0.0 - 1.0)
     /// </summary>
-    void SetProgress(float fProgress) noexcept { m_fProgress = fProgress; }
+    void SetProgress(unsigned nValue, unsigned nTarget) noexcept
+    {
+        m_nValue = nValue;
+        m_nTarget = nTarget;
+    }
 
     /// <summary>
     /// Updates the image to render.
@@ -44,8 +47,8 @@ public:
 
 private:
     ra::ui::ImageReference m_hImage;
-    ra::ui::ImageReference m_hImageGrayscale;
-    float m_fProgress = 0.0;
+    unsigned m_nValue = 0;
+    unsigned m_nTarget = 0;
 
     double m_fAnimationProgress = TOTAL_ANIMATION_TIME;
     

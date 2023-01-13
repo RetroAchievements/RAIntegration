@@ -269,7 +269,7 @@ public:
         return nullptr;
     }
 
-    void UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName, float fProgress);
+    void UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName, unsigned nValue, unsigned nTarget);
 
     /// <summary>
     /// Clears all popups.
@@ -348,6 +348,7 @@ private:
     void UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
     void UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
     void UpdateChallengeIndicators(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
+    void UpdateProgressTracker(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
     void UpdatePopup(ra::ui::drawing::ISurface& pSurface, const PopupLocations& pPopupLocations, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup);
 
     void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);

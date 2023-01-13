@@ -32,26 +32,42 @@ bool ProgressTrackerViewModel::UpdateRenderImage(double fElapsed)
         const auto nShadowOffset = pTheme.ShadowOffset();
         constexpr int nImageSize = 32;
 
+        // create a temporary surface so we can determine the size required for the actual surface
         const auto& pSurfaceFactory = ra::services::ServiceLocator::Get<ra::ui::drawing::ISurfaceFactory>();
-        m_pSurface = pSurfaceFactory.CreateSurface(nImageSize + nShadowOffset, nImageSize + nShadowOffset);
+        auto pSurface = pSurfaceFactory.CreateSurface(1, 1);
+
+        const auto& pOverlayTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+
+        const auto nFontSubtitle = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupDetail(), ra::ui::FontStyles::Normal);
+        std::wstring sText = ra::StringPrintf(L"%u/%u", m_nValue, m_nTarget);
+        const auto szText = pSurface->MeasureText(nFontSubtitle, sText);
+
+        const auto nWidth = 4 + nImageSize + 6 + szText.Width + nShadowOffset + 4 + nShadowOffset;
+        const auto nHeight = 4 + nImageSize + 4 + nShadowOffset;
+
+        pSurface = pSurfaceFactory.CreateSurface(nWidth, nHeight);
 
         // background
-        m_pSurface->FillRectangle(0, 0, m_pSurface->GetWidth(), m_pSurface->GetHeight(), Color::Transparent);
-        m_pSurface->FillRectangle(nShadowOffset, nShadowOffset, nImageSize, nImageSize, pTheme.ColorShadow());
+        pSurface->FillRectangle(0, 0, nWidth, nHeight, Color::Transparent);
+        pSurface->FillRectangle(nShadowOffset, nShadowOffset, nWidth - nShadowOffset, nHeight - nShadowOffset, pTheme.ColorShadow());
+
+        // frame
+        const auto nColorBackground = GetBackgroundColor();
+        pSurface->FillRectangle(0, 0, nWidth - nShadowOffset, nHeight - nShadowOffset, nColorBackground);
+        pSurface->FillRectangle(1, 1, nWidth - nShadowOffset - 2, nHeight - nShadowOffset - 2, pOverlayTheme.ColorBorder());
+        pSurface->FillRectangle(2, 2, nWidth - nShadowOffset - 4, nHeight - nShadowOffset - 4, nColorBackground);
 
         // image
         if (m_hImage.Type() != ra::ui::ImageType::None)
-            m_pSurface->DrawImageStretched(0, 0, nImageSize, nImageSize, m_hImage);
+            pSurface->DrawImageStretched(4, 4, nImageSize, nImageSize, m_hImage);
 
-        if (m_hImageGrayscale.Type() != ra::ui::ImageType::None)
-        {
-            std::unique_ptr<ra::ui::drawing::ISurface> pGrayscaleSurface;
-            pGrayscaleSurface = pSurfaceFactory.CreateSurface(nImageSize, nImageSize);
-            pGrayscaleSurface->DrawImageStretched(0, 0, nImageSize, nImageSize, m_hImageGrayscale);
+        // text
+        const auto nX = 4 + nImageSize + 6;
+        const auto nY = (nHeight - nShadowOffset - szText.Height - nShadowOffset) / 2;
+        pSurface->WriteText(nX + 2, nY + 2, nFontSubtitle, pOverlayTheme.ColorTextShadow(), sText);
+        pSurface->WriteText(nX, nY, nFontSubtitle, pOverlayTheme.ColorDetail(), sText);
 
-            const auto nGraySize = (int)((1.0 - m_fProgress) * nImageSize);
-            m_pSurface->DrawSurface(0, 0, *pGrayscaleSurface, 0, 0, nImageSize, nGraySize);
-        }
+        m_pSurface = std::move(pSurface);
 
         bUpdated = true;
     }

@@ -439,6 +439,9 @@ static void ProcessAchievements()
     std::vector<ra::services::AchievementRuntime::Change> vChanges;
     pRuntime.Process(vChanges);
 
+    const ra::data::models::AchievementModel* vmMeasuredAchievement = nullptr;
+    float fMeasuredAchievementPercent = 0.0;
+
     TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeEvents);
     for (const auto& pChange : vChanges)
     {
@@ -674,7 +677,33 @@ static void ProcessAchievements()
 
                 break;
             }
+
+            case ra::services::AchievementRuntime::ChangeType::AchievementProgressChanged:
+            {
+                 const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                 if (pChange.nValue2 > 0 && pChange.nValue <= pChange.nValue2 && pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Progress) != ra::ui::viewmodels::PopupLocation::None)
+                 {
+                     const auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
+                     if (vmAchievement)
+                     {
+                         float fProgress = (float)pChange.nValue / (float)pChange.nValue2;
+                         if (fProgress > fMeasuredAchievementPercent)
+                         {
+                             fMeasuredAchievementPercent = fProgress;
+                             vmMeasuredAchievement = vmAchievement;
+                         }
+                     }
+                 }
+
+                 break;
+            }
         }
+    }
+
+    if (vmMeasuredAchievement)
+    {
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge, ra::Narrow(vmMeasuredAchievement->GetBadge()), fMeasuredAchievementPercent);
     }
 }
 

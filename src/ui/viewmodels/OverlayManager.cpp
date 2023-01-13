@@ -60,7 +60,8 @@ bool OverlayManager::NeedsRender() const noexcept
         return true;
     }
 
-    if (!m_vPopupMessages.empty() || !m_vScoreboards.empty() || !m_vScoreTrackers.empty() || !m_vChallengeIndicators.empty())
+    if (!m_vPopupMessages.empty() || !m_vScoreboards.empty() || !m_vScoreTrackers.empty() ||
+        !m_vChallengeIndicators.empty() || m_vmProgressTracker != nullptr)
     {
         // a popup is visible
         return true;
@@ -168,8 +169,15 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
         if (!m_vScoreTrackers.empty())
             UpdateScoreTrackers(pSurface, pPopupLocations, fElapsed);
 
-        if (!m_vChallengeIndicators.empty())
+        if (!m_vChallengeIndicators.empty() || m_vmProgressTracker != nullptr)
+        {
             UpdateChallengeIndicators(pSurface, pPopupLocations, fElapsed);
+
+            // a visible progress tracker may not set m_bRedrawAll if it's in the pause portion of its animation loop
+            // make sure we keep the render cycle going so it'll eventually handle when the pause ends
+            if (m_vmProgressTracker != nullptr)
+                bRequestRender = true;
+        }
 
         // if anything changed, or caller requested a repaint, do so now
         if (m_bRedrawAll)
@@ -181,6 +189,8 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
                 RenderPopup(pSurface, *pScoreTracker);
             for (const auto& pChallengeIndicator : m_vChallengeIndicators)
                 RenderPopup(pSurface, *pChallengeIndicator);
+            if (m_vmProgressTracker != nullptr)
+                RenderPopup(pSurface, *m_vmProgressTracker);
             if (!m_vPopupMessages.empty())
                 RenderPopup(pSurface, *m_vPopupMessages.front());
 
@@ -313,6 +323,18 @@ void OverlayManager::RemoveChallengeIndicator(ra::AchievementID nAchievementId)
         RequestRender();
 }
 
+void OverlayManager::UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName, float fProgress)
+{
+    if (m_vmProgressTracker == nullptr)
+        m_vmProgressTracker.reset(new ProgressTrackerViewModel());
+
+    m_vmProgressTracker->SetImage(imageType, sImageName);
+    m_vmProgressTracker->SetProgress(fProgress);
+    m_vmProgressTracker->BeginAnimation();
+
+    RequestRender();
+}
+
 int OverlayManager::QueueMessage(std::unique_ptr<PopupMessageViewModel>& pMessage)
 {
     if (pMessage->GetImage().Type() != ra::ui::ImageType::None)
@@ -350,6 +372,9 @@ void OverlayManager::ClearPopups()
 
         for (auto& pChallengeIndicator : m_vChallengeIndicators)
             pChallengeIndicator->SetDestroyPending();
+
+        if (m_vmProgressTracker != nullptr)
+            m_vmProgressTracker->SetDestroyPending();
 
         for (auto& pTracker : m_vScoreTrackers)
             pTracker->SetDestroyPending();
@@ -595,15 +620,16 @@ void OverlayManager::UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, Po
 
 void OverlayManager::UpdateChallengeIndicators(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed)
 {
-    assert(!m_vChallengeIndicators.empty());
+    assert(!m_vChallengeIndicators.empty() || m_vmProgressTracker != nullptr);
+
+    constexpr int nSpacing = 10;
+    auto nRenderX = nSpacing;
 
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     const auto bEnabled = (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Challenge) != ra::ui::viewmodels::PopupLocation::None);
     if (bEnabled)
     {
         // adjust offsets so the items appear horizontally stacked
-        constexpr int nSpacing = 10;
-        auto nRenderX = nSpacing;
         for (auto pIter = m_vChallengeIndicators.begin(); pIter != m_vChallengeIndicators.end(); ++pIter)
         {
             auto& vmNotification = **pIter;
@@ -634,7 +660,35 @@ void OverlayManager::UpdateChallengeIndicators(ra::ui::drawing::ISurface& pSurfa
             ++pIter;
     }
 
-    if (bEnabled && !m_vChallengeIndicators.empty())
+    if (m_vmProgressTracker != nullptr)
+    {
+        if (m_vmProgressTracker->IsDestroyPending())
+            m_vmProgressTracker.reset();
+
+        const auto bProgressEnabled = (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Progress) != ra::ui::viewmodels::PopupLocation::None);
+        if (bProgressEnabled && m_vmProgressTracker != nullptr)
+        {
+            if (bEnabled && !m_vChallengeIndicators.empty() && pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Progress) != pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Challenge))
+            {
+                AdjustLocationForPopup(pPopupLocations, *m_vChallengeIndicators.front());
+                nRenderX = nSpacing;
+            }
+
+            m_vmProgressTracker->SetHorizontalOffset(nRenderX);
+            UpdatePopup(pSurface, pPopupLocations, fElapsed, *m_vmProgressTracker);
+
+            if (!m_vmProgressTracker->IsAnimationComplete())
+            {
+                AdjustLocationForPopup(pPopupLocations, *m_vmProgressTracker);
+                return;
+            }
+
+            m_vmProgressTracker.reset();
+            m_bRedrawAll = true;
+        }
+    }
+
+    if (!m_vChallengeIndicators.empty())
         AdjustLocationForPopup(pPopupLocations, *m_vChallengeIndicators.front());
 }
 
@@ -657,6 +711,8 @@ void OverlayManager::UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double f
 
         for (const auto& pChallengeIndicator : m_vChallengeIndicators)
             RenderPopupClippedX(pSurface, *pChallengeIndicator, nOverlayRight);
+        if (m_vmProgressTracker != nullptr)
+            RenderPopupClippedX(pSurface, *m_vmProgressTracker, nOverlayRight);
 
         for (const auto& pTracker : m_vScoreTrackers)
             RenderPopupClippedX(pSurface, *pTracker, nOverlayRight);

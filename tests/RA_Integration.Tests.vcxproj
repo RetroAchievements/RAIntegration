@@ -439,6 +439,7 @@
     <ClCompile Include="..\src\ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\LoginViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\PopupViewModelBase.cpp" />
+    <ClCompile Include="..\src\ui\viewmodels\ProgressTrackerViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\ProgressViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\ScoreboardViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\ScoreTrackerViewModel.cpp" />

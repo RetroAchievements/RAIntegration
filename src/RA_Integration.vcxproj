@@ -134,6 +134,7 @@
     <ClCompile Include="ui\viewmodels\PointerFinderViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupMessageViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\PopupViewModelBase.cpp" />
+    <ClCompile Include="ui\viewmodels\ProgressTrackerViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\ProgressViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\RichPresenceMonitorViewModel.cpp" />
     <ClCompile Include="ui\viewmodels\ScoreboardViewModel.cpp" />
@@ -317,6 +318,7 @@
     <ClInclude Include="ui\viewmodels\PointerFinderViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh" />
     <ClInclude Include="ui\viewmodels\PopupViewModelBase.hh" />
+    <ClInclude Include="ui\viewmodels\ProgressTrackerViewModel.hh" />
     <ClInclude Include="ui\viewmodels\ProgressViewModel.hh" />
     <ClInclude Include="ui\viewmodels\RichPresenceMonitorViewModel.hh" />
     <ClInclude Include="ui\viewmodels\ScoreboardViewModel.hh" />

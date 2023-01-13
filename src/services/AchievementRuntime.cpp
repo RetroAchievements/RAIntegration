@@ -46,6 +46,10 @@ void AchievementRuntime::ResetActiveAchievements()
     if (m_bInitialized)
     {
         rc_runtime_reset(&m_pRuntime);
+        
+        for (auto& pair : m_mMeasuredValues)
+            pair.second = MEASURED_UNKNOWN;
+
         RA_LOG_INFO("Runtime reset");
     }
 }
@@ -63,7 +67,7 @@ int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::st
         return nResult;
 
     unsigned value, target;
-    if (rc_runtime_get_achievement_measured(&m_pRuntime, nId, &value, &target))
+    if (rc_runtime_get_achievement_measured(&m_pRuntime, nId, &value, &target) && target > 0)
         m_mMeasuredValues[nId] = MEASURED_UNKNOWN;
 
     return RC_OK;
@@ -838,7 +842,7 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
     }
 
     // reset the runtime state, then apply state from file
-    rc_runtime_reset(&m_pRuntime);
+    ResetActiveAchievements();
 
     if (sLoadStateFilename == nullptr)
         return false;
@@ -912,7 +916,7 @@ bool AchievementRuntime::LoadProgressFromBuffer(const char* pBuffer)
     std::lock_guard<std::mutex> pLock(m_pMutex);
 
     // reset the runtime state, then apply state from file
-    rc_runtime_reset(&m_pRuntime);
+    ResetActiveAchievements();
 
     const unsigned char* pBytes;
     GSL_SUPPRESS_TYPE1 pBytes = reinterpret_cast<const unsigned char*>(pBuffer);

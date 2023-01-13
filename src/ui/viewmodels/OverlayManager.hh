@@ -6,6 +6,7 @@
 #include "OverlayViewModel.hh"
 #include "ChallengeIndicatorViewModel.hh"
 #include "PopupMessageViewModel.hh"
+#include "ProgressTrackerViewModel.hh"
 #include "ScoreboardViewModel.hh"
 #include "ScoreTrackerViewModel.hh"
 
@@ -268,6 +269,8 @@ public:
         return nullptr;
     }
 
+    void UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName, float fProgress);
+
     /// <summary>
     /// Clears all popups.
     /// </summary>
@@ -311,6 +314,7 @@ protected:
     std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
     std::vector<std::unique_ptr<ChallengeIndicatorViewModel>> m_vChallengeIndicators;
     std::deque<ScoreboardViewModel> m_vScoreboards;
+    std::unique_ptr<ra::ui::viewmodels::ProgressTrackerViewModel> m_vmProgressTracker;
 
     bool m_bIsRendering = false;
     bool m_bRenderRequestPending = false;

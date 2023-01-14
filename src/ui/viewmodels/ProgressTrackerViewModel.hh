@@ -26,12 +26,17 @@ public:
     /// <summary>
     /// Sets the percentage of the image to highlight
     /// </summary>
-    void SetProgress(unsigned nValue, unsigned nTarget, bool bAsPercent) noexcept
-    {
-        m_nValue = nValue;
-        m_nTarget = nTarget;
-        m_bAsPercent = bAsPercent;
-    }
+    void SetProgress(unsigned nValue, unsigned nTarget, bool bAsPercent);
+
+    /// <summary>
+    /// Gets the image to display.
+    /// </summary>
+    const ra::ui::ImageReference& GetImage() const noexcept { return m_hImage; }
+
+    /// <summary>
+    /// Gets the text to display.
+    /// </summary>
+    const std::wstring& GetText() const noexcept { return m_sProgress; }
 
     /// <summary>
     /// Updates the image to render.
@@ -41,22 +46,18 @@ public:
     void BeginAnimation() noexcept override { m_fAnimationProgress = 0.0; }
     bool IsAnimationStarted() const noexcept override { return true; }
 
-    bool IsAnimationComplete() const noexcept override 
-    { 
+    bool IsAnimationComplete() const noexcept override
+    {
         return m_fAnimationProgress >= TOTAL_ANIMATION_TIME;
     }
 
 private:
     ra::ui::ImageReference m_hImage;
-    unsigned m_nValue = 0;
-    unsigned m_nTarget = 0;
-    bool m_bAsPercent = false;
+    std::wstring m_sProgress;
 
     double m_fAnimationProgress = TOTAL_ANIMATION_TIME;
-    
+
     static _CONSTANT_VAR TOTAL_ANIMATION_TIME = 2.0;
-    static _CONSTANT_VAR OUT_TIME = 0.8;
-    static _CONSTANT_VAR HOLD_TIME = TOTAL_ANIMATION_TIME - OUT_TIME;
 };
 
 } // namespace viewmodels

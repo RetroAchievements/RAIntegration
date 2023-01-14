@@ -17,6 +17,19 @@ ProgressTrackerViewModel::ProgressTrackerViewModel() noexcept
     GSL_SUPPRESS_F6 SetVerticalOffset(10);
 }
 
+void ProgressTrackerViewModel::SetProgress(unsigned nValue, unsigned nTarget, bool bAsPercent)
+{
+    if (bAsPercent)
+    {
+        const auto nProgressPercent = gsl::narrow_cast<int>(static_cast<long long>(nValue) * 100 / nTarget);
+        m_sProgress = ra::StringPrintf(L"%d%%", nProgressPercent);
+    }
+    else
+    {
+        m_sProgress = ra::StringPrintf(L"%u/%u", nValue, nTarget);
+    }
+}
+
 bool ProgressTrackerViewModel::UpdateRenderImage(double fElapsed)
 {
     if (m_fAnimationProgress >= TOTAL_ANIMATION_TIME)
@@ -24,21 +37,10 @@ bool ProgressTrackerViewModel::UpdateRenderImage(double fElapsed)
 
     m_fAnimationProgress += fElapsed;
 
-    bool bUpdated = (m_fAnimationProgress >= HOLD_TIME);
+    bool bUpdated = false;
 
     if (m_pSurface == nullptr)
     {
-        std::wstring sText;
-        if (m_bAsPercent)
-        {
-            const auto nProgressPercent = gsl::narrow_cast<int>(static_cast<long long>(m_nValue) * 100 / m_nTarget);
-            sText = ra::StringPrintf(L"%d%%", nProgressPercent);
-        }
-        else
-        {
-            sText = ra::StringPrintf(L"%u/%u", m_nValue, m_nTarget);
-        }
-
         const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
         const auto nShadowOffset = pTheme.ShadowOffset();
         constexpr int nImageSize = 32;
@@ -50,7 +52,7 @@ bool ProgressTrackerViewModel::UpdateRenderImage(double fElapsed)
         const auto& pOverlayTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
 
         const auto nFontSubtitle = pSurface->LoadFont(pOverlayTheme.FontPopup(), pOverlayTheme.FontSizePopupDetail(), ra::ui::FontStyles::Normal);
-        const auto szText = pSurface->MeasureText(nFontSubtitle, sText);
+        const auto szText = pSurface->MeasureText(nFontSubtitle, m_sProgress);
 
         const auto nWidth = 4 + nImageSize + 6 + szText.Width + nShadowOffset + 4 + nShadowOffset;
         const auto nHeight = 4 + nImageSize + 4 + nShadowOffset;
@@ -74,8 +76,8 @@ bool ProgressTrackerViewModel::UpdateRenderImage(double fElapsed)
         // text
         const auto nX = 4 + nImageSize + 6;
         const auto nY = (nHeight - nShadowOffset - szText.Height - nShadowOffset) / 2;
-        pSurface->WriteText(nX + 2, nY + 2, nFontSubtitle, pOverlayTheme.ColorTextShadow(), sText);
-        pSurface->WriteText(nX, nY, nFontSubtitle, pOverlayTheme.ColorDetail(), sText);
+        pSurface->WriteText(nX + 2, nY + 2, nFontSubtitle, pOverlayTheme.ColorTextShadow(), m_sProgress);
+        pSurface->WriteText(nX, nY, nFontSubtitle, pOverlayTheme.ColorDetail(), m_sProgress);
 
         m_pSurface = std::move(pSurface);
 

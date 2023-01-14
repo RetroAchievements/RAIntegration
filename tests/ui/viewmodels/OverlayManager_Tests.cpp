@@ -77,6 +77,11 @@ private:
 
         int GetOverlayRenderX() const { return m_vmOverlay.GetHorizontalOffset(); }
 
+        ra::ui::viewmodels::ProgressTrackerViewModel* GetProgressTracker()
+        {
+            return m_vmProgressTracker.get();
+        }
+
     private:
         bool m_bRenderRequested = false;
         bool m_bShowRequested = false;
@@ -518,6 +523,34 @@ public:
 
         const auto& vmIndicator2 = overlay.AddChallengeIndicator(6, ra::ui::ImageType::Badge, "12345");
         Assert::IsTrue(&vmIndicator == &vmIndicator2);
+    }
+
+    TEST_METHOD(TestAddRemoveProgressIndicator)
+    {
+        OverlayManagerHarness overlay;
+        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress, ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        overlay.UpdateProgressTracker(ra::ui::ImageType::Badge, "12345_lock", 3, 7, false);
+        auto* pTracker = overlay.GetProgressTracker();
+        Assert::IsNotNull(pTracker);
+        Ensures(pTracker != nullptr);
+
+        Assert::AreEqual(std::wstring(L"3/7"), pTracker->GetText());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pTracker->GetImage().Type());
+        Assert::AreEqual(std::string("12345_lock"), pTracker->GetImage().Name());
+        Assert::IsTrue(overlay.WasRenderRequested());
+        Assert::IsFalse(pTracker->IsDestroyPending());
+        Assert::AreEqual(10, pTracker->GetVerticalOffset());
+
+        ra::ui::drawing::mocks::MockSurface mockSurface(800, 600);
+        overlay.Render(mockSurface, false);
+        Assert::AreEqual(10, pTracker->GetVerticalOffset());
+
+        overlay.mockClock.AdvanceTime(std::chrono::seconds(3));
+        overlay.Render(mockSurface, false);
+
+        pTracker = overlay.GetProgressTracker();
+        Assert::IsNull(pTracker);
     }
 
     TEST_METHOD(TestShowHideOverlay)

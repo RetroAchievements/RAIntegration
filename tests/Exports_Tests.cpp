@@ -588,6 +588,92 @@ public:
         Assert::IsTrue(pIndicator->IsDestroyPending());
     }
 
+    TEST_METHOD(TestDoAchievementsFrameAchievementProgress)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U).SetBadge(L"55223");
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress, ra::ui::viewmodels::PopupLocation::BottomRight);
+        harness.mockRuntime.ActivateAchievement(1U, "M:0xH0001=10");
+        auto* pTrigger = harness.mockRuntime.GetAchievementTrigger(1U);
+        pTrigger->measured_value = 5;
+
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementProgressChanged, 1U, pTrigger->measured_value);
+        _RA_DoAchievementsFrame();
+
+        const auto* pIndicator = harness.mockOverlayManager.GetProgressTracker();
+        Assert::IsNotNull(pIndicator);
+        Ensures(pIndicator != nullptr);
+
+        Assert::AreEqual(ra::ui::ImageType::Badge, pIndicator->GetImage().Type());
+        Assert::AreEqual(std::string("55223_lock"), pIndicator->GetImage().Name());
+        Assert::AreEqual(std::wstring(L"5/10"), pIndicator->GetText());
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameAchievementProgressNoTracker)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U).SetBadge(L"55223");
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress, ra::ui::viewmodels::PopupLocation::None);
+        harness.mockRuntime.ActivateAchievement(1U, "M:0xH0001=10");
+        auto* pTrigger = harness.mockRuntime.GetAchievementTrigger(1U);
+        pTrigger->measured_value = 5;
+
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementProgressChanged, 1U, pTrigger->measured_value);
+        _RA_DoAchievementsFrame();
+
+        const auto* pIndicator = harness.mockOverlayManager.GetProgressTracker();
+        Assert::IsNull(pIndicator);
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameAchievementProgressHighestPercent)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress, ra::ui::viewmodels::PopupLocation::BottomRight);
+        harness.MockAchievement(1U).SetBadge(L"55221");
+        harness.mockRuntime.ActivateAchievement(1U, "M:0xH0001=10");
+        harness.MockAchievement(2U).SetBadge(L"55222");
+        harness.mockRuntime.ActivateAchievement(2U, "M:0xH0001=10");
+        harness.MockAchievement(3U).SetBadge(L"55223");
+        harness.mockRuntime.ActivateAchievement(3U, "M:0xH0001=10");
+        harness.mockRuntime.GetAchievementTrigger(1U)->measured_value = 5;
+        harness.mockRuntime.GetAchievementTrigger(2U)->measured_value = 7;
+        harness.mockRuntime.GetAchievementTrigger(3U)->measured_value = 3;
+
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementProgressChanged, 1U, 5);
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementProgressChanged, 2U, 7);
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementProgressChanged, 3U, 3);
+        _RA_DoAchievementsFrame();
+
+        const auto* pIndicator = harness.mockOverlayManager.GetProgressTracker();
+        Assert::IsNotNull(pIndicator);
+        Ensures(pIndicator != nullptr);
+
+        Assert::AreEqual(ra::ui::ImageType::Badge, pIndicator->GetImage().Type());
+        Assert::AreEqual(std::string("55222_lock"), pIndicator->GetImage().Name());
+        Assert::AreEqual(std::wstring(L"7/10"), pIndicator->GetText());
+    }
+
+    TEST_METHOD(TestDoAchievementsFrameAchievementProgressAsPercent)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U).SetBadge(L"55223");
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress, ra::ui::viewmodels::PopupLocation::BottomRight);
+        harness.mockRuntime.ActivateAchievement(1U, "G:0xH0001=10");
+        auto* pTrigger = harness.mockRuntime.GetAchievementTrigger(1U);
+        pTrigger->measured_value = 5;
+
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementProgressChanged, 1U, pTrigger->measured_value);
+        _RA_DoAchievementsFrame();
+
+        const auto* pIndicator = harness.mockOverlayManager.GetProgressTracker();
+        Assert::IsNotNull(pIndicator);
+        Ensures(pIndicator != nullptr);
+
+        Assert::AreEqual(ra::ui::ImageType::Badge, pIndicator->GetImage().Type());
+        Assert::AreEqual(std::string("55223_lock"), pIndicator->GetImage().Name());
+        Assert::AreEqual(std::wstring(L"50%"), pIndicator->GetText());
+    }
+
     TEST_METHOD(TestDoAchievementsFramePaused)
     {
         DoAchievementsFrameHarness harness;

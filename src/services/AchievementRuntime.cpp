@@ -56,11 +56,7 @@ int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::st
     // When an achievement is activated, it's set to Waiting. The state of the achievement must evaluate
     // to false for at least one frame before it is promoted to Active. This ensures achievements don't
     // trigger from uninitialized (or randomly initialized) memory when first starting a game.
-    const auto nResult = rc_runtime_activate_achievement(&m_pRuntime, nId, sTrigger.c_str(), nullptr, 0);
-    if (nResult != RC_OK)
-        return nResult;
-
-    return RC_OK;
+    return rc_runtime_activate_achievement(&m_pRuntime, nId, sTrigger.c_str(), nullptr, 0);
 }
 
 rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId, const std::string& sTrigger)

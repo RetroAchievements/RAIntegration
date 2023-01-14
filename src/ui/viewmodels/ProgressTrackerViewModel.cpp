@@ -74,7 +74,7 @@ bool ProgressTrackerViewModel::UpdateRenderImage(double fElapsed)
             pSurface->DrawImageStretched(4, 4, nImageSize, nImageSize, m_hImage);
 
         // text
-        const auto nX = 4 + nImageSize + 6;
+        const auto constexpr nX = 4 + nImageSize + 6;
         const auto nY = (nHeight - nShadowOffset - szText.Height - nShadowOffset) / 2;
         pSurface->WriteText(nX + 2, nY + 2, nFontSubtitle, pOverlayTheme.ColorTextShadow(), m_sProgress);
         pSurface->WriteText(nX, nY, nFontSubtitle, pOverlayTheme.ColorDetail(), m_sProgress);

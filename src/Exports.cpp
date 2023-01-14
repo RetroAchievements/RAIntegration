@@ -692,7 +692,7 @@ static void ProcessAchievements()
                         const auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
                         if (vmAchievement != nullptr)
                         {
-                            float fProgress = (float)pTrigger->measured_value / (float)pTrigger->measured_target;
+                            const float fProgress = gsl::narrow_cast<float>(pTrigger->measured_value) / gsl::narrow_cast<float>(pTrigger->measured_target);
                             if (fProgress > fMeasuredAchievementPercent)
                             {
                                 fMeasuredAchievementPercent = fProgress;
@@ -708,7 +708,7 @@ static void ProcessAchievements()
         }
     }
 
-    if (vmMeasuredAchievement)
+    if (vmMeasuredAchievement && pMeasuredAchievementTrigger)
     {
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge,

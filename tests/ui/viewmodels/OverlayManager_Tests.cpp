@@ -77,7 +77,7 @@ private:
 
         int GetOverlayRenderX() const { return m_vmOverlay.GetHorizontalOffset(); }
 
-        ra::ui::viewmodels::ProgressTrackerViewModel* GetProgressTracker()
+        ra::ui::viewmodels::ProgressTrackerViewModel* GetProgressTracker() noexcept
         {
             return m_vmProgressTracker.get();
         }

@@ -20,8 +20,6 @@
 namespace ra {
 namespace services {
 
-static constexpr unsigned MEASURED_UNKNOWN = 0xFFFFFFFF;
-
 void AchievementRuntime::EnsureInitialized() noexcept
 {
     if (!m_bInitialized)
@@ -46,10 +44,6 @@ void AchievementRuntime::ResetActiveAchievements()
     if (m_bInitialized)
     {
         rc_runtime_reset(&m_pRuntime);
-        
-        for (auto& pair : m_mMeasuredValues)
-            pair.second = MEASURED_UNKNOWN;
-
         RA_LOG_INFO("Runtime reset");
     }
 }
@@ -65,10 +59,6 @@ int AchievementRuntime::ActivateAchievement(ra::AchievementID nId, const std::st
     const auto nResult = rc_runtime_activate_achievement(&m_pRuntime, nId, sTrigger.c_str(), nullptr, 0);
     if (nResult != RC_OK)
         return nResult;
-
-    unsigned value, target;
-    if (rc_runtime_get_achievement_measured(&m_pRuntime, nId, &value, &target) && target > 0)
-        m_mMeasuredValues[nId] = MEASURED_UNKNOWN;
 
     return RC_OK;
 }
@@ -108,9 +98,6 @@ void AchievementRuntime::DeactivateAchievement(ra::AchievementID nId)
     // we want to keep it so the user can examine the hit counts after an incorrect trigger
     // so we're just going to detach it (memory is still held by m_pRuntime.triggers[i].buffer
     DetachAchievementTrigger(nId);
-
-    // only track measured values for active achievements
-    m_mMeasuredValues.erase(nId);
 }
 
 rc_trigger_t* AchievementRuntime::DetachAchievementTrigger(ra::AchievementID nId)
@@ -174,13 +161,6 @@ void AchievementRuntime::UpdateAchievementId(ra::AchievementID nOldId, ra::Achie
     {
         if (m_pRuntime.triggers[i].id == nOldId)
             m_pRuntime.triggers[i].id = nNewId;
-    }
-
-    const auto pIter = m_mMeasuredValues.find(nOldId);
-    if (pIter != m_mMeasuredValues.end())
-    {
-        m_mMeasuredValues[nNewId] = pIter->second;
-        m_mMeasuredValues.erase(nOldId);
     }
 }
 
@@ -277,12 +257,15 @@ static void map_event_to_change(const rc_runtime_event_t* pRuntimeEvent)
         case RC_RUNTIME_EVENT_LBOARD_DISABLED:
             nChangeType = AchievementRuntime::ChangeType::LeaderboardDisabled;
             break;
+        case RC_RUNTIME_EVENT_ACHIEVEMENT_PROGRESS_UPDATED:
+            nChangeType = AchievementRuntime::ChangeType::AchievementProgressChanged;
+            break;
         default:
             // unsupported
             return;
     }
 
-    g_pChanges->emplace_back(AchievementRuntime::Change{ nChangeType, pRuntimeEvent->id, pRuntimeEvent->value, 0 });
+    g_pChanges->emplace_back(AchievementRuntime::Change{ nChangeType, pRuntimeEvent->id, pRuntimeEvent->value });
 }
 
 typedef struct LeaderboardPauseFlags
@@ -358,85 +341,49 @@ static void CheckForLeaderboardPauseChanges(const std::vector<LeaderboardPauseFl
                 (pLeaderboardPauseFlags.nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Start) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardStartReset, pLeaderboardPauseFlags.nID, 0, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardStartReset, pLeaderboardPauseFlags.nID, 0 });
             }
 
             if (!pLBoard->submit.has_hits &&
                 (pLeaderboardPauseFlags.nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Submit) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardSubmitReset, pLeaderboardPauseFlags.nID, 0, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardSubmitReset, pLeaderboardPauseFlags.nID, 0 });
             }
 
             if (!pLBoard->cancel.has_hits &&
                 (pLeaderboardPauseFlags.nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Cancel) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardCancelReset, pLeaderboardPauseFlags.nID, 0, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardCancelReset, pLeaderboardPauseFlags.nID, 0 });
             }
 
             if (!pLBoard->value.value.value &&
                 (pLeaderboardPauseFlags.nPauseOnReset & ra::data::models::LeaderboardModel::LeaderboardParts::Value) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardValueReset, pLeaderboardPauseFlags.nID, 0, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardValueReset, pLeaderboardPauseFlags.nID, 0 });
             }
 
             if (pLBoard->start.state == RC_TRIGGER_STATE_TRIGGERED &&
                 (pLeaderboardPauseFlags.nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Start) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardStartTriggered, pLeaderboardPauseFlags.nID, 0, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardStartTriggered, pLeaderboardPauseFlags.nID, 0 });
             }
 
             if (pLBoard->submit.state == RC_TRIGGER_STATE_TRIGGERED &&
                 (pLeaderboardPauseFlags.nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Submit) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardSubmitTriggered, pLeaderboardPauseFlags.nID, 0, 0 });
+                    { AchievementRuntime::ChangeType::LeaderboardSubmitTriggered, pLeaderboardPauseFlags.nID, 0 });
             }
 
             if (pLBoard->cancel.state == RC_TRIGGER_STATE_TRIGGERED &&
                 (pLeaderboardPauseFlags.nPauseOnTrigger & ra::data::models::LeaderboardModel::LeaderboardParts::Cancel) != ra::data::models::LeaderboardModel::LeaderboardParts::None)
             {
                 changes.emplace_back(AchievementRuntime::Change
-                    { AchievementRuntime::ChangeType::LeaderboardCancelTriggered, pLeaderboardPauseFlags.nID, 0, 0 });
-            }
-        }
-    }
-}
-
-static void CheckForMeasuredChanges(std::map<unsigned, unsigned>& mMeasuredValues,
-    const rc_runtime_t* pRuntime, std::vector<AchievementRuntime::Change>& changes)
-{
-    for (auto& pair : mMeasuredValues)
-    {
-        unsigned value, target;
-        if (rc_runtime_get_achievement_measured(pRuntime, pair.first, &value, &target))
-        {
-            if (value != pair.second)
-            {
-                // value changed. ignore if previous was unknown
-                if (pair.second != MEASURED_UNKNOWN)
-                {
-                    bool bTriggered = false;
-                    for (const auto& change : changes)
-                    {
-                        if (change.nId == pair.first && change.nType == AchievementRuntime::ChangeType::AchievementTriggered)
-                        {
-                            bTriggered = true;
-                            break;
-                        }
-                    }
-
-                    if (!bTriggered)
-                    {
-                        changes.emplace_back(AchievementRuntime::Change
-                            { AchievementRuntime::ChangeType::AchievementProgressChanged, pair.first, ra::to_signed(value), ra::to_signed(target) });
-                    }
-                }
-
-                pair.second = value;
+                    { AchievementRuntime::ChangeType::LeaderboardCancelTriggered, pLeaderboardPauseFlags.nID, 0 });
             }
         }
     }
@@ -461,9 +408,6 @@ _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& cha
 
     if (!vLeaderboardPauseFlags.empty())
         CheckForLeaderboardPauseChanges(vLeaderboardPauseFlags, &m_pRuntime, changes);
-
-    if (!m_mMeasuredValues.empty())
-        CheckForMeasuredChanges(m_mMeasuredValues, &m_pRuntime, changes);
 }
 
 _NODISCARD static char ComparisonSizeFromPrefix(_In_ char cPrefix) noexcept

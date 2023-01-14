@@ -145,14 +145,13 @@ private:
         Assert::Fail(pString.c_str());
     }
 
-    static void AssertChange(const std::vector<AchievementRuntime::Change>& vChanges, AchievementRuntime::ChangeType nType, unsigned nId, int nValue, int nValue2)
+    static void AssertChange(const std::vector<AchievementRuntime::Change>& vChanges, AchievementRuntime::ChangeType nType, unsigned nId, int nValue)
     {
         for (const auto& pChange : vChanges)
         {
             if (pChange.nId == nId && pChange.nType == nType)
             {
                 Assert::AreEqual(nValue, pChange.nValue);
-                Assert::AreEqual(nValue2, pChange.nValue2);
                 return;
             }
         }
@@ -364,7 +363,7 @@ public:
         memory.at(2) = 75;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementProgressChanged, 4U, 75, 100);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementProgressChanged, 4U, 75);
         vChanges.clear();
 
         // watch for notification, no change, no notification
@@ -389,7 +388,7 @@ public:
         memory.at(2) = 78;
         runtime.Process(vChanges);
         Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementProgressChanged, 4U, 78, 100);
+        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementProgressChanged, 4U, 78);
         vChanges.clear();
 
         // trigger achievement, expect trigger notification, but not progress notification

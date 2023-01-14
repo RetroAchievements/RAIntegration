@@ -13,6 +13,8 @@
 #include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
+#include <rcheevos\src\rcheevos\rc_internal.h>
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -975,7 +977,8 @@ void AssetEditorViewModel::UpdateMeasuredValue()
                         return;
                 }
 
-                SetValue(MeasuredValueProperty, ra::StringPrintf(L"%d/%d", pTrigger->measured_value, pTrigger->measured_target));
+                const auto nValue = (pTrigger->measured_value == RC_MEASURED_UNKNOWN) ? 0 : pTrigger->measured_value;
+                SetValue(MeasuredValueProperty, ra::StringPrintf(L"%d/%d", nValue, pTrigger->measured_target));
             }
             else
             {

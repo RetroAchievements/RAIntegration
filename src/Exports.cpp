@@ -36,7 +36,9 @@
 #include "ui\win32\OverlayWindow.hh"
 #include "ui\win32\bindings\ControlBinding.hh"
 
-#include "RAInterface\RA_Emulators.h"
+#include <RAInterface\RA_Emulators.h>
+
+#include <rcheevos\include\rc_api_runtime.h>
 
 API const char* CCONV _RA_IntegrationVersion() { return RA_INTEGRATION_VERSION; }
 
@@ -440,9 +442,8 @@ static void ProcessAchievements()
     pRuntime.Process(vChanges);
 
     const ra::data::models::AchievementModel* vmMeasuredAchievement = nullptr;
+    const rc_trigger_t* pMeasuredAchievementTrigger = nullptr;
     float fMeasuredAchievementPercent = 0.0;
-    unsigned nMeasuredAchievementValue = 0;
-    unsigned nMeasuredAchievementTarget = 0;
 
     TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeEvents);
     for (const auto& pChange : vChanges)
@@ -682,20 +683,23 @@ static void ProcessAchievements()
 
             case ra::services::AchievementRuntime::ChangeType::AchievementProgressChanged:
             {
-                 const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                 if (pChange.nValue2 > 0 && pChange.nValue <= pChange.nValue2 && pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Progress) != ra::ui::viewmodels::PopupLocation::None)
-                 {
-                     const auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
-                     if (vmAchievement)
-                     {
-                         float fProgress = (float)pChange.nValue / (float)pChange.nValue2;
-                         if (fProgress > fMeasuredAchievementPercent)
-                         {
-                             fMeasuredAchievementPercent = fProgress;
-                             nMeasuredAchievementValue = pChange.nValue;
-                             nMeasuredAchievementTarget = pChange.nValue2;
-                             vmMeasuredAchievement = vmAchievement;
-                         }
+                const auto* pTrigger = pRuntime.GetAchievementTrigger(pChange.nId);
+                if (pTrigger != nullptr && pTrigger->measured_target > 0)
+                {
+                    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+                    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Progress) != ra::ui::viewmodels::PopupLocation::None)
+                    {
+                        const auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
+                        if (vmAchievement != nullptr)
+                        {
+                            float fProgress = (float)pTrigger->measured_value / (float)pTrigger->measured_target;
+                            if (fProgress > fMeasuredAchievementPercent)
+                            {
+                                fMeasuredAchievementPercent = fProgress;
+                                vmMeasuredAchievement = vmAchievement;
+                                pMeasuredAchievementTrigger = pTrigger;
+                            }
+                        }
                      }
                  }
 
@@ -706,13 +710,11 @@ static void ProcessAchievements()
 
     if (vmMeasuredAchievement)
     {
-        const auto* pTrigger = pRuntime.GetAchievementTrigger(vmMeasuredAchievement->GetID());
-        const auto bAsPercent = (pTrigger != nullptr && pTrigger->measured_as_percent);
-
         auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
         pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge,
             ra::StringPrintf("%s_lock", vmMeasuredAchievement->GetBadge()),
-            nMeasuredAchievementValue, nMeasuredAchievementTarget, bAsPercent);
+            pMeasuredAchievementTrigger->measured_value, pMeasuredAchievementTrigger->measured_target,
+            pMeasuredAchievementTrigger->measured_as_percent);
     }
 }
 

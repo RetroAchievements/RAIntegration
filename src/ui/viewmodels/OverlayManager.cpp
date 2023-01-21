@@ -672,6 +672,9 @@ void OverlayManager::UpdateProgressTracker(ra::ui::drawing::ISurface& pSurface, 
 
     if (m_vmProgressTracker->IsDestroyPending())
     {
+        // call UpdatePopup again to force it to "unpaint"
+        UpdatePopup(pSurface, pPopupLocations, fElapsed, *m_vmProgressTracker);
+
         m_vmProgressTracker.reset();
         return;
     }
@@ -685,10 +688,7 @@ void OverlayManager::UpdateProgressTracker(ra::ui::drawing::ISurface& pSurface, 
 
         if (m_vmProgressTracker->IsAnimationComplete())
         {
-            // call UpdatePopup again to force it to "unpaint"
             m_vmProgressTracker->SetDestroyPending();
-            UpdatePopup(pSurface, pPopupLocations, fElapsed, *m_vmProgressTracker);
-            m_vmProgressTracker.reset();
             return;
         }
 

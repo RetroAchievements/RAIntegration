@@ -548,8 +548,11 @@ public:
 
         overlay.mockClock.AdvanceTime(std::chrono::seconds(3));
         overlay.Render(mockSurface, false);
+        Assert::IsTrue(overlay.WasRenderRequested()); // destroy pending
+        Assert::IsTrue(pTracker->IsDestroyPending());
 
-        pTracker = overlay.GetProgressTracker();
+        overlay.Render(mockSurface, false);
+        pTracker = overlay.GetProgressTracker(); // destroy occurred
         Assert::IsNull(pTracker);
     }
 

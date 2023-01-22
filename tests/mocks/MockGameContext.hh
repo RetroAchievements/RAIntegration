@@ -101,7 +101,7 @@ public:
         return true;
     }
 
-    bool DeleteCodeNote(ra::ByteAddress nAddress)
+    bool UpdateCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
     {
         auto* pCodeNotes = dynamic_cast<MockCodeNotesModel*>(Assets().FindCodeNotes());
         if (pCodeNotes == nullptr)
@@ -111,7 +111,7 @@ public:
             Expects(pCodeNotes != nullptr);
         }
 
-        pCodeNotes->SetCodeNote(nAddress, L"");
+        pCodeNotes->SetCodeNote(nAddress, sNote);
         return true;
     }
 

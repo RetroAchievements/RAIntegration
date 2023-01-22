@@ -647,6 +647,15 @@ void CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& s
             sOriginalAuthor = pIter2->second.first;
 
             m_mOriginalCodeNotes.erase(pIter2);
+
+            if (sNote.empty())
+            {
+                // note didn't originally exist, don't keep a modification record if the
+                // changes were discarded.
+                m_mCodeNotes.erase(nAddress);
+                OnCodeNoteChanged(nAddress, sNote);
+                return;
+            }
         }
     }
 
@@ -895,10 +904,12 @@ void CodeNotesModel::DoFrame()
 
 void CodeNotesModel::SetServerCodeNote(ra::ByteAddress nAddress, const std::wstring& sNote)
 {
-    // remove the original entry - we're setting a new original entry
     const auto pIter = m_mOriginalCodeNotes.find(nAddress);
     if (pIter != m_mOriginalCodeNotes.end())
+    {
+        // remove the original entry - we're setting a new original entry
         m_mOriginalCodeNotes.erase(pIter);
+    }
 
     // if we're just committing the current value, we're done
     const auto pIter2 = m_mCodeNotes.find(nAddress);

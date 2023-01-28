@@ -265,7 +265,7 @@ bool EmulatorContext::ValidateClientVersion(bool& bHardcore)
         auto response = request.Call();
         if (!response.Succeeded())
         {
-            if (ra::StringStartsWith(response.ErrorMessage, "Unknown client!"))
+            if (ra::StringStartsWith(response.ErrorMessage, "Unknown client"))
             {
                 // if m_nEmulatorID is not recognized by the server, let it through regardless of version.
                 // assume it's a new emulator that hasn't been released yet.

@@ -8,7 +8,6 @@
 #include "tests\RA_UnitTestHelpers.h"
 
 #include "tests\mocks\MockConfiguration.hh"
-#include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
@@ -28,7 +27,6 @@ private:
     class PointerFinderViewModelHarness : public PointerFinderViewModel
     {
     public:
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockConfiguration mockConfiguration;
@@ -36,9 +34,9 @@ private:
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-        GSL_SUPPRESS_F6 PointerFinderViewModelHarness() : PointerFinderViewModel(),
-            mockConsoleContext(PSP, L"PlayStation Portable")
+        GSL_SUPPRESS_F6 PointerFinderViewModelHarness() : PointerFinderViewModel()
         {
+
         }
 
         ~PointerFinderViewModelHarness()
@@ -155,6 +153,7 @@ public:
     {
         PointerFinderViewModelHarness vmPointerFinder;
         vmPointerFinder.mockGameContext.SetGameId(1U);
+        vmPointerFinder.mockEmulatorContext.MockTotalMemorySizeChanged(0x10000);
 
         for (auto& pState : vmPointerFinder.States())
         {

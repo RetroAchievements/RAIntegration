@@ -2,7 +2,7 @@
 
 #include "RA_Defs.h"
 
-#include "data/context/ConsoleContext.hh"
+#include "data/context/EmulatorContext.hh"
 #include "data/context/GameContext.hh"
 
 #include "services/IFileSystem.hh"
@@ -87,8 +87,8 @@ void PointerFinderViewModel::StateViewModel::Capture()
         }
     }
 
-    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
-    const auto nMemorySize = pConsoleContext.MemoryRegions().at(pConsoleContext.MemoryRegions().size() - 1).EndAddress + 1;
+    const auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    const auto nMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
     m_pCapture.reset(new ra::services::SearchResults());
     m_pCapture->Initialize(0, nMemorySize, m_pOwner->GetSearchType());

@@ -2,7 +2,6 @@
 
 #include "RA_Defs.h"
 
-#include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\GameContext.hh"
 
@@ -123,8 +122,8 @@ void MemoryViewerViewModel::InitializeNotifyTargets()
 
 void MemoryViewerViewModel::InitializeFixedViewer(ra::ByteAddress nAddress)
 {
-    const auto& pConsoleContext = ra::services::ServiceLocator::GetMutable<ra::data::context::ConsoleContext>();
-    m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pConsoleContext.MemoryRegions().at(pConsoleContext.MemoryRegions().size() - 1).EndAddress + 1);
+    auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+    m_nTotalMemorySize = gsl::narrow<ra::ByteAddress>(pEmulatorContext.TotalMemorySize());
 
     m_bReadOnly = true;
     m_bAddressFixed = true;
@@ -1183,7 +1182,7 @@ void MemoryViewerViewModel::RenderAddresses()
     if (nFirstAddress + nVisibleLines * 16 > m_nTotalMemorySize)
         nVisibleLines = (m_nTotalMemorySize - nFirstAddress) / 16;
 
-    const wchar_t* sFormat = (m_nTotalMemorySize >= 0x01000000) ? L"%08x" : L"0x%06x";
+    const wchar_t* sFormat = (m_nTotalMemorySize > 0x01000000) ? L"%08x" : L"0x%06x";
 
     for (int i = 0; i < nVisibleLines; ++i)
     {

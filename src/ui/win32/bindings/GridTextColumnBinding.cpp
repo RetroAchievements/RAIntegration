@@ -70,7 +70,24 @@ static LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM 
                 return GridBinding::CloseIPE(hwnd, pInfo);
             }
 
+            // BizHawk specific hack (possibly affects other emus?), seems BizHawk does not have WM_CHAR messages sent,
+            // so text can't be typed. It's unknown why this occurs, it's likely something to do with it using
+            // IsDialogMessage more properly in its message loop and something is likely wrong with the way edit windows
+            // are handled in RAIntegration. Until that is figured out, this hack seems to suffice
+            if (pInfo->bForceWmChar)
+            {
+                MSG msg = {hwnd, nMsg, wParam, lParam};
+                TranslateMessage(&msg);
+                PeekMessage(&msg, hwnd, 0, 0, PM_REMOVE);
+                return CallWindowProc(pInfo->pOriginalWndProc, msg.hwnd, msg.message, msg.wParam, msg.lParam);
+            }
+
             break;
+
+        case WM_GETDLGCODE:
+            // only reached if IsDialogMessage is used (also used as a signal to activate the above hack)
+            pInfo->bForceWmChar = true;
+            return DLGC_WANTALLKEYS;
     }
 
     return CallWindowProc(pInfo->pOriginalWndProc, hwnd, nMsg, wParam, lParam);

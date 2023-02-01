@@ -76,6 +76,7 @@ public:
         void* pGridBinding;
         GridColumnBinding* pColumnBinding;
         bool bIgnoreLostFocus;
+        bool bForceWmChar;
     };
 
     virtual HWND CreateInPlaceEditor(HWND, InPlaceEditorInfo&) noexcept(false) { return nullptr; }

@@ -1231,6 +1231,7 @@ void GridBinding::OnNmClick(const NMITEMACTIVATE* pnmItemActivate)
         {
             auto pInfo = std::make_unique<GridColumnBinding::InPlaceEditorInfo>();
             pInfo->bIgnoreLostFocus = false;
+            pInfo->bForceWmChar = false;
 
             if (pnmItemActivate->iItem >= 0)
             {

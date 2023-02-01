@@ -31,6 +31,16 @@ public:
         m_vScoreTrackers.clear();
     }
 
+    ra::ui::viewmodels::ProgressTrackerViewModel* GetProgressTracker() noexcept
+    {
+        return m_vmProgressTracker.get();
+    }
+
+    const ra::ui::viewmodels::ProgressTrackerViewModel* GetProgressTracker() const noexcept
+    {
+        return m_vmProgressTracker.get();
+    }
+
 private:
     ra::services::ServiceLocator::ServiceOverride<ra::ui::viewmodels::OverlayManager> m_Override;
 };

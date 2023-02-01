@@ -84,6 +84,7 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
     SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard, ra::ui::viewmodels::PopupLocation::BottomRight);
     SetPopupLocation(ra::ui::viewmodels::Popup::Challenge, ra::ui::viewmodels::PopupLocation::BottomRight);
+    SetPopupLocation(ra::ui::viewmodels::Popup::Progress, ra::ui::viewmodels::PopupLocation::BottomRight);
 
     RA_LOG_INFO("Loading preferences...");
 
@@ -121,7 +122,8 @@ bool JsonFileConfiguration::Load(const std::wstring& sFilename)
     ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardTracker, doc, "Leaderboard Counter Display", ra::ui::viewmodels::PopupLocation::BottomRight, true);
     ReadPopupLocation(*this, ra::ui::viewmodels::Popup::LeaderboardScoreboard, doc, "Leaderboard Scoreboard Display", ra::ui::viewmodels::PopupLocation::BottomRight, false);
 
-    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::Challenge, doc, "Challenge Notification Display", ra::ui::viewmodels::PopupLocation::BottomRight, true);
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::Challenge, doc, "Challenge Notification Display", ra::ui::viewmodels::PopupLocation::BottomRight, false);
+    ReadPopupLocation(*this, ra::ui::viewmodels::Popup::Progress, doc, "Progress Display", ra::ui::viewmodels::PopupLocation::BottomRight, false);
 
     ReadPopupLocation(*this, ra::ui::viewmodels::Popup::Message, doc, "Informational Notification Display", ra::ui::viewmodels::PopupLocation::BottomLeft, true);
 

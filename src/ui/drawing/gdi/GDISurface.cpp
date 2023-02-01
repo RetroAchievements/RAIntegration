@@ -100,7 +100,10 @@ void GDISurface::DrawImageStretched(int nX, int nY, int nWidth, int nHeight, con
 
     BITMAP bm;
     if (GetObject(hBitmap, sizeof(bm), &bm) == sizeof(bm))
+    {
+        SetStretchBltMode(m_hDC, HALFTONE);
         StretchBlt(m_hDC, nX, nY, nWidth, nHeight, hdcMem, 0, 0, bm.bmWidth, bm.bmHeight, SRCCOPY);
+    }
 
     SelectBitmap(hdcMem, hOldBitmap);
 

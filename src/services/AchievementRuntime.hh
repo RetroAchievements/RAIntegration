@@ -171,6 +171,7 @@ public:
         AchievementPrimed,
         AchievementActivated,
         AchievementUnprimed,
+        AchievementProgressChanged,
 
         // runtime only changes
         LeaderboardStartReset,

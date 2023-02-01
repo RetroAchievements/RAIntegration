@@ -20,6 +20,7 @@ enum class Popup
     LeaderboardTracker,
     LeaderboardScoreboard,
     Challenge,
+    Progress,
     NumPopups
 };
 

@@ -14,6 +14,7 @@
 #include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 
+#include <rcheevos\src\rcheevos\rc_internal.h>
 #include <rcheevos\src\rhash\md5.h>
 
 namespace ra {
@@ -252,6 +253,9 @@ static void map_event_to_change(const rc_runtime_event_t* pRuntimeEvent)
         case RC_RUNTIME_EVENT_LBOARD_DISABLED:
             nChangeType = AchievementRuntime::ChangeType::LeaderboardDisabled;
             break;
+        case RC_RUNTIME_EVENT_ACHIEVEMENT_PROGRESS_UPDATED:
+            nChangeType = AchievementRuntime::ChangeType::AchievementProgressChanged;
+            break;
         default:
             // unsupported
             return;
@@ -402,49 +406,16 @@ _Use_decl_annotations_ void AchievementRuntime::Process(std::vector<Change>& cha
         CheckForLeaderboardPauseChanges(vLeaderboardPauseFlags, &m_pRuntime, changes);
 }
 
-_NODISCARD static _CONSTANT_FN ComparisonSizeToPrefix(_In_ char nSize) noexcept
+_NODISCARD static char ComparisonSizeFromPrefix(_In_ char cPrefix) noexcept
 {
-    switch (nSize)
-    {
-        case RC_MEMSIZE_BIT_0:        return "M";
-        case RC_MEMSIZE_BIT_1:        return "N";
-        case RC_MEMSIZE_BIT_2:        return "O";
-        case RC_MEMSIZE_BIT_3:        return "P";
-        case RC_MEMSIZE_BIT_4:        return "Q";
-        case RC_MEMSIZE_BIT_5:        return "R";
-        case RC_MEMSIZE_BIT_6:        return "S";
-        case RC_MEMSIZE_BIT_7:        return "T";
-        case RC_MEMSIZE_LOW:          return "L";
-        case RC_MEMSIZE_HIGH:         return "U";
-        case RC_MEMSIZE_8_BITS:       return "H";
-        case RC_MEMSIZE_24_BITS:      return "W";
-        case RC_MEMSIZE_32_BITS:      return "X";
-        default:
-        case RC_MEMSIZE_16_BITS:      return " ";
-    }
-}
+    char buffer[] = "0xH0";
+    const char* ptr = buffer;
+    buffer[2] = cPrefix;
 
-_NODISCARD static constexpr char ComparisonSizeFromPrefix(_In_ char cPrefix) noexcept
-{
-    switch (cPrefix)
-    {
-        case 'm': case 'M': return RC_MEMSIZE_BIT_0;
-        case 'n': case 'N': return RC_MEMSIZE_BIT_1;
-        case 'o': case 'O': return RC_MEMSIZE_BIT_2;
-        case 'p': case 'P': return RC_MEMSIZE_BIT_3;
-        case 'q': case 'Q': return RC_MEMSIZE_BIT_4;
-        case 'r': case 'R': return RC_MEMSIZE_BIT_5;
-        case 's': case 'S': return RC_MEMSIZE_BIT_6;
-        case 't': case 'T': return RC_MEMSIZE_BIT_7;
-        case 'l': case 'L': return RC_MEMSIZE_LOW;
-        case 'u': case 'U': return RC_MEMSIZE_HIGH;
-        case 'h': case 'H': return RC_MEMSIZE_8_BITS;
-        case 'w': case 'W': return RC_MEMSIZE_24_BITS;
-        case 'x': case 'X': return RC_MEMSIZE_32_BITS;
-        default:
-        case ' ':
-            return RC_MEMSIZE_16_BITS;
-    }
+    char size = RC_MEMSIZE_16_BITS;
+    unsigned address = 0;
+    rc_parse_memref(&ptr, &size, &address);
+    return size;
 }
 
 static bool IsMemoryOperand(int nOperandType) noexcept
@@ -454,6 +425,8 @@ static bool IsMemoryOperand(int nOperandType) noexcept
         case RC_OPERAND_ADDRESS:
         case RC_OPERAND_DELTA:
         case RC_OPERAND_PRIOR:
+        case RC_OPERAND_BCD:
+        case RC_OPERAND_INVERTED:
             return true;
 
         default:
@@ -809,7 +782,7 @@ bool AchievementRuntime::LoadProgressFromFile(const char* sLoadStateFilename)
     }
 
     // reset the runtime state, then apply state from file
-    rc_runtime_reset(&m_pRuntime);
+    ResetActiveAchievements();
 
     if (sLoadStateFilename == nullptr)
         return false;
@@ -883,7 +856,7 @@ bool AchievementRuntime::LoadProgressFromBuffer(const char* pBuffer)
     std::lock_guard<std::mutex> pLock(m_pMutex);
 
     // reset the runtime state, then apply state from file
-    rc_runtime_reset(&m_pRuntime);
+    ResetActiveAchievements();
 
     const unsigned char* pBytes;
     GSL_SUPPRESS_TYPE1 pBytes = reinterpret_cast<const unsigned char*>(pBuffer);

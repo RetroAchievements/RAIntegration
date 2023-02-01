@@ -6,6 +6,7 @@
 #include "OverlayViewModel.hh"
 #include "ChallengeIndicatorViewModel.hh"
 #include "PopupMessageViewModel.hh"
+#include "ProgressTrackerViewModel.hh"
 #include "ScoreboardViewModel.hh"
 #include "ScoreTrackerViewModel.hh"
 
@@ -269,6 +270,12 @@ public:
     }
 
     /// <summary>
+    /// Updates the progress tracker indicator
+    /// </summary>
+    void UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName,
+        unsigned nValue, unsigned nTarget, bool bAsPercent);
+
+    /// <summary>
     /// Clears all popups.
     /// </summary>
     virtual void ClearPopups();
@@ -311,6 +318,7 @@ protected:
     std::vector<std::unique_ptr<ScoreTrackerViewModel>> m_vScoreTrackers;
     std::vector<std::unique_ptr<ChallengeIndicatorViewModel>> m_vChallengeIndicators;
     std::deque<ScoreboardViewModel> m_vScoreboards;
+    std::unique_ptr<ra::ui::viewmodels::ProgressTrackerViewModel> m_vmProgressTracker;
 
     bool m_bIsRendering = false;
     bool m_bRenderRequestPending = false;
@@ -344,6 +352,7 @@ private:
     void UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
     void UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
     void UpdateChallengeIndicators(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
+    void UpdateProgressTracker(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed);
     void UpdatePopup(ra::ui::drawing::ISurface& pSurface, const PopupLocations& pPopupLocations, double fElapsed, ra::ui::viewmodels::PopupViewModelBase& vmPopup);
 
     void UpdateOverlay(ra::ui::drawing::ISurface& pSurface, double fElapsed);

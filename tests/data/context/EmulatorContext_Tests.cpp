@@ -498,14 +498,14 @@ public:
         emulator.SetClientVersion("1.0");
         emulator.mockServer.HandleRequest<ra::api::LatestClient>([](const ra::api::LatestClient::Request&, ra::api::LatestClient::Response& response)
         {
-            response.ErrorMessage = "Unknown client! (EmulatorID: 999)";
+            response.ErrorMessage = "Unknown client";
             response.Result = ra::api::ApiResult::Error;
             return true;
         });
         emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Could not retrieve latest client version."), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Unknown client! (EmulatorID: 999)"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Unknown client"), vmMessageBox.GetMessage());
             return ra::ui::DialogResult::OK;
         });
 

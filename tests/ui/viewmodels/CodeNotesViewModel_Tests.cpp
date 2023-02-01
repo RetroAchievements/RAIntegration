@@ -212,7 +212,7 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.SetCodeNote(0x0024, L"New Note");
+        notes.mockGameContext.UpdateCodeNote(0x0024, L"New Note");
 
         Assert::AreEqual({ 15U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -237,7 +237,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.SetCodeNote(0x0024, L"New em Note");
+        notes.mockGameContext.UpdateCodeNote(0x0024, L"New em Note");
         Assert::AreEqual({ 7U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"7/15"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0024, L"0x0024", L"New em Note");
@@ -257,9 +257,75 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.SetCodeNote(0x0024, L"New Note");
+        notes.mockGameContext.UpdateCodeNote(0x0024, L"New Note");
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/15"), notes.GetResultCount());
+    }
+
+    TEST_METHOD(TestAddRemoveNote)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.PopulateNotes();
+        Assert::AreEqual({ 0U }, notes.Notes().Count());
+
+        notes.SetIsVisible(true);
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        notes.mockGameContext.UpdateCodeNote(0x0024, L"New Note");
+
+        Assert::AreEqual({ 15U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"15/15"), notes.GetResultCount());
+
+        notes.mockGameContext.UpdateCodeNote(0x0024, L"");
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        AssertRow(notes, 7, 0x0022, L"0x0022", L"[16-bit] Current HP");
+        AssertRow(notes, 8, 0x0030, L"0x0030", L"Item 1 Quantity");
+    }
+
+    TEST_METHOD(TestAddRemoveNoteFiltered)
+    {
+        CodeNotesViewModelHarness notes;
+        notes.PopulateNotes();
+        Assert::AreEqual({ 0U }, notes.Notes().Count());
+
+        notes.SetIsVisible(true);
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        notes.SetFilterValue(L"em");
+        notes.ApplyFilter();
+        Assert::AreEqual({ 6U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L"em"), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
+
+        notes.mockGameContext.UpdateCodeNote(0x0024, L"New Note");
+
+        Assert::AreEqual({ 6U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L"em"), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"6/15"), notes.GetResultCount());
+
+        notes.mockGameContext.UpdateCodeNote(0x0024, L"");
+
+        Assert::AreEqual({ 6U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L"em"), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
+
+        notes.ResetFilter();
+
+        Assert::AreEqual({ 14U }, notes.Notes().Count());
+        Assert::AreEqual(std::wstring(L"em"), notes.GetFilterValue());
+        Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
+
+        AssertRow(notes, 7, 0x0022, L"0x0022", L"[16-bit] Current HP");
+        AssertRow(notes, 8, 0x0030, L"0x0030", L"Item 1 Quantity");
     }
 
     TEST_METHOD(TestUpdateNoteUnfiltered)
@@ -273,7 +339,7 @@ public:
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
         Assert::AreEqual(std::wstring(L"14/14"), notes.GetResultCount());
 
-        notes.mockGameContext.SetCodeNote(0x0022, L"[8-bit] Current HP");
+        notes.mockGameContext.UpdateCodeNote(0x0022, L"[8-bit] Current HP");
 
         Assert::AreEqual({ 14U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -301,7 +367,7 @@ public:
 
         // This creates an indirect note at $0008, which would bring the total
         // note count to 15. Make sure it's not added to the list.
-        notes.mockGameContext.SetCodeNote(0x0022, sPointerNote);
+        notes.mockGameContext.UpdateCodeNote(0x0022, sPointerNote);
 
         Assert::AreEqual({ 14U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L""), notes.GetFilterValue());
@@ -331,7 +397,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.SetCodeNote(0x0030, L"Item 1s");
+        notes.mockGameContext.UpdateCodeNote(0x0030, L"Item 1s");
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1s");
@@ -351,7 +417,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.SetCodeNote(0x0030, L"Thing 1 Quantity");
+        notes.mockGameContext.UpdateCodeNote(0x0030, L"Thing 1 Quantity");
         Assert::AreEqual({ 5U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"5/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0031, L"0x0031", L"Item 2 Quantity");
@@ -371,7 +437,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.SetCodeNote(0x0020, L"Still hidden");
+        notes.mockGameContext.UpdateCodeNote(0x0020, L"Still hidden");
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1 Quantity");
@@ -391,7 +457,7 @@ public:
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
 
-        notes.mockGameContext.SetCodeNote(0x0020, L"Heal them max");
+        notes.mockGameContext.UpdateCodeNote(0x0020, L"Heal them max");
         Assert::AreEqual({ 7U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"7/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0020, L"0x0020", L"Heal them max");
@@ -405,7 +471,7 @@ public:
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
         // update before dialog is visible will be picked up when first made visible
-        notes.mockGameContext.SetCodeNote(0x0030, L"Item 1b");
+        notes.mockGameContext.UpdateCodeNote(0x0030, L"Item 1b");
         Assert::AreEqual({ 0U }, notes.Notes().Count());
 
         notes.SetIsVisible(true);
@@ -420,7 +486,7 @@ public:
         notes.SetIsVisible(false);
 
         // change should be picked up even if not visible
-        notes.mockGameContext.SetCodeNote(0x0030, L"Item 1s");
+        notes.mockGameContext.UpdateCodeNote(0x0030, L"Item 1s");
         Assert::AreEqual({ 6U }, notes.Notes().Count());
         Assert::AreEqual(std::wstring(L"6/14"), notes.GetResultCount());
         AssertRow(notes, 1, 0x0030, L"0x0030", L"Item 1s");

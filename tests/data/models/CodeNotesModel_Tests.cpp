@@ -424,23 +424,20 @@ public:
     TEST_METHOD(TestSetCodeNote)
     {
         CodeNotesModelHarness notes;
-        notes.mockServer.HandleRequest<ra::api::UpdateCodeNote>([](const ra::api::UpdateCodeNote::Request& request, ra::api::UpdateCodeNote::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-            Assert::AreEqual(1234U, request.Address);
-            Assert::AreEqual(std::wstring(L"Note1"), request.Note);
-
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
-
         notes.InitializeCodeNotes(1U);
         notes.mNewNotes.clear();
+        Assert::AreEqual({ 0U }, notes.CodeNoteCount());
 
         notes.SetCodeNote(1234, L"Note1");
 
         notes.AssertNote(1234U, L"Note1");
         Assert::AreEqual(std::wstring(L"Note1"), notes.mNewNotes[1234U]);
+        Assert::AreEqual({ 1U }, notes.CodeNoteCount());
+
+        notes.SetCodeNote(1234, L"");
+        notes.AssertNoNote(1234U);
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[1234U]);
+        Assert::AreEqual({ 0U }, notes.CodeNoteCount());
     }
 
     TEST_METHOD(TestDeleteCodeNote)

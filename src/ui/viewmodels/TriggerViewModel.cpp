@@ -381,26 +381,38 @@ void TriggerViewModel::NewCondition()
     vmCondition.SetSourceSize(nSize);
     vmCondition.SetSourceValue(nAddress);
 
-    // assume the user wants to compare to the current value of the watched memory address
-    vmCondition.SetOperator(TriggerOperatorType::Equals);
-
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    const auto nValue = pEmulatorContext.ReadMemory(nAddress, nSize);
-
-    vmCondition.SetTargetSize(nSize);
-    switch (nSize)
+    if (m_bIsValue && m_vConditions.Count() == 1)
     {
-        case MemSize::Float:
-        case MemSize::MBF32:
-        case MemSize::MBF32LE:
-            vmCondition.SetTargetType(TriggerOperandType::Float);
-            vmCondition.SetTargetValue(ra::data::U32ToFloat(nValue, nSize));
-            break;
+        // first condition added to a value should be Measured and not have a operator/target.
+        vmCondition.SetType(TriggerConditionType::Measured);
 
-        default:
-            vmCondition.SetTargetType(TriggerOperandType::Value);
-            vmCondition.SetTargetValue(nValue);
-            break;
+        // if the operator is None when changing to a non-modifying type, the operator is
+        // automatically changed to Equals. change it back.
+        vmCondition.SetOperator(TriggerOperatorType::None);
+    }
+    else
+    {
+        // assume the user wants to compare to the current value of the watched memory address
+        vmCondition.SetOperator(TriggerOperatorType::Equals);
+
+        const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+        const auto nValue = pEmulatorContext.ReadMemory(nAddress, nSize);
+
+        vmCondition.SetTargetSize(nSize);
+        switch (nSize)
+        {
+            case MemSize::Float:
+            case MemSize::MBF32:
+            case MemSize::MBF32LE:
+                vmCondition.SetTargetType(TriggerOperandType::Float);
+                vmCondition.SetTargetValue(ra::data::U32ToFloat(nValue, nSize));
+                break;
+
+            default:
+                vmCondition.SetTargetType(TriggerOperandType::Value);
+                vmCondition.SetTargetValue(nValue);
+                break;
+        }
     }
 
     vmCondition.SetSelected(true);

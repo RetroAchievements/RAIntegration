@@ -949,6 +949,38 @@ public:
             vmTrigger.Conditions().GetItemAt(2)->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
+    TEST_METHOD(TestNewConditionValue)
+    {
+        std::array<uint8_t, 10> pMemory = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+        TriggerViewModelHarness vmTrigger;
+        vmTrigger.SetIsValue(true);
+        vmTrigger.AddGroup();
+        Assert::AreEqual({ 0U }, vmTrigger.Conditions().Count());
+
+        vmTrigger.InitializeMemory(&pMemory.at(0), pMemory.size());
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(8);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::EightBit);
+        vmTrigger.NewCondition();
+
+        // first condition added to a value should be Measured without an operator
+        Assert::AreEqual({ 1U }, vmTrigger.Conditions().Count());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::AreEqual(std::string("M:0xH0008"), vmTrigger.Serialize());
+
+        // second condition should be added normally (as a comparison)
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetAddress(4);
+        vmTrigger.mockWindowManager.MemoryInspector.Viewer().SetSize(MemSize::SixteenBit);
+        vmTrigger.NewCondition();
+
+        Assert::AreEqual({ 2U }, vmTrigger.Conditions().Count());
+
+        // new condition should be selected, any previously selected items should be deselected
+        Assert::IsFalse(vmTrigger.Conditions().GetItemAt(0)->IsSelected());
+        Assert::IsTrue(vmTrigger.Conditions().GetItemAt(1)->IsSelected());
+
+        Assert::AreEqual(std::string("M:0xH0008_0x 0004=1284"), vmTrigger.Serialize());
+    }
+
     TEST_METHOD(TestAddGroupNoAlts)
     {
         TriggerViewModelHarness vmTrigger;

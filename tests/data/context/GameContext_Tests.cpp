@@ -317,6 +317,43 @@ public:
         Assert::IsFalse(bDialogShown);
     }
 
+    TEST_METHOD(TestLoadGameTitleConsoleMismatchDSvDSi)
+    {
+        GameContextHarness game;
+        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request& request, ra::api::FetchGameData::Response& response)
+        {
+            Assert::AreEqual(1U, request.GameId);
+
+            response.Title = L"Game";
+            response.ConsoleId = ra::etoi(ConsoleID::DS);
+            response.ImageIcon = "9743";
+            return true;
+        });
+
+        game.mockConsoleContext.SetId(ConsoleID::DSi);
+        game.mockConsoleContext.SetName(L"Nintendo DSi");
+
+        bool bDialogShown = false;
+        game.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            bDialogShown = true;
+            return ra::ui::DialogResult::OK;
+        });
+
+        game.LoadGame(1U);
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(std::wstring(L"Overlay\\info.wav")));
+
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Loaded Game"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"0 achievements, 0 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
+
+        Assert::IsFalse(bDialogShown);
+    }
+
     TEST_METHOD(TestLoadGameTitleConsoleMismatchNESvEvent)
     {
         GameContextHarness game;

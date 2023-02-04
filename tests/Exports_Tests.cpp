@@ -625,6 +625,27 @@ public:
         Assert::IsNull(pIndicator);
     }
 
+    TEST_METHOD(TestDoAchievementsFrameAchievementProgressLocalBadge)
+    {
+        DoAchievementsFrameHarness harness;
+        harness.MockAchievement(1U).SetBadge(L"local\\GUID");
+        harness.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress, ra::ui::viewmodels::PopupLocation::BottomRight);
+        harness.mockRuntime.ActivateAchievement(1U, "M:0xH0001=10");
+        auto* pTrigger = harness.mockRuntime.GetAchievementTrigger(1U);
+        pTrigger->measured_value = 5;
+
+        harness.mockRuntime.QueueChange(ra::services::AchievementRuntime::ChangeType::AchievementProgressChanged, 1U, pTrigger->measured_value);
+        _RA_DoAchievementsFrame();
+
+        const auto* pIndicator = harness.mockOverlayManager.GetProgressTracker();
+        Assert::IsNotNull(pIndicator);
+        Ensures(pIndicator != nullptr);
+
+        Assert::AreEqual(ra::ui::ImageType::Badge, pIndicator->GetImage().Type());
+        Assert::AreEqual(std::string("local\\GUID"), pIndicator->GetImage().Name()); // no "_lock"
+        Assert::AreEqual(std::wstring(L"5/10"), pIndicator->GetText());
+    }
+
     TEST_METHOD(TestDoAchievementsFrameAchievementProgressHighestPercent)
     {
         DoAchievementsFrameHarness harness;

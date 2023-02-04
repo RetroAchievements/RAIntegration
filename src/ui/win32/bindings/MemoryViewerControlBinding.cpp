@@ -27,6 +27,10 @@ static LRESULT CALLBACK s_MemoryViewerControlWndProc(HWND hControl, UINT uMsg, W
             pControl->RenderMemViewer();
             return 0;
 
+        case WM_ERASEBKGND:
+            // we'll repaint the entire control area in WM_PAINT, so don't need to clear first.
+            return TRUE;
+
         case WM_MOUSEWHEEL:
             if (GET_WHEEL_DELTA_WPARAM(wParam) > 0)
                 pControl->ScrollUp();

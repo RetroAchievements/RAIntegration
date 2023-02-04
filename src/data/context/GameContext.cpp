@@ -516,7 +516,8 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
     {
         auto sHeader = vmPopup->GetTitle();
         sHeader.insert(0, L"Modified ");
-        sHeader.insert(sHeader.length() - 8, L"NOT ");
+        if (pAchievement->GetCategory() != ra::data::models::AssetCategory::Local)
+            sHeader.append(L" LOCALLY");
         vmPopup->SetTitle(sHeader);
 
         RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement->GetID(), pAchievement->IsModified() ? "modified" : "unpublished");
@@ -528,7 +529,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     if (bSubmit && pEmulatorContext.WasMemoryModified())
     {
-        vmPopup->SetTitle(L"Achievement NOT Unlocked");
+        vmPopup->SetTitle(L"Achievement Unlocked LOCALLY");
         vmPopup->SetErrorDetail(L"Error: RAM tampered with");
 
         RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement->GetID(), "RAM tampered with");
@@ -538,7 +539,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
 
     if (bSubmit && _RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
     {
-        vmPopup->SetTitle(L"Achievement NOT Unlocked");
+        vmPopup->SetTitle(L"Achievement Unlocked LOCALLY");
         vmPopup->SetErrorDetail(L"Error: RAM insecure");
 
         RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement->GetID(), "RAM insecure");
@@ -601,7 +602,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
             auto pPopup = pOverlayManager.GetMessage(nPopupId);
             if (pPopup != nullptr)
             {
-                pPopup->SetTitle(L"Achievement NOT Unlocked");
+                pPopup->SetTitle(L"Achievement Unlock FAILED");
                 pPopup->SetErrorDetail(response.ErrorMessage.empty() ?
                     L"Error submitting unlock" : ra::Widen(response.ErrorMessage));
                 pPopup->RebuildRenderImage();
@@ -609,7 +610,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
             else
             {
                 std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-                vmPopup->SetTitle(L"Achievement NOT Unlocked");
+                vmPopup->SetTitle(L"Achievement Unlock FAILED");
                 vmPopup->SetErrorDetail(response.ErrorMessage.empty() ?
                     L"Error submitting unlock" : ra::Widen(response.ErrorMessage));
                 vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);

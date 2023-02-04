@@ -1636,7 +1636,7 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Modified Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Modified Achievement Unlocked LOCALLY"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (99)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
@@ -1661,7 +1661,7 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Modified Local Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Modified Local Achievement Unlocked"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (99)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
@@ -1686,7 +1686,7 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Modified Unofficial Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Modified Unofficial Achievement Unlocked LOCALLY"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (99)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
@@ -1712,7 +1712,7 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Modified Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Modified Achievement Unlocked LOCALLY"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (99)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"AchievementDescription"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());
@@ -1735,7 +1735,7 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked LOCALLY"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Error: RAM tampered with"), pPopup->GetDetail());
         Assert::IsTrue(pPopup->IsDetailError());
@@ -1760,7 +1760,7 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked LOCALLY"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Error: RAM insecure"), pPopup->GetDetail());
         Assert::IsTrue(pPopup->IsDetailError());
@@ -1919,7 +1919,7 @@ public:
         game.mockThreadPool.ExecuteNextTask();
 
         // error message should be reported
-        Assert::AreEqual(std::wstring(L"Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement Unlock FAILED"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Achievement data cannot be found for 1"), pPopup->GetDetail());
         Assert::IsTrue(pPopup->IsDetailError());
@@ -1959,7 +1959,7 @@ public:
         pPopup = game.mockOverlayManager.GetMessage(2);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Achievement NOT Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Achievement Unlock FAILED"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"AchievementTitle (5)"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"Achievement data cannot be found for 1"), pPopup->GetDetail());
         Assert::AreEqual(std::string("12345"), pPopup->GetImage().Name());

@@ -117,6 +117,11 @@ public:
     void SetValueDefinition(const std::string& sTrigger) { SetAssetDefinition(m_pValueDefinition, sTrigger); }
 
     /// <summary>
+    /// Gets the calculated hash for the value definition.
+    /// </summary>
+    const int GetValueDefinitionHash() const { return GetValue(ValueDefinitionProperty); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the value format.
     /// </summary>
     static const IntModelProperty ValueFormatProperty;

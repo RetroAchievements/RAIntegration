@@ -398,6 +398,14 @@ API unsigned int CCONV _RA_IdentifyHash(const char* sHash)
 API void CCONV _RA_ActivateGame(unsigned int nGameId)
 {
     _RA_SuspendRepaint();
+
+    if (nGameId == 0)
+    {
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        pOverlayManager.ClearPopups();
+        pOverlayManager.HideOverlayImmediately();
+    }
+
     ra::services::ServiceLocator::GetMutable<ra::services::GameIdentifier>().ActivateGame(nGameId);
     _RA_ResumeRepaint();
 }

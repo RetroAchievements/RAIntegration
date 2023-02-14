@@ -63,6 +63,7 @@ public:
 
     void Activate();
     void Deactivate();
+    void DeactivateImmediately();
 
     class PageViewModel : public ViewModelBase
     {

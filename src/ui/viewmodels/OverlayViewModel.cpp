@@ -357,6 +357,18 @@ void OverlayViewModel::Deactivate()
     }
 }
 
+void OverlayViewModel::DeactivateImmediately()
+{
+    if (m_nState != State::Hidden)
+    {
+        // set the state to completely faded out, but not hidden, as it won't repaint once
+        // it's completely hidden.
+        m_nState = State::FadeOut;
+        m_fAnimationProgress = INOUT_TIME;
+        RefreshOverlay();
+    }
+}
+
 void OverlayViewModel::PopulatePages()
 {
     m_vPages.resize(4);

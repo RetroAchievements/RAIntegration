@@ -47,7 +47,13 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
     }
 
     char hash[33];
-    rc_hash_generate_from_buffer(hash, nConsoleId, pROM, nROMSize);
+    if (!rc_hash_generate_from_buffer(hash, nConsoleId, pROM, nROMSize))
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+            L"Could not identify game.",
+            L"No hash was generated for the provided content.");
+        return 0U;
+    }
 
     return IdentifyHash(hash);
 }

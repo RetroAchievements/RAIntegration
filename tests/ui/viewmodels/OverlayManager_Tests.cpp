@@ -82,6 +82,17 @@ private:
             return m_vmProgressTracker.get();
         }
 
+        void AddLeaderboard(unsigned id, const std::string& sDefinition)
+        {
+            auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
+            vmLeaderboard->SetID(id);
+            vmLeaderboard->SetCategory(ra::data::models::AssetCategory::Core);
+            vmLeaderboard->SetValueDefinition(sDefinition);
+            vmLeaderboard->CreateServerCheckpoint();
+            vmLeaderboard->CreateLocalCheckpoint();
+            mockGameContext.Assets().Append(std::move(vmLeaderboard));
+        }
+
     private:
         bool m_bRenderRequested = false;
         bool m_bShowRequested = false;
@@ -296,6 +307,72 @@ public:
 
         overlay.Render(mockSurface, false);
         Assert::IsNull(overlay.GetScoreTracker(3)); // render should erase and destroy
+    }
+
+    TEST_METHOD(TestAddMultipleScoreTrackers)
+    {
+        OverlayManagerHarness overlay;
+        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
+        overlay.AddLeaderboard(3, "0xH1234");
+        overlay.AddLeaderboard(4, "0xH2345");
+
+        const auto& vmScoreTracker = overlay.AddScoreTracker(3);
+        Assert::AreEqual(3, vmScoreTracker.GetPopupId());
+        Assert::IsFalse(vmScoreTracker.IsDestroyPending());
+
+        const auto& vmScoreTracker2 = overlay.AddScoreTracker(4);
+        Assert::AreEqual(4, vmScoreTracker2.GetPopupId());
+        Assert::IsFalse(vmScoreTracker2.IsDestroyPending());
+
+        // no defined font, widget will only be 3 pixels tall
+        constexpr int nWidgetHeight = 3;
+        ra::ui::drawing::mocks::MockSurface mockSurface(800, 600);
+        overlay.Render(mockSurface, false);
+        Assert::AreEqual(600 - 10 - nWidgetHeight, vmScoreTracker.GetRenderLocationY());
+        Assert::AreEqual(600 - 10 - nWidgetHeight - 10 - nWidgetHeight, vmScoreTracker2.GetRenderLocationY());
+
+        overlay.ResetRenderRequested();
+        overlay.RemoveScoreTracker(3);
+        Assert::IsTrue(vmScoreTracker.IsDestroyPending()); // has to erase itself in render
+        Assert::IsFalse(overlay.WasRenderRequested());
+        Assert::IsNotNull(overlay.GetScoreTracker(3));
+
+        overlay.Render(mockSurface, false);
+        Assert::IsNull(overlay.GetScoreTracker(3)); // render should erase and destroy
+        Assert::AreEqual(600 - 10 - nWidgetHeight, vmScoreTracker2.GetRenderLocationY());
+    }
+
+    TEST_METHOD(TestAddMultipleScoreTrackersSharedValue)
+    {
+        OverlayManagerHarness overlay;
+        overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker, ra::ui::viewmodels::PopupLocation::BottomRight);
+        overlay.AddLeaderboard(3, "0xH1234");
+        overlay.AddLeaderboard(4, "0xH1234"); // same value definition
+
+        const auto& vmScoreTracker = overlay.AddScoreTracker(3);
+        Assert::AreEqual(3, vmScoreTracker.GetPopupId());
+        Assert::IsFalse(vmScoreTracker.IsDestroyPending());
+
+        const auto& vmScoreTracker2 = overlay.AddScoreTracker(4);
+        Assert::AreEqual(4, vmScoreTracker2.GetPopupId());
+        Assert::IsFalse(vmScoreTracker2.IsDestroyPending());
+
+        // no defined font, widget will only be 3 pixels tall
+        constexpr int nWidgetHeight = 3;
+        ra::ui::drawing::mocks::MockSurface mockSurface(800, 600);
+        overlay.Render(mockSurface, false);
+        Assert::AreEqual(600 - 10 - nWidgetHeight, vmScoreTracker.GetRenderLocationY());
+        Assert::AreEqual(-100, vmScoreTracker2.GetRenderLocationY()); // second widget positioned offscreen
+
+        overlay.ResetRenderRequested();
+        overlay.RemoveScoreTracker(3);
+        Assert::IsTrue(vmScoreTracker.IsDestroyPending()); // has to erase itself in render
+        Assert::IsFalse(overlay.WasRenderRequested());
+        Assert::IsNotNull(overlay.GetScoreTracker(3));
+
+        overlay.Render(mockSurface, false);
+        Assert::IsNull(overlay.GetScoreTracker(3)); // render should erase and destroy
+        Assert::AreEqual(600 - 10 - nWidgetHeight, vmScoreTracker2.GetRenderLocationY());
     }
 
     TEST_METHOD(TestQueueScoreboard)

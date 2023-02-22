@@ -580,23 +580,25 @@ void OverlayManager::UpdateActiveScoreboard(ra::ui::drawing::ISurface& pSurface,
     {
         m_vScoreboards.pop_front();
         if (m_vScoreboards.empty())
-            break;
+            return;
 
         pActiveScoreboard = &m_vScoreboards.front();
         pActiveScoreboard->BeginAnimation();
         pActiveScoreboard->UpdateRenderImage(0.0);
+        UpdatePopup(pSurface, pPopupLocations, fElapsed, *pActiveScoreboard);
     }
 
-    if (!m_vScoreboards.empty())
-        AdjustLocationForPopup(pPopupLocations, m_vScoreboards.front());
+    AdjustLocationForPopup(pPopupLocations, *pActiveScoreboard);
 }
 
 void OverlayManager::UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, PopupLocations& pPopupLocations, double fElapsed)
 {
     assert(!m_vScoreTrackers.empty());
 
+    const auto& pAssets = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().Assets();
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     const auto bEnabled = (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker) != ra::ui::viewmodels::PopupLocation::None);
+    std::set<unsigned> vDisplayedValues;
 
     auto pIter = m_vScoreTrackers.begin();
     while (pIter != m_vScoreTrackers.end())
@@ -613,7 +615,27 @@ void OverlayManager::UpdateScoreTrackers(ra::ui::drawing::ISurface& pSurface, Po
         else
         {
             if (bEnabled)
+            {
+                if (m_vScoreTrackers.size() > 1)
+                {
+                    const auto* pLeaderboard = pAssets.FindLeaderboard(vmTracker.GetPopupId());
+                    if (pLeaderboard != nullptr)
+                    {
+                        const auto nDisplayedValue = pLeaderboard->GetValueDefinitionHash();
+                        if (vDisplayedValues.find(nDisplayedValue) != vDisplayedValues.end())
+                        {
+                            // position offscreen
+                            vmTracker.SetRenderLocationY(-100);
+                            ++pIter;
+                            continue;
+                        }
+
+                        vDisplayedValues.insert(nDisplayedValue);
+                    }
+                }
+
                 AdjustLocationForPopup(pPopupLocations, vmTracker);
+            }
 
             ++pIter;
         }

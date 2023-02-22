@@ -164,6 +164,24 @@ public:
         Assert::IsTrue(bDialogShown);
     }
 
+    TEST_METHOD(TestIdentifyGameUnhashable)
+    {
+        GameIdentifierHarness identifier;
+        ra::data::context::mocks::MockConsoleContext n64Context(N64, L"N64");
+
+        bool bDialogShown = false;
+        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        {
+            Assert::AreEqual(std::wstring(L"Could not identify game."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"No hash was generated for the provided content."), vmMessageBox.GetMessage());
+            bDialogShown = true;
+            return ra::ui::DialogResult::OK;
+        });
+
+        Assert::AreEqual(0U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+        Assert::IsTrue(bDialogShown);
+    }
+
     TEST_METHOD(TestIdentifyGameNotLoggedIn)
     {
         GameIdentifierHarness identifier;
@@ -179,6 +197,7 @@ public:
         });
 
         Assert::AreEqual(0U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+        Assert::IsTrue(bDialogShown);
     }
 
     TEST_METHOD(TestIdentifyGameNoConsole)
@@ -196,6 +215,7 @@ public:
         });
 
         Assert::AreEqual(0U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
+        Assert::IsTrue(bDialogShown);
     }
 
     TEST_METHOD(TestIdentifyGameHashChange)

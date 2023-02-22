@@ -1334,6 +1334,38 @@ public:
         Assert::AreEqual(62U, vmTrigger.Conditions().GetItemAt(6)->GetTotalHits()); // end of hit-chain (2+12+48)
     }
 
+    TEST_METHOD(TestDoFrameHitsChainReset)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "0=0.5._C:0=0.10._0=0.20._R:1=1");
+        Assert::AreEqual({ 1U }, vmTrigger.Groups().Count());
+
+        auto* cond = vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions;
+        cond->current_hits = 2; cond = cond->next;  //         0=0 (5)
+        cond->current_hits = 3; cond = cond->next;  // AddHits 0=0 (10)
+        cond->current_hits = 6; cond = cond->next;  //         0=0 (20)
+        vmTrigger.DoFrame();
+        Assert::AreEqual(2U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+        Assert::AreEqual(3U, vmTrigger.Conditions().GetItemAt(1)->GetCurrentHits());
+        Assert::AreEqual(6U, vmTrigger.Conditions().GetItemAt(2)->GetCurrentHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // non hit-chain
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits()); // middle of hit-chain
+        Assert::AreEqual(9U, vmTrigger.Conditions().GetItemAt(2)->GetTotalHits()); // end of hit-chain (3+6)
+
+        // mimic a ResetIf clearing all hits
+        cond = vmTrigger.Groups().GetItemAt(0)->m_pConditionSet->conditions;
+        cond->current_hits = 0; cond = cond->next;  //         0=0 (5)
+        cond->current_hits = 0; cond = cond->next;  // AddHits 0=0 (10)
+        cond->current_hits = 0; cond = cond->next;  //         0=0 (20)
+        vmTrigger.DoFrame();
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetCurrentHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(2)->GetCurrentHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits()); // non hit-chain
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits()); // middle of hit-chain
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(2)->GetTotalHits()); // end of hit-chain (3+6)
+    }
+
     TEST_METHOD(TestBuildHitChainTooltip)
     {
         TriggerViewModelHarness vmTrigger;

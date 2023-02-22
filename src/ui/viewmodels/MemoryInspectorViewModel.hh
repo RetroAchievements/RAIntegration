@@ -91,6 +91,16 @@ public:
     const bool CanEditCurrentAddressNote() const { return GetValue(CanEditCurrentAddressNoteProperty); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not the current address note is readonly.
+    /// </summary>
+    static const BoolModelProperty IsCurrentAddressNoteReadOnlyProperty;
+
+    /// <summary>
+    /// Gets whether or not the current address note is readonly.
+    /// </summary>
+    const bool IsCurrentAddressNoteReadOnly() const { return GetValue(IsCurrentAddressNoteReadOnlyProperty); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not the current address note is modified.
     /// </summary>
     static const BoolModelProperty CanRevertCurrentAddressNoteProperty;

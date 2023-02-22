@@ -232,6 +232,7 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
         return true;
     });
     m_bindNoteText.BindText(MemoryInspectorViewModel::CurrentAddressNoteProperty, ra::ui::win32::bindings::TextBoxBinding::UpdateMode::Typing);
+    m_bindNoteText.BindReadOnly(MemoryInspectorViewModel::IsCurrentAddressNoteReadOnlyProperty);
     m_bindWindow.BindEnabled(IDC_RA_NOTE_TEXT, MemoryInspectorViewModel::CanEditCurrentAddressNoteProperty);
     m_bindWindow.BindEnabled(IDC_RA_PUBLISH_NOTE, MemoryInspectorViewModel::CanPublishCurrentAddressNoteProperty);
     m_bindWindow.BindEnabled(IDC_RA_REVERT_NOTE, MemoryInspectorViewModel::CanRevertCurrentAddressNoteProperty);

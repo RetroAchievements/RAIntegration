@@ -43,6 +43,13 @@ public:
         UpdateBoundText();
     }
 
+    void BindReadOnly(const BoolModelProperty& pReadOnlyProperty)
+    {
+        m_pReadOnlyProperty = &pReadOnlyProperty;
+
+        UpdateReadOnly();
+    }
+
     void OnLostFocus() override
     {
         if (m_pTextUpdateMode == UpdateMode::LostFocus)
@@ -88,6 +95,12 @@ protected:
             UpdateBoundText();
     }
 
+    void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override
+    {
+        if (m_pReadOnlyProperty && *m_pReadOnlyProperty == args.Property)
+            UpdateReadOnly();
+    }
+
     INT_PTR CALLBACK WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam) override
     {
         switch (uMsg)
@@ -105,6 +118,13 @@ protected:
         }
 
         return ControlBinding::WndProc(hControl, uMsg, wParam, lParam);
+    }
+
+    void UpdateReadOnly()
+    {
+        const bool bReadOnly = (m_pReadOnlyProperty) ? GetValue(*m_pReadOnlyProperty) : false;
+        if (m_hWnd)
+            SendMessage(m_hWnd, EM_SETREADONLY, bReadOnly ? TRUE : FALSE, 0);
     }
 
     virtual void UpdateBoundText()
@@ -140,6 +160,7 @@ protected:
 
 private:
     const StringModelProperty* m_pTextBoundProperty = nullptr;
+    const BoolModelProperty* m_pReadOnlyProperty = nullptr;
     std::map<unsigned int, std::function<bool()>> m_mKeyHandlers;
 };
 

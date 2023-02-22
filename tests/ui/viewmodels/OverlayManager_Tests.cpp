@@ -682,6 +682,33 @@ public:
 
         Assert::IsFalse(overlay.IsOverlayFullyVisible());
     }
+
+    TEST_METHOD(TestHideOverlayImmediately)
+    {
+        OverlayManagerHarness overlay;
+        ra::ui::drawing::mocks::MockSurface mockSurface(800, 600);
+
+        overlay.ShowOverlay();
+
+        // after 0.5 seconds, it should be fully on screen
+        overlay.mockClock.AdvanceTime(std::chrono::milliseconds(500));
+        overlay.ResetRenderRequested();
+        overlay.Render(mockSurface, false);
+        Assert::AreEqual(0, overlay.GetOverlayRenderX());
+        Assert::IsFalse(overlay.WasRenderRequested());
+        Assert::IsTrue(overlay.IsOverlayFullyVisible());
+
+        overlay.HideOverlayImmediately();
+        Assert::IsTrue(overlay.WasRenderRequested());
+        Assert::IsFalse(overlay.IsOverlayFullyVisible());
+
+        overlay.Render(mockSurface, false); // force state change from FadeOut to Hidden
+
+        // it should be fully off screen immediately
+        Assert::AreEqual(-800, overlay.GetOverlayRenderX());
+        Assert::IsTrue(overlay.WasRenderRequested());
+        Assert::IsTrue(overlay.WasHideRequested());
+    }
 };
 
 } // namespace tests

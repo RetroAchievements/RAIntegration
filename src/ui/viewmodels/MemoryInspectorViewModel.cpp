@@ -27,6 +27,7 @@ const BoolModelProperty MemoryInspectorViewModel::CurrentBitsVisibleProperty("Me
 const BoolModelProperty MemoryInspectorViewModel::CanEditCurrentAddressNoteProperty("MemoryInspectorViewModel", "CanEditCurrentAddressNote", true);
 const BoolModelProperty MemoryInspectorViewModel::CanRevertCurrentAddressNoteProperty("MemoryInspectorViewModel", "CanRevertCurrentAddressNote", false);
 const BoolModelProperty MemoryInspectorViewModel::CanPublishCurrentAddressNoteProperty("MemoryInspectorViewModel", "CanPublishCurrentAddressNote", false);
+const BoolModelProperty MemoryInspectorViewModel::IsCurrentAddressNoteReadOnlyProperty("MemoryInspectorViewModel", "IsCurrentAddressNoteReadOnly", false);
 
 MemoryInspectorViewModel::MemoryInspectorViewModel()
 {
@@ -160,15 +161,18 @@ void MemoryInspectorViewModel::UpdateNoteButtons()
     const auto* pCodeNotes = pGameContext.Assets().FindCodeNotes();
     if (pCodeNotes == nullptr || !CanModifyNotes())
     {
+        SetValue(IsCurrentAddressNoteReadOnlyProperty, true);
         SetValue(CanEditCurrentAddressNoteProperty, false);
         SetValue(CanPublishCurrentAddressNoteProperty, false);
         SetValue(CanRevertCurrentAddressNoteProperty, false);
     }
     else
     {
+        SetValue(CanEditCurrentAddressNoteProperty, true);
+
         if (m_bNoteIsIndirect)
         {
-            SetValue(CanEditCurrentAddressNoteProperty, false);
+            SetValue(IsCurrentAddressNoteReadOnlyProperty, true);
             SetValue(CanPublishCurrentAddressNoteProperty, false);
             SetValue(CanRevertCurrentAddressNoteProperty, false);
         }
@@ -179,7 +183,7 @@ void MemoryInspectorViewModel::UpdateNoteButtons()
             const auto nAddress = GetCurrentAddress();
             const auto bModified = pCodeNotes->IsNoteModified(nAddress);
 
-            SetValue(CanEditCurrentAddressNoteProperty, true);
+            SetValue(IsCurrentAddressNoteReadOnlyProperty, false);
             SetValue(CanPublishCurrentAddressNoteProperty, !bOffline && bModified);
             SetValue(CanRevertCurrentAddressNoteProperty, bModified);
         }

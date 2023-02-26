@@ -17,7 +17,12 @@ bool GridAddressColumnBinding::HandleDoubleClick(const ra::ui::ViewModelCollecti
     if (IsReadOnly())
     {
         const auto nValue = vmItems.GetItemValue(nIndex, *m_pBoundProperty);
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector.SetCurrentAddress(nValue);
+
+        auto& pMemoryInspector = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryInspector;
+        pMemoryInspector.SetCurrentAddress(nValue);
+
+        if (!pMemoryInspector.IsVisible())
+            pMemoryInspector.Show();
 
         return true;
     }

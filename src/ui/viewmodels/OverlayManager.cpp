@@ -484,7 +484,7 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, const Popu
         if (nOldWidth != 0)
         {
             const int nHeight = pNewImage.GetHeight() + std::abs(nNewPos.Y - nOldY);
-            if (nNewPos.X > nOldX)
+            if (nNewPos.X > nOldX && nOldX + ra::to_signed(nOldWidth) >= 0)
                 pSurface.FillRectangle(nOldX - nFudge, nOldY, nNewPos.X - nOldX + nFudge, nHeight, ra::ui::Color::Transparent);
 
             const int nOldRightBound = nOldX + nOldWidth;
@@ -503,7 +503,7 @@ void OverlayManager::UpdatePopup(ra::ui::drawing::ISurface& pSurface, const Popu
 
         if (nOldHeight != 0)
         {
-            if (nNewPos.Y > nOldY)
+            if (nNewPos.Y > nOldY && nOldY + ra::to_signed(nOldHeight) >= 0)
                 pSurface.FillRectangle(nNewPos.X, nOldY - nFudge, pNewImage.GetWidth(), nNewPos.Y - nOldY + nFudge, ra::ui::Color::Transparent);
 
             const int nOldLowerBound = nOldY + nOldHeight;

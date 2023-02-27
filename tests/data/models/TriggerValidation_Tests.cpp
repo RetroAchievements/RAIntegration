@@ -3,6 +3,7 @@
 #include "data\models\TriggerValidation.hh"
 
 #include "tests\mocks\MockConsoleContext.hh"
+#include "tests\mocks\MockEmulatorContext.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -144,6 +145,29 @@ public:
         // AddAddress can use really big values for negative offsets, don't flag them.
         AssertValidation("I:0xX1234_0xHFFFFFF00>5", L"");
         AssertValidation("I:0xX1234_0xH1234>5_0xHFFFFFF00>5", L"Condition 3: Address FFFFFF00 out of range (max FFFF)");
+    }
+
+    TEST_METHOD(TestAddressRangeArcade)
+    {
+        // arcade doesn't provide a max address as each game can have a different amount of memory
+        // instead, max valid address is determined by how much memory the emulator/core exposes
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext(Arcade, L"Arcade");
+        Assert::AreEqual(0U, mockConsoleContext.MaxAddress());
+        ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
+        unsigned char pMemory[256];
+        mockEmulatorContext.MockMemory(pMemory, sizeof(pMemory));
+        Assert::AreEqual({ 256U }, mockEmulatorContext.TotalMemorySize());
+
+        AssertValidation("0xH12>0xH34", L"");
+        AssertValidation("0xH123>0xH34", L"Condition 1: Address 0123 out of range (max 00FF)");
+        AssertValidation("0xH12>0xH345", L"Condition 1: Address 0345 out of range (max 00FF)");
+        AssertValidation("0xH123>0xH123", L"Condition 1: Address 0123 out of range (max 00FF)");
+        AssertValidation("0xX12>h123", L"");
+
+        // edge cases
+        AssertValidation("0xH00>5", L"");
+        AssertValidation("0xHFF>5", L"");
+        AssertValidation("0xH100>5", L"Condition 1: Address 0100 out of range (max 00FF)");
     }
 
     TEST_METHOD(TestLeaderboardConditionTypes)

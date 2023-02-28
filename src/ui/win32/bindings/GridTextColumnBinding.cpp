@@ -85,9 +85,17 @@ static LRESULT CALLBACK EditBoxProc(HWND hwnd, UINT nMsg, WPARAM wParam, LPARAM 
             break;
 
         case WM_GETDLGCODE:
-            // only reached if IsDialogMessage is used (also used as a signal to activate the above hack)
-            pInfo->bForceWmChar = true;
-            return DLGC_WANTALLKEYS;
+            if (lParam)
+            {
+                // If lParam is not null, a keyboard message is being processed. Assume we're in an IsDialogMessage
+                // call and set a flag indicating we need to manually convert the WM_KEYDOWN to WM_CHAR.
+                pInfo->bForceWmChar = true;
+                return DLGC_WANTALLKEYS;
+            }
+
+            // If lParam is null, don't set the flag - we're being called as the result of a focus change or
+            // something similar.
+            break;
     }
 
     return CallWindowProc(pInfo->pOriginalWndProc, hwnd, nMsg, wParam, lParam);

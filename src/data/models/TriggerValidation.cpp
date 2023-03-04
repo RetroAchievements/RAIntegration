@@ -3,6 +3,7 @@
 #include "RA_StringUtils.h"
 
 #include "data/context/ConsoleContext.hh"
+#include "data/context/EmulatorContext.hh"
 
 #include "services/ServiceLocator.hh"
 
@@ -103,6 +104,13 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
     {
         const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
         nMaxAddress = pConsoleContext.MaxAddress();
+
+        // if console definition doesn't specify the max address, see how much was exposed by the emulator
+        if (nMaxAddress == 0)
+        {
+            const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+            nMaxAddress = gsl::narrow_cast<unsigned>(pEmulatorContext.TotalMemorySize()) - 1;
+        }
     }
 
     char sErrorBuffer[256];

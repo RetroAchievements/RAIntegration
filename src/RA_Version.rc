@@ -77,7 +77,7 @@ BEGIN
             VALUE "FileDescription", "RetroAchievements Integration Toolkit"
             VALUE "FileVersion", RA_INTEGRATION_VERSION_MAJOR, RA_INTEGRATION_VERSION_MINOR, RA_INTEGRATION_VERSION_PATCH, RA_INTEGRATION_VERSION_REVISION
             VALUE "InternalName", "RA_Integration"
-            VALUE "LegalCopyright", "Copyright (C) 2022 retroachievements.org"
+            VALUE "LegalCopyright", "Copyright (C) 2023 retroachievements.org"
             VALUE "OriginalFilename", "RA_Integration.dll"
             VALUE "ProductName", "RetroAchievements Integration Toolkit"
             VALUE "ProductVersion", RA_INTEGRATION_VERSION_PRODUCT_ARCH

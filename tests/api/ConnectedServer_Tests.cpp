@@ -377,7 +377,7 @@ public:
 
         // only the first missing required field is reported
         Assert::AreEqual(ApiResult::Error, response.Result);
-        Assert::AreEqual(std::string("JSON Parse Error: Missing value expression"), response.ErrorMessage);
+        Assert::AreEqual(std::string("JSON Parse Error: User not found in response"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
         Assert::AreEqual(std::string(""), response.ApiToken);
         Assert::AreEqual(0U, response.Score);

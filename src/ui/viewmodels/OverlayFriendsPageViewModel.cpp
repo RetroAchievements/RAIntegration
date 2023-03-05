@@ -12,7 +12,7 @@ namespace viewmodels {
 
 void OverlayFriendsPageViewModel::Refresh()
 {
-    m_sTitle = L"Friends";
+    m_sTitle = L"Following";
     OverlayListPageViewModel::Refresh();
 
     const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();

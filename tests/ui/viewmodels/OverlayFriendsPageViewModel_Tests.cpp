@@ -53,7 +53,7 @@ public:
 
         friendsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Friends"), friendsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"Following"), friendsPage.GetTitle());
         Assert::AreEqual(std::wstring(), friendsPage.GetSummary());
 
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
@@ -77,7 +77,7 @@ public:
 
         friendsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Friends"), friendsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"Following"), friendsPage.GetTitle());
         Assert::AreEqual(std::wstring(), friendsPage.GetSummary());
 
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
@@ -119,7 +119,7 @@ public:
 
         friendsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Friends"), friendsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"Following"), friendsPage.GetTitle());
         Assert::AreEqual(std::wstring(), friendsPage.GetSummary());
 
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
@@ -143,7 +143,7 @@ public:
 
         friendsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Friends"), friendsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"Following"), friendsPage.GetTitle());
         Assert::AreEqual(std::wstring(), friendsPage.GetSummary());
 
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async

@@ -938,8 +938,40 @@ protected:
 
 class SixteenBitBigEndianSearchImpl : public SixteenBitSearchImpl
 {
+public:
     MemSize GetMemSize() const noexcept override { return MemSize::SixteenBitBigEndian; }
 
+protected:
+    unsigned int BuildValue(const unsigned char* ptr) const noexcept override
+    {
+        GSL_SUPPRESS_F6 Expects(ptr != nullptr);
+        return (ptr[0] << 8) | ptr[1];
+    }
+
+protected:
+    void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
+        const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
+        std::vector<ra::ByteAddress>& vMatches) const override
+    {
+        SearchImpl::ApplyConstantFilter(pBytes, pBytesStop,
+            pPreviousBlock, nComparison, nConstantValue, vMatches);
+    }
+
+    void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
+        const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
+        std::vector<ra::ByteAddress>& vMatches) const override
+    {
+        SearchImpl::ApplyCompareFilter(pBytes, pBytesStop,
+            pPreviousBlock, nComparison, nAdjustment, vMatches);
+    }
+};
+
+class SixteenBitBigEndianAlignedSearchImpl : public SixteenBitAlignedSearchImpl
+{
+public:
+    MemSize GetMemSize() const noexcept override { return MemSize::SixteenBitBigEndian; }
+
+protected:
     unsigned int BuildValue(const unsigned char* ptr) const noexcept override
     {
         GSL_SUPPRESS_F6 Expects(ptr != nullptr);
@@ -965,6 +997,34 @@ protected:
 };
 
 class ThirtyTwoBitBigEndianSearchImpl : public ThirtyTwoBitSearchImpl
+{
+    MemSize GetMemSize() const noexcept override { return MemSize::ThirtyTwoBitBigEndian; }
+
+    unsigned int BuildValue(const unsigned char* ptr) const noexcept override
+    {
+        GSL_SUPPRESS_F6 Expects(ptr != nullptr);
+        return (ptr[0] << 24) | (ptr[1] << 16) | (ptr[2] << 8) | ptr[3];
+    }
+
+protected:
+    void ApplyConstantFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
+        const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nConstantValue,
+        std::vector<ra::ByteAddress>& vMatches) const override
+    {
+        SearchImpl::ApplyConstantFilter(pBytes, pBytesStop,
+            pPreviousBlock, nComparison, nConstantValue, vMatches);
+    }
+
+    void ApplyCompareFilter(const uint8_t* pBytes, const uint8_t* pBytesStop,
+        const MemBlock& pPreviousBlock, ComparisonType nComparison, unsigned nAdjustment,
+        std::vector<ra::ByteAddress>& vMatches) const override
+    {
+        SearchImpl::ApplyCompareFilter(pBytes, pBytesStop,
+            pPreviousBlock, nComparison, nAdjustment, vMatches);
+    }
+};
+
+class ThirtyTwoBitBigEndianAlignedSearchImpl : public ThirtyTwoBitAlignedSearchImpl
 {
     MemSize GetMemSize() const noexcept override { return MemSize::ThirtyTwoBitBigEndian; }
 
@@ -1457,6 +1517,8 @@ static SixteenBitAlignedSearchImpl s_pSixteenBitAlignedSearchImpl;
 static ThirtyTwoBitAlignedSearchImpl s_pThirtyTwoBitAlignedSearchImpl;
 static SixteenBitBigEndianSearchImpl s_pSixteenBitBigEndianSearchImpl;
 static ThirtyTwoBitBigEndianSearchImpl s_pThirtyTwoBitBigEndianSearchImpl;
+static SixteenBitBigEndianAlignedSearchImpl s_pSixteenBitBigEndianAlignedSearchImpl;
+static ThirtyTwoBitBigEndianAlignedSearchImpl s_pThirtyTwoBitBigEndianAlignedSearchImpl;
 static BitCountSearchImpl s_pBitCountSearchImpl;
 static AsciiTextSearchImpl s_pAsciiTextSearchImpl;
 static FloatSearchImpl s_pFloatSearchImpl;
@@ -1657,6 +1719,12 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
             break;
         case SearchType::ThirtyTwoBitBigEndian:
             m_pImpl = &ra::services::impl::s_pThirtyTwoBitBigEndianSearchImpl;
+            break;
+        case SearchType::SixteenBitBigEndianAligned:
+            m_pImpl = &ra::services::impl::s_pSixteenBitBigEndianAlignedSearchImpl;
+            break;
+        case SearchType::ThirtyTwoBitBigEndianAligned:
+            m_pImpl = &ra::services::impl::s_pThirtyTwoBitBigEndianAlignedSearchImpl;
             break;
         case SearchType::BitCount:
             m_pImpl = &ra::services::impl::s_pBitCountSearchImpl;

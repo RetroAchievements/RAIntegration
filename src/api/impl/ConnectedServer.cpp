@@ -349,7 +349,11 @@ static bool ValidateResponse(int nResult, const rc_api_response_t& api_response,
     if (nResult != RC_OK)
     {
         /* parse error */
-        pResponse.ErrorMessage = ra::StringPrintf("JSON Parse Error: %s", rc_error_str(nResult));
+        if (nResult == RC_MISSING_VALUE && api_response.error_message)
+            pResponse.ErrorMessage = ra::StringPrintf("JSON Parse Error: %s", api_response.error_message);
+        else
+            pResponse.ErrorMessage = ra::StringPrintf("JSON Parse Error: %s", rc_error_str(nResult));
+
         pResponse.Result = ApiResult::Error;
         RA_LOG_ERR("-- %s %s", sApiName, pResponse.ErrorMessage);
         return false;

@@ -131,11 +131,12 @@ public:
         // basic checks for each side
         ra::data::context::mocks::MockConsoleContext mockConsoleContext(NES, L"NES");
         Assert::AreEqual(0xFFFFU, mockConsoleContext.MaxAddress());
-        AssertValidation("0xH1234>0xH1235", L"");
-        AssertValidation("0xH12345>0xH1235", L"Condition 1: Address 12345 out of range (max FFFF)");
-        AssertValidation("0xH1234>0xH12345", L"Condition 1: Address 12345 out of range (max FFFF)");
+        AssertValidation("0xH0234>0xH0235", L"");
+        AssertValidation("0xH1234>0xH1235", L"Condition 1: Mirror RAM may not be exposed by emulator (address 1234)");
+        AssertValidation("0xH12345>0xH0235", L"Condition 1: Address 12345 out of range (max FFFF)");
+        AssertValidation("0xH0234>0xH12345", L"Condition 1: Address 12345 out of range (max FFFF)");
         AssertValidation("0xH12345>0xH12345", L"Condition 1: Address 12345 out of range (max FFFF)");
-        AssertValidation("0xX1234>h12345", L"");
+        AssertValidation("0xX0234>h12345", L"");
 
         // edge cases
         AssertValidation("0xH0000>5", L"");
@@ -143,8 +144,8 @@ public:
         AssertValidation("0xH10000>5", L"Condition 1: Address 10000 out of range (max FFFF)");
 
         // AddAddress can use really big values for negative offsets, don't flag them.
-        AssertValidation("I:0xX1234_0xHFFFFFF00>5", L"");
-        AssertValidation("I:0xX1234_0xH1234>5_0xHFFFFFF00>5", L"Condition 3: Address FFFFFF00 out of range (max FFFF)");
+        AssertValidation("I:0xX0234_0xHFFFFFF00>5", L"");
+        AssertValidation("I:0xX0234_0xH0234>5_0xHFFFFFF00>5", L"Condition 3: Address FFFFFF00 out of range (max FFFF)");
     }
 
     TEST_METHOD(TestAddressRangeArcade)

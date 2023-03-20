@@ -20,6 +20,8 @@ enum class SearchType
     ThirtyTwoBitAligned,
     SixteenBitBigEndian,
     ThirtyTwoBitBigEndian,
+    SixteenBitBigEndianAligned,
+    ThirtyTwoBitBigEndianAligned,
     Float,
     MBF32,
     MBF32LE,

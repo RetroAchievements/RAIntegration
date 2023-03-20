@@ -1440,7 +1440,7 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
-        SearchResults::Result excludeResult{ 1U, 0U, MemSize::EightBit };
+        const SearchResults::Result excludeResult{ 1U, 0U, MemSize::EightBit };
         results1.ExcludeResult(excludeResult);
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
@@ -1539,7 +1539,7 @@ public:
         Assert::AreEqual({ 2U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
-        SearchResults::Result excludeResult{ 0U, 0U, MemSize::EightBit };
+        const SearchResults::Result excludeResult{ 0U, 0U, MemSize::EightBit };
         results1.ExcludeResult(excludeResult);
         Assert::AreEqual({ 2U }, results1.MatchingAddressCount());
 
@@ -2083,7 +2083,7 @@ public:
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 
         // exclude doesn't do anything to unfiltered results
-        SearchResults::Result excludeResult{ 0U, 0U, MemSize::EightBit };
+        const SearchResults::Result excludeResult{ 0U, 0U, MemSize::EightBit };
         results1.ExcludeResult(excludeResult);
         Assert::AreEqual({ 3U }, results1.MatchingAddressCount());
 

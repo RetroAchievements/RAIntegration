@@ -256,7 +256,7 @@ void WindowBinding::OnSizeChanged(_UNUSED ra::ui::Size oSize)
         // oSize is the size of client area, we need the size of the window (including non-client area)
         RECT rcDialog;
         GetWindowRect(m_hWnd, &rcDialog);
-        ra::ui::Size oDialogSize{ rcDialog.right - rcDialog.left, rcDialog.bottom - rcDialog.top };
+        const ra::ui::Size oDialogSize{ rcDialog.right - rcDialog.left, rcDialog.bottom - rcDialog.top };
 
         ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>().SetWindowSize(m_sSizeAndPositionKey, oDialogSize);
     }
@@ -275,7 +275,7 @@ void WindowBinding::OnPositionChanged(_UNUSED ra::ui::Position oPosition)
         // capture position relative to main window
         RECT rcMainWindow;
         GetWindowRect(g_RAMainWnd, &rcMainWindow);
-        ra::ui::Position oRelativePosition{ rcDialog.left - rcMainWindow.left, rcDialog.top - rcMainWindow.top };
+        const ra::ui::Position oRelativePosition{ rcDialog.left - rcMainWindow.left, rcDialog.top - rcMainWindow.top };
 
         ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>().SetWindowPosition(m_sSizeAndPositionKey, oRelativePosition);
     }

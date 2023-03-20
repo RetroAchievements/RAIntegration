@@ -127,7 +127,7 @@ void GDIBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const 
     SelectFont(hMemDC, m_pResourceRepository.GetHFont(nFont));
     SetTextColor(hMemDC, RGB(255, 255, 255));
     SetBkMode(hMemDC, TRANSPARENT);
-    RECT rcRect{0, 0, szText.cx, szText.cy};
+    const RECT rcRect{0, 0, szText.cx, szText.cy};
     TextOutW(hMemDC, 0, 0, sText.c_str(), gsl::narrow_cast<int>(sText.length()));
 
     // copy the greyscale text to the forground using the grey value as the alpha for antialiasing

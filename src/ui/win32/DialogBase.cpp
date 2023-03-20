@@ -423,7 +423,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 
         case WM_MOVE:
         {
-            ra::ui::Position oPosition{ LOWORD(lParam), HIWORD(lParam) };
+            const ra::ui::Position oPosition{ LOWORD(lParam), HIWORD(lParam) };
             OnMove(oPosition);
             return 0;
         }
@@ -443,7 +443,7 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 
         case WM_SIZE:
         {
-            ra::ui::Size oSize{ LOWORD(lParam), HIWORD(lParam) };
+            const ra::ui::Size oSize{ LOWORD(lParam), HIWORD(lParam) };
             OnSize(oSize);
             return 0;
         }
@@ -663,7 +663,7 @@ void DialogBase::UpdateAnchoredControls()
             auto* pBinding = FindControlBinding(hControl);
             if (pBinding)
             {
-                ra::ui::Size pNewSize{ nWidth, nHeight };
+                const ra::ui::Size pNewSize{ nWidth, nHeight };
                 pBinding->OnSizeChanged(pNewSize);
             }
         }

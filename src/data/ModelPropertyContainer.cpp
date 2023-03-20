@@ -26,7 +26,7 @@ void ModelPropertyContainer::SetValue(const BoolModelProperty& pProperty, bool b
     m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), bValue ? L"true" : L"false");
 #endif
 
-    BoolModelProperty::ChangeArgs args{ pProperty, !bValue, bValue };
+    const BoolModelProperty::ChangeArgs args{ pProperty, !bValue, bValue };
     OnValueChanged(args);
 }
 
@@ -76,7 +76,7 @@ void ModelPropertyContainer::SetValue(const StringModelProperty& pProperty, cons
     m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), sValue);
 #endif
 
-    StringModelProperty::ChangeArgs args{ pProperty, *pOldValue, sValue };
+    const StringModelProperty::ChangeArgs args{ pProperty, *pOldValue, sValue };
     OnValueChanged(args);
 }
 
@@ -121,7 +121,7 @@ void ModelPropertyContainer::SetValue(const IntModelProperty& pProperty, int nVa
     m_mDebugValues.insert_or_assign(pProperty.GetPropertyName(), std::to_wstring(nValue));
 #endif
 
-    IntModelProperty::ChangeArgs args{ pProperty, nOldValue, nValue };
+    const IntModelProperty::ChangeArgs args{ pProperty, nOldValue, nValue };
     OnValueChanged(args);
 }
 

@@ -99,7 +99,7 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
     sTriggerBuffer.resize(nSize);
     const auto* pTrigger = rc_parse_trigger(sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
 
-    char sErrorBuffer[256];
+    char sErrorBuffer[256] = "";
     int nResult = 1;
 
     if (ra::services::ServiceLocator::Exists<ra::data::context::ConsoleContext>())

@@ -311,7 +311,7 @@ public:
                 const auto nIndex = sFormat.find('.');
                 if (nIndex != std::string::npos)
                 {
-                    int nPrecision = std::stoi(sFormat.c_str() + nIndex + 1);
+                    const int nPrecision = std::stoi(sFormat.c_str() + nIndex + 1);
                     oss.precision(nPrecision);
                     oss << std::fixed;
                 }
@@ -332,7 +332,7 @@ public:
     {
         if (sFormat.front() == '.')
         {
-            int nCharacters = std::stoi(&sFormat.at(1));
+            const int nCharacters = std::stoi(&sFormat.at(1));
             AppendSubString(arg, nCharacters);
         }
         else

@@ -342,13 +342,13 @@ static HRESULT CreateDIBFromBitmapSource(_In_ IWICBitmapSource* pToRenderBitmapS
     // Create a DIB section based on Bitmap Info
     // BITMAPINFO Struct must first be setup before a DIB can be created.
     // Note that the height is negative for top-down bitmaps
-    BITMAPINFOHEADER info_header{sizeof(BITMAPINFOHEADER), // biSize
-                                 to_signed(nWidth),
-                                 -to_signed(nHeight),
-                                 WORD{1},  // biPlanes
-                                 WORD{32}, // biBitCount
-                                 DWORD{BI_RGB}};
-    BITMAPINFO bminfo{info_header};
+    const BITMAPINFOHEADER info_header{sizeof(BITMAPINFOHEADER), // biSize
+                                       to_signed(nWidth),
+                                       -to_signed(nHeight),
+                                       WORD{1},  // biPlanes
+                                       WORD{32}, // biBitCount
+                                       DWORD{BI_RGB}};
+    const BITMAPINFO bminfo{info_header};
     void *pvImageBits = nullptr;
 
     auto hWindow = GetActiveWindow();

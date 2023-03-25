@@ -99,22 +99,30 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
     sTriggerBuffer.resize(nSize);
     const auto* pTrigger = rc_parse_trigger(sTriggerBuffer.data(), sTrigger.c_str(), nullptr, 0);
 
-    unsigned nMaxAddress = ra::to_unsigned(-1);
+    char sErrorBuffer[256] = "";
+    int nResult = 1;
+
     if (ra::services::ServiceLocator::Exists<ra::data::context::ConsoleContext>())
     {
         const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
-        nMaxAddress = pConsoleContext.MaxAddress();
+        unsigned nMaxAddress = pConsoleContext.MaxAddress();
 
-        // if console definition doesn't specify the max address, see how much was exposed by the emulator
         if (nMaxAddress == 0)
         {
+            // if console definition doesn't specify the max address, see how much was exposed by the emulator
             const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
             nMaxAddress = gsl::narrow_cast<unsigned>(pEmulatorContext.TotalMemorySize()) - 1;
+
+            nResult = rc_validate_trigger(pTrigger, sErrorBuffer, sizeof(sErrorBuffer), nMaxAddress);
+        }
+        else
+        {
+            // if console definition does specify a max address, call the console-specific validator for additional validation
+            nResult = rc_validate_trigger_for_console(pTrigger, sErrorBuffer, sizeof(sErrorBuffer), ra::etoi(pConsoleContext.Id()));
         }
     }
 
-    char sErrorBuffer[256];
-    if (rc_validate_trigger(pTrigger, sErrorBuffer, sizeof(sErrorBuffer), nMaxAddress))
+    if (nResult)
     {
         if (nType == AssetType::Leaderboard)
         {

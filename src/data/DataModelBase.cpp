@@ -198,7 +198,7 @@ void DataModelBase::EndUpdate()
         {
             if (pChange.tNewValue != pChange.tOldValue)
             {
-                IntModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
+                const IntModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
                 m_pEndUpdateChangeArgs = &args;
                 OnValueChanged(args);
             }
@@ -208,7 +208,7 @@ void DataModelBase::EndUpdate()
         {
             if (pChange.tNewValue != pChange.tOldValue)
             {
-                BoolModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
+                const BoolModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
                 m_pEndUpdateChangeArgs = &args;
                 OnValueChanged(args);
             }
@@ -218,7 +218,7 @@ void DataModelBase::EndUpdate()
         {
             if (pChange.tNewValue != pChange.tOldValue)
             {
-                StringModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
+                const StringModelProperty::ChangeArgs args{ *pChange.pProperty, pChange.tOldValue, pChange.tNewValue };
                 m_pEndUpdateChangeArgs = &args;
                 OnValueChanged(args);
             }

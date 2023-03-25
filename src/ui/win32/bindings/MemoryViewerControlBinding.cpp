@@ -113,7 +113,7 @@ void MemoryViewerControlBinding::SetHWND(DialogBase& pDialog, HWND hControl)
     RECT rcRect;
     GetWindowRect(hControl, &rcRect);
 
-    ra::ui::Size szSize{ rcRect.right - rcRect.left, rcRect.bottom - rcRect.top };
+    const ra::ui::Size szSize{ rcRect.right - rcRect.left, rcRect.bottom - rcRect.top };
     OnSizeChanged(szSize);
 }
 

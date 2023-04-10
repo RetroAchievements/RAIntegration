@@ -348,6 +348,7 @@ std::string WindowsHttpRequester::GetStatusCodeText(unsigned int nStatusCode) co
             case HTTP_STATUS_NOT_SUPPORTED: message = "Not Implemented"; break;
             case HTTP_STATUS_BAD_GATEWAY: message = "Bad Gateway"; break;
             case HTTP_STATUS_SERVICE_UNAVAIL: message = "Service Unavailable"; break;
+            case 429: message = "Too Many Requests"; break;
         }
     }
 

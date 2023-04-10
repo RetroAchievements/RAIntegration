@@ -279,7 +279,11 @@ static bool DoRequestWithoutLog(const rc_api_request_t& api_request, _UNUSED con
     switch (pHttpResponse.Content().at(0))
     {
         case '{': // JSON, expected
+            break;
+
         case '<': // HTML, not expected
+            if (HandleHttpError(pHttpResponse.StatusCode(), pResponse))
+                return false;
             break;
 
         default:

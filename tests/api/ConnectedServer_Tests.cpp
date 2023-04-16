@@ -188,7 +188,6 @@ public:
 
         auto response = server.Login(request);
 
-        // "Success:false" without error message results in Failed call, not Error call
         Assert::AreEqual(ApiResult::Error, response.Result);
         Assert::AreEqual(std::string("HTTP error code: 401 (err401)"), response.ErrorMessage);
         Assert::AreEqual(std::string(""), response.Username);
@@ -239,7 +238,6 @@ public:
 
         auto response = server.AwardAchievement(request);
 
-        // "Success:false" without error message results in Failed call, not Error call
         Assert::AreEqual(ApiResult::Error, response.Result);
         Assert::AreEqual(std::string("HTTP error code: 403 (err403)"), response.ErrorMessage);
     }
@@ -263,9 +261,38 @@ public:
 
         auto response = server.AwardAchievement(request);
 
-        // "Success:false" without error message results in Failed call, not Error call
         Assert::AreEqual(ApiResult::Error, response.Result);
         Assert::AreEqual(std::string("Invalid API token"), response.ErrorMessage);
+    }
+
+    TEST_METHOD(TestAwardAchievementFailed429)
+    {
+        MockUserContext mockUserContext;
+        mockUserContext.Initialize("Username", "ApiToken");
+
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
+        {
+            return Http::Response(Http::StatusCode::TooManyRequests,
+                "<html>\n"
+                "<head><title>429 Too Many Requests</title></head>\n"
+                "<body>\n"
+                "<center><h1>429 Too Many Requests</h1></center>\n"
+                "<hr><center>nginx</center>\n"
+                "</body>\n"
+                "</html>");
+        });
+
+        ConnectedServer server("host.com");
+
+        AwardAchievement::Request request;
+        request.GameHash = "HASH";
+        request.AchievementId = 1234U;
+        request.Hardcore = true;
+
+        auto response = server.AwardAchievement(request);
+
+        Assert::AreEqual(ApiResult::Error, response.Result);
+        Assert::AreEqual(std::string("HTTP error code: 429 (err429)"), response.ErrorMessage);
     }
 
     TEST_METHOD(TestLoginUnknownServer)

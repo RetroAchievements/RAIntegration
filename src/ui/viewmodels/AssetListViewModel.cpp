@@ -1178,7 +1178,7 @@ static std::wstring ValidateCondSet(const rc_condset_t* pCondSet)
     for (const auto* pCondition = pCondSet->conditions; pCondition != nullptr; pCondition = pCondition->next)
     {
         /* rc_condition_t validation goes here */
-#if RA_INTEGRATION_VERSION_LESS_THAN(1,2,0)
+#if RA_INTEGRATION_VERSION_LESS_THAN(1,2,1)
 #define VALIDATE_PRERELEASE_FUNCTIONALITY
 //        if (pCondition->operand1.size == RC_MEMSIZE_MBF32_LE || pCondition->operand2.size == RC_MEMSIZE_MBF32_LE)
 //            return L"MBF32 LE size is pre-release functionality";

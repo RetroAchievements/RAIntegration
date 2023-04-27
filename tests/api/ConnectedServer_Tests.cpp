@@ -591,6 +591,45 @@ public:
         std::string sPatchData = "{\"ID\":99, \"Title\":\"Game Name\", \"ConsoleID\":5, \"ImageIcon\":\"/Images/BADGE.png\", \"Achievements\":[], \"Leaderboards\":[]}";
         Assert::AreEqual(sPatchData, mockLocalStorage.GetStoredData(ra::services::StorageItemType::GameData, L"99"));
     }
+
+    // ====================================================
+    // FetchCodeNotes
+
+    TEST_METHOD(TestFetchCodeNotesNormalizesLineEndings)
+    {
+        MockUserContext mockUserContext;
+        mockUserContext.Initialize("Username", "ApiToken");
+
+        MockHttpRequester mockHttp([](const Http::Request&)
+        {
+            return Http::Response(Http::StatusCode::OK,
+                "{\"Success\":true,\"CodeNotes\":["
+                    "{\"User\":\"Username\",\"Address\":\"0x00f304\",\"Note\":\"Line1\\nLine2\\r\\nLine3\\n\"}"
+                "]}");
+        });
+
+        MockLocalStorage mockLocalStorage;
+
+        ra::services::ServiceLocator::ServiceOverride<ra::api::IServer> serviceOverride(new ConnectedServer("host.com"), true);
+        auto& server = ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
+
+        FetchCodeNotes::Request request;
+        request.GameId = 99;
+        auto response = server.FetchCodeNotes(request);
+
+        Assert::AreEqual(ApiResult::Success, response.Result);
+        Assert::AreEqual(std::string(), response.ErrorMessage);
+
+        // note text should be normalized to windows line endings
+        Assert::AreEqual({1U}, response.Notes.size());
+        Assert::AreEqual(std::string("Username"), response.Notes.at(0).Author);
+        Assert::AreEqual({0x00f304}, response.Notes.at(0).Address);
+        Assert::AreEqual(std::wstring(L"Line1\r\nLine2\r\nLine3\r\n"), response.Notes.at(0).Note);
+
+        // cached file is not normalized (or unescaped)
+        std::string sPatchData = "[{\"User\":\"Username\",\"Address\":\"0x00f304\",\"Note\":\"Line1\\nLine2\\r\\nLine3\\n\"}]";
+        Assert::AreEqual(sPatchData, mockLocalStorage.GetStoredData(ra::services::StorageItemType::CodeNotes, L"99"));
+    }
 };
 
 } // namespace tests

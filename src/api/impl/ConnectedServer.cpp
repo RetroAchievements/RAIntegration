@@ -943,6 +943,8 @@ void ConnectedServer::ProcessCodeNotes(FetchCodeNotes::Response& response, const
         pNote.Author = note->author;
         pNote.Address = note->address;
         pNote.Note = ra::Widen(note->note);
+
+        ra::NormalizeLineEndings(pNote.Note);
     }
 }
 #pragma warning(pop)

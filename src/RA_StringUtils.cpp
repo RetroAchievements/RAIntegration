@@ -210,6 +210,25 @@ std::wstring& Trim(std::wstring& str)
 }
 
 _Use_decl_annotations_
+std::wstring& NormalizeLineEndings(std::wstring& str)
+{
+    size_t nIndex = 0;
+    do
+    {
+        nIndex = str.find('\n', nIndex);
+        if (nIndex == std::wstring::npos)
+            break;
+
+        if (nIndex == 0 || str.at(nIndex - 1) != '\r')
+            str.insert(str.begin() + nIndex++, '\r');
+
+        ++nIndex;
+    } while (true);
+
+    return str;
+}
+
+_Use_decl_annotations_
 const std::string FormatDateTime(time_t when)
 {
     struct tm tm;

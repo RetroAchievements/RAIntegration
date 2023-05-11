@@ -36,6 +36,12 @@ std::string& TrimLineEnding(_Inout_ std::string& str) noexcept;
 /// <returns>Reference to <paramref name="str" /> for chaining.</returns>
 std::wstring& Trim(_Inout_ std::wstring& str);
 
+/// <summary>
+/// Converts all "\n"s in a string to "\r\n".
+/// </summary>
+/// <returns>Reference to <paramref name="str" /> for chaining.</returns>
+std::wstring& NormalizeLineEndings(_Inout_ std::wstring& str);
+
 // ----- ToString -----
 
 template<typename T>

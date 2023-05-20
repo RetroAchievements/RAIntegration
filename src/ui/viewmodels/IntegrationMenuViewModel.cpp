@@ -351,6 +351,7 @@ void IntegrationMenuViewModel::ShowAllEditors()
         pWindowManager.MemoryInspector.Show();
         pWindowManager.MemoryBookmarks.Show();
         pWindowManager.CodeNotes.Show();
+        pWindowManager.PointerFinder.Show()
     }
     else
     {

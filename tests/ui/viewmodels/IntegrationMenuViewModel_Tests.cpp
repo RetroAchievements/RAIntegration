@@ -585,6 +585,13 @@ public:
             bBookmarksShown = true;
             return DialogResult::None;
         });
+        
+        bool bPointerFinderShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::PointerFinderViewModel>([&bPointerFinderShown](ra::ui::viewmodels::PointerFinderViewModel&)
+        {
+            bPointerFinderShown = true;
+            return DialogResult::None;
+        });
 
         bool bNotesShown = false;
         menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::CodeNotesViewModel>([&bNotesShown](ra::ui::viewmodels::CodeNotesViewModel&)
@@ -599,7 +606,7 @@ public:
             bRichPresenceShown = true;
             return DialogResult::None;
         });
-
+        
         menu.mockEmulatorContext.MockDisableHardcoreWarning(DialogResult::Yes);
 
         menu.ActivateMenuItem(IDM_RA_FILES_OPENALL);
@@ -609,6 +616,7 @@ public:
         Assert::IsTrue(bAssetShown);
         Assert::IsTrue(bInspectorShown);
         Assert::IsTrue(bBookmarksShown);
+        Assert::IsTrue(bPointerFinderShown);
         Assert::IsTrue(bNotesShown);
         Assert::IsTrue(bRichPresenceShown);
     }
@@ -647,6 +655,13 @@ public:
             bBookmarksShown = true;
             return DialogResult::None;
         });
+        
+        bool bPointerFinderShown = false;
+        menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::PointerFinderViewModel>([&bPointerFinderShown](ra::ui::viewmodels::PointerFinderViewModel&)
+        {
+            bPointerFinderShown = true;
+            return DialogResult::None;
+        });
 
         bool bNotesShown = false;
         menu.mockDesktop.ExpectWindow<ra::ui::viewmodels::CodeNotesViewModel>([&bNotesShown](ra::ui::viewmodels::CodeNotesViewModel&)
@@ -671,6 +686,7 @@ public:
         Assert::IsFalse(bAssetShown);
         Assert::IsFalse(bInspectorShown);
         Assert::IsFalse(bBookmarksShown);
+        Assert::IsFalse(bPointerFinderShown);
         Assert::IsFalse(bNotesShown);
         Assert::IsTrue(bRichPresenceShown);
     }
@@ -733,6 +749,7 @@ public:
         Assert::IsTrue(bAssetShown);
         Assert::IsTrue(bInspectorShown);
         Assert::IsTrue(bBookmarksShown);
+        Assert::IsTrue(bPointerFinderShown);
         Assert::IsTrue(bNotesShown);
         Assert::IsTrue(bRichPresenceShown);
     }

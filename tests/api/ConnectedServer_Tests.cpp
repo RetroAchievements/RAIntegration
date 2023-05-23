@@ -295,6 +295,30 @@ public:
         Assert::AreEqual(std::string("HTTP error code: 429 (err429)"), response.ErrorMessage);
     }
 
+    TEST_METHOD(TestAwardAchievementFailed429Json)
+    {
+        MockUserContext mockUserContext;
+        mockUserContext.Initialize("Username", "ApiToken");
+
+        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
+        {
+            return Http::Response(Http::StatusCode::TooManyRequests,
+                "{\"Success\": false,\"Error\": \"Too Many Attempts\"}");
+        });
+
+        ConnectedServer server("host.com");
+
+        AwardAchievement::Request request;
+        request.GameHash = "HASH";
+        request.AchievementId = 1234U;
+        request.Hardcore = true;
+
+        auto response = server.AwardAchievement(request);
+
+        Assert::AreEqual(ApiResult::Error, response.Result);
+        Assert::AreEqual(std::string("Too Many Attempts"), response.ErrorMessage);
+    }
+
     TEST_METHOD(TestLoginUnknownServer)
     {
         MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)

@@ -132,84 +132,94 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
     m_bRenderRequestPending = false;
     m_bRedrawAll = bRedrawAll;
 
-    auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
-    const auto tNow = pClock.UpTime();
-    const auto tElapsed = std::chrono::duration_cast<std::chrono::microseconds>(tNow - m_tLastRender);
-    const double fElapsed = tElapsed.count() / 1000000.0;
-
     bool bRequestRender = false;
-
-    if (m_vmOverlay.CurrentState() == OverlayViewModel::State::Hidden)
     {
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
 
-        PopupLocations pPopupLocations;
-        memset(&pPopupLocations, 0, sizeof(pPopupLocations));
+        auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
+        const auto tNow = pClock.UpTime();
+        const auto tElapsed = std::chrono::duration_cast<std::chrono::microseconds>(tNow - m_tLastRender);
+        const double fElapsedReal = tElapsed.count() / 1000000.0;
 
-        // layout pass - stack items in desired order
-
-        if (!m_vPopupMessages.empty())
+        const auto nState = m_vmOverlay.CurrentState();
+        if (nState != OverlayViewModel::State::Visible)
         {
-            UpdateActiveMessage(pSurface, pPopupLocations, fElapsed);
+            // if the overlay isn't fully hidden, don't animate the popups.
+            // do update them though to ensure the surfaces are initialized.
+            const double fElapsed = (nState == OverlayViewModel::State::Hidden) ? fElapsedReal : 0.0;
 
-            // a visible popup may not set m_bRedrawAll if it's in the pause portion of its animation loop
-            // make sure we keep the render cycle going so it'll eventually handle when the pause ends
-            bRequestRender = true;
-        }
+            PopupLocations pPopupLocations;
+            memset(&pPopupLocations, 0, sizeof(pPopupLocations));
 
-        if (!m_vScoreboards.empty())
-        {
-            UpdateActiveScoreboard(pSurface, pPopupLocations, fElapsed);
+            // layout pass - stack items in desired order
 
-            // a visible scoreboard may not set m_bRedrawAll if it's in the pause portion of its animation loop
-            // make sure we keep the render cycle going so it'll eventually handle when the pause ends
-            bRequestRender = true;
-        }
-
-        if (!m_vScoreTrackers.empty())
-            UpdateScoreTrackers(pSurface, pPopupLocations, fElapsed);
-
-        if (!m_vChallengeIndicators.empty())
-            UpdateChallengeIndicators(pSurface, pPopupLocations, fElapsed);
-
-        if (m_vmProgressTracker != nullptr)
-        {
-            UpdateProgressTracker(pSurface, pPopupLocations, fElapsed);
-
-            // a visible progress tracker may not set m_bRedrawAll if it's in the pause portion of its animation loop
-            // make sure we keep the render cycle going so it'll eventually handle when the pause ends
-            bRequestRender = true;
-        }
-
-        // if anything changed, or caller requested a repaint, do so now
-        if (m_bRedrawAll)
-        {
-            // render pass - items that should appear over other items should be drawn last
-            if (!m_vScoreboards.empty())
-                RenderPopup(pSurface, m_vScoreboards.front());
-            for (const auto& pScoreTracker : m_vScoreTrackers)
-                RenderPopup(pSurface, *pScoreTracker);
-            for (const auto& pChallengeIndicator : m_vChallengeIndicators)
-                RenderPopup(pSurface, *pChallengeIndicator);
-            if (m_vmProgressTracker != nullptr)
-                RenderPopup(pSurface, *m_vmProgressTracker);
             if (!m_vPopupMessages.empty())
-                RenderPopup(pSurface, *m_vPopupMessages.front());
+            {
+                UpdateActiveMessage(pSurface, pPopupLocations, fElapsed);
 
-            bRequestRender = true;
+                // a visible popup may not set m_bRedrawAll if it's in the pause portion of its animation loop
+                // make sure we keep the render cycle going so it'll eventually handle when the pause ends
+                bRequestRender = true;
+            }
+
+            if (!m_vScoreboards.empty())
+            {
+                UpdateActiveScoreboard(pSurface, pPopupLocations, fElapsed);
+
+                // a visible scoreboard may not set m_bRedrawAll if it's in the pause portion of its animation loop
+                // make sure we keep the render cycle going so it'll eventually handle when the pause ends
+                bRequestRender = true;
+            }
+
+            if (!m_vScoreTrackers.empty())
+                UpdateScoreTrackers(pSurface, pPopupLocations, fElapsed);
+
+            if (!m_vChallengeIndicators.empty())
+                UpdateChallengeIndicators(pSurface, pPopupLocations, fElapsed);
+
+            if (m_vmProgressTracker != nullptr)
+            {
+                UpdateProgressTracker(pSurface, pPopupLocations, fElapsed);
+
+                // a visible progress tracker may not set m_bRedrawAll if it's in the pause portion of its animation
+                // loop make sure we keep the render cycle going so it'll eventually handle when the pause ends
+                bRequestRender = true;
+            }
         }
-    }
-    else
-    {
-        UpdateOverlay(pSurface, fElapsed);
 
-        if (m_vmOverlay.CurrentState() != OverlayViewModel::State::Visible)
-            bRequestRender = true;
-    }
+        if (nState == OverlayViewModel::State::Hidden)
+        {
+            // popups are unobscured. if anything changed, or caller requested a repaint, do so now
+            if (m_bRedrawAll)
+            {
+                // render pass - items that should appear over other items should be drawn last
+                if (!m_vScoreboards.empty())
+                    RenderPopup(pSurface, m_vScoreboards.front());
+                for (const auto& pScoreTracker : m_vScoreTrackers)
+                    RenderPopup(pSurface, *pScoreTracker);
+                for (const auto& pChallengeIndicator : m_vChallengeIndicators)
+                    RenderPopup(pSurface, *pChallengeIndicator);
+                if (m_vmProgressTracker != nullptr)
+                    RenderPopup(pSurface, *m_vmProgressTracker);
+                if (!m_vPopupMessages.empty())
+                    RenderPopup(pSurface, *m_vPopupMessages.front());
 
-    // update state now, in case handlers cause recursion
-    m_tLastRender = tNow;
-    m_bRedrawAll = false;
+                bRequestRender = true;
+            }
+        }
+        else
+        {
+            // popups are obscured. draw any partially visible ones, then the overlay on top
+            UpdateOverlay(pSurface, fElapsedReal);
+
+            // only request another render if the overlay is fading in or out (may have changed in UpdateOverlay)
+            bRequestRender = (m_vmOverlay.CurrentState() != OverlayViewModel::State::Visible);
+        }
+
+        // update state now, in case handlers cause recursion
+        m_tLastRender = tNow;
+        m_bRedrawAll = false;
+    }
 
     if (bRequestRender)
     {

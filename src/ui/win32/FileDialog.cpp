@@ -71,11 +71,11 @@ static void ShowFolder(FileDialogViewModel& vmFileDialog, HWND hParentWnd)
             pFileDialog->SetOptions(dwOptions | FOS_PICKFOLDERS);
 
         const HRESULT hr = pFileDialog->Show(hParentWnd);
-        pFileDialog->Release();
 
         if (hr == HRESULT_FROM_WIN32(ERROR_CANCELLED))
         {
             vmFileDialog.SetDialogResult(ra::ui::DialogResult::Cancel);
+            pFileDialog->Release();
             return;
         }
 
@@ -93,6 +93,7 @@ static void ShowFolder(FileDialogViewModel& vmFileDialog, HWND hParentWnd)
                 pShellItem->Release();
             }
 
+            pFileDialog->Release();
             return;
         }
     }

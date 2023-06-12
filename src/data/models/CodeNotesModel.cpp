@@ -813,10 +813,10 @@ ra::ByteAddress CodeNotesModel::GetPreviousNoteAddress(ra::ByteAddress nBeforeAd
             if (!pNote.second.PointerData)
                 continue;
 
-            if (pNote.second.PointerData->PointerValue > nBestAddress)
+            if (pNote.second.PointerData->PointerValue > nBeforeAddress)
                 continue;
 
-            if (pNote.second.PointerData->PointerValue + pNote.second.PointerData->OffsetRange < nBeforeAddress)
+            if (pNote.second.PointerData->PointerValue + pNote.second.PointerData->OffsetRange < nBestAddress)
                 continue;
 
             for (const auto& pOffset : pNote.second.PointerData->OffsetNotes)

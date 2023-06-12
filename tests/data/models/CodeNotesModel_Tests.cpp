@@ -1098,6 +1098,60 @@ public:
         notes.SetServerCodeNote(0x1234U, L"");
         notes.AssertNoNote(0x1234);
     }
+
+    TEST_METHOD(TestGetNextNoteAddress)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sPointerNote =
+            L"Pointer\n"
+            L"+8 = Unknown\n"
+            L"+16 = Small (16-bit)";
+        notes.AddCodeNote(1234, "Author", sPointerNote);
+        notes.AddCodeNote(20, "Author", L"After [32-bit]");
+        notes.AddCodeNote(4, "Author", L"Before");
+        notes.AddCodeNote(12, "Author", L"In the middle");
+
+        Assert::AreEqual({4U}, notes.GetNextNoteAddress({0U}));
+        Assert::AreEqual({12U}, notes.GetNextNoteAddress({4U}));
+        Assert::AreEqual({20U}, notes.GetNextNoteAddress({12U}));
+        Assert::AreEqual({1234U}, notes.GetNextNoteAddress({20U}));
+        Assert::AreEqual({0xFFFFFFFFU}, notes.GetNextNoteAddress({1234U}));
+
+        Assert::AreEqual({4U}, notes.GetNextNoteAddress({0U}, true));
+        Assert::AreEqual({8U}, notes.GetNextNoteAddress({4U}, true));
+        Assert::AreEqual({12U}, notes.GetNextNoteAddress({8U}, true));
+        Assert::AreEqual({16U}, notes.GetNextNoteAddress({12U}, true));
+        Assert::AreEqual({20U}, notes.GetNextNoteAddress({16U}, true));
+        Assert::AreEqual({1234U}, notes.GetNextNoteAddress({20U}, true));
+        Assert::AreEqual({0xFFFFFFFFU}, notes.GetNextNoteAddress({1234U}, true));
+    }
+
+    TEST_METHOD(TestGetPreviousNoteAddress)
+    {
+        CodeNotesModelHarness notes;
+        const std::wstring sPointerNote =
+            L"Pointer\n"
+            L"+8 = Unknown\n"
+            L"+16 = Small (16-bit)";
+        notes.AddCodeNote(1234, "Author", sPointerNote);
+        notes.AddCodeNote(20, "Author", L"After [32-bit]");
+        notes.AddCodeNote(4, "Author", L"Before");
+        notes.AddCodeNote(12, "Author", L"In the middle");
+
+        Assert::AreEqual({1234U}, notes.GetPreviousNoteAddress({0xFFFFFFFFU}));
+        Assert::AreEqual({20U}, notes.GetPreviousNoteAddress({1234U}));
+        Assert::AreEqual({12U}, notes.GetPreviousNoteAddress({20U}));
+        Assert::AreEqual({4U}, notes.GetPreviousNoteAddress({12U}));
+        Assert::AreEqual({0xFFFFFFFFU}, notes.GetPreviousNoteAddress({4U}));
+
+        Assert::AreEqual({1234U}, notes.GetPreviousNoteAddress({0xFFFFFFFFU}, true));
+        Assert::AreEqual({20U}, notes.GetPreviousNoteAddress({1234U}, true));
+        Assert::AreEqual({16U}, notes.GetPreviousNoteAddress({20U}, true));
+        Assert::AreEqual({12U}, notes.GetPreviousNoteAddress({16U}, true));
+        Assert::AreEqual({8U}, notes.GetPreviousNoteAddress({12U}, true));
+        Assert::AreEqual({4U}, notes.GetPreviousNoteAddress({8U}, true));
+        Assert::AreEqual({0xFFFFFFFFU}, notes.GetPreviousNoteAddress({4U}, true));
+    }
 };
 
 } // namespace tests

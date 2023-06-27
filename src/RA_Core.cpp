@@ -65,7 +65,7 @@ static inline constexpr const char* __gsl_filename(const char* const str)
 void __gsl_contract_handler(const char* const file, unsigned int line)
 {
     static char buffer[128];
-    snprintf(buffer, sizeof(buffer), "Assertion failure at %s: %d", __gsl_filename(file), line);
+    snprintf(buffer, sizeof(buffer), "Assertion failure at %s: %u", __gsl_filename(file), line);
 
     if (ra::services::ServiceLocator::Exists<ra::services::ILogger>())
     {

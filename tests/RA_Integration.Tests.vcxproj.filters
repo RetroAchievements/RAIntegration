@@ -459,6 +459,9 @@
     <ClCompile Include="..\src\ui\viewmodels\ProgressTrackerViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="data\models\CapturedTriggerHits_Tests.cpp">
+      <Filter>Tests\Data\Models</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

@@ -39,7 +39,7 @@ bool ProgressTrackerViewModel::UpdateRenderImage(double fElapsed)
 
     bool bUpdated = false;
 
-    if (m_pSurface == nullptr)
+    if (m_pSurface == nullptr || m_bRegenerate)
     {
         const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
         const auto nShadowOffset = pTheme.ShadowOffset();
@@ -79,6 +79,7 @@ bool ProgressTrackerViewModel::UpdateRenderImage(double fElapsed)
         pSurface->WriteText(nX + 2, nY + 2, nFontSubtitle, pOverlayTheme.ColorTextShadow(), m_sProgress);
         pSurface->WriteText(nX, nY, nFontSubtitle, pOverlayTheme.ColorDetail(), m_sProgress);
 
+        m_bRegenerate = false;
         m_pSurface = std::move(pSurface);
 
         bUpdated = true;

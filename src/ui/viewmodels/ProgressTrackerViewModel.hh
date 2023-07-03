@@ -19,7 +19,7 @@ public:
     void SetImage(ra::ui::ImageType nImageType, const std::string& sImageName)
     {
         m_hImage.ChangeReference(nImageType, sImageName);
-        m_pSurface.reset();
+        m_bRegenerate = true;
         SetRenderLocationY(-1); // force redraw when position calculated
     }
 
@@ -54,6 +54,7 @@ public:
 private:
     ra::ui::ImageReference m_hImage;
     std::wstring m_sProgress;
+    bool m_bRegenerate = false;
 
     double m_fAnimationProgress = TOTAL_ANIMATION_TIME;
 

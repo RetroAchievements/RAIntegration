@@ -326,6 +326,9 @@ void MemoryInspectorViewModel::PublishCurrentAddressNote()
     vmAssetUpload.QueueCodeNote(*pCodeNotes, nAddress);
     vmAssetUpload.ShowModal(*this);
 
+    if (vmAssetUpload.HasFailures())
+        vmAssetUpload.ShowResults();
+
     if (pCodeNotes->IsNoteModified(nAddress))
     {
         // if canceled, re-enable buttons

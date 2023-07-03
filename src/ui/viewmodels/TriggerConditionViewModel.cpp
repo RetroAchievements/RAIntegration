@@ -482,6 +482,22 @@ void TriggerConditionViewModel::OnValueChanged(const IntModelProperty::ChangeArg
         pTriggerViewModel->ResumeConditionMonitor();
 }
 
+static constexpr bool IsModifyingOperator(TriggerOperatorType nType)
+{
+    switch (nType)
+    {
+        case TriggerOperatorType::None:
+        case TriggerOperatorType::Multiply:
+        case TriggerOperatorType::Divide:
+        case TriggerOperatorType::BitwiseAnd:
+        case TriggerOperatorType::BitwiseXor:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 void TriggerConditionViewModel::UpdateHasHits()
 {
     const auto nType = GetType();
@@ -494,7 +510,7 @@ void TriggerConditionViewModel::UpdateHasHits()
     else if (nType == TriggerConditionType::Measured && IsForValue())
     {
         // if Measured value is generated from hit count, show the hit count, but don't allow the target to be edited
-        SetValue(HasHitsProperty, GetOperator() != TriggerOperatorType::None);
+        SetValue(HasHitsProperty, !IsModifyingOperator(GetOperator()));
         SetValue(CanEditHitsProperty, false);
         SetValue(RequiredHitsProperty, 0);
     }
@@ -808,28 +824,21 @@ bool TriggerConditionViewModel::IsComparisonVisible(const ViewModelBase& vmItem,
     if (vmCondition == nullptr)
         return false;
 
-    const auto nComparison = ra::itoe<TriggerOperatorType>(nValue);
-    switch (nComparison)
-    {
-        case TriggerOperatorType::None:
-            if (vmCondition->IsModifying())
-                return true;
+    // comparison operators should only be visible for non-modifying operations
+    const auto nOperator = ra::itoe<TriggerOperatorType>(nValue);
+    if (!IsModifyingOperator(nOperator))
+        return !vmCondition->IsModifying();
 
-            // "None" can only be selected for the Measured flag when editing a value
-            if (vmCondition->GetType() == TriggerConditionType::Measured && vmCondition->IsForValue())
-                return true;
+    // modifying operators should be visible for modifying operations
+    if (vmCondition->IsModifying())
+        return true;
 
-            return false;
+    // modifying operators can be selected for the Measured flag when editing a value
+    if (vmCondition->GetType() == TriggerConditionType::Measured && vmCondition->IsForValue())
+        return true;
 
-        case TriggerOperatorType::Multiply:
-        case TriggerOperatorType::Divide:
-        case TriggerOperatorType::BitwiseAnd:
-        case TriggerOperatorType::BitwiseXor:
-            return vmCondition->IsModifying();
-
-        default:
-            return !vmCondition->IsModifying();
-    }
+    // modifying operator is not valid at this time
+    return false;
 }
 
 void TriggerConditionViewModel::UpdateRowColor(const rc_condition_t* pCondition)

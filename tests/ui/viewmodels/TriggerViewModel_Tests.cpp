@@ -1419,6 +1419,28 @@ public:
         Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(5)); // non hit modifier
         Assert::AreEqual(sTooltip, vmTrigger.GetHitChainTooltip(6)); // end of hits-chain
     }
+
+    TEST_METHOD(TestAltHitChain)
+    {
+        TriggerViewModelHarness vmTrigger;
+        Parse(vmTrigger, "1=1SC:0xH1234=1_0=1.10.SC:0xH2345=1_0=1.10.");
+        Assert::AreEqual({3U}, vmTrigger.Groups().Count());
+
+        vmTrigger.Groups().GetItemAt(1)->m_pConditionSet->conditions->current_hits = 2;
+        vmTrigger.Groups().GetItemAt(2)->m_pConditionSet->conditions->current_hits = 3;
+
+        vmTrigger.SetSelectedGroupIndex(2);
+        Assert::AreEqual(3U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetCurrentHits());
+        Assert::AreEqual(3U, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits());
+
+        vmTrigger.SetSelectedGroupIndex(1);
+        Assert::AreEqual(2U, vmTrigger.Conditions().GetItemAt(0)->GetCurrentHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(0)->GetTotalHits());
+        Assert::AreEqual(0U, vmTrigger.Conditions().GetItemAt(1)->GetCurrentHits());
+        Assert::AreEqual(2U, vmTrigger.Conditions().GetItemAt(1)->GetTotalHits());
+    }
 };
 
 } // namespace tests

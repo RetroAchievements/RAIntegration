@@ -144,6 +144,8 @@
 #define IDC_RA_CAPTURE_4                1239
 #define IDC_RA_MEMVIEWER_4              1240
 #define IDC_RA_DISPLAY_PROGRESS_INDICATOR 1241
+#define IDC_RA_MEMVIEW_32BITBE          1242
+
 
 #define IDD_RA_MEMORY                   1501
 #define IDD_RA_ACHIEVEMENTS             1502
@@ -211,7 +213,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        122
 #define _APS_NEXT_COMMAND_VALUE         40001
-#define _APS_NEXT_CONTROL_VALUE         1242
+#define _APS_NEXT_CONTROL_VALUE         1243
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

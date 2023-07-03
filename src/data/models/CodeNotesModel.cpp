@@ -1006,6 +1006,7 @@ bool CodeNotesModel::Deserialize(ra::Tokenizer& pTokenizer)
     if (!ReadQuoted(pTokenizer, sNote))
         return false;
 
+    ra::NormalizeLineEndings(sNote);
     SetCodeNote(nAddress, sNote);
     return true;
 }

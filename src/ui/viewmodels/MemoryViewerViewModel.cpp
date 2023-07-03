@@ -205,11 +205,13 @@ void MemoryViewerViewModel::UpdateColors()
     if (pCodeNotes != nullptr)
     {
         const auto nStopAddress = nFirstAddress + nVisibleLines * 16;
-        pCodeNotes->EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring&) {
-            if (nAddress + nBytes <= nFirstAddress)
+        pCodeNotes->EnumerateCodeNotes([nFirstAddress, nStopAddress, this](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
+            if (nAddress + nBytes <= nFirstAddress) // not to viewing window yet
                 return true;
-            if (nAddress >= nStopAddress)
+            if (nAddress >= nStopAddress) // past viewing window
                 return false;
+            if (sNote.empty()) // ignore deleted notes
+                return true;
 
             uint8_t* pOffset = m_pColor;
             Expects(pOffset != nullptr);

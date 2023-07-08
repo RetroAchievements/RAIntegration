@@ -897,19 +897,31 @@ public:
         Assert::IsTrue(notes.CanPublishCurrentAddressNote());
         Assert::IsTrue(notes.CanRevertCurrentAddressNote());
 
-        bool bWindowSeen = false;
-        notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        int nWindowsSeen = 0;
+        notes.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&nWindowsSeen, &notes](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Publish 2 notes?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"The selected modified notes will be uploaded to the server."), vmMessageBox.GetMessage());
-            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+            if (nWindowsSeen == 0)
+            {
+                Assert::AreEqual(std::wstring(L"Publish 2 notes?"), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"The selected modified notes will be uploaded to the server."), vmMessageBox.GetMessage());
+                Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
 
-            bWindowSeen = true;
-            return ra::ui::DialogResult::Yes;
+                nWindowsSeen++;
+                return ra::ui::DialogResult::Yes;
+            }
+            else
+            {
+                Assert::AreEqual(std::wstring(L"Publish succeeded."), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"2 items successfully uploaded."), vmMessageBox.GetMessage());
+                Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::OK, vmMessageBox.GetButtons());
+
+                nWindowsSeen++;
+                return ra::ui::DialogResult::OK;
+            }
         });
 
         notes.PublishSelected();
-        Assert::IsTrue(bWindowSeen);
+        Assert::AreEqual(nWindowsSeen, 2);
 
         AssertRow(notes, 4, 0x0016, L"0x0016", L"Changed 20");
         AssertRow(notes, 13, 0x0040, L"0x0040", L"Changed 64");

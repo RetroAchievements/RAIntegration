@@ -368,6 +368,17 @@ void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNot
     }
 }
 
+bool AssetUploadViewModel::HasFailures() const
+{
+    for (const auto& pItem : m_vUploadQueue)
+    {
+        if (pItem.nState == UploadState::Failed)
+            return true;
+    }
+
+    return false;
+}
+
 void AssetUploadViewModel::ShowResults() const
 {
     int nSuccessful = 0;

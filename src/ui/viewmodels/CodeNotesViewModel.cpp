@@ -376,6 +376,8 @@ void CodeNotesViewModel::PublishSelected()
         vmAssetUpload.QueueCodeNote(*pCodeNotes, nAddress);
 
     vmAssetUpload.ShowModal(*this);
+    if (vNotesToPublish.size() > 1 || vmAssetUpload.HasFailures())
+        vmAssetUpload.ShowResults();
 
     std::vector<ra::data::models::AssetModelBase*> vAssets;
     vAssets.push_back(pCodeNotes);

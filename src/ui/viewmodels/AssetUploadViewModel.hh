@@ -23,6 +23,8 @@ public:
     void QueueCodeNotes(ra::data::models::CodeNotesModel& pLeaderboard);
     void QueueCodeNote(ra::data::models::CodeNotesModel& pCodeNotes, ra::ByteAddress nAddress);
 
+    bool HasFailures() const;
+
     void ShowResults() const;
 
 protected:

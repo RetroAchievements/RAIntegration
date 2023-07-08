@@ -110,6 +110,34 @@ private:
             Assert::AreEqual(sNote, GetCurrentAddressNote());
         }
 
+        void PreparePublishFailure(ra::ByteAddress nAddress, std::wstring sNote)
+        {
+            mockServer.HandleRequest<ra::api::UpdateCodeNote>(
+                [this](const ra::api::UpdateCodeNote::Request& pRequest, ra::api::UpdateCodeNote::Response& pResponse) {
+                    m_nPublishedAddress = pRequest.Address;
+
+                    pResponse.Result = ra::api::ApiResult::Failed;
+                    return true;
+                });
+
+            mockServer.HandleRequest<ra::api::DeleteCodeNote>(
+                [this](const ra::api::DeleteCodeNote::Request& pRequest, ra::api::DeleteCodeNote::Response& pResponse) {
+                    m_nPublishedAddress = pRequest.Address;
+
+                    pResponse.Result = ra::api::ApiResult::Failed;
+                    return true;
+                });
+
+            mockThreadPool.SetSynchronous(true);
+
+            SetValue(CanModifyNotesProperty, true);
+
+            mockGameContext.Assets().FindCodeNotes()->SetCodeNote(nAddress, sNote);
+            SetCurrentAddress(nAddress);
+
+            Assert::AreEqual(sNote, GetCurrentAddressNote());
+        }
+
         ra::ByteAddress GetPublishedAddress() const noexcept { return m_nPublishedAddress; }
 
     private:
@@ -403,9 +431,17 @@ public:
         MemoryInspectorViewModelHarness inspector;
         inspector.PreparePublish(0x12, L"Test");
 
+        bool bWindowSeen = false;
+        inspector.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel&)
+        {
+            bWindowSeen = true;
+            return ra::ui::DialogResult::No;
+        });
+
         Assert::IsTrue(inspector.CanPublishCurrentAddressNote());
         inspector.PublishCurrentAddressNote();
 
+        Assert::IsFalse(bWindowSeen);
         Assert::AreEqual(0x12U, inspector.GetPublishedAddress());
         Assert::IsFalse(inspector.CanPublishCurrentAddressNote());
         Assert::IsFalse(inspector.CanRevertCurrentAddressNote());
@@ -506,6 +542,29 @@ public:
         Assert::AreEqual(std::wstring(L"Test2"), inspector.GetCurrentAddressNote());
         Assert::AreEqual(std::wstring(L"Test2"), *inspector.mockGameContext.Assets().FindCodeNotes()->FindCodeNote(0x12));
         Assert::IsTrue(inspector.mockGameContext.Assets().FindCodeNotes()->IsNoteModified(0x12));
+    }
+
+    TEST_METHOD(TestPublishCurrentAddressNoteFailed)
+    {
+        MemoryInspectorViewModelHarness inspector;
+        inspector.PreparePublishFailure(0x12, L"Test");
+
+        bool bWindowSeen = false;
+        inspector.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&bWindowSeen](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+            Assert::AreEqual(std::wstring(L"Publish failed."), vmMessageBox.GetHeader());
+            Assert::AreEqual(std::wstring(L"0 items successfully uploaded.\n\n1 items failed:\n* Code Notes: "), vmMessageBox.GetMessage());
+            Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::OK, vmMessageBox.GetButtons());
+
+            bWindowSeen = true;
+            return ra::ui::DialogResult::OK;
+        });
+
+        Assert::IsTrue(inspector.CanPublishCurrentAddressNote());
+        inspector.PublishCurrentAddressNote();
+
+        Assert::IsTrue(bWindowSeen);
+        Assert::IsTrue(inspector.CanPublishCurrentAddressNote());
+        Assert::IsTrue(inspector.CanRevertCurrentAddressNote());
     }
 
     TEST_METHOD(TestActiveGameChanged)

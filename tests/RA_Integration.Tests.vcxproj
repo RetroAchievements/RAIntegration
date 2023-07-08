@@ -375,6 +375,7 @@
     <ClCompile Include="data\ModelProperty_Tests.cpp" />
     <ClCompile Include="data\models\AchievementModel_Tests.cpp" />
     <ClCompile Include="data\models\AssetModelBase_Tests.cpp" />
+    <ClCompile Include="data\models\CapturedTriggerHits_Tests.cpp" />
     <ClCompile Include="data\models\CodeNotesModel_Tests.cpp" />
     <ClCompile Include="data\models\LeaderboardModel_Tests.cpp" />
     <ClCompile Include="data\models\LocalBadgesModel_Tests.cpp" />

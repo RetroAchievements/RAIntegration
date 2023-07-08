@@ -31,11 +31,23 @@ static void CaptureHitCounts(const rc_trigger_t* pTrigger, std::vector<unsigned>
 
 static void RestoreCondSetHitCounts(rc_condset_t* pCondSet, const std::vector<unsigned>& vCapturedHitCounts, gsl::index& nIndex)
 {
-    rc_condition_t* pCondition = pCondSet->conditions;
-    while (pCondition != nullptr)
+    if (vCapturedHitCounts.empty())
     {
-        pCondition->current_hits = vCapturedHitCounts.at(nIndex++);
-        pCondition = pCondition->next;
+        rc_condition_t* pCondition = pCondSet->conditions;
+        while (pCondition != nullptr)
+        {
+            pCondition->current_hits = 0;
+            pCondition = pCondition->next;
+        }
+    }
+    else
+    {
+        rc_condition_t* pCondition = pCondSet->conditions;
+        while (pCondition != nullptr)
+        {
+            pCondition->current_hits = vCapturedHitCounts.at(nIndex++);
+            pCondition = pCondition->next;
+        }
     }
 }
 
@@ -72,8 +84,8 @@ bool CapturedTriggerHits::Restore(rc_trigger_t* pTrigger, const std::string& sTr
     if (sCapturedHitsMD5 != m_sCapturedHitsMD5)
         return false;
 
-    if (!m_vCapturedHitCounts.empty())
-        RestoreHitCounts(pTrigger, m_vCapturedHitCounts);
+    RestoreHitCounts(pTrigger, m_vCapturedHitCounts);
+    pTrigger->has_hits = !m_vCapturedHitCounts.empty();
 
     return true;
 }
@@ -84,8 +96,8 @@ void CapturedTriggerHits::Capture(const rc_value_t* pValue, const std::string& s
 
     m_sCapturedHitsMD5 = RAGenerateMD5(sValue);
 
-    if (pValue->conditions)
-        CaptureCondSetHitCounts(pValue->conditions, m_vCapturedHitCounts);
+    for (const auto* conditions = pValue->conditions; conditions; conditions = conditions->next)
+        CaptureCondSetHitCounts(conditions, m_vCapturedHitCounts);
 }
 
 bool CapturedTriggerHits::Restore(rc_value_t* pValue, const std::string& sValue) const
@@ -97,11 +109,9 @@ bool CapturedTriggerHits::Restore(rc_value_t* pValue, const std::string& sValue)
     if (sCapturedHitsMD5 != m_sCapturedHitsMD5)
         return false;
 
-    if (!m_vCapturedHitCounts.empty())
-    {
-        gsl::index nIndex = 0;
-        RestoreCondSetHitCounts(pValue->conditions, m_vCapturedHitCounts, nIndex);
-    }
+    gsl::index nIndex = 0;
+    for (auto* conditions = pValue->conditions; conditions; conditions = conditions->next)
+        RestoreCondSetHitCounts(conditions, m_vCapturedHitCounts, nIndex);
 
     return true;
 }

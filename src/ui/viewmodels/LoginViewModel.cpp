@@ -11,6 +11,7 @@
 #include "data\context\UserContext.hh"
 
 #include "services\IConfiguration.hh"
+#include "services\RcheevosClient.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
@@ -48,41 +49,54 @@ bool LoginViewModel::Login() const
         return false;
     }
 
-    ra::api::Login::Request request;
-    request.Username = ra::Narrow(GetUsername());
-    request.Password = ra::Narrow(GetPassword());
+    std::mutex wait_mutex;
+    m_bWaiting = true;
 
-    const auto response = request.Call();
+    auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+    pClient.BeginLoginWithPassword(ra::Narrow(GetUsername()), ra::Narrow(GetPassword()),
+        [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata)
+        {
+            const LoginViewModel* vmLogin = reinterpret_cast<const LoginViewModel*>(pUserdata);
 
-    if (!response.Succeeded())
+            if (nResult != RC_OK)
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to login",
+                                                                          ra::Widen(sErrorMessage));
+            }
+            else
+            {
+                auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
+
+                const bool bRememberLogin = vmLogin->IsPasswordRemembered();
+                auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
+                pConfiguration.SetUsername(pUserContext.GetUsername());
+                pConfiguration.SetApiToken(bRememberLogin ? pUserContext.GetApiToken() : "");
+                pConfiguration.Save();
+
+                // load the session information
+                auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
+                pSessionTracker.Initialize(pUserContext.GetUsername());
+
+                ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(std::wstring(L"Successfully logged in as ") +
+                                                                         ra::Widen(pUserContext.GetDisplayName()));
+
+                ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
+                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator.UpdateWindowTitle();
+            }
+
+            vmLogin->m_pCondVar.notify_all();
+            vmLogin->m_bWaiting = false;
+        },
+        reinterpret_cast<void*>(const_cast<LoginViewModel*>(this)));
+
+    if (m_bWaiting)
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to login",
-            ra::Widen(response.ErrorMessage));
-        return false;
+        std::unique_lock<std::mutex> lock(wait_mutex);
+        m_pCondVar.wait(lock);
     }
 
-    const bool bRememberLogin = IsPasswordRemembered();
-    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-    pConfiguration.SetUsername(response.Username);
-    pConfiguration.SetApiToken(bRememberLogin ? response.ApiToken : "");
-    pConfiguration.Save();
-
-    // initialize the user context
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-    pUserContext.Initialize(response.Username, response.DisplayName, response.ApiToken);
-    pUserContext.SetScore(response.Score);
-
-    // load the session information
-    auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
-    pSessionTracker.Initialize(response.Username);
-
-    ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(
-        std::wstring(L"Successfully logged in as ") + ra::Widen(response.Username));
-
-    ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
-    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator.UpdateWindowTitle();
-
-    return true;
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    return pUserContext.IsLoggedIn();
 }
 
 } // namespace viewmodels

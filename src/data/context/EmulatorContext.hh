@@ -220,7 +220,7 @@ public:
     /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
-    void ReadMemory(ra::ByteAddress nAddress, _Out_writes_(nCount) uint8_t pBuffer[], size_t nCount) const;
+    uint32_t ReadMemory(ra::ByteAddress nAddress, _Out_writes_(nCount) uint8_t pBuffer[], size_t nCount) const;
 
     /// <summary>
     /// Writes memory to the emulator.

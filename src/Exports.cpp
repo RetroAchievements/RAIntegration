@@ -24,6 +24,7 @@
 #include "services\IFileSystem.hh"
 #include "services\Initialization.hh"
 #include "services\PerformanceCounter.hh"
+#include "services\RcheevosClient.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
@@ -267,33 +268,27 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
     ra::ui::viewmodels::IntegrationMenuViewModel::ActivateMenuItem(gsl::narrow_cast<int>(nID));
 }
 
-static void HandleLoginResponse(const ra::api::Login::Response& response)
+static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_client_t* pClient, void*)
 {
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-    if (pUserContext.IsLoginDisabled())
-        return;
-
-    if (response.Succeeded())
+    if (nResult == RC_OK)
     {
-        // initialize the user context
-        pUserContext.Initialize(response.Username, response.DisplayName, response.ApiToken);
-        pUserContext.SetScore(response.Score);
+        const auto* pUser = rc_client_get_user_info(pClient);
 
         // load the session information
         auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
-        pSessionTracker.Initialize(response.Username);
+        pSessionTracker.Initialize(pUser->username);
 
         // show the welcome message
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\login.wav");
 
         std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
         vmMessage->SetTitle(ra::StringPrintf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
-            response.DisplayName.c_str()));
-        vmMessage->SetDescription((response.NumUnreadMessages == 1)
+                                             pUser->display_name));
+        vmMessage->SetDescription((pUser->num_unread_messages == 1)
             ? L"You have 1 new message"
-            : ra::StringPrintf(L"You have %u new messages", response.NumUnreadMessages));
-        vmMessage->SetDetail(ra::StringPrintf(L"%u points", response.Score));
-        vmMessage->SetImage(ra::ui::ImageType::UserPic, response.Username);
+            : ra::StringPrintf(L"You have %u new messages", pUser->num_unread_messages));
+        vmMessage->SetDetail(ra::StringPrintf(L"%u points", pUser->score));
+        vmMessage->SetImage(ra::ui::ImageType::UserPic, pUser->username);
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmMessage);
 
         // notify the client to update the RetroAchievements menu
@@ -302,9 +297,9 @@ static void HandleLoginResponse(const ra::api::Login::Response& response)
         // update the client title-bar to include the user name
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator.UpdateWindowTitle();
     }
-    else if (!response.ErrorMessage.empty())
+    else if (sErrorMessage && *sErrorMessage)
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", ra::Widen(response.ErrorMessage));
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", ra::Widen(sErrorMessage));
     }
     else
     {
@@ -327,23 +322,19 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
     }
     else
     {
-        ra::api::Login::Request request;
-        request.Username = pConfiguration.GetUsername();
-        request.ApiToken = pConfiguration.GetApiToken();
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
 
         if (bBlocking)
         {
-            ra::api::Login::Response response = request.Call();
-
-            // if we're blocking, we can't keep retrying on network failure, but we can retry at least once
-            if (response.Result == ra::api::ApiResult::Incomplete)
-                response = request.Call();
-
-            HandleLoginResponse(response);
+            pClient.SetSynchronous(true);
+            pClient.BeginLoginWithToken(pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
+                                        HandleLoginResponse, nullptr);
+            pClient.SetSynchronous(false);
         }
         else
         {
-            request.CallAsyncWithRetry(HandleLoginResponse);
+            pClient.BeginLoginWithToken(pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
+                                        HandleLoginResponse, nullptr);
         }
     }
 }

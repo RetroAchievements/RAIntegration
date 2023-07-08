@@ -727,9 +727,10 @@ uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
 }
 
 _Use_decl_annotations_
-void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
+uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
 {
     const ra::ByteAddress nOriginalAddress = nAddress;
+    uint32_t nBytesRead = 0;
     Expects(pBuffer != nullptr);
 
     for (const auto& pBlock : m_vMemoryBlocks)
@@ -751,12 +752,14 @@ void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], si
                 memset(pBuffer + nRead, 0, nToRead - nRead);
 
             pBuffer += nToRead;
+            nBytesRead += gsl::narrow_cast<uint32_t>(nRead);
         }
         else if (!pBlock.read)
         {
             ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().InvalidateAddress(nOriginalAddress);
             memset(pBuffer, 0, nToRead);
             pBuffer += nToRead;
+            nBytesRead += gsl::narrow_cast<uint32_t>(nToRead);
         }
         else
         {
@@ -784,16 +787,20 @@ void EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], si
                 case 1: *pBuffer++ = pBlock.read(nAddress++); _FALLTHROUGH;
                 default: break;
             }
+
+            nBytesRead += gsl::narrow_cast<uint32_t>(nToRead);
         }
 
         if (nCount == 0)
-            return;
+            return nBytesRead;
 
         nAddress = 0;
     }
 
     if (nCount > 0)
         memset(pBuffer, 0, nCount);
+
+    return nBytesRead;
 }
 
 uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, MemSize nSize) const

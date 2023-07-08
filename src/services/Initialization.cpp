@@ -12,6 +12,7 @@
 #include "services\FrameEventQueue.hh"
 #include "services\GameIdentifier.hh"
 #include "services\PerformanceCounter.hh"
+#include "services\RcheevosClient.hh"
 #include "services\ServiceLocator.hh"
 #include "services\impl\Clock.hh"
 #include "services\impl\FileLocalStorage.hh"
@@ -136,6 +137,9 @@ void Initialization::RegisterServices(EmulatorID nEmulatorId, const char* sClien
     auto pPerformanceCounter = std::make_unique<ra::services::PerformanceCounter>();
     ra::services::ServiceLocator::Provide<ra::services::PerformanceCounter>(std::move(pPerformanceCounter));
 #endif
+
+    auto pRcheevosClient = std::make_unique<ra::services::RcheevosClient>();
+    ra::services::ServiceLocator::Provide<ra::services::RcheevosClient>(std::move(pRcheevosClient));
 
     auto pUserContext = std::make_unique<ra::data::context::UserContext>();
     ra::services::ServiceLocator::Provide<ra::data::context::UserContext>(std::move(pUserContext));

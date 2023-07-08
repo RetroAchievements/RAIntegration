@@ -392,6 +392,13 @@ public:
         Assert::IsTrue(vmCondition.HasHits());
         Assert::IsFalse(vmCondition.CanEditHits());
         Assert::AreEqual(0U, vmCondition.GetRequiredHits());
+
+        vmCondition.SetOperator(TriggerOperatorType::Multiply);
+        Assert::AreEqual(TriggerConditionType::Measured, vmCondition.GetType());
+        Assert::AreEqual(TriggerOperatorType::Multiply, vmCondition.GetOperator());
+        Assert::IsFalse(vmCondition.HasHits());
+        Assert::IsFalse(vmCondition.CanEditHits());
+        Assert::AreEqual(0U, vmCondition.GetRequiredHits());
     }
 
     TEST_METHOD(TestSerializeHasHits)
@@ -1094,6 +1101,7 @@ public:
         Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Multiply)));
         Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
         Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
+        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseXor)));
 
         TriggerViewModel vmTrigger;
         vmTrigger.SetIsValue(true);
@@ -1107,9 +1115,10 @@ public:
         Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThan)));
         Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::GreaterThanOrEqual)));
         Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::None)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Multiply)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
-        Assert::IsFalse(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Multiply)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::Divide)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseAnd)));
+        Assert::IsTrue(TriggerConditionViewModel::IsComparisonVisible(condition, ra::etoi(TriggerOperatorType::BitwiseXor)));
     }
 
     TEST_METHOD(TestFormatValueNumber)

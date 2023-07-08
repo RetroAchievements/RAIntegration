@@ -163,6 +163,7 @@ private:
     void InitializeGroups(const rc_trigger_t& pTrigger);
     void UpdateGroups(const rc_trigger_t& pTrigger);
     void UpdateConditions(const GroupViewModel* pGroup);
+    void UpdateTotalHits();
 
     void DeselectAllConditions();
     void UpdateIndicesAndEnsureSelectionVisible();

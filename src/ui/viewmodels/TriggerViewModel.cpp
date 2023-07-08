@@ -865,6 +865,9 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
                 m_bHasHitChain |= (pCondition->type == RC_CONDITION_ADD_HITS || pCondition->type == RC_CONDITION_SUB_HITS);
             }
         }
+
+        if (m_bHasHitChain)
+            UpdateTotalHits();
     }
 
     for (gsl::index nScan = m_vConditions.Count() - 1; nScan >= nIndex; --nScan)
@@ -872,6 +875,47 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
 
     m_vConditions.EndUpdate();
     m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
+}
+
+void TriggerViewModel::UpdateTotalHits()
+{
+    unsigned int nHits = 0;
+    bool bIsHitsChain = false;
+
+    for (size_t nIndex = 0; nIndex < m_vConditions.Count(); ++nIndex)
+    {
+        auto* vmCondition = m_vConditions.GetItemAt(nIndex);
+        switch (vmCondition->GetType())
+        {
+            case ra::ui::viewmodels::TriggerConditionType::AddHits:
+                bIsHitsChain = true;
+                nHits += vmCondition->GetCurrentHits();
+                break;
+
+            case ra::ui::viewmodels::TriggerConditionType::SubHits:
+                bIsHitsChain = true;
+                nHits -= vmCondition->GetCurrentHits();
+                break;
+
+            case ra::ui::viewmodels::TriggerConditionType::AddAddress:
+            case ra::ui::viewmodels::TriggerConditionType::AddSource:
+            case ra::ui::viewmodels::TriggerConditionType::SubSource:
+            case ra::ui::viewmodels::TriggerConditionType::AndNext:
+            case ra::ui::viewmodels::TriggerConditionType::OrNext:
+            case ra::ui::viewmodels::TriggerConditionType::ResetNextIf:
+                break;
+
+            default:
+                if (bIsHitsChain)
+                {
+                    nHits += vmCondition->GetCurrentHits();
+                    vmCondition->SetTotalHits(nHits);
+                    bIsHitsChain = false;
+                }
+                nHits = 0;
+                break;
+        }
+    }
 }
 
 void TriggerViewModel::AddGroup()
@@ -952,9 +996,6 @@ void TriggerViewModel::DoFrame()
         m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
         m_vConditions.BeginUpdate();
 
-        unsigned int nHits = 0;
-        bool bIsHitsChain = false;
-
         gsl::index nConditionIndex = 0;
         rc_condition_t* pCondition = pGroup->m_pConditionSet->conditions;
         for (; pCondition != nullptr; pCondition = pCondition->next)
@@ -968,41 +1009,10 @@ void TriggerViewModel::DoFrame()
             }
 
             vmCondition->SetCurrentHits(pCondition->current_hits);
-
-            if (m_bHasHitChain)
-            {
-                switch (vmCondition->GetType())
-                {
-                    case ra::ui::viewmodels::TriggerConditionType::AddHits:
-                        bIsHitsChain = true;
-                        nHits += vmCondition->GetCurrentHits();
-                        break;
-
-                    case ra::ui::viewmodels::TriggerConditionType::SubHits:
-                        bIsHitsChain = true;
-                        nHits -= vmCondition->GetCurrentHits();
-                        break;
-
-                    case ra::ui::viewmodels::TriggerConditionType::AddAddress:
-                    case ra::ui::viewmodels::TriggerConditionType::AddSource:
-                    case ra::ui::viewmodels::TriggerConditionType::SubSource:
-                    case ra::ui::viewmodels::TriggerConditionType::AndNext:
-                    case ra::ui::viewmodels::TriggerConditionType::OrNext:
-                    case ra::ui::viewmodels::TriggerConditionType::ResetNextIf:
-                        break;
-
-                    default:
-                        if (bIsHitsChain)
-                        {
-                            nHits += vmCondition->GetCurrentHits();
-                            vmCondition->SetTotalHits(nHits);
-                            bIsHitsChain = false;
-                        }
-                        nHits = 0;
-                        break;
-                }
-            }
         }
+
+        if (m_bHasHitChain)
+            UpdateTotalHits();
 
         m_vConditions.EndUpdate();
         m_vConditions.AddNotifyTarget(m_pConditionsMonitor);

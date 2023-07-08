@@ -1106,6 +1106,7 @@ void MemoryViewerViewModel::RenderMemory()
     if (nFirstAddress + nVisibleLines * 16 > m_nTotalMemorySize)
         nVisibleLines = (m_nTotalMemorySize - nFirstAddress) / 16;
 
+    const bool bBigEndian = (GetSize() == MemSize::ThirtyTwoBitBigEndian);
     const int nWordSpacing = NibblesPerWord() + 1;
     const int nBytesPerWord = nWordSpacing / 2;
     for (int i = 0; i < nVisibleLines * 16; ++i)
@@ -1124,7 +1125,8 @@ void MemoryViewerViewModel::RenderMemory()
         int nX = (((i & 0x0F) / nBytesPerWord) * nWordSpacing + ADDRESS_COLUMN_WIDTH) * s_szChar.Width;
         if (nBytesPerWord > 1)
         {
-            const int nByteOffset = ((nBytesPerWord - 1) - (i % nBytesPerWord));
+            const int nByteOffset = (bBigEndian) ?
+                (i % nBytesPerWord) : ((nBytesPerWord - 1) - (i % nBytesPerWord));
             nX += (nByteOffset * 2) * s_szChar.Width;
 
             if (nColorUpper == TextColor::Selected && m_bHasFocus && !m_bReadOnly)

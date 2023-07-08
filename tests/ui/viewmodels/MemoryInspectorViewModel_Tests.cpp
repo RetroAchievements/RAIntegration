@@ -326,6 +326,9 @@ public:
         inspector.Viewer().SetSize(MemSize::ThirtyTwoBit);
         Assert::IsFalse(inspector.CurrentBitsVisible());
 
+        inspector.Viewer().SetSize(MemSize::ThirtyTwoBitBigEndian);
+        Assert::IsFalse(inspector.CurrentBitsVisible());
+
         inspector.Viewer().SetSize(MemSize::EightBit);
         Assert::IsTrue(inspector.CurrentBitsVisible());
     }
@@ -647,6 +650,18 @@ public:
         Assert::AreEqual(MemSize::EightBit, pBookmarks.GetItemAt(0)->GetSize());
         Assert::AreEqual({ 5U }, pBookmarks.GetItemAt(1)->GetAddress());
         Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.GetItemAt(1)->GetSize());
+
+        inspector.Viewer().SetSize(MemSize::ThirtyTwoBitBigEndian);
+        inspector.SetCurrentAddress(12U);
+        inspector.BookmarkCurrentAddress();
+
+        Assert::AreEqual({3U}, pBookmarks.Count());
+        Assert::AreEqual({2U}, pBookmarks.GetItemAt(0)->GetAddress());
+        Assert::AreEqual(MemSize::EightBit, pBookmarks.GetItemAt(0)->GetSize());
+        Assert::AreEqual({5U}, pBookmarks.GetItemAt(1)->GetAddress());
+        Assert::AreEqual(MemSize::ThirtyTwoBit, pBookmarks.GetItemAt(1)->GetSize());
+        Assert::AreEqual({12U}, pBookmarks.GetItemAt(2)->GetAddress());
+        Assert::AreEqual(MemSize::ThirtyTwoBitBigEndian, pBookmarks.GetItemAt(2)->GetSize());
     }
 };
 

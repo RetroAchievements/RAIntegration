@@ -78,6 +78,7 @@ private:
     bindings::RadioButtonBinding m_bindViewer8Bit;
     bindings::RadioButtonBinding m_bindViewer16Bit;
     bindings::RadioButtonBinding m_bindViewer32Bit;
+    bindings::RadioButtonBinding m_bindViewer32BitBE;
     bindings::MemoryViewerControlBinding m_bindViewer;
 };
 

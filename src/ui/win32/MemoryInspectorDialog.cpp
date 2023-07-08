@@ -144,6 +144,7 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
       m_bindViewer8Bit(vmMemoryInspector.Viewer()),
       m_bindViewer16Bit(vmMemoryInspector.Viewer()),
       m_bindViewer32Bit(vmMemoryInspector.Viewer()),
+      m_bindViewer32BitBE(vmMemoryInspector.Viewer()),
       m_bindViewer(vmMemoryInspector.Viewer())
 {
     m_bindWindow.SetInitialPosition(RelativePosition::After, RelativePosition::Near, "Memory Inspector");
@@ -241,6 +242,7 @@ MemoryInspectorDialog::MemoryInspectorDialog(MemoryInspectorViewModel& vmMemoryI
     m_bindViewer8Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(MemSize::EightBit));
     m_bindViewer16Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(MemSize::SixteenBit));
     m_bindViewer32Bit.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(MemSize::ThirtyTwoBit));
+    m_bindViewer32BitBE.BindCheck(MemoryViewerViewModel::SizeProperty, ra::etoi(MemSize::ThirtyTwoBitBigEndian));
     m_bindWindow.BindLabel(IDC_RA_MEMBITS, MemoryInspectorViewModel::CurrentAddressBitsProperty);
     m_bindWindow.BindVisible(IDC_RA_MEMBITS_TITLE, MemoryInspectorViewModel::CurrentBitsVisibleProperty);
     m_bindWindow.BindVisible(IDC_RA_MEMBITS, MemoryInspectorViewModel::CurrentBitsVisibleProperty);
@@ -318,6 +320,7 @@ BOOL MemoryInspectorDialog::OnInitDialog()
     m_bindViewer8Bit.SetControl(*this, IDC_RA_MEMVIEW_8BIT);
     m_bindViewer16Bit.SetControl(*this, IDC_RA_MEMVIEW_16BIT);
     m_bindViewer32Bit.SetControl(*this, IDC_RA_MEMVIEW_32BIT);
+    m_bindViewer32BitBE.SetControl(*this, IDC_RA_MEMVIEW_32BITBE);
     m_bindViewer.SetControl(*this, IDC_RA_MEMVIEWER);
 
     SetWindowFont(GetDlgItem(GetHWND(), IDC_RA_MEMBITS), GetStockObject(SYSTEM_FIXED_FONT), TRUE);

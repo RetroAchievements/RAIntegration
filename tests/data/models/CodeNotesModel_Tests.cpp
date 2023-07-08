@@ -1059,7 +1059,7 @@ public:
 
         Assert::IsTrue(notes.Deserialize(pTokenizer));
         Assert::AreEqual(AssetChanges::Unpublished, notes.GetChanges());
-        notes.AssertNote(0x1234, std::wstring(L"16-bit pointer\n+2:\t\"a\"\n+4:\tb\n"));
+        notes.AssertNote(0x1234, std::wstring(L"16-bit pointer\r\n+2:\t\"a\"\r\n+4:\tb\r\n"));
     }
 
     TEST_METHOD(TestDeserializeUnchanged)

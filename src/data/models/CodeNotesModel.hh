@@ -220,11 +220,14 @@ protected:
     std::map<ra::ByteAddress, CodeNote> m_mCodeNotes;
     std::map<ra::ByteAddress, std::pair<std::string, std::wstring>> m_mOriginalCodeNotes;
 
+    std::map<ra::ByteAddress, std::wstring> m_mPendingCodeNotes;
+
     const CodeNote* FindCodeNoteInternal(ra::ByteAddress nAddress) const;
     void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNote& pCodeNote)> callback, bool bIncludeDerived) const;
 
     unsigned int m_nGameId = 0;
     bool m_bHasPointers = false;
+    bool m_bRefreshing = false;
 
     CodeNoteChangedFunction m_fCodeNoteChanged;
 

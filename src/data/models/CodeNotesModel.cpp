@@ -39,6 +39,11 @@ void CodeNotesModel::Refresh(unsigned int nGameId, CodeNoteChangedFunction fCode
     if (callback == nullptr) // unit test workaround to avoid server call
         return;
 
+    {
+        std::unique_lock<std::mutex> lock(m_oMutex);
+        m_bRefreshing = true;
+    }
+
     ra::api::FetchCodeNotes::Request request;
     request.GameId = nGameId;
     request.CallAsync([this, callback](const ra::api::FetchCodeNotes::Response& response)
@@ -66,6 +71,16 @@ void CodeNotesModel::Refresh(unsigned int nGameId, CodeNoteChangedFunction fCode
                 AddCodeNote(pNote.Address, pNote.Author, pNote.Note);
             }
         }
+
+        std::map<ra::ByteAddress, std::wstring> mPendingCodeNotes;
+        {
+            std::unique_lock<std::mutex> lock(m_oMutex);
+            mPendingCodeNotes.swap(m_mPendingCodeNotes);
+            m_bRefreshing = false;
+        }
+
+        for (const auto pNote : mPendingCodeNotes)
+            SetCodeNote(pNote.first, pNote.second);
 
         callback();
     });
@@ -609,6 +624,12 @@ void CodeNotesModel::SetCodeNote(ra::ByteAddress nAddress, const std::wstring& s
     {
         std::unique_lock<std::mutex> lock(m_oMutex);
 
+        if (m_bRefreshing)
+        {
+            m_mPendingCodeNotes[nAddress] = sNote;
+            return;
+        }
+
         const auto pIter = m_mCodeNotes.find(nAddress);
         if (pIter != m_mCodeNotes.end())
         {
@@ -985,6 +1006,7 @@ bool CodeNotesModel::Deserialize(ra::Tokenizer& pTokenizer)
     if (!ReadQuoted(pTokenizer, sNote))
         return false;
 
+    ra::NormalizeLineEndings(sNote);
     SetCodeNote(nAddress, sNote);
     return true;
 }

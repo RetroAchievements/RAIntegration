@@ -445,6 +445,7 @@
     <ClInclude Include="mocks\MockLocalStorage.hh" />
     <ClInclude Include="mocks\MockOverlayManager.hh" />
     <ClInclude Include="mocks\MockOverlayTheme.hh" />
+    <ClInclude Include="mocks\MockRcheevosClient.hh" />
     <ClInclude Include="mocks\MockServer.hh" />
     <ClInclude Include="mocks\MockSessionTracker.hh" />
     <ClInclude Include="mocks\MockSurface.hh" />

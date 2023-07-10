@@ -560,5 +560,8 @@
     <ClInclude Include="..\src\ui\viewmodels\PointerFinderViewModel.hh">
       <Filter>Code</Filter>
     </ClInclude>
+    <ClInclude Include="mocks\MockRcheevosClient.hh">
+      <Filter>Mocks</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

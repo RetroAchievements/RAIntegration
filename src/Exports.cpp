@@ -272,16 +272,17 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
 {
     if (nResult == RC_OK)
     {
-        const auto* pUser = rc_client_get_user_info(pClient);
+        ra::ui::viewmodels::LoginViewModel::PostLoginInitialization();
 
-        // load the session information
-        auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
-        pSessionTracker.Initialize(pUser->username);
-
-        // show the welcome message
+        // play the login sound
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\login.wav");
 
-        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
+        const auto& pSessionTracker = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>();
+        const auto* pUser = rc_client_get_user_info(pClient);
+
+        // show the welcome message
+        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(
+            new ra::ui::viewmodels::PopupMessageViewModel);
         vmMessage->SetTitle(ra::StringPrintf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
                                              pUser->display_name));
         vmMessage->SetDescription((pUser->num_unread_messages == 1)
@@ -290,12 +291,6 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
         vmMessage->SetDetail(ra::StringPrintf(L"%u points", pUser->score));
         vmMessage->SetImage(ra::ui::ImageType::UserPic, pUser->username);
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmMessage);
-
-        // notify the client to update the RetroAchievements menu
-        ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
-
-        // update the client title-bar to include the user name
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator.UpdateWindowTitle();
     }
     else if (sErrorMessage && *sErrorMessage)
     {
@@ -326,10 +321,18 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
 
         if (bBlocking)
         {
-            pClient.SetSynchronous(true);
+            ra::services::RcheevosClient::Synchronizer pSynchronizer;
+
             pClient.BeginLoginWithToken(pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
-                                        HandleLoginResponse, nullptr);
-            pClient.SetSynchronous(false);
+                [](int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata) {
+                    HandleLoginResponse(nResult, sErrorMessage, pClient, nullptr);
+
+                    auto* pSynchronizer = reinterpret_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
+                    pSynchronizer->Notify();
+                },
+                &pSynchronizer);
+
+            pSynchronizer.Wait();
         }
         else
         {

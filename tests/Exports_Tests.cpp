@@ -15,6 +15,7 @@
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
+#include "tests\mocks\MockRcheevosClient.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockSurface.hh"
@@ -40,6 +41,7 @@ using ra::services::mocks::MockAudioSystem;
 using ra::services::mocks::MockClock;
 using ra::services::mocks::MockConfiguration;
 using ra::services::mocks::MockFrameEventQueue;
+using ra::services::mocks::MockRcheevosClient;
 using ra::services::mocks::MockThreadPool;
 using ra::ui::mocks::MockDesktop;
 using ra::ui::mocks::MockOverlayTheme;
@@ -99,6 +101,7 @@ private:
         MockUserContext mockUserContext;
         MockSessionTracker mockSessionTracker;
         MockConfiguration mockConfiguration;
+        MockRcheevosClient mockRcheevosClient;
         MockAudioSystem mockAudioSystem;
         MockServer mockServer;
         MockOverlayManager mockOverlayManager;
@@ -110,7 +113,7 @@ private:
 
 public:
 
-    TEST_METHOD(TestAttemptLoginNewUser)
+    TEST_METHOD(TestAttemptLoginNoUser)
     {
         AttemptLoginHarness harness;
 
@@ -121,12 +124,6 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        harness.mockServer.HandleRequest<api::Login>([](_UNUSED const ra::api::Login::Request&, _UNUSED ra::api::Login::Response&)
-        {
-            Assert::IsFalse(true, L"API called without user info");
-            return false;
-        });
-
         Assert::IsFalse(harness.mockUserContext.IsLoggedIn());
 
         _RA_AttemptLogin(true);
@@ -135,6 +132,8 @@ public:
         Assert::AreEqual(std::string(""), harness.mockUserContext.GetUsername());
         Assert::AreEqual(std::wstring(L""), harness.mockSessionTracker.GetUsername());
         Assert::IsTrue(bLoginDialogShown);
+
+        harness.mockRcheevosClient.AssertNoPendingRequests();
     }
 
     TEST_METHOD(TestAttemptLoginSuccess)
@@ -145,20 +144,10 @@ public:
         harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
         harness.mockEmulatorContext.MockClient("RATests", "0.1.2.0");
 
-        bool bLoggedIn = false;
-        harness.mockServer.HandleRequest<api::Login>([&bLoggedIn](const ra::api::Login::Request& request, ra::api::Login::Response& response)
-        {
-            Assert::AreEqual(std::string("User"), request.Username);
-            Assert::AreEqual(std::string("ApiToken"), request.ApiToken);
-            bLoggedIn = true;
-
-            response.Username = "User";
-            response.DisplayName = "UserDisplay";
-            response.ApiToken = "ApiToken";
-            response.Score = 12345U;
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        harness.mockRcheevosClient.MockResponse("r=login&u=User&t=ApiToken",
+            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
+            "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
 
         harness.mockConfiguration.SetUsername("User");
         harness.mockConfiguration.SetApiToken("ApiToken");
@@ -203,20 +192,10 @@ public:
         harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
         harness.mockEmulatorContext.MockClient("RATests", "0.1.2.0");
 
-        bool bLoggedIn = false;
-        harness.mockServer.HandleRequest<api::Login>([&bLoggedIn](const ra::api::Login::Request& request, ra::api::Login::Response& response)
-        {
-            Assert::AreEqual(std::string("User"), request.Username);
-            Assert::AreEqual(std::string("ApiToken"), request.ApiToken);
-            bLoggedIn = true;
-
-            response.Username = "User";
-            response.DisplayName = "UserDisplay";
-            response.ApiToken = "ApiToken";
-            response.Score = 12345U;
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        harness.mockRcheevosClient.MockResponse("r=login&u=User&t=ApiToken",
+            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
+            "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
 
         harness.mockConfiguration.SetUsername("User");
         harness.mockConfiguration.SetApiToken("ApiToken");
@@ -258,16 +237,10 @@ public:
     {
         AttemptLoginHarness harness;
 
-        harness.mockServer.HandleRequest<api::Login>([](const ra::api::Login::Request&, ra::api::Login::Response& response)
-        {
-            response.Username = "User";
-            response.DisplayName = "UserDisplay";
-            response.ApiToken = "ApiToken";
-            response.NumUnreadMessages = 3;
-            response.Score = 0U;
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        harness.mockRcheevosClient.MockResponse("r=login&u=User&t=ApiToken",
+            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "\"Token\":\"ApiToken\",\"Score\":0,\"SoftcoreScore\":0,"
+            "\"Messages\":3,\"Permissions\":1,\"AccountType\":\"Registered\"}");
 
         harness.mockConfiguration.SetUsername("User");
         harness.mockConfiguration.SetApiToken("ApiToken");
@@ -291,15 +264,10 @@ public:
         bool bWasMenuRebuilt = false;
         harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
 
-        harness.mockServer.HandleRequest<api::Login>([](const ra::api::Login::Request&, ra::api::Login::Response& response)
-        {
-            response.Username = "User";
-            response.DisplayName = "UserDisplay";
-            response.ApiToken = "ApiToken";
-            response.Score = 12345U;
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        harness.mockRcheevosClient.MockResponse("r=login&u=User&t=ApiToken",
+            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
+            "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
 
         harness.mockConfiguration.SetUsername("User");
         harness.mockConfiguration.SetApiToken("ApiToken");
@@ -335,12 +303,8 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        harness.mockServer.HandleRequest<api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
-        {
-            response.ErrorMessage = "Invalid user/password combination. Please try again.";
-            response.Result = ra::api::ApiResult::Error;
-            return true;
-        });
+        harness.mockRcheevosClient.MockResponse("r=login&u=User&t=ApiToken",
+            "{\"Success\":false,\"Error\":\"Invalid user/password combination. Please try again.\"}");
 
         harness.mockConfiguration.SetUsername("User");
         harness.mockConfiguration.SetApiToken("ApiToken");

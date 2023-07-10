@@ -6,6 +6,7 @@
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
+#include "tests\mocks\MockRcheevosClient.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -17,6 +18,8 @@ using ra::data::context::mocks::MockEmulatorContext;
 using ra::data::context::mocks::MockSessionTracker;
 using ra::data::context::mocks::MockUserContext;
 using ra::services::mocks::MockConfiguration;
+using ra::services::mocks::MockRcheevosClient;
+
 using ra::ui::mocks::MockDesktop;
 
 namespace ra {
@@ -33,6 +36,7 @@ private:
         GSL_SUPPRESS_F6 LoginViewModelHarness() : LoginViewModel(L"User") {}
 
         MockConfiguration mockConfiguration;
+        MockRcheevosClient mockRcheevosClient;
         MockDesktop mockDesktop;
         MockServer mockServer;
         MockUserContext mockUserContext;
@@ -55,11 +59,6 @@ public:
     TEST_METHOD(TestLoginNoUsername)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, _UNUSED ra::api::Login::Response&)
-        {
-            Assert::IsFalse(true, L"API called with invalid inputs");
-            return false;
-        });
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Username is required."), vmMessageBox.GetMessage());
@@ -71,16 +70,12 @@ public:
         vmLogin.SetPassword(L"Pa$$w0rd");
         Assert::IsFalse(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
+        vmLogin.mockRcheevosClient.AssertNoPendingRequests();
     }
 
     TEST_METHOD(TestLoginNoPassword)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, _UNUSED ra::api::Login::Response&)
-        {
-            Assert::IsFalse(true, L"API called with invalid inputs");
-            return false;
-        });
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Password is required."), vmMessageBox.GetMessage());
@@ -92,23 +87,20 @@ public:
         vmLogin.SetPassword(L"");
         Assert::IsFalse(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
+        vmLogin.mockRcheevosClient.AssertNoPendingRequests();
     }
 
     TEST_METHOD(TestLoginSuccessful)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
-        {
-            response.Username = "User";
-            response.DisplayName = "UserDisplay";
-            response.ApiToken = "ApiToken";
-            response.Score = 12345;
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmLogin.mockRcheevosClient.MockResponse("r=login&u=user&p=Pa%24%24w0rd",
+            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
+            "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
+
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Successfully logged in as User"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Successfully logged in as UserDisplay"), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
             return DialogResult::OK;
         });
@@ -144,18 +136,14 @@ public:
     TEST_METHOD(TestLoginSuccessfulAppTitle)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
-        {
-            response.Username = "User";
-            response.DisplayName = "UserDisplay";
-            response.ApiToken = "ApiToken";
-            response.Score = 12345;
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmLogin.mockRcheevosClient.MockResponse("r=login&u=user&p=Pa%24%24w0rd",
+            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
+            "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
+
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Successfully logged in as User"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Successfully logged in as UserDisplay"), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
             return DialogResult::OK;
         });
@@ -193,16 +181,13 @@ public:
     TEST_METHOD(TestLoginInvalidPassword)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
-        {
-            response.ErrorMessage = "Invalid User/Password combination. Please try again\n";
-            response.Result = ra::api::ApiResult::Error;
-            return true;
-        });
+        vmLogin.mockRcheevosClient.MockResponse("r=login&u=User&p=Pa%24%24w0rd",
+            "{\"Success\":false,\"Error\":\"Invalid User/Password combination. Please try again\"}");
+
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
             Assert::AreEqual(std::wstring(L"Failed to login"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Invalid User/Password combination. Please try again\n"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Invalid User/Password combination. Please try again"), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Error, vmMessageBox.GetIcon());
             return DialogResult::OK;
         });
@@ -216,17 +201,14 @@ public:
     TEST_METHOD(TestLoginSuccessfulRememberPassword)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockServer.HandleRequest<ra::api::Login>([](_UNUSED const ra::api::Login::Request&, ra::api::Login::Response& response)
-        {
-            response.Username = "User";
-            response.ApiToken = "ApiToken";
-            response.Score = 12345;
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        vmLogin.mockRcheevosClient.MockResponse("r=login&u=user&p=Pa%24%24w0rd",
+            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
+            "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
+
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
         {
-            Assert::AreEqual(std::wstring(L"Successfully logged in as User"), vmMessageBox.GetMessage());
+            Assert::AreEqual(std::wstring(L"Successfully logged in as UserDisplay"), vmMessageBox.GetMessage());
             Assert::AreEqual(MessageBoxViewModel::Icon::Info, vmMessageBox.GetIcon());
             return DialogResult::OK;
         });

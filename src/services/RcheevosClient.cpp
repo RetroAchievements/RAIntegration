@@ -22,12 +22,6 @@
 namespace ra {
 namespace services {
 
-typedef struct rc_client_callback_wrapper_t
-{
-    rc_client_callback_t callback;
-    void* userdata;
-} rc_client_callback_wrapper_t;
-
 RcheevosClient::RcheevosClient()
 {
     m_pClient.reset(rc_client_create(RcheevosClient::ReadMemory, RcheevosClient::ServerCallAsync));
@@ -53,14 +47,6 @@ void RcheevosClient::LogMessage(const char* sMessage, const rc_client_t*)
         pLogger.LogMessage(ra::services::LogLevel::Info, sMessage);
 }
 
-void RcheevosClient::SetSynchronous(bool bSynchronous)
-{
-    if (bSynchronous)
-        m_pClient->callbacks.server_call = RcheevosClient::ServerCallAsync;
-    else
-        m_pClient->callbacks.server_call = RcheevosClient::ServerCall;
-}
-
 uint32_t RcheevosClient::ReadMemory(uint32_t nAddress, uint8_t* pBuffer, uint32_t nBytes, rc_client_t*)
 {
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
@@ -74,19 +60,6 @@ static void ConvertHttpResponseToApiServerResponse(rc_api_server_response_t& pRe
     pResponse.http_status_code = ra::etoi(httpResponse.StatusCode());
     pResponse.body = httpResponse.Content().c_str();
     pResponse.body_length = httpResponse.Content().length();
-}
-
-void RcheevosClient::ServerCall(const rc_api_request_t* pRequest,
-                                rc_client_server_callback_t fCallback, void* pCallbackData, rc_client_t*)
-{
-    ra::services::Http::Request httpRequest(pRequest->url);
-    httpRequest.SetPostData(pRequest->post_data);
-
-    ra::services::Http::Response httpResponse = httpRequest.Call();
-    rc_api_server_response_t pResponse;
-    ConvertHttpResponseToApiServerResponse(pResponse, httpResponse);
-
-    fCallback(&pResponse, pCallbackData);
 }
 
 void RcheevosClient::ServerCallAsync(const rc_api_request_t* pRequest,
@@ -106,23 +79,29 @@ void RcheevosClient::ServerCallAsync(const rc_api_request_t* pRequest,
 void RcheevosClient::BeginLoginWithPassword(const std::string& sUsername, const std::string& sPassword,
                                            rc_client_callback_t fCallback, void* pCallbackData)
 {
-    rc_client_callback_wrapper_t* wrapper = new rc_client_callback_wrapper_t();
-    wrapper->callback = fCallback;
-    wrapper->userdata = pCallbackData;
+    auto* pCallbackWrapper = new CallbackWrapper(m_pClient.get(), fCallback, pCallbackData);
+    BeginLoginWithPassword(sUsername.c_str(), sPassword.c_str(), pCallbackWrapper);
+}
 
-    rc_client_begin_login_with_password(GetClient(), sUsername.c_str(), sPassword.c_str(),
-        RcheevosClient::LoginCallback, wrapper);
+rc_client_async_handle_t* RcheevosClient::BeginLoginWithPassword(const char* sUsername, const char* sPassword,
+                                                                 CallbackWrapper* pCallbackWrapper)
+{
+    return rc_client_begin_login_with_password(GetClient(), sUsername, sPassword,
+                                               RcheevosClient::LoginCallback, pCallbackWrapper);
 }
 
 void RcheevosClient::BeginLoginWithToken(const std::string& sUsername, const std::string& sApiToken,
                                          rc_client_callback_t fCallback, void* pCallbackData)
 {
-    rc_client_callback_wrapper_t* wrapper = new rc_client_callback_wrapper_t();
-    wrapper->callback = fCallback;
-    wrapper->userdata = pCallbackData;
+    auto* pCallbackWrapper = new CallbackWrapper(m_pClient.get(), fCallback, pCallbackData);
+    BeginLoginWithToken(sUsername.c_str(), sApiToken.c_str(), pCallbackWrapper);
+}
 
-    rc_client_begin_login_with_token(GetClient(), sUsername.c_str(), sApiToken.c_str(),
-        RcheevosClient::LoginCallback, wrapper);
+rc_client_async_handle_t* RcheevosClient::BeginLoginWithToken(const char* sUsername, const char* sApiToken,
+                                                              CallbackWrapper* pCallbackWrapper)
+{
+    return rc_client_begin_login_with_token(GetClient(), sUsername, sApiToken,
+                                            RcheevosClient::LoginCallback, pCallbackWrapper);
 }
 
 void RcheevosClient::LoginCallback(int nResult, const char* sErrorMessage,
@@ -153,11 +132,79 @@ void RcheevosClient::LoginCallback(int nResult, const char* sErrorMessage,
         }
     }
 
-    auto* wrapper = reinterpret_cast<rc_client_callback_wrapper_t*>(pUserdata);
-    wrapper->callback(nResult, sErrorMessage, pClient, wrapper->userdata);
+    auto* wrapper = reinterpret_cast<CallbackWrapper*>(pUserdata);
+    wrapper->DoCallback(nResult, sErrorMessage);
 
     delete wrapper;
 }
 
+class RcheevosClientExports : private RcheevosClient
+{
+public:
+    static rc_client_async_handle_t* begin_login_with_password(rc_client_t* client,
+        const char* username, const char* password,
+        rc_client_callback_t callback, void* callback_userdata)
+    {
+        auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
+
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+        return pClient.BeginLoginWithPassword(username, password, pCallbackData);
+    }
+
+    static rc_client_async_handle_t* begin_login_with_token(rc_client_t* client,
+        const char* username, const char* token,
+        rc_client_callback_t callback, void* callback_userdata)
+    {
+        auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
+
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+        return pClient.BeginLoginWithToken(username, token, pCallbackData);
+    }
+
+    static const rc_client_user_t* get_user_info()
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+        return rc_client_get_user_info(pClient.GetClient());
+    }
+
+    static void logout()
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+        return rc_client_logout(pClient.GetClient());
+    }
+};
+
 } // namespace services
 } // namespace ra
+
+#include "Exports.hh"
+
+#define RC_CLIENT_SUPPORTS_EXTERNAL
+#include "rcheevos/src/rcheevos/rc_client_external.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClient, int nVersion)
+{
+    switch (nVersion)
+    {
+        default:
+            RA_LOG_WARN("Unknown rc_client_external interface version: %s", nVersion);
+            __fallthrough;
+
+        case 1:
+            pClient->begin_login_with_password = ra::services::RcheevosClientExports::begin_login_with_password;
+            pClient->begin_login_with_token = ra::services::RcheevosClientExports::begin_login_with_token;
+            pClient->logout = ra::services::RcheevosClientExports::logout;
+            pClient->get_user_info = ra::services::RcheevosClientExports::get_user_info;
+            break;
+    }
+
+    return 1;
+}
+
+#ifdef __cplusplus
+} // extern "C"
+#endif

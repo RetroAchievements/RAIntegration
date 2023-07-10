@@ -67,11 +67,10 @@ public:
     /// </returns>
     bool Login() const;
 
+    static void PostLoginInitialization();
+
 protected:
     LoginViewModel(const std::wstring&& sUsername); // alternate costructor for unit tests
-
-    mutable std::condition_variable m_pCondVar;
-    mutable bool m_bWaiting = false;
 };
 
 } // namespace viewmodels

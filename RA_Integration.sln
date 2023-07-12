@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.32106.194
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33829.357
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RA_Integration", "src\RA_Integration.vcxproj", "{825CB292-F069-4B27-82CF-3417746ACDF3}"
 EndProject
@@ -26,6 +26,8 @@ Global
 		Debug|x64 = Debug|x64
 		Release|Win32 = Release|Win32
 		Release|x64 = Release|x64
+		Release-vista|Win32 = Release-vista|Win32
+		Release-vista|x64 = Release-vista|x64
 		ReleaseWithDebug|Win32 = ReleaseWithDebug|Win32
 		ReleaseWithDebug|x64 = ReleaseWithDebug|x64
 		Release-xp|Win32 = Release-xp|Win32
@@ -44,6 +46,10 @@ Global
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.Release|Win32.Build.0 = Release|Win32
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.Release|x64.ActiveCfg = Release|x64
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.Release|x64.Build.0 = Release|x64
+		{825CB292-F069-4B27-82CF-3417746ACDF3}.Release-vista|Win32.ActiveCfg = Release-vista|Win32
+		{825CB292-F069-4B27-82CF-3417746ACDF3}.Release-vista|Win32.Build.0 = Release-vista|Win32
+		{825CB292-F069-4B27-82CF-3417746ACDF3}.Release-vista|x64.ActiveCfg = Release-vista|x64
+		{825CB292-F069-4B27-82CF-3417746ACDF3}.Release-vista|x64.Build.0 = Release-vista|x64
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|Win32.ActiveCfg = ReleaseWithDebug|Win32
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|Win32.Build.0 = ReleaseWithDebug|Win32
 		{825CB292-F069-4B27-82CF-3417746ACDF3}.ReleaseWithDebug|x64.ActiveCfg = ReleaseWithDebug|x64
@@ -64,6 +70,10 @@ Global
 		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Release|Win32.Build.0 = Release|Win32
 		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Release|x64.ActiveCfg = Release|x64
 		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Release|x64.Build.0 = Release|x64
+		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Release-vista|Win32.ActiveCfg = Release|Win32
+		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Release-vista|Win32.Build.0 = Release|Win32
+		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Release-vista|x64.ActiveCfg = Release|x64
+		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.Release-vista|x64.Build.0 = Release|x64
 		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.ReleaseWithDebug|Win32.ActiveCfg = Release|Win32
 		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.ReleaseWithDebug|Win32.Build.0 = Release|Win32
 		{876DEBDF-C7C8-4713-8CEF-EBDEE65306A7}.ReleaseWithDebug|x64.ActiveCfg = Release|x64
@@ -84,6 +94,10 @@ Global
 		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Release|Win32.Build.0 = Release|Win32
 		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Release|x64.ActiveCfg = Release|x64
 		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Release|x64.Build.0 = Release|x64
+		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Release-vista|Win32.ActiveCfg = Release|Win32
+		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Release-vista|Win32.Build.0 = Release|Win32
+		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Release-vista|x64.ActiveCfg = Release|x64
+		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.Release-vista|x64.Build.0 = Release|x64
 		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.ReleaseWithDebug|Win32.ActiveCfg = Release|Win32
 		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.ReleaseWithDebug|Win32.Build.0 = Release|Win32
 		{9D55EBE7-1392-4FA1-A9B9-F022F764CE35}.ReleaseWithDebug|x64.ActiveCfg = Release|x64
@@ -103,6 +117,10 @@ Global
 		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Release|Win32.Build.0 = Release|Win32
 		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Release|x64.ActiveCfg = Release|x64
 		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Release|x64.Build.0 = Release|x64
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Release-vista|Win32.ActiveCfg = Release|Win32
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Release-vista|Win32.Build.0 = Release|Win32
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Release-vista|x64.ActiveCfg = Release|x64
+		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.Release-vista|x64.Build.0 = Release|x64
 		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.ReleaseWithDebug|Win32.ActiveCfg = Release|Win32
 		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.ReleaseWithDebug|Win32.Build.0 = Release|Win32
 		{F78C2C8B-55DD-4252-A38F-F4D252D14DF8}.ReleaseWithDebug|x64.ActiveCfg = Release|x64

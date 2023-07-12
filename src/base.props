@@ -10,11 +10,11 @@
     <GSL_IncludeDir>$(RA_DIR)GSL\include\</GSL_IncludeDir>
     <Lua_Dir>$(RA_DIR)lua\</Lua_Dir>
     <RA_IncludePath>$(RA_DIR);$(RA_SourceDir);$(RAInterface_IncludePath);$(RapidJSON_IncludeDir);$(rcheevos_IncludePath);$(Lua_Dir);$(GSL_IncludeDir)</RA_IncludePath>
-    <XPDeprecationWarning>false</XPDeprecationWarning>
+    <XPDeprecationWarning>true</XPDeprecationWarning>
   </PropertyGroup>
   <PropertyGroup>
-    <OutDir>$(SolutionDir)bin\$(Configuration)\</OutDir>
-    <IntDir>$(SolutionDir)obj\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup>
     <ClCompile>

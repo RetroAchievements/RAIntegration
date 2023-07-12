@@ -885,6 +885,7 @@ void TriggerViewModel::UpdateTotalHits()
     for (size_t nIndex = 0; nIndex < m_vConditions.Count(); ++nIndex)
     {
         auto* vmCondition = m_vConditions.GetItemAt(nIndex);
+        Expects(vmCondition != nullptr);
         switch (vmCondition->GetType())
         {
             case ra::ui::viewmodels::TriggerConditionType::AddHits:

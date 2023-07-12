@@ -368,7 +368,7 @@ void AssetUploadViewModel::UploadCodeNote(ra::data::models::CodeNotesModel& pNot
     }
 }
 
-bool AssetUploadViewModel::HasFailures() const
+bool AssetUploadViewModel::HasFailures() const noexcept
 {
     for (const auto& pItem : m_vUploadQueue)
     {

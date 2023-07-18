@@ -191,8 +191,6 @@
     <ClInclude Include="api\impl\ServerBase.hh" />
     <ClInclude Include="api\IServer.hh" />
     <ClInclude Include="api\LatestClient.hh" />
-    <ClInclude Include="api\Login.hh" />
-    <ClInclude Include="api\Logout.hh" />
     <ClInclude Include="api\Ping.hh" />
     <ClInclude Include="api\ResolveHash.hh" />
     <ClInclude Include="api\StartSession.hh" />

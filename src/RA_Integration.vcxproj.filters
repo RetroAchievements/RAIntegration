@@ -590,12 +590,6 @@
     <ClInclude Include="api\IServer.hh">
       <Filter>API</Filter>
     </ClInclude>
-    <ClInclude Include="api\Login.hh">
-      <Filter>API</Filter>
-    </ClInclude>
-    <ClInclude Include="api\Logout.hh">
-      <Filter>API</Filter>
-    </ClInclude>
     <ClInclude Include="api\impl\ServerBase.hh">
       <Filter>API\impl</Filter>
     </ClInclude>

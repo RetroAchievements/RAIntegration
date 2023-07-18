@@ -89,7 +89,21 @@ _NODISCARD static bool GetJson([[maybe_unused]] _In_ const char* sApiName,
         if (pDocument.GetParseError() == rapidjson::kParseErrorValueInvalid && pDocument.GetErrorOffset() == 0)
         {
             // server did not return JSON, check for HTML
-            if (!ra::StringStartsWith(httpResponse.Content(), "<"))
+            if (ra::StringStartsWith(httpResponse.Content(), "<html>"))
+            {
+                const auto nStartIndex = httpResponse.Content().find("<title>");
+                if (nStartIndex != std::string::npos)
+                {
+                    const auto nEndIndex = httpResponse.Content().find("</title>");
+                    if (nEndIndex != std::string::npos)
+                    {
+                        pResponse.ErrorMessage =
+                            httpResponse.Content().substr(nStartIndex + 7, nEndIndex - nStartIndex - 7);
+                    }
+                }
+            }
+
+            if (pResponse.ErrorMessage.empty())
             {
                 // not HTML, return first line of response as the error message
                 std::string sContent = httpResponse.Content();
@@ -459,58 +473,6 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
 }
 
 // === APIs ===
-
-Login::Response ConnectedServer::Login(const Login::Request& request)
-{
-    Login::Response response;
-
-    rc_api_login_request_t api_params;
-    memset(&api_params, 0, sizeof(api_params));
-
-    api_params.username = request.Username.c_str();
-    if (!request.ApiToken.empty())
-        api_params.api_token = request.ApiToken.c_str();
-    else
-        api_params.password = request.Password.c_str();
-
-    rc_api_request_t api_request;
-    if (rc_api_init_login_request(&api_request, &api_params) == RC_OK)
-    {
-        RA_LOG_INFO("Login Request: (using %s)", !request.ApiToken.empty() ? "token" : "password");
-
-        ra::services::Http::Response httpResponse;
-        if (DoRequestWithoutLog(api_request, Login::Name(), httpResponse, response))
-        {
-            rc_api_login_response_t api_response;
-            const auto nResult = rc_api_process_login_response(&api_response, httpResponse.Content().c_str());
-
-            if (ValidateResponse(nResult, api_response.response, Login::Name(), httpResponse.StatusCode(), response))
-            {
-                response.Result = ApiResult::Success;
-                response.Username = api_response.username;
-                response.ApiToken = api_response.api_token;
-                response.DisplayName = api_response.display_name;
-                response.Score = api_response.score;
-                response.NumUnreadMessages = api_response.num_unread_messages;
-            }
-
-            rc_api_destroy_login_response(&api_response);
-        }
-    }
-
-    rc_api_destroy_request(&api_request);
-    return response;
-}
-
-Logout::Response ConnectedServer::Logout(const Logout::Request&)
-{
-    // update the global API pointer to a disconnected API
-    ra::services::ServiceLocator::Provide<ra::api::IServer>(std::make_unique<DisconnectedServer>(m_sHost));
-
-    Logout::Response response;
-    response.Result = ApiResult::Success;
-    return response;
-}
 
 StartSession::Response ConnectedServer::StartSession(const StartSession::Request& request)
 {

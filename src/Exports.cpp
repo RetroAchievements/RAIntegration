@@ -6,7 +6,6 @@
 #include "RA_Resource.h"
 
 #include "api\IServer.hh"
-#include "api\Login.hh"
 #include "api\impl\OfflineServer.hh"
 
 #include "data\context\ConsoleContext.hh"

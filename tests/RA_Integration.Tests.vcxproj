@@ -358,7 +358,6 @@
     <ClCompile Include="..\src\ui\viewmodels\TriggerViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="api\ConnectedServer_Tests.cpp" />
-    <ClCompile Include="api\DisconnectedServer_Tests.cpp" />
     <ClInclude Include="..\src\data\models\LeaderboardModel.hh" />
     <ClInclude Include="..\src\RA_Defs.h" />
     <ClCompile Include="..\src\ui\ViewModelBase.cpp" />

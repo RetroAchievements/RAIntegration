@@ -15,8 +15,6 @@ public:
 
     const char* Name() const noexcept override { return m_sHost.c_str(); }
 
-    Login::Response Login(const Login::Request& request) override;
-    Logout::Response Logout(const Logout::Request&) override;
     StartSession::Response StartSession(const StartSession::Request& request) override;
     Ping::Response Ping(const Ping::Request& request) override;
     FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) override;

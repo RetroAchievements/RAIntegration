@@ -114,9 +114,6 @@
     <ClCompile Include="..\src\ui\viewmodels\RichPresenceMonitorViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="api\DisconnectedServer_Tests.cpp">
-      <Filter>Tests\API</Filter>
-    </ClCompile>
     <ClCompile Include="api\ConnectedServer_Tests.cpp">
       <Filter>Tests\API</Filter>
     </ClCompile>

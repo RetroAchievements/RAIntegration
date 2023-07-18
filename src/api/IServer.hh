@@ -13,8 +13,6 @@
 #include "api/FetchUserFriends.hh"
 #include "api/FetchUserUnlocks.hh"
 #include "api/LatestClient.hh"
-#include "api/Login.hh"
-#include "api/Logout.hh"
 #include "api/Ping.hh"
 #include "api/ResolveHash.hh"
 #include "api/StartSession.hh"
@@ -35,8 +33,6 @@ public:
     virtual const char* Name() const noexcept = 0;
 
     // === user functions ===
-    virtual Login::Response Login(const Login::Request& request) = 0;
-    virtual Logout::Response Logout(const Logout::Request& request) = 0;
     virtual StartSession::Response StartSession(const StartSession::Request& request) = 0;
     virtual Ping::Response Ping(const Ping::Request& request) = 0;
     virtual FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) = 0;

@@ -19,6 +19,8 @@
 #include <rcheevos\src\rcheevos\rc_internal.h>
 #include <rcheevos\src\rcheevos\rc_client_internal.h>
 
+#undef RC_CLIENT_SUPPORTS_EXTERNAL
+
 namespace ra {
 namespace services {
 
@@ -67,6 +69,7 @@ void RcheevosClient::ServerCallAsync(const rc_api_request_t* pRequest,
 {
     ra::services::Http::Request httpRequest(pRequest->url);
     httpRequest.SetPostData(pRequest->post_data);
+    httpRequest.SetContentType(pRequest->content_type);
 
     httpRequest.CallAsync([fCallback, pCallbackData](const ra::services::Http::Response& httpResponse) {
         rc_api_server_response_t pResponse;
@@ -75,6 +78,8 @@ void RcheevosClient::ServerCallAsync(const rc_api_request_t* pRequest,
         fCallback(&pResponse, pCallbackData);
     });
 }
+
+/* ---- Login ----- */
 
 void RcheevosClient::BeginLoginWithPassword(const std::string& sUsername, const std::string& sPassword,
                                            rc_client_callback_t fCallback, void* pCallbackData)
@@ -138,6 +143,8 @@ void RcheevosClient::LoginCallback(int nResult, const char* sErrorMessage,
     delete wrapper;
 }
 
+#ifdef RC_CLIENT_SUPPORTS_EXTERNAL
+
 class RcheevosClientExports : private RcheevosClient
 {
 public:
@@ -174,12 +181,14 @@ public:
     }
 };
 
+#endif RC_CLIENT_SUPPORTS_EXTERNAL
+
 } // namespace services
 } // namespace ra
 
-#include "Exports.hh"
+#ifdef RC_CLIENT_SUPPORTS_EXTERNAL
 
-#define RC_CLIENT_SUPPORTS_EXTERNAL
+#include "Exports.hh"
 #include "rcheevos/src/rcheevos/rc_client_external.h"
 
 #ifdef __cplusplus
@@ -208,3 +217,5 @@ API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClient, int nVe
 #ifdef __cplusplus
 } // extern "C"
 #endif
+
+#endif /* RC_CLIENT_SUPPORTS_EXTERNAL */

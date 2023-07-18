@@ -4,7 +4,6 @@
 #include "RA_Interface.h"
 #include "RA_StringUtils.h"
 
-#include "api\Login.hh"
 #include "api\impl\ConnectedServer.hh"
 
 #include "data\context\EmulatorContext.hh"

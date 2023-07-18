@@ -41,7 +41,7 @@ void UserContext::Logout()
 
     ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(L"You are now logged out.");
 
-    // update the global IServer instance to the connected API
+    // update the global IServer instance to the disconnected API
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     auto serverApi = std::make_unique<ra::api::impl::DisconnectedServer>(pConfiguration.GetHostUrl());
     ra::services::ServiceLocator::Provide<ra::api::IServer>(std::move(serverApi));

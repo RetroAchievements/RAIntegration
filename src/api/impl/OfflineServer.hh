@@ -11,8 +11,6 @@ class OfflineServer : public ServerBase
 public:
     const char* Name() const noexcept override { return "offline client"; }
 
-    Login::Response Login(const Login::Request& request) override;
-    Logout::Response Logout(const Logout::Request&) noexcept override;
     AwardAchievement::Response AwardAchievement(const AwardAchievement::Request&) override;
     SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request&) override;
 

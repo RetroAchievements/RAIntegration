@@ -221,6 +221,7 @@ private:
     void UpdateHighlight(ra::ByteAddress nAddress, int nNewLength, int nOldLength);
 
     int NibblesPerWord() const;
+    int GetSelectedNibbleOffset() const;
     void UpdateSelectedNibble(int nNewNibble);
 
     std::unique_ptr<uint8_t[]> m_pBuffer;

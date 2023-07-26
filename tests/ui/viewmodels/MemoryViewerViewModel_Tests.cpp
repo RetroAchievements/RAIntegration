@@ -1608,6 +1608,75 @@ public:
         Assert::AreEqual({ 0x27U }, viewer.GetByte(7U));
     }
 
+    TEST_METHOD(TestOnCharThirtyTwoBitBigEndian)
+    {
+        MemoryViewerViewModelHarness viewer;
+        viewer.InitializeMemory(256);
+        viewer.SetSize(MemSize::ThirtyTwoBitBigEndian);
+        viewer.MockRender();
+
+        Assert::AreEqual({0U}, viewer.GetAddress());
+        Assert::AreEqual({0U}, viewer.GetSelectedNibble());
+        Assert::AreEqual({0U}, viewer.GetByte(0U));
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // ignore if readonly
+        Assert::IsTrue(viewer.IsReadOnly());
+        Assert::IsFalse(viewer.OnChar('6'));
+
+        viewer.SetReadOnly(false);
+        Assert::IsFalse(viewer.IsReadOnly());
+
+        // '6' should be set as upper nibble of selected byte
+        Assert::IsTrue(viewer.OnChar('6'));
+        Assert::AreEqual({0U}, viewer.GetAddress());
+        Assert::AreEqual({1U}, viewer.GetSelectedNibble());
+        Assert::AreEqual({0x60U}, viewer.GetByte(0U));
+        Assert::AreEqual({COLOR_RED | COLOR_REDRAW}, viewer.GetColor(0U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // ignore invalid character
+        Assert::IsFalse(viewer.OnChar('G'));
+        Assert::AreEqual({0U}, viewer.GetAddress());
+        Assert::AreEqual({1U}, viewer.GetSelectedNibble());
+        Assert::AreEqual({0x60U}, viewer.GetByte(0U));
+        Assert::AreEqual({COLOR_RED}, viewer.GetColor(0U));
+        Assert::IsFalse(viewer.NeedsRedraw());
+
+        // 'B' should be set as lower nibble of selected byte
+        viewer.OnChar('B');
+        Assert::AreEqual({0U}, viewer.GetAddress());
+        Assert::AreEqual({2U}, viewer.GetSelectedNibble());
+        Assert::AreEqual({0x6BU}, viewer.GetByte(0U));
+        Assert::AreEqual({COLOR_RED | COLOR_REDRAW}, viewer.GetColor(0U));
+        Assert::IsTrue(viewer.NeedsRedraw());
+        viewer.MockRender();
+
+        // 'F' should be set as upper nibble of next byte
+        viewer.OnChar('F');
+        Assert::AreEqual({0U}, viewer.GetAddress());
+        Assert::AreEqual({3U}, viewer.GetSelectedNibble());
+        Assert::AreEqual({0xF1U}, viewer.GetByte(1U));
+
+        viewer.OnChar('3');
+        viewer.OnChar('D');
+        viewer.OnChar('E');
+        viewer.OnChar('6');
+        viewer.OnChar('8');
+
+        Assert::AreEqual({4U}, viewer.GetAddress());
+        Assert::AreEqual({0U}, viewer.GetSelectedNibble());
+        Assert::AreEqual({0xF3U}, viewer.GetByte(1U));
+        Assert::AreEqual({0xDEU}, viewer.GetByte(2U));
+        Assert::AreEqual({0x68U}, viewer.GetByte(3U));
+
+        viewer.OnChar('2');
+        Assert::AreEqual({4U}, viewer.GetAddress());
+        Assert::AreEqual({1U}, viewer.GetSelectedNibble());
+        Assert::AreEqual({0x24U}, viewer.GetByte(4U));
+    }
+
     TEST_METHOD(TestTotalMemorySizeChanged)
     {
         MemoryViewerViewModelHarness viewer;

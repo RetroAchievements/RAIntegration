@@ -155,6 +155,20 @@ int MemoryViewerViewModel::NibblesPerWord() const
     return NibblesForSize(GetSize());
 }
 
+int MemoryViewerViewModel::GetSelectedNibbleOffset() const
+{
+    const auto nSize = GetSize();
+    switch (nSize)
+    {
+        case MemSize::SixteenBit:
+        case MemSize::ThirtyTwoBit:
+            return (NibblesForSize(nSize) - m_nSelectedNibble - 1);
+
+        default:
+            return m_nSelectedNibble ^ 1;
+    }
+}
+
 static MemoryViewerViewModel::TextColor GetColor(ra::ByteAddress nAddress,
     const ra::ui::viewmodels::MemoryBookmarksViewModel& pBookmarksViewModel,
     const ra::data::context::GameContext& pGameContext, bool bCheckNotes = true)
@@ -318,11 +332,10 @@ void MemoryViewerViewModel::UpdateSelectedNibble(int nNewNibble)
     {
         const auto nAddress = GetAddress();
         const auto nFirstAddress = GetFirstAddress();
-        const auto nNibblesPerWord = NibblesPerWord();
-        m_pColor[nAddress - nFirstAddress + (nNibblesPerWord - m_nSelectedNibble - 1) / 2] |= STALE_COLOR;
+        m_pColor[nAddress - nFirstAddress + GetSelectedNibbleOffset() / 2] |= STALE_COLOR;
         m_nSelectedNibble = nNewNibble;
 
-        m_pColor[nAddress - nFirstAddress + (nNibblesPerWord - m_nSelectedNibble - 1) / 2] |= STALE_COLOR;
+        m_pColor[nAddress - nFirstAddress + GetSelectedNibbleOffset() / 2] |= STALE_COLOR;
         m_nNeedsRedraw |= REDRAW_MEMORY;
     }
 }
@@ -919,8 +932,7 @@ bool MemoryViewerViewModel::OnChar(char c)
     }
 
     // adjust for 16-bit and 32-bit views
-    const auto nNibblesPerWord = NibblesPerWord();
-    auto nSelectedNibble = (nNibblesPerWord - m_nSelectedNibble - 1);
+    auto nSelectedNibble = GetSelectedNibbleOffset();
     while (nSelectedNibble > 1)
     {
         ++nAddress;

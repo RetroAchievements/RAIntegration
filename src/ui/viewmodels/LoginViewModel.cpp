@@ -55,7 +55,8 @@ bool LoginViewModel::Login() const
     pClient.BeginLoginWithPassword(
         ra::Narrow(GetUsername()), ra::Narrow(GetPassword()),
         [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) {
-            auto* pSynchronizer = reinterpret_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
+            auto* pSynchronizer = static_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
+            Expects(pSynchronizer != nullptr);
 
             if (nResult != RC_OK)
             {

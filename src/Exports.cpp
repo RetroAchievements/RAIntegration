@@ -267,6 +267,7 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
     ra::ui::viewmodels::IntegrationMenuViewModel::ActivateMenuItem(gsl::narrow_cast<int>(nID));
 }
 
+GSL_SUPPRESS_CON3
 static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_client_t* pClient, void*)
 {
     if (nResult == RC_OK)
@@ -326,7 +327,8 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
                 [](int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata) {
                     HandleLoginResponse(nResult, sErrorMessage, pClient, nullptr);
 
-                    auto* pSynchronizer = reinterpret_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
+                    auto* pSynchronizer = static_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
+                    Expects(pSynchronizer != nullptr);
                     pSynchronizer->Notify();
                 },
                 &pSynchronizer);
@@ -336,7 +338,7 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
         else
         {
             pClient.BeginLoginWithToken(pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
-                                        HandleLoginResponse, nullptr);
+                                        HandleLoginResponse, static_cast<void*>(nullptr));
         }
     }
 }

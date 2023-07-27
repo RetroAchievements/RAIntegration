@@ -36,7 +36,7 @@ RcheevosClient::~RcheevosClient()
     Shutdown();
 }
 
-void RcheevosClient::Shutdown()
+void RcheevosClient::Shutdown() noexcept
 {
     if (m_pClient != nullptr)
         rc_client_destroy(m_pClient.release());
@@ -56,7 +56,7 @@ uint32_t RcheevosClient::ReadMemory(uint32_t nAddress, uint8_t* pBuffer, uint32_
 }
 
 static void ConvertHttpResponseToApiServerResponse(rc_api_server_response_t& pResponse,
-                                                   const ra::services::Http::Response& httpResponse)
+                                                   const ra::services::Http::Response& httpResponse) noexcept
 {
     memset(&pResponse, 0, sizeof(pResponse));
     pResponse.http_status_code = ra::etoi(httpResponse.StatusCode());
@@ -71,7 +71,7 @@ void RcheevosClient::ServerCallAsync(const rc_api_request_t* pRequest,
     httpRequest.SetPostData(pRequest->post_data);
     httpRequest.SetContentType(pRequest->content_type);
 
-    httpRequest.CallAsync([fCallback, pCallbackData](const ra::services::Http::Response& httpResponse) {
+    httpRequest.CallAsync([fCallback, pCallbackData](const ra::services::Http::Response& httpResponse) noexcept {
         rc_api_server_response_t pResponse;
         ConvertHttpResponseToApiServerResponse(pResponse, httpResponse);
 
@@ -84,12 +84,13 @@ void RcheevosClient::ServerCallAsync(const rc_api_request_t* pRequest,
 void RcheevosClient::BeginLoginWithPassword(const std::string& sUsername, const std::string& sPassword,
                                            rc_client_callback_t fCallback, void* pCallbackData)
 {
+    GSL_SUPPRESS_R3
     auto* pCallbackWrapper = new CallbackWrapper(m_pClient.get(), fCallback, pCallbackData);
     BeginLoginWithPassword(sUsername.c_str(), sPassword.c_str(), pCallbackWrapper);
 }
 
 rc_client_async_handle_t* RcheevosClient::BeginLoginWithPassword(const char* sUsername, const char* sPassword,
-                                                                 CallbackWrapper* pCallbackWrapper)
+                                                                 CallbackWrapper* pCallbackWrapper) noexcept
 {
     return rc_client_begin_login_with_password(GetClient(), sUsername, sPassword,
                                                RcheevosClient::LoginCallback, pCallbackWrapper);
@@ -98,17 +99,19 @@ rc_client_async_handle_t* RcheevosClient::BeginLoginWithPassword(const char* sUs
 void RcheevosClient::BeginLoginWithToken(const std::string& sUsername, const std::string& sApiToken,
                                          rc_client_callback_t fCallback, void* pCallbackData)
 {
+    GSL_SUPPRESS_R3
     auto* pCallbackWrapper = new CallbackWrapper(m_pClient.get(), fCallback, pCallbackData);
     BeginLoginWithToken(sUsername.c_str(), sApiToken.c_str(), pCallbackWrapper);
 }
 
 rc_client_async_handle_t* RcheevosClient::BeginLoginWithToken(const char* sUsername, const char* sApiToken,
-                                                              CallbackWrapper* pCallbackWrapper)
+                                                              CallbackWrapper* pCallbackWrapper) noexcept
 {
     return rc_client_begin_login_with_token(GetClient(), sUsername, sApiToken,
                                             RcheevosClient::LoginCallback, pCallbackWrapper);
 }
 
+GSL_SUPPRESS_CON3
 void RcheevosClient::LoginCallback(int nResult, const char* sErrorMessage,
                                    rc_client_t* pClient, void* pUserdata)
 {
@@ -137,7 +140,8 @@ void RcheevosClient::LoginCallback(int nResult, const char* sErrorMessage,
         }
     }
 
-    auto* wrapper = reinterpret_cast<CallbackWrapper*>(pUserdata);
+    auto* wrapper = static_cast<CallbackWrapper*>(pUserdata);
+    Expects(wrapper != nullptr);
     wrapper->DoCallback(nResult, sErrorMessage);
 
     delete wrapper;

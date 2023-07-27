@@ -27,9 +27,9 @@ public:
     RcheevosClient(RcheevosClient&&) noexcept = delete;
     RcheevosClient& operator=(RcheevosClient&&) noexcept = delete;
 
-    void Shutdown();
+    void Shutdown() noexcept;
 
-    rc_client_t* GetClient() const { return m_pClient.get(); }
+    rc_client_t* GetClient() const noexcept { return m_pClient.get(); }
 
     void BeginLoginWithToken(const std::string& sUsername, const std::string& sApiToken,
                              rc_client_callback_t fCallback, void* pCallbackData);
@@ -52,7 +52,7 @@ public:
 #endif
         }
 
-        void Notify()
+        void Notify() noexcept
         {
             m_bWaiting = false;
             m_pCondVar.notify_all();
@@ -75,18 +75,19 @@ private:
     class CallbackWrapper
     {
     public:
-        CallbackWrapper(rc_client_t* client, rc_client_callback_t callback, void* callback_userdata) :
+        CallbackWrapper(rc_client_t* client, rc_client_callback_t callback, void* callback_userdata) noexcept :
             m_pClient(client), m_fCallback(callback), m_pCallbackUserdata(callback_userdata)
         {}
 
-        void DoCallback(int nResult, const char* sErrorMessage)
+        void DoCallback(int nResult, const char* sErrorMessage) noexcept
         {
             m_fCallback(nResult, sErrorMessage, m_pClient, m_pCallbackUserdata);
         }
 
         static void Dispatch(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata)
         {
-            auto* pWrapper = (CallbackWrapper*)pUserdata;
+            auto* pWrapper = static_cast<CallbackWrapper*>(pUserdata);
+            Expects(pWrapper != nullptr);
 
             pWrapper->DoCallback(nResult, sErrorMessage);
 
@@ -102,9 +103,9 @@ private:
     friend class RcheevosClientExports;
 
     rc_client_async_handle_t* BeginLoginWithPassword(const char* sUsername, const char* sPassword,
-                                                     CallbackWrapper* pCallbackWrapper);
+                                                     CallbackWrapper* pCallbackWrapper) noexcept;
     rc_client_async_handle_t* BeginLoginWithToken(const char* sUsername, const char* sApiToken,
-                                                  CallbackWrapper* pCallbackWrapper);
+                                                  CallbackWrapper* pCallbackWrapper) noexcept;
     static void LoginCallback(int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata);
 };
 

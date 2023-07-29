@@ -36,6 +36,9 @@ public:
     void BeginLoginWithPassword(const std::string& sUsername, const std::string& sPassword,
                                 rc_client_callback_t fCallback, void* pCallbackData);
 
+    void BeginLoadGame(const std::string& sHash, unsigned id,
+                       rc_client_callback_t fCallback, void* pCallbackData);
+
     class Synchronizer
     {
     public:
@@ -58,9 +61,17 @@ public:
             m_pCondVar.notify_all();
         }
 
+        void SetErrorMessage(const std::string& sErrorMessage) noexcept
+        {
+            m_sErrorMessage = sErrorMessage;
+        }
+
+        const std::string& GetErrorMessage() const noexcept { return m_sErrorMessage; }
+
     private:
         std::mutex m_pMutex;
         std::condition_variable m_pCondVar;
+        std::string m_sErrorMessage;
         bool m_bWaiting = true;
     };
 
@@ -107,6 +118,9 @@ private:
     rc_client_async_handle_t* BeginLoginWithToken(const char* sUsername, const char* sApiToken,
                                                   CallbackWrapper* pCallbackWrapper) noexcept;
     static void LoginCallback(int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata);
+
+    rc_client_async_handle_t* BeginLoadGame(const char* sHash, unsigned id, CallbackWrapper* pCallbackWrapper) noexcept;
+    static void LoadGameCallback(int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata);
 };
 
 } // namespace services

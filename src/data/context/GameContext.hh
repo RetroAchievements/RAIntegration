@@ -30,7 +30,12 @@ public:
     /// <summary>
     /// Loads the data for the specified game id.
     /// </summary>
-    virtual void LoadGame(unsigned int nGameId, Mode nMode = Mode::Normal);
+    virtual void LoadGame(unsigned int nGameId, const std::string& sGameHash, Mode nMode = Mode::Normal);
+
+    /// <summary>
+    /// Loads the data from the game currently loaded in the RcheevosClient.
+    /// </summary>
+    void InitializeFromRcheevosClient();
 
     /// <summary>
     /// Determines whether a game is being loaded.

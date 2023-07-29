@@ -180,7 +180,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
         pOverlayManager.ClearPopups();
 
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-        pGameContext.LoadGame(nGameId, m_nPendingMode);
+        pGameContext.LoadGame(nGameId, m_sPendingHash, m_nPendingMode);
         pGameContext.SetGameHash((nGameId == m_nPendingGameId) ? m_sPendingHash : "");
 
         ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>().BeginSession(nGameId);
@@ -224,7 +224,7 @@ void GameIdentifier::ActivateGame(unsigned int nGameId)
         pOverlayManager.ClearPopups();
 
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-        pGameContext.LoadGame(0U, m_nPendingMode);
+        pGameContext.LoadGame(0U, m_sPendingHash, m_nPendingMode);
         pGameContext.SetGameHash((m_nPendingGameId == 0) ? m_sPendingHash : "");
     }
 

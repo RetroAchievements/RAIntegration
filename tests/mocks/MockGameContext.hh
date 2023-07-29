@@ -19,7 +19,7 @@ public:
     {
     }
 
-    void LoadGame(unsigned int nGameId, ra::data::context::GameContext::Mode nMode) noexcept override
+    void LoadGame(unsigned int nGameId, const std::string&, ra::data::context::GameContext::Mode nMode) noexcept override
     {
         m_nGameId = nGameId;
         m_nMode = nMode;

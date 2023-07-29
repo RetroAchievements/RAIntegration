@@ -205,7 +205,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::AreEqual(1U, game.GameId());
         Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, game.GetMode());
@@ -236,7 +236,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(std::wstring(L"Overlay\\info.wav")));
 
@@ -273,7 +273,7 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::AreEqual(0U, game.GameId());
         Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, game.GetMode());
@@ -303,7 +303,7 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(std::wstring(L"Overlay\\info.wav")));
 
@@ -340,7 +340,7 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(std::wstring(L"Overlay\\info.wav")));
 
@@ -377,7 +377,7 @@ public:
                 return ra::ui::DialogResult::OK;
             });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(std::wstring(L"Overlay\\info.wav")));
 
@@ -412,28 +412,28 @@ public:
         });
 
         game.AddNotifyTarget(notifyHarness);
-        game.LoadGame(0U);
+        game.LoadGame(0U, "");
 
         Assert::AreEqual(0U, game.GameId());
         Assert::IsFalse(notifyHarness.m_bNotified);
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
         Assert::AreEqual(1U, game.GameId());
         Assert::IsTrue(notifyHarness.m_bNotified);
 
         notifyHarness.m_bNotified = false;
-        game.LoadGame(2U);
+        game.LoadGame(2U, "0123456789abcdeffedcba987654321");
         Assert::AreEqual(2U, game.GameId());
         Assert::IsTrue(notifyHarness.m_bNotified);
 
         notifyHarness.m_bNotified = false;
-        game.LoadGame(0U);
+        game.LoadGame(0U, "");
         Assert::AreEqual(0U, game.GameId());
         Assert::IsTrue(notifyHarness.m_bNotified);
 
         notifyHarness.m_bNotified = false;
         game.RemoveNotifyTarget(notifyHarness);
-        game.LoadGame(2U);
+        game.LoadGame(2U, "0123456789abcdeffedcba987654321");
         Assert::AreEqual(2U, game.GameId());
         Assert::IsFalse(notifyHarness.m_bNotified);
     }
@@ -447,7 +447,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::IsTrue(game.HasRichPresence());
         Assert::AreEqual(std::string("Display:\nHello, World\n"),
@@ -472,7 +472,7 @@ public:
         });
 
         game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom File\n");
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::IsTrue(game.HasRichPresence());
         Assert::AreEqual(std::string("Display:\nFrom File\n"),
@@ -500,7 +500,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::IsTrue(game.HasRichPresence());
         Assert::AreEqual(std::string("Display:\nHello, World\n"),
@@ -526,7 +526,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::IsTrue(game.HasRichPresence());
         Assert::AreEqual(std::string("Display:\nLocal\n"),
@@ -550,7 +550,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::IsFalse(game.HasRichPresence());
         Assert::IsFalse(game.mockStorage.HasStoredData(ra::services::StorageItemType::RichPresence, L"1"));
@@ -569,7 +569,7 @@ public:
                 return true;
             });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::IsFalse(game.HasRichPresence());
         Assert::AreEqual(std::string(),
@@ -590,7 +590,7 @@ public:
             });
 
         game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom File\n");
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::IsTrue(game.HasRichPresence());
         Assert::AreEqual(std::string("Display:\nFrom File\n"),
@@ -636,7 +636,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         game.RemoveNonAchievementAssets();
         Assert::AreEqual({ 2U }, game.Assets().Count());
@@ -699,7 +699,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         game.RemoveNonAchievementAssets();
         Assert::AreEqual({ 1U }, game.Assets().Count());
@@ -756,7 +756,7 @@ public:
             "0:R:1=1:Ach4:Desc4::::Auth4:10:1234511111:1234500000:::556\n"
         );
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         auto* pAch = game.Assets().FindAchievement(5U);
         Assert::IsNotNull(pAch);
@@ -822,7 +822,7 @@ public:
             "999000003:1=1:Ach4:Desc4::::Auth4:10:1234511111:1234500000:::556\n"
         );
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         game.RemoveNonAchievementAssets();
         Assert::AreEqual({ 3U }, game.Assets().Count());
@@ -898,7 +898,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         const auto* pLb1 = game.Assets().FindLeaderboard(7U);
         Assert::IsNotNull(pLb1);
@@ -944,7 +944,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
         {
@@ -974,7 +974,7 @@ public:
             return true;
         });
 
-        game.LoadGame(2U);
+        game.LoadGame(2U, "0123456789abcdeffedcba987654321");
 
         Assert::IsNull(game.Assets().FindAchievement(5U));
         Assert::IsNull(game.Assets().FindAchievement(7U));
@@ -1039,12 +1039,12 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         game.RemoveNonAchievementAssets();
         Assert::AreEqual({ 2U }, game.Assets().Count());
 
-        game.LoadGame(0U);
+        game.LoadGame(0U, "");
 
         Assert::IsNull(game.Assets().FindAchievement(5U));
         Assert::IsNull(game.Assets().FindAchievement(7U));
@@ -1087,7 +1087,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
         game.mockThreadPool.ExecuteNextTask();
 
@@ -1155,7 +1155,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
         game.mockThreadPool.ExecuteNextTask();
 
@@ -1213,7 +1213,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U, ra::data::context::GameContext::Mode::CompatibilityTest);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321", ra::data::context::GameContext::Mode::CompatibilityTest);
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
         game.mockThreadPool.ExecuteNextTask();
 
@@ -1267,7 +1267,7 @@ public:
             "7:1=2:Ach2b:Desc2b::::Auth2b:25:1234554321:1234555555:::54321\n"
         );
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
         game.mockThreadPool.ExecuteNextTask();
 
@@ -1310,7 +1310,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
         Assert::IsTrue(game.runtime.IsPaused());
 
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
@@ -1338,7 +1338,7 @@ public:
 
         game.runtime.SetPaused(true);
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
         Assert::IsTrue(game.runtime.IsPaused());
 
         game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
@@ -1355,7 +1355,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         /* load game will write the server RP to storage */
         game.ReloadRichPresenceScript();
@@ -1382,7 +1382,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         /* load game will write the server RP to storage */
         game.ReloadRichPresenceScript();
@@ -1409,7 +1409,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         /* load game will write the server RP to storage, so overwrite it now */
         game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom File");
@@ -1429,7 +1429,7 @@ public:
             return true;
         });
 
-        game.LoadGame(1U);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         /* load game will write the server RP to storage, so overwrite it now */
         std::string sFileContents = "...Display:\nFrom File";
@@ -2801,7 +2801,7 @@ public:
         Assert::AreEqual(GameContext::Mode::Normal, game.GetMode());
 
         game.AddNotifyTarget(notifyHarness);
-        game.LoadGame(0U);
+        game.LoadGame(0U, "");
 
         Assert::AreEqual(0U, game.GameId());
         Assert::IsFalse(notifyHarness.m_bNotified);
@@ -2810,7 +2810,7 @@ public:
         Assert::AreEqual(GameContext::Mode::CompatibilityTest, game.GetMode());
         Assert::IsFalse(notifyHarness.m_bNotified);
 
-        game.LoadGame(1U, GameContext::Mode::CompatibilityTest);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321", GameContext::Mode::CompatibilityTest);
         Assert::AreEqual(1U, game.GameId());
         Assert::AreEqual(GameContext::Mode::CompatibilityTest, game.GetMode());
         Assert::IsTrue(notifyHarness.m_bNotified);

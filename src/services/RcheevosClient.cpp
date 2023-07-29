@@ -147,6 +147,52 @@ void RcheevosClient::LoginCallback(int nResult, const char* sErrorMessage,
     delete wrapper;
 }
 
+/* ---- Load Game ----- */
+
+void RcheevosClient::BeginLoadGame(const std::string& sHash, unsigned id,
+                                   rc_client_callback_t fCallback, void* pCallbackData)
+{
+    GSL_SUPPRESS_R3
+    auto* pCallbackWrapper = new CallbackWrapper(m_pClient.get(), fCallback, pCallbackData);
+    BeginLoadGame(sHash.c_str(), id, pCallbackWrapper);
+}
+
+rc_client_async_handle_t* RcheevosClient::BeginLoadGame(const char* sHash, unsigned id,
+                                                        CallbackWrapper* pCallbackWrapper) noexcept
+{
+    auto* client = GetClient();
+
+    if (id != 0)
+    {
+        auto* client_hash = rc_client_find_game_hash(client, sHash);
+        if (ra::to_signed(client_hash->game_id) < 0)
+            client_hash->game_id = id;
+    }
+
+    return rc_client_begin_load_game(client, sHash, RcheevosClient::LoadGameCallback, pCallbackWrapper);
+}
+
+GSL_SUPPRESS_CON3
+void RcheevosClient::LoadGameCallback(int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata)
+{
+    if (nResult == RC_OK || nResult == RC_NO_GAME_LOADED)
+    {
+        // initialize the game context
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+        pGameContext.InitializeFromRcheevosClient();
+    }
+    else
+    {
+
+    }
+
+    auto* wrapper = static_cast<CallbackWrapper*>(pUserdata);
+    Expects(wrapper != nullptr);
+    wrapper->DoCallback(nResult, sErrorMessage);
+
+    delete wrapper;
+}
+
 #ifdef RC_CLIENT_SUPPORTS_EXTERNAL
 
 class RcheevosClientExports : private RcheevosClient

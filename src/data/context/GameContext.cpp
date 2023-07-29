@@ -26,6 +26,7 @@
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\ILocalStorage.hh"
+#include "services\RcheevosClient.hh"
 #include "services\impl\FileTextReader.hh"
 #include "services\impl\FileTextWriter.hh"
 #include "services\impl\StringTextReader.hh"
@@ -37,11 +38,13 @@
 #include "ui\viewmodels\ScoreboardViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
+#include <rcheevos\src\rcheevos\rc_client_internal.h>
+
 namespace ra {
 namespace data {
 namespace context {
 
-void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
+void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, Mode nMode)
 {
     OnBeforeActiveGameChanged();
 
@@ -101,6 +104,58 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
     }
 
     // download the game data
+#if 1
+    ra::services::RcheevosClient::Synchronizer pSynchronizer;
+
+    auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+    pClient.BeginLoadGame(sGameHash, nGameId,
+        [](int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata) {
+            auto* pSynchronizer = static_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
+            Expects(pSynchronizer != nullptr);
+
+            if (nResult != RC_OK)
+            {
+                auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+                pGameContext.m_nGameId = 0;
+
+                pSynchronizer->SetErrorMessage(sErrorMessage);
+            }
+
+            pSynchronizer->Notify();
+        },
+        &pSynchronizer);
+
+    // TODO: does this have to be synchronous? function returns void
+    pSynchronizer.Wait();
+
+    if (!pSynchronizer.GetErrorMessage().empty())
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to load game data",
+                                                                  ra::Widen(pSynchronizer.GetErrorMessage()));
+    }
+    else
+    {
+        auto* pGame = rc_client_get_game_info(pClient.GetClient());
+        if (pGame != nullptr && pGame->id != 0)
+        {
+            rc_client_user_game_summary_t pSummary;
+            rc_client_get_user_game_summary(pClient.GetClient(), &pSummary);
+
+            // show "game loaded" popup
+            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+            std::wstring sDescription =
+                ra::StringPrintf(L"%u achievements, %u points", pSummary.num_core_achievements, pSummary.points_core);
+            if (pSummary.num_unsupported_achievements)
+                sDescription += ra::StringPrintf(L" (%u unsupported)", pSummary.num_unsupported_achievements);
+
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                ra::StringPrintf(L"Loaded %s", pGame->title), sDescription,
+                ra::StringPrintf(L"You have earned %u achievements", pSummary.num_unlocked_achievements),
+                ra::ui::ImageType::Icon, m_sGameImage);
+        }
+    }
+#else
+
     ra::api::FetchGameData::Request request;
     request.GameId = nGameId;
 
@@ -296,12 +351,124 @@ void GameContext::LoadGame(unsigned int nGameId, Mode nMode)
 
     // get user unlocks asynchronously
     RefreshUnlocks(!bWasPaused, nPopup);
+#endif
 
     // finish up
     m_vAssets.EndUpdate();
 
     EndLoad();
     OnActiveGameChanged();
+}
+
+void GameContext::InitializeFromRcheevosClient()
+{
+    const auto* pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
+    const auto* pGame = rc_client_get_game_info(pClient);
+    m_sGameTitle = ra::Widen(pGame->title);
+
+#ifndef RA_UTEST
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+#endif
+
+    for (auto* pSubset = pClient->game->subsets; pSubset; pSubset = pSubset->next)
+    {
+        // achievements
+        auto* pAchievementData = pSubset->achievements;
+        auto* pAchievementStop = pAchievementData + pSubset->public_.num_achievements;
+        for (; pAchievementData < pAchievementStop; ++pAchievementData)
+        {
+            // if the server has provided an unexpected category (usually 0), ignore it.
+            ra::data::models::AssetCategory nCategory;
+            switch (pAchievementData->public_.category)
+            {
+                case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
+                    nCategory = ra::data::models::AssetCategory::Core;
+                    break;
+                case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL:
+                    nCategory = ra::data::models::AssetCategory::Unofficial;
+                    break;
+                default:
+                    continue;
+            }
+
+            auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
+            vmAchievement->SetID(pAchievementData->public_.id);
+            vmAchievement->SetName(ra::Widen(pAchievementData->public_.title));
+            vmAchievement->SetDescription(ra::Widen(pAchievementData->public_.description));
+            vmAchievement->SetCategory(nCategory);
+            vmAchievement->SetPoints(pAchievementData->public_.points);
+            //vmAchievement->SetAuthor(ra::Widen(pAchievementData->author));
+            vmAchievement->SetBadge(ra::Widen(pAchievementData->public_.badge_name));
+            //vmAchievement->SetTrigger(pAchievementData->trigger);
+            //vmAchievement->SetCreationTime(pAchievementData->created);
+            //vmAchievement->SetUpdatedTime(pAchievementData->updated);
+            vmAchievement->CreateServerCheckpoint();
+            vmAchievement->CreateLocalCheckpoint();
+
+            switch (pAchievementData->public_.state)
+            {
+                case RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE:
+                    vmAchievement->SetState(ra::data::models::AssetState::Active);
+                    break;
+                case RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE:
+                    vmAchievement->SetState(ra::data::models::AssetState::Inactive);
+                    break;
+                case RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED:
+                    vmAchievement->SetState(ra::data::models::AssetState::Triggered);
+                    break;
+                case RC_CLIENT_ACHIEVEMENT_STATE_DISABLED:
+                    vmAchievement->SetState(ra::data::models::AssetState::Disabled);
+                    break;
+            }
+
+            m_vAssets.Append(std::move(vmAchievement));
+
+#ifndef RA_UTEST
+            // prefetch the achievement image
+            pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievementData->public_.badge_name);
+#endif
+        }
+
+        // leaderboards
+        auto* pLeaderboardData = pSubset->leaderboards;
+        auto* pLeaderboardStop = pLeaderboardData + pSubset->public_.num_leaderboards;
+        for (; pLeaderboardData < pLeaderboardStop; ++pLeaderboardData)
+        {
+            auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
+            vmLeaderboard->SetID(pLeaderboardData->public_.id);
+            vmLeaderboard->SetName(ra::Widen(pLeaderboardData->public_.title));
+            vmLeaderboard->SetDescription(ra::Widen(pLeaderboardData->public_.description));
+            vmLeaderboard->SetCategory(ra::data::models::AssetCategory::Core);
+            vmLeaderboard->SetValueFormat(ra::itoe<ValueFormat>(pLeaderboardData->format));
+            vmLeaderboard->SetLowerIsBetter(pLeaderboardData->public_.lower_is_better);
+            //vmLeaderboard->SetHidden(pLeaderboardData->hidden);
+            //vmLeaderboard->SetDefinition(pLeaderboardData.Definition);
+            vmLeaderboard->CreateServerCheckpoint();
+            vmLeaderboard->CreateLocalCheckpoint();
+
+            switch (pAchievementData->public_.state)
+            {
+                case RC_CLIENT_LEADERBOARD_STATE_ACTIVE:
+                    vmLeaderboard->SetState(ra::data::models::AssetState::Active);
+                    break;
+                case RC_CLIENT_LEADERBOARD_STATE_INACTIVE:
+                    vmLeaderboard->SetState(ra::data::models::AssetState::Inactive);
+                    break;
+                case RC_CLIENT_LEADERBOARD_STATE_TRACKING:
+                    vmLeaderboard->SetState(ra::data::models::AssetState::Primed);
+                    break;
+                case RC_CLIENT_LEADERBOARD_STATE_DISABLED:
+                    vmLeaderboard->SetState(ra::data::models::AssetState::Disabled);
+                    break;
+            }
+
+            m_vAssets.Append(std::move(vmLeaderboard));
+        }
+    }
+
+    // merge local assets
+    std::vector<ra::data::models::AssetModelBase*> vEmptyAssetsList;
+    m_vAssets.ReloadAssets(vEmptyAssetsList);
 }
 
 void GameContext::OnBeforeActiveGameChanged()

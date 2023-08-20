@@ -34,6 +34,31 @@ public:
         pResponse.nHttpStatus = 200;
     }
 
+    void OnBeforeResponse(const std::string& sRequestParams, std::function<void()>&& fHandler)
+    {
+        for (auto& pResponse : m_vResponses)
+        {
+            if (pResponse.sRequestParams == sRequestParams)
+            {
+                pResponse.fBeforeResponse = fHandler;
+                return;
+            }
+        }
+
+        Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(
+            ra::StringPrintf(L"No response registered for: %s", sRequestParams).c_str());
+    }
+
+    void MockUser(const std::string& sUsername, const std::string& sApiToken)
+    { 
+        m_sUsername = sUsername;
+        m_sApiToken = sApiToken;
+        GetClient()->user.username = m_sUsername.c_str();
+        GetClient()->user.display_name = m_sUsername.c_str();
+        GetClient()->user.token = m_sApiToken.c_str();
+        GetClient()->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
+    }
+
     void AssertCalled(const std::string& sRequestParams) const
     {
         for (auto& pResponse : m_vResponses)
@@ -75,6 +100,9 @@ private:
             {
                 pResponse.bSeen = true;
 
+                if (pResponse.fBeforeResponse)
+                    pResponse.fBeforeResponse();
+
                 rc_api_server_response_t pServerResponse;
                 memset(&pServerResponse, 0, sizeof(pServerResponse));
                 pServerResponse.http_status_code = pResponse.nHttpStatus;
@@ -102,9 +130,13 @@ private:
         bool bSeen = 0;
         rc_client_server_callback_t fAsyncCallback = nullptr;
         void* pAsyncCallbackData = nullptr;
+        std::function<void()> fBeforeResponse = nullptr;
     } MockApiResponse;
 
     std::vector<MockApiResponse> m_vResponses;
+
+    std::string m_sUsername;
+    std::string m_sApiToken;
 };
 
 } // namespace mocks

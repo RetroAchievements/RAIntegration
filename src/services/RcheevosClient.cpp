@@ -16,6 +16,7 @@
 #include "RA_Log.h"
 #include "RA_StringUtils.h"
 
+#include <rcheevos\include\rc_api_runtime.h>
 #include <rcheevos\src\rcheevos\rc_internal.h>
 #include <rcheevos\src\rcheevos\rc_client_internal.h>
 
@@ -24,11 +25,52 @@
 namespace ra {
 namespace services {
 
+static int CanSubmit()
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
+        return 0;
+
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    if (pEmulatorContext.WasMemoryModified())
+        return 0;
+
+    if (pEmulatorContext.IsMemoryInsecure())
+        return 0;
+
+    return 1;
+}
+
+static int CanSubmitAchievementUnlock(uint32_t nAchievementId, rc_client_t* client)
+{
+    if (!CanSubmit())
+        return 0;
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pAchievement = pGameContext.Assets().FindAchievement(nAchievementId);
+    if (pAchievement == nullptr || pAchievement->GetChanges() != ra::data::models::AssetChanges::None)
+        return 0;
+
+    return 1;
+}
+
+static int CanSubmitLeaderboardEntry(uint32_t nLeaderboardId, rc_client_t* client)
+{
+    return CanSubmit();
+}
+
 RcheevosClient::RcheevosClient()
 {
     m_pClient.reset(rc_client_create(RcheevosClient::ReadMemory, RcheevosClient::ServerCallAsync));
 
+    m_pClient->callbacks.can_submit_achievement_unlock = CanSubmitAchievementUnlock;
+    m_pClient->callbacks.can_submit_leaderboard_entry = CanSubmitLeaderboardEntry;
+
+#ifndef RA_UTEST
     rc_client_enable_logging(m_pClient.get(), RC_CLIENT_LOG_LEVEL_VERBOSE, RcheevosClient::LogMessage);
+#endif
+
+    rc_client_set_unofficial_enabled(m_pClient.get(), 1);
 }
 
 RcheevosClient::~RcheevosClient()
@@ -153,8 +195,38 @@ void RcheevosClient::BeginLoadGame(const std::string& sHash, unsigned id,
                                    rc_client_callback_t fCallback, void* pCallbackData)
 {
     GSL_SUPPRESS_R3
-    auto* pCallbackWrapper = new CallbackWrapper(m_pClient.get(), fCallback, pCallbackData);
+    auto* pCallbackWrapper = new LoadGameCallbackWrapper(m_pClient.get(), fCallback, pCallbackData);
     BeginLoadGame(sHash.c_str(), id, pCallbackWrapper);
+}
+
+void RcheevosClient::PostProcessGameDataResponse(const rc_api_server_response_t* server_response,
+    struct rc_api_fetch_game_data_response_t* game_data_response,
+    rc_client_t* client, void* pUserdata)
+{
+    auto* wrapper = static_cast<LoadGameCallbackWrapper*>(pUserdata);
+    Expects(wrapper != nullptr);
+
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+
+    auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
+    pRichPresence->SetScript(game_data_response->rich_presence_script);
+    pRichPresence->CreateServerCheckpoint();
+    pRichPresence->CreateLocalCheckpoint();
+    pGameContext.Assets().Append(std::move(pRichPresence));
+
+#ifndef RA_UTEST
+    // prefetch the game icon
+    if (client->game)
+    {
+        auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+        pImageRepository.FetchImage(ra::ui::ImageType::Icon, client->game->public_.badge_name);
+    }
+#endif
+
+    const rc_api_achievement_definition_t* pAchievement = game_data_response->achievements;
+    const rc_api_achievement_definition_t* pAchievementStop = pAchievement + game_data_response->num_achievements;
+    for (; pAchievement < pAchievementStop; ++pAchievement)
+        wrapper->m_mAchievementDefinitions[pAchievement->id] = pAchievement->definition;
 }
 
 rc_client_async_handle_t* RcheevosClient::BeginLoadGame(const char* sHash, unsigned id,
@@ -169,25 +241,29 @@ rc_client_async_handle_t* RcheevosClient::BeginLoadGame(const char* sHash, unsig
             client_hash->game_id = id;
     }
 
+    client->callbacks.post_process_game_data_response = PostProcessGameDataResponse;
+
     return rc_client_begin_load_game(client, sHash, RcheevosClient::LoadGameCallback, pCallbackWrapper);
 }
 
 GSL_SUPPRESS_CON3
-void RcheevosClient::LoadGameCallback(int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata)
+void RcheevosClient::LoadGameCallback(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata)
 {
+    auto* wrapper = static_cast<LoadGameCallbackWrapper*>(pUserdata);
+    Expects(wrapper != nullptr);
+
     if (nResult == RC_OK || nResult == RC_NO_GAME_LOADED)
     {
         // initialize the game context
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-        pGameContext.InitializeFromRcheevosClient();
+        pGameContext.InitializeFromRcheevosClient(wrapper->m_mAchievementDefinitions,
+                                                  wrapper->m_mLeaderboardDefinitions);
     }
     else
     {
 
     }
 
-    auto* wrapper = static_cast<CallbackWrapper*>(pUserdata);
-    Expects(wrapper != nullptr);
     wrapper->DoCallback(nResult, sErrorMessage);
 
     delete wrapper;

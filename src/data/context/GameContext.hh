@@ -35,7 +35,8 @@ public:
     /// <summary>
     /// Loads the data from the game currently loaded in the RcheevosClient.
     /// </summary>
-    void InitializeFromRcheevosClient();
+    void InitializeFromRcheevosClient(const std::map<uint32_t, std::string> mAchievementDefinitions,
+                                      const std::map<uint32_t, std::string> mLeaderboardDefinitions);
 
     /// <summary>
     /// Determines whether a game is being loaded.

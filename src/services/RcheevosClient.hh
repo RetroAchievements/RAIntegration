@@ -13,6 +13,9 @@
 
 #include <rcheevos\include\rc_client.h>
 
+struct rc_api_fetch_game_data_response_t;
+
+
 namespace ra {
 namespace services {
 
@@ -47,7 +50,7 @@ public:
 #ifdef RA_UTEST
             // unit tests are single-threaded. if m_bWaiting is true, it would wait indefinitely.
             if (m_bWaiting)
-                throw std::runtime_error("Sycnhronous request was not handled");
+                Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(L"Sycnhronous request was not handled.");
 #else
             std::unique_lock<std::mutex> lock(m_pMutex);
             if (m_bWaiting)
@@ -119,8 +122,23 @@ private:
                                                   CallbackWrapper* pCallbackWrapper) noexcept;
     static void LoginCallback(int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata);
 
+    class LoadGameCallbackWrapper : public CallbackWrapper
+    {
+    public:
+        LoadGameCallbackWrapper(rc_client_t* client, rc_client_callback_t callback, void* callback_userdata) noexcept :
+            CallbackWrapper(client, callback, callback_userdata)
+        {}
+
+        std::map<uint32_t, std::string> m_mAchievementDefinitions;
+        std::map<uint32_t, std::string> m_mLeaderboardDefinitions;
+    };
+
     rc_client_async_handle_t* BeginLoadGame(const char* sHash, unsigned id, CallbackWrapper* pCallbackWrapper) noexcept;
     static void LoadGameCallback(int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata);
+
+    static void PostProcessGameDataResponse(const rc_api_server_response_t* server_response,
+                                            struct rc_api_fetch_game_data_response_t* game_data_response,
+                                            rc_client_t* client, void* pUserdata);
 };
 
 } // namespace services

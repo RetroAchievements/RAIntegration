@@ -8,6 +8,8 @@
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
+#include <rcheevos/src/rcheevos/rc_version.h>
+
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
 
@@ -19,6 +21,7 @@
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
+#include "tests\mocks\MockRcheevosClient.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockThreadPool.hh"
@@ -62,6 +65,7 @@ public:
         ra::services::mocks::MockLocalStorage mockStorage;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockAudioSystem mockAudioSystem;
+        ra::services::mocks::MockRcheevosClient mockRcheevosClient;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulator;
@@ -141,6 +145,45 @@ public:
             }
         }
 
+        void MockLoadGameAPIs(unsigned nGameID, const std::string& sHash,
+            const std::string& sUnlocks = "", const std::string& sAchievements = "",
+            const std::string& sLeaderboards = "", const std::string& sRichPresence = "",
+            ConsoleID nConsoleID = ConsoleID::MegaDrive)
+        {
+            mockConsoleContext.SetId(nConsoleID);
+            mockConsoleContext.SetName(ra::Widen(rc_console_name(static_cast<int>(nConsoleID))));
+
+            mockRcheevosClient.MockUser("Username", "ApiToken");
+            mockRcheevosClient.MockResponse("r=gameid&m=" + sHash,
+                "{\"Success\":true,\"GameID\":" + std::to_string(nGameID) + "}");
+            mockRcheevosClient.MockResponse(
+                "r=patch&u=Username&t=ApiToken&g=" + std::to_string(nGameID),
+                "{\"Success\":true,\"PatchData\":{"
+                    "\"ID\":" + std::to_string(nGameID) + "," +
+                    "\"Title\":\"GameTitle\"," +
+                    "\"ConsoleID\":" + std::to_string(ra::etoi(nConsoleID)) + "," +
+                    "\"ImageIcon\":\"/Images/9743.png\","
+                    "\"Achievements\":[" + sAchievements + "],"
+                    "\"Leaderboards\":[" + sLeaderboards + "],"
+                    "\"RichPresencePatch\":\"" + sRichPresence + "\""
+                "}}");
+            mockRcheevosClient.MockResponse(
+                "r=startsession&u=Username&t=ApiToken&g=" + std::to_string(nGameID) +
+                                                "&l=" RCHEEVOS_VERSION_STRING,
+                sUnlocks.empty() ? "{\"Success\":true}" : "{\"Success\":true," + sUnlocks + "}");
+        }
+
+        std::string MockAchievementJson(unsigned nAchievementID, unsigned nPoints,
+            const std::string sMemAddr = "1=1")
+        {
+            const std::string sAchievementID = std::to_string(nAchievementID);
+            return "{\"ID\":" + sAchievementID + ",\"Title\":\"Ach" + sAchievementID + "\"," +
+                "\"Description\":\"Desc" + sAchievementID + "\",\"Flags\":3," +
+                "\"Points\":" + std::to_string(nPoints) + ",\"MemAddr\":\"" + sMemAddr + "\"," +
+                "\"Author\":\"User1\",\"BadgeName\":\"00234\"," +
+                "\"Created\":1367266583,\"Modified\":1376929305}";
+        }
+
     private:
         ra::data::models::RichPresenceModel* GetRichPresence()
         {
@@ -197,44 +240,20 @@ public:
     TEST_METHOD(TestLoadGameTitle)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request& request, ra::api::FetchGameData::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-
-            response.Title = L"Game";
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         Assert::AreEqual(1U, game.GameId());
         Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, game.GetMode());
-        Assert::AreEqual(std::wstring(L"Game"), game.GameTitle());
+        Assert::AreEqual(std::wstring(L"GameTitle"), game.GameTitle());
     }
 
     TEST_METHOD(TestLoadGamePopup)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request& request, ra::api::FetchGameData::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-
-            auto& ach1 = response.Achievements.emplace_back();
-            ach1.Id = 5;
-            ach1.Title = "Ach1";
-            ach1.Description = "Desc1";
-            ach1.Author = "Auth1";
-            ach1.BadgeName = "12345";
-            ach1.CategoryId = 3;
-            ach1.Created = 1234567890;
-            ach1.Updated = 1234599999;
-            ach1.Definition = "1=1";
-            ach1.Points = 5;
-
-            response.Title = L"GameTitle";
-            response.ImageIcon = "9743";
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+            game.MockAchievementJson(123U, 5U));
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
@@ -251,14 +270,7 @@ public:
     TEST_METHOD(TestLoadGameTitleConsoleMismatch)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request& request, ra::api::FetchGameData::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-
-            response.Title = L"Game";
-            response.ConsoleId = ra::etoi(ConsoleID::MegaDrive);
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
         game.mockConsoleContext.SetId(ConsoleID::MasterSystem);
         game.mockConsoleContext.SetName(L"Master System");
@@ -283,15 +295,7 @@ public:
     TEST_METHOD(TestLoadGameTitleConsoleMismatchGBvGBC)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request& request, ra::api::FetchGameData::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-
-            response.Title = L"Game";
-            response.ConsoleId = ra::etoi(ConsoleID::GB);
-            response.ImageIcon = "9743";
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", "", ConsoleID::GB);
 
         game.mockConsoleContext.SetId(ConsoleID::GBC);
         game.mockConsoleContext.SetName(L"GameBoy Color");
@@ -310,7 +314,7 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Loaded Game"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"0 achievements, 0 points"), pPopup->GetDescription());
         Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
 
@@ -320,15 +324,7 @@ public:
     TEST_METHOD(TestLoadGameTitleConsoleMismatchDSvDSi)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request& request, ra::api::FetchGameData::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-
-            response.Title = L"Game";
-            response.ConsoleId = ra::etoi(ConsoleID::DS);
-            response.ImageIcon = "9743";
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", "", ConsoleID::DS);
 
         game.mockConsoleContext.SetId(ConsoleID::DSi);
         game.mockConsoleContext.SetName(L"Nintendo DSi");
@@ -347,7 +343,7 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Loaded Game"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"0 achievements, 0 points"), pPopup->GetDescription());
         Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
 
@@ -357,15 +353,7 @@ public:
     TEST_METHOD(TestLoadGameTitleConsoleMismatchNESvEvent)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>(
-            [](const ra::api::FetchGameData::Request& request, ra::api::FetchGameData::Response& response) {
-                Assert::AreEqual(1U, request.GameId);
-
-                response.Title = L"Event";
-                response.ConsoleId = RC_CONSOLE_EVENTS;
-                response.ImageIcon = "9743";
-                return true;
-            });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", "", static_cast<ConsoleID>(RC_CONSOLE_EVENTS));
 
         game.mockConsoleContext.SetId(ConsoleID::NES);
         game.mockConsoleContext.SetName(L"Nintendo");
@@ -384,7 +372,7 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Loaded Event"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"0 achievements, 0 points"), pPopup->GetDescription());
         Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
 
@@ -404,12 +392,8 @@ public:
         NotifyHarness notifyHarness;
 
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.Title = L"GameTitle";
-            response.ImageIcon = "9743";
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
+        game.MockLoadGameAPIs(2U, "fedcba9876543210123456789abcdef");
 
         game.AddNotifyTarget(notifyHarness);
         game.LoadGame(0U, "");
@@ -422,7 +406,7 @@ public:
         Assert::IsTrue(notifyHarness.m_bNotified);
 
         notifyHarness.m_bNotified = false;
-        game.LoadGame(2U, "0123456789abcdeffedcba987654321");
+        game.LoadGame(2U, "fedcba9876543210123456789abcdef");
         Assert::AreEqual(2U, game.GameId());
         Assert::IsTrue(notifyHarness.m_bNotified);
 
@@ -433,7 +417,7 @@ public:
 
         notifyHarness.m_bNotified = false;
         game.RemoveNotifyTarget(notifyHarness);
-        game.LoadGame(2U, "0123456789abcdeffedcba987654321");
+        game.LoadGame(2U, "fedcba9876543210123456789abcdef");
         Assert::AreEqual(2U, game.GameId());
         Assert::IsFalse(notifyHarness.m_bNotified);
     }
@@ -441,11 +425,8 @@ public:
     TEST_METHOD(TestLoadGameRichPresence)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.RichPresence = "Display:\nHello, World";
-            return true;
-        });
+        const std::string sRichPresence = "Display:\nHello, World";
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
@@ -465,11 +446,8 @@ public:
     TEST_METHOD(TestLoadGameDoesNotOverwriteRichPresenceFromFile)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.RichPresence = "Display:\nHello, World";
-            return true;
-        });
+        const std::string sRichPresence = "Display:\nHello, World";
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
 
         game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom File\n");
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
@@ -492,13 +470,11 @@ public:
     TEST_METHOD(TestLoadGameRichPresenceUpdatedFromServer)
     {
         GameContextHarness game;
+        const std::string sRichPresence = "Display:\nHello, World";
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
+
         game.mockStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1", "{\"RichPresencePatch\": \"Display:\\nOld\\n\"}");
         game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nOld\n");
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.RichPresence = "Display:\nHello, World";
-            return true;
-        });
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
@@ -518,13 +494,11 @@ public:
     TEST_METHOD(TestLoadGameRichPresenceUpdatedFromServerLocalModifications)
     {
         GameContextHarness game;
+        const std::string sRichPresence = "Display:\nHello, World";
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
+
         game.mockStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1", "{\"RichPresencePatch\": \"Display:\\nOld\\n\"}");
         game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nLocal\n");
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.RichPresence = "Display:\nHello, World";
-            return true;
-        });
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
@@ -544,11 +518,9 @@ public:
     TEST_METHOD(TestLoadGameRichPresenceNotOnServer)
     {
         GameContextHarness game;
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
+
         game.mockStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1", "{\"RichPresencePatch\": null}");
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
-        {
-            return true;
-        });
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
@@ -563,11 +535,7 @@ public:
     TEST_METHOD(TestLoadGameNoRichPresence)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>(
-            [](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response) {
-                response.RichPresence = "";
-                return true;
-            });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
@@ -583,11 +551,7 @@ public:
     TEST_METHOD(TestLoadGameRichPresenceOnlyFromFile)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>(
-            [](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response) {
-                response.RichPresence = "";
-                return true;
-            });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
         game.mockStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom File\n");
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
@@ -608,33 +572,14 @@ public:
     TEST_METHOD(TestLoadGameAchievements)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            auto& ach1 = response.Achievements.emplace_back();
-            ach1.Id = 5;
-            ach1.Title = "Ach1";
-            ach1.Description = "Desc1";
-            ach1.Author = "Auth1";
-            ach1.BadgeName = "12345";
-            ach1.CategoryId = 3;
-            ach1.Created = 1234567890;
-            ach1.Updated = 1234599999;
-            ach1.Definition = "1=1";
-            ach1.Points = 5;
-
-            auto& ach2 = response.Achievements.emplace_back();
-            ach2.Id = 7;
-            ach2.Title = "Ach2";
-            ach2.Description = "Desc2";
-            ach2.Author = "Auth2";
-            ach2.BadgeName = "12345";
-            ach2.CategoryId = 5;
-            ach2.Created = 1234567890;
-            ach2.Updated = 1234599999;
-            ach2.Definition = "1=1";
-            ach2.Points = 15;
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+             "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+               "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999},"
+             "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":5,"
+               "\"Points\":15,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999}"
+        );
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
@@ -671,38 +616,32 @@ public:
     TEST_METHOD(TestLoadGameInvalidAchievementFlags)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            auto& ach1 = response.Achievements.emplace_back();
-            ach1.Id = 5;
-            ach1.Title = "Ach1";
-            ach1.Description = "Desc1";
-            ach1.Author = "Auth1";
-            ach1.BadgeName = "12345";
-            ach1.CategoryId = 0; // not a valid category
-            ach1.Created = 1234567890;
-            ach1.Updated = 1234599999;
-            ach1.Definition = "1=1";
-            ach1.Points = 5;
-
-            auto& ach2 = response.Achievements.emplace_back();
-            ach2.Id = 7;
-            ach2.Title = "Ach2";
-            ach2.Description = "Desc2";
-            ach2.Author = "Auth2";
-            ach2.BadgeName = "12345";
-            ach2.CategoryId = 5;
-            ach2.Created = 1234567890;
-            ach2.Updated = 1234599999;
-            ach2.Definition = "1=1";
-            ach2.Points = 15;
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+             "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":0," // not a valid Flags
+               "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999},"
+             "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":5,"
+               "\"Points\":15,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999}"
+        );
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         game.RemoveNonAchievementAssets();
-        Assert::AreEqual({ 1U }, game.Assets().Count());
+        Assert::AreEqual({ 2U }, game.Assets().Count());
+
+        const auto* vmAch1 = game.Assets().FindAchievement(5U);
+        Assert::IsNotNull(vmAch1);
+        Ensures(vmAch1 != nullptr);
+        Assert::AreEqual(5U, vmAch1->GetID());
+        Assert::AreEqual(std::wstring(L"Ach1"), vmAch1->GetName());
+        Assert::AreEqual(std::wstring(L"Desc1"), vmAch1->GetDescription());
+        Assert::AreEqual(std::wstring(L"Auth1"), vmAch1->GetAuthor());
+        Assert::AreEqual(ra::data::models::AssetCategory::Unofficial, vmAch1->GetCategory());
+        Assert::AreEqual(5, vmAch1->GetPoints());
+        Assert::AreEqual(std::wstring(L"12345"), vmAch1->GetBadge());
+        Assert::AreEqual(std::string("1=1"), vmAch1->GetTrigger());
+        Assert::IsFalse(vmAch1->IsModified());
 
         const auto* vmAch2 = game.Assets().FindAchievement(7U);
         Assert::IsNotNull(vmAch2);
@@ -720,33 +659,14 @@ public:
     TEST_METHOD(TestLoadGameMergeLocalAchievements)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            auto& ach1 = response.Achievements.emplace_back();
-            ach1.Id = 5;
-            ach1.Title = "Ach1";
-            ach1.Description = "Desc1";
-            ach1.Author = "Auth1";
-            ach1.BadgeName = "12345";
-            ach1.CategoryId = 3;
-            ach1.Created = 1234567890;
-            ach1.Updated = 1234599999;
-            ach1.Definition = "1=1";
-            ach1.Points = 5;
-
-            auto& ach2 = response.Achievements.emplace_back();
-            ach2.Id = 7;
-            ach2.Title = "Ach2";
-            ach2.Description = "Desc2";
-            ach2.Author = "Auth2";
-            ach2.BadgeName = "12345";
-            ach2.CategoryId = 5;
-            ach2.Created = 1234567890;
-            ach2.Updated = 1234599999;
-            ach2.Definition = "1=1";
-            ach2.Points = 15;
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+             "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+               "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999},"
+             "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":5,"
+               "\"Points\":15,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999}"
+        );
 
         game.mockStorage.MockStoredData(ra::services::StorageItemType::UserAchievements, L"1",
             "Version\n"
@@ -809,10 +729,7 @@ public:
     TEST_METHOD(TestLoadGameMergeLocalAchievementsWithIds)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
-        {
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
         game.mockStorage.MockStoredData(ra::services::StorageItemType::UserAchievements, L"1",
             "Version\n"
@@ -879,24 +796,12 @@ public:
     TEST_METHOD(TestLoadGameLeaderboards)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            auto& lb1 = response.Leaderboards.emplace_back();
-            lb1.Id = 7U;
-            lb1.Title = "LB1";
-            lb1.Description = "Desc1";
-            lb1.Definition = "STA:1=1::CAN:1=1::SUB:1=1::VAL:1";
-            lb1.Format = RC_FORMAT_SECONDS;
-
-            auto& lb2 = response.Leaderboards.emplace_back();
-            lb2.Id = 8U;
-            lb2.Title = "LB2";
-            lb2.Description = "Desc2";
-            lb2.Definition = "STA:1=1::CAN:1=1::SUB:1=1::VAL:1";
-            lb2.Format = RC_FORMAT_FRAMES;
-
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "",
+            "{\"ID\":7,\"Title\":\"LB1\",\"Description\":\"Desc1\","
+             "\"Mem\":\"STA:1=1::CAN:1=1::SUB:1=1::VAL:1\",\"Format\":\"SECS\"},"
+            "{\"ID\":8,\"Title\":\"LB2\",\"Description\":\"Desc2\","
+             "\"Mem\":\"STA:1=1::CAN:1=1::SUB:1=1::VAL:1\",\"Format\":\"FRAMES\"}"
+        );
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
@@ -916,65 +821,27 @@ public:
     TEST_METHOD(TestLoadGameReplacesAchievements)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            auto& ach1 = response.Achievements.emplace_back();
-            ach1.Id = 5;
-            ach1.Title = "Ach1";
-            ach1.Description = "Desc1";
-            ach1.Author = "Auth1";
-            ach1.BadgeName = "12345";
-            ach1.CategoryId = 3;
-            ach1.Created = 1234567890;
-            ach1.Updated = 1234599999;
-            ach1.Definition = "1=1";
-            ach1.Points = 5;
-
-            auto& ach2 = response.Achievements.emplace_back();
-            ach2.Id = 7;
-            ach2.Title = "Ach2";
-            ach2.Description = "Desc2";
-            ach2.Author = "Auth2";
-            ach2.BadgeName = "12345";
-            ach2.CategoryId = 5;
-            ach2.Created = 1234567890;
-            ach2.Updated = 1234599999;
-            ach2.Definition = "1=1";
-            ach2.Points = 15;
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+             "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+               "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999},"
+             "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":5,"
+               "\"Points\":15,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999}"
+        );
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            auto& ach1 = response.Achievements.emplace_back();
-            ach1.Id = 9;
-            ach1.Title = "Ach9";
-            ach1.Description = "Desc9";
-            ach1.Author = "Auth9";
-            ach1.BadgeName = "12345";
-            ach1.CategoryId = 3;
-            ach1.Created = 1234567890;
-            ach1.Updated = 1234599999;
-            ach1.Definition = "1=1";
-            ach1.Points = 9;
+        game.MockLoadGameAPIs(2U, "fedcba9876543210123456789abcdef", "",
+             "{\"ID\":9,\"Title\":\"Ach9\",\"Description\":\"Desc9\",\"Flags\":3,"
+               "\"Points\":9,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999},"
+             "{\"ID\":11,\"Title\":\"Ach11\",\"Description\":\"Desc11\",\"Flags\":5,"
+               "\"Points\":11,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999}"
+        );
 
-            auto& ach2 = response.Achievements.emplace_back();
-            ach2.Id = 11;
-            ach2.Title = "Ach11";
-            ach2.Description = "Desc11";
-            ach2.Author = "Auth11";
-            ach2.BadgeName = "12345";
-            ach2.CategoryId = 5;
-            ach2.Created = 1234567890;
-            ach2.Updated = 1234599999;
-            ach2.Definition = "1=1";
-            ach2.Points = 11;
-            return true;
-        });
-
-        game.LoadGame(2U, "0123456789abcdeffedcba987654321");
+        game.LoadGame(2U, "fedcba9876543210123456789abcdef");
 
         Assert::IsNull(game.Assets().FindAchievement(5U));
         Assert::IsNull(game.Assets().FindAchievement(7U));
@@ -1011,33 +878,14 @@ public:
     TEST_METHOD(TestLoadGameZeroRemovesAchievements)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            auto& ach1 = response.Achievements.emplace_back();
-            ach1.Id = 5;
-            ach1.Title = "Ach1";
-            ach1.Description = "Desc1";
-            ach1.Author = "Auth1";
-            ach1.BadgeName = "12345";
-            ach1.CategoryId = 3;
-            ach1.Created = 1234567890;
-            ach1.Updated = 1234599999;
-            ach1.Definition = "1=1";
-            ach1.Points = 5;
-
-            auto& ach2 = response.Achievements.emplace_back();
-            ach2.Id = 7;
-            ach2.Title = "Ach2";
-            ach2.Description = "Desc2";
-            ach2.Author = "Auth2";
-            ach2.BadgeName = "12345";
-            ach2.CategoryId = 5;
-            ach2.Created = 1234567890;
-            ach2.Updated = 1234599999;
-            ach2.Definition = "1=1";
-            ach2.Points = 15;
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+             "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+               "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999},"
+             "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":5,"
+               "\"Points\":15,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+               "\"Created\":1234567890,\"Modified\":123459999}"
+        );
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
@@ -1056,40 +904,17 @@ public:
     TEST_METHOD(TestLoadGameUserUnlocks)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.Title = L"My Game";
-            response.ImageIcon = "3333";
-
-            auto& ach1 = response.Achievements.emplace_back();
-            ach1.Id = 5;
-            ach1.Points = 5;
-            ach1.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
-
-            auto& ach2 = response.Achievements.emplace_back();
-            ach2.Id = 7;
-            ach2.Points = 10;
-            ach2.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
-            return true;
-        });
-
-        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-            Assert::IsFalse(request.Hardcore);
-
-            response.UnlockedAchievements.insert(7U);
-            return true;
-        });
-
-        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
-        {
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321",
+            "\"HardcoreUnlocks\":[{\"ID\":7,\"When\":1234567890}]",
+            "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+              "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999},"
+            "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":3,"
+              "\"Points\":10,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999}"
+        );
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
-        game.mockThreadPool.ExecuteNextTask();
 
         const auto* pAch1 = game.Assets().FindAchievement(5U);
         Assert::IsNotNull(pAch1);
@@ -1104,60 +929,32 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Loaded My Game"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"2 achievements, 15 points"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"You have earned 1 achievements"), pPopup->GetDetail());
-        Assert::AreEqual(std::string("3333"), pPopup->GetImage().Name());
+        Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
     }
 
     TEST_METHOD(TestLoadGameUserUnlocksUnofficial)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.Title = L"My Game";
-            response.ImageIcon = "3333";
-
-            auto& ach1 = response.Achievements.emplace_back();
-            ach1.Id = 5;
-            ach1.Points = 5;
-            ach1.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
-
-            auto& ach2 = response.Achievements.emplace_back();
-            ach2.Id = 7;
-            ach2.Points = 10;
-            ach2.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
-
-            auto& ach3 = response.Achievements.emplace_back();
-            ach3.Id = 9;
-            ach3.Points = 25;
-            ach3.CategoryId = ra::etoi(ra::data::models::AssetCategory::Unofficial);
-
-            auto& ach4 = response.Achievements.emplace_back();
-            ach4.Id = 11;
-            ach4.Points = 50;
-            ach4.CategoryId = ra::etoi(ra::data::models::AssetCategory::Unofficial);
-            return true;
-        });
-
-        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
-        {
-            Assert::AreEqual(1U, request.GameId);
-            Assert::IsFalse(request.Hardcore);
-
-            response.UnlockedAchievements.insert(7U); // core achievement
-            response.UnlockedAchievements.insert(9U); // unofficial achievement
-            return true;
-        });
-
-        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
-        {
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321",
+            "\"HardcoreUnlocks\":[{\"ID\":7,\"When\":1234567890},{\"ID\":9,\"When\":1234567890}]",
+            "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+              "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999},"
+            "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":3,"
+              "\"Points\":10,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999},"
+            "{\"ID\":9,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":5,"
+              "\"Points\":25,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999},"
+            "{\"ID\":11,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":5,"
+              "\"Points\":50,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999}"
+        );
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
-        game.mockThreadPool.ExecuteNextTask();
 
         const auto* pAch1 = game.Assets().FindAchievement(5U);
         Assert::IsNotNull(pAch1);
@@ -1185,37 +982,26 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Loaded My Game"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"2 achievements, 15 points"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"You have earned 1 achievements"), pPopup->GetDetail());
-        Assert::AreEqual(std::string("3333"), pPopup->GetImage().Name());
+        Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
     }
 
     TEST_METHOD(TestLoadGameUserUnlocksCompatibilityMode)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            auto& ach1 = response.Achievements.emplace_back();
-            ach1.Id = 5;
-            ach1.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
-
-            auto& ach2 = response.Achievements.emplace_back();
-            ach2.Id = 7;
-            ach2.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
-            return true;
-        });
-
-        game.mockServer.ExpectUncalled<ra::api::FetchUserUnlocks>();
-
-        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
-        {
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321",
+            "\"HardcoreUnlocks\":[{\"ID\":7,\"When\":1234567890}]",
+            "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+              "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999},"
+            "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":3,"
+              "\"Points\":10,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999}"
+        );
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321", ra::data::context::GameContext::Mode::CompatibilityTest);
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
-        game.mockThreadPool.ExecuteNextTask();
 
         const auto* pAch1 = game.Assets().FindAchievement(5U);
         Assert::IsNotNull(pAch1);
@@ -1231,35 +1017,14 @@ public:
     TEST_METHOD(TestLoadGameUserUnlocksLocalModifications)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.Title = L"My Game";
-            response.ImageIcon = "3333";
-
-            auto& ach1 = response.Achievements.emplace_back();
-            ach1.Id = 5;
-            ach1.Points = 5;
-            ach1.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
-
-            auto& ach2 = response.Achievements.emplace_back();
-            ach2.Id = 7;
-            ach2.Points = 10;
-            ach2.CategoryId = ra::etoi(ra::data::models::AssetCategory::Core);
-            return true;
-        });
-
-        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response&)
-        {
-            Assert::AreEqual(1U, request.GameId);
-            Assert::IsFalse(request.Hardcore);
-
-            return true;
-        });
-
-        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
-        {
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+            "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+              "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999},"
+            "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":3,"
+              "\"Points\":10,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999}"
+        );
 
         game.mockStorage.MockStoredData(ra::services::StorageItemType::UserAchievements, L"1",
             "Version\n"
@@ -1268,8 +1033,6 @@ public:
         );
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
-        game.mockThreadPool.ExecuteNextTask();
 
         const auto* pAch1 = game.Assets().FindAchievement(5U);
         Assert::IsNotNull(pAch1);
@@ -1286,74 +1049,55 @@ public:
         const auto* pPopup = game.mockOverlayManager.GetMessage(1);
         Expects(pPopup != nullptr);
         Assert::IsNotNull(pPopup);
-        Assert::AreEqual(std::wstring(L"Loaded My Game"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
         Assert::AreEqual(std::wstring(L"2 achievements, 15 points"), pPopup->GetDescription());
         Assert::AreEqual(std::wstring(L"You have earned 0 achievements"), pPopup->GetDetail());
-        Assert::AreEqual(std::string("3333"), pPopup->GetImage().Name());
+        Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
     }
 
     TEST_METHOD(TestLoadGamePausesRuntime)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
-        {
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
-        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response&)
-        {
-            return true;
-        });
-
-        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
-        {
-            return true;
-        });
+        bool bBeforeResponseCalled = false;
+        game.mockRcheevosClient.OnBeforeResponse("r=patch&u=Username&t=ApiToken&g=1",
+            [&game, &bBeforeResponseCalled]() {
+                bBeforeResponseCalled = true;
+                Assert::IsTrue(game.runtime.IsPaused());
+            });
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-        Assert::IsTrue(game.runtime.IsPaused());
 
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
-        game.mockThreadPool.ExecuteNextTask();
-        Assert::IsFalse(game.runtime.IsPaused());
+        Assert::IsTrue(bBeforeResponseCalled);    // paused during load
+        Assert::IsFalse(game.runtime.IsPaused()); // not paused after load
     }
 
     TEST_METHOD(TestLoadGameWhileRuntimePaused)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response&)
-        {
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
-        game.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([](const ra::api::FetchUserUnlocks::Request&, ra::api::FetchUserUnlocks::Response&)
-        {
-            return true;
-        });
-
-        game.mockServer.HandleRequest<ra::api::FetchCodeNotes>([](const ra::api::FetchCodeNotes::Request&, ra::api::FetchCodeNotes::Response&)
-        {
-            return true;
-        });
+        bool bBeforeResponseCalled = false;
+        game.mockRcheevosClient.OnBeforeResponse("r=patch&u=Username&t=ApiToken&g=1",
+            [&game, &bBeforeResponseCalled]() {
+                bBeforeResponseCalled = true;
+                Assert::IsTrue(game.runtime.IsPaused());
+            });
 
         game.runtime.SetPaused(true);
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
-        Assert::IsTrue(game.runtime.IsPaused());
 
-        game.mockThreadPool.ExecuteNextTask(); // FetchUserUnlocks and FetchCodeNotes are async
-        game.mockThreadPool.ExecuteNextTask();
-        Assert::IsTrue(game.runtime.IsPaused());
+        Assert::IsTrue(bBeforeResponseCalled);   // paused during load
+        Assert::IsTrue(game.runtime.IsPaused()); // paused after load
     }
 
     TEST_METHOD(TestReloadRichPresenceScriptNoFile)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.RichPresence = "Display:\nHello, World";
-            return true;
-        });
+        const std::string sRichPresence = "Display:\nHello, World";
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
@@ -1376,11 +1120,8 @@ public:
     TEST_METHOD(TestReloadRichPresenceScriptWindowsLineEndings)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.RichPresence = "Display:\r\nHello, World\r\n";
-            return true;
-        });
+        const std::string sRichPresence = "Display:\nHello, World";
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
@@ -1403,11 +1144,8 @@ public:
     TEST_METHOD(TestReloadRichPresenceScript)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.RichPresence = "Display:\nHello, World";
-            return true;
-        });
+        const std::string sRichPresence = "Display:\nHello, World";
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
@@ -1423,16 +1161,12 @@ public:
     TEST_METHOD(TestReloadRichPresenceScriptBOM)
     {
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.RichPresence = "Display:\nHello, World";
-            return true;
-        });
-
+        const std::string sRichPresence = "Display:\nHello, World";
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", sRichPresence);
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         /* load game will write the server RP to storage, so overwrite it now */
-        std::string sFileContents = "...Display:\nFrom File";
+        std::string sFileContents = "\xEF\xBB\xBF" "Display:\nFrom File";
         sFileContents.at(0) = gsl::narrow_cast<char>(0xef);
         sFileContents.at(1) = gsl::narrow_cast<char>(0xbb);
         sFileContents.at(2) = gsl::narrow_cast<char>(0xbf);
@@ -1445,7 +1179,7 @@ public:
         Assert::IsTrue(game.IsRichPresenceFromFile());
 
         /* hash should ignore BOM and convert windows newlines to unix newlines */
-        sFileContents = "...Display:\r\nHello, World";
+        sFileContents = "\xEF\xBB\xBF" "Display:\r\nHello, World";
         sFileContents.at(0) = gsl::narrow_cast<char>(0xef);
         sFileContents.at(1) = gsl::narrow_cast<char>(0xbb);
         sFileContents.at(2) = gsl::narrow_cast<char>(0xbf);
@@ -2791,12 +2525,7 @@ public:
         NotifyHarness notifyHarness;
 
         GameContextHarness game;
-        game.mockServer.HandleRequest<ra::api::FetchGameData>([](const ra::api::FetchGameData::Request&, ra::api::FetchGameData::Response& response)
-        {
-            response.Title = L"GameTitle";
-            response.ImageIcon = "9743";
-            return true;
-        });
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321");
 
         Assert::AreEqual(GameContext::Mode::Normal, game.GetMode());
 

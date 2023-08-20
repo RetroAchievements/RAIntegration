@@ -6,7 +6,6 @@
 #include "RA_Resource.h"
 
 #include "api\IServer.hh"
-#include "api\Login.hh"
 #include "api\impl\OfflineServer.hh"
 
 #include "data\context\ConsoleContext.hh"
@@ -24,6 +23,7 @@
 #include "services\IFileSystem.hh"
 #include "services\Initialization.hh"
 #include "services\PerformanceCounter.hh"
+#include "services\RcheevosClient.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
@@ -267,44 +267,34 @@ API void CCONV _RA_InvokeDialog(LPARAM nID)
     ra::ui::viewmodels::IntegrationMenuViewModel::ActivateMenuItem(gsl::narrow_cast<int>(nID));
 }
 
-static void HandleLoginResponse(const ra::api::Login::Response& response)
+GSL_SUPPRESS_CON3
+static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_client_t* pClient, void*)
 {
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-    if (pUserContext.IsLoginDisabled())
-        return;
-
-    if (response.Succeeded())
+    if (nResult == RC_OK)
     {
-        // initialize the user context
-        pUserContext.Initialize(response.Username, response.DisplayName, response.ApiToken);
-        pUserContext.SetScore(response.Score);
+        ra::ui::viewmodels::LoginViewModel::PostLoginInitialization();
 
-        // load the session information
-        auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
-        pSessionTracker.Initialize(response.Username);
-
-        // show the welcome message
+        // play the login sound
         ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\login.wav");
 
-        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
+        const auto& pSessionTracker = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>();
+        const auto* pUser = rc_client_get_user_info(pClient);
+
+        // show the welcome message
+        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(
+            new ra::ui::viewmodels::PopupMessageViewModel);
         vmMessage->SetTitle(ra::StringPrintf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
-            response.DisplayName.c_str()));
-        vmMessage->SetDescription((response.NumUnreadMessages == 1)
+                                             pUser->display_name));
+        vmMessage->SetDescription((pUser->num_unread_messages == 1)
             ? L"You have 1 new message"
-            : ra::StringPrintf(L"You have %u new messages", response.NumUnreadMessages));
-        vmMessage->SetDetail(ra::StringPrintf(L"%u points", response.Score));
-        vmMessage->SetImage(ra::ui::ImageType::UserPic, response.Username);
+            : ra::StringPrintf(L"You have %u new messages", pUser->num_unread_messages));
+        vmMessage->SetDetail(ra::StringPrintf(L"%u points", pUser->score));
+        vmMessage->SetImage(ra::ui::ImageType::UserPic, pUser->username);
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmMessage);
-
-        // notify the client to update the RetroAchievements menu
-        ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
-
-        // update the client title-bar to include the user name
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator.UpdateWindowTitle();
     }
-    else if (!response.ErrorMessage.empty())
+    else if (sErrorMessage && *sErrorMessage)
     {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", ra::Widen(response.ErrorMessage));
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Login Failed", ra::Widen(sErrorMessage));
     }
     else
     {
@@ -327,23 +317,28 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
     }
     else
     {
-        ra::api::Login::Request request;
-        request.Username = pConfiguration.GetUsername();
-        request.ApiToken = pConfiguration.GetApiToken();
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
 
         if (bBlocking)
         {
-            ra::api::Login::Response response = request.Call();
+            ra::services::RcheevosClient::Synchronizer pSynchronizer;
 
-            // if we're blocking, we can't keep retrying on network failure, but we can retry at least once
-            if (response.Result == ra::api::ApiResult::Incomplete)
-                response = request.Call();
+            pClient.BeginLoginWithToken(pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
+                [](int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata) {
+                    HandleLoginResponse(nResult, sErrorMessage, pClient, nullptr);
 
-            HandleLoginResponse(response);
+                    auto* pSynchronizer = static_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
+                    Expects(pSynchronizer != nullptr);
+                    pSynchronizer->Notify();
+                },
+                &pSynchronizer);
+
+            pSynchronizer.Wait();
         }
         else
         {
-            request.CallAsyncWithRetry(HandleLoginResponse);
+            pClient.BeginLoginWithToken(pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
+                                        HandleLoginResponse, static_cast<void*>(nullptr));
         }
     }
 }

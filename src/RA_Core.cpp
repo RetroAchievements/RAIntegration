@@ -11,6 +11,7 @@
 #include "services\IConfiguration.hh"
 #include "services\IThreadPool.hh"
 #include "services\Initialization.hh"
+#include "services\RcheevosClient.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\IDesktop.hh"
@@ -145,6 +146,8 @@ API int CCONV _RA_Shutdown()
         if (pWindowManager.PointerFinder.IsVisible())
             pDesktop.CloseWindow(pWindowManager.PointerFinder);
     }
+
+    ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>().Shutdown();
 
     ra::services::Initialization::Shutdown();
 

@@ -318,6 +318,7 @@
     <ClCompile Include="..\src\services\Http.cpp" />
     <ClCompile Include="..\src\services\impl\FileLocalStorage.cpp" />
     <ClCompile Include="..\src\services\impl\JsonFileConfiguration.cpp" />
+    <ClCompile Include="..\src\services\RcheevosClient.cpp" />
     <ClCompile Include="..\src\services\SearchResults.cpp" />
     <ClCompile Include="..\src\ui\Theme.cpp" />
     <ClCompile Include="..\src\ui\TransactionalViewModelBase.cpp" />
@@ -357,7 +358,6 @@
     <ClCompile Include="..\src\ui\viewmodels\TriggerViewModel.cpp" />
     <ClCompile Include="..\src\ui\viewmodels\UnknownGameViewModel.cpp" />
     <ClCompile Include="api\ConnectedServer_Tests.cpp" />
-    <ClCompile Include="api\DisconnectedServer_Tests.cpp" />
     <ClInclude Include="..\src\data\models\LeaderboardModel.hh" />
     <ClInclude Include="..\src\RA_Defs.h" />
     <ClCompile Include="..\src\ui\ViewModelBase.cpp" />
@@ -444,6 +444,7 @@
     <ClInclude Include="mocks\MockLocalStorage.hh" />
     <ClInclude Include="mocks\MockOverlayManager.hh" />
     <ClInclude Include="mocks\MockOverlayTheme.hh" />
+    <ClInclude Include="mocks\MockRcheevosClient.hh" />
     <ClInclude Include="mocks\MockServer.hh" />
     <ClInclude Include="mocks\MockSessionTracker.hh" />
     <ClInclude Include="mocks\MockSurface.hh" />

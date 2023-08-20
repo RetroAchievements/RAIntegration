@@ -13,7 +13,6 @@ public:
 
     const char* Name() const noexcept override { return "disconnected client"; }
 
-    Login::Response Login(const Login::Request& request) override;
     const std::string& Host() const noexcept { return m_sHost; }
 
     LatestClient::Response LatestClient(const LatestClient::Request& request) override;

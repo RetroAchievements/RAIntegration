@@ -13,22 +13,6 @@ namespace ra {
 namespace api {
 namespace impl {
 
-Login::Response OfflineServer::Login(const Login::Request& request)
-{
-    Login::Response response;
-    response.Result = ApiResult::Success;
-    response.Username = request.Username;
-    response.ApiToken = "offlineToken";
-    return response;
-}
-
-Logout::Response OfflineServer::Logout(const Logout::Request&) noexcept
-{
-    Logout::Response response;
-    response.Result = ApiResult::Success;
-    return response;
-}
-
 AwardAchievement::Response OfflineServer::AwardAchievement(const AwardAchievement::Request&)
 {
     AwardAchievement::Response response;

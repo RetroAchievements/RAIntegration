@@ -58,16 +58,6 @@ public:
 
     // === user functions ===
 
-    Login::Response Login(const Login::Request& request) override
-    {
-        return HandleRequest<ra::api::Login>(request);
-    }
-
-    Logout::Response Logout(const Logout::Request& request) override
-    {
-        return HandleRequest<ra::api::Logout>(request);
-    }
-
     StartSession::Response StartSession(const StartSession::Request& request) override
     {
         return HandleRequest<ra::api::StartSession>(request);

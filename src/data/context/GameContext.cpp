@@ -583,6 +583,7 @@ void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
     {
         if (response.Succeeded())
         {
+            // TODO: just read score from rc_client->user (when client handles unlocks)
             // success! update the player's score
             ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().SetScore(response.NewPlayerScore);
 

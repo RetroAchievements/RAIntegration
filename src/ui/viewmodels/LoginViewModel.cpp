@@ -4,13 +4,14 @@
 #include "RA_Interface.h"
 #include "RA_StringUtils.h"
 
-#include "api\Login.hh"
+#include "api\impl\ConnectedServer.hh"
 
 #include "data\context\EmulatorContext.hh"
 #include "data\context\SessionTracker.hh"
 #include "data\context\UserContext.hh"
 
 #include "services\IConfiguration.hh"
+#include "services\RcheevosClient.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
@@ -48,41 +49,62 @@ bool LoginViewModel::Login() const
         return false;
     }
 
-    ra::api::Login::Request request;
-    request.Username = ra::Narrow(GetUsername());
-    request.Password = ra::Narrow(GetPassword());
+    ra::services::RcheevosClient::Synchronizer pSynchronizer;
 
-    const auto response = request.Call();
+    auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+    pClient.BeginLoginWithPassword(
+        ra::Narrow(GetUsername()), ra::Narrow(GetPassword()),
+        [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) {
+            auto* pSynchronizer = static_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
+            Expects(pSynchronizer != nullptr);
 
-    if (!response.Succeeded())
-    {
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to login",
-            ra::Widen(response.ErrorMessage));
+            if (nResult != RC_OK)
+            {
+                ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to login", ra::Widen(sErrorMessage));
+            }
+
+            pSynchronizer->Notify();
+        },
+        &pSynchronizer);
+
+    pSynchronizer.Wait();
+
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
+    if (!pUserContext.IsLoggedIn())
         return false;
-    }
 
     const bool bRememberLogin = IsPasswordRemembered();
     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-    pConfiguration.SetUsername(response.Username);
-    pConfiguration.SetApiToken(bRememberLogin ? response.ApiToken : "");
+    pConfiguration.SetUsername(pUserContext.GetUsername());
+    pConfiguration.SetApiToken(bRememberLogin ? pUserContext.GetApiToken() : "");
     pConfiguration.Save();
 
-    // initialize the user context
-    auto& pUserContext = ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>();
-    pUserContext.Initialize(response.Username, response.DisplayName, response.ApiToken);
-    pUserContext.SetScore(response.Score);
+    ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(std::wstring(L"Successfully logged in as ") +
+                                                             ra::Widen(pUserContext.GetDisplayName()));
+
+    PostLoginInitialization();
+
+    return true;
+}
+
+void LoginViewModel::PostLoginInitialization()
+{
+    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
 
     // load the session information
     auto& pSessionTracker = ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>();
-    pSessionTracker.Initialize(response.Username);
+    pSessionTracker.Initialize(pUserContext.GetUsername());
 
-    ra::ui::viewmodels::MessageBoxViewModel::ShowInfoMessage(
-        std::wstring(L"Successfully logged in as ") + ra::Widen(response.Username));
-
+    // notify the client to update the RetroAchievements menu
     ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>().RebuildMenu();
+
+    // update the client title-bar to include the user name
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().Emulator.UpdateWindowTitle();
 
-    return true;
+    // update the global IServer instance to the connected API
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    auto serverApi = std::make_unique<ra::api::impl::ConnectedServer>(pConfiguration.GetHostUrl());
+    ra::services::ServiceLocator::Provide<ra::api::IServer>(std::move(serverApi));
 }
 
 } // namespace viewmodels

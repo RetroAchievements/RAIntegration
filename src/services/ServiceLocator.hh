@@ -60,6 +60,11 @@ public:
     template <class TClass>
     static void Provide(std::unique_ptr<TClass> pInstance) noexcept
     {
+#ifdef RA_UTEST
+        if (!Service<TClass>::s_bDestroy)
+            Service<TClass>::s_pInstance.release();
+#endif
+
         Service<TClass>::s_pInstance = std::move(pInstance);
     }
 
@@ -68,6 +73,7 @@ public:
     /// </summary>
     static bool IsInitialized() noexcept;
 
+#ifdef RA_UTEST
     /// <summary>
     /// Provides a temporary implementation of an interface for the duration of the scope of the ServiceOverride.
     /// The original implementation will be restored when the <see cref="ServiceOverride"/> goes out of scope.
@@ -90,19 +96,22 @@ public:
         /// of a stack variable.
         /// </param>
         explicit ServiceOverride(TClass* pOverride, bool bDestroy = false) noexcept
-            : m_pPrevious(Service<TClass>::s_pInstance.release()), m_bDestroy(bDestroy)
+            : m_pPreviousInstance(Service<TClass>::s_pInstance.release()),
+              m_bPreviousDestroy(Service<TClass>::s_bDestroy)
         {
             Service<TClass>::s_pInstance.reset(pOverride);
+            Service<TClass>::s_bDestroy = bDestroy;
         }
 
         ServiceOverride() = delete;
 
         ~ServiceOverride() noexcept
         {
-            if (!m_bDestroy)
+            if (!Service<TClass>::s_bDestroy)
                 Service<TClass>::s_pInstance.release();
 
-            Service<TClass>::s_pInstance.reset(m_pPrevious);
+            Service<TClass>::s_pInstance.reset(m_pPreviousInstance);
+            Service<TClass>::s_bDestroy = m_bPreviousDestroy;
         }
 
         ServiceOverride(const ServiceOverride&) noexcept = delete;
@@ -111,9 +120,10 @@ public:
         ServiceOverride& operator=(ServiceOverride&&) noexcept = delete;
 
     private:
-        TClass * m_pPrevious;
-        bool m_bDestroy;
+        TClass* m_pPreviousInstance;
+        bool m_bPreviousDestroy;
     };
+#endif
 
 private:
     template <class TClass>
@@ -134,6 +144,10 @@ private:
         }
 
         static std::unique_ptr<TClass> s_pInstance;
+
+#ifdef RA_UTEST
+        static bool s_bDestroy;
+#endif
 
     private:
         static void ThrowNoServiceProvidedException()
@@ -173,6 +187,11 @@ private:
 
 template <class TClass>
 std::unique_ptr<TClass> ServiceLocator::Service<TClass>::s_pInstance;
+
+#ifdef RA_UTEST
+template<class TClass>
+bool ServiceLocator::Service<TClass>::s_bDestroy = true;
+#endif
 
 } // namespace services
 } // namespace ra

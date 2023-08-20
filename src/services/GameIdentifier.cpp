@@ -90,8 +90,8 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sHash)
     const auto pIter = m_mKnownHashes.find(sHash);
     if (pIter != m_mKnownHashes.end())
     {
-        RA_LOG_INFO("Using previously looked up game ID %u for hash %s", nGameId, sHash);
         nGameId = pIter->second;
+        RA_LOG_INFO("Using previously looked up game ID %u for hash %s", nGameId, sHash);
     }
     else
     {

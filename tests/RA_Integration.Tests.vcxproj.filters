@@ -114,9 +114,6 @@
     <ClCompile Include="..\src\ui\viewmodels\RichPresenceMonitorViewModel.cpp">
       <Filter>Code</Filter>
     </ClCompile>
-    <ClCompile Include="api\DisconnectedServer_Tests.cpp">
-      <Filter>Tests\API</Filter>
-    </ClCompile>
     <ClCompile Include="api\ConnectedServer_Tests.cpp">
       <Filter>Tests\API</Filter>
     </ClCompile>
@@ -462,6 +459,9 @@
     <ClCompile Include="data\models\CapturedTriggerHits_Tests.cpp">
       <Filter>Tests\Data\Models</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\services\RcheevosClient.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />
@@ -556,6 +556,9 @@
     </ClInclude>
     <ClInclude Include="..\src\ui\viewmodels\PointerFinderViewModel.hh">
       <Filter>Code</Filter>
+    </ClInclude>
+    <ClInclude Include="mocks\MockRcheevosClient.hh">
+      <Filter>Mocks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

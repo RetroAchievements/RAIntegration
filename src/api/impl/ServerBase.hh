@@ -17,16 +17,6 @@ class ServerBase : public IServer
 {
 public:
     // === user functions ===
-    Login::Response Login(const Login::Request&) override
-    {
-        return UnsupportedApi<Login::Response>(Login::Name());
-    }
-
-    Logout::Response Logout(const Logout::Request&) override
-    {
-        return UnsupportedApi<Logout::Response>(Logout::Name());
-    }
-
     StartSession::Response StartSession(const StartSession::Request&) override
     {
         return UnsupportedApi<StartSession::Response>(StartSession::Name());

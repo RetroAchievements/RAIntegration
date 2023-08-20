@@ -124,32 +124,29 @@ public:
     }
 
     // ====================================================
-    // These tests validate the generic handling of errors - they just happen to be written using the Login API
+    // These tests validate the generic handling of errors - they just happen to be written using the LatestClient API
 
-    TEST_METHOD(TestLoginInvalid)
+    TEST_METHOD(TestLatestClientInvalid)
     {
         MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
-            return Http::Response(Http::StatusCode::OK, "{\"Success\":false,\"Error\":\"Invalid User/Password combination. Please try again\"}");
+            return Http::Response(Http::StatusCode::OK, "{\"Success\":false,\"Error\":\"Unknown client\"}");
         });
 
         ConnectedServer server("host.com");
 
-        Login::Request request;
-        request.Username = "User";
-        request.Password = "pa$$w0rd";
+        LatestClient::Request request;
+        request.EmulatorId = 1;
 
-        auto response = server.Login(request);
+        auto response = server.LatestClient(request);
 
         Assert::AreEqual(ApiResult::Error, response.Result);
-        Assert::AreEqual(std::string("Invalid User/Password combination. Please try again"), response.ErrorMessage);
-        Assert::AreEqual(std::string(""), response.Username);
-        Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual(std::string("Unknown client"), response.ErrorMessage);
+        Assert::AreEqual(std::string(""), response.LatestVersion);
+        Assert::AreEqual(std::string(""), response.MinimumVersion);
     }
 
-    TEST_METHOD(TestLoginFailed)
+    TEST_METHOD(TestLatestClientFailed)
     {
         MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
@@ -158,22 +155,19 @@ public:
 
         ConnectedServer server("host.com");
 
-        Login::Request request;
-        request.Username = "User";
-        request.Password = "pa$$w0rd";
+        LatestClient::Request request;
+        request.EmulatorId = 1;
 
-        auto response = server.Login(request);
+        auto response = server.LatestClient(request);
 
         // "Success:false" without error message results in Failed call, not Error call
         Assert::AreEqual(ApiResult::Failed, response.Result);
         Assert::AreEqual(std::string(""), response.ErrorMessage);
-        Assert::AreEqual(std::string(""), response.Username);
-        Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual(std::string(""), response.LatestVersion);
+        Assert::AreEqual(std::string(""), response.MinimumVersion);
     }
 
-    TEST_METHOD(TestLoginFailed401)
+    TEST_METHOD(TestLatestClientFailed401)
     {
         MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
@@ -182,41 +176,35 @@ public:
 
         ConnectedServer server("host.com");
 
-        Login::Request request;
-        request.Username = "User";
-        request.Password = "pa$$w0rd";
+        LatestClient::Request request;
+        request.EmulatorId = 1;
 
-        auto response = server.Login(request);
+        auto response = server.LatestClient(request);
 
         Assert::AreEqual(ApiResult::Error, response.Result);
         Assert::AreEqual(std::string("HTTP error code: 401 (err401)"), response.ErrorMessage);
-        Assert::AreEqual(std::string(""), response.Username);
-        Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual(std::string(""), response.LatestVersion);
+        Assert::AreEqual(std::string(""), response.MinimumVersion);
     }
 
-    TEST_METHOD(TestLoginFailed401WithMessage)
+    TEST_METHOD(TestLatestClientFailed401WithMessage)
     {
         MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
-            return Http::Response(Http::StatusCode::Unauthorized, "{\"Success\":false, \"Error\":\"Invalid User/Password combination. Please try again\"}");
+            return Http::Response(Http::StatusCode::Unauthorized, "{\"Success\":false,\"Error\":\"Unknown client\"}");
         });
 
         ConnectedServer server("host.com");
 
-        Login::Request request;
-        request.Username = "User";
-        request.Password = "pa$$w0rd";
+        LatestClient::Request request;
+        request.EmulatorId = 1;
 
-        auto response = server.Login(request);
+        auto response = server.LatestClient(request);
 
         Assert::AreEqual(ApiResult::Error, response.Result);
-        Assert::AreEqual(std::string("Invalid User/Password combination. Please try again"), response.ErrorMessage);
-        Assert::AreEqual(std::string(""), response.Username);
-        Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual(std::string("Unknown client"), response.ErrorMessage);
+        Assert::AreEqual(std::string(""), response.LatestVersion);
+        Assert::AreEqual(std::string(""), response.MinimumVersion);
     }
 
     TEST_METHOD(TestAwardAchievementFailed403)
@@ -319,7 +307,7 @@ public:
         Assert::AreEqual(std::string("Too Many Attempts"), response.ErrorMessage);
     }
 
-    TEST_METHOD(TestLoginUnknownServer)
+    TEST_METHOD(TestLatestClientUnknownServer)
     {
         MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
@@ -328,21 +316,18 @@ public:
 
         ConnectedServer server("host.com");
 
-        Login::Request request;
-        request.Username = "User";
-        request.Password = "pa$$w0rd";
+        LatestClient::Request request;
+        request.EmulatorId = 1;
 
-        auto response = server.Login(request);
+        auto response = server.LatestClient(request);
 
         Assert::AreEqual(ApiResult::Error, response.Result);
         Assert::AreEqual(std::string("HTTP error code: 404 (err404)"), response.ErrorMessage);
-        Assert::AreEqual(std::string(""), response.Username);
-        Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual(std::string(""), response.LatestVersion);
+        Assert::AreEqual(std::string(""), response.MinimumVersion);
     }
 
-    TEST_METHOD(TestLoginEmptyResponse)
+    TEST_METHOD(TestLatestClientEmptyResponse)
     {
         MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
@@ -351,21 +336,18 @@ public:
 
         ConnectedServer server("host.com");
 
-        Login::Request request;
-        request.Username = "User";
-        request.Password = "pa$$w0rd";
+        LatestClient::Request request;
+        request.EmulatorId = 1;
 
-        auto response = server.Login(request);
+        auto response = server.LatestClient(request);
 
         Assert::AreEqual(ApiResult::Failed, response.Result);
         Assert::AreEqual(std::string("Empty JSON response"), response.ErrorMessage);
-        Assert::AreEqual(std::string(""), response.Username);
-        Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual(std::string(""), response.LatestVersion);
+        Assert::AreEqual(std::string(""), response.MinimumVersion);
     }
 
-    TEST_METHOD(TestLoginInvalidJson)
+    TEST_METHOD(TestLatestClientInvalidJson)
     {
         MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
@@ -374,21 +356,18 @@ public:
 
         ConnectedServer server("host.com");
 
-        Login::Request request;
-        request.Username = "User";
-        request.Password = "pa$$w0rd";
+        LatestClient::Request request;
+        request.EmulatorId = 1;
 
-        auto response = server.Login(request);
+        auto response = server.LatestClient(request);
 
         Assert::AreEqual(ApiResult::Error, response.Result);
         Assert::AreEqual(std::string("You do not have access to that resource"), response.ErrorMessage);
-        Assert::AreEqual(std::string(""), response.Username);
-        Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual(std::string(""), response.LatestVersion);
+        Assert::AreEqual(std::string(""), response.MinimumVersion);
     }
 
-    TEST_METHOD(TestLoginHtmlResponse)
+    TEST_METHOD(TestLatestClientHtmlResponse)
     {
         MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
@@ -397,21 +376,18 @@ public:
 
         ConnectedServer server("host.com");
 
-        Login::Request request;
-        request.Username = "User";
-        request.Password = "pa$$w0rd";
+        LatestClient::Request request;
+        request.EmulatorId = 1;
 
-        auto response = server.Login(request);
+        auto response = server.LatestClient(request);
 
         Assert::AreEqual(ApiResult::Error, response.Result);
-        Assert::AreEqual(std::string("JSON Parse Error: Invalid JSON"), response.ErrorMessage);
-        Assert::AreEqual(std::string(""), response.Username);
-        Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual(std::string("<b>You do not have access to that resource</b>"), response.ErrorMessage);
+        Assert::AreEqual(std::string(""), response.LatestVersion);
+        Assert::AreEqual(std::string(""), response.MinimumVersion);
     }
 
-    TEST_METHOD(TestLoginNoRequiredFields)
+    TEST_METHOD(TestLatestClientNoRequiredFields)
     {
         MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request& /*request*/)
         {
@@ -420,141 +396,20 @@ public:
 
         ConnectedServer server("host.com");
 
-        Login::Request request;
-        request.Username = "User";
-        request.Password = "pa$$w0rd";
+        LatestClient::Request request;
+        request.EmulatorId = 1;
 
-        auto response = server.Login(request);
+        auto response = server.LatestClient(request);
 
         // only the first missing required field is reported
         Assert::AreEqual(ApiResult::Error, response.Result);
-        Assert::AreEqual(std::string("JSON Parse Error: User not found in response"), response.ErrorMessage);
-        Assert::AreEqual(std::string(""), response.Username);
-        Assert::AreEqual(std::string(""), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
+        Assert::AreEqual(std::string("LatestVersion not found in response"), response.ErrorMessage);
+        Assert::AreEqual(std::string(""), response.LatestVersion);
+        Assert::AreEqual(std::string(""), response.MinimumVersion);
     }
 
     // End of generic validation tests
     // ====================================================
-
-    // ====================================================
-    // Login
-
-    TEST_METHOD(TestLoginPasswordSuccess)
-    {
-        MockHttpRequester mockHttp([](const Http::Request&)
-        {
-            return Http::Response(Http::StatusCode::OK, "{\"Success\":true,\"User\":\"User\",\"Token\":\"ApiTOKEN\",\"Score\":1234,\"Messages\":2}");
-        });
-
-        ConnectedServer server("host.com");
-
-        Login::Request request;
-        request.Username = "User";
-        request.Password = "pa$$w0rd";
-
-        auto response = server.Login(request);
-
-        Assert::AreEqual(ApiResult::Success, response.Result);
-        Assert::AreEqual(std::string(), response.ErrorMessage);
-        Assert::AreEqual(std::string("User"), response.Username);
-        Assert::AreEqual(std::string("ApiTOKEN"), response.ApiToken);
-        Assert::AreEqual(1234U, response.Score);
-        Assert::AreEqual(2U, response.NumUnreadMessages);
-    }
-
-    TEST_METHOD(TestLoginTokenSuccess)
-    {
-        MockHttpRequester mockHttp([](const Http::Request&)
-        {
-            return Http::Response(Http::StatusCode::OK, "{\"Success\":true,\"User\":\"User\",\"Token\":\"ApiTOKEN\",\"Score\":1234,\"Messages\":2}");
-        });
-
-        ConnectedServer server("host.com");
-
-        Login::Request request;
-        request.Username = "User";
-        request.ApiToken = "ApiTOKEN";
-
-        auto response = server.Login(request);
-
-        Assert::AreEqual(ApiResult::Success, response.Result);
-        Assert::AreEqual(std::string(), response.ErrorMessage);
-        Assert::AreEqual(std::string("User"), response.Username);
-        Assert::AreEqual(std::string("ApiTOKEN"), response.ApiToken);
-        Assert::AreEqual(1234U, response.Score);
-        Assert::AreEqual(2U, response.NumUnreadMessages);
-    }
-
-    TEST_METHOD(TestLoginNoOptionalFields)
-    {
-        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request&)
-        {
-            return Http::Response(Http::StatusCode::OK, "{\"Success\":true,\"User\":\"User\",\"Token\":\"ApiTOKEN\"}");
-        });
-
-        ConnectedServer server("host.com");
-
-        Login::Request request;
-        request.Username = "User";
-        request.Password = "pa$$w0rd";
-
-        auto response = server.Login(request);
-
-        Assert::AreEqual(ApiResult::Success, response.Result);
-        Assert::AreEqual(std::string(), response.ErrorMessage);
-        Assert::AreEqual(std::string("User"), response.Username);
-        Assert::AreEqual(std::string("ApiTOKEN"), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
-    }
-
-    TEST_METHOD(TestLoginNullOptionalFields)
-    {
-        MockHttpRequester mockHttp([]([[maybe_unused]] const Http::Request&)
-        {
-            return Http::Response(Http::StatusCode::OK, "{\"Success\":true,\"User\":\"User\",\"Token\":\"ApiTOKEN\",\"Score\":null,\"Messages\":null}");
-        });
-
-        ConnectedServer server("host.com");
-
-        Login::Request request;
-        request.Username = "User";
-        request.Password = "pa$$w0rd";
-
-        auto response = server.Login(request);
-
-        Assert::AreEqual(ApiResult::Success, response.Result);
-        Assert::AreEqual(std::string(), response.ErrorMessage);
-        Assert::AreEqual(std::string("User"), response.Username);
-        Assert::AreEqual(std::string("ApiTOKEN"), response.ApiToken);
-        Assert::AreEqual(0U, response.Score);
-        Assert::AreEqual(0U, response.NumUnreadMessages);
-    }
-
-    // ====================================================
-    // Logout
-
-    TEST_METHOD(TestLogout)
-    {
-        // Logout method doesn't actually call server - it just replaced the ConnectedServer instance
-        // with a DisconnectedServer instance
-        ra::services::ServiceLocator::ServiceOverride<ra::api::IServer> serviceOverride(new ConnectedServer("host.com"), true);
-        auto& server = ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
-
-        Logout::Request request;
-        auto response = server.Logout(request);
-
-        Assert::AreEqual(ApiResult::Success, response.Result);
-        Assert::AreEqual(std::string(), response.ErrorMessage);
-
-        const auto* pServer = &ra::services::ServiceLocator::Get<ra::api::IServer>();
-        Assert::IsNotNull(pServer, L"IServer not found");
-        const auto* pDisconnectedServer = dynamic_cast<const ra::api::impl::DisconnectedServer*>(pServer);
-        Assert::IsNotNull(pServer, L"Server not a DisconnectedServer");
-        Assert::AreEqual(std::string("host.com"), pDisconnectedServer->Host());
-    }
 
     // ====================================================
     // SubmitLeaderboardEntry

@@ -611,6 +611,10 @@ public:
         Assert::AreEqual(std::wstring(L"12345"), vmAch2->GetBadge());
         Assert::AreEqual(std::string("1=1"), vmAch2->GetTrigger());
         Assert::IsFalse(vmAch2->IsModified());
+
+        const auto pPatchData = game.mockStorage.GetStoredData(ra::services::StorageItemType::GameData, L"1");
+        Assert::AreNotEqual(pPatchData.find("\"ID\":1,"), std::string::npos);
+        Assert::AreEqual(pPatchData.find("\"PatchData\":"), std::string::npos); /* PatchData should be stripped out */
     }
 
     TEST_METHOD(TestLoadGameInvalidAchievementFlags)

@@ -6,6 +6,7 @@
 
 #include "services/Http.hh"
 #include "services/IAudioSystem.hh"
+#include "services/ILocalStorage.hh"
 #include "services/ServiceLocator.hh"
 
 #include "ui/viewmodels/MessageBoxViewModel.hh"
@@ -17,6 +18,7 @@
 #include "RA_StringUtils.h"
 
 #include <rcheevos\include\rc_api_runtime.h>
+#include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
 #include <rcheevos\src\rcheevos\rc_internal.h>
 #include <rcheevos\src\rcheevos\rc_client_internal.h>
 
@@ -199,6 +201,30 @@ void RcheevosClient::BeginLoadGame(const std::string& sHash, unsigned id,
     BeginLoadGame(sHash.c_str(), id, pCallbackWrapper);
 }
 
+static void ExtractPatchData(const rc_api_server_response_t* server_response, uint32_t nGameId)
+{
+    // extract the PatchData and store a copy in the cache for offline mode
+    rc_api_response_t api_response{};
+    rc_json_field_t fields[] = {
+        RC_JSON_NEW_FIELD("Success"),
+        RC_JSON_NEW_FIELD("Error"),
+        RC_JSON_NEW_FIELD("PatchData")
+    };
+
+    if (rc_json_parse_server_response(&api_response, server_response, fields, sizeof(fields) / sizeof(fields[0])) == RC_OK &&
+        fields[2].value_start && fields[2].value_end)
+    {
+        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+        auto pData = pLocalStorage.WriteText(ra::services::StorageItemType::GameData, std::to_wstring(nGameId));
+        if (pData != nullptr)
+        {
+            std::string sPatchData;
+            sPatchData.append(fields[2].value_start, fields[2].value_end - fields[2].value_start);
+            pData->Write(sPatchData);
+        }
+    }
+}
+
 void RcheevosClient::PostProcessGameDataResponse(const rc_api_server_response_t* server_response,
     struct rc_api_fetch_game_data_response_t* game_data_response,
     rc_client_t* client, void* pUserdata)
@@ -227,6 +253,8 @@ void RcheevosClient::PostProcessGameDataResponse(const rc_api_server_response_t*
     const rc_api_achievement_definition_t* pAchievementStop = pAchievement + game_data_response->num_achievements;
     for (; pAchievement < pAchievementStop; ++pAchievement)
         wrapper->m_mAchievementDefinitions[pAchievement->id] = pAchievement->definition;
+
+    ExtractPatchData(server_response, game_data_response->id);
 }
 
 rc_client_async_handle_t* RcheevosClient::BeginLoadGame(const char* sHash, unsigned id,

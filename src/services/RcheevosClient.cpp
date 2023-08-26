@@ -43,7 +43,7 @@ static int CanSubmit()
     return 1;
 }
 
-static int CanSubmitAchievementUnlock(uint32_t nAchievementId, rc_client_t* client)
+static int CanSubmitAchievementUnlock(uint32_t nAchievementId, rc_client_t*)
 {
     if (!CanSubmit())
         return 0;
@@ -56,7 +56,7 @@ static int CanSubmitAchievementUnlock(uint32_t nAchievementId, rc_client_t* clie
     return 1;
 }
 
-static int CanSubmitLeaderboardEntry(uint32_t nLeaderboardId, rc_client_t* client)
+static int CanSubmitLeaderboardEntry(uint32_t, rc_client_t*)
 {
     return CanSubmit();
 }

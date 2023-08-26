@@ -168,12 +168,25 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
             auto* pSynchronizer = static_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
             Expects(pSynchronizer != nullptr);
 
+            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+
             if (nResult != RC_OK)
             {
-                auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
                 pGameContext.m_nGameId = 0;
 
                 pSynchronizer->SetErrorMessage(sErrorMessage);
+            }
+            else
+            {
+                pGameContext.BeginLoad();
+                auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
+                pCodeNotes->Refresh(
+                    pGameContext.m_nGameId,
+                    [&pGameContext](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
+                        pGameContext.OnCodeNoteChanged(nAddress, sNewNote);
+                    },
+                    [&pGameContext]() { pGameContext.EndLoad(); });
+                pGameContext.m_vAssets.Append(std::move(pCodeNotes));
             }
 
             pSynchronizer->Notify();

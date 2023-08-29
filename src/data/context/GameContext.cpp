@@ -143,7 +143,8 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
         if (pData != nullptr)
         {
             rapidjson::Document pDocument;
-            if (LoadDocument(pDocument, *pData) && pDocument.HasMember("RichPresencePatch") && pDocument["RichPresencePatch"].IsString())
+            if (LoadDocument(pDocument, *pData) && pDocument.HasMember("RichPresencePatch") &&
+                pDocument["RichPresencePatch"].IsString())
                 sOldRichPresence = pDocument["RichPresencePatch"].GetString();
         }
     }
@@ -159,46 +160,48 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
     const bool bWasPaused = pRuntime.IsPaused();
     pRuntime.SetPaused(true);
 
+    struct LoadGameUserData
+    {
+        bool bWasPaused;
+        std::string sOldRichPresence;
+    }* pLoadGameUserData;
+    pLoadGameUserData = new LoadGameUserData;
+    pLoadGameUserData->bWasPaused = bWasPaused;
+    pLoadGameUserData->sOldRichPresence = std::move(sOldRichPresence);
+
     pClient.BeginLoadGame(sGameHash, nGameId,
         [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) {
-            auto* pSynchronizer = static_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
-            Expects(pSynchronizer != nullptr);
-
             auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-
-            if (nResult != RC_OK)
-            {
-                pGameContext.m_nGameId = 0;
-
-                pSynchronizer->SetErrorMessage(sErrorMessage);
-            }
-            else
-            {
-                pGameContext.BeginLoad();
-                auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
-                pCodeNotes->Refresh(
-                    pGameContext.m_nGameId,
-                    [&pGameContext](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
-                        pGameContext.OnCodeNoteChanged(nAddress, sNewNote);
-                    },
-                    [&pGameContext]() { pGameContext.EndLoad(); });
-                pGameContext.m_vAssets.Append(std::move(pCodeNotes));
-            }
-
-            pSynchronizer->Notify();
+            auto* pLoadGameUserData = reinterpret_cast<struct LoadGameUserData*>(pUserdata);
+            pGameContext.FinishLoadGame(nResult, sErrorMessage, pLoadGameUserData->bWasPaused,
+                                        pLoadGameUserData->sOldRichPresence);
+            delete pLoadGameUserData;
         },
-        &pSynchronizer);
+        pLoadGameUserData);
+}
 
-    // TODO: does this have to be synchronous? BeginLoadGame returns void
-    pSynchronizer.Wait();
-
-    if (!pSynchronizer.GetErrorMessage().empty())
+void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused, const std::string& sOldRichPresence)
+{
+    if (nResult != RC_OK)
     {
+        m_nGameId = 0;
+
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to load game data",
-                                                                  ra::Widen(pSynchronizer.GetErrorMessage()));
+                                                                    ra::Widen(sErrorMessage));
     }
     else
     {
+        BeginLoad();
+        auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
+        pCodeNotes->Refresh(
+            m_nGameId,
+            [this](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
+                OnCodeNoteChanged(nAddress, sNewNote);
+            },
+            [this]() { EndLoad(); });
+        m_vAssets.Append(std::move(pCodeNotes));
+
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
         auto* pGame = rc_client_get_game_info(pClient.GetClient());
         if (pGame == nullptr || pGame->id == 0)
         {

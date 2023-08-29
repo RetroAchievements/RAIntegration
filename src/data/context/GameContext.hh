@@ -135,6 +135,7 @@ public:
 
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
+    void FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused, const std::string& sOldRichPresence);
 
 protected:
     void RefreshUnlocks(bool bUnpause, int nPopup);

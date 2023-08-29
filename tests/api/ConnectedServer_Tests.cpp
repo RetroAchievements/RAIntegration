@@ -440,38 +440,6 @@ public:
     }
 
     // ====================================================
-    // FetchGameData
-
-    TEST_METHOD(TestFetchGameDataCachesPatchData)
-    {
-        MockUserContext mockUserContext;
-        mockUserContext.Initialize("Username", "ApiToken");
-
-        MockHttpRequester mockHttp([](const Http::Request&)
-        {
-            return Http::Response(Http::StatusCode::OK,
-                "{\"Success\":true,\"PatchData\":"
-                    "{\"ID\":99, \"Title\":\"Game Name\", \"ConsoleID\":5, \"ImageIcon\":\"/Images/BADGE.png\", \"Achievements\":[], \"Leaderboards\":[]}"
-                "}");
-        });
-
-        MockLocalStorage mockLocalStorage;
-
-        ra::services::ServiceLocator::ServiceOverride<ra::api::IServer> serviceOverride(new ConnectedServer("host.com"), true);
-        auto& server = ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
-
-        FetchGameData::Request request;
-        request.GameId = 99;
-        auto response = server.FetchGameData(request);
-
-        Assert::AreEqual(ApiResult::Success, response.Result);
-        Assert::AreEqual(std::string(), response.ErrorMessage);
-
-        std::string sPatchData = "{\"ID\":99, \"Title\":\"Game Name\", \"ConsoleID\":5, \"ImageIcon\":\"/Images/BADGE.png\", \"Achievements\":[], \"Leaderboards\":[]}";
-        Assert::AreEqual(sPatchData, mockLocalStorage.GetStoredData(ra::services::StorageItemType::GameData, L"99"));
-    }
-
-    // ====================================================
     // FetchCodeNotes
 
     TEST_METHOD(TestFetchCodeNotesNormalizesLineEndings)

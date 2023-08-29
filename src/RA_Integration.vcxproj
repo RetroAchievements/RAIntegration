@@ -180,7 +180,6 @@
     <ClInclude Include="api\FetchAchievementInfo.hh" />
     <ClInclude Include="api\FetchBadgeIds.hh" />
     <ClInclude Include="api\FetchCodeNotes.hh" />
-    <ClInclude Include="api\FetchGameData.hh" />
     <ClInclude Include="api\FetchGamesList.hh" />
     <ClInclude Include="api\FetchLeaderboardInfo.hh" />
     <ClInclude Include="api\FetchUserFriends.hh" />

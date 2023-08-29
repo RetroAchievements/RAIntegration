@@ -49,11 +49,6 @@ public:
         return UnsupportedApi<ResolveHash::Response>(ResolveHash::Name());
     }
 
-    FetchGameData::Response FetchGameData(const FetchGameData::Request&) override
-    {
-        return UnsupportedApi<FetchGameData::Response>(FetchGameData::Name());
-    }
-
     FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request&) override
     {
         return UnsupportedApi<FetchCodeNotes::Response>(FetchCodeNotes::Name());

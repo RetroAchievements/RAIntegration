@@ -159,9 +159,9 @@ public:
             mockRcheevosClient.MockResponse(
                 "r=patch&u=Username&t=ApiToken&g=" + std::to_string(nGameID),
                 "{\"Success\":true,\"PatchData\":{"
-                    "\"ID\":" + std::to_string(nGameID) + "," +
-                    "\"Title\":\"GameTitle\"," +
-                    "\"ConsoleID\":" + std::to_string(ra::etoi(nConsoleID)) + "," +
+                    "\"ID\":" + std::to_string(nGameID) + ","
+                    "\"Title\":\"GameTitle\","
+                    "\"ConsoleID\":" + std::to_string(ra::etoi(nConsoleID)) + ","
                     "\"ImageIcon\":\"/Images/9743.png\","
                     "\"Achievements\":[" + sAchievements + "],"
                     "\"Leaderboards\":[" + sLeaderboards + "],"

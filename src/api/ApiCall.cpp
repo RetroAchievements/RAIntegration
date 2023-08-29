@@ -20,7 +20,6 @@ AwardAchievement::Response AwardAchievement::Request::Call() const { return Serv
 SubmitLeaderboardEntry::Response SubmitLeaderboardEntry::Request::Call() const { return Server().SubmitLeaderboardEntry(*this); }
 FetchUserFriends::Response FetchUserFriends::Request::Call() const { return Server().FetchUserFriends(*this); }
 ResolveHash::Response ResolveHash::Request::Call() const { return Server().ResolveHash(*this); }
-FetchGameData::Response FetchGameData::Request::Call() const { return Server().FetchGameData(*this); }
 FetchCodeNotes::Response FetchCodeNotes::Request::Call() const { return Server().FetchCodeNotes(*this); }
 UpdateCodeNote::Response UpdateCodeNote::Request::Call() const { return Server().UpdateCodeNote(*this); }
 DeleteCodeNote::Response DeleteCodeNote::Request::Call() const { return Server().DeleteCodeNote(*this); }

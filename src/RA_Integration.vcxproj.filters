@@ -668,9 +668,6 @@
     <ClInclude Include="api\LatestClient.hh">
       <Filter>API</Filter>
     </ClInclude>
-    <ClInclude Include="api\FetchGameData.hh">
-      <Filter>API</Filter>
-    </ClInclude>
     <ClInclude Include="api\AwardAchievement.hh">
       <Filter>API</Filter>
     </ClInclude>

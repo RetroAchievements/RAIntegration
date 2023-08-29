@@ -7,7 +7,6 @@
 #include "api/FetchAchievementInfo.hh"
 #include "api/FetchBadgeIds.hh"
 #include "api/FetchCodeNotes.hh"
-#include "api/FetchGameData.hh"
 #include "api/FetchGamesList.hh"
 #include "api/FetchLeaderboardInfo.hh"
 #include "api/FetchUserFriends.hh"
@@ -40,7 +39,6 @@ public:
 
     // === game functions ===
     virtual ResolveHash::Response ResolveHash(const ResolveHash::Request& request) = 0;
-    virtual FetchGameData::Response FetchGameData(const FetchGameData::Request& request) = 0;
     virtual FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) = 0;
     virtual UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) = 0;
     virtual DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) = 0;

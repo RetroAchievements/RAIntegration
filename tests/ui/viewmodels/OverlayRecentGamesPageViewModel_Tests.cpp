@@ -2,12 +2,15 @@
 
 #include "ui\viewmodels\OverlayRecentGamesPageViewModel.hh"
 
+#include "tests\mocks\MockConfiguration.hh"
+#include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockThreadPool.hh"
+#include "tests\mocks\MockUserContext.hh"
 #include "tests\RA_UnitTestHelpers.h"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -25,6 +28,8 @@ private:
     public:
         ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockSessionTracker mockSessions;
+        ra::data::context::mocks::MockUserContext mockUserContext;
+        ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::services::mocks::MockThreadPool mockTheadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
@@ -79,15 +84,19 @@ public:
     {
         OverlayRecentGamesPageViewModelHarness gamesPage;
         gamesPage.mockSessions.MockSession(3U, 1234567890U, std::chrono::seconds(5000));
-        gamesPage.mockServer.HandleRequest<ra::api::FetchGameData>(
-            [](const ra::api::FetchGameData::Request& request, ra::api::FetchGameData::Response & response)
-        {
-            Assert::AreEqual(3U, request.GameId);
+        gamesPage.mockUserContext.Initialize("Username", "APITOKEN");
 
-            response.Result = ra::api::ApiResult::Success;
-            response.Title = L"Game Name";
-            response.ImageIcon = "BADGE";
-            return true;
+        ra::services::mocks::MockHttpRequester mockHttp([](const ra::services::Http::Request&) {
+            return ra::services::Http::Response(ra::services::Http::StatusCode::OK,
+                                                "{\"Success\":true,\"PatchData\":{"
+                                                    "\"ID\":99,"
+                                                    "\"Title\":\"Game Name\","
+                                                    "\"ConsoleID\":5,"
+                                                    "\"ImageIcon\":\"/Images/BADGE.png\","
+                                                    "\"Achievements\":[],"
+                                                    "\"Leaderboards\":[],"
+                                                    "\"RichPresencePatch\":\"\""
+                                                "}}");
         });
 
         gamesPage.Refresh();
@@ -136,7 +145,13 @@ public:
     {
         OverlayRecentGamesPageViewModelHarness gamesPage;
         gamesPage.mockSessions.MockSession(3U, 1234567890U, std::chrono::seconds(5000));
-        gamesPage.mockServer.ExpectUncalled<ra::api::FetchGameData>();
+
+        bool bHttpRequesterCalled = false;
+        ra::services::mocks::MockHttpRequester mockHttp([&bHttpRequesterCalled](const ra::services::Http::Request&) {
+            bHttpRequesterCalled = true;
+            return ra::services::Http::Response();
+        });
+
         gamesPage.mockLocalStorage.MockStoredData(ra::services::StorageItemType::GameData, L"3",
             "{\"ID\":99, \"Title\":\"Game Name\", \"ConsoleID\":5, \"ImageIcon\":\"/Images/BADGE.png\", \"Achievements\":[], \"Leaderboards\":[]}");
 

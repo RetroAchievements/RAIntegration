@@ -90,11 +90,6 @@ public:
         return HandleRequest<ra::api::ResolveHash>(request);
     }
 
-    FetchGameData::Response FetchGameData(const FetchGameData::Request& request) override
-    {
-        return HandleRequest<ra::api::FetchGameData>(request);
-    }
-
     FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override
     {
         return HandleRequest<ra::api::FetchCodeNotes>(request);

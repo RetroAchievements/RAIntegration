@@ -29,39 +29,6 @@ SubmitLeaderboardEntry::Response OfflineServer::SubmitLeaderboardEntry(const Sub
     return response;
 }
 
-FetchGameData::Response OfflineServer::FetchGameData(const FetchGameData::Request& request)
-{
-    FetchGameData::Response response;
-    rapidjson::Document document;
-
-    // see if the data is available in the cache
-    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(request.GameId));
-    if (pData == nullptr)
-    {
-        response.Result = ApiResult::Failed;
-        response.ErrorMessage = ra::StringPrintf("Achievement data for game %u not found in cache", request.GameId);
-    }
-    else 
-    {
-        std::string sContents = "{\"Success\":true,\"PatchData\":";
-        std::string sLine;
-        while (pData->GetLine(sLine))
-        {
-            if (!sContents.empty())
-                sContents.push_back('\n');
-
-            sContents.append(sLine);
-        }
-        sContents.push_back('}');
-
-        ra::services::Http::Response httpResponse(ra::services::Http::StatusCode::OK, sContents);
-        ConnectedServer::ProcessGamePatchData(response, httpResponse);
-    }
-
-    return response;
-}
-
 FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Request& request)
 {
     FetchCodeNotes::Response response;

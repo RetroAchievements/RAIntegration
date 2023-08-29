@@ -16,7 +16,6 @@ static ra::api::IServer& Server()
 
 StartSession::Response StartSession::Request::Call() const { return Server().StartSession(*this); }
 Ping::Response Ping::Request::Call() const { return Server().Ping(*this); }
-FetchUserUnlocks::Response FetchUserUnlocks::Request::Call() const { return Server().FetchUserUnlocks(*this); }
 AwardAchievement::Response AwardAchievement::Request::Call() const { return Server().AwardAchievement(*this); }
 SubmitLeaderboardEntry::Response SubmitLeaderboardEntry::Request::Call() const { return Server().SubmitLeaderboardEntry(*this); }
 FetchUserFriends::Response FetchUserFriends::Request::Call() const { return Server().FetchUserFriends(*this); }

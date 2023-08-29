@@ -59,7 +59,7 @@ static rc_client_subset_info_t* GetCoreSubset(rc_client_game_info_t* game)
         subset = (rc_client_subset_info_t*)rc_buf_alloc(&game->buffer, sizeof(rc_client_subset_info_t));
         memset(subset, 0, sizeof(*subset));
         subset->public_.id = game->public_.id;
-        strcpy(subset->public_.badge_name, game->public_.badge_name);
+        strcpy_s(subset->public_.badge_name, sizeof(subset->public_.badge_name), game->public_.badge_name);
         subset->public_.title = game->public_.title;
 
         game->subsets = subset;

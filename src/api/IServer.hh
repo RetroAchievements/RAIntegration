@@ -11,7 +11,6 @@
 #include "api/FetchGamesList.hh"
 #include "api/FetchLeaderboardInfo.hh"
 #include "api/FetchUserFriends.hh"
-#include "api/FetchUserUnlocks.hh"
 #include "api/LatestClient.hh"
 #include "api/Ping.hh"
 #include "api/ResolveHash.hh"
@@ -35,7 +34,6 @@ public:
     // === user functions ===
     virtual StartSession::Response StartSession(const StartSession::Request& request) = 0;
     virtual Ping::Response Ping(const Ping::Request& request) = 0;
-    virtual FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) = 0;
     virtual AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) = 0;
     virtual SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) = 0;
     virtual FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) = 0;

@@ -68,11 +68,6 @@ public:
         return HandleRequest<ra::api::Ping>(request);
     }
 
-    FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) override
-    {
-        return HandleRequest<ra::api::FetchUserUnlocks>(request);
-    }
-
     AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) override
     {
         return HandleRequest<ra::api::AwardAchievement>(request);

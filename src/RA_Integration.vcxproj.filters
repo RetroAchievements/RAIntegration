@@ -671,9 +671,6 @@
     <ClInclude Include="api\FetchGameData.hh">
       <Filter>API</Filter>
     </ClInclude>
-    <ClInclude Include="api\FetchUserUnlocks.hh">
-      <Filter>API</Filter>
-    </ClInclude>
     <ClInclude Include="api\AwardAchievement.hh">
       <Filter>API</Filter>
     </ClInclude>

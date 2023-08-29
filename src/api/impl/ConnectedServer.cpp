@@ -545,44 +545,6 @@ Ping::Response ConnectedServer::Ping(const Ping::Request& request)
     return response;
 }
 
-FetchUserUnlocks::Response ConnectedServer::FetchUserUnlocks(const FetchUserUnlocks::Request& request)
-{
-    FetchUserUnlocks::Response response;
-
-    rc_api_fetch_user_unlocks_request_t api_params;
-    memset(&api_params, 0, sizeof(api_params));
-
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    api_params.username = pUserContext.GetUsername().c_str();
-    api_params.api_token = pUserContext.GetApiToken().c_str();
-    api_params.game_id = request.GameId;
-    api_params.hardcore = request.Hardcore ? 1 : 0;
-
-    rc_api_request_t api_request;
-    if (rc_api_init_fetch_user_unlocks_request(&api_request, &api_params) == RC_OK)
-    {
-        ra::services::Http::Response httpResponse;
-        if (DoRequest(api_request, FetchUserUnlocks::Name(), httpResponse, response))
-        {
-            rc_api_fetch_user_unlocks_response_t api_response;
-            const auto nResult = rc_api_process_fetch_user_unlocks_response(&api_response, httpResponse.Content().c_str());
-
-            if (ValidateResponse(nResult, api_response.response, FetchUserUnlocks::Name(), httpResponse.StatusCode(), response))
-            {
-                response.Result = ApiResult::Success;
-
-                for (unsigned i = 0; i < api_response.num_achievement_ids; ++i)
-                    response.UnlockedAchievements.insert(api_response.achievement_ids[i]);
-            }
-
-            rc_api_destroy_fetch_user_unlocks_response(&api_response);
-        }
-    }
-
-    rc_api_destroy_request(&api_request);
-    return response;
-}
-
 AwardAchievement::Response ConnectedServer::AwardAchievement(const AwardAchievement::Request& request)
 {
     AwardAchievement::Response response;

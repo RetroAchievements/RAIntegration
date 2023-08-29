@@ -8,8 +8,6 @@
 #include "RA_StringUtils.h"
 
 #include "api\AwardAchievement.hh"
-#include "api\FetchGameData.hh"
-#include "api\FetchUserUnlocks.hh"
 #include "api\SubmitLeaderboardEntry.hh"
 
 #include "data\context\ConsoleContext.hh"
@@ -39,7 +37,6 @@
 #include "ui\viewmodels\WindowManager.hh"
 
 #include <rcheevos\src\rcheevos\rc_client_internal.h>
-#define USE_RCHEEVOS_CLIENT
 
 namespace ra {
 namespace data {
@@ -152,7 +149,6 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
     }
 
     // download the game data
-#ifdef USE_RCHEEVOS_CLIENT
     ra::services::RcheevosClient::Synchronizer pSynchronizer;
 
     auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
@@ -244,137 +240,6 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
         pAssetList.SetProcessingActive(true);
 #endif
     }
-#else
-
-    ra::api::FetchGameData::Request request;
-    request.GameId = nGameId;
-
-    const auto response = request.Call();
-    if (response.Failed())
-    {
-        m_vAssets.EndUpdate();
-        m_nGameId = 0;
-
-        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to download game data",
-                                                                  ra::Widen(response.ErrorMessage));
-        EndLoad();
-        return;
-    }
-
-    if (!ValidateConsole(response.ConsoleId))
-    {
-        m_vAssets.EndUpdate();
-        m_nGameId = 0;
-        EndLoad();
-        return;
-    }
-
-    // start fetching the code notes
-    {
-        BeginLoad();
-        auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
-        pCodeNotes->Refresh(m_nGameId,
-            [this](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
-                OnCodeNoteChanged(nAddress, sNewNote);
-            },
-            [this]() { EndLoad(); });
-        m_vAssets.Append(std::move(pCodeNotes));
-    }
-
-    // game properties
-    m_sGameTitle = response.Title;
-    m_sGameImage = response.ImageIcon;
-
-    // rich presence
-    {
-        auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
-        pRichPresence->SetScript(response.RichPresence);
-        pRichPresence->CreateServerCheckpoint();
-        pRichPresence->CreateLocalCheckpoint();
-        m_vAssets.Append(std::move(pRichPresence));
-    }
-
-    // achievements
-    const bool bWasPaused = pRuntime.IsPaused();
-    pRuntime.SetPaused(true);
-
-#ifndef RA_UTEST
-    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-#endif
-
-    unsigned int nNumCoreAchievements = 0;
-    unsigned int nTotalCoreAchievementPoints = 0;
-    for (const auto& pAchievementData : response.Achievements)
-    {
-        // if the server has provided an unexpected category (usually 0), ignore it.
-        const auto nCategory = ra::itoe<ra::data::models::AssetCategory>(pAchievementData.CategoryId);
-        if (nCategory != ra::data::models::AssetCategory::Core && nCategory != ra::data::models::AssetCategory::Unofficial)
-            continue;
-
-        auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
-        vmAchievement->SetID(pAchievementData.Id);
-        vmAchievement->SetName(ra::Widen(pAchievementData.Title));
-        vmAchievement->SetDescription(ra::Widen(pAchievementData.Description));
-        vmAchievement->SetCategory(nCategory);
-        vmAchievement->SetPoints(pAchievementData.Points);
-        vmAchievement->SetAuthor(ra::Widen(pAchievementData.Author));
-        vmAchievement->SetBadge(ra::Widen(pAchievementData.BadgeName));
-        vmAchievement->SetTrigger(pAchievementData.Definition);
-        vmAchievement->SetCreationTime(pAchievementData.Created);
-        vmAchievement->SetUpdatedTime(pAchievementData.Updated);
-        vmAchievement->CreateServerCheckpoint();
-        vmAchievement->CreateLocalCheckpoint();
-        m_vAssets.Append(std::move(vmAchievement));
-
-#ifndef RA_UTEST
-        // prefetch the achievement image
-        pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievementData.BadgeName);
-#endif
-
-        if (nCategory == ra::data::models::AssetCategory::Core)
-        {
-            ++nNumCoreAchievements;
-            nTotalCoreAchievementPoints += pAchievementData.Points;
-        }
-    }
-
-    // leaderboards
-    for (const auto& pLeaderboardData : response.Leaderboards)
-    {
-        auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
-        vmLeaderboard->SetID(pLeaderboardData.Id);
-        vmLeaderboard->SetName(ra::Widen(pLeaderboardData.Title));
-        vmLeaderboard->SetDescription(ra::Widen(pLeaderboardData.Description));
-        vmLeaderboard->SetCategory(ra::data::models::AssetCategory::Core);
-        vmLeaderboard->SetValueFormat(ra::itoe<ValueFormat>(pLeaderboardData.Format));
-        vmLeaderboard->SetLowerIsBetter(pLeaderboardData.LowerIsBetter);
-        vmLeaderboard->SetHidden(pLeaderboardData.Hidden);
-        vmLeaderboard->SetDefinition(pLeaderboardData.Definition);
-        vmLeaderboard->CreateServerCheckpoint();
-        vmLeaderboard->CreateLocalCheckpoint();
-        m_vAssets.Append(std::move(vmLeaderboard));
-    }
-
-    ActivateLeaderboards();
-
-    // merge local assets
-    std::vector<ra::data::models::AssetModelBase*> vEmptyAssetsList;
-    m_vAssets.ReloadAssets(vEmptyAssetsList);
-
-#ifndef RA_UTEST
-    DoFrame();
-#endif
-
-    // show "game loaded" popup
-    ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-    const auto nPopup = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
-        ra::StringPrintf(L"Loaded %s", response.Title),
-        ra::StringPrintf(L"%u achievements, %u points", nNumCoreAchievements, nTotalCoreAchievementPoints),
-        ra::ui::ImageType::Icon, m_sGameImage);
-
-    // get user unlocks asynchronously
-    RefreshUnlocks(!bWasPaused, nPopup);
-#endif
 
     // activate rich presence (or remove if not defined)
     auto* pRichPresence = m_vAssets.FindRichPresence();
@@ -595,25 +460,33 @@ void GameContext::EndLoad()
 
 void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
 {
-    if (m_nMode == Mode::CompatibilityTest)
+    std::set<unsigned int> vUnlockedAchievements;
+
+    if (m_nMode != Mode::CompatibilityTest)
     {
-        std::set<unsigned int> vUnlockedAchievements;
-        UpdateUnlocks(vUnlockedAchievements, bUnpause, nPopup);
-        return;
+        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        const bool bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+        const uint8_t nFlag = gsl::narrow_cast<uint8_t>(bHardcore ? ra::etoi(RC_CLIENT_ACHIEVEMENT_UNLOCKED_HARDCORE)
+                                                                  : ra::etoi(RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE));
+
+        const auto* pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
+        Expects(pClient->game != nullptr);
+        for (auto* pSubset = pClient->game->subsets; pSubset; pSubset = pSubset->next)
+        {
+            // achievements
+            auto* pAchievementData = pSubset->achievements;
+            auto* pAchievementStop = pAchievementData + pSubset->public_.num_achievements;
+            for (; pAchievementData < pAchievementStop; ++pAchievementData)
+            {
+                if (pAchievementData->public_.unlocked & nFlag)
+                    vUnlockedAchievements.insert(pAchievementData->public_.id);
+            }
+        }
     }
 
     BeginLoad();
-
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-
-    ra::api::FetchUserUnlocks::Request request;
-    request.GameId = m_nGameId;
-    request.Hardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-    request.CallAsync([this, bUnpause, nPopup](const ra::api::FetchUserUnlocks::Response& response)
-    {
-        UpdateUnlocks(response.UnlockedAchievements, bUnpause, nPopup);
-        EndLoad();
-    });
+    UpdateUnlocks(vUnlockedAchievements, bUnpause, nPopup);
+    EndLoad();
 }
 
 void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup)

@@ -5,9 +5,6 @@
 #include "services\RcheevosClient.hh"
 #include "services\ServiceLocator.hh"
 
-#include "CppUnitTest.h"
-#include "RA_StringUtils.h"
-
 #include <rcheevos\src\rcheevos\rc_client_internal.h>
 
 namespace ra {
@@ -34,91 +31,20 @@ public:
         pResponse.nHttpStatus = 200;
     }
 
-    void OnBeforeResponse(const std::string& sRequestParams, std::function<void()>&& fHandler)
-    {
-        for (auto& pResponse : m_vResponses)
-        {
-            if (pResponse.sRequestParams == sRequestParams)
-            {
-                pResponse.fBeforeResponse = fHandler;
-                return;
-            }
-        }
+    void OnBeforeResponse(const std::string& sRequestParams, std::function<void()>&& fHandler);
 
-        Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(
-            ra::StringPrintf(L"No response registered for: %s", sRequestParams).c_str());
-    }
+    void MockUser(const std::string& sUsername, const std::string& sApiToken);
 
-    void MockUser(const std::string& sUsername, const std::string& sApiToken)
-    { 
-        m_sUsername = sUsername;
-        m_sApiToken = sApiToken;
-        GetClient()->user.username = m_sUsername.c_str();
-        GetClient()->user.display_name = m_sUsername.c_str();
-        GetClient()->user.token = m_sApiToken.c_str();
-        GetClient()->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
-    }
+    void MockGame();
+    rc_client_achievement_info_t* MockAchievement(uint32_t nId, const char* sTitle = nullptr);
 
-    void AssertCalled(const std::string& sRequestParams) const
-    {
-        for (auto& pResponse : m_vResponses)
-        {
-            if (pResponse.sRequestParams == sRequestParams)
-            {
-                Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsTrue(pResponse.bSeen);
-                return;
-            }
-        }
+    void AssertCalled(const std::string& sRequestParams) const;
 
-        Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(
-            ra::StringPrintf(L"Could not find mock response for %s", sRequestParams).c_str());
-    }
-
-    void AssertNoPendingRequests() const
-    {
-        for (auto& pResponse : m_vResponses)
-        {
-            if (pResponse.fAsyncCallback != nullptr && !pResponse.bSeen)
-            {
-                Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(
-                    ra::StringPrintf(L"Unexpected request pending for %s", pResponse.sRequestParams).c_str());
-                return;
-            }
-        }
-    }
+    void AssertNoPendingRequests() const;
 
 private:
     static void MockServerCall(const rc_api_request_t* pRequest, rc_client_server_callback_t fCallback,
-                               void* pCallbackData, rc_client_t*)
-    {
-        auto* pClient = dynamic_cast<MockRcheevosClient*>(&ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>());
-        std::string sRequestParams = pRequest->post_data;
-
-        for (auto& pResponse : pClient->m_vResponses)
-        {
-            if (pResponse.sRequestParams == sRequestParams)
-            {
-                pResponse.bSeen = true;
-
-                if (pResponse.fBeforeResponse)
-                    pResponse.fBeforeResponse();
-
-                rc_api_server_response_t pServerResponse;
-                memset(&pServerResponse, 0, sizeof(pServerResponse));
-                pServerResponse.http_status_code = pResponse.nHttpStatus;
-                pServerResponse.body = pResponse.sResponseBody.c_str();
-                pServerResponse.body_length = pResponse.sResponseBody.length();
-
-                fCallback(&pServerResponse, pCallbackData);
-                return;
-            }
-        }
-
-        auto& pResponse = pClient->m_vResponses.emplace_back();
-        pResponse.sRequestParams = sRequestParams;
-        pResponse.fAsyncCallback = fCallback;
-        pResponse.pAsyncCallbackData = pCallbackData;
-    }
+                               void* pCallbackData, rc_client_t*);
 
     ra::services::ServiceLocator::ServiceOverride<ra::services::RcheevosClient> m_Override;
 

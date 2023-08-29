@@ -382,6 +382,7 @@
     <ClCompile Include="data\models\RichPresenceModel_Tests.cpp" />
     <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />
+    <ClCompile Include="mocks\MockRcheevosClient.cpp" />
     <ClCompile Include="services\AchievementRuntime_Tests.cpp" />
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />
     <ClCompile Include="services\FrameEventQueue_Tests.cpp" />

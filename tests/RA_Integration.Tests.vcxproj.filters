@@ -462,6 +462,9 @@
     <ClCompile Include="..\src\services\RcheevosClient.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="mocks\MockRcheevosClient.cpp">
+      <Filter>Mocks</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

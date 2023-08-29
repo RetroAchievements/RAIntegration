@@ -14,6 +14,7 @@
 #include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
+#include "tests\mocks\MockRcheevosClient.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -41,6 +42,7 @@ private:
         ra::services::mocks::MockFileSystem mockFileSystem;
         ra::services::mocks::MockHttpRequester mockHttpRequester;
         ra::services::mocks::MockThreadPool mockThreadPool;
+        ra::services::mocks::MockRcheevosClient mockRcheevosClient;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
@@ -48,6 +50,7 @@ private:
         GSL_SUPPRESS_F6 EmulatorContextHarness() noexcept
             : mockHttpRequester([](const ra::services::Http::Request&) { return ra::services::Http::Response(ra::services::Http::StatusCode::OK, ""); })
         {
+            mockRcheevosClient.MockGame();
         }
 
         void MockVersions(const std::string& sClientVersion, const std::string& sServerVersion, const std::string& sMinimumVersion)
@@ -662,15 +665,21 @@ public:
         pLeaderboard.SetState(ra::data::models::AssetState::Active);
         Assert::IsTrue(pLeaderboard.IsActive());
 
-        bool bUnlocksRequested = false;
-        emulator.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([&bUnlocksRequested](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
-        {
-            bUnlocksRequested = true;
-            Assert::AreEqual(1234U, request.GameId);
-            Assert::IsFalse(request.Hardcore);
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        emulator.mockRcheevosClient.MockAchievement(44U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_NONE;
+        emulator.mockRcheevosClient.MockAchievement(45U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE;
+        emulator.mockRcheevosClient.MockAchievement(46U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+
+        auto& pAchievement44 = emulator.mockGameContext.Assets().NewAchievement();
+        pAchievement44.SetID(44U);
+        pAchievement44.SetState(ra::data::models::AssetState::Active);
+        auto& pAchievement45 = emulator.mockGameContext.Assets().NewAchievement();
+        pAchievement45.SetID(45U);
+        auto& pAchievement46 = emulator.mockGameContext.Assets().NewAchievement();
+        pAchievement46.SetID(46U);
+
+        Assert::IsTrue(pAchievement44.IsActive());
+        Assert::IsFalse(pAchievement45.IsActive());
+        Assert::IsFalse(pAchievement46.IsActive());
 
         emulator.DisableHardcoreMode();
 
@@ -680,9 +689,10 @@ public:
         // deactivating hardcore mode should not disable leaderboards
         Assert::IsTrue(pLeaderboard.IsActive());
 
-        // deactivating hardcore mode should request non-hardcore unlocks
-        emulator.mockThreadPool.ExecuteNextTask();
-        Assert::IsTrue(bUnlocksRequested);
+        // deactivating hardcore mode should update active achievements
+        Assert::IsTrue(pAchievement44.IsActive());
+        Assert::IsFalse(pAchievement45.IsActive());
+        Assert::IsFalse(pAchievement46.IsActive());
 
         // deactivating hardcore mode should not reset the emulator
         Assert::IsFalse(bWasReset);
@@ -732,15 +742,16 @@ public:
             return ra::ui::DialogResult::Yes;
         });
 
-        bool bUnlocksRequested = false;
-        emulator.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([&bUnlocksRequested](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
-        {
-            bUnlocksRequested = true;
-            Assert::AreEqual(1U, request.GameId);
-            Assert::IsTrue(request.Hardcore);
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        emulator.mockRcheevosClient.MockAchievement(44U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_NONE;
+        emulator.mockRcheevosClient.MockAchievement(45U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE;
+        emulator.mockRcheevosClient.MockAchievement(46U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+
+        auto& pAchievement44 = emulator.mockGameContext.Assets().NewAchievement();
+        pAchievement44.SetID(44U);
+        auto& pAchievement45 = emulator.mockGameContext.Assets().NewAchievement();
+        pAchievement45.SetID(45U);
+        auto& pAchievement46 = emulator.mockGameContext.Assets().NewAchievement();
+        pAchievement46.SetID(46U);
 
         auto& pLeaderboard = emulator.mockGameContext.Assets().NewLeaderboard();
         pLeaderboard.SetID(32U);
@@ -760,9 +771,10 @@ public:
         // enabling hardcore mode should enable leaderboards
         Assert::IsTrue(pLeaderboard.IsActive());
 
-        // enabling hardcore mode should request hardcore unlocks
-        emulator.mockThreadPool.ExecuteNextTask();
-        Assert::IsTrue(bUnlocksRequested);
+        // enabling hardcore mode should activate achievements not unlocked in hardcore
+        Assert::IsTrue(pAchievement44.IsActive());
+        Assert::IsTrue(pAchievement45.IsActive());
+        Assert::IsFalse(pAchievement46.IsActive());
 
         // enabling hardcore mode should reset the emulator
         Assert::IsTrue(bWasReset);
@@ -878,15 +890,16 @@ public:
         emulator.mockGameContext.SetGameId(1U);
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
 
-        bool bUnlocksRequested = false;
-        emulator.mockServer.HandleRequest<ra::api::FetchUserUnlocks>([&bUnlocksRequested](const ra::api::FetchUserUnlocks::Request& request, ra::api::FetchUserUnlocks::Response& response)
-        {
-            bUnlocksRequested = true;
-            Assert::AreEqual(1U, request.GameId);
-            Assert::IsTrue(request.Hardcore);
-            response.Result = ra::api::ApiResult::Success;
-            return true;
-        });
+        emulator.mockRcheevosClient.MockAchievement(44U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_NONE;
+        emulator.mockRcheevosClient.MockAchievement(45U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE;
+        emulator.mockRcheevosClient.MockAchievement(46U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+
+        auto& pAchievement44 = emulator.mockGameContext.Assets().NewAchievement();
+        pAchievement44.SetID(44U);
+        auto& pAchievement45 = emulator.mockGameContext.Assets().NewAchievement();
+        pAchievement45.SetID(45U);
+        auto& pAchievement46 = emulator.mockGameContext.Assets().NewAchievement();
+        pAchievement46.SetID(46U);
 
         auto& pLeaderboard = emulator.mockGameContext.Assets().NewLeaderboard();
         pLeaderboard.SetID(32U);
@@ -906,9 +919,10 @@ public:
         // enabling hardcore mode should enable leaderboards
         Assert::IsTrue(pLeaderboard.IsActive());
 
-        // enabling hardcore mode should request hardcore unlocks
-        emulator.mockThreadPool.ExecuteNextTask();
-        Assert::IsTrue(bUnlocksRequested);
+        // enabling hardcore mode should activate achievements not unlocked in hardcore
+        Assert::IsTrue(pAchievement44.IsActive());
+        Assert::IsTrue(pAchievement45.IsActive());
+        Assert::IsFalse(pAchievement46.IsActive());
 
         // enabling hardcore mode should reset the emulator
         Assert::IsTrue(bWasReset);

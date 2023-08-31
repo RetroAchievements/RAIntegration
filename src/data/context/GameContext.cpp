@@ -162,7 +162,7 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
 
     struct LoadGameUserData
     {
-        bool bWasPaused;
+        bool bWasPaused = false;
         std::string sOldRichPresence;
     }* pLoadGameUserData;
     pLoadGameUserData = new LoadGameUserData;
@@ -172,7 +172,7 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
     pClient.BeginLoadGame(sGameHash, nGameId,
         [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) {
             auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-            auto* pLoadGameUserData = reinterpret_cast<struct LoadGameUserData*>(pUserdata);
+            auto* pLoadGameUserData = static_cast<struct LoadGameUserData*>(pUserdata);
             pGameContext.FinishLoadGame(nResult, sErrorMessage, pLoadGameUserData->bWasPaused,
                                         pLoadGameUserData->sOldRichPresence);
             delete pLoadGameUserData;
@@ -306,11 +306,11 @@ void GameContext::InitializeFromRcheevosClient(const std::map<uint32_t, std::str
     {
         // achievements
         auto* pAchievementData = pSubset->achievements;
-        auto* pAchievementStop = pAchievementData + pSubset->public_.num_achievements;
+        const auto* pAchievementStop = pAchievementData + pSubset->public_.num_achievements;
         for (; pAchievementData < pAchievementStop; ++pAchievementData)
         {
             // if the server has provided an unexpected category (usually 0), ignore it.
-            ra::data::models::AssetCategory nCategory;
+            ra::data::models::AssetCategory nCategory = ra::data::models::AssetCategory::None;
             switch (pAchievementData->public_.category)
             {
                 case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
@@ -371,7 +371,7 @@ void GameContext::InitializeFromRcheevosClient(const std::map<uint32_t, std::str
 
         // leaderboards
         auto* pLeaderboardData = pSubset->leaderboards;
-        auto* pLeaderboardStop = pLeaderboardData + pSubset->public_.num_leaderboards;
+        const auto* pLeaderboardStop = pLeaderboardData + pSubset->public_.num_leaderboards;
         for (; pLeaderboardData < pLeaderboardStop; ++pLeaderboardData)
         {
             auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
@@ -478,7 +478,7 @@ void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
         {
             // achievements
             auto* pAchievementData = pSubset->achievements;
-            auto* pAchievementStop = pAchievementData + pSubset->public_.num_achievements;
+            const auto* pAchievementStop = pAchievementData + pSubset->public_.num_achievements;
             for (; pAchievementData < pAchievementStop; ++pAchievementData)
             {
                 if (pAchievementData->public_.unlocked & nFlag)

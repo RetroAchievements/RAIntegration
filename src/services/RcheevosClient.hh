@@ -64,7 +64,7 @@ public:
             m_pCondVar.notify_all();
         }
 
-        void SetErrorMessage(const std::string& sErrorMessage) noexcept
+        void SetErrorMessage(const std::string& sErrorMessage)
         {
             m_sErrorMessage = sErrorMessage;
         }

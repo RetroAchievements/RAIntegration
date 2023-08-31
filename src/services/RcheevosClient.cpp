@@ -205,11 +205,13 @@ static void ExtractPatchData(const rc_api_server_response_t* server_response, ui
 {
     // extract the PatchData and store a copy in the cache for offline mode
     rc_api_response_t api_response{};
+    GSL_SUPPRESS_ES47
     rc_json_field_t fields[] = {
         RC_JSON_NEW_FIELD("Success"),
         RC_JSON_NEW_FIELD("Error"),
         RC_JSON_NEW_FIELD("PatchData")
     };
+
 
     if (rc_json_parse_server_response(&api_response, server_response, fields, sizeof(fields) / sizeof(fields[0])) == RC_OK &&
         fields[2].value_start && fields[2].value_end)
@@ -225,6 +227,7 @@ static void ExtractPatchData(const rc_api_server_response_t* server_response, ui
     }
 }
 
+GSL_SUPPRESS_CON3
 void RcheevosClient::PostProcessGameDataResponse(const rc_api_server_response_t* server_response,
     struct rc_api_fetch_game_data_response_t* game_data_response,
     rc_client_t* client, void* pUserdata)

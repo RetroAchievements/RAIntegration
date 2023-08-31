@@ -1459,6 +1459,30 @@ protected:
     }
 };
 
+class FloatBESearchImpl : public FloatSearchImpl
+{
+public:
+    MemSize GetMemSize() const noexcept override { return MemSize::FloatBigEndian; }
+
+protected:
+    GSL_SUPPRESS_TYPE1
+    float BuildFloatValue(const unsigned char* ptr) const noexcept override
+    {
+        GSL_SUPPRESS_F6 Expects(ptr != nullptr);
+        rc_typed_value_t value;
+        value.type = RC_VALUE_TYPE_UNSIGNED;
+        value.value.u32 = *reinterpret_cast<const unsigned int*>(ptr);
+        rc_transform_memref_value(&value, RC_MEMSIZE_FLOAT_BE);
+
+        return value.value.f32;
+    }
+
+    unsigned int DeconstructFloatValue(float fValue) const noexcept override
+    {
+        return ra::data::FloatToU32(fValue, MemSize::FloatBigEndian);
+    }
+};
+
 class MBF32SearchImpl : public FloatSearchImpl
 {
 public:
@@ -1522,6 +1546,7 @@ static ThirtyTwoBitBigEndianAlignedSearchImpl s_pThirtyTwoBitBigEndianAlignedSea
 static BitCountSearchImpl s_pBitCountSearchImpl;
 static AsciiTextSearchImpl s_pAsciiTextSearchImpl;
 static FloatSearchImpl s_pFloatSearchImpl;
+static FloatBESearchImpl s_pFloatBESearchImpl;
 static MBF32SearchImpl s_pMBF32SearchImpl;
 static MBF32LESearchImpl s_pMBF32LESearchImpl;
 
@@ -1734,6 +1759,9 @@ void SearchResults::Initialize(ra::ByteAddress nAddress, size_t nBytes, SearchTy
             break;
         case SearchType::Float:
             m_pImpl = &ra::services::impl::s_pFloatSearchImpl;
+            break;
+        case SearchType::FloatBigEndian:
+            m_pImpl = &ra::services::impl::s_pFloatBESearchImpl;
             break;
         case SearchType::MBF32:
             m_pImpl = &ra::services::impl::s_pMBF32SearchImpl;

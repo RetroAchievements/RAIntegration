@@ -69,6 +69,7 @@ TriggerViewModel::TriggerViewModel() noexcept
     m_vOperandSizes.Add(ra::etoi(MemSize::ThirtyTwoBitBigEndian), L"32-bit BE");
     m_vOperandSizes.Add(ra::etoi(MemSize::BitCount), L"BitCount");
     m_vOperandSizes.Add(ra::etoi(MemSize::Float), L"Float");
+    m_vOperandSizes.Add(ra::etoi(MemSize::FloatBigEndian), L"Float BE");
     m_vOperandSizes.Add(ra::etoi(MemSize::MBF32), L"MBF32");
     m_vOperandSizes.Add(ra::etoi(MemSize::MBF32LE), L"MBF32 LE");
 
@@ -402,6 +403,7 @@ void TriggerViewModel::NewCondition()
         switch (nSize)
         {
             case MemSize::Float:
+            case MemSize::FloatBigEndian:
             case MemSize::MBF32:
             case MemSize::MBF32LE:
                 vmCondition.SetTargetType(TriggerOperandType::Float);

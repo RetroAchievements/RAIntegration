@@ -73,6 +73,9 @@ std::wstring MemSizeFormat(unsigned nValue, MemSize nSize, MemFormat nFormat)
         case MemSize::Float:
             return U32ToFloatString(nValue, RC_MEMSIZE_FLOAT);
 
+        case MemSize::FloatBigEndian:
+            return U32ToFloatString(nValue, RC_MEMSIZE_FLOAT_BE);
+
         case MemSize::MBF32:
             return U32ToFloatString(nValue, RC_MEMSIZE_MBF32);
 
@@ -95,6 +98,14 @@ std::wstring MemSizeFormat(unsigned nValue, MemSize nSize, MemFormat nFormat)
     }
 }
 
+static unsigned ReverseBytes(unsigned nValue)
+{
+    return ((nValue & 0xFF000000) >> 24) |
+           ((nValue & 0x00FF0000) >> 8) |
+           ((nValue & 0x0000FF00) << 8) |
+           ((nValue & 0x000000FF) << 24);
+}
+
 unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept
 {
     // this leverages the fact that Windows uses IEE754 floats
@@ -105,23 +116,30 @@ unsigned FloatToU32(float fValue, MemSize nFloatType) noexcept
     } uUnion;
 
     uUnion.fValue = fValue;
-    if (nFloatType == MemSize::Float)
-        return uUnion.nValue;
 
-    // MBF32 puts the sign after the exponent, uses a 129 base instead of 127, and stores in big endian
-    unsigned nValue = ((uUnion.nValue & 0x007FFFFF)) | // mantissa is unmoved
-        ((uUnion.nValue & 0x7F800000) << 1) | // exponent is shifted one bit left
-        ((uUnion.nValue & 0x80000000) >> 8);  // sign is shifted eight bits right
+    switch (nFloatType)
+    {
+        case MemSize::Float:
+            return uUnion.nValue;
 
-    nValue += 0x02000000; // adjust to 129 base
+        case MemSize::FloatBigEndian:
+            return ReverseBytes(uUnion.nValue);
 
-    if (nFloatType == MemSize::MBF32LE)
-        return nValue;
+        case MemSize::MBF32:
+        case MemSize::MBF32LE:
+        {
+            // MBF32 puts the sign after the exponent, uses a 129 base instead of 127, and stores in big endian
+            unsigned nValue = ((uUnion.nValue & 0x007FFFFF)) |      // mantissa is unmoved
+                              ((uUnion.nValue & 0x7F800000) << 1) | // exponent is shifted one bit left
+                              ((uUnion.nValue & 0x80000000) >> 8);  // sign is shifted eight bits right
 
-    return ((nValue & 0xFF000000) >> 24) | // convert to big endian
-        ((nValue & 0x00FF0000) >> 8) |
-        ((nValue & 0x0000FF00) << 8) |
-        ((nValue & 0x000000FF) << 24);
+            nValue += 0x02000000; // adjust to 129 base
+            return (nFloatType == MemSize::MBF32LE) ? nValue : ReverseBytes(nValue);            
+        }
+
+        default:
+            return 0;
+    }
 }
 
 float U32ToFloat(unsigned nValue, MemSize nFloatType) noexcept
@@ -133,25 +151,32 @@ float U32ToFloat(unsigned nValue, MemSize nFloatType) noexcept
         unsigned nValue;
     } uUnion;
 
-    uUnion.nValue = nValue;
-
-    if (nFloatType != MemSize::Float)
+    switch (nFloatType)
     {
-        if (nFloatType == MemSize::MBF32)
-        {
-            nValue = ((nValue & 0xFF000000) >> 24) | // convert to big endian
-                ((nValue & 0x00FF0000) >> 8) |
-                ((nValue & 0x0000FF00) << 8) |
-                ((nValue & 0x000000FF) << 24);
-        }
+        case MemSize::FloatBigEndian:
+            nValue = ReverseBytes(nValue);
+            __fallthrough; // to MemSize::Float
 
-        // MBF32 puts the sign after the exponent, uses a 129 base instead of 127, and stores in big endian
-        nValue -= 0x02000000; // adjust to 129 base
-        nValue = ((nValue & 0x007FFFFF)) | // mantissa is unmoved
-            ((nValue & 0xFF000000) >> 1) | // exponent is shifted one bit right
-            ((nValue & 0x00800000) << 8);  // sign is shifted eight bits left
+        case MemSize::Float:
+            uUnion.nValue = nValue;
+            break;
 
-        uUnion.nValue = nValue;
+        case MemSize::MBF32:
+            nValue = ReverseBytes(nValue);
+            __fallthrough; // to MemSize::MBF32LE
+
+        case MemSize::MBF32LE:
+            // MBF32 puts the sign after the exponent, uses a 129 base instead of 127, and stores in big endian
+            nValue -= 0x02000000;                   // adjust to 129 base
+            nValue = ((nValue & 0x007FFFFF)) |      // mantissa is unmoved
+                     ((nValue & 0xFF000000) >> 1) | // exponent is shifted one bit right
+                     ((nValue & 0x00800000) << 8);  // sign is shifted eight bits left
+
+            uUnion.nValue = nValue;
+            break;
+
+        default:
+            return 0.0f;
     }
 
     return uUnion.fValue;

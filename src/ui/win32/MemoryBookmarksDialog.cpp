@@ -158,6 +158,7 @@ private:
         switch (nSize)
         {
             case MemSize::Float:
+            case MemSize::FloatBigEndian:
             case MemSize::MBF32:
             case MemSize::MBF32LE:
             case MemSize::Text:

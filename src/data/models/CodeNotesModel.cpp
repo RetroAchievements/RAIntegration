@@ -261,18 +261,36 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
                 std::wstring sWord = pNote.Note.substr(nScan, nLength);
                 ra::StringMakeLowercase(sWord);
 
+                nScan += nLength;
+                while (nScan < pNote.Note.length() && isspace(pNote.Note.at(nScan)))
+                    nScan++;
+                nLength = 0;
+                while (nScan + nLength < pNote.Note.length() && isalpha(pNote.Note.at(nScan + nLength)))
+                    nLength++;
+                std::wstring sNextWord = pNote.Note.substr(nScan, nLength);
+                ra::StringMakeLowercase(sNextWord);
+
                 if (sWord == L"be" || sWord == L"bigendian")
                 {
-                    switch (pNote.Bytes)
+                    if (sNextWord == L"float")
                     {
-                        case 2: pNote.MemSize = MemSize::SixteenBitBigEndian; break;
-                        case 3: pNote.MemSize = MemSize::TwentyFourBitBigEndian; break;
-                        case 4: pNote.MemSize = MemSize::ThirtyTwoBitBigEndian; break;
+                        pNote.MemSize = MemSize::FloatBigEndian;
+                    }
+                    else
+                    {
+                        switch (pNote.Bytes)
+                        {
+                            case 2: pNote.MemSize = MemSize::SixteenBitBigEndian; break;
+                            case 3: pNote.MemSize = MemSize::TwentyFourBitBigEndian; break;
+                            case 4: pNote.MemSize = MemSize::ThirtyTwoBitBigEndian; break;
+                        }
                     }
                 }
                 else if (sWord == L"float")
                 {
-                    if (pNote.Bytes == 4)
+                    if (sNextWord == L"be" || sNextWord == L"bigendian")
+                        pNote.MemSize = MemSize::FloatBigEndian;
+                    else if (pNote.Bytes == 4)
                         pNote.MemSize = MemSize::Float;
                 }
                 else if (sWord == L"mbf")
@@ -280,6 +298,7 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
                     if (pNote.Bytes == 4 || pNote.Bytes == 5)
                         pNote.MemSize = MemSize::MBF32;
                 }
+
             }
 
             // if "bytes" were found, we're done. if bits were found, it might be indicating
@@ -294,27 +313,63 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
     // did not find a bytes annotation, look for float
     if (pNote.Note.length() >= 5)
     {
-        const size_t nStopFloat = pNote.Note.length() - 5;
-        for (size_t nIndex = 0; nIndex <= nStopFloat; ++nIndex)
+        std::wstring sPreviousWord, sWord;
+        bool bIgnoreWord = false;
+        const size_t nLength = pNote.Note.length();
+        size_t nIndex = 0;
+        for (nIndex = 0; nIndex <= nLength; ++nIndex)
         {
-            const wchar_t c = pNote.Note.at(nIndex);
-            if (c == L'f' || c == L'F')
+            // support reading null terminator so we process the last word in the string
+            const wchar_t c = (nIndex == nLength) ? 0 : pNote.Note.at(nIndex);
+            if (isalnum(c))
             {
-                if (nIndex == 0 || !isalpha(pNote.Note.at(nIndex - 1)))
+                if (sWord.empty())
                 {
-                    std::wstring sWord = pNote.Note.substr(nIndex, 5);
-                    ra::StringMakeLowercase(sWord);
-                    if (sWord == L"float")
-                    {
-                        if (nIndex == nStopFloat || !isalpha(pNote.Note.at(nIndex + 5)))
-                        {
-                            pNote.Bytes = 4;
-                            pNote.MemSize = MemSize::Float;
-                            return;
-                        }
-                    }
+                    bIgnoreWord = (c != 'f' && c != 'F' && c != 'b' && c != 'B');
+                    sWord.push_back(c); // always push one char to make it non-empty
+                }
+                else if (!bIgnoreWord)
+                {
+                    sWord.push_back(c);
                 }
             }
+            else if (!sWord.empty())
+            {
+                if (!bIgnoreWord)
+                {
+                    ra::StringMakeLowercase(sWord);
+                    if (sWord == L"float32")
+                        sWord.resize(5); // convert to "float"
+
+                    if (sWord == L"float" && (sPreviousWord == L"be" || sPreviousWord == L"bigendian"))
+                    {
+                        pNote.Bytes = 4;
+                        pNote.MemSize = MemSize::FloatBigEndian;
+                        return;
+                    }
+                }
+
+                if (sPreviousWord == L"float")
+                {
+                    pNote.Bytes = 4;
+
+                    if (sWord == L"be" || sWord == L"bigendian")
+                        pNote.MemSize = MemSize::FloatBigEndian;
+                    else
+                        pNote.MemSize = MemSize::Float;
+                    return;
+                }
+
+                std::swap(sPreviousWord, sWord);
+                sWord.clear();
+            }
+        }
+
+        if (sPreviousWord == L"float")
+        {
+            pNote.Bytes = 4;
+            pNote.MemSize = MemSize::Float;
+            return;
         }
     }
 }

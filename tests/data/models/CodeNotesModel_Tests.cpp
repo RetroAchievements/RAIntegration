@@ -236,6 +236,10 @@ public:
         TestCodeNoteSize(L"is floating", 1U, MemSize::Unknown);
         TestCodeNoteSize(L"has floated", 1U, MemSize::Unknown);
         TestCodeNoteSize(L"16-afloat", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"[float be] Test", 4U, MemSize::FloatBigEndian);
+        TestCodeNoteSize(L"[float bigendian] Test", 4U, MemSize::FloatBigEndian);
+        TestCodeNoteSize(L"[be float] Test", 4U, MemSize::FloatBigEndian);
+        TestCodeNoteSize(L"[bigendian float] Test", 4U, MemSize::FloatBigEndian);
 
         TestCodeNoteSize(L"[MBF32] Test", 4U, MemSize::MBF32);
         TestCodeNoteSize(L"[MBF40] Test", 5U, MemSize::MBF32);

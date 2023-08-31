@@ -247,12 +247,19 @@ void RcheevosClient::PostProcessGameDataResponse(const rc_api_server_response_t*
         auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
         pImageRepository.FetchImage(ra::ui::ImageType::Icon, client->game->public_.badge_name);
     }
+#else
+    (void*)client;
 #endif
 
     const rc_api_achievement_definition_t* pAchievement = game_data_response->achievements;
     const rc_api_achievement_definition_t* pAchievementStop = pAchievement + game_data_response->num_achievements;
     for (; pAchievement < pAchievementStop; ++pAchievement)
         wrapper->m_mAchievementDefinitions[pAchievement->id] = pAchievement->definition;
+
+    const rc_api_leaderboard_definition_t* pLeaderboard = game_data_response->leaderboards;
+    const rc_api_leaderboard_definition_t* pLeaderboardStop = pLeaderboard + game_data_response->num_leaderboards;
+    for (; pLeaderboard < pLeaderboardStop; ++pLeaderboard)
+        wrapper->m_mLeaderboardDefinitions[pLeaderboard->id] = pLeaderboard->definition;
 
     ExtractPatchData(server_response, game_data_response->id);
 }

@@ -465,7 +465,7 @@ void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
 {
     std::set<unsigned int> vUnlockedAchievements;
 
-    if (m_nMode != Mode::CompatibilityTest)
+    if (m_nGameId != 0 && m_nMode != Mode::CompatibilityTest)
     {
         const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
         const bool bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
@@ -473,7 +473,9 @@ void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
                                                                   : ra::etoi(RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE));
 
         const auto* pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
-        Expects(pClient->game != nullptr);
+        if (!pClient->game) // game still loading, ignore
+            return;
+
         for (auto* pSubset = pClient->game->subsets; pSubset; pSubset = pSubset->next)
         {
             // achievements

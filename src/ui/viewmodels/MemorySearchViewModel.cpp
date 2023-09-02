@@ -106,6 +106,7 @@ MemorySearchViewModel::MemorySearchViewModel()
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::ThirtyTwoBitBigEndianAligned), L"32-bit BE (aligned)");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::BitCount), L"BitCount");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::Float), L"Float");
+    m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::FloatBigEndian), L"Float BE");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::MBF32), L"MBF32");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::MBF32LE), L"MBF32 LE");
     m_vSearchTypes.Add(ra::etoi(ra::services::SearchType::AsciiText), L"ASCII Text");

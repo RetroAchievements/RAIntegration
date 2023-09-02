@@ -88,9 +88,6 @@ void CodeNotesModel::Refresh(unsigned int nGameId, CodeNoteChangedFunction fCode
 
 void CodeNotesModel::ExtractSize(CodeNote& pNote)
 {
-    bool bIsBytes = false;
-    bool bBytesFromBits = false;
-
     // provide defaults in case no matches are found
     pNote.Bytes = 1;
     pNote.MemSize = MemSize::Unknown;
@@ -99,277 +96,179 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
     if (pNote.Note.length() < 4)
         return;
 
-    const size_t nStop = pNote.Note.length() - 3;
-    for (size_t nIndex = 1; nIndex <= nStop; ++nIndex)
+    bool bBytesFromBits = false;
+    bool bFoundSize = false;
+    bool bLastWordIsSize = false;
+    bool bLastWordIsNumber = false;
+    bool bWordIsNumber = false;
+
+    std::wstring sPreviousWord, sWord;
+    const size_t nLength = pNote.Note.length();
+    for (size_t nIndex = 0; nIndex <= nLength; ++nIndex)
     {
-        wchar_t c = pNote.Note.at(nIndex);
-        if (c != L'b' && c != L'B')
+        // support reading null terminator so we process the last word in the string
+        const wchar_t c = (nIndex == nLength) ? 0 : pNote.Note.at(nIndex);
+
+        // find the next word
+        if (isalpha(c))
+        {
+            if (sWord.empty())
+            {
+                sWord.push_back(gsl::narrow_cast<wchar_t>(tolower(c)));
+                bWordIsNumber = false;
+                continue;
+            }
+
+            if (!bWordIsNumber)
+            {
+                sWord.push_back(gsl::narrow_cast<wchar_t>(tolower(c)));
+                continue;
+            }
+        }
+        else if (isdigit(c))
+        {
+            if (sWord.empty())
+            {
+                sWord.push_back(c);
+                bWordIsNumber = true;
+                continue;
+            }
+
+            if (bWordIsNumber)
+            {
+                sWord.push_back(c);
+                continue;
+            }
+        }
+
+        if (sWord.empty())
             continue;
 
-        c = pNote.Note.at(nIndex + 1);
-        if (c == L'i' || c == L'I')
+        // process the word
+        bool bWordIsSize = false;
+        if (bWordIsNumber)
         {
-            // already found one bit reference, give it precedence
-            if (bBytesFromBits)
-                continue;
-
-            c = pNote.Note.at(nIndex + 2);
-            if (c != L't' && c != L'T')
-                continue;
-
-            // match "bits", but not "bite" even if there is a numeric prefix
-            if (nIndex < nStop)
+            if (sPreviousWord == L"mbf")
             {
-                c = pNote.Note.at(nIndex + 3);
-                if (isalpha(c) && c != L's' && c != L'S')
-                    continue;
-            }
-
-            // found "bit"
-            bIsBytes = false;
-        }
-        else if (c == L'y' || c == L'Y')
-        {
-            if (nIndex == nStop)
-                continue;
-
-            c = pNote.Note.at(nIndex + 2);
-            if (c != L't' && c != L'T')
-                continue;
-
-            c = pNote.Note.at(nIndex + 3);
-            if (c != L'e' && c != L'E')
-                continue;
-
-            // found "byte"
-            bIsBytes = true;
-        }
-        else if (c == L'F' || c == 'f')
-        {
-            if (nIndex == 0)
-                continue;
-
-            c = pNote.Note.at(nIndex - 1);
-            if (c != 'm' && c != 'M')
-                continue;
-
-            // found "mbf", check for "mbf32" or "mbf40"
-            std::wstring sBits = pNote.Note.substr(nIndex + 2, 2);
-            if (nIndex + 4 < pNote.Note.length() && std::isdigit(pNote.Note.at(nIndex + 4)))
-                continue;
-
-            if (sBits == L"32")
-            {
-                pNote.Bytes = 4;
-                pNote.MemSize = MemSize::MBF32;
-            }
-            else if (sBits == L"40")
-            {
-                // should be MBF40, but the runtime doesn't support 40-bit values. because of the way MBF40 is stored,
-                // it can be read as an MBF32 value with only the loss of the smallest 8-bits of precision.
-                pNote.MemSize = MemSize::MBF32;
-                pNote.Bytes = 5;
-            }
-            else
-            {
-                continue;
-            }
-
-            // check for LE (little endian)
-            nIndex += 4;
-            while (nIndex < pNote.Note.length() && (pNote.Note.at(nIndex) == ' ' || pNote.Note.at(nIndex) == '-'))
-                ++nIndex;
-            if (nIndex + 1 < pNote.Note.length())
-            {
-                c = pNote.Note.at(nIndex);
-                if (c == 'L' || c == 'l')
+                const auto nBits = _wtoi(sWord.c_str());
+                if (nBits == 32)
                 {
-                    c = pNote.Note.at(++nIndex);
-                    if (c == 'E' || c == 'e')
-                    {
-                        nIndex++;
-                        if (nIndex == pNote.Note.length() || !std::isalpha(pNote.Note.at(nIndex)))
-                            pNote.MemSize = MemSize::MBF32LE;
-                    }
+                    pNote.Bytes = 4;
+                    pNote.MemSize = MemSize::MBF32;
+                    bWordIsSize = true;
+                    bFoundSize = true;
+                }
+                else if (nBits == 40)
+                {
+                    pNote.Bytes = 5;
+                    pNote.MemSize = MemSize::MBF32;
+                    bWordIsSize = true;
+                    bFoundSize = true;
+                }
+            }
+        }
+        else if (bLastWordIsSize)
+        {
+            if (sWord == L"float")
+            {
+                if (pNote.MemSize == MemSize::ThirtyTwoBit)
+                    pNote.MemSize = MemSize::Float;
+            }
+            else if (sWord == L"be" || sWord == L"bigendian")
+            {
+                switch (pNote.MemSize)
+                {
+                    case MemSize::SixteenBit: pNote.MemSize = MemSize::SixteenBitBigEndian; break;
+                    case MemSize::TwentyFourBit: pNote.MemSize = MemSize::TwentyFourBitBigEndian; break;
+                    case MemSize::ThirtyTwoBit: pNote.MemSize = MemSize::ThirtyTwoBitBigEndian; break;
+                    case MemSize::Float: pNote.MemSize = MemSize::FloatBigEndian; break;
+                    default: break;
+                }
+            }
+            else if (sWord == L"le")
+            {
+                if (pNote.MemSize == MemSize::MBF32)
+                    pNote.MemSize = MemSize::MBF32LE;
+            }
+            else if (sWord == L"mbf")
+            {
+                if (pNote.Bytes == 4 || pNote.Bytes == 5)
+                    pNote.MemSize = MemSize::MBF32;
+            }
+        }
+        else if (bLastWordIsNumber)
+        {
+            if (sWord == L"bit" || sWord == L"bits")
+            {
+                if (!bFoundSize)
+                {
+                    const auto nBits = _wtoi(sPreviousWord.c_str());
+                    pNote.Bytes = (nBits + 7) / 8;
+                    pNote.MemSize = MemSize::Unknown;
+                    bBytesFromBits = true;
+                    bWordIsSize = true;
+                    bFoundSize = true;
+                }
+            }
+            else if (sWord == L"byte" || sWord == L"bytes")
+            {
+                if (!bFoundSize || bBytesFromBits)
+                {
+                    pNote.Bytes = _wtoi(sPreviousWord.c_str());
+                    pNote.MemSize = MemSize::Unknown;
+                    bBytesFromBits = false;
+                    bWordIsSize = true;
+                    bFoundSize = true;
                 }
             }
 
-            return;
+            if (bWordIsSize)
+            {
+                switch (pNote.Bytes)
+                {
+                    case 0: pNote.Bytes = 1; break; // Unexpected size, reset to defaults (1 byte, Unknown)
+                    case 1: pNote.MemSize = MemSize::EightBit; break;
+                    case 2: pNote.MemSize = MemSize::SixteenBit; break;
+                    case 3: pNote.MemSize = MemSize::TwentyFourBit; break;
+                    case 4: pNote.MemSize = MemSize::ThirtyTwoBit; break;
+                    default: pNote.MemSize = MemSize::Array; break;
+                }
+            }
+        }
+        else if (sWord == L"float")
+        {
+            if (!bFoundSize)
+            {
+                pNote.Bytes = 4;
+                pNote.MemSize = MemSize::Float;
+                bWordIsSize = true;
+
+                if (sPreviousWord == L"be" || sPreviousWord == L"bigendian")
+                    pNote.MemSize = MemSize::FloatBigEndian;
+            }
+        }
+
+        // store information about the word for later
+        bLastWordIsSize = bWordIsSize;
+        bLastWordIsNumber = bWordIsNumber;
+
+        if (isalnum(c))
+        {
+            std::swap(sPreviousWord, sWord);
+            sWord.clear();
+
+            sWord.push_back(gsl::narrow_cast<wchar_t>(tolower(c)));
+            bWordIsNumber = isdigit(c);
         }
         else
         {
-            continue;
-        }
-
-        // ignore single space or hyphen preceding "bit" or "byte"
-        size_t nScan = nIndex - 1;
-        c = pNote.Note.at(nScan);
-        if (c == ' ' || c == '-')
-        {
-            if (nScan == 0)
-                continue;
-
-            c = pNote.Note.at(--nScan);
-        }
-
-        // extract the number
-        unsigned int nBytes = 0;
-        int nMultiplier = 1;
-        while (c <= L'9' && c >= L'0')
-        {
-            nBytes += (c - L'0') * nMultiplier;
-
-            if (nScan == 0)
-                break;
-
-            nMultiplier *= 10;
-            c = pNote.Note.at(--nScan);
-        }
-
-        // if a number was found, process it
-        if (nBytes > 0)
-        {
-            // convert bits to bytes, rounding up
-            pNote.Bytes = bIsBytes ? nBytes : (nBytes + 7) / 8;
-            switch (pNote.Bytes)
-            {
-                case 1: pNote.MemSize = MemSize::EightBit; break;
-                case 2: pNote.MemSize = MemSize::SixteenBit; break;
-                case 3: pNote.MemSize = MemSize::TwentyFourBit; break;
-                case 4: pNote.MemSize = MemSize::ThirtyTwoBit; break;
-                default: pNote.MemSize = MemSize::Array; break;
-            }
-
-            // find the next word after "bit(s) or byte(s)"
-            nScan = nIndex + 3;
-            while (nScan < pNote.Note.length() && isalpha(pNote.Note.at(nScan)))
-                nScan++;
-            while (nScan < pNote.Note.length())
-            {
-                c = pNote.Note.at(nScan);
-                if (c != ' ' && c != '-' && c != '(' && c != '[' && c != '<')
-                    break;
-                nScan++;
-            }
-
-            size_t nLength = 0;
-            while (nScan + nLength < pNote.Note.length() && isalpha(pNote.Note.at(nScan + nLength)))
-                nLength++;
-
-            if ((nLength >= 2 && nLength <= 5) || nLength == 9)
-            {
-                std::wstring sWord = pNote.Note.substr(nScan, nLength);
-                ra::StringMakeLowercase(sWord);
-
-                nScan += nLength;
-                while (nScan < pNote.Note.length() && isspace(pNote.Note.at(nScan)))
-                    nScan++;
-                nLength = 0;
-                while (nScan + nLength < pNote.Note.length() && isalpha(pNote.Note.at(nScan + nLength)))
-                    nLength++;
-                std::wstring sNextWord = pNote.Note.substr(nScan, nLength);
-                ra::StringMakeLowercase(sNextWord);
-
-                if (sWord == L"be" || sWord == L"bigendian")
-                {
-                    if (sNextWord == L"float")
-                    {
-                        pNote.MemSize = MemSize::FloatBigEndian;
-                    }
-                    else
-                    {
-                        switch (pNote.Bytes)
-                        {
-                            case 2: pNote.MemSize = MemSize::SixteenBitBigEndian; break;
-                            case 3: pNote.MemSize = MemSize::TwentyFourBitBigEndian; break;
-                            case 4: pNote.MemSize = MemSize::ThirtyTwoBitBigEndian; break;
-                        }
-                    }
-                }
-                else if (sWord == L"float")
-                {
-                    if (sNextWord == L"be" || sNextWord == L"bigendian")
-                        pNote.MemSize = MemSize::FloatBigEndian;
-                    else if (pNote.Bytes == 4)
-                        pNote.MemSize = MemSize::Float;
-                }
-                else if (sWord == L"mbf")
-                {
-                    if (pNote.Bytes == 4 || pNote.Bytes == 5)
-                        pNote.MemSize = MemSize::MBF32;
-                }
-
-            }
-
-            // if "bytes" were found, we're done. if bits were found, it might be indicating
-            // the size of individual elements. capture the bit value and keep searching.
-            if (bIsBytes)
-                return;
-
-            bBytesFromBits = true;
-        }
-    }
-
-    // did not find a bytes annotation, look for float
-    if (pNote.Note.length() >= 5)
-    {
-        std::wstring sPreviousWord, sWord;
-        bool bIgnoreWord = false;
-        const size_t nLength = pNote.Note.length();
-        size_t nIndex = 0;
-        for (nIndex = 0; nIndex <= nLength; ++nIndex)
-        {
-            // support reading null terminator so we process the last word in the string
-            const wchar_t c = (nIndex == nLength) ? 0 : pNote.Note.at(nIndex);
-            if (isalnum(c))
-            {
-                if (sWord.empty())
-                {
-                    bIgnoreWord = (c != 'f' && c != 'F' && c != 'b' && c != 'B');
-                    sWord.push_back(c); // always push one char to make it non-empty
-                }
-                else if (!bIgnoreWord)
-                {
-                    sWord.push_back(c);
-                }
-            }
-            else if (!sWord.empty())
-            {
-                if (!bIgnoreWord)
-                {
-                    ra::StringMakeLowercase(sWord);
-                    if (sWord == L"float32")
-                        sWord.resize(5); // convert to "float"
-
-                    if (sWord == L"float" && (sPreviousWord == L"be" || sPreviousWord == L"bigendian"))
-                    {
-                        pNote.Bytes = 4;
-                        pNote.MemSize = MemSize::FloatBigEndian;
-                        return;
-                    }
-                }
-
-                if (sPreviousWord == L"float")
-                {
-                    pNote.Bytes = 4;
-
-                    if (sWord == L"be" || sWord == L"bigendian")
-                        pNote.MemSize = MemSize::FloatBigEndian;
-                    else
-                        pNote.MemSize = MemSize::Float;
-                    return;
-                }
-
+            // only join words with spaces or hyphens.
+            if (c == L' ' || c == L'-')
                 std::swap(sPreviousWord, sWord);
-                sWord.clear();
-            }
-        }
+            else
+                sPreviousWord.clear();
 
-        if (sPreviousWord == L"float")
-        {
-            pNote.Bytes = 4;
-            pNote.MemSize = MemSize::Float;
-            return;
+            sWord.clear();
         }
     }
 }

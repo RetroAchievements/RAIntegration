@@ -246,7 +246,7 @@ public:
         TestCodeNoteSize(L"[MBF32 float] Test", 4U, MemSize::MBF32);
         TestCodeNoteSize(L"[MBF80] Test", 1U, MemSize::Unknown);
         TestCodeNoteSize(L"[MBF320] Test", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"[MBF-32] Test", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"[MBF-32] Test", 4U, MemSize::MBF32);
         TestCodeNoteSize(L"[32-bit MBF] Test", 4U, MemSize::MBF32);
         TestCodeNoteSize(L"[40-bit MBF] Test", 5U, MemSize::MBF32);
         TestCodeNoteSize(L"[MBF] Test", 1U, MemSize::Unknown);

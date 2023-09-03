@@ -773,6 +773,7 @@ FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Requ
             {
                 // extract the PatchData and store a copy in the cache for offline mode
                 rc_api_response_t api_response{};
+                GSL_SUPPRESS_ES47
                 rc_json_field_t fields[] = {
                     RC_JSON_NEW_FIELD("Success"),
                     RC_JSON_NEW_FIELD("Error"),

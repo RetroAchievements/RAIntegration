@@ -98,7 +98,7 @@ std::wstring MemSizeFormat(unsigned nValue, MemSize nSize, MemFormat nFormat)
     }
 }
 
-static unsigned ReverseBytes(unsigned nValue)
+static unsigned ReverseBytes(unsigned nValue) noexcept
 {
     return ((nValue & 0xFF000000) >> 24) |
            ((nValue & 0x00FF0000) >> 8) |
@@ -149,7 +149,7 @@ float U32ToFloat(unsigned nValue, MemSize nFloatType) noexcept
     {
         float fValue;
         unsigned nValue;
-    } uUnion;
+    } uUnion{};
 
     switch (nFloatType)
     {

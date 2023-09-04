@@ -831,8 +831,8 @@ void OverlayManager::ProcessScreenshots()
                 if (pMessage == nullptr)
                 {
                     // popup no longer available, discard request
-                    iter = pScreenshot.vMessages.erase(iter);
                     RA_LOG_INFO("Popup no longer available for %s", iter->second);
+                    iter = pScreenshot.vMessages.erase(iter);
                 }
                 else
                 {

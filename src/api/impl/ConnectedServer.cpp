@@ -773,13 +773,19 @@ FetchGameData::Response ConnectedServer::FetchGameData(const FetchGameData::Requ
             {
                 // extract the PatchData and store a copy in the cache for offline mode
                 rc_api_response_t api_response{};
+                GSL_SUPPRESS_ES47
                 rc_json_field_t fields[] = {
-                    {"Success"},
-                    {"Error"},
-                    {"PatchData"}
+                    RC_JSON_NEW_FIELD("Success"),
+                    RC_JSON_NEW_FIELD("Error"),
+                    RC_JSON_NEW_FIELD("PatchData")
                 };
 
-                if (rc_json_parse_response(&api_response, httpResponse.Content().c_str(), fields, sizeof(fields) / sizeof(fields[0])) == RC_OK &&
+                rc_api_server_response_t server_response{};
+                server_response.body = httpResponse.Content().c_str();
+                server_response.body_length = httpResponse.Content().length();
+                server_response.http_status_code = ra::etoi(httpResponse.StatusCode());
+
+                if (rc_json_parse_server_response(&api_response, &server_response, fields, sizeof(fields) / sizeof(fields[0])) == RC_OK &&
                     fields[2].value_start && fields[2].value_end)
                 {
                     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();

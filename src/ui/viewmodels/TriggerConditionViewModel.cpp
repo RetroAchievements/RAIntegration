@@ -248,6 +248,13 @@ void TriggerConditionViewModel::SerializeAppendOperand(std::string& sBuffer, Tri
             sBuffer.push_back('F');
             break;
 
+        case MemSize::FloatBigEndian:
+            sBuffer.pop_back();
+            sBuffer.pop_back();
+            sBuffer.push_back('f');
+            sBuffer.push_back('B');
+            break;
+
         case MemSize::MBF32:
             sBuffer.pop_back();
             sBuffer.pop_back();

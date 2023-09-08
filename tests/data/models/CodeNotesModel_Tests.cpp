@@ -236,13 +236,17 @@ public:
         TestCodeNoteSize(L"is floating", 1U, MemSize::Unknown);
         TestCodeNoteSize(L"has floated", 1U, MemSize::Unknown);
         TestCodeNoteSize(L"16-afloat", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"[float be] Test", 4U, MemSize::FloatBigEndian);
+        TestCodeNoteSize(L"[float bigendian] Test", 4U, MemSize::FloatBigEndian);
+        TestCodeNoteSize(L"[be float] Test", 4U, MemSize::FloatBigEndian);
+        TestCodeNoteSize(L"[bigendian float] Test", 4U, MemSize::FloatBigEndian);
 
         TestCodeNoteSize(L"[MBF32] Test", 4U, MemSize::MBF32);
         TestCodeNoteSize(L"[MBF40] Test", 5U, MemSize::MBF32);
         TestCodeNoteSize(L"[MBF32 float] Test", 4U, MemSize::MBF32);
         TestCodeNoteSize(L"[MBF80] Test", 1U, MemSize::Unknown);
         TestCodeNoteSize(L"[MBF320] Test", 1U, MemSize::Unknown);
-        TestCodeNoteSize(L"[MBF-32] Test", 1U, MemSize::Unknown);
+        TestCodeNoteSize(L"[MBF-32] Test", 4U, MemSize::MBF32);
         TestCodeNoteSize(L"[32-bit MBF] Test", 4U, MemSize::MBF32);
         TestCodeNoteSize(L"[40-bit MBF] Test", 5U, MemSize::MBF32);
         TestCodeNoteSize(L"[MBF] Test", 1U, MemSize::Unknown);

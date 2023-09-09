@@ -161,7 +161,7 @@ public:
     void SetSize(MemSize value) { SetValue(SizeProperty, ra::etoi(value)); }
 
     void OnClick(int nX, int nY);
-    void OnResized(_UNUSED int nWidth, int nHeight);
+    void OnResized(int nWidth, int nHeight);
     bool OnChar(char c);
     void OnGotFocus();
     void OnLostFocus();
@@ -197,6 +197,8 @@ protected:
     bool m_bReadOnly = true;
     bool m_bAddressFixed = false;
     bool m_bHasFocus = false;
+    bool m_bWideEnoughForASCII = false;
+    bool m_bShowASCII = false;
 
     static constexpr int REDRAW_MEMORY = 1;
     static constexpr int REDRAW_ADDRESSES = 2;
@@ -209,6 +211,7 @@ protected:
 private:
     static const IntModelProperty PendingAddressProperty;
 
+    void ResetSurface() noexcept;
     void BuildFontSurface();
     void RenderAddresses();
     void RenderHeader();
@@ -224,10 +227,13 @@ private:
     int GetSelectedNibbleOffset() const;
     void UpdateSelectedNibble(int nNewNibble);
 
+    void DetermineIfASCIIShouldBeVisible();
+
     std::unique_ptr<uint8_t[]> m_pBuffer;
 
     std::unique_ptr<ra::ui::drawing::ISurface> m_pSurface;
     static std::unique_ptr<ra::ui::drawing::ISurface> s_pFontSurface;
+    static std::unique_ptr<ra::ui::drawing::ISurface> s_pFontASCIISurface;
     static int s_nFont;
 
     class MemoryBookmarkMonitor;

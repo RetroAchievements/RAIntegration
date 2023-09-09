@@ -71,6 +71,27 @@ union Color {
     } Channel;
 
     static const Color Transparent;
+
+    static const Color Blend(Color nFirst, Color nSecond, float fFirstSaturation = 0.5f) noexcept
+    {
+        unsigned char r = 0, g = 0, b = 0;
+        if (fFirstSaturation == 0.5f)
+        {
+            r = gsl::narrow_cast<unsigned char>((gsl::narrow_cast<int>(nFirst.Channel.R) + nSecond.Channel.R) / 2);
+            g = gsl::narrow_cast<unsigned char>((gsl::narrow_cast<int>(nFirst.Channel.G) + nSecond.Channel.G) / 2);
+            b = gsl::narrow_cast<unsigned char>((gsl::narrow_cast<int>(nFirst.Channel.B) + nSecond.Channel.B) / 2);
+        }
+        else
+        {
+            r = gsl::narrow_cast<unsigned char>(fFirstSaturation * nFirst.Channel.R +
+                                                (1.0f - fFirstSaturation) * nSecond.Channel.R);
+            g = gsl::narrow_cast<unsigned char>(fFirstSaturation * nFirst.Channel.G +
+                                                (1.0f - fFirstSaturation) * nSecond.Channel.G);
+            b = gsl::narrow_cast<unsigned char>(fFirstSaturation * nFirst.Channel.B +
+                                                (1.0f - fFirstSaturation) * nSecond.Channel.B);
+        }
+        return Color(r, g, b);
+    }
 };
 static_assert(sizeof(Color) == sizeof(unsigned int));
 

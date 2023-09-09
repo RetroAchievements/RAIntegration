@@ -118,7 +118,7 @@ API int CCONV _RA_Shutdown()
 
     ra::services::ServiceLocator::GetMutable<ra::data::context::SessionTracker>().EndSession();
 
-    ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().LoadGame(0U);
+    ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().LoadGame(0U, "");
 
     if (ra::services::ServiceLocator::Exists<ra::ui::viewmodels::WindowManager>())
     {

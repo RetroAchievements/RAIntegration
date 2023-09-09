@@ -122,6 +122,11 @@ bool TriggerValidation::Validate(const std::string& sTrigger, std::wstring& sErr
             nResult = rc_validate_trigger_for_console(pTrigger, sErrorBuffer, sizeof(sErrorBuffer), ra::etoi(pConsoleContext.Id()));
         }
     }
+    else
+    {
+        // shouldn't get here, but if we do (unit tests), validate the logic but not the addresses.
+        nResult = rc_validate_trigger(pTrigger, sErrorBuffer, sizeof(sErrorBuffer), 0xFFFFFFFF);
+    }
 
     if (nResult)
     {

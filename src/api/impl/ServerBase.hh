@@ -27,11 +27,6 @@ public:
         return UnsupportedApi<Ping::Response>(Ping::Name());
     }
 
-    FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request&) override
-    {
-        return UnsupportedApi<FetchUserUnlocks::Response>(FetchUserUnlocks::Name());
-    }
-
     AwardAchievement::Response AwardAchievement(const AwardAchievement::Request&) override
     {
         return UnsupportedApi<AwardAchievement::Response>(AwardAchievement::Name());
@@ -52,11 +47,6 @@ public:
     ResolveHash::Response ResolveHash(const ResolveHash::Request&) override
     {
         return UnsupportedApi<ResolveHash::Response>(ResolveHash::Name());
-    }
-
-    FetchGameData::Response FetchGameData(const FetchGameData::Request&) override
-    {
-        return UnsupportedApi<FetchGameData::Response>(FetchGameData::Name());
     }
 
     FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request&) override

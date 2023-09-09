@@ -180,11 +180,9 @@
     <ClInclude Include="api\FetchAchievementInfo.hh" />
     <ClInclude Include="api\FetchBadgeIds.hh" />
     <ClInclude Include="api\FetchCodeNotes.hh" />
-    <ClInclude Include="api\FetchGameData.hh" />
     <ClInclude Include="api\FetchGamesList.hh" />
     <ClInclude Include="api\FetchLeaderboardInfo.hh" />
     <ClInclude Include="api\FetchUserFriends.hh" />
-    <ClInclude Include="api\FetchUserUnlocks.hh" />
     <ClInclude Include="api\impl\ConnectedServer.hh" />
     <ClInclude Include="api\impl\DisconnectedServer.hh" />
     <ClInclude Include="api\impl\OfflineServer.hh" />
@@ -537,7 +535,7 @@
       <GenerateDebugInformation>false</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
-    <ItemDefinitionGroup Condition="'$(Configuration)'=='Release-vista'">
+  <ItemDefinitionGroup Condition="'$(Configuration)'=='Release-vista'">
     <ClCompile>
       <Optimization>Full</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>

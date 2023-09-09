@@ -30,7 +30,13 @@ public:
     /// <summary>
     /// Loads the data for the specified game id.
     /// </summary>
-    virtual void LoadGame(unsigned int nGameId, Mode nMode = Mode::Normal);
+    virtual void LoadGame(unsigned int nGameId, const std::string& sGameHash, Mode nMode = Mode::Normal);
+
+    /// <summary>
+    /// Loads the data from the game currently loaded in the RcheevosClient.
+    /// </summary>
+    void InitializeFromRcheevosClient(const std::map<uint32_t, std::string> mAchievementDefinitions,
+                                      const std::map<uint32_t, std::string> mLeaderboardDefinitions);
 
     /// <summary>
     /// Determines whether a game is being loaded.
@@ -129,6 +135,7 @@ public:
 
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
+    void FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused, const std::string& sOldRichPresence);
 
 protected:
     void RefreshUnlocks(bool bUnpause, int nPopup);

@@ -5,9 +5,6 @@
 #include "services\RcheevosClient.hh"
 #include "services\ServiceLocator.hh"
 
-#include "CppUnitTest.h"
-#include "RA_StringUtils.h"
-
 #include <rcheevos\src\rcheevos\rc_client_internal.h>
 
 namespace ra {
@@ -34,63 +31,20 @@ public:
         pResponse.nHttpStatus = 200;
     }
 
-    void AssertCalled(const std::string& sRequestParams) const
-    {
-        for (auto& pResponse : m_vResponses)
-        {
-            if (pResponse.sRequestParams == sRequestParams)
-            {
-                Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsTrue(pResponse.bSeen);
-                return;
-            }
-        }
+    void OnBeforeResponse(const std::string& sRequestParams, std::function<void()>&& fHandler);
 
-        Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(
-            ra::StringPrintf(L"Could not find mock response for %s", sRequestParams).c_str());
-    }
+    void MockUser(const std::string& sUsername, const std::string& sApiToken);
 
-    void AssertNoPendingRequests() const
-    {
-        for (auto& pResponse : m_vResponses)
-        {
-            if (pResponse.fAsyncCallback != nullptr && !pResponse.bSeen)
-            {
-                Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(
-                    ra::StringPrintf(L"Unexpected request pending for %s", pResponse.sRequestParams).c_str());
-                return;
-            }
-        }
-    }
+    void MockGame();
+    rc_client_achievement_info_t* MockAchievement(uint32_t nId, const char* sTitle = nullptr);
+
+    void AssertCalled(const std::string& sRequestParams) const;
+
+    void AssertNoPendingRequests() const;
 
 private:
     static void MockServerCall(const rc_api_request_t* pRequest, rc_client_server_callback_t fCallback,
-                               void* pCallbackData, rc_client_t*)
-    {
-        auto* pClient = dynamic_cast<MockRcheevosClient*>(&ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>());
-        std::string sRequestParams = pRequest->post_data;
-
-        for (auto& pResponse : pClient->m_vResponses)
-        {
-            if (pResponse.sRequestParams == sRequestParams)
-            {
-                pResponse.bSeen = true;
-
-                rc_api_server_response_t pServerResponse;
-                memset(&pServerResponse, 0, sizeof(pServerResponse));
-                pServerResponse.http_status_code = pResponse.nHttpStatus;
-                pServerResponse.body = pResponse.sResponseBody.c_str();
-                pServerResponse.body_length = pResponse.sResponseBody.length();
-
-                fCallback(&pServerResponse, pCallbackData);
-                return;
-            }
-        }
-
-        auto& pResponse = pClient->m_vResponses.emplace_back();
-        pResponse.sRequestParams = sRequestParams;
-        pResponse.fAsyncCallback = fCallback;
-        pResponse.pAsyncCallbackData = pCallbackData;
-    }
+                               void* pCallbackData, rc_client_t*);
 
     ra::services::ServiceLocator::ServiceOverride<ra::services::RcheevosClient> m_Override;
 
@@ -102,9 +56,13 @@ private:
         bool bSeen = 0;
         rc_client_server_callback_t fAsyncCallback = nullptr;
         void* pAsyncCallbackData = nullptr;
+        std::function<void()> fBeforeResponse = nullptr;
     } MockApiResponse;
 
     std::vector<MockApiResponse> m_vResponses;
+
+    std::string m_sUsername;
+    std::string m_sApiToken;
 };
 
 } // namespace mocks

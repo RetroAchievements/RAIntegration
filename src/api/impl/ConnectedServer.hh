@@ -17,12 +17,10 @@ public:
 
     StartSession::Response StartSession(const StartSession::Request& request) override;
     Ping::Response Ping(const Ping::Request& request) override;
-    FetchUserUnlocks::Response FetchUserUnlocks(const FetchUserUnlocks::Request& request) override;
     AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) override;
     SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) override;
     FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) override;
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) override;
-    FetchGameData::Response FetchGameData(const FetchGameData::Request& request) override;
     FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override;
     UpdateCodeNote::Response UpdateCodeNote(const UpdateCodeNote::Request& request) override;
     DeleteCodeNote::Response DeleteCodeNote(const DeleteCodeNote::Request& request) override;
@@ -37,7 +35,6 @@ public:
     FetchBadgeIds::Response FetchBadgeIds(const FetchBadgeIds::Request& request) override;
     UploadBadge::Response UploadBadge(const UploadBadge::Request& request) override;
 
-    static void ProcessGamePatchData(FetchGameData::Response &response, const ra::services::Http::Response& httpResponse);
     static void ProcessCodeNotes(FetchCodeNotes::Response &response, const void* api_response);
 
 private:

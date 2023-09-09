@@ -12,6 +12,7 @@
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
+#include "tests\mocks\MockRcheevosClient.hh"
 #include "tests\mocks\MockSurface.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -38,6 +39,7 @@ private:
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
+        ra::services::mocks::MockRcheevosClient mockRcheevosClient;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::mocks::MockImageRepository mockImageRepository;

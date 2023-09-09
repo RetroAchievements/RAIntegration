@@ -19,9 +19,8 @@ const IntModelProperty OverlayListPageViewModel::SelectedItemIndexProperty("Over
 
 const StringModelProperty OverlayListPageViewModel::ItemViewModel::DetailProperty("ItemViewModel", "Detail", L"");
 const BoolModelProperty OverlayListPageViewModel::ItemViewModel::IsDisabledProperty("ItemViewModel", "IsDisabled", false);
-const IntModelProperty OverlayListPageViewModel::ItemViewModel::ProgressMaximumProperty("ItemViewModel", "ProgressMaximum", 0);
-const IntModelProperty OverlayListPageViewModel::ItemViewModel::ProgressValueProperty("ItemViewModel", "ProgressValue", 0);
-const BoolModelProperty OverlayListPageViewModel::ItemViewModel::IsProgressPercentageProperty("ItemViewModel", "IsProgressPercentage", false);
+const StringModelProperty OverlayListPageViewModel::ItemViewModel::ProgressValueProperty("ItemViewModel", "ProgressValue", L"");
+const IntModelProperty OverlayListPageViewModel::ItemViewModel::ProgressPercentageProperty("ItemViewModel", "IsProgressPercentage", 0);
 
 void OverlayListPageViewModel::Refresh()
 {
@@ -68,9 +67,8 @@ void OverlayListPageViewModel::SetHeader(OverlayListPageViewModel::ItemViewModel
     vmItem.SetDetail(L"");
     vmItem.SetDisabled(false);
     vmItem.Image.ChangeReference(ra::ui::ImageType::None, "");
-    vmItem.SetProgressValue(0U);
-    vmItem.SetProgressMaximum(0U);
-    vmItem.SetProgressPercentage(true);
+    vmItem.SetProgressString(L"");
+    vmItem.SetProgressPercentage(0);
 }
 
 void OverlayListPageViewModel::EnsureSelectedItemIndexValid()
@@ -216,21 +214,17 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
             pSurface.WriteText(nTextX + 12, nY + 1, nFont, nTextColor, pItem->GetLabel());
             pSurface.WriteText(nTextX + 12, nY + 1 + 26, nSubFont, nSubTextColor, pItem->GetDetail());
 
-            const auto nTarget = pItem->GetProgressMaximum();
-            if (nTarget != 0)
+            const auto& sProgress = pItem->GetProgressString();
+            if (!sProgress.empty())
             {
                 const auto nProgressBarWidth = (nWidth - nTextX - 12) * 2 / 3;
-                const auto nValue = std::min(pItem->GetProgressValue(), nTarget);
-                const auto nProgressBarFillWidth = gsl::narrow_cast<int>(((static_cast<long long>(nProgressBarWidth) - 2) * nValue) / nTarget);
+                const auto nValue = pItem->GetProgressPercentage();
+                const auto nProgressBarFillWidth = gsl::narrow_cast<int>((nProgressBarWidth - 2) * nValue);
 
                 pSurface.FillRectangle(nTextX + 12, nY + 1 + 26 + 25, nProgressBarWidth, 8, pTheme.ColorOverlayScrollBar());
                 pSurface.FillRectangle(nTextX + 12 + 2, nY + 1 + 26 + 25 + 2, nProgressBarFillWidth - 4, 8 - 4, pTheme.ColorOverlayScrollBarGripper());
 
                 const auto nProgressFont = pSurface.LoadFont(pTheme.FontOverlay(), 14, ra::ui::FontStyles::Normal);
-                const auto nProgressBarPercent = gsl::narrow_cast<int>(static_cast<long long>(nValue) * 100 / nTarget);
-                const std::wstring sProgress = pItem->IsProgressPercentage() ?
-                    ra::StringPrintf(L"%d%%", nProgressBarPercent) :
-                    ra::StringPrintf(L"%u/%u", nValue, nTarget);
                 const auto szProgress = pSurface.MeasureText(nProgressFont, sProgress);
                 pSurface.WriteText(nTextX + 12 + nProgressBarWidth + 6, nY + 1 + 26 + 25 + 4 - (szProgress.Height / 2) - 1, nProgressFont, nSubTextColor, sProgress);
             }

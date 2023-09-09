@@ -101,49 +101,34 @@ public:
         ImageReference Image{};
 
         /// <summary>
-        /// The <see cref="ModelProperty" /> for the maximum progress bar value.
+        /// The <see cref="ModelProperty" /> for the current progress bar label.
         /// </summary>
-        static const IntModelProperty ProgressMaximumProperty;
-
-        /// <summary>
-        /// Gets the maximum progress bar value.
-        /// </summary>
-        unsigned int GetProgressMaximum() const { return ra::to_unsigned(GetValue(ProgressMaximumProperty)); }
-
-        /// <summary>
-        /// Sets the maximum progress bar value.
-        /// </summary>
-        void SetProgressMaximum(unsigned int nValue) { SetValue(ProgressMaximumProperty, ra::to_signed(nValue)); }
-
-        /// <summary>
-        /// The <see cref="ModelProperty" /> for the current progress bar value.
-        /// </summary>
-        static const IntModelProperty ProgressValueProperty;
+        static const StringModelProperty ProgressValueProperty;
 
         /// <summary>
         /// Gets the current progress bar value.
         /// </summary>
-        unsigned int GetProgressValue() const { return ra::to_unsigned(GetValue(ProgressValueProperty)); }
+        const std::wstring& GetProgressString() const { return GetValue(ProgressValueProperty); }
 
         /// <summary>
         /// Sets the current progress bar value.
         /// </summary>
-        void SetProgressValue(unsigned int nValue) { SetValue(ProgressValueProperty, ra::to_signed(nValue)); }
+        void SetProgressString(const std::wstring& sProgress) { SetValue(ProgressValueProperty, sProgress); }
 
         /// <summary>
-        /// The <see cref="ModelProperty" /> for whether the current progress value should be shown as a percentage (or raw).
+        /// The <see cref="ModelProperty" /> for the current progress bar value.
         /// </summary>
-        static const BoolModelProperty IsProgressPercentageProperty;
+        static const IntModelProperty ProgressPercentageProperty;
 
         /// <summary>
-        /// Gets whether the progress value should be shown as a percentage.
+        /// Sets the percentage of the progress bar that should be filled.
         /// </summary>
-        bool IsProgressPercentage() const { return GetValue(IsProgressPercentageProperty); }
+        float GetProgressPercentage() const { return GetValue(ProgressPercentageProperty) / 100.0f; }
 
         /// <summary>
-        /// Sets whether the progress value should be shown as a percentage.
+        /// Sets the percentage of the progress bar that should be filled.
         /// </summary>
-        void SetProgressPercentage(bool bValue) { SetValue(IsProgressPercentageProperty, bValue); }
+        void SetProgressPercentage(float fValue) { SetValue(ProgressPercentageProperty, static_cast<int>(fValue * 100.0f)); }
 
         /// <summary>
         /// Gets whether the current item is a header item.

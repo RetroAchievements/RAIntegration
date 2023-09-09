@@ -37,6 +37,9 @@ public:
 
     void MockGame();
     rc_client_achievement_info_t* MockAchievement(uint32_t nId, const char* sTitle = nullptr);
+    rc_client_achievement_info_t* MockAchievementWithTrigger(uint32_t nId, const char* sTitle = nullptr);
+    rc_client_achievement_info_t* MockUnofficialAchievement(uint32_t nId, const char* sTitle = nullptr);
+    rc_client_achievement_info_t* MockLocalAchievement(uint32_t nId, const char* sTitle = nullptr);
 
     void AssertCalled(const std::string& sRequestParams) const;
 

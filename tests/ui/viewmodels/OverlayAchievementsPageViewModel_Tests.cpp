@@ -7,6 +7,7 @@
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
+#include "tests\mocks\MockRcheevosClient.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockThreadPool.hh"
@@ -36,6 +37,7 @@ private:
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockClock mockClock;
+        ra::services::mocks::MockRcheevosClient mockRcheevosClient;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
@@ -83,6 +85,64 @@ private:
             pTrigger->measured_value = nValue;
             pTrigger->measured_target = nMax;
         }
+
+        void AssertHeader(gsl::index nIndex, const std::wstring& sExpectedLabel)
+        {
+            const auto* pItem = GetItem(nIndex);
+            Expects(pItem != nullptr);
+            Assert::IsTrue(pItem->IsHeader());
+            Assert::AreEqual(sExpectedLabel, pItem->GetLabel());
+            Assert::IsFalse(pItem->IsDisabled());
+        }
+
+    private:
+        void AssertAchievement(gsl::index nIndex, const rc_client_achievement_info_t* pAchievement, bool bLocked)
+        {
+            const auto* pItem = GetItem(nIndex);
+            Expects(pItem != nullptr);
+            Assert::IsFalse(pItem->IsHeader());
+            Assert::AreEqual(pAchievement->public_.id, static_cast<uint32_t>(pItem->GetId()));
+
+            const std::wstring sTitle =
+                (pAchievement->public_.points == 1)
+                    ? ra::StringPrintf(L"%s (1 point)", pAchievement->public_.title)
+                    : ra::StringPrintf(L"%s (%u points)", pAchievement->public_.title, pAchievement->public_.points);
+            Assert::AreEqual(sTitle, pItem->GetLabel());
+            Assert::AreEqual(ra::Widen(pAchievement->public_.description), pItem->GetDetail());
+
+            if (bLocked)
+            {
+                Assert::IsTrue(pItem->IsDisabled(), ra::StringPrintf(L"Item %d not disabled", nIndex).c_str());
+                Assert::AreEqual(ra::StringPrintf("%s_lock", pAchievement->public_.badge_name), pItem->Image.Name());
+            }
+            else
+            {
+                Assert::IsFalse(pItem->IsDisabled(), ra::StringPrintf(L"Item %d disabled", nIndex).c_str());
+                Assert::AreEqual(std::string(pAchievement->public_.badge_name), pItem->Image.Name());
+            }
+        }
+
+    public:
+        void AssertLockedAchievement(gsl::index nIndex, const rc_client_achievement_info_t* pAchievement)
+        {
+            AssertAchievement(nIndex, pAchievement, true);
+        }
+
+        void AssertUnlockedAchievement(gsl::index nIndex, const rc_client_achievement_info_t* pAchievement)
+        {
+            AssertAchievement(nIndex, pAchievement, false);
+        }
+
+        void AssertProgressAchievement(gsl::index nIndex, const rc_client_achievement_info_t* pAchievement, float fProgress, const std::wstring& sProgress)
+        {
+            AssertAchievement(nIndex, pAchievement, true);
+
+            const auto* pItem = GetItem(nIndex);
+            Expects(pItem != nullptr);
+
+            Assert::AreEqual(fProgress, pItem->GetProgressPercentage());
+            Assert::AreEqual(sProgress, pItem->GetProgressString());
+        }
     };
 
 public:
@@ -93,595 +153,465 @@ public:
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"No achievements present"), achievementsPage.GetSummary());
+        Assert::IsNull(achievementsPage.GetItem(0));
     }
 
-    TEST_METHOD(TestRefreshInactiveAchievement)
+    TEST_METHOD(TestRefreshUnlockedAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetName(L"AchievementTitle");
-        pAch1.SetDescription(L"Trigger this");
-        pAch1.SetPoints(5U);
-        pAch1.SetBadge(L"BADGE_URI");
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1, "AchievementTitle");
+        pAch1->public_.description = "Trigger this";
+        pAch1->public_.points = 5;
+        snprintf(pAch1->public_.badge_name, sizeof(pAch1->public_.badge_name), "BADGE");
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+        pAch1->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"1 of 1 won (5/5)"), achievementsPage.GetSummary());
 
-        auto const* pItem = achievementsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"AchievementTitle (5 points)"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Trigger this"), pItem->GetDetail());
-        Assert::IsFalse(pItem->IsDisabled());
-        Assert::AreEqual(std::string("BADGE_URI"), pItem->Image.Name());
+        achievementsPage.AssertHeader(0, L"Unlocked");
+        achievementsPage.AssertUnlockedAchievement(1, pAch1);
+        Assert::IsNull(achievementsPage.GetItem(2));
     }
 
     TEST_METHOD(TestRefreshActiveAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetName(L"AchievementTitle");
-        pAch1.SetDescription(L"Trigger this");
-        pAch1.SetPoints(5U);
-        pAch1.SetBadge(L"BADGE_URI");
-        pAch1.SetState(AssetState::Active);
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1, "AchievementTitle");
+        pAch1->public_.description = "Trigger this";
+        pAch1->public_.points = 5;
+        snprintf(pAch1->public_.badge_name, sizeof(pAch1->public_.badge_name), "BADGE");
+
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"0 of 1 won (0/5)"), achievementsPage.GetSummary());
 
-        auto const* pItem = achievementsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"AchievementTitle (5 points)"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Trigger this"), pItem->GetDetail());
-        Assert::IsTrue(pItem->IsDisabled());
-        Assert::AreEqual(std::string("BADGE_URI_lock"), pItem->Image.Name());
+        achievementsPage.AssertHeader(0, L"Locked");
+        achievementsPage.AssertLockedAchievement(1, pAch1);
+        Assert::IsNull(achievementsPage.GetItem(2));
     }
 
     TEST_METHOD(TestRefreshOnePointAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetName(L"AchievementTitle");
-        pAch1.SetDescription(L"Trigger this");
-        pAch1.SetPoints(1U); // should say "1 point" instead of "1 points"
-        pAch1.SetBadge(L"BADGE_URI");
-        pAch1.SetState(AssetState::Active);
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1, "AchievementTitle");
+        pAch1->public_.description = "Trigger this";
+        pAch1->public_.points = 1; // should say "1 point" instead of "1 points"
+        snprintf(pAch1->public_.badge_name, sizeof(pAch1->public_.badge_name), "BADGE");
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"0 of 1 won (0/1)"), achievementsPage.GetSummary());
 
-        auto const* pItem = achievementsPage.GetItem(0);
+        achievementsPage.AssertHeader(0, L"Locked");
+        achievementsPage.AssertLockedAchievement(1, pAch1);
+
+        const auto* pItem = achievementsPage.GetItem(1);
         Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
         Assert::AreEqual(std::wstring(L"AchievementTitle (1 point)"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Trigger this"), pItem->GetDetail());
-        Assert::IsTrue(pItem->IsDisabled());
-        Assert::AreEqual(std::string("BADGE_URI_lock"), pItem->Image.Name());
+
+        Assert::IsNull(achievementsPage.GetItem(2));
     }
 
     TEST_METHOD(TestRefreshActiveAndInactiveAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetPoints(1U);
-        pAch1.SetState(AssetState::Waiting);
-        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch2.SetID(2);
-        pAch2.SetPoints(2U);
-        pAch2.SetState(AssetState::Inactive);
-        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch3.SetID(3);
-        pAch3.SetPoints(3U);
-        pAch3.SetState(AssetState::Active);
-        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch4.SetID(4);
-        pAch4.SetPoints(4U);
-        pAch4.SetState(AssetState::Triggered);
-        achievementsPage.mockClock.AdvanceTime(std::chrono::hours(1));
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        pAch1->public_.points = 1;
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE; // Waiting appears as active at this level
+
+        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievement(2);
+        pAch2->public_.points = 2;
+        pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
+
+        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievement(3);
+        pAch3->public_.points = 3;
+        pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        pAch4->public_.points = 4;
+        pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+        pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"2 of 4 won (6/10)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"1 of 4 won (4/10)"), achievementsPage.GetSummary());
 
-        auto const* pItem = achievementsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::IsTrue(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::IsTrue(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(3);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(2, pItem->GetId());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(4);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(4, pItem->GetId());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        Assert::IsNull(achievementsPage.GetItem(5));
+        achievementsPage.AssertHeader(0, L"Locked");
+        achievementsPage.AssertLockedAchievement(1, pAch1);
+        achievementsPage.AssertLockedAchievement(2, pAch2); // Inactive returned in Locked bucket
+        achievementsPage.AssertLockedAchievement(3, pAch3);
+        achievementsPage.AssertHeader(4, L"Unlocked");
+        achievementsPage.AssertUnlockedAchievement(5, pAch4);
+        Assert::IsNull(achievementsPage.GetItem(6));
     }
 
     TEST_METHOD(TestRefreshActiveAndDisabledAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetPoints(1U);
-        pAch1.SetState(AssetState::Waiting);
-        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch2.SetID(2);
-        pAch2.SetPoints(2U);
-        pAch2.SetState(AssetState::Disabled);
-        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch3.SetID(3);
-        pAch3.SetPoints(3U);
-        pAch3.SetState(AssetState::Active);
-        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch4.SetID(4);
-        pAch4.SetPoints(4U);
-        pAch4.SetState(AssetState::Disabled);
-        achievementsPage.mockClock.AdvanceTime(std::chrono::hours(1));
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        pAch1->public_.points = 1;
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE; // Waiting appears as active at this level
+
+        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievement(2);
+        pAch2->public_.points = 2;
+        pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
+        pAch2->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
+
+        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievement(3);
+        pAch3->public_.points = 3;
+        pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        pAch4->public_.points = 4;
+        pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED; // will appear as locked, even though it was unlocked
+        pAch4->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
+        pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH; // still counts in the overall unlock rate
+
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"0 of 4 won (0/10)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"1 of 4 won (4/10)"), achievementsPage.GetSummary());
 
-        auto const* pItem = achievementsPage.GetItem(0);
+        auto* pItem = achievementsPage.GetItem(0);
+        Expects(pItem != nullptr);
+        Assert::IsTrue(pItem->IsHeader());
+        Assert::AreEqual(std::wstring(L"Locked"), pItem->GetLabel());
+        Assert::IsFalse(pItem->IsDisabled());
+
+        pItem = achievementsPage.GetItem(1);
         Expects(pItem != nullptr);
         Assert::AreEqual(1, pItem->GetId());
         Assert::IsTrue(pItem->IsDisabled());
 
-        pItem = achievementsPage.GetItem(1);
+        pItem = achievementsPage.GetItem(2);
         Expects(pItem != nullptr);
         Assert::AreEqual(3, pItem->GetId());
         Assert::IsTrue(pItem->IsDisabled());
 
-        pItem = achievementsPage.GetItem(2);
+        pItem = achievementsPage.GetItem(3);
         Expects(pItem != nullptr);
         Assert::IsTrue(pItem->IsHeader());
         Assert::AreEqual(std::wstring(L"Unsupported"), pItem->GetLabel());
         Assert::IsFalse(pItem->IsDisabled());
 
-        pItem = achievementsPage.GetItem(3);
+        pItem = achievementsPage.GetItem(4);
         Expects(pItem != nullptr);
         Assert::AreEqual(2, pItem->GetId());
         Assert::IsTrue(pItem->IsDisabled());
 
-        pItem = achievementsPage.GetItem(4);
+        pItem = achievementsPage.GetItem(5);
         Expects(pItem != nullptr);
         Assert::AreEqual(4, pItem->GetId());
         Assert::IsTrue(pItem->IsDisabled());
 
-        Assert::IsNull(achievementsPage.GetItem(5));
+        achievementsPage.AssertHeader(0, L"Locked");
+        achievementsPage.AssertLockedAchievement(1, pAch1);
+        achievementsPage.AssertLockedAchievement(2, pAch3);
+        achievementsPage.AssertHeader(3, L"Unsupported");
+        achievementsPage.AssertLockedAchievement(4, pAch2);
+        achievementsPage.AssertLockedAchievement(5, pAch4);
+        Assert::IsNull(achievementsPage.GetItem(6));
     }
 
     TEST_METHOD(TestRefreshInactiveAndDisabledAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetPoints(1U);
-        pAch1.SetState(AssetState::Inactive);
-        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch2.SetID(2);
-        pAch2.SetPoints(2U);
-        pAch2.SetState(AssetState::Disabled);
-        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch3.SetID(3);
-        pAch3.SetPoints(3U);
-        pAch3.SetState(AssetState::Triggered);
-        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch4.SetID(4);
-        pAch4.SetPoints(4U);
-        pAch4.SetState(AssetState::Disabled);
-        achievementsPage.mockClock.AdvanceTime(std::chrono::hours(1));
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        pAch1->public_.points = 1;
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
+
+        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievement(2);
+        pAch2->public_.points = 2;
+        pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
+        pAch2->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
+
+        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievement(3);
+        pAch3->public_.points = 3;
+        pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+        pAch3->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+
+        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        pAch4->public_.points = 4;
+        pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED; // will appear as locked, even though it was unlocked
+        pAch4->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
+        pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH; // still counts in the overall unlock rate
+
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"2 of 4 won (4/10)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"2 of 4 won (7/10)"), achievementsPage.GetSummary());
 
-        auto const* pItem = achievementsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Unsupported"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(2, pItem->GetId());
-        Assert::IsTrue(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(4, pItem->GetId());
-        Assert::IsTrue(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(3);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(4);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(5);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        Assert::IsNull(achievementsPage.GetItem(6));
-    }
-
-    TEST_METHOD(TestRefreshDisabledAchievements)
-    {
-        OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch2.SetID(2);
-        pAch2.SetPoints(2U);
-        pAch2.SetState(AssetState::Disabled);
-        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch4.SetID(4);
-        pAch4.SetPoints(4U);
-        pAch4.SetState(AssetState::Disabled);
-        achievementsPage.mockClock.AdvanceTime(std::chrono::hours(1));
-        achievementsPage.Refresh();
-
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"0 of 2 won (0/6)"), achievementsPage.GetSummary());
-
-        auto const* pItem = achievementsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Unsupported"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(2, pItem->GetId());
-        Assert::IsTrue(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(4, pItem->GetId());
-        Assert::IsTrue(pItem->IsDisabled());
-
-        Assert::IsNull(achievementsPage.GetItem(3));
+        achievementsPage.AssertHeader(0, L"Locked");
+        achievementsPage.AssertLockedAchievement(1, pAch1);
+        achievementsPage.AssertHeader(2, L"Unsupported");
+        achievementsPage.AssertLockedAchievement(3, pAch2);
+        achievementsPage.AssertLockedAchievement(4, pAch4);
+        achievementsPage.AssertHeader(5, L"Unlocked");
+        achievementsPage.AssertUnlockedAchievement(6, pAch3);
+        Assert::IsNull(achievementsPage.GetItem(7));
     }
 
     TEST_METHOD(TestRefreshActiveAndPrimedAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetPoints(1U);
-        pAch1.SetState(AssetState::Waiting);
-        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch2.SetID(2);
-        pAch2.SetPoints(2U);
-        pAch2.SetState(AssetState::Primed);
-        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch3.SetID(3);
-        pAch3.SetPoints(3U);
-        pAch3.SetState(AssetState::Active);
-        achievementsPage.mockClock.AdvanceTime(std::chrono::hours(1));
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        pAch1->public_.points = 1;
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(2);
+        pAch2->public_.points = 2;
+        pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+        pAch2->trigger->state = RC_TRIGGER_STATE_PRIMED;
+
+        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievement(3);
+        pAch3->public_.points = 3;
+        pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"0 of 3 won (0/6)"), achievementsPage.GetSummary());
 
-        auto const* pItem = achievementsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Active Challenges"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(2, pItem->GetId());
-        Assert::IsTrue(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Locked"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(3);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::IsTrue(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(4);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::IsTrue(pItem->IsDisabled());
-
+        achievementsPage.AssertHeader(0, L"Active Challenges");
+        achievementsPage.AssertLockedAchievement(1, pAch2);
+        achievementsPage.AssertHeader(2, L"Locked");
+        achievementsPage.AssertLockedAchievement(3, pAch1);
+        achievementsPage.AssertLockedAchievement(4, pAch3);
         Assert::IsNull(achievementsPage.GetItem(5));
     }
 
-    TEST_METHOD(TestRefreshCategoryFilter)
+    TEST_METHOD(TestRefreshCategoriesCoreOnly)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetPoints(1U);
-        pAch1.SetState(AssetState::Active);
-        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Unofficial);
-        pAch2.SetID(2);
-        pAch2.SetPoints(2U);
-        pAch2.SetState(AssetState::Inactive);
-        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Local);
-        pAch3.SetID(3);
-        pAch3.SetPoints(3U);
-        pAch3.SetState(AssetState::Active);
-        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch4.SetID(4);
-        pAch4.SetPoints(4U);
-        pAch4.SetState(AssetState::Inactive);
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        pAch1->public_.points = 1;
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+        auto* pAch2 = achievementsPage.mockRcheevosClient.MockUnofficialAchievement(2);
+        pAch2->public_.points = 2;
+        pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+        auto* pAch3 = achievementsPage.mockRcheevosClient.MockLocalAchievement(3);
+        pAch3->public_.points = 3;
+        pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        pAch4->public_.points = 4;
+        pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+        pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+
+        achievementsPage.mockWindowManager.AssetList.SetFilterCategory(
+            ra::ui::viewmodels::AssetListViewModel::FilterCategory::Core);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"1 of 2 won (4/5)"), achievementsPage.GetSummary());
 
-        // only 1 and 4 will be visible - 2 and 3 are not core, and filtered out by asset list
-        auto* pItem = achievementsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::IsTrue(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(4, pItem->GetId());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        Assert::IsNull(achievementsPage.GetItem(3));
+        // only 1 and 4 will be visible - 2 and 3 are not core, and will be filtered out
+        achievementsPage.AssertHeader(0, L"Locked");
+        achievementsPage.AssertLockedAchievement(1, pAch1);
+        achievementsPage.AssertHeader(2, L"Unlocked");
+        achievementsPage.AssertUnlockedAchievement(3, pAch4);
+        Assert::IsNull(achievementsPage.GetItem(4));
     }
 
-    TEST_METHOD(TestRefreshLocalAchievement)
+    TEST_METHOD(TestRefreshCategoriesWithLocal)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockWindowManager.AssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Local);
-        pAch1.SetID(1);
-        pAch1.SetName(L"AchievementTitle");
-        pAch1.SetDescription(L"Trigger this");
-        pAch1.SetPoints(5U);
-        pAch1.SetBadge(L"BADGE_URI");
-        pAch1.SetState(AssetState::Active);
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        pAch1->public_.points = 1;
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+        auto* pAch2 = achievementsPage.mockRcheevosClient.MockUnofficialAchievement(2);
+        pAch2->public_.points = 2;
+        pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+        auto* pAch3 = achievementsPage.mockRcheevosClient.MockLocalAchievement(3);
+        pAch3->public_.points = 3;
+        pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        pAch4->public_.points = 4;
+        pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+        pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+
+        achievementsPage.mockWindowManager.AssetList.SetFilterCategory(
+            ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"1 achievements present"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"1 of 2 won (4/5)"), achievementsPage.GetSummary());
 
-        auto const* pItem = achievementsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"AchievementTitle (5 points)"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Trigger this"), pItem->GetDetail());
-        Assert::IsFalse(pItem->IsDisabled()); // local achievement never disabled
-        Assert::AreEqual(std::string("BADGE_URI"), pItem->Image.Name());
+        achievementsPage.AssertHeader(0, L"Game Title - Locked");
+        achievementsPage.AssertLockedAchievement(1, pAch1);
+        achievementsPage.AssertHeader(2, L"Game Title - Unofficial");
+        achievementsPage.AssertLockedAchievement(3, pAch2);
+        achievementsPage.AssertHeader(4, L"Game Title - Unlocked");
+        achievementsPage.AssertUnlockedAchievement(5, pAch4);
+        achievementsPage.AssertHeader(6, L"Local Achievements - Locked");
+        achievementsPage.AssertUnlockedAchievement(7, pAch3); // local achievements appear unlocked (no greyscale image)
+        Assert::IsNull(achievementsPage.GetItem(8));
     }
 
     TEST_METHOD(TestRefreshProgressAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetPoints(1U);
-        pAch1.SetState(AssetState::Active);
-        achievementsPage.SetProgress(1U, 1, 10);
-        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch2.SetID(2);
-        pAch2.SetPoints(2U);
-        pAch2.SetState(AssetState::Inactive);
-        achievementsPage.SetProgress(2U, 1, 10);
-        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch3.SetID(3);
-        pAch3.SetPoints(3U);
-        pAch3.SetState(AssetState::Active);
-        achievementsPage.SetProgress(3U, 0, 0);
-        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch4.SetID(4);
-        pAch4.SetPoints(4U);
-        pAch4.SetState(AssetState::Inactive);
-        achievementsPage.SetProgress(4U, 0, 0);
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        pAch1->public_.points = 1;
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(2);
+        pAch2->public_.points = 2;
+        pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+        pAch2->trigger->measured_target = 10;
+        pAch2->trigger->measured_value = 5;
+
+        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievement(3);
+        pAch3->public_.points = 3;
+        pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(4);
+        pAch4->public_.points = 4;
+        pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+        pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+        pAch4->trigger->measured_target = 10;
+        pAch4->trigger->measured_value = 5;
 
         achievementsPage.Refresh();
+
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"2 of 4 won (6/10)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"1 of 4 won (4/10)"), achievementsPage.GetSummary());
 
-        auto const* pItem = achievementsPage.GetItem(0);
+        achievementsPage.AssertHeader(0, L"Locked");
+        achievementsPage.AssertProgressAchievement(1, pAch1, 0.0, L"");
+        achievementsPage.AssertProgressAchievement(2, pAch2, 50.0, L"5/10");
+        achievementsPage.AssertProgressAchievement(3, pAch3, 0.0, L"");
+        achievementsPage.AssertHeader(4, L"Unlocked");
+        achievementsPage.AssertUnlockedAchievement(5, pAch4);
+        Assert::IsNull(achievementsPage.GetItem(6));
+
+         // unlocked achievement should not report progress
+        const auto* pItem = achievementsPage.GetItem(5);
         Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(10U, pItem->GetProgressMaximum()); // active item with progress
-        Assert::AreEqual(1U, pItem->GetProgressValue());
-
-        pItem = achievementsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // active item without progress
-        Assert::AreEqual(0U, pItem->GetProgressValue());
-
-        pItem = achievementsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(3);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(2, pItem->GetId());
-        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // inactive item with progress should not display it
-        Assert::AreEqual(0U, pItem->GetProgressValue());
-
-        pItem = achievementsPage.GetItem(4);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(4, pItem->GetId());
-        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // inactive item without progress
-        Assert::AreEqual(0U, pItem->GetProgressValue());
-
-        Assert::IsNull(achievementsPage.GetItem(5));
+        Assert::AreEqual(0.0f, pItem->GetProgressPercentage());
+        Assert::AreEqual(std::wstring(), pItem->GetProgressString());
     }
 
     TEST_METHOD(TestRefreshAlmostThereAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetPoints(1U);
-        pAch1.SetState(AssetState::Active);
-        achievementsPage.SetProgress(1U, 1, 10);
-        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch2.SetID(2);
-        pAch2.SetPoints(2U);
-        pAch2.SetState(AssetState::Inactive);
-        achievementsPage.SetProgress(2U, 1, 10);
-        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch3.SetID(3);
-        pAch3.SetPoints(3U);
-        pAch3.SetState(AssetState::Active);
-        achievementsPage.SetProgress(3U, 9, 10);
-        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch4.SetID(4);
-        pAch4.SetPoints(4U);
-        pAch4.SetState(AssetState::Inactive);
-        achievementsPage.SetProgress(4U, 0, 0);
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(1);
+        pAch1->public_.points = 1;
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+        pAch1->trigger->measured_target = 10;
+        pAch1->trigger->measured_value = 1;
+
+        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(2);
+        pAch2->public_.points = 2;
+        pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+        pAch2->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+        pAch2->trigger->measured_target = 10;
+        pAch2->trigger->measured_value = 9;
+
+        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(3);
+        pAch3->public_.points = 3;
+        pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+        pAch3->trigger->measured_target = 10;
+        pAch3->trigger->measured_value = 9;
+
+        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        pAch4->public_.points = 4;
+        pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
         achievementsPage.Refresh();
+
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"2 of 4 won (6/10)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"1 of 4 won (2/10)"), achievementsPage.GetSummary());
 
-        auto const* pItem = achievementsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Almost There"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::AreEqual(10U, pItem->GetProgressMaximum()); // active item with >= 80% progress
-        Assert::AreEqual(9U, pItem->GetProgressValue());
-
-        pItem = achievementsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Locked"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(3);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(10U, pItem->GetProgressMaximum()); // active item with < 80% progress
-        Assert::AreEqual(1U, pItem->GetProgressValue());
-
-        pItem = achievementsPage.GetItem(4);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Unlocked"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(5);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(2, pItem->GetId());
-        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // inactive item with progress should not display it
-        Assert::AreEqual(0U, pItem->GetProgressValue());
-
-        pItem = achievementsPage.GetItem(6);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(4, pItem->GetId());
-        Assert::AreEqual(0U, pItem->GetProgressMaximum()); // inactive item without progress
-        Assert::AreEqual(0U, pItem->GetProgressValue());
-
+        achievementsPage.AssertHeader(0, L"Almost There");
+        achievementsPage.AssertProgressAchievement(1, pAch3, 90.0, L"9/10");
+        achievementsPage.AssertHeader(2, L"Locked");
+        achievementsPage.AssertProgressAchievement(3, pAch1, 10.0, L"1/10");
+        achievementsPage.AssertProgressAchievement(4, pAch4, 0.0, L"");
+        achievementsPage.AssertHeader(5, L"Unlocked");
+        achievementsPage.AssertUnlockedAchievement(6, pAch2);
         Assert::IsNull(achievementsPage.GetItem(7));
+
+        // unlocked achievement should not report progress
+        const auto* pItem = achievementsPage.GetItem(6);
+        Expects(pItem != nullptr);
+        Assert::AreEqual(0.0f, pItem->GetProgressPercentage());
+        Assert::AreEqual(std::wstring(), pItem->GetProgressString());
     }
 
     TEST_METHOD(TestRefreshAlmostThereAchievementsSorting)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetPoints(1U);
-        pAch1.SetState(AssetState::Active);
-        achievementsPage.SetProgress(1U, 85, 100);
-        auto& pAch2 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch2.SetID(2);
-        pAch2.SetPoints(2U);
-        pAch2.SetState(AssetState::Active);
-        achievementsPage.SetProgress(2U, 95, 100);
-        auto& pAch3 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch3.SetID(3);
-        pAch3.SetPoints(3U);
-        pAch3.SetState(AssetState::Active);
-        achievementsPage.SetProgress(3U, 85, 100);
-        auto& pAch4 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch4.SetID(4);
-        pAch4.SetPoints(4U);
-        pAch4.SetState(AssetState::Active);
-        achievementsPage.SetProgress(4U, 90, 100);
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(1);
+        pAch1->public_.points = 1;
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+        pAch1->trigger->measured_target = 100;
+        pAch1->trigger->measured_value = 90;
+
+        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(2);
+        pAch2->public_.points = 2;
+        pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+        pAch2->trigger->measured_target = 100;
+        pAch2->trigger->measured_value = 85;
+
+        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(3);
+        pAch3->public_.points = 3;
+        pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+        pAch3->trigger->measured_target = 100;
+        pAch3->trigger->measured_value = 95;
+
+        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(4);
+        pAch4->public_.points = 4;
+        pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+        pAch4->trigger->measured_target = 100;
+        pAch4->trigger->measured_value = 85;
 
         achievementsPage.Refresh();
+
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"0 of 4 won (0/10)"), achievementsPage.GetSummary());
 
-        auto const* pItem = achievementsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Almost There"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = achievementsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(2, pItem->GetId());
-        Assert::AreEqual(100U, pItem->GetProgressMaximum());
-        Assert::AreEqual(95U, pItem->GetProgressValue());
-
-        pItem = achievementsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(4, pItem->GetId());
-        Assert::AreEqual(100U, pItem->GetProgressMaximum());
-        Assert::AreEqual(90U, pItem->GetProgressValue());
-
-        pItem = achievementsPage.GetItem(3);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(100U, pItem->GetProgressMaximum());
-        Assert::AreEqual(85U, pItem->GetProgressValue());
-
-        pItem = achievementsPage.GetItem(4);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::AreEqual(100U, pItem->GetProgressMaximum());
-        Assert::AreEqual(85U, pItem->GetProgressValue());
-
+        achievementsPage.AssertHeader(0, L"Almost There");
+        achievementsPage.AssertProgressAchievement(1, pAch3, 95.0, L"95/100");
+        achievementsPage.AssertProgressAchievement(2, pAch1, 90.0, L"90/100");
+        achievementsPage.AssertProgressAchievement(3, pAch2, 85.0, L"85/100");
+        achievementsPage.AssertProgressAchievement(4, pAch4, 85.0, L"85/100");
         Assert::IsNull(achievementsPage.GetItem(5));
     }
 
@@ -689,11 +619,13 @@ public:
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
         achievementsPage.mockGameContext.SetGameId(1U);
+        achievementsPage.mockRcheevosClient.MockGame();
         achievementsPage.mockSessionTracker.MockSession(1U, 1234567879, std::chrono::minutes(347));
 
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetPoints(5U);
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+        pAch1->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -704,11 +636,13 @@ public:
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
         achievementsPage.mockGameContext.SetGameId(1U);
+        achievementsPage.mockRcheevosClient.MockGame();
         achievementsPage.mockSessionTracker.MockSession(1U, 1234567879, std::chrono::seconds(17 * 60 + 12));
 
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetPoints(5U);
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+        pAch1->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+
         achievementsPage.Refresh();
 
         achievementsPage.mockSessionTracker.MockSession(1U, 1234567879, std::chrono::minutes(1));
@@ -730,20 +664,15 @@ public:
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
         achievementsPage.mockWindowManager.AssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Local);
-        pAch1.SetID(1);
-        pAch1.SetName(L"AchievementTitle");
-        pAch1.SetDescription(L"Trigger this");
-        pAch1.SetPoints(5U);
-        pAch1.SetBadge(L"BADGE_URI");
-        pAch1.SetState(AssetState::Active);
+        achievementsPage.mockRcheevosClient.MockGame();
+        const auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(ra::data::context::GameAssets::FirstLocalId);
 
         achievementsPage.mockServer.ExpectUncalled<ra::api::FetchAchievementInfo>();
 
         achievementsPage.Refresh();
-        achievementsPage.TestFetchItemDetail(0);
+        achievementsPage.TestFetchItemDetail(1);
 
-        auto const* pDetail = achievementsPage.GetItemDetail(1);
+        auto const* pDetail = achievementsPage.GetItemDetail(pAch1->public_.id);
         Expects(pDetail != nullptr);
 
         Assert::AreEqual(std::wstring(L"Local Achievement"), pDetail->GetWonBy());
@@ -753,18 +682,15 @@ public:
     TEST_METHOD(TestFetchItemDetail)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        auto& pAch1 = achievementsPage.NewAchievement(AssetCategory::Core);
-        pAch1.SetID(1);
-        pAch1.SetName(L"AchievementTitle");
-        pAch1.SetDescription(L"Trigger this");
-        pAch1.SetPoints(5U);
-        pAch1.SetBadge(L"BADGE_URI");
-        pAch1.SetState(AssetState::Active);
+        achievementsPage.mockRcheevosClient.MockGame();
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1234);
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+        pAch1->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
 
         achievementsPage.mockUserContext.Initialize("user2", "User2", "ApiToken");
         achievementsPage.mockServer.HandleRequest<ra::api::FetchAchievementInfo>([](const ra::api::FetchAchievementInfo::Request& request, ra::api::FetchAchievementInfo::Response& response)
         {
-            Assert::AreEqual(1U, request.AchievementId);
+            Assert::AreEqual(1234U, request.AchievementId);
 
             response.Result = ra::api::ApiResult::Success;
             response.EarnedBy = 6;
@@ -777,14 +703,14 @@ public:
         });
 
         achievementsPage.Refresh();
-        achievementsPage.TestFetchItemDetail(0);
+        achievementsPage.TestFetchItemDetail(1);
 
-        auto* pDetail = achievementsPage.GetItemDetail(1);
+        auto* pDetail = achievementsPage.GetItemDetail(pAch1->public_.id);
         Expects(pDetail != nullptr);
         Assert::AreEqual(std::wstring(), pDetail->GetWonBy());
 
         achievementsPage.mockThreadPool.ExecuteNextTask();
-        pDetail = achievementsPage.GetItemDetail(1);
+        pDetail = achievementsPage.GetItemDetail(pAch1->public_.id);
         Expects(pDetail != nullptr);
 
         Assert::AreEqual(std::wstring(L"Won by 6 of 12 (50%)"), pDetail->GetWonBy());

@@ -473,7 +473,7 @@ public:
         achievementsPage.AssertLockedAchievement(3, pAch2);
         achievementsPage.AssertHeader(4, L"Game Title - Unlocked");
         achievementsPage.AssertUnlockedAchievement(5, pAch4);
-        achievementsPage.AssertHeader(6, L"Local Achievements - Locked");
+        achievementsPage.AssertHeader(6, L"Local - Locked");
         achievementsPage.AssertUnlockedAchievement(7, pAch3); // local achievements appear unlocked (no greyscale image)
         Assert::IsNull(achievementsPage.GetItem(8));
     }

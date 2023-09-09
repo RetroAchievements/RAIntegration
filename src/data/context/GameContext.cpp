@@ -287,6 +287,9 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
     // finish up
     m_vAssets.EndUpdate();
 
+    auto& pRcheevosClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+    pRcheevosClient.SyncAssets();
+
     EndLoad();
     OnActiveGameChanged();
 }

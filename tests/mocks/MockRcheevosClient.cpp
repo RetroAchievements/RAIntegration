@@ -153,7 +153,7 @@ rc_client_achievement_info_t* MockRcheevosClient::MockUnofficialAchievement(uint
 rc_client_achievement_info_t* MockRcheevosClient::MockLocalAchievement(uint32_t nId, const char* sTitle)
 {
     rc_client_game_info_t* game = GetClient()->game;
-    rc_client_subset_info_t* subset = GetSubset(game, ra::data::context::GameAssets::LocalSubsetId, "Local Achievements");
+    rc_client_subset_info_t* subset = GetSubset(game, ra::data::context::GameAssets::LocalSubsetId, "Local");
     return AddAchievement(game, subset, nId, sTitle);
 }
 

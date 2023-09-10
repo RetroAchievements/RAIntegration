@@ -41,6 +41,9 @@ public:
     rc_client_achievement_info_t* MockUnofficialAchievement(uint32_t nId, const char* sTitle = nullptr);
     rc_client_achievement_info_t* MockLocalAchievement(uint32_t nId, const char* sTitle = nullptr);
 
+    rc_client_leaderboard_info_t* MockLeaderboard(uint32_t nId, const char* sTitle = nullptr);
+    rc_client_leaderboard_info_t* MockLocalLeaderboard(uint32_t nId, const char* sTitle = nullptr);
+
     void AssertCalled(const std::string& sRequestParams) const;
 
     void AssertNoPendingRequests() const;

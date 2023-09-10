@@ -227,11 +227,15 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
             if (!sProgress.empty())
             {
                 const auto nProgressBarWidth = (nWidth - nTextX - 12) * 2 / 3;
-                const auto nValue = pItem->GetProgressPercentage();
-                const auto nProgressBarFillWidth = gsl::narrow_cast<int>((nProgressBarWidth - 2) * nValue);
 
-                pSurface.FillRectangle(nTextX + 12, nY + 1 + 26 + 25, nProgressBarWidth, 8, pTheme.ColorOverlayScrollBar());
-                pSurface.FillRectangle(nTextX + 12 + 2, nY + 1 + 26 + 25 + 2, nProgressBarFillWidth - 4, 8 - 4, pTheme.ColorOverlayScrollBarGripper());
+                const auto nValue = pItem->GetProgressPercentage();
+                if (nValue >= 0.0)
+                {
+                    const auto nProgressBarFillWidth = gsl::narrow_cast<int>((nProgressBarWidth - 2) * nValue);
+
+                    pSurface.FillRectangle(nTextX + 12, nY + 1 + 26 + 25, nProgressBarWidth, 8, pTheme.ColorOverlayScrollBar());
+                    pSurface.FillRectangle(nTextX + 12 + 2, nY + 1 + 26 + 25 + 2, nProgressBarFillWidth - 4, 8 - 4, pTheme.ColorOverlayScrollBarGripper());
+                }
 
                 const auto nProgressFont = pSurface.LoadFont(pTheme.FontOverlay(), 14, ra::ui::FontStyles::Normal);
                 const auto szProgress = pSurface.MeasureText(nProgressFont, sProgress);

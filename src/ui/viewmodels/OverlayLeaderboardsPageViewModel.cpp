@@ -7,18 +7,52 @@
 #include "data\context\GameContext.hh"
 #include "data\context\UserContext.hh"
 
+#include "services\RcheevosClient.hh"
+
 #include "ui\OverlayTheme.hh"
+
+#include "ui\viewmodels\WindowManager.hh"
+
+#include <rcheevos\src\rcheevos\rc_client_internal.h>
 
 namespace ra {
 namespace ui {
 namespace viewmodels {
 
-static void SetLeaderboard(OverlayListPageViewModel::ItemViewModel& vmItem, const ra::data::models::LeaderboardModel& vmLeaderboard)
+static void SetLeaderboard(OverlayListPageViewModel::ItemViewModel& vmItem,
+                           const rc_client_leaderboard_t& pLeaderboard)
 {
-    vmItem.SetId(vmLeaderboard.GetID());
-    vmItem.SetLabel(vmLeaderboard.GetName());
-    vmItem.SetDetail(vmLeaderboard.GetDescription());
-    vmItem.SetDisabled(vmLeaderboard.GetState() == ra::data::models::AssetState::Disabled);
+    vmItem.SetId(pLeaderboard.id);
+    vmItem.SetLabel(ra::Widen(pLeaderboard.title));
+    vmItem.SetDetail(ra::Widen(pLeaderboard.description));
+    vmItem.SetCollapsed(false);
+
+    switch (pLeaderboard.state)
+    {
+        case RC_CLIENT_LEADERBOARD_STATE_ACTIVE:
+            vmItem.SetProgressString(L"");
+            vmItem.SetProgressPercentage(0.0f);
+            vmItem.SetDisabled(false);
+            break;
+
+        case RC_CLIENT_LEADERBOARD_STATE_TRACKING:
+            vmItem.SetProgressString(ra::Widen(pLeaderboard.tracker_value));
+            vmItem.SetProgressPercentage(-1.0f);
+            vmItem.SetDisabled(false);
+            break;
+
+        case RC_CLIENT_LEADERBOARD_STATE_DISABLED:
+            vmItem.SetProgressString(L"");
+            vmItem.SetProgressPercentage(0.0f);
+            vmItem.SetDisabled(true);
+            break;
+
+        default: // INACTIVE
+            vmItem.SetProgressString(L"");
+            vmItem.SetProgressPercentage(0.0f);
+            vmItem.SetDisabled(false);
+            break;
+    }
 }
 
 void OverlayLeaderboardsPageViewModel::Refresh()
@@ -27,137 +61,102 @@ void OverlayLeaderboardsPageViewModel::Refresh()
     m_sDetailTitle = L"Leaderboard Info";
     OverlayListPageViewModel::Refresh();
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-
     // title
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     SetListTitle(pGameContext.GameTitle());
 
     // leaderboard list
-    std::vector<const ra::data::models::LeaderboardModel*> vActiveLeaderboards;
-    std::vector<const ra::data::models::LeaderboardModel*> vLocalLeaderboards;
-    std::vector<const ra::data::models::LeaderboardModel*> vCoreLeaderboards;
-    std::vector<const ra::data::models::LeaderboardModel*> vUnsupportedLeaderboards;
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
+    const auto& pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
+
+    std::vector<rc_client_subset_info_t*> vDeactivatedSubsets;
+    const auto& pAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
+    if (pAssetList.GetFilterCategory() == ra::ui::viewmodels::AssetListViewModel::FilterCategory::Core)
     {
-        const auto* pLeaderboard = dynamic_cast<const ra::data::models::LeaderboardModel*>(pGameContext.Assets().GetItemAt(nIndex));
-        if (pLeaderboard != nullptr && !pLeaderboard->IsHidden())
+        // disable local subset while we build the list
+        auto* pSubset = pClient->game ? pClient->game->subsets : nullptr;
+        for (; pSubset; pSubset = pSubset->next)
         {
-            switch (pLeaderboard->GetState())
+            if (!pSubset->active)
+                continue;
+
+            if (pSubset->public_.id == ra::data::context::GameAssets::LocalSubsetId)
             {
-                case ra::data::models::AssetState::Primed:
-                    vActiveLeaderboards.push_back(pLeaderboard);
-                    continue;
-
-                case ra::data::models::AssetState::Disabled:
-                    vUnsupportedLeaderboards.push_back(pLeaderboard);
-                    continue;
-
-                default:
-                    break;
-            }
-
-            switch (pLeaderboard->GetCategory())
-            {
-                case ra::data::models::AssetCategory::Core:
-                    vCoreLeaderboards.push_back(pLeaderboard);
-                    break;
-
-                default:
-                    if (AssetAppearsInFilter(*pLeaderboard))
-                        vLocalLeaderboards.push_back(pLeaderboard);
-                    break;
+                vDeactivatedSubsets.push_back(pSubset);
+                pSubset->active = 0;
             }
         }
     }
+
+    auto* pLeaderboardList = rc_client_create_leaderboard_list(pClient, RC_CLIENT_LEADERBOARD_LIST_GROUPING_TRACKING);
+
+    for (auto* pSubset : vDeactivatedSubsets)
+        pSubset->active = 1;
 
     size_t nIndex = 0;
     size_t nNumberOfLeaderboards = 0;
+    m_mHeaderKeys.clear();
+    m_vItems.BeginUpdate();
 
-    if (!vActiveLeaderboards.empty())
+    const bool bCanCollapseHeaders = GetCanCollapseHeaders();
+    const auto* pBucket = pLeaderboardList->buckets;
+    const auto* pBucketStop = pBucket + pLeaderboardList->num_buckets;
+    for (; pBucket < pBucketStop; ++pBucket)
     {
         auto& pvmHeader = GetNextItem(&nIndex);
-        SetHeader(pvmHeader, L"Active Leaderboards");
+        SetHeader(pvmHeader, ra::Widen(pBucket->label));
 
-        for (const auto* vmLeaderboard : vActiveLeaderboards)
+        bool bCollapsed = false;
+        if (bCanCollapseHeaders)
         {
-            if (vmLeaderboard == nullptr)
-                continue;
-
-            auto& pvmLeaderboard = GetNextItem(&nIndex);
-            SetLeaderboard(pvmLeaderboard, *vmLeaderboard);
+            const auto nKey = pBucket->subset_id << 5 | pBucket->bucket_type;
+            m_mHeaderKeys[nIndex - 1] = nKey;
+            const auto pIter = m_mCollapseState.find(nKey);
+            if (pIter != m_mCollapseState.end())
+                bCollapsed = pIter->second;
         }
 
-        nNumberOfLeaderboards += vActiveLeaderboards.size();
-    }
+        pvmHeader.SetCollapsed(bCollapsed);
 
-    if (!vLocalLeaderboards.empty())
-    {
-        if (nIndex > 0 || !vCoreLeaderboards.empty() || !vUnsupportedLeaderboards.empty())
+        if (!bCollapsed)
         {
-            auto& pvmHeader = GetNextItem(&nIndex);
-            SetHeader(pvmHeader, L"Inactive Local Leaderboards");
+            const auto* pLeaderboard = pBucket->leaderboards;
+            const auto* pLeaderboardStop = pLeaderboard + pBucket->num_leaderboards;
+            for (; pLeaderboard < pLeaderboardStop; ++pLeaderboard)
+            {
+                auto& pvmLeaderboard = GetNextItem(&nIndex);
+                SetLeaderboard(pvmLeaderboard, **pLeaderboard);
+            }
         }
 
-        for (const auto* vmLeaderboard : vLocalLeaderboards)
-        {
-            if (vmLeaderboard == nullptr)
-                continue;
-
-            auto& pvmLeaderboard = GetNextItem(&nIndex);
-            SetLeaderboard(pvmLeaderboard, *vmLeaderboard);
-        }
-
-        nNumberOfLeaderboards += vLocalLeaderboards.size();
-    }
-
-    if (!vCoreLeaderboards.empty())
-    {
-        if (nIndex > 0 || !vUnsupportedLeaderboards.empty())
-        {
-            auto& pvmHeader = GetNextItem(&nIndex);
-            SetHeader(pvmHeader, L"Inactive Leaderboards");
-        }
-
-        for (const auto* vmLeaderboard : vCoreLeaderboards)
-        {
-            if (vmLeaderboard == nullptr)
-                continue;
-
-            auto& pvmLeaderboard = GetNextItem(&nIndex);
-            SetLeaderboard(pvmLeaderboard, *vmLeaderboard);
-        }
-
-        nNumberOfLeaderboards += vCoreLeaderboards.size();
-    }
-
-    if (!vUnsupportedLeaderboards.empty())
-    {
-        if (nIndex > 0)
-        {
-            auto& pvmHeader = GetNextItem(&nIndex);
-            SetHeader(pvmHeader, L"Unsupported Leaderboards");
-        }
-
-        for (const auto* vmLeaderboard : vUnsupportedLeaderboards)
-        {
-            if (vmLeaderboard == nullptr)
-                continue;
-
-            auto& pvmLeaderboard = GetNextItem(&nIndex);
-            SetLeaderboard(pvmLeaderboard, *vmLeaderboard);
-        }
-
-        nNumberOfLeaderboards += vUnsupportedLeaderboards.size();
+        nNumberOfLeaderboards += pBucket->num_leaderboards;
     }
 
     while (m_vItems.Count() > nIndex)
         m_vItems.RemoveAt(m_vItems.Count() - 1);
+
+    m_vItems.EndUpdate();
 
     // summary
     if (nNumberOfLeaderboards == 0)
         SetSummary(L"No leaderboards present");
     else
         SetSummary(ra::StringPrintf(L"%u leaderboards present", nNumberOfLeaderboards));
+}
+
+bool OverlayLeaderboardsPageViewModel::OnHeaderClicked(ItemViewModel& vmItem)
+{
+    for (const auto pair : m_mHeaderKeys)
+    {
+        const auto* vmHeader = m_vItems.GetItemAt(pair.first);
+        if (vmHeader == &vmItem)
+        {
+            m_mCollapseState[pair.second] = !vmItem.IsCollapsed();
+            Refresh();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void OverlayLeaderboardsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, _UNUSED int nWidth, int nHeight) const
@@ -200,28 +199,25 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     if (m_vLeaderboardRanks.find(vmItem.GetId()) != m_vLeaderboardRanks.end()) // already populated
         return;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(vmItem.GetId());
+    const auto& pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
+    const auto nLeaderboardId = vmItem.GetId();
+    const auto* pLeaderboard = reinterpret_cast<const rc_client_leaderboard_info_t*>(rc_client_get_leaderboard_info(pClient, nLeaderboardId));
     if (pLeaderboard == nullptr)
         return;
 
-    m_vLeaderboardRanks.emplace(vmItem.GetId(), ViewModelCollection<ItemViewModel>());
+    m_vLeaderboardRanks.emplace(nLeaderboardId, ViewModelCollection<ItemViewModel>());
 
     ra::api::FetchLeaderboardInfo::Request request;
-    request.LeaderboardId = vmItem.GetId();
+    request.LeaderboardId = nLeaderboardId;
     request.AroundUser = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetUsername();
     request.NumEntries = 11;
-    request.CallAsync([this, nId = vmItem.GetId()](const ra::api::FetchLeaderboardInfo::Response& response)
+    request.CallAsync([this, nId = nLeaderboardId, nFormat = pLeaderboard->format](const ra::api::FetchLeaderboardInfo::Response& response)
     {
         const auto pIter = m_vLeaderboardRanks.find(nId);
         if (pIter == m_vLeaderboardRanks.end())
             return;
 
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(nId);
-        if (!pLeaderboard)
-            return;
-
+        char sBuffer[64];
         const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
         auto& vmLeaderboard = pIter->second;
         for (const auto& pEntry : response.Entries)
@@ -229,7 +225,9 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
             auto& vmEntry = vmLeaderboard.Add();
             vmEntry.SetId(pEntry.Rank);
             vmEntry.SetLabel(ra::Widen(pEntry.User));
-            vmEntry.SetDetail(ra::Widen(pLeaderboard->FormatScore(pEntry.Score)));
+
+            rc_format_value(sBuffer, sizeof(sBuffer), pEntry.Score, nFormat);
+            vmEntry.SetDetail(ra::Widen(sBuffer));
 
             if (pEntry.User == sUsername)
                 vmEntry.SetDisabled(true);

@@ -38,7 +38,8 @@ static void SetImage(OverlayListPageViewModel::ItemViewModel& vmItem, const char
 }
 
 static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem,
-                           const rc_client_achievement_bucket_t& pBucket, const rc_client_achievement_t& pAchievement)
+                           const rc_client_achievement_bucket_t& pBucket,
+                           const rc_client_achievement_t& pAchievement)
 {
     vmItem.SetId(pAchievement.id);
     vmItem.SetLabel(ra::StringPrintf(L"%s (%s %s)", pAchievement.title, pAchievement.points,
@@ -166,7 +167,6 @@ void OverlayAchievementsPageViewModel::Refresh()
             {
                 auto& pvmAchievement = GetNextItem(&nIndex);
                 SetAchievement(pvmAchievement, *pBucket, **pAchievement);
-                ++nNumberOfAchievements;
             }
         }
 

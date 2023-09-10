@@ -87,7 +87,7 @@ void OverlayLeaderboardsPageViewModel::Refresh()
         }
     }
 
-    auto* pLeaderboardList = rc_client_create_leaderboard_list(pClient, RC_CLIENT_LEADERBOARD_LIST_GROUPING_TRACKING);
+    const auto* pLeaderboardList = rc_client_create_leaderboard_list(pClient, RC_CLIENT_LEADERBOARD_LIST_GROUPING_TRACKING);
 
     for (auto* pSubset : vDeactivatedSubsets)
         pSubset->active = 1;
@@ -97,38 +97,42 @@ void OverlayLeaderboardsPageViewModel::Refresh()
     m_mHeaderKeys.clear();
     m_vItems.BeginUpdate();
 
-    const bool bCanCollapseHeaders = GetCanCollapseHeaders();
     const auto* pBucket = pLeaderboardList->buckets;
-    const auto* pBucketStop = pBucket + pLeaderboardList->num_buckets;
-    for (; pBucket < pBucketStop; ++pBucket)
+    if (pBucket != nullptr)
     {
-        auto& pvmHeader = GetNextItem(&nIndex);
-        SetHeader(pvmHeader, ra::Widen(pBucket->label));
-
-        bool bCollapsed = false;
-        if (bCanCollapseHeaders)
+        const bool bCanCollapseHeaders = GetCanCollapseHeaders();
+        const rc_client_leaderboard_bucket_t* pBucketStop = pBucket + pLeaderboardList->num_buckets;
+        for (; pBucket < pBucketStop; ++pBucket)
         {
-            const auto nKey = pBucket->subset_id << 5 | pBucket->bucket_type;
-            m_mHeaderKeys[nIndex - 1] = nKey;
-            const auto pIter = m_mCollapseState.find(nKey);
-            if (pIter != m_mCollapseState.end())
-                bCollapsed = pIter->second;
-        }
+            auto& pvmHeader = GetNextItem(&nIndex);
+            SetHeader(pvmHeader, ra::Widen(pBucket->label));
 
-        pvmHeader.SetCollapsed(bCollapsed);
-
-        if (!bCollapsed)
-        {
-            const auto* pLeaderboard = pBucket->leaderboards;
-            const auto* pLeaderboardStop = pLeaderboard + pBucket->num_leaderboards;
-            for (; pLeaderboard < pLeaderboardStop; ++pLeaderboard)
+            bool bCollapsed = false;
+            if (bCanCollapseHeaders)
             {
-                auto& pvmLeaderboard = GetNextItem(&nIndex);
-                SetLeaderboard(pvmLeaderboard, **pLeaderboard);
+                const auto nKey = pBucket->subset_id << 5 | pBucket->bucket_type;
+                m_mHeaderKeys[nIndex - 1] = nKey;
+                const auto pIter = m_mCollapseState.find(nKey);
+                if (pIter != m_mCollapseState.end())
+                    bCollapsed = pIter->second;
             }
-        }
 
-        nNumberOfLeaderboards += pBucket->num_leaderboards;
+            pvmHeader.SetCollapsed(bCollapsed);
+
+            if (!bCollapsed)
+            {
+                const auto* pLeaderboard = pBucket->leaderboards;
+                Expects(pLeaderboard != nullptr);
+                const rc_client_leaderboard_t* const* pLeaderboardStop = pLeaderboard + pBucket->num_leaderboards;
+                for (; pLeaderboard < pLeaderboardStop; ++pLeaderboard)
+                {
+                    auto& pvmLeaderboard = GetNextItem(&nIndex);
+                    SetLeaderboard(pvmLeaderboard, **pLeaderboard);
+                }
+            }
+
+            nNumberOfLeaderboards += pBucket->num_leaderboards;
+        }
     }
 
     while (m_vItems.Count() > nIndex)
@@ -201,7 +205,8 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
 
     const auto& pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
     const auto nLeaderboardId = vmItem.GetId();
-    const auto* pLeaderboard = reinterpret_cast<const rc_client_leaderboard_info_t*>(rc_client_get_leaderboard_info(pClient, nLeaderboardId));
+    GSL_SUPPRESS_TYPE1 const auto* pLeaderboard =
+        reinterpret_cast<const rc_client_leaderboard_info_t*>(rc_client_get_leaderboard_info(pClient, nLeaderboardId));
     if (pLeaderboard == nullptr)
         return;
 
@@ -217,7 +222,7 @@ void OverlayLeaderboardsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
         if (pIter == m_vLeaderboardRanks.end())
             return;
 
-        char sBuffer[64];
+        char sBuffer[64] = "";
         const auto& sUsername = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
         auto& vmLeaderboard = pIter->second;
         for (const auto& pEntry : response.Entries)

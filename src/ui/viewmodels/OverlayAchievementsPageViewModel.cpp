@@ -127,50 +127,54 @@ void OverlayAchievementsPageViewModel::Refresh()
     m_mHeaderKeys.clear();
     m_vItems.BeginUpdate();
 
-    const bool bCanCollapseHeaders = GetCanCollapseHeaders();
     const auto* pBucket = pAchievementList->buckets;
-    const auto* pBucketStop = pBucket + pAchievementList->num_buckets;
-    for (; pBucket < pBucketStop; ++pBucket)
+    if (pBucket != nullptr)
     {
-        auto& pvmHeader = GetNextItem(&nIndex);
-        SetHeader(pvmHeader, ra::Widen(pBucket->label));
-
-        bool bCollapsed = false;
-        if (bCanCollapseHeaders)
+        const bool bCanCollapseHeaders = GetCanCollapseHeaders();
+        const auto* pBucketStop = pBucket + pAchievementList->num_buckets;
+        for (; pBucket < pBucketStop; ++pBucket)
         {
-            const auto nKey = pBucket->subset_id << 5 | pBucket->bucket_type;
-            m_mHeaderKeys[nIndex - 1] = nKey;
-            const auto pIter = m_mCollapseState.find(nKey);
-            if (pIter != m_mCollapseState.end())
+            auto& pvmHeader = GetNextItem(&nIndex);
+            SetHeader(pvmHeader, ra::Widen(pBucket->label));
+
+            bool bCollapsed = false;
+            if (bCanCollapseHeaders)
             {
-                bCollapsed = pIter->second;
-            }
-            else
-            {
-                switch (pBucket->bucket_type)
+                const auto nKey = pBucket->subset_id << 5 | pBucket->bucket_type;
+                m_mHeaderKeys[nIndex - 1] = nKey;
+                const auto pIter = m_mCollapseState.find(nKey);
+                if (pIter != m_mCollapseState.end())
                 {
-                    case RC_CLIENT_ACHIEVEMENT_BUCKET_UNLOCKED:
-                    case RC_CLIENT_ACHIEVEMENT_BUCKET_UNOFFICIAL:
-                        bCollapsed = true;
-                        break;
+                    bCollapsed = pIter->second;
+                }
+                else
+                {
+                    switch (pBucket->bucket_type)
+                    {
+                        case RC_CLIENT_ACHIEVEMENT_BUCKET_UNLOCKED:
+                        case RC_CLIENT_ACHIEVEMENT_BUCKET_UNOFFICIAL:
+                            bCollapsed = true;
+                            break;
+                    }
                 }
             }
-        }
 
-        pvmHeader.SetCollapsed(bCollapsed);
+            pvmHeader.SetCollapsed(bCollapsed);
 
-        if (!bCollapsed)
-        {
-            const auto* pAchievement = pBucket->achievements;
-            const auto* pAchievementStop = pAchievement + pBucket->num_achievements;
-            for (; pAchievement < pAchievementStop; ++pAchievement)
+            if (!bCollapsed)
             {
-                auto& pvmAchievement = GetNextItem(&nIndex);
-                SetAchievement(pvmAchievement, *pBucket, **pAchievement);
+                const auto* pAchievement = pBucket->achievements;
+                Expects(pAchievement != nullptr);
+                const rc_client_achievement_t* const* pAchievementStop = pAchievement + pBucket->num_achievements;
+                for (; pAchievement < pAchievementStop; ++pAchievement)
+                {
+                    auto& pvmAchievement = GetNextItem(&nIndex);
+                    SetAchievement(pvmAchievement, *pBucket, **pAchievement);
+                }
             }
-        }
 
-        nNumberOfAchievements += pBucket->num_achievements;
+            nNumberOfAchievements += pBucket->num_achievements;
+        }
     }
 
     while (m_vItems.Count() > nIndex)
@@ -300,7 +304,8 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
 
     const auto& pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
     const auto nAchievementID = vmItem.GetId();
-    const auto* pAchievement = reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, nAchievementID));
+    GSL_SUPPRESS_TYPE1 const auto* pAchievement =
+        reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, nAchievementID));
     if (pAchievement == nullptr)
         return;
 

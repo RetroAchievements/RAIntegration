@@ -128,11 +128,16 @@ void RcheevosClient::ServerCallAsync(const rc_api_request_t* pRequest,
 class RcheevosClient::ClientSynchronizer
 {
 public:
-    ~ClientSynchronizer()
+    ClientSynchronizer() = default;
+    virtual ~ClientSynchronizer()
     {
         for (auto* pMemory : m_vAllocatedMemory)
             free(pMemory);
     }
+    ClientSynchronizer(const ClientSynchronizer&) noexcept = delete;
+    ClientSynchronizer& operator=(const ClientSynchronizer&) noexcept = delete;
+    ClientSynchronizer(ClientSynchronizer&&) noexcept = delete;
+    ClientSynchronizer& operator=(ClientSynchronizer&&) noexcept = delete;
 
 private:
     rc_client_subset_info_t* m_pPublishedSubset = nullptr;
@@ -151,7 +156,7 @@ private:
 
     std::vector<void*> m_vAllocatedMemory;
 
-    static bool DetachMemory(std::vector<void*>& pAllocatedMemory, void* pMemory)
+    static bool DetachMemory(std::vector<void*>& pAllocatedMemory, void* pMemory) noexcept
     {
         for (auto pIter = pAllocatedMemory.begin(); pIter != pAllocatedMemory.end(); ++pIter)
         {
@@ -165,7 +170,7 @@ private:
         return false;
     }
 
-    bool AllocatedMemrefs()
+    bool AllocatedMemrefs() noexcept
     {
         bool bAllocatedMemref = false;
 
@@ -198,8 +203,10 @@ private:
 
     static rc_client_leaderboard_info_t* FindLeaderboard(rc_client_subset_info_t* pSubset, uint32_t nId)
     {
+        Expects(pSubset != nullptr);
+
         auto* pLeaderboard = pSubset->leaderboards;
-        auto* pLeaderboardStop = pLeaderboard + pSubset->public_.num_leaderboards;
+        const auto* pLeaderboardStop = pLeaderboard + pSubset->public_.num_leaderboards;
         for (; pLeaderboard < pLeaderboardStop; ++pLeaderboard)
         {
             if (pLeaderboard->public_.id == nId)
@@ -212,6 +219,8 @@ private:
     void SyncLeaderboard(rc_client_leaderboard_info_t* pLeaderboard, SubsetWrapper* pSubsetWrapper,
                          const ra::data::models::LeaderboardModel* vmLeaderboard)
     {
+        Expects(vmLeaderboard != nullptr);
+
         const auto sTitle = ra::Narrow(vmLeaderboard->GetName());
         if (!pLeaderboard->public_.title || pLeaderboard->public_.title != sTitle)
             pLeaderboard->public_.title = rc_buf_strcpy(&pSubsetWrapper->pBuffer, sTitle.c_str());
@@ -251,7 +260,7 @@ private:
             const auto nSize = rc_lboard_size(sMemAddr.c_str());
             if (nSize > 0)
             {
-                pLeaderboard->lboard = (rc_lboard_t*)malloc(nSize);
+                pLeaderboard->lboard = static_cast<rc_lboard_t*>(malloc(nSize));
                 if (pLeaderboard->lboard)
                 {
                     /* populate the item, using the communal memrefs pool */
@@ -278,8 +287,10 @@ private:
 
     static rc_client_achievement_info_t* FindAchievement(rc_client_subset_info_t* pSubset, uint32_t nId)
     {
+        Expects(pSubset != nullptr);
+
         auto* pAchievement = pSubset->achievements;
-        auto* pAchievementStop = pAchievement + pSubset->public_.num_achievements;
+        const auto* pAchievementStop = pAchievement + pSubset->public_.num_achievements;
         for (; pAchievement < pAchievementStop; ++pAchievement)
         {
             if (pAchievement->public_.id == nId)
@@ -292,6 +303,10 @@ private:
     void SyncAchievement(rc_client_achievement_info_t* pAchievement, SubsetWrapper* pSubsetWrapper,
                          const ra::data::models::AchievementModel* vmAchievement)
     {
+        Expects(pAchievement != nullptr);
+        Expects(pSubsetWrapper != nullptr);
+        Expects(vmAchievement != nullptr);
+
         const auto sTitle = ra::Narrow(vmAchievement->GetName());
         if (!pAchievement->public_.title || pAchievement->public_.title != sTitle)
             pAchievement->public_.title = rc_buf_strcpy(&pSubsetWrapper->pBuffer, sTitle.c_str());
@@ -351,7 +366,7 @@ private:
             const auto nSize = rc_trigger_size(sTrigger.c_str());
             if (nSize > 0)
             {
-                pAchievement->trigger = (rc_trigger_t*)malloc(nSize);
+                pAchievement->trigger = static_cast<rc_trigger_t*>(malloc(nSize));
                 if (pAchievement->trigger)
                 {
                     /* populate the item, using the communal memrefs pool */
@@ -385,14 +400,16 @@ private:
 
         if (!vAchievements.empty())
         {
-            pSubset->achievements = (rc_client_achievement_info_t*)rc_buf_alloc(
-                &pSubsetWrapper->pBuffer, vAchievements.size() * sizeof(*pSubset->achievements));
+            pSubset->achievements = static_cast<rc_client_achievement_info_t*>(rc_buf_alloc(
+                &pSubsetWrapper->pBuffer, vAchievements.size() * sizeof(*pSubset->achievements)));
             memset(pSubset->achievements, 0, vAchievements.size() * sizeof(*pSubset->achievements));
 
             rc_client_achievement_info_t* pAchievement = pSubset->achievements;
-            rc_client_achievement_info_t* pSrcAchievement;
+            rc_client_achievement_info_t* pSrcAchievement = nullptr;
             for (const auto* vmAchievement : vAchievements)
             {
+                Expects(vmAchievement != nullptr);
+
                 const auto nAchievementId = vmAchievement->GetID();
                 if (vmAchievement->GetChanges() == ra::data::models::AssetChanges::None)
                 {
@@ -438,14 +455,16 @@ private:
 
         if (!vLeaderboards.empty())
         {
-            pSubset->leaderboards = (rc_client_leaderboard_info_t*)rc_buf_alloc(
-                &pSubsetWrapper->pBuffer, vLeaderboards.size() * sizeof(*pSubset->leaderboards));
+            pSubset->leaderboards = static_cast<rc_client_leaderboard_info_t*>(rc_buf_alloc(
+                &pSubsetWrapper->pBuffer, vLeaderboards.size() * sizeof(*pSubset->leaderboards)));
             memset(pSubset->leaderboards, 0, vLeaderboards.size() * sizeof(*pSubset->leaderboards));
 
             rc_client_leaderboard_info_t* pLeaderboard = pSubset->leaderboards;
-            rc_client_leaderboard_info_t* pSrcLeaderboard;
+            rc_client_leaderboard_info_t* pSrcLeaderboard = nullptr;
             for (const auto* vmLeaderboard : vLeaderboards)
             {
+                Expects(vmLeaderboard != nullptr);
+
                 const auto nLeaderboardId = vmLeaderboard->GetID();
                 if (vmLeaderboard->GetChanges() == ra::data::models::AssetChanges::None)
                 {

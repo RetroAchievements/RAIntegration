@@ -79,7 +79,7 @@ public:
     bool Update(double fElapsed) override;
     void Render(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const override;
     bool ProcessInput(const ControllerInput& pInput) override;
-    const wchar_t* GetAcceptButtonText() const;
+    const wchar_t* GetAcceptButtonText() const override;
 
     class ItemViewModel : public LookupItemViewModel
     {

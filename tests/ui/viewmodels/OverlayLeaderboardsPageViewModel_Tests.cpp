@@ -266,7 +266,7 @@ public:
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
         leaderboardsPage.mockRcheevosClient.MockGame();
-        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
+        leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
 
         leaderboardsPage.mockUserContext.Initialize("user2", "User2", "ApiToken");
         leaderboardsPage.mockServer.HandleRequest<ra::api::FetchLeaderboardInfo>([](const ra::api::FetchLeaderboardInfo::Request& request, ra::api::FetchLeaderboardInfo::Response& response)

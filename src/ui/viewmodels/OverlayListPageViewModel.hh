@@ -46,6 +46,21 @@ public:
     void SetSummary(const std::wstring& sValue) { SetValue(SummaryProperty, sValue); }
 
     /// <summary>
+    /// The <see cref="ModelProperty" /> for whether or not headers can be collapsed.
+    /// </summary>
+    static const BoolModelProperty CanCollapseHeadersProperty;
+
+    /// <summary>
+    /// Gets whether or not headers can be collapsed.
+    /// </summary>
+    bool GetCanCollapseHeaders() const { return GetValue(CanCollapseHeadersProperty); }
+
+    /// <summary>
+    /// Sets whether or not headers can be collapsed.
+    /// </summary>
+    void SetCanCollapseHeaders(bool bValue) { SetValue(CanCollapseHeadersProperty, bValue); }
+
+    /// <summary>
     /// The <see cref="ModelProperty" /> for the index of the selected item.
     /// </summary>
     static const IntModelProperty SelectedItemIndexProperty;
@@ -64,6 +79,7 @@ public:
     bool Update(double fElapsed) override;
     void Render(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const override;
     bool ProcessInput(const ControllerInput& pInput) override;
+    const wchar_t* GetAcceptButtonText() const;
 
     class ItemViewModel : public LookupItemViewModel
     {
@@ -97,6 +113,21 @@ public:
         /// Sets whether the item is disabled.
         /// </summary>
         void SetDisabled(bool bValue) { SetValue(IsDisabledProperty, bValue); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for whether or not the item is collapsed.
+        /// </summary>
+        static const BoolModelProperty IsCollapsedProperty;
+
+        /// <summary>
+        /// Gets whether or not the item is collapsed.
+        /// </summary>
+        bool IsCollapsed() const { return GetValue(IsCollapsedProperty); }
+
+        /// <summary>
+        /// Sets whether the item is collapsed.
+        /// </summary>
+        void SetCollapsed(bool bValue) { SetValue(IsCollapsedProperty, bValue); }
 
         ImageReference Image{};
 
@@ -140,7 +171,8 @@ protected:
     void EnsureSelectedItemIndexValid();
     bool SetDetail(bool bDetail);
     void ForceRedraw();
-    virtual void FetchItemDetail(_UNUSED ItemViewModel& vmItem) noexcept(false) {};
+    virtual void FetchItemDetail(_UNUSED ItemViewModel& vmItem) noexcept(false) {}
+    virtual bool OnHeaderClicked(_UNUSED ItemViewModel& vmItem) noexcept(false) { return false; }
 
     gsl::index m_nScrollOffset = 0;
     mutable unsigned int m_nVisibleItems = 0;

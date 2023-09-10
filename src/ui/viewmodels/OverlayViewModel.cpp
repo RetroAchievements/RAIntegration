@@ -204,7 +204,7 @@ void OverlayViewModel::CreateRenderImage()
     // navigation controls
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     const auto sBack = ra::StringPrintf(L"%s: Back", pEmulatorContext.GetCancelButtonText());
-    const auto sSelect = ra::StringPrintf(L"%s: Select", pEmulatorContext.GetAcceptButtonText());
+    const auto sSelect = ra::StringPrintf(L"%s: %s", pEmulatorContext.GetAcceptButtonText(), pCurrentPage.GetAcceptButtonText());
     const auto sNext = std::wstring(L"\u2BC8: Next");
     const auto sPrev = std::wstring(L"\u2BC7: Prev");
 

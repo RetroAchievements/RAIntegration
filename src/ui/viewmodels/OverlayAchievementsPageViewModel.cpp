@@ -44,6 +44,7 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem,
     vmItem.SetLabel(ra::StringPrintf(L"%s (%s %s)", pAchievement.title, pAchievement.points,
                                      (pAchievement.points == 1) ? "point" : "points"));
     vmItem.SetDetail(ra::Widen(pAchievement.description));
+    vmItem.SetCollapsed(false);
 
     switch (pAchievement.state)
     {
@@ -122,8 +123,10 @@ void OverlayAchievementsPageViewModel::Refresh()
 
     size_t nIndex = 0;
     size_t nNumberOfAchievements = 0;
+    m_mHeaderKeys.clear();
     m_vItems.BeginUpdate();
 
+    const bool bCanCollapseHeaders = GetCanCollapseHeaders();
     const auto* pBucket = pAchievementList->buckets;
     const auto* pBucketStop = pBucket + pAchievementList->num_buckets;
     for (; pBucket < pBucketStop; ++pBucket)
@@ -131,14 +134,43 @@ void OverlayAchievementsPageViewModel::Refresh()
         auto& pvmHeader = GetNextItem(&nIndex);
         SetHeader(pvmHeader, ra::Widen(pBucket->label));
 
-        const auto* pAchievement = pBucket->achievements;
-        const auto* pAchievementStop = pAchievement + pBucket->num_achievements;
-        for (; pAchievement < pAchievementStop; ++pAchievement)
+        bool bCollapsed = false;
+        if (bCanCollapseHeaders)
         {
-            auto& pvmAchievement = GetNextItem(&nIndex);
-            SetAchievement(pvmAchievement, *pBucket, **pAchievement);
-            ++nNumberOfAchievements;
+            const auto nKey = pBucket->subset_id << 5 | pBucket->bucket_type;
+            m_mHeaderKeys[nIndex - 1] = nKey;
+            const auto pIter = m_mCollapseState.find(nKey);
+            if (pIter != m_mCollapseState.end())
+            {
+                bCollapsed = pIter->second;
+            }
+            else
+            {
+                switch (pBucket->bucket_type)
+                {
+                    case RC_CLIENT_ACHIEVEMENT_BUCKET_UNLOCKED:
+                    case RC_CLIENT_ACHIEVEMENT_BUCKET_UNOFFICIAL:
+                        bCollapsed = true;
+                        break;
+                }
+            }
         }
+
+        pvmHeader.SetCollapsed(bCollapsed);
+
+        if (!bCollapsed)
+        {
+            const auto* pAchievement = pBucket->achievements;
+            const auto* pAchievementStop = pAchievement + pBucket->num_achievements;
+            for (; pAchievement < pAchievementStop; ++pAchievement)
+            {
+                auto& pvmAchievement = GetNextItem(&nIndex);
+                SetAchievement(pvmAchievement, *pBucket, **pAchievement);
+                ++nNumberOfAchievements;
+            }
+        }
+
+        nNumberOfAchievements += pBucket->num_achievements;
     }
 
     while (m_vItems.Count() > nIndex)
@@ -194,6 +226,22 @@ bool OverlayAchievementsPageViewModel::Update(double fElapsed)
     } while (m_fElapsed > 60.0);
 
     return true;
+}
+
+bool OverlayAchievementsPageViewModel::OnHeaderClicked(ItemViewModel& vmItem)
+{
+    for (const auto pair : m_mHeaderKeys)
+    {
+        const auto* vmHeader = m_vItems.GetItemAt(pair.first);
+        if (vmHeader == &vmItem)
+        {
+            m_mCollapseState[pair.second] = !vmItem.IsCollapsed();
+            Refresh();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, _UNUSED int nWidth, int nHeight) const

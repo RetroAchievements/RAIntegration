@@ -83,6 +83,8 @@ public:
         /// </summary>
         void SetTitle(const std::wstring& sValue) { SetValue(TitleProperty, sValue); }
 
+        virtual const wchar_t* GetAcceptButtonText() const { return L"Select"; }
+
         virtual void Refresh() = 0;
 
         virtual bool Update(_UNUSED double fElapsed) noexcept(false) { return false; }

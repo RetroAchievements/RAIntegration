@@ -149,6 +149,7 @@ public:
     TEST_METHOD(TestRefreshNoAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -168,6 +169,7 @@ public:
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch1->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
 
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -188,6 +190,7 @@ public:
         pAch1->public_.points = 5;
         snprintf(pAch1->public_.badge_name, sizeof(pAch1->public_.badge_name), "BADGE");
 
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -209,6 +212,7 @@ public:
         snprintf(pAch1->public_.badge_name, sizeof(pAch1->public_.badge_name), "BADGE");
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -246,6 +250,7 @@ public:
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
 
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -284,6 +289,7 @@ public:
         pAch4->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
         pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH; // still counts in the overall unlock rate
 
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -355,6 +361,7 @@ public:
         pAch4->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
         pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH; // still counts in the overall unlock rate
 
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -368,6 +375,46 @@ public:
         achievementsPage.AssertHeader(5, L"Unlocked");
         achievementsPage.AssertUnlockedAchievement(6, pAch3);
         Assert::IsNull(achievementsPage.GetItem(7));
+    }
+
+    TEST_METHOD(TestRefreshInactiveAndDisabledAchievementsInitialCollapseState)
+    {
+        OverlayAchievementsPageViewModelHarness achievementsPage;
+        achievementsPage.mockRcheevosClient.MockGame();
+
+        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        pAch1->public_.points = 1;
+        pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
+
+        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievement(2);
+        pAch2->public_.points = 2;
+        pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
+        pAch2->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
+
+        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievement(3);
+        pAch3->public_.points = 3;
+        pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+        pAch3->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+
+        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        pAch4->public_.points = 4;
+        pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
+        pAch4->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
+        pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+
+        achievementsPage.SetCanCollapseHeaders(true);
+        achievementsPage.Refresh();
+
+        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"2 of 4 won (7/10)"), achievementsPage.GetSummary());
+
+        achievementsPage.AssertHeader(0, L"Locked");
+        achievementsPage.AssertLockedAchievement(1, pAch1);
+        achievementsPage.AssertHeader(2, L"Unsupported");
+        achievementsPage.AssertLockedAchievement(3, pAch2);
+        achievementsPage.AssertLockedAchievement(4, pAch4);
+        achievementsPage.AssertHeader(5, L"Unlocked"); // unlocked should be collapsed
+        Assert::IsNull(achievementsPage.GetItem(6));
     }
 
     TEST_METHOD(TestRefreshActiveAndPrimedAchievements)
@@ -388,6 +435,7 @@ public:
         pAch3->public_.points = 3;
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -425,6 +473,7 @@ public:
 
         achievementsPage.mockWindowManager.AssetList.SetFilterCategory(
             ra::ui::viewmodels::AssetListViewModel::FilterCategory::Core);
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -462,6 +511,7 @@ public:
 
         achievementsPage.mockWindowManager.AssetList.SetFilterCategory(
             ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local);
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -504,6 +554,7 @@ public:
         pAch4->trigger->measured_target = 10;
         pAch4->trigger->measured_value = 5;
 
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -552,6 +603,7 @@ public:
         pAch4->public_.points = 4;
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -602,6 +654,7 @@ public:
         pAch4->trigger->measured_target = 100;
         pAch4->trigger->measured_value = 85;
 
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
@@ -669,6 +722,7 @@ public:
 
         achievementsPage.mockServer.ExpectUncalled<ra::api::FetchAchievementInfo>();
 
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
         achievementsPage.TestFetchItemDetail(1);
 
@@ -702,6 +756,7 @@ public:
             return true;
         });
 
+        achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
         achievementsPage.TestFetchItemDetail(1);
 

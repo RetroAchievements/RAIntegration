@@ -82,13 +82,16 @@ public:
     };
 
 protected:
+    bool OnHeaderClicked(ItemViewModel& vmItem) override;
     void FetchItemDetail(ItemViewModel& vmItem) override;
     std::map<ra::AchievementID, AchievementViewModel> m_vAchievementDetails;
+    std::map<uint32_t, bool> m_mCollapseState;
 
 private:
     void RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, _UNUSED int nWidth, int nHeight) const override;
 
     std::wstring m_sSummary;
+    std::map<gsl::index, uint32_t> m_mHeaderKeys;
 };
 
 } // namespace viewmodels

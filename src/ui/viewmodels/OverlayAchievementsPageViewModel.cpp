@@ -27,18 +27,23 @@ const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel
 const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::ModifiedDateProperty("AchievementViewModel", "ModifiedDate", L"");
 const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::WonByProperty("AchievementViewModel", "WonBy", L"");
 
-static void SetImage(OverlayListPageViewModel::ItemViewModel& vmItem, const char* sBadgeName, bool bLocked)
+static void SetImage(OverlayListPageViewModel::ItemViewModel& vmItem, const std::string& sBadgeName, bool bLocked)
 {
     std::string sImageName = sBadgeName;
-    if (bLocked)
+    if (bLocked && !ra::StringStartsWith(sBadgeName, "local")) // local images don't have _lock equivalents
+    {
         sImageName += "_lock";
+        vmItem.SetDisabled(true);
+    }
+    else
+    {
+        vmItem.SetDisabled(false);
+    }
 
     vmItem.Image.ChangeReference(ra::ui::ImageType::Badge, sImageName);
-    vmItem.SetDisabled(bLocked);
 }
 
 static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem,
-                           const rc_client_achievement_bucket_t& pBucket,
                            const rc_client_achievement_t& pAchievement)
 {
     vmItem.SetId(pAchievement.id);
@@ -47,13 +52,20 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem,
     vmItem.SetDetail(ra::Widen(pAchievement.description));
     vmItem.SetCollapsed(false);
 
+    std::string sBadgeName = pAchievement.badge_name;
+    if (!sBadgeName.empty() && sBadgeName.front() == 'L')
+    {
+        // local image, get from model
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        auto* vmLocalAchievement = pGameContext.Assets().FindAchievement(vmItem.GetId());
+        if (vmLocalAchievement != nullptr)
+            sBadgeName = ra::Narrow(vmLocalAchievement->GetBadge());
+    }
+
     switch (pAchievement.state)
     {
         case RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE:
-            if (pBucket.subset_id == ra::data::context::GameAssets::LocalSubsetId) // local achievements never appear disabled
-                SetImage(vmItem, pAchievement.badge_name, false);
-            else
-                SetImage(vmItem, pAchievement.badge_name, true);
+            SetImage(vmItem, sBadgeName, true);
 
             if (pAchievement.measured_progress[0])
             {
@@ -68,13 +80,13 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem,
             break;
 
         case RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED:
-            SetImage(vmItem, pAchievement.badge_name, false);
+            SetImage(vmItem, sBadgeName, false);
             vmItem.SetProgressString(L"");
             vmItem.SetProgressPercentage(0.0f);
             break;
 
         default: // DISABLED/INACTIVE
-            SetImage(vmItem, pAchievement.badge_name, true);
+            SetImage(vmItem, sBadgeName, true);
             vmItem.SetProgressString(L"");
             vmItem.SetProgressPercentage(0.0f);
             break;
@@ -169,7 +181,7 @@ void OverlayAchievementsPageViewModel::Refresh()
                 for (; pAchievement < pAchievementStop; ++pAchievement)
                 {
                     auto& pvmAchievement = GetNextItem(&nIndex);
-                    SetAchievement(pvmAchievement, *pBucket, **pAchievement);
+                    SetAchievement(pvmAchievement, **pAchievement);
                 }
             }
 

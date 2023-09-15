@@ -502,7 +502,12 @@ public:
 
         auto* pAch3 = achievementsPage.mockRcheevosClient.MockLocalAchievement(3);
         pAch3->public_.points = 3;
+        snprintf(pAch3->public_.badge_name, sizeof(pAch3->public_.badge_name), "L000003");
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+        // L000003 badge points at VM for full local badge path
+        auto& vmAch3 = achievementsPage.mockGameContext.Assets().NewAchievement();
+        vmAch3.SetID(3);
+        vmAch3.SetBadge(L"local\\1-abcdef0123456789.png");
 
         auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
         pAch4->public_.points = 4;
@@ -524,7 +529,18 @@ public:
         achievementsPage.AssertHeader(4, L"Game Title - Unlocked");
         achievementsPage.AssertUnlockedAchievement(5, pAch4);
         achievementsPage.AssertHeader(6, L"Local - Locked");
-        achievementsPage.AssertUnlockedAchievement(7, pAch3); // local achievements appear unlocked (no greyscale image)
+
+        // local achievements appear unlocked (no greyscale image available)
+        const auto* pItem = achievementsPage.GetItem(7);
+        Expects(pItem != nullptr);
+        Assert::IsFalse(pItem->IsHeader());
+        Assert::AreEqual(pAch3->public_.id, static_cast<uint32_t>(pItem->GetId()));
+        const std::wstring sTitle = ra::StringPrintf(L"%s (%u points)", pAch3->public_.title, pAch3->public_.points);
+        Assert::AreEqual(sTitle, pItem->GetLabel());
+        Assert::AreEqual(ra::Widen(pAch3->public_.description), pItem->GetDetail());
+        Assert::IsFalse(pItem->IsDisabled(), ra::StringPrintf(L"Item %d disabled", 7).c_str());
+        Assert::AreEqual(ra::Narrow(vmAch3.GetBadge()), pItem->Image.Name());
+
         Assert::IsNull(achievementsPage.GetItem(8));
     }
 

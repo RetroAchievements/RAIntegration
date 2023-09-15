@@ -317,9 +317,15 @@ private:
 
         const auto& sBadge = vmAchievement->GetBadge();
         if (ra::StringStartsWith(sBadge, L"local\\"))
-            snprintf(pAchievement->public_.badge_name, sizeof(pAchievement->public_.badge_name), "000000");
+        {
+            // cannot fit "local/md5.png" into 8 byte buffer. also, client may not understand.
+            // encode a value that we can intercept in rc_client_achievement_get_image_url.
+            snprintf(pAchievement->public_.badge_name, sizeof(pAchievement->public_.badge_name), "L%06x", pAchievement->public_.id);
+        }
         else
+        {
             snprintf(pAchievement->public_.badge_name, sizeof(pAchievement->public_.badge_name), "%s", ra::Narrow(sBadge).c_str());
+        }
 
         pAchievement->public_.id = vmAchievement->GetID();
         pAchievement->public_.points = vmAchievement->GetPoints();

@@ -344,10 +344,12 @@ void MemorySearchViewModel::DoFrame()
         return;
     }
 
-    m_vResults.BeginUpdate();
-
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
+    auto& pCurrentResults = *m_vSearchResults.at(m_nSelectedSearchResult).get();
+
+    std::lock_guard lock(m_oMutex);
+
+    m_vResults.BeginUpdate();
 
     // NOTE: only processes the visible items
     ra::services::SearchResults::Result pResult;
@@ -465,9 +467,13 @@ void MemorySearchViewModel::ClearResults()
     if (m_bIsContinuousFiltering)
         ToggleContinuousFilter();
 
-    m_vSelectedAddresses.clear();
-    m_vSearchResults.clear();
-    m_vResults.Clear();
+    {
+        std::lock_guard lock(m_oMutex);
+
+        m_vSelectedAddresses.clear();
+        m_vSearchResults.clear();
+        m_vResults.Clear();
+    }
 
     SetValue(FilterSummaryProperty, FilterSummaryProperty.GetDefaultValue());
     SetValue(SelectedPageProperty, SelectedPageProperty.GetDefaultValue());
@@ -489,36 +495,43 @@ void MemorySearchViewModel::BeginNewSearch()
     if (m_bIsContinuousFiltering)
         ToggleContinuousFilter();
 
-    m_vSelectedAddresses.clear();
+    std::unique_ptr<SearchResult> pResult;
+    pResult.reset(new SearchResult());
+    pResult->pResults.Initialize(nStart, gsl::narrow<size_t>(nEnd) - nStart + 1, GetSearchType());
+    pResult->sSummary = ra::StringPrintf(L"New %s Search", SearchTypes().GetLabelForId(ra::etoi(GetSearchType())));
 
-    m_vSearchResults.clear();
-    SearchResult& pResult = m_vSearchResults.emplace_back();
-    m_nSelectedSearchResult = 0;
-
-    pResult.pResults.Initialize(nStart, gsl::narrow<size_t>(nEnd) - nStart + 1, GetSearchType());
-    pResult.sSummary = ra::StringPrintf(L"New %s Search", SearchTypes().GetLabelForId(ra::etoi(GetSearchType())));
-
-    m_vResults.BeginUpdate();
-    while (m_vResults.Count() > 0)
-        m_vResults.RemoveAt(m_vResults.Count() - 1);
-    m_vResults.EndUpdate();
-
-    SetValue(FilterSummaryProperty, pResult.sSummary);
+    SetValue(FilterSummaryProperty, pResult->sSummary);
     SetValue(SelectedPageProperty, L"1/1");
     SetValue(ScrollOffsetProperty, 0);
     SetValue(ScrollMaximumProperty, 0);
-    SetValue(ResultCountProperty, gsl::narrow_cast<int>(pResult.pResults.MatchingAddressCount()));
-    SetValue(ResultMemSizeProperty, ra::etoi(pResult.pResults.GetSize()));
+    SetValue(ResultCountProperty, gsl::narrow_cast<int>(pResult->pResults.MatchingAddressCount()));
+    SetValue(ResultMemSizeProperty, ra::etoi(pResult->pResults.GetSize()));
+
+    {
+        std::lock_guard lock(m_oMutex);
+
+        m_vSearchResults.clear();
+        m_vSearchResults.push_back(std::move(pResult));
+        m_nSelectedSearchResult = 0;
+        m_vSelectedAddresses.clear();
+
+        m_vResults.BeginUpdate();
+        while (m_vResults.Count() > 0)
+            m_vResults.RemoveAt(m_vResults.Count() - 1);
+        m_vResults.EndUpdate();
+    }
 }
 
-void MemorySearchViewModel::AddNewPage(SearchResult&& pNewPage)
+void MemorySearchViewModel::AddNewPage(std::unique_ptr<SearchResult>&& pNewPage)
 {
+    std::lock_guard lock(m_oMutex);
+
     // remove any search history after the current node
     while (m_vSearchResults.size() - 1 > m_nSelectedSearchResult)
         m_vSearchResults.pop_back();
 
     // add a new search history entry
-    m_vSearchResults.emplace_back(std::move(pNewPage));
+    m_vSearchResults.push_back(std::move(pNewPage));
     if (m_vSearchResults.size() > SEARCH_MAX_HISTORY + 1)
     {
         // always discard the second search result in case the user wants to do an initial search later
@@ -538,27 +551,28 @@ void MemorySearchViewModel::ApplyFilter()
     const std::wstring sEmptyString;
     const auto* sValue = GetValue(CanEditFilterValueProperty) ? &GetFilterValue() : &sEmptyString;
 
-    SearchResult& pPreviousResult = m_vSearchResults.at(m_nSelectedSearchResult);
-    SearchResult pResult;
+    SearchResult& pPreviousResult = *m_vSearchResults.at(m_nSelectedSearchResult).get();
+    std::unique_ptr<SearchResult> pResult;
+    pResult.reset(new SearchResult());
 
-    if (!ApplyFilter(pResult, pPreviousResult, GetComparisonType(), GetValueType(), *sValue))
+    if (!ApplyFilter(*pResult, pPreviousResult, GetComparisonType(), GetValueType(), *sValue))
     {
         ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Invalid filter value");
         return;
     }
 
     // if this isn't the first filter being applied, and the result count hasn't changed
-    const auto nMatches = pResult.pResults.MatchingAddressCount();
+    const auto nMatches = pResult->pResults.MatchingAddressCount();
     if (nMatches == pPreviousResult.pResults.MatchingAddressCount() && m_vSearchResults.size() > 2)
     {
         // check to see if the same filter was applied.
-        if (pResult.pResults.GetFilterComparison() == pPreviousResult.pResults.GetFilterComparison() &&
-            pResult.pResults.GetFilterType() == pPreviousResult.pResults.GetFilterType() &&
-            pResult.pResults.GetFilterValue() == pPreviousResult.pResults.GetFilterValue())
+        if (pResult->pResults.GetFilterComparison() == pPreviousResult.pResults.GetFilterComparison() &&
+            pResult->pResults.GetFilterType() == pPreviousResult.pResults.GetFilterType() &&
+            pResult->pResults.GetFilterValue() == pPreviousResult.pResults.GetFilterValue())
         {
             // same filter applied, result set didn't change, if applying an equality filter we know the memory
             // didn't change, so don't generate a new result set. do clear the modified addresses list.
-            if (pResult.pResults.GetFilterComparison() == ComparisonType::Equals)
+            if (pResult->pResults.GetFilterComparison() == ComparisonType::Equals)
             {
                 pPreviousResult.vModifiedAddresses.clear();
                 return;
@@ -593,8 +607,8 @@ void MemorySearchViewModel::ApplyFilter()
             builder.Append(L"Initial");
             break;
     }
-    pResult.sSummary = builder.ToWString();
-    SetValue(FilterSummaryProperty, pResult.sSummary);
+    pResult->sSummary = builder.ToWString();
+    SetValue(FilterSummaryProperty, pResult->sSummary);
 
     AddNewPage(std::move(pResult));
     ChangePage(m_nSelectedSearchResult);
@@ -605,7 +619,7 @@ bool MemorySearchViewModel::ApplyFilter(SearchResult& pResult, const SearchResul
 {
     if (nValueType == ra::services::SearchFilterType::InitialValue)
     {
-        SearchResult const& pInitialResult = m_vSearchResults.front();
+        SearchResult const& pInitialResult = *m_vSearchResults.front().get();
         return pResult.pResults.Initialize(pInitialResult.pResults, pPreviousResult.pResults,
             nComparisonType, nValueType, sValue);
     }
@@ -638,7 +652,7 @@ void MemorySearchViewModel::ToggleContinuousFilter()
 
 void MemorySearchViewModel::ApplyContinuousFilter()
 {
-    const SearchResult& pResult = m_vSearchResults.back();
+    const SearchResult& pResult = *m_vSearchResults.back().get();
 
     // if there are more than 1000 results, only apply the filter periodically.
     // formula is "number of results / 100" ms between filterings
@@ -660,15 +674,18 @@ void MemorySearchViewModel::ApplyContinuousFilter()
     }
 
     // apply the current filter
-    SearchResult pNewResult;
-    ApplyFilter(pNewResult, pResult, pResult.pResults.GetFilterComparison(),
+    std::unique_ptr<SearchResult> pNewResult;
+    pNewResult.reset(new SearchResult());
+    ApplyFilter(*pNewResult, pResult, pResult.pResults.GetFilterComparison(),
         pResult.pResults.GetFilterType(), pResult.pResults.GetFilterString());
-    pNewResult.sSummary = pResult.sSummary;
-    const auto nNewResults = pNewResult.pResults.MatchingAddressCount();
+    pNewResult->sSummary = pResult.sSummary;
+    const auto nNewResults = pNewResult->pResults.MatchingAddressCount();
 
     // replace the last item with the new results
-    m_vSearchResults.erase(m_vSearchResults.end() - 1);
-    m_vSearchResults.push_back(pNewResult);
+    {
+        std::lock_guard lock(m_oMutex);
+        m_vSearchResults.back().swap(pNewResult);
+    }
 
     ChangePage(m_nSelectedSearchResult);
 
@@ -684,9 +701,10 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
     m_nSelectedSearchResult = nNewPage;
     SetValue(SelectedPageProperty, ra::StringPrintf(L"%u/%u", m_nSelectedSearchResult, m_vSearchResults.size() - 1));
 
-    const auto nMatches = m_vSearchResults.at(nNewPage).pResults.MatchingAddressCount();
+    const auto& pResult = *m_vSearchResults.at(nNewPage).get();
+    const auto nMatches = pResult.pResults.MatchingAddressCount();
     SetValue(ResultCountProperty, gsl::narrow_cast<int>(nMatches));
-    SetValue(FilterSummaryProperty, m_vSearchResults.at(nNewPage).sSummary);
+    SetValue(FilterSummaryProperty, pResult.sSummary);
 
     // prevent scrolling from triggering a call to UpdateResults - we'll do that in a few lines.
     m_bScrolling = true;
@@ -705,10 +723,12 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
 
 void MemorySearchViewModel::UpdateResults()
 {
+    std::lock_guard lock(m_oMutex);
+
     if (m_vSearchResults.size() < 2)
         return;
 
-    const auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
+    const auto& pCurrentResults = *m_vSearchResults.at(m_nSelectedSearchResult).get();
     ra::services::SearchResults::Result pResult;
     const auto nIndex = gsl::narrow_cast<gsl::index>(GetScrollOffset());
 
@@ -803,9 +823,9 @@ void MemorySearchViewModel::UpdateResult(SearchResultViewModel& vmResult,
     if (pResults.UpdateValue(pResult, &sFormattedValue, pEmulatorContext) || bForceFilterCheck)
     {
         if (pResults.GetFilterType() == ra::services::SearchFilterType::InitialValue)
-            vmResult.bMatchesFilter = pResults.MatchesFilter(m_vSearchResults.front().pResults, pResult);
+            vmResult.bMatchesFilter = pResults.MatchesFilter(m_vSearchResults.front()->pResults, pResult);
         else
-            vmResult.bMatchesFilter = pResults.MatchesFilter(m_vSearchResults.at(m_nSelectedSearchResult - 1).pResults, pResult);
+            vmResult.bMatchesFilter = pResults.MatchesFilter(m_vSearchResults.at(m_nSelectedSearchResult - 1)->pResults, pResult);
 
         vmResult.SetCurrentValue(sFormattedValue);
         vmResult.nCurrentValue = pResult.nValue;
@@ -817,7 +837,7 @@ std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmRe
     std::wstring sTooltip = ra::StringPrintf(L"%s\n%s | Current\n",
         vmResult.GetAddress(), vmResult.GetCurrentValue());
 
-    const auto& pCompareResults = m_vSearchResults.at(m_nSelectedSearchResult).pResults;
+    const auto& pCompareResults = m_vSearchResults.at(m_nSelectedSearchResult)->pResults;
     ra::ByteAddress nAddress = vmResult.nAddress;
     MemSize nSize = pCompareResults.GetSize();
 
@@ -831,7 +851,7 @@ std::wstring MemorySearchViewModel::GetTooltip(const SearchResultViewModel& vmRe
     sTooltip.append(pCompareResults.GetFormattedValue(nAddress, nSize));
     sTooltip.append(L" | Last Filter\n");
 
-    const auto& pInitialResults = m_vSearchResults.front().pResults;
+    const auto& pInitialResults = m_vSearchResults.front()->pResults;
     sTooltip.append(pInitialResults.GetFormattedValue(nAddress, nSize));
     sTooltip.append(L" | Initial");
 
@@ -966,7 +986,7 @@ void MemorySearchViewModel::SelectRange(gsl::index nFrom, gsl::index nTo, bool b
     if (m_vSearchResults.empty())
         return;
 
-    const auto& pCurrentResults = m_vSearchResults.back().pResults;
+    const auto& pCurrentResults = m_vSearchResults.back()->pResults;
     if (!bValue && nFrom == 0 && nTo >= gsl::narrow_cast<gsl::index>(pCurrentResults.MatchingAddressCount()) - 1)
     {
         m_vSelectedAddresses.clear();
@@ -1022,8 +1042,9 @@ void MemorySearchViewModel::ExcludeSelected()
     if (m_vSelectedAddresses.empty())
         return;
 
-    const auto& pCurrentResults = m_vSearchResults.at(m_nSelectedSearchResult);
-    SearchResult pResult{ pCurrentResults }; // clone current item
+    const auto& pCurrentResults = *m_vSearchResults.at(m_nSelectedSearchResult).get();
+    std::unique_ptr<SearchResult> pResult;
+    pResult.reset(new SearchResult(pCurrentResults)); // clone current item
     ra::services::SearchResults::Result pItem {};
 
     const auto nSize = pCurrentResults.pResults.GetSize();
@@ -1033,7 +1054,7 @@ void MemorySearchViewModel::ExcludeSelected()
         {
             pItem.nAddress = nAddress >> 1;
             pItem.nSize = (nAddress & 1) ? MemSize::Nibble_Upper : MemSize::Nibble_Lower;
-            pResult.pResults.ExcludeResult(pItem);
+            pResult->pResults.ExcludeResult(pItem);
         }
     }
     else
@@ -1042,7 +1063,7 @@ void MemorySearchViewModel::ExcludeSelected()
         for (const auto nAddress : m_vSelectedAddresses)
         {
             pItem.nAddress = nAddress;
-            pResult.pResults.ExcludeResult(pItem);
+            pResult->pResults.ExcludeResult(pItem);
         }
     }
 
@@ -1061,7 +1082,7 @@ void MemorySearchViewModel::ExcludeSelected()
     m_vSelectedAddresses.clear();
     SetValue(HasSelectionProperty, false);
 
-    const size_t nMatchingAddressCount = pResult.pResults.MatchingAddressCount();
+    const size_t nMatchingAddressCount = pResult->pResults.MatchingAddressCount();
     AddNewPage(std::move(pResult));
     ChangePage(m_nSelectedSearchResult);
 
@@ -1076,7 +1097,7 @@ void MemorySearchViewModel::BookmarkSelected()
     if (m_vSelectedAddresses.empty())
         return;
 
-    const MemSize nSize = m_vSearchResults.back().pResults.GetSize();
+    const MemSize nSize = m_vSearchResults.back()->pResults.GetSize();
     auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     if (!vmBookmarks.IsVisible())
         vmBookmarks.Show();
@@ -1136,7 +1157,7 @@ void MemorySearchViewModel::ExportResults() const
         }
         else
         {
-            const auto& pResults = m_vSearchResults.at(m_nSelectedSearchResult).pResults;
+            const auto& pResults = m_vSearchResults.at(m_nSelectedSearchResult)->pResults;
             const auto nResults = pResults.MatchingAddressCount();
             if (pResults.MatchingAddressCount() > 500)
             {
@@ -1161,9 +1182,9 @@ void MemorySearchViewModel::ExportResults() const
 
 void MemorySearchViewModel::SaveResults(ra::services::TextWriter& sFile, std::function<bool(int)> pProgressCallback) const
 {
-    const auto& pResults = m_vSearchResults.at(m_nSelectedSearchResult).pResults;
-    const auto& pCompareResults = m_vSearchResults.at(m_nSelectedSearchResult - 1).pResults;
-    const auto& pInitialResults = m_vSearchResults.front().pResults;
+    const auto& pResults = m_vSearchResults.at(m_nSelectedSearchResult)->pResults;
+    const auto& pCompareResults = m_vSearchResults.at(m_nSelectedSearchResult - 1)->pResults;
+    const auto& pInitialResults = m_vSearchResults.front()->pResults;
     ra::services::SearchResults::Result pResult;
 
     const auto nResults = pResults.MatchingAddressCount();

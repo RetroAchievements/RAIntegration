@@ -485,6 +485,8 @@ private:
     bool m_bScrolling = false;
     bool m_bSelectingFilter = false;
 
+    std::mutex m_oMutex;
+
     struct SearchResult
     {
         ra::services::SearchResults pResults;
@@ -493,11 +495,11 @@ private:
         std::wstring sSummary;
     };
 
-    void AddNewPage(SearchResult&& pNewPage);
+    void AddNewPage(std::unique_ptr<SearchResult>&& pNewPage);
     void ChangePage(size_t nNewPage);
 
     size_t m_nSelectedSearchResult = 0U;
-    std::vector<SearchResult> m_vSearchResults;
+    std::vector<std::unique_ptr<SearchResult>> m_vSearchResults;
     std::set<unsigned int> m_vSelectedAddresses;
 
     bool ApplyFilter(SearchResult& pResult, const SearchResult& pPreviousResult,

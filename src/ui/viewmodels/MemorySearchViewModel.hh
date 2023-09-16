@@ -484,6 +484,7 @@ private:
     std::chrono::steady_clock::time_point m_tLastContinuousFilter;
     bool m_bScrolling = false;
     bool m_bSelectingFilter = false;
+    bool m_bUpdateResultsPending = false;
 
     std::mutex m_oMutex;
 

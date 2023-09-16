@@ -345,38 +345,49 @@ void MemorySearchViewModel::DoFrame()
     }
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    auto& pCurrentResults = *m_vSearchResults.at(m_nSelectedSearchResult).get();
 
-    std::lock_guard lock(m_oMutex);
-
-    m_vResults.BeginUpdate();
-
-    // NOTE: only processes the visible items
-    ra::services::SearchResults::Result pResult;
-    std::wstring sFormattedValue;
-
-    gsl::index nIndex = GetScrollOffset();
-    for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++i)
     {
-        auto* pRow = m_vResults.GetItemAt(i);
-        Expects(pRow != nullptr);
+        std::lock_guard lock(m_oMutex);
+        auto& pCurrentResults = *m_vSearchResults.at(m_nSelectedSearchResult).get();
 
-        pCurrentResults.pResults.GetMatchingAddress(nIndex++, pResult);
+        m_vResults.BeginUpdate();
 
-        const auto nPreviousValue = pResult.nValue;
-        UpdateResult(*pRow, pCurrentResults.pResults, pResult, false, pEmulatorContext);
+        // NOTE: only processes the visible items
+        ra::services::SearchResults::Result pResult;
+        std::wstring sFormattedValue;
 
-        // when updating an existing result, check to see if it's been modified and update the tracker
-        if (!pRow->bHasBeenModified && pResult.nValue != nPreviousValue)
+        gsl::index nIndex = GetScrollOffset();
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(m_vResults.Count()); ++i)
         {
-            pCurrentResults.vModifiedAddresses.insert(pResult.nAddress);
-            pRow->bHasBeenModified = true;
-        }
+            auto* pRow = m_vResults.GetItemAt(i);
+            Expects(pRow != nullptr);
 
-        pRow->UpdateRowColor();
+            pCurrentResults.pResults.GetMatchingAddress(nIndex++, pResult);
+
+            const auto nPreviousValue = pResult.nValue;
+            UpdateResult(*pRow, pCurrentResults.pResults, pResult, false, pEmulatorContext);
+
+            // when updating an existing result, check to see if it's been modified and update the tracker
+            if (!pRow->bHasBeenModified && pResult.nValue != nPreviousValue)
+            {
+                pCurrentResults.vModifiedAddresses.insert(pResult.nAddress);
+                pRow->bHasBeenModified = true;
+            }
+
+            pRow->UpdateRowColor();
+        }
     }
 
+    // EndUpdate has to be outside the lock as it may raise UI events
     m_vResults.EndUpdate();
+
+    // If another thread tried to update the results while we were updating the results,
+    // let that happen now
+    if (m_bUpdateResultsPending)
+    {
+        m_bUpdateResultsPending = false;
+        UpdateResults();
+    }
 }
 
 inline static constexpr auto ParseAddress(const wchar_t* ptr, ra::ByteAddress& address) noexcept
@@ -524,8 +535,6 @@ void MemorySearchViewModel::BeginNewSearch()
 
 void MemorySearchViewModel::AddNewPage(std::unique_ptr<SearchResult>&& pNewPage)
 {
-    std::lock_guard lock(m_oMutex);
-
     // remove any search history after the current node
     while (m_vSearchResults.size() - 1 > m_nSelectedSearchResult)
         m_vSearchResults.pop_back();
@@ -682,10 +691,7 @@ void MemorySearchViewModel::ApplyContinuousFilter()
     const auto nNewResults = pNewResult->pResults.MatchingAddressCount();
 
     // replace the last item with the new results
-    {
-        std::lock_guard lock(m_oMutex);
-        m_vSearchResults.back().swap(pNewResult);
-    }
+    m_vSearchResults.back().swap(pNewResult);
 
     ChangePage(m_nSelectedSearchResult);
 
@@ -723,6 +729,14 @@ void MemorySearchViewModel::ChangePage(size_t nNewPage)
 
 void MemorySearchViewModel::UpdateResults()
 {
+    if (m_vResults.IsUpdating())
+    {
+        // assume DoFrame is updating the results list from another thread and just
+        // queue the UpdateResults
+        m_bUpdateResultsPending = true;
+        return;
+    }
+
     std::lock_guard lock(m_oMutex);
 
     if (m_vSearchResults.size() < 2)

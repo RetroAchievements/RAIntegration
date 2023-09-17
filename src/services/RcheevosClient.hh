@@ -7,6 +7,7 @@
 #include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\models\AchievementModel.hh"
+#include "data\models\LeaderboardModel.hh"
 
 #include "services\TextReader.hh"
 
@@ -37,8 +38,10 @@ public:
 
     void SyncAssets();
     void SyncAchievement(ra::data::models::AchievementModel& vmAchievement, bool bStateOnly = false);
+    void SyncLeaderboard(ra::data::models::LeaderboardModel& vmLeaderboard, bool bStateOnly = false);
 
     rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const;
+    rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) const;
     bool HasRichPresence() const;
     std::wstring GetRichPresenceDisplayString() const;
 

@@ -38,6 +38,10 @@ static int CanSubmit()
     if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
         return 0;
 
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
+        return 0;
+
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
     if (pEmulatorContext.WasMemoryModified())
         return 0;
@@ -61,8 +65,17 @@ static int CanSubmitAchievementUnlock(uint32_t nAchievementId, rc_client_t*)
     return 1;
 }
 
-static int CanSubmitLeaderboardEntry(uint32_t, rc_client_t*)
+static int CanSubmitLeaderboardEntry(uint32_t nLeaderboardId, rc_client_t*)
 {
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+        return false;
+
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(nLeaderboardId);
+    if (pLeaderboard == nullptr || pLeaderboard->GetChanges() != ra::data::models::AssetChanges::None)
+        return 0;
+    
     return CanSubmit();
 }
 
@@ -238,22 +251,6 @@ private:
 
         pLeaderboard->public_.id = vmLeaderboard->GetID();
 
-        switch (vmLeaderboard->GetState())
-        {
-            case ra::data::models::AssetState::Disabled:
-                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_DISABLED;
-                break;
-            case ra::data::models::AssetState::Inactive:
-                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_INACTIVE;
-                break;
-            case ra::data::models::AssetState::Primed:
-                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_TRACKING;
-                break;
-            default:
-                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
-                break;
-        }
-
         const auto& sMemAddr = vmLeaderboard->GetDefinition();
         uint8_t md5[16];
         rc_runtime_checksum(sMemAddr.c_str(), md5);
@@ -289,6 +286,41 @@ private:
                     }
                 }
             }
+        }
+
+        SyncLeaderboardState(pLeaderboard, vmLeaderboard);
+    }
+
+    void SyncLeaderboardState(rc_client_leaderboard_info_t* pLeaderboard,
+                              const ra::data::models::LeaderboardModel* vmLeaderboard)
+    {
+        switch (vmLeaderboard->GetState())
+        {
+            case ra::data::models::AssetState::Disabled:
+                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_DISABLED;
+                if (pLeaderboard->lboard)
+                    pLeaderboard->lboard->state = RC_LBOARD_STATE_DISABLED;
+                break;
+            case ra::data::models::AssetState::Inactive:
+                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_INACTIVE;
+                if (pLeaderboard->lboard)
+                    pLeaderboard->lboard->state = RC_LBOARD_STATE_INACTIVE;
+                break;
+            case ra::data::models::AssetState::Primed:
+                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_TRACKING;
+                if (pLeaderboard->lboard)
+                    pLeaderboard->lboard->state = RC_LBOARD_STATE_STARTED;
+                break;
+            case ra::data::models::AssetState::Waiting:
+                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
+                if (pLeaderboard->lboard)
+                    pLeaderboard->lboard->state = RC_LBOARD_STATE_WAITING;
+                break;
+            default:
+                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
+                if (pLeaderboard->lboard)
+                    pLeaderboard->lboard->state = RC_LBOARD_STATE_ACTIVE;
+                break;
         }
     }
 
@@ -660,6 +692,32 @@ public:
 
         SyncAssets(m_pClient);
     }
+
+    void SyncLeaderboard(ra::data::models::LeaderboardModel& vmLeaderboard, bool bStateOnly)
+    {
+        const auto nId = vmLeaderboard.GetID();
+        auto* pLeaderboard = FindLeaderboard(&m_pSubsetWrapper->pLocalSubset, nId);
+        if (pLeaderboard != nullptr)
+        {
+            if (bStateOnly)
+                SyncLeaderboardState(pLeaderboard, &vmLeaderboard);
+            else
+                SyncLeaderboard(pLeaderboard, m_pSubsetWrapper.get(), &vmLeaderboard);
+            return;
+        }
+
+        pLeaderboard = FindLeaderboard(&m_pSubsetWrapper->pCoreSubset, nId);
+        if (pLeaderboard != nullptr)
+        {
+            if (bStateOnly)
+                SyncLeaderboardState(pLeaderboard, &vmLeaderboard);
+            else
+                SyncLeaderboard(pLeaderboard, m_pSubsetWrapper.get(), &vmLeaderboard);
+            return;
+        }
+
+        SyncAssets(m_pClient);
+    }
 };
 
 void RcheevosClient::SyncAssets()
@@ -673,6 +731,12 @@ void RcheevosClient::SyncAchievement(ra::data::models::AchievementModel& vmAchie
 {
     if (m_pClientSynchronizer != nullptr)
         m_pClientSynchronizer->SyncAchievement(vmAchievement, bStateOnly);
+}
+
+void RcheevosClient::SyncLeaderboard(ra::data::models::LeaderboardModel& vmLeaderboard, bool bStateOnly)
+{
+    if (m_pClientSynchronizer != nullptr)
+        m_pClientSynchronizer->SyncLeaderboard(vmLeaderboard, bStateOnly);
 }
 
 static rc_client_achievement_info_t* GetAchievementInfo(rc_client_t* pClient, ra::AchievementID nId)
@@ -697,6 +761,30 @@ rc_trigger_t* RcheevosClient::GetAchievementTrigger(ra::AchievementID nId) const
 {
     rc_client_achievement_info_t* achievement = GetAchievementInfo(GetClient(), nId);
     return (achievement != nullptr) ? achievement->trigger : nullptr;
+}
+
+static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra::LeaderboardID nId)
+{
+    rc_client_subset_info_t* subset = pClient->game->subsets;
+    for (; subset; subset = subset->next)
+    {
+        rc_client_leaderboard_info_t* leaderboard = subset->leaderboards;
+        rc_client_leaderboard_info_t* stop = leaderboard + subset->public_.num_leaderboards;
+
+        for (; leaderboard < stop; ++leaderboard)
+        {
+            if (leaderboard->public_.id == nId)
+                return leaderboard;
+        }
+    }
+
+    return nullptr;
+}
+
+rc_lboard_t* RcheevosClient::GetLeaderboardDefinition(ra::LeaderboardID nId) const
+{
+    rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(GetClient(), nId);
+    return (leaderboard != nullptr) ? leaderboard->lboard : nullptr;
 }
 
 bool RcheevosClient::HasRichPresence() const
@@ -893,8 +981,6 @@ void RcheevosClient::LoadGameCallback(int nResult, const char* sErrorMessage, rc
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.InitializeFromRcheevosClient(wrapper->m_mAchievementDefinitions,
                                                   wrapper->m_mLeaderboardDefinitions);
-
-
     }
     else
     {
@@ -1039,6 +1125,217 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
     }
 }
 
+static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeaderboard)
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto* vmLeaderboard = pGameContext.Assets().FindLeaderboard(pLeaderboard.id);
+    if (!vmLeaderboard)
+    {
+        RA_LOG_ERR("Received leaderboard started event for unknown leaderboard %u", pLeaderboard.id);
+        return;
+    }
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted) !=
+        ra::ui::viewmodels::PopupLocation::None)
+    {
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardStarted, L"Leaderboard attempt started",
+                                     ra::Widen(pLeaderboard.title), ra::Widen(pLeaderboard.description));
+    }
+}
+
+static void HandleLeaderboardFailedEvent(const rc_client_leaderboard_t& pLeaderboard)
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto* vmLeaderboard = pGameContext.Assets().FindLeaderboard(pLeaderboard.id);
+    if (!vmLeaderboard)
+    {
+        RA_LOG_ERR("Received leaderboard started event for unknown leaderboard %u", pLeaderboard.id);
+        return;
+    }
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted) !=
+        ra::ui::viewmodels::PopupLocation::None)
+    {
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lbcancel.wav");
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardStarted, L"Leaderboard attempt failed",
+                                     ra::Widen(pLeaderboard.title), ra::Widen(pLeaderboard.description));
+    }
+}
+
+static void HandleLeaderboardSubmittedEvent(const rc_client_leaderboard_t& pLeaderboard)
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto* vmLeaderboard = pGameContext.Assets().FindLeaderboard(pLeaderboard.id);
+    if (!vmLeaderboard)
+    {
+        RA_LOG_ERR("Received leaderboard started event for unknown leaderboard %u", pLeaderboard.id);
+        return;
+    }
+
+    std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
+    vmPopup->SetDescription(ra::Widen(pLeaderboard.title));
+    std::wstring sTitle = L"Leaderboard NOT Submitted";
+    bool bSubmit = true;
+
+    switch (vmLeaderboard->GetCategory())
+    {
+        case ra::data::models::AssetCategory::Local:
+            sTitle.insert(0, L"Local ");
+            bSubmit = false;
+            break;
+
+        case ra::data::models::AssetCategory::Unofficial:
+            sTitle.insert(0, L"Unofficial ");
+            bSubmit = false;
+            break;
+
+        default:
+            break;
+    }
+
+    if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
+    {
+        vmPopup->SetDetail(L"Leaderboards are not submitted in test mode.");
+        bSubmit = false;
+    }
+
+    if (vmLeaderboard->IsModified() ||                                                    // actual modifications
+        (bSubmit && vmLeaderboard->GetChanges() != ra::data::models::AssetChanges::None)) // unpublished changes
+    {
+        sTitle.insert(0, L"Modified ");
+        bSubmit = false;
+    }
+
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    if (bSubmit && pEmulatorContext.WasMemoryModified())
+    {
+        vmPopup->SetErrorDetail(L"Error: RAM tampered with");
+        bSubmit = false;
+    }
+
+    if (bSubmit)
+    {
+        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+        {
+            vmPopup->SetErrorDetail(L"Submission requires Hardcore mode");
+            bSubmit = false;
+        }
+        else if (pEmulatorContext.IsMemoryInsecure())
+        {
+            vmPopup->SetErrorDetail(L"Error: RAM insecure");
+            bSubmit = false;
+        }
+        else if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
+        {
+            vmPopup->SetDetail(L"Leaderboards are not submitted in offline mode.");
+            bSubmit = false;
+        }
+    }
+
+    if (!bSubmit)
+    {
+        vmPopup->SetTitle(sTitle);
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
+
+#ifndef NDEBUG
+        Expects(!CanSubmitLeaderboardEntry(pLeaderboard.id, nullptr));
+#endif
+
+        return;
+    }
+
+    // no popup shown here, the scoreboard will be shown instead
+}
+
+static void HandleLeaderboardTrackerUpdateEvent(const rc_client_leaderboard_tracker_t& pTracker)
+{
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    auto* pScoreTracker = pOverlayManager.GetScoreTracker(pTracker.id);
+    if (pScoreTracker)
+        pScoreTracker->SetDisplayText(ra::Widen(pTracker.display));
+}
+
+static void HandleLeaderboardTrackerShowEvent(const rc_client_leaderboard_tracker_t& pTracker)
+{
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker) !=
+        ra::ui::viewmodels::PopupLocation::None)
+    {
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        auto& pScoreTracker = pOverlayManager.AddScoreTracker(pTracker.id);
+        pScoreTracker.SetDisplayText(ra::Widen(pTracker.display));
+    }
+}
+
+static void HandleLeaderboardTrackerHideEvent(const rc_client_leaderboard_tracker_t& pTracker)
+{
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    pOverlayManager.RemoveScoreTracker(pTracker.id);
+}
+
+static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scoreboard_t& pScoreboard, const rc_client_leaderboard_t& pLeaderboard)
+{
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) ==
+        ra::ui::viewmodels::PopupLocation::None)
+    {
+        return;
+    }
+
+    ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
+    vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard.title));
+
+    const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
+    constexpr uint32_t nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
+    bool bSeenPlayer = false;
+
+    const auto* pEntry = pScoreboard.top_entries;
+    const auto* pStop = pEntry + std::min(pScoreboard.num_top_entries, nEntriesDisplayed);
+    for (; pEntry < pStop; ++pEntry)
+    {
+        auto& pEntryViewModel = vmScoreboard.Entries().Add();
+        pEntryViewModel.SetRank(pEntry->rank);
+        pEntryViewModel.SetScore(ra::Widen(pEntry->score));
+        pEntryViewModel.SetUserName(ra::Widen(pEntry->username));
+
+        if (pEntry->username == pUserName)
+        {
+            bSeenPlayer = true;
+            pEntryViewModel.SetHighlighted(true);
+
+            if (strcmp(pScoreboard.best_score, pScoreboard.submitted_score) != 0)
+                pEntryViewModel.SetScore(ra::StringPrintf(L"(%s) %s", pScoreboard.submitted_score, pScoreboard.best_score));
+        }
+    }
+
+    if (!bSeenPlayer)
+    {
+        auto* pEntryViewModel = vmScoreboard.Entries().GetItemAt(6);
+        if (pEntryViewModel != nullptr)
+        {
+            pEntryViewModel->SetRank(pScoreboard.new_rank);
+
+            if (strcmp(pScoreboard.best_score, pScoreboard.submitted_score) != 0)
+                pEntryViewModel->SetScore(ra::StringPrintf(L"(%s) %s", pScoreboard.submitted_score, pScoreboard.best_score));
+            else
+                pEntryViewModel->SetScore(ra::Widen(pScoreboard.best_score));
+
+            pEntryViewModel->SetUserName(ra::Widen(pUserName));
+            pEntryViewModel->SetHighlighted(true);
+        }
+    }
+
+    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(
+        pLeaderboard.id, std::move(vmScoreboard));
+}
+
 static void HandleServerError(const rc_client_server_error_t& pServerError)
 {
     if (strcmp(pServerError.api, "award_achievement"))
@@ -1100,6 +1397,34 @@ void RcheevosClient::EventHandler(const rc_client_event_t* pEvent, rc_client_t*)
     {
         case RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED:
             HandleAchievementTriggeredEvent(*pEvent->achievement);
+            break;
+
+        case RC_CLIENT_EVENT_LEADERBOARD_STARTED:
+            HandleLeaderboardStartedEvent(*pEvent->leaderboard);
+            break;
+
+        case RC_CLIENT_EVENT_LEADERBOARD_FAILED:
+            HandleLeaderboardFailedEvent(*pEvent->leaderboard);
+            break;
+
+        case RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED:
+            HandleLeaderboardSubmittedEvent(*pEvent->leaderboard);
+            break;
+
+        case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_UPDATE:
+            HandleLeaderboardTrackerUpdateEvent(*pEvent->leaderboard_tracker);
+            break;
+
+        case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_SHOW:
+            HandleLeaderboardTrackerShowEvent(*pEvent->leaderboard_tracker);
+            break;
+
+        case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE:
+            HandleLeaderboardTrackerHideEvent(*pEvent->leaderboard_tracker);
+            break;
+
+        case RC_CLIENT_EVENT_LEADERBOARD_SCOREBOARD:
+            HandleLeaderboardScoreboardEvent(*pEvent->leaderboard_scoreboard, *pEvent->leaderboard);
             break;
 
         case RC_CLIENT_EVENT_SERVER_ERROR:

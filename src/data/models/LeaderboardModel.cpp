@@ -4,7 +4,7 @@
 
 #include "data\models\TriggerValidation.hh"
 
-#include "services\AchievementRuntime.hh"
+#include "services\RcheevosClient.hh"
 #include "services\ServiceLocator.hh"
 
 namespace ra {
@@ -60,8 +60,8 @@ void LeaderboardModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
             if (IsActive())
             {
                 const std::string sDefinition = GetDefinition();
-                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-                pRuntime.ActivateLeaderboard(GetID(), sDefinition);
+                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+                pRuntime.SyncLeaderboard(*this);
             }
         }
     }
@@ -130,7 +130,7 @@ bool LeaderboardModel::ValidateAsset(std::wstring& sError)
 
 void LeaderboardModel::DoFrame()
 {
-    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>();
     const auto* pLeaderboard = pRuntime.GetLeaderboardDefinition(GetID());
     if (pLeaderboard == nullptr)
     {
@@ -165,57 +165,32 @@ void LeaderboardModel::DoFrame()
 
 void LeaderboardModel::HandleStateChanged(AssetState nOldState, AssetState nNewState)
 {
-    if (!ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+    if (!ra::services::ServiceLocator::Exists<ra::services::RcheevosClient>())
         return;
+
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
 
     const bool bWasActive = IsActive(nOldState);
     const bool bIsActive = IsActive(nNewState);
-    if (bWasActive == bIsActive)
-        return;
 
-    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    auto* pLeaderboard = pRuntime.GetLeaderboardDefinition(GetID());
-
-    if (bIsActive)
+    if (!bIsActive && bWasActive)
     {
-        const bool bRuntimeActive = (pLeaderboard != nullptr);
-        if (!bRuntimeActive)
+        auto* pLeaderboard = pRuntime.GetLeaderboardDefinition(GetID());
+        if (pLeaderboard)
         {
-            const std::string sDefinition = GetDefinition();
-            pRuntime.ActivateLeaderboard(GetID(), sDefinition);
-            pLeaderboard = pRuntime.GetLeaderboardDefinition(GetID());
-        }
-        else
-        {
-            rc_reset_lboard(pLeaderboard);
+            m_pCapturedStartTriggerHits.Capture(&pLeaderboard->start, GetStartTrigger());
+            m_pCapturedSubmitTriggerHits.Capture(&pLeaderboard->submit, GetSubmitTrigger());
+            m_pCapturedCancelTriggerHits.Capture(&pLeaderboard->cancel, GetCancelTrigger());
+            m_pCapturedValueDefinitionHits.Capture(&pLeaderboard->value, GetValueDefinition());
         }
     }
-    else if (pLeaderboard)
+    else if (bIsActive && !bWasActive)
     {
-        m_pCapturedStartTriggerHits.Capture(&pLeaderboard->start, GetStartTrigger());
-        m_pCapturedSubmitTriggerHits.Capture(&pLeaderboard->submit, GetSubmitTrigger());
-        m_pCapturedCancelTriggerHits.Capture(&pLeaderboard->cancel, GetCancelTrigger());
-        m_pCapturedValueDefinitionHits.Capture(&pLeaderboard->value, GetValueDefinition());
-        pRuntime.DeactivateLeaderboard(GetID());
+        auto* pLeaderboard = pRuntime.GetLeaderboardDefinition(GetID());
+        rc_reset_lboard(pLeaderboard);
     }
 
-    switch (nNewState)
-    {
-        case AssetState::Waiting:
-            if (pLeaderboard)
-                pLeaderboard->state = RC_LBOARD_STATE_WAITING;
-            break;
-
-        case AssetState::Active:
-            if (pLeaderboard)
-                pLeaderboard->state = RC_LBOARD_STATE_ACTIVE;
-            break;
-
-        case AssetState::Inactive:
-            if (pLeaderboard)
-                pLeaderboard->state = RC_LBOARD_STATE_INACTIVE;
-            break;
-    }
+    pRuntime.SyncLeaderboard(*this, true);
 }
 
 void LeaderboardModel::SetDefinition(const std::string& sDefinition)

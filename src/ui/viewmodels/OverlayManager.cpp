@@ -239,13 +239,13 @@ void OverlayManager::Render(ra::ui::drawing::ISurface& pSurface, bool bRedrawAll
     }
 }
 
-ScoreTrackerViewModel& OverlayManager::AddScoreTracker(ra::LeaderboardID nLeaderboardId)
+ScoreTrackerViewModel& OverlayManager::AddScoreTracker(uint32_t nTrackerId)
 {
     ScoreTrackerViewModel* vmTracker;
     {
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
         auto pScoreTracker = std::make_unique<ScoreTrackerViewModel>();
-        pScoreTracker->SetPopupId(nLeaderboardId);
+        pScoreTracker->SetPopupId(nTrackerId);
         pScoreTracker->UpdateRenderImage(0.0);
         vmTracker = m_vScoreTrackers.emplace_back(std::move(pScoreTracker)).get();
     }
@@ -255,14 +255,14 @@ ScoreTrackerViewModel& OverlayManager::AddScoreTracker(ra::LeaderboardID nLeader
     return *vmTracker;
 }
 
-void OverlayManager::RemoveScoreTracker(ra::LeaderboardID nLeaderboardId)
+void OverlayManager::RemoveScoreTracker(uint32_t nTrackerId)
 {
     bool bRequestRender = false;
     {
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
         for (auto pIter = m_vScoreTrackers.begin(); pIter != m_vScoreTrackers.end(); ++pIter)
         {
-            if (ra::to_unsigned((*pIter)->GetPopupId()) == nLeaderboardId && !(*pIter)->IsDestroyPending())
+            if (ra::to_unsigned((*pIter)->GetPopupId()) == nTrackerId && !(*pIter)->IsDestroyPending())
             {
                 (*pIter)->SetDestroyPending();
                 bRequestRender = true;

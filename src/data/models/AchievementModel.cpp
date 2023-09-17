@@ -191,8 +191,12 @@ void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
         const auto* pTrigger = pRuntime.GetAchievementTrigger(GetID());
         m_pCapturedTriggerHits.Capture(pTrigger, GetTrigger());
     }
+    else if (bIsActive && !bWasActive)
+    {
+        auto* pTrigger = pRuntime.GetAchievementTrigger(GetID());
+        rc_reset_trigger(pTrigger);
+    }
 
-    const auto nId = GetID();
     pRuntime.SyncAchievement(*this, true);
 
     if (nNewState == AssetState::Triggered)

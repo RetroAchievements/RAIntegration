@@ -907,7 +907,7 @@ void MemoryViewerViewModel::OnResized(int nWidth, int nHeight)
     const int nWordsPerLine = 16 / nBytesPerWord;
     const int nNeededWidthForASCII = (ADDRESS_COLUMN_WIDTH +         // address column
                                       nWordsPerLine * nWordSpacing + // memory values
-                                      16) * s_szChar.Width;          // ASCII region
+                                      16 + 1) * s_szChar.Width;      // ASCII region
     m_bWideEnoughForASCII = nWidth > nNeededWidthForASCII;
     DetermineIfASCIIShouldBeVisible();
 }
@@ -1148,7 +1148,7 @@ void MemoryViewerViewModel::UpdateRenderImage()
         const int nHeight = (GetNumVisibleLines() + 1) * s_szChar.Height;
         int nWidth = BASE_MEMORY_VIEWER_WIDTH_IN_CHARACTERS * s_szChar.Width;
         if (m_bShowASCII)
-            nWidth += (1 + 16) * s_szChar.Width;
+            nWidth += (2 + 16) * s_szChar.Width;
         m_pSurface = pSurfaceFactory.CreateSurface(nWidth, nHeight);
 
         // background

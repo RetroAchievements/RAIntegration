@@ -1151,6 +1151,42 @@ static void HandleChallengeIndicatorHideEvent(const rc_client_achievement_t& pAc
     pOverlayManager.RemoveChallengeIndicator(pAchievement.id);
 }
 
+static void HandleProgressIndicatorUpdateEvent(const rc_client_achievement_t& pAchievement)
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto* vmAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
+    if (!vmAchievement)
+    {
+        RA_LOG_ERR("Received achievement triggered event for unknown achievement %u", pAchievement.id);
+        return;
+    }
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Progress) !=
+        ra::ui::viewmodels::PopupLocation::None)
+    {
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+
+        // use locked badge if available
+        auto sBadgeName = ra::Narrow(vmAchievement->GetBadge());
+        if (!ra::StringStartsWith(sBadgeName, "local\\"))
+            sBadgeName += "_lock";
+
+        pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge, sBadgeName, ra::Widen(pAchievement.measured_progress));
+    }
+}
+
+static void HandleProgressIndicatorShowEvent(const rc_client_achievement_t& pAchievement)
+{
+    HandleProgressIndicatorUpdateEvent(pAchievement);
+}
+
+static void HandleProgressIndicatorHideEvent()
+{
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::None, "", L"");
+}
+
 static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeaderboard)
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -1439,6 +1475,18 @@ void RcheevosClient::EventHandler(const rc_client_event_t* pEvent, rc_client_t*)
 
         case RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE:
             HandleChallengeIndicatorHideEvent(*pEvent->achievement);
+            break;
+
+        case RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_SHOW:
+            HandleProgressIndicatorShowEvent(*pEvent->achievement);
+            break;
+
+        case RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_HIDE:
+            HandleProgressIndicatorHideEvent();
+            break;
+
+        case RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_UPDATE:
+            HandleProgressIndicatorUpdateEvent(*pEvent->achievement);
             break;
 
         case RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED:

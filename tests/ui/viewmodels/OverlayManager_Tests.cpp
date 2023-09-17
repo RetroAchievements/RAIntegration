@@ -609,7 +609,7 @@ public:
         OverlayManagerHarness overlay;
         overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress, ra::ui::viewmodels::PopupLocation::BottomRight);
 
-        overlay.UpdateProgressTracker(ra::ui::ImageType::Badge, "12345_lock", 3, 7, false);
+        overlay.UpdateProgressTracker(ra::ui::ImageType::Badge, "12345_lock", L"3/7");
         auto* pTracker = overlay.GetProgressTracker();
         Assert::IsNotNull(pTracker);
         Ensures(pTracker != nullptr);

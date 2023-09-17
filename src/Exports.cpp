@@ -728,16 +728,6 @@ static void ProcessAchievements()
 
     if (vmMeasuredAchievement && pMeasuredAchievementTrigger)
     {
-        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-
-        // use locked badge if available
-        auto sBadgeName = ra::Narrow(vmMeasuredAchievement->GetBadge());
-        if (!ra::StringStartsWith(sBadgeName, "local\\"))
-            sBadgeName += "_lock";
-
-        pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge, sBadgeName,
-            pMeasuredAchievementTrigger->measured_value, pMeasuredAchievementTrigger->measured_target,
-            pMeasuredAchievementTrigger->measured_as_percent);
     }
 }
 

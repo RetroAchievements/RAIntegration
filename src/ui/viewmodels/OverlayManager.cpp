@@ -335,14 +335,24 @@ void OverlayManager::RemoveChallengeIndicator(ra::AchievementID nAchievementId)
         RequestRender();
 }
 
-void OverlayManager::UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName, unsigned nValue, unsigned nTarget, bool bAsPercent)
+void OverlayManager::UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName, const std::wstring& sProgress)
 {
-    if (m_vmProgressTracker == nullptr)
-        m_vmProgressTracker.reset(new ProgressTrackerViewModel());
+    if (sProgress.empty())
+    {
+        if (m_vmProgressTracker == nullptr)
+            return;
 
-    m_vmProgressTracker->SetImage(imageType, sImageName);
-    m_vmProgressTracker->SetProgress(nValue, nTarget, bAsPercent);
-    m_vmProgressTracker->BeginAnimation();
+        m_vmProgressTracker->SetDestroyPending();
+    }
+    else
+    {
+        if (m_vmProgressTracker == nullptr)
+            m_vmProgressTracker.reset(new ProgressTrackerViewModel());
+
+        m_vmProgressTracker->SetImage(imageType, sImageName);
+        m_vmProgressTracker->SetProgress(sProgress);
+        m_vmProgressTracker->BeginAnimation();
+    }
 
     RequestRender();
 }
@@ -704,9 +714,6 @@ void OverlayManager::UpdateProgressTracker(ra::ui::drawing::ISurface& pSurface, 
     Expects(m_vmProgressTracker != nullptr);
 
     UpdatePopup(pSurface, pPopupLocations, fElapsed, *m_vmProgressTracker);
-
-    if (m_vmProgressTracker->IsAnimationComplete())
-        m_vmProgressTracker->SetDestroyPending();
 
     if (m_vmProgressTracker->IsDestroyPending())
     {

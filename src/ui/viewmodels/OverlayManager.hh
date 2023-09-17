@@ -281,7 +281,7 @@ public:
     /// Updates the progress tracker indicator
     /// </summary>
     void UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName,
-        unsigned nValue, unsigned nTarget, bool bAsPercent);
+        const std::wstring& sProgress);
 
     /// <summary>
     /// Clears all popups.

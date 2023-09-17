@@ -17,26 +17,8 @@ ProgressTrackerViewModel::ProgressTrackerViewModel() noexcept
     GSL_SUPPRESS_F6 SetVerticalOffset(10);
 }
 
-void ProgressTrackerViewModel::SetProgress(unsigned nValue, unsigned nTarget, bool bAsPercent)
+bool ProgressTrackerViewModel::UpdateRenderImage(double)
 {
-    if (bAsPercent)
-    {
-        const auto nProgressPercent = gsl::narrow_cast<int>(static_cast<long long>(nValue) * 100 / nTarget);
-        m_sProgress = ra::StringPrintf(L"%d%%", nProgressPercent);
-    }
-    else
-    {
-        m_sProgress = ra::StringPrintf(L"%u/%u", nValue, nTarget);
-    }
-}
-
-bool ProgressTrackerViewModel::UpdateRenderImage(double fElapsed)
-{
-    if (m_fAnimationProgress >= TOTAL_ANIMATION_TIME)
-        return false;
-
-    m_fAnimationProgress += fElapsed;
-
     bool bUpdated = false;
 
     if (m_pSurface == nullptr || m_bRegenerate)

@@ -2,52 +2,29 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
+#include "tests\mocks\MockAudioSystem.hh"
+#include "tests\mocks\MockClock.hh"
+#include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFileSystem.hh"
+#include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockImageRepository.hh"
+#include "tests\mocks\MockOverlayManager.hh"
+#include "tests\mocks\MockOverlayTheme.hh"
+#include "tests\mocks\MockSessionTracker.hh"
+#include "tests\mocks\MockSurface.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
 
+#include "tests\ui\UIAsserts.hh"
+
+#include <rcheevos\src\rapi\rc_api_common.h>
+#include <rcheevos\src\rcheevos\rc_client_internal.h>
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
-
-namespace Microsoft {
-namespace VisualStudio {
-namespace CppUnitTestFramework {
-
-template<>
-std::wstring ToString<ra::services::AchievementRuntime::ChangeType>(
-    const ra::services::AchievementRuntime::ChangeType& nChangeType)
-{
-    switch (nChangeType)
-    {
-        case ra::services::AchievementRuntime::ChangeType::None:
-            return L"None";
-        case ra::services::AchievementRuntime::ChangeType::AchievementTriggered:
-            return L"AchievementTriggered";
-        case ra::services::AchievementRuntime::ChangeType::AchievementReset:
-            return L"AchievementReset";
-        case ra::services::AchievementRuntime::ChangeType::AchievementDisabled:
-            return L"AchievementDisabled";
-        case ra::services::AchievementRuntime::ChangeType::LeaderboardStarted:
-            return L"LeaderboardStarted";
-        case ra::services::AchievementRuntime::ChangeType::LeaderboardCanceled:
-            return L"LeaderboardCanceled";
-        case ra::services::AchievementRuntime::ChangeType::LeaderboardUpdated:
-            return L"LeaderboardUpdated";
-        case ra::services::AchievementRuntime::ChangeType::LeaderboardTriggered:
-            return L"LeaderboardTriggered";
-        case ra::services::AchievementRuntime::ChangeType::LeaderboardDisabled:
-            return L"LeaderboardDisabled";
-        default:
-            return std::to_wstring(static_cast<int>(nChangeType));
-    }
-}
-
-} // namespace CppUnitTestFramework
-} // namespace VisualStudio
-} // namespace Microsoft
 
 namespace ra {
 namespace services {
@@ -59,346 +36,565 @@ public:
     GSL_SUPPRESS_F6 AchievementRuntimeHarness() : m_Override(this)
     {
         mockUserContext.Initialize("User", "ApiToken");
+        GetClient()->user.display_name = "UserDisplay";
+        GetClient()->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
+        MockGame();
+
+        m_fRealEventHandler = GetClient()->callbacks.event_handler;
+        rc_client_set_event_handler(GetClient(), CaptureEventHandler);
+
+        rc_client_set_userdata(GetClient(), this);
     }
 
     ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
     ra::data::context::mocks::MockGameContext mockGameContext;
+    ra::data::context::mocks::MockSessionTracker mockSessionTracker;
     ra::data::context::mocks::MockUserContext mockUserContext;
+    ra::services::mocks::MockAudioSystem mockAudioSystem;
+    ra::services::mocks::MockClock mockClock;
+    ra::services::mocks::MockConfiguration mockConfiguration;
     ra::services::mocks::MockFileSystem mockFileSystem;
+    ra::services::mocks::MockFrameEventQueue mockFrameEventQueue;
     ra::services::mocks::MockThreadPool mockThreadPool;
+    ra::ui::drawing::mocks::MockSurfaceFactory mockSurfaceFactory;
+    ra::ui::mocks::MockImageRepository mockImageRepository;
+    ra::ui::mocks::MockOverlayTheme mockOverlayTheme;
+    ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
     ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
-    rc_memref_t* GetMemRefs() noexcept
+    void MockGame()
     {
-        return m_pRuntime.memrefs;
+        rc_client_game_info_t* game = (rc_client_game_info_t*)calloc(1, sizeof(rc_client_game_info_t));
+        Expects(game != nullptr);
+        rc_buf_init(&game->buffer);
+        rc_runtime_init(&game->runtime);
+
+        game->public_.id = 1;
+        game->public_.console_id = RC_CONSOLE_NINTENDO;
+        game->public_.badge_name = "012345";
+        game->public_.title = "Game Title";
+
+        GetClient()->game = game;
     }
 
-    size_t GetTriggerCount() const noexcept
+    void ResetEvents() { m_vEvents.clear(); }
+
+    size_t GetEventCount() const { return m_vEvents.size(); }
+
+    void AssertEvent(uint32_t nType, uint32_t nRecordId = 0)
     {
-        return m_pRuntime.trigger_count;
+        for (const auto& pEvent : m_vEvents)
+        {
+            if (pEvent.type != nType)
+                continue;
+
+            switch (nType)
+            {
+                case RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_SHOW:
+                case RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE:
+                case RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_SHOW:
+                case RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_UPDATE:
+                case RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED:
+                    if (pEvent.achievement->id == nRecordId)
+                        return;
+                    break;
+
+                case RC_CLIENT_EVENT_LEADERBOARD_STARTED:
+                case RC_CLIENT_EVENT_LEADERBOARD_FAILED:
+                case RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED:
+                case RC_CLIENT_EVENT_LEADERBOARD_SCOREBOARD:
+                    if (pEvent.leaderboard->id == nRecordId)
+                        return;
+                    break;
+
+                case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_UPDATE:
+                case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_SHOW:
+                case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE:
+                    if (pEvent.leaderboard_tracker->id == nRecordId)
+                        return;
+                    break;
+
+                case RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_HIDE:
+                case RC_CLIENT_EVENT_GAME_COMPLETED:
+                    return;
+            }
+        }
+
+        if (nRecordId != 0)
+            Assert::Fail(ra::StringPrintf(L"Event %u not found for record %u.", nType, nRecordId).c_str());
+        else
+            Assert::Fail(ra::StringPrintf(L"Event %u not found.", nType).c_str());
+    }
+
+    void RaiseEvent(const rc_client_event_t& event)
+    {
+        m_fRealEventHandler(&event, GetClient());
+    }
+
+    rc_client_achievement_info_t* MockAchievement(uint32_t nId, const std::string& sTrigger)
+    {
+        auto* game = GetClient()->game;
+        auto* ach = AddAchievement(game, GetCoreSubset(game), nId, ra::StringPrintf("Ach%u", nId).c_str());
+
+        auto nSize = rc_trigger_size(sTrigger.c_str());
+        void* trigger_buffer = rc_buf_alloc(&game->buffer, nSize);
+        ach->trigger = rc_parse_trigger(trigger_buffer, sTrigger.c_str(), nullptr, 0);
+        ActivateAchievement(ach);
+
+        return ach;
+    }
+
+    rc_client_achievement_info_t* MockLocalAchievement(uint32_t nId, const std::string& sTrigger)
+    {
+        auto* game = GetClient()->game;
+        auto* ach = AddAchievement(game, GetLocalSubset(game), nId, ra::StringPrintf("Ach%u", nId).c_str());
+
+        auto nSize = rc_trigger_size(sTrigger.c_str());
+        void* trigger_buffer = rc_buf_alloc(&game->buffer, nSize);
+        ach->trigger = rc_parse_trigger(trigger_buffer, sTrigger.c_str(), nullptr, 0);
+        ActivateAchievement(ach);
+
+        return ach;
+    }
+
+    void ActivateAchievement(rc_client_achievement_info_t* pAchievement)
+    {
+        pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+        pAchievement->trigger->state = RC_TRIGGER_STATE_WAITING;
+    }
+
+    void DeactivateAchievement(rc_client_achievement_info_t* pAchievement)
+    {
+        pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
+        pAchievement->trigger->state = RC_TRIGGER_STATE_INACTIVE;
+    }
+
+    ra::data::models::AchievementModel* WrapAchievement(rc_client_achievement_info_t* pAchievement)
+    {
+        auto nCategory = ra::data::models::AssetCategory::Core;
+        if (pAchievement->public_.category == RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL)
+        {
+            nCategory = ra::data::models::AssetCategory::Unofficial;
+        }
+        else
+        {
+            const auto* pSubset = GetClient()->game->subsets;
+            for (; pSubset; pSubset = pSubset->next)
+            {
+                for (uint32_t i = 0; i < pSubset->public_.num_achievements; ++i)
+                {
+                    if (&pSubset->achievements[i] == pAchievement)
+                    {
+                        if (pSubset->public_.id == ra::data::context::GameAssets::LocalSubsetId)
+                            nCategory = ra::data::models::AssetCategory::Local;
+                        break;
+                    }
+                }
+            }
+        }
+
+        auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
+        vmAchievement->Attach(*pAchievement, nCategory, "");
+
+        mockGameContext.Assets().Append(std::move(vmAchievement));
+        return mockGameContext.Assets().FindAchievement(pAchievement->public_.id);
+    }
+
+    rc_client_leaderboard_info_t* MockLeaderboard(uint32_t nId, const std::string& sDefinition)
+    {
+        rc_client_game_info_t* game = GetClient()->game;
+        auto* lboard = AddLeaderboard(game, GetCoreSubset(game), nId, ra::StringPrintf("Leaderboard%u", nId).c_str());
+
+        auto nSize = rc_lboard_size(sDefinition.c_str());
+        void* lboard_buffer = rc_buf_alloc(&game->buffer, nSize);
+        lboard->lboard = rc_parse_lboard(lboard_buffer, sDefinition.c_str(), nullptr, 0);
+        ActivateLeaderboard(lboard);
+
+        return lboard;
+    }
+
+    rc_client_leaderboard_info_t* MockLocalLeaderboard(uint32_t nId, const std::string& sDefinition)
+    {
+        rc_client_game_info_t* game = GetClient()->game;
+        auto* lboard = AddLeaderboard(game, GetLocalSubset(game), nId, ra::StringPrintf("Leaderboard%u", nId).c_str());
+
+        auto nSize = rc_lboard_size(sDefinition.c_str());
+        void* lboard_buffer = rc_buf_alloc(&game->buffer, nSize);
+        lboard->lboard = rc_parse_lboard(lboard_buffer, sDefinition.c_str(), nullptr, 0);
+        ActivateLeaderboard(lboard);
+
+        return lboard;
+    }
+
+    void ActivateLeaderboard(rc_client_leaderboard_info_t* pLeaderboard)
+    {
+        pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
+        pLeaderboard->lboard->state = RC_LBOARD_STATE_ACTIVE;
+    }
+
+    void DeactivateLeaderboard(rc_client_leaderboard_info_t* pLeaderboard)
+    {
+        pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_INACTIVE;
+        pLeaderboard->lboard->state = RC_LBOARD_STATE_INACTIVE;
+    }
+
+    ra::data::models::LeaderboardModel* WrapLeaderboard(rc_client_leaderboard_info_t* pLeaderboard)
+    {
+        auto nCategory = ra::data::models::AssetCategory::Core;
+
+        const auto* pSubset = GetClient()->game->subsets;
+        for (; pSubset; pSubset = pSubset->next)
+        {
+            for (uint32_t i = 0; i < pSubset->public_.num_leaderboards; ++i)
+            {
+                if (&pSubset->leaderboards[i] == pLeaderboard)
+                {
+                    if (pSubset->public_.id == ra::data::context::GameAssets::LocalSubsetId)
+                        nCategory = ra::data::models::AssetCategory::Local;
+                    break;
+                }
+            }
+        }
+
+        auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
+        vmLeaderboard->Attach(*pLeaderboard, nCategory, "");
+        pLeaderboard->lboard->state = RC_LBOARD_STATE_ACTIVE; // syncing State sets this back to waiting
+
+        mockGameContext.Assets().Append(std::move(vmLeaderboard));
+        return mockGameContext.Assets().FindLeaderboard(pLeaderboard->public_.id);
+    }
+
+    void SyncToRuntime()
+    {
+        // toggling hardcore will reset the runtime with appropriately active achievements
+        bool bHardcoreEnabled = rc_client_get_hardcore_enabled(GetClient());
+        rc_client_set_hardcore_enabled(GetClient(), !bHardcoreEnabled);
+        rc_client_set_hardcore_enabled(GetClient(), bHardcoreEnabled);
+
+        // one of the toggles will be to hardcore mode, which expects a reset - clear the flag
+        GetClient()->game->waiting_for_reset = false;
+
+        // MockAchievement generates triggers with their own memrefs - promote to common memref pool
+        auto& runtime = GetClient()->game->runtime;
+        Assert::IsNull(runtime.memrefs);
+        auto** next = &runtime.memrefs;
+        for (unsigned i = 0; i < runtime.trigger_count; ++i)
+        {
+            *next = runtime.triggers[i].trigger->memrefs;
+            while (*next)
+                next = &(*next)->next;
+
+            runtime.triggers[i].trigger->memrefs = nullptr;
+        }
+    }
+
+    void SaveProgressToString(std::string& sBuffer)
+    {
+        const int nSize = SaveProgressToBuffer(reinterpret_cast<uint8_t*>(sBuffer.data()), gsl::narrow_cast<int>(sBuffer.size()));
+        if (nSize > sBuffer.size())
+        {
+            sBuffer.resize(nSize);
+            SaveProgressToBuffer(reinterpret_cast<uint8_t*>(sBuffer.data()), nSize);
+        }
+    }
+
+    bool LoadProgressFromString(const std::string& sBuffer)
+    {
+        return LoadProgressFromBuffer(reinterpret_cast<const uint8_t*>(sBuffer.data()));
     }
 
 private:
+    static void CaptureEventHandler(const rc_client_event_t* pEvent, rc_client_t* pClient)
+    {
+        auto* harness = static_cast<AchievementRuntimeHarness*>(rc_client_get_userdata(pClient));
+        Expects(harness != nullptr);
+        harness->m_vEvents.push_back(*pEvent);
+    }
+
+    std::vector<rc_client_event_t> m_vEvents;
+
+    static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t subset_id, const char* name)
+    {
+        rc_client_subset_info_t *subset = game->subsets, **next = &game->subsets;
+        for (; subset; subset = subset->next)
+        {
+            if (subset->public_.id == subset_id)
+                return subset;
+
+            next = &subset->next;
+        }
+
+        subset = (rc_client_subset_info_t*)rc_buf_alloc(&game->buffer, sizeof(rc_client_subset_info_t));
+        memset(subset, 0, sizeof(*subset));
+        subset->public_.id = subset_id;
+        strcpy_s(subset->public_.badge_name, sizeof(subset->public_.badge_name), game->public_.badge_name);
+        subset->public_.title = name;
+        subset->active = 1;
+
+        *next = subset;
+
+        return subset;
+    }
+
+    static rc_client_subset_info_t* GetCoreSubset(rc_client_game_info_t* game)
+    {
+        return GetSubset(game, game->public_.id, game->public_.title);
+    }
+
+    static rc_client_subset_info_t* GetLocalSubset(rc_client_game_info_t* game)
+    {
+        return GetSubset(game, ra::data::context::GameAssets::LocalSubsetId, "Local");
+    }
+
+    static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game, rc_client_subset_info_t* subset,
+                                                        uint32_t nId, const char* sTitle)
+    {
+        if (subset->public_.num_achievements % 8 == 0)
+        {
+            const uint32_t new_count = subset->public_.num_achievements + 8;
+            rc_client_achievement_info_t* new_achievements = (rc_client_achievement_info_t*)rc_buf_alloc(
+                &game->buffer, sizeof(rc_client_achievement_info_t) * new_count);
+
+            if (subset->public_.num_achievements > 0)
+            {
+                memcpy(new_achievements, subset->achievements,
+                       sizeof(rc_client_achievement_info_t) * subset->public_.num_achievements);
+            }
+
+            subset->achievements = new_achievements;
+        }
+
+        rc_client_achievement_info_t* achievement = &subset->achievements[subset->public_.num_achievements++];
+        memset(achievement, 0, sizeof(*achievement));
+        achievement->public_.id = nId;
+
+        if (sTitle)
+        {
+            achievement->public_.title = rc_buf_strcpy(&game->buffer, sTitle);
+        }
+        else
+        {
+            const std::string sGeneratedTitle = ra::StringPrintf("Achievement %u", nId);
+            achievement->public_.title = rc_buf_strcpy(&game->buffer, sGeneratedTitle.c_str());
+        }
+
+        const std::string sGeneratedDescripton = ra::StringPrintf("Description %u", nId);
+        achievement->public_.description = rc_buf_strcpy(&game->buffer, sGeneratedDescripton.c_str());
+
+        achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
+        achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+        achievement->public_.points = 5;
+
+        return achievement;
+    }
+
+    static rc_client_leaderboard_info_t* AddLeaderboard(rc_client_game_info_t* game, rc_client_subset_info_t* subset,
+                                                        uint32_t nId, const char* sTitle)
+    {
+        if (subset->public_.num_leaderboards % 8 == 0)
+        {
+            const uint32_t new_count = subset->public_.num_leaderboards + 8;
+            rc_client_leaderboard_info_t* new_leaderboards = (rc_client_leaderboard_info_t*)rc_buf_alloc(
+                &game->buffer, sizeof(rc_client_leaderboard_info_t) * new_count);
+
+            if (subset->public_.num_leaderboards > 0)
+            {
+                memcpy(new_leaderboards, subset->leaderboards,
+                       sizeof(rc_client_leaderboard_info_t) * subset->public_.num_leaderboards);
+            }
+
+            subset->leaderboards = new_leaderboards;
+        }
+
+        rc_client_leaderboard_info_t* leaderboard = &subset->leaderboards[subset->public_.num_leaderboards++];
+        memset(leaderboard, 0, sizeof(*leaderboard));
+        leaderboard->public_.id = nId;
+
+        if (sTitle)
+        {
+            leaderboard->public_.title = rc_buf_strcpy(&game->buffer, sTitle);
+        }
+        else
+        {
+            const std::string sGeneratedTitle = ra::StringPrintf("Leaderboard %u", nId);
+            leaderboard->public_.title = rc_buf_strcpy(&game->buffer, sGeneratedTitle.c_str());
+        }
+
+        const std::string sGeneratedDescripton = ra::StringPrintf("Description %u", nId);
+        leaderboard->public_.description = rc_buf_strcpy(&game->buffer, sGeneratedDescripton.c_str());
+
+        leaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
+
+        return leaderboard;
+    }
+
     ra::services::ServiceLocator::ServiceOverride<ra::services::AchievementRuntime> m_Override;
+    rc_client_event_handler_t m_fRealEventHandler;
 };
 
 TEST_CLASS(AchievementRuntime_Tests)
 {
-private:
-    std::array<unsigned char, 1024> sTriggerBuffer{};
-
-    rc_trigger_t* ParseTrigger(const char* sTrigger, unsigned char* sBuffer = nullptr, size_t nBufferSize = 0U)
-    {
-        Expects(sTrigger != nullptr);
-        if (sBuffer == nullptr)
-        {
-            sBuffer = sTriggerBuffer.data();
-            nBufferSize = sizeof(sTriggerBuffer);
-        }
-
-        const auto nSize = rc_trigger_size(sTrigger);
-        Expects(to_unsigned(nSize) < nBufferSize);
-
-        return rc_parse_trigger(sBuffer, sTrigger, nullptr, 0);
-    }
-
-    rc_lboard_t* ParseLeaderboard(const char* sTrigger, unsigned char* sBuffer = nullptr, size_t nBufferSize = 0U)
-    {
-        Expects(sTrigger != nullptr);
-        if (sBuffer == nullptr)
-        {
-            sBuffer = sTriggerBuffer.data();
-            nBufferSize = sizeof(sTriggerBuffer);
-        }
-
-        const auto nSize = rc_lboard_size(sTrigger);
-        Expects(to_unsigned(nSize) < nBufferSize);
-
-        return rc_parse_lboard(sBuffer, sTrigger, nullptr, 0);
-    }
-
-    rc_richpresence_t* ParseRichPresence(const char* sScript, unsigned char* sBuffer = nullptr, size_t nBufferSize = 0U)
-    {
-        Expects(sScript != nullptr);
-        if (sBuffer == nullptr)
-        {
-            sBuffer = sTriggerBuffer.data();
-            nBufferSize = sizeof(sTriggerBuffer);
-        }
-
-        const auto nSize = rc_richpresence_size(sScript);
-        Expects(to_unsigned(nSize) < nBufferSize);
-
-        return rc_parse_richpresence(sBuffer, sScript, nullptr, 0);
-    }
-
-    static void AssertChange(const std::vector<AchievementRuntime::Change>& vChanges, AchievementRuntime::ChangeType nType, unsigned nId)
-    {
-        for (const auto& pChange : vChanges)
-        {
-            if (pChange.nId == nId && pChange.nType == nType)
-                return;
-        }
-
-        const auto pString = ra::StringPrintf(L"Could not find change notification for %s:%d",
-            Microsoft::VisualStudio::CppUnitTestFramework::ToString<AchievementRuntime::ChangeType>(nType), nId);
-        Assert::Fail(pString.c_str());
-    }
-
-    static void AssertChange(const std::vector<AchievementRuntime::Change>& vChanges, AchievementRuntime::ChangeType nType, unsigned nId, int nValue)
-    {
-        for (const auto& pChange : vChanges)
-        {
-            if (pChange.nId == nId && pChange.nType == nType)
-            {
-                Assert::AreEqual(nValue, pChange.nValue);
-                return;
-            }
-        }
-
-        const auto pString = ra::StringPrintf(L"Could not find change notification for %s:%d",
-            Microsoft::VisualStudio::CppUnitTestFramework::ToString<AchievementRuntime::ChangeType>(nType), nId);
-        Assert::Fail(pString.c_str());
-    }
-
 public:
-    TEST_METHOD(TestActivateAchievement)
+    TEST_METHOD(TestDoFrameTriggerAchievement)
     {
         std::array<unsigned char, 1> memory{ 0x00 };
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        auto* pTrigger = "0xH0000=1";
+        runtime.MockAchievement(6U, "0xH0000=1");
 
-        // achievement not active, should not raise events
-        std::vector<AchievementRuntime::Change> vChanges;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        // expect no events for untriggered achievement
+        runtime.DoFrame();
+        Assert::AreEqual({ 0U }, runtime.GetEventCount());
 
-        // first Process call will switch the state from Waiting to Active
-        runtime.ActivateAchievement(6U, pTrigger);
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 6U);
-        vChanges.clear();
-
-        // now that it's active, we can trigger it
+        // now trigger it
         memory.at(0) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 6U);
-        vChanges.clear();
+        runtime.DoFrame();
+        Assert::AreEqual({ 1U }, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED, 6U);
+        runtime.ResetEvents();
 
         // triggered achievement should not continue to trigger
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
     }
 
-    TEST_METHOD(TestActivateAchievementPaused)
+    TEST_METHOD(TestDoFrameTriggerAchievementWhilePaused)
     {
         std::array<unsigned char, 1> memory{ 0x00 };
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        auto* pTrigger = "0xH0000=0";
+        runtime.MockAchievement(6U, "0xH0000=1");
 
         runtime.SetPaused(true);
         Assert::IsTrue(runtime.IsPaused());
-        runtime.ActivateAchievement(6U, pTrigger);
 
         // runtime is paused and achievement will be ignored as long as its true
-        std::vector<AchievementRuntime::Change> vChanges;
         for (int i = 0; i < 10; i++)
         {
-            runtime.Process(vChanges);
-            Assert::AreEqual({ 0U }, vChanges.size());
+            runtime.DoFrame();
+            Assert::AreEqual({0U}, runtime.GetEventCount());
         }
 
         runtime.SetPaused(false);
         Assert::IsFalse(runtime.IsPaused());
 
-        // achievement will initially be "waiting" and must be false before it can activate
-        runtime.Process(vChanges);
+        // expect no events for untriggered achievement
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+
+        // pause runtime and trigger achievement
+        runtime.SetPaused(true);
+        Assert::IsTrue(runtime.IsPaused());
+        memory.at(0) = 1;
+
+        // runtime is paused and achievement will be ignored as long as its paused
         for (int i = 0; i < 10; i++)
         {
-            runtime.Process(vChanges);
-            Assert::AreEqual({ 0U }, vChanges.size());
+            runtime.DoFrame();
+            Assert::AreEqual({0U}, runtime.GetEventCount());
         }
 
-        // achievement is no longer true, so it can activate
-        memory.at(0) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 6U);
-        vChanges.clear();
-
-        // achievement is true again, but should not trigger when paused
-        memory.at(0) = 0;
-        runtime.SetPaused(true);
-        Assert::IsTrue(runtime.IsPaused());
-        vChanges.clear();
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // processing re-enabled, achievement should trigger
+        // unpausing the runtime does not explicitly process a frame
         runtime.SetPaused(false);
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 6U);
+        Assert::IsFalse(runtime.IsPaused());
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+
+        // now achievement should trigger
+        runtime.DoFrame();
+        Assert::AreEqual({1U}, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED, 6U);
+        runtime.ResetEvents();
     }
 
-    TEST_METHOD(TestReactivateAchievementPaused)
+    TEST_METHOD(TestDoFrameReactivateAchievementWhilePaused)
     {
-        std::array<unsigned char, 1> memory{ 0x00 };
+        std::array<unsigned char, 1> memory{0x00};
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        const char* pTriggerDefinition = "0xH0000=1";
-        rc_trigger_t* pTrigger;
+        auto* pAchievement = runtime.MockAchievement(6U, "0xH0000=1");
 
-        std::vector<AchievementRuntime::Change> vChanges;
-        runtime.ActivateAchievement(6U, pTriggerDefinition);
-        pTrigger = runtime.GetAchievementTrigger(6U);
-        Assert::IsNotNull(pTrigger);
-        Assert::AreEqual(static_cast<int>(RC_TRIGGER_STATE_WAITING), static_cast<int>(pTrigger->state));
+        // expect no events for untriggered achievement
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
 
-        runtime.Process(vChanges);
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 6U);
-        Assert::AreEqual(static_cast<int>(RC_TRIGGER_STATE_ACTIVE), static_cast<int>(pTrigger->state));
-        vChanges.clear();
+        // trigger achievement
+        memory.at(0) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({1U}, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED, 6U);
+        runtime.ResetEvents();
 
+        // pause runtime and reactivate the achievement - expect no events
         runtime.SetPaused(true);
-        Assert::IsTrue(runtime.IsPaused());
+        runtime.ActivateAchievement(pAchievement);
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
 
-        runtime.DeactivateAchievement(6U);
-        Assert::IsNull(runtime.GetAchievementTrigger(6U));
-
-        // activating a previously active achievement should resurrect it, even if paused
-        runtime.ActivateAchievement(6U, pTriggerDefinition);
-        pTrigger = runtime.GetAchievementTrigger(6U);
-        Assert::IsNotNull(pTrigger);
-        Assert::AreEqual(static_cast<int>(RC_TRIGGER_STATE_WAITING), static_cast<int>(pTrigger->state));
-
-        // achievement should not become active when paused
-        runtime.SetPaused(true);
-        Assert::IsTrue(runtime.IsPaused());
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // processing re-enabled, achievement should become active
+        // unpause runtime - expect no events - achievement is waiting
         runtime.SetPaused(false);
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 6U);
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual((int)RC_TRIGGER_STATE_WAITING, (int)pAchievement->trigger->state);
+
+        // adjust memory so achievement will transition to active
+        memory.at(0) = 0;
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pAchievement->trigger->state);
+
+        // pause runtime and update memory so achievement would trigger - expect no events
+        runtime.SetPaused(true);
+        memory.at(0) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+
+        // unpause runtime - expect event
+        runtime.SetPaused(false);
+        runtime.DoFrame();
+        Assert::AreEqual({1U}, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED, 6U);
     }
 
-    TEST_METHOD(TestMonitorAchievementReset)
+    TEST_METHOD(TestDoFrameMeasuredAchievement)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        auto* pTrigger = "1=1.3._R:0xH0000=1";
-        runtime.ActivateAchievement(4U, pTrigger);
-        runtime.GetAchievementTrigger(4U)->state = RC_TRIGGER_STATE_ACTIVE;
-
-        // HitCount should increase, but no trigger
-        std::vector<AchievementRuntime::Change> vChanges;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // trigger reset, expect notification
-        memory.at(0) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementReset, 4U);
-        vChanges.clear();
-
-        // watch for notification, already reset, no notification
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // disable reset, hitcount should increase, no notification
-        memory.at(0) = 0;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // enable reset, expect notification
-        memory.at(0) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementReset, 4U);
-        vChanges.clear();
-
-        // already reset, shouldn't get repeated notification
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // disable reset, advance to trigger
-        memory.at(0) = 0;
-        runtime.Process(vChanges);
-        runtime.Process(vChanges);
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 4U);
-        vChanges.clear();
-    }
-
-    TEST_METHOD(TestMonitorAchievementMeasured)
-    {
-        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
-
-        AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
-        auto* pTrigger = "M:0xH0002=100";
-        runtime.ActivateAchievement(4U, pTrigger);
-        runtime.GetAchievementTrigger(4U)->state = RC_TRIGGER_STATE_ACTIVE;
+        runtime.MockAchievement(4U, "M:0xH0002=100");
 
         // value did not change, expect no event from initialization
-        std::vector<AchievementRuntime::Change> vChanges;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
 
         // change value, expect notification
         memory.at(2) = 75;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementProgressChanged, 4U, 75);
-        vChanges.clear();
+        runtime.DoFrame();
+        Assert::AreEqual({1U}, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_SHOW, 4U);
+        runtime.ResetEvents();
 
         // watch for notification, no change, no notification
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // disable achievement, no notification
-        runtime.DeactivateAchievement(4U);
-        memory.at(2) = 76;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // enable achievement, expect activation event, but not progress notification
-        runtime.ActivateAchievement(4U, pTrigger);
-        memory.at(2) = 77;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 4U);
-        vChanges.clear();
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
 
         // change value, expect notification
         memory.at(2) = 78;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementProgressChanged, 4U, 78);
-        vChanges.clear();
+        runtime.DoFrame();
+        Assert::AreEqual({1U}, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_UPDATE, 4U);
+        runtime.ResetEvents();
 
         // trigger achievement, expect trigger notification, but not progress notification
         memory.at(2) = 100;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 4U);
-        vChanges.clear();
+        runtime.DoFrame();
+        Assert::AreEqual({1U}, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED, 4U);
     }
-
+    /*
     TEST_METHOD(TestUpdateAchievementId)
     {
         std::array<unsigned char, 1> memory{ 0x00 };
@@ -437,67 +633,7 @@ public:
         Assert::AreEqual({ 1U }, vChanges.size());
         AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 99001U);
     }
-
-    TEST_METHOD(TestResetActiveAchievements)
-    {
-        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
-
-        AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
-        runtime.ActivateAchievement(6U, "0xH0000=0_0xH0001=1");
-        auto* pTrigger = runtime.GetAchievementTrigger(6U);
-        pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
-
-        runtime.ActivateAchievement(7U, "0xH0000=0.30._R:0xH0001=1");
-        auto* pTrigger2 = runtime.GetAchievementTrigger(7U);
-        pTrigger2->state = RC_TRIGGER_STATE_ACTIVE;
-
-        // rack up some hits
-        std::vector<AchievementRuntime::Change> vChanges;
-        for (int i = 0; i < 10; i++)
-        {
-            runtime.Process(vChanges);
-            Assert::AreEqual({ 0U }, vChanges.size());
-        }
-        Assert::AreEqual(10U, pTrigger->requirement->conditions->current_hits);
-        Assert::AreEqual(10U, pTrigger2->requirement->conditions->current_hits);
-
-        // set state to trigger achievement, then call reset. HitCount should go to 0 and trigger should be delayed
-        // until inactive.
-        memory.at(1) = 1;
-        runtime.ResetActiveAchievements();
-        Assert::AreEqual(0U, pTrigger->requirement->conditions->current_hits);
-        Assert::AreEqual(0U, pTrigger2->requirement->conditions->current_hits);
-
-        // first call will register an activation change for 7. ignore it
-        runtime.Process(vChanges);
-        vChanges.clear();
-
-        for (int i = 0; i < 10; i++)
-        {
-            runtime.Process(vChanges);
-            Assert::AreEqual({ 0U }, vChanges.size());
-        }
-
-        // achievement is no longer true, so it will transition from waiting to active
-        memory.at(1) = 0;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, 6U);
-        vChanges.clear();
-
-        // second achievement should get a hitcount since the reset condition is no longer true
-        Assert::AreEqual(1U, pTrigger2->requirement->conditions->current_hits);
-
-        // achievement is true again and should trigger
-        // second achievement is reset - expect to be notified
-        memory.at(1) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 2U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementTriggered, 6U);
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementReset, 7U);
-        Assert::AreEqual(0U, pTrigger2->requirement->conditions->current_hits);
-    }
+    */
 
     static rc_condition_t* GetCondition(AchievementRuntimeHarness& harness, ra::AchievementID nId, int nGroup, int nCond) noexcept
     {
@@ -533,35 +669,35 @@ public:
         Assert::IsNotNull(pCond);
         Assert::AreEqual(pCond->current_hits, ra::to_unsigned(nHits));
     }
-    /*
+
     TEST_METHOD(TestPersistProgressFile)
     {
         AchievementRuntimeHarness runtime;
-        runtime.ActivateAchievement(3U, "1=1.10.");
-        runtime.ActivateAchievement(5U, "1=1.2.");
+        auto* pAch3 = runtime.MockAchievement(3U, "1=1.10.");
+        auto* pAch5 = runtime.MockAchievement(5U, "1=1.2.");
+        runtime.SyncToRuntime();
 
         SetConditionHitCount(runtime, 3U, 0, 0, 2);
         SetConditionHitCount(runtime, 5U, 0, 0, 2);
 
         runtime.SaveProgressToFile("test.sav");
 
-        // inactive achievements aren't persisted
-        runtime.GetAchievementTrigger(3U)->state = RC_TRIGGER_STATE_INACTIVE;
-        runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_INACTIVE;
+        // inactive achievements aren't updated from the persisted data
+        runtime.DeactivateAchievement(pAch3);
+        runtime.DeactivateAchievement(pAch5);
         SetConditionHitCount(runtime, 3U, 0, 0, 1);
         SetConditionHitCount(runtime, 5U, 0, 0, 1);
         runtime.LoadProgressFromFile("test.sav");
-        AssertConditionHitCount(runtime, 3U, 0, 0, 0);
-        AssertConditionHitCount(runtime, 5U, 0, 0, 0);
+        AssertConditionHitCount(runtime, 3U, 0, 0, 1);
+        AssertConditionHitCount(runtime, 5U, 0, 0, 1);
 
         // activate one achievement, save, activate other, restore - only first should be restored,
         // second should be reset because it wasn't captured.
-        runtime.GetAchievementTrigger(3U)->state = RC_TRIGGER_STATE_ACTIVE;
+        runtime.ActivateAchievement(pAch3);
         SetConditionHitCount(runtime, 3U, 0, 0, 1);
         SetConditionHitCount(runtime, 5U, 0, 0, 1);
         runtime.SaveProgressToFile("test.sav");
-        runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
-
+        runtime.ActivateAchievement(pAch5);       
         SetConditionHitCount(runtime, 3U, 0, 0, 2);
         SetConditionHitCount(runtime, 5U, 0, 0, 2);
         runtime.LoadProgressFromFile("test.sav");
@@ -569,7 +705,6 @@ public:
         AssertConditionHitCount(runtime, 5U, 0, 0, 0);
 
         // both active, save and restore should reset both
-        runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
         SetConditionHitCount(runtime, 3U, 0, 0, 1);
         SetConditionHitCount(runtime, 5U, 0, 0, 1);
         runtime.SaveProgressToFile("test.sav");
@@ -583,118 +718,91 @@ public:
         // second no longer active, file contains data that should be ignored
         SetConditionHitCount(runtime, 3U, 0, 0, 6);
         SetConditionHitCount(runtime, 5U, 0, 0, 6);
-        runtime.DeactivateAchievement(5U);
+        runtime.DeactivateAchievement(pAch5);
         runtime.LoadProgressFromFile("test.sav");
         AssertConditionHitCount(runtime, 3U, 0, 0, 1);
         AssertConditionHitCount(runtime, 5U, 0, 0, 6);
 
-        // if the definition changes, the hits should be reset instead of remembered
-        pAchievement3->GenerateConditions();
-        pAchievement3->GetCondition(0, 0).CompSource().SetValue(2);
-        pAchievement3->RebuildTrigger();
-        pAchievement3->SetConditionHitCount(0, 0, 2);
-        Assert::IsTrue(pAchievement3->Active());
+        // if the definition changes (different md5), the hits should be reset instead of remembered
+        runtime.GetClient()->game->runtime.triggers[0].md5[0]++;
+        SetConditionHitCount(runtime, 3U, 0, 0, 6);
+        runtime.ActivateAchievement(pAch3);
         runtime.LoadProgressFromFile("test.sav");
-        Assert::AreEqual(0U, pAchievement3->GetConditionHitCount(0, 0));
+        AssertConditionHitCount(runtime, 3U, 0, 0, 0);
     }
 
     TEST_METHOD(TestPersistProgressBuffer)
     {
         AchievementRuntimeHarness runtime;
-        auto& ach1 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
-        ach1.SetID(3U);
-        ach1.SetTrigger("1=1.10.");
-        auto& ach2 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
-        ach2.SetID(5U);
-        ach2.SetTrigger("1=1.2.");
+        auto* pAch3 = runtime.MockAchievement(3U, "1=1.10.");
+        auto* pAch5 = runtime.MockAchievement(5U, "1=1.2.");
+        runtime.SyncToRuntime();
 
-        const gsl::not_null<Achievement*> pAchievement3{
-            gsl::make_not_null(runtime.mockGameContext.FindAchievement(3U))};
-        const gsl::not_null<Achievement*> pAchievement5{
-            gsl::make_not_null(runtime.mockGameContext.FindAchievement(5U))};
-
-        pAchievement3->SetConditionHitCount(0, 0, 2);
-        pAchievement5->SetConditionHitCount(0, 0, 2);
+        SetConditionHitCount(runtime, 3U, 0, 0, 2);
+        SetConditionHitCount(runtime, 5U, 0, 0, 2);
 
         std::string sBuffer;
-        int nSize = runtime.SaveProgressToBuffer(nullptr, 0);
-        sBuffer.resize(nSize);
-        runtime.SaveProgressToBuffer(sBuffer.data(), nSize);
+        runtime.SaveProgressToString(sBuffer);
 
-        // achievements weren't active, so they weren't persisted
-        pAchievement3->SetConditionHitCount(0, 0, 1);
-        pAchievement5->SetConditionHitCount(0, 0, 1);
-        runtime.LoadProgressFromBuffer(sBuffer.data());
-        Assert::AreEqual(0U, pAchievement3->GetConditionHitCount(0, 0));
-        Assert::AreEqual(0U, pAchievement5->GetConditionHitCount(0, 0));
+        // inactive achievements aren't updated from the persisted data
+        runtime.DeactivateAchievement(pAch3);
+        runtime.DeactivateAchievement(pAch5);
+        SetConditionHitCount(runtime, 3U, 0, 0, 1);
+        SetConditionHitCount(runtime, 5U, 0, 0, 1);
+        runtime.LoadProgressFromString(sBuffer);
+        AssertConditionHitCount(runtime, 3U, 0, 0, 1);
+        AssertConditionHitCount(runtime, 5U, 0, 0, 1);
 
         // activate one achievement, save, activate other, restore - only first should be restored,
         // second should be reset because it wasn't captured.
-        pAchievement3->SetActive(true);
-        runtime.GetAchievementTrigger(3U)->state = RC_TRIGGER_STATE_ACTIVE;
-        pAchievement3->SetConditionHitCount(0, 0, 1);
-        pAchievement5->SetConditionHitCount(0, 0, 1);
-        nSize = runtime.SaveProgressToBuffer(sBuffer.data(), nSize);
-        if (nSize > gsl::narrow_cast<int>(sBuffer.size()))
-        {
-            sBuffer.resize(nSize);
-            runtime.SaveProgressToBuffer(sBuffer.data(), nSize);
-        }
-        pAchievement5->SetActive(true);
-        runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
-
-        pAchievement3->SetConditionHitCount(0, 0, 2);
-        pAchievement5->SetConditionHitCount(0, 0, 2);
-        runtime.LoadProgressFromBuffer(sBuffer.data());
-        Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
-        Assert::AreEqual(0U, pAchievement5->GetConditionHitCount(0, 0));
+        runtime.ActivateAchievement(pAch3);
+        SetConditionHitCount(runtime, 3U, 0, 0, 1);
+        SetConditionHitCount(runtime, 5U, 0, 0, 1);
+        runtime.SaveProgressToString(sBuffer);
+        runtime.ActivateAchievement(pAch5);
+        SetConditionHitCount(runtime, 3U, 0, 0, 2);
+        SetConditionHitCount(runtime, 5U, 0, 0, 2);
+        runtime.LoadProgressFromString(sBuffer);
+        AssertConditionHitCount(runtime, 3U, 0, 0, 1);
+        AssertConditionHitCount(runtime, 5U, 0, 0, 0);
 
         // both active, save and restore should reset both
-        runtime.GetAchievementTrigger(5U)->state = RC_TRIGGER_STATE_ACTIVE;
-        pAchievement5->SetConditionHitCount(0, 0, 1);
-        nSize = runtime.SaveProgressToBuffer(sBuffer.data(), nSize);
-        if (nSize > gsl::narrow_cast<int>(sBuffer.size()))
-        {
-            sBuffer.resize(nSize);
-            runtime.SaveProgressToBuffer(sBuffer.data(), nSize);
-        }
+        SetConditionHitCount(runtime, 3U, 0, 0, 1);
+        SetConditionHitCount(runtime, 5U, 0, 0, 1);
+        runtime.SaveProgressToString(sBuffer);
 
-        pAchievement3->SetConditionHitCount(0, 0, 2);
-        pAchievement5->SetConditionHitCount(0, 0, 2);
-        runtime.LoadProgressFromBuffer(sBuffer.data());
-        Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
-        Assert::AreEqual(1U, pAchievement5->GetConditionHitCount(0, 0));
+        SetConditionHitCount(runtime, 3U, 0, 0, 2);
+        SetConditionHitCount(runtime, 5U, 0, 0, 2);
+        runtime.LoadProgressFromString(sBuffer);
+        AssertConditionHitCount(runtime, 3U, 0, 0, 1);
+        AssertConditionHitCount(runtime, 5U, 0, 0, 1);
 
         // second no longer active, file contains data that should be ignored
-        pAchievement3->SetConditionHitCount(0, 0, 6);
-        pAchievement5->SetConditionHitCount(0, 0, 6);
-        pAchievement5->SetActive(false);
-        runtime.LoadProgressFromBuffer(sBuffer.data());
-        Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
-        Assert::AreEqual(6U, pAchievement5->GetConditionHitCount(0, 0));
+        SetConditionHitCount(runtime, 3U, 0, 0, 6);
+        SetConditionHitCount(runtime, 5U, 0, 0, 6);
+        runtime.DeactivateAchievement(pAch5);
+        runtime.LoadProgressFromString(sBuffer);
+        AssertConditionHitCount(runtime, 3U, 0, 0, 1);
+        AssertConditionHitCount(runtime, 5U, 0, 0, 6);
 
-        // if the definition changes, the hits should be reset instead of remembered
-        pAchievement3->GenerateConditions();
-        pAchievement3->GetCondition(0, 0).CompSource().SetValue(2);
-        pAchievement3->RebuildTrigger();
-        pAchievement3->SetConditionHitCount(0, 0, 2);
-        Assert::IsTrue(pAchievement3->Active());
-        runtime.LoadProgressFromBuffer(sBuffer.data());
-        Assert::AreEqual(0U, pAchievement3->GetConditionHitCount(0, 0));
+        // if the definition changes (different md5), the hits should be reset instead of remembered
+        runtime.GetClient()->game->runtime.triggers[0].md5[0]++;
+        SetConditionHitCount(runtime, 3U, 0, 0, 6);
+        runtime.ActivateAchievement(pAch3);
+        runtime.LoadProgressFromString(sBuffer);
+        AssertConditionHitCount(runtime, 3U, 0, 0, 0);
     }
 
     TEST_METHOD(TestPersistProgressMemory)
     {
         AchievementRuntimeHarness runtime;
-        auto& ach = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
-        ach.SetID(9U);
-        ach.SetTrigger("0xH1234=1_0xX1234>d0xX1234");
-        ach.SetActive(true);
-        runtime.GetAchievementTrigger(9U)->state = RC_TRIGGER_STATE_ACTIVE;
+        runtime.MockAchievement(9U, "0xH1234=1_0xX1234>d0xX1234");
+        runtime.SyncToRuntime();
+        auto pMemRefs = runtime.GetClient()->game->runtime.memrefs;
 
-        ach.SetConditionHitCount(0, 0, 2);
-        ach.SetConditionHitCount(0, 1, 0);
-        auto pMemRef = runtime.GetMemRefs(); // 0xH1234
+        SetConditionHitCount(runtime, 9U, 0, 0, 2);
+        SetConditionHitCount(runtime, 9U, 0, 1, 0);
+        auto pMemRef = pMemRefs; // 0xH1234
         pMemRef->value.value = 0x02;
         pMemRef->value.changed = 0;
         pMemRef->value.prior = 0x03;
@@ -706,7 +814,7 @@ public:
         runtime.SaveProgressToFile("test.sav");
 
         // modify data so we can see if the persisted data is restored
-        pMemRef = runtime.GetMemRefs();
+        pMemRef = pMemRefs;
         pMemRef->value.value = 0;
         pMemRef->value.changed = 0;
         pMemRef->value.prior = 0;
@@ -714,16 +822,16 @@ public:
         pMemRef->value.value = 0;
         pMemRef->value.changed = 0;
         pMemRef->value.prior = 0;
-        ach.SetConditionHitCount(0, 0, 1);
-        ach.SetConditionHitCount(0, 1, 1);
+        SetConditionHitCount(runtime, 9U, 0, 0, 1);
+        SetConditionHitCount(runtime, 9U, 0, 1, 1);
 
         // restore persisted data
         runtime.LoadProgressFromFile("test.sav");
 
-        Assert::AreEqual(2U, ach.GetConditionHitCount(0, 0));
-        Assert::AreEqual(0U, ach.GetConditionHitCount(0, 1));
+        AssertConditionHitCount(runtime, 9U, 0, 0, 2);
+        AssertConditionHitCount(runtime, 9U, 0, 1, 0);
 
-        pMemRef = runtime.GetMemRefs();
+        pMemRef = pMemRefs;
         Assert::AreEqual(0x02U, pMemRef->value.value);
         Assert::AreEqual(0, (int)pMemRef->value.changed);
         Assert::AreEqual(0x03U, pMemRef->value.prior);
@@ -736,266 +844,111 @@ public:
     TEST_METHOD(TestLoadProgressV1)
     {
         AchievementRuntimeHarness runtime;
-        auto& ach1 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
-        ach1.SetID(3U);
-        ach1.SetTrigger("1=1.10.");
-        auto& ach2 = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
-        ach2.SetID(5U);
-        ach2.SetTrigger("1=1.2.");
+        runtime.WrapAchievement(runtime.MockAchievement(3U, "1=1.10."))->SetTrigger("1=1.10.");
+        runtime.WrapAchievement(runtime.MockAchievement(5U, "1=1.2."))->SetTrigger("1=1.2.");
+        runtime.SyncToRuntime();
 
-        const gsl::not_null<Achievement*> pAchievement3{
-            gsl::make_not_null(runtime.mockGameContext.FindAchievement(3U)) };
-        const gsl::not_null<Achievement*> pAchievement5{
-            gsl::make_not_null(runtime.mockGameContext.FindAchievement(5U)) };
-
-        pAchievement3->SetConditionHitCount(0, 0, 2);
-        pAchievement5->SetConditionHitCount(0, 0, 2);
-        pAchievement3->SetActive(true);
-        pAchievement5->SetActive(true);
+        SetConditionHitCount(runtime, 3U, 0, 0, 2);
+        SetConditionHitCount(runtime, 5U, 0, 0, 2);
 
         runtime.mockFileSystem.MockFile(L"test.sav.rap", "3:1:1:0:0:0:0:6e2301982f40d1a3f311cdb063f57e2f:4f52856e145d7cb05822e8a9675b086b:5:1:1:0:0:0:0:0e9aec1797ad6ba861a4b1e0c7f6d2ab:dd9e5fc6020e728b8c9231d5a5c904d5:");
 
         runtime.LoadProgressFromFile("test.sav");
-        Assert::AreEqual(1U, pAchievement3->GetConditionHitCount(0, 0));
-        Assert::AreEqual(1U, pAchievement5->GetConditionHitCount(0, 0));
+
+        AssertConditionHitCount(runtime, 3U, 0, 0, 1);
+        AssertConditionHitCount(runtime, 5U, 0, 0, 1);
     }
 
-    TEST_METHOD(TestPersistProgressNoCoreGroup)
-    {
-        AchievementRuntimeHarness runtime;
-        auto& ach = runtime.mockGameContext.NewAchievement(Achievement::Category::Core);
-        ach.SetID(9U);
-        ach.SetTrigger("S0xH1234=1_0xX1234>d0xX1234");
-        ach.SetActive(true);
-        runtime.GetAchievementTrigger(9U)->state = RC_TRIGGER_STATE_ACTIVE;
-
-        ach.SetConditionHitCount(1, 0, 2);
-        ach.SetConditionHitCount(1, 1, 0);
-        auto pMemRef = runtime.GetMemRefs(); // 0xH1234
-        pMemRef->value.value = 0x02;
-        pMemRef->value.changed = 1;
-        pMemRef->value.prior = 0x03;
-        pMemRef = pMemRef->next; // 0xX1234
-        pMemRef->value.value = 0x020000;
-        pMemRef->value.changed = 0;
-        pMemRef->value.prior = 0x040000;
-
-        runtime.SaveProgressToFile("test.sav");
-
-        // modify data so we can see if the persisted data is restored
-        pMemRef = runtime.GetMemRefs();
-        pMemRef->value.value = 0;
-        pMemRef->value.changed = 0;
-        pMemRef->value.prior = 0;
-        pMemRef = pMemRef->next;
-        pMemRef->value.value = 0;
-        pMemRef->value.changed = 0;
-        pMemRef->value.prior = 0;
-        ach.SetConditionHitCount(1, 0, 1);
-        ach.SetConditionHitCount(1, 1, 1);
-
-        // restore persisted data
-        runtime.LoadProgressFromFile("test.sav");
-
-        Assert::AreEqual(2U, ach.GetConditionHitCount(1, 0));
-        Assert::AreEqual(0U, ach.GetConditionHitCount(1, 1));
-
-        pMemRef = runtime.GetMemRefs();
-        Assert::AreEqual(0x02U, pMemRef->value.value);
-        Assert::AreEqual(1, (int)pMemRef->value.changed);
-        Assert::AreEqual(0x03U, pMemRef->value.prior);
-        pMemRef = pMemRef->next;
-        Assert::AreEqual(0x020000U, pMemRef->value.value);
-        Assert::AreEqual(0, (int)pMemRef->value.changed);
-        Assert::AreEqual(0x040000U, pMemRef->value.prior);
-    }
-    */
-
-    TEST_METHOD(TestReactivateAchievement)
-    {
-        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
-
-        AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
-
-        auto* sTrigger = "0xH0001=0_0xH0000=1";
-        runtime.ActivateAchievement(6U, sTrigger);
-        auto* pTrigger = runtime.GetAchievementTrigger(6U);
-        pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
-
-        std::vector<AchievementRuntime::Change> vChanges;
-        runtime.Process(vChanges);
-        runtime.Process(vChanges);
-        runtime.Process(vChanges);
-        Assert::AreEqual(3U, pTrigger->requirement->conditions->current_hits);
-
-        // deactivating achievement should not reset hit count
-        // so user can examine hit counts after achievement has triggered
-        runtime.DeactivateAchievement(6U);
-        Assert::AreEqual(3U, pTrigger->requirement->conditions->current_hits);
-
-        runtime.Process(vChanges);
-        Assert::AreEqual(3U, pTrigger->requirement->conditions->current_hits);
-
-        // reactivating achievement will reset hit count and allow it to increment again
-        runtime.ActivateAchievement(6U, sTrigger);
-        Assert::AreEqual(0U, pTrigger->requirement->conditions->current_hits);
-
-        runtime.Process(vChanges);
-        Assert::AreEqual(1U, pTrigger->requirement->conditions->current_hits);
-    }
-
-    TEST_METHOD(TestReleaseAchievementTrigger)
-    {
-        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
-
-        AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
-
-        const auto* sTrigger = "0xH0001=0_0xH0000=1";
-        runtime.ActivateAchievement(6U, sTrigger);
-        auto* pTrigger = runtime.GetAchievementTrigger(6U);
-
-        // deactivated achievement shouldn't be found without passing in the trigger
-        runtime.DeactivateAchievement(6U);
-        auto* pTrigger2 = runtime.GetAchievementTrigger(6U);
-        Assert::IsNull(pTrigger2);
-        pTrigger2 = runtime.GetAchievementTrigger(6U, sTrigger);
-        Assert::IsNotNull(pTrigger2);
-        Assert::IsTrue(pTrigger == pTrigger2);
-
-        // cannot release trigger that has memrefs
-        runtime.ReleaseAchievementTrigger(6U, pTrigger);
-        pTrigger2 = runtime.GetAchievementTrigger(6U);
-        Assert::IsNull(pTrigger2);
-        pTrigger2 = runtime.GetAchievementTrigger(6U, sTrigger);
-        Assert::IsNotNull(pTrigger2);
-        Assert::IsTrue(pTrigger == pTrigger2);
-
-        // register second trigger that will not have memrefs
-        runtime.ActivateAchievement(7U, sTrigger);
-        pTrigger = runtime.GetAchievementTrigger(7U);
-        runtime.DeactivateAchievement(7U);
-        pTrigger2 = runtime.GetAchievementTrigger(7U);
-        Assert::IsNull(pTrigger2);
-        pTrigger2 = runtime.GetAchievementTrigger(7U, sTrigger);
-        Assert::IsNotNull(pTrigger2);
-        Assert::IsTrue(pTrigger == pTrigger2);
-
-        // can release trigger that does not have memrefs
-        Assert::AreEqual({ 2U }, runtime.GetTriggerCount());
-        runtime.ReleaseAchievementTrigger(7U, pTrigger);
-        Assert::AreEqual({ 1U }, runtime.GetTriggerCount());
-        pTrigger2 = runtime.GetAchievementTrigger(7U);
-        Assert::IsNull(pTrigger2);
-        pTrigger2 = runtime.GetAchievementTrigger(7U, sTrigger);
-        Assert::IsNull(pTrigger2);
-
-        // first trigger should still be findable
-        pTrigger2 = runtime.GetAchievementTrigger(6U, sTrigger);
-        Assert::IsNotNull(pTrigger2);
-    }
-
-    TEST_METHOD(TestActivateLeaderboard)
+    TEST_METHOD(TestDoFrameActivateLeaderboard)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        auto* pLeaderboard = "STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02";
+        auto* pLeaderboard = runtime.MockLeaderboard(6U, "STA:0xH00=1::CAN:0xH00=2::SUB:0xH00=3::VAL:0xH02");
 
-        // leaderboard not active, should not trigger
-        std::vector<AchievementRuntime::Change> vChanges;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        // leaderboard active, but not started
-        runtime.ActivateLeaderboard(6U, pLeaderboard);
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        // expect no events for inactive leaderboard
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
 
         // leaderboard cancel condition should not be captured until it's been started
         memory.at(0) = 2;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
 
         // leaderboard start condition should notify the start with initial value
         memory.at(0) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardStarted, 6U);
-        Assert::AreEqual(52, vChanges.front().nValue);
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_LEADERBOARD_STARTED, 6U);
+        runtime.AssertEvent(RC_CLIENT_EVENT_LEADERBOARD_TRACKER_SHOW, 1U);
+        runtime.ResetEvents();
 
         // still active leaderboard should not notify unless the value changes
-        vChanges.clear();
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
 
         memory.at(2) = 33;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardUpdated, 6U);
-        Assert::AreEqual(33, vChanges.front().nValue);
-        vChanges.clear();
+        runtime.DoFrame();
+        Assert::AreEqual({1U}, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_LEADERBOARD_TRACKER_UPDATE, 1U);
+        runtime.ResetEvents();
 
         // leaderboard cancel condition should notify
         memory.at(0) = 2;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardCanceled, 6U);
-        vChanges.clear();
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_LEADERBOARD_FAILED, 6U);
+        runtime.AssertEvent(RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE, 1U);
+        runtime.ResetEvents();
 
         // leaderboard submit condition should not trigger if leaderboard not started
         memory.at(0) = 3;
-        vChanges.clear();
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
 
         // restart the leaderboard
         memory.at(0) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardStarted, 6U);
-        Assert::AreEqual(33, vChanges.front().nValue);
-        vChanges.clear();
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_LEADERBOARD_STARTED, 6U);
+        runtime.AssertEvent(RC_CLIENT_EVENT_LEADERBOARD_TRACKER_SHOW, 1U);
+        runtime.ResetEvents();
 
         // leaderboard submit should trigger if leaderboard started
         memory.at(0) = 3;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardTriggered, 6U);
-        Assert::AreEqual(33, vChanges.front().nValue);
-        vChanges.clear();
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED, 6U);
+        runtime.AssertEvent(RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE, 1U);
+        runtime.ResetEvents();
 
         // leaderboard cancel condition should not trigger after submission
         memory.at(0) = 2;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
 
         // restart the leaderboard
         memory.at(0) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardStarted, 6U);
-        Assert::AreEqual(33, vChanges.front().nValue);
-        vChanges.clear();
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount());
+        runtime.AssertEvent(RC_CLIENT_EVENT_LEADERBOARD_STARTED, 6U);
+        runtime.AssertEvent(RC_CLIENT_EVENT_LEADERBOARD_TRACKER_SHOW, 1U);
+        runtime.ResetEvents();
 
         // deactivated leaderboard should not trigger
-        runtime.DeactivateLeaderboard(6U);
-        vChanges.clear();
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        runtime.DeactivateLeaderboard(pLeaderboard);
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
 
         memory.at(0) = 2;
-        vChanges.clear();
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
     }
 
     TEST_METHOD(TestActivateRichPresence)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        std::vector<ra::services::AchievementRuntime::Change> changes;
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
@@ -1009,32 +962,31 @@ public:
         Assert::AreEqual(std::wstring(L"0 0"), runtime.GetRichPresenceDisplayString());
 
         // do_frame should immediately process the rich presence
-        runtime.Process(changes);
+        runtime.DoFrame();
         Assert::AreEqual(std::wstring(L"18 0"), runtime.GetRichPresenceDisplayString());
 
         // first update - updates value and delta
-        runtime.Process(changes);
+        runtime.DoFrame();
         Assert::AreEqual(std::wstring(L"18 18"), runtime.GetRichPresenceDisplayString());
 
         // second update - updates delta
-        runtime.Process(changes);
+        runtime.DoFrame();
         Assert::AreEqual(std::wstring(L"18 18"), runtime.GetRichPresenceDisplayString());
 
         // third update - updates value after change
         memory.at(1) = 11;
-        runtime.Process(changes);
+        runtime.DoFrame();
         Assert::AreEqual(std::wstring(L"11 18"), runtime.GetRichPresenceDisplayString());
 
         // fourth update - updates delta and value after change
         memory.at(1) = 13;
-        runtime.Process(changes);
+        runtime.DoFrame();
         Assert::AreEqual(std::wstring(L"13 11"), runtime.GetRichPresenceDisplayString());
     }
 
     TEST_METHOD(TestActivateRichPresenceChange)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        std::vector<ra::services::AchievementRuntime::Change> changes;
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
@@ -1056,7 +1008,6 @@ public:
     TEST_METHOD(TestActivateRichPresenceWithError)
     {
         std::array<unsigned char, 5> memory{ 0x00, 0x12, 0x34, 0xAB, 0x56 };
-        std::vector<ra::services::AchievementRuntime::Change> changes;
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
@@ -1068,347 +1019,1794 @@ public:
         Assert::AreEqual(std::wstring(L"Parse error -6 (line 5): Invalid operator"), runtime.GetRichPresenceDisplayString());
     }
 
-    TEST_METHOD(TestProcessLeaderboardStartPauseOnReset)
+    TEST_METHOD(TestMonitorAchievementPauseOnReset)
     {
-        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        std::vector<AchievementRuntime::Change> vChanges;
-        auto* pDefinition = "STA:0xH0000=0_0xH0000=9_R:0xH0001=1::SUB:0xH0000=1::CAN:0xH0000=2::VAL:0xH0000";
+        auto* pAchievement = runtime.MockAchievement(4U, "1=1.3._R:0xH0000=1");
+        auto* vmAchievement = runtime.WrapAchievement(pAchievement);
 
-        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
-        pLeaderboard.SetID(6U);
+        // HitCount should increase, but no trigger
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::AreEqual(true, pAchievement->trigger->has_hits != 0);
 
-        runtime.ActivateLeaderboard(6U, pDefinition);
-        const auto* pLboard = runtime.GetLeaderboardDefinition(6U);
-        runtime.Process(vChanges);
-        Assert::IsTrue(pLboard->start.has_hits);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        memory.at(1) = 1;
-        runtime.Process(vChanges);
-        Assert::IsFalse(pLboard->start.has_hits);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        pLeaderboard.SetPauseOnReset(ra::data::models::LeaderboardModel::LeaderboardParts::Start);
-
-        memory.at(1) = 0;
-        runtime.Process(vChanges);
-        Assert::IsTrue(pLboard->start.has_hits);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        memory.at(1) = 1;
-        runtime.Process(vChanges);
-        Assert::IsFalse(pLboard->start.has_hits);
-
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardStartReset, 6U);
-    }
-
-    TEST_METHOD(TestProcessLeaderboardSubmitPauseOnReset)
-    {
-        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
-
-        AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
-        std::vector<AchievementRuntime::Change> vChanges;
-        auto* pDefinition = "STA:0xH0000=1::SUB:0xH0000=0_0xH0000=9_R:0xH0001=1::CAN:0xH0000=2::VAL:0xH0000";
-
-        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
-        pLeaderboard.SetID(6U);
-
-        runtime.ActivateLeaderboard(6U, pDefinition);
-        const auto* pLboard = runtime.GetLeaderboardDefinition(6U);
-        runtime.Process(vChanges);
-        Assert::IsTrue(pLboard->submit.has_hits);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        memory.at(1) = 1;
-        runtime.Process(vChanges);
-        Assert::IsFalse(pLboard->submit.has_hits);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        pLeaderboard.SetPauseOnReset(ra::data::models::LeaderboardModel::LeaderboardParts::Submit);
-
-        memory.at(1) = 0;
-        runtime.Process(vChanges);
-        Assert::IsTrue(pLboard->submit.has_hits);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        memory.at(1) = 1;
-        runtime.Process(vChanges);
-        Assert::IsFalse(pLboard->submit.has_hits);
-
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardSubmitReset, 6U);
-    }
-
-    TEST_METHOD(TestProcessLeaderboardCancelPauseOnReset)
-    {
-        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
-
-        AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
-        std::vector<AchievementRuntime::Change> vChanges;
-        auto* pDefinition = "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=0_0xH0000=9_R:0xH0001=1::VAL:0xH0000";
-
-        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
-        pLeaderboard.SetID(6U);
-
-        runtime.ActivateLeaderboard(6U, pDefinition);
-        const auto* pLboard = runtime.GetLeaderboardDefinition(6U);
-        runtime.Process(vChanges);
-        Assert::IsTrue(pLboard->cancel.has_hits);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        memory.at(1) = 1;
-        runtime.Process(vChanges);
-        Assert::IsFalse(pLboard->cancel.has_hits);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        pLeaderboard.SetPauseOnReset(ra::data::models::LeaderboardModel::LeaderboardParts::Cancel);
-
-        memory.at(1) = 0;
-        runtime.Process(vChanges);
-        Assert::IsTrue(pLboard->cancel.has_hits);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        memory.at(1) = 1;
-        runtime.Process(vChanges);
-        Assert::IsFalse(pLboard->cancel.has_hits);
-
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardCancelReset, 6U);
-    }
-
-    TEST_METHOD(TestProcessLeaderboardValuePauseOnReset)
-    {
-        std::array<unsigned char, 2> memory{ 0x05, 0x00 };
-
-        AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
-        std::vector<AchievementRuntime::Change> vChanges;
-        auto* pDefinition = "STA:0xH0000=0::SUB:0xH0000=2::CAN:0xH0000=3::VAL:Q:0xH0001=0_M:0xH0000";
-
-        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
-        pLeaderboard.SetID(6U);
-
-        runtime.ActivateLeaderboard(6U, pDefinition);
-        auto* pLboard = runtime.GetLeaderboardDefinition(6U);
-        pLboard->state = RC_LBOARD_STATE_STARTED; // value not calculated if not started
-        runtime.Process(vChanges);
-        Assert::AreEqual(5U, pLboard->value.value.value);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardUpdated, 6U);
-        vChanges.clear();
-
-        memory.at(1) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual(0U, pLboard->value.value.value);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardUpdated, 6U);
-        vChanges.clear();
-
-        pLeaderboard.SetPauseOnReset(ra::data::models::LeaderboardModel::LeaderboardParts::Value);
-
-        memory.at(1) = 0;
-        runtime.Process(vChanges);
-        Assert::AreEqual(5U, pLboard->value.value.value);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardUpdated, 6U);
-        vChanges.clear();
-
-        memory.at(1) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual(0U, pLboard->value.value.value);
-
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 2U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardUpdated, 6U);
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardValueReset, 6U);
-    }
-
-    TEST_METHOD(TestProcessLeaderboardStartPauseOnTrigger)
-    {
-        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
-
-        AchievementRuntimeHarness runtime;
-        runtime.mockEmulatorContext.MockMemory(memory);
-        std::vector<AchievementRuntime::Change> vChanges;
-        auto* pDefinition = "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001";
-
-        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
-        pLeaderboard.SetID(6U);
-
-        runtime.ActivateLeaderboard(6U, pDefinition);
-        const auto* pLboard = runtime.GetLeaderboardDefinition(6U);
-        runtime.Process(vChanges);
-        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->start.state);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
+        // trigger reset, expect no notification because not watching for one
         memory.at(0) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual((int)RC_TRIGGER_STATE_TRIGGERED, (int)pLboard->start.state);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardStarted, 6U);
-        vChanges.clear();
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
 
-        pLeaderboard.SetPauseOnTrigger(ra::data::models::LeaderboardModel::LeaderboardParts::Start);
+        // no notification if already reset
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
 
+        // disable reset, hitcount should increase, no notification
         memory.at(0) = 0;
-        runtime.Process(vChanges);
-        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->start.state);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
 
+        // trigger reset, watch for notification
+        vmAchievement->SetPauseOnReset(true);
         memory.at(0) = 1;
-        runtime.Process(vChanges);
-        Assert::AreEqual((int)RC_TRIGGER_STATE_TRIGGERED, (int)pLboard->start.state);
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({1U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        runtime.mockFrameEventQueue.Reset();
 
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardStartTriggered, 6U);
+        // already reset, shouldn't get repeated notification
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
     }
 
-    TEST_METHOD(TestProcessLeaderboardSubmitPauseOnTrigger)
+    TEST_METHOD(TestMonitorLeaderboardStartPauseOnReset)
     {
         std::array<unsigned char, 2> memory{ 0x00, 0x00 };
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        std::vector<AchievementRuntime::Change> vChanges;
-        auto* pDefinition = "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001";
+        auto* pLeaderboard = runtime.MockLeaderboard(6U,
+            "STA:0xH0000=0_0xH0000=9_R:0xH0001=1::SUB:0xH0000=1::CAN:0xH0000=2::VAL:0xH0000");
+        auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
 
-        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
-        pLeaderboard.SetID(6U);
+        // impossible start condition - but it should accumulate hits so we can detect a reset.
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsTrue(pLeaderboard->lboard->start.has_hits);
 
-        runtime.ActivateLeaderboard(6U, pDefinition);
-        const auto* pLboard = runtime.GetLeaderboardDefinition(6U);
-        runtime.Process(vChanges);
-        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->submit.state);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        // reset should clear hits, but we're not watching for event yet
+        memory.at(1) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsFalse(pLeaderboard->lboard->start.has_hits);
 
-        memory.at(0) = 2;
-        runtime.Process(vChanges);
-        Assert::AreEqual((int)RC_TRIGGER_STATE_TRIGGERED, (int)pLboard->submit.state);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        // start watching for event and allow hits to accumulate again
+        vmLeaderboard->SetPauseOnReset(ra::data::models::LeaderboardModel::LeaderboardParts::Start);
+        memory.at(1) = 0;
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsTrue(pLeaderboard->lboard->start.has_hits);
 
-        pLeaderboard.SetPauseOnTrigger(ra::data::models::LeaderboardModel::LeaderboardParts::Submit);
+        // reset should clear hits and raise event
+        memory.at(1) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({1U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsFalse(pLeaderboard->lboard->start.has_hits);
+        runtime.mockFrameEventQueue.Reset();
 
-        memory.at(0) = 0;
-        runtime.Process(vChanges);
-        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->submit.state);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        memory.at(0) = 2;
-        runtime.Process(vChanges);
-        Assert::AreEqual((int)RC_TRIGGER_STATE_TRIGGERED, (int)pLboard->submit.state);
-
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardSubmitTriggered, 6U);
+        // persistent reset should not raise event again
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsFalse(pLeaderboard->lboard->start.has_hits);
     }
 
-    TEST_METHOD(TestProcessLeaderboardCancelPauseOnTrigger)
+    TEST_METHOD(TestMonitorLeaderboardSubmitPauseOnReset)
     {
-        std::array<unsigned char, 2> memory{ 0x00, 0x00 };
+        std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
         runtime.mockEmulatorContext.MockMemory(memory);
-        std::vector<AchievementRuntime::Change> vChanges;
-        auto* pDefinition = "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001";
+        auto* pLeaderboard = runtime.MockLeaderboard(6U,
+            "STA:0xH0000=1::SUB:0xH0000=0_0xH0000=9_R:0xH0001=1::CAN:0xH0000=2::VAL:0xH0000");
+        auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
 
-        auto& pLeaderboard = runtime.mockGameContext.Assets().NewLeaderboard();
-        pLeaderboard.SetID(6U);
+        // accumulate hits on submit
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsTrue(pLeaderboard->lboard->submit.has_hits);
 
-        runtime.ActivateLeaderboard(6U, pDefinition);
-        const auto* pLboard = runtime.GetLeaderboardDefinition(6U);
-        runtime.Process(vChanges);
-        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->cancel.state);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        // reset should clear hits, but we're not watching for event yet
+        memory.at(1) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsFalse(pLeaderboard->lboard->submit.has_hits);
 
-        memory.at(0) = 3;
-        runtime.Process(vChanges);
-        Assert::AreEqual((int)RC_TRIGGER_STATE_TRIGGERED, (int)pLboard->cancel.state);
-        Assert::AreEqual({ 0U }, vChanges.size());
+        // start watching for event and allow hits to accumulate again
+        vmLeaderboard->SetPauseOnReset(ra::data::models::LeaderboardModel::LeaderboardParts::Submit);
+        memory.at(1) = 0;
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsTrue(pLeaderboard->lboard->submit.has_hits);
 
-        pLeaderboard.SetPauseOnTrigger(ra::data::models::LeaderboardModel::LeaderboardParts::Cancel);
+        // reset should clear hits and raise event
+        memory.at(1) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({1U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsFalse(pLeaderboard->lboard->submit.has_hits);
+        runtime.mockFrameEventQueue.Reset();
 
-        memory.at(0) = 0;
-        runtime.Process(vChanges);
-        Assert::AreEqual((int)RC_TRIGGER_STATE_ACTIVE, (int)pLboard->cancel.state);
-        Assert::AreEqual({ 0U }, vChanges.size());
-
-        memory.at(0) = 3;
-        runtime.Process(vChanges);
-        Assert::AreEqual((int)RC_TRIGGER_STATE_TRIGGERED, (int)pLboard->cancel.state);
-
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 1U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::LeaderboardCancelTriggered, 6U);
+        // persistent reset should not raise event again
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsFalse(pLeaderboard->lboard->submit.has_hits);
     }
-
-    TEST_METHOD(TestDetectUnsupportedAchievements)
+    
+    TEST_METHOD(TestMonitorLeaderboardCancelPauseOnReset)
     {
-        ra::data::context::mocks::MockConsoleContext mockConsoleContext(Atari2600, L"Atari 2600");
-        Assert::AreEqual(0x7FU, mockConsoleContext.MaxAddress());
-        std::array<unsigned char, 128> memory{};
+        std::array<unsigned char, 2> memory{0x00, 0x00};
 
         AchievementRuntimeHarness runtime;
-        auto& pAch1 = runtime.mockGameContext.Assets().NewAchievement();
-        pAch1.SetTrigger("0xH0000=1");
-        pAch1.UpdateLocalCheckpoint();
-        pAch1.Activate();
-        auto& pAch2 = runtime.mockGameContext.Assets().NewAchievement();
-        pAch2.SetTrigger("0xH0100=1");
-        pAch1.UpdateLocalCheckpoint();
-        pAch2.Activate();
-        auto& pAch3 = runtime.mockGameContext.Assets().NewAchievement();
-        pAch3.SetTrigger("0xH0100=1");
-        pAch1.UpdateLocalCheckpoint();
-
-        Assert::AreEqual(ra::data::models::AssetState::Waiting, pAch1.GetState());
-        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
-        Assert::AreEqual(ra::data::models::AssetState::Waiting, pAch2.GetState());
-        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
-        Assert::AreEqual(ra::data::models::AssetState::Inactive, pAch3.GetState());
-        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
-
-        // no memory registered, can't detect yet
-        runtime.DetectUnsupportedAchievements();
-        Assert::AreEqual(ra::data::models::AssetState::Waiting, pAch1.GetState());
-        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
-        Assert::AreEqual(ra::data::models::AssetState::Waiting, pAch2.GetState());
-        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
-        Assert::AreEqual(ra::data::models::AssetState::Inactive, pAch3.GetState());
-        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
-
-        // unsupported achievements will be detected 100ms after the memory is registered
         runtime.mockEmulatorContext.MockMemory(memory);
-        runtime.mockThreadPool.AdvanceTime(std::chrono::milliseconds(100));
+        auto* pLeaderboard = runtime.MockLeaderboard(6U,
+            "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=0_0xH0000=9_R:0xH0001=1::VAL:0xH0000");
+        auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
 
-        // actually disable the achievements that were flagged
-        std::vector<AchievementRuntime::Change> vChanges;
-        runtime.Process(vChanges);
-        Assert::AreEqual({ 2U }, vChanges.size());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementActivated, pAch1.GetID());
-        AssertChange(vChanges, AchievementRuntime::ChangeType::AchievementDisabled, pAch2.GetID());
+        // accumulate hits on cancel
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsTrue(pLeaderboard->lboard->cancel.has_hits);
 
-        // sync the state
-        pAch1.DoFrame();
-        pAch2.DoFrame();
-        pAch3.DoFrame();
+        // reset should clear hits, but we're not watching for event yet
+        memory.at(1) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsFalse(pLeaderboard->lboard->cancel.has_hits);
 
-        Assert::AreEqual(ra::data::models::AssetState::Active, pAch1.GetState());
-        Assert::AreEqual(std::wstring(), pAch1.GetValidationError());
-        Assert::AreEqual(ra::data::models::AssetState::Disabled, pAch2.GetState());
-        Assert::AreEqual(std::wstring(L"Condition 1: Address 0100 out of range (max 007F)"), pAch2.GetValidationError());
-        Assert::AreEqual(ra::data::models::AssetState::Inactive, pAch3.GetState());
-        Assert::AreEqual(std::wstring(L"Condition 1: Address 0100 out of range (max 007F)"), pAch3.GetValidationError());
+        // start watching for event and allow hits to accumulate again
+        vmLeaderboard->SetPauseOnReset(ra::data::models::LeaderboardModel::LeaderboardParts::Cancel);
+        memory.at(1) = 0;
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsTrue(pLeaderboard->lboard->cancel.has_hits);
+
+        // reset should clear hits and raise event
+        memory.at(1) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({1U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsFalse(pLeaderboard->lboard->cancel.has_hits);
+        runtime.mockFrameEventQueue.Reset();
+
+        // persistent reset should not raise event again
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::IsFalse(pLeaderboard->lboard->cancel.has_hits);
     }
+
+    TEST_METHOD(TestMonitorLeaderboardValuePauseOnReset)
+    {
+        std::array<unsigned char, 3> memory{0x00, 0x00, 0x00};
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        auto* pLeaderboard = runtime.MockLeaderboard(6U,
+            "STA:0xH0000=0::SUB:0xH0000=2::CAN:0xH0000=3::VAL:R:0xH0001=1_M:0xH0002=0");
+        auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
+
+        // start the leaderboard so we can start counting hits on the value
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount()); // started + tracker
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::AreEqual(1U, pLeaderboard->lboard->value.value.value);
+        runtime.ResetEvents();
+
+        // reset should clear hits, but we're not watching for event yet
+        memory.at(1) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({1U}, runtime.GetEventCount()); // tracker updated
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::AreEqual(0U, pLeaderboard->lboard->value.value.value);
+        runtime.ResetEvents();
+
+        // start watching for event and allow hits to accumulate again
+        vmLeaderboard->SetPauseOnReset(ra::data::models::LeaderboardModel::LeaderboardParts::Value);
+        memory.at(1) = 0;
+        runtime.DoFrame();
+        Assert::AreEqual({1U}, runtime.GetEventCount()); // tracker updated
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::AreEqual(1U, pLeaderboard->lboard->value.value.value);
+        runtime.ResetEvents();
+
+        // reset should clear hits and raise event
+        memory.at(1) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({1U}, runtime.GetEventCount()); // tracker updated
+        Assert::AreEqual({1U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::AreEqual(0U, pLeaderboard->lboard->value.value.value);
+        runtime.mockFrameEventQueue.Reset();
+        runtime.ResetEvents();
+
+        // persistent reset should not raise event again
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        Assert::AreEqual(0U, pLeaderboard->lboard->value.value.value);
+    }
+
+    TEST_METHOD(TestMonitorLeaderboardStartPauseOnTrigger)
+    {
+        std::array<unsigned char, 2> memory{0x00, 0x00};
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        auto* pLeaderboard = runtime.MockLeaderboard(6U,
+            "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001");
+        auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
+
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+
+        // start the leaderboard, but we're not watching for event yet
+        memory.at(0) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount()); // started + tracker show
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        runtime.ResetEvents();
+
+        // cancel the leaderboard
+        memory.at(0) = 3;
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount()); // canceled + tracker hide
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        runtime.ResetEvents();
+
+        // let leaderboard transition from waiting to active
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+
+        // start watching for event and restart the leaderboard
+        vmLeaderboard->SetPauseOnTrigger(ra::data::models::LeaderboardModel::LeaderboardParts::Start);
+        memory.at(0) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount()); // started + tracker show
+        Assert::AreEqual({1U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        runtime.mockFrameEventQueue.Reset();
+        runtime.ResetEvents();
+    }
+
+    TEST_METHOD(TestMonitorLeaderboardSubmitPauseOnTrigger)
+    {
+        std::array<unsigned char, 2> memory{0x00, 0x00};
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        auto* pLeaderboard = runtime.MockLeaderboard(6U,
+            "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001");
+        auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
+
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+
+        // start the leaderboard
+        memory.at(0) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount()); // started + tracker show
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        runtime.ResetEvents();
+
+        // submit the leaderboard, but we're not watching for the event yet
+        memory.at(0) = 2;
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount()); // submitted + tracker hide
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        runtime.ResetEvents();
+
+        // let leaderboard transition from waiting to active
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+
+        // start watching for event and restart the leaderboard
+        vmLeaderboard->SetPauseOnTrigger(ra::data::models::LeaderboardModel::LeaderboardParts::Submit);
+        memory.at(0) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount()); // started + tracker show
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        runtime.ResetEvents();
+
+        // submit the leaderboard, expect the event
+        memory.at(0) = 2;
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount()); // submitted + tracker hide
+        Assert::AreEqual({1U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+    }
+
+    TEST_METHOD(TestMonitorLeaderboardCancelPauseOnTrigger)
+    {
+        std::array<unsigned char, 2> memory{0x00, 0x00};
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        auto* pLeaderboard = runtime.MockLeaderboard(6U, "STA:0xH0000=1::SUB:0xH0000=2::CAN:0xH0000=3::VAL:0xH0001");
+        auto* vmLeaderboard = runtime.WrapLeaderboard(pLeaderboard);
+
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+
+        // start the leaderboard
+        memory.at(0) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount()); // started + tracker show
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        runtime.ResetEvents();
+
+        // cancel the leaderboard, but we're not watching for the event yet
+        memory.at(0) = 3;
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount()); // canceled + tracker hide
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+        runtime.ResetEvents();
+
+        // let leaderboard transition from waiting to active
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumResetTriggers());
+
+        // start watching for event and restart the leaderboard
+        vmLeaderboard->SetPauseOnTrigger(ra::data::models::LeaderboardModel::LeaderboardParts::Cancel);
+        memory.at(0) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount()); // started + tracker show
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        runtime.ResetEvents();
+
+        // cancel the leaderboard, expect the event
+        memory.at(0) = 3;
+        runtime.DoFrame();
+        Assert::AreEqual({2U}, runtime.GetEventCount()); // submitted + tracker hide
+        Assert::AreEqual({1U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+    }
+
+    TEST_METHOD(TestDoFrameInvalidAddressDisablesAchievement)
+    {
+        std::array<unsigned char, 2> memory{0x00, 0x00};
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0004=1");
+        runtime.SyncToRuntime();
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+
+        Assert::AreEqual(static_cast<uint8_t>(RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE), pAch6->public_.state);
+        Assert::AreEqual(ra::data::models::AssetState::Waiting, vmAch6->GetState());
+
+        runtime.DoFrame();
+
+        Assert::AreEqual(static_cast<uint8_t>(RC_CLIENT_ACHIEVEMENT_STATE_DISABLED), pAch6->public_.state);
+
+        // model state isn't synced until DoFrame is called.
+        vmAch6->DoFrame();
+        Assert::AreEqual(ra::data::models::AssetState::Disabled, vmAch6->GetState());
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEventNoRichPresence)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L""), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEventLocal)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockLocalAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Local Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEventUnofficial)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        pAch6->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Unofficial Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEventCompatibilityMode)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        runtime.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Test Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEventModified)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        vmAch6->SetTrigger("0xH0000=2");
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Modified Achievement Unlocked LOCALLY"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEventLocalModified)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockLocalAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        vmAch6->SetTrigger("0xH0000=2");
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Modified Local Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEventMemoryModified)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockEmulatorContext.SetMemoryModified();
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked LOCALLY"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Error: RAM tampered with"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEventMemoryInsecureHardcore)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.GetClient()->state.hardcore = 1;
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockEmulatorContext.MockMemoryInsecure(true);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked LOCALLY"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Error: RAM insecure"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEventMemoryInsecureSoftcore)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        runtime.GetClient()->state.hardcore = 0;
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockEmulatorContext.MockMemoryInsecure(true);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEventOffline)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Offline Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEventNoPopup)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::None);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Assert::IsNull(pPopup);
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleAchievementTriggeredEventPauseOnTrigger)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        vmAch6->SetPauseOnTrigger(true);
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
+        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::AreEqual({1U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleChallengeIndicatorShowEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        runtime.WrapAchievement(pAch6);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_SHOW;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetChallengeIndicator(6U);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Challenge, pPopup->GetPopupType());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+    }
+
+    TEST_METHOD(TestHandleChallengeIndicatorShowEventNoPopup)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        runtime.WrapAchievement(pAch6);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge,
+                                                   ra::ui::viewmodels::PopupLocation::None);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_SHOW;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetChallengeIndicator(6U);
+        Assert::IsNull(pPopup);
+    }
+
+    TEST_METHOD(TestHandleChallengeIndicatorHideEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        runtime.WrapAchievement(pAch6);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+        runtime.mockOverlayManager.AddChallengeIndicator(6U, ra::ui::ImageType::Badge, "55223");
+        auto* pPopup = runtime.mockOverlayManager.GetChallengeIndicator(6U);
+        Assert::IsTrue(pPopup != nullptr && !pPopup->IsDestroyPending());
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        pPopup = runtime.mockOverlayManager.GetChallengeIndicator(6U);
+        Assert::IsTrue(pPopup == nullptr || pPopup->IsDestroyPending());
+    }
+
+    TEST_METHOD(TestHandleChallengeIndicatorHideEventNoPopup)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        runtime.WrapAchievement(pAch6);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Challenge,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+        auto* pPopup = runtime.mockOverlayManager.GetChallengeIndicator(6U);
+        Assert::IsNull(pPopup);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        pPopup = runtime.mockOverlayManager.GetChallengeIndicator(6U);
+        Assert::IsNull(pPopup);
+    }
+
+    TEST_METHOD(TestHandleProgressIndicatorShowEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        snprintf(pAch6->public_.measured_progress, sizeof(pAch6->public_.measured_progress), "6/10");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        runtime.WrapAchievement(pAch6);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_SHOW;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetProgressTracker();
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Progress, pPopup->GetPopupType());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345_lock"), pPopup->GetImage().Name());
+        Assert::AreEqual(std::wstring(L"6/10"), pPopup->GetText());
+    }
+
+    TEST_METHOD(TestHandleProgressIndicatorShowEventNoPopup)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        snprintf(pAch6->public_.measured_progress, sizeof(pAch6->public_.measured_progress), "6/10");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        runtime.WrapAchievement(pAch6);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
+                                                   ra::ui::viewmodels::PopupLocation::None);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_SHOW;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetProgressTracker();
+        Assert::IsNull(pPopup);
+    }
+
+    TEST_METHOD(TestHandleProgressIndicatorShowEventLocalBadge)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        snprintf(pAch6->public_.measured_progress, sizeof(pAch6->public_.measured_progress), "6/10");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        auto* vmAch6 = runtime.WrapAchievement(pAch6);
+        vmAch6->SetBadge(L"local\\abcdefg.png");
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_SHOW;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetProgressTracker();
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Progress, pPopup->GetPopupType());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("local\\abcdefg.png"), pPopup->GetImage().Name());
+        Assert::AreEqual(std::wstring(L"6/10"), pPopup->GetText());
+    }
+
+    TEST_METHOD(TestHandleProgressIndicatorUpdateEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        snprintf(pAch6->public_.measured_progress, sizeof(pAch6->public_.measured_progress), "6/10");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        runtime.WrapAchievement(pAch6);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+        runtime.mockOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge, "000001", L"4/10");
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_UPDATE;
+        event.achievement = &pAch6->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetProgressTracker();
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Progress, pPopup->GetPopupType());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345_lock"), pPopup->GetImage().Name());
+        Assert::AreEqual(std::wstring(L"6/10"), pPopup->GetText());
+    }
+
+    TEST_METHOD(TestHandleProgressIndicatorHideEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        snprintf(pAch6->public_.measured_progress, sizeof(pAch6->public_.measured_progress), "6/10");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        runtime.WrapAchievement(pAch6);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+        runtime.mockOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge, "000001", L"4/10");
+        auto* pPopup = runtime.mockOverlayManager.GetProgressTracker();
+        Assert::IsTrue(pPopup != nullptr && !pPopup->IsDestroyPending());
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_PROGRESS_INDICATOR_HIDE;
+        runtime.RaiseEvent(event);
+
+        pPopup = runtime.mockOverlayManager.GetProgressTracker();
+        Assert::IsTrue(pPopup == nullptr || pPopup->IsDestroyPending());
+    }
+    
+    TEST_METHOD(TestHandleGameCompletedEventHardcore)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.MockAchievement(6U, "0xH0000=1")->public_.points = 5;
+        runtime.MockAchievement(7U, "0xH0000=1")->public_.points = 1;
+        runtime.MockAchievement(8U, "0xH0000=1")->public_.points = 1;
+        runtime.MockAchievement(9U, "0xH0000=1")->public_.points = 3;
+        runtime.MockAchievement(10U, "0xH0000=1")->public_.points = 10;
+        runtime.MockAchievement(11U, "0xH0000=1")->public_.points = 5;
+        runtime.MockAchievement(12U, "0xH0000=1")->public_.points = 10;
+        runtime.MockAchievement(13U, "0xH0000=1")->public_.points = 5;
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery,
+                                                   ra::ui::viewmodels::PopupLocation::TopMiddle);
+        runtime.mockSessionTracker.MockSession(1U, time(NULL), std::chrono::seconds(20000));
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_GAME_COMPLETED;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Mastery, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Mastered Game Title"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"8 achievements, 40 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"UserDisplay | Play time: 5h33m"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Icon, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleGameCompletedEventSoftcore)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        runtime.MockAchievement(6U, "0xH0000=1")->public_.points = 5;
+        runtime.MockAchievement(7U, "0xH0000=1")->public_.points = 1;
+        runtime.MockAchievement(8U, "0xH0000=1")->public_.points = 1;
+        runtime.MockAchievement(9U, "0xH0000=1")->public_.points = 3;
+        runtime.MockAchievement(10U, "0xH0000=1")->public_.points = 10;
+        runtime.MockAchievement(11U, "0xH0000=1")->public_.points = 5;
+        runtime.MockAchievement(12U, "0xH0000=1")->public_.points = 10;
+        runtime.MockAchievement(13U, "0xH0000=1")->public_.points = 5;
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Mastery,
+                                                   ra::ui::viewmodels::PopupLocation::TopMiddle);
+        runtime.mockSessionTracker.MockSession(1U, time(NULL), std::chrono::seconds(20000));
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_GAME_COMPLETED;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Mastery, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Completed Game Title"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"8 achievements, 40 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"UserDisplay | Play time: 5h33m"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::Icon, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
+    }
+
+    TEST_METHOD(TestHandleLeaderboardStartedEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        auto *pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        runtime.WrapLeaderboard(pLbd4);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_STARTED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::LeaderboardStarted, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Leaderboard attempt started"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 4"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::None, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string(), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lb.wav"));
+    }
+
+    TEST_METHOD(TestHandleLeaderboardStartedEventNoPopup)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        runtime.WrapLeaderboard(pLbd4);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted,
+                                                   ra::ui::viewmodels::PopupLocation::None);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_STARTED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Assert::IsNull(pPopup);
+    }
+
+    TEST_METHOD(TestHandleLeaderboardFailedEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        runtime.WrapLeaderboard(pLbd4);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled,
+                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_FAILED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::LeaderboardCanceled, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Leaderboard attempt failed"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Description 4"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::None, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string(), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\lbcancel.wav"));
+    }
+
+    TEST_METHOD(TestHandleLeaderboardFailedEventNoPopup)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        runtime.WrapLeaderboard(pLbd4);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled,
+                                                   ra::ui::viewmodels::PopupLocation::None);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_FAILED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Assert::IsNull(pPopup);
+    }
+
+    TEST_METHOD(TestHandleLeaderboardSubmittedEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        pLbd4->public_.tracker_value = "1:23.45";
+        runtime.WrapLeaderboard(pLbd4);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        // Submitted event doesn't do anything unless a problem occurs - scoreboard event is used instead
+        Assert::IsNull(runtime.mockOverlayManager.GetMessage(1));
+        Assert::IsNull(runtime.mockOverlayManager.GetScoreboard(4U));
+    }
+
+private:
+    void AssertSimpleScoreboard(AchievementRuntimeHarness& runtime, ra::LeaderboardID nId)
+    {
+        auto* pScoreboard = runtime.mockOverlayManager.GetScoreboard(nId);
+        Assert::IsNotNull(pScoreboard);
+        Ensures(pScoreboard != nullptr);
+
+        Assert::AreEqual(ra::ui::viewmodels::Popup::LeaderboardScoreboard, pScoreboard->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pScoreboard->GetHeaderText());
+        Assert::AreEqual({1U}, pScoreboard->Entries().Count());
+
+        const auto* pEntry = pScoreboard->Entries().GetItemAt(0);
+        Expects(pEntry != nullptr);
+        Assert::AreEqual(0, pEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"1:23.45"), pEntry->GetScore());
+        Assert::AreEqual(std::wstring(L"User_"), pEntry->GetUserName());
+        Assert::IsTrue(pEntry->IsHighlighted());
+    }
+
+public:
+    TEST_METHOD(TestHandleLeaderboardSubmittedEventLocal)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        auto* pLbd4 = runtime.MockLocalLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        pLbd4->public_.tracker_value = "1:23.45";
+        runtime.WrapLeaderboard(pLbd4);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Message, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Local Leaderboard Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Local leaderboards are not submitted."), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::None, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string(), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        AssertSimpleScoreboard(runtime, 4U);
+    }
+
+    TEST_METHOD(TestHandleLeaderboardSubmittedEventCompatibilityMode)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        pLbd4->public_.tracker_value = "1:23.45";
+        runtime.WrapLeaderboard(pLbd4);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Message, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Leaderboard Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Leaderboards are not submitted in compatibility test mode."), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::None, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string(), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        AssertSimpleScoreboard(runtime, 4U);
+    }
+
+    TEST_METHOD(TestHandleLeaderboardSubmittedEventModified)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        pLbd4->public_.tracker_value = "1:23.45";
+        auto* vmLbd4 = runtime.WrapLeaderboard(pLbd4);
+        vmLbd4->SetDescription(L"Modified Description");
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Message, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Modified Leaderboard Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Modified leaderboards are not submitted."), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::None, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string(), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        AssertSimpleScoreboard(runtime, 4U);
+    }
+
+    TEST_METHOD(TestHandleLeaderboardSubmittedEventUnpublished)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        pLbd4->public_.tracker_value = "1:23.45";
+        auto* vmLbd4 = runtime.WrapLeaderboard(pLbd4);
+        vmLbd4->SetDescription(L"Modified Description");
+        vmLbd4->UpdateLocalCheckpoint();
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Message, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Modified Leaderboard Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Modified leaderboards are not submitted."), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::None, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string(), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        AssertSimpleScoreboard(runtime, 4U);
+    }
+
+    TEST_METHOD(TestHandleLeaderboardSubmittedEventModifiedMemory)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        pLbd4->public_.tracker_value = "1:23.45";
+        runtime.WrapLeaderboard(pLbd4);
+        runtime.mockEmulatorContext.MockMemoryModified(true);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Message, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Leaderboard Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Error: RAM tampered with"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::None, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string(), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        AssertSimpleScoreboard(runtime, 4U);
+    }
+
+    TEST_METHOD(TestHandleLeaderboardSubmittedEventSoftcore)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        pLbd4->public_.tracker_value = "1:23.45";
+        runtime.WrapLeaderboard(pLbd4);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Message, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Leaderboard Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Submission requires Hardcore mode"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::None, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string(), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        AssertSimpleScoreboard(runtime, 4U);
+    }
+   
+    TEST_METHOD(TestHandleLeaderboardSubmittedEventMemoryInsecure)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        pLbd4->public_.tracker_value = "1:23.45";
+        runtime.WrapLeaderboard(pLbd4);
+        runtime.mockEmulatorContext.MockMemoryInsecure(true);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Message, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Leaderboard Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Error: RAM insecure"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::None, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string(), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        AssertSimpleScoreboard(runtime, 4U);
+    }
+
+    TEST_METHOD(TestHandleLeaderboardSubmittedEventOffline)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        pLbd4->public_.tracker_value = "1:23.45";
+        runtime.WrapLeaderboard(pLbd4);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED;
+        event.leaderboard = &pLbd4->public_;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Message, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Leaderboard Submitted"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Leaderboards are not submitted in offline mode."), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::None, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string(), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\info.wav"));
+
+        AssertSimpleScoreboard(runtime, 4U);
+    }
+
+    TEST_METHOD(TestHandleLeaderboardTrackerShowEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_leaderboard_tracker_t tracker;
+        memset(&tracker, 0, sizeof(tracker));
+        snprintf(tracker.display, sizeof(tracker.display), "1:23.45");
+        tracker.id = 1;
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_TRACKER_SHOW;
+        event.leaderboard_tracker = &tracker;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetScoreTracker(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::LeaderboardTracker, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"1:23.45"), pPopup->GetDisplayText());
+    }
+
+    TEST_METHOD(TestHandleLeaderboardTrackerShowEventNoPopup)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+                                                   ra::ui::viewmodels::PopupLocation::None);
+
+        rc_client_leaderboard_tracker_t tracker;
+        memset(&tracker, 0, sizeof(tracker));
+        snprintf(tracker.display, sizeof(tracker.display), "1:23.45");
+        tracker.id = 1;
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_TRACKER_SHOW;
+        event.leaderboard_tracker = &tracker;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetScoreTracker(1);
+        Assert::IsNull(pPopup);
+    }
+
+    TEST_METHOD(TestHandleLeaderboardTrackerUpdateEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+        runtime.mockOverlayManager.AddScoreTracker(1U).SetDisplayText(L"XXX");
+
+        rc_client_leaderboard_tracker_t tracker;
+        memset(&tracker, 0, sizeof(tracker));
+        snprintf(tracker.display, sizeof(tracker.display), "1:23.45");
+        tracker.id = 1;
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_TRACKER_UPDATE;
+        event.leaderboard_tracker = &tracker;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetScoreTracker(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::LeaderboardTracker, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"1:23.45"), pPopup->GetDisplayText());
+    }
+
+    TEST_METHOD(TestHandleLeaderboardTrackerUpdateEventNoPopup)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+                                                   ra::ui::viewmodels::PopupLocation::None);
+
+        rc_client_leaderboard_tracker_t tracker;
+        memset(&tracker, 0, sizeof(tracker));
+        snprintf(tracker.display, sizeof(tracker.display), "1:23.45");
+        tracker.id = 1;
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_TRACKER_UPDATE;
+        event.leaderboard_tracker = &tracker;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetScoreTracker(1);
+        Assert::IsNull(pPopup);
+    }
+
+    TEST_METHOD(TestHandleLeaderboardTrackerHideEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+        runtime.mockOverlayManager.AddScoreTracker(1U).SetDisplayText(L"XXX");
+
+        rc_client_leaderboard_tracker_t tracker;
+        memset(&tracker, 0, sizeof(tracker));
+        snprintf(tracker.display, sizeof(tracker.display), "1:23.45");
+        tracker.id = 1;
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE;
+        event.leaderboard_tracker = &tracker;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetScoreTracker(1);
+        Assert::IsTrue(pPopup == nullptr || pPopup->IsDestroyPending());
+    }
+
+    TEST_METHOD(TestHandleLeaderboardScoreboardEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_leaderboard_scoreboard_entry_t entries[3];
+        memset(entries, 0, sizeof(entries));
+        rc_client_leaderboard_scoreboard_t scoreboard;
+        memset(&scoreboard, 0, sizeof(scoreboard));
+        scoreboard.leaderboard_id = 4U;
+        scoreboard.new_rank = 2;
+        snprintf(scoreboard.best_score, sizeof(scoreboard.best_score), "1:20.00");
+        snprintf(scoreboard.submitted_score, sizeof(scoreboard.submitted_score), "1:23.45");
+        scoreboard.num_entries = 3;
+        scoreboard.num_top_entries = 3;
+        scoreboard.top_entries = entries;
+        entries[0].rank = 1;
+        snprintf(entries[0].score, sizeof(entries[0].score), "1:19.55");
+        entries[0].username = "Bob";
+        entries[1].rank = 2;
+        snprintf(entries[1].score, sizeof(entries[0].score), "1:20.00");
+        entries[1].username = "User_";
+        entries[2].rank = 3;
+        snprintf(entries[2].score, sizeof(entries[0].score), "1:20.12");
+        entries[2].username = "Tara";
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_SCOREBOARD;
+        event.leaderboard = &pLbd4->public_;
+        event.leaderboard_scoreboard = &scoreboard;
+        runtime.RaiseEvent(event);
+
+        auto* pScoreboard = runtime.mockOverlayManager.GetScoreboard(4U);
+        Assert::IsNotNull(pScoreboard);
+        Ensures(pScoreboard != nullptr);
+
+        Assert::AreEqual(ra::ui::viewmodels::Popup::LeaderboardScoreboard, pScoreboard->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pScoreboard->GetHeaderText());
+        Assert::AreEqual({3U}, pScoreboard->Entries().Count());
+
+        const auto* pEntry = pScoreboard->Entries().GetItemAt(0);
+        Expects(pEntry != nullptr);
+        Assert::AreEqual(1, pEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"1:19.55"), pEntry->GetScore());
+        Assert::AreEqual(std::wstring(L"Bob"), pEntry->GetUserName());
+        Assert::IsFalse(pEntry->IsHighlighted());
+
+        pEntry = pScoreboard->Entries().GetItemAt(1);
+        Expects(pEntry != nullptr);
+        Assert::AreEqual(2, pEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"(1:23.45) 1:20.00"), pEntry->GetScore());
+        Assert::AreEqual(std::wstring(L"User_"), pEntry->GetUserName());
+        Assert::IsTrue(pEntry->IsHighlighted());
+
+        pEntry = pScoreboard->Entries().GetItemAt(2);
+        Expects(pEntry != nullptr);
+        Assert::AreEqual(3, pEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"1:20.12"), pEntry->GetScore());
+        Assert::AreEqual(std::wstring(L"Tara"), pEntry->GetUserName());
+        Assert::IsFalse(pEntry->IsHighlighted());
+    }
+
+    TEST_METHOD(TestHandleLeaderboardScoreboardEventNoPopup)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+                                                   ra::ui::viewmodels::PopupLocation::None);
+
+        rc_client_leaderboard_scoreboard_entry_t entries[3];
+        memset(entries, 0, sizeof(entries));
+        rc_client_leaderboard_scoreboard_t scoreboard;
+        memset(&scoreboard, 0, sizeof(scoreboard));
+        scoreboard.leaderboard_id = 4U;
+        scoreboard.new_rank = 2;
+        snprintf(scoreboard.best_score, sizeof(scoreboard.best_score), "1:20.00");
+        snprintf(scoreboard.submitted_score, sizeof(scoreboard.submitted_score), "1:23.45");
+        scoreboard.num_entries = 3;
+        scoreboard.num_top_entries = 3;
+        scoreboard.top_entries = entries;
+        entries[0].rank = 1;
+        snprintf(entries[0].score, sizeof(entries[0].score), "1:19.55");
+        entries[0].username = "Bob";
+        entries[1].rank = 2;
+        snprintf(entries[1].score, sizeof(entries[1].score), "1:20.00");
+        entries[1].username = "User_";
+        entries[2].rank = 3;
+        snprintf(entries[2].score, sizeof(entries[2].score), "1:20.12");
+        entries[2].username = "Tara";
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_SCOREBOARD;
+        event.leaderboard = &pLbd4->public_;
+        event.leaderboard_scoreboard = &scoreboard;
+        runtime.RaiseEvent(event);
+
+        auto* pScoreboard = runtime.mockOverlayManager.GetScoreboard(4U);
+        Assert::IsNull(pScoreboard);
+    }
+
+    TEST_METHOD(TestHandleLeaderboardScoreboardEventPlayerNotInTopEntries)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        auto* pLbd4 = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        rc_client_leaderboard_scoreboard_entry_t entries[7];
+        memset(entries, 0, sizeof(entries));
+        rc_client_leaderboard_scoreboard_t scoreboard;
+        memset(&scoreboard, 0, sizeof(scoreboard));
+        scoreboard.leaderboard_id = 4U;
+        scoreboard.new_rank = 27;
+        snprintf(scoreboard.best_score, sizeof(scoreboard.best_score), "1:20.00");
+        snprintf(scoreboard.submitted_score, sizeof(scoreboard.submitted_score), "1:23.45");
+        scoreboard.num_entries = 31;
+        scoreboard.num_top_entries = 7;
+        scoreboard.top_entries = entries;
+        entries[0].rank = 1;
+        snprintf(entries[0].score, sizeof(entries[0].score), "0:56.55");
+        entries[0].username = "Bob";
+        entries[1].rank = 2;
+        snprintf(entries[1].score, sizeof(entries[1].score), "0:57.00");
+        entries[1].username = "Calvin";
+        entries[2].rank = 3;
+        snprintf(entries[2].score, sizeof(entries[2].score), "0:57.12");
+        entries[2].username = "Debbie";
+        entries[3].rank = 4;
+        snprintf(entries[3].score, sizeof(entries[3].score), "0:58.22");
+        entries[3].username = "Erin";
+        entries[4].rank = 4;
+        snprintf(entries[4].score, sizeof(entries[4].score), "0:58.22");
+        entries[4].username = "Frank";
+        entries[5].rank = 6;
+        snprintf(entries[5].score, sizeof(entries[5].score), "0:59.88");
+        entries[5].username = "George";
+        entries[6].rank = 7;
+        snprintf(entries[6].score, sizeof(entries[6].score), "1:00.41");
+        entries[6].username = "Harry";
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_LEADERBOARD_SCOREBOARD;
+        event.leaderboard = &pLbd4->public_;
+        event.leaderboard_scoreboard = &scoreboard;
+        runtime.RaiseEvent(event);
+
+        auto* pScoreboard = runtime.mockOverlayManager.GetScoreboard(4U);
+        Assert::IsNotNull(pScoreboard);
+        Ensures(pScoreboard != nullptr);
+
+        Assert::AreEqual(ra::ui::viewmodels::Popup::LeaderboardScoreboard, pScoreboard->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pScoreboard->GetHeaderText());
+        Assert::AreEqual({7U}, pScoreboard->Entries().Count());
+
+        const auto* pEntry = pScoreboard->Entries().GetItemAt(0);
+        Expects(pEntry != nullptr);
+        Assert::AreEqual(1, pEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"0:56.55"), pEntry->GetScore());
+        Assert::AreEqual(std::wstring(L"Bob"), pEntry->GetUserName());
+        Assert::IsFalse(pEntry->IsHighlighted());
+
+        pEntry = pScoreboard->Entries().GetItemAt(1);
+        Expects(pEntry != nullptr);
+        Assert::AreEqual(2, pEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"0:57.00"), pEntry->GetScore());
+        Assert::AreEqual(std::wstring(L"Calvin"), pEntry->GetUserName());
+        Assert::IsFalse(pEntry->IsHighlighted());
+
+        pEntry = pScoreboard->Entries().GetItemAt(2);
+        Expects(pEntry != nullptr);
+        Assert::AreEqual(3, pEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"0:57.12"), pEntry->GetScore());
+        Assert::AreEqual(std::wstring(L"Debbie"), pEntry->GetUserName());
+        Assert::IsFalse(pEntry->IsHighlighted());
+
+        pEntry = pScoreboard->Entries().GetItemAt(3);
+        Expects(pEntry != nullptr);
+        Assert::AreEqual(4, pEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"0:58.22"), pEntry->GetScore());
+        Assert::AreEqual(std::wstring(L"Erin"), pEntry->GetUserName());
+        Assert::IsFalse(pEntry->IsHighlighted());
+
+        pEntry = pScoreboard->Entries().GetItemAt(4);
+        Expects(pEntry != nullptr);
+        Assert::AreEqual(4, pEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"0:58.22"), pEntry->GetScore());
+        Assert::AreEqual(std::wstring(L"Frank"), pEntry->GetUserName());
+        Assert::IsFalse(pEntry->IsHighlighted());
+
+        pEntry = pScoreboard->Entries().GetItemAt(5);
+        Expects(pEntry != nullptr);
+        Assert::AreEqual(6, pEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"0:59.88"), pEntry->GetScore());
+        Assert::AreEqual(std::wstring(L"George"), pEntry->GetUserName());
+        Assert::IsFalse(pEntry->IsHighlighted());
+
+        pEntry = pScoreboard->Entries().GetItemAt(6);
+        Expects(pEntry != nullptr);
+        Assert::AreEqual(27, pEntry->GetRank());
+        Assert::AreEqual(std::wstring(L"(1:23.45) 1:20.00"), pEntry->GetScore());
+        Assert::AreEqual(std::wstring(L"User_"), pEntry->GetUserName());
+        Assert::IsTrue(pEntry->IsHighlighted());
+    }
+
+    // TODO: TestHandleServerError
+
+    TEST_METHOD(TestHandleResetEvent)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker,
+                                                   ra::ui::viewmodels::PopupLocation::BottomRight);
+
+        bool bWasReset = false;
+        runtime.mockEmulatorContext.SetResetFunction([&bWasReset]() { bWasReset = true; });
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_RESET;
+        runtime.RaiseEvent(event);
+
+        Assert::IsTrue(bWasReset);
+    }
+
 };
 
 } // namespace tests

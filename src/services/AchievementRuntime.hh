@@ -6,24 +6,25 @@
 
 #include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
+#include "data\models\AchievementModel.hh"
+#include "data\models\LeaderboardModel.hh"
 
 #include "services\TextReader.hh"
 
 #include <string>
 
-#include <rcheevos\include\rcheevos.h>
+#include <rcheevos\include\rc_client.h>
+
+struct rc_api_fetch_game_data_response_t;
 
 namespace ra {
 namespace services {
 
-class AchievementRuntime : protected ra::data::context::EmulatorContext::NotifyTarget
+class AchievementRuntime
 {
 public:
-    GSL_SUPPRESS_F6 AchievementRuntime() = default;
-    virtual ~AchievementRuntime()
-    {
-        ResetRuntime();
-    }
+    GSL_SUPPRESS_F6 AchievementRuntime();
+    virtual ~AchievementRuntime();
 
     AchievementRuntime(const AchievementRuntime&) noexcept = delete;
     AchievementRuntime& operator=(const AchievementRuntime&) noexcept = delete;
@@ -31,97 +32,49 @@ public:
     AchievementRuntime& operator=(AchievementRuntime&&) noexcept = delete;
 
     /// <summary>
+    /// Shuts down the runtime.
+    /// </summary>
+    void Shutdown() noexcept;
+
+    /// <summary>
+    /// Gets the underlying rc_client object for directly calling into rcheevos.
+    /// </summary>
+    rc_client_t* GetClient() const noexcept { return m_pClient.get(); }
+
+    void BeginLoginWithToken(const std::string& sUsername, const std::string& sApiToken,
+                             rc_client_callback_t fCallback, void* pCallbackData);
+    void BeginLoginWithPassword(const std::string& sUsername, const std::string& sPassword,
+                                rc_client_callback_t fCallback, void* pCallbackData);
+
+    void BeginLoadGame(const std::string& sHash, unsigned id,
+                       rc_client_callback_t fCallback, void* pCallbackData);
+
+    /// <summary>
+    /// Syncs data in Assets to rc_client.
+    /// </summary>
+    void SyncAssets();
+
+    /// <summary>
     /// Clears all active achievements/leaderboards/rich presence from the runtime.
     /// </summary>
-    void ResetRuntime() noexcept;
+    void ResetRuntime();
 
     /// <summary>
-    /// Adds an achievement to the processing queue.
-    /// </summary>
-    int ActivateAchievement(ra::AchievementID nId, const std::string& sTrigger);
-
-    /// <summary>
-    /// Removes an achievement from the processing queue.
-    /// </summary>
-    void DeactivateAchievement(ra::AchievementID nId);
-
-    /// <summary>
-    /// Updates any references using the provided ID to a new value
+    /// Updates any references using the provided ID to a new value.
     /// </summary>
     void UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId);
 
     /// <summary>
-    /// Gets the raw trigger for the achievement (if active)
+    /// Gets the raw trigger for the achievement.
     /// </summary>
-    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) noexcept
-    {
-        if (!m_bInitialized)
-            return nullptr;
-
-        return rc_runtime_get_achievement(&m_pRuntime, nId);
-    }
+    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const;
 
     /// <summary>
-    /// Gets the raw trigger for the achievement (if active)
+    /// Gets the raw definition for the leaderboard.
     /// </summary>
-    const rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const noexcept
-    {
-        if (!m_bInitialized)
-            return nullptr;
+    rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) const;
 
-        return rc_runtime_get_achievement(&m_pRuntime, nId);
-    }
-
-    /// <summary>
-    /// Gets the raw trigger for the achievement (if ever active)
-    /// </summary>
-    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId, const std::string& sTrigger);
-
-    /// <summary>
-    /// Gets the raw trigger for the achievement (if active)
-    /// </summary>
-    rc_trigger_t* DetachAchievementTrigger(ra::AchievementID nId);
-
-    /// <summary>
-    /// Removes an achievement from the processing queue.
-    /// </summary>
-    void ReleaseAchievementTrigger(ra::AchievementID nId, _In_ rc_trigger_t* pTrigger);
-
-    /// <summary>
-    /// Adds a leaderboard to the processing queue.
-    /// </summary>
-    int ActivateLeaderboard(unsigned int nId, const std::string& sDefinition);
-
-    /// <summary>
-    /// Removes a leaderboard from the processing queue.
-    /// </summary>
-    void DeactivateLeaderboard(unsigned int nId) noexcept
-    {
-        if (m_bInitialized)
-            rc_runtime_deactivate_lboard(&m_pRuntime, nId);
-    }
-
-    /// <summary>
-    /// Gets the raw definition for the leaderboard (if active)
-    /// </summary>
-    rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) noexcept
-    {
-        if (!m_bInitialized)
-            return nullptr;
-
-        return rc_runtime_get_lboard(&m_pRuntime, nId);
-    }
-
-    /// <summary>
-    /// Gets the raw definition for the leaderboard (if active)
-    /// </summary>
-    const rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) const noexcept
-    {
-        if (!m_bInitialized)
-            return nullptr;
-
-        return rc_runtime_get_lboard(&m_pRuntime, nId);
-    }
+    void ReleaseLeaderboardTracker(ra::LeaderboardID nId);
 
     /// <summary>
     /// Specifies the rich presence to process each frame.
@@ -133,67 +86,19 @@ public:
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
     /// </summary>
-    bool HasRichPresence() const noexcept
-    {
-        if (!m_bInitialized)
-            return false;
-
-        /* valid rich presence */
-        if (m_pRuntime.richpresence != nullptr && m_pRuntime.richpresence->richpresence != nullptr)
-            return true;
-
-        /* invalid rich presence */
-        if (m_nRichPresenceParseResult != RC_OK)
-            return true;
-
-        /* no rich presence */
-        return false;
-    }
+    bool HasRichPresence() const;
 
     /// <summary>
     /// Gets the current rich presence display string.
     /// </summary>
     std::wstring GetRichPresenceDisplayString() const;
 
-
-    enum class ChangeType
-    {
-        None = 0,
-        AchievementTriggered,
-        AchievementReset,
-        AchievementPaused,
-        LeaderboardStarted,
-        LeaderboardCanceled,
-        LeaderboardUpdated,
-        LeaderboardTriggered,
-        AchievementDisabled,
-        LeaderboardDisabled,
-        AchievementPrimed,
-        AchievementActivated,
-        AchievementUnprimed,
-        AchievementProgressChanged,
-
-        // runtime only changes
-        LeaderboardStartReset,
-        LeaderboardSubmitReset,
-        LeaderboardCancelReset,
-        LeaderboardValueReset,
-        LeaderboardStartTriggered,
-        LeaderboardSubmitTriggered,
-        LeaderboardCancelTriggered,
-    };
-
-    struct Change
-    {
-        ChangeType nType;
-        unsigned int nId;
-        int nValue;
-    };
+    void InvalidateAddress(ra::ByteAddress nAddress) noexcept;
 
     /// <summary>
     /// Processes all active achievements for the current frame.
     /// </summary>
-    virtual void Process(_Inout_ std::vector<Change>& changes);
+    void DoFrame();
 
     /// <summary>
     /// Loads HitCount data for active achievements from a save state file.
@@ -207,7 +112,7 @@ public:
     /// </summary>
     /// <param name="pBuffer">The buffer to read from.</param>
     /// <returns><c>true</c> if the achievement HitCounts were modified, <c>false</c> if not.</returns>
-    bool LoadProgressFromBuffer(const char* pBuffer);
+    bool LoadProgressFromBuffer(const uint8_t* pBuffer);
 
     /// <summary>
     /// Writes HitCount data for active achievements to a save state file.
@@ -225,7 +130,7 @@ public:
     /// nBufferSize - in which case the caller should allocate the specified amount
     /// and call again.
     /// </returns>
-    int SaveProgressToBuffer(char* pBuffer, int nBufferSize) const;
+    int SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) const;
 
     /// <summary>
     /// Gets whether achievement processing is temporarily suspended.
@@ -237,32 +142,111 @@ public:
     /// </summary>
     void SetPaused(bool bValue) noexcept { m_bPaused = bValue; }
 
-    /// <summary>
-    /// Resets any active achievements and disables them until their triggers are false.
-    /// </summary>
-    void ResetActiveAchievements();
+    class Synchronizer
+    {
+    public:
+        void Wait()
+        {
+#ifdef RA_UTEST
+            // unit tests are single-threaded. if m_bWaiting is true, it would wait indefinitely.
+            if (m_bWaiting)
+                Microsoft::VisualStudio::CppUnitTestFramework::Assert::Fail(L"Sycnhronous request was not handled.");
+#else
+            std::unique_lock<std::mutex> lock(m_pMutex);
+            if (m_bWaiting)
+                m_pCondVar.wait(lock);
+#endif
+        }
 
-    void InvalidateAddress(ra::ByteAddress nAddress) noexcept;
+        void Notify() noexcept
+        {
+            m_bWaiting = false;
+            m_pCondVar.notify_all();
+        }
 
-    size_t DetectUnsupportedAchievements();
+        void SetErrorMessage(const std::string& sErrorMessage) { m_sErrorMessage = sErrorMessage; }
 
-protected:
-    bool m_bPaused = false;
-    rc_runtime_t m_pRuntime{};
-    mutable std::mutex m_pMutex;
+        const std::string& GetErrorMessage() const noexcept { return m_sErrorMessage; }
 
-    // EmulatorContext::NotifyTarget
-    void OnTotalMemorySizeChanged() override;
+    private:
+        std::mutex m_pMutex;
+        std::condition_variable m_pCondVar;
+        std::string m_sErrorMessage;
+        bool m_bWaiting = true;
+    };
+
+    void AttachMemory(void* pMemory);
+    bool DetachMemory(void* pMemory);
 
 private:
-    bool LoadProgressV1(const std::string& sProgress, std::set<unsigned int>& vProcessedAchievementIds);
-    bool LoadProgressV2(ra::services::TextReader& pFile, std::set<unsigned int>& vProcessedAchievementIds);
+    bool m_bPaused = false;
+    std::unique_ptr<rc_client_t> m_pClient;
 
-    void EnsureInitialized() noexcept;
+    class ClientSynchronizer;
+    std::unique_ptr<ClientSynchronizer> m_pClientSynchronizer;
 
     int m_nRichPresenceParseResult = RC_OK;
     int m_nRichPresenceErrorLine = 0;
-    bool m_bInitialized = false;
+
+    static void LogMessage(const char* sMessage, const rc_client_t* pClient);
+    static uint32_t ReadMemory(uint32_t nAddress, uint8_t* pBuffer, uint32_t nBytes, rc_client_t* pClient);
+    static void ServerCallAsync(const rc_api_request_t* pRequest, rc_client_server_callback_t fCallback,
+                                void* pCallbackData, rc_client_t* pClient);
+    static void EventHandler(const rc_client_event_t* pEvent, rc_client_t* pClient);
+
+    class CallbackWrapper
+    {
+    public:
+        CallbackWrapper(rc_client_t* client, rc_client_callback_t callback, void* callback_userdata) noexcept :
+            m_pClient(client), m_fCallback(callback), m_pCallbackUserdata(callback_userdata)
+        {}
+
+        void DoCallback(int nResult, const char* sErrorMessage) noexcept
+        {
+            m_fCallback(nResult, sErrorMessage, m_pClient, m_pCallbackUserdata);
+        }
+
+        static void Dispatch(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata)
+        {
+            auto* pWrapper = static_cast<CallbackWrapper*>(pUserdata);
+            Expects(pWrapper != nullptr);
+
+            pWrapper->DoCallback(nResult, sErrorMessage);
+
+            delete pWrapper;
+        }
+
+    private:
+        rc_client_t* m_pClient;
+        rc_client_callback_t m_fCallback;
+        void* m_pCallbackUserdata;
+    };
+
+    friend class AchievementRuntimeExports;
+
+    rc_client_async_handle_t* BeginLoginWithPassword(const char* sUsername, const char* sPassword,
+                                                     CallbackWrapper* pCallbackWrapper) noexcept;
+    rc_client_async_handle_t* BeginLoginWithToken(const char* sUsername, const char* sApiToken,
+                                                  CallbackWrapper* pCallbackWrapper) noexcept;
+    static void LoginCallback(int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata);
+
+    class LoadGameCallbackWrapper : public CallbackWrapper
+    {
+    public:
+        LoadGameCallbackWrapper(rc_client_t* client, rc_client_callback_t callback, void* callback_userdata) noexcept :
+            CallbackWrapper(client, callback, callback_userdata)
+        {}
+
+        std::map<uint32_t, std::string> m_mAchievementDefinitions;
+        std::map<uint32_t, std::string> m_mLeaderboardDefinitions;
+    };
+
+    rc_client_async_handle_t* BeginLoadGame(const char* sHash, unsigned id, CallbackWrapper* pCallbackWrapper) noexcept;
+    static void LoadGameCallback(int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata);
+
+    static void PostProcessGameDataResponse(const rc_api_server_response_t* server_response,
+                                            struct rc_api_fetch_game_data_response_t* game_data_response,
+                                            rc_client_t* client, void* pUserdata);
 };
 
 } // namespace services

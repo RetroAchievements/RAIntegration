@@ -405,9 +405,6 @@
     <ClCompile Include="ui\viewmodels\ProgressTrackerViewModel.cpp">
       <Filter>UI\ViewModels</Filter>
     </ClCompile>
-    <ClCompile Include="services\RcheevosClient.cpp">
-      <Filter>Services</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="RA_Resource.h">
@@ -985,9 +982,6 @@
     </ClInclude>
     <ClInclude Include="ui\viewmodels\ProgressTrackerViewModel.hh">
       <Filter>UI\ViewModels</Filter>
-    </ClInclude>
-    <ClInclude Include="services\RcheevosClient.hh">
-      <Filter>Services</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

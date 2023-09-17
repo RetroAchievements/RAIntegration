@@ -458,8 +458,12 @@ void EmulatorContext::DisableHardcoreMode()
 
         RebuildMenu();
 
+        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_set_hardcore_enabled(pRuntime.GetClient(), false);
+
+        // GameContext::DoFrame synchronizes the models to the runtime
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-        pGameContext.RefreshUnlocks();
+        pGameContext.DoFrame();
     }
 }
 
@@ -503,17 +507,6 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
 
     RA_LOG_INFO("Hardcore enabled");
 
-    // Disable any modified assets
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
-    {
-        auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-        if (pAsset != nullptr && pAsset->GetChanges() != ra::data::models::AssetChanges::None)
-        {
-            if (pAsset->IsActive())
-                pAsset->SetState(ra::data::models::AssetState::Inactive);
-        }
-    }
-
     // User has agreed to reset the emulator, or no game is loaded. Enabled hardcore!
     pConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
@@ -542,15 +535,25 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     // update the integration menu
     RebuildMenu();
 
-    // when enabling hardcore mode, force a system reset
-    if (m_fResetEmulator)
-        m_fResetEmulator();
+    // update the runtime
+    auto* pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().GetClient();
+    rc_client_set_hardcore_enabled(pClient, true);
 
-#ifndef RA_UTEST
-    // emulator reset code will normally call back into _RA_OnReset, but call it explicitly just in case.
-    _RA_OnReset();
-#endif
+    // GameContext::DoFrame synchronizes the models to the runtime
+    pGameContext.DoFrame();
 
+    // Disable any modified assets
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
+    {
+        auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        if (pAsset != nullptr && pAsset->GetChanges() != ra::data::models::AssetChanges::None)
+        {
+            if (pAsset->IsActive())
+                pAsset->SetState(ra::data::models::AssetState::Inactive);
+        }
+    }
+
+    // unfreeze bookmarks so the user doesn't get hit with a modified memory error
     auto& vmBookmarks = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().MemoryBookmarks;
     for (gsl::index nIndex = 0; nIndex < ra::to_signed(vmBookmarks.Bookmarks().Count()); ++nIndex)
     {
@@ -558,9 +561,6 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
         if (pBookmark)
             pBookmark->SetBehavior(ra::ui::viewmodels::MemoryBookmarksViewModel::BookmarkBehavior::None);
     }
-
-    pGameContext.ActivateLeaderboards();
-    pGameContext.RefreshUnlocks();
 
     return true;
 }
@@ -706,7 +706,6 @@ bool EmulatorContext::IsValidAddress(ra::ByteAddress nAddress) const noexcept
 
 uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
 {
-    const ra::ByteAddress nOriginalAddress = nAddress;
     for (const auto& pBlock : m_vMemoryBlocks)
     {
         if (nAddress < pBlock.size)
@@ -720,16 +719,12 @@ uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
         nAddress -= gsl::narrow_cast<ra::ByteAddress>(pBlock.size);
     }
 
-    if (nOriginalAddress < m_nTotalMemorySize)
-        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().InvalidateAddress(nOriginalAddress);
-
     return 0;
 }
 
 _Use_decl_annotations_
 uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[], size_t nCount) const
 {
-    const ra::ByteAddress nOriginalAddress = nAddress;
     uint32_t nBytesRead = 0;
     Expects(pBuffer != nullptr);
 
@@ -756,10 +751,8 @@ uint32_t EmulatorContext::ReadMemory(ra::ByteAddress nAddress, uint8_t pBuffer[]
         }
         else if (!pBlock.read)
         {
-            ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().InvalidateAddress(nOriginalAddress);
             memset(pBuffer, 0, nToRead);
             pBuffer += nToRead;
-            nBytesRead += gsl::narrow_cast<uint32_t>(nToRead);
         }
         else
         {

@@ -10,8 +10,8 @@
 #include "data\context\SessionTracker.hh"
 #include "data\context\UserContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
-#include "services\RcheevosClient.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
@@ -49,13 +49,13 @@ bool LoginViewModel::Login() const
         return false;
     }
 
-    ra::services::RcheevosClient::Synchronizer pSynchronizer;
+    ra::services::AchievementRuntime::Synchronizer pSynchronizer;
 
-    auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+    auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
     pClient.BeginLoginWithPassword(
         ra::Narrow(GetUsername()), ra::Narrow(GetPassword()),
         [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) {
-            auto* pSynchronizer = static_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
+            auto* pSynchronizer = static_cast<ra::services::AchievementRuntime::Synchronizer*>(pUserdata);
             Expects(pSynchronizer != nullptr);
 
             if (nResult != RC_OK)

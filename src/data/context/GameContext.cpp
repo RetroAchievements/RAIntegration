@@ -7,9 +7,6 @@
 #include "RA_md5factory.h"
 #include "RA_StringUtils.h"
 
-#include "api\AwardAchievement.hh"
-#include "api\SubmitLeaderboardEntry.hh"
-
 #include "data\context\ConsoleContext.hh"
 #include "data\context\EmulatorContext.hh"
 #include "data\context\SessionTracker.hh"
@@ -24,7 +21,6 @@
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\ILocalStorage.hh"
-#include "services\RcheevosClient.hh"
 #include "services\impl\FileTextReader.hh"
 #include "services\impl\FileTextWriter.hh"
 #include "services\impl\StringTextReader.hh"
@@ -149,17 +145,13 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
         }
     }
 
-    // download the game data
-    ra::services::RcheevosClient::Synchronizer pSynchronizer;
-
-    auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
-
     // enable spectator mode to prevent unlocks when testing compatibility
-    rc_client_set_spectator_mode_enabled(pClient.GetClient(), nMode == Mode::CompatibilityTest);
+    rc_client_set_spectator_mode_enabled(pRuntime.GetClient(), nMode == Mode::CompatibilityTest);
 
     const bool bWasPaused = pRuntime.IsPaused();
     pRuntime.SetPaused(true);
 
+    // download the game data
     struct LoadGameUserData
     {
         bool bWasPaused = false;
@@ -169,7 +161,7 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
     pLoadGameUserData->bWasPaused = bWasPaused;
     pLoadGameUserData->sOldRichPresence = std::move(sOldRichPresence);
 
-    pClient.BeginLoadGame(sGameHash, nGameId,
+    pRuntime.BeginLoadGame(sGameHash, nGameId,
         [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) {
             auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
             auto* pLoadGameUserData = static_cast<struct LoadGameUserData*>(pUserdata);
@@ -201,7 +193,7 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
             [this]() { EndLoad(); });
         m_vAssets.Append(std::move(pCodeNotes));
 
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
         auto* pGame = rc_client_get_game_info(pClient.GetClient());
         if (pGame == nullptr || pGame->id == 0)
         {
@@ -287,17 +279,17 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
     // finish up
     m_vAssets.EndUpdate();
 
-    auto& pRcheevosClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+    auto& pRcheevosClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
     pRcheevosClient.SyncAssets();
 
     EndLoad();
     OnActiveGameChanged();
 }
 
-void GameContext::InitializeFromRcheevosClient(const std::map<uint32_t, std::string> mAchievementDefinitions,
-                                               const std::map<uint32_t, std::string> mLeaderboardDefinitions)
+void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std::string> mAchievementDefinitions,
+                                                   const std::map<uint32_t, std::string> mLeaderboardDefinitions)
 {
-    const auto* pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
+    const auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
     const auto* pGame = rc_client_get_game_info(pClient);
     m_sGameTitle = ra::Widen(pGame->title);
 
@@ -319,50 +311,29 @@ void GameContext::InitializeFromRcheevosClient(const std::map<uint32_t, std::str
                 case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
                     nCategory = ra::data::models::AssetCategory::Core;
                     break;
+
                 case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL:
                     nCategory = ra::data::models::AssetCategory::Unofficial;
 
                     // all unofficial achievements should start inactive.
                     // rc_client automatically activates them.
                     pAchievementData->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
+
+                    if (pAchievementData->trigger)
+                        pAchievementData->trigger->state = RC_TRIGGER_STATE_INACTIVE;
                     break;
+
                 default:
                     continue;
             }
 
             auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
-            vmAchievement->SetID(pAchievementData->public_.id);
-            vmAchievement->SetName(ra::Widen(pAchievementData->public_.title));
-            vmAchievement->SetDescription(ra::Widen(pAchievementData->public_.description));
-            vmAchievement->SetCategory(nCategory);
-            vmAchievement->SetPoints(pAchievementData->public_.points);
-            vmAchievement->SetAuthor(ra::Widen(pAchievementData->author));
-            vmAchievement->SetBadge(ra::Widen(pAchievementData->public_.badge_name));
-            vmAchievement->SetCreationTime(pAchievementData->created_time);
-            vmAchievement->SetUpdatedTime(pAchievementData->updated_time);
 
             const auto sDefinition = mAchievementDefinitions.find(pAchievementData->public_.id);
             if (sDefinition != mAchievementDefinitions.end())
-                vmAchievement->SetTrigger(sDefinition->second);
-
-            vmAchievement->CreateServerCheckpoint();
-            vmAchievement->CreateLocalCheckpoint();
-
-            switch (pAchievementData->public_.state)
-            {
-                case RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE:
-                    vmAchievement->SetState(ra::data::models::AssetState::Active);
-                    break;
-                case RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE:
-                    vmAchievement->SetState(ra::data::models::AssetState::Inactive);
-                    break;
-                case RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED:
-                    vmAchievement->SetState(ra::data::models::AssetState::Triggered);
-                    break;
-                case RC_CLIENT_ACHIEVEMENT_STATE_DISABLED:
-                    vmAchievement->SetState(ra::data::models::AssetState::Disabled);
-                    break;
-            }
+                vmAchievement->Attach(*pAchievementData, nCategory, sDefinition->second);
+            else
+                vmAchievement->Attach(*pAchievementData, nCategory, "");
 
             m_vAssets.Append(std::move(vmAchievement));
 
@@ -378,36 +349,14 @@ void GameContext::InitializeFromRcheevosClient(const std::map<uint32_t, std::str
         for (; pLeaderboardData < pLeaderboardStop; ++pLeaderboardData)
         {
             auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
-            vmLeaderboard->SetID(pLeaderboardData->public_.id);
-            vmLeaderboard->SetName(ra::Widen(pLeaderboardData->public_.title));
-            vmLeaderboard->SetDescription(ra::Widen(pLeaderboardData->public_.description));
-            vmLeaderboard->SetCategory(ra::data::models::AssetCategory::Core);
-            vmLeaderboard->SetValueFormat(ra::itoe<ValueFormat>(pLeaderboardData->format));
-            vmLeaderboard->SetLowerIsBetter(pLeaderboardData->public_.lower_is_better);
-            vmLeaderboard->SetHidden(pLeaderboardData->hidden);
+
+            const auto nCategory = ra::data::models::AssetCategory::Core; // all published leaderboards are core
 
             const auto sDefinition = mLeaderboardDefinitions.find(pLeaderboardData->public_.id);
             if (sDefinition != mLeaderboardDefinitions.end())
-                vmLeaderboard->SetDefinition(sDefinition->second);
-
-            vmLeaderboard->CreateServerCheckpoint();
-            vmLeaderboard->CreateLocalCheckpoint();
-
-            switch (pLeaderboardData->public_.state)
-            {
-                case RC_CLIENT_LEADERBOARD_STATE_ACTIVE:
-                    vmLeaderboard->SetState(ra::data::models::AssetState::Active);
-                    break;
-                case RC_CLIENT_LEADERBOARD_STATE_INACTIVE:
-                    vmLeaderboard->SetState(ra::data::models::AssetState::Inactive);
-                    break;
-                case RC_CLIENT_LEADERBOARD_STATE_TRACKING:
-                    vmLeaderboard->SetState(ra::data::models::AssetState::Primed);
-                    break;
-                case RC_CLIENT_LEADERBOARD_STATE_DISABLED:
-                    vmLeaderboard->SetState(ra::data::models::AssetState::Disabled);
-                    break;
-            }
+                vmLeaderboard->Attach(*pLeaderboardData, nCategory, sDefinition->second);
+            else
+                vmLeaderboard->Attach(*pLeaderboardData, nCategory, "");
 
             m_vAssets.Append(std::move(vmLeaderboard));
         }
@@ -464,117 +413,6 @@ void GameContext::EndLoad()
     }
 }
 
-void GameContext::RefreshUnlocks(bool bUnpause, int nPopup)
-{
-    std::set<unsigned int> vUnlockedAchievements;
-
-    if (m_nGameId != 0 && m_nMode != Mode::CompatibilityTest)
-    {
-        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-        const bool bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-        const uint8_t nFlag = gsl::narrow_cast<uint8_t>(bHardcore ? ra::etoi(RC_CLIENT_ACHIEVEMENT_UNLOCKED_HARDCORE)
-                                                                  : ra::etoi(RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE));
-
-        const auto* pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
-        if (!pClient->game) // game still loading, ignore
-            return;
-
-        for (auto* pSubset = pClient->game->subsets; pSubset; pSubset = pSubset->next)
-        {
-            // achievements
-            auto* pAchievementData = pSubset->achievements;
-            const auto* pAchievementStop = pAchievementData + pSubset->public_.num_achievements;
-            for (; pAchievementData < pAchievementStop; ++pAchievementData)
-            {
-                if (pAchievementData->public_.unlocked & nFlag)
-                    vUnlockedAchievements.insert(pAchievementData->public_.id);
-            }
-        }
-    }
-
-    BeginLoad();
-    UpdateUnlocks(vUnlockedAchievements, bUnpause, nPopup);
-    EndLoad();
-}
-
-void GameContext::UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup)
-{
-    // start by identifying all available achievements
-    std::set<unsigned int> vLockedAchievements;
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Assets().Count()); ++nIndex)
-    {
-        const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(Assets().GetItemAt(nIndex));
-        if (pAchievement != nullptr)
-            vLockedAchievements.insert(pAchievement->GetID());
-    }
-
-    // deactivate anything the player has already unlocked
-    size_t nUnlockedCoreAchievements = 0U;
-    for (const auto nUnlockedAchievement : vUnlockedAchievements)
-    {
-        vLockedAchievements.erase(nUnlockedAchievement);
-        auto* pAchievement = Assets().FindAchievement(nUnlockedAchievement);
-
-        // only core achievements will be automatically activated. also, they're all we want to count
-        if (pAchievement != nullptr && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
-        {
-            pAchievement->SetState(ra::data::models::AssetState::Inactive);
-            ++nUnlockedCoreAchievements;
-        }
-    }
-
-#ifndef RA_UTEST
-    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-#endif
-    // activate any core achievements the player hasn't earned and pre-fetch the locked image
-    for (auto nAchievementId : vLockedAchievements)
-    {
-        auto* pAchievement = Assets().FindAchievement(nAchievementId);
-        if (pAchievement && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
-        {
-            if (!pAchievement->IsActive() && pAchievement->GetState() != ra::data::models::AssetState::Disabled)
-            {
-                // modified assets should start in the inactive state
-                if (pAchievement->GetChanges() != ra::data::models::AssetChanges::None)
-                    pAchievement->SetState(ra::data::models::AssetState::Inactive);
-                else
-                    pAchievement->SetState(ra::data::models::AssetState::Waiting);
-            }
-
-#ifndef RA_UTEST
-            if (!pAchievement->GetBadge().empty())
-                pImageRepository.FetchImage(ra::ui::ImageType::Badge, ra::Narrow(pAchievement->GetBadge()) + "_lock");
-#endif
-        }
-    }
-
-    if (bUnpause)
-    {
-        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(false);
-#ifndef RA_UTEST
-        auto& pAssetList = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
-        pAssetList.SetProcessingActive(true);
-#endif
-    }
-
-    if (nPopup)
-    {
-        auto* pPopup = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().GetMessage(nPopup);
-        if (pPopup != nullptr)
-        {
-            const auto nDisabledAchievements = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().DetectUnsupportedAchievements();
-            if (nDisabledAchievements != 0)
-            {
-                const auto sDescription = ra::StringPrintf(L"%s (%s unsupported)", pPopup->GetDescription(), nDisabledAchievements);
-                pPopup->SetDescription(sDescription);
-            }
-
-            pPopup->SetDetail(ra::StringPrintf(L"You have earned %u achievements", nUnlockedCoreAchievements));
-            pPopup->RebuildRenderImage();
-        }
-    }
-}
-
 void GameContext::DoFrame()
 {
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
@@ -583,435 +421,6 @@ void GameContext::DoFrame()
         if (pItem != nullptr)
             pItem->DoFrame();
     }
-}
-
-void GameContext::AwardAchievement(ra::AchievementID nAchievementId)
-{
-    auto* pAchievement = Assets().FindAchievement(nAchievementId);
-    if (pAchievement == nullptr)
-        return;
-
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    bool bTakeScreenshot = pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot);
-    bool bSubmit = false;
-    bool bIsError = false;
-
-    std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-    vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->GetName(), pAchievement->GetPoints()));
-    vmPopup->SetDetail(ra::Widen(pAchievement->GetDescription()));
-    vmPopup->SetImage(ra::ui::ImageType::Badge, ra::Narrow(pAchievement->GetBadge()));
-    vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);
-
-    switch (pAchievement->GetCategory())
-    {
-        case ra::data::models::AssetCategory::Local:
-            vmPopup->SetTitle(L"Local Achievement Unlocked");
-            bSubmit = false;
-            bTakeScreenshot = false;
-            break;
-
-        case ra::data::models::AssetCategory::Unofficial:
-            vmPopup->SetTitle(L"Unofficial Achievement Unlocked");
-            bSubmit = false;
-            break;
-
-        default:
-            vmPopup->SetTitle(L"Achievement Unlocked");
-            bSubmit = true;
-            break;
-    }
-
-    if (m_nMode == Mode::CompatibilityTest)
-    {
-        auto sHeader = vmPopup->GetTitle();
-        sHeader.insert(0, L"Test ");
-        vmPopup->SetTitle(sHeader);
-
-        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement->GetID(), "test compatibility mode");
-        bSubmit = false;
-    }
-
-    if (pAchievement->IsModified() || // actual modifications
-        (bSubmit && pAchievement->GetChanges() != ra::data::models::AssetChanges::None)) // unpublished changes
-    {
-        auto sHeader = vmPopup->GetTitle();
-        sHeader.insert(0, L"Modified ");
-        if (pAchievement->GetCategory() != ra::data::models::AssetCategory::Local)
-            sHeader.append(L" LOCALLY");
-        vmPopup->SetTitle(sHeader);
-
-        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement->GetID(), pAchievement->IsModified() ? "modified" : "unpublished");
-        bIsError = true;
-        bSubmit = false;
-        bTakeScreenshot = false;
-    }
-
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (bSubmit && pEmulatorContext.WasMemoryModified())
-    {
-        vmPopup->SetTitle(L"Achievement Unlocked LOCALLY");
-        vmPopup->SetErrorDetail(L"Error: RAM tampered with");
-
-        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement->GetID(), "RAM tampered with");
-        bIsError = true;
-        bSubmit = false;
-    }
-
-    if (bSubmit && _RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
-    {
-        vmPopup->SetTitle(L"Achievement Unlocked LOCALLY");
-        vmPopup->SetErrorDetail(L"Error: RAM insecure");
-
-        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement->GetID(), "RAM insecure");
-        bIsError = true;
-        bSubmit = false;
-    }
-
-    if (bSubmit && pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
-    {
-        vmPopup->SetTitle(L"Offline Achievement Unlocked");
-        bSubmit = false;
-    }
-
-    int nPopupId = -1;
-
-    ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(
-        bIsError ? L"Overlay\\acherror.wav" : L"Overlay\\unlock.wav");
-
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered) != ra::ui::viewmodels::PopupLocation::None)
-    {
-        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-        nPopupId = pOverlayManager.QueueMessage(vmPopup);
-
-        if (bTakeScreenshot)
-        {
-            std::wstring sPath = ra::StringPrintf(L"%s%u.png", pConfiguration.GetScreenshotDirectory(), nAchievementId);
-            pOverlayManager.CaptureScreenshot(nPopupId, sPath);
-        }
-    }
-
-    pAchievement->SetState(ra::data::models::AssetState::Triggered);
-
-    if (!bSubmit)
-        return;
-
-    ra::api::AwardAchievement::Request request;
-    request.AchievementId = nAchievementId;
-    request.Hardcore = _RA_HardcoreModeIsActive();
-    request.GameHash = GameHash();
-    request.CallAsyncWithRetry([this, nPopupId, nAchievementId](const ra::api::AwardAchievement::Response& response)
-    {
-        if (response.Succeeded())
-        {
-            // TODO: just read score from rc_client->user (when client handles unlocks)
-            // success! update the player's score
-            ra::services::ServiceLocator::GetMutable<ra::data::context::UserContext>().SetScore(response.NewPlayerScore);
-
-            if (response.AchievementsRemaining == 0)
-                CheckForMastery();
-        }
-        else if (ra::StringStartsWith(response.ErrorMessage, "User already has "))
-        {
-            // if server responds with "Error: User already has hardcore and regular achievements awarded." or
-            // "Error: User already has this achievement awarded.", just ignore the error. There's no reason to
-            // notify the user that the unlock failed because it had happened previously.
-        }
-        else if (nPopupId != -1)
-        {
-            // an error occurred, update the popup to display the error message
-            auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-            auto pPopup = pOverlayManager.GetMessage(nPopupId);
-            if (pPopup != nullptr)
-            {
-                pPopup->SetTitle(L"Achievement Unlock FAILED");
-                pPopup->SetErrorDetail(response.ErrorMessage.empty() ?
-                    L"Error submitting unlock" : ra::Widen(response.ErrorMessage));
-                pPopup->RebuildRenderImage();
-            }
-            else
-            {
-                std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-                vmPopup->SetTitle(L"Achievement Unlock FAILED");
-                vmPopup->SetErrorDetail(response.ErrorMessage.empty() ?
-                    L"Error submitting unlock" : ra::Widen(response.ErrorMessage));
-                vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);
-
-                const auto& pGameContext = ra::services::ServiceLocator::Get<GameContext>();
-                const auto* pAchievement = pGameContext.Assets().FindAchievement(nAchievementId);
-                if (pAchievement != nullptr)
-                {
-                    vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement->GetName(), pAchievement->GetPoints()));
-                    vmPopup->SetImage(ra::ui::ImageType::Badge, ra::Narrow(pAchievement->GetBadge()));
-                }
-                else
-                {
-                    vmPopup->SetDescription(ra::StringPrintf(L"Achievement %u", nAchievementId));
-                }
-
-                ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\acherror.wav");
-                pOverlayManager.QueueMessage(vmPopup);
-            }
-        }
-    });
-}
-
-void GameContext::CheckForMastery()
-{
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Mastery) == ra::ui::viewmodels::PopupLocation::None)
-        return;
-
-    // if multiple achievements unlock the mastery at the same time, only show the popup once
-    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-    if (m_nMasteryPopupId != 0 && pOverlayManager.GetMessage(m_nMasteryPopupId))
-        return;
-
-    // validate that all core assets are unlocked
-    const auto& pAssets = ra::services::ServiceLocator::Get<ra::data::context::GameContext>().Assets();
-    unsigned nTotalCoreAchievementPoints = 0;
-    size_t nNumCoreAchievements = -0;
-    bool bActiveCoreAchievement = false;
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pAssets.Count()); ++nIndex)
-    {
-        const auto* pAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAssets.GetItemAt(nIndex));
-        if (pAchievement != nullptr && pAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
-        {
-            ++nNumCoreAchievements;
-            nTotalCoreAchievementPoints += pAchievement->GetPoints();
-
-            if (pAchievement->IsActive())
-            {
-                bActiveCoreAchievement = true;
-                break;
-            }
-        }
-    }
-
-    // if they are, show the mastery notification
-    if (!bActiveCoreAchievement && nNumCoreAchievements > 0)
-    {
-        const bool bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-
-        const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(m_nGameId);
-        const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
-
-        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
-        vmMessage->SetTitle(ra::StringPrintf(L"%s %s", bHardcore ? L"Mastered" : L"Completed", m_sGameTitle));
-        vmMessage->SetDescription(ra::StringPrintf(L"%u achievements, %u points", nNumCoreAchievements, nTotalCoreAchievementPoints));
-        vmMessage->SetDetail(ra::StringPrintf(L"%s | Play time: %dh%02dm", pConfiguration.GetUsername(), nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
-        vmMessage->SetImage(ra::ui::ImageType::Icon, m_sGameImage);
-        vmMessage->SetPopupType(ra::ui::viewmodels::Popup::Mastery);
-
-        // if multiple achievements unlock the mastery at the same time, only show the popup once
-        if (m_nMasteryPopupId != 0 && pOverlayManager.GetMessage(m_nMasteryPopupId))
-            return;
-
-        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\unlock.wav");
-        m_nMasteryPopupId = pOverlayManager.QueueMessage(vmMessage);
-
-        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::MasteryNotificationScreenshot))
-        {
-            std::wstring sPath = ra::StringPrintf(L"%sGame%u.png", pConfiguration.GetScreenshotDirectory(), m_nGameId);
-            pOverlayManager.CaptureScreenshot(m_nMasteryPopupId, sPath);
-        }
-    }
-}
-
-void GameContext::DeactivateLeaderboards()
-{
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Assets().Count()); ++nIndex)
-    {
-        auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(Assets().GetItemAt(nIndex));
-        if (pLeaderboard != nullptr)
-            pLeaderboard->SetState(ra::data::models::AssetState::Inactive);
-    }
-}
-
-void GameContext::ActivateLeaderboards()
-{
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards)) // if not, simply ignore them.
-    {
-        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(Assets().Count()); ++nIndex)
-        {
-            auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(Assets().GetItemAt(nIndex));
-            if (pLeaderboard != nullptr && pLeaderboard->GetCategory() == ra::data::models::AssetCategory::Core)
-                pLeaderboard->SetState(ra::data::models::AssetState::Waiting);
-        }
-    }
-}
-
-void GameContext::ShowSimplifiedScoreboard(ra::LeaderboardID nLeaderboardId, int nScore) const
-{
-    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) == ra::ui::viewmodels::PopupLocation::None)
-        return;
-
-    const auto* pLeaderboard = Assets().FindLeaderboard(nLeaderboardId);
-    if (!pLeaderboard)
-        return;
-
-    ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
-    vmScoreboard.SetHeaderText(ra::Widen(pLeaderboard->GetName()));
-
-    const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
-    auto& pEntryViewModel = vmScoreboard.Entries().Add();
-    pEntryViewModel.SetRank(0);
-    pEntryViewModel.SetScore(ra::Widen(pLeaderboard->FormatScore(nScore)));
-    pEntryViewModel.SetUserName(ra::Widen(pUserName));
-    pEntryViewModel.SetHighlighted(true);
-
-    ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(
-        pLeaderboard->GetID(), std::move(vmScoreboard));
-}
-
-void GameContext::SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int nScore) const
-{
-    const auto* pLeaderboard = Assets().FindLeaderboard(nLeaderboardId);
-    if (pLeaderboard == nullptr)
-        return;
-
-    std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-    vmPopup->SetDescription(ra::Widen(pLeaderboard->GetName()));
-    std::wstring sTitle = L"Leaderboard NOT Submitted";
-    bool bSubmit = true;
-
-    switch (pLeaderboard->GetCategory())
-    {
-        case ra::data::models::AssetCategory::Local:
-            sTitle.insert(0, L"Local ");
-            bSubmit = false;
-            break;
-
-        case ra::data::models::AssetCategory::Unofficial:
-            sTitle.insert(0, L"Unofficial ");
-            bSubmit = false;
-            break;
-
-        default:
-            break;
-    }
-
-    if (m_nMode == Mode::CompatibilityTest)
-    {
-        vmPopup->SetDetail(L"Leaderboards are not submitted in test mode.");
-        bSubmit = false;
-    }
-
-    if (pLeaderboard->IsModified() || // actual modifications
-        (bSubmit && pLeaderboard->GetChanges() != ra::data::models::AssetChanges::None)) // unpublished changes
-    {
-        sTitle.insert(0, L"Modified ");
-        bSubmit = false;
-    }
-
-    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    if (bSubmit && pEmulatorContext.WasMemoryModified())
-    {
-        vmPopup->SetErrorDetail(L"Error: RAM tampered with");
-        bSubmit = false;
-    }
-
-    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-    if (bSubmit)
-    {
-        if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
-        {
-            vmPopup->SetErrorDetail(L"Submission requires Hardcore mode");
-            bSubmit = false;
-        }
-        else if (pEmulatorContext.IsMemoryInsecure())
-        {
-            vmPopup->SetErrorDetail(L"Error: RAM insecure");
-            bSubmit = false;
-        }
-        else if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
-        {
-            vmPopup->SetDetail(L"Leaderboards are not submitted in offline mode.");
-            bSubmit = false;
-        }
-    }
-
-    if (!bSubmit)
-    {
-        vmPopup->SetTitle(sTitle);
-        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
-        ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
-        ShowSimplifiedScoreboard(nLeaderboardId, nScore);
-        return;
-    }
-
-    ra::api::SubmitLeaderboardEntry::Request request;
-    request.LeaderboardId = pLeaderboard->GetID();
-    request.Score = nScore;
-    request.GameHash = GameHash();
-    request.CallAsyncWithRetry([this, nLeaderboardId = pLeaderboard->GetID()](const ra::api::SubmitLeaderboardEntry::Response& response)
-    {
-        const auto* pLeaderboard = Assets().FindLeaderboard(nLeaderboardId);
-
-        if (!response.Succeeded())
-        {
-            std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
-            vmPopup->SetTitle(L"Leaderboard NOT Submitted");
-            vmPopup->SetDescription(pLeaderboard ? pLeaderboard->GetName() : ra::StringPrintf(L"Leaderboard %u", nLeaderboardId));
-            vmPopup->SetDetail(!response.ErrorMessage.empty() ? ra::StringPrintf(L"Error: %s", response.ErrorMessage) : L"Error submitting entry");
-
-            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmPopup);
-        }
-        else if (pLeaderboard)
-        {
-            auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-            if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardScoreboard) != ra::ui::viewmodels::PopupLocation::None)
-            {
-                ra::ui::viewmodels::ScoreboardViewModel vmScoreboard;
-                vmScoreboard.SetHeaderText(pLeaderboard->GetName());
-
-                const auto& pUserName = ra::services::ServiceLocator::Get<ra::data::context::UserContext>().GetDisplayName();
-                constexpr int nEntriesDisplayed = 7; // display is currently hard-coded to show 7 entries
-                bool bSeenPlayer = false;
-
-                for (const auto& pEntry : response.TopEntries)
-                {
-                    auto& pEntryViewModel = vmScoreboard.Entries().Add();
-                    pEntryViewModel.SetRank(pEntry.Rank);
-                    pEntryViewModel.SetScore(ra::Widen(pLeaderboard->FormatScore(pEntry.Score)));
-                    pEntryViewModel.SetUserName(ra::Widen(pEntry.User));
-
-                    if (pEntry.User == pUserName)
-                    {
-                        bSeenPlayer = true;
-                        pEntryViewModel.SetHighlighted(true);
-
-                        if (response.BestScore != response.Score)
-                            pEntryViewModel.SetScore(ra::StringPrintf(L"(%s) %s", pLeaderboard->FormatScore(response.Score), pLeaderboard->FormatScore(response.BestScore)));
-                    }
-
-                    if (vmScoreboard.Entries().Count() == nEntriesDisplayed)
-                        break;
-                }
-
-                if (!bSeenPlayer)
-                {
-                    auto* pEntryViewModel = vmScoreboard.Entries().GetItemAt(6);
-                    if (pEntryViewModel != nullptr)
-                    {
-                        pEntryViewModel->SetRank(response.NewRank);
-
-                        if (response.BestScore != response.Score)
-                            pEntryViewModel->SetScore(ra::StringPrintf(L"(%s) %s", pLeaderboard->FormatScore(response.Score), pLeaderboard->FormatScore(response.BestScore)));
-                        else
-                            pEntryViewModel->SetScore(ra::Widen(pLeaderboard->FormatScore(response.BestScore)));
-
-                        pEntryViewModel->SetUserName(ra::Widen(pUserName));
-                        pEntryViewModel->SetHighlighted(true);
-                    }
-                }
-
-                ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueScoreboard(
-                    pLeaderboard->GetID(), std::move(vmScoreboard));
-            }
-        }
-    });
 }
 
 void GameContext::OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote)

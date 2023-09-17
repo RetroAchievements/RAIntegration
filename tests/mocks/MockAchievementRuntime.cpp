@@ -1,4 +1,7 @@
-#include "MockRcheevosClient.hh"
+#include "MockAchievementRuntime.hh"
+
+#include "MockEmulatorContext.hh"
+#include "MockGameContext.hh"
 #include "services\ServiceLocator.hh"
 
 #include "CppUnitTest.h"
@@ -13,7 +16,7 @@ namespace ra {
 namespace services {
 namespace mocks {
 
-void MockRcheevosClient::OnBeforeResponse(const std::string& sRequestParams, std::function<void()>&& fHandler)
+void MockAchievementRuntime::OnBeforeResponse(const std::string& sRequestParams, std::function<void()>&& fHandler)
 {
     for (auto& pResponse : m_vResponses)
     {
@@ -28,7 +31,7 @@ void MockRcheevosClient::OnBeforeResponse(const std::string& sRequestParams, std
         ra::StringPrintf(L"No response registered for: %s", sRequestParams).c_str());
 }
 
-void MockRcheevosClient::MockUser(const std::string& sUsername, const std::string& sApiToken)
+void MockAchievementRuntime::MockUser(const std::string& sUsername, const std::string& sApiToken)
 {
     m_sUsername = sUsername;
     m_sApiToken = sApiToken;
@@ -38,7 +41,7 @@ void MockRcheevosClient::MockUser(const std::string& sUsername, const std::strin
     GetClient()->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
 }
 
-void MockRcheevosClient::MockGame()
+void MockAchievementRuntime::MockGame()
 {
     rc_client_game_info_t* game = (rc_client_game_info_t*)calloc(1, sizeof(rc_client_game_info_t));
     Expects(game != nullptr);
@@ -126,28 +129,72 @@ static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,
     achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
     achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
     achievement->public_.points = 5;
+    achievement->author = "Author";
 
     return achievement;
 }
 
-rc_client_achievement_info_t* MockRcheevosClient::MockAchievement(uint32_t nId, const char* sTitle)
+rc_client_achievement_info_t* MockAchievementRuntime::MockAchievement(uint32_t nId, const char* sTitle)
 {
     rc_client_game_info_t* game = GetClient()->game;
     return AddAchievement(game, GetCoreSubset(game), nId, sTitle);
 }
 
-rc_client_achievement_info_t* MockRcheevosClient::MockAchievementWithTrigger(uint32_t nId, const char* sTitle)
+rc_client_achievement_info_t* MockAchievementRuntime::MockAchievementWithTrigger(uint32_t nId, const char* sTitle)
 {
     rc_client_game_info_t* game = GetClient()->game;
     rc_client_achievement_info_t* achievement = AddAchievement(game, GetCoreSubset(game), nId, sTitle);
 
     achievement->trigger = (rc_trigger_t*)rc_buf_alloc(&game->buffer, sizeof(rc_trigger_t));
     memset(achievement->trigger, 0, sizeof(*achievement->trigger));
+    achievement->trigger->state = RC_TRIGGER_STATE_ACTIVE;
 
     return achievement;
 }
 
-rc_client_achievement_info_t* MockRcheevosClient::MockUnofficialAchievement(uint32_t nId, const char* sTitle)
+rc_client_achievement_info_t* MockAchievementRuntime::ActivateAchievement(uint32_t nId, const std::string& sTrigger)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    rc_client_achievement_info_t* achievement = AddAchievement(game, GetCoreSubset(game), nId, "Achievement");
+
+    m_mAchievementDefinitions[nId] = sTrigger;
+
+    auto nSize = rc_trigger_size(sTrigger.c_str());
+    void* trigger_buffer = rc_buf_alloc(&game->buffer, nSize);
+    achievement->trigger = rc_parse_trigger(trigger_buffer, sTrigger.c_str(), nullptr, 0);
+    achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+    return achievement;
+}
+
+void MockAchievementRuntime::UnlockAchievement(rc_client_achievement_info_t* pAchievement, int nMode)
+{
+    pAchievement->public_.unlocked |= nMode;
+
+    if (pAchievement->unlock_time_softcore == 0)
+        pAchievement->unlock_time_softcore = time(nullptr);
+
+    if (nMode == RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH)
+    {
+        if (pAchievement->unlock_time_hardcore == 0)
+            pAchievement->unlock_time_hardcore = time(nullptr);
+
+        pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+
+        if (pAchievement->trigger)
+            pAchievement->trigger->state = RC_TRIGGER_STATE_TRIGGERED;
+    }
+    else if (nMode == RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE &&
+             !rc_client_get_hardcore_enabled(GetClient()))
+    {
+        pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+
+        if (pAchievement->trigger)
+            pAchievement->trigger->state = RC_TRIGGER_STATE_TRIGGERED;
+    }
+}
+
+rc_client_achievement_info_t* MockAchievementRuntime::MockUnofficialAchievement(uint32_t nId, const char* sTitle)
 {
     rc_client_game_info_t* game = GetClient()->game;
     rc_client_achievement_info_t* achievement = AddAchievement(game, GetCoreSubset(game), nId, sTitle);
@@ -155,14 +202,14 @@ rc_client_achievement_info_t* MockRcheevosClient::MockUnofficialAchievement(uint
     return achievement;
 }
 
-rc_client_achievement_info_t* MockRcheevosClient::MockLocalAchievement(uint32_t nId, const char* sTitle)
+rc_client_achievement_info_t* MockAchievementRuntime::MockLocalAchievement(uint32_t nId, const char* sTitle)
 {
     rc_client_game_info_t* game = GetClient()->game;
     return AddAchievement(game, GetLocalSubset(game), nId, sTitle);
 }
 
-static rc_client_leaderboard_info_t* AddLeaderboard(rc_client_game_info_t* game, rc_client_subset_info_t* subset,
-                                                    uint32_t nId, const char* sTitle)
+static rc_client_leaderboard_info_t* AddLeaderboard(rc_client_t* client, rc_client_game_info_t* game,
+    rc_client_subset_info_t* subset, uint32_t nId, const char* sTitle)
 {
     if (subset->public_.num_leaderboards % 8 == 0)
     {
@@ -196,24 +243,53 @@ static rc_client_leaderboard_info_t* AddLeaderboard(rc_client_game_info_t* game,
     const std::string sGeneratedDescripton = ra::StringPrintf("Description %u", nId);
     leaderboard->public_.description = rc_buf_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
+    leaderboard->public_.state = static_cast<uint8_t>(rc_client_get_hardcore_enabled(client) ?
+        RC_CLIENT_LEADERBOARD_STATE_ACTIVE : RC_CLIENT_LEADERBOARD_STATE_INACTIVE);
+
+    return leaderboard;
+}
+
+rc_client_leaderboard_info_t* MockAchievementRuntime::MockLeaderboard(uint32_t nId, const char* sTitle)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    return AddLeaderboard(GetClient(), game, GetCoreSubset(game), nId, sTitle);
+}
+
+rc_client_leaderboard_info_t* MockAchievementRuntime::MockLeaderboardWithLboard(uint32_t nId, const char* sTitle)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    rc_client_leaderboard_info_t* leaderboard = AddLeaderboard(GetClient(), game, GetCoreSubset(game), nId, sTitle);
+
+    leaderboard->lboard = (rc_lboard_t*)rc_buf_alloc(&game->buffer, sizeof(rc_lboard_t));
+    memset(leaderboard->lboard, 0, sizeof(*leaderboard->lboard));
+    leaderboard->lboard->state = static_cast<uint8_t>(
+        rc_client_get_hardcore_enabled(GetClient()) ? RC_LBOARD_STATE_ACTIVE : RC_LBOARD_STATE_INACTIVE);
+
+    return leaderboard;
+}
+
+rc_client_leaderboard_info_t* MockAchievementRuntime::MockLocalLeaderboard(uint32_t nId, const char* sTitle)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    return AddLeaderboard(GetClient(), game, GetLocalSubset(game), nId, sTitle);
+}
+
+rc_client_leaderboard_info_t* MockAchievementRuntime::ActivateLeaderboard(uint32_t nId, const std::string& sDefinition)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    rc_client_leaderboard_info_t* leaderboard = AddLeaderboard(GetClient(), game, GetCoreSubset(game), nId, "Leaderboard");
+
+    m_mLeaderboardDefinitions[nId] = sDefinition;
+
+    auto nSize = rc_lboard_size(sDefinition.c_str());
+    void* trigger_buffer = rc_buf_alloc(&game->buffer, nSize);
+    leaderboard->lboard = rc_parse_lboard(trigger_buffer, sDefinition.c_str(), nullptr, 0);
     leaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
 
     return leaderboard;
 }
 
-rc_client_leaderboard_info_t* MockRcheevosClient::MockLeaderboard(uint32_t nId, const char* sTitle)
-{
-    rc_client_game_info_t* game = GetClient()->game;
-    return AddLeaderboard(game, GetCoreSubset(game), nId, sTitle);
-}
-
-rc_client_leaderboard_info_t* MockRcheevosClient::MockLocalLeaderboard(uint32_t nId, const char* sTitle)
-{
-    rc_client_game_info_t* game = GetClient()->game;
-    return AddLeaderboard(game, GetLocalSubset(game), nId, sTitle);
-}
-
-void MockRcheevosClient::AssertCalled(const std::string& sRequestParams) const
+void MockAchievementRuntime::AssertCalled(const std::string& sRequestParams) const
 {
     for (auto& pResponse : m_vResponses)
     {
@@ -228,7 +304,7 @@ void MockRcheevosClient::AssertCalled(const std::string& sRequestParams) const
         ra::StringPrintf(L"Could not find mock response for %s", sRequestParams).c_str());
 }
 
-void MockRcheevosClient::AssertNoPendingRequests() const
+void MockAchievementRuntime::AssertNoPendingRequests() const
 {
     for (auto& pResponse : m_vResponses)
     {
@@ -241,10 +317,10 @@ void MockRcheevosClient::AssertNoPendingRequests() const
     }
 }
 
-void MockRcheevosClient::MockServerCall(const rc_api_request_t* pRequest,
+void MockAchievementRuntime::MockServerCall(const rc_api_request_t* pRequest,
      rc_client_server_callback_t fCallback, void* pCallbackData, rc_client_t*)
 {
-    auto* pClient = dynamic_cast<MockRcheevosClient*>(&ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>());
+    auto* pClient = dynamic_cast<MockAchievementRuntime*>(&ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>());
     std::string sRequestParams = pRequest->post_data;
 
     for (auto& pResponse : pClient->m_vResponses)
@@ -275,4 +351,41 @@ void MockRcheevosClient::MockServerCall(const rc_api_request_t* pRequest,
 
 } // namespace mocks
 } // namespace services
+
+namespace data {
+namespace context {
+namespace mocks {
+
+void MockEmulatorContext::SetRuntimeMemorySize(size_t nBytes)
+{
+    if (ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+    {
+        auto* pGame = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient()->game;
+        if (pGame && pGame->max_valid_address == 0U)
+            pGame->max_valid_address = gsl::narrow_cast<uint32_t>(nBytes);
+    }
+}
+
+void MockGameContext::InitializeFromAchievementRuntime()
+{
+    auto* pMockRuntime = dynamic_cast<ra::services::mocks::MockAchievementRuntime*>(
+        &ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>());
+
+    if (pMockRuntime != nullptr)
+    {
+        GameContext::InitializeFromAchievementRuntime(pMockRuntime->GetAchievementDefinitions(),
+                                                      pMockRuntime->GetLeaderboardDefinitions());
+    }
+    else
+    {
+        std::map<uint32_t, std::string> mAchievementDefinitions;
+        std::map<uint32_t, std::string> mLeaderboardDefinitions;
+        GameContext::InitializeFromAchievementRuntime(mAchievementDefinitions, mLeaderboardDefinitions);
+    }
+}
+
+} // namespace mocks
+} // namespace context
+} // namespace data
 } // namespace ra
+

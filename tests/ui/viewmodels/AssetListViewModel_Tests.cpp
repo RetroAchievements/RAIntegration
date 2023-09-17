@@ -172,6 +172,8 @@ private:
 
         AssetListViewModelHarness() noexcept
         {
+            mockRuntime.MockGame();
+
             GSL_SUPPRESS_F6 InitializeNotifyTargets();
         }
 
@@ -387,20 +389,21 @@ private:
 
         void AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle)
         {
-            auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
+            auto vmAchievement = std::make_unique<MockAchievementModel>();
             vmAchievement->SetID(gsl::narrow_cast<unsigned int>(mockGameContext.Assets().Count() + 1));
             vmAchievement->SetCategory(nCategory);
             vmAchievement->SetPoints(nPoints);
             vmAchievement->SetName(sTitle);
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->CreateLocalCheckpoint();
+            vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
             mockGameContext.Assets().Append(std::move(vmAchievement));
         }
 
         void AddAchievement(AssetCategory nCategory, unsigned nPoints, const std::wstring& sTitle,
             const std::wstring& sDescription, const std::wstring& sBadge, const std::string& sTrigger)
         {
-            auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
+            auto vmAchievement = std::make_unique<MockAchievementModel>();
             vmAchievement->SetID(gsl::narrow_cast<unsigned int>(mockGameContext.Assets().Count() + 1));
             vmAchievement->SetCategory(nCategory);
             vmAchievement->SetPoints(nPoints);
@@ -410,13 +413,14 @@ private:
             vmAchievement->SetTrigger(sTrigger);
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->CreateLocalCheckpoint();
+            vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
             mockGameContext.Assets().Append(std::move(vmAchievement));
         }
 
         void AddNewAchievement(unsigned nPoints, const std::wstring& sTitle,
             const std::wstring& sDescription, const std::wstring& sBadge, const std::string& sTrigger)
         {
-            auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
+            auto vmAchievement = std::make_unique<MockAchievementModel>();
             vmAchievement->CreateServerCheckpoint();
             vmAchievement->SetID(gsl::narrow_cast<unsigned int>(mockGameContext.Assets().Count() + 1));
             vmAchievement->SetCategory(AssetCategory::Local);
@@ -427,6 +431,7 @@ private:
             vmAchievement->SetTrigger(sTrigger);
             vmAchievement->CreateLocalCheckpoint();
             vmAchievement->SetNew();
+            vmAchievement->AttachAndInitialize(*vmAchievement->m_pInfo);
             mockGameContext.Assets().Append(std::move(vmAchievement));
         }
 
@@ -561,8 +566,18 @@ private:
             return dynamic_cast<ra::data::models::LocalBadgesModel*>(mockGameContext.Assets().FindAsset(ra::data::models::AssetType::LocalBadges, 0));
         }
 
+        class MockAchievementModel : public ra::data::models::AchievementModel
+        {
+        public:
+            MockAchievementModel()
+            {
+                m_pInfo = std::make_unique<rc_client_achievement_info_t>();
+                memset(m_pInfo.get(), 0, sizeof(rc_client_achievement_info_t));
+            }
 
-    private:
+            std::unique_ptr<rc_client_achievement_info_t> m_pInfo;
+        };
+
         std::map<ra::AchievementID, std::wstring> m_mValidationErrors;
         std::map<ra::AchievementID, std::string> m_mPublishServerErrors;
     };
@@ -1250,6 +1265,7 @@ public:
         vmAssetList.SetSpecialFilter(AssetListViewModel::SpecialFilter::Active);
 
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Ach1");
+
         Assert::AreEqual({ 1U }, vmAssetList.mockGameContext.Assets().Count());
         auto* pAsset = dynamic_cast<ra::data::models::AchievementModel*>(vmAssetList.mockGameContext.Assets().GetItemAt(0));
         Expects(pAsset != nullptr);
@@ -3101,12 +3117,13 @@ public:
         vmAssetList.AddAchievement(AssetCategory::Core, 5, L"Test1", L"Desc1", L"12345", "0xH1234=1");
         vmAssetList.AddAchievement(AssetCategory::Core, 7, L"Test2", L"Desc2", L"11111", "0xH1111=1");
 
-        auto* pAchievement = vmAssetList.mockGameContext.Assets().FindAchievement(1U);
+        auto* pAchievement = dynamic_cast<AssetListViewModelHarness::MockAchievementModel*>(
+            vmAssetList.mockGameContext.Assets().FindAchievement(1U));
         Expects(pAchievement != nullptr);
         pAchievement->Activate();
         Assert::AreEqual(AssetState::Waiting, pAchievement->GetState());
 
-        auto* pTrigger = vmAssetList.mockRuntime.GetAchievementTrigger(1U);
+        auto* pTrigger = pAchievement->m_pInfo->trigger;
         Expects(pTrigger != nullptr);
         pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
         Assert::AreEqual(AssetState::Waiting, pAchievement->GetState());

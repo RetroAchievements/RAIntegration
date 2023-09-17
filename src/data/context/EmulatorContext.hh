@@ -139,6 +139,15 @@ public:
     }
 
     /// <summary>
+    /// Resets the emulator.
+    /// </summary>
+    void Reset() const
+    {
+        if (m_fResetEmulator)
+            m_fResetEmulator();
+    }
+
+    /// <summary>
     /// Sets a function to call to reset the emulator.
     /// </summary>
     void SetResetFunction(std::function<void()>&& fResetEmulator) noexcept { m_fResetEmulator = std::move(fResetEmulator); }

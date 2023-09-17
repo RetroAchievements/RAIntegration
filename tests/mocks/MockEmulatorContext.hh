@@ -87,6 +87,8 @@ public:
 
         ClearMemoryBlocks();
         AddMemoryBlock(0, s_pMemory.size_bytes(), ReadMemoryHelper, WriteMemoryHelper);
+
+        SetRuntimeMemorySize(s_pMemory.size_bytes());
     }
 
     void MockMemory(unsigned char pMemory[], size_t nBytes)
@@ -95,6 +97,8 @@ public:
 
         ClearMemoryBlocks();
         AddMemoryBlock(0, nBytes, ReadMemoryHelper, WriteMemoryHelper);
+
+        SetRuntimeMemorySize(nBytes);
     }
 
     void MockMemoryModified(bool bModified) noexcept
@@ -121,6 +125,8 @@ private:
     {
         s_pMemory.at(nAddress) = nValue;
     }
+
+    static void SetRuntimeMemorySize(size_t nBytes);
 
     bool m_bInvalid = false;
 

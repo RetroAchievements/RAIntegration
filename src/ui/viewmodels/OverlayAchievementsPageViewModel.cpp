@@ -8,8 +8,8 @@
 #include "data\context\SessionTracker.hh"
 #include "data\context\UserContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
-#include "services\RcheevosClient.hh"
 
 #include "ui\OverlayTheme.hh"
 
@@ -104,7 +104,7 @@ void OverlayAchievementsPageViewModel::Refresh()
     SetListTitle(pGameContext.GameTitle());
 
     // achievement list
-    const auto& pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
+    const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
 
     std::vector<rc_client_subset_info_t*> vDeactivatedSubsets;
     int nCategory = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE_AND_UNOFFICIAL;
@@ -314,7 +314,7 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     if (m_vAchievementDetails.find(vmItem.GetId()) != m_vAchievementDetails.end()) // already populated
         return;
 
-    const auto& pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
+    const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
     const auto nAchievementID = vmItem.GetId();
     GSL_SUPPRESS_TYPE1 const auto* pAchievement =
         reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, nAchievementID));

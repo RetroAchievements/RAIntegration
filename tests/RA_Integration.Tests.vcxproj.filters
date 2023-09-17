@@ -459,10 +459,7 @@
     <ClCompile Include="data\models\CapturedTriggerHits_Tests.cpp">
       <Filter>Tests\Data\Models</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\services\RcheevosClient.cpp">
-      <Filter>Code</Filter>
-    </ClCompile>
-    <ClCompile Include="mocks\MockRcheevosClient.cpp">
+    <ClCompile Include="mocks\MockAchievementRuntime.cpp">
       <Filter>Mocks</Filter>
     </ClCompile>
   </ItemGroup>
@@ -559,9 +556,6 @@
     </ClInclude>
     <ClInclude Include="..\src\ui\viewmodels\PointerFinderViewModel.hh">
       <Filter>Code</Filter>
-    </ClInclude>
-    <ClInclude Include="mocks\MockRcheevosClient.hh">
-      <Filter>Mocks</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

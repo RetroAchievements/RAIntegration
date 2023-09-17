@@ -8,6 +8,8 @@
 
 #include "data\Types.hh"
 
+struct rc_client_leaderboard_info_t;
+
 namespace ra {
 namespace data {
 namespace models {
@@ -189,6 +191,14 @@ public:
     void Serialize(ra::services::TextWriter& pWriter) const override;
     bool Deserialize(ra::Tokenizer& pTokenizer) override;
 
+    // Attaches an rc_client_leaderboard_info_t and populates the model from it.
+    void Attach(struct rc_client_leaderboard_info_t& pLeaderboard,
+        AssetCategory nCategory, const std::string& sDefinition);
+    // Replaces the attached rc_client_leaderboard_info_t. Does not update model or source.
+    void ReplaceAttached(struct rc_client_leaderboard_info_t& pLeaderboard);
+    // Attaches an rc_client_leaderboard_info_t and populates it from the model.
+    void AttachAndInitialize(struct rc_client_leaderboard_info_t& pLeaderboard);
+
     const CapturedTriggerHits& GetStartCapturedHits() const noexcept { return m_pCapturedStartTriggerHits; }
     const CapturedTriggerHits& GetSubmitCapturedHits() const noexcept { return m_pCapturedSubmitTriggerHits; }
     const CapturedTriggerHits& GetCancelCapturedHits() const noexcept { return m_pCapturedCancelTriggerHits; }
@@ -205,16 +215,24 @@ public:
 
 protected:
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;
+    void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
 
     bool ValidateAsset(std::wstring& sErrorMessage) override;
 
 private:
     void HandleStateChanged(AssetState nOldState, AssetState nNewState);
+    void SyncTitle();
+    void SyncDescription();
+    void SyncDefinition();
 
     AssetDefinition m_pStartTrigger;
     AssetDefinition m_pSubmitTrigger;
     AssetDefinition m_pCancelTrigger;
     AssetDefinition m_pValueDefinition;
+
+    struct rc_client_leaderboard_info_t* m_pLeaderboard = nullptr;
+    std::string m_sTitleBuffer;
+    std::string m_sDescriptionBuffer;
 
     CapturedTriggerHits m_pCapturedStartTriggerHits;
     CapturedTriggerHits m_pCapturedSubmitTriggerHits;

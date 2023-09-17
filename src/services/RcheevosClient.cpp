@@ -1125,6 +1125,32 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
     }
 }
 
+static void HandleChallengeIndicatorShowEvent(const rc_client_achievement_t& pAchievement)
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto* vmAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
+    if (!vmAchievement)
+    {
+        RA_LOG_ERR("Received achievement triggered event for unknown achievement %u", pAchievement.id);
+        return;
+    }
+   
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Challenge) !=
+        ra::ui::viewmodels::PopupLocation::None)
+    {
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        pOverlayManager.AddChallengeIndicator(vmAchievement->GetID(), ra::ui::ImageType::Badge,
+                                              ra::Narrow(vmAchievement->GetBadge()));
+    }
+}
+
+static void HandleChallengeIndicatorHideEvent(const rc_client_achievement_t& pAchievement)
+{
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    pOverlayManager.RemoveChallengeIndicator(pAchievement.id);
+}
+
 static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeaderboard)
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -1395,6 +1421,26 @@ void RcheevosClient::EventHandler(const rc_client_event_t* pEvent, rc_client_t*)
 {
     switch (pEvent->type)
     {
+        case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_UPDATE:
+            HandleLeaderboardTrackerUpdateEvent(*pEvent->leaderboard_tracker);
+            break;
+
+        case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_SHOW:
+            HandleLeaderboardTrackerShowEvent(*pEvent->leaderboard_tracker);
+            break;
+
+        case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE:
+            HandleLeaderboardTrackerHideEvent(*pEvent->leaderboard_tracker);
+            break;
+
+        case RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_SHOW:
+            HandleChallengeIndicatorShowEvent(*pEvent->achievement);
+            break;
+
+        case RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE:
+            HandleChallengeIndicatorHideEvent(*pEvent->achievement);
+            break;
+
         case RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED:
             HandleAchievementTriggeredEvent(*pEvent->achievement);
             break;
@@ -1409,18 +1455,6 @@ void RcheevosClient::EventHandler(const rc_client_event_t* pEvent, rc_client_t*)
 
         case RC_CLIENT_EVENT_LEADERBOARD_SUBMITTED:
             HandleLeaderboardSubmittedEvent(*pEvent->leaderboard);
-            break;
-
-        case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_UPDATE:
-            HandleLeaderboardTrackerUpdateEvent(*pEvent->leaderboard_tracker);
-            break;
-
-        case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_SHOW:
-            HandleLeaderboardTrackerShowEvent(*pEvent->leaderboard_tracker);
-            break;
-
-        case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE:
-            HandleLeaderboardTrackerHideEvent(*pEvent->leaderboard_tracker);
             break;
 
         case RC_CLIENT_EVENT_LEADERBOARD_SCOREBOARD:

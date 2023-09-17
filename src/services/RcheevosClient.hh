@@ -6,6 +6,7 @@
 
 #include "data\Types.hh"
 #include "data\context\EmulatorContext.hh"
+#include "data\models\AchievementModel.hh"
 
 #include "services\TextReader.hh"
 
@@ -35,6 +36,11 @@ public:
     rc_client_t* GetClient() const noexcept { return m_pClient.get(); }
 
     void SyncAssets();
+    void SyncAchievement(ra::data::models::AchievementModel& vmAchievement, bool bStateOnly = false);
+
+    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const;
+    bool HasRichPresence() const;
+    std::wstring GetRichPresenceDisplayString() const;
 
     void BeginLoginWithToken(const std::string& sUsername, const std::string& sApiToken,
                              rc_client_callback_t fCallback, void* pCallbackData);
@@ -43,6 +49,8 @@ public:
 
     void BeginLoadGame(const std::string& sHash, unsigned id,
                        rc_client_callback_t fCallback, void* pCallbackData);
+
+    void DoFrame();
 
     class Synchronizer
     {
@@ -90,6 +98,7 @@ private:
     static uint32_t ReadMemory(uint32_t nAddress, uint8_t* pBuffer, uint32_t nBytes, rc_client_t* pClient);
     static void ServerCallAsync(const rc_api_request_t* pRequest, rc_client_server_callback_t fCallback,
                            void* pCallbackData, rc_client_t* pClient);
+    static void EventHandler(const rc_client_event_t* pEvent, rc_client_t* pClient);
 
     class CallbackWrapper
     {

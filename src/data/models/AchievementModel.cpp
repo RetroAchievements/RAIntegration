@@ -5,8 +5,8 @@
 #include "data\models\LocalBadgesModel.hh"
 #include "data\models\TriggerValidation.hh"
 
-#include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
+#include "services\RcheevosClient.hh"
 #include "services\ServiceLocator.hh"
 
 namespace ra {
@@ -56,8 +56,8 @@ void AchievementModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
         {
             if (IsActive())
             {
-                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-                pRuntime.ActivateAchievement(GetID(), GetTrigger());
+                auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+                pRuntime.SyncAchievement(*this);
             }
         }
     }
@@ -140,7 +140,7 @@ bool AchievementModel::ValidateAsset(std::wstring& sError)
 
 void AchievementModel::DoFrame()
 {
-    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>();
     const auto* pTrigger = pRuntime.GetAchievementTrigger(GetID());
     if (pTrigger == nullptr)
     {
@@ -178,65 +178,30 @@ void AchievementModel::DoFrame()
 
 void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewState)
 {
-    if (!ra::services::ServiceLocator::Exists<ra::services::AchievementRuntime>())
+    if (!ra::services::ServiceLocator::Exists<ra::services::RcheevosClient>())
         return;
+
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
 
     const bool bWasActive = IsActive(nOldState);
     const bool bIsActive = IsActive(nNewState);
-    if (bWasActive == bIsActive)
-        return;
 
-    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    auto* pTrigger = pRuntime.GetAchievementTrigger(GetID());
-
-    if (bIsActive)
+    if (!bIsActive && bWasActive)
     {
-        const bool bRuntimeActive = (pTrigger != nullptr);
-        if (!bRuntimeActive)
-        {
-            pRuntime.ActivateAchievement(GetID(), GetTrigger());
-            pTrigger = pRuntime.GetAchievementTrigger(GetID());
-        }
-        else
-        {
-            rc_reset_trigger(pTrigger);
-        }
-    }
-    else if (pTrigger)
-    {
+        const auto* pTrigger = pRuntime.GetAchievementTrigger(GetID());
         m_pCapturedTriggerHits.Capture(pTrigger, GetTrigger());
-        pRuntime.DeactivateAchievement(GetID());
     }
 
-    switch (nNewState)
+    const auto nId = GetID();
+    pRuntime.SyncAchievement(*this, true);
+
+    if (nNewState == AssetState::Triggered)
     {
-        case AssetState::Waiting:
-            if (pTrigger)
-                pTrigger->state = RC_TRIGGER_STATE_WAITING;
-            break;
+        const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
+        m_tUnlock = pClock.Now();
 
-        case AssetState::Active:
-            if (pTrigger)
-                pTrigger->state = RC_TRIGGER_STATE_ACTIVE;
-            break;
-
-        case AssetState::Inactive:
-            if (pTrigger)
-                pTrigger->state = RC_TRIGGER_STATE_INACTIVE;
-            break;
-
-        case AssetState::Primed:
-            if (pTrigger)
-                pTrigger->state = RC_TRIGGER_STATE_PRIMED;
-            break;
-
-        case AssetState::Triggered:
-            const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
-            m_tUnlock = pClock.Now();
-
-            if (pRuntime.HasRichPresence())
-                SetUnlockRichPresence(pRuntime.GetRichPresenceDisplayString());
-            break;
+        if (pRuntime.HasRichPresence())
+            SetUnlockRichPresence(pRuntime.GetRichPresenceDisplayString());
     }
 }
 

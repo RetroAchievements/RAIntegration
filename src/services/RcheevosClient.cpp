@@ -4,8 +4,10 @@
 #include "data/context/SessionTracker.hh"
 #include "data/context/UserContext.hh"
 
+#include "services/FrameEventQueue.hh"
 #include "services/Http.hh"
 #include "services/IAudioSystem.hh"
+#include "services/IConfiguration.hh"
 #include "services/ILocalStorage.hh"
 #include "services/ServiceLocator.hh"
 
@@ -14,6 +16,7 @@
 #include "ui/viewmodels/PopupMessageViewModel.hh"
 #include "ui/viewmodels/WindowManager.hh"
 
+#include "Exports.hh"
 #include "RA_Log.h"
 #include "RA_StringUtils.h"
 
@@ -26,6 +29,8 @@
 
 namespace ra {
 namespace services {
+
+static std::map<uint32_t, int> s_mAchievementPopups;
 
 static int CanSubmit()
 {
@@ -71,6 +76,8 @@ RcheevosClient::RcheevosClient()
 #ifndef RA_UTEST
     rc_client_enable_logging(m_pClient.get(), RC_CLIENT_LOG_LEVEL_VERBOSE, RcheevosClient::LogMessage);
 #endif
+
+    rc_client_set_event_handler(m_pClient.get(), EventHandler);
 
     rc_client_set_unofficial_enabled(m_pClient.get(), 1);
 }
@@ -300,6 +307,46 @@ private:
         return nullptr;
     }
 
+    void SyncAchievementState(rc_client_achievement_info_t* pAchievement,
+                              const ra::data::models::AchievementModel* vmAchievement)
+    {
+        switch (vmAchievement->GetState())
+        {
+            case ra::data::models::AssetState::Triggered:
+                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+                if (pAchievement->trigger)
+                    pAchievement->trigger->state = RC_TRIGGER_STATE_TRIGGERED;
+                break;
+            case ra::data::models::AssetState::Disabled:
+                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
+                pAchievement->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
+                break;
+            case ra::data::models::AssetState::Inactive:
+                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
+                if (pAchievement->trigger)
+                    pAchievement->trigger->state = RC_TRIGGER_STATE_INACTIVE;
+                break;
+            case ra::data::models::AssetState::Waiting:
+                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+                if (pAchievement->trigger)
+                    pAchievement->trigger->state = RC_TRIGGER_STATE_WAITING;
+                break;
+            case ra::data::models::AssetState::Active:
+                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+                if (pAchievement->trigger)
+                    pAchievement->trigger->state = RC_TRIGGER_STATE_ACTIVE;
+                break;
+            case ra::data::models::AssetState::Primed:
+                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+                if (pAchievement->trigger)
+                    pAchievement->trigger->state = RC_TRIGGER_STATE_PRIMED;
+                break;
+            default:
+                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+                break;
+        }
+    }
+
     void SyncAchievement(rc_client_achievement_info_t* pAchievement, SubsetWrapper* pSubsetWrapper,
                          const ra::data::models::AchievementModel* vmAchievement)
     {
@@ -342,23 +389,6 @@ private:
                 break;
         }
 
-        switch (vmAchievement->GetState())
-        {
-            case ra::data::models::AssetState::Triggered:
-                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
-                break;
-            case ra::data::models::AssetState::Disabled:
-                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
-                pAchievement->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
-                break;
-            case ra::data::models::AssetState::Inactive:
-                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
-                break;
-            default:
-                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
-                break;
-        }
-
         const auto& sTrigger = vmAchievement->GetTrigger();
         uint8_t md5[16];
         rc_runtime_checksum(sTrigger.c_str(), md5);
@@ -372,30 +402,35 @@ private:
             const auto nSize = rc_trigger_size(sTrigger.c_str());
             if (nSize > 0)
             {
-                pAchievement->trigger = static_cast<rc_trigger_t*>(malloc(nSize));
-                if (pAchievement->trigger)
+                void* trigger_buffer = malloc(nSize);
+                if (trigger_buffer)
                 {
                     /* populate the item, using the communal memrefs pool */
                     rc_parse_state_t parse;
-                    rc_init_parse_state(&parse, pAchievement->trigger, nullptr, 0);
+                    rc_init_parse_state(&parse, trigger_buffer, nullptr, 0);
                     parse.first_memref = &m_pClient->game->runtime.memrefs;
                     parse.variables = &m_pClient->game->runtime.variables;
                     const char* sMemaddr = sTrigger.c_str();
+                    pAchievement->trigger = RC_ALLOC(rc_trigger_t, &parse);
                     rc_parse_trigger_internal(pAchievement->trigger, &sMemaddr, &parse);
                     rc_destroy_parse_state(&parse);
+
+                    pAchievement->trigger->memrefs = nullptr;
 
                     if (AllocatedMemrefs())
                     {
                         // if memrefs were allocated, we can't release this memory until the game is unloaded
-                        m_vAllocatedMemory.push_back(pAchievement->trigger);
+                        m_vAllocatedMemory.push_back(trigger_buffer);
                     }
                     else
                     {
-                        pSubsetWrapper->vAllocatedMemory.push_back(pAchievement->trigger);
+                        pSubsetWrapper->vAllocatedMemory.push_back(trigger_buffer);
                     }
                 }
             }
         }
+
+        SyncAchievementState(pAchievement, vmAchievement);
     }
 
     void SyncSubset(rc_client_subset_info_t* pSubset, SubsetWrapper* pSubsetWrapper,
@@ -599,6 +634,32 @@ public:
         pClient->game->subsets = &m_pSubsetWrapper->pCoreSubset;
         rc_mutex_unlock(&pClient->state.mutex);
     }
+
+    void SyncAchievement(ra::data::models::AchievementModel& vmAchievement, bool bStateOnly)
+    {
+        const auto nId = vmAchievement.GetID();
+        auto* pAchievement = FindAchievement(&m_pSubsetWrapper->pLocalSubset, nId);
+        if (pAchievement != nullptr)
+        {
+            if (bStateOnly)
+                SyncAchievementState(pAchievement, &vmAchievement);
+            else
+                SyncAchievement(pAchievement, m_pSubsetWrapper.get(), &vmAchievement);
+            return;
+        }
+
+        pAchievement = FindAchievement(&m_pSubsetWrapper->pCoreSubset, nId);
+        if (pAchievement != nullptr)
+        {
+            if (bStateOnly)
+                SyncAchievementState(pAchievement, &vmAchievement);
+            else
+                SyncAchievement(pAchievement, m_pSubsetWrapper.get(), &vmAchievement);
+            return;
+        }
+
+        SyncAssets(m_pClient);
+    }
 };
 
 void RcheevosClient::SyncAssets()
@@ -606,6 +667,50 @@ void RcheevosClient::SyncAssets()
     if (m_pClientSynchronizer == nullptr)
         m_pClientSynchronizer.reset(new ClientSynchronizer());
     m_pClientSynchronizer->SyncAssets(GetClient());
+}
+
+void RcheevosClient::SyncAchievement(ra::data::models::AchievementModel& vmAchievement, bool bStateOnly)
+{
+    if (m_pClientSynchronizer != nullptr)
+        m_pClientSynchronizer->SyncAchievement(vmAchievement, bStateOnly);
+}
+
+static rc_client_achievement_info_t* GetAchievementInfo(rc_client_t* pClient, ra::AchievementID nId)
+{
+    rc_client_subset_info_t* subset = pClient->game->subsets;
+    for (; subset; subset = subset->next)
+    {
+        rc_client_achievement_info_t* achievement = subset->achievements;
+        rc_client_achievement_info_t* stop = achievement + subset->public_.num_achievements;
+
+        for (; achievement < stop; ++achievement)
+        {
+            if (achievement->public_.id == nId)
+                return achievement;
+        }
+    }
+
+    return nullptr;
+}
+
+rc_trigger_t* RcheevosClient::GetAchievementTrigger(ra::AchievementID nId) const
+{
+    rc_client_achievement_info_t* achievement = GetAchievementInfo(GetClient(), nId);
+    return (achievement != nullptr) ? achievement->trigger : nullptr;
+}
+
+bool RcheevosClient::HasRichPresence() const
+{
+    return rc_client_has_rich_presence(GetClient());
+}
+
+std::wstring RcheevosClient::GetRichPresenceDisplayString() const
+{
+    char buffer[256];
+    if (rc_client_get_rich_presence_message(GetClient(), buffer, sizeof(buffer)) > 0)
+        return ra::Widen(buffer);
+
+    return L"";
 }
 
 /* ---- Login ----- */
@@ -760,6 +865,7 @@ rc_client_async_handle_t* RcheevosClient::BeginLoadGame(const char* sHash, unsig
     // unload the game and free any additional memory we allocated for local changes
     rc_client_unload_game(client);
     m_pClientSynchronizer.reset();
+    s_mAchievementPopups.clear();
 
     // if an ID was provided, store the hash->id mapping
     if (id != 0)
@@ -787,6 +893,8 @@ void RcheevosClient::LoadGameCallback(int nResult, const char* sErrorMessage, rc
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.InitializeFromRcheevosClient(wrapper->m_mAchievementDefinitions,
                                                   wrapper->m_mLeaderboardDefinitions);
+
+
     }
     else
     {
@@ -797,6 +905,214 @@ void RcheevosClient::LoadGameCallback(int nResult, const char* sErrorMessage, rc
 
     delete wrapper;
 }
+
+/* ---- DoFrame ----- */
+
+void RcheevosClient::DoFrame()
+{
+    rc_client_do_frame(GetClient());
+}
+
+static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchievement)
+{
+    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+    auto* vmAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
+    if (!vmAchievement)
+    {
+        RA_LOG_ERR("Received achievement triggered event for unknown achievement %u", pAchievement.id);
+        return;
+    }
+
+    // immediately set the state to Triggered (instead of waiting for AssetListViewModel::DoFrame to do it).
+    vmAchievement->SetState(ra::data::models::AssetState::Triggered);
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    bool bTakeScreenshot = pConfiguration.IsFeatureEnabled(ra::services::Feature::AchievementTriggeredScreenshot);
+    bool bSubmit = false;
+    bool bIsError = false;
+
+    std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
+    vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement.title, pAchievement.points));
+    vmPopup->SetDetail(ra::Widen(pAchievement.description));
+    vmPopup->SetImage(ra::ui::ImageType::Badge, pAchievement.badge_name);
+    vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);
+
+    switch (vmAchievement->GetCategory())
+    {
+        case ra::data::models::AssetCategory::Local:
+            vmPopup->SetTitle(L"Local Achievement Unlocked");
+            bSubmit = false;
+            bTakeScreenshot = false;
+            break;
+
+        case ra::data::models::AssetCategory::Unofficial:
+            vmPopup->SetTitle(L"Unofficial Achievement Unlocked");
+            bSubmit = false;
+            break;
+
+        default:
+            vmPopup->SetTitle(L"Achievement Unlocked");
+            bSubmit = true;
+            break;
+    }
+
+    if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
+    {
+        auto sHeader = vmPopup->GetTitle();
+        sHeader.insert(0, L"Test ");
+        vmPopup->SetTitle(sHeader);
+
+        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement.id, "test compatibility mode");
+        bSubmit = false;
+    }
+
+    if (vmAchievement->IsModified() ||                                                    // actual modifications
+        (bSubmit && vmAchievement->GetChanges() != ra::data::models::AssetChanges::None)) // unpublished changes
+    {
+        auto sHeader = vmPopup->GetTitle();
+        sHeader.insert(0, L"Modified ");
+        if (vmAchievement->GetCategory() != ra::data::models::AssetCategory::Local)
+            sHeader.append(L" LOCALLY");
+        vmPopup->SetTitle(sHeader);
+
+        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement.id,
+                    vmAchievement->IsModified() ? "modified" : "unpublished");
+        bIsError = true;
+        bSubmit = false;
+        bTakeScreenshot = false;
+    }
+
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    if (bSubmit && pEmulatorContext.WasMemoryModified())
+    {
+        vmPopup->SetTitle(L"Achievement Unlocked LOCALLY");
+        vmPopup->SetErrorDetail(L"Error: RAM tampered with");
+
+        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement.id, "RAM tampered with");
+        bIsError = true;
+        bSubmit = false;
+    }
+
+    if (bSubmit && _RA_HardcoreModeIsActive() && pEmulatorContext.IsMemoryInsecure())
+    {
+        vmPopup->SetTitle(L"Achievement Unlocked LOCALLY");
+        vmPopup->SetErrorDetail(L"Error: RAM insecure");
+
+        RA_LOG_INFO("Achievement %u not unlocked - %s", pAchievement.id, "RAM insecure");
+        bIsError = true;
+        bSubmit = false;
+    }
+
+    if (bSubmit && pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
+    {
+        vmPopup->SetTitle(L"Offline Achievement Unlocked");
+        bSubmit = false;
+    }
+
+#ifndef NDEBUG
+    if (!bSubmit)
+        Expects(!CanSubmitAchievementUnlock(pAchievement.id, nullptr));
+#endif
+
+    ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(bIsError ? L"Overlay\\acherror.wav"
+                                                                                           : L"Overlay\\unlock.wav");
+
+    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered) !=
+        ra::ui::viewmodels::PopupLocation::None)
+    {
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        const auto nPopupId = pOverlayManager.QueueMessage(vmPopup);
+
+        if (bTakeScreenshot)
+        {
+            std::wstring sPath = ra::StringPrintf(L"%s%u.png", pConfiguration.GetScreenshotDirectory(), pAchievement.id);
+            pOverlayManager.CaptureScreenshot(nPopupId, sPath);
+        }
+
+        s_mAchievementPopups[pAchievement.id] = nPopupId;
+    }
+
+    if (vmAchievement->IsPauseOnTrigger())
+    {
+        auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
+        pFrameEventQueue.QueuePauseOnTrigger(vmAchievement->GetName());
+    }
+}
+
+static void HandleServerError(const rc_client_server_error_t& pServerError)
+{
+    if (strcmp(pServerError.api, "award_achievement"))
+    {
+        // TODO: match pServerError.id to a popup - by matching description? - then SetErrorDetail
+        const auto nAchievementId = 0;//pServerError.target_id;
+        const auto nPopupId = s_mAchievementPopups[nAchievementId];
+
+        const auto sErrorMessage = pServerError.error_message ?
+            ra::Widen(pServerError.error_message) : L"Error submitting unlock";
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        auto pPopup = pOverlayManager.GetMessage(nPopupId);
+        if (pPopup != nullptr)
+        {
+            pPopup->SetTitle(L"Achievement Unlock FAILED");
+            pPopup->SetErrorDetail(sErrorMessage);
+            pPopup->RebuildRenderImage();
+        }
+        else
+        {
+            std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(
+                new ra::ui::viewmodels::PopupMessageViewModel);
+            vmPopup->SetTitle(L"Achievement Unlock FAILED");
+            vmPopup->SetErrorDetail(sErrorMessage);
+            vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);
+
+            const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+            const auto* pAchievement = pGameContext.Assets().FindAchievement(nAchievementId);
+            if (pAchievement != nullptr)
+            {
+                vmPopup->SetDescription(
+                    ra::StringPrintf(L"%s (%u)", pAchievement->GetName(), pAchievement->GetPoints()));
+                vmPopup->SetImage(ra::ui::ImageType::Badge, ra::Narrow(pAchievement->GetBadge()));
+            }
+            else
+            {
+                vmPopup->SetDescription(ra::StringPrintf(L"Achievement %u", nAchievementId));
+            }
+
+            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\acherror.wav");
+            pOverlayManager.QueueMessage(vmPopup);
+        }
+
+        return;
+    }
+
+    if (strcmp(pServerError.api, "submit_lboard_entry"))
+    {
+
+    }
+
+    ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
+        ra::StringPrintf(L"%s %s", pServerError.api, pServerError.error_message));
+}
+
+void RcheevosClient::EventHandler(const rc_client_event_t* pEvent, rc_client_t*)
+{
+    switch (pEvent->type)
+    {
+        case RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED:
+            HandleAchievementTriggeredEvent(*pEvent->achievement);
+            break;
+
+        case RC_CLIENT_EVENT_SERVER_ERROR:
+            HandleServerError(*pEvent->server_error);
+            break;
+
+        default:
+            RA_LOG_WARN("Unhandled rc_client_event %u", pEvent->type);
+            break;
+    }
+}
+
+/* ---- Exports ----- */
 
 #ifdef RC_CLIENT_SUPPORTS_EXTERNAL
 

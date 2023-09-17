@@ -446,6 +446,13 @@ static void ProcessAchievements()
     if (pRuntime.IsPaused())
         return;
 
+    if (ra::services::ServiceLocator::Exists<ra::services::RcheevosClient>())
+    {
+        auto& pRcheevosClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+        pRcheevosClient.DoFrame();
+        return;
+    }
+
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
     
     TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeProcess);

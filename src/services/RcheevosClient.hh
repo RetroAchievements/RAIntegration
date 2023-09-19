@@ -64,10 +64,17 @@ public:
             m_pCondVar.notify_all();
         }
 
-        void SetErrorMessage(const std::string& sErrorMessage)
+        void CaptureResult(int nResult, const char* sErrorMessage)
         {
-            m_sErrorMessage = sErrorMessage;
+            m_nResult = nResult;
+
+            if (sErrorMessage)
+                m_sErrorMessage = sErrorMessage;
+            else
+                m_sErrorMessage.clear();
         }
+
+        int GetResult() const noexcept { return m_nResult; }
 
         const std::string& GetErrorMessage() const noexcept { return m_sErrorMessage; }
 
@@ -75,6 +82,7 @@ public:
         std::mutex m_pMutex;
         std::condition_variable m_pCondVar;
         std::string m_sErrorMessage;
+        int m_nResult = 0;
         bool m_bWaiting = true;
     };
 

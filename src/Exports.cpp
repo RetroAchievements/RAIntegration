@@ -329,30 +329,23 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
 
         if (bBlocking)
         {
-            struct LoginData
-            {
-                ra::services::RcheevosClient::Synchronizer pSynchronizer;
-                std::string sErrorMessage;
-                int nResult;
-            } pLoginData;
+            ra::services::RcheevosClient::Synchronizer pSynchronizer;
 
             pClient.BeginLoginWithToken(
                 pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
                 [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) {
-                    auto* pLoginData = static_cast<LoginData*>(pUserdata);
-                    Expects(pLoginData != nullptr);
+                    auto* pSynchronizer = static_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
+                    Expects(pSynchronizer != nullptr);
 
-                    pLoginData->nResult = nResult;
-                    if (sErrorMessage != nullptr)
-                        pLoginData->sErrorMessage = sErrorMessage;
-
-                    pLoginData->pSynchronizer.Notify();
+                    pSynchronizer->CaptureResult(nResult, sErrorMessage);
+                    pSynchronizer->Notify();
                 },
-                &pLoginData);
+                &pSynchronizer);
 
-            pLoginData.pSynchronizer.Wait();
+            pSynchronizer.Wait();
 
-            HandleLoginResponse(pLoginData.nResult, pLoginData.sErrorMessage.c_str(), pClient.GetClient(), nullptr);
+            HandleLoginResponse(pSynchronizer.GetResult(), pSynchronizer.GetErrorMessage().c_str(),
+                                pClient.GetClient(), nullptr);
         }
         else
         {

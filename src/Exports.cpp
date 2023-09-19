@@ -331,8 +331,7 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
         {
             ra::services::RcheevosClient::Synchronizer pSynchronizer;
 
-            pClient.BeginLoginWithToken(
-                pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
+            pClient.BeginLoginWithToken(pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
                 [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) {
                     auto* pSynchronizer = static_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
                     Expects(pSynchronizer != nullptr);

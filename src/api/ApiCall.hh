@@ -29,45 +29,6 @@ protected:
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync(
             [request, callback = std::move(callback)]{ callback(request.Call()); });
     }
-
-    template<class TRequest, class TCallback>
-    static void CallAsyncWithRetry(const TRequest& request, TCallback&& callback)
-    {
-        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync(
-            [request, callback]
-        {
-            DoAsyncWithRetry(request, callback, std::chrono::milliseconds(0));
-        });
-    }
-
-private:
-    template<class TRequest, class TCallback>
-    static void DoAsyncWithRetry(const TRequest& request, TCallback&& callback, std::chrono::milliseconds delay)
-    {
-        auto response = request.Call();
-        if (response.Result != ApiResult::Incomplete)
-        {
-            callback(response);
-            return;
-        }
-
-        if (delay < std::chrono::milliseconds(500))
-        {
-            delay = std::chrono::milliseconds(500);
-        }
-        else
-        {
-            delay += delay;
-            if (delay > std::chrono::minutes(2))
-                delay = std::chrono::minutes(2);
-        }
-
-        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(delay,
-            [request = std::move(request), callback = std::move(callback), delay]
-        {
-            DoAsyncWithRetry(request, callback, delay);
-        });
-    }
 };
 
 struct ApiResponseBase

@@ -623,9 +623,6 @@
     <ClInclude Include="api\StartSession.hh">
       <Filter>API</Filter>
     </ClInclude>
-    <ClInclude Include="api\Ping.hh">
-      <Filter>API</Filter>
-    </ClInclude>
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>
@@ -643,9 +640,6 @@
     </ClInclude>
     <ClInclude Include="services\AchievementRuntime.hh">
       <Filter>Services</Filter>
-    </ClInclude>
-    <ClInclude Include="api\ResolveHash.hh">
-      <Filter>API</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\LoginViewModel.hh">
       <Filter>UI\ViewModels</Filter>
@@ -665,9 +659,6 @@
     <ClInclude Include="api\LatestClient.hh">
       <Filter>API</Filter>
     </ClInclude>
-    <ClInclude Include="api\AwardAchievement.hh">
-      <Filter>API</Filter>
-    </ClInclude>
     <ClInclude Include="ui\ViewModelCollection.hh">
       <Filter>UI</Filter>
     </ClInclude>
@@ -678,9 +669,6 @@
       <Filter>API</Filter>
     </ClInclude>
     <ClInclude Include="api\SubmitNewTitle.hh">
-      <Filter>API</Filter>
-    </ClInclude>
-    <ClInclude Include="api\SubmitLeaderboardEntry.hh">
       <Filter>API</Filter>
     </ClInclude>
     <ClInclude Include="ui\viewmodels\EmulatorViewModel.hh">

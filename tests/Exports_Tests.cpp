@@ -399,27 +399,6 @@ private:
         MockWindowManager mockWindowManager;
         MockClock mockClock;
 
-        DoAchievementsFrameHarness() noexcept
-        {
-            GSL_SUPPRESS_F6 mockServer.HandleRequest<ra::api::AwardAchievement>([this]
-                (const ra::api::AwardAchievement::Request& request, ra::api::AwardAchievement::Response& response)
-            {
-                m_vUnlockedAchievements.insert(request.AchievementId);
-                response.Result = ra::api::ApiResult::Success;
-
-                return true;
-            });
-
-            GSL_SUPPRESS_F6 mockServer.HandleRequest<ra::api::SubmitLeaderboardEntry>([this]
-                (const ra::api::SubmitLeaderboardEntry::Request& request, ra::api::SubmitLeaderboardEntry::Response& response)
-            {
-                m_vSubmittedLeaderboardEntries.insert_or_assign(request.LeaderboardId, request.Score);
-                response.Result = ra::api::ApiResult::Success;
-
-                return true;
-            });
-        }
-
         ra::data::models::AchievementModel& MockAchievement(unsigned int nId)
         {
             auto& pAch = mockGameContext.Assets().NewAchievement();
@@ -431,26 +410,10 @@ private:
             return pAch;
         }
 
-        bool WasUnlocked(unsigned int nId)
-        {
-            mockThreadPool.ExecuteNextTask();
-            return m_vUnlockedAchievements.find(nId) != m_vUnlockedAchievements.end();
-        }
-
-        unsigned int GetSubmittedScore(ra::LeaderboardID nId)
-        {
-            mockThreadPool.ExecuteNextTask();
-            const auto pIter = m_vSubmittedLeaderboardEntries.find(nId);
-            return (pIter != m_vSubmittedLeaderboardEntries.end()) ? pIter->second : 0U;
-        }
-
     private:
         MockThreadPool mockThreadPool;
         MockServer mockServer;
         MockUserContext mockUserContext;
-
-        std::set<unsigned int> m_vUnlockedAchievements;
-        std::map<ra::LeaderboardID, unsigned int> m_vSubmittedLeaderboardEntries;
     };
 
     void AssertMenuItem(const RA_MenuItem* pItem, LPARAM nId, const wchar_t* sLabel, bool bChecked = false)

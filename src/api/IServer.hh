@@ -2,7 +2,6 @@
 #define RA_API_ISERVER_HH
 #pragma once
 
-#include "api/AwardAchievement.hh"
 #include "api/DeleteCodeNote.hh"
 #include "api/FetchAchievementInfo.hh"
 #include "api/FetchBadgeIds.hh"
@@ -11,10 +10,8 @@
 #include "api/FetchLeaderboardInfo.hh"
 #include "api/FetchUserFriends.hh"
 #include "api/LatestClient.hh"
-#include "api/Ping.hh"
 #include "api/ResolveHash.hh"
 #include "api/StartSession.hh"
-#include "api/SubmitLeaderboardEntry.hh"
 #include "api/SubmitNewTitle.hh"
 #include "api/SubmitTicket.hh"
 #include "api/UpdateAchievement.hh"
@@ -32,9 +29,6 @@ public:
 
     // === user functions ===
     virtual StartSession::Response StartSession(const StartSession::Request& request) = 0;
-    virtual Ping::Response Ping(const Ping::Request& request) = 0;
-    virtual AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) = 0;
-    virtual SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) = 0;
     virtual FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) = 0;
 
     // === game functions ===

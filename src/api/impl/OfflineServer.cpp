@@ -13,22 +13,6 @@ namespace ra {
 namespace api {
 namespace impl {
 
-AwardAchievement::Response OfflineServer::AwardAchievement(const AwardAchievement::Request&)
-{
-    AwardAchievement::Response response;
-    response.Result = ApiResult::Failed;
-    response.ErrorMessage = "Achievements are not actually unlocked in offline mode";
-    return response;
-}
-
-SubmitLeaderboardEntry::Response OfflineServer::SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request&)
-{
-    SubmitLeaderboardEntry::Response response;
-    response.Result = ApiResult::Failed;
-    response.ErrorMessage = "Leaderboard entries are not actually submitted in offline mode";
-    return response;
-}
-
 FetchCodeNotes::Response OfflineServer::FetchCodeNotes(const FetchCodeNotes::Request& request)
 {
     FetchCodeNotes::Response response;

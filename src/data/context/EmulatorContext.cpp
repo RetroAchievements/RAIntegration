@@ -704,7 +704,7 @@ bool EmulatorContext::IsValidAddress(ra::ByteAddress nAddress) const noexcept
     return false;
 }
 
-uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const
+uint8_t EmulatorContext::ReadMemoryByte(ra::ByteAddress nAddress) const noexcept
 {
     for (const auto& pBlock : m_vMemoryBlocks)
     {

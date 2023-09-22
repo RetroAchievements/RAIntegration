@@ -404,7 +404,7 @@ void AchievementModel::Attach(struct rc_client_achievement_info_t& pAchievement,
     DoFrame(); // sync state
 }
 
-void AchievementModel::ReplaceAttached(struct rc_client_achievement_info_t& pAchievement)
+void AchievementModel::ReplaceAttached(struct rc_client_achievement_info_t& pAchievement) noexcept
 {
     m_pAchievement = &pAchievement;
 }

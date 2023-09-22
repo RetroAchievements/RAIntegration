@@ -525,6 +525,7 @@ API void CCONV _RA_OnSaveState(const char* sFilename)
 
 API int CCONV _RA_CaptureState(char* pBuffer, int nBufferSize)
 {
+    GSL_SUPPRESS_TYPE1
     return ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().
         SaveProgressToBuffer(reinterpret_cast<uint8_t*>(pBuffer), nBufferSize);
 }
@@ -598,7 +599,7 @@ static void OnStateRestored()
                     {
                         auto& pScoreTracker = pOverlayManager.AddScoreTracker(pLeaderboard->GetID());
 
-                        const auto pDefinition = pRuntime.GetLeaderboardDefinition(pLeaderboard->GetID());
+                        const auto* pDefinition = pRuntime.GetLeaderboardDefinition(pLeaderboard->GetID());
                         if (pDefinition != nullptr)
                         {
                             const auto sDisplayText = pLeaderboard->FormatScore(pDefinition->value.value.value);
@@ -630,6 +631,7 @@ API void CCONV _RA_RestoreState(const char* pBuffer)
 {
     if (CanRestoreState())
     {
+        GSL_SUPPRESS_TYPE1
         ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().
             LoadProgressFromBuffer(reinterpret_cast<const uint8_t*>(pBuffer));
         OnStateRestored();

@@ -109,7 +109,7 @@ AchievementRuntime::AchievementRuntime()
 
 AchievementRuntime::~AchievementRuntime() { Shutdown(); }
 
-static void DummyEventHandler(const rc_client_event_t*, rc_client_t*)
+static void DummyEventHandler(const rc_client_event_t*, rc_client_t*) noexcept
 {
 }
 
@@ -495,7 +495,7 @@ public:
         }
     }
 
-    bool DetachMemory(void* pMemory)
+    bool DetachMemory(void* pMemory) noexcept
     {
         if (!m_pSubsetWrapper)
             return false;
@@ -515,7 +515,7 @@ void AchievementRuntime::SyncAssets()
 void AchievementRuntime::AttachMemory(void* pMemory)
 {
     if (m_pClientSynchronizer != nullptr)
-        m_pClientSynchronizer->DetachMemory(pMemory);
+        m_pClientSynchronizer->AttachMemory(pMemory);
 }
 
 bool AchievementRuntime::DetachMemory(void* pMemory)
@@ -526,13 +526,13 @@ bool AchievementRuntime::DetachMemory(void* pMemory)
     return m_pClientSynchronizer->DetachMemory(pMemory);
 }
 
-static rc_client_achievement_info_t* GetAchievementInfo(rc_client_t* pClient, ra::AchievementID nId)
+static rc_client_achievement_info_t* GetAchievementInfo(rc_client_t* pClient, ra::AchievementID nId) noexcept
 {
     rc_client_subset_info_t* subset = pClient->game->subsets;
     for (; subset; subset = subset->next)
     {
         rc_client_achievement_info_t* achievement = subset->achievements;
-        rc_client_achievement_info_t* stop = achievement + subset->public_.num_achievements;
+        const rc_client_achievement_info_t* stop = achievement + subset->public_.num_achievements;
 
         for (; achievement < stop; ++achievement)
         {
@@ -544,19 +544,19 @@ static rc_client_achievement_info_t* GetAchievementInfo(rc_client_t* pClient, ra
     return nullptr;
 }
 
-rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId) const
+rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId) const noexcept
 {
     rc_client_achievement_info_t* achievement = GetAchievementInfo(GetClient(), nId);
     return (achievement != nullptr) ? achievement->trigger : nullptr;
 }
 
-static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra::LeaderboardID nId)
+static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra::LeaderboardID nId) noexcept
 {
     rc_client_subset_info_t* subset = pClient->game->subsets;
     for (; subset; subset = subset->next)
     {
         rc_client_leaderboard_info_t* leaderboard = subset->leaderboards;
-        rc_client_leaderboard_info_t* stop = leaderboard + subset->public_.num_leaderboards;
+        const rc_client_leaderboard_info_t* stop = leaderboard + subset->public_.num_leaderboards;
 
         for (; leaderboard < stop; ++leaderboard)
         {
@@ -568,20 +568,20 @@ static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra
     return nullptr;
 }
 
-rc_lboard_t* AchievementRuntime::GetLeaderboardDefinition(ra::LeaderboardID nId) const
+rc_lboard_t* AchievementRuntime::GetLeaderboardDefinition(ra::LeaderboardID nId) const noexcept
 {
     rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(GetClient(), nId);
     return (leaderboard != nullptr) ? leaderboard->lboard : nullptr;
 }
 
-void AchievementRuntime::ReleaseLeaderboardTracker(ra::LeaderboardID nId)
+void AchievementRuntime::ReleaseLeaderboardTracker(ra::LeaderboardID nId) noexcept
 {
     rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(GetClient(), nId);
     if (leaderboard)
         rc_client_release_leaderboard_tracker(GetClient()->game, leaderboard);
 }
 
-bool AchievementRuntime::HasRichPresence() const
+bool AchievementRuntime::HasRichPresence() const noexcept
 {
     return m_nRichPresenceParseResult != RC_OK || rc_client_has_rich_presence(GetClient());
 }
@@ -830,7 +830,7 @@ static void PrepareForPauseOnChangeEvents(rc_client_t* pClient,
     {
         auto* vmAsset = pGameContext.Assets().GetItemAt(nIndex);
 
-        auto* vmAchievement = dynamic_cast<ra::data::models::AchievementModel*>(vmAsset);
+        const auto* vmAchievement = dynamic_cast<ra::data::models::AchievementModel*>(vmAsset);
         if (vmAchievement != nullptr)
         {
             if (vmAchievement->IsPauseOnReset())
@@ -863,7 +863,7 @@ static void PrepareForPauseOnChangeEvents(rc_client_t* pClient,
             continue;
         }
 
-        auto* vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(vmAsset);
+        const auto* vmLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(vmAsset);
         if (vmLeaderboard != nullptr)
         {
             using namespace ra::bitwise_ops;
@@ -912,7 +912,7 @@ static void PrepareForPauseOnChangeEvents(rc_client_t* pClient,
 static void RaisePauseOnChangeEvents(std::vector<rc_client_achievement_info_t*>& vAchievementsWithHits,
                                      std::vector<rc_client_achievement_info_t*>& vActiveAchievements)
 {
-    for (auto* pAchievement : vAchievementsWithHits)
+    for (const auto* pAchievement : vAchievementsWithHits)
     {
         if (pAchievement != nullptr && pAchievement->trigger && !pAchievement->trigger->has_hits)
         {
@@ -921,7 +921,7 @@ static void RaisePauseOnChangeEvents(std::vector<rc_client_achievement_info_t*>&
         }
     }
 
-    for (auto* pAchievement : vActiveAchievements)
+    for (const auto* pAchievement : vActiveAchievements)
     {
         if (pAchievement && pAchievement->trigger && pAchievement->trigger->state == RC_TRIGGER_STATE_TRIGGERED)
         {
@@ -942,7 +942,7 @@ static void RaisePauseOnChangeEvents(
             using namespace ra::bitwise_ops;
 
             auto nPauseOnReset = pair.second;
-            auto* pLeaderboard = pair.first->lboard;
+            const auto* pLeaderboard = pair.first->lboard;
             if (pLeaderboard->start.has_hits)
                 nPauseOnReset &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Start;
             if (pLeaderboard->cancel.has_hits)
@@ -990,7 +990,7 @@ static void RaisePauseOnChangeEvents(
             using namespace ra::bitwise_ops;
 
             auto nPauseOnTrigger = pair.second;
-            auto* pLeaderboard = pair.first->lboard;
+            const auto* pLeaderboard = pair.first->lboard;
             if (pLeaderboard->start.state != RC_TRIGGER_STATE_TRIGGERED)
                 nPauseOnTrigger &= ~ra::data::models::LeaderboardModel::LeaderboardParts::Start;
             if (pLeaderboard->cancel.state != RC_TRIGGER_STATE_TRIGGERED)
@@ -1185,7 +1185,7 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
 static void HandleChallengeIndicatorShowEvent(const rc_client_achievement_t& pAchievement)
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* vmAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
+    const auto* vmAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
     if (!vmAchievement)
     {
         RA_LOG_ERR("Received achievement triggered event for unknown achievement %u", pAchievement.id);
@@ -1211,7 +1211,7 @@ static void HandleChallengeIndicatorHideEvent(const rc_client_achievement_t& pAc
 static void HandleProgressIndicatorUpdateEvent(const rc_client_achievement_t& pAchievement)
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* vmAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
+    const auto* vmAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
     if (!vmAchievement)
     {
         RA_LOG_ERR("Received achievement triggered event for unknown achievement %u", pAchievement.id);
@@ -1244,7 +1244,7 @@ static void HandleProgressIndicatorHideEvent()
     pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::None, "", L"");
 }
 
-static void HandleGameCompletedEvent(rc_client_t& pClient)
+static void HandleGameCompletedEvent(const rc_client_t& pClient)
 {
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Mastery) == ra::ui::viewmodels::PopupLocation::None)
@@ -1283,7 +1283,7 @@ static void HandleGameCompletedEvent(rc_client_t& pClient)
 static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeaderboard)
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* vmLeaderboard = pGameContext.Assets().FindLeaderboard(pLeaderboard.id);
+    const auto* vmLeaderboard = pGameContext.Assets().FindLeaderboard(pLeaderboard.id);
     if (!vmLeaderboard)
     {
         RA_LOG_ERR("Received leaderboard started event for unknown leaderboard %u", pLeaderboard.id);
@@ -1304,7 +1304,7 @@ static void HandleLeaderboardStartedEvent(const rc_client_leaderboard_t& pLeader
 static void HandleLeaderboardFailedEvent(const rc_client_leaderboard_t& pLeaderboard)
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* vmLeaderboard = pGameContext.Assets().FindLeaderboard(pLeaderboard.id);
+    const auto* vmLeaderboard = pGameContext.Assets().FindLeaderboard(pLeaderboard.id);
     if (!vmLeaderboard)
     {
         RA_LOG_ERR("Received leaderboard started event for unknown leaderboard %u", pLeaderboard.id);
@@ -1348,7 +1348,7 @@ static void ShowSimplifiedScoreboard(const rc_client_leaderboard_t& pLeaderboard
 static void HandleLeaderboardSubmittedEvent(const rc_client_leaderboard_t& pLeaderboard)
 {
     auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    auto* vmLeaderboard = pGameContext.Assets().FindLeaderboard(pLeaderboard.id);
+    const auto* vmLeaderboard = pGameContext.Assets().FindLeaderboard(pLeaderboard.id);
     if (!vmLeaderboard)
     {
         RA_LOG_ERR("Received leaderboard started event for unknown leaderboard %u", pLeaderboard.id);
@@ -1579,8 +1579,11 @@ static void HandleResetEvent()
     pEmulatorContext.Reset();
 }
 
+GSL_SUPPRESS_CON3
 void AchievementRuntime::EventHandler(const rc_client_event_t* pEvent, rc_client_t* pClient)
 {
+    Expects(pClient != nullptr);
+    Expects(pEvent != nullptr);
     switch (pEvent->type)
     {
         case RC_CLIENT_EVENT_LEADERBOARD_TRACKER_UPDATE:
@@ -1655,7 +1658,7 @@ void AchievementRuntime::EventHandler(const rc_client_event_t* pEvent, rc_client
 
 /* ---- Runtime State ----- */
 
-void AchievementRuntime::ResetRuntime()
+void AchievementRuntime::ResetRuntime() noexcept
 {
     rc_client_reset(GetClient());
 }
@@ -2066,7 +2069,8 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
     const auto nSize = rc_client_progress_size(GetClient());
     std::string sSerialized;
     sSerialized.resize(nSize);
-    rc_client_serialize_progress(GetClient(), reinterpret_cast<uint8_t*>(sSerialized.data()));
+    GSL_SUPPRESS_TYPE1 const auto pData = reinterpret_cast<uint8_t*>(sSerialized.data());
+    rc_client_serialize_progress(GetClient(), pData);
     pFile->Write(sSerialized);
 
     RA_LOG_INFO("Runtime state written to %s", sSaveStateFilename);
@@ -2074,7 +2078,7 @@ void AchievementRuntime::SaveProgressToFile(const char* sSaveStateFilename) cons
 
 int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) const
 {
-    const int nSize = static_cast<int>(rc_client_progress_size(GetClient()));
+    const int nSize = gsl::narrow_cast<int>(rc_client_progress_size(GetClient()));
     if (nSize <= nBufferSize)
     {
         rc_client_serialize_progress(GetClient(), pBuffer);

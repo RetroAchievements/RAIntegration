@@ -192,7 +192,7 @@ void LeaderboardModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
 
     if (!bIsActive && bWasActive)
     {
-        auto* pLeaderboard = m_pLeaderboard->lboard;
+        const auto* pLeaderboard = m_pLeaderboard->lboard;
         Expects(pLeaderboard != nullptr);
 
         m_pCapturedStartTriggerHits.Capture(&pLeaderboard->start, GetStartTrigger());
@@ -369,7 +369,7 @@ void LeaderboardModel::Attach(struct rc_client_leaderboard_info_t& pLeaderboard,
     DoFrame(); // sync state
 }
 
-void LeaderboardModel::ReplaceAttached(struct rc_client_leaderboard_info_t& pLeaderboard)
+void LeaderboardModel::ReplaceAttached(struct rc_client_leaderboard_info_t& pLeaderboard) noexcept
 {
     m_pLeaderboard = &pLeaderboard;
 }

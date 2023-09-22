@@ -301,6 +301,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
     {
         // achievements
         auto* pAchievementData = pSubset->achievements;
+        Expects(pAchievementData != nullptr);
         const auto* pAchievementStop = pAchievementData + pSubset->public_.num_achievements;
         for (; pAchievementData < pAchievementStop; ++pAchievementData)
         {
@@ -345,6 +346,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
 
         // leaderboards
         auto* pLeaderboardData = pSubset->leaderboards;
+        Expects(pLeaderboardData != nullptr);
         const auto* pLeaderboardStop = pLeaderboardData + pSubset->public_.num_leaderboards;
         for (; pLeaderboardData < pLeaderboardStop; ++pLeaderboardData)
         {

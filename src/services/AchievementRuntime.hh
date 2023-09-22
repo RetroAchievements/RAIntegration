@@ -57,7 +57,7 @@ public:
     /// <summary>
     /// Clears all active achievements/leaderboards/rich presence from the runtime.
     /// </summary>
-    void ResetRuntime();
+    void ResetRuntime() noexcept;
 
     /// <summary>
     /// Updates any references using the provided ID to a new value.
@@ -67,14 +67,14 @@ public:
     /// <summary>
     /// Gets the raw trigger for the achievement.
     /// </summary>
-    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const;
+    rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const noexcept;
 
     /// <summary>
     /// Gets the raw definition for the leaderboard.
     /// </summary>
-    rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) const;
+    rc_lboard_t* GetLeaderboardDefinition(ra::LeaderboardID nId) const noexcept;
 
-    void ReleaseLeaderboardTracker(ra::LeaderboardID nId);
+    void ReleaseLeaderboardTracker(ra::LeaderboardID nId) noexcept;
 
     /// <summary>
     /// Specifies the rich presence to process each frame.
@@ -86,7 +86,7 @@ public:
     /// <summary>
     /// Gets whether or not the loaded game has a rich presence script.
     /// </summary>
-    bool HasRichPresence() const;
+    bool HasRichPresence() const noexcept;
 
     /// <summary>
     /// Gets the current rich presence display string.

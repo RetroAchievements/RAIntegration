@@ -518,7 +518,7 @@ void AchievementRuntime::AttachMemory(void* pMemory)
         m_pClientSynchronizer->AttachMemory(pMemory);
 }
 
-bool AchievementRuntime::DetachMemory(void* pMemory)
+bool AchievementRuntime::DetachMemory(void* pMemory) noexcept
 {
     if (m_pClientSynchronizer != nullptr)
         return m_pClientSynchronizer->DetachMemory(pMemory);

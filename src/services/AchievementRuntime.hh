@@ -187,7 +187,7 @@ public:
     };
 
     void AttachMemory(void* pMemory);
-    bool DetachMemory(void* pMemory);
+    bool DetachMemory(void* pMemory) noexcept;
 
 private:
     bool m_bPaused = false;

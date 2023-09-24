@@ -279,8 +279,8 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
     // finish up
     m_vAssets.EndUpdate();
 
-    auto& pRcheevosClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    pRcheevosClient.SyncAssets();
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    pRuntime.SyncAssets();
 
     EndLoad();
     OnActiveGameChanged();

@@ -520,10 +520,10 @@ void AchievementRuntime::AttachMemory(void* pMemory)
 
 bool AchievementRuntime::DetachMemory(void* pMemory)
 {
-    if (m_pClientSynchronizer == nullptr)
-        m_pClientSynchronizer.reset(new ClientSynchronizer());
+    if (m_pClientSynchronizer != nullptr)
+        return m_pClientSynchronizer->DetachMemory(pMemory);
 
-    return m_pClientSynchronizer->DetachMemory(pMemory);
+    return false;
 }
 
 static rc_client_achievement_info_t* GetAchievementInfo(rc_client_t* pClient, ra::AchievementID nId) noexcept
@@ -1524,8 +1524,7 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
 {
     if (strcmp(pServerError.api, "award_achievement"))
     {
-        // TODO: match pServerError.id to a popup - by matching description? - then SetErrorDetail
-        const auto nAchievementId = 0; // pServerError.target_id;
+        const auto nAchievementId = pServerError.related_id;
         const auto nPopupId = s_mAchievementPopups[nAchievementId];
 
         const auto sErrorMessage =
@@ -1570,7 +1569,7 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
     {}
 
     ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
-        ra::StringPrintf(L"%s %s", pServerError.api, pServerError.error_message));
+        ra::StringPrintf(L"%s:%u %s", pServerError.api, pServerError.related_id, pServerError.error_message));
 }
 
 static void HandleResetEvent()

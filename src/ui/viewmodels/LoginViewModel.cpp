@@ -51,23 +51,25 @@ bool LoginViewModel::Login() const
 
     ra::services::AchievementRuntime::Synchronizer pSynchronizer;
 
-    auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    pClient.BeginLoginWithPassword(
-        ra::Narrow(GetUsername()), ra::Narrow(GetPassword()),
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    pRuntime.BeginLoginWithPassword(ra::Narrow(GetUsername()), ra::Narrow(GetPassword()),
         [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) {
             auto* pSynchronizer = static_cast<ra::services::AchievementRuntime::Synchronizer*>(pUserdata);
             Expects(pSynchronizer != nullptr);
 
-            if (nResult != RC_OK)
-            {
-                ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to login", ra::Widen(sErrorMessage));
-            }
-
+            pSynchronizer->CaptureResult(nResult, sErrorMessage);
             pSynchronizer->Notify();
         },
         &pSynchronizer);
 
     pSynchronizer.Wait();
+
+    if (pSynchronizer.GetResult() != RC_OK)
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(L"Failed to login",
+            ra::Widen(pSynchronizer.GetErrorMessage()));
+        return false;
+    }
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     if (!pUserContext.IsLoggedIn())

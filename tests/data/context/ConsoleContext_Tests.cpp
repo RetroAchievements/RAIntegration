@@ -60,26 +60,33 @@ public:
 
         Assert::AreEqual(5, (int)context.Id());
         Assert::AreEqual(std::wstring(L"GameBoy Advance"), context.Name());
-        Assert::AreEqual(0x00047FFFU, context.MaxAddress());
+        Assert::AreEqual(0x00057FFFU, context.MaxAddress());
 
         const auto& vRegions = context.MemoryRegions();
-        Assert::AreEqual({2}, vRegions.size());
+        Assert::AreEqual({3}, vRegions.size());
         Assert::AreEqual(0x00000000U, vRegions.at(0).StartAddress);
         Assert::AreEqual(0x00007FFFU, vRegions.at(0).EndAddress);
         Assert::AreEqual(0x03000000U, vRegions.at(0).RealAddress);
-        Assert::AreEqual((int)ConsoleContext::AddressType::SaveRAM, (int)vRegions.at(0).Type);
-        Assert::AreEqual(std::string("Cartridge RAM"), vRegions.at(0).Description);
+        Assert::AreEqual((int)ConsoleContext::AddressType::SystemRAM, (int)vRegions.at(0).Type);
+        Assert::AreEqual(std::string("System RAM"), vRegions.at(0).Description);
         Assert::AreEqual(0x00008000U, vRegions.at(1).StartAddress);
         Assert::AreEqual(0x00047FFFU, vRegions.at(1).EndAddress);
         Assert::AreEqual(0x02000000U, vRegions.at(1).RealAddress);
         Assert::AreEqual((int)ConsoleContext::AddressType::SystemRAM, (int)vRegions.at(1).Type);
         Assert::AreEqual(std::string("System RAM"), vRegions.at(1).Description);
+        Assert::AreEqual(0x00048000U, vRegions.at(2).StartAddress);
+        Assert::AreEqual(0x00057FFFU, vRegions.at(2).EndAddress);
+        Assert::AreEqual(0x0E000000U, vRegions.at(2).RealAddress);
+        Assert::AreEqual((int)ConsoleContext::AddressType::SaveRAM, (int)vRegions.at(2).Type);
+        Assert::AreEqual(std::string("Save RAM"), vRegions.at(2).Description);
 
         AssertRegion(context, 0x00000000U, &vRegions.at(0));
         AssertRegion(context, 0x00007FFFU, &vRegions.at(0));
         AssertRegion(context, 0x00008000U, &vRegions.at(1));
         AssertRegion(context, 0x00047FFFU, &vRegions.at(1));
-        AssertRegion(context, 0x00048000U, nullptr);
+        AssertRegion(context, 0x00048000U, &vRegions.at(2));
+        AssertRegion(context, 0x00057FFFU, &vRegions.at(2));
+        AssertRegion(context, 0x00058000U, nullptr);
 
         Assert::AreEqual(0x00019234U, context.ByteAddressFromRealAddress(0x02011234U));
     }

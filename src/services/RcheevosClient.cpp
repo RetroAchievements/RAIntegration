@@ -123,6 +123,491 @@ void RcheevosClient::ServerCallAsync(const rc_api_request_t* pRequest,
     });
 }
 
+/* ---- ClientSynchronizer ----- */
+
+class RcheevosClient::ClientSynchronizer
+{
+public:
+    ClientSynchronizer() = default;
+    virtual ~ClientSynchronizer()
+    {
+        for (auto* pMemory : m_vAllocatedMemory)
+            free(pMemory);
+    }
+    ClientSynchronizer(const ClientSynchronizer&) noexcept = delete;
+    ClientSynchronizer& operator=(const ClientSynchronizer&) noexcept = delete;
+    ClientSynchronizer(ClientSynchronizer&&) noexcept = delete;
+    ClientSynchronizer& operator=(ClientSynchronizer&&) noexcept = delete;
+
+private:
+    rc_client_subset_info_t* m_pPublishedSubset = nullptr;
+    rc_client_t* m_pClient = nullptr;
+    rc_memref_t** m_pNextMemref = nullptr;
+    rc_value_t** m_pNextVariable = nullptr;
+
+    typedef struct rc_client_subset_wrapper_t
+    {
+        rc_client_subset_info_t pCoreSubset{};
+        rc_client_subset_info_t pLocalSubset{};
+        rc_api_buffer_t pBuffer{};
+        std::vector<void*> vAllocatedMemory;
+    } SubsetWrapper;
+    std::unique_ptr<SubsetWrapper> m_pSubsetWrapper;
+
+    std::vector<void*> m_vAllocatedMemory;
+
+    static bool DetachMemory(std::vector<void*>& pAllocatedMemory, void* pMemory) noexcept
+    {
+        for (auto pIter = pAllocatedMemory.begin(); pIter != pAllocatedMemory.end(); ++pIter)
+        {
+            if (*pIter == pMemory)
+            {
+                pAllocatedMemory.erase(pIter);
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    bool AllocatedMemrefs() noexcept
+    {
+        bool bAllocatedMemref = false;
+
+        /* if at least one memref was allocated within the object, we can't free the buffer when the object is
+         * deactivated */
+        if (*m_pNextMemref != nullptr)
+        {
+            bAllocatedMemref = true;
+            /* advance through the new memrefs so we're ready for the next allocation */
+            do
+            {
+                m_pNextMemref = &(*m_pNextMemref)->next;
+            } while (*m_pNextMemref != nullptr);
+        }
+
+        /* if at least one variable was allocated within the object, we can't free the buffer when the object is
+         * deactivated */
+        if (*m_pNextVariable != nullptr)
+        {
+            bAllocatedMemref = true;
+            /* advance through the new variables so we're ready for the next allocation */
+            do
+            {
+                m_pNextVariable = &(*m_pNextVariable)->next;
+            } while (*m_pNextVariable != nullptr);
+        }
+
+        return bAllocatedMemref;
+    }
+
+    static rc_client_leaderboard_info_t* FindLeaderboard(rc_client_subset_info_t* pSubset, uint32_t nId)
+    {
+        Expects(pSubset != nullptr);
+
+        auto* pLeaderboard = pSubset->leaderboards;
+        const auto* pLeaderboardStop = pLeaderboard + pSubset->public_.num_leaderboards;
+        for (; pLeaderboard < pLeaderboardStop; ++pLeaderboard)
+        {
+            if (pLeaderboard->public_.id == nId)
+                return pLeaderboard;
+        }
+
+        return nullptr;
+    }
+
+    void SyncLeaderboard(rc_client_leaderboard_info_t* pLeaderboard, SubsetWrapper* pSubsetWrapper,
+                         const ra::data::models::LeaderboardModel* vmLeaderboard)
+    {
+        Expects(vmLeaderboard != nullptr);
+
+        const auto sTitle = ra::Narrow(vmLeaderboard->GetName());
+        if (!pLeaderboard->public_.title || pLeaderboard->public_.title != sTitle)
+            pLeaderboard->public_.title = rc_buf_strcpy(&pSubsetWrapper->pBuffer, sTitle.c_str());
+
+        const auto sDescription = ra::Narrow(vmLeaderboard->GetDescription());
+        if (!pLeaderboard->public_.description || pLeaderboard->public_.description != sDescription)
+            pLeaderboard->public_.description = rc_buf_strcpy(&pSubsetWrapper->pBuffer, sDescription.c_str());
+
+        pLeaderboard->public_.id = vmLeaderboard->GetID();
+
+        switch (vmLeaderboard->GetState())
+        {
+            case ra::data::models::AssetState::Disabled:
+                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_DISABLED;
+                break;
+            case ra::data::models::AssetState::Inactive:
+                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_INACTIVE;
+                break;
+            case ra::data::models::AssetState::Primed:
+                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_TRACKING;
+                break;
+            default:
+                pLeaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
+                break;
+        }
+
+        const auto& sMemAddr = vmLeaderboard->GetDefinition();
+        uint8_t md5[16];
+        rc_runtime_checksum(sMemAddr.c_str(), md5);
+        if (memcmp(pLeaderboard->md5, md5, sizeof(md5)) != 0)
+        {
+            memcpy(pLeaderboard->md5, md5, sizeof(md5));
+
+            if (m_pSubsetWrapper && DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pLeaderboard->lboard))
+                free(pLeaderboard->lboard);
+
+            const auto nSize = rc_lboard_size(sMemAddr.c_str());
+            if (nSize > 0)
+            {
+                pLeaderboard->lboard = static_cast<rc_lboard_t*>(malloc(nSize));
+                if (pLeaderboard->lboard)
+                {
+                    /* populate the item, using the communal memrefs pool */
+                    rc_parse_state_t parse;
+                    rc_init_parse_state(&parse, pLeaderboard->lboard, nullptr, 0);
+                    parse.first_memref = &m_pClient->game->runtime.memrefs;
+                    parse.variables = &m_pClient->game->runtime.variables;
+                    rc_parse_lboard_internal(pLeaderboard->lboard, sMemAddr.c_str(), &parse);
+                    rc_destroy_parse_state(&parse);
+
+                    if (AllocatedMemrefs())
+                    {
+                        // if memrefs were allocated, we can't release this memory until the game is unloaded
+                        m_vAllocatedMemory.push_back(pLeaderboard->lboard);
+                    }
+                    else
+                    {
+                        pSubsetWrapper->vAllocatedMemory.push_back(pLeaderboard->lboard);
+                    }
+                }
+            }
+        }
+    }
+
+    static rc_client_achievement_info_t* FindAchievement(rc_client_subset_info_t* pSubset, uint32_t nId)
+    {
+        Expects(pSubset != nullptr);
+
+        auto* pAchievement = pSubset->achievements;
+        const auto* pAchievementStop = pAchievement + pSubset->public_.num_achievements;
+        for (; pAchievement < pAchievementStop; ++pAchievement)
+        {
+            if (pAchievement->public_.id == nId)
+                return pAchievement;
+        }
+
+        return nullptr;
+    }
+
+    void SyncAchievement(rc_client_achievement_info_t* pAchievement, SubsetWrapper* pSubsetWrapper,
+                         const ra::data::models::AchievementModel* vmAchievement)
+    {
+        Expects(pAchievement != nullptr);
+        Expects(pSubsetWrapper != nullptr);
+        Expects(vmAchievement != nullptr);
+
+        const auto sTitle = ra::Narrow(vmAchievement->GetName());
+        if (!pAchievement->public_.title || pAchievement->public_.title != sTitle)
+            pAchievement->public_.title = rc_buf_strcpy(&pSubsetWrapper->pBuffer, sTitle.c_str());
+
+        const auto sDescription = ra::Narrow(vmAchievement->GetDescription());
+        if (!pAchievement->public_.description || pAchievement->public_.description != sDescription)
+            pAchievement->public_.description = rc_buf_strcpy(&pSubsetWrapper->pBuffer, sDescription.c_str());
+
+        const auto& sBadge = vmAchievement->GetBadge();
+        if (ra::StringStartsWith(sBadge, L"local\\"))
+        {
+            // cannot fit "local/md5.png" into 8 byte buffer. also, client may not understand.
+            // encode a value that we can intercept in rc_client_achievement_get_image_url.
+            snprintf(pAchievement->public_.badge_name, sizeof(pAchievement->public_.badge_name), "L%06x", pAchievement->public_.id);
+        }
+        else
+        {
+            snprintf(pAchievement->public_.badge_name, sizeof(pAchievement->public_.badge_name), "%s", ra::Narrow(sBadge).c_str());
+        }
+
+        pAchievement->public_.id = vmAchievement->GetID();
+        pAchievement->public_.points = vmAchievement->GetPoints();
+
+        switch (vmAchievement->GetCategory())
+        {
+            case ra::data::models::AssetCategory::Core:
+            case ra::data::models::AssetCategory::Local:
+                pAchievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
+                break;
+
+            default:
+                pAchievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
+                break;
+        }
+
+        switch (vmAchievement->GetState())
+        {
+            case ra::data::models::AssetState::Triggered:
+                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
+                break;
+            case ra::data::models::AssetState::Disabled:
+                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
+                pAchievement->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
+                break;
+            case ra::data::models::AssetState::Inactive:
+                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
+                break;
+            default:
+                pAchievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+                break;
+        }
+
+        const auto& sTrigger = vmAchievement->GetTrigger();
+        uint8_t md5[16];
+        rc_runtime_checksum(sTrigger.c_str(), md5);
+        if (memcmp(pAchievement->md5, md5, sizeof(md5)) != 0)
+        {
+            memcpy(pAchievement->md5, md5, sizeof(md5));
+
+            if (m_pSubsetWrapper && DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pAchievement->trigger))
+                free(pAchievement->trigger);
+
+            const auto nSize = rc_trigger_size(sTrigger.c_str());
+            if (nSize > 0)
+            {
+                pAchievement->trigger = static_cast<rc_trigger_t*>(malloc(nSize));
+                if (pAchievement->trigger)
+                {
+                    /* populate the item, using the communal memrefs pool */
+                    rc_parse_state_t parse;
+                    rc_init_parse_state(&parse, pAchievement->trigger, nullptr, 0);
+                    parse.first_memref = &m_pClient->game->runtime.memrefs;
+                    parse.variables = &m_pClient->game->runtime.variables;
+                    const char* sMemaddr = sTrigger.c_str();
+                    rc_parse_trigger_internal(pAchievement->trigger, &sMemaddr, &parse);
+                    rc_destroy_parse_state(&parse);
+
+                    if (AllocatedMemrefs())
+                    {
+                        // if memrefs were allocated, we can't release this memory until the game is unloaded
+                        m_vAllocatedMemory.push_back(pAchievement->trigger);
+                    }
+                    else
+                    {
+                        pSubsetWrapper->vAllocatedMemory.push_back(pAchievement->trigger);
+                    }
+                }
+            }
+        }
+    }
+
+    void SyncSubset(rc_client_subset_info_t* pSubset, SubsetWrapper* pSubsetWrapper,
+                    std::vector<const ra::data::models::AchievementModel*>& vAchievements,
+                    std::vector<const ra::data::models::LeaderboardModel*>& vLeaderboards)
+    {
+        pSubset->active = true;
+
+        if (!vAchievements.empty())
+        {
+            pSubset->achievements = static_cast<rc_client_achievement_info_t*>(rc_buf_alloc(
+                &pSubsetWrapper->pBuffer, vAchievements.size() * sizeof(*pSubset->achievements)));
+            memset(pSubset->achievements, 0, vAchievements.size() * sizeof(*pSubset->achievements));
+
+            rc_client_achievement_info_t* pAchievement = pSubset->achievements;
+            rc_client_achievement_info_t* pSrcAchievement = nullptr;
+            for (const auto* vmAchievement : vAchievements)
+            {
+                Expects(vmAchievement != nullptr);
+
+                const auto nAchievementId = vmAchievement->GetID();
+                if (vmAchievement->GetChanges() == ra::data::models::AssetChanges::None)
+                {
+                    rc_client_subset_info_t* pPublishedSubset = m_pPublishedSubset;
+                    for (; pPublishedSubset; pPublishedSubset = pPublishedSubset->next)
+                    {
+                        pSrcAchievement = FindAchievement(pPublishedSubset, nAchievementId);
+                        if (pSrcAchievement != nullptr)
+                        {
+                            memcpy(pAchievement++, pSrcAchievement, sizeof(*pAchievement));
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    pSrcAchievement = nullptr;
+                    if (m_pSubsetWrapper != nullptr)
+                    {
+                        if (vmAchievement->GetCategory() == ra::data::models::AssetCategory::Local)
+                            pSrcAchievement = FindAchievement(&m_pSubsetWrapper->pLocalSubset, nAchievementId);
+                        else
+                            pSrcAchievement = FindAchievement(&m_pSubsetWrapper->pCoreSubset, nAchievementId);
+                    }
+
+                    if (pSrcAchievement != nullptr)
+                    {
+                        // transfer the trigger ownership to the new SubsetWrapper
+                        if (pAchievement->trigger && DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pAchievement->trigger))
+                            pSubsetWrapper->vAllocatedMemory.push_back(pAchievement->trigger);
+
+                        memcpy(pAchievement++, pSrcAchievement, sizeof(*pAchievement));
+                    }
+                    else
+                    {
+                        SyncAchievement(pAchievement++, pSubsetWrapper, vmAchievement);
+                    }
+                }
+            }
+
+            pSubset->public_.num_achievements = gsl::narrow_cast<uint32_t>(pAchievement - pSubset->achievements);
+        }
+
+        if (!vLeaderboards.empty())
+        {
+            pSubset->leaderboards = static_cast<rc_client_leaderboard_info_t*>(rc_buf_alloc(
+                &pSubsetWrapper->pBuffer, vLeaderboards.size() * sizeof(*pSubset->leaderboards)));
+            memset(pSubset->leaderboards, 0, vLeaderboards.size() * sizeof(*pSubset->leaderboards));
+
+            rc_client_leaderboard_info_t* pLeaderboard = pSubset->leaderboards;
+            rc_client_leaderboard_info_t* pSrcLeaderboard = nullptr;
+            for (const auto* vmLeaderboard : vLeaderboards)
+            {
+                Expects(vmLeaderboard != nullptr);
+
+                const auto nLeaderboardId = vmLeaderboard->GetID();
+                if (vmLeaderboard->GetChanges() == ra::data::models::AssetChanges::None)
+                {
+                    rc_client_subset_info_t* pPublishedSubset = m_pPublishedSubset;
+                    for (; pPublishedSubset; pPublishedSubset = pPublishedSubset->next)
+                    {
+                        pSrcLeaderboard = FindLeaderboard(pPublishedSubset, nLeaderboardId);
+                        if (pSrcLeaderboard != nullptr)
+                        {
+                            memcpy(pLeaderboard++, pSrcLeaderboard, sizeof(*pLeaderboard));
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    pSrcLeaderboard = nullptr;
+                    if (m_pSubsetWrapper != nullptr)
+                    {
+                        if (vmLeaderboard->GetCategory() == ra::data::models::AssetCategory::Local)
+                            pSrcLeaderboard = FindLeaderboard(&m_pSubsetWrapper->pLocalSubset, nLeaderboardId);
+                        else
+                            pSrcLeaderboard = FindLeaderboard(&m_pSubsetWrapper->pCoreSubset, nLeaderboardId);
+                    }
+
+                    if (pSrcLeaderboard != nullptr)
+                    {
+                        // transfer the lboard ownership to the new SubsetWrapper
+                        if (pLeaderboard->lboard && DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pLeaderboard->lboard))
+                            pSubsetWrapper->vAllocatedMemory.push_back(pLeaderboard->lboard);
+
+                        memcpy(pLeaderboard++, pSrcLeaderboard, sizeof(*pLeaderboard));
+                    }
+                    else
+                    {
+                        SyncLeaderboard(pLeaderboard++, pSubsetWrapper, vmLeaderboard);
+                    }
+                }
+            }
+
+            pSubset->public_.num_leaderboards = gsl::narrow_cast<uint32_t>(pLeaderboard - pSubset->leaderboards);
+        }
+    }
+
+public:
+    void SyncAssets(rc_client_t* pClient)
+    {
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto& vAssets = pGameContext.Assets();
+
+        m_pClient = pClient;
+        m_pNextMemref = &pClient->game->runtime.memrefs;
+        m_pNextVariable = &pClient->game->runtime.variables;
+        AllocatedMemrefs(); // advance pointers
+
+        if (m_pPublishedSubset == nullptr)
+            m_pPublishedSubset = pClient->game->subsets;
+
+        std::vector<const ra::data::models::AchievementModel*> vCoreAchievements;
+        std::vector<const ra::data::models::AchievementModel*> vLocalAchievements;
+        std::vector<const ra::data::models::LeaderboardModel*> vCoreLeaderboards;
+        std::vector<const ra::data::models::LeaderboardModel*> vLocalLeaderboards;
+
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vAssets.Count()); ++nIndex)
+        {
+            const auto* pAsset = vAssets.GetItemAt(nIndex);
+            Expects(pAsset != nullptr);
+            if (pAsset->GetChanges() == ra::data::models::AssetChanges::Deleted)
+                continue;
+
+            switch (pAsset->GetType())
+            {
+                case ra::data::models::AssetType::Achievement:
+                    if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
+                        vLocalAchievements.push_back(dynamic_cast<const ra::data::models::AchievementModel*>(pAsset));
+                    else
+                        vCoreAchievements.push_back(dynamic_cast<const ra::data::models::AchievementModel*>(pAsset));
+                    break;
+
+                case ra::data::models::AssetType::Leaderboard:
+                    if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
+                        vLocalLeaderboards.push_back(dynamic_cast<const ra::data::models::LeaderboardModel*>(pAsset));
+                    else
+                        vCoreLeaderboards.push_back(dynamic_cast<const ra::data::models::LeaderboardModel*>(pAsset));
+                    break;
+
+                default:
+                    break;
+            }
+        }
+
+        std::unique_ptr<SubsetWrapper> pSubsetWrapper;
+        pSubsetWrapper.reset(new SubsetWrapper);
+        memset(&pSubsetWrapper->pCoreSubset, 0, sizeof(pSubsetWrapper->pCoreSubset));
+        memset(&pSubsetWrapper->pLocalSubset, 0, sizeof(pSubsetWrapper->pLocalSubset));
+        rc_buf_init(&pSubsetWrapper->pBuffer);
+
+        pSubsetWrapper->pCoreSubset.public_.id = pClient->game->public_.id;
+        pSubsetWrapper->pCoreSubset.public_.title = pClient->game->public_.title;
+        snprintf(pSubsetWrapper->pCoreSubset.public_.badge_name, sizeof(pSubsetWrapper->pCoreSubset.public_.badge_name),
+                 "%s", pClient->game->public_.badge_name);
+
+        SyncSubset(&pSubsetWrapper->pCoreSubset, pSubsetWrapper.get(), vCoreAchievements, vCoreLeaderboards);
+
+        if (!vLocalAchievements.empty() || !vLocalLeaderboards.empty())
+        {
+            pSubsetWrapper->pLocalSubset.public_.id = ra::data::context::GameAssets::LocalSubsetId;
+            pSubsetWrapper->pLocalSubset.public_.title = "Local";
+            snprintf(pSubsetWrapper->pLocalSubset.public_.badge_name,
+                     sizeof(pSubsetWrapper->pLocalSubset.public_.badge_name), "%s", pClient->game->public_.badge_name);
+
+            SyncSubset(&pSubsetWrapper->pLocalSubset, pSubsetWrapper.get(), vLocalAchievements, vLocalLeaderboards);
+
+            pSubsetWrapper->pCoreSubset.next = &pSubsetWrapper->pLocalSubset;
+        }
+
+        std::swap(pSubsetWrapper, m_pSubsetWrapper);
+
+        if (pSubsetWrapper != nullptr)
+        {
+            for (auto* pMemory : pSubsetWrapper->vAllocatedMemory)
+                free(pMemory);
+        }
+
+        rc_mutex_lock(&pClient->state.mutex);
+        pClient->game->subsets = &m_pSubsetWrapper->pCoreSubset;
+        rc_mutex_unlock(&pClient->state.mutex);
+    }
+};
+
+void RcheevosClient::SyncAssets()
+{
+    if (m_pClientSynchronizer == nullptr)
+        m_pClientSynchronizer.reset(new ClientSynchronizer());
+    m_pClientSynchronizer->SyncAssets(GetClient());
+}
+
 /* ---- Login ----- */
 
 void RcheevosClient::BeginLoginWithPassword(const std::string& sUsername, const std::string& sPassword,
@@ -272,6 +757,11 @@ rc_client_async_handle_t* RcheevosClient::BeginLoadGame(const char* sHash, unsig
 {
     auto* client = GetClient();
 
+    // unload the game and free any additional memory we allocated for local changes
+    rc_client_unload_game(client);
+    m_pClientSynchronizer.reset();
+
+    // if an ID was provided, store the hash->id mapping
     if (id != 0)
     {
         auto* client_hash = rc_client_find_game_hash(client, sHash);
@@ -279,6 +769,7 @@ rc_client_async_handle_t* RcheevosClient::BeginLoadGame(const char* sHash, unsig
             client_hash->game_id = id;
     }
 
+    // start the load process
     client->callbacks.post_process_game_data_response = PostProcessGameDataResponse;
 
     return rc_client_begin_load_game(client, sHash, RcheevosClient::LoadGameCallback, pCallbackWrapper);

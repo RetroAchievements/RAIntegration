@@ -4,6 +4,8 @@
 #include "CppUnitTest.h"
 #include "RA_StringUtils.h"
 
+#include "data\context\GameAssets.hh"
+
 #include <rcheevos\src\rapi\rc_api_common.h>
 #include <rcheevos\src\rcheevos\rc_client_internal.h>
 
@@ -51,34 +53,49 @@ void MockRcheevosClient::MockGame()
     GetClient()->game = game;
 }
 
-static rc_client_subset_info_t* GetCoreSubset(rc_client_game_info_t* game)
+static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t subset_id, const char* name)
 {
-    rc_client_subset_info_t* subset = game->subsets;
-    if (subset == nullptr)
+    rc_client_subset_info_t* subset = game->subsets, **next = &game->subsets;
+    for (; subset; subset = subset->next)
     {
-        subset = (rc_client_subset_info_t*)rc_buf_alloc(&game->buffer, sizeof(rc_client_subset_info_t));
-        memset(subset, 0, sizeof(*subset));
-        subset->public_.id = game->public_.id;
-        strcpy_s(subset->public_.badge_name, sizeof(subset->public_.badge_name), game->public_.badge_name);
-        subset->public_.title = game->public_.title;
+        if (subset->public_.id == subset_id)
+            return subset;
 
-        game->subsets = subset;
+        next = &subset->next;
     }
+
+    subset = (rc_client_subset_info_t*)rc_buf_alloc(&game->buffer, sizeof(rc_client_subset_info_t));
+    memset(subset, 0, sizeof(*subset));
+    subset->public_.id = subset_id;
+    strcpy_s(subset->public_.badge_name, sizeof(subset->public_.badge_name), game->public_.badge_name);
+    subset->public_.title = name;
+    subset->active = 1;
+
+    *next = subset;
 
     return subset;
 }
 
-rc_client_achievement_info_t* MockRcheevosClient::MockAchievement(uint32_t nId, const char* sTitle)
+static rc_client_subset_info_t* GetCoreSubset(rc_client_game_info_t* game)
 {
-    rc_client_game_info_t* game = GetClient()->game;
-    rc_client_subset_info_t* subset = GetCoreSubset(game);
+    Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsNotNull(game, L"MockGame must be called first");
+    return GetSubset(game, game->public_.id, game->public_.title);
+}
 
+static rc_client_subset_info_t* GetLocalSubset(rc_client_game_info_t* game)
+{
+    Microsoft::VisualStudio::CppUnitTestFramework::Assert::IsNotNull(game, L"MockGame must be called first");
+    return GetSubset(game, ra::data::context::GameAssets::LocalSubsetId, "Local");
+}
+
+static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,
+        rc_client_subset_info_t* subset, uint32_t nId, const char* sTitle)
+{
     if (subset->public_.num_achievements % 8 == 0)
     {
         const uint32_t new_count = subset->public_.num_achievements + 8;
-        rc_client_achievement_info_t* new_achievements =
-            (rc_client_achievement_info_t*)rc_buf_alloc(&game->buffer,
-                sizeof(rc_client_achievement_info_t) * new_count);
+        rc_client_achievement_info_t* new_achievements = (rc_client_achievement_info_t*)rc_buf_alloc(
+            &game->buffer, sizeof(rc_client_achievement_info_t) * new_count);
 
         if (subset->public_.num_achievements > 0)
         {
@@ -107,9 +124,93 @@ rc_client_achievement_info_t* MockRcheevosClient::MockAchievement(uint32_t nId, 
     achievement->public_.description = rc_buf_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
     achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
+    achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
     achievement->public_.points = 5;
 
     return achievement;
+}
+
+rc_client_achievement_info_t* MockRcheevosClient::MockAchievement(uint32_t nId, const char* sTitle)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    return AddAchievement(game, GetCoreSubset(game), nId, sTitle);
+}
+
+rc_client_achievement_info_t* MockRcheevosClient::MockAchievementWithTrigger(uint32_t nId, const char* sTitle)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    rc_client_achievement_info_t* achievement = AddAchievement(game, GetCoreSubset(game), nId, sTitle);
+
+    achievement->trigger = (rc_trigger_t*)rc_buf_alloc(&game->buffer, sizeof(rc_trigger_t));
+    memset(achievement->trigger, 0, sizeof(*achievement->trigger));
+
+    return achievement;
+}
+
+rc_client_achievement_info_t* MockRcheevosClient::MockUnofficialAchievement(uint32_t nId, const char* sTitle)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    rc_client_achievement_info_t* achievement = AddAchievement(game, GetCoreSubset(game), nId, sTitle);
+    achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL;
+    return achievement;
+}
+
+rc_client_achievement_info_t* MockRcheevosClient::MockLocalAchievement(uint32_t nId, const char* sTitle)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    return AddAchievement(game, GetLocalSubset(game), nId, sTitle);
+}
+
+static rc_client_leaderboard_info_t* AddLeaderboard(rc_client_game_info_t* game, rc_client_subset_info_t* subset,
+                                                    uint32_t nId, const char* sTitle)
+{
+    if (subset->public_.num_leaderboards % 8 == 0)
+    {
+        const uint32_t new_count = subset->public_.num_leaderboards + 8;
+        rc_client_leaderboard_info_t* new_leaderboards = (rc_client_leaderboard_info_t*)rc_buf_alloc(
+            &game->buffer, sizeof(rc_client_leaderboard_info_t) * new_count);
+
+        if (subset->public_.num_leaderboards > 0)
+        {
+            memcpy(new_leaderboards, subset->leaderboards,
+                   sizeof(rc_client_leaderboard_info_t) * subset->public_.num_leaderboards);
+        }
+
+        subset->leaderboards = new_leaderboards;
+    }
+
+    rc_client_leaderboard_info_t* leaderboard = &subset->leaderboards[subset->public_.num_leaderboards++];
+    memset(leaderboard, 0, sizeof(*leaderboard));
+    leaderboard->public_.id = nId;
+
+    if (sTitle)
+    {
+        leaderboard->public_.title = rc_buf_strcpy(&game->buffer, sTitle);
+    }
+    else
+    {
+        const std::string sGeneratedTitle = ra::StringPrintf("Leaderboard %u", nId);
+        leaderboard->public_.title = rc_buf_strcpy(&game->buffer, sGeneratedTitle.c_str());
+    }
+
+    const std::string sGeneratedDescripton = ra::StringPrintf("Description %u", nId);
+    leaderboard->public_.description = rc_buf_strcpy(&game->buffer, sGeneratedDescripton.c_str());
+
+    leaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
+
+    return leaderboard;
+}
+
+rc_client_leaderboard_info_t* MockRcheevosClient::MockLeaderboard(uint32_t nId, const char* sTitle)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    return AddLeaderboard(game, GetCoreSubset(game), nId, sTitle);
+}
+
+rc_client_leaderboard_info_t* MockRcheevosClient::MockLocalLeaderboard(uint32_t nId, const char* sTitle)
+{
+    rc_client_game_info_t* game = GetClient()->game;
+    return AddLeaderboard(game, GetLocalSubset(game), nId, sTitle);
 }
 
 void MockRcheevosClient::AssertCalled(const std::string& sRequestParams) const

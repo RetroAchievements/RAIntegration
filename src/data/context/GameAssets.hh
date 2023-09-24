@@ -134,8 +134,10 @@ public:
     /// <param name="vAssetsToReload">List of assets to reload, empty to reload all assets.</param>
     void ReloadAssets(const std::vector<ra::data::models::AssetModelBase*>& vAssetsToReload);
 
-    static const uint32_t FirstLocalId = 111000001;
+    static constexpr uint32_t FirstLocalId = 111000001;
     void ResetLocalId() noexcept { m_nNextLocalId = FirstLocalId; }
+
+    static constexpr uint32_t LocalSubsetId = 0xFFFFFFFF;
 
 protected:
     void OnBeforeItemRemoved(ModelBase& pModel) override;

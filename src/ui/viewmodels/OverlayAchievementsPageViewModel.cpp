@@ -8,12 +8,14 @@
 #include "data\context\SessionTracker.hh"
 #include "data\context\UserContext.hh"
 
-#include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
+#include "services\RcheevosClient.hh"
 
 #include "ui\OverlayTheme.hh"
 
 #include "ui\viewmodels\WindowManager.hh"
+
+#include <rcheevos\src\rcheevos\rc_client_internal.h>
 
 namespace ra {
 namespace ui {
@@ -25,57 +27,69 @@ const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel
 const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::ModifiedDateProperty("AchievementViewModel", "ModifiedDate", L"");
 const StringModelProperty OverlayAchievementsPageViewModel::AchievementViewModel::WonByProperty("AchievementViewModel", "WonBy", L"");
 
-static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem, const ra::data::models::AchievementModel& vmAchievement)
+static void SetImage(OverlayListPageViewModel::ItemViewModel& vmItem, const std::string& sBadgeName, bool bLocked)
 {
-    vmItem.SetId(vmAchievement.GetID());
-    vmItem.SetLabel(ra::StringPrintf(L"%s (%s %s)", vmAchievement.GetName(),
-        vmAchievement.GetPoints(), (vmAchievement.GetPoints() == 1) ? "point" : "points"));
-    vmItem.SetDetail(vmAchievement.GetDescription());
-
-    if (vmAchievement.IsActive())
+    std::string sImageName = sBadgeName;
+    if (bLocked && !ra::StringStartsWith(sBadgeName, "local")) // local images don't have _lock equivalents
     {
-        if (vmAchievement.GetCategory() == ra::data::models::AssetCategory::Local)
-        {
-            // local achievements never appear disabled
-            vmItem.Image.ChangeReference(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement.GetBadge()));
-            vmItem.SetDisabled(false);
-        }
-        else
-        {
-            vmItem.Image.ChangeReference(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement.GetBadge()) + "_lock");
-            vmItem.SetDisabled(true);
-        }
-
-        const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        const auto* pTrigger = pRuntime.GetAchievementTrigger(vmAchievement.GetID());
-        if (pTrigger != nullptr)
-        {
-            vmItem.SetProgressMaximum(pTrigger->measured_target);
-            vmItem.SetProgressValue(pTrigger->measured_value);
-            vmItem.SetProgressPercentage(pTrigger->measured_as_percent);
-        }
-        else
-        {
-            vmItem.SetProgressMaximum(0);
-            vmItem.SetProgressValue(0);
-            vmItem.SetProgressPercentage(false);
-        }
-    }
-    else if (vmAchievement.GetState() == ra::data::models::AssetState::Disabled)
-    {
-        vmItem.Image.ChangeReference(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement.GetBadge()) + "_lock");
+        sImageName += "_lock";
         vmItem.SetDisabled(true);
-        vmItem.SetProgressValue(0U);
-        vmItem.SetProgressMaximum(0U);
-        vmItem.SetProgressPercentage(false);
     }
     else
     {
-        vmItem.Image.ChangeReference(ra::ui::ImageType::Badge, ra::Narrow(vmAchievement.GetBadge()));
         vmItem.SetDisabled(false);
-        vmItem.SetProgressValue(0U);
-        vmItem.SetProgressMaximum(0U);
-        vmItem.SetProgressPercentage(false);
+    }
+
+    vmItem.Image.ChangeReference(ra::ui::ImageType::Badge, sImageName);
+}
+
+static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem,
+                           const rc_client_achievement_t& pAchievement)
+{
+    vmItem.SetId(pAchievement.id);
+    vmItem.SetLabel(ra::StringPrintf(L"%s (%s %s)", pAchievement.title, pAchievement.points,
+                                     (pAchievement.points == 1) ? "point" : "points"));
+    vmItem.SetDetail(ra::Widen(pAchievement.description));
+    vmItem.SetCollapsed(false);
+
+    std::string sBadgeName = pAchievement.badge_name;
+    if (!sBadgeName.empty() && sBadgeName.front() == 'L')
+    {
+        // local image, get from model
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        auto* vmLocalAchievement = pGameContext.Assets().FindAchievement(vmItem.GetId());
+        if (vmLocalAchievement != nullptr)
+            sBadgeName = ra::Narrow(vmLocalAchievement->GetBadge());
+    }
+
+    switch (pAchievement.state)
+    {
+        case RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE:
+            SetImage(vmItem, sBadgeName, true);
+
+            if (pAchievement.measured_progress[0])
+            {
+                vmItem.SetProgressString(ra::Widen(pAchievement.measured_progress));
+                vmItem.SetProgressPercentage(pAchievement.measured_percent);
+            }
+            else
+            {
+                vmItem.SetProgressString(L"");
+                vmItem.SetProgressPercentage(0.0f);
+            }
+            break;
+
+        case RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED:
+            SetImage(vmItem, sBadgeName, false);
+            vmItem.SetProgressString(L"");
+            vmItem.SetProgressPercentage(0.0f);
+            break;
+
+        default: // DISABLED/INACTIVE
+            SetImage(vmItem, sBadgeName, true);
+            vmItem.SetProgressString(L"");
+            vmItem.SetProgressPercentage(0.0f);
+            break;
     }
 }
 
@@ -90,263 +104,89 @@ void OverlayAchievementsPageViewModel::Refresh()
     SetListTitle(pGameContext.GameTitle());
 
     // achievement list
-    std::vector<const ra::data::models::AchievementModel*> vRecentAchievements;
-    std::vector<const ra::data::models::AchievementModel*> vActiveChallengeAchievements;
-    std::vector<std::pair<const ra::data::models::AchievementModel*, unsigned>> vAlmostThereAchievements;
-    std::vector<const ra::data::models::AchievementModel*> vUnofficialAchievements;
-    std::vector<const ra::data::models::AchievementModel*> vLocalAchievements;
-    std::vector<const ra::data::models::AchievementModel*> vLockedCoreAchievements;
-    std::vector<const ra::data::models::AchievementModel*> vUnlockedCoreAchievements;
-    std::vector<const ra::data::models::AchievementModel*> vUnsupportedCoreAchievements;
+    const auto& pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
 
-    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-    const auto tNow = ra::services::ServiceLocator::Get<ra::services::IClock>().Now();
-
-    for (gsl::index nIndex = 0; nIndex < ra::to_signed(pGameContext.Assets().Count()); ++nIndex)
+    std::vector<rc_client_subset_info_t*> vDeactivatedSubsets;
+    int nCategory = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE_AND_UNOFFICIAL;
+    const auto& pAssetList = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().AssetList;
+    if (pAssetList.GetFilterCategory() == ra::ui::viewmodels::AssetListViewModel::FilterCategory::Core)
     {
-        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
-        if (!pAsset || pAsset->GetType() != ra::data::models::AssetType::Achievement)
-            continue;
+        nCategory = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
 
-        const auto* vmAchievement = dynamic_cast<const ra::data::models::AchievementModel*>(pAsset);
-        switch (vmAchievement->GetState())
+        // disable local subset while we build the list
+        auto* pSubset = pClient->game ? pClient->game->subsets : nullptr;
+        for (; pSubset; pSubset = pSubset->next)
         {
-            case ra::data::models::AssetState::Inactive:
-                break;
-
-            case ra::data::models::AssetState::Triggered:
-            {
-                const auto tUnlock = vmAchievement->GetUnlockTime();
-                const auto tElapsed = tNow - tUnlock;
-                if (tElapsed < std::chrono::minutes(10))
-                {
-                    gsl::index nInsert = 0;
-                    while (nInsert < ra::to_signed(vRecentAchievements.size()) && vRecentAchievements.at(nInsert)->GetUnlockTime() > tUnlock)
-                        nInsert++;
-                    vRecentAchievements.insert(vRecentAchievements.begin() + nInsert, vmAchievement);
-                    continue;
-                }
-                break;
-            }
-
-            case ra::data::models::AssetState::Primed:
-            {
-                vActiveChallengeAchievements.push_back(vmAchievement);
+            if (!pSubset->active)
                 continue;
-            }
 
-            default:
+            if (pSubset->public_.id == ra::data::context::GameAssets::LocalSubsetId)
             {
-                const auto* pTrigger = pRuntime.GetAchievementTrigger(vmAchievement->GetID());
-                if (pTrigger != nullptr && pTrigger->measured_target > 0)
-                {
-                    const auto nProgress = pTrigger->measured_value * 100 / pTrigger->measured_target;
-                    if (nProgress >= 80)
-                    {
-                        auto pIter = vAlmostThereAchievements.begin();
-                        while (pIter < vAlmostThereAchievements.end())
-                        {
-                            if (pIter->second < nProgress)
-                                break;
-
-                            ++pIter;
-                        }
-                        vAlmostThereAchievements.insert(pIter, std::make_pair(vmAchievement, nProgress));
-                        continue;
-                    }
-                }
-                break;
+                vDeactivatedSubsets.push_back(pSubset);
+                pSubset->active = 0;
             }
-        }
-
-        switch (vmAchievement->GetCategory())
-        {
-            case ra::data::models::AssetCategory::Local:
-                if (AssetAppearsInFilter(*vmAchievement))
-                    vLocalAchievements.push_back(vmAchievement);
-                break;
-
-            case ra::data::models::AssetCategory::Unofficial:
-                if (AssetAppearsInFilter(*vmAchievement))
-                    vUnofficialAchievements.push_back(vmAchievement);
-                break;
-
-            default:
-                if (vmAchievement->IsActive())
-                    vLockedCoreAchievements.push_back(vmAchievement);
-                else if (vmAchievement->GetState() == ra::data::models::AssetState::Disabled)
-                    vUnsupportedCoreAchievements.push_back(vmAchievement);
-                else
-                    vUnlockedCoreAchievements.push_back(vmAchievement);
-                break;
         }
     }
 
-    unsigned int nMaxPts = 0;
-    unsigned int nUserPts = 0;
-    unsigned int nUserCompleted = 0;
+    auto* pAchievementList = rc_client_create_achievement_list(pClient, nCategory,
+        RC_CLIENT_ACHIEVEMENT_LIST_GROUPING_PROGRESS);
+
+    for (auto* pSubset : vDeactivatedSubsets)
+        pSubset->active = 1;
+
     size_t nIndex = 0;
     size_t nNumberOfAchievements = 0;
-    size_t nNumberOfCoreAchievements = 0;
-
+    m_mHeaderKeys.clear();
     m_vItems.BeginUpdate();
 
-    if (!vActiveChallengeAchievements.empty())
+    const auto* pBucket = pAchievementList->buckets;
+    if (pBucket != nullptr)
     {
-        auto& pvmHeader = GetNextItem(&nIndex);
-        SetHeader(pvmHeader, L"Active Challenges");
-
-        for (const auto* vmAchievement : vActiveChallengeAchievements)
+        const bool bCanCollapseHeaders = GetCanCollapseHeaders();
+        const auto* pBucketStop = pBucket + pAchievementList->num_buckets;
+        for (; pBucket < pBucketStop; ++pBucket)
         {
-            auto& pvmAchievement = GetNextItem(&nIndex);
-            SetAchievement(pvmAchievement, *vmAchievement);
+            auto& pvmHeader = GetNextItem(&nIndex);
+            SetHeader(pvmHeader, ra::Widen(pBucket->label));
 
-            const auto nPoints = vmAchievement->GetPoints();
-            nMaxPts += nPoints;
-
-            if (vmAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
-                ++nNumberOfCoreAchievements;
-        }
-
-        nNumberOfAchievements += vRecentAchievements.size();
-    }
-
-    if (!vRecentAchievements.empty())
-    {
-        auto& pvmHeader = GetNextItem(&nIndex);
-        SetHeader(pvmHeader, L"Recently Unlocked");
-
-        for (const auto* vmAchievement : vRecentAchievements)
-        {
-            auto& pvmAchievement = GetNextItem(&nIndex);
-            SetAchievement(pvmAchievement, *vmAchievement);
-
-            const auto nPoints = vmAchievement->GetPoints();
-            nMaxPts += nPoints;
-
-            if (vmAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
+            bool bCollapsed = false;
+            if (bCanCollapseHeaders)
             {
-                nUserPts += nPoints;
-                ++nUserCompleted;
-                ++nNumberOfCoreAchievements;
+                const auto nKey = pBucket->subset_id << 5 | pBucket->bucket_type;
+                m_mHeaderKeys[nIndex - 1] = nKey;
+                const auto pIter = m_mCollapseState.find(nKey);
+                if (pIter != m_mCollapseState.end())
+                {
+                    bCollapsed = pIter->second;
+                }
+                else
+                {
+                    switch (pBucket->bucket_type)
+                    {
+                        case RC_CLIENT_ACHIEVEMENT_BUCKET_UNLOCKED:
+                        case RC_CLIENT_ACHIEVEMENT_BUCKET_UNOFFICIAL:
+                            bCollapsed = true;
+                            break;
+                    }
+                }
             }
+
+            pvmHeader.SetCollapsed(bCollapsed);
+
+            if (!bCollapsed)
+            {
+                const auto* pAchievement = pBucket->achievements;
+                Expects(pAchievement != nullptr);
+                const rc_client_achievement_t* const* pAchievementStop = pAchievement + pBucket->num_achievements;
+                for (; pAchievement < pAchievementStop; ++pAchievement)
+                {
+                    auto& pvmAchievement = GetNextItem(&nIndex);
+                    SetAchievement(pvmAchievement, **pAchievement);
+                }
+            }
+
+            nNumberOfAchievements += pBucket->num_achievements;
         }
-
-        nNumberOfAchievements += vRecentAchievements.size();
-    }
-
-    if (!vAlmostThereAchievements.empty())
-    {
-        auto& pvmHeader = GetNextItem(&nIndex);
-        SetHeader(pvmHeader, L"Almost There");
-
-        for (const auto& pPair : vAlmostThereAchievements)
-        {
-            const auto* vmAchievement = pPair.first;
-            auto& pvmAchievement = GetNextItem(&nIndex);
-            SetAchievement(pvmAchievement, *vmAchievement);
-            nMaxPts += vmAchievement->GetPoints();
-
-            if (vmAchievement->GetCategory() == ra::data::models::AssetCategory::Core)
-                ++nNumberOfCoreAchievements;
-        }
-
-        nNumberOfAchievements += vAlmostThereAchievements.size();
-    }
-
-    if (!vLocalAchievements.empty())
-    {
-        if (nIndex > 0 || !vUnofficialAchievements.empty() || !vLockedCoreAchievements.empty() || !vUnlockedCoreAchievements.empty())
-        {
-            auto& pvmHeader = GetNextItem(&nIndex);
-            SetHeader(pvmHeader, L"Local");
-        }
-
-        for (const auto* vmAchievement : vLocalAchievements)
-        {
-            auto& pvmAchievement = GetNextItem(&nIndex);
-            SetAchievement(pvmAchievement, *vmAchievement);
-            nMaxPts += vmAchievement->GetPoints();
-        }
-
-        nNumberOfAchievements += vLocalAchievements.size();
-    }
-
-    if (!vUnofficialAchievements.empty())
-    {
-        if (nIndex > 0 || !vLockedCoreAchievements.empty() || !vUnlockedCoreAchievements.empty())
-        {
-            auto& pvmHeader = GetNextItem(&nIndex);
-            SetHeader(pvmHeader, L"Unofficial");
-        }
-
-        for (const auto* vmAchievement : vUnofficialAchievements)
-        {
-            auto& pvmAchievement = GetNextItem(&nIndex);
-            SetAchievement(pvmAchievement, *vmAchievement);
-            nMaxPts += vmAchievement->GetPoints();
-        }
-
-        nNumberOfAchievements += vUnofficialAchievements.size();
-    }
-
-    if (!vLockedCoreAchievements.empty())
-    {
-        if (nIndex > 0)
-        {
-            auto& pvmHeader = GetNextItem(&nIndex);
-            SetHeader(pvmHeader, L"Locked");
-        }
-
-        for (const auto* vmAchievement : vLockedCoreAchievements)
-        {
-            auto& pvmAchievement = GetNextItem(&nIndex);
-            SetAchievement(pvmAchievement, *vmAchievement);
-            nMaxPts += vmAchievement->GetPoints();
-        }
-
-        nNumberOfAchievements += vLockedCoreAchievements.size();
-        nNumberOfCoreAchievements += vLockedCoreAchievements.size();
-    }
-
-    if (!vUnsupportedCoreAchievements.empty())
-    {
-        auto& pvmHeader = GetNextItem(&nIndex);
-        SetHeader(pvmHeader, L"Unsupported");
-
-        for (const auto* vmAchievement : vUnsupportedCoreAchievements)
-        {
-            auto& pvmAchievement = GetNextItem(&nIndex);
-            SetAchievement(pvmAchievement, *vmAchievement);
-            nMaxPts += vmAchievement->GetPoints();
-        }
-
-        nNumberOfAchievements += vUnsupportedCoreAchievements.size();
-        nNumberOfCoreAchievements += vUnsupportedCoreAchievements.size();
-    }
-
-    if (vUnlockedCoreAchievements.size() > 0)
-    {
-        if (nIndex > 0)
-        {
-            auto& pvmHeader = GetNextItem(&nIndex);
-            SetHeader(pvmHeader, L"Unlocked");
-        }
-
-        for (const auto* vmAchievement : vUnlockedCoreAchievements)
-        {
-            auto& pvmAchievement = GetNextItem(&nIndex);
-            SetAchievement(pvmAchievement, *vmAchievement);
-
-            const auto nPoints = vmAchievement->GetPoints();
-            nMaxPts += nPoints;
-
-            nUserPts += nPoints;
-            ++nUserCompleted;
-        }
-
-        nNumberOfAchievements += vUnlockedCoreAchievements.size();
-        nNumberOfCoreAchievements += vUnlockedCoreAchievements.size();
     }
 
     while (m_vItems.Count() > nIndex)
@@ -354,11 +194,17 @@ void OverlayAchievementsPageViewModel::Refresh()
 
     m_vItems.EndUpdate();
 
+    free(pAchievementList);
+
     // summary
+    rc_client_user_game_summary_t summary;
+    rc_client_get_user_game_summary(pClient, &summary);
     if (nNumberOfAchievements == 0)
         m_sSummary = L"No achievements present";
-    else if (nNumberOfCoreAchievements > 0)
-        m_sSummary = ra::StringPrintf(L"%u of %u won (%u/%u)", nUserCompleted, nNumberOfCoreAchievements, nUserPts, nMaxPts);
+    else if (summary.num_core_achievements > 0)
+        m_sSummary = ra::StringPrintf(L"%u of %u won (%u/%u)",
+            summary.num_unlocked_achievements, summary.num_core_achievements,
+            summary.points_unlocked, summary.points_core);
     else
         m_sSummary = ra::StringPrintf(L"%u achievements present", nNumberOfAchievements);
 
@@ -396,6 +242,22 @@ bool OverlayAchievementsPageViewModel::Update(double fElapsed)
     } while (m_fElapsed > 60.0);
 
     return true;
+}
+
+bool OverlayAchievementsPageViewModel::OnHeaderClicked(ItemViewModel& vmItem)
+{
+    for (const auto pair : m_mHeaderKeys)
+    {
+        const auto* vmHeader = m_vItems.GetItemAt(pair.first);
+        if (vmHeader == &vmItem)
+        {
+            m_mCollapseState[pair.second] = !vmItem.IsCollapsed();
+            Refresh();
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, _UNUSED int nWidth, int nHeight) const
@@ -452,26 +314,28 @@ void OverlayAchievementsPageViewModel::FetchItemDetail(ItemViewModel& vmItem)
     if (m_vAchievementDetails.find(vmItem.GetId()) != m_vAchievementDetails.end()) // already populated
         return;
 
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    const auto* pAchievement = pGameContext.Assets().FindAchievement(vmItem.GetId());
+    const auto& pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
+    const auto nAchievementID = vmItem.GetId();
+    GSL_SUPPRESS_TYPE1 const auto* pAchievement =
+        reinterpret_cast<const rc_client_achievement_info_t*>(rc_client_get_achievement_info(pClient, nAchievementID));
     if (pAchievement == nullptr)
         return;
 
-    auto& vmAchievement = m_vAchievementDetails.emplace(vmItem.GetId(), AchievementViewModel{}).first->second;
-    vmAchievement.SetCreatedDate(ra::Widen(ra::FormatDateTime(pAchievement->GetCreationTime())));
-    vmAchievement.SetModifiedDate(ra::Widen(ra::FormatDateTime(pAchievement->GetUpdatedTime())));
+    auto& vmAchievement = m_vAchievementDetails.emplace(nAchievementID, AchievementViewModel{}).first->second;
+    vmAchievement.SetCreatedDate(ra::Widen(ra::FormatDateTime(pAchievement->created_time)));
+    vmAchievement.SetModifiedDate(ra::Widen(ra::FormatDateTime(pAchievement->updated_time)));
 
-    if (pAchievement->GetCategory() == ra::data::models::AssetCategory::Local)
+    if (nAchievementID >= ra::data::context::GameAssets::FirstLocalId)
     {
         vmAchievement.SetWonBy(L"Local Achievement");
         return;
     }
 
     ra::api::FetchAchievementInfo::Request request;
-    request.AchievementId = pAchievement->GetID();
+    request.AchievementId = nAchievementID;
     request.FirstEntry = 1;
     request.NumEntries = 10;
-    request.CallAsync([this, nId = pAchievement->GetID()](const ra::api::FetchAchievementInfo::Response& response)
+    request.CallAsync([this, nId = nAchievementID](const ra::api::FetchAchievementInfo::Response& response)
     {
         const auto pIter = m_vAchievementDetails.find(nId);
         if (pIter == m_vAchievementDetails.end())

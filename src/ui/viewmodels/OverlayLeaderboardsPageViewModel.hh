@@ -17,11 +17,15 @@ public:
     void Refresh() override;
 
 protected:
+    bool OnHeaderClicked(ItemViewModel& vmItem) override;
     void FetchItemDetail(ItemViewModel& vmItem) override;
     std::map<ra::LeaderboardID, ViewModelCollection<ItemViewModel>> m_vLeaderboardRanks;
 
 private:
     void RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, _UNUSED int nWidth, int nHeight) const override;
+
+    std::map<uint32_t, bool> m_mCollapseState;
+    std::map<gsl::index, uint32_t> m_mHeaderKeys;
 };
 
 } // namespace viewmodels

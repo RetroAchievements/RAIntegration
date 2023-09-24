@@ -15,13 +15,14 @@ namespace viewmodels {
 
 const StringModelProperty OverlayListPageViewModel::ListTitleProperty("OverlayListPageViewModel", "ListTitle", L"");
 const StringModelProperty OverlayListPageViewModel::SummaryProperty("OverlayListPageViewModel", "Summary", L"");
+const BoolModelProperty OverlayListPageViewModel::CanCollapseHeadersProperty("OverlayListPageViewModel", "CanCollapseHeadersProperty", true);
 const IntModelProperty OverlayListPageViewModel::SelectedItemIndexProperty("OverlayListPageViewModel", "SelectedItemIndex", 0);
 
 const StringModelProperty OverlayListPageViewModel::ItemViewModel::DetailProperty("ItemViewModel", "Detail", L"");
 const BoolModelProperty OverlayListPageViewModel::ItemViewModel::IsDisabledProperty("ItemViewModel", "IsDisabled", false);
-const IntModelProperty OverlayListPageViewModel::ItemViewModel::ProgressMaximumProperty("ItemViewModel", "ProgressMaximum", 0);
-const IntModelProperty OverlayListPageViewModel::ItemViewModel::ProgressValueProperty("ItemViewModel", "ProgressValue", 0);
-const BoolModelProperty OverlayListPageViewModel::ItemViewModel::IsProgressPercentageProperty("ItemViewModel", "IsProgressPercentage", false);
+const BoolModelProperty OverlayListPageViewModel::ItemViewModel::IsCollapsedProperty("ItemViewModel", "IsCollapsed", false);
+const StringModelProperty OverlayListPageViewModel::ItemViewModel::ProgressValueProperty("ItemViewModel", "ProgressValue", L"");
+const IntModelProperty OverlayListPageViewModel::ItemViewModel::ProgressPercentageProperty("ItemViewModel", "IsProgressPercentage", 0);
 
 void OverlayListPageViewModel::Refresh()
 {
@@ -68,25 +69,18 @@ void OverlayListPageViewModel::SetHeader(OverlayListPageViewModel::ItemViewModel
     vmItem.SetDetail(L"");
     vmItem.SetDisabled(false);
     vmItem.Image.ChangeReference(ra::ui::ImageType::None, "");
-    vmItem.SetProgressValue(0U);
-    vmItem.SetProgressMaximum(0U);
-    vmItem.SetProgressPercentage(true);
+    vmItem.SetProgressString(L"");
+    vmItem.SetProgressPercentage(0);
 }
 
 void OverlayListPageViewModel::EnsureSelectedItemIndexValid()
 {
     auto nSelectedIndex = GetSelectedItemIndex();
     const auto* vmItem = m_vItems.GetItemAt(nSelectedIndex);
-    while (vmItem && vmItem->IsHeader())
-        vmItem = m_vItems.GetItemAt(++nSelectedIndex);
 
     if (!vmItem)
     {
         nSelectedIndex = 0;
-        vmItem = m_vItems.GetItemAt(nSelectedIndex);
-        while (vmItem && vmItem->IsHeader())
-            vmItem = m_vItems.GetItemAt(++nSelectedIndex);
-
         m_nScrollOffset = 0;
     }
 
@@ -174,63 +168,76 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
 
         nX += 20;
     }
+    else
+    {
+        // fewer items than fit on screen, force scroll offset to 0.
+        nIndex = 0;
+    }
 
     // items list
+    const bool bCanCollapseHeaders = GetCanCollapseHeaders();
     while (nHeight >= nItemSize)
     {
         const auto* pItem = m_vItems.GetItemAt(nIndex);
         if (!pItem)
             break;
 
+        auto nTextX = nX;
+        if (pItem->Image.Type() != ra::ui::ImageType::None)
+        {
+            pSurface.DrawImage(nX, nY, nItemSize, nItemSize, pItem->Image);
+            nTextX += nItemSize;
+        }
+
+        const ra::ui::Color nSubTextColor =
+            pItem->IsDisabled() ? pTheme.ColorOverlayDisabledSubText() : pTheme.ColorOverlaySubText();
+        ra::ui::Color nTextColor = pTheme.ColorOverlayText();
+
+        const bool bSelected = (nIndex == ra::to_signed(nSelectedIndex));
+        if (bSelected)
+        {
+            pSurface.FillRectangle(nTextX, nY, nWidth - nTextX, nItemSize, pTheme.ColorOverlaySelectionBackground());
+            nTextColor = pItem->IsDisabled() ?
+                pTheme.ColorOverlaySelectionDisabledText() : pTheme.ColorOverlaySelectionText();
+        }
+        else if (pItem->IsDisabled())
+        {
+            nTextColor = pTheme.ColorOverlayDisabledText();
+        }
+
         if (pItem->IsHeader())
         {
-            const auto sHeader = ra::StringPrintf(L"----- %s -----", pItem->GetLabel());
-            const auto szHeader = pSurface.MeasureText(nFont, sHeader);
+            const auto szHeaderText = pSurface.MeasureText(nFont, pItem->GetLabel());
 
-            pSurface.WriteText((nWidth - szHeader.Width) / 2, nY + nItemSize - szHeader.Height - 4, nFont, pTheme.ColorOverlayText(), sHeader);
+            pSurface.FillRectangle(nTextX + 2, nY + nItemSize - 6, nWidth - nTextX - 4, 1, nTextColor);
+            pSurface.WriteText(nTextX + 4, nY + nItemSize - 6 - szHeaderText.Height, nFont, nTextColor, pItem->GetLabel());
+
+            if (bCanCollapseHeaders)
+            {
+                pSurface.WriteText(nWidth - 26, nY + nItemSize - 6 - szHeaderText.Height, nFont, nTextColor,
+                                   pItem->IsCollapsed() ? L"\x25BC" : L"\x25B2");
+            }
         }
         else
         {
-            auto nTextX = nX;
-            if (pItem->Image.Type() != ra::ui::ImageType::None)
-            {
-                pSurface.DrawImage(nX, nY, nItemSize, nItemSize, pItem->Image);
-                nTextX += nItemSize;
-            }
-
-            const ra::ui::Color nSubTextColor = pItem->IsDisabled() ? pTheme.ColorOverlayDisabledSubText() : pTheme.ColorOverlaySubText();
-            ra::ui::Color nTextColor = pTheme.ColorOverlayText();
-
-            const bool bSelected = (nIndex == ra::to_signed(nSelectedIndex));
-            if (bSelected)
-            {
-                pSurface.FillRectangle(nTextX, nY, nWidth - nTextX, nItemSize, pTheme.ColorOverlaySelectionBackground());
-                nTextColor = pItem->IsDisabled() ?
-                    pTheme.ColorOverlaySelectionDisabledText() : pTheme.ColorOverlaySelectionText();
-            }
-            else if (pItem->IsDisabled())
-            {
-                nTextColor = pTheme.ColorOverlayDisabledText();
-            }
-
             pSurface.WriteText(nTextX + 12, nY + 1, nFont, nTextColor, pItem->GetLabel());
             pSurface.WriteText(nTextX + 12, nY + 1 + 26, nSubFont, nSubTextColor, pItem->GetDetail());
 
-            const auto nTarget = pItem->GetProgressMaximum();
-            if (nTarget != 0)
+            const auto& sProgress = pItem->GetProgressString();
+            if (!sProgress.empty())
             {
                 const auto nProgressBarWidth = (nWidth - nTextX - 12) * 2 / 3;
-                const auto nValue = std::min(pItem->GetProgressValue(), nTarget);
-                const auto nProgressBarFillWidth = gsl::narrow_cast<int>(((static_cast<long long>(nProgressBarWidth) - 2) * nValue) / nTarget);
 
-                pSurface.FillRectangle(nTextX + 12, nY + 1 + 26 + 25, nProgressBarWidth, 8, pTheme.ColorOverlayScrollBar());
-                pSurface.FillRectangle(nTextX + 12 + 2, nY + 1 + 26 + 25 + 2, nProgressBarFillWidth - 4, 8 - 4, pTheme.ColorOverlayScrollBarGripper());
+                const auto nValue = pItem->GetProgressPercentage();
+                if (nValue >= 0.0)
+                {
+                    const auto nProgressBarFillWidth = gsl::narrow_cast<int>((nProgressBarWidth - 2) * nValue);
+
+                    pSurface.FillRectangle(nTextX + 12, nY + 1 + 26 + 25, nProgressBarWidth, 8, pTheme.ColorOverlayScrollBar());
+                    pSurface.FillRectangle(nTextX + 12 + 2, nY + 1 + 26 + 25 + 2, nProgressBarFillWidth - 4, 8 - 4, pTheme.ColorOverlayScrollBarGripper());
+                }
 
                 const auto nProgressFont = pSurface.LoadFont(pTheme.FontOverlay(), 14, ra::ui::FontStyles::Normal);
-                const auto nProgressBarPercent = gsl::narrow_cast<int>(static_cast<long long>(nValue) * 100 / nTarget);
-                const std::wstring sProgress = pItem->IsProgressPercentage() ?
-                    ra::StringPrintf(L"%d%%", nProgressBarPercent) :
-                    ra::StringPrintf(L"%u/%u", nValue, nTarget);
                 const auto szProgress = pSurface.MeasureText(nProgressFont, sProgress);
                 pSurface.WriteText(nTextX + 12 + nProgressBarWidth + 6, nY + 1 + 26 + 25 + 4 - (szProgress.Height / 2) - 1, nProgressFont, nSubTextColor, sProgress);
             }
@@ -242,6 +249,18 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
     }
 }
 
+const wchar_t* OverlayListPageViewModel::GetAcceptButtonText() const
+{
+    if (GetCanCollapseHeaders())
+    {
+        const auto* vmItem = m_vItems.GetItemAt(GetSelectedItemIndex());
+        if (vmItem && vmItem->IsHeader())
+            return vmItem->IsCollapsed() ? L"Expand" : L"Collapse";
+    }
+
+    return PageViewModel::GetAcceptButtonText();
+}
+
 bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
 {
     if (pInput.m_bDownPressed)
@@ -251,11 +270,6 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
         {
             ++nSelectedItemIndex;
             auto* vmItem = m_vItems.GetItemAt(nSelectedItemIndex);
-
-            // skip over header items
-            while (vmItem && vmItem->IsHeader())
-                vmItem = m_vItems.GetItemAt(++nSelectedItemIndex);
-
             if (!vmItem)
                 return false;
                 
@@ -277,11 +291,6 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
         {
             auto* vmItem = m_vItems.GetItemAt(gsl::narrow_cast<size_t>(--nSelectedItemIndex));
             const auto nScrollOfffset = m_nScrollOffset;
-
-            // skip over header items
-            while (vmItem && vmItem->IsHeader())
-                vmItem = m_vItems.GetItemAt(gsl::narrow_cast<size_t>(--nSelectedItemIndex));
-
             if (nSelectedItemIndex < m_nScrollOffset)
                 m_nScrollOffset = std::max(nSelectedItemIndex, 0);
 
@@ -312,15 +321,21 @@ bool OverlayListPageViewModel::SetDetail(bool bDetail)
 {
     if (bDetail)
     {
-        if (!m_bDetail && !m_sDetailTitle.empty())
+        if (!m_bDetail)
         {
             auto* vmItem = m_vItems.GetItemAt(GetSelectedItemIndex());
             if (vmItem != nullptr)
             {
-                FetchItemDetail(*vmItem);
-                m_bDetail = true;
-                SetTitle(m_sDetailTitle);
-                return true;
+                if (vmItem->IsHeader())
+                    return OnHeaderClicked(*vmItem);
+
+                if (!m_sDetailTitle.empty())
+                {
+                    FetchItemDetail(*vmItem);
+                    m_bDetail = true;
+                    SetTitle(m_sDetailTitle);
+                    return true;
+                }
             }
         }
     }

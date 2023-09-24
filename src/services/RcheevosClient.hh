@@ -34,6 +34,8 @@ public:
 
     rc_client_t* GetClient() const noexcept { return m_pClient.get(); }
 
+    void SyncAssets();
+
     void BeginLoginWithToken(const std::string& sUsername, const std::string& sApiToken,
                              rc_client_callback_t fCallback, void* pCallbackData);
     void BeginLoginWithPassword(const std::string& sUsername, const std::string& sPassword,
@@ -88,6 +90,9 @@ public:
 
 private:
     std::unique_ptr<rc_client_t> m_pClient;
+
+    class ClientSynchronizer;
+    std::unique_ptr<ClientSynchronizer> m_pClientSynchronizer;
 
     static void LogMessage(const char* sMessage, const rc_client_t* pClient);
     static uint32_t ReadMemory(uint32_t nAddress, uint8_t* pBuffer, uint32_t nBytes, rc_client_t* pClient);

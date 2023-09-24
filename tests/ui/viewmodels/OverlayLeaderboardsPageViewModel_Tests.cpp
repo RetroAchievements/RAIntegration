@@ -6,6 +6,7 @@
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
+#include "tests\mocks\MockRcheevosClient.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
@@ -27,6 +28,7 @@ private:
         ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
+        ra::services::mocks::MockRcheevosClient mockRcheevosClient;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
@@ -56,344 +58,215 @@ private:
             pAssetList.SetAssetTypeFilter(ra::data::models::AssetType::Leaderboard);
             pAssetList.SetFilterCategory(nCategory);
         }
+
+        void AssertHeader(gsl::index nIndex, const std::wstring& sExpectedLabel)
+        {
+            const auto* pItem = GetItem(nIndex);
+            Expects(pItem != nullptr);
+            Assert::IsTrue(pItem->IsHeader());
+            Assert::AreEqual(sExpectedLabel, pItem->GetLabel());
+            Assert::IsFalse(pItem->IsDisabled());
+        }
+
+        void AssertLeaderboard(gsl::index nIndex,
+                               const rc_client_leaderboard_info_t* pLeaderboard,
+                               const std::wstring& sTrackerValue = L"")
+        {
+            const auto* pItem = GetItem(nIndex);
+            Expects(pItem != nullptr);
+            Assert::IsFalse(pItem->IsHeader());
+            Assert::AreEqual(pLeaderboard->public_.id, static_cast<uint32_t>(pItem->GetId()));
+
+            Assert::AreEqual(ra::Widen(pLeaderboard->public_.title), pItem->GetLabel());
+            Assert::AreEqual(ra::Widen(pLeaderboard->public_.description), pItem->GetDetail());
+            Assert::AreEqual(sTrackerValue, pItem->GetProgressString());
+            if (sTrackerValue.empty())
+                Assert::AreEqual(0.0f, pItem->GetProgressPercentage());
+            else
+                Assert::AreEqual(-1.0f, pItem->GetProgressPercentage());
+        }
     };
 
 public:
     TEST_METHOD(TestRefreshNoLeaderboards)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
+        leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"No leaderboards present"), leaderboardsPage.GetSummary());
+        Assert::IsNull(leaderboardsPage.GetItem(0));
     }
 
     TEST_METHOD(TestRefreshLeaderboards)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        leaderboardsPage.SetAssetFilter(ra::ui::viewmodels::AssetListViewModel::FilterCategory::All);
-        auto& pLB1 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB1.SetID(1U);
-        pLB1.SetName(L"LeaderboardTitle");
-        pLB1.SetDescription(L"Trigger this");
-        auto& pLB2 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB2.SetID(2U);
-        pLB2.SetName(L"LeaderboardTitle2");
-        pLB2.SetDescription(L"Trigger this too");
+        leaderboardsPage.mockRcheevosClient.MockGame();
+
+        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
+        auto* pLbd2 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(2);
+
+        leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"2 leaderboards present"), leaderboardsPage.GetSummary());
 
-        auto* pItem = leaderboardsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Trigger this"), pItem->GetDetail());
-
-        pItem = leaderboardsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(2, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle2"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Trigger this too"), pItem->GetDetail());
+        leaderboardsPage.AssertHeader(0, L"Inactive");
+        leaderboardsPage.AssertLeaderboard(1, pLbd1);
+        leaderboardsPage.AssertLeaderboard(2, pLbd2);
     }
 
     TEST_METHOD(TestRefreshCoreOnly)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        auto& pLB1 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB1.SetID(1U);
-        pLB1.SetName(L"LeaderboardTitle");
-        pLB1.SetDescription(L"Capture this");
-        auto& pLB2 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB2.SetID(2U);
-        pLB2.SetName(L"LeaderboardTitle2");
-        pLB2.SetDescription(L"Local Leaderboard");
-        pLB2.SetCategory(ra::data::models::AssetCategory::Local);
-        auto& pLB3 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB3.SetID(3U);
-        pLB3.SetName(L"LeaderboardTitle3");
-        pLB3.SetDescription(L"Capture this too");
+        leaderboardsPage.mockRcheevosClient.MockGame();
+
+        // only 1 and 3 will be visible - 2 is not core, and filtered out by asset list
+        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
+                      leaderboardsPage.mockRcheevosClient.MockLocalLeaderboard(2);
+        auto* pLbd3 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(3);
+
+        leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"2 leaderboards present"), leaderboardsPage.GetSummary());
 
-        // only 1 and 3 will be visible - 2 is not core, and filtered out by asset list
-        auto* pItem = leaderboardsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Capture this"), pItem->GetDetail());
-
-        pItem = leaderboardsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle3"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Capture this too"), pItem->GetDetail());
-
+        leaderboardsPage.AssertHeader(0, L"Inactive");
+        leaderboardsPage.AssertLeaderboard(1, pLbd1);
+        leaderboardsPage.AssertLeaderboard(2, pLbd3);
         Assert::IsNull(leaderboardsPage.GetItem(3));
     }
 
     TEST_METHOD(TestRefreshCoreAndLocal)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        auto& pLB1 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB1.SetID(1U);
-        pLB1.SetName(L"LeaderboardTitle");
-        pLB1.SetDescription(L"Capture this");
-        auto& pLB2 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB2.SetID(2U);
-        pLB2.SetName(L"LeaderboardTitle2");
-        pLB2.SetDescription(L"Local Leaderboard");
-        pLB2.SetCategory(ra::data::models::AssetCategory::Local);
-        auto& pLB3 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB3.SetID(3U);
-        pLB3.SetName(L"LeaderboardTitle3");
-        pLB3.SetDescription(L"Capture this too");
-        leaderboardsPage.mockWindowManager.AssetList.SetAssetTypeFilter(ra::data::models::AssetType::Leaderboard);
-        leaderboardsPage.mockWindowManager.AssetList.SetFilterCategory(ra::ui::viewmodels::AssetListViewModel::FilterCategory::All);
+        leaderboardsPage.mockRcheevosClient.MockGame();
+
+        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
+        auto* pLbd2 = leaderboardsPage.mockRcheevosClient.MockLocalLeaderboard(2);
+        auto* pLbd3 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(3);
+
+        leaderboardsPage.SetAssetFilter(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local);
+        leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"3 leaderboards present"), leaderboardsPage.GetSummary());
 
-        auto* pItem = leaderboardsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Inactive Local Leaderboards"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = leaderboardsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(2, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle2"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Local Leaderboard"), pItem->GetDetail());
-
-        pItem = leaderboardsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Inactive Leaderboards"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = leaderboardsPage.GetItem(3);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Capture this"), pItem->GetDetail());
-
-        pItem = leaderboardsPage.GetItem(4);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle3"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Capture this too"), pItem->GetDetail());
-
+        leaderboardsPage.AssertHeader(0, L"Game Title - Inactive");
+        leaderboardsPage.AssertLeaderboard(1, pLbd1);
+        leaderboardsPage.AssertLeaderboard(2, pLbd3);
+        leaderboardsPage.AssertHeader(3, L"Local - Inactive");
+        leaderboardsPage.AssertLeaderboard(4, pLbd2);
         Assert::IsNull(leaderboardsPage.GetItem(5));
     }
 
     TEST_METHOD(TestRefreshWithHidden)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        auto& pLB1 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB1.SetID(1U);
-        pLB1.SetName(L"LeaderboardTitle");
-        pLB1.SetDescription(L"Capture this");
-        auto& pLB2 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB2.SetID(2U);
-        pLB2.SetName(L"LeaderboardTitle2");
-        pLB2.SetDescription(L"Hidden Leaderboard");
-        pLB2.SetHidden(true);
-        auto& pLB3 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB3.SetID(3U);
-        pLB3.SetName(L"LeaderboardTitle3");
-        pLB3.SetDescription(L"Capture this too");
+        leaderboardsPage.mockRcheevosClient.MockGame();
+
+        // only 1 and 3 will be visible - 2 is hidden
+        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
+        auto* pLbd2 = leaderboardsPage.mockRcheevosClient.MockLocalLeaderboard(2);
+        pLbd2->hidden = 1;
+        auto* pLbd3 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(3);
+
+        leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"2 leaderboards present"), leaderboardsPage.GetSummary());
 
-        // only 1 and 3 will be visible - 2 is not core, and filtered out by asset list
-        auto* pItem = leaderboardsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Capture this"), pItem->GetDetail());
-
-        pItem = leaderboardsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle3"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Capture this too"), pItem->GetDetail());
-
+        leaderboardsPage.AssertHeader(0, L"Inactive");
+        leaderboardsPage.AssertLeaderboard(1, pLbd1);
+        leaderboardsPage.AssertLeaderboard(2, pLbd3);
         Assert::IsNull(leaderboardsPage.GetItem(3));
     }
 
     TEST_METHOD(TestRefreshWithActive)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        auto& pLB1 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB1.SetID(1U);
-        pLB1.SetName(L"LeaderboardTitle");
-        pLB1.SetDescription(L"Capture this");
-        auto& pLB2 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB2.SetID(2U);
-        pLB2.SetName(L"LeaderboardTitle2");
-        pLB2.SetDescription(L"Another Capture");
-        pLB2.SetState(ra::data::models::AssetState::Primed);
-        auto& pLB3 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB3.SetID(3U);
-        pLB3.SetName(L"LeaderboardTitle3");
-        pLB3.SetDescription(L"Capture this too");
-        pLB3.SetState(ra::data::models::AssetState::Primed);
+        leaderboardsPage.mockRcheevosClient.MockGame();
+
+        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
+        auto* pLbd2 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(2);
+        pLbd2->public_.state = RC_CLIENT_LEADERBOARD_STATE_TRACKING;
+        pLbd2->public_.tracker_value = "1:23.00";
+        auto* pLbd3 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(3);
+
+        leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"3 leaderboards present"), leaderboardsPage.GetSummary());
 
-        auto* pItem = leaderboardsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Active Leaderboards"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = leaderboardsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(2, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle2"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Another Capture"), pItem->GetDetail());
-
-        pItem = leaderboardsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle3"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Capture this too"), pItem->GetDetail());
-
-        pItem = leaderboardsPage.GetItem(3);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Inactive Leaderboards"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = leaderboardsPage.GetItem(4);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Capture this"), pItem->GetDetail());
-
+        leaderboardsPage.AssertHeader(0, L"Active");
+        leaderboardsPage.AssertLeaderboard(1, pLbd2, L"1:23.00");
+        leaderboardsPage.AssertHeader(2, L"Inactive");
+        leaderboardsPage.AssertLeaderboard(3, pLbd1);
+        leaderboardsPage.AssertLeaderboard(4, pLbd3);
         Assert::IsNull(leaderboardsPage.GetItem(5));
     }
 
     TEST_METHOD(TestRefreshWithHiddenActive)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        auto& pLB1 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB1.SetID(1U);
-        pLB1.SetName(L"LeaderboardTitle");
-        pLB1.SetDescription(L"Capture this");
-        auto& pLB2 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB2.SetID(2U);
-        pLB2.SetName(L"LeaderboardTitle2");
-        pLB2.SetDescription(L"Another Capture");
-        pLB2.SetState(ra::data::models::AssetState::Primed);
-        pLB2.SetHidden(true);
-        auto& pLB3 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB3.SetID(3U);
-        pLB3.SetName(L"LeaderboardTitle3");
-        pLB3.SetDescription(L"Capture this too");
-        pLB3.SetState(ra::data::models::AssetState::Primed);
+        leaderboardsPage.mockRcheevosClient.MockGame();
+
+        // only 1 and 3 will be visible - 2 is hidden (TODO: should it be?)
+        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
+        auto* pLbd2 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(2);
+        pLbd2->hidden = 1;
+        pLbd2->public_.state = RC_CLIENT_LEADERBOARD_STATE_TRACKING;
+        pLbd2->public_.tracker_value = "1:23.00";
+        auto* pLbd3 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(3);
+
+        leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"2 leaderboards present"), leaderboardsPage.GetSummary());
 
-        auto* pItem = leaderboardsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Active Leaderboards"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = leaderboardsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle3"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Capture this too"), pItem->GetDetail());
-
-        pItem = leaderboardsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Inactive Leaderboards"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = leaderboardsPage.GetItem(3);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Capture this"), pItem->GetDetail());
-
-        Assert::IsNull(leaderboardsPage.GetItem(4));
+        leaderboardsPage.AssertHeader(0, L"Inactive");
+        leaderboardsPage.AssertLeaderboard(1, pLbd1);
+        leaderboardsPage.AssertLeaderboard(2, pLbd3);
+        Assert::IsNull(leaderboardsPage.GetItem(3));
     }
 
     TEST_METHOD(TestRefreshWithDisabled)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        auto& pLB1 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB1.SetID(1U);
-        pLB1.SetName(L"LeaderboardTitle");
-        pLB1.SetDescription(L"Capture this");
-        auto& pLB2 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB2.SetID(2U);
-        pLB2.SetName(L"LeaderboardTitle2");
-        pLB2.SetDescription(L"Disabled Leaderboard");
-        pLB2.SetState(ra::data::models::AssetState::Disabled);
-        auto& pLB3 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB3.SetID(3U);
-        pLB3.SetName(L"LeaderboardTitle3");
-        pLB3.SetDescription(L"Capture this too");
+        leaderboardsPage.mockRcheevosClient.MockGame();
+
+        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
+        auto* pLbd2 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(2);
+        pLbd2->public_.state = RC_CLIENT_LEADERBOARD_STATE_DISABLED;
+        auto* pLbd3 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(3);
+
+        leaderboardsPage.SetAssetFilter(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local);
+        leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
         Assert::AreEqual(std::wstring(L"3 leaderboards present"), leaderboardsPage.GetSummary());
 
-        auto* pItem = leaderboardsPage.GetItem(0);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Inactive Leaderboards"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = leaderboardsPage.GetItem(1);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(1, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Capture this"), pItem->GetDetail());
-
-        pItem = leaderboardsPage.GetItem(2);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(3, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle3"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Capture this too"), pItem->GetDetail());
-
-        pItem = leaderboardsPage.GetItem(3);
-        Expects(pItem != nullptr);
-        Assert::IsTrue(pItem->IsHeader());
-        Assert::AreEqual(std::wstring(L"Unsupported Leaderboards"), pItem->GetLabel());
-        Assert::IsFalse(pItem->IsDisabled());
-
-        pItem = leaderboardsPage.GetItem(4);
-        Expects(pItem != nullptr);
-        Assert::AreEqual(2, pItem->GetId());
-        Assert::AreEqual(std::wstring(L"LeaderboardTitle2"), pItem->GetLabel());
-        Assert::AreEqual(std::wstring(L"Disabled Leaderboard"), pItem->GetDetail());
-
+        leaderboardsPage.AssertHeader(0, L"Inactive");
+        leaderboardsPage.AssertLeaderboard(1, pLbd1);
+        leaderboardsPage.AssertLeaderboard(2, pLbd3);
+        leaderboardsPage.AssertHeader(3, L"Unsupported");
+        leaderboardsPage.AssertLeaderboard(4, pLbd2);
         Assert::IsNull(leaderboardsPage.GetItem(5));
     }
 
     TEST_METHOD(TestFetchItemDetail)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        auto& pLB1 = leaderboardsPage.mockGameContext.Assets().NewLeaderboard();
-        pLB1.SetID(1U);
-        pLB1.SetName(L"LeaderboardTitle");
-        pLB1.SetDescription(L"Trigger this");
+        leaderboardsPage.mockRcheevosClient.MockGame();
+        leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
 
         leaderboardsPage.mockUserContext.Initialize("user2", "User2", "ApiToken");
         leaderboardsPage.mockServer.HandleRequest<ra::api::FetchLeaderboardInfo>([](const ra::api::FetchLeaderboardInfo::Request& request, ra::api::FetchLeaderboardInfo::Response& response)
@@ -409,7 +282,7 @@ public:
         });
 
         leaderboardsPage.Refresh();
-        leaderboardsPage.TestFetchItemDetail(0);
+        leaderboardsPage.TestFetchItemDetail(1);
 
         auto* pDetail = leaderboardsPage.GetRanks(1);
         Expects(pDetail != nullptr);

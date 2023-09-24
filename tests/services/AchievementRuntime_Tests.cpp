@@ -290,11 +290,11 @@ public:
 
     void SaveProgressToString(std::string& sBuffer)
     {
-        const int nSize = SaveProgressToBuffer(reinterpret_cast<uint8_t*>(sBuffer.data()), gsl::narrow_cast<int>(sBuffer.size()));
+        const size_t nSize = SaveProgressToBuffer(reinterpret_cast<uint8_t*>(sBuffer.data()), gsl::narrow_cast<int>(sBuffer.size()));
         if (nSize > sBuffer.size())
         {
             sBuffer.resize(nSize);
-            SaveProgressToBuffer(reinterpret_cast<uint8_t*>(sBuffer.data()), nSize);
+            SaveProgressToBuffer(reinterpret_cast<uint8_t*>(sBuffer.data()), gsl::narrow_cast<int>(nSize));
         }
     }
 

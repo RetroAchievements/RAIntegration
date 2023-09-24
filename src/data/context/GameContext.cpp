@@ -301,66 +301,70 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
     {
         // achievements
         auto* pAchievementData = pSubset->achievements;
-        Expects(pAchievementData != nullptr);
-        const auto* pAchievementStop = pAchievementData + pSubset->public_.num_achievements;
-        for (; pAchievementData < pAchievementStop; ++pAchievementData)
+        if (pAchievementData != nullptr)
         {
-            // if the server has provided an unexpected category (usually 0), ignore it.
-            ra::data::models::AssetCategory nCategory = ra::data::models::AssetCategory::None;
-            switch (pAchievementData->public_.category)
+            const auto* pAchievementStop = pAchievementData + pSubset->public_.num_achievements;
+            for (; pAchievementData < pAchievementStop; ++pAchievementData)
             {
-                case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
-                    nCategory = ra::data::models::AssetCategory::Core;
-                    break;
+                // if the server has provided an unexpected category (usually 0), ignore it.
+                ra::data::models::AssetCategory nCategory = ra::data::models::AssetCategory::None;
+                switch (pAchievementData->public_.category)
+                {
+                    case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
+                        nCategory = ra::data::models::AssetCategory::Core;
+                        break;
 
-                case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL:
-                    nCategory = ra::data::models::AssetCategory::Unofficial;
+                    case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL:
+                        nCategory = ra::data::models::AssetCategory::Unofficial;
 
-                    // all unofficial achievements should start inactive.
-                    // rc_client automatically activates them.
-                    pAchievementData->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
+                        // all unofficial achievements should start inactive.
+                        // rc_client automatically activates them.
+                        pAchievementData->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
 
-                    if (pAchievementData->trigger)
-                        pAchievementData->trigger->state = RC_TRIGGER_STATE_INACTIVE;
-                    break;
+                        if (pAchievementData->trigger)
+                            pAchievementData->trigger->state = RC_TRIGGER_STATE_INACTIVE;
+                        break;
 
-                default:
-                    continue;
-            }
+                    default:
+                        continue;
+                }
 
-            auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
+                auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
 
-            const auto sDefinition = mAchievementDefinitions.find(pAchievementData->public_.id);
-            if (sDefinition != mAchievementDefinitions.end())
-                vmAchievement->Attach(*pAchievementData, nCategory, sDefinition->second);
-            else
-                vmAchievement->Attach(*pAchievementData, nCategory, "");
+                const auto sDefinition = mAchievementDefinitions.find(pAchievementData->public_.id);
+                if (sDefinition != mAchievementDefinitions.end())
+                    vmAchievement->Attach(*pAchievementData, nCategory, sDefinition->second);
+                else
+                    vmAchievement->Attach(*pAchievementData, nCategory, "");
 
-            m_vAssets.Append(std::move(vmAchievement));
+                m_vAssets.Append(std::move(vmAchievement));
 
 #ifndef RA_UTEST
-            // prefetch the achievement image
-            pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievementData->public_.badge_name);
+                // prefetch the achievement image
+                pImageRepository.FetchImage(ra::ui::ImageType::Badge, pAchievementData->public_.badge_name);
 #endif
+            }
         }
 
         // leaderboards
         auto* pLeaderboardData = pSubset->leaderboards;
-        Expects(pLeaderboardData != nullptr);
-        const auto* pLeaderboardStop = pLeaderboardData + pSubset->public_.num_leaderboards;
-        for (; pLeaderboardData < pLeaderboardStop; ++pLeaderboardData)
+        if (pLeaderboardData != nullptr)
         {
-            auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
+            const auto* pLeaderboardStop = pLeaderboardData + pSubset->public_.num_leaderboards;
+            for (; pLeaderboardData < pLeaderboardStop; ++pLeaderboardData)
+            {
+                auto vmLeaderboard = std::make_unique<ra::data::models::LeaderboardModel>();
 
-            const auto nCategory = ra::data::models::AssetCategory::Core; // all published leaderboards are core
+                const auto nCategory = ra::data::models::AssetCategory::Core; // all published leaderboards are core
 
-            const auto sDefinition = mLeaderboardDefinitions.find(pLeaderboardData->public_.id);
-            if (sDefinition != mLeaderboardDefinitions.end())
-                vmLeaderboard->Attach(*pLeaderboardData, nCategory, sDefinition->second);
-            else
-                vmLeaderboard->Attach(*pLeaderboardData, nCategory, "");
+                const auto sDefinition = mLeaderboardDefinitions.find(pLeaderboardData->public_.id);
+                if (sDefinition != mLeaderboardDefinitions.end())
+                    vmLeaderboard->Attach(*pLeaderboardData, nCategory, sDefinition->second);
+                else
+                    vmLeaderboard->Attach(*pLeaderboardData, nCategory, "");
 
-            m_vAssets.Append(std::move(vmLeaderboard));
+                m_vAssets.Append(std::move(vmLeaderboard));
+            }
         }
     }
 }

@@ -313,17 +313,33 @@ private:
                             pSrcAchievement = FindAchievement(&m_pSubsetWrapper->pCoreSubset, nAchievementId);
                     }
 
-                    if (pSrcAchievement != nullptr)
+                    if (pSrcAchievement != nullptr && pSrcAchievement == vmAchievement->GetAttached())
                     {
                         // transfer the trigger ownership to the new SubsetWrapper
-                        if (pAchievement->trigger && DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pAchievement->trigger))
-                            pSubsetWrapper->vAllocatedMemory.push_back(pAchievement->trigger);
+                        if (pSrcAchievement->trigger && DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pSrcAchievement->trigger))
+                            pSubsetWrapper->vAllocatedMemory.push_back(pSrcAchievement->trigger);
 
                         memcpy(pAchievement, pSrcAchievement, sizeof(*pAchievement));
                         vmAchievement->ReplaceAttached(*pAchievement++);
                     }
                     else
                     {
+                        if (pSrcAchievement != nullptr && pSrcAchievement->trigger)
+                        {
+                            const auto& sTrigger = vmAchievement->GetTrigger();
+                            uint8_t md5[16];
+                            rc_runtime_checksum(sTrigger.c_str(), md5);
+                            if (memcmp(pSrcAchievement->md5, md5, sizeof(md5)) == 0)
+                            {
+                                memcpy(pAchievement->md5, pSrcAchievement->md5, sizeof(md5));
+                                pAchievement->trigger = pSrcAchievement->trigger;
+
+                                // transfer the trigger ownership to the new SubsetWrapper
+                                if (DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pSrcAchievement->trigger))
+                                    pSubsetWrapper->vAllocatedMemory.push_back(pSrcAchievement->trigger);
+                            }
+                        }
+
                         // no rc_client_achievement_t found for this achievement, populate from the model
                         vmAchievement->AttachAndInitialize(*pAchievement++);
                     }
@@ -363,7 +379,7 @@ private:
                 else
                 {
                     pSrcLeaderboard = nullptr;
-                    if (m_pSubsetWrapper != nullptr)
+                    if (m_pSubsetWrapper != nullptr && vmLeaderboard->GetAttached() != nullptr)
                     {
                         if (vmLeaderboard->GetCategory() == ra::data::models::AssetCategory::Local)
                             pSrcLeaderboard = FindLeaderboard(&m_pSubsetWrapper->pLocalSubset, nLeaderboardId);
@@ -371,17 +387,33 @@ private:
                             pSrcLeaderboard = FindLeaderboard(&m_pSubsetWrapper->pCoreSubset, nLeaderboardId);
                     }
 
-                    if (pSrcLeaderboard != nullptr)
+                    if (pSrcLeaderboard != nullptr && pSrcLeaderboard == vmLeaderboard->GetAttached())
                     {
                         // transfer the lboard ownership to the new SubsetWrapper
-                        if (pLeaderboard->lboard && DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pLeaderboard->lboard))
-                            pSubsetWrapper->vAllocatedMemory.push_back(pLeaderboard->lboard);
+                        if (pSrcLeaderboard->lboard && DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pSrcLeaderboard->lboard))
+                            pSubsetWrapper->vAllocatedMemory.push_back(pSrcLeaderboard->lboard);
 
                         memcpy(pLeaderboard, pSrcLeaderboard, sizeof(*pLeaderboard));
                         vmLeaderboard->ReplaceAttached(*pLeaderboard++);
                     }
                     else
                     {
+                        if (pSrcLeaderboard != nullptr && pSrcLeaderboard->lboard)
+                        {
+                            const auto& sTrigger = vmLeaderboard->GetDefinition();
+                            uint8_t md5[16];
+                            rc_runtime_checksum(sTrigger.c_str(), md5);
+                            if (memcmp(pSrcLeaderboard->md5, md5, sizeof(md5)) == 0)
+                            {
+                                memcpy(pLeaderboard->md5, pSrcLeaderboard->md5, sizeof(md5));
+                                pLeaderboard->lboard = pSrcLeaderboard->lboard;
+
+                                // transfer the trigger ownership to the new SubsetWrapper
+                                if (DetachMemory(m_pSubsetWrapper->vAllocatedMemory, pSrcLeaderboard->lboard))
+                                    pSubsetWrapper->vAllocatedMemory.push_back(pSrcLeaderboard->lboard);
+                            }
+                        }
+
                         // no rc_client_leaderboard_t found for this leaderboard, populate from the model
                         vmLeaderboard->AttachAndInitialize(*pLeaderboard++);
                     }
@@ -401,10 +433,13 @@ public:
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         auto& vAssets = pGameContext.Assets();
 
-        m_pClient = pClient;
-        m_pNextMemref = &pClient->game->runtime.memrefs;
-        m_pNextVariable = &pClient->game->runtime.variables;
-        AllocatedMemrefs(); // advance pointers
+        if (m_pClient == nullptr)
+        {
+            m_pClient = pClient;
+            m_pNextMemref = &pClient->game->runtime.memrefs;
+            m_pNextVariable = &pClient->game->runtime.variables;
+            AllocatedMemrefs(); // advance pointers
+        }
 
         if (m_pPublishedSubset == nullptr)
             m_pPublishedSubset = pClient->game->subsets;

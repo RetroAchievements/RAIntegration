@@ -198,6 +198,8 @@ public:
     void ReplaceAttached(struct rc_client_leaderboard_info_t& pLeaderboard) noexcept;
     // Attaches an rc_client_leaderboard_info_t and populates it from the model.
     void AttachAndInitialize(struct rc_client_leaderboard_info_t& pLeaderboard);
+    // Gets the attached rc_client_achievement_info_t.
+    const struct rc_client_leaderboard_info_t* GetAttached() const noexcept { return m_pLeaderboard; }
 
     const CapturedTriggerHits& GetStartCapturedHits() const noexcept { return m_pCapturedStartTriggerHits; }
     const CapturedTriggerHits& GetSubmitCapturedHits() const noexcept { return m_pCapturedSubmitTriggerHits; }

@@ -136,6 +136,8 @@ public:
     void ReplaceAttached(struct rc_client_achievement_info_t& pAchievement) noexcept;
     // Attaches an rc_client_achievement_info_t and populates it from the model.
     void AttachAndInitialize(struct rc_client_achievement_info_t& pAchievement);
+    // Gets the attached rc_client_achievement_info_t.
+    const struct rc_client_achievement_info_t* GetAttached() const noexcept { return m_pAchievement; }
 
     const CapturedTriggerHits& GetCapturedHits() const noexcept { return m_pCapturedTriggerHits; }
     void ResetCapturedHits() noexcept { m_pCapturedTriggerHits.Reset(); }

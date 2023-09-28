@@ -1477,6 +1477,9 @@ void AssetListViewModel::ResetSelected()
 
     pGameContext.Assets().EndUpdate();
 
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    pRuntime.SyncAssets();
+
     // if any achievements were deleted, disable their challenge indicators
     for (auto nId : vPrimedAchievementsBefore)
     {

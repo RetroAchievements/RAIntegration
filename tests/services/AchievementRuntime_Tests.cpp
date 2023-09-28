@@ -435,6 +435,105 @@ private:
 TEST_CLASS(AchievementRuntime_Tests)
 {
 public:
+    TEST_METHOD(TestSyncAssetsAchievement)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockGame();
+
+        auto vmAchievement = std::make_unique<ra::data::models::AchievementModel>();
+        vmAchievement->CreateServerCheckpoint();
+        vmAchievement->SetCategory(ra::data::models::AssetCategory::Local);
+        vmAchievement->SetName(L"Achievement Name");
+        vmAchievement->SetDescription(L"Do something cool");
+        vmAchievement->SetPoints(25);
+        vmAchievement->SetTrigger("0xH0000=1");
+        vmAchievement->SetID(ra::data::context::GameAssets::FirstLocalId);
+        vmAchievement->CreateLocalCheckpoint();
+        vmAchievement->SetState(ra::data::models::AssetState::Active);
+        runtime.mockGameContext.Assets().Append(std::move(vmAchievement));
+
+        // SyncAssets should generate an empty core subset and a local subset containing the achievement
+        runtime.SyncAssets();
+
+        auto* pSubset = runtime.GetClient()->game->subsets;
+        Expects(pSubset != nullptr);
+        Assert::AreEqual("Game Title", pSubset->public_.title);
+        Assert::AreEqual(1U, pSubset->public_.id);
+        Assert::AreEqual("012345", pSubset->public_.badge_name);
+        Assert::AreEqual(0U, pSubset->public_.num_achievements);
+        Assert::IsTrue(pSubset->active);
+
+        pSubset = pSubset->next;
+        Expects(pSubset != nullptr);
+        Assert::AreEqual("Local", pSubset->public_.title);
+        Assert::AreEqual(ra::data::context::GameAssets::LocalSubsetId, pSubset->public_.id);
+        Assert::AreEqual("012345", pSubset->public_.badge_name);
+        Assert::AreEqual(1U, pSubset->public_.num_achievements);
+        Assert::IsTrue(pSubset->active);
+        Assert::IsNull(pSubset->next);
+
+        const auto* pAchievement = pSubset->achievements;
+        Assert::AreEqual("Achievement Name", pAchievement->public_.title);
+        Assert::AreEqual("Do something cool", pAchievement->public_.description);
+        Assert::AreEqual(25U, pAchievement->public_.points);
+        Assert::AreEqual(ra::data::context::GameAssets::FirstLocalId, pAchievement->public_.id);
+        Assert::IsNotNull(pAchievement->trigger);
+        const auto* pOldTrigger = pAchievement->trigger;
+
+        // directly modifying the achievement trigger should rebuild the underlying trigger
+        runtime.mockGameContext.Assets().FindAchievement(ra::data::context::GameAssets::FirstLocalId)
+            ->SetTrigger("0xH0000=2");
+        Assert::IsNotNull(pAchievement->trigger);
+        const auto* pNewTrigger = pAchievement->trigger;
+        Assert::AreNotEqual(static_cast<const void*>(pOldTrigger), static_cast<const void*>(pNewTrigger));
+
+        // refreshing a local asset will reconstruct the model. since the hash is the same, the sync
+        // should reuse the trigger.
+        runtime.mockGameContext.Assets().Clear();
+
+        auto vmAchievement2 = std::make_unique<ra::data::models::AchievementModel>();
+        vmAchievement2->CreateServerCheckpoint();
+        vmAchievement2->SetCategory(ra::data::models::AssetCategory::Local);
+        vmAchievement2->SetName(L"Achievement Name");
+        vmAchievement2->SetDescription(L"Do something cool");
+        vmAchievement2->SetPoints(25);
+        vmAchievement2->SetTrigger("0xH0000=2");
+        vmAchievement2->SetID(ra::data::context::GameAssets::FirstLocalId);
+        vmAchievement2->CreateLocalCheckpoint();
+        vmAchievement2->SetState(ra::data::models::AssetState::Active);
+        runtime.mockGameContext.Assets().Append(std::move(vmAchievement2));
+
+        runtime.SyncAssets();
+
+        pAchievement = runtime.GetClient()->game->subsets->next->achievements;
+        Expects(pAchievement != nullptr);
+        const auto* pNewerTrigger = pAchievement->trigger;
+        Assert::AreEqual(static_cast<const void*>(pNewTrigger), static_cast<const void*>(pNewerTrigger));
+
+        // refreshing a local asset will reconstruct the model. if the hash changes, a new trigger
+        // will be constructed.
+        runtime.mockGameContext.Assets().Clear();
+
+        auto vmAchievement3 = std::make_unique<ra::data::models::AchievementModel>();
+        vmAchievement3->CreateServerCheckpoint();
+        vmAchievement3->SetCategory(ra::data::models::AssetCategory::Local);
+        vmAchievement3->SetName(L"Achievement Name");
+        vmAchievement3->SetDescription(L"Do something cool");
+        vmAchievement3->SetPoints(25);
+        vmAchievement3->SetTrigger("0xH0000=1");
+        vmAchievement3->SetID(ra::data::context::GameAssets::FirstLocalId);
+        vmAchievement3->CreateLocalCheckpoint();
+        vmAchievement3->SetState(ra::data::models::AssetState::Active);
+        runtime.mockGameContext.Assets().Append(std::move(vmAchievement3));
+
+        runtime.SyncAssets();
+
+        pAchievement = runtime.GetClient()->game->subsets->next->achievements;
+        Expects(pAchievement != nullptr);
+        const auto* pNewestTrigger = pAchievement->trigger;
+        Assert::AreNotEqual(static_cast<const void*>(pNewerTrigger), static_cast<const void*>(pNewestTrigger));
+    }
+
     TEST_METHOD(TestDoFrameTriggerAchievement)
     {
         std::array<unsigned char, 1> memory{ 0x00 };

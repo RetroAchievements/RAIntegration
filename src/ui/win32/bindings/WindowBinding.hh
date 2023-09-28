@@ -133,7 +133,7 @@ public:
     /// <summary>
     /// Returns <c>true</c> if the current thread is the UI thread.
     /// </summary>
-    bool IsOnUIThread() const { return GetCurrentThreadId() == s_hUIThreadId; }
+    bool IsOnUIThread() const noexcept { return GetCurrentThreadId() == s_hUIThreadId; }
 
 protected:
     // ViewModelBase::NotifyTarget

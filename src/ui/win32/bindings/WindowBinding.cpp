@@ -97,7 +97,7 @@ void WindowBinding::SetHWND(DialogBase* pDialog, HWND hWnd)
 
     if (m_pDialog)
     {
-        InvokeOnUIThread([this]()
+        InvokeOnUIThread([this]() noexcept
         {
             s_hUIThreadId = GetCurrentThreadId();
         });

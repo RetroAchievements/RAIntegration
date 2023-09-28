@@ -301,7 +301,7 @@ bool Desktop::IsDebuggerPresent() const
 
 bool Desktop::IsOnUIThread(const WindowViewModelBase& vmViewModel) const
 {
-    auto* pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
+    const auto* pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
     Expects(pBinding != nullptr);
     return pBinding->IsOnUIThread();
 }

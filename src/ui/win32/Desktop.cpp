@@ -23,6 +23,7 @@
 #include "ui/win32/RichPresenceDialog.hh"
 #include "ui/win32/UnknownGameDialog.hh"
 
+#include "ui/win32/bindings/ControlBinding.hh"
 #include "ui/win32/bindings/MemoryViewerControlBinding.hh"
 
 #include "RA_Log.h"
@@ -298,6 +299,19 @@ bool Desktop::IsDebuggerPresent() const
     return IsSuspiciousProcessRunning();
 }
 
+bool Desktop::IsOnUIThread(const WindowViewModelBase& vmViewModel) const
+{
+    auto* pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
+    Expects(pBinding != nullptr);
+    return pBinding->IsOnUIThread();
+}
+
+void Desktop::InvokeOnUIThread(const WindowViewModelBase& vmViewModel, std::function<void()> fAction) const
+{
+    auto* pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
+    Expects(pBinding != nullptr);
+    pBinding->InvokeOnUIThread(fAction);
+}
 
 void Desktop::Shutdown() noexcept
 {

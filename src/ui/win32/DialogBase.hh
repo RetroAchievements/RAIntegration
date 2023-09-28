@@ -165,6 +165,8 @@ private:
         GSL_SUPPRESS_F6 m_mControlBindings.erase(hControl);
     }
 
+    // allow WindowBinding to access QueueFunction method
+    friend class ra::ui::win32::bindings::WindowBinding;
     void QueueFunction(std::function<void()> fAction);
 
     ra::ui::win32::bindings::ControlBinding* FindControlBinding(HWND hControl)
@@ -186,7 +188,8 @@ private:
     };
     std::vector<AnchorInfo> m_vControlAnchors;
 
-    std::queue<std::function<void()>> m_qActions;
+    static std::mutex s_pQueueMutex;
+    static std::queue<std::function<void()>> s_qActions;
 
     void InitializeAnchors() noexcept;
     void UpdateAnchoredControls();

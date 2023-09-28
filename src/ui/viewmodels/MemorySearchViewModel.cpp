@@ -7,6 +7,7 @@
 #include "services\IFileSystem.hh"
 #include "services\ServiceLocator.hh"
 
+#include "ui\IDesktop.hh"
 #include "ui\viewmodels\FileDialogViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\ProgressViewModel.hh"
@@ -734,6 +735,23 @@ void MemorySearchViewModel::UpdateResults()
         // assume DoFrame is updating the results list from another thread and just
         // queue the UpdateResults
         m_bUpdateResultsPending = true;
+        return;
+    }
+
+    const auto& vmMemoryInspector = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryInspector;
+    const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
+    if (!pDesktop.IsOnUIThread(vmMemoryInspector))
+    {
+        m_bUpdateResultsPending = true;
+        pDesktop.InvokeOnUIThread(vmMemoryInspector, [this]()
+        {
+            if (m_bUpdateResultsPending)
+            {
+                m_bUpdateResultsPending = false;
+                UpdateResults();
+            }
+        });
+
         return;
     }
 

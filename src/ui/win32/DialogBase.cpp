@@ -14,6 +14,9 @@ namespace ra {
 namespace ui {
 namespace win32 {
 
+std::mutex DialogBase::s_pQueueMutex;
+std::queue<std::function<void()>> DialogBase::s_qActions;
+
 _Use_decl_annotations_
 DialogBase::DialogBase(ra::ui::WindowViewModelBase& vmWindow) noexcept :
     m_vmWindow{ vmWindow },
@@ -450,13 +453,20 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 
         case WM_QUEUED_ACTION:
         {
-            if (!m_qActions.empty())
+            std::function<void()> fAction = nullptr;
             {
-                std::function<void()> fAction = m_qActions.front();
-                m_qActions.pop();
+                std::lock_guard<std::mutex> lock(s_pQueueMutex);
+                if (!s_qActions.empty())
+                {
+                    fAction = s_qActions.front();
+                    s_qActions.pop();
+                }
+            }
+
+            if (fAction != nullptr)
+            {
                 fAction();
-                if (!m_qActions.empty())
-                    PostMessage(m_hWnd, WM_QUEUED_ACTION, NULL, NULL);
+                PostMessage(m_hWnd, WM_QUEUED_ACTION, NULL, NULL);
             }
 
             return 0;
@@ -469,7 +479,10 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 
 void DialogBase::QueueFunction(std::function<void()> fAction)
 {
-    m_qActions.push(fAction);
+    {
+        std::lock_guard<std::mutex> lock(s_pQueueMutex);
+        s_qActions.push(fAction);
+    }
     PostMessage(m_hWnd, WM_QUEUED_ACTION, NULL, NULL);
 }
 

@@ -94,6 +94,9 @@ public:
     bool IsDebuggerPresent() const noexcept override { return m_bDebuggerPresent; }
     void SetDebuggerPresent(bool bValue) noexcept { m_bDebuggerPresent = bValue; }
 
+    bool IsOnUIThread(const WindowViewModelBase&) const override { return true; }
+    void InvokeOnUIThread(const WindowViewModelBase&, std::function<void()> fAction) const override { fAction(); }
+
 private:
     ra::ui::DialogResult Handle(WindowViewModelBase& vmViewModel) const
     {

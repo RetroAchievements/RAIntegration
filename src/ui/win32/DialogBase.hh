@@ -188,8 +188,8 @@ private:
     };
     std::vector<AnchorInfo> m_vControlAnchors;
 
-    static std::mutex s_pQueueMutex;
-    static std::queue<std::function<void()>> s_qActions;
+    std::mutex m_pMutex;
+    std::queue<std::function<void()>> m_qActions;
 
     void InitializeAnchors() noexcept;
     void UpdateAnchoredControls();

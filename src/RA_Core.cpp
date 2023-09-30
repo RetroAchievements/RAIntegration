@@ -11,7 +11,6 @@
 #include "services\IConfiguration.hh"
 #include "services\IThreadPool.hh"
 #include "services\Initialization.hh"
-#include "services\RcheevosClient.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\IDesktop.hh"
@@ -147,7 +146,7 @@ API int CCONV _RA_Shutdown()
             pDesktop.CloseWindow(pWindowManager.PointerFinder);
     }
 
-    ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>().Shutdown();
+    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().Shutdown();
 
     ra::services::Initialization::Shutdown();
 
@@ -214,7 +213,7 @@ API void CCONV _RA_OnReset()
     // Temporarily disable achievements while the system is resetting. They will automatically re-enable when
     // DoAchievementsFrame is called if the trigger is not active. Prevents most unexpected triggering caused
     // by resetting the emulator.
-    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().ResetActiveAchievements();
+    ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().ResetRuntime();
 
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().ClearPopups();
 }

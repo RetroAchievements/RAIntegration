@@ -22,21 +22,6 @@ public:
         return UnsupportedApi<StartSession::Response>(StartSession::Name());
     }
 
-    Ping::Response Ping(const Ping::Request&) override
-    {
-        return UnsupportedApi<Ping::Response>(Ping::Name());
-    }
-
-    AwardAchievement::Response AwardAchievement(const AwardAchievement::Request&) override
-    {
-        return UnsupportedApi<AwardAchievement::Response>(AwardAchievement::Name());
-    }
-
-    SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request&) override
-    {
-        return UnsupportedApi<SubmitLeaderboardEntry::Response>(SubmitLeaderboardEntry::Name());
-    }
-
     FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request&) override
     {
         return UnsupportedApi<FetchUserFriends::Response>(FetchUserFriends::Name());

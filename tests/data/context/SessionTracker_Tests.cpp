@@ -32,8 +32,8 @@ public:
         GSL_SUPPRESS_F6 SessionTrackerHarness(const char* sUsername = "User") noexcept
             : m_sUsername(sUsername), m_sUsernameWide(ra::Widen(sUsername))
         {
+            mockRuntime.MockGame();
         }
-
 
         ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockGameContext mockGameContext;
@@ -243,96 +243,6 @@ public:
         tracker.mockClock.AdvanceTime(std::chrono::seconds(19));
         tracker.EndSession();
         Assert::AreEqual(std::string("1234:1534000000:1732:f5\n1234:1534889323:173:bb\n9999:1534889496:169:14\n"), tracker.GetStoredData());
-    }
-
-    TEST_METHOD(TestPing)
-    {
-        SessionTrackerHarness tracker;
-
-        tracker.Initialize("User");
-
-        int nPings = 0;
-        tracker.mockServer.HandleRequest<ra::api::Ping>([&nPings](const ra::api::Ping::Request& request, _UNUSED ra::api::Ping::Response& /*response*/)
-        {
-            Assert::AreEqual(1234U, request.GameId);
-            Assert::AreEqual(std::wstring(L"Playing Banana"), request.CurrentActivity);
-            ++nPings;
-            return false;
-        });
-
-        // BeginSession should begin the session, but not write to the file
-        tracker.mockGameContext.SetGameId(1234U);
-        tracker.mockGameContext.SetGameTitle(L"Banana");
-        tracker.BeginSession(1234U);
-        tracker.mockThreadPool.ExecuteNextTask(); // execute async server call StartSession
-        Assert::AreEqual(0, nPings);
-
-        // after 30 seconds, the callback will be called, and the first ping should occur
-        tracker.mockClock.AdvanceTime(std::chrono::seconds(30));
-        tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(30));
-        tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
-        Assert::AreEqual(1, nPings);
-
-        // after two minutes, the callback will be called again, and the second ping should occur
-        tracker.mockClock.AdvanceTime(std::chrono::seconds(120));
-        tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(120));
-        tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(2, nPings);
-
-        // after two more minutes, the callback will be called again, and the third ping should occur
-        tracker.mockClock.AdvanceTime(std::chrono::seconds(120));
-        tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(120));
-        tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(3, nPings);
-
-        // once the session is ended, pinging should stop
-        tracker.EndSession();
-        tracker.mockClock.AdvanceTime(std::chrono::seconds(120));
-        tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(120));
-        tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(3, nPings);
-    }
-
-    TEST_METHOD(TestPingUnknownGame)
-    {
-        SessionTrackerHarness tracker;
-
-        tracker.Initialize("User");
-        tracker.mockGameContext.SetGameId(0U);
-        tracker.mockGameContext.SetGameTitle(L"FileUnknown");
-
-        int nPings = 0;
-        tracker.mockServer.HandleRequest<ra::api::Ping>([&nPings](const ra::api::Ping::Request& request, _UNUSED ra::api::Ping::Response& /*response*/)
-        {
-            Assert::AreEqual(0U, request.GameId);
-            Assert::AreEqual(std::wstring(L"Playing FileUnknown"), request.CurrentActivity);
-            ++nPings;
-            return false;
-        });
-        tracker.mockServer.ExpectUncalled<ra::api::StartSession>();
-
-        // BeginSession should begin the session, but not send a start session
-        tracker.BeginSession(0U);
-        tracker.mockThreadPool.ExecuteNextTask(); // StartSession should not be queued
-        Assert::AreEqual(0, nPings);
-
-        // after 30 seconds, the callback will be called, and the first ping should occur
-        tracker.mockClock.AdvanceTime(std::chrono::seconds(30));
-        tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(30));
-        tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
-        Assert::AreEqual(1, nPings);
-
-        // after two minutes, the callback will be called again, and the second ping should occur
-        tracker.mockClock.AdvanceTime(std::chrono::seconds(120));
-        tracker.mockThreadPool.AdvanceTime(std::chrono::seconds(120));
-        tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
-        Assert::AreEqual(2, nPings);
-
-        // total playtime should still be tallied, but not written to the file
-        Assert::AreEqual(150, gsl::narrow<int>(tracker.GetTotalPlaytime(0U).count()));
-        Assert::AreEqual(std::string(""), tracker.GetStoredData());
     }
 
     TEST_METHOD(TestCurrentActivityNoRichPresence)

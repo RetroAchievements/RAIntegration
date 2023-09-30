@@ -14,7 +14,6 @@
 #include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
-#include "tests\mocks\MockRcheevosClient.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -42,15 +41,15 @@ private:
         ra::services::mocks::MockFileSystem mockFileSystem;
         ra::services::mocks::MockHttpRequester mockHttpRequester;
         ra::services::mocks::MockThreadPool mockThreadPool;
-        ra::services::mocks::MockRcheevosClient mockRcheevosClient;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
         GSL_SUPPRESS_F6 EmulatorContextHarness() noexcept
-            : mockHttpRequester([](const ra::services::Http::Request&) { return ra::services::Http::Response(ra::services::Http::StatusCode::OK, ""); })
+            : mockHttpRequester([](const ra::services::Http::Request&) { return ra::services::Http::Response(ra::services::Http::StatusCode::OK, ""); }),
+              m_Override(this)
         {
-            mockRcheevosClient.MockGame();
+            mockAchievementRuntime.MockGame();
         }
 
         void MockVersions(const std::string& sClientVersion, const std::string& sServerVersion, const std::string& sMinimumVersion)
@@ -83,6 +82,9 @@ private:
             pAch.UpdateServerCheckpoint();
             return pAch;
         }
+
+    private:
+        ra::services::ServiceLocator::ServiceOverride<EmulatorContext> m_Override;
     };
 
     class EmulatorContextNotifyHarness : public EmulatorContext::NotifyTarget
@@ -655,44 +657,43 @@ public:
     TEST_METHOD(TestDisableHardcoreMode)
     {
         EmulatorContextHarness emulator;
-        emulator.mockGameContext.SetGameId(1234U);
+        emulator.mockAchievementRuntime.MockGame();
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
         bool bWasReset = false;
         emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
 
-        auto& pLeaderboard = emulator.mockGameContext.Assets().NewLeaderboard();
-        pLeaderboard.SetID(32U);
-        pLeaderboard.SetState(ra::data::models::AssetState::Active);
-        Assert::IsTrue(pLeaderboard.IsActive());
+        emulator.mockAchievementRuntime.MockLeaderboardWithLboard(32U);
+        emulator.mockAchievementRuntime.MockAchievementWithTrigger(44U);
+        auto* pAchievement45 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(45U);
+        emulator.mockAchievementRuntime.UnlockAchievement(pAchievement45, RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE);
+        auto* pAchievement46 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(46U);
+        emulator.mockAchievementRuntime.UnlockAchievement(pAchievement46, RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH);
+        emulator.mockGameContext.InitializeFromAchievementRuntime();
 
-        emulator.mockRcheevosClient.MockAchievement(44U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_NONE;
-        emulator.mockRcheevosClient.MockAchievement(45U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE;
-        emulator.mockRcheevosClient.MockAchievement(46U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+        auto* vmAchievement44 = emulator.mockGameContext.Assets().FindAchievement(44U);
+        auto* vmAchievement45 = emulator.mockGameContext.Assets().FindAchievement(45U);
+        auto* vmAchievement46 = emulator.mockGameContext.Assets().FindAchievement(46U);
+        auto* vmLeaderboard32 = emulator.mockGameContext.Assets().FindLeaderboard(32U);
+        Expects(vmAchievement44 && vmAchievement45 && vmAchievement46 && vmLeaderboard32);
 
-        auto& pAchievement44 = emulator.mockGameContext.Assets().NewAchievement();
-        pAchievement44.SetID(44U);
-        pAchievement44.SetState(ra::data::models::AssetState::Active);
-        auto& pAchievement45 = emulator.mockGameContext.Assets().NewAchievement();
-        pAchievement45.SetID(45U);
-        auto& pAchievement46 = emulator.mockGameContext.Assets().NewAchievement();
-        pAchievement46.SetID(46U);
-
-        Assert::IsTrue(pAchievement44.IsActive());
-        Assert::IsFalse(pAchievement45.IsActive());
-        Assert::IsFalse(pAchievement46.IsActive());
+        Assert::IsTrue(vmAchievement44->IsActive());
+        Assert::IsTrue(vmAchievement45->IsActive());
+        Assert::IsFalse(vmAchievement46->IsActive());
+        Assert::IsTrue(vmLeaderboard32->IsActive());
 
         emulator.DisableHardcoreMode();
 
         // ensure mode was deactivated
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsFalse(rc_client_get_hardcore_enabled(emulator.mockAchievementRuntime.GetClient()));
 
         // deactivating hardcore mode should not disable leaderboards
-        Assert::IsTrue(pLeaderboard.IsActive());
+        Assert::IsTrue(vmLeaderboard32->IsActive());
 
         // deactivating hardcore mode should update active achievements
-        Assert::IsTrue(pAchievement44.IsActive());
-        Assert::IsFalse(pAchievement45.IsActive());
-        Assert::IsFalse(pAchievement46.IsActive());
+        Assert::IsTrue(vmAchievement44->IsActive());
+        Assert::IsFalse(vmAchievement45->IsActive());
+        Assert::IsFalse(vmAchievement46->IsActive());
 
         // deactivating hardcore mode should not reset the emulator
         Assert::IsFalse(bWasReset);
@@ -709,7 +710,7 @@ public:
 
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
         Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
-        Assert::IsTrue(bWasReset);
+        Assert::IsFalse(bWasReset); // if no game loaded, rc_client won't raise a reset event
     }
 
     TEST_METHOD(TestEnableHardcoreModeAlreadyEnabled)
@@ -734,28 +735,36 @@ public:
         emulator.MockVersions("0.57", "0.57");
         emulator.mockGameContext.SetGameId(1U);
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
-        {
-            Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
-            Assert::AreEqual(std::wstring(L"Enable hardcore mode?"), vmMessageBox.GetHeader());
-            Assert::AreEqual(std::wstring(L"Enabling hardcore mode will reset the emulator. You will lose any progress that has not been saved through the game."), vmMessageBox.GetMessage());
-            return ra::ui::DialogResult::Yes;
-        });
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        emulator.mockAchievementRuntime.GetClient()->state.hardcore = 0;
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+                Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+                Assert::AreEqual(std::wstring(L"Enable hardcore mode?"), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"Enabling hardcore mode will reset the emulator. You will lose any "
+                                              L"progress that has not been saved through the game."),
+                                 vmMessageBox.GetMessage());
+                return ra::ui::DialogResult::Yes;
+            });
 
-        emulator.mockRcheevosClient.MockAchievement(44U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_NONE;
-        emulator.mockRcheevosClient.MockAchievement(45U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE;
-        emulator.mockRcheevosClient.MockAchievement(46U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+        emulator.mockAchievementRuntime.MockLeaderboardWithLboard(32U);
+        emulator.mockAchievementRuntime.MockAchievementWithTrigger(44U);
+        auto* pAchievement45 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(45U);
+        emulator.mockAchievementRuntime.UnlockAchievement(pAchievement45, RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE);
+        auto* pAchievement46 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(46U);
+        emulator.mockAchievementRuntime.UnlockAchievement(pAchievement46, RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH);
+        emulator.mockGameContext.InitializeFromAchievementRuntime();
 
-        auto& pAchievement44 = emulator.mockGameContext.Assets().NewAchievement();
-        pAchievement44.SetID(44U);
-        auto& pAchievement45 = emulator.mockGameContext.Assets().NewAchievement();
-        pAchievement45.SetID(45U);
-        auto& pAchievement46 = emulator.mockGameContext.Assets().NewAchievement();
-        pAchievement46.SetID(46U);
+        auto* vmAchievement44 = emulator.mockGameContext.Assets().FindAchievement(44U);
+        auto* vmAchievement45 = emulator.mockGameContext.Assets().FindAchievement(45U);
+        auto* vmAchievement46 = emulator.mockGameContext.Assets().FindAchievement(46U);
+        auto* vmLeaderboard32 = emulator.mockGameContext.Assets().FindLeaderboard(32U);
+        Expects(vmAchievement44 && vmAchievement45 && vmAchievement46 && vmLeaderboard32);
 
-        auto& pLeaderboard = emulator.mockGameContext.Assets().NewLeaderboard();
-        pLeaderboard.SetID(32U);
-        Assert::IsFalse(pLeaderboard.IsActive());
+        Assert::IsTrue(vmAchievement44->IsActive());
+        Assert::IsFalse(vmAchievement45->IsActive());
+        Assert::IsFalse(vmAchievement46->IsActive());
+        Assert::IsFalse(vmLeaderboard32->IsActive());
 
         bool bWasReset = false;
         emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
@@ -764,17 +773,18 @@ public:
 
         // ensure hardcore mode was enabled
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsTrue(rc_client_get_hardcore_enabled(emulator.mockAchievementRuntime.GetClient()) != 0);
 
         // ensure prompt was shown
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
 
         // enabling hardcore mode should enable leaderboards
-        Assert::IsTrue(pLeaderboard.IsActive());
+        Assert::IsTrue(vmLeaderboard32->IsActive());
 
         // enabling hardcore mode should activate achievements not unlocked in hardcore
-        Assert::IsTrue(pAchievement44.IsActive());
-        Assert::IsTrue(pAchievement45.IsActive());
-        Assert::IsFalse(pAchievement46.IsActive());
+        Assert::IsTrue(vmAchievement44->IsActive());
+        Assert::IsTrue(vmAchievement45->IsActive());
+        Assert::IsFalse(vmAchievement46->IsActive());
 
         // enabling hardcore mode should reset the emulator
         Assert::IsTrue(bWasReset);
@@ -785,7 +795,10 @@ public:
         EmulatorContextHarness emulator;
         emulator.MockVersions("0.57", "0.57");
         emulator.mockGameContext.SetGameId(1U);
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        emulator.mockAchievementRuntime.GetClient()->state.hardcore = 0;
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
             Assert::AreEqual(std::wstring(L"Enable hardcore mode?"), vmMessageBox.GetHeader());
@@ -799,6 +812,7 @@ public:
         Assert::IsFalse(emulator.EnableHardcoreMode());
 
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsFalse(rc_client_get_hardcore_enabled(emulator.mockAchievementRuntime.GetClient()) != 0);
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
         Assert::IsFalse(bWasReset);
     }
@@ -808,7 +822,10 @@ public:
         EmulatorContextHarness emulator;
         emulator.MockVersions("0.58", "0.57");
         emulator.mockGameContext.SetGameId(1U);
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        emulator.mockAchievementRuntime.GetClient()->state.hardcore = 0;
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
             Assert::AreEqual(std::wstring(L"Enable hardcore mode?"), vmMessageBox.GetHeader());
@@ -821,6 +838,7 @@ public:
         Assert::IsTrue(emulator.EnableHardcoreMode());
 
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsTrue(rc_client_get_hardcore_enabled(emulator.mockAchievementRuntime.GetClient()) != 0);
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
         Assert::IsTrue(bWasReset);
     }
@@ -832,8 +850,11 @@ public:
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.mockGameContext.SetGameId(1U);
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        emulator.mockAchievementRuntime.GetClient()->state.hardcore = 0;
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
             Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
@@ -847,6 +868,7 @@ public:
         Assert::IsFalse(emulator.EnableHardcoreMode());
 
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsFalse(rc_client_get_hardcore_enabled(emulator.mockAchievementRuntime.GetClient()) != 0);
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
         Assert::AreEqual(std::string("http://host/download.php"), emulator.mockDesktop.LastOpenedUrl());
 
@@ -862,8 +884,11 @@ public:
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.mockGameContext.SetGameId(1U);
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        emulator.mockAchievementRuntime.GetClient()->state.hardcore = 0;
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
             Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
@@ -877,6 +902,7 @@ public:
         Assert::IsFalse(emulator.EnableHardcoreMode());
 
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsFalse(rc_client_get_hardcore_enabled(emulator.mockAchievementRuntime.GetClient()) != 0);
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
         Assert::AreEqual(std::string(""), emulator.mockDesktop.LastOpenedUrl());
         Assert::IsTrue(emulator.mockUserContext.IsLoggedIn());
@@ -889,21 +915,27 @@ public:
         emulator.MockVersions("0.57", "0.57");
         emulator.mockGameContext.SetGameId(1U);
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        emulator.mockAchievementRuntime.GetClient()->state.hardcore = 0;
 
-        emulator.mockRcheevosClient.MockAchievement(44U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_NONE;
-        emulator.mockRcheevosClient.MockAchievement(45U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE;
-        emulator.mockRcheevosClient.MockAchievement(46U)->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
+        emulator.mockAchievementRuntime.MockLeaderboardWithLboard(32U);
+        emulator.mockAchievementRuntime.MockAchievementWithTrigger(44U);
+        auto* pAchievement45 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(45U);
+        emulator.mockAchievementRuntime.UnlockAchievement(pAchievement45, RC_CLIENT_ACHIEVEMENT_UNLOCKED_SOFTCORE);
+        auto* pAchievement46 = emulator.mockAchievementRuntime.MockAchievementWithTrigger(46U);
+        emulator.mockAchievementRuntime.UnlockAchievement(pAchievement46, RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH);
+        emulator.mockGameContext.InitializeFromAchievementRuntime();
 
-        auto& pAchievement44 = emulator.mockGameContext.Assets().NewAchievement();
-        pAchievement44.SetID(44U);
-        auto& pAchievement45 = emulator.mockGameContext.Assets().NewAchievement();
-        pAchievement45.SetID(45U);
-        auto& pAchievement46 = emulator.mockGameContext.Assets().NewAchievement();
-        pAchievement46.SetID(46U);
+        auto* vmAchievement44 = emulator.mockGameContext.Assets().FindAchievement(44U);
+        auto* vmAchievement45 = emulator.mockGameContext.Assets().FindAchievement(45U);
+        auto* vmAchievement46 = emulator.mockGameContext.Assets().FindAchievement(46U);
+        auto* vmLeaderboard32 = emulator.mockGameContext.Assets().FindLeaderboard(32U);
+        Expects(vmAchievement44 && vmAchievement45 && vmAchievement46 && vmLeaderboard32);
 
-        auto& pLeaderboard = emulator.mockGameContext.Assets().NewLeaderboard();
-        pLeaderboard.SetID(32U);
-        Assert::IsFalse(pLeaderboard.IsActive());
+        Assert::IsTrue(vmAchievement44->IsActive());
+        Assert::IsFalse(vmAchievement45->IsActive());
+        Assert::IsFalse(vmAchievement46->IsActive());
+        Assert::IsFalse(vmLeaderboard32->IsActive());
 
         bool bWasReset = false;
         emulator.SetResetFunction([&bWasReset]() { bWasReset = true; });
@@ -912,17 +944,18 @@ public:
 
         // ensure hardcore mode was enabled
         Assert::IsTrue(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsTrue(rc_client_get_hardcore_enabled(emulator.mockAchievementRuntime.GetClient()) != 0);
 
         // ensure prompt was not shown
         Assert::IsFalse(emulator.mockDesktop.WasDialogShown());
 
         // enabling hardcore mode should enable leaderboards
-        Assert::IsTrue(pLeaderboard.IsActive());
+        Assert::IsTrue(vmLeaderboard32->IsActive());
 
         // enabling hardcore mode should activate achievements not unlocked in hardcore
-        Assert::IsTrue(pAchievement44.IsActive());
-        Assert::IsTrue(pAchievement45.IsActive());
-        Assert::IsFalse(pAchievement46.IsActive());
+        Assert::IsTrue(vmAchievement44->IsActive());
+        Assert::IsTrue(vmAchievement45->IsActive());
+        Assert::IsFalse(vmAchievement46->IsActive());
 
         // enabling hardcore mode should reset the emulator
         Assert::IsTrue(bWasReset);
@@ -935,8 +968,11 @@ public:
         emulator.mockConfiguration.SetHostName("host");
         emulator.mockUserContext.Initialize("User", "Token");
         emulator.mockGameContext.SetGameId(1U);
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        emulator.mockAchievementRuntime.GetClient()->state.hardcore = 0;
         emulator.MockVersions("0.57.0.0", "0.58.0.0");
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&emulator](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox)
         {
             Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
             Assert::AreEqual(std::wstring(L"A newer client is required for hardcore mode."), vmMessageBox.GetHeader());
@@ -950,6 +986,7 @@ public:
         Assert::IsFalse(emulator.EnableHardcoreMode(false));
 
         Assert::IsFalse(emulator.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+        Assert::IsFalse(rc_client_get_hardcore_enabled(emulator.mockAchievementRuntime.GetClient()) != 0);
         Assert::IsTrue(emulator.mockDesktop.WasDialogShown());
         Assert::AreEqual(std::string("http://host/download.php"), emulator.mockDesktop.LastOpenedUrl());
 
@@ -1317,36 +1354,6 @@ public:
         Assert::AreEqual(gsl::at(buffer, 1), memory.at(1));
     }
 
-    TEST_METHOD(TestReadMemoryByteInvalidAddressDisablesAchievement)
-    {
-        memory.at(4) = 0xA8;
-        memory.at(5) = 0x00;
-        memory.at(6) = 0x37;
-        memory.at(7) = 0x2E;
-
-        EmulatorContextHarness emulator;
-        emulator.mockAchievementRuntime.ActivateAchievement(1, "0xH0004=1_0xH0044=1");
-        Assert::IsTrue(emulator.mockAchievementRuntime.IsAchievementSupported(1));
-
-        // memory has not yet been registered. achievement should not be disabled [client may register memory later]
-        Assert::AreEqual(0x00, static_cast<int>(emulator.ReadMemory(4U, MemSize::EightBit)));
-        Assert::IsTrue(emulator.mockAchievementRuntime.IsAchievementSupported(1));
-
-        // valid memory registered. achievement should not be disabled
-        emulator.AddMemoryBlock(0, 20, &ReadMemory0, &WriteMemory0);
-        Assert::AreEqual(0xA8, static_cast<int>(emulator.ReadMemory(4U, MemSize::EightBit)));
-        Assert::IsTrue(emulator.mockAchievementRuntime.IsAchievementSupported(1));
-
-        // address not in supported memory range, achievement should not be disabled [indirect memory address]
-        Assert::AreEqual(0x00, static_cast<int>(emulator.ReadMemory(68U, MemSize::EightBit)));
-        Assert::IsTrue(emulator.mockAchievementRuntime.IsAchievementSupported(1));
-
-        // invalid memory region registered, address not supported. achievement should be disabled
-        emulator.AddMemoryBlock(1, 80, nullptr, nullptr);
-        Assert::AreEqual(0x00, static_cast<int>(emulator.ReadMemory(68U, MemSize::EightBit)));
-        Assert::IsFalse(emulator.mockAchievementRuntime.IsAchievementSupported(1));
-    }
-
     TEST_METHOD(TestReadMemoryBuffer)
     {
         InitializeMemory();
@@ -1688,45 +1695,52 @@ public:
         emulator.MockVersions("0.57", "0.57");
         emulator.mockGameContext.SetGameId(1U);
         emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
-        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>([&emulator](ra::ui::viewmodels::MessageBoxViewModel&)
+        emulator.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        emulator.mockAchievementRuntime.GetClient()->state.hardcore = 0;
+        emulator.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&emulator](ra::ui::viewmodels::MessageBoxViewModel&)
         {
             return ra::ui::DialogResult::Yes;
         });
 
-        auto& ach0 = emulator.MockAchievement(); // 0 = Unmodified
-        ach0.SetState(ra::data::models::AssetState::Active);
-        auto& ach1 = emulator.MockAchievement(); // 1 = Modified
-        ach1.SetName(L"New Name");
-        ach1.SetState(ra::data::models::AssetState::Active);
-        auto& ach2 = emulator.MockAchievement(); // 2 = New
-        ach2.SetNew();
-        ach2.SetState(ra::data::models::AssetState::Active);
-        auto& ach3 = emulator.MockAchievement(); // 3 = Unpublished
-        ach3.SetName(L"Newer Name");
-        ach3.UpdateLocalCheckpoint();
-        ach3.SetState(ra::data::models::AssetState::Active);
+        emulator.mockAchievementRuntime.MockAchievementWithTrigger(44U);
+        emulator.mockAchievementRuntime.MockAchievementWithTrigger(45U);
+        emulator.mockAchievementRuntime.MockAchievementWithTrigger(46U);
+        emulator.mockAchievementRuntime.MockAchievementWithTrigger(47U);
+        emulator.mockGameContext.InitializeFromAchievementRuntime();
 
-        Assert::AreEqual(ra::data::models::AssetChanges::None, emulator.mockGameContext.Assets().GetItemAt(0)->GetChanges());
-        Assert::AreEqual(ra::data::models::AssetChanges::Modified, emulator.mockGameContext.Assets().GetItemAt(1)->GetChanges());
-        Assert::AreEqual(ra::data::models::AssetChanges::New, emulator.mockGameContext.Assets().GetItemAt(2)->GetChanges());
-        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, emulator.mockGameContext.Assets().GetItemAt(3)->GetChanges());
+        auto* vmAchievement44 = emulator.mockGameContext.Assets().FindAchievement(44U);
+        auto* vmAchievement45 = emulator.mockGameContext.Assets().FindAchievement(45U);
+        vmAchievement45->SetName(L"New Name"); // modified
+        auto* vmAchievement46 = emulator.mockGameContext.Assets().FindAchievement(46U);
+        vmAchievement46->SetNew(); // new
+        auto* vmAchievement47 = emulator.mockGameContext.Assets().FindAchievement(47U);
+        vmAchievement47->SetName(L"New Name");
+        vmAchievement47->UpdateLocalCheckpoint(); // unpublished
 
-        Assert::AreEqual(ra::data::models::AssetState::Active, emulator.mockGameContext.Assets().GetItemAt(0)->GetState());
-        Assert::AreEqual(ra::data::models::AssetState::Active, emulator.mockGameContext.Assets().GetItemAt(1)->GetState());
-        Assert::AreEqual(ra::data::models::AssetState::Active, emulator.mockGameContext.Assets().GetItemAt(2)->GetState());
-        Assert::AreEqual(ra::data::models::AssetState::Active, emulator.mockGameContext.Assets().GetItemAt(3)->GetState());
+        Assert::AreEqual(ra::data::models::AssetChanges::None, vmAchievement44->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::Modified, vmAchievement45->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::New, vmAchievement46->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, vmAchievement47->GetChanges());
+
+        Assert::AreEqual(ra::data::models::AssetState::Active, vmAchievement44->GetState());
+        Assert::AreEqual(ra::data::models::AssetState::Active, vmAchievement45->GetState());
+        Assert::AreEqual(ra::data::models::AssetState::Active, vmAchievement46->GetState());
+        Assert::AreEqual(ra::data::models::AssetState::Active, vmAchievement47->GetState());
 
         Assert::IsTrue(emulator.EnableHardcoreMode());
 
-        Assert::AreEqual(ra::data::models::AssetChanges::None, emulator.mockGameContext.Assets().GetItemAt(0)->GetChanges());
-        Assert::AreEqual(ra::data::models::AssetChanges::Modified, emulator.mockGameContext.Assets().GetItemAt(1)->GetChanges());
-        Assert::AreEqual(ra::data::models::AssetChanges::New, emulator.mockGameContext.Assets().GetItemAt(2)->GetChanges());
-        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, emulator.mockGameContext.Assets().GetItemAt(3)->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::None, vmAchievement44->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::Modified, vmAchievement45->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::New, vmAchievement46->GetChanges());
+        Assert::AreEqual(ra::data::models::AssetChanges::Unpublished, vmAchievement47->GetChanges());
 
-        Assert::AreEqual(ra::data::models::AssetState::Active, emulator.mockGameContext.Assets().GetItemAt(0)->GetState());
-        Assert::AreEqual(ra::data::models::AssetState::Inactive, emulator.mockGameContext.Assets().GetItemAt(1)->GetState());
-        Assert::AreEqual(ra::data::models::AssetState::Inactive, emulator.mockGameContext.Assets().GetItemAt(2)->GetState());
-        Assert::AreEqual(ra::data::models::AssetState::Inactive, emulator.mockGameContext.Assets().GetItemAt(3)->GetState());
+        // enabling hardcore does not change the asset state to waiting. it issues a reset request
+        // and resetting the runtime changes the asset state to waiting.
+        Assert::AreEqual(ra::data::models::AssetState::Active, vmAchievement44->GetState());
+        Assert::AreEqual(ra::data::models::AssetState::Inactive, vmAchievement45->GetState());
+        Assert::AreEqual(ra::data::models::AssetState::Inactive, vmAchievement46->GetState());
+        Assert::AreEqual(ra::data::models::AssetState::Inactive, vmAchievement47->GetState());
     }
 
     TEST_METHOD(TestFormatAddress)

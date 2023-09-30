@@ -5,6 +5,7 @@
 #include "ui\ImageReference.hh"
 #include "ui\WindowViewModelBase.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
+#include "ui\viewmodels\PopupViewModelBase.hh"
 
 namespace Microsoft {
 namespace VisualStudio {
@@ -87,6 +88,36 @@ template<> std::wstring ToString<ra::ui::ImageType>(const ra::ui::ImageType& typ
         case ra::ui::ImageType::Local: return L"Local";
         case ra::ui::ImageType::Icon: return L"Icon";
         default: return std::to_wstring(ra::etoi(type));
+    }
+}
+
+template<>
+std::wstring ToString<ra::ui::viewmodels::Popup>(const ra::ui::viewmodels::Popup& type)
+{
+    switch (type)
+    {
+        case ra::ui::viewmodels::Popup::None:
+            return L"None";
+        case ra::ui::viewmodels::Popup::Message:
+            return L"Message";
+        case ra::ui::viewmodels::Popup::AchievementTriggered:
+            return L"AchievementTriggered";
+        case ra::ui::viewmodels::Popup::Mastery:
+            return L"Mastery";
+        case ra::ui::viewmodels::Popup::LeaderboardStarted:
+            return L"LeaderboardStarted";
+        case ra::ui::viewmodels::Popup::LeaderboardCanceled:
+            return L"LeaderboardCanceled";
+        case ra::ui::viewmodels::Popup::LeaderboardTracker:
+            return L"LeaderboardTracker";
+        case ra::ui::viewmodels::Popup::LeaderboardScoreboard:
+            return L"LeaderboardScoreboard";
+        case ra::ui::viewmodels::Popup::Challenge:
+            return L"Challenge";
+        case ra::ui::viewmodels::Popup::Progress:
+            return L"Progress";
+        default:
+            return std::to_wstring(ra::etoi(type));
     }
 }
 

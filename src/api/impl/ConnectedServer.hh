@@ -16,9 +16,6 @@ public:
     const char* Name() const noexcept override { return m_sHost.c_str(); }
 
     StartSession::Response StartSession(const StartSession::Request& request) override;
-    Ping::Response Ping(const Ping::Request& request) override;
-    AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) override;
-    SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) override;
     FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) override;
     ResolveHash::Response ResolveHash(const ResolveHash::Request& request) override;
     FetchCodeNotes::Response FetchCodeNotes(const FetchCodeNotes::Request& request) override;

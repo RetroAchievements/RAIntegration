@@ -29,49 +29,6 @@ protected:
         ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync(
             [request, callback = std::move(callback)]{ callback(request.Call()); });
     }
-
-    template<class TRequest, class TCallback>
-    static void CallAsyncWithRetry(const TRequest& request, TCallback&& callback)
-    {
-        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync(
-            [requestCopy = request, callback]
-        {
-            DoAsyncWithRetry(requestCopy, callback, std::chrono::milliseconds(0));
-        });
-    }
-
-private:
-    template<class TRequest, class TCallback>
-    static void DoAsyncWithRetry(const TRequest& request, TCallback&& callback, std::chrono::milliseconds delay)
-    {
-        auto response = request.Call();
-        if (response.Result != ApiResult::Incomplete)
-        {
-            callback(response);
-            return;
-        }
-
-        if (delay < std::chrono::milliseconds(500))
-        {
-            delay = std::chrono::milliseconds(500);
-        }
-        else
-        {
-            delay += delay;
-            if (delay > std::chrono::minutes(2))
-                delay = std::chrono::minutes(2);
-        }
-
-        // TODO: this used to be requestCopy = std::move(request), but the newest analysis tool
-        // says not to move const items. This is the only solution I could find the satiate it.
-        // I'm not convinced this is creating a copy of request, but this code will go away after
-        // AwardAchievement and SubmitLeaderboardEntry are managed by rc_client_.
-        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(delay,
-            [requestCopy = request, callback, delay]
-        {
-            DoAsyncWithRetry(requestCopy, callback, delay);
-        });
-    }
 };
 
 struct ApiResponseBase

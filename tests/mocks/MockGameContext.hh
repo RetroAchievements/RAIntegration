@@ -115,6 +115,8 @@ public:
         return true;
     }
 
+    void InitializeFromAchievementRuntime();
+
 private:
     class MockCodeNotesModel : public ra::data::models::CodeNotesModel
     {

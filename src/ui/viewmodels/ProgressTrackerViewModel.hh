@@ -26,7 +26,7 @@ public:
     /// <summary>
     /// Sets the percentage of the image to highlight
     /// </summary>
-    void SetProgress(unsigned nValue, unsigned nTarget, bool bAsPercent);
+    void SetProgress(const std::wstring& sProgress) { m_sProgress = sProgress; }
 
     /// <summary>
     /// Gets the image to display.
@@ -43,13 +43,9 @@ public:
     /// </summary>
     bool UpdateRenderImage(double fElapsed) override;
 
-    void BeginAnimation() noexcept override { m_fAnimationProgress = 0.0; }
+    void BeginAnimation() noexcept override { }
     bool IsAnimationStarted() const noexcept override { return true; }
-
-    bool IsAnimationComplete() const noexcept override
-    {
-        return m_fAnimationProgress >= TOTAL_ANIMATION_TIME;
-    }
+    bool IsAnimationComplete() const noexcept override { return false; }
 
 private:
     ra::ui::ImageReference m_hImage;

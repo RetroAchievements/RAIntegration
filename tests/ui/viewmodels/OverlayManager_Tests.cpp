@@ -12,7 +12,6 @@
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
-#include "tests\mocks\MockRcheevosClient.hh"
 #include "tests\mocks\MockSurface.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -39,7 +38,6 @@ private:
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
-        ra::services::mocks::MockRcheevosClient mockRcheevosClient;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::mocks::MockImageRepository mockImageRepository;
@@ -609,7 +607,7 @@ public:
         OverlayManagerHarness overlay;
         overlay.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::Progress, ra::ui::viewmodels::PopupLocation::BottomRight);
 
-        overlay.UpdateProgressTracker(ra::ui::ImageType::Badge, "12345_lock", 3, 7, false);
+        overlay.UpdateProgressTracker(ra::ui::ImageType::Badge, "12345_lock", L"3/7");
         auto* pTracker = overlay.GetProgressTracker();
         Assert::IsNotNull(pTracker);
         Ensures(pTracker != nullptr);
@@ -625,7 +623,7 @@ public:
         overlay.Render(mockSurface, false);
         Assert::AreEqual(10, pTracker->GetVerticalOffset());
 
-        overlay.mockClock.AdvanceTime(std::chrono::seconds(3));
+        overlay.UpdateProgressTracker(ra::ui::ImageType::None, "", L"");
         overlay.Render(mockSurface, false);
         Assert::IsTrue(overlay.WasRenderRequested()); // destroy pending
         Assert::IsTrue(pTracker->IsDestroyPending());

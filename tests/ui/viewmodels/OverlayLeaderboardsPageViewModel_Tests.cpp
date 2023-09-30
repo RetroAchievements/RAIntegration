@@ -2,11 +2,11 @@
 
 #include "ui\viewmodels\OverlayLeaderboardsPageViewModel.hh"
 
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
-#include "tests\mocks\MockRcheevosClient.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
@@ -28,7 +28,7 @@ private:
         ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::data::context::mocks::MockUserContext mockUserContext;
-        ra::services::mocks::MockRcheevosClient mockRcheevosClient;
+        ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
@@ -102,10 +102,10 @@ public:
     TEST_METHOD(TestRefreshLeaderboards)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        leaderboardsPage.mockRcheevosClient.MockGame();
+        leaderboardsPage.mockAchievementRuntime.MockGame();
 
-        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
-        auto* pLbd2 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(2);
+        auto* pLbd1 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(1);
+        auto* pLbd2 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(2);
 
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
@@ -121,12 +121,12 @@ public:
     TEST_METHOD(TestRefreshCoreOnly)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        leaderboardsPage.mockRcheevosClient.MockGame();
+        leaderboardsPage.mockAchievementRuntime.MockGame();
 
         // only 1 and 3 will be visible - 2 is not core, and filtered out by asset list
-        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
-                      leaderboardsPage.mockRcheevosClient.MockLocalLeaderboard(2);
-        auto* pLbd3 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(3);
+        auto* pLbd1 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(1);
+                      leaderboardsPage.mockAchievementRuntime.MockLocalLeaderboard(2);
+        auto* pLbd3 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(3);
 
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
@@ -143,11 +143,11 @@ public:
     TEST_METHOD(TestRefreshCoreAndLocal)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        leaderboardsPage.mockRcheevosClient.MockGame();
+        leaderboardsPage.mockAchievementRuntime.MockGame();
 
-        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
-        auto* pLbd2 = leaderboardsPage.mockRcheevosClient.MockLocalLeaderboard(2);
-        auto* pLbd3 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(3);
+        auto* pLbd1 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(1);
+        auto* pLbd2 = leaderboardsPage.mockAchievementRuntime.MockLocalLeaderboard(2);
+        auto* pLbd3 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(3);
 
         leaderboardsPage.SetAssetFilter(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local);
         leaderboardsPage.SetCanCollapseHeaders(false);
@@ -167,13 +167,13 @@ public:
     TEST_METHOD(TestRefreshWithHidden)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        leaderboardsPage.mockRcheevosClient.MockGame();
+        leaderboardsPage.mockAchievementRuntime.MockGame();
 
         // only 1 and 3 will be visible - 2 is hidden
-        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
-        auto* pLbd2 = leaderboardsPage.mockRcheevosClient.MockLocalLeaderboard(2);
+        auto* pLbd1 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(1);
+        auto* pLbd2 = leaderboardsPage.mockAchievementRuntime.MockLocalLeaderboard(2);
         pLbd2->hidden = 1;
-        auto* pLbd3 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(3);
+        auto* pLbd3 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(3);
 
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
@@ -190,13 +190,13 @@ public:
     TEST_METHOD(TestRefreshWithActive)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        leaderboardsPage.mockRcheevosClient.MockGame();
+        leaderboardsPage.mockAchievementRuntime.MockGame();
 
-        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
-        auto* pLbd2 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(2);
+        auto* pLbd1 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(1);
+        auto* pLbd2 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(2);
         pLbd2->public_.state = RC_CLIENT_LEADERBOARD_STATE_TRACKING;
         pLbd2->public_.tracker_value = "1:23.00";
-        auto* pLbd3 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(3);
+        auto* pLbd3 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(3);
 
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
@@ -215,15 +215,15 @@ public:
     TEST_METHOD(TestRefreshWithHiddenActive)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        leaderboardsPage.mockRcheevosClient.MockGame();
+        leaderboardsPage.mockAchievementRuntime.MockGame();
 
         // only 1 and 3 will be visible - 2 is hidden (TODO: should it be?)
-        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
-        auto* pLbd2 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(2);
+        auto* pLbd1 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(1);
+        auto* pLbd2 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(2);
         pLbd2->hidden = 1;
         pLbd2->public_.state = RC_CLIENT_LEADERBOARD_STATE_TRACKING;
         pLbd2->public_.tracker_value = "1:23.00";
-        auto* pLbd3 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(3);
+        auto* pLbd3 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(3);
 
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
@@ -240,12 +240,12 @@ public:
     TEST_METHOD(TestRefreshWithDisabled)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        leaderboardsPage.mockRcheevosClient.MockGame();
+        leaderboardsPage.mockAchievementRuntime.MockGame();
 
-        auto* pLbd1 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
-        auto* pLbd2 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(2);
+        auto* pLbd1 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(1);
+        auto* pLbd2 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(2);
         pLbd2->public_.state = RC_CLIENT_LEADERBOARD_STATE_DISABLED;
-        auto* pLbd3 = leaderboardsPage.mockRcheevosClient.MockLeaderboard(3);
+        auto* pLbd3 = leaderboardsPage.mockAchievementRuntime.MockLeaderboard(3);
 
         leaderboardsPage.SetAssetFilter(ra::ui::viewmodels::AssetListViewModel::FilterCategory::Local);
         leaderboardsPage.SetCanCollapseHeaders(false);
@@ -265,8 +265,8 @@ public:
     TEST_METHOD(TestFetchItemDetail)
     {
         OverlayLeaderboardsPageViewModelHarness leaderboardsPage;
-        leaderboardsPage.mockRcheevosClient.MockGame();
-        leaderboardsPage.mockRcheevosClient.MockLeaderboard(1);
+        leaderboardsPage.mockAchievementRuntime.MockGame();
+        leaderboardsPage.mockAchievementRuntime.MockLeaderboard(1);
 
         leaderboardsPage.mockUserContext.Initialize("user2", "User2", "ApiToken");
         leaderboardsPage.mockServer.HandleRequest<ra::api::FetchLeaderboardInfo>([](const ra::api::FetchLeaderboardInfo::Request& request, ra::api::FetchLeaderboardInfo::Response& response)

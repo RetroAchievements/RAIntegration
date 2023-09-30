@@ -33,10 +33,10 @@ public:
     virtual void LoadGame(unsigned int nGameId, const std::string& sGameHash, Mode nMode = Mode::Normal);
 
     /// <summary>
-    /// Loads the data from the game currently loaded in the RcheevosClient.
+    /// Loads the data from the game currently loaded in the AchievementRuntime.
     /// </summary>
-    void InitializeFromRcheevosClient(const std::map<uint32_t, std::string> mAchievementDefinitions,
-                                      const std::map<uint32_t, std::string> mLeaderboardDefinitions);
+    void InitializeFromAchievementRuntime(const std::map<uint32_t, std::string> mAchievementDefinitions,
+                                          const std::map<uint32_t, std::string> mLeaderboardDefinitions);
 
     /// <summary>
     /// Determines whether a game is being loaded.
@@ -93,24 +93,6 @@ public:
     GameAssets& Assets() noexcept { return m_vAssets; }
     const GameAssets& Assets() const noexcept { return m_vAssets; }
 
-    /// <summary>
-    /// Shows the popup for earning an achievement and notifies the server if legitimate.
-    /// </summary>
-    void AwardAchievement(ra::AchievementID nAchievementId);
-
-    void DeactivateLeaderboards();
-    void ActivateLeaderboards();
-
-    /// <summary>
-    /// Submit a new score for the specified leaderboard.
-    /// </summary>
-    void SubmitLeaderboardEntry(ra::LeaderboardID nLeaderboardId, int nScore) const;
-
-    /// <summary>
-    /// Updates the set of unlocked achievements from the server.
-    /// </summary>
-    void RefreshUnlocks() { RefreshUnlocks(false, 0); }
-
     class NotifyTarget
     {
     public:
@@ -138,10 +120,6 @@ private:
     void FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused, const std::string& sOldRichPresence);
 
 protected:
-    void RefreshUnlocks(bool bUnpause, int nPopup);
-    void UpdateUnlocks(const std::set<unsigned int>& vUnlockedAchievements, bool bUnpause, int nPopup);
-    void ShowSimplifiedScoreboard(ra::LeaderboardID nLeaderboardId, int nScore) const;
-
     void OnBeforeActiveGameChanged();
     void OnActiveGameChanged();
     void OnCodeNoteChanged(ra::ByteAddress nAddress, const std::wstring& sNewNote);
@@ -155,8 +133,6 @@ protected:
     Mode m_nMode{};
 
 private:
-    void CheckForMastery();
-
     /// <summary>
     /// A collection of pointers to other objects. These are not allocated object and do not need to be free'd. It's
     /// impossible to create a set of <c>NotifyTarget</c> references.

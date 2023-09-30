@@ -139,6 +139,15 @@ public:
     }
 
     /// <summary>
+    /// Resets the emulator.
+    /// </summary>
+    void Reset() const
+    {
+        if (m_fResetEmulator)
+            m_fResetEmulator();
+    }
+
+    /// <summary>
     /// Sets a function to call to reset the emulator.
     /// </summary>
     void SetResetFunction(std::function<void()>&& fResetEmulator) noexcept { m_fResetEmulator = std::move(fResetEmulator); }
@@ -215,7 +224,7 @@ public:
     /// <summary>
     /// Reads memory from the emulator.
     /// </summary>
-    uint8_t ReadMemoryByte(ra::ByteAddress nAddress) const;
+    uint8_t ReadMemoryByte(ra::ByteAddress nAddress) const noexcept;
 
     /// <summary>
     /// Reads memory from the emulator.

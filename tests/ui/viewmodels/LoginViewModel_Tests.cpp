@@ -3,10 +3,10 @@
 #include "ui\viewmodels\LoginViewModel.hh"
 
 #include "tests\ui\UIAsserts.hh"
+#include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
-#include "tests\mocks\MockRcheevosClient.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockUserContext.hh"
@@ -18,7 +18,7 @@ using ra::data::context::mocks::MockEmulatorContext;
 using ra::data::context::mocks::MockSessionTracker;
 using ra::data::context::mocks::MockUserContext;
 using ra::services::mocks::MockConfiguration;
-using ra::services::mocks::MockRcheevosClient;
+using ra::services::mocks::MockAchievementRuntime;
 
 using ra::ui::mocks::MockDesktop;
 
@@ -36,7 +36,7 @@ private:
         GSL_SUPPRESS_F6 LoginViewModelHarness() : LoginViewModel(L"User") {}
 
         MockConfiguration mockConfiguration;
-        MockRcheevosClient mockRcheevosClient;
+        MockAchievementRuntime mockAchievementRuntime;
         MockDesktop mockDesktop;
         MockServer mockServer;
         MockUserContext mockUserContext;
@@ -70,7 +70,7 @@ public:
         vmLogin.SetPassword(L"Pa$$w0rd");
         Assert::IsFalse(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
-        vmLogin.mockRcheevosClient.AssertNoPendingRequests();
+        vmLogin.mockAchievementRuntime.AssertNoPendingRequests();
     }
 
     TEST_METHOD(TestLoginNoPassword)
@@ -87,13 +87,13 @@ public:
         vmLogin.SetPassword(L"");
         Assert::IsFalse(vmLogin.Login());
         Assert::IsTrue(vmLogin.mockDesktop.WasDialogShown());
-        vmLogin.mockRcheevosClient.AssertNoPendingRequests();
+        vmLogin.mockAchievementRuntime.AssertNoPendingRequests();
     }
 
     TEST_METHOD(TestLoginSuccessful)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockRcheevosClient.MockResponse("r=login&u=user&p=Pa%24%24w0rd",
+        vmLogin.mockAchievementRuntime.MockResponse("r=login&u=user&p=Pa%24%24w0rd",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -136,7 +136,7 @@ public:
     TEST_METHOD(TestLoginSuccessfulAppTitle)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockRcheevosClient.MockResponse("r=login&u=user&p=Pa%24%24w0rd",
+        vmLogin.mockAchievementRuntime.MockResponse("r=login&u=user&p=Pa%24%24w0rd",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -181,7 +181,7 @@ public:
     TEST_METHOD(TestLoginInvalidPassword)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockRcheevosClient.MockResponse("r=login&u=User&p=Pa%24%24w0rd",
+        vmLogin.mockAchievementRuntime.MockResponse("r=login&u=User&p=Pa%24%24w0rd",
             "{\"Success\":false,\"Error\":\"Invalid User/Password combination. Please try again\"}");
 
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
@@ -201,7 +201,7 @@ public:
     TEST_METHOD(TestLoginSuccessfulRememberPassword)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockRcheevosClient.MockResponse("r=login&u=user&p=Pa%24%24w0rd",
+        vmLogin.mockAchievementRuntime.MockResponse("r=login&u=user&p=Pa%24%24w0rd",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");

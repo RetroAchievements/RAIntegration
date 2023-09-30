@@ -44,6 +44,8 @@ private:
         {
             // DoFrame tests expect the dialog to be visible
             GSL_SUPPRESS_F6 SetIsVisible(true);
+
+            mockRuntime.MockGame();
         }
 
         ~AssetEditorViewModelHarness()
@@ -853,62 +855,64 @@ public:
     TEST_METHOD(TestSyncState)
     {
         AssetEditorViewModelHarness editor;
-        AchievementModel achievement;
-        achievement.SetState(AssetState::Active);
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
+        vmAch->SetState(AssetState::Active);
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
         Assert::AreEqual(AssetState::Active, editor.GetState());
-        Assert::AreEqual(AssetState::Active, achievement.GetState());
+        Assert::AreEqual(AssetState::Active, vmAch->GetState());
         Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
 
         editor.SetState(AssetState::Paused);
         Assert::AreEqual(AssetState::Paused, editor.GetState());
-        Assert::AreEqual(AssetState::Paused, achievement.GetState());
+        Assert::AreEqual(AssetState::Paused, vmAch->GetState());
         Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
 
-        achievement.SetState(AssetState::Primed);
+        vmAch->SetState(AssetState::Primed);
         Assert::AreEqual(AssetState::Primed, editor.GetState());
-        Assert::AreEqual(AssetState::Primed, achievement.GetState());
+        Assert::AreEqual(AssetState::Primed, vmAch->GetState());
         Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
 
         editor.SetState(AssetState::Triggered);
         Assert::AreEqual(AssetState::Triggered, editor.GetState());
-        Assert::AreEqual(AssetState::Triggered, achievement.GetState());
+        Assert::AreEqual(AssetState::Triggered, vmAch->GetState());
         Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
 
-        achievement.SetState(AssetState::Waiting);
+        vmAch->SetState(AssetState::Waiting);
         Assert::AreEqual(AssetState::Waiting, editor.GetState());
-        Assert::AreEqual(AssetState::Waiting, achievement.GetState());
+        Assert::AreEqual(AssetState::Waiting, vmAch->GetState());
         Assert::AreEqual(std::wstring(L"Waiting"), editor.GetWaitingLabel());
 
-        achievement.SetState(AssetState::Active);
+        vmAch->SetState(AssetState::Active);
         Assert::AreEqual(AssetState::Active, editor.GetState());
-        Assert::AreEqual(AssetState::Active, achievement.GetState());
+        Assert::AreEqual(AssetState::Active, vmAch->GetState());
         Assert::AreEqual(std::wstring(L"Active"), editor.GetWaitingLabel());
     }
 
     TEST_METHOD(TestSyncStateMeasured)
     {
         AssetEditorViewModelHarness editor;
-        AchievementModel achievement;
-        achievement.SetTrigger("M:0xH1234=6.11.");
-        achievement.SetState(AssetState::Inactive);
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        editor.LoadAsset(&achievement);
+        editor.mockRuntime.ActivateAchievement(1234U, "M:0xH1234=6.11.");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
+        vmAch->SetState(AssetState::Inactive);
+
+        editor.LoadAsset(vmAch);
 
         Assert::IsTrue(editor.HasMeasured());
         Assert::AreEqual(std::wstring(L"[Not Active]"), editor.GetMeasuredValue());
 
-        achievement.SetState(AssetState::Waiting);
+        vmAch->SetState(AssetState::Waiting);
         Assert::AreEqual(std::wstring(L"0/11"), editor.GetMeasuredValue());
 
-        achievement.SetState(AssetState::Active);
+        vmAch->SetState(AssetState::Active);
         Assert::AreEqual(std::wstring(L"0/11"), editor.GetMeasuredValue());
 
-        achievement.SetState(AssetState::Triggered);
+        vmAch->SetState(AssetState::Triggered);
         Assert::AreEqual(std::wstring(L"[Not Active]"), editor.GetMeasuredValue());
     }
 
@@ -1225,14 +1229,12 @@ public:
     {
         AssetEditorViewModelHarness editor;
         editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("0xH1234=1");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
         const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
@@ -1253,7 +1255,7 @@ public:
         pCondition->SetTargetValue(2U);
 
         // make sure the trigger definition got updated
-        Assert::AreEqual(std::string("0xH1234=2"), achievement.GetTrigger());
+        Assert::AreEqual(std::string("0xH1234=2"), vmAch->GetTrigger());
 
         // make sure the runtime record got updated
         pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
@@ -1277,18 +1279,13 @@ public:
     {
         AssetEditorViewModelHarness editor;
         editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("0xH1234=1");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Deactivate();
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
+        vmAch->Deactivate();
 
-        editor.LoadAsset(&achievement);
-
-        // make sure the record did not get loaded into the runtime
-        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
-        Assert::IsNull(pTrigger);
+        editor.LoadAsset(vmAch);
 
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
@@ -1304,11 +1301,7 @@ public:
         pCondition->SetTargetValue(2U);
 
         // make sure the trigger definition got updated
-        Assert::AreEqual(std::string("0xH1234=2"), achievement.GetTrigger());
-
-        // make sure the record did not get loaded into the runtime
-        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
-        Assert::IsNull(pTrigger);
+        Assert::AreEqual(std::string("0xH1234=2"), vmAch->GetTrigger());
 
         // make sure the UI kept the updated value
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
@@ -1327,14 +1320,12 @@ public:
     {
         AssetEditorViewModelHarness editor;
         editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("0xH1234=1");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
         const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
@@ -1352,10 +1343,10 @@ public:
         Assert::AreEqual((int)TriggerOperandType::Value, (int)pCondition->GetTargetType());
         Assert::AreEqual(std::wstring(L"1"), pCondition->GetTargetValue());
 
-        achievement.SetTrigger("0xH1234=2");
+        vmAch->SetTrigger("0xH1234=2");
 
         // make sure the trigger definition got updated
-        Assert::AreEqual(std::string("0xH1234=2"), achievement.GetTrigger());
+        Assert::AreEqual(std::string("0xH1234=2"), vmAch->GetTrigger());
 
         // make sure the runtime record got updated
         pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
@@ -1379,14 +1370,12 @@ public:
     {
         AssetEditorViewModelHarness editor;
         editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("M:0xH1234=1.1._0xH2345=1.2.");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
+        editor.mockRuntime.ActivateAchievement(1234U, "M:0xH1234=1.1._0xH2345=1.2.");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
         const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
@@ -1396,16 +1385,14 @@ public:
         editor.Trigger().Conditions().GetItemAt(1)->SetType(ra::ui::viewmodels::TriggerConditionType::Measured);
 
         // make sure the trigger definition got updated
-        Assert::AreEqual(std::string("M:0xH1234=1.1._M:0xH2345=1.2."), achievement.GetTrigger());
+        Assert::AreEqual(std::string("M:0xH1234=1.1._M:0xH2345=1.2."), vmAch->GetTrigger());
 
         // make sure the error got set
         Assert::AreEqual(std::wstring(L"Multiple measured targets"), editor.GetAssetValidationError());
         Assert::IsTrue(editor.HasAssetValidationError());
 
         // make sure the achievement was disabled
-        Assert::AreEqual(AssetState::Inactive, achievement.GetState());
-        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
-        Assert::IsNull(pTrigger);
+        Assert::AreEqual(AssetState::Inactive, vmAch->GetState());
 
         // make sure the UI kept the change
         Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
@@ -1417,16 +1404,14 @@ public:
         editor.Trigger().Conditions().GetItemAt(0)->SetType(ra::ui::viewmodels::TriggerConditionType::Standard);
 
         // make sure the trigger definition got updated
-        Assert::AreEqual(std::string("0xH1234=1.1._M:0xH2345=1.2."), achievement.GetTrigger());
+        Assert::AreEqual(std::string("0xH1234=1.1._M:0xH2345=1.2."), vmAch->GetTrigger());
 
         // make sure the error got cleared
         Assert::AreEqual(std::wstring(L""), editor.GetAssetValidationError());
         Assert::IsFalse(editor.HasAssetValidationError());
 
         // the achievement should have remained disabled
-        Assert::AreEqual(AssetState::Inactive, achievement.GetState());
-        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
-        Assert::IsNull(pTrigger);
+        Assert::AreEqual(AssetState::Inactive, vmAch->GetState());
 
         // make sure the UI kept the change
         Assert::AreEqual({ 2U }, editor.Trigger().Conditions().Count());
@@ -1441,14 +1426,12 @@ public:
     TEST_METHOD(TestTriggerUpdatedInvalidAlts)
     {
         AssetEditorViewModelHarness editor;
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("0=0SM:0xH1234=1.1.S0xH2345=1.2.");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
+        editor.mockRuntime.ActivateAchievement(1234U, "0=0SM:0xH1234=1.1.S0xH2345=1.2.");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
         const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
@@ -1459,16 +1442,14 @@ public:
         editor.Trigger().Conditions().GetItemAt(0)->SetType(ra::ui::viewmodels::TriggerConditionType::Measured);
 
         // make sure the trigger definition got updated
-        Assert::AreEqual(std::string("0=0SM:0xH1234=1.1.SM:0xH2345=1.2."), achievement.GetTrigger());
+        Assert::AreEqual(std::string("0=0SM:0xH1234=1.1.SM:0xH2345=1.2."), vmAch->GetTrigger());
 
         // make sure the error got set
         Assert::AreEqual(std::wstring(L"Multiple measured targets"), editor.GetAssetValidationError());
         Assert::IsTrue(editor.HasAssetValidationError());
 
         // make sure the achievement was disabled
-        Assert::AreEqual(AssetState::Inactive, achievement.GetState());
-        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
-        Assert::IsNull(pTrigger);
+        Assert::AreEqual(AssetState::Inactive, vmAch->GetState());
 
         // make sure the UI kept the change
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
@@ -1504,16 +1485,14 @@ public:
         pCondition->SetRequiredHits(2);
 
         // make sure the trigger definition got updated
-        Assert::AreEqual(std::string("0=0SM:0xH1234=1.2.SM:0xH2345=1.2."), achievement.GetTrigger());
+        Assert::AreEqual(std::string("0=0SM:0xH1234=1.2.SM:0xH2345=1.2."), vmAch->GetTrigger());
 
         // make sure the error got cleared
         Assert::AreEqual(std::wstring(L""), editor.GetAssetValidationError());
         Assert::IsFalse(editor.HasAssetValidationError());
 
         // the achievement should have remained disabled
-        Assert::AreEqual(AssetState::Inactive, achievement.GetState());
-        pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
-        Assert::IsNull(pTrigger);
+        Assert::AreEqual(AssetState::Inactive, vmAch->GetState());
 
         // make sure the UI kept the change
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
@@ -1535,14 +1514,12 @@ public:
 
         AssetEditorViewModelHarness editor;
         editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("0xH1234=1");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
 
         editor.Trigger().SetSelectedGroupIndex(0);
         auto& condition = *editor.Trigger().Conditions().GetItemAt(0);
@@ -1552,13 +1529,13 @@ public:
 
         // change to address switches size to match source
         condition.SetTargetType(TriggerOperandType::Delta);
-        Assert::AreEqual(std::string("0xH1234=d0xH0001"), achievement.GetTrigger());
+        Assert::AreEqual(std::string("0xH1234=d0xH0001"), vmAch->GetTrigger());
         Assert::AreEqual(initialVersion + 1, editor.GetTriggerVersion());
         Assert::IsNotNull(group.m_pConditionSet);
 
         // change to value sets size back to 32-bit
         condition.SetTargetType(TriggerOperandType::Value);
-        Assert::AreEqual(std::string("0xH1234=1"), achievement.GetTrigger());
+        Assert::AreEqual(std::string("0xH1234=1"), vmAch->GetTrigger());
         Assert::AreEqual(initialVersion + 2, editor.GetTriggerVersion());
         Assert::IsNotNull(group.m_pConditionSet);
     }
@@ -1567,14 +1544,12 @@ public:
     {
         AssetEditorViewModelHarness editor;
         editor.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("0xH1234=1_0xH1235=2");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1_0xH1235=2");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
 
         // make sure the record got loaded into the runtime
         const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
@@ -1585,7 +1560,7 @@ public:
         editor.Trigger().MoveSelectedConditionsUp();
 
         // make sure the trigger definition got updated
-        Assert::AreEqual(std::string("0xH1235=2_0xH1234=1"), achievement.GetTrigger());
+        Assert::AreEqual(std::string("0xH1235=2_0xH1234=1"), vmAch->GetTrigger());
         Assert::IsNotNull(editor.Trigger().Groups().GetItemAt(0)->m_pConditionSet);
 
         // make sure the UI picked up the updated value
@@ -1605,7 +1580,7 @@ public:
         editor.Trigger().MoveSelectedConditionsUp();
 
         // make sure the trigger definition did not update
-        Assert::AreEqual(std::string("0xH1235=2_0xH1234=1"), achievement.GetTrigger());
+        Assert::AreEqual(std::string("0xH1235=2_0xH1234=1"), vmAch->GetTrigger());
         Assert::IsNotNull(editor.Trigger().Groups().GetItemAt(0)->m_pConditionSet);
 
         // make sure the UI did not update
@@ -1623,17 +1598,14 @@ public:
     TEST_METHOD(TestValueUpdated)
     {
         AssetEditorViewModelHarness editor;
-        LeaderboardModel leaderboard;
-        leaderboard.SetID(1234U);
-        leaderboard.SetStartTrigger("0x8000=0");
-        leaderboard.SetSubmitTrigger("0x8000=1");
-        leaderboard.SetCancelTrigger("0x8000=2");
-        leaderboard.SetValueDefinition("M:0xH1234");
-        leaderboard.CreateServerCheckpoint();
-        leaderboard.CreateLocalCheckpoint();
-        leaderboard.Activate();
+        const std::string sDefinition = "STA:0x8000=0::SUB:0x8000=1::CAN:0x8000=2::VAL:M:0xH1234";
+        editor.mockRuntime.ActivateLeaderboard(1234U, sDefinition);
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmLbd = editor.mockGameContext.Assets().FindLeaderboard(1234U);
+        vmLbd->SetDefinition(sDefinition);
+        editor.mockRuntime.SyncAssets();
 
-        editor.LoadAsset(&leaderboard);
+        editor.LoadAsset(vmLbd);
         editor.SetSelectedLeaderboardPart(AssetEditorViewModel::LeaderboardPart::Value);
 
         // make sure the record got loaded into the runtime
@@ -1648,10 +1620,10 @@ public:
         Assert::AreEqual(std::wstring(L"0x1234"), pCondition->GetSourceValue());
         Assert::AreEqual((int)TriggerOperatorType::None, (int)pCondition->GetOperator());
 
-        leaderboard.SetValueDefinition("M:0xH2222");
+        vmLbd->SetValueDefinition("M:0xH2222");
 
         // make sure the value definition got updated
-        Assert::AreEqual(std::string("M:0xH2222"), leaderboard.GetValueDefinition());
+        Assert::AreEqual(std::string("M:0xH2222"), vmLbd->GetValueDefinition());
 
         // make sure the runtime record got updated
         pLeaderboard = editor.mockRuntime.GetLeaderboardDefinition(1234U);
@@ -1671,7 +1643,7 @@ public:
         pCondition->SetSourceValue(0x3333U);
 
         // make sure the value definition got updated
-        Assert::AreEqual(std::string("M:0xH3333"), leaderboard.GetValueDefinition());
+        Assert::AreEqual(std::string("M:0xH3333"), vmLbd->GetValueDefinition());
 
         // make sure the runtime record got updated
         pLeaderboard = editor.mockRuntime.GetLeaderboardDefinition(1234U);
@@ -1682,14 +1654,12 @@ public:
     TEST_METHOD(TestDoFrameUpdatesHitsFromActiveAchievement)
     {
         AssetEditorViewModelHarness editor;
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("0xH1234=1");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
 
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
@@ -1708,15 +1678,13 @@ public:
     TEST_METHOD(TestDoFrameUpdatesHitsFromActiveAchievementWhenHidden)
     {
         AssetEditorViewModelHarness editor;
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("0xH1234=1");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
         editor.SetIsVisible(false);
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
 
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
@@ -1742,14 +1710,12 @@ public:
     TEST_METHOD(TestDoFrameUpdatesMeasuredFromActiveAchievement)
     {
         AssetEditorViewModelHarness editor;
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("M:0xH1234=1.99.");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
+        editor.mockRuntime.ActivateAchievement(1234U, "M:0xH1234=1.99.");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
 
         auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
         Expects(pTrigger != nullptr);
@@ -1763,18 +1729,12 @@ public:
     TEST_METHOD(TestDoFrameUpdatesMeasuredFromActiveLeaderboard)
     {
         AssetEditorViewModelHarness editor;
-        LeaderboardModel leaderboard;
-        leaderboard.SetID(1234U);
-        leaderboard.SetStartTrigger("1=1");
-        leaderboard.SetSubmitTrigger("1=0");
-        leaderboard.SetCancelTrigger("0=1");
-        leaderboard.SetValueDefinition("M:0xH1234");
-        leaderboard.SetValueFormat(ra::data::ValueFormat::Centiseconds);
-        leaderboard.CreateServerCheckpoint();
-        leaderboard.CreateLocalCheckpoint();
-        leaderboard.Activate();
+        editor.mockRuntime.ActivateLeaderboard(1234U, "STA:1=1::SUB:1=0::CAN:0=1::VAL:M:0xH1234")->format = RC_FORMAT_CENTISECS;
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmLbd = editor.mockGameContext.Assets().FindLeaderboard(1234U);
+        editor.mockRuntime.SyncAssets();
 
-        editor.LoadAsset(&leaderboard);
+        editor.LoadAsset(vmLbd);
 
         auto* pDefinition = editor.mockRuntime.GetLeaderboardDefinition(1234U);
         Expects(pDefinition != nullptr);
@@ -1831,18 +1791,16 @@ public:
     TEST_METHOD(TestDecimalPreferredUpdatesConditions)
     {
         AssetEditorViewModelHarness editor;
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("0xH1234=1_fF2222=f2.3");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1_fF2222=f2.3");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
         const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
         const auto* pCondition1 = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition1 != nullptr);
         const auto* pCondition2 = editor.Trigger().Conditions().GetItemAt(1);
@@ -1872,18 +1830,16 @@ public:
     TEST_METHOD(TestCaptureRestoreHits)
     {
         AssetEditorViewModelHarness editor;
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("0xH1234=1");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
         const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
 
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
@@ -1897,7 +1853,7 @@ public:
         editor.LoadAsset(nullptr);
         Assert::AreEqual({ 0U }, editor.Trigger().Conditions().Count());
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
@@ -1907,20 +1863,17 @@ public:
     TEST_METHOD(TestCaptureRestoreHitsTriggered)
     {
         AssetEditorViewModelHarness editor;
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("0xH1234=1");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
-        Assert::AreEqual(ra::data::models::AssetState::Waiting, achievement.GetState());
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
         auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
         pTrigger->has_hits = 1;
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
 
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
@@ -1929,17 +1882,15 @@ public:
 
         pTrigger->requirement->conditions->current_hits = 7U;
         pTrigger->state = RC_TRIGGER_STATE_TRIGGERED;
-        achievement.SetState(ra::data::models::AssetState::Triggered);
-        // triggered achievement is removed from runtime
-        Assert::IsNull(editor.mockRuntime.GetAchievementTrigger(1234U));
+        vmAch->SetState(ra::data::models::AssetState::Triggered);
 
-        // but the updated state should still be reflected in the UI
+        // the updated state should still be reflected in the UI
         Assert::AreEqual(7U, pCondition->GetCurrentHits());
 
         editor.LoadAsset(nullptr);
         Assert::AreEqual({ 0U }, editor.Trigger().Conditions().Count());
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);
@@ -1950,20 +1901,17 @@ public:
     TEST_METHOD(TestCaptureRestoreHitsTriggeredChanged)
     {
         AssetEditorViewModelHarness editor;
-        AchievementModel achievement;
-        achievement.SetID(1234U);
-        achievement.SetTrigger("0xH1234=1");
-        achievement.CreateServerCheckpoint();
-        achievement.CreateLocalCheckpoint();
-        achievement.Activate();
-        Assert::AreEqual(ra::data::models::AssetState::Waiting, achievement.GetState());
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
 
         auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
         Expects(pTrigger != nullptr);
         pTrigger->requirement->conditions->current_hits = 6U;
         pTrigger->has_hits = 1;
 
-        editor.LoadAsset(&achievement);
+        editor.LoadAsset(vmAch);
 
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         auto* pCondition = editor.Trigger().Conditions().GetItemAt(0);
@@ -1972,9 +1920,7 @@ public:
 
         pTrigger->requirement->conditions->current_hits = 7U;
         pTrigger->state = RC_TRIGGER_STATE_TRIGGERED;
-        achievement.SetState(ra::data::models::AssetState::Triggered);
-        // triggered achievement is removed from runtime
-        Assert::IsNull(editor.mockRuntime.GetAchievementTrigger(1234U));
+        vmAch->SetState(ra::data::models::AssetState::Triggered);
 
         // but the updated state should still be reflected in the UI
         Assert::AreEqual(7U, pCondition->GetCurrentHits());
@@ -1982,8 +1928,8 @@ public:
         editor.LoadAsset(nullptr);
         Assert::AreEqual({ 0U }, editor.Trigger().Conditions().Count());
 
-        achievement.SetTrigger("0xH1234=2");
-        editor.LoadAsset(&achievement);
+        vmAch->SetTrigger("0xH1234=2");
+        editor.LoadAsset(vmAch);
         Assert::AreEqual({ 1U }, editor.Trigger().Conditions().Count());
         pCondition = editor.Trigger().Conditions().GetItemAt(0);
         Expects(pCondition != nullptr);

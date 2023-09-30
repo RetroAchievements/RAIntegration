@@ -7,7 +7,6 @@
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
-#include "tests\mocks\MockRcheevosClient.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
 #include "tests\mocks\MockThreadPool.hh"
@@ -37,7 +36,6 @@ private:
         ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
         ra::services::mocks::MockClock mockClock;
-        ra::services::mocks::MockRcheevosClient mockRcheevosClient;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
@@ -160,9 +158,9 @@ public:
     TEST_METHOD(TestRefreshUnlockedAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1, "AchievementTitle");
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1, "AchievementTitle");
         pAch1->public_.description = "Trigger this";
         pAch1->public_.points = 5;
         snprintf(pAch1->public_.badge_name, sizeof(pAch1->public_.badge_name), "BADGE");
@@ -183,9 +181,9 @@ public:
     TEST_METHOD(TestRefreshActiveAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1, "AchievementTitle");
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1, "AchievementTitle");
         pAch1->public_.description = "Trigger this";
         pAch1->public_.points = 5;
         snprintf(pAch1->public_.badge_name, sizeof(pAch1->public_.badge_name), "BADGE");
@@ -204,9 +202,9 @@ public:
     TEST_METHOD(TestRefreshOnePointAchievement)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1, "AchievementTitle");
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1, "AchievementTitle");
         pAch1->public_.description = "Trigger this";
         pAch1->public_.points = 1; // should say "1 point" instead of "1 points"
         snprintf(pAch1->public_.badge_name, sizeof(pAch1->public_.badge_name), "BADGE");
@@ -231,21 +229,21 @@ public:
     TEST_METHOD(TestRefreshActiveAndInactiveAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1);
         pAch1->public_.points = 1;
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE; // Waiting appears as active at this level
 
-        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievement(2);
+        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockAchievement(2);
         pAch2->public_.points = 2;
         pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
 
-        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievement(3);
+        auto* pAch3 = achievementsPage.mockAchievementRuntime.MockAchievement(3);
         pAch3->public_.points = 3;
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
-        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        auto* pAch4 = achievementsPage.mockAchievementRuntime.MockAchievement(4);
         pAch4->public_.points = 4;
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
@@ -268,22 +266,22 @@ public:
     TEST_METHOD(TestRefreshActiveAndDisabledAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1);
         pAch1->public_.points = 1;
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE; // Waiting appears as active at this level
 
-        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievement(2);
+        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockAchievement(2);
         pAch2->public_.points = 2;
         pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
         pAch2->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
 
-        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievement(3);
+        auto* pAch3 = achievementsPage.mockAchievementRuntime.MockAchievement(3);
         pAch3->public_.points = 3;
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
-        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        auto* pAch4 = achievementsPage.mockAchievementRuntime.MockAchievement(4);
         pAch4->public_.points = 4;
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED; // will appear as locked, even though it was unlocked
         pAch4->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
@@ -339,23 +337,23 @@ public:
     TEST_METHOD(TestRefreshInactiveAndDisabledAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1);
         pAch1->public_.points = 1;
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
 
-        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievement(2);
+        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockAchievement(2);
         pAch2->public_.points = 2;
         pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
         pAch2->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
 
-        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievement(3);
+        auto* pAch3 = achievementsPage.mockAchievementRuntime.MockAchievement(3);
         pAch3->public_.points = 3;
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch3->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
 
-        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        auto* pAch4 = achievementsPage.mockAchievementRuntime.MockAchievement(4);
         pAch4->public_.points = 4;
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED; // will appear as locked, even though it was unlocked
         pAch4->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
@@ -380,23 +378,23 @@ public:
     TEST_METHOD(TestRefreshInactiveAndDisabledAchievementsInitialCollapseState)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1);
         pAch1->public_.points = 1;
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_INACTIVE;
 
-        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievement(2);
+        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockAchievement(2);
         pAch2->public_.points = 2;
         pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
         pAch2->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
 
-        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievement(3);
+        auto* pAch3 = achievementsPage.mockAchievementRuntime.MockAchievement(3);
         pAch3->public_.points = 3;
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch3->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
 
-        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        auto* pAch4 = achievementsPage.mockAchievementRuntime.MockAchievement(4);
         pAch4->public_.points = 4;
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_DISABLED;
         pAch4->public_.bucket = RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED;
@@ -420,18 +418,18 @@ public:
     TEST_METHOD(TestRefreshActiveAndPrimedAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1);
         pAch1->public_.points = 1;
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
-        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(2);
+        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockAchievementWithTrigger(2);
         pAch2->public_.points = 2;
         pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
         pAch2->trigger->state = RC_TRIGGER_STATE_PRIMED;
 
-        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievement(3);
+        auto* pAch3 = achievementsPage.mockAchievementRuntime.MockAchievement(3);
         pAch3->public_.points = 3;
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
@@ -452,21 +450,21 @@ public:
     TEST_METHOD(TestRefreshCategoriesCoreOnly)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1);
         pAch1->public_.points = 1;
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
-        auto* pAch2 = achievementsPage.mockRcheevosClient.MockUnofficialAchievement(2);
+        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockUnofficialAchievement(2);
         pAch2->public_.points = 2;
         pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
-        auto* pAch3 = achievementsPage.mockRcheevosClient.MockLocalAchievement(3);
+        auto* pAch3 = achievementsPage.mockAchievementRuntime.MockLocalAchievement(3);
         pAch3->public_.points = 3;
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
-        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        auto* pAch4 = achievementsPage.mockAchievementRuntime.MockAchievement(4);
         pAch4->public_.points = 4;
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
@@ -490,17 +488,17 @@ public:
     TEST_METHOD(TestRefreshCategoriesWithLocal)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1);
         pAch1->public_.points = 1;
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
-        auto* pAch2 = achievementsPage.mockRcheevosClient.MockUnofficialAchievement(2);
+        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockUnofficialAchievement(2);
         pAch2->public_.points = 2;
         pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
-        auto* pAch3 = achievementsPage.mockRcheevosClient.MockLocalAchievement(3);
+        auto* pAch3 = achievementsPage.mockAchievementRuntime.MockLocalAchievement(3);
         pAch3->public_.points = 3;
         snprintf(pAch3->public_.badge_name, sizeof(pAch3->public_.badge_name), "L000003");
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
@@ -509,7 +507,7 @@ public:
         vmAch3.SetID(3);
         vmAch3.SetBadge(L"local\\1-abcdef0123456789.png");
 
-        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        auto* pAch4 = achievementsPage.mockAchievementRuntime.MockAchievement(4);
         pAch4->public_.points = 4;
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
@@ -547,23 +545,23 @@ public:
     TEST_METHOD(TestRefreshProgressAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1);
         pAch1->public_.points = 1;
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
-        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(2);
+        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockAchievementWithTrigger(2);
         pAch2->public_.points = 2;
         pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
         pAch2->trigger->measured_target = 10;
         pAch2->trigger->measured_value = 5;
 
-        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievement(3);
+        auto* pAch3 = achievementsPage.mockAchievementRuntime.MockAchievement(3);
         pAch3->public_.points = 3;
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
-        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(4);
+        auto* pAch4 = achievementsPage.mockAchievementRuntime.MockAchievementWithTrigger(4);
         pAch4->public_.points = 4;
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch4->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
@@ -594,28 +592,28 @@ public:
     TEST_METHOD(TestRefreshAlmostThereAchievements)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(1);
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievementWithTrigger(1);
         pAch1->public_.points = 1;
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
         pAch1->trigger->measured_target = 10;
         pAch1->trigger->measured_value = 1;
 
-        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(2);
+        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockAchievementWithTrigger(2);
         pAch2->public_.points = 2;
         pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch2->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
         pAch2->trigger->measured_target = 10;
         pAch2->trigger->measured_value = 9;
 
-        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(3);
+        auto* pAch3 = achievementsPage.mockAchievementRuntime.MockAchievementWithTrigger(3);
         pAch3->public_.points = 3;
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
         pAch3->trigger->measured_target = 10;
         pAch3->trigger->measured_value = 9;
 
-        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievement(4);
+        auto* pAch4 = achievementsPage.mockAchievementRuntime.MockAchievement(4);
         pAch4->public_.points = 4;
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
@@ -644,27 +642,27 @@ public:
     TEST_METHOD(TestRefreshAlmostThereAchievementsSorting)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(1);
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievementWithTrigger(1);
         pAch1->public_.points = 1;
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
         pAch1->trigger->measured_target = 100;
         pAch1->trigger->measured_value = 90;
 
-        auto* pAch2 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(2);
+        auto* pAch2 = achievementsPage.mockAchievementRuntime.MockAchievementWithTrigger(2);
         pAch2->public_.points = 2;
         pAch2->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
         pAch2->trigger->measured_target = 100;
         pAch2->trigger->measured_value = 85;
 
-        auto* pAch3 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(3);
+        auto* pAch3 = achievementsPage.mockAchievementRuntime.MockAchievementWithTrigger(3);
         pAch3->public_.points = 3;
         pAch3->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
         pAch3->trigger->measured_target = 100;
         pAch3->trigger->measured_value = 95;
 
-        auto* pAch4 = achievementsPage.mockRcheevosClient.MockAchievementWithTrigger(4);
+        auto* pAch4 = achievementsPage.mockAchievementRuntime.MockAchievementWithTrigger(4);
         pAch4->public_.points = 4;
         pAch4->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
         pAch4->trigger->measured_target = 100;
@@ -688,10 +686,10 @@ public:
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
         achievementsPage.mockGameContext.SetGameId(1U);
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
         achievementsPage.mockSessionTracker.MockSession(1U, 1234567879, std::chrono::minutes(347));
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1);
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch1->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
 
@@ -705,10 +703,10 @@ public:
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
         achievementsPage.mockGameContext.SetGameId(1U);
-        achievementsPage.mockRcheevosClient.MockGame();
+        achievementsPage.mockAchievementRuntime.MockGame();
         achievementsPage.mockSessionTracker.MockSession(1U, 1234567879, std::chrono::seconds(17 * 60 + 12));
 
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1);
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1);
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch1->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
 
@@ -733,8 +731,8 @@ public:
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
         achievementsPage.mockWindowManager.AssetList.SetFilterCategory(AssetListViewModel::FilterCategory::Local);
-        achievementsPage.mockRcheevosClient.MockGame();
-        const auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(ra::data::context::GameAssets::FirstLocalId);
+        achievementsPage.mockAchievementRuntime.MockGame();
+        const auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(ra::data::context::GameAssets::FirstLocalId);
 
         achievementsPage.mockServer.ExpectUncalled<ra::api::FetchAchievementInfo>();
 
@@ -752,8 +750,8 @@ public:
     TEST_METHOD(TestFetchItemDetail)
     {
         OverlayAchievementsPageViewModelHarness achievementsPage;
-        achievementsPage.mockRcheevosClient.MockGame();
-        auto* pAch1 = achievementsPage.mockRcheevosClient.MockAchievement(1234);
+        achievementsPage.mockAchievementRuntime.MockGame();
+        auto* pAch1 = achievementsPage.mockAchievementRuntime.MockAchievement(1234);
         pAch1->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_UNLOCKED;
         pAch1->public_.unlocked = RC_CLIENT_ACHIEVEMENT_UNLOCKED_BOTH;
 

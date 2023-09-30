@@ -201,27 +201,27 @@ public:
     void AdvanceFrame() noexcept { ++m_nFrameId; }
 
     /// <summary>
-    /// Adds a score tracker for a leaderboard.
+    /// Adds a score tracker.
     /// </summary>
-    ScoreTrackerViewModel& AddScoreTracker(ra::LeaderboardID nLeaderboardId);
+    ScoreTrackerViewModel& AddScoreTracker(uint32_t nTrackerId);
 
     /// <summary>
-    /// Removes the score tracker associated to the specified leaderboard.
+    /// Removes the specified score tracker.
     /// </summary>
-    /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the tracker.</param>
-    void RemoveScoreTracker(ra::LeaderboardID nLeaderboardId);
+    /// <param name="nTrackerId">The unique identifier of the leaderboard  tracker.</param>
+    void RemoveScoreTracker(uint32_t nTrackerId);
 
     /// <summary>
     /// Gets the score tracker associated to the specified leaderboard.
     /// </summary>
     /// <param name="nLeaderboardId">The unique identifier of the leaderboard associated to the tracker.</param>
     /// <returns>Requested score tracker view model, <c>nullptr</c> if not found.</returns>
-    ScoreTrackerViewModel* GetScoreTracker(ra::LeaderboardID nLeaderboardId)
+    ScoreTrackerViewModel* GetScoreTracker(uint32_t nTrackerId)
     {
         std::lock_guard<std::mutex> pGuard(m_pPopupQueueMutex);
         for (auto& pTracker : m_vScoreTrackers)
         {
-            if (ra::to_unsigned(pTracker->GetPopupId()) == nLeaderboardId)
+            if (ra::to_unsigned(pTracker->GetPopupId()) == nTrackerId)
                 return pTracker.get();
         }
 
@@ -281,7 +281,7 @@ public:
     /// Updates the progress tracker indicator
     /// </summary>
     void UpdateProgressTracker(ra::ui::ImageType imageType, const std::string& sImageName,
-        unsigned nValue, unsigned nTarget, bool bAsPercent);
+        const std::wstring& sProgress);
 
     /// <summary>
     /// Clears all popups.

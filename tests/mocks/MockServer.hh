@@ -63,21 +63,6 @@ public:
         return HandleRequest<ra::api::StartSession>(request);
     }
 
-    Ping::Response Ping(const Ping::Request& request) override
-    {
-        return HandleRequest<ra::api::Ping>(request);
-    }
-
-    AwardAchievement::Response AwardAchievement(const AwardAchievement::Request& request) override
-    {
-        return HandleRequest<ra::api::AwardAchievement>(request);
-    }
-
-    SubmitLeaderboardEntry::Response SubmitLeaderboardEntry(const SubmitLeaderboardEntry::Request& request) override
-    {
-        return HandleRequest<ra::api::SubmitLeaderboardEntry>(request);
-    }
-
     FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) override
     {
         return HandleRequest<ra::api::FetchUserFriends>(request);

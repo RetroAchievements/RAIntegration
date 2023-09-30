@@ -246,16 +246,15 @@ void IntegrationMenuViewModel::ToggleLeaderboards()
     const bool bLeaderboardsActive = !pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
     pConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, bLeaderboardsActive);
 
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-
     if (!bLeaderboardsActive)
     {
-        pGameContext.DeactivateLeaderboards();
+        // TODO: disallow disabling leaderboards
+        //pGameContext.DeactivateLeaderboards();
         ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Leaderboards are now disabled.");
     }
     else
     {
-        pGameContext.ActivateLeaderboards();
+        //pGameContext.ActivateLeaderboards();
         ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Leaderboards are now enabled.");
     }
 
@@ -385,7 +384,6 @@ void IntegrationMenuViewModel::ShowGameHash()
             Expects(!vmUnknownGame.GetTestMode());
 
             pGameContext.SetMode(ra::data::context::GameContext::Mode::Normal);
-            pGameContext.RefreshUnlocks();
         }
     }
     else

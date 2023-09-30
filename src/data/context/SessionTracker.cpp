@@ -5,7 +5,6 @@
 #include "RA_md5factory.h"
 #include "RA_StringUtils.h"
 
-#include "api\Ping.hh"
 #include "api\StartSession.hh"
 
 #include "data\context\GameContext.hh"
@@ -152,12 +151,6 @@ void SessionTracker::UpdateSession(time_t tSessionStart)
     // make sure we're still tracking the same game
     if (tSessionStart != m_tSessionStart)
         return;
-
-    // ping the server (this also updates the player's current activity string)
-    ra::api::Ping::Request request;
-    request.GameId = m_nCurrentGameId;
-    request.CurrentActivity = GetCurrentActivity();
-    request.CallAsync([](const ra::api::Ping::Response&) {});
 
     // update session duration
     const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();

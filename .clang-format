@@ -2,16 +2,32 @@
 
 #Some settings are unavailable but should be already taken care of
 
+Language: Cpp
+Standard: Cpp11
+MaxEmptyLinesToKeep: 1
+ColumnLimit: 120 #should between 80-120 so it'll be easier to see diffs
+UseTab: Never
+IndentWidth: 4
+
+SortIncludes: true
+IncludeBlocks: Preserve #Sorts includes separately
+SortUsingDeclarations: true
+CompactNamespaces: false #Puts em all on the same line
+FixNamespaceComments: true
+NamespaceIndentation: None
+
 AlignAfterOpenBracket: true
 AlignEscapedNewlinesLeft: true
 AlignTrailingComments: true
 AlignConsecutiveAssignments: false
 
+IndentCaseLabels: true
+AllowShortCaseLabelsOnASingleLine: false
+
 AllowAllParametersOfDeclarationOnNextLine: true
-AllowShortFunctionsOnASingleLine: All
+AllowShortFunctionsOnASingleLine: InlineOnly
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
-AllowShortCaseLabelsOnASingleLine: false
 
 AlwaysBreakBeforeMultilineStrings: true
 AlwaysBreakTemplateDeclarations: true
@@ -30,25 +46,14 @@ BraceWrapping:
 BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: AfterColon
 
-ColumnLimit: 120 #should between 80-120 so it'll be easier to see diffs
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
-Cpp11BracedListStyle: true
 DerivePointerAlignment: true #Tries to stay consistent with existing code
 ExperimentalAutoDetectBinPacking: true
-IndentCaseLabels: true
-IndentWidth: 4
 IndentWrappedFunctionNames: true
 KeepEmptyLinesAtTheStartOfBlocks: false
-Language: Cpp
-MaxEmptyLinesToKeep: 1
-NamespaceIndentation: None
 PointerAlignment: Left
 ReflowComments: true
 
-Standard: Cpp11
-UseTab: Never
-
-AccessModifierOffset: -4
 SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
 SpaceBeforeParens: ControlStatements
@@ -59,8 +64,7 @@ SpacesInParentheses: false
 SpacesInCStyleCastParentheses: false
 SpacesInSquareBrackets: false
 
-SortUsingDeclarations: true
-SortIncludes: true
-IncludeBlocks: Preserve #Sorts includes separately
-FixNamespaceComments: true
-CompactNamespaces: false #Puts em all on the same line
+EmptyLineAfterAccessModifier: Never
+EmptyLineBeforeAccessModifier: Always
+IndentAccessModifiers: false
+AccessModifierOffset: -4

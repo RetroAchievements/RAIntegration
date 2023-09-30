@@ -7,8 +7,8 @@
 
 #include "data\context\EmulatorContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
-#include "services\RcheevosClient.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
@@ -23,7 +23,7 @@ void UserContext::Logout()
     if (!IsLoggedIn())
         return;
 
-    auto* pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
     rc_client_logout(pClient);
 
     m_sUsername.clear();

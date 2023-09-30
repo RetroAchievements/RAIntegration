@@ -6,6 +6,8 @@
 
 #include "CapturedTriggerHits.hh"
 
+struct rc_client_achievement_info_t;
+
 namespace ra {
 namespace data {
 namespace models {
@@ -127,6 +129,16 @@ public:
     void Serialize(ra::services::TextWriter& pWriter) const override;
     bool Deserialize(ra::Tokenizer& pTokenizer) override;
 
+    // Attaches an rc_client_achievement_info_t and populates the model from it.
+    void Attach(struct rc_client_achievement_info_t& pAchievement,
+        AssetCategory nCategory, const std::string& sTrigger);
+    // Replaces the attached rc_client_achievement_info_t. Does not update model or source.
+    void ReplaceAttached(struct rc_client_achievement_info_t& pAchievement) noexcept;
+    // Attaches an rc_client_achievement_info_t and populates it from the model.
+    void AttachAndInitialize(struct rc_client_achievement_info_t& pAchievement);
+    // Gets the attached rc_client_achievement_info_t.
+    const struct rc_client_achievement_info_t* GetAttached() const noexcept { return m_pAchievement; }
+
     const CapturedTriggerHits& GetCapturedHits() const noexcept { return m_pCapturedTriggerHits; }
     void ResetCapturedHits() noexcept { m_pCapturedTriggerHits.Reset(); }
 
@@ -149,9 +161,20 @@ private:
     static const std::array<int, 10> s_vValidPoints;
 
     void HandleStateChanged(AssetState nOldState, AssetState nNewState);
+    void SyncTitle();
+    void SyncDescription();
+    void SyncBadge();
+    void SyncPoints();
+    void SyncCategory();
+    void SyncState();
+    void SyncTrigger();
 
     AssetDefinition m_pTrigger;
     std::chrono::system_clock::time_point m_tUnlock;
+
+    struct rc_client_achievement_info_t* m_pAchievement = nullptr;
+    std::string m_sTitleBuffer;
+    std::string m_sDescriptionBuffer;
 
     CapturedTriggerHits m_pCapturedTriggerHits;
 };

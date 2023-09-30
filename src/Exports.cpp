@@ -23,7 +23,6 @@
 #include "services\IFileSystem.hh"
 #include "services\Initialization.hh"
 #include "services\PerformanceCounter.hh"
-#include "services\RcheevosClient.hh"
 #include "services\ServiceLocator.hh"
 
 #include "ui\drawing\gdi\GDISurface.hh"
@@ -108,7 +107,7 @@ static void InitializeOfflineMode()
         pSessionTracker.Initialize(sUsername);
     }
 
-    auto* pClient = ra::services::ServiceLocator::Get<ra::services::RcheevosClient>().GetClient();
+    auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
     pClient->user.username = rc_buf_strcpy(&pClient->state.buffer, pUserContext.GetUsername().c_str());
     pClient->user.display_name = rc_buf_strcpy(&pClient->state.buffer, pUserContext.GetDisplayName().c_str());
     pClient->user.token = rc_buf_strcpy(&pClient->state.buffer, pConfiguration.GetApiToken().c_str());
@@ -325,15 +324,15 @@ API void CCONV _RA_AttemptLogin(int bBlocking)
     }
     else
     {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::RcheevosClient>();
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
 
         if (bBlocking)
         {
-            ra::services::RcheevosClient::Synchronizer pSynchronizer;
+            ra::services::AchievementRuntime::Synchronizer pSynchronizer;
 
             pClient.BeginLoginWithToken(pConfiguration.GetUsername(), pConfiguration.GetApiToken(),
                 [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) {
-                    auto* pSynchronizer = static_cast<ra::services::RcheevosClient::Synchronizer*>(pUserdata);
+                    auto* pSynchronizer = static_cast<ra::services::AchievementRuntime::Synchronizer*>(pUserdata);
                     Expects(pSynchronizer != nullptr);
 
                     pSynchronizer->CaptureResult(nResult, sErrorMessage);
@@ -443,300 +442,6 @@ API void _RA_NavigateOverlay(const ControllerInput* pInput)
     ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().Update(*pInput);
 }
 
-static void ProcessAchievements()
-{
-    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    if (pRuntime.IsPaused())
-        return;
-
-    auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
-    
-    TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeProcess);
-    std::vector<ra::services::AchievementRuntime::Change> vChanges;
-    pRuntime.Process(vChanges);
-
-    const ra::data::models::AchievementModel* vmMeasuredAchievement = nullptr;
-    const rc_trigger_t* pMeasuredAchievementTrigger = nullptr;
-    float fMeasuredAchievementPercent = 0.0;
-
-    TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeEvents);
-    for (const auto& pChange : vChanges)
-    {
-        switch (pChange.nType)
-        {
-            case ra::services::AchievementRuntime::ChangeType::AchievementReset:
-            {
-                const auto* pAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
-                if (pAchievement && pAchievement->IsPauseOnReset())
-                {
-                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnReset(pAchievement->GetName());
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::AchievementTriggered:
-            {
-                // AwardAchievement may detach the trigger, which would result in the state changing to Inactive.
-                // explicitly set the state to Triggered before the trigger gets detached.
-                auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
-                if (vmAchievement)
-                    vmAchievement->SetState(ra::data::models::AssetState::Triggered);
-
-                pGameContext.AwardAchievement(pChange.nId);
-
-                if (vmAchievement && vmAchievement->IsPauseOnTrigger())
-                {
-                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnTrigger(vmAchievement->GetName());
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::AchievementDisabled:
-            {
-                auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
-                if (vmAchievement)
-                {
-                    RA_LOG_WARN("Achievement #%u disabled: address %s not supported by current core", pChange.nId, ra::ByteAddressToString(pChange.nValue));
-                    vmAchievement->SetState(ra::data::models::AssetState::Disabled);
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::AchievementPrimed:
-            {
-                const auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
-                if (vmAchievement)
-                {
-                    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Challenge) != ra::ui::viewmodels::PopupLocation::None)
-                    {
-                        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                        pOverlayManager.AddChallengeIndicator(vmAchievement->GetID(), ra::ui::ImageType::Badge, ra::Narrow(vmAchievement->GetBadge()));
-                    }
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::AchievementUnprimed:
-            {
-                auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                pOverlayManager.RemoveChallengeIndicator(pChange.nId);
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::LeaderboardStarted:
-            {
-                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
-                if (pLeaderboard)
-                {
-                    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardStarted) != ra::ui::viewmodels::PopupLocation::None)
-                    {
-                        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lb.wav");
-                        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                        pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardStarted,
-                            L"Leaderboard attempt started", pLeaderboard->GetName(), pLeaderboard->GetDescription());
-                    }
-
-                    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker) != ra::ui::viewmodels::PopupLocation::None)
-                    {
-                        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                        auto& pScoreTracker = pOverlayManager.AddScoreTracker(pLeaderboard->GetID());
-                        const auto sDisplayText = pLeaderboard->FormatScore(pChange.nValue);
-                        pScoreTracker.SetDisplayText(ra::Widen(sDisplayText));
-                    }
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::LeaderboardUpdated:
-            {
-                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
-                if (pLeaderboard)
-                {
-                    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                    auto* pScoreTracker = pOverlayManager.GetScoreTracker(pChange.nId);
-                    if (pScoreTracker != nullptr)
-                    {
-                        const auto sDisplayText = pLeaderboard->FormatScore(pChange.nValue);
-                        pScoreTracker->SetDisplayText(ra::Widen(sDisplayText));
-                    }
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::LeaderboardCanceled:
-            {
-                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
-                if (pLeaderboard)
-                {
-                    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardCanceled) != ra::ui::viewmodels::PopupLocation::None)
-                    {
-                        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\lbcancel.wav");
-
-                        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                        pOverlayManager.QueueMessage(ra::ui::viewmodels::Popup::LeaderboardCanceled,
-                            L"Leaderboard attempt failed", pLeaderboard->GetName(), pLeaderboard->GetDescription());
-                    }
-
-                    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                    pOverlayManager.RemoveScoreTracker(pLeaderboard->GetID());
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::LeaderboardTriggered:
-            {
-                pGameContext.SubmitLeaderboardEntry(pChange.nId, pChange.nValue); // will show the scoreboard when submission completes
-
-                auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                pOverlayManager.RemoveScoreTracker(pChange.nId);
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::LeaderboardStartReset:
-            {
-                /* ASSERT: this event is only raised if the leaderboard is watching for it */
-                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
-                if (pLeaderboard)
-                {
-                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnReset(L"Start: " + pLeaderboard->GetName());
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::LeaderboardSubmitReset:
-            {
-                /* ASSERT: this event is only raised if the leaderboard is watching for it */
-                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
-                if (pLeaderboard)
-                {
-                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnReset(L"Submit: " + pLeaderboard->GetName());
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::LeaderboardCancelReset:
-            {
-                /* ASSERT: this event is only raised if the leaderboard is watching for it */
-                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
-                if (pLeaderboard)
-                {
-                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnReset(L"Cancel: " + pLeaderboard->GetName());
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::LeaderboardValueReset:
-            {
-                /* ASSERT: this event is only raised if the leaderboard is watching for it */
-                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
-                if (pLeaderboard)
-                {
-                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnReset(L"Value: " + pLeaderboard->GetName());
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::LeaderboardStartTriggered:
-            {
-                /* ASSERT: this event is only raised if the leaderboard is watching for it */
-                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
-                if (pLeaderboard)
-                {
-                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnTrigger(L"Start: " + pLeaderboard->GetName());
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::LeaderboardSubmitTriggered:
-            {
-                /* ASSERT: this event is only raised if the leaderboard is watching for it */
-                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
-                if (pLeaderboard)
-                {
-                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnTrigger(L"Submit: " + pLeaderboard->GetName());
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::LeaderboardCancelTriggered:
-            {
-                /* ASSERT: this event is only raised if the leaderboard is watching for it */
-                const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(pChange.nId);
-                if (pLeaderboard)
-                {
-                    auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-                    pFrameEventQueue.QueuePauseOnTrigger(L"Cancel: " + pLeaderboard->GetName());
-                }
-
-                break;
-            }
-
-            case ra::services::AchievementRuntime::ChangeType::AchievementProgressChanged:
-            {
-                const auto* pTrigger = pRuntime.GetAchievementTrigger(pChange.nId);
-                if (pTrigger != nullptr && pTrigger->measured_target > 0)
-                {
-                    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-                    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::Progress) != ra::ui::viewmodels::PopupLocation::None)
-                    {
-                        const auto* vmAchievement = pGameContext.Assets().FindAchievement(pChange.nId);
-                        if (vmAchievement != nullptr)
-                        {
-                            const float fProgress = gsl::narrow_cast<float>(pTrigger->measured_value) / gsl::narrow_cast<float>(pTrigger->measured_target);
-                            if (fProgress > fMeasuredAchievementPercent)
-                            {
-                                fMeasuredAchievementPercent = fProgress;
-                                vmMeasuredAchievement = vmAchievement;
-                                pMeasuredAchievementTrigger = pTrigger;
-                            }
-                        }
-                     }
-                 }
-
-                 break;
-            }
-        }
-    }
-
-    if (vmMeasuredAchievement && pMeasuredAchievementTrigger)
-    {
-        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-
-        // use locked badge if available
-        auto sBadgeName = ra::Narrow(vmMeasuredAchievement->GetBadge());
-        if (!ra::StringStartsWith(sBadgeName, "local\\"))
-            sBadgeName += "_lock";
-
-        pOverlayManager.UpdateProgressTracker(ra::ui::ImageType::Badge, sBadgeName,
-            pMeasuredAchievementTrigger->measured_value, pMeasuredAchievementTrigger->measured_target,
-            pMeasuredAchievementTrigger->measured_as_percent);
-    }
-}
-
 API void CCONV _RA_SetPaused(int bIsPaused)
 {
     auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
@@ -782,8 +487,11 @@ API void CCONV _RA_DoAchievementsFrame()
     ra::ui::win32::bindings::ControlBinding::RepaintGuard guard;
 #endif
 
-    // make sure we process the achievements _before_ the frozen bookmarks modify the memory
-    ProcessAchievements();
+    // make sure we process the achievements _before_ updating the UI.
+    // the frozen bookmarks may modify the memory
+    TALLY_PERFORMANCE(PerformanceCheckpoint::RuntimeProcess);
+    auto& pRcheevosClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    pRcheevosClient.DoFrame();
 
 #ifndef RA_UTEST
     UpdateUIForFrameChange();
@@ -820,7 +528,9 @@ API void CCONV _RA_OnSaveState(const char* sFilename)
 
 API int CCONV _RA_CaptureState(char* pBuffer, int nBufferSize)
 {
-    return ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().SaveProgressToBuffer(pBuffer, nBufferSize);
+    GSL_SUPPRESS_TYPE1
+    return ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().
+        SaveProgressToBuffer(reinterpret_cast<uint8_t*>(pBuffer), nBufferSize);
 }
 
 static bool CanRestoreState()
@@ -847,6 +557,7 @@ static bool CanRestoreState()
 
 static void OnStateRestored()
 {
+    // TODO: rc_client should handle the UI - only need to sync assets
     const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
     auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
 
@@ -891,7 +602,7 @@ static void OnStateRestored()
                     {
                         auto& pScoreTracker = pOverlayManager.AddScoreTracker(pLeaderboard->GetID());
 
-                        const auto pDefinition = pRuntime.GetLeaderboardDefinition(pLeaderboard->GetID());
+                        const auto* pDefinition = pRuntime.GetLeaderboardDefinition(pLeaderboard->GetID());
                         if (pDefinition != nullptr)
                         {
                             const auto sDisplayText = pLeaderboard->FormatScore(pDefinition->value.value.value);
@@ -923,7 +634,9 @@ API void CCONV _RA_RestoreState(const char* pBuffer)
 {
     if (CanRestoreState())
     {
-        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().LoadProgressFromBuffer(pBuffer);
+        GSL_SUPPRESS_TYPE1
+        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().
+            LoadProgressFromBuffer(reinterpret_cast<const uint8_t*>(pBuffer));
         OnStateRestored();
     }
 }

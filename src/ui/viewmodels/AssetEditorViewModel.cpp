@@ -985,7 +985,7 @@ void AssetEditorViewModel::UpdateMeasuredValue()
                 const auto* pLeaderboard = dynamic_cast<ra::data::models::LeaderboardModel*>(m_pAsset);
                 if (pLeaderboard != nullptr)
                 {
-                    auto* pLeaderboardDefinition = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetLeaderboardDefinition(pLeaderboard->GetID());
+                    const auto* pLeaderboardDefinition = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetLeaderboardDefinition(pLeaderboard->GetID());
                     if (pLeaderboardDefinition)
                     {
                         const unsigned nValue = pLeaderboardDefinition->value.value.value;

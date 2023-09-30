@@ -28,6 +28,8 @@ TEST_CLASS(RichPresenceMonitorViewModel_Tests)
     public:
         RichPresenceMonitorViewModelHarness() noexcept
         {
+            mockRuntime.MockGame();
+
             GSL_SUPPRESS_F6 InitializeNotifyTargets();
         }
 

@@ -125,6 +125,16 @@ public:
     /// <param name="oPosition">The new position.</param>
     void OnPositionChanged(ra::ui::Position oPosition);
 
+    /// <summary>
+    /// Executes a function on the UI thread.
+    /// </summary>
+    void InvokeOnUIThread(std::function<void()> fAction);
+
+    /// <summary>
+    /// Returns <c>true</c> if the current thread is the UI thread.
+    /// </summary>
+    bool IsOnUIThread() const noexcept { return GetCurrentThreadId() == s_hUIThreadId; }
+
 protected:
     // ViewModelBase::NotifyTarget
     GSL_SUPPRESS_F6 void OnViewModelStringValueChanged(const StringModelProperty::ChangeArgs& args) noexcept override;
@@ -183,6 +193,8 @@ private:
     
     ra::ui::win32::DialogBase* m_pDialog = nullptr;
     HWND m_hWnd{};
+
+    static DWORD s_hUIThreadId;
 
     static std::vector<WindowBinding*> s_vKnownBindings;
 };

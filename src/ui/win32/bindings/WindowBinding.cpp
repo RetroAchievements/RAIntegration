@@ -17,6 +17,7 @@ namespace win32 {
 namespace bindings {
 
 std::vector<WindowBinding*> WindowBinding::s_vKnownBindings;
+DWORD WindowBinding::s_hUIThreadId;
 
 void WindowBinding::SetHWND(DialogBase* pDialog, HWND hWnd)
 {
@@ -92,6 +93,14 @@ void WindowBinding::SetHWND(DialogBase* pDialog, HWND hWnd)
         }
 
         RestoreSizeAndPosition();
+    }
+
+    if (m_pDialog)
+    {
+        InvokeOnUIThread([this]() noexcept
+        {
+            s_hUIThreadId = GetCurrentThreadId();
+        });
     }
 }
 
@@ -478,6 +487,12 @@ bool WindowBinding::GetValueFromAny(const BoolModelProperty& pProperty) const
     }
 
     return bValue;
+}
+
+void WindowBinding::InvokeOnUIThread(std::function<void()> fAction)
+{
+    Expects(m_pDialog != nullptr);
+    m_pDialog->QueueFunction(fAction);
 }
 
 } // namespace bindings

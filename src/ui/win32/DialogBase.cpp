@@ -450,13 +450,20 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 
         case WM_QUEUED_ACTION:
         {
-            if (!m_qActions.empty())
+            std::function<void()> fAction = nullptr;
             {
-                std::function<void()> fAction = m_qActions.front();
-                m_qActions.pop();
-                fAction();
+                std::lock_guard<std::mutex> lock(m_pMutex);
                 if (!m_qActions.empty())
-                    PostMessage(m_hWnd, WM_QUEUED_ACTION, NULL, NULL);
+                {
+                    fAction = m_qActions.front();
+                    m_qActions.pop();
+                }
+            }
+
+            if (fAction != nullptr)
+            {
+                fAction();
+                PostMessage(m_hWnd, WM_QUEUED_ACTION, NULL, NULL);
             }
 
             return 0;
@@ -469,7 +476,10 @@ INT_PTR CALLBACK DialogBase::DialogProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPA
 
 void DialogBase::QueueFunction(std::function<void()> fAction)
 {
-    m_qActions.push(fAction);
+    {
+        std::lock_guard<std::mutex> lock(m_pMutex);
+        m_qActions.push(fAction);
+    }
     PostMessage(m_hWnd, WM_QUEUED_ACTION, NULL, NULL);
 }
 

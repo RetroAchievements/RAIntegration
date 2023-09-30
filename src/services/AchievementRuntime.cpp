@@ -169,6 +169,8 @@ public:
     ClientSynchronizer() = default;
     virtual ~ClientSynchronizer()
     {
+        m_pPublishedSubset = nullptr;
+
         for (auto* pMemory : m_vAllocatedMemory)
             free(pMemory);
     }
@@ -438,11 +440,9 @@ public:
             m_pClient = pClient;
             m_pNextMemref = &pClient->game->runtime.memrefs;
             m_pNextVariable = &pClient->game->runtime.variables;
+            m_pPublishedSubset = pClient->game->subsets;
             AllocatedMemrefs(); // advance pointers
         }
-
-        if (m_pPublishedSubset == nullptr)
-            m_pPublishedSubset = pClient->game->subsets;
 
         std::vector<ra::data::models::AchievementModel*> vCoreAchievements;
         std::vector<ra::data::models::AchievementModel*> vLocalAchievements;

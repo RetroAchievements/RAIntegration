@@ -13,8 +13,6 @@ namespace ra {
 namespace ui {
 namespace viewmodels {
 
-const StringModelProperty OverlayListPageViewModel::ListTitleProperty("OverlayListPageViewModel", "ListTitle", L"");
-const StringModelProperty OverlayListPageViewModel::SummaryProperty("OverlayListPageViewModel", "Summary", L"");
 const BoolModelProperty OverlayListPageViewModel::CanCollapseHeadersProperty("OverlayListPageViewModel", "CanCollapseHeadersProperty", true);
 const IntModelProperty OverlayListPageViewModel::SelectedItemIndexProperty("OverlayListPageViewModel", "SelectedItemIndex", 0);
 
@@ -27,7 +25,6 @@ const IntModelProperty OverlayListPageViewModel::ItemViewModel::ProgressPercenta
 void OverlayListPageViewModel::Refresh()
 {
     m_bDetail = false;
-    SetTitle(m_sTitle);
     m_nImagesPending = 99;
 }
 
@@ -131,24 +128,8 @@ void OverlayListPageViewModel::Render(ra::ui::drawing::ISurface& pSurface, int n
 void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const
 {
     const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
-
-    // title
-    const auto& sGameTitle = GetListTitle();
-    if (!sGameTitle.empty())
-    {
-        const auto nTitleFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayTitle(), ra::ui::FontStyles::Normal);
-        pSurface.WriteText(nX, nY, nTitleFont, pTheme.ColorOverlayText(), sGameTitle);
-        nY += 34;
-        nHeight -= 34;
-    }
-
-    // subtitle
     const auto nFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayHeader(), ra::ui::FontStyles::Normal);
     const auto nSubFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
-    const auto& sSummary = GetSummary();
-    pSurface.WriteText(nX, nY, nSubFont, pTheme.ColorOverlaySubText(), sSummary);
-    nY += 30;
-    nHeight -= 30;
 
     // scrollbar
     const auto nSelectedIndex = ra::to_unsigned(GetSelectedItemIndex());
@@ -251,6 +232,9 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
 
 const wchar_t* OverlayListPageViewModel::GetAcceptButtonText() const
 {
+    if (m_bDetail)
+        return L"";
+
     if (GetCanCollapseHeaders())
     {
         const auto* vmItem = m_vItems.GetItemAt(GetSelectedItemIndex());
@@ -261,6 +245,30 @@ const wchar_t* OverlayListPageViewModel::GetAcceptButtonText() const
     return PageViewModel::GetAcceptButtonText();
 }
 
+const wchar_t* OverlayListPageViewModel::GetCancelButtonText() const
+{
+    if (m_bDetail)
+        return L"Back";
+
+    return PageViewModel::GetCancelButtonText();
+}
+
+const wchar_t* OverlayListPageViewModel::GetPrevButtonText() const
+{
+    if (m_bDetail)
+        return L"";
+
+    return PageViewModel::GetPrevButtonText();
+}
+
+const wchar_t* OverlayListPageViewModel::GetNextButtonText() const
+{
+    if (m_bDetail)
+        return L"";
+
+    return PageViewModel::GetNextButtonText();
+}
+
 bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
 {
     if (pInput.m_bDownPressed)
@@ -268,11 +276,15 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
         size_t nSelectedItemIndex = gsl::narrow_cast<size_t>(GetSelectedItemIndex());
         if (nSelectedItemIndex < m_vItems.Count() - 1)
         {
-            ++nSelectedItemIndex;
-            auto* vmItem = m_vItems.GetItemAt(nSelectedItemIndex);
-            if (!vmItem)
-                return false;
-                
+            ItemViewModel* vmItem;
+            do
+            {
+                ++nSelectedItemIndex;
+                vmItem = m_vItems.GetItemAt(nSelectedItemIndex);
+                if (!vmItem)
+                    return false;
+            } while (m_bDetail && vmItem->IsHeader());
+
             SetSelectedItemIndex(gsl::narrow_cast<int>(nSelectedItemIndex));
 
             if (nSelectedItemIndex - m_nScrollOffset >= gsl::narrow_cast<size_t>(m_nVisibleItems))
@@ -289,13 +301,17 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
         auto nSelectedItemIndex = GetSelectedItemIndex();
         if (nSelectedItemIndex > 0)
         {
-            auto* vmItem = m_vItems.GetItemAt(gsl::narrow_cast<size_t>(--nSelectedItemIndex));
-            const auto nScrollOfffset = m_nScrollOffset;
-            if (nSelectedItemIndex < m_nScrollOffset)
-                m_nScrollOffset = std::max(nSelectedItemIndex, 0);
+            ItemViewModel* vmItem;
+            do
+            {
+                vmItem = m_vItems.GetItemAt(gsl::narrow_cast<size_t>(--nSelectedItemIndex));
+                const auto nScrollOfffset = m_nScrollOffset;
+                if (nSelectedItemIndex < m_nScrollOffset)
+                    m_nScrollOffset = std::max(nSelectedItemIndex, 0);
 
-            if (!vmItem)
-                return (m_nScrollOffset != nScrollOfffset);
+                if (!vmItem)
+                    return (m_nScrollOffset != nScrollOfffset);
+            } while (m_bDetail && vmItem->IsHeader());
 
             SetSelectedItemIndex(nSelectedItemIndex);
 
@@ -305,13 +321,17 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
             return true;
         }
     }
+    else if (m_bDetail)
+    {
+        if (pInput.m_bCancelPressed)
+            return SetDetail(false);
+
+        // swallow all other buttons on the detail page
+        return true;
+    }
     else if (pInput.m_bConfirmPressed)
     {
         return SetDetail(true);
-    }
-    else if (pInput.m_bCancelPressed)
-    {
-        return SetDetail(false);
     }
 
     return false;
@@ -329,11 +349,10 @@ bool OverlayListPageViewModel::SetDetail(bool bDetail)
                 if (vmItem->IsHeader())
                     return OnHeaderClicked(*vmItem);
 
-                if (!m_sDetailTitle.empty())
+                if (m_bHasDetail)
                 {
                     FetchItemDetail(*vmItem);
                     m_bDetail = true;
-                    SetTitle(m_sDetailTitle);
                     return true;
                 }
             }
@@ -344,7 +363,7 @@ bool OverlayListPageViewModel::SetDetail(bool bDetail)
         if (m_bDetail)
         {
             m_bDetail = false;
-            SetTitle(m_sTitle);
+
             return true;
         }
     }

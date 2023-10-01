@@ -44,6 +44,8 @@ private:
         OverlayAchievementsPageViewModelHarness() noexcept
         {
             GSL_SUPPRESS_F6 mockWindowManager.AssetList.InitializeNotifyTargets();
+
+            mockGameContext.SetGameTitle(L"Game Title");
         }
 
         ItemViewModel* GetItem(gsl::index nIndex) { return m_vItems.GetItemAt(nIndex); }
@@ -150,8 +152,22 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"No achievements present"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"No achievements present"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L""), achievementsPage.GetTitleDetail());
+        Assert::IsNull(achievementsPage.GetItem(0));
+    }
+
+    TEST_METHOD(TestRefreshNoGameLoaded)
+    {
+        OverlayAchievementsPageViewModelHarness achievementsPage;
+        achievementsPage.mockGameContext.SetGameTitle(L"");
+        achievementsPage.SetCanCollapseHeaders(false);
+        achievementsPage.Refresh();
+
+        Assert::AreEqual(std::wstring(L"No Game Loaded"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"No achievements present"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L""), achievementsPage.GetTitleDetail());
         Assert::IsNull(achievementsPage.GetItem(0));
     }
 
@@ -170,8 +186,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"1 of 1 won (5/5)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"1 of 1 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"5 of 5 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Unlocked");
         achievementsPage.AssertUnlockedAchievement(1, pAch1);
@@ -191,8 +208,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"0 of 1 won (0/5)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"0 of 1 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"0 of 5 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Locked");
         achievementsPage.AssertLockedAchievement(1, pAch1);
@@ -213,8 +231,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"0 of 1 won (0/1)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"0 of 1 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"0 of 1 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Locked");
         achievementsPage.AssertLockedAchievement(1, pAch1);
@@ -251,8 +270,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"1 of 4 won (4/10)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"1 of 4 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"4 of 10 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Locked");
         achievementsPage.AssertLockedAchievement(1, pAch1);
@@ -290,8 +310,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"1 of 4 won (4/10)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"1 of 4 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"4 of 10 points"), achievementsPage.GetTitleDetail());
 
         auto* pItem = achievementsPage.GetItem(0);
         Expects(pItem != nullptr);
@@ -362,8 +383,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"2 of 4 won (7/10)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"2 of 4 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"7 of 10 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Locked");
         achievementsPage.AssertLockedAchievement(1, pAch1);
@@ -403,8 +425,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(true);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"2 of 4 won (7/10)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"2 of 4 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"7 of 10 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Locked");
         achievementsPage.AssertLockedAchievement(1, pAch1);
@@ -436,8 +459,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"0 of 3 won (0/6)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"0 of 3 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"0 of 6 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Active Challenges");
         achievementsPage.AssertLockedAchievement(1, pAch2);
@@ -474,8 +498,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"1 of 2 won (4/5)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"1 of 2 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"4 of 5 points"), achievementsPage.GetTitleDetail());
 
         // only 1 and 4 will be visible - 2 and 3 are not core, and will be filtered out
         achievementsPage.AssertHeader(0, L"Locked");
@@ -517,8 +542,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"1 of 2 won (4/5)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"1 of 2 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"4 of 5 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Game Title - Locked");
         achievementsPage.AssertLockedAchievement(1, pAch1);
@@ -571,8 +597,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"1 of 4 won (4/10)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"1 of 4 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"4 of 10 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Locked");
         achievementsPage.AssertProgressAchievement(1, pAch1, 0.0, L"");
@@ -620,8 +647,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"1 of 4 won (2/10)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"1 of 4 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"2 of 10 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Almost There");
         achievementsPage.AssertProgressAchievement(1, pAch3, 90.0, L"9/10");
@@ -671,8 +699,9 @@ public:
         achievementsPage.SetCanCollapseHeaders(false);
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"0 of 4 won (0/10)"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"0 of 4 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"0 of 10 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Almost There");
         achievementsPage.AssertProgressAchievement(1, pAch3, 95.0, L"95/100");
@@ -695,8 +724,9 @@ public:
 
         achievementsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"1 of 1 won (5/5) - 5h47m"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"1 of 1 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"5 of 5 points - 5h47m"), achievementsPage.GetTitleDetail());
     }
 
     TEST_METHOD(TestUpdateSession)
@@ -713,18 +743,22 @@ public:
         achievementsPage.Refresh();
 
         achievementsPage.mockSessionTracker.MockSession(1U, 1234567879, std::chrono::minutes(1));
-        Assert::AreEqual(std::wstring(L"Achievements"), achievementsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"1 of 1 won (5/5) - 0h17m"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), achievementsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"1 of 1 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"5 of 5 points - 0h17m"), achievementsPage.GetTitleDetail());
 
         // Refresh() called at 12 seconds into session, text shouldn't update until 60 seconds in
         achievementsPage.Update(40.0); // 12 -> 52
-        Assert::AreEqual(std::wstring(L"1 of 1 won (5/5) - 0h17m"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"1 of 1 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"5 of 5 points - 0h17m"), achievementsPage.GetTitleDetail());
 
         Assert::IsFalse(achievementsPage.Update(7.9)); // 52 -> 59.9
-        Assert::AreEqual(std::wstring(L"1 of 1 won (5/5) - 0h17m"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"1 of 1 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"5 of 5 points - 0h17m"), achievementsPage.GetTitleDetail());
 
         Assert::IsTrue(achievementsPage.Update(0.2)); // 59.9 -> 60.1
-        Assert::AreEqual(std::wstring(L"1 of 1 won (5/5) - 0h18m"), achievementsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"1 of 1 achievements"), achievementsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(L"5 of 5 points - 0h18m"), achievementsPage.GetTitleDetail());
     }
 
     TEST_METHOD(TestFetchItemDetailLocal)

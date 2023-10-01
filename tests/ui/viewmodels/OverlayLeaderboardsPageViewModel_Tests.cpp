@@ -34,6 +34,11 @@ private:
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 
+        OverlayLeaderboardsPageViewModelHarness()
+        {
+            mockGameContext.SetGameTitle(L"Game Title");
+        }
+
         ItemViewModel* GetItem(gsl::index nIndex) { return m_vItems.GetItemAt(nIndex); }
 
         void TestFetchItemDetail(gsl::index nIndex)
@@ -94,8 +99,9 @@ public:
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"No leaderboards present"), leaderboardsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), leaderboardsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"No leaderboards present"), leaderboardsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), leaderboardsPage.GetTitleDetail());
         Assert::IsNull(leaderboardsPage.GetItem(0));
     }
 
@@ -110,8 +116,9 @@ public:
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"2 leaderboards present"), leaderboardsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), leaderboardsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"2 leaderboards present"), leaderboardsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), leaderboardsPage.GetTitleDetail());
 
         leaderboardsPage.AssertHeader(0, L"Inactive");
         leaderboardsPage.AssertLeaderboard(1, pLbd1);
@@ -131,8 +138,9 @@ public:
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"2 leaderboards present"), leaderboardsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), leaderboardsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"2 leaderboards present"), leaderboardsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), leaderboardsPage.GetTitleDetail());
 
         leaderboardsPage.AssertHeader(0, L"Inactive");
         leaderboardsPage.AssertLeaderboard(1, pLbd1);
@@ -153,8 +161,9 @@ public:
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"3 leaderboards present"), leaderboardsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), leaderboardsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"3 leaderboards present"), leaderboardsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), leaderboardsPage.GetTitleDetail());
 
         leaderboardsPage.AssertHeader(0, L"Game Title - Inactive");
         leaderboardsPage.AssertLeaderboard(1, pLbd1);
@@ -178,8 +187,9 @@ public:
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"2 leaderboards present"), leaderboardsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), leaderboardsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"2 leaderboards present"), leaderboardsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), leaderboardsPage.GetTitleDetail());
 
         leaderboardsPage.AssertHeader(0, L"Inactive");
         leaderboardsPage.AssertLeaderboard(1, pLbd1);
@@ -201,8 +211,9 @@ public:
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"3 leaderboards present"), leaderboardsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), leaderboardsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"3 leaderboards present"), leaderboardsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), leaderboardsPage.GetTitleDetail());
 
         leaderboardsPage.AssertHeader(0, L"Active");
         leaderboardsPage.AssertLeaderboard(1, pLbd2, L"1:23.00");
@@ -228,8 +239,9 @@ public:
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"2 leaderboards present"), leaderboardsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), leaderboardsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"2 leaderboards present"), leaderboardsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), leaderboardsPage.GetTitleDetail());
 
         leaderboardsPage.AssertHeader(0, L"Inactive");
         leaderboardsPage.AssertLeaderboard(1, pLbd1);
@@ -251,8 +263,9 @@ public:
         leaderboardsPage.SetCanCollapseHeaders(false);
         leaderboardsPage.Refresh();
 
-        Assert::AreEqual(std::wstring(L"Leaderboards"), leaderboardsPage.GetTitle());
-        Assert::AreEqual(std::wstring(L"3 leaderboards present"), leaderboardsPage.GetSummary());
+        Assert::AreEqual(std::wstring(L"Game Title"), leaderboardsPage.GetTitle());
+        Assert::AreEqual(std::wstring(L"3 leaderboards present"), leaderboardsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), leaderboardsPage.GetTitleDetail());
 
         leaderboardsPage.AssertHeader(0, L"Inactive");
         leaderboardsPage.AssertLeaderboard(1, pLbd1);

@@ -24,9 +24,8 @@ private:
 
         void Refresh() override
         {
-            m_sTitle = L"Title";
-            m_sDetailTitle = L"Detail Title";
             OverlayListPageViewModel::Refresh();
+            m_bHasDetail = true;
 
             AddItem(1, L"One");
             AddItem(2, L"Two");
@@ -46,9 +45,8 @@ private:
 
         void RefreshWithHeader()
         {
-            m_sTitle = L"Title";
-            m_sDetailTitle = L"Detail Title";
             OverlayListPageViewModel::Refresh();
+            m_bHasDetail = true;
 
             m_vItems.Clear();
             AddItem(0, L"Header 1");
@@ -102,8 +100,8 @@ public:
         Assert::AreEqual({ 0U }, vmListPage.GetItemCount());
         Assert::IsFalse(vmListPage.IsDetail());
         Assert::AreEqual(std::wstring(), vmListPage.GetTitle());
-        Assert::AreEqual(std::wstring(), vmListPage.GetListTitle());
-        Assert::AreEqual(std::wstring(), vmListPage.GetSummary());
+        Assert::AreEqual(std::wstring(), vmListPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), vmListPage.GetTitleDetail());
     }
 
     TEST_METHOD(TestRefresh)
@@ -115,9 +113,9 @@ public:
         Assert::AreEqual(0, vmListPage.GetSelectedItemIndex());
         Assert::AreEqual({ 12U }, vmListPage.GetItemCount());
         Assert::IsFalse(vmListPage.IsDetail());
-        Assert::AreEqual(std::wstring(L"Title"), vmListPage.GetTitle());
-        Assert::AreEqual(std::wstring(), vmListPage.GetListTitle());
-        Assert::AreEqual(std::wstring(), vmListPage.GetSummary());
+        Assert::AreEqual(std::wstring(), vmListPage.GetTitle());
+        Assert::AreEqual(std::wstring(), vmListPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), vmListPage.GetTitleDetail());
     }
 
     TEST_METHOD(TestUpdateEmpty)
@@ -344,13 +342,13 @@ public:
         ControllerInput pInputConfirm{};
         pInputConfirm.m_bConfirmPressed = true;
         Assert::IsTrue(vmListPage.ProcessInput(pInputConfirm));
-        Assert::AreEqual(std::wstring(L"Detail Title"), vmListPage.GetTitle());
+        Assert::AreEqual(std::wstring(), vmListPage.GetTitle());
         Assert::AreEqual(0, vmListPage.GetSelectedItemIndex());
         Assert::AreEqual(1, vmListPage.vmDetail->GetId());
 
         // pressing confirm on the detail page does nothing
-        Assert::IsFalse(vmListPage.ProcessInput(pInputConfirm));
-        Assert::AreEqual(std::wstring(L"Detail Title"), vmListPage.GetTitle());
+        Assert::IsTrue(vmListPage.ProcessInput(pInputConfirm));
+        Assert::AreEqual(std::wstring(), vmListPage.GetTitle());
         Assert::AreEqual(0, vmListPage.GetSelectedItemIndex());
         Assert::AreEqual(1, vmListPage.vmDetail->GetId());
 
@@ -358,12 +356,12 @@ public:
         ControllerInput pInputDown{};
         pInputDown.m_bDownPressed = true;
         Assert::IsTrue(vmListPage.ProcessInput(pInputDown));
-        Assert::AreEqual(std::wstring(L"Detail Title"), vmListPage.GetTitle());
+        Assert::AreEqual(std::wstring(), vmListPage.GetTitle());
         Assert::AreEqual(1, vmListPage.GetSelectedItemIndex());
         Assert::AreEqual(2, vmListPage.vmDetail->GetId());
 
         Assert::IsTrue(vmListPage.ProcessInput(pInputDown));
-        Assert::AreEqual(std::wstring(L"Detail Title"), vmListPage.GetTitle());
+        Assert::AreEqual(std::wstring(), vmListPage.GetTitle());
         Assert::AreEqual(2, vmListPage.GetSelectedItemIndex());
         Assert::AreEqual(3, vmListPage.vmDetail->GetId());
 
@@ -372,13 +370,13 @@ public:
         ControllerInput pInputCancel{};
         pInputCancel.m_bCancelPressed = true;
         Assert::IsTrue(vmListPage.ProcessInput(pInputCancel));
-        Assert::AreEqual(std::wstring(L"Title"), vmListPage.GetTitle());
+        Assert::AreEqual(std::wstring(), vmListPage.GetTitle());
         Assert::AreEqual(2, vmListPage.GetSelectedItemIndex());
         Assert::IsNull(vmListPage.vmDetail);
 
         // pressing confirm reopens the detail page
         Assert::IsTrue(vmListPage.ProcessInput(pInputConfirm));
-        Assert::AreEqual(std::wstring(L"Detail Title"), vmListPage.GetTitle());
+        Assert::AreEqual(std::wstring(), vmListPage.GetTitle());
         Assert::AreEqual(2, vmListPage.GetSelectedItemIndex());
         Assert::AreEqual(3, vmListPage.vmDetail->GetId());
     }

@@ -30,6 +30,9 @@ public:
     void Refresh() override;
     bool Update(double fElapsed) override;
 
+    const wchar_t* GetPrevButtonText() const override;
+    const wchar_t* GetNextButtonText() const override;
+
     class AchievementViewModel : public ViewModelBase
     {
     public:

@@ -16,6 +16,9 @@ class OverlayLeaderboardsPageViewModel : public OverlayListPageViewModel
 public:
     void Refresh() override;
 
+    const wchar_t* GetPrevButtonText() const override;
+    const wchar_t* GetNextButtonText() const override;
+
 protected:
     bool OnHeaderClicked(ItemViewModel& vmItem) override;
     void FetchItemDetail(ItemViewModel& vmItem) override;

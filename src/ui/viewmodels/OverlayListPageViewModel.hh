@@ -16,36 +16,6 @@ class OverlayListPageViewModel : public OverlayViewModel::PageViewModel
 {
 public:
     /// <summary>
-    /// The <see cref="ModelProperty" /> for the list title.
-    /// </summary>
-    static const StringModelProperty ListTitleProperty;
-
-    /// <summary>
-    /// Gets the list title.
-    /// </summary>
-    const std::wstring& GetListTitle() const { return GetValue(ListTitleProperty); }
-
-    /// <summary>
-    /// Sets the list title.
-    /// </summary>
-    void SetListTitle(const std::wstring& sValue) { SetValue(ListTitleProperty, sValue); }
-
-    /// <summary>
-    /// The <see cref="ModelProperty" /> for the summary information.
-    /// </summary>
-    static const StringModelProperty SummaryProperty;
-
-    /// <summary>
-    /// Gets the summary information.
-    /// </summary>
-    const std::wstring& GetSummary() const { return GetValue(SummaryProperty); }
-
-    /// <summary>
-    /// Sets the summary information.
-    /// </summary>
-    void SetSummary(const std::wstring& sValue) { SetValue(SummaryProperty, sValue); }
-
-    /// <summary>
     /// The <see cref="ModelProperty" /> for whether or not headers can be collapsed.
     /// </summary>
     static const BoolModelProperty CanCollapseHeadersProperty;
@@ -80,6 +50,9 @@ public:
     void Render(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const override;
     bool ProcessInput(const ControllerInput& pInput) override;
     const wchar_t* GetAcceptButtonText() const override;
+    const wchar_t* GetCancelButtonText() const override;
+    const wchar_t* GetPrevButtonText() const override;
+    const wchar_t* GetNextButtonText() const override;
 
     class ItemViewModel : public LookupItemViewModel
     {
@@ -178,8 +151,7 @@ protected:
     mutable unsigned int m_nVisibleItems = 0;
     double m_fElapsed = 0.0;
     bool m_bDetail = false;
-    std::wstring m_sTitle;
-    std::wstring m_sDetailTitle;
+    bool m_bHasDetail = false;
 
     ItemViewModel& GetNextItem(size_t* nIndex);
     static void SetHeader(OverlayListPageViewModel::ItemViewModel& vmItem, const std::wstring& sHeader);

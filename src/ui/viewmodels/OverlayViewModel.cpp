@@ -23,6 +23,8 @@ namespace ui {
 namespace viewmodels {
 
 const StringModelProperty OverlayViewModel::PageViewModel::TitleProperty("PageViewModel", "Title", L"");
+const StringModelProperty OverlayViewModel::PageViewModel::SubTitleProperty("PageViewModel", "SubTitle", L"");
+const StringModelProperty OverlayViewModel::PageViewModel::TitleDetailProperty("PageViewModel", "TitleDetail", L"");
 
 void OverlayViewModel::BeginAnimation()
 {
@@ -150,24 +152,33 @@ void OverlayViewModel::CreateRenderImage()
     // user frame
     const auto nFont =
         m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayHeader(), ra::ui::FontStyles::Normal);
+    const auto nSubFont =
+        m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
+    const auto nDetailFont =
+        m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayDetail(), ra::ui::FontStyles::Normal);
 
     const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
     const auto sUserName = ra::Widen(pUserContext.GetDisplayName());
     const auto szUsername = m_pSurface->MeasureText(nFont, sUserName);
 
     const auto sPoints = ra::StringPrintf(L"%u Points", pUserContext.GetScore());
-    const auto szPoints = m_pSurface->MeasureText(nFont, sPoints);
+    const auto szPoints = m_pSurface->MeasureText(nSubFont, sPoints);
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+    const auto sHardcore = std::wstring(L"HARDCORE");
+    const auto szHardcore = m_pSurface->MeasureText(nDetailFont, sHardcore);
 
     constexpr auto nImageSize = 64;
     constexpr auto nPadding = 4;
     constexpr auto nUserFrameHeight = nImageSize + nPadding * 2;
-    const auto nUserFrameWidth = nImageSize + nPadding * 4 + std::max(szUsername.Width, szPoints.Width);
+    const auto nUserFrameWidth = nImageSize + nPadding * 4 +
+        std::max(std::max(szUsername.Width, szPoints.Width), bHardcore ? 0 : szHardcore.Width);
 
     const int nX = nWidth - nUserFrameWidth - nMargin;
     if (nX > 200)
     {
         constexpr int nY = nMargin;
-
         m_pSurface->FillRectangle(nX, nY, nUserFrameWidth, nUserFrameHeight, pTheme.ColorOverlayPanel());
 
         const ImageReference pUserImage(ra::ui::ImageType::UserPic, pUserContext.GetUsername());
@@ -175,27 +186,33 @@ void OverlayViewModel::CreateRenderImage()
                               pUserImage);
 
         m_pSurface->WriteText(nX + nPadding, nY + nPadding, nFont, pTheme.ColorOverlayText(), sUserName);
-        m_pSurface->WriteText(nX + nPadding, nY + nUserFrameHeight - nPadding - szPoints.Height, nFont,
-                              pTheme.ColorOverlayText(), sPoints);
-    }
+        m_pSurface->WriteText(nX + nPadding, nY + nPadding + szUsername.Height, nSubFont,
+                              pTheme.ColorOverlaySubText(), sPoints);
 
-    // hardcore indicator
-    if (ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(
-            ra::services::Feature::Hardcore))
+        if (bHardcore)
+            m_pSurface->WriteText(nX + nPadding, nY + nUserFrameHeight - nPadding - szHardcore.Height, nDetailFont,
+                                  pTheme.ColorError(), sHardcore);
+    }
+    else if (bHardcore)
     {
-        const auto nHardcoreFont =
-            m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
-        const std::wstring sHardcore = L"HARDCORE";
-        const auto szHardcore = m_pSurface->MeasureText(nHardcoreFont, sHardcore);
-        m_pSurface->WriteText(nWidth - nMargin - szHardcore.Width - nPadding, nMargin + nUserFrameHeight, nHardcoreFont,
+        m_pSurface->WriteText(nWidth - nMargin - szHardcore.Width, nMargin, nDetailFont,
                               pTheme.ColorError(), sHardcore);
     }
 
     // page header
     const auto& pCurrentPage = CurrentPage();
+    const auto& sPageHeader = pCurrentPage.GetTitle();
     const auto nPageHeaderFont =
         m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayTitle(), ra::ui::FontStyles::Normal);
-    m_pSurface->WriteText(nMargin, nMargin, nPageHeaderFont, pTheme.ColorOverlayText(), pCurrentPage.GetTitle());
+    const auto szPageHeader = m_pSurface->MeasureText(nPageHeaderFont, sPageHeader);
+    m_pSurface->WriteText(nMargin, nMargin, nPageHeaderFont, pTheme.ColorOverlayText(), sPageHeader);
+
+    const auto& sSubTitle = pCurrentPage.GetSubTitle();
+    const auto szSubTitle = m_pSurface->MeasureText(nSubFont, sSubTitle);
+    m_pSurface->WriteText(nMargin, nMargin + szPageHeader.Height, nSubFont, pTheme.ColorOverlaySubText(), sSubTitle);
+
+    const auto& sTitleDetail = pCurrentPage.GetTitleDetail();
+    m_pSurface->WriteText(nMargin, nMargin + szPageHeader.Height + szSubTitle.Height, nDetailFont, pTheme.ColorOverlaySubText(), sTitleDetail);
 
     // page content
     pCurrentPage.Render(*m_pSurface, nMargin, nMargin + nUserFrameHeight, nWidth - nMargin * 2,
@@ -203,27 +220,36 @@ void OverlayViewModel::CreateRenderImage()
 
     // navigation controls
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    const auto sBack = ra::StringPrintf(L"%s: Back", pEmulatorContext.GetCancelButtonText());
+    const auto sPrev = ra::StringPrintf(L"\u2BC7: %s", pCurrentPage.GetPrevButtonText());
+    const auto sNext = ra::StringPrintf(L"\u2BC8: %s", pCurrentPage.GetNextButtonText());
     const auto sSelect = ra::StringPrintf(L"%s: %s", pEmulatorContext.GetAcceptButtonText(), pCurrentPage.GetAcceptButtonText());
-    const auto sNext = std::wstring(L"\u2BC8: Next");
-    const auto sPrev = std::wstring(L"\u2BC7: Prev");
+    const auto sCancel = ra::StringPrintf(L"%s: %s", pEmulatorContext.GetCancelButtonText(), pCurrentPage.GetCancelButtonText());
 
-    const auto nNavFont =
-        m_pSurface->LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
-    const auto szBack = m_pSurface->MeasureText(nNavFont, sBack);
-    const auto szSelect = m_pSurface->MeasureText(nNavFont, sSelect);
+    const bool bHasPrev = sPrev.length() > 3;
+    const auto szPrev = bHasPrev ? m_pSurface->MeasureText(nDetailFont, sPrev) : ra::ui::Size();
+    const bool bHasNext = sPrev.length() > 3;
+    const auto szNext = bHasNext ? m_pSurface->MeasureText(nDetailFont, sNext) : ra::ui::Size();
+    const bool bHasSelect = *pCurrentPage.GetAcceptButtonText();
+    const auto szSelect = bHasSelect ? m_pSurface->MeasureText(nDetailFont, sSelect) : ra::ui::Size();
+    const auto szCancel = m_pSurface->MeasureText(nDetailFont, sCancel);
 
-    const int nControlsX2 = std::max(szBack.Width, szSelect.Width) + nMargin + nPadding + 2;
-    const int nControlsX1 = nControlsX2 + 72;
-    const int nControlsY2 = nHeight - nMargin - nPadding - szSelect.Height;
-    const int nControlsY1 = nControlsY2 - szBack.Height - nPadding;
+    const int nNavPadding = 2;
+    const int nCancelX = nWidth - nMargin - nNavPadding - szCancel.Width;
+    const int nSelectX = nCancelX - (bHasSelect ? nMargin * 2 : 0) - szSelect.Width;
+    const int nNextX = nSelectX - (bHasNext ? nMargin * 2 : 0) - szNext.Width;
+    const int nPrevX = nNextX - (bHasPrev ? nMargin * 2 : 0) - szPrev.Width;
+    const int nControlsX = nPrevX - nNavPadding;
+    const int nControlsY = nHeight - nMargin - nNavPadding - szCancel.Height;
 
-    m_pSurface->FillRectangle(nWidth - nControlsX1 - nPadding, nControlsY1 - nPadding, nControlsX1 - nPadding,
-                              nHeight - nControlsY1 - nPadding, pTheme.ColorOverlayPanel());
-    m_pSurface->WriteText(nWidth - nControlsX1, nControlsY1, nNavFont, pTheme.ColorOverlayText(), sNext);
-    m_pSurface->WriteText(nWidth - nControlsX1, nControlsY2, nNavFont, pTheme.ColorOverlayText(), sPrev);
-    m_pSurface->WriteText(nWidth - nControlsX2, nControlsY1, nNavFont, pTheme.ColorOverlayText(), sSelect);
-    m_pSurface->WriteText(nWidth - nControlsX2, nControlsY2, nNavFont, pTheme.ColorOverlayText(), sBack);
+    m_pSurface->FillRectangle(nControlsX, nControlsY - nNavPadding, nWidth - nMargin - nControlsX,
+                              szCancel.Height + nNavPadding * 2, pTheme.ColorOverlayPanel());
+    if (bHasPrev)
+        m_pSurface->WriteText(nPrevX, nControlsY, nDetailFont, pTheme.ColorOverlayText(), sPrev);
+    if (bHasNext)
+        m_pSurface->WriteText(nNextX, nControlsY, nDetailFont, pTheme.ColorOverlayText(), sNext);
+    if (bHasSelect)
+        m_pSurface->WriteText(nSelectX, nControlsY, nDetailFont, pTheme.ColorOverlayText(), sSelect);
+    m_pSurface->WriteText(nCancelX, nControlsY, nDetailFont, pTheme.ColorOverlayText(), sCancel);
 }
 
 void OverlayViewModel::RefreshOverlay()
@@ -379,11 +405,11 @@ void OverlayViewModel::PopulatePages()
     auto pLeaderboardsPage = std::make_unique<OverlayLeaderboardsPageViewModel>();
     m_vPages.at(1) = std::move(pLeaderboardsPage);
 
-    auto pRecentGamesPage = std::make_unique<OverlayRecentGamesPageViewModel>();
-    m_vPages.at(2) = std::move(pRecentGamesPage);
-
     auto pFriendsPage = std::make_unique<OverlayFriendsPageViewModel>();
-    m_vPages.at(3) = std::move(pFriendsPage);
+    m_vPages.at(2) = std::move(pFriendsPage);
+
+    auto pRecentGamesPage = std::make_unique<OverlayRecentGamesPageViewModel>();
+    m_vPages.at(3) = std::move(pRecentGamesPage);
 }
 
 } // namespace viewmodels

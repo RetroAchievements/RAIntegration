@@ -122,6 +122,7 @@ void OverlayTheme::LoadFromFile()
             ReadSize(m_nFontSizeOverlayTitle, sizes, "Title");
             ReadSize(m_nFontSizeOverlayHeader, sizes, "Header");
             ReadSize(m_nFontSizeOverlaySummary, sizes, "Summary");
+            ReadSize(m_nFontSizeOverlayDetail, sizes, "Detail");
         }
 
         if (overlay.HasMember("Colors"))

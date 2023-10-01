@@ -276,7 +276,7 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
         size_t nSelectedItemIndex = gsl::narrow_cast<size_t>(GetSelectedItemIndex());
         if (nSelectedItemIndex < m_vItems.Count() - 1)
         {
-            ItemViewModel* vmItem;
+            ItemViewModel* vmItem = nullptr;
             do
             {
                 ++nSelectedItemIndex;
@@ -301,7 +301,7 @@ bool OverlayListPageViewModel::ProcessInput(const ControllerInput& pInput)
         auto nSelectedItemIndex = GetSelectedItemIndex();
         if (nSelectedItemIndex > 0)
         {
-            ItemViewModel* vmItem;
+            ItemViewModel* vmItem = nullptr;
             do
             {
                 vmItem = m_vItems.GetItemAt(gsl::narrow_cast<size_t>(--nSelectedItemIndex));

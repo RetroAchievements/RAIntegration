@@ -162,7 +162,7 @@ bool OverlayLeaderboardsPageViewModel::OnHeaderClicked(ItemViewModel& vmItem)
     return false;
 }
 
-const wchar_t* OverlayLeaderboardsPageViewModel::GetPrevButtonText() const
+const wchar_t* OverlayLeaderboardsPageViewModel::GetPrevButtonText() const noexcept
 {
     if (m_bDetail)
         return L"";
@@ -170,7 +170,7 @@ const wchar_t* OverlayLeaderboardsPageViewModel::GetPrevButtonText() const
     return L"Achievements";
 }
 
-const wchar_t* OverlayLeaderboardsPageViewModel::GetNextButtonText() const
+const wchar_t* OverlayLeaderboardsPageViewModel::GetNextButtonText() const noexcept
 {
     if (m_bDetail)
         return L"";

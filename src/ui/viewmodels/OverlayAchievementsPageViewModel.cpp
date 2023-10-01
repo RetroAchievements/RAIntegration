@@ -270,7 +270,7 @@ bool OverlayAchievementsPageViewModel::OnHeaderClicked(ItemViewModel& vmItem)
     return false;
 }
 
-const wchar_t* OverlayAchievementsPageViewModel::GetPrevButtonText() const
+const wchar_t* OverlayAchievementsPageViewModel::GetPrevButtonText() const noexcept
 {
     if (m_bDetail)
         return L"";
@@ -278,7 +278,7 @@ const wchar_t* OverlayAchievementsPageViewModel::GetPrevButtonText() const
     return L"Recent Games";
 }
 
-const wchar_t* OverlayAchievementsPageViewModel::GetNextButtonText() const
+const wchar_t* OverlayAchievementsPageViewModel::GetNextButtonText() const noexcept
 {
     if (m_bDetail)
         return L"";

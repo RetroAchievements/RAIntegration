@@ -233,7 +233,7 @@ void OverlayViewModel::CreateRenderImage()
     const auto szSelect = bHasSelect ? m_pSurface->MeasureText(nDetailFont, sSelect) : ra::ui::Size();
     const auto szCancel = m_pSurface->MeasureText(nDetailFont, sCancel);
 
-    const int nNavPadding = 2;
+    constexpr int nNavPadding = 2;
     const int nCancelX = nWidth - nMargin - nNavPadding - szCancel.Width;
     const int nSelectX = nCancelX - (bHasSelect ? nMargin * 2 : 0) - szSelect.Width;
     const int nNextX = nSelectX - (bHasNext ? nMargin * 2 : 0) - szNext.Width;

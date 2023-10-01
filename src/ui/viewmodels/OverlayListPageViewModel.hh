@@ -45,7 +45,7 @@ public:
     /// </summary>
     void SetSelectedItemIndex(int nValue) { SetValue(SelectedItemIndexProperty, nValue); }
 
-    void Refresh() override;
+    void Refresh() noexcept(false) override;
     bool Update(double fElapsed) override;
     void Render(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const override;
     bool ProcessInput(const ControllerInput& pInput) override;

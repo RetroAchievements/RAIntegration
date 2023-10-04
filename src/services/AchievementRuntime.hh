@@ -69,6 +69,8 @@ public:
     /// </summary>
     rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const noexcept;
 
+    static std::string GetAchievementBadge(const rc_client_achievement_t& pAchievement);
+
     /// <summary>
     /// Gets the raw definition for the leaderboard.
     /// </summary>

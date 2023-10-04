@@ -52,15 +52,7 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem,
     vmItem.SetDetail(ra::Widen(pAchievement.description));
     vmItem.SetCollapsed(false);
 
-    std::string sBadgeName = pAchievement.badge_name;
-    if (!sBadgeName.empty() && sBadgeName.front() == 'L')
-    {
-        // local image, get from model
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        auto* vmLocalAchievement = pGameContext.Assets().FindAchievement(vmItem.GetId());
-        if (vmLocalAchievement != nullptr)
-            sBadgeName = ra::Narrow(vmLocalAchievement->GetBadge());
-    }
+    std::string sBadgeName = ra::services::AchievementRuntime::GetAchievementBadge(pAchievement);
 
     switch (pAchievement.state)
     {

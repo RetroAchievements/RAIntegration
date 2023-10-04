@@ -585,6 +585,22 @@ rc_trigger_t* AchievementRuntime::GetAchievementTrigger(ra::AchievementID nId) c
     return (achievement != nullptr) ? achievement->trigger : nullptr;
 }
 
+std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_t& pAchievement)
+{
+    std::string sBadgeName = pAchievement.badge_name;
+
+    if (!sBadgeName.empty() && sBadgeName.front() == 'L')
+    {
+        // local image, get from model
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        auto* vmLocalAchievement = pGameContext.Assets().FindAchievement(pAchievement.id);
+        if (vmLocalAchievement != nullptr)
+            sBadgeName = ra::Narrow(vmLocalAchievement->GetBadge());
+    }
+
+    return sBadgeName;
+}
+
 static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra::LeaderboardID nId) noexcept
 {
     rc_client_subset_info_t* subset = pClient->game->subsets;
@@ -1111,7 +1127,7 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
     std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmPopup(new ra::ui::viewmodels::PopupMessageViewModel);
     vmPopup->SetDescription(ra::StringPrintf(L"%s (%u)", pAchievement.title, pAchievement.points));
     vmPopup->SetDetail(ra::Widen(pAchievement.description));
-    vmPopup->SetImage(ra::ui::ImageType::Badge, pAchievement.badge_name);
+    vmPopup->SetImage(ra::ui::ImageType::Badge, AchievementRuntime::GetAchievementBadge(pAchievement));
     vmPopup->SetPopupType(ra::ui::viewmodels::Popup::AchievementTriggered);
 
     switch (vmAchievement->GetCategory())

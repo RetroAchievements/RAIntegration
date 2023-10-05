@@ -11,7 +11,6 @@
 #include "api/FetchUserFriends.hh"
 #include "api/LatestClient.hh"
 #include "api/ResolveHash.hh"
-#include "api/StartSession.hh"
 #include "api/SubmitNewTitle.hh"
 #include "api/SubmitTicket.hh"
 #include "api/UpdateAchievement.hh"
@@ -28,7 +27,6 @@ public:
     virtual const char* Name() const noexcept = 0;
 
     // === user functions ===
-    virtual StartSession::Response StartSession(const StartSession::Request& request) = 0;
     virtual FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) = 0;
 
     // === game functions ===

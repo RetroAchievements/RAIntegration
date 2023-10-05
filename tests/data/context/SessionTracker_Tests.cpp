@@ -81,21 +81,12 @@ public:
         tracker.Initialize("User");
         Assert::IsFalse(tracker.HasStoredData());
 
-        bool bSessionStarted = false;
-        tracker.mockServer.HandleRequest<ra::api::StartSession>([&bSessionStarted](const ra::api::StartSession::Request& request, _UNUSED ra::api::StartSession::Response& /*response*/)
-        {
-            Assert::AreEqual(1234U, request.GameId);
-            bSessionStarted = true;
-            return false;
-        });
-
         // BeginSession should begin the session, but not write to the file
         tracker.mockGameContext.SetGameId(1234U);
         tracker.BeginSession(1234U);
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
         Assert::AreEqual({ 1U }, tracker.mockThreadPool.PendingTasks());
         Assert::IsFalse(tracker.HasStoredData());
-        Assert::IsTrue(bSessionStarted);
 
         // after 30 seconds, the callback will be called, but the file shouldn't be written until at least 60 seconds have elapsed
         tracker.mockClock.AdvanceTime(std::chrono::seconds(30));
@@ -130,20 +121,11 @@ public:
         tracker.Initialize("User");
         Assert::IsTrue(tracker.HasStoredData());
 
-        bool bSessionStarted = false;
-        tracker.mockServer.HandleRequest<ra::api::StartSession>([&bSessionStarted](const ra::api::StartSession::Request& request, _UNUSED ra::api::StartSession::Response& /*response*/)
-        {
-            Assert::AreEqual(1234U, request.GameId);
-            bSessionStarted = true;
-            return false;
-        });
-
         // BeginSession should begin the session, but not write to the file
         tracker.mockGameContext.SetGameId(1234U);
         tracker.BeginSession(1234U);
         tracker.mockThreadPool.ExecuteNextTask(); // execute async server call
         Assert::AreEqual(sInitialValue, tracker.GetStoredData());
-        Assert::IsTrue(bSessionStarted);
 
         // after 30 seconds, the callback will be called, but the file shouldn't be written until at least 60 seconds have elapsed
         tracker.mockClock.AdvanceTime(std::chrono::seconds(30));

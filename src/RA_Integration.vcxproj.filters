@@ -620,9 +620,6 @@
     <ClInclude Include="ui\drawing\gdi\GDIBitmapSurface.hh">
       <Filter>UI\Drawing\GDI</Filter>
     </ClInclude>
-    <ClInclude Include="api\StartSession.hh">
-      <Filter>API</Filter>
-    </ClInclude>
     <ClInclude Include="ui\viewmodels\PopupMessageViewModel.hh">
       <Filter>UI\ViewModels</Filter>
     </ClInclude>

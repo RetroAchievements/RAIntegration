@@ -58,11 +58,6 @@ public:
 
     // === user functions ===
 
-    StartSession::Response StartSession(const StartSession::Request& request) override
-    {
-        return HandleRequest<ra::api::StartSession>(request);
-    }
-
     FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request& request) override
     {
         return HandleRequest<ra::api::FetchUserFriends>(request);

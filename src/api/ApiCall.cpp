@@ -14,7 +14,6 @@ static ra::api::IServer& Server()
     return ra::services::ServiceLocator::GetMutable<ra::api::IServer>();
 }
 
-StartSession::Response StartSession::Request::Call() const { return Server().StartSession(*this); }
 FetchUserFriends::Response FetchUserFriends::Request::Call() const { return Server().FetchUserFriends(*this); }
 ResolveHash::Response ResolveHash::Request::Call() const { return Server().ResolveHash(*this); }
 FetchCodeNotes::Response FetchCodeNotes::Request::Call() const { return Server().FetchCodeNotes(*this); }

@@ -160,7 +160,7 @@ void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_cl
         nIndex += 2;
         for (; nIndex < httpRequest.GetPostData().length(); ++nIndex)
         {
-            char c = httpRequest.GetPostData().at(nIndex);
+            const char c = httpRequest.GetPostData().at(nIndex);
             if (c == '&')
                 break;
 
@@ -169,7 +169,7 @@ void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_cl
 
         std::string sParams;
         bool redacted = false;
-        for (char c : httpRequest.GetPostData())
+        for (const char c : httpRequest.GetPostData())
         {
             if (c == '=')
             {
@@ -196,7 +196,7 @@ void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_cl
         RA_LOG_INFO(">> %s request: %s", sApi.c_str(), sParams.c_str());
     }
 
-    httpRequest.CallAsync([fCallback, pCallbackData, sApi](const ra::services::Http::Response& httpResponse) noexcept {
+    httpRequest.CallAsync([fCallback, pCallbackData, sApi](const ra::services::Http::Response& httpResponse) {
         rc_api_server_response_t pResponse;
         ConvertHttpResponseToApiServerResponse(pResponse, httpResponse);
 

@@ -64,7 +64,8 @@ void LeaderboardModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
         }
         else if (args.Property == ValueFormatProperty)
         {
-            SyncValueFormat();
+            if (m_pLeaderboard)
+                SyncValueFormat();
         }
     }
 

@@ -62,6 +62,10 @@ void LeaderboardModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
         {
             SyncDefinition();
         }
+        else if (args.Property == ValueFormatProperty)
+        {
+            SyncValueFormat();
+        }
     }
 
     AssetModelBase::OnValueChanged(args);
@@ -260,6 +264,12 @@ void LeaderboardModel::SyncDescription()
     m_pLeaderboard->public_.description = m_sDescriptionBuffer.c_str();
 }
 
+void LeaderboardModel::SyncValueFormat()
+{
+    m_pLeaderboard->format = ra::etoi(GetValueFormat());
+    m_pLeaderboard->public_.format = rc_client_map_leaderboard_format(m_pLeaderboard->format);
+}
+
 void LeaderboardModel::SyncDefinition()
 {
     if (!m_pLeaderboard)
@@ -383,6 +393,7 @@ void LeaderboardModel::AttachAndInitialize(struct rc_client_leaderboard_info_t& 
     SyncTitle();
     SyncDescription();
     SyncDefinition();
+    SyncValueFormat();
 }
 
 void LeaderboardModel::Serialize(ra::services::TextWriter& pWriter) const

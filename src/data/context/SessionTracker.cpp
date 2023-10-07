@@ -5,8 +5,6 @@
 #include "RA_md5factory.h"
 #include "RA_StringUtils.h"
 
-#include "api\StartSession.hh"
-
 #include "data\context\GameContext.hh"
 
 #include "services\AchievementRuntime.hh"
@@ -115,10 +113,6 @@ void SessionTracker::BeginSession(unsigned int nGameId)
 
     if (nGameId != 0)
     {
-        ra::api::StartSession::Request request;
-        request.GameId = nGameId;
-        request.CallAsync([](const ra::api::StartSession::Response&) {});
-
         // make sure a persisted play entry exists for the game and is first in the list
         AddSession(nGameId, m_tSessionStart, std::chrono::seconds(0));
         if (m_vGameStats.begin()->GameId != nGameId)

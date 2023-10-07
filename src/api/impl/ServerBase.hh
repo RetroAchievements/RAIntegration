@@ -17,10 +17,6 @@ class ServerBase : public IServer
 {
 public:
     // === user functions ===
-    StartSession::Response StartSession(const StartSession::Request&) override
-    {
-        return UnsupportedApi<StartSession::Response>(StartSession::Name());
-    }
 
     FetchUserFriends::Response FetchUserFriends(const FetchUserFriends::Request&) override
     {

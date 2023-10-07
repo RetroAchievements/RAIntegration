@@ -474,38 +474,6 @@ static bool DoUpload(const std::string& sHost, const char* restrict sApiName, co
 
 // === APIs ===
 
-StartSession::Response ConnectedServer::StartSession(const StartSession::Request& request)
-{
-    StartSession::Response response;
-
-    rc_api_start_session_request_t api_params;
-    memset(&api_params, 0, sizeof(api_params));
-
-    const auto& pUserContext = ra::services::ServiceLocator::Get<ra::data::context::UserContext>();
-    api_params.username = pUserContext.GetUsername().c_str();
-    api_params.api_token = pUserContext.GetApiToken().c_str();
-    api_params.game_id = request.GameId;
-
-    rc_api_request_t api_request;
-    if (rc_api_init_start_session_request(&api_request, &api_params) == RC_OK)
-    {
-        ra::services::Http::Response httpResponse;
-        if (DoRequest(api_request, StartSession::Name(), httpResponse, response))
-        {
-            rc_api_start_session_response_t api_response;
-            const auto nResult = rc_api_process_start_session_response(&api_response, httpResponse.Content().c_str());
-
-            if (ValidateResponse(nResult, api_response.response, StartSession::Name(), httpResponse.StatusCode(), response))
-                response.Result = ApiResult::Success;
-
-            rc_api_destroy_start_session_response(&api_response);
-        }
-    }
-
-    rc_api_destroy_request(&api_request);
-    return response;
-}
-
 FetchUserFriends::Response ConnectedServer::FetchUserFriends(const FetchUserFriends::Request&)
 {
     FetchUserFriends::Response response;

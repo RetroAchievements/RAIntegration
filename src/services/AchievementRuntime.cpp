@@ -153,9 +153,55 @@ void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_cl
     httpRequest.SetPostData(pRequest->post_data);
     httpRequest.SetContentType(pRequest->content_type);
 
-    httpRequest.CallAsync([fCallback, pCallbackData](const ra::services::Http::Response& httpResponse) noexcept {
+    std::string sApi;
+    auto nIndex = httpRequest.GetPostData().find("r=", 0, 2);
+    if (nIndex != std::string::npos)
+    {
+        nIndex += 2;
+        for (; nIndex < httpRequest.GetPostData().length(); ++nIndex)
+        {
+            const char c = httpRequest.GetPostData().at(nIndex);
+            if (c == '&')
+                break;
+
+            sApi.push_back(c);
+        }
+
+        std::string sParams;
+        bool redacted = false;
+        for (const char c : httpRequest.GetPostData())
+        {
+            if (c == '=')
+            {
+                const auto param = sParams.back();
+                redacted = (param == 't') || (param == 'p' && ra::StringStartsWith(sApi, "login"));
+
+                if (redacted)
+                {
+                    sParams.append("=[redacted]");
+                    continue;
+                }
+            }
+            else if (c == '&')
+            {
+                redacted = false;
+            }
+            else if (redacted)
+            {
+                continue;
+            }
+
+            sParams.push_back(c);
+        }
+        RA_LOG_INFO(">> %s request: %s", sApi.c_str(), sParams.c_str());
+    }
+
+    httpRequest.CallAsync([fCallback, pCallbackData, sApi](const ra::services::Http::Response& httpResponse) {
         rc_api_server_response_t pResponse;
         ConvertHttpResponseToApiServerResponse(pResponse, httpResponse);
+
+        RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()),
+                    httpResponse.Content().c_str());
 
         fCallback(&pResponse, pCallbackData);
     });

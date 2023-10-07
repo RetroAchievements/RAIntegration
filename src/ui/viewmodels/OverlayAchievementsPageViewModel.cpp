@@ -15,7 +15,7 @@
 
 #include "ui\viewmodels\WindowManager.hh"
 
-#include <rcheevos\src\rcheevos\rc_client_internal.h>
+#include <rcheevos\src\rc_client_internal.h>
 
 namespace ra {
 namespace ui {

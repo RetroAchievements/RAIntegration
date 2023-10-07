@@ -32,7 +32,7 @@
 #include "ui\viewmodels\ScoreboardViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
-#include <rcheevos\src\rcheevos\rc_client_internal.h>
+#include <rcheevos\src\rc_client_internal.h>
 
 namespace ra {
 namespace data {

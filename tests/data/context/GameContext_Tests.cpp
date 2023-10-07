@@ -8,7 +8,7 @@
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 
-#include <rcheevos/src/rcheevos/rc_version.h>
+#include <rcheevos\src\rc_version.h>
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"

@@ -28,7 +28,7 @@
 #include <rcheevos\include\rc_api_runtime.h>
 #include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
 #include <rcheevos\src\rcheevos\rc_internal.h>
-#include <rcheevos\src\rcheevos\rc_client_internal.h>
+#include <rcheevos\src\rc_client_internal.h>
 #include <rcheevos\src\rhash\md5.h>
 
 namespace ra {
@@ -235,7 +235,7 @@ private:
     {
         rc_client_subset_info_t pCoreSubset{};
         rc_client_subset_info_t pLocalSubset{};
-        rc_api_buffer_t pBuffer{};
+        rc_buffer_t pBuffer{};
         std::vector<void*> vAllocatedMemory;
     } SubsetWrapper;
     std::unique_ptr<SubsetWrapper> m_pSubsetWrapper;
@@ -326,7 +326,7 @@ private:
         if (!vAchievements.empty())
         {
             pSubset->achievements = static_cast<rc_client_achievement_info_t*>(
-                rc_buf_alloc(&pSubsetWrapper->pBuffer, vAchievements.size() * sizeof(*pSubset->achievements)));
+                rc_buffer_alloc(&pSubsetWrapper->pBuffer, vAchievements.size() * sizeof(*pSubset->achievements)));
             memset(pSubset->achievements, 0, vAchievements.size() * sizeof(*pSubset->achievements));
 
             rc_client_achievement_info_t* pAchievement = pSubset->achievements;
@@ -400,7 +400,7 @@ private:
         if (!vLeaderboards.empty())
         {
             pSubset->leaderboards = static_cast<rc_client_leaderboard_info_t*>(
-                rc_buf_alloc(&pSubsetWrapper->pBuffer, vLeaderboards.size() * sizeof(*pSubset->leaderboards)));
+                rc_buffer_alloc(&pSubsetWrapper->pBuffer, vLeaderboards.size() * sizeof(*pSubset->leaderboards)));
             memset(pSubset->leaderboards, 0, vLeaderboards.size() * sizeof(*pSubset->leaderboards));
 
             rc_client_leaderboard_info_t* pLeaderboard = pSubset->leaderboards;
@@ -529,7 +529,7 @@ public:
         pSubsetWrapper.reset(new SubsetWrapper);
         memset(&pSubsetWrapper->pCoreSubset, 0, sizeof(pSubsetWrapper->pCoreSubset));
         memset(&pSubsetWrapper->pLocalSubset, 0, sizeof(pSubsetWrapper->pLocalSubset));
-        rc_buf_init(&pSubsetWrapper->pBuffer);
+        rc_buffer_init(&pSubsetWrapper->pBuffer);
 
         pSubsetWrapper->pCoreSubset.public_.id = pClient->game->public_.id;
         pSubsetWrapper->pCoreSubset.public_.title = pClient->game->public_.title;

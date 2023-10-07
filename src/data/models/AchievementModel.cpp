@@ -10,7 +10,7 @@
 #include "services\ServiceLocator.hh"
 
 #include <rcheevos\src\rcheevos\rc_internal.h>
-#include <rcheevos\src\rcheevos\rc_client_internal.h>
+#include <rcheevos\src\rc_client_internal.h>
 
 namespace ra {
 namespace data {

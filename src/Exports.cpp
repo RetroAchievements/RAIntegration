@@ -39,7 +39,7 @@
 
 #include <rcheevos\include\rc_api_runtime.h>
 #include <rcheevos\src\rapi\rc_api_common.h>
-#include <rcheevos\src\rcheevos\rc_client_internal.h>
+#include <rcheevos\src\rc_client_internal.h>
 
 API const char* CCONV _RA_IntegrationVersion() { return RA_INTEGRATION_VERSION; }
 
@@ -108,9 +108,9 @@ static void InitializeOfflineMode()
     }
 
     auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
-    pClient->user.username = rc_buf_strcpy(&pClient->state.buffer, pUserContext.GetUsername().c_str());
-    pClient->user.display_name = rc_buf_strcpy(&pClient->state.buffer, pUserContext.GetDisplayName().c_str());
-    pClient->user.token = rc_buf_strcpy(&pClient->state.buffer, pConfiguration.GetApiToken().c_str());
+    pClient->user.username = rc_buffer_strcpy(&pClient->state.buffer, pUserContext.GetUsername().c_str());
+    pClient->user.display_name = rc_buffer_strcpy(&pClient->state.buffer, pUserContext.GetDisplayName().c_str());
+    pClient->user.token = rc_buffer_strcpy(&pClient->state.buffer, pConfiguration.GetApiToken().c_str());
     pClient->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
 
     pUserContext.DisableLogin();

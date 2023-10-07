@@ -51,6 +51,7 @@ public:
     int FontSizeOverlayTitle() const noexcept { return m_nFontSizeOverlayTitle; }
     int FontSizeOverlayHeader() const noexcept { return m_nFontSizeOverlayHeader; }
     int FontSizeOverlaySummary() const noexcept { return m_nFontSizeOverlaySummary; }
+    int FontSizeOverlayDetail() const noexcept { return m_nFontSizeOverlayDetail; }
 
     Color ColorOverlayPanel() const noexcept { return m_colorOverlayPanel; }
     Color ColorOverlayText() const noexcept { return m_colorOverlayText; }
@@ -96,6 +97,7 @@ private:
     int m_nFontSizeOverlayTitle = 32;
     int m_nFontSizeOverlayHeader = 26;
     int m_nFontSizeOverlaySummary = 22;
+    int m_nFontSizeOverlayDetail = 14;
 
     Color m_colorOverlayPanel{ 255, 32, 32, 32 };
     Color m_colorOverlayText{ 255, 17, 102, 221 };

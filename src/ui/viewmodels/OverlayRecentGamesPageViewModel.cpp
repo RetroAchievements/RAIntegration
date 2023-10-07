@@ -21,7 +21,7 @@ namespace viewmodels {
 
 void OverlayRecentGamesPageViewModel::Refresh()
 {
-    m_sTitle = L"Recent Games";
+    SetTitle(L"Recent Games");
     OverlayListPageViewModel::Refresh();
 
     for (gsl::index nIndex = m_vItems.Count() - 1; nIndex >= 0; --nIndex)

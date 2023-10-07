@@ -12,7 +12,7 @@ namespace viewmodels {
 
 void OverlayFriendsPageViewModel::Refresh()
 {
-    m_sTitle = L"Following";
+    SetTitle(L"Following");
     OverlayListPageViewModel::Refresh();
 
     const auto& pClock = ra::services::ServiceLocator::Get<ra::services::IClock>();
@@ -26,7 +26,7 @@ void OverlayFriendsPageViewModel::Refresh()
         {
             if (response.Failed())
             {
-                SetSummary(ra::Widen(response.ErrorMessage));
+                SetSubTitle(ra::Widen(response.ErrorMessage));
                 return;
             }
 

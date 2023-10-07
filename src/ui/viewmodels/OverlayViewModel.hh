@@ -83,7 +83,40 @@ public:
         /// </summary>
         void SetTitle(const std::wstring& sValue) { SetValue(TitleProperty, sValue); }
 
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the page subtitle.
+        /// </summary>
+        static const StringModelProperty SubTitleProperty;
+
+        /// <summary>
+        /// Gets the page subtitle to display.
+        /// </summary>
+        const std::wstring& GetSubTitle() const { return GetValue(SubTitleProperty); }
+
+        /// <summary>
+        /// Sets the page subtitle to display.
+        /// </summary>
+        void SetSubTitle(const std::wstring& sValue) { SetValue(SubTitleProperty, sValue); }
+
+        /// <summary>
+        /// The <see cref="ModelProperty" /> for the page title detail.
+        /// </summary>
+        static const StringModelProperty TitleDetailProperty;
+
+        /// <summary>
+        /// Gets the page title detail to display.
+        /// </summary>
+        const std::wstring& GetTitleDetail() const { return GetValue(TitleDetailProperty); }
+
+        /// <summary>
+        /// Sets the page title detail to display.
+        /// </summary>
+        void SetTitleDetail(const std::wstring& sValue) { SetValue(TitleDetailProperty, sValue); }
+
         virtual const wchar_t* GetAcceptButtonText() const noexcept(false) { return L"Select"; }
+        virtual const wchar_t* GetCancelButtonText() const noexcept(false) { return L"Close"; }
+        virtual const wchar_t* GetPrevButtonText() const noexcept(false) { return L"Prev"; }
+        virtual const wchar_t* GetNextButtonText() const noexcept(false) { return L"Next"; }
 
         virtual void Refresh() = 0;
 

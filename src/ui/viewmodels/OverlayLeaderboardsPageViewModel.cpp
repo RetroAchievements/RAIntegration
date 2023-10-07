@@ -57,13 +57,12 @@ static void SetLeaderboard(OverlayListPageViewModel::ItemViewModel& vmItem,
 
 void OverlayLeaderboardsPageViewModel::Refresh()
 {
-    m_sTitle = L"Leaderboards";
-    m_sDetailTitle = L"Leaderboard Info";
     OverlayListPageViewModel::Refresh();
 
     // title
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    SetListTitle(pGameContext.GameTitle());
+    SetTitle(pGameContext.GameTitle());
+    m_bHasDetail = true;
 
     // leaderboard list
     const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
@@ -142,9 +141,9 @@ void OverlayLeaderboardsPageViewModel::Refresh()
 
     // summary
     if (nNumberOfLeaderboards == 0)
-        SetSummary(L"No leaderboards present");
+        SetSubTitle(L"No leaderboards present");
     else
-        SetSummary(ra::StringPrintf(L"%u leaderboards present", nNumberOfLeaderboards));
+        SetSubTitle(ra::StringPrintf(L"%u leaderboards present", nNumberOfLeaderboards));
 }
 
 bool OverlayLeaderboardsPageViewModel::OnHeaderClicked(ItemViewModel& vmItem)
@@ -161,6 +160,22 @@ bool OverlayLeaderboardsPageViewModel::OnHeaderClicked(ItemViewModel& vmItem)
     }
 
     return false;
+}
+
+const wchar_t* OverlayLeaderboardsPageViewModel::GetPrevButtonText() const noexcept
+{
+    if (m_bDetail)
+        return L"";
+
+    return L"Achievements";
+}
+
+const wchar_t* OverlayLeaderboardsPageViewModel::GetNextButtonText() const noexcept
+{
+    if (m_bDetail)
+        return L"";
+
+    return L"Following";
 }
 
 void OverlayLeaderboardsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, _UNUSED int nWidth, int nHeight) const

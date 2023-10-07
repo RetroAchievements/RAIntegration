@@ -12,6 +12,10 @@ class OverlayRecentGamesPageViewModel : public OverlayListPageViewModel
 public:
     void Refresh() override;
 
+    const wchar_t* GetPrevButtonText() const noexcept override { return L"Following"; }
+    const wchar_t* GetNextButtonText() const noexcept override { return L"Achievements"; }
+    const wchar_t* GetAcceptButtonText() const noexcept override { return L""; }
+
 protected:
     void UpdateGameEntry(ItemViewModel& pvmItem, const std::wstring& sGameName, const std::string& sGameBadge,
                          std::chrono::seconds nPlaytimeSeconds);

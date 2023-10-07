@@ -47,6 +47,15 @@ private:
     };
 
 public:
+    TEST_METHOD(TestNavigationLabels)
+    {
+        OverlayRecentGamesPageViewModelHarness gamesPage;
+        Assert::AreEqual(L"", gamesPage.GetAcceptButtonText());
+        Assert::AreEqual(L"Close", gamesPage.GetCancelButtonText());
+        Assert::AreEqual(L"Following", gamesPage.GetPrevButtonText());
+        Assert::AreEqual(L"Achievements", gamesPage.GetNextButtonText());
+    }
+
     TEST_METHOD(TestRefreshNoGames)
     {
         OverlayRecentGamesPageViewModelHarness gamesPage;
@@ -54,7 +63,8 @@ public:
         gamesPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Recent Games"), gamesPage.GetTitle());
-        Assert::AreEqual(std::wstring(), gamesPage.GetSummary());
+        Assert::AreEqual(std::wstring(), gamesPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), gamesPage.GetTitleDetail());
         Assert::AreEqual({ 0U }, gamesPage.GetItemCount());
     }
 
@@ -67,8 +77,9 @@ public:
         gamesPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Recent Games"), gamesPage.GetTitle());
-        Assert::AreEqual(std::wstring(), gamesPage.GetSummary());
-        Assert::AreEqual({ 1U }, gamesPage.GetItemCount());
+        Assert::AreEqual(std::wstring(), gamesPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), gamesPage.GetTitleDetail());
+        Assert::AreEqual({1U}, gamesPage.GetItemCount());
 
         const auto* pItem1 = gamesPage.GetItem(0);
         Assert::IsNotNull(pItem1);
@@ -102,8 +113,9 @@ public:
         gamesPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Recent Games"), gamesPage.GetTitle());
-        Assert::AreEqual(std::wstring(), gamesPage.GetSummary());
-        Assert::AreEqual({ 1U }, gamesPage.GetItemCount());
+        Assert::AreEqual(std::wstring(), gamesPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), gamesPage.GetTitleDetail());
+        Assert::AreEqual({1U}, gamesPage.GetItemCount());
 
         // data is not initially available
         auto* pItem1 = gamesPage.GetItem(0);
@@ -158,8 +170,9 @@ public:
         gamesPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Recent Games"), gamesPage.GetTitle());
-        Assert::AreEqual(std::wstring(), gamesPage.GetSummary());
-        Assert::AreEqual({ 1U }, gamesPage.GetItemCount());
+        Assert::AreEqual(std::wstring(), gamesPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), gamesPage.GetTitleDetail());
+        Assert::AreEqual({1U}, gamesPage.GetItemCount());
 
         // data is not initially available
         auto* pItem1 = gamesPage.GetItem(0);

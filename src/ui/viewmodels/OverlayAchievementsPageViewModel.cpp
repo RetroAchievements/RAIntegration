@@ -52,15 +52,7 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem,
     vmItem.SetDetail(ra::Widen(pAchievement.description));
     vmItem.SetCollapsed(false);
 
-    std::string sBadgeName = pAchievement.badge_name;
-    if (!sBadgeName.empty() && sBadgeName.front() == 'L')
-    {
-        // local image, get from model
-        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-        auto* vmLocalAchievement = pGameContext.Assets().FindAchievement(vmItem.GetId());
-        if (vmLocalAchievement != nullptr)
-            sBadgeName = ra::Narrow(vmLocalAchievement->GetBadge());
-    }
+    std::string sBadgeName = ra::services::AchievementRuntime::GetAchievementBadge(pAchievement);
 
     switch (pAchievement.state)
     {
@@ -95,13 +87,16 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem,
 
 void OverlayAchievementsPageViewModel::Refresh()
 {
-    m_sTitle = L"Achievements";
-    m_sDetailTitle = L"Achievement Info";
     OverlayListPageViewModel::Refresh();
 
     // title
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-    SetListTitle(pGameContext.GameTitle());
+    const auto& sTitle = pGameContext.GameTitle();
+    if (sTitle.empty())
+        SetTitle(L"No Game Loaded");
+    else
+        SetTitle(pGameContext.GameTitle());
+    m_bHasDetail = true;
 
     // achievement list
     const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
@@ -200,24 +195,31 @@ void OverlayAchievementsPageViewModel::Refresh()
     rc_client_user_game_summary_t summary;
     rc_client_get_user_game_summary(pClient, &summary);
     if (nNumberOfAchievements == 0)
-        m_sSummary = L"No achievements present";
+    {
+        SetSubTitle(L"No achievements present");
+    }
     else if (summary.num_core_achievements > 0)
-        m_sSummary = ra::StringPrintf(L"%u of %u won (%u/%u)",
-            summary.num_unlocked_achievements, summary.num_core_achievements,
-            summary.points_unlocked, summary.points_core);
+    {
+        SetSubTitle(ra::StringPrintf(L"%u of %u achievements",
+            summary.num_unlocked_achievements, summary.num_core_achievements));
+
+        m_sSummary = ra::StringPrintf(L"%d of %d points", summary.points_unlocked, summary.points_core);
+    }
     else
-        m_sSummary = ra::StringPrintf(L"%u achievements present", nNumberOfAchievements);
+    {
+        SetSubTitle(ra::StringPrintf(L"%u achievements present", nNumberOfAchievements));
+    }
 
     // playtime
     if (pGameContext.GameId() == 0)
     {
-        SetSummary(m_sSummary);
+        SetTitleDetail(m_sSummary);
     }
     else
     {
         const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(pGameContext.GameId());
         const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
-        SetSummary(ra::StringPrintf(L"%s - %dh%02dm", m_sSummary, nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
+        SetTitleDetail(ra::StringPrintf(L"%s - %dh%02dm", m_sSummary, nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
         m_fElapsed = static_cast<double>(nPlayTimeSeconds.count() % 60);
     }
 
@@ -234,7 +236,7 @@ bool OverlayAchievementsPageViewModel::Update(double fElapsed)
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto nPlayTimeSeconds = ra::services::ServiceLocator::Get<ra::data::context::SessionTracker>().GetTotalPlaytime(pGameContext.GameId());
     const auto nPlayTimeMinutes = std::chrono::duration_cast<std::chrono::minutes>(nPlayTimeSeconds).count();
-    SetSummary(ra::StringPrintf(L"%s - %dh%02dm", m_sSummary, nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
+    SetTitleDetail(ra::StringPrintf(L"%s - %dh%02dm", m_sSummary, nPlayTimeMinutes / 60, nPlayTimeMinutes % 60));
 
     do
     {
@@ -260,6 +262,22 @@ bool OverlayAchievementsPageViewModel::OnHeaderClicked(ItemViewModel& vmItem)
     return false;
 }
 
+const wchar_t* OverlayAchievementsPageViewModel::GetPrevButtonText() const noexcept
+{
+    if (m_bDetail)
+        return L"";
+
+    return L"Recent Games";
+}
+
+const wchar_t* OverlayAchievementsPageViewModel::GetNextButtonText() const noexcept
+{
+    if (m_bDetail)
+        return L"";
+
+    return L"Leaderboards";
+}
+
 void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, _UNUSED int nWidth, int nHeight) const
 {
     const auto* pAchievement = m_vItems.GetItemAt(GetSelectedItemIndex());
@@ -269,6 +287,7 @@ void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& p
     const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
     const auto nFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayHeader(), ra::ui::FontStyles::Normal);
     const auto nSubFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlaySummary(), ra::ui::FontStyles::Normal);
+    const auto nDetailFont = pSurface.LoadFont(pTheme.FontOverlay(), pTheme.FontSizeOverlayDetail(), ra::ui::FontStyles::Normal);
     constexpr auto nAchievementSize = 64;
 
     pSurface.DrawImage(nX, nY, nAchievementSize, nAchievementSize, pAchievement->Image);
@@ -281,9 +300,11 @@ void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& p
     if (pDetail == m_vAchievementDetails.end())
         return;
 
-    pSurface.WriteText(nX, nY, nSubFont, pTheme.ColorOverlaySubText(), L"Created: " + pDetail->second.GetCreatedDate());
-    pSurface.WriteText(nX, nY + 26, nSubFont, pTheme.ColorOverlaySubText(), L"Modified: " + pDetail->second.GetModifiedDate());
-    nY += 60;
+    const auto szDetail = pSurface.MeasureText(nDetailFont, L"M");
+    pSurface.WriteText(nX, nY, nDetailFont, pTheme.ColorOverlaySubText(), L"Created: " + pDetail->second.GetCreatedDate());
+    nY += szDetail.Height;
+    pSurface.WriteText(nX, nY, nDetailFont, pTheme.ColorOverlaySubText(), L"Modified: " + pDetail->second.GetModifiedDate());
+    nY += szDetail.Height + 8;
 
     const auto sWonBy = pDetail->second.GetWonBy();
     if (sWonBy.empty())

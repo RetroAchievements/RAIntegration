@@ -41,6 +41,15 @@ private:
     };
 
 public:
+    TEST_METHOD(TestNavigationLabels)
+    {
+        OverlayFriendsPageViewModelHarness friendsPage;
+        Assert::AreEqual(L"", friendsPage.GetAcceptButtonText());
+        Assert::AreEqual(L"Close", friendsPage.GetCancelButtonText());
+        Assert::AreEqual(L"Leaderboards", friendsPage.GetPrevButtonText());
+        Assert::AreEqual(L"Recent Games", friendsPage.GetNextButtonText());
+    }
+
     TEST_METHOD(TestRefreshNoFriends)
     {
         OverlayFriendsPageViewModelHarness friendsPage;
@@ -54,12 +63,14 @@ public:
         friendsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Following"), friendsPage.GetTitle());
-        Assert::AreEqual(std::wstring(), friendsPage.GetSummary());
+        Assert::AreEqual(std::wstring(), friendsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), friendsPage.GetTitleDetail());
 
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
 
-        Assert::AreEqual(std::wstring(), friendsPage.GetSummary());
-        Assert::AreEqual({ 0U }, friendsPage.GetItemCount());
+        Assert::AreEqual(std::wstring(), friendsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), friendsPage.GetTitleDetail());
+        Assert::AreEqual({0U}, friendsPage.GetItemCount());
     }
 
     TEST_METHOD(TestRefreshSeveralFriends)
@@ -78,11 +89,13 @@ public:
         friendsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Following"), friendsPage.GetTitle());
-        Assert::AreEqual(std::wstring(), friendsPage.GetSummary());
+        Assert::AreEqual(std::wstring(), friendsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), friendsPage.GetTitleDetail());
 
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
 
-        Assert::AreEqual(std::wstring(), friendsPage.GetSummary());
+        Assert::AreEqual(std::wstring(), friendsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), friendsPage.GetTitleDetail());
 
         const auto* pFriend1 = friendsPage.GetItem(0);
         Assert::IsNotNull(pFriend1);
@@ -120,12 +133,14 @@ public:
         friendsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Following"), friendsPage.GetTitle());
-        Assert::AreEqual(std::wstring(), friendsPage.GetSummary());
+        Assert::AreEqual(std::wstring(), friendsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), friendsPage.GetTitleDetail());
 
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
 
-        Assert::AreEqual(std::wstring(L"Failed to find friends"), friendsPage.GetSummary());
-        Assert::AreEqual({ 0U }, friendsPage.GetItemCount());
+        Assert::AreEqual(std::wstring(L"Failed to find friends"), friendsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), friendsPage.GetTitleDetail());
+        Assert::AreEqual({0U}, friendsPage.GetItemCount());
     }
 
     TEST_METHOD(TestRefreshTimer)
@@ -144,7 +159,8 @@ public:
         friendsPage.Refresh();
 
         Assert::AreEqual(std::wstring(L"Following"), friendsPage.GetTitle());
-        Assert::AreEqual(std::wstring(), friendsPage.GetSummary());
+        Assert::AreEqual(std::wstring(), friendsPage.GetSubTitle());
+        Assert::AreEqual(std::wstring(), friendsPage.GetTitleDetail());
 
         friendsPage.mockTheadPool.ExecuteNextTask(); // fetch friends list is async
         Assert::AreEqual({ 3U }, friendsPage.GetItemCount());

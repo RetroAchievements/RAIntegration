@@ -543,33 +543,8 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
     {
         if (args.Property == StateProperty)
         {
-            const auto nOldState = ra::itoe<ra::data::models::AssetState>(args.tOldValue);
-            const auto nNewState = ra::itoe<ra::data::models::AssetState>(args.tNewValue);
-
-            // make sure to update the hit counts in the frame where the achievement triggers
-            // before it's deactivated, which might remove it from the runtime
-            if (nNewState == ra::data::models::AssetState::Triggered)
-                Trigger().DoFrame();
-
-            // update the state of the asset
-            m_pAsset->SetState(nNewState);
-
-            // if the asset became active, rebind to the actual trigger
-            if (ra::data::models::AssetModelBase::IsActive(nNewState))
-            {
-                if (!ra::data::models::AssetModelBase::IsActive(nOldState))
-                    UpdateTriggerBinding();
-            }
-
-            if (nNewState == ra::data::models::AssetState::Waiting)
-                SetValue(WaitingLabelProperty, L"Waiting");
-            else if (nOldState == ra::data::models::AssetState::Waiting)
-                SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
-
-            if (ra::data::models::AssetModelBase::IsActive(nNewState))
-                UpdateAssetFrameValues();
-            else
-                UpdateMeasuredValue();
+            HandleStateChanged(ra::itoe<ra::data::models::AssetState>(args.tOldValue),
+                               ra::itoe<ra::data::models::AssetState>(args.tNewValue));
         }
         else if (args.Property == CategoryProperty)
         {
@@ -615,6 +590,43 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
     }
 
     WindowViewModelBase::OnValueChanged(args);
+}
+
+void AssetEditorViewModel::HandleStateChanged(ra::data::models::AssetState nOldState, ra::data::models::AssetState nNewState)
+{
+    // make sure to update the hit counts in the frame where the achievement triggers
+    // before it's deactivated, which might remove it from the runtime
+    if (nNewState == ra::data::models::AssetState::Triggered)
+        Trigger().DoFrame();
+
+    // update the state of the asset
+    m_pAsset->SetState(nNewState);
+
+    // if the asset became active, rebind to the actual trigger
+    const bool bIsActive = ra::data::models::AssetModelBase::IsActive(nNewState);
+    const bool bWasActive = ra::data::models::AssetModelBase::IsActive(nOldState);
+    if (bIsActive && !bWasActive)
+        UpdateTriggerBinding();
+
+    // if the state changed to/from Waiting, update the Waiting label
+    if (nNewState == ra::data::models::AssetState::Waiting)
+        SetValue(WaitingLabelProperty, L"Waiting");
+    else if (nOldState == ra::data::models::AssetState::Waiting)
+        SetValue(WaitingLabelProperty, WaitingLabelProperty.GetDefaultValue());
+
+    // if the trigger is active, update the counters in the display list
+    // otherwise, just update the measured value.
+    if (bIsActive)
+        UpdateAssetFrameValues();
+    else
+        UpdateMeasuredValue();
+
+    // if the achievement changed between active and inactive, update the active achievements
+    if (bIsActive != bWasActive)
+    {
+        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        pRuntime.UpdateActiveAchievements();
+    }
 }
 
 static void AppendTrigger(std::string& sDefinition, const std::string& sTrigger)

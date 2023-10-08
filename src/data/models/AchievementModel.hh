@@ -161,6 +161,7 @@ private:
     static const std::array<int, 10> s_vValidPoints;
 
     void HandleStateChanged(AssetState nOldState, AssetState nNewState);
+    void SyncID();
     void SyncTitle();
     void SyncDescription();
     void SyncBadge();

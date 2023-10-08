@@ -1021,6 +1021,9 @@ void AssetListViewModel::ActivateSelected()
                 vmItem->Activate();
         }
     }
+
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    pRuntime.UpdateActiveAchievements();
 }
 
 void AssetListViewModel::SaveSelected()

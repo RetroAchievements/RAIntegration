@@ -65,6 +65,11 @@ void AchievementModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
             if (m_pAchievement)
                 SyncPoints();
         }
+        else if (args.Property == IDProperty)
+        {
+            if (m_pAchievement)
+                SyncID();
+        }
     }
 
     AssetModelBase::OnValueChanged(args);
@@ -275,6 +280,11 @@ void AchievementModel::SyncState()
     }
 }
 
+void AchievementModel::SyncID()
+{
+    m_pAchievement->public_.id = GetID();
+}
+
 void AchievementModel::SyncTitle()
 {
     m_sTitleBuffer = ra::Narrow(GetName());
@@ -411,10 +421,9 @@ void AchievementModel::ReplaceAttached(struct rc_client_achievement_info_t& pAch
 
 void AchievementModel::AttachAndInitialize(struct rc_client_achievement_info_t& pAchievement)
 {
-    pAchievement.public_.id = GetID();
-
     m_pAchievement = &pAchievement;
-    
+
+    SyncID();
     SyncTitle();
     SyncDescription();
     SyncBadge();

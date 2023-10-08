@@ -647,6 +647,18 @@ std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_
     return sBadgeName;
 }
 
+void AchievementRuntime::UpdateActiveAchievements() noexcept
+{
+    auto* client = GetClient();
+    if (client->game)
+    {
+        rc_mutex_lock(&client->state.mutex);
+        if (client->game && (client->game->pending_events & RC_CLIENT_GAME_PENDING_EVENT_UPDATE_ACTIVE_ACHIEVEMENTS) == 0)
+            rc_client_update_active_achievements(client->game);
+        rc_mutex_unlock(&client->state.mutex);
+    }
+}
+
 static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra::LeaderboardID nId) noexcept
 {
     rc_client_subset_info_t* subset = pClient->game->subsets;

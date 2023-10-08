@@ -103,13 +103,7 @@
     <ClCompile Include="..\rcheevos\src\rcheevos\runtime_progress.c">
       <Filter>rcheevos</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\compat.c">
-      <Filter>rcheevos</Filter>
-    </ClCompile>
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h">
-      <Filter>rcheevos</Filter>
-    </ClInclude>
-    <ClInclude Include="..\rcheevos\src\rcheevos\compat.h">
       <Filter>rcheevos</Filter>
     </ClInclude>
     <ClCompile Include="..\rcheevos\src\rapi\rc_api_user.c">
@@ -136,9 +130,9 @@
     <ClCompile Include="..\rcheevos\src\rapi\rc_api_editor.c">
       <Filter>rapi</Filter>
     </ClCompile>
-    <ClCompile Include="..\rcheevos\src\rcheevos\rc_client.c">
-      <Filter>rcheevos</Filter>
-    </ClCompile>
+    <ClCompile Include="..\rcheevos\src\rc_util.c" />
+    <ClCompile Include="..\rcheevos\src\rc_client.c" />
+    <ClCompile Include="..\rcheevos\src\rc_compat.c" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="lua">

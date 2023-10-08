@@ -10,7 +10,7 @@
 #include "data\context\GameAssets.hh"
 
 #include <rcheevos\src\rapi\rc_api_common.h>
-#include <rcheevos\src\rcheevos\rc_client_internal.h>
+#include <rcheevos\src\rc_client_internal.h>
 
 namespace ra {
 namespace services {
@@ -45,7 +45,7 @@ void MockAchievementRuntime::MockGame()
 {
     rc_client_game_info_t* game = (rc_client_game_info_t*)calloc(1, sizeof(rc_client_game_info_t));
     Expects(game != nullptr);
-    rc_buf_init(&game->buffer);
+    rc_buffer_init(&game->buffer);
     rc_runtime_init(&game->runtime);
 
     game->public_.id = 1;
@@ -67,7 +67,7 @@ static rc_client_subset_info_t* GetSubset(rc_client_game_info_t* game, uint32_t 
         next = &subset->next;
     }
 
-    subset = (rc_client_subset_info_t*)rc_buf_alloc(&game->buffer, sizeof(rc_client_subset_info_t));
+    subset = (rc_client_subset_info_t*)rc_buffer_alloc(&game->buffer, sizeof(rc_client_subset_info_t));
     memset(subset, 0, sizeof(*subset));
     subset->public_.id = subset_id;
     strcpy_s(subset->public_.badge_name, sizeof(subset->public_.badge_name), game->public_.badge_name);
@@ -97,7 +97,7 @@ static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,
     if (subset->public_.num_achievements % 8 == 0)
     {
         const uint32_t new_count = subset->public_.num_achievements + 8;
-        rc_client_achievement_info_t* new_achievements = (rc_client_achievement_info_t*)rc_buf_alloc(
+        rc_client_achievement_info_t* new_achievements = (rc_client_achievement_info_t*)rc_buffer_alloc(
             &game->buffer, sizeof(rc_client_achievement_info_t) * new_count);
 
         if (subset->public_.num_achievements > 0)
@@ -115,16 +115,16 @@ static rc_client_achievement_info_t* AddAchievement(rc_client_game_info_t* game,
 
     if (sTitle)
     {
-        achievement->public_.title = rc_buf_strcpy(&game->buffer, sTitle);
+        achievement->public_.title = rc_buffer_strcpy(&game->buffer, sTitle);
     }
     else
     {
         const std::string sGeneratedTitle = ra::StringPrintf("Achievement %u", nId);
-        achievement->public_.title = rc_buf_strcpy(&game->buffer, sGeneratedTitle.c_str());
+        achievement->public_.title = rc_buffer_strcpy(&game->buffer, sGeneratedTitle.c_str());
     }
 
     const std::string sGeneratedDescripton = ra::StringPrintf("Description %u", nId);
-    achievement->public_.description = rc_buf_strcpy(&game->buffer, sGeneratedDescripton.c_str());
+    achievement->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
     achievement->public_.category = RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE;
     achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
@@ -145,7 +145,7 @@ rc_client_achievement_info_t* MockAchievementRuntime::MockAchievementWithTrigger
     rc_client_game_info_t* game = GetClient()->game;
     rc_client_achievement_info_t* achievement = AddAchievement(game, GetCoreSubset(game), nId, sTitle);
 
-    achievement->trigger = (rc_trigger_t*)rc_buf_alloc(&game->buffer, sizeof(rc_trigger_t));
+    achievement->trigger = (rc_trigger_t*)rc_buffer_alloc(&game->buffer, sizeof(rc_trigger_t));
     memset(achievement->trigger, 0, sizeof(*achievement->trigger));
     achievement->trigger->state = RC_TRIGGER_STATE_ACTIVE;
 
@@ -160,7 +160,7 @@ rc_client_achievement_info_t* MockAchievementRuntime::ActivateAchievement(uint32
     m_mAchievementDefinitions[nId] = sTrigger;
 
     auto nSize = rc_trigger_size(sTrigger.c_str());
-    void* trigger_buffer = rc_buf_alloc(&game->buffer, nSize);
+    void* trigger_buffer = rc_buffer_alloc(&game->buffer, nSize);
     achievement->trigger = rc_parse_trigger(trigger_buffer, sTrigger.c_str(), nullptr, 0);
     achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
 
@@ -214,7 +214,7 @@ static rc_client_leaderboard_info_t* AddLeaderboard(rc_client_t* client, rc_clie
     if (subset->public_.num_leaderboards % 8 == 0)
     {
         const uint32_t new_count = subset->public_.num_leaderboards + 8;
-        rc_client_leaderboard_info_t* new_leaderboards = (rc_client_leaderboard_info_t*)rc_buf_alloc(
+        rc_client_leaderboard_info_t* new_leaderboards = (rc_client_leaderboard_info_t*)rc_buffer_alloc(
             &game->buffer, sizeof(rc_client_leaderboard_info_t) * new_count);
 
         if (subset->public_.num_leaderboards > 0)
@@ -232,16 +232,16 @@ static rc_client_leaderboard_info_t* AddLeaderboard(rc_client_t* client, rc_clie
 
     if (sTitle)
     {
-        leaderboard->public_.title = rc_buf_strcpy(&game->buffer, sTitle);
+        leaderboard->public_.title = rc_buffer_strcpy(&game->buffer, sTitle);
     }
     else
     {
         const std::string sGeneratedTitle = ra::StringPrintf("Leaderboard %u", nId);
-        leaderboard->public_.title = rc_buf_strcpy(&game->buffer, sGeneratedTitle.c_str());
+        leaderboard->public_.title = rc_buffer_strcpy(&game->buffer, sGeneratedTitle.c_str());
     }
 
     const std::string sGeneratedDescripton = ra::StringPrintf("Description %u", nId);
-    leaderboard->public_.description = rc_buf_strcpy(&game->buffer, sGeneratedDescripton.c_str());
+    leaderboard->public_.description = rc_buffer_strcpy(&game->buffer, sGeneratedDescripton.c_str());
 
     leaderboard->public_.state = static_cast<uint8_t>(rc_client_get_hardcore_enabled(client) ?
         RC_CLIENT_LEADERBOARD_STATE_ACTIVE : RC_CLIENT_LEADERBOARD_STATE_INACTIVE);
@@ -260,7 +260,7 @@ rc_client_leaderboard_info_t* MockAchievementRuntime::MockLeaderboardWithLboard(
     rc_client_game_info_t* game = GetClient()->game;
     rc_client_leaderboard_info_t* leaderboard = AddLeaderboard(GetClient(), game, GetCoreSubset(game), nId, sTitle);
 
-    leaderboard->lboard = (rc_lboard_t*)rc_buf_alloc(&game->buffer, sizeof(rc_lboard_t));
+    leaderboard->lboard = (rc_lboard_t*)rc_buffer_alloc(&game->buffer, sizeof(rc_lboard_t));
     memset(leaderboard->lboard, 0, sizeof(*leaderboard->lboard));
     leaderboard->lboard->state = static_cast<uint8_t>(
         rc_client_get_hardcore_enabled(GetClient()) ? RC_LBOARD_STATE_ACTIVE : RC_LBOARD_STATE_INACTIVE);
@@ -282,7 +282,7 @@ rc_client_leaderboard_info_t* MockAchievementRuntime::ActivateLeaderboard(uint32
     m_mLeaderboardDefinitions[nId] = sDefinition;
 
     auto nSize = rc_lboard_size(sDefinition.c_str());
-    void* trigger_buffer = rc_buf_alloc(&game->buffer, nSize);
+    void* trigger_buffer = rc_buffer_alloc(&game->buffer, nSize);
     leaderboard->lboard = rc_parse_lboard(trigger_buffer, sDefinition.c_str(), nullptr, 0);
     leaderboard->public_.state = RC_CLIENT_LEADERBOARD_STATE_ACTIVE;
 

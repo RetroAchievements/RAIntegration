@@ -225,6 +225,7 @@ private:
     void HandleStateChanged(AssetState nOldState, AssetState nNewState);
     void SyncTitle();
     void SyncDescription();
+    void SyncValueFormat();
     void SyncDefinition();
 
     AssetDefinition m_pStartTrigger;

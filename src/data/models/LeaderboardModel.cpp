@@ -7,7 +7,7 @@
 #include "services\AchievementRuntime.hh"
 #include "services\ServiceLocator.hh"
 
-#include <rcheevos\src\rcheevos\rc_client_internal.h>
+#include <rcheevos\src\rc_client_internal.h>
 #include <rcheevos\src\rcheevos\rc_internal.h>
 
 namespace ra {
@@ -61,6 +61,11 @@ void LeaderboardModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
             args.Property == CancelTriggerProperty || args.Property == ValueDefinitionProperty)
         {
             SyncDefinition();
+        }
+        else if (args.Property == ValueFormatProperty)
+        {
+            if (m_pLeaderboard)
+                SyncValueFormat();
         }
     }
 
@@ -260,6 +265,12 @@ void LeaderboardModel::SyncDescription()
     m_pLeaderboard->public_.description = m_sDescriptionBuffer.c_str();
 }
 
+void LeaderboardModel::SyncValueFormat()
+{
+    m_pLeaderboard->format = ra::etoi(GetValueFormat());
+    m_pLeaderboard->public_.format = rc_client_map_leaderboard_format(m_pLeaderboard->format);
+}
+
 void LeaderboardModel::SyncDefinition()
 {
     if (!m_pLeaderboard)
@@ -383,6 +394,7 @@ void LeaderboardModel::AttachAndInitialize(struct rc_client_leaderboard_info_t& 
     SyncTitle();
     SyncDescription();
     SyncDefinition();
+    SyncValueFormat();
 }
 
 void LeaderboardModel::Serialize(ra::services::TextWriter& pWriter) const

@@ -144,7 +144,7 @@ public:
         harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
         harness.mockEmulatorContext.MockClient("RATests", "0.1.2.0");
 
-        harness.mockRcheevosClient.MockResponse("r=login&u=User&t=ApiToken",
+        harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -192,7 +192,7 @@ public:
         harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
         harness.mockEmulatorContext.MockClient("RATests", "0.1.2.0");
 
-        harness.mockRcheevosClient.MockResponse("r=login&u=User&t=ApiToken",
+        harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -237,7 +237,7 @@ public:
     {
         AttemptLoginHarness harness;
 
-        harness.mockRcheevosClient.MockResponse("r=login&u=User&t=ApiToken",
+        harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
             "\"Token\":\"ApiToken\",\"Score\":0,\"SoftcoreScore\":0,"
             "\"Messages\":3,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -264,7 +264,7 @@ public:
         bool bWasMenuRebuilt = false;
         harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
 
-        harness.mockRcheevosClient.MockResponse("r=login&u=User&t=ApiToken",
+        harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -303,7 +303,7 @@ public:
             return ra::ui::DialogResult::OK;
         });
 
-        harness.mockRcheevosClient.MockResponse("r=login&u=User&t=ApiToken",
+        harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":false,\"Error\":\"Invalid user/password combination. Please try again.\"}");
 
         harness.mockConfiguration.SetUsername("User");

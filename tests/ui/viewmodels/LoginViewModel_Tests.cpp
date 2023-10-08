@@ -93,7 +93,7 @@ public:
     TEST_METHOD(TestLoginSuccessful)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockAchievementRuntime.MockResponse("r=login&u=user&p=Pa%24%24w0rd",
+        vmLogin.mockAchievementRuntime.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -136,7 +136,7 @@ public:
     TEST_METHOD(TestLoginSuccessfulAppTitle)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockAchievementRuntime.MockResponse("r=login&u=user&p=Pa%24%24w0rd",
+        vmLogin.mockAchievementRuntime.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
@@ -181,7 +181,7 @@ public:
     TEST_METHOD(TestLoginInvalidPassword)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockAchievementRuntime.MockResponse("r=login&u=User&p=Pa%24%24w0rd",
+        vmLogin.mockAchievementRuntime.MockResponse("r=login2&u=User&p=Pa%24%24w0rd",
             "{\"Success\":false,\"Error\":\"Invalid User/Password combination. Please try again\"}");
 
         vmLogin.mockDesktop.ExpectWindow<MessageBoxViewModel>([](MessageBoxViewModel& vmMessageBox)
@@ -201,7 +201,7 @@ public:
     TEST_METHOD(TestLoginSuccessfulRememberPassword)
     {
         LoginViewModelHarness vmLogin;
-        vmLogin.mockAchievementRuntime.MockResponse("r=login&u=user&p=Pa%24%24w0rd",
+        vmLogin.mockAchievementRuntime.MockResponse("r=login2&u=user&p=Pa%24%24w0rd",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
             "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
             "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");

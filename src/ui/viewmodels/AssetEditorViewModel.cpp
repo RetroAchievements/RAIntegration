@@ -625,7 +625,10 @@ void AssetEditorViewModel::HandleStateChanged(ra::data::models::AssetState nOldS
     if (bIsActive != bWasActive)
     {
         auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        pRuntime.UpdateActiveAchievements();
+        if (IsAchievement())
+            pRuntime.UpdateActiveAchievements();
+        else
+            pRuntime.UpdateActiveLeaderboards();
     }
 }
 

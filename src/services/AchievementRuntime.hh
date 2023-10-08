@@ -67,6 +67,7 @@ public:
     static std::string GetAchievementBadge(const rc_client_achievement_t& pAchievement);
 
     void UpdateActiveAchievements() noexcept;
+    void UpdateActiveLeaderboards() noexcept;
 
     /// <summary>
     /// Gets the raw definition for the leaderboard.

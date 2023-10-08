@@ -659,6 +659,18 @@ void AchievementRuntime::UpdateActiveAchievements() noexcept
     }
 }
 
+void AchievementRuntime::UpdateActiveLeaderboards() noexcept
+{
+    auto* client = GetClient();
+    if (client->game)
+    {
+        rc_mutex_lock(&client->state.mutex);
+        if (client->game)
+            rc_client_update_active_leaderboards(client->game);
+        rc_mutex_unlock(&client->state.mutex);
+    }
+}
+
 static rc_client_leaderboard_info_t* GetLeaderboardInfo(rc_client_t* pClient, ra::LeaderboardID nId) noexcept
 {
     rc_client_subset_info_t* subset = pClient->game->subsets;

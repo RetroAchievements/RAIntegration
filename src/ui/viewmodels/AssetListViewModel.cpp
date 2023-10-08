@@ -1023,7 +1023,22 @@ void AssetListViewModel::ActivateSelected()
     }
 
     auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    pRuntime.UpdateActiveAchievements();
+    for (const auto* vmItem : vSelectedAssets)
+    {
+        if (vmItem && vmItem->GetType() == ra::data::models::AssetType::Achievement)
+        {
+            pRuntime.UpdateActiveAchievements();
+            break;
+        }
+    }
+    for (const auto* vmItem : vSelectedAssets)
+    {
+        if (vmItem && vmItem->GetType() == ra::data::models::AssetType::Leaderboard)
+        {
+            pRuntime.UpdateActiveLeaderboards();
+            break;
+        }
+    }
 }
 
 void AssetListViewModel::SaveSelected()

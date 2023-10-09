@@ -100,6 +100,10 @@ AchievementRuntime::AchievementRuntime()
 
 #ifndef RA_UTEST
     rc_client_enable_logging(m_pClient.get(), RC_CLIENT_LOG_LEVEL_VERBOSE, AchievementRuntime::LogMessage);
+
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+    rc_client_set_hardcore_enabled(m_pClient.get(), bHardcore ? 1 : 0);
 #endif
 
     rc_client_set_event_handler(m_pClient.get(), EventHandler);

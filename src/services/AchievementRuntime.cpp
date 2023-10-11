@@ -1295,12 +1295,6 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
 
         s_mAchievementPopups[pAchievement.id] = nPopupId;
     }
-
-    if (vmAchievement->IsPauseOnTrigger())
-    {
-        auto& pFrameEventQueue = ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>();
-        pFrameEventQueue.QueuePauseOnTrigger(vmAchievement->GetName());
-    }
 }
 
 static void HandleChallengeIndicatorShowEvent(const rc_client_achievement_t& pAchievement)

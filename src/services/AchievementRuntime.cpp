@@ -1176,7 +1176,7 @@ void AchievementRuntime::DoFrame()
         RaisePauseOnChangeEvents(mLeaderboardsWithHits, mActiveLeaderboards);
 }
 
-void AchievementRuntime::Idle()
+void AchievementRuntime::Idle() noexcept
 {
     rc_client_idle(GetClient());
 }

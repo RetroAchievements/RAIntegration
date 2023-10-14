@@ -103,7 +103,7 @@ public:
     /// <summary>
     /// Processes stuff not related to a frame.
     /// </summary>
-    void Idle();
+    void Idle() noexcept;
 
     /// <summary>
     /// Loads HitCount data for active achievements from a save state file.

@@ -1118,6 +1118,49 @@ public:
         Assert::AreEqual(std::wstring(L"Parse error -6 (line 5): Invalid operator"), runtime.GetRichPresenceDisplayString());
     }
 
+    TEST_METHOD(TestMonitorAchievementPauseOnTrigger)
+    {
+        std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
+
+        AchievementRuntimeHarness runtime;
+        runtime.mockEmulatorContext.MockMemory(memory);
+        auto* pAchievement = runtime.MockAchievement(6U, "0xH0000=1");
+        auto* vmAchievement = runtime.WrapAchievement(pAchievement);
+
+        // no trigger, no event
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+
+        // trigger, expect no notification because not watching for one
+        memory.at(0) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({1U}, runtime.GetEventCount()); // trigger event
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        runtime.ResetEvents();
+
+        // reactivate, no event
+        memory.at(0) = 0;
+        vmAchievement->SetState(ra::data::models::AssetState::Active);
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+
+        // trigger, watch for notification
+        vmAchievement->SetPauseOnTrigger(true);
+        memory.at(0) = 1;
+        runtime.DoFrame();
+        Assert::AreEqual({1U}, runtime.GetEventCount());
+        Assert::AreEqual({1U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+        runtime.mockFrameEventQueue.Reset();
+        runtime.ResetEvents();
+
+        // already triggered, shouldn't get repeated notification
+        runtime.DoFrame();
+        Assert::AreEqual({0U}, runtime.GetEventCount());
+        Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
+    }
+
     TEST_METHOD(TestMonitorAchievementPauseOnReset)
     {
         std::array<unsigned char, 5> memory{0x00, 0x12, 0x34, 0xAB, 0x56};
@@ -1894,39 +1937,6 @@ public:
         auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
         Assert::IsNull(pPopup);
         Assert::AreEqual({0U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
-        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
-    }
-
-    TEST_METHOD(TestHandleAchievementTriggeredEventPauseOnTrigger)
-    {
-        AchievementRuntimeHarness runtime;
-        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
-        memcpy(pAch6->public_.badge_name, "012345", 7);
-        auto* vmAch6 = runtime.WrapAchievement(pAch6);
-        vmAch6->SetPauseOnTrigger(true);
-        runtime.mockGameContext.SetRichPresenceDisplayString(L"Titles");
-        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
-        runtime.mockConfiguration.SetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered,
-                                                   ra::ui::viewmodels::PopupLocation::BottomLeft);
-
-        rc_client_event_t event;
-        memset(&event, 0, sizeof(event));
-        event.type = RC_CLIENT_EVENT_ACHIEVEMENT_TRIGGERED;
-        event.achievement = &pAch6->public_;
-        runtime.RaiseEvent(event);
-
-        Assert::AreEqual(ra::data::models::AssetState::Triggered, vmAch6->GetState());
-        Assert::AreEqual(std::wstring(L"Titles"), vmAch6->GetUnlockRichPresence());
-
-        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
-        Expects(pPopup != nullptr);
-        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
-        Assert::AreEqual(std::wstring(L"Achievement Unlocked"), pPopup->GetTitle());
-        Assert::AreEqual(std::wstring(L"Ach6 (5)"), pPopup->GetDescription());
-        Assert::AreEqual(std::wstring(L"Description 6"), pPopup->GetDetail());
-        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
-        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
-        Assert::AreEqual({1U}, runtime.mockFrameEventQueue.NumTriggeredTriggers());
         Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
     }
 

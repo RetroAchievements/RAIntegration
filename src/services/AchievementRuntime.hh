@@ -60,16 +60,14 @@ public:
     void ResetRuntime() noexcept;
 
     /// <summary>
-    /// Updates any references using the provided ID to a new value.
-    /// </summary>
-    void UpdateAchievementId(ra::AchievementID nOldId, ra::AchievementID nNewId);
-
-    /// <summary>
     /// Gets the raw trigger for the achievement.
     /// </summary>
     rc_trigger_t* GetAchievementTrigger(ra::AchievementID nId) const noexcept;
 
     static std::string GetAchievementBadge(const rc_client_achievement_t& pAchievement);
+
+    void UpdateActiveAchievements() noexcept;
+    void UpdateActiveLeaderboards() noexcept;
 
     /// <summary>
     /// Gets the raw definition for the leaderboard.

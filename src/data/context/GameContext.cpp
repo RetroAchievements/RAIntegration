@@ -238,7 +238,7 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
 
     // activate rich presence (or remove if not defined)
     auto* pRichPresence = m_vAssets.FindRichPresence();
-    if (pRichPresence)
+    if (pRichPresence && nResult == RC_OK)
     {
         // if the server value differs from the local value, the model will appear as Unpublished
         if (pRichPresence->GetChanges() != ra::data::models::AssetChanges::None)

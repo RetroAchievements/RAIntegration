@@ -445,6 +445,8 @@ protected:
     void UpdateMeasuredValue();
     void UpdateLeaderboardTrigger();
 
+    void HandleStateChanged(ra::data::models::AssetState nOldState, ra::data::models::AssetState nNewState);
+
     TriggerViewModel m_vmTrigger;
 
     ra::data::models::AssetModelBase* m_pAsset = nullptr;

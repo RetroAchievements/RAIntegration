@@ -116,6 +116,29 @@ static void InitializeOfflineMode()
     pUserContext.DisableLogin();
 }
 
+static bool g_bPulseScheduled = false;
+static void Pulse();
+
+static void SchedulePulse()
+{
+    ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().ScheduleAsync(std::chrono::seconds(1), []()
+    {
+        Pulse();
+    });
+}
+
+static void Pulse()
+{
+    auto& vmRichPresence = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().RichPresenceMonitor;
+    if (vmRichPresence.IsVisible())
+        vmRichPresence.UpdateDisplayString();
+
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    pRuntime.Idle();
+
+    SchedulePulse();
+}
+
 static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEmulatorID,
     [[maybe_unused]] const char* sClientName, const char* sClientVer, bool bOffline)
 {
@@ -172,6 +195,12 @@ static BOOL InitCommon([[maybe_unused]] HWND hMainHWND, [[maybe_unused]] int nEm
             RA_LOG_INFO("Hardcore disabled by external tool");
             ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().DisableHardcoreMode();
         }
+    }
+
+    if (!g_bPulseScheduled)
+    {
+        g_bPulseScheduled = true;
+        SchedulePulse();
     }
 
     return TRUE;

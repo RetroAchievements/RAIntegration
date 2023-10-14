@@ -28,26 +28,16 @@ public:
     /// </summary>
     const std::wstring& GetDisplayString() const { return GetValue(DisplayStringProperty); }
 
-protected:
     /// <summary>
     /// Refreshes the display string.
     /// </summary>
     void UpdateDisplayString();
 
+protected:
     /// <summary>
     /// Sets the message to display.
     /// </summary>
     void SetDisplayString(const std::wstring& sValue) { SetValue(DisplayStringProperty, sValue); }
-
-    /// <summary>
-    /// Starts periodically updating the display string.
-    /// </summary>
-    void StartMonitoring();
-
-    /// <summary>
-    /// Stops periodically updating the display string.
-    /// </summary>
-    void StopMonitoring() noexcept;
 
     void OnValueChanged(const BoolModelProperty::ChangeArgs& args) override;
 
@@ -55,18 +45,7 @@ protected:
     void OnActiveGameChanged() override;
 
 private:
-    void ScheduleUpdateDisplayString();
     void UpdateWindowTitle();
-
-    enum class MonitorState
-    {
-        None,
-        Active,
-        Deactivated,
-        Static,
-    };
-
-    MonitorState m_nState{ MonitorState::None };
 
     time_t m_tRichPresenceFileTime{ 0 };
 };

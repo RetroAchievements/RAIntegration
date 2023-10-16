@@ -358,6 +358,7 @@ void AchievementModel::SyncTrigger()
     {
         memcpy(m_pAchievement->md5, md5, sizeof(md5));
 
+        const auto* pOldTrigger = m_pAchievement->trigger;
         auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
         if (m_pAchievement->trigger && pRuntime.DetachMemory(m_pAchievement->trigger))
         {
@@ -386,6 +387,20 @@ void AchievementModel::SyncTrigger()
                 m_pAchievement->trigger->memrefs = nullptr;
 
                 pRuntime.AttachMemory(m_pAchievement->trigger);
+
+                // update the runtime memory reference too
+                auto* pRuntimeTrigger = pGame->runtime.triggers;
+                const auto* pRuntimeTriggerStop = pRuntimeTrigger + pGame->runtime.trigger_count;
+                for (; pRuntimeTrigger < pRuntimeTriggerStop; ++pRuntimeTrigger)
+                {
+                    if (pRuntimeTrigger->trigger == pOldTrigger &&
+                        pRuntimeTrigger->id == m_pAchievement->public_.id)
+                    {
+                        pRuntimeTrigger->trigger = m_pAchievement->trigger;
+                        memcpy(pRuntimeTrigger->md5, md5, sizeof(md5));
+                        break;
+                    }
+                }
             }
         }
     }

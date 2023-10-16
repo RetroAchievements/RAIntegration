@@ -1486,6 +1486,11 @@ void AssetListViewModel::ResetSelected()
         }
     }
 
+    // sync assets before calling EndUpdate to ensure anything watching for TriggerProperty to change
+    // can find the new definition (i.e. asset editor)
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    pRuntime.SyncAssets();
+
     // if the asset that is loaded in the editor no longer exists, clear out the editor
     // do this before EndUpdate so the asset won't have been destroyed yet
     auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
@@ -1494,9 +1499,6 @@ void AssetListViewModel::ResetSelected()
         pWindowManager.AssetEditor.LoadAsset(nullptr);
 
     pGameContext.Assets().EndUpdate();
-
-    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    pRuntime.SyncAssets();
 
     // if any achievements were deleted, disable their challenge indicators
     for (auto nId : vPrimedAchievementsBefore)

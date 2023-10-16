@@ -298,6 +298,7 @@ void LeaderboardModel::SyncDefinition()
     {
         memcpy(m_pLeaderboard->md5, md5, sizeof(md5));
 
+        const auto* pOldLboard = m_pLeaderboard->lboard;
         auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
         if (m_pLeaderboard->lboard && pRuntime.DetachMemory(m_pLeaderboard->lboard))
         {
@@ -311,7 +312,7 @@ void LeaderboardModel::SyncDefinition()
             void* lboard_buffer = malloc(nSize);
             if (lboard_buffer)
             {
-                /* populate the item, using the communal memrefs pool */
+                // populate the item, using the communal memrefs pool
                 auto* pGame = pRuntime.GetClient()->game;
 
                 rc_parse_state_t parse;
@@ -326,6 +327,20 @@ void LeaderboardModel::SyncDefinition()
                 m_pLeaderboard->lboard->memrefs = nullptr;
 
                 pRuntime.AttachMemory(m_pLeaderboard->lboard);
+
+                // update the runtime memory reference too
+                auto* pRuntimeLboard = pGame->runtime.lboards;
+                const auto* pRuntimeLboardStop = pRuntimeLboard + pGame->runtime.lboard_count;
+                for (; pRuntimeLboard < pRuntimeLboardStop; ++pRuntimeLboard)
+                {
+                    if (pRuntimeLboard->lboard == pOldLboard &&
+                        pRuntimeLboard->id == m_pLeaderboard->public_.id)
+                    {
+                        pRuntimeLboard->lboard = m_pLeaderboard->lboard;
+                        memcpy(pRuntimeLboard->md5, md5, sizeof(md5));
+                        break;
+                    }
+                }
             }
         }
     }

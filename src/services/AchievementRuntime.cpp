@@ -1947,7 +1947,7 @@ _NODISCARD static char ComparisonSizeFromPrefix(_In_ char cPrefix) noexcept
     const char* ptr = buffer;
     buffer[2] = cPrefix;
 
-    char size = RC_MEMSIZE_16_BITS;
+    uint8_t size = RC_MEMSIZE_16_BITS;
     unsigned address = 0;
     rc_parse_memref(&ptr, &size, &address);
     return size;

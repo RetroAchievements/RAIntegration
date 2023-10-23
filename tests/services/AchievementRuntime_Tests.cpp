@@ -3105,7 +3105,7 @@ public:
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::string("Developing Achievements"), runtime.GetRichPresenceOverride());
     }
-    };
+};
 
 } // namespace tests
 } // namespace services

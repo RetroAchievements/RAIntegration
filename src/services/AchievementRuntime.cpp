@@ -91,12 +91,62 @@ static int CanSubmitLeaderboardEntry(uint32_t nLeaderboardId, rc_client_t*)
     return CanSubmit();
 }
 
+static int RichPresenceOverride(rc_client_t*, char buffer[], size_t buffer_size)
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+
+    const auto& pWindowManager = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>();
+    const bool bIsInspectingMemory = pWindowManager.MemoryBookmarks.IsVisible() ||
+                                     pWindowManager.MemoryInspector.IsVisible() ||
+                                     pWindowManager.AssetEditor.IsVisible();
+
+    if (bIsInspectingMemory)
+    {
+        if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
+            return snprintf(buffer, buffer_size, "Testing Compatibility");
+
+        if (_RA_HardcoreModeIsActive())
+            return snprintf(buffer, buffer_size, "Inspecting Memory in Hardcore mode");
+
+        const char* sMessage = "Inspecting Memory";
+        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++i)
+        {
+            const auto* pAsset = pGameContext.Assets().GetItemAt(i);
+            if (pAsset)
+            {
+                if (!pAsset->IsShownInList())
+                    continue;
+
+                if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
+                {
+                    sMessage = "Developing Achievements";
+                    break;
+                }
+
+                if (pAsset->GetChanges() != ra::data::models::AssetChanges::None)
+                    sMessage = "Fixing Achievements";
+            }
+        }
+
+        return snprintf(buffer, buffer_size, "%s", sMessage);
+    }
+
+    // don't send text from modified rich presence to server
+    const auto* pRichPresence = pGameContext.Assets().FindRichPresence();
+    if (pRichPresence && pRichPresence->GetChanges() != ra::data::models::AssetChanges::None)
+        return snprintf(buffer, buffer_size, "Playing %s", ra::Narrow(pGameContext.GameTitle()).c_str());
+
+    // allow default behavior
+    return 0;
+}
+
 AchievementRuntime::AchievementRuntime()
 {
     m_pClient.reset(rc_client_create(AchievementRuntime::ReadMemory, AchievementRuntime::ServerCallAsync));
 
     m_pClient->callbacks.can_submit_achievement_unlock = CanSubmitAchievementUnlock;
     m_pClient->callbacks.can_submit_leaderboard_entry = CanSubmitLeaderboardEntry;
+    m_pClient->callbacks.rich_presence_override = RichPresenceOverride;
 
 #ifndef RA_UTEST
     rc_client_enable_logging(m_pClient.get(), RC_CLIENT_LOG_LEVEL_VERBOSE, AchievementRuntime::LogMessage);

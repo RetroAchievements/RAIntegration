@@ -61,9 +61,6 @@ protected:
 
     void UpdateSession(time_t tSessionStart);
     std::streampos WriteSessionStats(std::chrono::seconds tSessionDuration) const;
-    std::wstring GetCurrentActivity() const;
-
-    bool IsInspectingMemory() const;
 
     std::wstring m_sUsername;
     unsigned int m_nCurrentGameId = 0;

@@ -10,9 +10,7 @@
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
-#include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
-#include "tests\mocks\MockWindowManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -35,14 +33,13 @@ public:
             mockRuntime.MockGame();
         }
 
-        ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockStorage;
         ra::services::mocks::MockThreadPool mockThreadPool;
-        ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
+
 
         bool HasStoredData() const
         {
@@ -57,16 +54,6 @@ public:
         void MockStoredData(const std::string& sContents)
         {
             mockStorage.MockStoredData(StorageItemType::SessionStats, m_sUsernameWide, sContents);
-        }
-
-        void MockInspectingMemory(bool bInspectingMemory)
-        {
-            mockWindowManager.MemoryBookmarks.SetIsVisible(bInspectingMemory);
-        }
-
-        std::wstring GetActivity() const
-        {
-            return SessionTracker::GetCurrentActivity();
         }
 
     private:
@@ -225,182 +212,6 @@ public:
         tracker.mockClock.AdvanceTime(std::chrono::seconds(19));
         tracker.EndSession();
         Assert::AreEqual(std::string("1234:1534000000:1732:f5\n1234:1534889323:173:bb\n9999:1534889496:169:14\n"), tracker.GetStoredData());
-    }
-
-    TEST_METHOD(TestCurrentActivityNoRichPresence)
-    {
-        SessionTrackerHarness tracker;
-        tracker.mockGameContext.SetGameTitle(L"GameTitle");
-        Assert::AreEqual(std::wstring(L"Playing GameTitle"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityRichPresence)
-    {
-        SessionTrackerHarness tracker;
-        tracker.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
-        tracker.mockGameContext.Assets().FindRichPresence()->Activate();
-        Assert::AreEqual(std::wstring(L"Level 10"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityRichPresenceFromFile)
-    {
-        SessionTrackerHarness tracker;
-        tracker.mockGameContext.SetGameTitle(L"GameTitle");
-        tracker.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
-        tracker.mockGameContext.SetRichPresenceFromFile(true);
-        tracker.mockGameContext.Assets().FindRichPresence()->Activate();
-        Assert::AreEqual(std::wstring(L"Playing GameTitle"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityRichPresenceCompatibilityMode)
-    {
-        SessionTrackerHarness tracker;
-        tracker.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
-        tracker.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
-        tracker.mockGameContext.Assets().FindRichPresence()->Activate();
-        Assert::AreEqual(std::wstring(L"Level 10"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryCompatibilityMode)
-    {
-        SessionTrackerHarness tracker;
-        tracker.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Core);
-        tracker.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
-        tracker.MockInspectingMemory(true);
-        Assert::AreEqual(std::wstring(L"Testing Compatibility"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryNoAchievements)
-    {
-        SessionTrackerHarness tracker;
-        tracker.MockInspectingMemory(true);
-        tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        Assert::AreEqual(std::wstring(L"Inspecting Memory"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryNoAchievementsHardcore)
-    {
-        SessionTrackerHarness tracker;
-        tracker.MockInspectingMemory(true);
-        tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        Assert::AreEqual(std::wstring(L"Inspecting Memory in Hardcore mode"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryCoreAchievementsHardcore)
-    {
-        SessionTrackerHarness tracker;
-        tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Core);
-        tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        Assert::AreEqual(std::wstring(L"Inspecting Memory in Hardcore mode"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryModifiedCoreAchievementsHardcore)
-    {
-        SessionTrackerHarness tracker;
-        tracker.MockInspectingMemory(true);
-        auto& pAch = tracker.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Core);
-        pAch.SetName(L"Modified");
-        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
-        tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
-        Assert::AreEqual(std::wstring(L"Inspecting Memory in Hardcore mode"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryCoreAchievements)
-    {
-        SessionTrackerHarness tracker;
-        tracker.MockInspectingMemory(true);
-        auto& pAch = tracker.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Core);
-        pAch.UpdateServerCheckpoint();
-        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::None);
-        tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        Assert::AreEqual(std::wstring(L"Inspecting Memory"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryModifiedCoreAchievements)
-    {
-        SessionTrackerHarness tracker;
-        tracker.MockInspectingMemory(true);
-        auto& pAch = tracker.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Core);
-        pAch.SetName(L"Modified");
-        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
-        tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        Assert::AreEqual(std::wstring(L"Fixing Achievements"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryUnpublishedCoreAchievements)
-    {
-        SessionTrackerHarness tracker;
-        tracker.MockInspectingMemory(true);
-        auto& pAch = tracker.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Core);
-        pAch.SetName(L"Modified");
-        pAch.UpdateLocalCheckpoint();
-        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Unpublished);
-        tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        Assert::AreEqual(std::wstring(L"Fixing Achievements"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryUnofficialAchievements)
-    {
-        SessionTrackerHarness tracker;
-        tracker.MockInspectingMemory(true);
-        auto& pAch = tracker.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Unofficial);
-        pAch.UpdateServerCheckpoint();
-        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::None);
-        tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        Assert::AreEqual(std::wstring(L"Inspecting Memory"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryModifiedUnofficialAchievements)
-    {
-        SessionTrackerHarness tracker;
-        tracker.MockInspectingMemory(true);
-        auto& pAch = tracker.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Unofficial);
-        pAch.SetName(L"Modified");
-        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
-        tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        Assert::AreEqual(std::wstring(L"Fixing Achievements"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryLocalAchievements)
-    {
-        SessionTrackerHarness tracker;
-        tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
-        tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        Assert::AreEqual(std::wstring(L"Developing Achievements"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryLocalAndCoreAchievements)
-    {
-        SessionTrackerHarness tracker;
-        tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
-        auto& pAch = tracker.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Core);
-        pAch.UpdateServerCheckpoint();
-        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::None);
-        tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        Assert::AreEqual(std::wstring(L"Developing Achievements"), tracker.GetActivity());
-    }
-
-    TEST_METHOD(TestCurrentActivityInspectingMemoryLocalAndModifiedCoreAchievements)
-    {
-        SessionTrackerHarness tracker;
-        tracker.MockInspectingMemory(true);
-        tracker.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
-        auto& pAch = tracker.mockGameContext.Assets().NewAchievement();
-        pAch.SetCategory(ra::data::models::AssetCategory::Core);
-        pAch.SetName(L"Modified");
-        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
-        tracker.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
-        Assert::AreEqual(std::wstring(L"Developing Achievements"), tracker.GetActivity());
     }
 };
 

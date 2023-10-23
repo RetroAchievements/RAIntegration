@@ -303,6 +303,20 @@ public:
         return LoadProgressFromBuffer(reinterpret_cast<const uint8_t*>(sBuffer.data()));
     }
 
+    std::string GetRichPresenceOverride()
+    {
+        char buffer[256];
+        if (!GetClient()->callbacks.rich_presence_override(GetClient(), buffer, sizeof(buffer)))
+            buffer[0] = '\0';
+
+        return std::string(buffer);
+    }
+
+    void MockInspectingMemory(bool bInspectingMemory)
+    {
+        mockWindowManager.MemoryBookmarks.SetIsVisible(bInspectingMemory);
+    }
+
 private:
     static void CaptureEventHandler(const rc_client_event_t* pEvent, rc_client_t* pClient)
     {
@@ -2916,7 +2930,182 @@ public:
         Assert::IsTrue(bWasReset);
     }
 
-};
+    TEST_METHOD(TestRichPresenceOverrideNoRichPresence)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockGameContext.SetGameTitle(L"GameTitle");
+        Assert::AreEqual(std::string(""), runtime.GetRichPresenceOverride()); // no override
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideRichPresence)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        Assert::AreEqual(std::string(""), runtime.GetRichPresenceOverride()); // no override
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideRichPresenceFromFile)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockGameContext.SetGameTitle(L"GameTitle");
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
+        runtime.mockGameContext.SetRichPresenceFromFile(true);
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        Assert::AreEqual(std::string("Playing GameTitle"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideRichPresenceCompatibilityMode)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
+        runtime.mockGameContext.SetRichPresenceDisplayString(L"Level 10");
+        runtime.mockGameContext.Assets().FindRichPresence()->Activate();
+        Assert::AreEqual(std::string(""), runtime.GetRichPresenceOverride()); // no override
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryCompatibilityMode)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Core);
+        runtime.mockGameContext.SetMode(ra::data::context::GameContext::Mode::CompatibilityTest);
+        runtime.MockInspectingMemory(true);
+        Assert::AreEqual(std::string("Testing Compatibility"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryNoAchievements)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockInspectingMemory(true);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        Assert::AreEqual(std::string("Inspecting Memory"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryNoAchievementsHardcore)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockInspectingMemory(true);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        Assert::AreEqual(std::string("Inspecting Memory in Hardcore mode"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryCoreAchievementsHardcore)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockInspectingMemory(true);
+        runtime.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Core);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        Assert::AreEqual(std::string("Inspecting Memory in Hardcore mode"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryModifiedCoreAchievementsHardcore)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockInspectingMemory(true);
+        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
+        pAch.SetCategory(ra::data::models::AssetCategory::Core);
+        pAch.SetName(L"Modified");
+        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        Assert::AreEqual(std::string("Inspecting Memory in Hardcore mode"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryCoreAchievements)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockInspectingMemory(true);
+        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
+        pAch.SetCategory(ra::data::models::AssetCategory::Core);
+        pAch.UpdateServerCheckpoint();
+        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::None);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        Assert::AreEqual(std::string("Inspecting Memory"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryModifiedCoreAchievements)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockInspectingMemory(true);
+        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
+        pAch.SetCategory(ra::data::models::AssetCategory::Core);
+        pAch.SetName(L"Modified");
+        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        Assert::AreEqual(std::string("Fixing Achievements"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryUnpublishedCoreAchievements)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockInspectingMemory(true);
+        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
+        pAch.SetCategory(ra::data::models::AssetCategory::Core);
+        pAch.SetName(L"Modified");
+        pAch.UpdateLocalCheckpoint();
+        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Unpublished);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        Assert::AreEqual(std::string("Fixing Achievements"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryUnofficialAchievements)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockInspectingMemory(true);
+        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
+        pAch.SetCategory(ra::data::models::AssetCategory::Unofficial);
+        pAch.UpdateServerCheckpoint();
+        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::None);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        Assert::AreEqual(std::string("Inspecting Memory"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryModifiedUnofficialAchievements)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockInspectingMemory(true);
+        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
+        pAch.SetCategory(ra::data::models::AssetCategory::Unofficial);
+        pAch.SetName(L"Modified");
+        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        Assert::AreEqual(std::string("Fixing Achievements"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryLocalAchievements)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockInspectingMemory(true);
+        runtime.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        Assert::AreEqual(std::string("Developing Achievements"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryLocalAndCoreAchievements)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockInspectingMemory(true);
+        runtime.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
+        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
+        pAch.SetCategory(ra::data::models::AssetCategory::Core);
+        pAch.UpdateServerCheckpoint();
+        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::None);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        Assert::AreEqual(std::string("Developing Achievements"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestRichPresenceOverrideInspectingMemoryLocalAndModifiedCoreAchievements)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.MockInspectingMemory(true);
+        runtime.mockGameContext.Assets().NewAchievement().SetCategory(ra::data::models::AssetCategory::Local);
+        auto& pAch = runtime.mockGameContext.Assets().NewAchievement();
+        pAch.SetCategory(ra::data::models::AssetCategory::Core);
+        pAch.SetName(L"Modified");
+        Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        Assert::AreEqual(std::string("Developing Achievements"), runtime.GetRichPresenceOverride());
+    }
+    };
 
 } // namespace tests
 } // namespace services

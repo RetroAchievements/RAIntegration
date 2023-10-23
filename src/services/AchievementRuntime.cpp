@@ -732,7 +732,11 @@ std::wstring AchievementRuntime::GetRichPresenceDisplayString() const
 bool AchievementRuntime::ActivateRichPresence(const std::string& sScript)
 {
     auto* game = GetClient()->game;
-    Expects(game != nullptr);
+    if (!game)
+    {
+        // game still loading - assume success
+        return true;
+    }
     auto* runtime = &game->runtime;
     Expects(runtime != nullptr);
 
@@ -1170,6 +1174,11 @@ void AchievementRuntime::DoFrame()
         RaisePauseOnChangeEvents(vAchievementsWithHits, vActiveAchievements);
     if (!mLeaderboardsWithHits.empty() || !mActiveLeaderboards.empty())
         RaisePauseOnChangeEvents(mLeaderboardsWithHits, mActiveLeaderboards);
+}
+
+void AchievementRuntime::Idle() noexcept
+{
+    rc_client_idle(GetClient());
 }
 
 void AchievementRuntime::InvalidateAddress(ra::ByteAddress nAddress) noexcept
@@ -1938,7 +1947,7 @@ _NODISCARD static char ComparisonSizeFromPrefix(_In_ char cPrefix) noexcept
     const char* ptr = buffer;
     buffer[2] = cPrefix;
 
-    char size = RC_MEMSIZE_16_BITS;
+    uint8_t size = RC_MEMSIZE_16_BITS;
     unsigned address = 0;
     rc_parse_memref(&ptr, &size, &address);
     return size;

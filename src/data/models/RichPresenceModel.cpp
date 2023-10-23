@@ -3,6 +3,7 @@
 #include "data\context\GameContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\IConfiguration.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 
@@ -145,6 +146,13 @@ void RichPresenceModel::ReloadRichPresenceScript()
     {
         SetCategory(ra::data::models::AssetCategory::Local);
         UpdateLocalCheckpoint();
+    }
+
+    if (GetChanges() != ra::data::models::AssetChanges::None && IsActive() &&
+        ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(ra::services::Feature::Hardcore))
+    {
+        // ignore modified rich presence in hardcore
+        Deactivate();
     }
 
     EndUpdate();

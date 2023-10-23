@@ -101,6 +101,11 @@ public:
     void DoFrame();
 
     /// <summary>
+    /// Processes stuff not related to a frame.
+    /// </summary>
+    void Idle() noexcept;
+
+    /// <summary>
     /// Loads HitCount data for active achievements from a save state file.
     /// </summary>
     /// <param name="sLoadStateFilename">The name of the save state file.</param>

@@ -8,6 +8,7 @@
 #include "tests\data\DataAsserts.hh"
 
 #include "tests\mocks\MockAchievementRuntime.hh"
+#include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 
@@ -30,6 +31,7 @@ private:
         }
 
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::services::mocks::MockConfiguration mockConfiguration;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::services::impl::StringTextWriter textWriter;
         ra::services::mocks::MockAchievementRuntime mockRuntime;
@@ -197,6 +199,48 @@ public:
         Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
 
         Assert::AreEqual(std::string("Display:\nTest\n"), richPresence.mockLocalStorage.GetStoredData(ra::services::StorageItemType::RichPresence, L"1"));
+    }
+
+    TEST_METHOD(TestReloadDeactivatesInHardcore)
+    {
+        RichPresenceModelHarness richPresence;
+        richPresence.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        richPresence.mockGameContext.SetGameId(1);
+        richPresence.mockLocalStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom file\n");
+        richPresence.SetScript("Display:\nTest\n");
+        richPresence.CreateServerCheckpoint();
+        richPresence.CreateLocalCheckpoint();
+        richPresence.SetState(AssetState::Active);
+
+        Assert::AreEqual(AssetChanges::None, richPresence.GetChanges());
+        Assert::AreEqual(AssetState::Active, richPresence.GetState());
+
+        richPresence.ReloadRichPresenceScript();
+        Assert::AreEqual(std::string("Display:\nFrom file\n"), richPresence.GetScript());
+        Assert::AreEqual(AssetChanges::Unpublished, richPresence.GetChanges());
+        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+        Assert::AreEqual(AssetState::Inactive, richPresence.GetState());
+    }
+
+    TEST_METHOD(TestReloadRemainsActiveNotInHardcore)
+    {
+        RichPresenceModelHarness richPresence;
+        richPresence.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        richPresence.mockGameContext.SetGameId(1);
+        richPresence.mockLocalStorage.MockStoredData(ra::services::StorageItemType::RichPresence, L"1", "Display:\nFrom file\n");
+        richPresence.SetScript("Display:\nTest\n");
+        richPresence.CreateServerCheckpoint();
+        richPresence.CreateLocalCheckpoint();
+        richPresence.SetState(AssetState::Active);
+
+        Assert::AreEqual(AssetChanges::None, richPresence.GetChanges());
+        Assert::AreEqual(AssetState::Active, richPresence.GetState());
+
+        richPresence.ReloadRichPresenceScript();
+        Assert::AreEqual(std::string("Display:\nFrom file\n"), richPresence.GetScript());
+        Assert::AreEqual(AssetChanges::Unpublished, richPresence.GetChanges());
+        Assert::AreEqual(AssetCategory::Core, richPresence.GetCategory());
+        Assert::AreEqual(AssetState::Active, richPresence.GetState());
     }
 
     TEST_METHOD(TestRevertUpdatesFile)

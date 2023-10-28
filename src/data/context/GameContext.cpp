@@ -272,7 +272,17 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
         if (pAsset != nullptr && pAsset->GetChanges() != ra::data::models::AssetChanges::None)
         {
             if (pAsset->IsActive())
+            {
+                if (pAsset->GetType() == ra::data::models::AssetType::RichPresence &&
+                    ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().RichPresenceMonitor.IsVisible())
+                {
+                    // if rich presence monitor is open, allow modified rich presence to remain active. otherwise,
+                    // it will be activated when the monitor is opened. it cannot be activated from the list.
+                    continue;
+                }
+
                 pAsset->SetState(ra::data::models::AssetState::Inactive);
+            }
         }
     }
 

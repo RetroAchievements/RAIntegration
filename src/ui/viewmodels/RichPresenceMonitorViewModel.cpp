@@ -120,7 +120,14 @@ void RichPresenceMonitorViewModel::OnValueChanged(const BoolModelProperty::Chang
     if (args.Property == IsVisibleProperty)
     {
         if (args.tNewValue)
+        {
+            auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+            auto* pRichPresence = pGameContext.Assets().FindRichPresence();
+            if (pRichPresence && pRichPresence->GetState() == ra::data::models::AssetState::Inactive)
+                pRichPresence->Activate();
+
             UpdateDisplayString();
+        }
     }
 
     WindowViewModelBase::OnValueChanged(args);

@@ -1597,6 +1597,22 @@ void AssetListViewModel::RevertSelected()
 
         if (!sMessage.empty())
             sMessage.push_back(',');
+
+        switch (pAsset->GetType())
+        {
+            case ra::data::models::AssetType::Achievement:
+                sMessage.append("ach");
+                break;
+
+            case ra::data::models::AssetType::Leaderboard:
+                sMessage.append("lbd");
+                break;
+
+            case ra::data::models::AssetType::RichPresence:
+                sMessage.append("rp");
+                break;
+        }
+
         sMessage.append(std::to_string(pAsset->GetID()));
     }
     RA_LOG_INFO("Reverting %zu assets: %s", vAssetsToReset.size(), sMessage);

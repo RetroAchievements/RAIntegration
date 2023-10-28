@@ -210,69 +210,6 @@ std::chrono::seconds SessionTracker::GetTotalPlaytime(unsigned int nGameId) cons
     return tPlaytime;
 }
 
-bool SessionTracker::IsInspectingMemory() const
-{
-    const auto& pWindowManager = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>();
-
-    if (pWindowManager.MemoryBookmarks.IsVisible())
-        return true;
-
-    if (pWindowManager.MemoryInspector.IsVisible())
-        return true;
-
-    if (pWindowManager.AssetEditor.IsVisible())
-        return true;
-
-    return false;
-}
-
-std::wstring SessionTracker::GetCurrentActivity() const
-{
-    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
-
-    if (IsInspectingMemory())
-    {
-        if (pGameContext.GetMode() == ra::data::context::GameContext::Mode::CompatibilityTest)
-            return L"Testing Compatibility";
-
-        if (_RA_HardcoreModeIsActive())
-            return L"Inspecting Memory in Hardcore mode";
-
-        std::wstring sMessage = L"Inspecting Memory";
-        for (gsl::index i = 0; i < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++i)
-        {
-            const auto* pAsset = pGameContext.Assets().GetItemAt(i);
-            if (pAsset)
-            {
-                if (!pAsset->IsShownInList())
-                    continue;
-
-                if (pAsset->GetCategory() == ra::data::models::AssetCategory::Local)
-                {
-                    sMessage = L"Developing Achievements";
-                    break;
-                }
-
-                if (pAsset->GetChanges() != ra::data::models::AssetChanges::None)
-                    sMessage = L"Fixing Achievements";
-            }
-        }
-
-        return sMessage;
-    }
-
-    const auto* pRichPresence = pGameContext.Assets().FindRichPresence();
-    if (pRichPresence && pRichPresence->GetChanges() == ra::data::models::AssetChanges::None)
-    {
-        const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        const auto sRPResponse = pRuntime.GetRichPresenceDisplayString();
-        if (!sRPResponse.empty())
-            return sRPResponse;
-    }
-
-    return L"Playing " + pGameContext.GameTitle();
-}
-
 } // namespace context
 } // namespace data
 } // namespace ra

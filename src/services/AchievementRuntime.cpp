@@ -194,7 +194,7 @@ uint32_t AchievementRuntime::ReadMemory(uint32_t nAddress, uint8_t* pBuffer, uin
 
 static void ConvertHttpResponseToApiServerResponse(rc_api_server_response_t& pResponse,
                                                    const ra::services::Http::Response& httpResponse,
-                                                   std::string& sErrorBuffer) noexcept
+                                                   std::string& sErrorBuffer)
 {
     memset(&pResponse, 0, sizeof(pResponse));
     pResponse.http_status_code = ra::etoi(httpResponse.StatusCode());

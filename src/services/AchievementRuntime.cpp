@@ -31,6 +31,8 @@
 #include <rcheevos\src\rc_client_internal.h>
 #include <rcheevos\src\rhash\md5.h>
 
+#define RC_CLIENT_SUPPORTS_EXTERNAL
+
 namespace ra {
 namespace services {
 
@@ -2333,7 +2335,7 @@ extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBy
 #ifdef RC_CLIENT_SUPPORTS_EXTERNAL
 
 #include "Exports.hh"
-#include "rcheevos/src/rcheevos/rc_client_external.h"
+#include "rcheevos/src/rc_client_external.h"
 
 #ifdef __cplusplus
 extern "C" {

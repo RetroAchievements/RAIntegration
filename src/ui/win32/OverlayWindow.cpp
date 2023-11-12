@@ -57,14 +57,15 @@ void OverlayWindow::CreateOverlayWindow(HWND hWnd)
 
     if (m_hOverlayWnd && IsWindow(m_hOverlayWnd))
     {
-        // overlay window exists, just update the parent (if necessary)
+        // overlay window already exists, destroy before creating a new one
         if (m_hWnd != hWnd)
         {
-            m_hWnd = hWnd;
-            SetParent(m_hOverlayWnd, hWnd);
-            UpdateOverlayPosition();
+            DestroyOverlayWindow();
         }
-        return;
+        else
+        {
+            return;
+        }
     }
 
     // overlay window does not exist, create it
@@ -197,8 +198,13 @@ void OverlayWindow::CreateOverlayWindow()
     });
 }
 
-void OverlayWindow::DestroyOverlayWindow() noexcept
+void OverlayWindow::DestroyOverlayWindow() 
 {
+
+    //clear current popups so they don't interfere with creation of a new overlay
+    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+    pOverlayManager.ClearPopups();
+
     if (m_hEventHook)
     {
         UnhookWinEvent(m_hEventHook);

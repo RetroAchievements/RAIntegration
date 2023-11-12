@@ -2278,6 +2278,100 @@ int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) 
 class AchievementRuntimeExports : private AchievementRuntime
 {
 public:
+    static void destroy()
+    {
+        memset(&s_callbacks, 0, sizeof(s_callbacks));
+    }
+
+    static void enable_logging(rc_client_t* client, int level, rc_client_message_callback_t callback)
+    {
+        s_callbacks.log_callback = callback;
+        s_callbacks.log_client = client;
+
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_enable_logging(pClient.GetClient(), level, AchievementRuntimeExports::LogMessageExternal);
+    }
+
+    static void set_event_handler(rc_client_t* client, rc_client_event_handler_t handler)
+    {
+        s_callbacks.event_handler = handler;
+        s_callbacks.event_client = client;
+
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_set_event_handler(pClient.GetClient(), AchievementRuntimeExports::EventHandlerExternal);
+    }
+
+    static void set_read_memory(rc_client_t* client, rc_client_read_memory_func_t handler)
+    {
+        s_callbacks.read_memory_handler = handler;
+        s_callbacks.read_memory_client = client;
+
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_set_read_memory_function(pClient.GetClient(), AchievementRuntimeExports::ReadMemoryExternal);
+
+        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        pEmulatorContext.ClearMemoryBlocks();
+        pEmulatorContext.AddMemoryBlock(0, 0xFFFFFFFF, nullptr, nullptr);
+        pEmulatorContext.AddMemoryBlockReader(0, AchievementRuntimeExports::ReadMemoryBlock);
+    }
+
+    static void set_hardcore_enabled(int value)
+    {
+        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        if (value)
+            pEmulatorContext.EnableHardcoreMode(false);
+        else
+            pEmulatorContext.DisableHardcoreMode();
+    }
+
+    static int get_hardcore_enabled()
+    {
+        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        return pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+    }
+
+    static void set_unofficial_enabled(int value)
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_set_unofficial_enabled(pClient.GetClient(), value);
+    }
+
+    static int get_unofficial_enabled()
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_get_unofficial_enabled(pClient.GetClient());
+    }
+
+    static void set_encore_mode_enabled(int value)
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_set_encore_mode_enabled(pClient.GetClient(), value);
+    }
+
+    static int get_encore_mode_enabled()
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_get_encore_mode_enabled(pClient.GetClient());
+    }
+
+    static void set_spectator_mode_enabled(int value)
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_set_spectator_mode_enabled(pClient.GetClient(), value);
+    }
+
+    static int get_spectator_mode_enabled()
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_get_spectator_mode_enabled(pClient.GetClient());
+    }
+
+    static void abort_async(rc_client_async_handle_t* handle)
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        rc_client_abort_async(pClient.GetClient(), handle);
+    }
+
     static rc_client_async_handle_t* begin_login_with_password(rc_client_t* client, const char* username,
                                                                const char* password, rc_client_callback_t callback,
                                                                void* callback_userdata)
@@ -2309,7 +2403,57 @@ public:
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
         return rc_client_logout(pClient.GetClient());
     }
+
+private:
+    typedef struct ExternalClientCallbacks
+    {
+        rc_client_message_callback_t log_callback;
+        rc_client_t* log_client;
+
+        rc_client_event_handler_t event_handler;
+        rc_client_t* event_client;
+
+        rc_client_read_memory_func_t read_memory_handler;
+        rc_client_t* read_memory_client;
+
+    } ExternalClientCallbacks;
+
+    static ExternalClientCallbacks s_callbacks;
+
+    static void LogMessageExternal(const char* sMessage, const rc_client_t*)
+    {
+        const auto& pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>();
+        if (pLogger.IsEnabled(ra::services::LogLevel::Info))
+            pLogger.LogMessage(ra::services::LogLevel::Info, sMessage);
+
+        if (s_callbacks.log_callback)
+            s_callbacks.log_callback(sMessage, s_callbacks.log_client);
+    }
+
+    static void EventHandlerExternal(const rc_client_event_t* event, rc_client_t*)
+    {
+        if (s_callbacks.event_handler)
+            s_callbacks.event_handler(event, s_callbacks.event_client);
+    }
+
+    static uint32_t ReadMemoryBlock(uint32_t address, uint8_t* buffer, uint32_t num_bytes)
+    {
+        if (s_callbacks.read_memory_handler)
+            return s_callbacks.read_memory_handler(address, buffer, num_bytes, s_callbacks.read_memory_client);
+
+        return 0;
+    }
+
+    static uint32_t ReadMemoryExternal(uint32_t address, uint8_t* buffer, uint32_t num_bytes, rc_client_t*)
+    {
+        if (s_callbacks.read_memory_handler)
+            return s_callbacks.read_memory_handler(address, buffer, num_bytes, s_callbacks.read_memory_client);
+
+        return 0;
+    }
 };
+
+AchievementRuntimeExports::ExternalClientCallbacks AchievementRuntimeExports::s_callbacks{};
 
 #endif RC_CLIENT_SUPPORTS_EXTERNAL
 
@@ -2341,7 +2485,7 @@ extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBy
 extern "C" {
 #endif
 
-API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClient, int nVersion)
+API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal, int nVersion)
 {
     switch (nVersion)
     {
@@ -2350,10 +2494,27 @@ API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClient, int nVe
             __fallthrough;
 
         case 1:
-            pClient->begin_login_with_password = ra::services::AchievementRuntimeExports::begin_login_with_password;
-            pClient->begin_login_with_token = ra::services::AchievementRuntimeExports::begin_login_with_token;
-            pClient->logout = ra::services::AchievementRuntimeExports::logout;
-            pClient->get_user_info = ra::services::AchievementRuntimeExports::get_user_info;
+            pClientExternal->destroy = ra::services::AchievementRuntimeExports::destroy;
+
+            pClientExternal->enable_logging = ra::services::AchievementRuntimeExports::enable_logging;
+            pClientExternal->set_event_handler = ra::services::AchievementRuntimeExports::set_event_handler;
+            pClientExternal->set_read_memory = ra::services::AchievementRuntimeExports::set_read_memory;
+
+            pClientExternal->set_hardcore_enabled = ra::services::AchievementRuntimeExports::set_hardcore_enabled;
+            pClientExternal->get_hardcore_enabled = ra::services::AchievementRuntimeExports::get_hardcore_enabled;
+            pClientExternal->set_unofficial_enabled = ra::services::AchievementRuntimeExports::set_unofficial_enabled;
+            pClientExternal->get_unofficial_enabled = ra::services::AchievementRuntimeExports::get_unofficial_enabled;
+            pClientExternal->set_encore_mode_enabled = ra::services::AchievementRuntimeExports::set_encore_mode_enabled;
+            pClientExternal->get_encore_mode_enabled = ra::services::AchievementRuntimeExports::get_encore_mode_enabled;
+            pClientExternal->set_spectator_mode_enabled = ra::services::AchievementRuntimeExports::set_spectator_mode_enabled;
+            pClientExternal->get_spectator_mode_enabled = ra::services::AchievementRuntimeExports::get_spectator_mode_enabled;
+
+            pClientExternal->abort_async = ra::services::AchievementRuntimeExports::abort_async;
+
+            pClientExternal->begin_login_with_password = ra::services::AchievementRuntimeExports::begin_login_with_password;
+            pClientExternal->begin_login_with_token = ra::services::AchievementRuntimeExports::begin_login_with_token;
+            pClientExternal->logout = ra::services::AchievementRuntimeExports::logout;
+            pClientExternal->get_user_info = ra::services::AchievementRuntimeExports::get_user_info;
             break;
     }
 

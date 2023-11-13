@@ -2452,14 +2452,86 @@ public:
 
     static const rc_client_game_t* get_game_info()
     {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
         return rc_client_get_game_info(pClient.GetClient());
     }
 
     static void get_user_game_summary(rc_client_user_game_summary_t* summary)
     {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
         return rc_client_get_user_game_summary(pClient.GetClient(), summary);
+    }
+
+    static rc_client_achievement_list_info_t* create_achievement_list(int category, int grouping)
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        auto* list = (rc_client_achievement_list_info_t*)
+            rc_client_create_achievement_list(pClient.GetClient(), category, grouping);
+        list->destroy_func = destroy_achievement_list;
+        return list;
+    }
+
+    static int has_achievements()
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_has_achievements(pClient.GetClient());
+    }
+
+    static const rc_client_achievement_t* get_achievement_info(uint32_t id)
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_get_achievement_info(pClient.GetClient(), id);
+    }
+
+    static rc_client_leaderboard_list_info_t* create_leaderboard_list(int grouping)
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        auto* list = (rc_client_leaderboard_list_info_t*)
+            rc_client_create_leaderboard_list(pClient.GetClient(), grouping);
+        list->destroy_func = destroy_leaderboard_list;
+        return list;
+    }
+
+    static int has_leaderboards()
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_has_leaderboards(pClient.GetClient());
+    }
+
+    static const rc_client_leaderboard_t* get_leaderboard_info(uint32_t id)
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_get_leaderboard_info(pClient.GetClient(), id);
+    }
+
+    static size_t get_rich_presence_message(char buffer[], size_t buffer_size)
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_get_rich_presence_message(pClient.GetClient(), buffer, buffer_size);
+    }
+
+    static void do_frame()
+    {
+        _RA_DoAchievementsFrame();
+    }
+
+    static void idle()
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        return rc_client_idle(pClient.GetClient());
+    }
+
+    static int is_processing_required()
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_is_processing_required(pClient.GetClient());
+    }
+
+    static void reset()
+    {
+#ifndef RA_UTEST
+        _RA_OnReset();
+#endif
     }
 
 private:
@@ -2508,6 +2580,18 @@ private:
             return s_callbacks.read_memory_handler(address, buffer, num_bytes, s_callbacks.read_memory_client);
 
         return 0;
+    }
+
+    static void destroy_achievement_list(rc_client_achievement_list_info_t* list)
+    {
+        if (list)
+            free(list);
+    }
+
+    static void destroy_leaderboard_list(rc_client_leaderboard_list_info_t* list)
+    {
+        if (list)
+            free(list);
     }
 };
 
@@ -2572,6 +2656,21 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal)
     pClientExternal->get_game_info = ra::services::AchievementRuntimeExports::get_game_info;
     pClientExternal->unload_game = ra::services::AchievementRuntimeExports::unload_game;
     pClientExternal->get_user_game_summary = ra::services::AchievementRuntimeExports::get_user_game_summary;
+
+    pClientExternal->create_achievement_list = ra::services::AchievementRuntimeExports::create_achievement_list;
+    pClientExternal->has_achievements = ra::services::AchievementRuntimeExports::has_achievements;
+    pClientExternal->get_achievement_info = ra::services::AchievementRuntimeExports::get_achievement_info;
+
+    pClientExternal->create_leaderboard_list = ra::services::AchievementRuntimeExports::create_leaderboard_list;
+    pClientExternal->has_leaderboards = ra::services::AchievementRuntimeExports::has_leaderboards;
+    pClientExternal->get_leaderboard_info = ra::services::AchievementRuntimeExports::get_leaderboard_info;
+
+    pClientExternal->get_rich_presence_message = ra::services::AchievementRuntimeExports::get_rich_presence_message;
+
+    pClientExternal->do_frame = ra::services::AchievementRuntimeExports::do_frame;
+    pClientExternal->idle = ra::services::AchievementRuntimeExports::idle;
+    pClientExternal->is_processing_required = ra::services::AchievementRuntimeExports::is_processing_required;
+    pClientExternal->reset = ra::services::AchievementRuntimeExports::reset;
 }
 
 API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal, int nVersion)

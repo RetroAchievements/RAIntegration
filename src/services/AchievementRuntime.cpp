@@ -2534,6 +2534,24 @@ public:
 #endif
     }
 
+    static size_t progress_size()
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_progress_size(pClient.GetClient());
+    }
+
+    static int serialize_progress(uint8_t* buffer)
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_serialize_progress(pClient.GetClient(), buffer);
+    }
+
+    static int deserialize_progress(const uint8_t* buffer)
+    {
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        return rc_client_deserialize_progress(pClient.GetClient(), buffer);
+    }
+
 private:
     typedef struct ExternalClientCallbacks
     {
@@ -2671,6 +2689,10 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal)
     pClientExternal->idle = ra::services::AchievementRuntimeExports::idle;
     pClientExternal->is_processing_required = ra::services::AchievementRuntimeExports::is_processing_required;
     pClientExternal->reset = ra::services::AchievementRuntimeExports::reset;
+
+    pClientExternal->progress_size = ra::services::AchievementRuntimeExports::progress_size;
+    pClientExternal->serialize_progress = ra::services::AchievementRuntimeExports::serialize_progress;
+    pClientExternal->deserialize_progress = ra::services::AchievementRuntimeExports::deserialize_progress;
 }
 
 API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal, int nVersion)

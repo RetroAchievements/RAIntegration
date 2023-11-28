@@ -3119,7 +3119,7 @@ public:
         Assert::IsNotNull((void*)pClient.enable_logging, L"enable_logging not set");
         Assert::IsNotNull((void*)pClient.set_event_handler, L"set_event_handler not set");
         Assert::IsNotNull((void*)pClient.set_read_memory, L"set_read_memory not set");
-        Assert::IsNull((void*)pClient.set_get_time_millisecs, L"set_get_time_millisecs set");
+        Assert::IsNotNull((void*)pClient.set_get_time_millisecs, L"set_get_time_millisecs not set");
         Assert::IsNull((void*)pClient.set_host, L"set_host set");
 
         Assert::IsNotNull((void*)pClient.set_hardcore_enabled, L"set_hardcore_enabled not set");
@@ -3158,7 +3158,7 @@ public:
         Assert::IsNull((void*)pClient.begin_fetch_leaderboard_entries_around_user, L"begin_fetch_leaderboard_entries_around_user set");
 
         Assert::IsNotNull((void*)pClient.get_rich_presence_message, L"get_rich_presence_message not set");
-        Assert::IsNotNull((void*)pClient.has_rich_presence, L"has_rich_presence set");
+        Assert::IsNotNull((void*)pClient.has_rich_presence, L"has_rich_presence not set");
 
         Assert::IsNotNull((void*)pClient.do_frame, L"do_frame not set");
         Assert::IsNotNull((void*)pClient.idle, L"idle not set");

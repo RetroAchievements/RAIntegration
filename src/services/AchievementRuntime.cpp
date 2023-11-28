@@ -2331,6 +2331,15 @@ public:
         pEmulatorContext.AddMemoryBlockReader(0, AchievementRuntimeExports::ReadMemoryBlock);
     }
 
+    static void set_get_time_millisecs(rc_client_t* client, rc_get_time_millisecs_func_t handler)
+    {
+        s_callbacks.get_time_millisecs_handler = handler;
+        s_callbacks.get_time_millisecs_client = client;
+
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        rc_client_set_get_time_millisecs_function(pClient.GetClient(), AchievementRuntimeExports::GetTimeMillisecsExternal);
+    }
+
     static void set_hardcore_enabled(int value)
     {
         auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
@@ -2568,6 +2577,9 @@ private:
         rc_client_read_memory_func_t read_memory_handler;
         rc_client_t* read_memory_client;
 
+        rc_get_time_millisecs_func_t get_time_millisecs_handler;
+        rc_client_t* get_time_millisecs_client;
+
     } ExternalClientCallbacks;
 
     static ExternalClientCallbacks s_callbacks;
@@ -2600,6 +2612,14 @@ private:
     {
         if (s_callbacks.read_memory_handler)
             return s_callbacks.read_memory_handler(address, buffer, num_bytes, s_callbacks.read_memory_client);
+
+        return 0;
+    }
+
+    static rc_clock_t GetTimeMillisecsExternal(const rc_client_t*)
+    {
+        if (s_callbacks.get_time_millisecs_handler)
+            return s_callbacks.get_time_millisecs_handler(s_callbacks.get_time_millisecs_client);
 
         return 0;
     }
@@ -2656,6 +2676,7 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal)
     pClientExternal->enable_logging = ra::services::AchievementRuntimeExports::enable_logging;
     pClientExternal->set_event_handler = ra::services::AchievementRuntimeExports::set_event_handler;
     pClientExternal->set_read_memory = ra::services::AchievementRuntimeExports::set_read_memory;
+    pClientExternal->set_get_time_millisecs = ra::services::AchievementRuntimeExports::set_get_time_millisecs;
 
     pClientExternal->set_hardcore_enabled = ra::services::AchievementRuntimeExports::set_hardcore_enabled;
     pClientExternal->get_hardcore_enabled = ra::services::AchievementRuntimeExports::get_hardcore_enabled;

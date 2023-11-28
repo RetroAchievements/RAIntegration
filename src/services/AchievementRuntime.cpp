@@ -31,8 +31,6 @@
 #include <rcheevos\src\rc_client_internal.h>
 #include <rcheevos\src\rhash\md5.h>
 
-#define RC_CLIENT_SUPPORTS_EXTERNAL
-
 namespace ra {
 namespace services {
 
@@ -2510,6 +2508,12 @@ public:
         return rc_client_get_rich_presence_message(pClient.GetClient(), buffer, buffer_size);
     }
 
+    static int has_rich_presence()
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_has_rich_presence(pClient.GetClient());
+    }
+
     static void do_frame()
     {
         _RA_DoAchievementsFrame();
@@ -2684,6 +2688,7 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal)
     pClientExternal->get_leaderboard_info = ra::services::AchievementRuntimeExports::get_leaderboard_info;
 
     pClientExternal->get_rich_presence_message = ra::services::AchievementRuntimeExports::get_rich_presence_message;
+    pClientExternal->has_rich_presence = ra::services::AchievementRuntimeExports::has_rich_presence;
 
     pClientExternal->do_frame = ra::services::AchievementRuntimeExports::do_frame;
     pClientExternal->idle = ra::services::AchievementRuntimeExports::idle;

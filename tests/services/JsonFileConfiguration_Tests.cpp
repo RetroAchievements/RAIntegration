@@ -279,6 +279,17 @@ public:
         Assert::AreEqual(std::string("https://stage.retroachievements.org"), config.GetHostUrl());
         Assert::AreEqual(std::string("https://stage.retroachievements.org"), config.GetImageHostUrl());
     }
+
+    TEST_METHOD(TestHostNameFromRcClient)
+    {
+        MockFileSystem mockFileSystem;
+        mockFileSystem.MockFile(L"host.txt", "stage.retroachievements.org");
+        JsonFileConfiguration config;
+        config.SetHost("localhost");
+        Assert::AreEqual(std::string("localhost"), config.GetHostName());
+        Assert::AreEqual(std::string("http://localhost"), config.GetHostUrl());
+        Assert::AreEqual(std::string("http://localhost"), config.GetImageHostUrl());
+    }
 };
 
 } // namespace tests

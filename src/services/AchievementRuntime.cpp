@@ -19,6 +19,7 @@
 #include "services\IFileSystem.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
+#include "services\impl\JsonFileConfiguration.hh"
 
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
@@ -2340,6 +2341,14 @@ public:
         rc_client_set_get_time_millisecs_function(pClient.GetClient(), AchievementRuntimeExports::GetTimeMillisecsExternal);
     }
 
+    static void set_host(const char* value)
+    {
+        auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(
+            &ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());
+        if (pConfiguration != nullptr)
+            pConfiguration->SetHost(value);
+    }
+
     static void set_hardcore_enabled(int value)
     {
         auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
@@ -2677,6 +2686,7 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal)
     pClientExternal->set_event_handler = ra::services::AchievementRuntimeExports::set_event_handler;
     pClientExternal->set_read_memory = ra::services::AchievementRuntimeExports::set_read_memory;
     pClientExternal->set_get_time_millisecs = ra::services::AchievementRuntimeExports::set_get_time_millisecs;
+    pClientExternal->set_host = ra::services::AchievementRuntimeExports::set_host;
 
     pClientExternal->set_hardcore_enabled = ra::services::AchievementRuntimeExports::set_hardcore_enabled;
     pClientExternal->get_hardcore_enabled = ra::services::AchievementRuntimeExports::get_hardcore_enabled;

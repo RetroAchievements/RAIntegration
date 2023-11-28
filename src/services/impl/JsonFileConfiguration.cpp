@@ -301,15 +301,21 @@ ra::ui::Size JsonFileConfiguration::GetWindowSize(const std::string & sPositionK
     return ra::ui::Size{ INT32_MIN, INT32_MIN };
 }
 
-void JsonFileConfiguration::SetWindowSize(const std::string & sPositionKey, const ra::ui::Size & oSize)
+void JsonFileConfiguration::SetWindowSize(const std::string& sPositionKey, const ra::ui::Size& oSize)
 {
     m_mWindowPositions[sPositionKey].oSize = oSize;
+}
+
+void JsonFileConfiguration::SetHost(const std::string& sHost)
+{
+    m_sHostName = sHost;
+    UpdateHost();
 }
 
 const std::string& JsonFileConfiguration::GetHostName() const
 {
     if (m_sHostName.empty())
-        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->UpdateHost();
+        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->ReadHostFile();
 
     return m_sHostName;
 }
@@ -317,7 +323,7 @@ const std::string& JsonFileConfiguration::GetHostName() const
 const std::string& JsonFileConfiguration::GetHostUrl() const
 {
     if (m_sHostUrl.empty())
-        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->UpdateHost();
+        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->ReadHostFile();
 
     return m_sHostUrl;
 }
@@ -325,12 +331,12 @@ const std::string& JsonFileConfiguration::GetHostUrl() const
 const std::string& JsonFileConfiguration::GetImageHostUrl() const
 {
     if (m_sImageHostUrl.empty())
-        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->UpdateHost();
+        GSL_SUPPRESS_TYPE3 const_cast<JsonFileConfiguration*>(this)->ReadHostFile();
 
     return m_sImageHostUrl;
 }
 
-void JsonFileConfiguration::UpdateHost()
+void JsonFileConfiguration::ReadHostFile()
 {
     const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
     if (pFileSystem.GetFileSize(L"host.txt") > 0)
@@ -340,8 +346,14 @@ void JsonFileConfiguration::UpdateHost()
             pFile->GetLine(m_sHostName);
     }
 
+    UpdateHost();
+}
+
+void JsonFileConfiguration::UpdateHost()
+{
     if (m_sHostName.empty())
     {
+        m_bCustomHost = false;
         m_sHostName = "retroachievements.org";
         m_sHostUrl = "https://retroachievements.org";
         m_sImageHostUrl = "http://i.retroachievements.org";

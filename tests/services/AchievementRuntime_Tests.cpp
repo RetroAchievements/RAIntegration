@@ -3120,7 +3120,7 @@ public:
         Assert::IsNotNull((void*)pClient.set_event_handler, L"set_event_handler not set");
         Assert::IsNotNull((void*)pClient.set_read_memory, L"set_read_memory not set");
         Assert::IsNotNull((void*)pClient.set_get_time_millisecs, L"set_get_time_millisecs not set");
-        Assert::IsNull((void*)pClient.set_host, L"set_host set");
+        Assert::IsNotNull((void*)pClient.set_host, L"set_host not set");
 
         Assert::IsNotNull((void*)pClient.set_hardcore_enabled, L"set_hardcore_enabled not set");
         Assert::IsNotNull((void*)pClient.get_hardcore_enabled, L"get_hardcore_enabled not set");

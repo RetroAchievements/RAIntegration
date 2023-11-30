@@ -24,7 +24,8 @@
 #include <rcheevos\src\rapi\rc_api_common.h>
 #include <rcheevos\src\rc_client_internal.h>
 
-#ifdef RC_CLIENT_SUPPORTS_EXTERNAL
+#ifdef RC_CLIENT_EXPORTS_EXTERNAL
+#include <rcheevos\src\rc_client_external.h>
 #include "Exports.hh"
 extern "C" API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal, int nVersion);
 #endif
@@ -3111,7 +3112,7 @@ public:
         Assert::AreEqual(std::string("Developing Achievements"), runtime.GetRichPresenceOverride());
     }
 
-#ifdef RC_CLIENT_SUPPORTS_EXTERNAL
+#ifdef RC_CLIENT_EXPORTS_EXTERNAL
     static void AssertV1Exports(rc_client_external_t& pClient)
     {
         Assert::IsNotNull((void*)pClient.destroy, L"destory not set");
@@ -3154,8 +3155,8 @@ public:
         Assert::IsNotNull((void*)pClient.create_leaderboard_list, L"create_leaderboard_list not set");
         Assert::IsNotNull((void*)pClient.has_leaderboards, L"has_leaderboards not set");
         Assert::IsNotNull((void*)pClient.get_leaderboard_info, L"get_leaderboard_info not set");
-        Assert::IsNull((void*)pClient.begin_fetch_leaderboard_entries, L"begin_fetch_leaderboard_entries set");
-        Assert::IsNull((void*)pClient.begin_fetch_leaderboard_entries_around_user, L"begin_fetch_leaderboard_entries_around_user set");
+        Assert::IsNotNull((void*)pClient.begin_fetch_leaderboard_entries, L"begin_fetch_leaderboard_entries not set");
+        Assert::IsNotNull((void*)pClient.begin_fetch_leaderboard_entries_around_user, L"begin_fetch_leaderboard_entries_around_user not set");
 
         Assert::IsNotNull((void*)pClient.get_rich_presence_message, L"get_rich_presence_message not set");
         Assert::IsNotNull((void*)pClient.has_rich_presence, L"has_rich_presence not set");

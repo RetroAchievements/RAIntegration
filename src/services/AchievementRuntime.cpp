@@ -2552,6 +2552,64 @@ public:
         return rc_client_get_leaderboard_info(pClient.GetClient(), id);
     }
 
+private:
+    class LeaderboardEntriesListCallbackWrapper
+    {
+    public:
+        LeaderboardEntriesListCallbackWrapper(rc_client_t* client,
+                                              rc_client_fetch_leaderboard_entries_callback_t callback,
+                                              void* callback_userdata) noexcept :
+            m_pClient(client), m_fCallback(callback), m_pCallbackUserdata(callback_userdata)
+        {}
+
+        void DoCallback(int nResult, rc_client_leaderboard_entry_list_t* pList, const char* sErrorMessage) noexcept
+        {
+            m_fCallback(nResult, sErrorMessage, pList, m_pClient, m_pCallbackUserdata);
+        }
+
+        static void Dispatch(int nResult, const char* sErrorMessage, rc_client_leaderboard_entry_list_t* pList,
+                             rc_client_t*, void* pUserdata)
+        {
+            auto* wrapper = static_cast<LeaderboardEntriesListCallbackWrapper*>(pUserdata);
+            Expects(wrapper != nullptr);
+
+            if (pList)
+                ((rc_client_leaderboard_entry_list_info_t*)pList)->destroy_func = destroy_leaderboard_entry_list;
+
+            wrapper->DoCallback(nResult, pList, sErrorMessage);
+
+            delete wrapper;
+        }
+
+    private:
+        rc_client_t* m_pClient;
+        rc_client_fetch_leaderboard_entries_callback_t m_fCallback;
+        void* m_pCallbackUserdata;
+    };
+
+public:
+    static rc_client_async_handle_t* begin_fetch_leaderboard_entries(rc_client_t* client,
+        uint32_t leaderboard_id, uint32_t first_entry, uint32_t count,
+        rc_client_fetch_leaderboard_entries_callback_t callback, void* callback_userdata)
+    {
+        auto* pCallbackData = new LeaderboardEntriesListCallbackWrapper(client, callback, callback_userdata);
+
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        return rc_client_begin_fetch_leaderboard_entries(pClient.GetClient(), leaderboard_id, first_entry, count,
+                                                         LeaderboardEntriesListCallbackWrapper::Dispatch, pCallbackData);
+    }
+
+    static rc_client_async_handle_t* begin_fetch_leaderboard_entries_around_user(rc_client_t* client,
+        uint32_t leaderboard_id, uint32_t count,
+        rc_client_fetch_leaderboard_entries_callback_t callback, void* callback_userdata)
+    {
+        auto* pCallbackData = new LeaderboardEntriesListCallbackWrapper(client, callback, callback_userdata);
+
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        return rc_client_begin_fetch_leaderboard_entries_around_user(pClient.GetClient(), leaderboard_id, count,
+                                                                     LeaderboardEntriesListCallbackWrapper::Dispatch, pCallbackData);
+    }
+
     static size_t get_rich_presence_message(char buffer[], size_t buffer_size)
     {
         const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
@@ -2676,6 +2734,12 @@ private:
         if (list)
             free(list);
     }
+
+    static void destroy_leaderboard_entry_list(rc_client_leaderboard_entry_list_info_t* list)
+    {
+        if (list)
+            free(list);
+    }
 };
 
 AchievementRuntimeExports::ExternalClientCallbacks AchievementRuntimeExports::s_callbacks{};
@@ -2750,6 +2814,9 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal)
     pClientExternal->create_leaderboard_list = ra::services::AchievementRuntimeExports::create_leaderboard_list;
     pClientExternal->has_leaderboards = ra::services::AchievementRuntimeExports::has_leaderboards;
     pClientExternal->get_leaderboard_info = ra::services::AchievementRuntimeExports::get_leaderboard_info;
+    pClientExternal->begin_fetch_leaderboard_entries = ra::services::AchievementRuntimeExports::begin_fetch_leaderboard_entries;
+    pClientExternal->begin_fetch_leaderboard_entries_around_user =
+        ra::services::AchievementRuntimeExports::begin_fetch_leaderboard_entries_around_user;
 
     pClientExternal->get_rich_presence_message = ra::services::AchievementRuntimeExports::get_rich_presence_message;
     pClientExternal->has_rich_presence = ra::services::AchievementRuntimeExports::has_rich_presence;

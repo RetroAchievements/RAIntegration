@@ -346,7 +346,7 @@ static bool DoRequest(const rc_api_request_t& api_request, const char* sApiName,
                 if (!sParams.empty())
                     sParams.push_back('&');
 
-                sParams.append(api_request.post_data, ptr - api_request.post_data - 1);
+                sParams.append(api_request.post_data, ptr - api_request.post_data);
             }
 
             while (*ptr && ptr[0] != '&')

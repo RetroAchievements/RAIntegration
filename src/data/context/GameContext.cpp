@@ -145,9 +145,6 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
         }
     }
 
-    // enable spectator mode to prevent unlocks when testing compatibility
-    rc_client_set_spectator_mode_enabled(pRuntime.GetClient(), nMode == Mode::CompatibilityTest);
-
     const bool bWasPaused = pRuntime.IsPaused();
     pRuntime.SetPaused(true);
 

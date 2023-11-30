@@ -3145,7 +3145,7 @@ public:
         Assert::IsNull((void*)pClient.get_subset_info, L"get_subset_info set");
         Assert::IsNotNull((void*)pClient.unload_game, L"unload_game not set");
         Assert::IsNotNull((void*)pClient.get_user_game_summary, L"get_user_game_summary not set");
-        Assert::IsNull((void*)pClient.begin_change_media, L"begin_change_media set");
+        Assert::IsNotNull((void*)pClient.begin_change_media, L"begin_change_media not set");
 
         Assert::IsNotNull((void*)pClient.create_achievement_list, L"create_achievement_list not set");
         Assert::IsNotNull((void*)pClient.has_achievements, L"has_achievements not set");

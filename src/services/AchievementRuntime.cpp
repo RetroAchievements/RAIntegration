@@ -1015,6 +1015,28 @@ void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage
     delete wrapper;
 }
 
+rc_client_async_handle_t* AchievementRuntime::BeginChangeMedia(const char* file_path,
+    const uint8_t* data, size_t data_size, CallbackWrapper* pCallbackWrapper) noexcept
+{
+    auto* client = GetClient();
+    return rc_client_begin_change_media(client, file_path, data, data_size, AchievementRuntime::ChangeMediaCallback, pCallbackWrapper);
+}
+
+GSL_SUPPRESS_CON3
+void AchievementRuntime::ChangeMediaCallback(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata)
+{
+    auto* wrapper = static_cast<CallbackWrapper*>(pUserdata);
+    Expects(wrapper != nullptr);
+
+    if (nResult == RC_HARDCORE_DISABLED)
+        ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().DisableHardcoreMode();
+
+    wrapper->DoCallback(nResult, sErrorMessage);
+
+    delete wrapper;
+}
+
+
 /* ---- DoFrame ----- */
 
 static void PrepareForPauseOnChangeEvents(rc_client_t* pClient,
@@ -2478,6 +2500,16 @@ public:
         return rc_client_get_user_game_summary(pClient.GetClient(), summary);
     }
 
+    static rc_client_async_handle_t* begin_change_media(rc_client_t* client, const char* file_path,
+                                                        const uint8_t* data, size_t data_size,
+                                                        rc_client_callback_t callback, void* callback_userdata)
+    {
+        auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
+
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        return pClient.BeginChangeMedia(file_path, data, data_size, pCallbackData);
+    }
+
     static rc_client_achievement_list_info_t* create_achievement_list(int category, int grouping)
     {
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
@@ -2709,6 +2741,7 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal)
     pClientExternal->get_game_info = ra::services::AchievementRuntimeExports::get_game_info;
     pClientExternal->unload_game = ra::services::AchievementRuntimeExports::unload_game;
     pClientExternal->get_user_game_summary = ra::services::AchievementRuntimeExports::get_user_game_summary;
+    pClientExternal->begin_change_media = ra::services::AchievementRuntimeExports::begin_change_media;
 
     pClientExternal->create_achievement_list = ra::services::AchievementRuntimeExports::create_achievement_list;
     pClientExternal->has_achievements = ra::services::AchievementRuntimeExports::has_achievements;

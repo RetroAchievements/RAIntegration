@@ -13,7 +13,7 @@
 
 #include <string>
 
-#define RC_CLIENT_SUPPORTS_EXTERNAL
+#define RC_CLIENT_EXPORTS_EXTERNAL
 
 #include <rcheevos\include\rc_client.h>
 

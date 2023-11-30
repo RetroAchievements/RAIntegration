@@ -2290,7 +2290,7 @@ int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) 
 
 /* ---- Exports ----- */
 
-#ifdef RC_CLIENT_SUPPORTS_EXTERNAL
+#ifdef RC_CLIENT_EXPORTS_EXTERNAL
 
 class AchievementRuntimeExports : private AchievementRuntime
 {
@@ -2648,7 +2648,7 @@ private:
 
 AchievementRuntimeExports::ExternalClientCallbacks AchievementRuntimeExports::s_callbacks{};
 
-#endif RC_CLIENT_SUPPORTS_EXTERNAL
+#endif RC_CLIENT_EXPORTS_EXTERNAL
 
 } // namespace services
 } // namespace ra
@@ -2669,7 +2669,7 @@ extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBy
     }
 }
 
-#ifdef RC_CLIENT_SUPPORTS_EXTERNAL
+#ifdef RC_CLIENT_EXPORTS_EXTERNAL
 
 #include "Exports.hh"
 #include "rcheevos/src/rc_client_external.h"
@@ -2751,4 +2751,4 @@ API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal,
 } // extern "C"
 #endif
 
-#endif /* RC_CLIENT_SUPPORTS_EXTERNAL */
+#endif /* RC_CLIENT_EXPORTS_EXTERNAL */

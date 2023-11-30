@@ -35,10 +35,11 @@ void MockAchievementRuntime::MockUser(const std::string& sUsername, const std::s
 {
     m_sUsername = sUsername;
     m_sApiToken = sApiToken;
-    GetClient()->user.username = m_sUsername.c_str();
-    GetClient()->user.display_name = m_sUsername.c_str();
-    GetClient()->user.token = m_sApiToken.c_str();
-    GetClient()->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
+    rc_client_t* pClient = GetClient();
+    pClient->user.username = m_sUsername.c_str();
+    pClient->user.display_name = m_sUsername.c_str();
+    pClient->user.token = m_sApiToken.c_str();
+    pClient->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
 }
 
 void MockAchievementRuntime::MockGame()

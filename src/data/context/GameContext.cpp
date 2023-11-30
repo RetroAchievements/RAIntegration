@@ -319,6 +319,15 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 {
                     case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
                         nCategory = ra::data::models::AssetCategory::Core;
+
+                        // automatically activate all core achievements in compatibility mode
+                        if (GetMode() == Mode::CompatibilityTest)
+                        {
+                            pAchievementData->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+                            if (pAchievementData->trigger)
+                                pAchievementData->trigger->state = RC_TRIGGER_STATE_WAITING;
+                        }
                         break;
 
                     case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL:

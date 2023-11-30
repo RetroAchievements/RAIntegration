@@ -2494,6 +2494,12 @@ public:
         return rc_client_get_game_info(pClient.GetClient());
     }
 
+    static const rc_client_subset_t* get_subset_info(uint32_t subset_id)
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_get_subset_info(pClient.GetClient(), subset_id);
+    }
+
     static void get_user_game_summary(rc_client_user_game_summary_t* summary)
     {
         const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
@@ -2803,6 +2809,7 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal)
     pClientExternal->begin_identify_and_load_game = ra::services::AchievementRuntimeExports::begin_identify_and_load_game;
     pClientExternal->begin_load_game = ra::services::AchievementRuntimeExports::begin_load_game;
     pClientExternal->get_game_info = ra::services::AchievementRuntimeExports::get_game_info;
+    pClientExternal->get_subset_info = ra::services::AchievementRuntimeExports::get_subset_info;
     pClientExternal->unload_game = ra::services::AchievementRuntimeExports::unload_game;
     pClientExternal->get_user_game_summary = ra::services::AchievementRuntimeExports::get_user_game_summary;
     pClientExternal->begin_change_media = ra::services::AchievementRuntimeExports::begin_change_media;

@@ -293,6 +293,37 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
     pRuntime.SyncAssets();
 
     EndLoad();
+
+    // non-hardcore warning
+    auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (!pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore))
+    {
+        bool bShowHardcorePrompt = false;
+        if (pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning))
+            bShowHardcorePrompt = Assets().HasCoreAssets();
+
+        if (bShowHardcorePrompt)
+        {
+            ra::ui::viewmodels::MessageBoxViewModel vmWarning;
+            vmWarning.SetHeader(L"Enable Hardcore mode?");
+            vmWarning.SetMessage(L"You are loading a game with achievements and do not currently have hardcore mode enabled.");
+            vmWarning.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+            vmWarning.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+
+            if (vmWarning.ShowModal() == ra::ui::DialogResult::Yes)
+                ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().EnableHardcoreMode(false);
+        }
+        else
+        {
+            const bool bLeaderboardsEnabled = pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
+
+            ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\info.wav");
+            ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(
+                L"Playing in Softcore Mode",
+                bLeaderboardsEnabled ? L"Leaderboard entries will not be submitted." : L"");
+        }
+    }
+
     OnActiveGameChanged();
 }
 

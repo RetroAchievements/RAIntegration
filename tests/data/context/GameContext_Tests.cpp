@@ -21,6 +21,7 @@
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
@@ -66,6 +67,7 @@ public:
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
+        ra::services::mocks::MockFrameEventQueue mockFrameEventQueue;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulator;
@@ -1255,6 +1257,7 @@ public:
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         // no dialogs when game with achievements loaded in hardcore mode
+        game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
         Assert::IsFalse(game.mockDesktop.WasDialogShown());
         Assert::IsNull(game.mockOverlayManager.GetMessage(2U)); // message 1 will be game placard
     }
@@ -1277,6 +1280,7 @@ public:
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         // should get popup message indicating leaderboards not supported in softcore
+        game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
         Assert::IsFalse(game.mockDesktop.WasDialogShown());
 
         const auto* pPopup = game.mockOverlayManager.GetMessage(2U);
@@ -1303,6 +1307,7 @@ public:
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         // should get popup message indicating playing in softcore
+        game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
         Assert::IsFalse(game.mockDesktop.WasDialogShown());
 
         const auto* pPopup = game.mockOverlayManager.GetMessage(2U);
@@ -1337,6 +1342,7 @@ public:
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         // should get confirmation dialog about hardcore and no popups
+        game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
         Assert::IsTrue(game.mockDesktop.WasDialogShown());
         Assert::IsNull(game.mockOverlayManager.GetMessage(2U));
 
@@ -1370,6 +1376,7 @@ public:
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         // should get confirmation dialog about hardcore and no popups
+        game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
         Assert::IsTrue(game.mockDesktop.WasDialogShown());
         Assert::IsNull(game.mockOverlayManager.GetMessage(2U));
 
@@ -1394,6 +1401,7 @@ public:
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
         // should only get softcore popup
+        game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
         Assert::IsFalse(game.mockDesktop.WasDialogShown());
 
         const auto* pPopup = game.mockOverlayManager.GetMessage(2U);

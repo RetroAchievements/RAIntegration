@@ -35,12 +35,18 @@ public:
         m_vTriggeredTriggers.push_back(sTriggerName);
     }
 
+    void QueueFunction(std::function<void(void)> fAction)
+    {
+        m_vFunctions.push_back(fAction);
+    }
+
     void DoFrame();
 
 protected:
     std::set<std::wstring> m_vMemChanges;
     std::vector<std::wstring> m_vResetTriggers;
     std::vector<std::wstring> m_vTriggeredTriggers;
+    std::vector<std::function<void(void)>> m_vFunctions;
 };
 
 } // namespace services

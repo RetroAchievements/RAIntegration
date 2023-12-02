@@ -39,6 +39,7 @@ bool ImageRepository::Initialize()
 
     if (SUCCEEDED(hr) || hr == RPC_E_CHANGED_MODE)
     {
+        GSL_SUPPRESS_TYPE1
         hr = CoCreateInstance(
 
 #if defined (__cplusplus)

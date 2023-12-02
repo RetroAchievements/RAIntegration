@@ -2317,7 +2317,7 @@ int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) 
 class AchievementRuntimeExports : private AchievementRuntime
 {
 public:
-    static void destroy()
+    static void destroy() noexcept
     {
         memset(&s_callbacks, 0, sizeof(s_callbacks));
     }
@@ -2432,6 +2432,7 @@ public:
                                                                const char* password, rc_client_callback_t callback,
                                                                void* callback_userdata)
     {
+        GSL_SUPPRESS_R3
         auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
 
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
@@ -2476,6 +2477,7 @@ public:
     static rc_client_async_handle_t* begin_load_game(rc_client_t* client, const char* hash,
                                                      rc_client_callback_t callback, void* callback_userdata)
     {
+        GSL_SUPPRESS_R3
         auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
 
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
@@ -2510,6 +2512,7 @@ public:
                                                         const uint8_t* data, size_t data_size,
                                                         rc_client_callback_t callback, void* callback_userdata)
     {
+        GSL_SUPPRESS_R3
         auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
 
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
@@ -2519,8 +2522,9 @@ public:
     static rc_client_achievement_list_info_t* create_achievement_list(int category, int grouping)
     {
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        auto* list = (rc_client_achievement_list_info_t*)
-            rc_client_create_achievement_list(pClient.GetClient(), category, grouping);
+        GSL_SUPPRESS_TYPE1
+        auto* list = reinterpret_cast<rc_client_achievement_list_info_t*>(
+            rc_client_create_achievement_list(pClient.GetClient(), category, grouping));
         list->destroy_func = destroy_achievement_list;
         return list;
     }
@@ -2540,8 +2544,9 @@ public:
     static rc_client_leaderboard_list_info_t* create_leaderboard_list(int grouping)
     {
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        auto* list = (rc_client_leaderboard_list_info_t*)
-            rc_client_create_leaderboard_list(pClient.GetClient(), grouping);
+        GSL_SUPPRESS_TYPE1
+        auto* list = reinterpret_cast<rc_client_leaderboard_list_info_t*>(
+            rc_client_create_leaderboard_list(pClient.GetClient(), grouping));
         list->destroy_func = destroy_leaderboard_list;
         return list;
     }
@@ -2580,7 +2585,10 @@ private:
             Expects(wrapper != nullptr);
 
             if (pList)
-                ((rc_client_leaderboard_entry_list_info_t*)pList)->destroy_func = destroy_leaderboard_entry_list;
+            {
+                GSL_SUPPRESS_TYPE1
+                reinterpret_cast<rc_client_leaderboard_entry_list_info_t*>(pList)->destroy_func = destroy_leaderboard_entry_list;
+            }
 
             wrapper->DoCallback(nResult, pList, sErrorMessage);
 
@@ -2598,6 +2606,7 @@ public:
         uint32_t leaderboard_id, uint32_t first_entry, uint32_t count,
         rc_client_fetch_leaderboard_entries_callback_t callback, void* callback_userdata)
     {
+        GSL_SUPPRESS_R3
         auto* pCallbackData = new LeaderboardEntriesListCallbackWrapper(client, callback, callback_userdata);
 
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
@@ -2609,6 +2618,7 @@ public:
         uint32_t leaderboard_id, uint32_t count,
         rc_client_fetch_leaderboard_entries_callback_t callback, void* callback_userdata)
     {
+        GSL_SUPPRESS_R3
         auto* pCallbackData = new LeaderboardEntriesListCallbackWrapper(client, callback, callback_userdata);
 
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
@@ -2628,7 +2638,7 @@ public:
         return rc_client_has_rich_presence(pClient.GetClient());
     }
 
-    static void do_frame()
+    static void do_frame() noexcept
     {
         _RA_DoAchievementsFrame();
     }
@@ -2651,7 +2661,7 @@ public:
         return rc_client_can_pause(pClient.GetClient(), frames_remaining);
     }
 
-    static void reset()
+    static void reset() noexcept
     {
 #ifndef RA_UTEST
         _RA_OnReset();
@@ -2705,13 +2715,13 @@ private:
             s_callbacks.log_callback(sMessage, s_callbacks.log_client);
     }
 
-    static void EventHandlerExternal(const rc_client_event_t* event, rc_client_t*)
+    static void EventHandlerExternal(const rc_client_event_t* event, rc_client_t*) noexcept(false)
     {
         if (s_callbacks.event_handler)
             s_callbacks.event_handler(event, s_callbacks.event_client);
     }
 
-    static uint32_t ReadMemoryBlock(uint32_t address, uint8_t* buffer, uint32_t num_bytes)
+    static uint32_t ReadMemoryBlock(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false)
     {
         if (s_callbacks.read_memory_handler)
             return s_callbacks.read_memory_handler(address, buffer, num_bytes, s_callbacks.read_memory_client);
@@ -2719,7 +2729,7 @@ private:
         return 0;
     }
 
-    static uint32_t ReadMemoryExternal(uint32_t address, uint8_t* buffer, uint32_t num_bytes, rc_client_t*)
+    static uint32_t ReadMemoryExternal(uint32_t address, uint8_t* buffer, uint32_t num_bytes, rc_client_t*)  noexcept(false)
     {
         if (s_callbacks.read_memory_handler)
             return s_callbacks.read_memory_handler(address, buffer, num_bytes, s_callbacks.read_memory_client);
@@ -2727,7 +2737,7 @@ private:
         return 0;
     }
 
-    static rc_clock_t GetTimeMillisecsExternal(const rc_client_t*)
+    static rc_clock_t GetTimeMillisecsExternal(const rc_client_t*) noexcept(false)
     {
         if (s_callbacks.get_time_millisecs_handler)
             return s_callbacks.get_time_millisecs_handler(s_callbacks.get_time_millisecs_client);
@@ -2735,19 +2745,19 @@ private:
         return 0;
     }
 
-    static void destroy_achievement_list(rc_client_achievement_list_info_t* list)
+    static void destroy_achievement_list(rc_client_achievement_list_info_t* list) noexcept
     {
         if (list)
             free(list);
     }
 
-    static void destroy_leaderboard_list(rc_client_leaderboard_list_info_t* list)
+    static void destroy_leaderboard_list(rc_client_leaderboard_list_info_t* list) noexcept
     {
         if (list)
             free(list);
     }
 
-    static void destroy_leaderboard_entry_list(rc_client_leaderboard_entry_list_info_t* list)
+    static void destroy_leaderboard_entry_list(rc_client_leaderboard_entry_list_info_t* list) noexcept
     {
         if (list)
             free(list);

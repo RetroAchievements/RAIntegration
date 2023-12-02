@@ -3164,6 +3164,7 @@ public:
         Assert::IsNotNull((void*)pClient.do_frame, L"do_frame not set");
         Assert::IsNotNull((void*)pClient.idle, L"idle not set");
         Assert::IsNotNull((void*)pClient.is_processing_required, L"is_processing_required not set");
+        Assert::IsNotNull((void*)pClient.can_pause, L"can_pause not set");
         Assert::IsNotNull((void*)pClient.reset, L"reset not set");
 
         Assert::IsNotNull((void*)pClient.progress_size, L"progress_size not set");

@@ -2645,6 +2645,12 @@ public:
         return rc_client_is_processing_required(pClient.GetClient());
     }
 
+    static int can_pause(uint32_t* frames_remaining)
+    {
+        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
+        return rc_client_can_pause(pClient.GetClient(), frames_remaining);
+    }
+
     static void reset()
     {
 #ifndef RA_UTEST
@@ -2831,6 +2837,7 @@ static void GetExternalClientV1(rc_client_external_t* pClientExternal)
     pClientExternal->do_frame = ra::services::AchievementRuntimeExports::do_frame;
     pClientExternal->idle = ra::services::AchievementRuntimeExports::idle;
     pClientExternal->is_processing_required = ra::services::AchievementRuntimeExports::is_processing_required;
+    pClientExternal->can_pause = ra::services::AchievementRuntimeExports::can_pause;
     pClientExternal->reset = ra::services::AchievementRuntimeExports::reset;
 
     pClientExternal->progress_size = ra::services::AchievementRuntimeExports::progress_size;

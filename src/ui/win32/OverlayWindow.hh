@@ -13,7 +13,7 @@ class OverlayWindow
 {
 public:
     void CreateOverlayWindow(HWND hWnd);
-    void DestroyOverlayWindow() noexcept;
+    void DestroyOverlayWindow();
 
     void OnOverlayMoved() noexcept;
 

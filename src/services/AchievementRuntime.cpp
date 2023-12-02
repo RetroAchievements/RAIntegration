@@ -17,6 +17,7 @@
 #include "services\IAudioSystem.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
+#include "services\IHttpRequester.hh"
 #include "services\ILocalStorage.hh"
 #include "services\ServiceLocator.hh"
 #include "services\impl\JsonFileConfiguration.hh"
@@ -193,12 +194,23 @@ uint32_t AchievementRuntime::ReadMemory(uint32_t nAddress, uint8_t* pBuffer, uin
 }
 
 static void ConvertHttpResponseToApiServerResponse(rc_api_server_response_t& pResponse,
-                                                   const ra::services::Http::Response& httpResponse) noexcept
+                                                   const ra::services::Http::Response& httpResponse,
+                                                   std::string& sErrorBuffer)
 {
     memset(&pResponse, 0, sizeof(pResponse));
     pResponse.http_status_code = ra::etoi(httpResponse.StatusCode());
     pResponse.body = httpResponse.Content().c_str();
     pResponse.body_length = httpResponse.Content().length();
+
+    if (pResponse.http_status_code > 599 || pResponse.body_length == 0)
+    {
+        const auto& pHttpRequestService = ra::services::ServiceLocator::Get<ra::services::IHttpRequester>();
+        sErrorBuffer = pHttpRequestService.GetStatusCodeText(pResponse.http_status_code);
+        pResponse.body = sErrorBuffer.c_str();
+        pResponse.body_length = sErrorBuffer.length();
+        pResponse.http_status_code = pHttpRequestService.IsRetryable(pResponse.http_status_code) ?
+            RC_API_SERVER_RESPONSE_RETRYABLE_CLIENT_ERROR : RC_API_SERVER_RESPONSE_CLIENT_ERROR;
+    }
 }
 
 void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_client_server_callback_t fCallback,
@@ -253,7 +265,8 @@ void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_cl
 
     httpRequest.CallAsync([fCallback, pCallbackData, sApi](const ra::services::Http::Response& httpResponse) {
         rc_api_server_response_t pResponse;
-        ConvertHttpResponseToApiServerResponse(pResponse, httpResponse);
+        std::string sErrorBuffer;
+        ConvertHttpResponseToApiServerResponse(pResponse, httpResponse, sErrorBuffer);
 
         RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()),
                     httpResponse.Content().c_str());

@@ -3,6 +3,7 @@
 #include "Exports.hh"
 #include "RA_Defs.h"
 #include "RA_Log.h"
+#include "RA_Resource.h"
 #include "RA_StringUtils.h"
 
 #include "RA_md5factory.h"
@@ -22,12 +23,14 @@
 #include "services\ServiceLocator.hh"
 #include "services\impl\JsonFileConfiguration.hh"
 
+#include "ui\viewmodels\IntegrationMenuViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\PopupMessageViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 #include <rcheevos\include\rc_api_runtime.h>
+#include <rcheevos\include\rc_client_raintegration.h>
 #include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
 #include <rcheevos\src\rcheevos\rc_internal.h>
 #include <rcheevos\src\rc_client_internal.h>
@@ -2699,6 +2702,125 @@ public:
         return rc_client_deserialize_progress(pClient.GetClient(), buffer);
     }
 
+    static const rc_client_raintegration_menu_t* get_raintegration_menu()
+    {
+        ra::ui::viewmodels::LookupItemViewModelCollection vmMenuItems;
+
+        vmMenuItems.Clear();
+        ra::ui::viewmodels::IntegrationMenuViewModel::BuildMenu(vmMenuItems);
+
+        for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(vmMenuItems.Count()) - 1; nIndex >= 0; --nIndex)
+        {
+            const auto* pItem = vmMenuItems.GetItemAt(nIndex);
+            switch (pItem->GetId())
+            {
+                case IDM_RA_FILES_LOGIN:
+                case IDM_RA_FILES_LOGOUT:
+                case IDM_RA_TOGGLELEADERBOARDS:
+                case IDM_RA_OVERLAYSETTINGS:
+                    vmMenuItems.RemoveAt(nIndex);
+                    break;
+
+                case 0: // separator - prevent two adjacent separators
+                    pItem = vmMenuItems.GetItemAt(nIndex + 1);
+                    if (pItem && pItem->GetId() == 0)
+                        vmMenuItems.RemoveAt(nIndex + 1);
+                    break;
+            }
+        }
+
+        {
+            const auto* pItem = vmMenuItems.GetItemAt(0);
+            if (pItem && pItem->GetId() == 0)
+                vmMenuItems.RemoveAt(0);
+        }
+
+        bool bChanged = true;
+        rc_client_raintegration_menu_item_t* pMenuItem;
+
+        if (m_pIntegrationMenu && m_pIntegrationMenu->num_items == vmMenuItems.Count())
+        {
+            bChanged = false;
+
+            pMenuItem = m_pIntegrationMenu->items;
+            for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmMenuItems.Count()); ++nIndex, ++pMenuItem)
+            {
+                const auto* pItem = vmMenuItems.GetItemAt(nIndex);
+                const auto nId = ra::to_unsigned(pItem->GetId());
+                if (pMenuItem->id != nId)
+                {
+                    if (pMenuItem->id == 0 || nId == 0)
+                    {
+                        bChanged = true;
+                        break;
+                    }
+
+                    pMenuItem->id = nId;
+                }
+
+                pMenuItem->checked = pItem->IsSelected();
+            }
+
+            if (!bChanged)
+            {
+                pMenuItem = m_pIntegrationMenu->items;
+                for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmMenuItems.Count());
+                     ++nIndex, ++pMenuItem)
+                {
+                    const auto* pItem = vmMenuItems.GetItemAt(nIndex);
+                    if (pMenuItem->label)
+                    {
+                        if (ra::Narrow(pItem->GetLabel()) != pMenuItem->label)
+                        {
+                            bChanged = true;
+                            break;
+                        }
+                    }
+                    else if (!pItem->GetLabel().empty())
+                    {
+                        bChanged = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!bChanged)
+            return m_pIntegrationMenu;
+
+        if (m_pIntegrationMenu)
+            rc_buffer_destroy(&m_pIntegrationMenuBuffer);
+
+        rc_buffer_init(&m_pIntegrationMenuBuffer);
+        m_pIntegrationMenu = reinterpret_cast<rc_client_raintegration_menu_t*>(
+            rc_buffer_alloc(&m_pIntegrationMenuBuffer, sizeof(*m_pIntegrationMenu)));
+        m_pIntegrationMenu->num_items = 0;
+        m_pIntegrationMenu->items = reinterpret_cast<rc_client_raintegration_menu_item_t*>(
+            rc_buffer_alloc(&m_pIntegrationMenuBuffer, sizeof(rc_client_raintegration_menu_item_t) * vmMenuItems.Count()));
+
+        pMenuItem = m_pIntegrationMenu->items;
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmMenuItems.Count()); ++nIndex, ++pMenuItem)
+        {
+            const auto* pItem = vmMenuItems.GetItemAt(nIndex);
+            const auto nId = pItem->GetId();
+            if (nId == 0)
+            {
+                memset(pMenuItem, 0, sizeof(*pMenuItem));
+            }
+            else
+            {
+                pMenuItem->label = rc_buffer_strcpy(&m_pIntegrationMenuBuffer, ra::Narrow(pItem->GetLabel()).c_str());
+                pMenuItem->id = nId;
+                pMenuItem->checked = pItem->IsSelected();
+            }
+
+            pMenuItem->enabled = (nId != IDM_RA_FILES_LOGIN);
+        }
+
+        m_pIntegrationMenu->num_items = gsl::narrow_cast<uint32_t>(pMenuItem - m_pIntegrationMenu->items);
+        return m_pIntegrationMenu;
+    }
+
 private:
     typedef struct ExternalClientCallbacks
     {
@@ -2775,9 +2897,14 @@ private:
         if (list)
             free(list);
     }
+
+    static rc_buffer_t m_pIntegrationMenuBuffer;
+    static rc_client_raintegration_menu_t* m_pIntegrationMenu;
 };
 
 AchievementRuntimeExports::ExternalClientCallbacks AchievementRuntimeExports::s_callbacks{};
+rc_client_raintegration_menu_t* AchievementRuntimeExports::m_pIntegrationMenu = nullptr;
+rc_buffer_t AchievementRuntimeExports::m_pIntegrationMenuBuffer{};
 
 #endif RC_CLIENT_EXPORTS_EXTERNAL
 
@@ -2804,6 +2931,7 @@ extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBy
 
 #include "Exports.hh"
 #include "rcheevos/src/rc_client_external.h"
+#include "rcheevos/include/rc_client_raintegration.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -2882,6 +3010,11 @@ API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal,
     }
 
     return 1;
+}
+
+API const rc_client_raintegration_menu_t* CCONV _Rcheevos_RAIntegrationGetMenu()
+{
+    return ra::services::AchievementRuntimeExports::get_raintegration_menu();
 }
 
 #ifdef __cplusplus

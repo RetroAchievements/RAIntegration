@@ -586,13 +586,6 @@ static bool CanRestoreState()
 
 static void OnStateRestored()
 {
-    // TODO: rc_client should handle the UI - only need to sync assets
-    const auto& pRuntime = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-    auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
-
-    auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-    pOverlayManager.ClearPopups();
-
     auto& pAssets = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().Assets();
     pAssets.BeginUpdate();
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pAssets.Count()); ++nIndex)
@@ -609,10 +602,6 @@ static void OnStateRestored()
 
                 // synchronize the state
                 pAchievement->DoFrame();
-
-                // if it's Primed, show the indicator
-                if (pAchievement->GetState() == ra::data::models::AssetState::Primed)
-                    pOverlayManager.AddChallengeIndicator(pAchievement->GetID(), ra::ui::ImageType::Badge, ra::Narrow(pAchievement->GetBadge()));
                 break;
             }
 
@@ -623,22 +612,6 @@ static void OnStateRestored()
 
                 // synchronize the state
                 pLeaderboard->DoFrame();
-
-                // if it's Primed, show the tracker
-                if (pLeaderboard->GetState() == ra::data::models::AssetState::Primed)
-                {
-                    if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::LeaderboardTracker) != ra::ui::viewmodels::PopupLocation::None)
-                    {
-                        auto& pScoreTracker = pOverlayManager.AddScoreTracker(pLeaderboard->GetID());
-
-                        const auto* pDefinition = pRuntime.GetLeaderboardDefinition(pLeaderboard->GetID());
-                        if (pDefinition != nullptr)
-                        {
-                            const auto sDisplayText = pLeaderboard->FormatScore(pDefinition->value.value.value);
-                            pScoreTracker.SetDisplayText(ra::Widen(sDisplayText));
-                        }
-                    }
-                }
                 break;
             }
         }

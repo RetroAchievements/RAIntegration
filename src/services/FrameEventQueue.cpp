@@ -13,6 +13,14 @@ void FrameEventQueue::DoFrame()
 {
     std::wstring sPauseMessage;
 
+    if (!m_vFunctions.empty())
+    {
+        for (auto& fFunction : m_vFunctions)
+            fFunction();
+
+        m_vFunctions.clear();
+    }
+
     if (!m_vTriggeredTriggers.empty())
     {
         sPauseMessage.append(L"The following triggers have triggered:");

@@ -12,6 +12,7 @@
 
 #include "tests\RA_UnitTestHelpers.h"
 #include "tests\data\DataAsserts.hh"
+#include "tests\ui\UIAsserts.hh"
 
 #include "tests\mocks\MockAchievementRuntime.hh"
 #include "tests\mocks\MockAudioSystem.hh"
@@ -20,6 +21,7 @@
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
+#include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockServer.hh"
@@ -65,6 +67,7 @@ public:
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockAudioSystem mockAudioSystem;
         ra::services::mocks::MockAchievementRuntime mockAchievementRuntime;
+        ra::services::mocks::MockFrameEventQueue mockFrameEventQueue;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockEmulatorContext mockEmulator;
@@ -1234,6 +1237,180 @@ public:
         game.SetMode(GameContext::Mode::Normal);
         Assert::AreEqual(GameContext::Mode::Normal, game.GetMode());
         Assert::IsFalse(notifyHarness.m_bNotified);
+    }
+
+
+    TEST_METHOD(TestLoadGameNonHardcoreWarningHardcore)
+    {
+        GameContextHarness game;
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+            "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+              "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999},"
+            "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":3,"
+              "\"Points\":10,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999}"
+        );
+
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
+
+        // no dialogs when game with achievements loaded in hardcore mode
+        game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
+        Assert::IsFalse(game.mockDesktop.WasDialogShown());
+        Assert::IsNull(game.mockOverlayManager.GetMessage(2U)); // message 1 will be game placard
+    }
+
+    TEST_METHOD(TestLoadGameNonHardcoreWarningLeaderboards)
+    {
+        GameContextHarness game;
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+            "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+              "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999},"
+            "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":3,"
+              "\"Points\":10,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999}"
+        );
+
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, false);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, true);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
+
+        // should get popup message indicating leaderboards not supported in softcore
+        game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
+        Assert::IsFalse(game.mockDesktop.WasDialogShown());
+
+        const auto* pPopup = game.mockOverlayManager.GetMessage(2U);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(std::wstring(L"Playing in Softcore Mode"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard entries will not be submitted."), pPopup->GetDescription());
+    }
+
+    TEST_METHOD(TestLoadGameNonHardcoreWarningLeaderboardsOff)
+    {
+        GameContextHarness game;
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+            "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+              "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999},"
+            "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":3,"
+              "\"Points\":10,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999}"
+        );
+
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, false);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Leaderboards, false);
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
+
+        // should get popup message indicating playing in softcore
+        game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
+        Assert::IsFalse(game.mockDesktop.WasDialogShown());
+
+        const auto* pPopup = game.mockOverlayManager.GetMessage(2U);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(std::wstring(L"Playing in Softcore Mode"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L""), pPopup->GetDescription());
+    }
+
+    TEST_METHOD(TestLoadGameNonHardcoreWarningCancel)
+    {
+        GameContextHarness game;
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+            "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+              "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999},"
+            "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":3,"
+              "\"Points\":10,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999}"
+        );
+
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        game.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+                Assert::AreEqual(std::wstring(L"Enable Hardcore mode?"), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"You are loading a game with achievements and do not currently have hardcore mode enabled."), vmMessageBox.GetMessage());
+                Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
+                Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+                return ra::ui::DialogResult::No;
+            });
+
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
+
+        // should get confirmation dialog about hardcore and no popups
+        game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
+        Assert::IsTrue(game.mockDesktop.WasDialogShown());
+        Assert::IsNull(game.mockOverlayManager.GetMessage(2U));
+
+        // hardcore should remain disabled
+        Assert::IsFalse(game.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestLoadGameNonHardcoreWarningAccept)
+    {
+        GameContextHarness game;
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+            "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":3,"
+              "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999},"
+            "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":3,"
+              "\"Points\":10,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+              "\"Created\":1234567890,\"Modified\":123459999}"
+        );
+
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+        game.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [](ra::ui::viewmodels::MessageBoxViewModel& vmMessageBox) {
+                Assert::AreEqual(std::wstring(L"Enable Hardcore mode?"), vmMessageBox.GetHeader());
+                Assert::AreEqual(std::wstring(L"You are loading a game with achievements and do not currently have hardcore mode enabled."), vmMessageBox.GetMessage());
+                Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning, vmMessageBox.GetIcon());
+                Assert::AreEqual(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo, vmMessageBox.GetButtons());
+                return ra::ui::DialogResult::Yes;
+            });
+
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
+
+        // should get confirmation dialog about hardcore and no popups
+        game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
+        Assert::IsTrue(game.mockDesktop.WasDialogShown());
+        Assert::IsNull(game.mockOverlayManager.GetMessage(2U));
+
+        // hardcore should remain disabled
+        Assert::IsTrue(game.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
+    }
+
+    TEST_METHOD(TestLoadGameNonHardcoreWarningNoCoreAchievements)
+    {
+        GameContextHarness game;
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "",
+                              "{\"ID\":5,\"Title\":\"Ach1\",\"Description\":\"Desc1\",\"Flags\":5,"
+                              "\"Points\":5,\"MemAddr\":\"1=1\",\"Author\":\"Auth1\",\"BadgeName\":\"12345\","
+                              "\"Created\":1234567890,\"Modified\":123459999},"
+                              "{\"ID\":7,\"Title\":\"Ach2\",\"Description\":\"Desc2\",\"Flags\":5,"
+                              "\"Points\":10,\"MemAddr\":\"1=1\",\"Author\":\"Auth2\",\"BadgeName\":\"12345\","
+                              "\"Created\":1234567890,\"Modified\":123459999}");
+
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
+        game.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
+
+        // should only get softcore popup
+        game.mockFrameEventQueue.DoFrame(); // hardcore warning gets queued for the UI thread
+        Assert::IsFalse(game.mockDesktop.WasDialogShown());
+
+        const auto* pPopup = game.mockOverlayManager.GetMessage(2U);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(std::wstring(L"Playing in Softcore Mode"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L""), pPopup->GetDescription());
+
+        // hardcore should remain disabled
+        Assert::IsFalse(game.mockConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore));
     }
 };
 

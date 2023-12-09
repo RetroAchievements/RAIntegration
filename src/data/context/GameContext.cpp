@@ -145,9 +145,6 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
         }
     }
 
-    // enable spectator mode to prevent unlocks when testing compatibility
-    rc_client_set_spectator_mode_enabled(pRuntime.GetClient(), nMode == Mode::CompatibilityTest);
-
     const bool bWasPaused = pRuntime.IsPaused();
     pRuntime.SetPaused(true);
 
@@ -322,6 +319,15 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
                 {
                     case RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE:
                         nCategory = ra::data::models::AssetCategory::Core;
+
+                        // automatically activate all core achievements in compatibility mode
+                        if (GetMode() == Mode::CompatibilityTest)
+                        {
+                            pAchievementData->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+
+                            if (pAchievementData->trigger)
+                                pAchievementData->trigger->state = RC_TRIGGER_STATE_WAITING;
+                        }
                         break;
 
                     case RC_CLIENT_ACHIEVEMENT_CATEGORY_UNOFFICIAL:

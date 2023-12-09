@@ -125,7 +125,7 @@ void GDISurface::DrawSurface(int nX, int nY, const ISurface& pSurface)
     if (pGDISurface != nullptr)
     {
         ::BitBlt(m_hDC, nX, nY,
-            static_cast<int>(pSurface.GetWidth()), static_cast<int>(pSurface.GetHeight()),
+            gsl::narrow_cast<int>(pSurface.GetWidth()), gsl::narrow_cast<int>(pSurface.GetHeight()),
             pGDISurface->m_hDC, 0, 0, SRCCOPY);
     }
 }

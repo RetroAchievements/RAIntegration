@@ -24,6 +24,12 @@
 #include <rcheevos\src\rapi\rc_api_common.h>
 #include <rcheevos\src\rc_client_internal.h>
 
+#ifdef RC_CLIENT_EXPORTS_EXTERNAL
+#include <rcheevos\src\rc_client_external.h>
+#include "Exports.hh"
+extern "C" API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal, int nVersion);
+#endif
+
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
 namespace ra {
@@ -3105,6 +3111,77 @@ public:
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::string("Developing Achievements"), runtime.GetRichPresenceOverride());
     }
+
+#ifdef RC_CLIENT_EXPORTS_EXTERNAL
+    static void AssertV1Exports(rc_client_external_t& pClient)
+    {
+        Assert::IsNotNull((void*)pClient.destroy, L"destory not set");
+
+        Assert::IsNotNull((void*)pClient.enable_logging, L"enable_logging not set");
+        Assert::IsNotNull((void*)pClient.set_event_handler, L"set_event_handler not set");
+        Assert::IsNotNull((void*)pClient.set_read_memory, L"set_read_memory not set");
+        Assert::IsNotNull((void*)pClient.set_get_time_millisecs, L"set_get_time_millisecs not set");
+        Assert::IsNotNull((void*)pClient.set_host, L"set_host not set");
+
+        Assert::IsNotNull((void*)pClient.set_hardcore_enabled, L"set_hardcore_enabled not set");
+        Assert::IsNotNull((void*)pClient.get_hardcore_enabled, L"get_hardcore_enabled not set");
+        Assert::IsNotNull((void*)pClient.set_unofficial_enabled, L"set_unofficial_enabled not set");
+        Assert::IsNotNull((void*)pClient.get_unofficial_enabled, L"get_unofficial_enabled not set");
+        Assert::IsNotNull((void*)pClient.set_encore_mode_enabled, L"set_encore_mode_enabled not set");
+        Assert::IsNotNull((void*)pClient.get_encore_mode_enabled, L"get_encore_mode_enabled not set");
+        Assert::IsNotNull((void*)pClient.set_spectator_mode_enabled, L"set_spectator_mode_enabled not set");
+        Assert::IsNotNull((void*)pClient.get_spectator_mode_enabled, L"get_spectator_mode_enabled not set");
+
+        Assert::IsNotNull((void*)pClient.abort_async, L"abort_async not set");
+
+        Assert::IsNotNull((void*)pClient.begin_login_with_password, L"begin_login_with_password not set");
+        Assert::IsNotNull((void*)pClient.begin_login_with_token, L"begin_login_with_token not set");
+        Assert::IsNotNull((void*)pClient.logout, L"logout not set");
+        Assert::IsNotNull((void*)pClient.get_user_info, L"get_user_info not set");
+
+        Assert::IsNotNull((void*)pClient.begin_identify_and_load_game, L"begin_identify_and_load_game not set");
+        Assert::IsNotNull((void*)pClient.begin_load_game, L"begin_load_game not set");
+        Assert::IsNotNull((void*)pClient.get_game_info, L"get_game_info not set");
+        Assert::IsNull((void*)pClient.begin_load_subset, L"begin_load_subset set");
+        Assert::IsNotNull((void*)pClient.get_subset_info, L"get_subset_info not set");
+        Assert::IsNotNull((void*)pClient.unload_game, L"unload_game not set");
+        Assert::IsNotNull((void*)pClient.get_user_game_summary, L"get_user_game_summary not set");
+        Assert::IsNotNull((void*)pClient.begin_change_media, L"begin_change_media not set");
+
+        Assert::IsNotNull((void*)pClient.create_achievement_list, L"create_achievement_list not set");
+        Assert::IsNotNull((void*)pClient.has_achievements, L"has_achievements not set");
+        Assert::IsNotNull((void*)pClient.get_achievement_info, L"get_achievement_info not set");
+
+        Assert::IsNotNull((void*)pClient.create_leaderboard_list, L"create_leaderboard_list not set");
+        Assert::IsNotNull((void*)pClient.has_leaderboards, L"has_leaderboards not set");
+        Assert::IsNotNull((void*)pClient.get_leaderboard_info, L"get_leaderboard_info not set");
+        Assert::IsNotNull((void*)pClient.begin_fetch_leaderboard_entries, L"begin_fetch_leaderboard_entries not set");
+        Assert::IsNotNull((void*)pClient.begin_fetch_leaderboard_entries_around_user, L"begin_fetch_leaderboard_entries_around_user not set");
+
+        Assert::IsNotNull((void*)pClient.get_rich_presence_message, L"get_rich_presence_message not set");
+        Assert::IsNotNull((void*)pClient.has_rich_presence, L"has_rich_presence not set");
+
+        Assert::IsNotNull((void*)pClient.do_frame, L"do_frame not set");
+        Assert::IsNotNull((void*)pClient.idle, L"idle not set");
+        Assert::IsNotNull((void*)pClient.is_processing_required, L"is_processing_required not set");
+        Assert::IsNotNull((void*)pClient.can_pause, L"can_pause not set");
+        Assert::IsNotNull((void*)pClient.reset, L"reset not set");
+
+        Assert::IsNotNull((void*)pClient.progress_size, L"progress_size not set");
+        Assert::IsNotNull((void*)pClient.serialize_progress, L"serialize_progress not set");
+        Assert::IsNotNull((void*)pClient.deserialize_progress, L"deserialize_progress not set");
+    }
+
+    TEST_METHOD(TestGetExternalClientV1)
+    {
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+
+        _Rcheevos_GetExternalClient(&pClient, 1);
+
+        AssertV1Exports(pClient);
+    }
+#endif
 };
 
 } // namespace tests

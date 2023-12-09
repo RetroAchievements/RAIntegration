@@ -38,6 +38,7 @@ public:
     ra::ui::Size GetWindowSize(const std::string& sPositionKey) const override;
     void SetWindowSize(const std::string& sPositionKey, const ra::ui::Size& oSize) override;
 
+    void SetHost(const std::string& sHost);
     bool IsCustomHost() const noexcept override { return m_bCustomHost; }
     const std::string& GetHostName() const override;
     const std::string& GetHostUrl() const override;
@@ -46,6 +47,7 @@ public:
     void Save() const override;
 
 private:
+    void ReadHostFile();
     void UpdateHost();
 
     std::string m_sUsername;

@@ -110,7 +110,12 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
         const wchar_t c = (nIndex == nLength) ? 0 : pNote.Note.at(nIndex);
 
         // find the next word
-        if (isalpha(c))
+        if (c > 255)
+        {
+            // ignore unicode characters - isalpha with the default locale would return false,
+            // but also likes to pop up asserts when in a debug build.
+        }
+        else if (isalpha(c))
         {
             if (sWord.empty())
             {
@@ -252,7 +257,7 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
         bLastWordIsSize = bWordIsSize;
         bLastWordIsNumber = bWordIsNumber;
 
-        if (isalnum(c))
+        if (c < 256 && isalnum(c))
         {
             std::swap(sPreviousWord, sWord);
             sWord.clear();

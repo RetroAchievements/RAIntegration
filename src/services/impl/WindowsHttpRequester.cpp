@@ -157,6 +157,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
 
             // open the connection
             auto sPathWide = ra::Widen(sPath);
+            GSL_SUPPRESS_ES47
             HINTERNET hRequest = WinHttpOpenRequest(hConnect,
                 sPostData.empty() ? L"GET" : L"POST",
                 sPathWide.c_str(),
@@ -185,6 +186,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                     // send the request
                     if (sPostData.empty())
                     {
+                        GSL_SUPPRESS_ES47
                         bResults = WinHttpSendRequest(hRequest,
                             sHeaders.c_str(), gsl::narrow_cast<int>(sHeaders.length()),
                             WINHTTP_NO_REQUEST_DATA,
@@ -195,7 +197,7 @@ unsigned int WindowsHttpRequester::Request(const Http::Request& pRequest, TextWr
                     {
                         bResults = WinHttpSendRequest(hRequest,
                             sHeaders.c_str(), gsl::narrow_cast<int>(sHeaders.length()),
-                            static_cast<LPVOID>(sPostData.data()),
+                            sPostData.data(),
                             gsl::narrow_cast<int>(sPostData.length()), gsl::narrow_cast<int>(sPostData.length()),
                             0);
                     }
@@ -319,7 +321,7 @@ std::string WindowsHttpRequester::GetStatusCodeText(unsigned int nStatusCode) co
         const DWORD nResult = ::FormatMessage(FORMAT_MESSAGE_FROM_HMODULE | FORMAT_MESSAGE_IGNORE_INSERTS,
             ::GetModuleHandle(TEXT("winhttp.dll")),
             nStatusCode, 0, (LPTSTR)szMessageBuffer,
-            sizeof(szMessageBuffer)/sizeof(szMessageBuffer[0]), NULL);
+            sizeof(szMessageBuffer)/sizeof(szMessageBuffer[0]), nullptr);
 
         if (nResult > 0)
         {

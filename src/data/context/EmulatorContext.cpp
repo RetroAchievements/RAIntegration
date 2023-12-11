@@ -3,6 +3,7 @@
 #include "Exports.hh"
 #include "RA_BuildVer.h"
 #include "RA_Log.h"
+#include "RA_Resource.h"
 #include "RA_StringUtils.h"
 
 #include "api\LatestClient.hh"
@@ -11,6 +12,7 @@
 #include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\AchievementRuntimeExports.hh"
 #include "services\IClock.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
@@ -456,7 +458,7 @@ void EmulatorContext::DisableHardcoreMode()
         auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
         pWindowManager.AssetList.UpdateButtons();
 
-        RebuildMenu();
+        UpdateMenuState(IDM_RA_HARDCORE_MODE);
 
         auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
         rc_client_set_hardcore_enabled(pRuntime.GetClient(), false);
@@ -533,7 +535,7 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     pWindowManager.AssetList.UpdateButtons();
 
     // update the integration menu
-    RebuildMenu();
+    UpdateMenuState(IDM_RA_HARDCORE_MODE);
 
     // update the runtime
     auto* pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().GetClient();
@@ -1025,6 +1027,13 @@ bool EmulatorContext::IsMemoryInsecure() const
     }
 
     return m_bMemoryInsecure;
+}
+
+void EmulatorContext::UpdateMenuState(int nMenuItemId) const
+{
+    SyncClientExternalRAIntegrationMenuItem(nMenuItemId);
+
+    RebuildMenu();
 }
 
 } // namespace context

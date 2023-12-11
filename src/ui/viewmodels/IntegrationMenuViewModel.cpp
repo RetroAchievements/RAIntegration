@@ -237,7 +237,7 @@ void IntegrationMenuViewModel::ToggleNonHardcoreWarning()
         !pConfiguration.IsFeatureEnabled(ra::services::Feature::NonHardcoreWarning));
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    pEmulatorContext.RebuildMenu();
+    pEmulatorContext.UpdateMenuState(IDM_RA_NON_HARDCORE_WARNING);
 }
 
 void IntegrationMenuViewModel::ToggleLeaderboards()
@@ -259,7 +259,7 @@ void IntegrationMenuViewModel::ToggleLeaderboards()
     }
 
     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-    pEmulatorContext.RebuildMenu();
+    pEmulatorContext.UpdateMenuState(IDM_RA_TOGGLELEADERBOARDS);
 
 }
 

@@ -462,6 +462,9 @@
     <ClCompile Include="mocks\MockAchievementRuntime.cpp">
       <Filter>Mocks</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\services\AchievementRuntimeExports.cpp">
+      <Filter>Code</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

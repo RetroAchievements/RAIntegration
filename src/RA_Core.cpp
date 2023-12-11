@@ -95,7 +95,7 @@ void __gsl_contract_handler(const char* const file, unsigned int line, const cha
 }
 #endif
 
-API int CCONV _RA_Shutdown()
+static int DoShutdown()
 {
     // if the services haven't been registered, there's nothing to shut down
     if (!ra::services::Initialization::IsInitialized())
@@ -151,6 +151,20 @@ API int CCONV _RA_Shutdown()
     ra::services::Initialization::Shutdown();
 
     RA_LOG_INFO("Shutdown complete");
+
+    return 0;
+}
+
+API int CCONV _RA_Shutdown()
+{
+    try
+    {
+        return DoShutdown();
+    }
+    catch (std::runtime_error&)
+    {
+
+    }
 
     return 0;
 }

@@ -4,6 +4,8 @@
 #include "RA_Log.h"
 #include "RA_Resource.h"
 
+#include "data\context\GameContext.hh"
+
 #include "services\AchievementRuntime.hh"
 #include "services\IConfiguration.hh"
 #include "services\ServiceLocator.hh"
@@ -172,23 +174,57 @@ public:
         return rc_client_logout(pClient.GetClient());
     }
 
+    class LoadExternalGameCallbackWrapper : public CallbackWrapper
+    {
+    public:
+        LoadExternalGameCallbackWrapper(rc_client_t* client, rc_client_callback_t callback,
+                                        void* callback_userdata) noexcept :
+            CallbackWrapper(client, callback, callback_userdata)
+        {}
+
+        bool bWasPaused = false;
+    };
+
+    static void load_game_callback(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata)
+    {
+        auto* wrapper = static_cast<LoadExternalGameCallbackWrapper*>(pUserdata);
+        Expects(wrapper != nullptr);
+
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+        pGameContext.EndLoadGame(nResult, wrapper->bWasPaused, false);
+
+        wrapper->DoCallback(nResult, sErrorMessage);
+
+        delete wrapper;
+    }
+
     static rc_client_async_handle_t* begin_identify_and_load_game(rc_client_t* client, uint32_t console_id,
                                                                   const char* file_path, const uint8_t* data,
                                                                   size_t data_size, rc_client_callback_t callback,
                                                                   void* callback_userdata)
     {
         GSL_SUPPRESS_R3
-        auto* pCallbackWrapper = new LoadGameCallbackWrapper(client, callback, callback_userdata);
+        auto* pNestedCallbackData = new LoadExternalGameCallbackWrapper(client, callback, callback_userdata);
+        auto* pCallbackData = new LoadGameCallbackWrapper(client, load_game_callback, pNestedCallbackData);
+
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+        pGameContext.BeginLoadGame(0xFFFFFFFF, ra::data::context::GameContext::Mode::Normal,
+                                   pNestedCallbackData->bWasPaused);
 
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return pClient.BeginIdentifyAndLoadGame(console_id, file_path, data, data_size, pCallbackWrapper);
+        return pClient.BeginIdentifyAndLoadGame(console_id, file_path, data, data_size, pCallbackData);
     }
 
     static rc_client_async_handle_t* begin_load_game(rc_client_t* client, const char* hash,
                                                      rc_client_callback_t callback, void* callback_userdata)
     {
         GSL_SUPPRESS_R3
-        auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
+        auto* pNestedCallbackData = new LoadExternalGameCallbackWrapper(client, callback, callback_userdata);
+        auto* pCallbackData = new LoadGameCallbackWrapper(client, load_game_callback, pNestedCallbackData);
+
+        auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
+        pGameContext.BeginLoadGame(0xFFFFFFFF, ra::data::context::GameContext::Mode::Normal,
+                                   pNestedCallbackData->bWasPaused);
 
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
         return pClient.BeginLoadGame(hash, 0, pCallbackData);

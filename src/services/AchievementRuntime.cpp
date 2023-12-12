@@ -24,6 +24,7 @@
 #include "services\impl\JsonFileConfiguration.hh"
 
 #include "ui\viewmodels\IntegrationMenuViewModel.hh"
+#include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\PopupMessageViewModel.hh"
@@ -883,6 +884,8 @@ void AchievementRuntime::LoginCallback(int nResult, const char* sErrorMessage, r
             {
                 pUserContext.Initialize(user->username, user->display_name, user->token);
                 pUserContext.SetScore(user->score);
+
+                ra::ui::viewmodels::LoginViewModel::PostLoginInitialization();
             }
         }
     }
@@ -930,7 +933,7 @@ static void ExtractPatchData(const rc_api_server_response_t* server_response, ui
 GSL_SUPPRESS_CON3
 void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_response_t* server_response,
                                                  struct rc_api_fetch_game_data_response_t* game_data_response,
-                                                 rc_client_t* client, void* pUserdata)
+                                                 rc_client_t*, void* pUserdata)
 {
     auto* wrapper = static_cast<LoadGameCallbackWrapper*>(pUserdata);
     Expects(wrapper != nullptr);
@@ -940,18 +943,29 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
     auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
     pRichPresence->SetScript(game_data_response->rich_presence_script);
     pRichPresence->CreateServerCheckpoint();
+
+    // extract the old rich presence script from the last cached server response so we can tell if the
+    // local value has changed. store it as the local value, and we'll merge in the real local value later.
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(game_data_response->id));
+    if (pData != nullptr)
+    {
+        rapidjson::Document pDocument;
+        if (LoadDocument(pDocument, *pData) &&
+            pDocument.HasMember("RichPresencePatch") &&
+            pDocument["RichPresencePatch"].IsString())
+        {
+            pRichPresence->SetScript(pDocument["RichPresencePatch"].GetString());
+        }
+    }
+
     pRichPresence->CreateLocalCheckpoint();
     pGameContext.Assets().Append(std::move(pRichPresence));
 
 #ifndef RA_UTEST
     // prefetch the game icon
-    if (client->game)
-    {
-        auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-        pImageRepository.FetchImage(ra::ui::ImageType::Icon, client->game->public_.badge_name);
-    }
-#else
-    (void*)client;
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+    pImageRepository.FetchImage(ra::ui::ImageType::Icon, game_data_response->image_name);
 #endif
 
     const rc_api_achievement_definition_t* pAchievement = game_data_response->achievements;

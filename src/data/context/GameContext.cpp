@@ -86,7 +86,7 @@ static bool ValidateConsole(int nServerConsoleId)
     return true;
 }
 
-void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, Mode nMode)
+bool GameContext::BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaused)
 {
     OnBeforeActiveGameChanged();
 
@@ -119,7 +119,7 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
             m_nGameId = 0;
             OnActiveGameChanged();
         }
-        return;
+        return false;
     }
 
     // start the load process
@@ -132,45 +132,39 @@ void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, M
     pLocalBadges->CreateLocalCheckpoint();
     m_vAssets.Append(std::move(pLocalBadges));
 
-    // capture the old rich presence data so we can tell if it changed on the server
-    std::string sOldRichPresence = "[NONE]";
-    {
-        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
-        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(nGameId));
-        if (pData != nullptr)
-        {
-            rapidjson::Document pDocument;
-            if (LoadDocument(pDocument, *pData) && pDocument.HasMember("RichPresencePatch") &&
-                pDocument["RichPresencePatch"].IsString())
-                sOldRichPresence = pDocument["RichPresencePatch"].GetString();
-        }
-    }
-
-    const bool bWasPaused = pRuntime.IsPaused();
+    bWasPaused = pRuntime.IsPaused();
     pRuntime.SetPaused(true);
+
+    return true;
+}
+
+void GameContext::LoadGame(unsigned int nGameId, const std::string& sGameHash, Mode nMode)
+{
+    bool bWasPaused;
+
+    if (!BeginLoadGame(nGameId, nMode, bWasPaused))
+        return;
 
     // download the game data
     struct LoadGameUserData
     {
         bool bWasPaused = false;
-        std::string sOldRichPresence;
     }* pLoadGameUserData;
     pLoadGameUserData = new LoadGameUserData;
     pLoadGameUserData->bWasPaused = bWasPaused;
-    pLoadGameUserData->sOldRichPresence = std::move(sOldRichPresence);
 
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
     pRuntime.BeginLoadGame(sGameHash, nGameId,
         [](int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata) {
             auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
             auto* pLoadGameUserData = static_cast<struct LoadGameUserData*>(pUserdata);
-            pGameContext.FinishLoadGame(nResult, sErrorMessage, pLoadGameUserData->bWasPaused,
-                                        pLoadGameUserData->sOldRichPresence);
+            pGameContext.FinishLoadGame(nResult, sErrorMessage, pLoadGameUserData->bWasPaused);
             delete pLoadGameUserData;
         },
         pLoadGameUserData);
 }
 
-void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused, const std::string& sOldRichPresence)
+void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused)
 {
     if (nResult != RC_OK)
     {
@@ -181,26 +175,22 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
     }
     else
     {
-        BeginLoad();
-        auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
-        pCodeNotes->Refresh(
-            m_nGameId,
-            [this](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
-                OnCodeNoteChanged(nAddress, sNewNote);
-            },
-            [this]() { EndLoad(); });
-        m_vAssets.Append(std::move(pCodeNotes));
-
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
         auto* pGame = rc_client_get_game_info(pClient.GetClient());
         if (pGame == nullptr || pGame->id == 0)
         {
             // invalid hash
+            m_nGameId = 0;
+            m_sGameTitle.clear();
+            m_sGameHash.clear();
+            nResult = RC_NO_GAME_LOADED;
         }
         else if (!ValidateConsole(pGame->console_id))
         {
             m_nGameId = 0;
             m_sGameTitle.clear();
+            m_sGameHash.clear();
+            nResult = RC_INVALID_STATE;
         }
         else
         {
@@ -218,11 +208,40 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
                 ra::StringPrintf(L"Loaded %s", pGame->title), sDescription,
                 ra::StringPrintf(L"You have earned %u achievements", pSummary.num_unlocked_achievements),
                 ra::ui::ImageType::Icon, pGame->badge_name);
-
-            // merge local assets
-            std::vector<ra::data::models::AssetModelBase*> vEmptyAssetsList;
-            m_vAssets.ReloadAssets(vEmptyAssetsList);
         }
+    }
+
+    EndLoadGame(nResult, bWasPaused, true);
+}
+
+void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWarning)
+{
+    ra::data::models::RichPresenceModel* pRichPresence = nullptr;
+    std::string sOldRichPresence;
+
+    if (nResult == RC_OK && m_nGameId > 0) {
+        BeginLoad();
+
+        auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
+        pCodeNotes->Refresh(m_nGameId,
+            [this](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
+                OnCodeNoteChanged(nAddress, sNewNote);
+            },
+            [this]() {
+                EndLoad();
+            });
+
+        m_vAssets.Append(std::move(pCodeNotes));
+
+        // the old server value (if different from current server value) will be stored as Local modification.
+        // capture it now. ReloadAssets will load the XXX-Rich.txt file and replace it
+        pRichPresence = m_vAssets.FindRichPresence();
+        if (pRichPresence)
+            sOldRichPresence = pRichPresence->GetScript();
+
+        // merge local assets
+        std::vector<ra::data::models::AssetModelBase*> vEmptyAssetsList;
+        m_vAssets.ReloadAssets(vEmptyAssetsList);
     }
 
     if (!bWasPaused)
@@ -235,7 +254,6 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
     }
 
     // activate rich presence (or remove if not defined)
-    auto* pRichPresence = m_vAssets.FindRichPresence();
     if (pRichPresence && nResult == RC_OK)
     {
         // if the server value differs from the local value, the model will appear as Unpublished
@@ -272,7 +290,8 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
             if (pAsset->IsActive())
             {
                 if (pAsset->GetType() == ra::data::models::AssetType::RichPresence &&
-                    ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().RichPresenceMonitor.IsVisible())
+                    ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>()
+                        .RichPresenceMonitor.IsVisible())
                 {
                     // if rich presence monitor is open, allow modified rich presence to remain active. otherwise,
                     // it will be activated when the monitor is opened. it cannot be activated from the list.
@@ -305,7 +324,8 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
             ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>().QueueFunction([]() {
                 ra::ui::viewmodels::MessageBoxViewModel vmWarning;
                 vmWarning.SetHeader(L"Enable Hardcore mode?");
-                vmWarning.SetMessage(L"You are loading a game with achievements and do not currently have hardcore mode enabled.");
+                vmWarning.SetMessage(
+                    L"You are loading a game with achievements and do not currently have hardcore mode enabled.");
                 vmWarning.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
                 vmWarning.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
 
@@ -313,7 +333,7 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
                     ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().EnableHardcoreMode(false);
             });
         }
-        else
+        else if (bShowSoftcoreWarning)
         {
             const bool bLeaderboardsEnabled = pConfiguration.IsFeatureEnabled(ra::services::Feature::Leaderboards);
 
@@ -332,7 +352,9 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
 {
     const auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
     const auto* pGame = rc_client_get_game_info(pClient);
+    m_nGameId = pGame->id;
     m_sGameTitle = ra::Widen(pGame->title);
+    m_sGameHash = pGame->hash;
 
 #ifndef RA_UTEST
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();

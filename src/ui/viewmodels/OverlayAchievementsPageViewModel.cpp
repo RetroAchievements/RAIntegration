@@ -62,7 +62,7 @@ static void SetAchievement(OverlayListPageViewModel::ItemViewModel& vmItem,
             if (pAchievement.measured_progress[0])
             {
                 vmItem.SetProgressString(ra::Widen(pAchievement.measured_progress));
-                vmItem.SetProgressPercentage(pAchievement.measured_percent);
+                vmItem.SetProgressPercentage(pAchievement.measured_percent / 100.0f);
             }
             else
             {

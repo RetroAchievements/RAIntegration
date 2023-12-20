@@ -458,10 +458,9 @@ void EmulatorContext::DisableHardcoreMode()
         auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
         pWindowManager.AssetList.UpdateButtons();
 
-        UpdateMenuState(IDM_RA_HARDCORE_MODE);
+        SyncClientExternalHardcoreState();
 
-        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        rc_client_set_hardcore_enabled(pRuntime.GetClient(), false);
+        UpdateMenuState(IDM_RA_HARDCORE_MODE);
 
         // GameContext::DoFrame synchronizes the models to the runtime
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -534,12 +533,11 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     // updating the enabled-ness of the buttons of the asset list
     pWindowManager.AssetList.UpdateButtons();
 
+    // update the runtime
+    SyncClientExternalHardcoreState();
+
     // update the integration menu
     UpdateMenuState(IDM_RA_HARDCORE_MODE);
-
-    // update the runtime
-    auto* pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().GetClient();
-    rc_client_set_hardcore_enabled(pClient, true);
 
     // GameContext::DoFrame synchronizes the models to the runtime
     pGameContext.DoFrame();

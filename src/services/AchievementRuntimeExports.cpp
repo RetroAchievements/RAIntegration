@@ -4,6 +4,7 @@
 #include "RA_Log.h"
 #include "RA_Resource.h"
 
+#include "data\context\ConsoleContext.hh"
 #include "data\context\GameContext.hh"
 
 #include "services\AchievementRuntime.hh"
@@ -60,10 +61,7 @@ public:
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
         rc_client_set_read_memory_function(pClient.GetClient(), AchievementRuntimeExports::ReadMemoryExternal);
 
-        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        pEmulatorContext.ClearMemoryBlocks();
-        pEmulatorContext.AddMemoryBlock(0, 0xFFFFFFFF, nullptr, nullptr);
-        pEmulatorContext.AddMemoryBlockReader(0, AchievementRuntimeExports::ReadMemoryBlock);
+        ResetMemory();
     }
 
     static void set_get_time_millisecs(rc_client_t* client, rc_get_time_millisecs_func_t handler)
@@ -83,13 +81,20 @@ public:
             pConfiguration->SetHost(value);
     }
 
+    static bool IsUpdatingHardcore() { return s_bUpdatingHardcore; }
+
     static void set_hardcore_enabled(int value)
     {
         auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+
+        s_bUpdatingHardcore = true; // prevent raising RC_CLIENT_RAINTEGRATION_EVENT_HARDCORE_CHANGED event
+
         if (value)
             pEmulatorContext.EnableHardcoreMode(false);
         else
             pEmulatorContext.DisableHardcoreMode();
+
+        s_bUpdatingHardcore = false;
     }
 
     static int get_hardcore_enabled()
@@ -190,6 +195,14 @@ public:
         auto* wrapper = static_cast<LoadExternalGameCallbackWrapper*>(pUserdata);
         Expects(wrapper != nullptr);
 
+        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        auto* pGame = pClient.GetClient()->game;
+        if (pGame)
+        {
+            _RA_SetConsoleID(pGame->public_.console_id);
+            ResetMemory();
+        }
+
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.EndLoadGame(nResult, wrapper->bWasPaused, false);
 
@@ -232,6 +245,8 @@ public:
 
     static void unload_game()
     {
+        _RA_ActivateGame(0);
+
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
         return rc_client_unload_game(pClient.GetClient());
     }
@@ -432,6 +447,12 @@ public:
         return rc_client_deserialize_progress(pClient.GetClient(), buffer);
     }
 
+    static void set_raintegration_write_memory_function(rc_client_t* client, rc_client_raintegration_write_memory_func_t handler)
+    {
+        s_callbacks.write_memory_client = client;
+        s_callbacks.write_memory_handler = handler;
+    }
+
     static void set_raintegration_event_handler(rc_client_t* client, rc_client_raintegration_event_handler_t handler)
     {
         s_callbacks.raintegration_event_client = client;
@@ -615,6 +636,32 @@ public:
         return 1;
     }
 
+    static void RaiseIntegrationEvent(uint32_t nType)
+    {
+        if (s_callbacks.raintegration_event_handler)
+        {
+            rc_client_raintegration_event_t pEvent;
+            memset(&pEvent, 0, sizeof(pEvent));
+            pEvent.type = nType;
+
+            s_callbacks.raintegration_event_handler(&pEvent, s_callbacks.raintegration_event_client);
+        }
+    }
+
+    static bool IsExternalRcheevosClient()
+    {
+        return s_bIsExternalRcheevosClient;
+    }
+
+    static void HookupCallbackEvents()
+    {
+        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        pEmulatorContext.SetPauseFunction(RaisePauseEvent);
+        pEmulatorContext.SetResetFunction(RaiseResetEvent);
+
+        s_bIsExternalRcheevosClient = true;
+    }
+
 private:
     typedef struct ExternalClientCallbacks
     {
@@ -626,6 +673,9 @@ private:
 
         rc_client_read_memory_func_t read_memory_handler;
         rc_client_t* read_memory_client;
+
+        rc_client_raintegration_write_memory_func_t write_memory_handler;
+        rc_client_t* write_memory_client;
 
         rc_get_time_millisecs_func_t get_time_millisecs_handler;
         rc_client_t* get_time_millisecs_client;
@@ -653,6 +703,25 @@ private:
             s_callbacks.event_handler(event, s_callbacks.event_client);
     }
 
+    static uint8_t ReadMemoryByte(uint32_t address)
+    {
+        if (s_callbacks.read_memory_handler)
+        {
+            uint8_t value;
+
+            if (s_callbacks.read_memory_handler(address, &value, 1, s_callbacks.read_memory_client) == 1)
+                return value;
+        }
+
+        return 0;
+    }
+
+    static void WriteMemoryByte(uint32_t address, uint8_t value)
+    {
+        if (s_callbacks.write_memory_handler)
+            s_callbacks.write_memory_handler(address, &value, 1, s_callbacks.write_memory_client);
+    }
+
     static uint32_t ReadMemoryBlock(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false)
     {
         if (s_callbacks.read_memory_handler)
@@ -667,6 +736,34 @@ private:
             return s_callbacks.read_memory_handler(address, buffer, num_bytes, s_callbacks.read_memory_client);
 
         return 0;
+    }
+    
+    static void ResetMemory()
+    {
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        const auto nNumBytes = pConsoleContext.MaxAddress() + 1;
+
+        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        pEmulatorContext.ClearMemoryBlocks();
+        pEmulatorContext.AddMemoryBlock(0, nNumBytes, AchievementRuntimeExports::ReadMemoryByte, AchievementRuntimeExports::WriteMemoryByte);
+        pEmulatorContext.AddMemoryBlockReader(0, AchievementRuntimeExports::ReadMemoryBlock);
+    }
+
+    static void RaisePauseEvent()
+    {
+        RaiseIntegrationEvent(RC_CLIENT_RAINTEGRATION_EVENT_PAUSE);
+    }
+
+    static void RaiseResetEvent()
+    {
+        if (s_callbacks.event_handler)
+        {
+            rc_client_event_t client_event;
+            memset(&client_event, 0, sizeof(client_event));
+            client_event.type = RC_CLIENT_EVENT_RESET;
+
+            s_callbacks.event_handler(&client_event, s_callbacks.event_client);
+        }
     }
 
     static rc_clock_t GetTimeMillisecsExternal(const rc_client_t*) noexcept(false)
@@ -695,20 +792,45 @@ private:
             free(list);
     }
 
+    static bool s_bIsExternalRcheevosClient;
+    static bool s_bUpdatingHardcore;
+
     static rc_buffer_t s_pIntegrationMenuBuffer;
     static rc_client_raintegration_menu_t* s_pIntegrationMenu;
 };
 
 AchievementRuntimeExports::ExternalClientCallbacks AchievementRuntimeExports::s_callbacks{};
+bool AchievementRuntimeExports::s_bIsExternalRcheevosClient = false;
+bool AchievementRuntimeExports::s_bUpdatingHardcore = false;
 rc_client_raintegration_menu_t* AchievementRuntimeExports::s_pIntegrationMenu = nullptr;
 rc_buffer_t AchievementRuntimeExports::s_pIntegrationMenuBuffer{};
 
 } // namespace services
 } // namespace ra
 
+bool IsExternalRcheevosClient()
+{
+    return ra::services::AchievementRuntimeExports::IsExternalRcheevosClient();
+}
+
 void SyncClientExternalRAIntegrationMenuItem(int nMenuItemId)
 {
     ra::services::AchievementRuntimeExports::SyncMenuItem(nMenuItemId);
+}
+
+void SyncClientExternalHardcoreState()
+{
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    const int bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore) ? 1 : 0;
+
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    if (rc_client_get_hardcore_enabled(pRuntime.GetClient()) != bHardcore)
+    {
+        rc_client_set_hardcore_enabled(pRuntime.GetClient(), bHardcore);
+
+        if (!ra::services::AchievementRuntimeExports::IsUpdatingHardcore())
+            ra::services::AchievementRuntimeExports::RaiseIntegrationEvent(RC_CLIENT_RAINTEGRATION_EVENT_HARDCORE_CHANGED);
+    }
 }
 
 static void GetExternalClientV1(rc_client_external_t* pClientExternal)
@@ -787,6 +909,8 @@ API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal,
             break;
     }
 
+    ra::services::AchievementRuntimeExports::HookupCallbackEvents();
+
     return 1;
 }
 
@@ -798,6 +922,11 @@ API const rc_client_raintegration_menu_t* CCONV _Rcheevos_RAIntegrationGetMenu()
 API int CCONV _Rcheevos_ActivateRAIntegrationMenuItem(uint32_t nId)
 {
     return ra::services::AchievementRuntimeExports::activate_menu_item(nId);
+}
+
+API void CCONV _Rcheevos_SetRAIntegrationWriteMemoryFunction(rc_client_t* client, rc_client_raintegration_write_memory_func_t handler)
+{
+    ra::services::AchievementRuntimeExports::set_raintegration_write_memory_function(client, handler);
 }
 
 API void CCONV _Rcheevos_SetRAIntegrationEventHandler(rc_client_t* client, rc_client_raintegration_event_handler_t handler)

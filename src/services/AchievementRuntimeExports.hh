@@ -3,5 +3,7 @@
 #pragma once
 
 void SyncClientExternalRAIntegrationMenuItem(int nMenuItemId);
+void SyncClientExternalHardcoreState();
+bool IsExternalRcheevosClient();
 
 #endif // !RA_SERVICES_ACHIEVEMENT_RUNTIME_EXPORTS_HH

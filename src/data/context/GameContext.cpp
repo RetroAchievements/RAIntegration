@@ -354,7 +354,7 @@ void GameContext::InitializeFromAchievementRuntime(const std::map<uint32_t, std:
     const auto* pGame = rc_client_get_game_info(pClient);
     m_nGameId = pGame->id;
     m_sGameTitle = ra::Widen(pGame->title);
-    m_sGameHash = pGame->hash;
+    m_sGameHash = pGame->hash ? pGame->hash : "";
 
 #ifndef RA_UTEST
     auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();

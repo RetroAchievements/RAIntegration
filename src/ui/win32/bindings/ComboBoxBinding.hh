@@ -104,7 +104,7 @@ protected:
     void OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs& args) override
     {
         if (m_pSelectedIdProperty && *m_pSelectedIdProperty == args.Property)
-            UpdateSelectedItem();
+            InvokeOnUIThread([this]() { UpdateSelectedItem(); });
     }
 
     void OnViewModelStringValueChanged(gsl::index nIndex, const StringModelProperty::ChangeArgs& args) override
@@ -112,26 +112,32 @@ protected:
         if (args.Property == *m_pItemTextProperty)
         {
             const auto& pLabel = m_pViewModelCollection->GetItemValue(nIndex, *m_pItemTextProperty);
-            ComboBox_DeleteString(m_hWnd, nIndex);
-            ComboBox_InsertString(m_hWnd, nIndex, NativeStr(pLabel).c_str());
+            InvokeOnUIThread([this, pLabel = NativeStr(pLabel), nIndex]() {
+                ComboBox_DeleteString(m_hWnd, nIndex);
+                ComboBox_InsertString(m_hWnd, nIndex, NativeStr(pLabel).c_str());
 
-            if (m_nSelectedIndex == nIndex)
-            {
-                ComboBox_SetCurSel(m_hWnd, nIndex);
-                ComboBox_SetText(m_hWnd, NativeStr(pLabel).c_str());
-            }
+                if (m_nSelectedIndex == nIndex)
+                {
+                    ComboBox_SetCurSel(m_hWnd, nIndex);
+                    ComboBox_SetText(m_hWnd, NativeStr(pLabel).c_str());
+                }
+            });
         }
     }
 
     void OnViewModelAdded(gsl::index nIndex) override
     {
         const auto& pLabel = m_pViewModelCollection->GetItemValue(nIndex, *m_pItemTextProperty);
-        ComboBox_InsertString(m_hWnd, nIndex, NativeStr(pLabel).c_str());
+        InvokeOnUIThread([this, nIndex, pLabel = NativeStr(pLabel)]() {
+            ComboBox_InsertString(m_hWnd, nIndex, NativeStr(pLabel).c_str());
+        });
     }
 
     void OnViewModelRemoved(gsl::index nIndex) noexcept override
     {
-        ComboBox_DeleteString(m_hWnd, nIndex);
+        InvokeOnUIThread([this, nIndex]() {
+            ComboBox_DeleteString(m_hWnd, nIndex);
+        });
     }
 
     virtual void PopulateComboBox()

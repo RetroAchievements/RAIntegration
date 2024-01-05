@@ -59,6 +59,9 @@ Desktop::Desktop() noexcept
 
 void Desktop::ShowWindow(WindowViewModelBase& vmViewModel) const
 {
+    if (m_pWindowBinding)
+        m_pWindowBinding->EnableInvokeOnUIThread();
+
     auto* pPresenter = GetDialogPresenter(vmViewModel);
     if (pPresenter != nullptr)
     {
@@ -78,13 +81,35 @@ ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel) const
 
 ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel, const WindowViewModelBase& vmParentViewModel) const
 {
+    if (m_pWindowBinding)
+        m_pWindowBinding->EnableInvokeOnUIThread();
+
     auto* pPresenter = GetDialogPresenter(vmViewModel);
     if (pPresenter != nullptr)
     {
-        const auto* pBinding = ui::win32::bindings::WindowBinding::GetBindingFor(vmParentViewModel);
+        auto* pBinding = ui::win32::bindings::WindowBinding::GetBindingFor(vmParentViewModel);
         const HWND hParentWnd = pBinding ? pBinding->GetHWnd() : nullptr;
 
-        pPresenter->ShowModal(vmViewModel, hParentWnd);
+        if (IsOnUIThread())
+        {
+            pPresenter->ShowModal(vmViewModel, hParentWnd);
+        }
+        else
+        {
+            std::mutex pMutex;
+            std::condition_variable pCondition;
+            bool bClosed = false;
+
+            InvokeOnUIThread([this, &vmViewModel, pPresenter, hParentWnd, &pCondition, &bClosed]() {
+                pPresenter->ShowModal(vmViewModel, hParentWnd);
+
+                bClosed = true;
+                pCondition.notify_all();
+            });
+
+            std::unique_lock<std::mutex> lock(pMutex);
+            pCondition.wait(lock, [&bClosed]() { return bClosed; });
+        }
     }
     else
     {
@@ -166,6 +191,8 @@ void Desktop::SetMainHWnd(HWND hWnd)
     }
 
     m_pWindowBinding->SetHWND(nullptr, hWnd);
+    m_pWindowBinding->SetUIThread(::GetWindowThreadProcessId(hWnd, nullptr));
+    m_pWindowBinding->EnableInvokeOnUIThread();
 
     g_RAMainWnd = hWnd;
 }
@@ -299,18 +326,14 @@ bool Desktop::IsDebuggerPresent() const
     return IsSuspiciousProcessRunning();
 }
 
-bool Desktop::IsOnUIThread(const WindowViewModelBase& vmViewModel) const
+bool Desktop::IsOnUIThread() const
 {
-    const auto* pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
-    Expects(pBinding != nullptr);
-    return pBinding->IsOnUIThread();
+    return ra::ui::win32::bindings::WindowBinding::IsOnUIThread();
 }
 
-void Desktop::InvokeOnUIThread(const WindowViewModelBase& vmViewModel, std::function<void()> fAction) const
+void Desktop::InvokeOnUIThread(std::function<void()> fAction) const
 {
-    auto* pBinding = ra::ui::win32::bindings::WindowBinding::GetBindingFor(vmViewModel);
-    Expects(pBinding != nullptr);
-    pBinding->InvokeOnUIThread(fAction);
+    ra::ui::win32::bindings::WindowBinding::InvokeOnUIThread(fAction);
 }
 
 void Desktop::Shutdown() noexcept

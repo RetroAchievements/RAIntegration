@@ -36,8 +36,8 @@ public:
 
     bool IsDebuggerPresent() const override;
 
-    bool IsOnUIThread(const WindowViewModelBase& vmViewModel) const override;
-    void InvokeOnUIThread(const WindowViewModelBase& vmViewModel, std::function<void()> fAction) const override;
+    bool IsOnUIThread() const override;
+    void InvokeOnUIThread(std::function<void()> fAction) const override;
 
 private:
     _Success_(return != nullptr)

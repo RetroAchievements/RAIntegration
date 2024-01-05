@@ -151,7 +151,9 @@ protected:
 
     void InvokeOnUIThread(std::function<void()> fAction)
     {
-        if (m_pDialog)
+        if (!m_pDialog || WindowBinding::IsOnUIThread())
+            fAction();
+        else
             m_pDialog->QueueFunction(fAction);
     }
 

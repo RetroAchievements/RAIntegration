@@ -1,6 +1,8 @@
 #include "WindowBinding.hh"
 
 #include "RA_Core.h"
+#include "RA_Log.h"
+#include "RA_Resource.h"
 
 #include "data\ModelProperty.hh"
 
@@ -15,6 +17,37 @@ namespace ra {
 namespace ui {
 namespace win32 {
 namespace bindings {
+
+class DispatchingWindow : public DialogBase
+{
+public:
+    explicit DispatchingWindow(WindowViewModelBase& vmWindow) : DialogBase(vmWindow) {}
+    virtual ~DispatchingWindow() noexcept = default;
+    DispatchingWindow(const DispatchingWindow&) noexcept = delete;
+    DispatchingWindow& operator=(const DispatchingWindow&) noexcept = delete;
+    DispatchingWindow(DispatchingWindow&&) noexcept = delete;
+    DispatchingWindow& operator=(DispatchingWindow&&) noexcept = delete;
+
+    class ViewModel : public WindowViewModelBase
+    {
+    };
+
+    class Presenter : public IDialogPresenter
+    {
+    public:
+        bool IsSupported(const ra::ui::WindowViewModelBase&) noexcept override { return true; }
+        void ShowWindow(ra::ui::WindowViewModelBase&) override {}
+        void ShowModal(ra::ui::WindowViewModelBase&, HWND) override {}
+    };
+
+    Presenter m_pPresenter;
+
+private:
+
+    ViewModel m_vmViewModel;
+};
+static std::unique_ptr<DispatchingWindow> s_pDispatchingWindow;
+static DispatchingWindow::ViewModel s_vmDispatchingWindow;
 
 std::vector<WindowBinding*> WindowBinding::s_vKnownBindings;
 DWORD WindowBinding::s_hUIThreadId;
@@ -93,14 +126,6 @@ void WindowBinding::SetHWND(DialogBase* pDialog, HWND hWnd)
         }
 
         RestoreSizeAndPosition();
-    }
-
-    if (m_pDialog)
-    {
-        InvokeOnUIThread([this]() noexcept
-        {
-            s_hUIThreadId = GetCurrentThreadId();
-        });
     }
 }
 
@@ -300,7 +325,11 @@ void WindowBinding::OnViewModelStringValueChanged(const StringModelProperty::Cha
 
     const auto pIter = m_mLabelBindings.find(args.Property.GetKey());
     if (pIter != m_mLabelBindings.end())
-        SetDlgItemTextW(m_hWnd, pIter->second, args.tNewValue.c_str());
+    {
+        InvokeOnUIThread([this, nDlgItemId = pIter->second, sValue = args.tNewValue]() {
+            SetDlgItemTextW(m_hWnd, nDlgItemId, sValue.c_str());
+        });
+    }
 }
 
 void WindowBinding::BindLabel(int nDlgItemId, const StringModelProperty& pSourceProperty)
@@ -319,8 +348,9 @@ void WindowBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArg
     const auto pIter = m_mLabelBindings.find(args.Property.GetKey());
     if (pIter != m_mLabelBindings.end())
     {
-        const auto sText = std::to_wstring(args.tNewValue);
-        SetDlgItemTextW(m_hWnd, pIter->second, sText.c_str());
+        InvokeOnUIThread([this, nDlgItemId = pIter->second, sText = std::to_wstring(args.tNewValue)]() {
+            SetDlgItemTextW(m_hWnd, nDlgItemId, sText.c_str());
+        });
     }
 
     if (m_pDialog && args.Property == WindowViewModelBase::DialogResultProperty)
@@ -351,7 +381,9 @@ void WindowBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeA
             auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
             if (hControl)
             {
-                EnableWindow(hControl, args.tNewValue ? TRUE : FALSE);
+                InvokeOnUIThread([hControl, bValue = args.tNewValue ? TRUE : FALSE]() {
+                    EnableWindow(hControl, bValue);
+                });
                 bRepaint = true;
             }
         }
@@ -369,7 +401,9 @@ void WindowBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeA
                 if (bVisible && m_vMultipleVisibilityBoundControls.find(nDlgItemId) != m_vMultipleVisibilityBoundControls.end())
                     bVisible = CheckMultiBoundVisibility(nDlgItemId);
 
-                ShowWindow(hControl, bVisible ? SW_SHOW : SW_HIDE);
+                InvokeOnUIThread([hControl, bVisible] {
+                    ShowWindow(hControl, bVisible ? SW_SHOW : SW_HIDE);
+                });
                 bRepaint = true;
             }
         }
@@ -489,10 +523,49 @@ bool WindowBinding::GetValueFromAny(const BoolModelProperty& pProperty) const
     return bValue;
 }
 
+void WindowBinding::SetUIThread(DWORD hThreadId)
+{
+    if (s_hUIThreadId == hThreadId)
+        return;
+
+    s_hUIThreadId = hThreadId;
+
+    s_pDispatchingWindow.reset();
+}
+
+void WindowBinding::EnableInvokeOnUIThread()
+{
+    if (s_pDispatchingWindow == nullptr && IsOnUIThread())
+    {
+        // create a hidden dummy window for dispatching UI messages
+
+        s_pDispatchingWindow.reset(new DispatchingWindow(s_vmDispatchingWindow));
+        if (!s_pDispatchingWindow->CreateDialogWindow(MAKEINTRESOURCE(IDD_RA_RICHPRESENCE),
+                                                      &s_pDispatchingWindow->m_pPresenter))
+        {
+            RA_LOG_ERR("Could not create Code Notes dialog!");
+            s_pDispatchingWindow.reset();
+        }
+    }
+}
+
 void WindowBinding::InvokeOnUIThread(std::function<void()> fAction)
 {
-    Expects(m_pDialog != nullptr);
-    m_pDialog->QueueFunction(fAction);
+    if (s_pDispatchingWindow == nullptr)
+    {
+        // no window to post the action to - just run it
+        fAction();
+    }
+    else if (IsOnUIThread())
+    {
+        // already on the UI thread
+        fAction();
+    }
+    else
+    {
+        // queue the function to be called from the UI thread
+        s_pDispatchingWindow->QueueFunction(fAction);
+    }
 }
 
 } // namespace bindings

@@ -98,7 +98,11 @@ protected:
     void OnViewModelBoolValueChanged(const BoolModelProperty::ChangeArgs& args) override
     {
         if (m_pReadOnlyProperty && *m_pReadOnlyProperty == args.Property)
-            UpdateReadOnly();
+        {
+            InvokeOnUIThread([this]() {
+                UpdateReadOnly();
+            });
+        }
     }
 
     INT_PTR CALLBACK WndProc(HWND hControl, UINT uMsg, WPARAM wParam, LPARAM lParam) override
@@ -135,7 +139,9 @@ protected:
 
     virtual void UpdateTextFromSource(const std::wstring& sText) noexcept(false)
     {
-        SetWindowTextW(m_hWnd, sText.c_str());
+        InvokeOnUIThread([this, sTextCopy = sText]() {
+            SetWindowTextW(m_hWnd, sTextCopy.c_str());
+        });
     }
 
     virtual void UpdateSourceFromText(const std::wstring& sText)

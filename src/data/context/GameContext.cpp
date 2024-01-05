@@ -321,17 +321,15 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
 
         if (bShowHardcorePrompt)
         {
-            ra::services::ServiceLocator::GetMutable<ra::services::FrameEventQueue>().QueueFunction([]() {
-                ra::ui::viewmodels::MessageBoxViewModel vmWarning;
-                vmWarning.SetHeader(L"Enable Hardcore mode?");
-                vmWarning.SetMessage(
-                    L"You are loading a game with achievements and do not currently have hardcore mode enabled.");
-                vmWarning.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
-                vmWarning.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
+            ra::ui::viewmodels::MessageBoxViewModel vmWarning;
+            vmWarning.SetHeader(L"Enable Hardcore mode?");
+            vmWarning.SetMessage(
+                L"You are loading a game with achievements and do not currently have hardcore mode enabled.");
+            vmWarning.SetIcon(ra::ui::viewmodels::MessageBoxViewModel::Icon::Warning);
+            vmWarning.SetButtons(ra::ui::viewmodels::MessageBoxViewModel::Buttons::YesNo);
 
-                if (vmWarning.ShowModal() == ra::ui::DialogResult::Yes)
-                    ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().EnableHardcoreMode(false);
-            });
+            if (vmWarning.ShowModal() == ra::ui::DialogResult::Yes)
+                ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>().EnableHardcoreMode(false);
         }
         else if (bShowSoftcoreWarning)
         {

@@ -64,6 +64,11 @@ public:
     /// </summary>
     void SetDialogResult(DialogResult nResult);
 
+    /// <summary>
+    /// Returns <c>true</c> if the current thread is the UI thread.
+    /// </summary>
+    bool IsOnUIThread() const noexcept { return m_bindWindow.IsOnUIThread(); }
+
 protected:
     explicit DialogBase(_Inout_ ra::ui::WindowViewModelBase& vmWindow) noexcept;
     ~DialogBase() noexcept;

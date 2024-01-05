@@ -81,6 +81,12 @@ void GridBinding::UpdateLayout()
     if (m_vColumns.empty())
         return;
 
+    if (!WindowBinding::IsOnUIThread())
+    {
+        InvokeOnUIThread([this]() { UpdateLayout(); });
+        return;
+    }
+
     DWORD exStyle = LVS_EX_DOUBLEBUFFER | LVS_EX_FULLROWSELECT | LVS_EX_LABELTIP;
     if (m_bShowGridLines)
         exStyle |= LVS_EX_GRIDLINES;
@@ -275,10 +281,12 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
         {
             m_nScrollOffset = args.tNewValue;
 
-            const auto nTopIndex = ListView_GetTopIndex(m_hWnd);
-            const auto nSpacing = HIWORD(ListView_GetItemSpacing(m_hWnd, TRUE));
-            const int nDeltaY = (m_nScrollOffset - nTopIndex) * gsl::narrow_cast<int>(nSpacing);
-            ListView_Scroll(m_hWnd, 0, nDeltaY);
+            InvokeOnUIThread([this] {
+                const auto nTopIndex = ListView_GetTopIndex(m_hWnd);
+                const auto nSpacing = HIWORD(ListView_GetItemSpacing(m_hWnd, TRUE));
+                const int nDeltaY = (m_nScrollOffset - nTopIndex) * gsl::narrow_cast<int>(nSpacing);
+                ListView_Scroll(m_hWnd, 0, nDeltaY);
+            });
             return;
         }
 
@@ -286,10 +294,12 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
         {
             if (m_hWnd)
             {
-                if (args.tNewValue < 1)
-                    ListView_SetItemCountEx(m_hWnd, 0, 0);
-                else
-                    ListView_SetItemCountEx(m_hWnd, gsl::narrow_cast<size_t>(args.tNewValue), LVSICF_NOSCROLL);
+                InvokeOnUIThread([this, nValue = args.tNewValue]() {
+                    if (nValue < 1)
+                        ListView_SetItemCountEx(m_hWnd, 0, 0);
+                    else
+                        ListView_SetItemCountEx(m_hWnd, gsl::narrow_cast<size_t>(nValue), LVSICF_NOSCROLL);
+                });
 
                 CheckForScrollBar();
             }
@@ -315,7 +325,10 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
     {
         if (m_nAdjustingScrollOffset == 0)
         {
-            ListView_RedrawItems(m_hWnd, nIndex, nIndex);
+            InvokeOnUIThread([this, nIndex] {
+                ListView_RedrawItems(m_hWnd, nIndex, nIndex);
+            });
+
             m_bForceRepaintItems = true;
         }
         return;
@@ -325,18 +338,7 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
     {
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
-        {
-            SuspendRedraw();
-
-            // if the affected data is in the sort column, it's no longer sorted
-            if (m_nSortIndex == ra::to_signed(nColumnIndex))
-                m_nSortIndex = -1;
-
             UpdateCell(nIndex, nColumnIndex);
-
-            ListView_RedrawItems(m_hWnd, nIndex, nIndex);
-            m_bForceRepaintItems = true;
-        }
     }
 
     if (!m_vmItems->IsUpdating())
@@ -349,24 +351,17 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
     nIndex = GetRealItemIndex(nIndex);
 
     if (m_pIsSelectedProperty && *m_pIsSelectedProperty == args.Property)
-        ListView_SetItemState(m_hWnd, nIndex, args.tNewValue ? LVIS_SELECTED : 0, LVIS_SELECTED);
+    {
+        InvokeOnUIThread([this, nIndex, nValue = args.tNewValue ? LVIS_SELECTED : 0]() {
+            ListView_SetItemState(m_hWnd, nIndex, nValue, LVIS_SELECTED);
+        });
+    }
 
     for (size_t nColumnIndex = 0; nColumnIndex < m_vColumns.size(); ++nColumnIndex)
     {
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
-        {
-            SuspendRedraw();
-
-            // if the affected data is in the sort column, it's no longer sorted
-            if (m_nSortIndex == ra::to_signed(nColumnIndex))
-                m_nSortIndex = -1;
-
             UpdateCell(nIndex, nColumnIndex);
-
-            ListView_RedrawItems(m_hWnd, nIndex, nIndex);
-            m_bForceRepaintItems = true;
-        }
     }
 }
 
@@ -379,41 +374,45 @@ void GridBinding::OnViewModelStringValueChanged(gsl::index nIndex, const StringM
     {
         const auto& pColumn = *m_vColumns.at(nColumnIndex);
         if (pColumn.DependsOn(args.Property))
-        {
-            SuspendRedraw();
-
-            // if the affected data is in the sort column, it's no longer sorted
-            if (m_nSortIndex == ra::to_signed(nColumnIndex))
-                m_nSortIndex = -1;
-
             UpdateCell(nIndex, nColumnIndex);
-
-            ListView_RedrawItems(m_hWnd, nIndex, nIndex);
-            m_bForceRepaintItems = true;
-        }
     }
 }
 
 void GridBinding::UpdateCell(gsl::index nIndex, gsl::index nColumnIndex)
 {
-    std::wstring sText;
-    LV_ITEMW item{};
-    item.mask = LVIF_TEXT;
-    item.iItem = gsl::narrow_cast<int>(nIndex);
-    item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
+    SuspendRedraw();
+
+    // if the affected data is in the sort column, it's no longer sorted
+    if (m_nSortIndex == nColumnIndex)
+        m_nSortIndex = -1;
 
     const auto& pColumn = *m_vColumns.at(nColumnIndex);
-    sText = pColumn.GetText(*m_vmItems, nIndex);
-    item.pszText = sText.data();
+    std::wstring sText = pColumn.GetText(*m_vmItems, nIndex);
 
-    GSL_SUPPRESS_TYPE1
-    SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
+    InvokeOnUIThread([this, sText, nIndex, nColumnIndex]() {
+        LV_ITEMW item{};
+        item.mask = LVIF_TEXT;
+        item.iItem = gsl::narrow_cast<int>(nIndex);
+        item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
+        item.pszText = const_cast<wchar_t*>(sText.data());
+
+        GSL_SUPPRESS_TYPE1
+        SNDMSG(m_hWnd, LVM_SETITEMW, 0, reinterpret_cast<LPARAM>(&item));
+
+        ListView_RedrawItems(m_hWnd, nIndex, nIndex);
+    });
+
+    m_bForceRepaintItems = true;
 }
 
 void GridBinding::EnsureVisible(gsl::index nIndex)
 {
     if (nIndex >= 0 && nIndex < gsl::narrow_cast<gsl::index>(m_vmItems->Count()))
-        ListView_EnsureVisible(m_hWnd, gsl::narrow_cast<int>(nIndex), FALSE);
+    {
+        InvokeOnUIThread([this, nIndex] {
+            ListView_EnsureVisible(m_hWnd, gsl::narrow_cast<int>(nIndex), FALSE);
+        });
+    }
 }
 
 void GridBinding::DeselectAll() noexcept
@@ -448,6 +447,12 @@ void GridBinding::UpdateRow(gsl::index nIndex, bool bExisting)
     // virtualized listview does not support LVM_INSERTITEM or LVM_SETITEM
     if (m_pUpdateSelectedItems)
         return;
+
+    if (!WindowBinding::IsOnUIThread())
+    {
+        InvokeOnUIThread([this, nIndex, bExisting]() { UpdateRow(nIndex, bExisting); });
+        return;
+    }
 
     std::wstring sText;
 
@@ -526,7 +531,9 @@ void GridBinding::OnViewModelRemoved(gsl::index nIndex)
         else
         {
             SuspendRedraw();
-            ListView_DeleteItem(m_hWnd, nIndex);
+            InvokeOnUIThread([this, nIndex]() {
+                ListView_DeleteItem(m_hWnd, nIndex);
+            });
         }
 
         if (!m_vmItems->IsUpdating())
@@ -576,7 +583,9 @@ void GridBinding::OnEndViewModelCollectionUpdate()
         if (m_bRedrawSuspended)
         {
             // enable redraw before calling CheckForScrollBar to ensure metrics are updated
-            SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
+            InvokeOnUIThread([this]() {
+                SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
+            });
             m_bRedrawSuspended = false;
         }
 
@@ -612,7 +621,9 @@ void GridBinding::SuspendRedraw() noexcept
     {
         // if we're in a BeginUpdate/EndUpdate block, stop redrawing until the EndUpdate
         m_bRedrawSuspended = true;
-        SendMessage(m_hWnd, WM_SETREDRAW, FALSE, 0);
+        InvokeOnUIThread([this]() {
+            SendMessage(m_hWnd, WM_SETREDRAW, FALSE, 0);
+        });
     }
 }
 

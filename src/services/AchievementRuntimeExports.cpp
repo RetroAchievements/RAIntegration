@@ -718,7 +718,7 @@ private:
     {
         if (s_callbacks.read_memory_handler)
         {
-            uint8_t value;
+            uint8_t value = 0;
 
             if (s_callbacks.read_memory_handler(address, &value, 1, s_callbacks.read_memory_client) == 1)
                 return value;

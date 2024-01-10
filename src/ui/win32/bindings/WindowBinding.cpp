@@ -36,8 +36,8 @@ public:
     {
     public:
         bool IsSupported(const ra::ui::WindowViewModelBase&) noexcept override { return true; }
-        void ShowWindow(ra::ui::WindowViewModelBase&) override {}
-        void ShowModal(ra::ui::WindowViewModelBase&, HWND) override {}
+        void ShowWindow(ra::ui::WindowViewModelBase&) noexcept override {}
+        void ShowModal(ra::ui::WindowViewModelBase&, HWND) noexcept override {}
     };
 
     Presenter m_pPresenter;
@@ -326,7 +326,7 @@ void WindowBinding::OnViewModelStringValueChanged(const StringModelProperty::Cha
     const auto pIter = m_mLabelBindings.find(args.Property.GetKey());
     if (pIter != m_mLabelBindings.end())
     {
-        InvokeOnUIThread([this, nDlgItemId = pIter->second, sValue = args.tNewValue]() {
+        InvokeOnUIThread([this, nDlgItemId = pIter->second, sValue = args.tNewValue]() noexcept {
             SetDlgItemTextW(m_hWnd, nDlgItemId, sValue.c_str());
         });
     }
@@ -348,7 +348,7 @@ void WindowBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArg
     const auto pIter = m_mLabelBindings.find(args.Property.GetKey());
     if (pIter != m_mLabelBindings.end())
     {
-        InvokeOnUIThread([this, nDlgItemId = pIter->second, sText = std::to_wstring(args.tNewValue)]() {
+        InvokeOnUIThread([this, nDlgItemId = pIter->second, sText = std::to_wstring(args.tNewValue)]() noexcept {
             SetDlgItemTextW(m_hWnd, nDlgItemId, sText.c_str());
         });
     }
@@ -381,7 +381,7 @@ void WindowBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeA
             auto hControl = GetDlgItem(m_hWnd, nDlgItemId);
             if (hControl)
             {
-                InvokeOnUIThread([hControl, bValue = args.tNewValue ? TRUE : FALSE]() {
+                InvokeOnUIThread([hControl, bValue = args.tNewValue ? TRUE : FALSE]() noexcept {
                     EnableWindow(hControl, bValue);
                 });
                 bRepaint = true;
@@ -401,7 +401,7 @@ void WindowBinding::OnViewModelBoolValueChanged(const BoolModelProperty::ChangeA
                 if (bVisible && m_vMultipleVisibilityBoundControls.find(nDlgItemId) != m_vMultipleVisibilityBoundControls.end())
                     bVisible = CheckMultiBoundVisibility(nDlgItemId);
 
-                InvokeOnUIThread([hControl, bVisible] {
+                InvokeOnUIThread([hControl, bVisible]() noexcept {
                     ShowWindow(hControl, bVisible ? SW_SHOW : SW_HIDE);
                 });
                 bRepaint = true;
@@ -523,7 +523,7 @@ bool WindowBinding::GetValueFromAny(const BoolModelProperty& pProperty) const
     return bValue;
 }
 
-void WindowBinding::SetUIThread(DWORD hThreadId)
+void WindowBinding::SetUIThread(DWORD hThreadId) noexcept
 {
     if (s_hUIThreadId == hThreadId)
         return;
@@ -565,6 +565,30 @@ void WindowBinding::InvokeOnUIThread(std::function<void()> fAction)
     {
         // queue the function to be called from the UI thread
         s_pDispatchingWindow->QueueFunction(fAction);
+    }
+}
+
+void WindowBinding::InvokeOnUIThreadAndWait(std::function<void()> fAction)
+{
+    if (s_pDispatchingWindow == nullptr || IsOnUIThread())
+    {
+        fAction();
+    }
+    else
+    {
+        std::mutex pMutex;
+        std::condition_variable pCondition;
+        bool bExecuted = false;
+
+        s_pDispatchingWindow->QueueFunction([fAction, &pCondition, &bExecuted]() {
+            fAction();
+
+            bExecuted = true;
+            pCondition.notify_all();
+        });
+
+        std::unique_lock<std::mutex> lock(pMutex);
+        pCondition.wait(lock, [&bExecuted]() { return bExecuted; });
     }
 }
 

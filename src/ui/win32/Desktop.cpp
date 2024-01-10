@@ -65,7 +65,10 @@ void Desktop::ShowWindow(WindowViewModelBase& vmViewModel) const
     auto* pPresenter = GetDialogPresenter(vmViewModel);
     if (pPresenter != nullptr)
     {
-        pPresenter->ShowWindow(vmViewModel);
+        ra::ui::win32::bindings::WindowBinding::InvokeOnUIThread(
+            [this, &vmViewModel, pPresenter]() {
+                pPresenter->ShowWindow(vmViewModel);
+            });
     }
     else
     {
@@ -87,29 +90,13 @@ ra::ui::DialogResult Desktop::ShowModal(WindowViewModelBase& vmViewModel, const 
     auto* pPresenter = GetDialogPresenter(vmViewModel);
     if (pPresenter != nullptr)
     {
-        auto* pBinding = ui::win32::bindings::WindowBinding::GetBindingFor(vmParentViewModel);
+        const auto* pBinding = ui::win32::bindings::WindowBinding::GetBindingFor(vmParentViewModel);
         const HWND hParentWnd = pBinding ? pBinding->GetHWnd() : nullptr;
 
-        if (IsOnUIThread())
-        {
-            pPresenter->ShowModal(vmViewModel, hParentWnd);
-        }
-        else
-        {
-            std::mutex pMutex;
-            std::condition_variable pCondition;
-            bool bClosed = false;
-
-            InvokeOnUIThread([this, &vmViewModel, pPresenter, hParentWnd, &pCondition, &bClosed]() {
+        ra::ui::win32::bindings::WindowBinding::InvokeOnUIThreadAndWait(
+            [this, &vmViewModel, pPresenter, hParentWnd]() {
                 pPresenter->ShowModal(vmViewModel, hParentWnd);
-
-                bClosed = true;
-                pCondition.notify_all();
             });
-
-            std::unique_lock<std::mutex> lock(pMutex);
-            pCondition.wait(lock, [&bClosed]() { return bClosed; });
-        }
     }
     else
     {
@@ -326,7 +313,7 @@ bool Desktop::IsDebuggerPresent() const
     return IsSuspiciousProcessRunning();
 }
 
-bool Desktop::IsOnUIThread() const
+bool Desktop::IsOnUIThread() const noexcept
 {
     return ra::ui::win32::bindings::WindowBinding::IsOnUIThread();
 }

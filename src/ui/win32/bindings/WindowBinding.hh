@@ -128,7 +128,7 @@ public:
     /// <summary>
     /// Specifies the UI thread.
     /// </summary>
-    static void SetUIThread(DWORD hUIThreadId);
+    static void SetUIThread(DWORD hUIThreadId) noexcept;
 
     /// <summary>
     /// Ensures the UI thread dispatcher is enabled.
@@ -141,9 +141,14 @@ public:
     static bool IsOnUIThread() noexcept { return GetCurrentThreadId() == s_hUIThreadId; }
 
     /// <summary>
-    /// Executes a function on the UI thread.
+    /// Dispatches a function to the UI thread.
     /// </summary>
     static void InvokeOnUIThread(std::function<void()> fAction);
+
+    /// <summary>
+    /// Executes a function on the UI thread and waits for it to complete.
+    /// </summary>
+    static void InvokeOnUIThreadAndWait(std::function<void()> fAction);
 
 protected:
     // ViewModelBase::NotifyTarget

@@ -139,7 +139,7 @@ protected:
 
     virtual void UpdateTextFromSource(const std::wstring& sText) noexcept(false)
     {
-        InvokeOnUIThread([this, sTextCopy = sText]() {
+        InvokeOnUIThread([this, sTextCopy = sText]() noexcept {
             SetWindowTextW(m_hWnd, sTextCopy.c_str());
         });
     }

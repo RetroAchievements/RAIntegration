@@ -133,9 +133,9 @@ protected:
         });
     }
 
-    void OnViewModelRemoved(gsl::index nIndex) noexcept override
+    void OnViewModelRemoved(gsl::index nIndex) override
     {
-        InvokeOnUIThread([this, nIndex]() {
+        InvokeOnUIThread([this, nIndex]() noexcept {
             ComboBox_DeleteString(m_hWnd, nIndex);
         });
     }

@@ -36,7 +36,7 @@ public:
 
     bool IsDebuggerPresent() const override;
 
-    bool IsOnUIThread() const override;
+    bool IsOnUIThread() const noexcept override;
     void InvokeOnUIThread(std::function<void()> fAction) const override;
 
 private:

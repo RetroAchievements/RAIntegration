@@ -281,7 +281,7 @@ void GridBinding::OnViewModelIntValueChanged(const IntModelProperty::ChangeArgs&
         {
             m_nScrollOffset = args.tNewValue;
 
-            InvokeOnUIThread([this] {
+            InvokeOnUIThread([this]() noexcept {
                 const auto nTopIndex = ListView_GetTopIndex(m_hWnd);
                 const auto nSpacing = HIWORD(ListView_GetItemSpacing(m_hWnd, TRUE));
                 const int nDeltaY = (m_nScrollOffset - nTopIndex) * gsl::narrow_cast<int>(nSpacing);
@@ -325,7 +325,7 @@ void GridBinding::OnViewModelIntValueChanged(gsl::index nIndex, const IntModelPr
     {
         if (m_nAdjustingScrollOffset == 0)
         {
-            InvokeOnUIThread([this, nIndex] {
+            InvokeOnUIThread([this, nIndex]() noexcept {
                 ListView_RedrawItems(m_hWnd, nIndex, nIndex);
             });
 
@@ -352,7 +352,7 @@ void GridBinding::OnViewModelBoolValueChanged(gsl::index nIndex, const BoolModel
 
     if (m_pIsSelectedProperty && *m_pIsSelectedProperty == args.Property)
     {
-        InvokeOnUIThread([this, nIndex, nValue = args.tNewValue ? LVIS_SELECTED : 0]() {
+        InvokeOnUIThread([this, nIndex, nValue = args.tNewValue ? LVIS_SELECTED : 0]() noexcept {
             ListView_SetItemState(m_hWnd, nIndex, nValue, LVIS_SELECTED);
         });
     }
@@ -389,11 +389,12 @@ void GridBinding::UpdateCell(gsl::index nIndex, gsl::index nColumnIndex)
     const auto& pColumn = *m_vColumns.at(nColumnIndex);
     std::wstring sText = pColumn.GetText(*m_vmItems, nIndex);
 
-    InvokeOnUIThread([this, sText, nIndex, nColumnIndex]() {
+    InvokeOnUIThread([this, sText, nIndex, nColumnIndex]() noexcept {
         LV_ITEMW item{};
         item.mask = LVIF_TEXT;
         item.iItem = gsl::narrow_cast<int>(nIndex);
         item.iSubItem = gsl::narrow_cast<int>(nColumnIndex);
+        GSL_SUPPRESS_TYPE3
         item.pszText = const_cast<wchar_t*>(sText.data());
 
         GSL_SUPPRESS_TYPE1
@@ -409,7 +410,7 @@ void GridBinding::EnsureVisible(gsl::index nIndex)
 {
     if (nIndex >= 0 && nIndex < gsl::narrow_cast<gsl::index>(m_vmItems->Count()))
     {
-        InvokeOnUIThread([this, nIndex] {
+        InvokeOnUIThread([this, nIndex]() noexcept {
             ListView_EnsureVisible(m_hWnd, gsl::narrow_cast<int>(nIndex), FALSE);
         });
     }
@@ -531,7 +532,7 @@ void GridBinding::OnViewModelRemoved(gsl::index nIndex)
         else
         {
             SuspendRedraw();
-            InvokeOnUIThread([this, nIndex]() {
+            InvokeOnUIThread([this, nIndex]() noexcept {
                 ListView_DeleteItem(m_hWnd, nIndex);
             });
         }
@@ -580,12 +581,16 @@ void GridBinding::OnEndViewModelCollectionUpdate()
 {
     if (m_hWnd)
     {
+        if (!WindowBinding::IsOnUIThread())
+        {
+            WindowBinding::InvokeOnUIThread([this]() { OnEndViewModelCollectionUpdate(); });
+            return;
+        }
+
         if (m_bRedrawSuspended)
         {
             // enable redraw before calling CheckForScrollBar to ensure metrics are updated
-            InvokeOnUIThread([this]() {
-                SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
-            });
+            SendMessage(m_hWnd, WM_SETREDRAW, TRUE, 0);
             m_bRedrawSuspended = false;
         }
 
@@ -615,13 +620,13 @@ void GridBinding::OnEndViewModelCollectionUpdate()
     }
 }
 
-void GridBinding::SuspendRedraw() noexcept
+void GridBinding::SuspendRedraw()
 {
     if (!m_bRedrawSuspended && m_vmItems->IsUpdating())
     {
         // if we're in a BeginUpdate/EndUpdate block, stop redrawing until the EndUpdate
         m_bRedrawSuspended = true;
-        InvokeOnUIThread([this]() {
+        InvokeOnUIThread([this]() noexcept {
             SendMessage(m_hWnd, WM_SETREDRAW, FALSE, 0);
         });
     }

@@ -45,7 +45,7 @@ protected:
     {
         if (m_pIsCheckedProperty && *m_pIsCheckedProperty == args.Property)
         {
-            InvokeOnUIThread([this, nValue = args.tNewValue ? BST_CHECKED : BST_UNCHECKED]() {
+            InvokeOnUIThread([this, nValue = args.tNewValue ? BST_CHECKED : BST_UNCHECKED]() noexcept {
                 Button_SetCheck(m_hWnd, nValue);
             });
             OnValueChanged();

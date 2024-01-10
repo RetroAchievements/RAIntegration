@@ -81,7 +81,7 @@ public:
             pConfiguration->SetHost(value);
     }
 
-    static bool IsUpdatingHardcore() { return s_bUpdatingHardcore; }
+    static bool IsUpdatingHardcore() noexcept { return s_bUpdatingHardcore; }
 
     static void set_hardcore_enabled(int value)
     {
@@ -196,7 +196,7 @@ public:
         Expects(wrapper != nullptr);
 
         auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        auto* pGame = pClient.GetClient()->game;
+        const auto* pGame = pClient.GetClient()->game;
         if (pGame)
         {
             _RA_SetConsoleID(pGame->public_.console_id);
@@ -218,6 +218,7 @@ public:
     {
         GSL_SUPPRESS_R3
         auto* pNestedCallbackData = new LoadExternalGameCallbackWrapper(client, callback, callback_userdata);
+        GSL_SUPPRESS_R3
         auto* pCallbackData = new LoadGameCallbackWrapper(client, load_game_callback, pNestedCallbackData);
 
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -233,6 +234,7 @@ public:
     {
         GSL_SUPPRESS_R3
         auto* pNestedCallbackData = new LoadExternalGameCallbackWrapper(client, callback, callback_userdata);
+        GSL_SUPPRESS_R3
         auto* pCallbackData = new LoadGameCallbackWrapper(client, load_game_callback, pNestedCallbackData);
 
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -447,13 +449,13 @@ public:
         return rc_client_deserialize_progress(pClient.GetClient(), buffer);
     }
 
-    static void set_raintegration_write_memory_function(rc_client_t* client, rc_client_raintegration_write_memory_func_t handler)
+    static void set_raintegration_write_memory_function(rc_client_t* client, rc_client_raintegration_write_memory_func_t handler) noexcept
     {
         s_callbacks.write_memory_client = client;
         s_callbacks.write_memory_handler = handler;
     }
 
-    static void set_raintegration_event_handler(rc_client_t* client, rc_client_raintegration_event_handler_t handler)
+    static void set_raintegration_event_handler(rc_client_t* client, rc_client_raintegration_event_handler_t handler) noexcept
     {
         s_callbacks.raintegration_event_client = client;
         s_callbacks.raintegration_event_handler = handler;
@@ -467,6 +469,9 @@ public:
         for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(vmMenuItems.Count()) - 1; nIndex >= 0; --nIndex)
         {
             const auto* pItem = vmMenuItems.GetItemAt(nIndex);
+            if (!pItem)
+                continue;
+
             switch (pItem->GetId())
             {
                 case IDM_RA_FILES_LOGIN:
@@ -491,7 +496,7 @@ public:
         }
 
         bool bChanged = true;
-        rc_client_raintegration_menu_item_t* pMenuItem;
+        rc_client_raintegration_menu_item_t* pMenuItem = nullptr;
 
         if (s_pIntegrationMenu && s_pIntegrationMenu->num_items == vmMenuItems.Count())
         {
@@ -501,6 +506,9 @@ public:
             for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmMenuItems.Count()); ++nIndex, ++pMenuItem)
             {
                 const auto* pItem = vmMenuItems.GetItemAt(nIndex);
+                if (!pItem)
+                    continue;
+
                 const auto nId = ra::to_unsigned(pItem->GetId());
                 if (pMenuItem->id != nId)
                 {
@@ -523,6 +531,9 @@ public:
                      ++nIndex, ++pMenuItem)
                 {
                     const auto* pItem = vmMenuItems.GetItemAt(nIndex);
+                    if (!pItem)
+                        continue;
+
                     if (pMenuItem->label)
                     {
                         if (ra::Narrow(pItem->GetLabel()) != pMenuItem->label)
@@ -547,17 +558,17 @@ public:
             rc_buffer_destroy(&s_pIntegrationMenuBuffer);
 
         rc_buffer_init(&s_pIntegrationMenuBuffer);
-        s_pIntegrationMenu = reinterpret_cast<rc_client_raintegration_menu_t*>(
+        s_pIntegrationMenu = static_cast<rc_client_raintegration_menu_t*>(
             rc_buffer_alloc(&s_pIntegrationMenuBuffer, sizeof(*s_pIntegrationMenu)));
         s_pIntegrationMenu->num_items = 0;
-        s_pIntegrationMenu->items = reinterpret_cast<rc_client_raintegration_menu_item_t*>(
+        s_pIntegrationMenu->items = static_cast<rc_client_raintegration_menu_item_t*>(
             rc_buffer_alloc(&s_pIntegrationMenuBuffer, sizeof(rc_client_raintegration_menu_item_t) * vmMenuItems.Count()));
 
         pMenuItem = s_pIntegrationMenu->items;
         for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(vmMenuItems.Count()); ++nIndex, ++pMenuItem)
         {
             const auto* pItem = vmMenuItems.GetItemAt(nIndex);
-            const auto nId = pItem->GetId();
+            const auto nId = pItem ? pItem->GetId() : 0;
             if (nId == 0)
             {
                 memset(pMenuItem, 0, sizeof(*pMenuItem));
@@ -598,7 +609,7 @@ public:
         for (gsl::index nIndex = gsl::narrow_cast<gsl::index>(vmMenuItems.Count()) - 1; nIndex >= 0; --nIndex)
         {
             const auto* pItem = vmMenuItems.GetItemAt(nIndex);
-            if (pItem->GetId() == nMenuItemId)
+            if (pItem && pItem->GetId() == nMenuItemId)
             {
                 const uint8_t checked = pItem->IsSelected() ? 1 : 0;
                 if (pMenuItem->checked != checked)
@@ -636,7 +647,7 @@ public:
         return 1;
     }
 
-    static void RaiseIntegrationEvent(uint32_t nType)
+    static void RaiseIntegrationEvent(uint32_t nType) noexcept
     {
         if (s_callbacks.raintegration_event_handler)
         {
@@ -648,7 +659,7 @@ public:
         }
     }
 
-    static bool IsExternalRcheevosClient()
+    static bool IsExternalRcheevosClient() noexcept
     {
         return s_bIsExternalRcheevosClient;
     }
@@ -703,7 +714,7 @@ private:
             s_callbacks.event_handler(event, s_callbacks.event_client);
     }
 
-    static uint8_t ReadMemoryByte(uint32_t address)
+    static uint8_t ReadMemoryByte(uint32_t address) noexcept
     {
         if (s_callbacks.read_memory_handler)
         {
@@ -716,7 +727,7 @@ private:
         return 0;
     }
 
-    static void WriteMemoryByte(uint32_t address, uint8_t value)
+    static void WriteMemoryByte(uint32_t address, uint8_t value) noexcept
     {
         if (s_callbacks.write_memory_handler)
             s_callbacks.write_memory_handler(address, &value, 1, s_callbacks.write_memory_client);
@@ -749,12 +760,12 @@ private:
         pEmulatorContext.AddMemoryBlockReader(0, AchievementRuntimeExports::ReadMemoryBlock);
     }
 
-    static void RaisePauseEvent()
+    static void RaisePauseEvent() noexcept
     {
         RaiseIntegrationEvent(RC_CLIENT_RAINTEGRATION_EVENT_PAUSE);
     }
 
-    static void RaiseResetEvent()
+    static void RaiseResetEvent() noexcept
     {
         if (s_callbacks.event_handler)
         {
@@ -808,7 +819,7 @@ rc_buffer_t AchievementRuntimeExports::s_pIntegrationMenuBuffer{};
 } // namespace services
 } // namespace ra
 
-bool IsExternalRcheevosClient()
+bool IsExternalRcheevosClient() noexcept
 {
     return ra::services::AchievementRuntimeExports::IsExternalRcheevosClient();
 }
@@ -833,7 +844,7 @@ void SyncClientExternalHardcoreState()
     }
 }
 
-static void GetExternalClientV1(rc_client_external_t* pClientExternal)
+static void GetExternalClientV1(rc_client_external_t* pClientExternal) noexcept
 {
     pClientExternal->destroy = ra::services::AchievementRuntimeExports::destroy;
 

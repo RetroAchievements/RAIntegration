@@ -1411,8 +1411,38 @@ static void HandleAchievementTriggeredEvent(const rc_client_achievement_t& pAchi
         Expects(!CanSubmitAchievementUnlock(pAchievement.id, nullptr));
 #endif
 
-    ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(bIsError ? L"Overlay\\acherror.wav"
-                                                                                           : L"Overlay\\unlock.wav");
+    const wchar_t* sAudioPath = L"Overlay\\unlock.wav";
+
+    if (bIsError)
+    {
+        sAudioPath = L"Overlay\\acherror.wav";
+    }
+    else if (bSubmit)
+    {
+        const bool bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+        const auto nRarity = bHardcore ? pAchievement.rarity_hardcore : pAchievement.rarity;
+
+        if (nRarity >= 10.0)
+        {
+            vmPopup->SetTitle(ra::StringPrintf(L"Achievement Unlocked - %0.2f%%", nRarity));
+        }
+        else if (nRarity > 0.0)
+        {
+            vmPopup->SetTitle(ra::StringPrintf(L"Rare Achievement Unlocked - %0.2f%%", nRarity));
+
+            const wchar_t* sPath = L"Overlay\\rareunlock.wav";
+            const auto& pFileSystem = ra::services::ServiceLocator::Get<ra::services::IFileSystem>();
+            const std::wstring sFullPath = pFileSystem.BaseDirectory() + sPath;
+            if (pFileSystem.GetFileSize(sFullPath) > 0)
+                sAudioPath = sPath;
+        }
+        else
+        {
+            // rarity not set - don't report it
+        }
+    }
+
+    ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(sAudioPath);
 
     if (pConfiguration.GetPopupLocation(ra::ui::viewmodels::Popup::AchievementTriggered) !=
         ra::ui::viewmodels::PopupLocation::None)

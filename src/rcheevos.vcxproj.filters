@@ -161,5 +161,8 @@
     <ClInclude Include="..\rcheevos\include\rc_runtime_types.h">
       <Filter>rcheevos</Filter>
     </ClInclude>
+    <ClInclude Include="..\rcheevos\include\rc_client.h" />
+    <ClInclude Include="..\rcheevos\include\rc_client_raintegration.h" />
+    <ClInclude Include="..\rcheevos\src\rc_client_external.h" />
   </ItemGroup>
 </Project>

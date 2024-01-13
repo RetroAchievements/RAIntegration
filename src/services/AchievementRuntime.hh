@@ -13,8 +13,6 @@
 
 #include <string>
 
-#define RC_CLIENT_EXPORTS_EXTERNAL
-
 #include <rcheevos\include\rc_client.h>
 
 struct rc_api_fetch_game_data_response_t;

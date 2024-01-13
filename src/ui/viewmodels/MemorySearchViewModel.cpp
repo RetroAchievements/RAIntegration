@@ -738,12 +738,11 @@ void MemorySearchViewModel::UpdateResults()
         return;
     }
 
-    const auto& vmMemoryInspector = ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>().MemoryInspector;
     const auto& pDesktop = ra::services::ServiceLocator::Get<ra::ui::IDesktop>();
-    if (!pDesktop.IsOnUIThread(vmMemoryInspector))
+    if (!pDesktop.IsOnUIThread())
     {
         m_bUpdateResultsPending = true;
-        pDesktop.InvokeOnUIThread(vmMemoryInspector, [this]()
+        pDesktop.InvokeOnUIThread([this]()
         {
             if (m_bUpdateResultsPending)
             {

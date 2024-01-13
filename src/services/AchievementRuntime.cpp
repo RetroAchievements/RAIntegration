@@ -3,6 +3,7 @@
 #include "Exports.hh"
 #include "RA_Defs.h"
 #include "RA_Log.h"
+#include "RA_Resource.h"
 #include "RA_StringUtils.h"
 
 #include "RA_md5factory.h"
@@ -22,12 +23,15 @@
 #include "services\ServiceLocator.hh"
 #include "services\impl\JsonFileConfiguration.hh"
 
+#include "ui\viewmodels\IntegrationMenuViewModel.hh"
+#include "ui\viewmodels\LoginViewModel.hh"
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\PopupMessageViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 #include <rcheevos\include\rc_api_runtime.h>
+#include <rcheevos\include\rc_client_raintegration.h>
 #include <rcheevos\src\rapi\rc_api_common.h> // for parsing cached patchdata response
 #include <rcheevos\src\rcheevos\rc_internal.h>
 #include <rcheevos\src\rc_client_internal.h>
@@ -880,6 +884,8 @@ void AchievementRuntime::LoginCallback(int nResult, const char* sErrorMessage, r
             {
                 pUserContext.Initialize(user->username, user->display_name, user->token);
                 pUserContext.SetScore(user->score);
+
+                ra::ui::viewmodels::LoginViewModel::PostLoginInitialization();
             }
         }
     }
@@ -927,7 +933,7 @@ static void ExtractPatchData(const rc_api_server_response_t* server_response, ui
 GSL_SUPPRESS_CON3
 void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_response_t* server_response,
                                                  struct rc_api_fetch_game_data_response_t* game_data_response,
-                                                 rc_client_t* client, void* pUserdata)
+                                                 rc_client_t*, void* pUserdata)
 {
     auto* wrapper = static_cast<LoadGameCallbackWrapper*>(pUserdata);
     Expects(wrapper != nullptr);
@@ -937,18 +943,29 @@ void AchievementRuntime::PostProcessGameDataResponse(const rc_api_server_respons
     auto pRichPresence = std::make_unique<ra::data::models::RichPresenceModel>();
     pRichPresence->SetScript(game_data_response->rich_presence_script);
     pRichPresence->CreateServerCheckpoint();
+
+    // extract the old rich presence script from the last cached server response so we can tell if the
+    // local value has changed. store it as the local value, and we'll merge in the real local value later.
+    auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+    auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, std::to_wstring(game_data_response->id));
+    if (pData != nullptr)
+    {
+        rapidjson::Document pDocument;
+        if (LoadDocument(pDocument, *pData) &&
+            pDocument.HasMember("RichPresencePatch") &&
+            pDocument["RichPresencePatch"].IsString())
+        {
+            pRichPresence->SetScript(pDocument["RichPresencePatch"].GetString());
+        }
+    }
+
     pRichPresence->CreateLocalCheckpoint();
     pGameContext.Assets().Append(std::move(pRichPresence));
 
 #ifndef RA_UTEST
     // prefetch the game icon
-    if (client->game)
-    {
-        auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
-        pImageRepository.FetchImage(ra::ui::ImageType::Icon, client->game->public_.badge_name);
-    }
-#else
-    (void*)client;
+    auto& pImageRepository = ra::services::ServiceLocator::GetMutable<ra::ui::IImageRepository>();
+    pImageRepository.FetchImage(ra::ui::ImageType::Icon, game_data_response->image_name);
 #endif
 
     const rc_api_achievement_definition_t* pAchievement = game_data_response->achievements;
@@ -2323,464 +2340,6 @@ int AchievementRuntime::SaveProgressToBuffer(uint8_t* pBuffer, int nBufferSize) 
     return nSize;
 }
 
-/* ---- Exports ----- */
-
-#ifdef RC_CLIENT_EXPORTS_EXTERNAL
-
-class AchievementRuntimeExports : private AchievementRuntime
-{
-public:
-    static void destroy() noexcept
-    {
-        memset(&s_callbacks, 0, sizeof(s_callbacks));
-    }
-
-    static void enable_logging(rc_client_t* client, int level, rc_client_message_callback_t callback)
-    {
-        s_callbacks.log_callback = callback;
-        s_callbacks.log_client = client;
-
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        rc_client_enable_logging(pClient.GetClient(), level, AchievementRuntimeExports::LogMessageExternal);
-    }
-
-    static void set_event_handler(rc_client_t* client, rc_client_event_handler_t handler)
-    {
-        s_callbacks.event_handler = handler;
-        s_callbacks.event_client = client;
-
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        rc_client_set_event_handler(pClient.GetClient(), AchievementRuntimeExports::EventHandlerExternal);
-    }
-
-    static void set_read_memory(rc_client_t* client, rc_client_read_memory_func_t handler)
-    {
-        s_callbacks.read_memory_handler = handler;
-        s_callbacks.read_memory_client = client;
-
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        rc_client_set_read_memory_function(pClient.GetClient(), AchievementRuntimeExports::ReadMemoryExternal);
-
-        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        pEmulatorContext.ClearMemoryBlocks();
-        pEmulatorContext.AddMemoryBlock(0, 0xFFFFFFFF, nullptr, nullptr);
-        pEmulatorContext.AddMemoryBlockReader(0, AchievementRuntimeExports::ReadMemoryBlock);
-    }
-
-    static void set_get_time_millisecs(rc_client_t* client, rc_get_time_millisecs_func_t handler)
-    {
-        s_callbacks.get_time_millisecs_handler = handler;
-        s_callbacks.get_time_millisecs_client = client;
-
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        rc_client_set_get_time_millisecs_function(pClient.GetClient(), AchievementRuntimeExports::GetTimeMillisecsExternal);
-    }
-
-    static void set_host(const char* value)
-    {
-        auto* pConfiguration = dynamic_cast<ra::services::impl::JsonFileConfiguration*>(
-            &ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>());
-        if (pConfiguration != nullptr)
-            pConfiguration->SetHost(value);
-    }
-
-    static void set_hardcore_enabled(int value)
-    {
-        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        if (value)
-            pEmulatorContext.EnableHardcoreMode(false);
-        else
-            pEmulatorContext.DisableHardcoreMode();
-    }
-
-    static int get_hardcore_enabled()
-    {
-        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
-        return pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-    }
-
-    static void set_unofficial_enabled(int value)
-    {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        rc_client_set_unofficial_enabled(pClient.GetClient(), value);
-    }
-
-    static int get_unofficial_enabled()
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_get_unofficial_enabled(pClient.GetClient());
-    }
-
-    static void set_encore_mode_enabled(int value)
-    {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        rc_client_set_encore_mode_enabled(pClient.GetClient(), value);
-    }
-
-    static int get_encore_mode_enabled()
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_get_encore_mode_enabled(pClient.GetClient());
-    }
-
-    static void set_spectator_mode_enabled(int value)
-    {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        rc_client_set_spectator_mode_enabled(pClient.GetClient(), value);
-    }
-
-    static int get_spectator_mode_enabled()
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_get_spectator_mode_enabled(pClient.GetClient());
-    }
-
-    static void abort_async(rc_client_async_handle_t* handle)
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        rc_client_abort_async(pClient.GetClient(), handle);
-    }
-
-    static rc_client_async_handle_t* begin_login_with_password(rc_client_t* client, const char* username,
-                                                               const char* password, rc_client_callback_t callback,
-                                                               void* callback_userdata)
-    {
-        GSL_SUPPRESS_R3
-        auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
-
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return pClient.BeginLoginWithPassword(username, password, pCallbackData);
-    }
-
-    static rc_client_async_handle_t* begin_login_with_token(rc_client_t* client, const char* username,
-                                                            const char* token, rc_client_callback_t callback,
-                                                            void* callback_userdata)
-    {
-        GSL_SUPPRESS_R3
-        auto* pCallbackWrapper = new LoadGameCallbackWrapper(client, callback, callback_userdata);
-
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return pClient.BeginLoginWithToken(username, token, pCallbackWrapper);
-    }
-
-    static const rc_client_user_t* get_user_info()
-    {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return rc_client_get_user_info(pClient.GetClient());
-    }
-
-    static void logout()
-    {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return rc_client_logout(pClient.GetClient());
-    }
-
-    static rc_client_async_handle_t* begin_identify_and_load_game(rc_client_t* client, uint32_t console_id,
-                                                                  const char* file_path, const uint8_t* data,
-                                                                  size_t data_size, rc_client_callback_t callback,
-                                                                  void* callback_userdata)
-    {
-        GSL_SUPPRESS_R3
-        auto* pCallbackWrapper = new LoadGameCallbackWrapper(client, callback, callback_userdata);
-
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return pClient.BeginIdentifyAndLoadGame(console_id, file_path, data, data_size, pCallbackWrapper);
-    }
-
-    static rc_client_async_handle_t* begin_load_game(rc_client_t* client, const char* hash,
-                                                     rc_client_callback_t callback, void* callback_userdata)
-    {
-        GSL_SUPPRESS_R3
-        auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
-
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return pClient.BeginLoadGame(hash, 0, pCallbackData);
-    }
-
-    static void unload_game()
-    {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return rc_client_unload_game(pClient.GetClient());
-    }
-
-    static const rc_client_game_t* get_game_info()
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_get_game_info(pClient.GetClient());
-    }
-
-    static const rc_client_subset_t* get_subset_info(uint32_t subset_id)
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_get_subset_info(pClient.GetClient(), subset_id);
-    }
-
-    static void get_user_game_summary(rc_client_user_game_summary_t* summary)
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_get_user_game_summary(pClient.GetClient(), summary);
-    }
-
-    static rc_client_async_handle_t* begin_change_media(rc_client_t* client, const char* file_path,
-                                                        const uint8_t* data, size_t data_size,
-                                                        rc_client_callback_t callback, void* callback_userdata)
-    {
-        GSL_SUPPRESS_R3
-        auto* pCallbackData = new CallbackWrapper(client, callback, callback_userdata);
-
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return pClient.BeginChangeMedia(file_path, data, data_size, pCallbackData);
-    }
-
-    static rc_client_achievement_list_info_t* create_achievement_list(int category, int grouping)
-    {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        GSL_SUPPRESS_TYPE1
-        auto* list = reinterpret_cast<rc_client_achievement_list_info_t*>(
-            rc_client_create_achievement_list(pClient.GetClient(), category, grouping));
-        list->destroy_func = destroy_achievement_list;
-        return list;
-    }
-
-    static int has_achievements()
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_has_achievements(pClient.GetClient());
-    }
-
-    static const rc_client_achievement_t* get_achievement_info(uint32_t id)
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_get_achievement_info(pClient.GetClient(), id);
-    }
-
-    static rc_client_leaderboard_list_info_t* create_leaderboard_list(int grouping)
-    {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        GSL_SUPPRESS_TYPE1
-        auto* list = reinterpret_cast<rc_client_leaderboard_list_info_t*>(
-            rc_client_create_leaderboard_list(pClient.GetClient(), grouping));
-        list->destroy_func = destroy_leaderboard_list;
-        return list;
-    }
-
-    static int has_leaderboards()
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_has_leaderboards(pClient.GetClient());
-    }
-
-    static const rc_client_leaderboard_t* get_leaderboard_info(uint32_t id)
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_get_leaderboard_info(pClient.GetClient(), id);
-    }
-
-private:
-    class LeaderboardEntriesListCallbackWrapper
-    {
-    public:
-        LeaderboardEntriesListCallbackWrapper(rc_client_t* client,
-                                              rc_client_fetch_leaderboard_entries_callback_t callback,
-                                              void* callback_userdata) noexcept :
-            m_pClient(client), m_fCallback(callback), m_pCallbackUserdata(callback_userdata)
-        {}
-
-        void DoCallback(int nResult, rc_client_leaderboard_entry_list_t* pList, const char* sErrorMessage) noexcept
-        {
-            m_fCallback(nResult, sErrorMessage, pList, m_pClient, m_pCallbackUserdata);
-        }
-
-        static void Dispatch(int nResult, const char* sErrorMessage, rc_client_leaderboard_entry_list_t* pList,
-                             rc_client_t*, void* pUserdata)
-        {
-            auto* wrapper = static_cast<LeaderboardEntriesListCallbackWrapper*>(pUserdata);
-            Expects(wrapper != nullptr);
-
-            if (pList)
-            {
-                GSL_SUPPRESS_TYPE1
-                reinterpret_cast<rc_client_leaderboard_entry_list_info_t*>(pList)->destroy_func = destroy_leaderboard_entry_list;
-            }
-
-            wrapper->DoCallback(nResult, pList, sErrorMessage);
-
-            delete wrapper;
-        }
-
-    private:
-        rc_client_t* m_pClient;
-        rc_client_fetch_leaderboard_entries_callback_t m_fCallback;
-        void* m_pCallbackUserdata;
-    };
-
-public:
-    static rc_client_async_handle_t* begin_fetch_leaderboard_entries(rc_client_t* client,
-        uint32_t leaderboard_id, uint32_t first_entry, uint32_t count,
-        rc_client_fetch_leaderboard_entries_callback_t callback, void* callback_userdata)
-    {
-        GSL_SUPPRESS_R3
-        auto* pCallbackData = new LeaderboardEntriesListCallbackWrapper(client, callback, callback_userdata);
-
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return rc_client_begin_fetch_leaderboard_entries(pClient.GetClient(), leaderboard_id, first_entry, count,
-                                                         LeaderboardEntriesListCallbackWrapper::Dispatch, pCallbackData);
-    }
-
-    static rc_client_async_handle_t* begin_fetch_leaderboard_entries_around_user(rc_client_t* client,
-        uint32_t leaderboard_id, uint32_t count,
-        rc_client_fetch_leaderboard_entries_callback_t callback, void* callback_userdata)
-    {
-        GSL_SUPPRESS_R3
-        auto* pCallbackData = new LeaderboardEntriesListCallbackWrapper(client, callback, callback_userdata);
-
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return rc_client_begin_fetch_leaderboard_entries_around_user(pClient.GetClient(), leaderboard_id, count,
-                                                                     LeaderboardEntriesListCallbackWrapper::Dispatch, pCallbackData);
-    }
-
-    static size_t get_rich_presence_message(char buffer[], size_t buffer_size)
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_get_rich_presence_message(pClient.GetClient(), buffer, buffer_size);
-    }
-
-    static int has_rich_presence()
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_has_rich_presence(pClient.GetClient());
-    }
-
-    static void do_frame() noexcept
-    {
-        _RA_DoAchievementsFrame();
-    }
-
-    static void idle()
-    {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return rc_client_idle(pClient.GetClient());
-    }
-
-    static int is_processing_required()
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_is_processing_required(pClient.GetClient());
-    }
-
-    static int can_pause(uint32_t* frames_remaining)
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_can_pause(pClient.GetClient(), frames_remaining);
-    }
-
-    static void reset() noexcept
-    {
-#ifndef RA_UTEST
-        _RA_OnReset();
-#endif
-    }
-
-    static size_t progress_size()
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_progress_size(pClient.GetClient());
-    }
-
-    static int serialize_progress(uint8_t* buffer)
-    {
-        const auto& pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>();
-        return rc_client_serialize_progress(pClient.GetClient(), buffer);
-    }
-
-    static int deserialize_progress(const uint8_t* buffer)
-    {
-        auto& pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        return rc_client_deserialize_progress(pClient.GetClient(), buffer);
-    }
-
-private:
-    typedef struct ExternalClientCallbacks
-    {
-        rc_client_message_callback_t log_callback;
-        rc_client_t* log_client;
-
-        rc_client_event_handler_t event_handler;
-        rc_client_t* event_client;
-
-        rc_client_read_memory_func_t read_memory_handler;
-        rc_client_t* read_memory_client;
-
-        rc_get_time_millisecs_func_t get_time_millisecs_handler;
-        rc_client_t* get_time_millisecs_client;
-
-    } ExternalClientCallbacks;
-
-    static ExternalClientCallbacks s_callbacks;
-
-    static void LogMessageExternal(const char* sMessage, const rc_client_t*)
-    {
-        const auto& pLogger = ra::services::ServiceLocator::Get<ra::services::ILogger>();
-        if (pLogger.IsEnabled(ra::services::LogLevel::Info))
-            pLogger.LogMessage(ra::services::LogLevel::Info, sMessage);
-
-        if (s_callbacks.log_callback)
-            s_callbacks.log_callback(sMessage, s_callbacks.log_client);
-    }
-
-    static void EventHandlerExternal(const rc_client_event_t* event, rc_client_t*) noexcept(false)
-    {
-        if (s_callbacks.event_handler)
-            s_callbacks.event_handler(event, s_callbacks.event_client);
-    }
-
-    static uint32_t ReadMemoryBlock(uint32_t address, uint8_t* buffer, uint32_t num_bytes) noexcept(false)
-    {
-        if (s_callbacks.read_memory_handler)
-            return s_callbacks.read_memory_handler(address, buffer, num_bytes, s_callbacks.read_memory_client);
-
-        return 0;
-    }
-
-    static uint32_t ReadMemoryExternal(uint32_t address, uint8_t* buffer, uint32_t num_bytes, rc_client_t*)  noexcept(false)
-    {
-        if (s_callbacks.read_memory_handler)
-            return s_callbacks.read_memory_handler(address, buffer, num_bytes, s_callbacks.read_memory_client);
-
-        return 0;
-    }
-
-    static rc_clock_t GetTimeMillisecsExternal(const rc_client_t*) noexcept(false)
-    {
-        if (s_callbacks.get_time_millisecs_handler)
-            return s_callbacks.get_time_millisecs_handler(s_callbacks.get_time_millisecs_client);
-
-        return 0;
-    }
-
-    static void destroy_achievement_list(rc_client_achievement_list_info_t* list) noexcept
-    {
-        if (list)
-            free(list);
-    }
-
-    static void destroy_leaderboard_list(rc_client_leaderboard_list_info_t* list) noexcept
-    {
-        if (list)
-            free(list);
-    }
-
-    static void destroy_leaderboard_entry_list(rc_client_leaderboard_entry_list_info_t* list) noexcept
-    {
-        if (list)
-            free(list);
-    }
-};
-
-AchievementRuntimeExports::ExternalClientCallbacks AchievementRuntimeExports::s_callbacks{};
-
-#endif RC_CLIENT_EXPORTS_EXTERNAL
-
 } // namespace services
 } // namespace ra
 
@@ -2799,93 +2358,3 @@ extern "C" unsigned int rc_peek_callback(unsigned int nAddress, unsigned int nBy
             return 0U;
     }
 }
-
-#ifdef RC_CLIENT_EXPORTS_EXTERNAL
-
-#include "Exports.hh"
-#include "rcheevos/src/rc_client_external.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-static void GetExternalClientV1(rc_client_external_t* pClientExternal)
-{
-    pClientExternal->destroy = ra::services::AchievementRuntimeExports::destroy;
-
-    pClientExternal->enable_logging = ra::services::AchievementRuntimeExports::enable_logging;
-    pClientExternal->set_event_handler = ra::services::AchievementRuntimeExports::set_event_handler;
-    pClientExternal->set_read_memory = ra::services::AchievementRuntimeExports::set_read_memory;
-    pClientExternal->set_get_time_millisecs = ra::services::AchievementRuntimeExports::set_get_time_millisecs;
-    pClientExternal->set_host = ra::services::AchievementRuntimeExports::set_host;
-
-    pClientExternal->set_hardcore_enabled = ra::services::AchievementRuntimeExports::set_hardcore_enabled;
-    pClientExternal->get_hardcore_enabled = ra::services::AchievementRuntimeExports::get_hardcore_enabled;
-    pClientExternal->set_unofficial_enabled = ra::services::AchievementRuntimeExports::set_unofficial_enabled;
-    pClientExternal->get_unofficial_enabled = ra::services::AchievementRuntimeExports::get_unofficial_enabled;
-    pClientExternal->set_encore_mode_enabled = ra::services::AchievementRuntimeExports::set_encore_mode_enabled;
-    pClientExternal->get_encore_mode_enabled = ra::services::AchievementRuntimeExports::get_encore_mode_enabled;
-    pClientExternal->set_spectator_mode_enabled = ra::services::AchievementRuntimeExports::set_spectator_mode_enabled;
-    pClientExternal->get_spectator_mode_enabled = ra::services::AchievementRuntimeExports::get_spectator_mode_enabled;
-
-    pClientExternal->abort_async = ra::services::AchievementRuntimeExports::abort_async;
-
-    pClientExternal->begin_login_with_password = ra::services::AchievementRuntimeExports::begin_login_with_password;
-    pClientExternal->begin_login_with_token = ra::services::AchievementRuntimeExports::begin_login_with_token;
-    pClientExternal->logout = ra::services::AchievementRuntimeExports::logout;
-    pClientExternal->get_user_info = ra::services::AchievementRuntimeExports::get_user_info;
-
-    pClientExternal->begin_identify_and_load_game = ra::services::AchievementRuntimeExports::begin_identify_and_load_game;
-    pClientExternal->begin_load_game = ra::services::AchievementRuntimeExports::begin_load_game;
-    pClientExternal->get_game_info = ra::services::AchievementRuntimeExports::get_game_info;
-    pClientExternal->get_subset_info = ra::services::AchievementRuntimeExports::get_subset_info;
-    pClientExternal->unload_game = ra::services::AchievementRuntimeExports::unload_game;
-    pClientExternal->get_user_game_summary = ra::services::AchievementRuntimeExports::get_user_game_summary;
-    pClientExternal->begin_change_media = ra::services::AchievementRuntimeExports::begin_change_media;
-
-    pClientExternal->create_achievement_list = ra::services::AchievementRuntimeExports::create_achievement_list;
-    pClientExternal->has_achievements = ra::services::AchievementRuntimeExports::has_achievements;
-    pClientExternal->get_achievement_info = ra::services::AchievementRuntimeExports::get_achievement_info;
-
-    pClientExternal->create_leaderboard_list = ra::services::AchievementRuntimeExports::create_leaderboard_list;
-    pClientExternal->has_leaderboards = ra::services::AchievementRuntimeExports::has_leaderboards;
-    pClientExternal->get_leaderboard_info = ra::services::AchievementRuntimeExports::get_leaderboard_info;
-    pClientExternal->begin_fetch_leaderboard_entries = ra::services::AchievementRuntimeExports::begin_fetch_leaderboard_entries;
-    pClientExternal->begin_fetch_leaderboard_entries_around_user =
-        ra::services::AchievementRuntimeExports::begin_fetch_leaderboard_entries_around_user;
-
-    pClientExternal->get_rich_presence_message = ra::services::AchievementRuntimeExports::get_rich_presence_message;
-    pClientExternal->has_rich_presence = ra::services::AchievementRuntimeExports::has_rich_presence;
-
-    pClientExternal->do_frame = ra::services::AchievementRuntimeExports::do_frame;
-    pClientExternal->idle = ra::services::AchievementRuntimeExports::idle;
-    pClientExternal->is_processing_required = ra::services::AchievementRuntimeExports::is_processing_required;
-    pClientExternal->can_pause = ra::services::AchievementRuntimeExports::can_pause;
-    pClientExternal->reset = ra::services::AchievementRuntimeExports::reset;
-
-    pClientExternal->progress_size = ra::services::AchievementRuntimeExports::progress_size;
-    pClientExternal->serialize_progress = ra::services::AchievementRuntimeExports::serialize_progress;
-    pClientExternal->deserialize_progress = ra::services::AchievementRuntimeExports::deserialize_progress;
-}
-
-API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal, int nVersion)
-{
-    switch (nVersion)
-    {
-        default:
-            RA_LOG_WARN("Unknown rc_client_external interface version: %s", nVersion);
-            __fallthrough;
-
-        case 1:
-            GetExternalClientV1(pClientExternal);
-            break;
-    }
-
-    return 1;
-}
-
-#ifdef __cplusplus
-} // extern "C"
-#endif
-
-#endif /* RC_CLIENT_EXPORTS_EXTERNAL */

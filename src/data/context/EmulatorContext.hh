@@ -116,6 +116,12 @@ public:
     }
 
     /// <summary>
+    /// Updates the state of a single menu item.
+    /// </summary>
+    /// <remarks>Indirectly calls RebuildMenu after raising an event for the singular menu item</remarks>
+    void UpdateMenuState(int nMenuItemId) const;
+
+    /// <summary>
     /// Gets whether or not the emulator can be paused.
     /// </summary>
     bool CanPause() const noexcept { return m_fPauseEmulator != nullptr; }

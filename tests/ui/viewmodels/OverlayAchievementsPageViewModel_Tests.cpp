@@ -603,7 +603,7 @@ public:
 
         achievementsPage.AssertHeader(0, L"Locked");
         achievementsPage.AssertProgressAchievement(1, pAch1, 0.0, L"");
-        achievementsPage.AssertProgressAchievement(2, pAch2, 50.0, L"5/10");
+        achievementsPage.AssertProgressAchievement(2, pAch2, 0.5, L"5/10");
         achievementsPage.AssertProgressAchievement(3, pAch3, 0.0, L"");
         achievementsPage.AssertHeader(4, L"Unlocked");
         achievementsPage.AssertUnlockedAchievement(5, pAch4);
@@ -652,10 +652,10 @@ public:
         Assert::AreEqual(std::wstring(L"2 of 10 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Almost There");
-        achievementsPage.AssertProgressAchievement(1, pAch3, 90.0, L"9/10");
+        achievementsPage.AssertProgressAchievement(1, pAch3, 0.9f, L"9/10");
         achievementsPage.AssertHeader(2, L"Locked");
-        achievementsPage.AssertProgressAchievement(3, pAch1, 10.0, L"1/10");
-        achievementsPage.AssertProgressAchievement(4, pAch4, 0.0, L"");
+        achievementsPage.AssertProgressAchievement(3, pAch1, 0.1f, L"1/10");
+        achievementsPage.AssertProgressAchievement(4, pAch4, 0.0f, L"");
         achievementsPage.AssertHeader(5, L"Unlocked");
         achievementsPage.AssertUnlockedAchievement(6, pAch2);
         Assert::IsNull(achievementsPage.GetItem(7));
@@ -704,10 +704,10 @@ public:
         Assert::AreEqual(std::wstring(L"0 of 10 points"), achievementsPage.GetTitleDetail());
 
         achievementsPage.AssertHeader(0, L"Almost There");
-        achievementsPage.AssertProgressAchievement(1, pAch3, 95.0, L"95/100");
-        achievementsPage.AssertProgressAchievement(2, pAch1, 90.0, L"90/100");
-        achievementsPage.AssertProgressAchievement(3, pAch2, 85.0, L"85/100");
-        achievementsPage.AssertProgressAchievement(4, pAch4, 85.0, L"85/100");
+        achievementsPage.AssertProgressAchievement(1, pAch3, 0.95f, L"95/100");
+        achievementsPage.AssertProgressAchievement(2, pAch1, 0.90f, L"90/100");
+        achievementsPage.AssertProgressAchievement(3, pAch2, 0.85f, L"85/100");
+        achievementsPage.AssertProgressAchievement(4, pAch4, 0.85f, L"85/100");
         Assert::IsNull(achievementsPage.GetItem(5));
     }
 

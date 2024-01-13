@@ -147,6 +147,8 @@
     <Lib />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="..\rcheevos\include\rc_client.h" />
+    <ClInclude Include="..\rcheevos\include\rc_client_raintegration.h" />
     <ClInclude Include="..\rcheevos\include\rc_runtime.h" />
     <ClInclude Include="..\rcheevos\include\rc_runtime_types.h" />
     <ClInclude Include="..\rcheevos\src\rcheevos\internal.h" />
@@ -162,6 +164,7 @@
     <ClCompile Include="..\rcheevos\src\rcheevos\rc_validate.c" />
     <ClCompile Include="..\rcheevos\src\rcheevos\richpresence.c" />
     <ClInclude Include="..\rcheevos\src\rcheevos\rc_internal.h" />
+    <ClInclude Include="..\rcheevos\src\rc_client_external.h" />
     <ClInclude Include="..\rcheevos\src\rhash\md5.h" />
     <ClCompile Include="..\lua\lapi.c" />
     <ClCompile Include="..\lua\lauxlib.c" />

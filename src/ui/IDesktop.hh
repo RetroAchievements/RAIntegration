@@ -77,12 +77,12 @@ public:
     /// <summary>
     /// Returns <c>true</c> if the current thread is the UI thread.
     /// </summary>
-    virtual bool IsOnUIThread(const WindowViewModelBase& vmViewModel) const = 0;
+    virtual bool IsOnUIThread() const = 0;
 
     /// <summary>
     /// Executes a function on the UI thread.
     /// </summary>
-    virtual void InvokeOnUIThread(const WindowViewModelBase& vmViewModel, std::function<void()> fAction) const = 0;
+    virtual void InvokeOnUIThread(std::function<void()> fAction) const = 0;
 
     virtual void Shutdown() = 0;
 

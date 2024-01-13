@@ -151,8 +151,12 @@ protected:
 
     void InvokeOnUIThread(std::function<void()> fAction)
     {
-        if (m_pDialog)
-            m_pDialog->QueueFunction(fAction);
+        WindowBinding::InvokeOnUIThread(fAction);
+    }
+
+    void InvokeOnUIThreadAndWait(std::function<void()> fAction)
+    {
+        WindowBinding::InvokeOnUIThreadAndWait(fAction);
     }
 
     HWND GetDialogHwnd() const

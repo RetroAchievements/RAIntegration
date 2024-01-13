@@ -86,6 +86,7 @@
     <ClCompile Include="RA_md5factory.cpp" />
     <ClCompile Include="RA_StringUtils.cpp" />
     <ClCompile Include="services\AchievementRuntime.cpp" />
+    <ClCompile Include="services\AchievementRuntimeExports.cpp" />
     <ClCompile Include="services\FrameEventQueue.cpp" />
     <ClCompile Include="services\GameIdentifier.cpp" />
     <ClCompile Include="services\Http.cpp" />
@@ -231,6 +232,7 @@
     <ClInclude Include="RA_Resource.h" />
     <ClInclude Include="RA_StringUtils.h" />
     <ClInclude Include="services\AchievementRuntime.hh" />
+    <ClInclude Include="services\AchievementRuntimeExports.hh" />
     <ClInclude Include="services\FrameEventQueue.hh" />
     <ClInclude Include="services\GameIdentifier.hh" />
     <ClInclude Include="services\Http.hh" />

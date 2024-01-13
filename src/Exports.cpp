@@ -15,6 +15,7 @@
 #include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\AchievementRuntimeExports.hh"
 #include "services\FrameEventQueue.hh"
 #include "services\GameIdentifier.hh"
 #include "services\Http.hh"
@@ -79,8 +80,11 @@ API void CCONV _RA_UpdateHWnd(HWND hMainHWND)
     {
         pDesktop.SetMainHWnd(hMainHWND);
 
-        auto& pOverlayWindow = ra::services::ServiceLocator::GetMutable<ra::ui::win32::OverlayWindow>();
-        pOverlayWindow.CreateOverlayWindow(hMainHWND);
+        if (!IsExternalRcheevosClient())
+        {
+            auto& pOverlayWindow = ra::services::ServiceLocator::GetMutable<ra::ui::win32::OverlayWindow>();
+            pOverlayWindow.CreateOverlayWindow(hMainHWND);
+        }
     }
 }
 #endif

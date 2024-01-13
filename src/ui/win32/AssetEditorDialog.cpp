@@ -499,12 +499,15 @@ void AssetEditorDialog::ActiveCheckBoxBinding::OnViewModelIntValueChanged(const 
     if (args.Property == ra::ui::viewmodels::AssetEditorViewModel::StateProperty)
     {
         const bool bIsActive = IsActive();
-        const bool bWasActive = Button_GetCheck(m_hWnd);
-        if (bIsActive != bWasActive)
-        {
-            Button_SetCheck(m_hWnd, bIsActive);
-            OnValueChanged();
-        }
+
+        InvokeOnUIThread([this, bIsActive]() {
+            const bool bWasActive = Button_GetCheck(m_hWnd);
+            if (bIsActive != bWasActive)
+            {
+                Button_SetCheck(m_hWnd, bIsActive);
+                OnValueChanged();
+            }
+        });
     }
 }
 

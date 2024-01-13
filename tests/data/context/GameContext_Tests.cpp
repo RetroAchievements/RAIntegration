@@ -170,7 +170,7 @@ public:
                 "}}");
             mockAchievementRuntime.MockResponse(
                 "r=startsession&u=Username&t=ApiToken&g=" + std::to_string(nGameID) +
-                                                "&l=" RCHEEVOS_VERSION_STRING,
+                    "&h=1&m=" + sHash + "&l=" RCHEEVOS_VERSION_STRING,
                 sUnlocks.empty() ? "{\"Success\":true}" : "{\"Success\":true," + sUnlocks + "}");
         }
 

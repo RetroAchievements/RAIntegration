@@ -74,7 +74,7 @@ public:
     virtual void EnsureVisible(gsl::index nIndex) noexcept(false);
 
 protected:
-    void SuspendRedraw() noexcept;
+    void SuspendRedraw();
     void UpdateLayout();
     virtual void UpdateAllItems();
     virtual void UpdateItems(gsl::index nColumn);

@@ -126,14 +126,29 @@ public:
     void OnPositionChanged(ra::ui::Position oPosition);
 
     /// <summary>
-    /// Executes a function on the UI thread.
+    /// Specifies the UI thread.
     /// </summary>
-    void InvokeOnUIThread(std::function<void()> fAction);
+    static void SetUIThread(DWORD hUIThreadId) noexcept;
+
+    /// <summary>
+    /// Ensures the UI thread dispatcher is enabled.
+    /// </summary>
+    static void EnableInvokeOnUIThread();
 
     /// <summary>
     /// Returns <c>true</c> if the current thread is the UI thread.
     /// </summary>
-    bool IsOnUIThread() const noexcept { return GetCurrentThreadId() == s_hUIThreadId; }
+    static bool IsOnUIThread() noexcept { return GetCurrentThreadId() == s_hUIThreadId; }
+
+    /// <summary>
+    /// Dispatches a function to the UI thread.
+    /// </summary>
+    static void InvokeOnUIThread(std::function<void()> fAction);
+
+    /// <summary>
+    /// Executes a function on the UI thread and waits for it to complete.
+    /// </summary>
+    static void InvokeOnUIThreadAndWait(std::function<void()> fAction);
 
 protected:
     // ViewModelBase::NotifyTarget

@@ -26,8 +26,11 @@
 
 #ifdef RC_CLIENT_EXPORTS_EXTERNAL
 #include <rcheevos\src\rc_client_external.h>
+#include <rcheevos\include\rc_client_raintegration.h>
 #include "Exports.hh"
+#include "RA_Resource.h"
 extern "C" API int CCONV _Rcheevos_GetExternalClient(rc_client_external_t* pClientExternal, int nVersion);
+extern "C" API const rc_client_raintegration_menu_t* CCONV _Rcheevos_RAIntegrationGetMenu();
 #endif
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
@@ -3180,6 +3183,97 @@ public:
         _Rcheevos_GetExternalClient(&pClient, 1);
 
         AssertV1Exports(pClient);
+    }
+
+    TEST_METHOD(TestRAIntegrationGetMenu)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockUserContext.Logout();
+
+        const rc_client_raintegration_menu_t* pMenu;
+
+        auto AssertMenuItem = [&pMenu](int nIndex, uint32_t nId, const char* label) {
+            const auto* pItem = &pMenu->items[nIndex];
+            Assert::AreEqual(nId, pItem->id);
+            Assert::AreEqual(std::string(label), std::string(pItem->label));
+            Assert::AreEqual({1}, pItem->enabled);
+            Assert::AreEqual({0}, pItem->checked);
+        };
+
+        auto AssertMenuItemChecked = [&pMenu](int nIndex, uint32_t nId, const char* label) {
+            const auto* pItem = &pMenu->items[nIndex];
+            Assert::AreEqual(nId, pItem->id);
+            Assert::AreEqual(std::string(label), std::string(pItem->label));
+            Assert::AreEqual({1}, pItem->enabled);
+            Assert::AreEqual({1}, pItem->checked);
+        };
+
+        auto AssertMenuSeparator = [&pMenu](int nIndex) {
+            const auto* pItem = &pMenu->items[nIndex];
+            Assert::AreEqual(0U, pItem->id);
+            Assert::IsNull(pItem->label);
+            Assert::AreEqual({1}, pItem->enabled);
+            Assert::AreEqual({0}, pItem->checked);
+        };
+
+        pMenu = _Rcheevos_RAIntegrationGetMenu();
+        Assert::AreEqual(11U, pMenu->num_items);
+        AssertMenuItem(0, IDM_RA_HARDCORE_MODE, "&Hardcore Mode");
+        AssertMenuItem(1, IDM_RA_NON_HARDCORE_WARNING, "Non-Hardcore &Warning");
+        AssertMenuSeparator(2);
+        AssertMenuItem(3, IDM_RA_FILES_OPENALL, "&Open All");
+        AssertMenuItem(4, IDM_RA_FILES_ACHIEVEMENTS, "Assets Li&st");
+        AssertMenuItem(5, IDM_RA_FILES_ACHIEVEMENTEDITOR, "Assets &Editor");
+        AssertMenuItem(6, IDM_RA_FILES_MEMORYFINDER, "&Memory Inspector");
+        AssertMenuItem(7, IDM_RA_FILES_MEMORYBOOKMARKS, "Memory &Bookmarks");
+        AssertMenuItem(8, IDM_RA_FILES_POINTERFINDER, "Pointer &Finder");
+        AssertMenuItem(9, IDM_RA_FILES_CODENOTES, "Code &Notes");
+        AssertMenuItem(10, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
+
+        runtime.mockUserContext.Initialize("User", "ApiToken");
+
+        pMenu = _Rcheevos_RAIntegrationGetMenu();
+        Assert::AreEqual(17U, pMenu->num_items);
+        AssertMenuItem(0, IDM_RA_OPENUSERPAGE, "Open my &User Page");
+        AssertMenuItem(1, IDM_RA_OPENGAMEPAGE, "Open this &Game's Page");
+        AssertMenuSeparator(2);
+        AssertMenuItem(3, IDM_RA_HARDCORE_MODE, "&Hardcore Mode");
+        AssertMenuItem(4, IDM_RA_NON_HARDCORE_WARNING, "Non-Hardcore &Warning");
+        AssertMenuSeparator(5);
+        AssertMenuItem(6, IDM_RA_FILES_OPENALL, "&Open All");
+        AssertMenuItem(7, IDM_RA_FILES_ACHIEVEMENTS, "Assets Li&st");
+        AssertMenuItem(8, IDM_RA_FILES_ACHIEVEMENTEDITOR, "Assets &Editor");
+        AssertMenuItem(9, IDM_RA_FILES_MEMORYFINDER, "&Memory Inspector");
+        AssertMenuItem(10, IDM_RA_FILES_MEMORYBOOKMARKS, "Memory &Bookmarks");
+        AssertMenuItem(11, IDM_RA_FILES_POINTERFINDER, "Pointer &Finder");
+        AssertMenuItem(12, IDM_RA_FILES_CODENOTES, "Code &Notes");
+        AssertMenuItem(13, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
+        AssertMenuSeparator(14);
+        AssertMenuItem(15, IDM_RA_REPORTBROKENACHIEVEMENTS, "&Report Achievement Problem");
+        AssertMenuItem(16, IDM_RA_GETROMCHECKSUM, "View Game H&ash");
+
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::NonHardcoreWarning, true);
+
+        pMenu = _Rcheevos_RAIntegrationGetMenu();
+        Assert::AreEqual(17U, pMenu->num_items);
+        AssertMenuItem(0, IDM_RA_OPENUSERPAGE, "Open my &User Page");
+        AssertMenuItem(1, IDM_RA_OPENGAMEPAGE, "Open this &Game's Page");
+        AssertMenuSeparator(2);
+        AssertMenuItemChecked(3, IDM_RA_HARDCORE_MODE, "&Hardcore Mode");
+        AssertMenuItemChecked(4, IDM_RA_NON_HARDCORE_WARNING, "Non-Hardcore &Warning");
+        AssertMenuSeparator(5);
+        AssertMenuItem(6, IDM_RA_FILES_OPENALL, "&Open All");
+        AssertMenuItem(7, IDM_RA_FILES_ACHIEVEMENTS, "Assets Li&st");
+        AssertMenuItem(8, IDM_RA_FILES_ACHIEVEMENTEDITOR, "Assets &Editor");
+        AssertMenuItem(9, IDM_RA_FILES_MEMORYFINDER, "&Memory Inspector");
+        AssertMenuItem(10, IDM_RA_FILES_MEMORYBOOKMARKS, "Memory &Bookmarks");
+        AssertMenuItem(11, IDM_RA_FILES_POINTERFINDER, "Pointer &Finder");
+        AssertMenuItem(12, IDM_RA_FILES_CODENOTES, "Code &Notes");
+        AssertMenuItem(13, IDM_RA_PARSERICHPRESENCE, "Rich &Presence Monitor");
+        AssertMenuSeparator(14);
+        AssertMenuItem(15, IDM_RA_REPORTBROKENACHIEVEMENTS, "&Report Achievement Problem");
+        AssertMenuItem(16, IDM_RA_GETROMCHECKSUM, "View Game H&ash");
     }
 #endif
 };

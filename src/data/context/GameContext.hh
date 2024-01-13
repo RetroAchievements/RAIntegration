@@ -7,6 +7,8 @@
 #include <string>
 #include <atomic>
 
+namespace ra { namespace services { class AchievementRuntimeExports; } }
+
 namespace ra {
 namespace data {
 namespace context {
@@ -117,7 +119,11 @@ public:
 
 private:
     using NotifyTargetSet = std::set<NotifyTarget*>;
-    void FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused, const std::string& sOldRichPresence);
+    void FinishLoadGame(int nResult, const char* sErrorMessage, bool bWasPaused);
+
+    friend class ra::services::AchievementRuntimeExports;
+    bool BeginLoadGame(unsigned int nGameId, Mode nMode, bool& bWasPaused);
+    void EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWarning);
 
 protected:
     void OnBeforeActiveGameChanged();
@@ -129,7 +135,6 @@ protected:
     unsigned int m_nGameId = 0;
     std::wstring m_sGameTitle;
     std::string m_sGameHash;
-    std::string m_sGameImage;
     Mode m_nMode{};
 
 private:

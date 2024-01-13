@@ -66,18 +66,19 @@ void RichPresenceMonitorViewModel::UpdateDisplayString()
                 &pGameContext.Assets().Append(std::move(pNewRichPresence)));
         }
 
-        // modified rich presence cannot be active in hardcore
-        const bool bHardcore = ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(
-            ra::services::Feature::Hardcore);
-        if (bHardcore)
-            pRichPresence->Deactivate();
-
         // load the updated file
         pRichPresence->ReloadRichPresenceScript();
 
         // automatically activate if not in hardcore
-        if (!bHardcore)
-            pRichPresence->Activate();
+        if (!pRichPresence->IsActive())
+        {
+            const bool bHardcore = ra::services::ServiceLocator::Get<ra::services::IConfiguration>().IsFeatureEnabled(
+                ra::services::Feature::Hardcore);
+            if (!bHardcore)
+            {
+                pRichPresence->Activate();
+            }
+        }
 
         UpdateWindowTitle();
     }

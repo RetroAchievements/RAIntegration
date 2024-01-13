@@ -3,6 +3,7 @@
 #include "Exports.hh"
 #include "RA_BuildVer.h"
 #include "RA_Log.h"
+#include "RA_Resource.h"
 #include "RA_StringUtils.h"
 
 #include "api\LatestClient.hh"
@@ -11,6 +12,7 @@
 #include "data\context\UserContext.hh"
 
 #include "services\AchievementRuntime.hh"
+#include "services\AchievementRuntimeExports.hh"
 #include "services\IClock.hh"
 #include "services\IConfiguration.hh"
 #include "services\IFileSystem.hh"
@@ -456,10 +458,9 @@ void EmulatorContext::DisableHardcoreMode()
         auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
         pWindowManager.AssetList.UpdateButtons();
 
-        RebuildMenu();
+        SyncClientExternalHardcoreState();
 
-        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-        rc_client_set_hardcore_enabled(pRuntime.GetClient(), false);
+        UpdateMenuState(IDM_RA_HARDCORE_MODE);
 
         // GameContext::DoFrame synchronizes the models to the runtime
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
@@ -532,12 +533,11 @@ bool EmulatorContext::EnableHardcoreMode(bool bShowWarning)
     // updating the enabled-ness of the buttons of the asset list
     pWindowManager.AssetList.UpdateButtons();
 
-    // update the integration menu
-    RebuildMenu();
-
     // update the runtime
-    auto* pClient = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().GetClient();
-    rc_client_set_hardcore_enabled(pClient, true);
+    SyncClientExternalHardcoreState();
+
+    // update the integration menu
+    UpdateMenuState(IDM_RA_HARDCORE_MODE);
 
     // GameContext::DoFrame synchronizes the models to the runtime
     pGameContext.DoFrame();
@@ -1025,6 +1025,13 @@ bool EmulatorContext::IsMemoryInsecure() const
     }
 
     return m_bMemoryInsecure;
+}
+
+void EmulatorContext::UpdateMenuState(int nMenuItemId) const
+{
+    SyncClientExternalRAIntegrationMenuItem(nMenuItemId);
+
+    RebuildMenu();
 }
 
 } // namespace context

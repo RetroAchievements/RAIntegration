@@ -3132,7 +3132,7 @@ public:
         Assert::AreEqual(AssetState::Active, pAchievement->GetState());
     }
 
-    TEST_METHOD(TestCreateNew)
+    TEST_METHOD(TestCreateNewAchievement)
     {
         AssetListViewModelHarness vmAssetList;
         vmAssetList.mockUserContext.Initialize("User1", "FOO");
@@ -3189,6 +3189,18 @@ public:
         pAsset = vmAssetList.FilteredAssets().GetItemAt(1);
         Expects(pAsset != nullptr);
         Assert::IsTrue(pAsset->IsSelected());
+
+        // both achievements should be loaded in the runtime
+        auto* pClient = vmAssetList.mockRuntime.GetClient();
+        auto* pAch1 = (rc_client_achievement_info_t*)rc_client_get_achievement_info(pClient, 111000001U);
+        Expects(pAch1 != nullptr);
+        Assert::IsNull(pAch1->trigger); // trigger not set until activated
+        Assert::AreEqual({0}, pAch1->public_.points);
+
+        auto* pAch2 = (rc_client_achievement_info_t*)rc_client_get_achievement_info(pClient, 111000002U);
+        Expects(pAch2 != nullptr);
+        Assert::IsNull(pAch2->trigger);
+        Assert::AreEqual({0}, pAch2->public_.points);
     }
 
     TEST_METHOD(TestCreateNewHardcore)

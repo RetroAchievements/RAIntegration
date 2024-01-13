@@ -1651,6 +1651,11 @@ void AssetListViewModel::RevertSelected()
         }
     }
 
+    // sync assets before calling EndUpdate to ensure anything watching for TriggerProperty to change
+    // can find the new definition (i.e. asset editor)
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    pRuntime.SyncAssets();
+
     pAssets.EndUpdate();
 
     // update the local file
@@ -1747,6 +1752,11 @@ void AssetListViewModel::CreateNew()
             }
         }
     }
+
+    // sync assets before calling EndUpdate to ensure anything watching for TriggerProperty to change
+    // can find the new definition (i.e. asset editor)
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    pRuntime.SyncAssets();
 
     FilteredAssets().EndUpdate();
 
@@ -1864,6 +1874,11 @@ void AssetListViewModel::CloneSelected()
             }
         }
     }
+
+    // sync assets before calling EndUpdate to ensure anything watching for TriggerProperty to change
+    // can find the new definition (i.e. asset editor)
+    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+    pRuntime.SyncAssets();
 
     FilteredAssets().EndUpdate();
 

@@ -282,11 +282,15 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
     }
 
     // modified assets should start in the inactive state
+    size_t nLocalAssets = 0;
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
     {
         auto* pAsset = m_vAssets.GetItemAt(nIndex);
         if (pAsset != nullptr && pAsset->GetChanges() != ra::data::models::AssetChanges::None)
         {
+            if (pAsset->HasUnpublishedChanges())
+                ++nLocalAssets;
+
             if (pAsset->IsActive())
             {
                 if (pAsset->GetType() == ra::data::models::AssetType::RichPresence &&
@@ -301,6 +305,10 @@ void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWa
                 pAsset->SetState(ra::data::models::AssetState::Inactive);
             }
         }
+    }
+    if (nLocalAssets > 0)
+    {
+        RA_LOG_INFO("%d unpublished assets loaded", nLocalAssets);
     }
 
     // finish up

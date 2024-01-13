@@ -163,6 +163,7 @@ AchievementRuntime::AchievementRuntime()
 #endif
 
     rc_client_set_event_handler(m_pClient.get(), EventHandler);
+    m_pClient->state.allow_leaderboards_in_softcore = true;
 
     rc_client_set_unofficial_enabled(m_pClient.get(), 1);
 }

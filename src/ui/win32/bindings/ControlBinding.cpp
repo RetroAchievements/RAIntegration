@@ -32,10 +32,12 @@ ControlBinding::~ControlBinding() noexcept
 
 void ControlBinding::ForceRepaint(HWND hWnd)
 {
-    ::InvalidateRect(hWnd, nullptr, FALSE);
+    WindowBinding::InvokeOnUIThread([hWnd] {
+        ::InvalidateRect(hWnd, nullptr, FALSE);
 
-    if (NeedsUpdateWindow())
-        RedrawWindow(hWnd);
+        if (NeedsUpdateWindow())
+            RedrawWindow(hWnd);
+    });
 }
 
 void ControlBinding::RedrawWindow(HWND hWnd)

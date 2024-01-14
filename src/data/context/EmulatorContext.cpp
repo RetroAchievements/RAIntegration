@@ -1034,6 +1034,30 @@ void EmulatorContext::UpdateMenuState(int nMenuItemId) const
     RebuildMenu();
 }
 
+void EmulatorContext::RebuildMenu() const
+{
+    if (m_fRebuildMenu)
+        ra::services::ServiceLocator::Get<ra::ui::IDesktop>().InvokeOnUIThread(m_fRebuildMenu);
+}
+
+void EmulatorContext::Reset() const
+{
+    if (m_fResetEmulator)
+        ra::services::ServiceLocator::Get<ra::ui::IDesktop>().InvokeOnUIThread(m_fResetEmulator);
+}
+
+void EmulatorContext::Pause() const
+{
+    if (m_fPauseEmulator)
+        ra::services::ServiceLocator::Get<ra::ui::IDesktop>().InvokeOnUIThread(m_fPauseEmulator);
+}
+
+void EmulatorContext::Unpause() const
+{
+    if (m_fUnpauseEmulator)
+        ra::services::ServiceLocator::Get<ra::ui::IDesktop>().InvokeOnUIThread(m_fUnpauseEmulator);
+}
+
 } // namespace context
 } // namespace data
 } // namespace ra

@@ -15,6 +15,8 @@
 #include "RA_Defs.h"
 #include "RA_Log.h"
 
+#include <rcheevos/include/rc_api_runtime.h>
+
 namespace ra {
 namespace ui {
 namespace viewmodels {
@@ -232,6 +234,25 @@ void AssetUploadViewModel::UploadAchievement(ra::data::models::AchievementModel&
     request.Trigger = pAchievement.GetTrigger();
     request.Points = pAchievement.GetPoints();
     request.Badge = ra::Narrow(pAchievement.GetBadge());
+
+    switch (pAchievement.GetAchievementType())
+    {
+        case ra::data::models::AchievementType::None:
+            request.Type = RC_ACHIEVEMENT_TYPE_STANDARD;
+            break;
+        case ra::data::models::AchievementType::Missable:
+            request.Type = RC_ACHIEVEMENT_TYPE_MISSABLE;
+            break;
+        case ra::data::models::AchievementType::Progression:
+            request.Type = RC_ACHIEVEMENT_TYPE_PROGRESSION;
+            break;
+        case ra::data::models::AchievementType::Win:
+            request.Type = RC_ACHIEVEMENT_TYPE_WIN;
+            break;
+        default:
+            request.Type = ra::etoi(pAchievement.GetAchievementType());
+            break;
+    }
 
     if (pAchievement.GetCategory() == ra::data::models::AssetCategory::Local)
     {

@@ -283,6 +283,46 @@ public:
             Assert::AreEqual(std::string("12345"), pRequest.Badge);
             Assert::AreEqual(3U, pRequest.Category);
             Assert::AreEqual(1U, pRequest.AchievementId);
+            Assert::AreEqual(0U, pRequest.Type);
+
+            pResponse.AchievementId = pRequest.AchievementId;
+            pResponse.Result = ra::api::ApiResult::Success;
+            return true;
+        });
+
+        vmUpload.DoUpload();
+
+        Assert::IsTrue(bApiCalled);
+        Assert::AreEqual(AssetChanges::None, pAchievement.GetChanges());
+
+        vmUpload.AssertSuccess(1);
+    }
+
+    TEST_METHOD(TestSingleCoreAchievementMissable)
+    {
+        AssetUploadViewModelHarness vmUpload;
+        auto& pAchievement = vmUpload.AddAchievement(AssetCategory::Core, 5, L"Title1", L"Desc1", L"12345", "0xH1234=1");
+        pAchievement.SetAchievementType(ra::data::models::AchievementType::Missable);
+        pAchievement.UpdateLocalCheckpoint();
+        Assert::AreEqual(AssetChanges::Unpublished, pAchievement.GetChanges());
+
+        vmUpload.QueueAsset(pAchievement);
+        Assert::AreEqual({ 1U }, vmUpload.TaskCount());
+
+        bool bApiCalled = false;
+        vmUpload.mockServer.HandleRequest<ra::api::UpdateAchievement>([&bApiCalled]
+                (const ra::api::UpdateAchievement::Request& pRequest, ra::api::UpdateAchievement::Response& pResponse)
+        {
+            bApiCalled = true;
+            Assert::AreEqual(AssetUploadViewModelHarness::GameId, pRequest.GameId);
+            Assert::AreEqual(std::wstring(L"Title1"), pRequest.Title);
+            Assert::AreEqual(std::wstring(L"Desc1"), pRequest.Description);
+            Assert::AreEqual(std::string("0xH1234=1"), pRequest.Trigger);
+            Assert::AreEqual(5U, pRequest.Points);
+            Assert::AreEqual(std::string("12345"), pRequest.Badge);
+            Assert::AreEqual(3U, pRequest.Category);
+            Assert::AreEqual(1U, pRequest.AchievementId);
+            Assert::AreEqual(1U, pRequest.Type);
 
             pResponse.AchievementId = pRequest.AchievementId;
             pResponse.Result = ra::api::ApiResult::Success;

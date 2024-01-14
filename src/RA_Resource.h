@@ -145,6 +145,8 @@
 #define IDC_RA_MEMVIEWER_4              1240
 #define IDC_RA_DISPLAY_PROGRESS_INDICATOR 1241
 #define IDC_RA_MEMVIEW_32BITBE          1242
+#define IDC_RA_LBL_TYPE                 1243
+#define IDC_RA_TYPE                     1244
 
 
 #define IDD_RA_MEMORY                   1501

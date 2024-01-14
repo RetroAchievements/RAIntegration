@@ -143,6 +143,7 @@ private:
     ra::ui::win32::bindings::ImageBinding m_bindBadgeImage;
     PointBinding m_bindPoints;
     ra::ui::win32::bindings::ComboBoxBinding m_bindFormats;
+    ra::ui::win32::bindings::ComboBoxBinding m_bindAchievementTypes;
     ra::ui::win32::bindings::GridBinding m_bindLeaderboardParts;
     ra::ui::win32::bindings::CheckBoxBinding m_bindLowerIsBetter;
 

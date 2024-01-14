@@ -711,6 +711,7 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindBadgeImage(vmAssetEditor),
     m_bindPoints(vmAssetEditor),
     m_bindFormats(vmAssetEditor),
+    m_bindAchievementTypes(vmAssetEditor),
     m_bindLeaderboardParts(vmAssetEditor),
     m_bindLowerIsBetter(vmAssetEditor),
     m_bindErrorIcon(vmAssetEditor),
@@ -771,6 +772,10 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     m_bindWindow.BindVisible(IDC_RA_BADGE_SPIN, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_UPLOAD_BADGE, AssetEditorViewModel::IsAchievementProperty);
     m_bindWindow.BindVisible(IDC_RA_BADGEPIC, AssetEditorViewModel::IsAchievementProperty);
+    m_bindAchievementTypes.BindItems(vmAssetEditor.AchievementTypes());
+    m_bindAchievementTypes.BindSelectedItem(AssetEditorViewModel::AchievementTypeProperty);
+    m_bindWindow.BindVisible(IDC_RA_LBL_TYPE, AssetEditorViewModel::IsAchievementProperty);
+    m_bindWindow.BindVisible(IDC_RA_TYPE, AssetEditorViewModel::IsAchievementProperty);
 
     // leaderboard only fields
     m_bindFormats.BindItems(vmAssetEditor.Formats());
@@ -940,6 +945,7 @@ BOOL AssetEditorDialog::OnInitDialog()
     m_bindPoints.SetControl(*this, IDC_RA_POINTS);
     m_bindFormats.SetControl(*this, IDC_RA_FORMAT);
     m_bindLeaderboardParts.SetControl(*this, IDC_RA_LBX_LBOARD_PARTS);
+    m_bindAchievementTypes.SetControl(*this, IDC_RA_TYPE);
 
     m_bindGroups.SetControl(*this, IDC_RA_LBX_GROUPS);
     m_bindConditions.SetControl(*this, IDC_RA_LBX_CONDITIONS);
@@ -974,6 +980,8 @@ BOOL AssetEditorDialog::OnInitDialog()
         GSL_SUPPRESS_TYPE1 SendMessage(m_hTooltip, TTM_ADDTOOL, 0, reinterpret_cast<LPARAM>(&toolInfo));
         SendMessage(m_hTooltip, TTM_ACTIVATE, TRUE, 0);
     }
+
+    SendMessage(::GetDlgItem(GetHWND(), IDC_RA_TYPE), CB_SETDROPPEDWIDTH, 70, 0);
 
     return DialogBase::OnInitDialog();
 }

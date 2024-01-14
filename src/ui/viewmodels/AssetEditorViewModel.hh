@@ -5,6 +5,7 @@
 #include "TriggerViewModel.hh"
 
 #include "data\Types.hh"
+#include "data\models\AchievementModel.hh"
 #include "data\models\AssetModelBase.hh"
 
 #include "ui\WindowViewModelBase.hh"
@@ -201,6 +202,29 @@ public:
     /// Opens the file chooser to select a new badge image.
     /// </summary>
     void SelectBadgeFile();
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the achievement type.
+    /// </summary>
+    static const IntModelProperty AchievementTypeProperty;
+
+    /// <summary>
+    /// Gets the achievement type.
+    /// </summary>
+    ra::data::models::AchievementType GetAchievementType() const
+    {
+        return ra::itoe<ra::data::models::AchievementType>(GetValue(AchievementTypeProperty));
+    }
+
+    /// <summary>
+    /// Sets the achievement type.
+    /// </summary>
+    void SetAchievementType(ra::data::models::AchievementType nValue) { SetValue(AchievementTypeProperty, ra::etoi(nValue)); }
+
+    /// <summary>
+    /// Gets the list of achievement types.
+    /// </summary>
+    const LookupItemViewModelCollection& AchievementTypes() const noexcept { return m_vAchievementTypes; }
 
     // ===== Leaderboard Specific =====
 
@@ -452,6 +476,7 @@ protected:
     ra::data::models::AssetModelBase* m_pAsset = nullptr;
     bool m_bIgnoreTriggerUpdate = false;
 
+    LookupItemViewModelCollection m_vAchievementTypes;
     LookupItemViewModelCollection m_vFormats;
     ViewModelCollection<LeaderboardPartViewModel> m_vLeaderboardParts;
 };

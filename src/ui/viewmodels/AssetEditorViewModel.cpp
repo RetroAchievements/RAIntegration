@@ -46,6 +46,7 @@ const StringModelProperty AssetEditorViewModel::AssetValidationWarningProperty("
 const BoolModelProperty AssetEditorViewModel::HasMeasuredProperty("AssetEditorViewModel", "HasMeasured", false);
 const StringModelProperty AssetEditorViewModel::MeasuredValueProperty("AssetEditorViewModel", "MeasuredValue", L"[Not Active]");
 const StringModelProperty AssetEditorViewModel::WaitingLabelProperty("AssetEditorViewModel", "WaitingLabel", L"Active");
+const IntModelProperty AssetEditorViewModel::AchievementTypeProperty("AssetEditorViewModel", "AchievementType", ra::etoi(ra::data::models::AchievementType::None));
 const IntModelProperty AssetEditorViewModel::LeaderboardPartViewModel::ColorProperty("LeaderboardPartViewModel", "Color", 0);
 
 AssetEditorViewModel::AssetEditorViewModel() noexcept
@@ -53,6 +54,11 @@ AssetEditorViewModel::AssetEditorViewModel() noexcept
     SetWindowTitle(L"Achievement Editor");
 
     m_vmTrigger.AddNotifyTarget(*this);
+
+    m_vAchievementTypes.Add(ra::etoi(ra::data::models::AchievementType::None), L"");
+    m_vAchievementTypes.Add(ra::etoi(ra::data::models::AchievementType::Missable), L"Missable");
+    m_vAchievementTypes.Add(ra::etoi(ra::data::models::AchievementType::Progression), L"Progression");
+    m_vAchievementTypes.Add(ra::etoi(ra::data::models::AchievementType::Win), L"Win");
 
     m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Value), L"Value");
     m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Score), L"Score");
@@ -204,6 +210,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, b
             {
                 SetPoints(pAchievement->GetPoints());
                 SetBadge(pAchievement->GetBadge());
+                SetAchievementType(pAchievement->GetAchievementType());
                 SetPauseOnReset(pAchievement->IsPauseOnReset());
                 SetPauseOnTrigger(pAchievement->IsPauseOnTrigger());
 
@@ -251,6 +258,7 @@ void AssetEditorViewModel::LoadAsset(ra::data::models::AssetModelBase* pAsset, b
         SetCategory(ra::itoe<ra::data::models::AssetCategory>(CategoryProperty.GetDefaultValue()));
         SetPoints(PointsProperty.GetDefaultValue());
         SetBadge(BadgeProperty.GetDefaultValue());
+        SetAchievementType(ra::itoe<ra::data::models::AchievementType>(AchievementTypeProperty.GetDefaultValue()));
         SetPauseOnReset(PauseOnResetProperty.GetDefaultValue());
         SetPauseOnTrigger(PauseOnTriggerProperty.GetDefaultValue());
         SetWindowTitle(L"Achievement Editor");
@@ -412,6 +420,8 @@ void AssetEditorViewModel::OnDataModelIntValueChanged(const IntModelProperty::Ch
         SetCategory(ra::itoe<ra::data::models::AssetCategory>(args.tNewValue));
     else if (args.Property == ra::data::models::AchievementModel::PointsProperty)
         SetPoints(args.tNewValue);
+    else if (args.Property == ra::data::models::AchievementModel::TypeProperty)
+        SetAchievementType(ra::itoe<ra::data::models::AchievementType>(args.tNewValue));
     else if (args.Property == ra::data::models::LeaderboardModel::ValueFormatProperty)
         SetValueFormat(ra::itoe<ra::data::ValueFormat>(args.tNewValue));
     else if (args.Property == ra::data::models::AssetModelBase::IDProperty)
@@ -557,6 +567,8 @@ void AssetEditorViewModel::OnValueChanged(const IntModelProperty::ChangeArgs& ar
             {
                 if (args.Property == PointsProperty)
                     pAchievement->SetPoints(args.tNewValue);
+                else if (args.Property == AchievementTypeProperty)
+                    pAchievement->SetAchievementType(ra::itoe<ra::data::models::AchievementType>(args.tNewValue));
             }
             else
             {

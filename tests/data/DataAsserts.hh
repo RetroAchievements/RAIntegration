@@ -152,6 +152,24 @@ std::wstring ToString<ra::data::models::LeaderboardModel::LeaderboardParts>(cons
     }
 }
 
+template<>
+std::wstring ToString<ra::data::models::AchievementType>(const ra::data::models::AchievementType& nAchievementType)
+{
+    switch (nAchievementType)
+    {
+        case ra::data::models::AchievementType::None:
+            return L"None";
+        case ra::data::models::AchievementType::Missable:
+            return L"Missable";
+        case ra::data::models::AchievementType::Progression:
+            return L"Progression";
+        case ra::data::models::AchievementType::Win:
+            return L"Win";
+        default:
+            return std::to_wstring(static_cast<int>(nAchievementType));
+    }
+}
+
 #pragma warning(pop)
 
 } // namespace CppUnitTestFramework

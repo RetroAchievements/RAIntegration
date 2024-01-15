@@ -120,7 +120,7 @@ bool OverlayListPageViewModel::Update(double fElapsed)
 std::unique_ptr<ra::ui::drawing::ISurface> OverlayListPageViewModel::LoadDecorator(
      const uint8_t* pixels, int nWidth, int nHeight)
 {
-    uint32_t* argb_pixels = (uint32_t*)malloc(nWidth * nHeight * sizeof(uint32_t));
+    uint32_t* argb_pixels = static_cast<uint32_t*>(malloc(gsl::narrow_cast<size_t>(nWidth) * nHeight * sizeof(uint32_t)));
     if (argb_pixels == nullptr)
         return nullptr;
 
@@ -129,9 +129,9 @@ std::unique_ptr<ra::ui::drawing::ISurface> OverlayListPageViewModel::LoadDecorat
 
     auto& pSurfaceFactory = ra::services::ServiceLocator::GetMutable<ra::ui::drawing::ISurfaceFactory>();
     auto pDecorator = pSurfaceFactory.CreateTransparentSurface(nWidth, nHeight);
-    uint32_t* dst = argb_pixels;
-    const uint8_t* src = pixels;
-    const uint8_t* stop = pixels + nWidth * nHeight;
+    GSL_SUPPRESS_F23 uint32_t* dst = argb_pixels;
+    GSL_SUPPRESS_F23 const uint8_t* src = pixels;
+    const uint8_t* stop = pixels + gsl::narrow_cast<size_t>(nWidth) * nHeight;
 
     while (src < stop)
     {

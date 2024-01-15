@@ -139,8 +139,8 @@ public:
         /// </summary>
         bool IsHeader() const { return GetId() == 0; }
 
-        ra::ui::drawing::ISurface* GetDecorator() const { return m_pDecorator; }
-        void SetDecorator(ra::ui::drawing::ISurface* pDecorator) { m_pDecorator = pDecorator; }
+        ra::ui::drawing::ISurface* GetDecorator() const noexcept { return m_pDecorator; }
+        void SetDecorator(ra::ui::drawing::ISurface* pDecorator) noexcept { m_pDecorator = pDecorator; }
 
     private:
         ra::ui::drawing::ISurface* m_pDecorator = nullptr;

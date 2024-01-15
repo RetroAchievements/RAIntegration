@@ -306,7 +306,7 @@ const wchar_t* OverlayAchievementsPageViewModel::GetNextButtonText() const noexc
     return L"Leaderboards";
 }
 
-void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, _UNUSED int nWidth, int nHeight) const
+void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const
 {
     const auto* pAchievement = m_vItems.GetItemAt(GetSelectedItemIndex());
     if (pAchievement == nullptr)
@@ -322,11 +322,16 @@ void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& p
 
     pSurface.WriteText(nX + nAchievementSize + 12, nY + 4, nFont, pTheme.ColorOverlayText(), pAchievement->GetLabel());
     pSurface.WriteText(nX + nAchievementSize + 12, nY + 4 + 26, nSubFont, pTheme.ColorOverlaySubText(), pAchievement->GetDetail());
-    nY += nAchievementSize + 8;
+
+    const auto* pDecorator = pAchievement->GetDecorator();
+    if (pDecorator != nullptr)
+        pSurface.DrawSurface(nWidth - 5 - pDecorator->GetWidth(), nY + 6, *pDecorator);
 
     const auto pDetail = m_vAchievementDetails.find(pAchievement->GetId());
     if (pDetail == m_vAchievementDetails.end())
         return;
+
+    nY += nAchievementSize + 8;
 
     const auto szDetail = pSurface.MeasureText(nDetailFont, L"M");
     pSurface.WriteText(nX, nY, nDetailFont, pTheme.ColorOverlaySubText(), L"Created: " + pDetail->second.GetCreatedDate());

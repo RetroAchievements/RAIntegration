@@ -39,6 +39,10 @@ public:
     void DrawSurface(int nX, int nY, const ISurface& pSurface, int nSurfaceX, int nSurfaceY, int nWidth, int nHeight) noexcept override;
 
     GSL_SUPPRESS_F6 void SetOpacity(_UNUSED double) override { assert("This surface does not support opacity"); }
+    GSL_SUPPRESS_F6 void SetPixels(_UNUSED int, _UNUSED int, _UNUSED int, _UNUSED int, _UNUSED uint32_t*) override
+    {
+        assert("This surface does not support setting pixels");
+    }
 
     HDC GetHDC() const noexcept { return m_hDC; }
 

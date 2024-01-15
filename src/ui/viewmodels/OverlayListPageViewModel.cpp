@@ -117,6 +117,39 @@ bool OverlayListPageViewModel::Update(double fElapsed)
     return bUpdated;
 }
 
+std::unique_ptr<ra::ui::drawing::ISurface> OverlayListPageViewModel::LoadDecorator(
+     const uint8_t* pixels, int nWidth, int nHeight)
+{
+    uint32_t* argb_pixels = (uint32_t*)malloc(nWidth * nHeight * sizeof(uint32_t));
+    if (argb_pixels == nullptr)
+        return nullptr;
+
+    const auto& pTheme = ra::services::ServiceLocator::Get<ra::ui::OverlayTheme>();
+    ra::ui::Color nTextColor = pTheme.ColorOverlayDisabledText();
+
+    auto& pSurfaceFactory = ra::services::ServiceLocator::GetMutable<ra::ui::drawing::ISurfaceFactory>();
+    auto pDecorator = pSurfaceFactory.CreateTransparentSurface(nWidth, nHeight);
+    uint32_t* dst = argb_pixels;
+    const uint8_t* src = pixels;
+    const uint8_t* stop = pixels + nWidth * nHeight;
+
+    while (src < stop)
+    {
+        nTextColor.Channel.A = *src++;
+
+        if (nTextColor.Channel.A == 0)
+            *dst++ = 0;
+        else
+            *dst++ = nTextColor.ARGB;
+    }
+
+    pDecorator->SetPixels(0, 0, nWidth, nHeight, argb_pixels);
+    free(argb_pixels);
+
+    return pDecorator;
+}
+
+
 void OverlayListPageViewModel::Render(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const
 {
     if (m_bDetail)
@@ -222,6 +255,10 @@ void OverlayListPageViewModel::RenderList(ra::ui::drawing::ISurface& pSurface, i
                 const auto szProgress = pSurface.MeasureText(nProgressFont, sProgress);
                 pSurface.WriteText(nTextX + 12 + nProgressBarWidth + 6, nY + 1 + 26 + 25 + 4 - (szProgress.Height / 2) - 1, nProgressFont, nSubTextColor, sProgress);
             }
+
+            const auto* pDecorator = pItem->GetDecorator();
+            if (pDecorator != nullptr)
+                pSurface.DrawSurface(nWidth - 5 - pDecorator->GetWidth(), nY + 6, *pDecorator);
         }
 
         nIndex++;

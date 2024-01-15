@@ -36,6 +36,7 @@ public:
     void DrawSurface(int, int, const ISurface&) noexcept override {}
     void DrawSurface(int, int, const ISurface&, int, int, int, int) noexcept override {}
     void SetOpacity(double) noexcept override {}
+    void SetPixels(int, int, int, int, uint32_t*) noexcept override {}
 
 private:
     unsigned int m_nWidth;

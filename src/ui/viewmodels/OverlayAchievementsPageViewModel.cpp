@@ -89,6 +89,18 @@ void OverlayAchievementsPageViewModel::Refresh()
 {
     OverlayListPageViewModel::Refresh();
 
+    if (m_pMissableSurface == nullptr)
+    {
+        #include "..\data\missable.h"
+        m_pMissableSurface = LoadDecorator(MISSABLE_PIXELS, 20, 20);
+
+        #include "..\data\progression.h"
+        m_pProgressionSurface = LoadDecorator(PROGRESSION_PIXELS, 20, 20);
+
+        #include "..\data\win-condition.h"
+        m_pWinConditionSurface = LoadDecorator(WIN_CONDITION_PIXELS, 20, 20);
+    }
+
     // title
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto& sTitle = pGameContext.GameTitle();
@@ -177,6 +189,22 @@ void OverlayAchievementsPageViewModel::Refresh()
                 {
                     auto& pvmAchievement = GetNextItem(&nIndex);
                     SetAchievement(pvmAchievement, **pAchievement);
+
+                    switch ((*pAchievement)->type)
+                    {
+                        case RC_CLIENT_ACHIEVEMENT_TYPE_MISSABLE:
+                            pvmAchievement.SetDecorator(m_pMissableSurface.get());
+                            break;
+                        case RC_CLIENT_ACHIEVEMENT_TYPE_PROGRESSION:
+                            pvmAchievement.SetDecorator(m_pProgressionSurface.get());
+                            break;
+                        case RC_CLIENT_ACHIEVEMENT_TYPE_WIN:
+                            pvmAchievement.SetDecorator(m_pWinConditionSurface.get());
+                            break;
+                        default:
+                            pvmAchievement.SetDecorator(nullptr);
+                            break;
+                    }
                 }
             }
 

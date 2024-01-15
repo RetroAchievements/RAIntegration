@@ -95,6 +95,10 @@ private:
 
     std::wstring m_sSummary;
     std::map<gsl::index, uint32_t> m_mHeaderKeys;
+
+    std::unique_ptr<ra::ui::drawing::ISurface> m_pMissableSurface;
+    std::unique_ptr<ra::ui::drawing::ISurface> m_pProgressionSurface;
+    std::unique_ptr<ra::ui::drawing::ISurface> m_pWinConditionSurface;
 };
 
 } // namespace viewmodels

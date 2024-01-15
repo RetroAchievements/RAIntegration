@@ -138,6 +138,12 @@ public:
         /// Gets whether the current item is a header item.
         /// </summary>
         bool IsHeader() const { return GetId() == 0; }
+
+        ra::ui::drawing::ISurface* GetDecorator() const { return m_pDecorator; }
+        void SetDecorator(ra::ui::drawing::ISurface* pDecorator) { m_pDecorator = pDecorator; }
+
+    private:
+        ra::ui::drawing::ISurface* m_pDecorator = nullptr;
     };
 
 protected:
@@ -156,6 +162,8 @@ protected:
     ItemViewModel& GetNextItem(size_t* nIndex);
     static void SetHeader(OverlayListPageViewModel::ItemViewModel& vmItem, const std::wstring& sHeader);
     static bool AssetAppearsInFilter(const ra::data::models::AssetModelBase& pAsset);
+
+    std::unique_ptr<ra::ui::drawing::ISurface> LoadDecorator(const uint8_t* pixels, int nWidth, int nHeight);
 
     ra::ui::ViewModelCollection<ItemViewModel> m_vItems;
 

@@ -636,7 +636,7 @@ bool AchievementModel::Deserialize(ra::Tokenizer& pTokenizer)
     else if (sType == "win_condition")
         SetAchievementType(ra::data::models::AchievementType::Win);
     else
-        SetValue(TypeProperty, atoi(sType.c_str()));
+        SetValue(AchievementTypeProperty, atoi(sType.c_str()));
 
     return true;
 }

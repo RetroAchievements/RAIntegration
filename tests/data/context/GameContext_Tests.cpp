@@ -379,6 +379,36 @@ public:
         Assert::IsFalse(bDialogShown);
     }
 
+    TEST_METHOD(TestLoadGameTitleConsoleMismatchNESvStandalone)
+    {
+        GameContextHarness game;
+        game.MockLoadGameAPIs(1U, "0123456789abcdeffedcba987654321", "", "", "", "",
+                              static_cast<ConsoleID>(RC_CONSOLE_STANDALONE));
+
+        game.mockConsoleContext.SetId(ConsoleID::NES);
+        game.mockConsoleContext.SetName(L"Nintendo");
+
+        bool bDialogShown = false;
+        game.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::MessageBoxViewModel&) {
+                bDialogShown = true;
+                return ra::ui::DialogResult::OK;
+            });
+
+        game.LoadGame(1U, "0123456789abcdeffedcba987654321");
+
+        Assert::IsTrue(game.mockAudioSystem.WasAudioFilePlayed(std::wstring(L"Overlay\\info.wav")));
+
+        const auto* pPopup = game.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::IsNotNull(pPopup);
+        Assert::AreEqual(std::wstring(L"Loaded GameTitle"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"0 achievements, 0 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::string("9743"), pPopup->GetImage().Name());
+
+        Assert::IsFalse(bDialogShown);
+    }
+
     TEST_METHOD(TestLoadGameNotify)
     {
         class NotifyHarness : public GameContext::NotifyTarget

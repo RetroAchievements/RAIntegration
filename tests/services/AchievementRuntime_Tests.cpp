@@ -6,6 +6,7 @@
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockConsoleContext.hh"
+#include "tests\mocks\MockDesktop.hh"
 #include "tests\mocks\MockEmulatorContext.hh"
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
@@ -66,6 +67,7 @@ public:
     ra::services::mocks::MockFrameEventQueue mockFrameEventQueue;
     ra::services::mocks::MockThreadPool mockThreadPool;
     ra::ui::drawing::mocks::MockSurfaceFactory mockSurfaceFactory;
+    ra::ui::mocks::MockDesktop mockDesktop;
     ra::ui::mocks::MockImageRepository mockImageRepository;
     ra::ui::mocks::MockOverlayTheme mockOverlayTheme;
     ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;

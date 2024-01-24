@@ -109,11 +109,7 @@ public:
     /// <summary>
     /// Notifies the emulator that the RetroAchievements menu has changed.
     /// </summary>
-    void RebuildMenu() const
-    {
-        if (m_fRebuildMenu)
-            m_fRebuildMenu();
-    }
+    void RebuildMenu() const;
 
     /// <summary>
     /// Updates the state of a single menu item.
@@ -129,29 +125,17 @@ public:
     /// <summary>
     /// Pauses the emulator.
     /// </summary>
-    void Pause() const
-    {
-        if (m_fPauseEmulator)
-            m_fPauseEmulator();
-    }
+    void Pause() const;
 
     /// <summary>
     /// Unpauses the emulator.
     /// </summary>
-    void Unpause() const
-    {
-        if (m_fUnpauseEmulator)
-            m_fUnpauseEmulator();
-    }
+    void Unpause() const;
 
     /// <summary>
     /// Resets the emulator.
     /// </summary>
-    void Reset() const
-    {
-        if (m_fResetEmulator)
-            m_fResetEmulator();
-    }
+    void Reset() const;
 
     /// <summary>
     /// Sets a function to call to reset the emulator.

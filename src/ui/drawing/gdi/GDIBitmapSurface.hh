@@ -45,6 +45,8 @@ public:
 
     HBITMAP GetHBitmap() const noexcept { return m_hBitmap; }
 
+    void SetPixels(int nX, int nY, int nWidth, int nHeight, uint32_t* pARGB) noexcept override;
+
 protected:
     std::uint32_t* m_pBits; // see note below about initializing this
 

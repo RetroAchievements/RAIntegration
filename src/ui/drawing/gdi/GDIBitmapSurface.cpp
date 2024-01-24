@@ -76,6 +76,18 @@ static constexpr uint8_t BlendPixel(std::uint8_t nTarget, std::uint8_t nBlend, s
     return gsl::narrow_cast<std::uint8_t>(((nBlend * nAlpha) + (nTarget * (256 - nAlpha))) / 256);
 }
 
+void GDIBitmapSurface::SetPixels(int nX, int nY, int nWidth, int nHeight, uint32_t* pARGB) noexcept
+{
+    const auto nStride = ra::to_signed(GetWidth());
+    std::uint32_t* pBits = m_pBits + gsl::narrow_cast<size_t>(nY) * nStride + nX;
+
+    while (nHeight--)
+    {
+        memcpy(pBits + gsl::narrow_cast<size_t>(nHeight) * nStride, pARGB, nWidth * sizeof(uint32_t));
+        pARGB += nWidth;
+    }
+}
+
 void GDIBitmapSurface::WriteText(int nX, int nY, int nFont, Color nColor, const std::wstring& sText)
 {
     if (sText.empty())

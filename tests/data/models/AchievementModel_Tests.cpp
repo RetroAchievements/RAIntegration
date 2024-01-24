@@ -62,6 +62,7 @@ public:
         Assert::AreEqual(AssetState::Inactive, achievement.GetState());
         Assert::AreEqual(AssetChanges::None, achievement.GetChanges());
         Assert::AreEqual(5, achievement.GetPoints());
+        Assert::AreEqual(AchievementType::None, achievement.GetAchievementType());
         Assert::AreEqual(std::wstring(L"00000"), achievement.GetBadge());
         Assert::IsFalse(achievement.IsPauseOnReset());
         Assert::IsFalse(achievement.IsPauseOnTrigger());

@@ -114,6 +114,8 @@ public:
     /// <param name="nAlpha">The new opacity (0.0-1.0).</param>
     virtual void SetOpacity(double fAlpha) = 0;
 
+    virtual void SetPixels(int nX, int nY, int nWidth, int nHeight, uint32_t* pARGB) = 0;
+
 protected:
     ISurface() noexcept = default;
 };

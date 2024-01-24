@@ -688,6 +688,7 @@ UpdateAchievement::Response ConnectedServer::UpdateAchievement(const UpdateAchie
     api_params.points = request.Points;
     api_params.category = request.Category;
     api_params.badge = request.Badge.c_str();
+    api_params.type = request.Type;
 
     rc_api_request_t api_request;
     if (rc_api_init_update_achievement_request(&api_request, &api_params) == RC_OK)

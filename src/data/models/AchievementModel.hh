@@ -12,6 +12,14 @@ namespace ra {
 namespace data {
 namespace models {
 
+enum AchievementType
+{
+    None = 0,
+    Missable,
+    Progression,
+    Win,
+};
+
 class AchievementModel : public AssetModelBase
 {
 public:
@@ -31,6 +39,21 @@ public:
     /// Sets the points for the achievement.
     /// </summary>
     void SetPoints(int nValue) { SetValue(PointsProperty, nValue); }
+
+    /// <summary>
+    /// The <see cref="ModelProperty" /> for the achievement type.
+    /// </summary>
+    static const IntModelProperty AchievementTypeProperty;
+
+    /// <summary>
+    /// Gets the type of the achievement.
+    /// </summary>
+    AchievementType GetAchievementType() const { return ra::itoe<AchievementType>(GetValue(AchievementTypeProperty)); }
+
+    /// <summary>
+    /// Sets the type for the achievement.
+    /// </summary>
+    void SetAchievementType(AchievementType nValue) { SetValue(AchievementTypeProperty, ra::etoi(nValue)); }
 
     /// <summary>
     /// The <see cref="ModelProperty" /> for the badge.
@@ -166,6 +189,7 @@ private:
     void SyncDescription();
     void SyncBadge();
     void SyncPoints();
+    void SyncAchievementType();
     void SyncCategory();
     void SyncState();
     void SyncTrigger();

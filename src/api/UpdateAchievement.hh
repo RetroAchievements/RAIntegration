@@ -27,6 +27,7 @@ public:
         unsigned int Points{ 0U };
         unsigned int Category{ 0U };
         std::string Badge;
+        unsigned int Type { 0U };
 
         using Callback = std::function<void(const Response& response)>;
 

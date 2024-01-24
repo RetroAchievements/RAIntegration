@@ -89,6 +89,18 @@ void OverlayAchievementsPageViewModel::Refresh()
 {
     OverlayListPageViewModel::Refresh();
 
+    if (m_pMissableSurface == nullptr)
+    {
+        #include "..\data\missable.h"
+        m_pMissableSurface = LoadDecorator(MISSABLE_PIXELS, 20, 20);
+
+        #include "..\data\progression.h"
+        m_pProgressionSurface = LoadDecorator(PROGRESSION_PIXELS, 20, 20);
+
+        #include "..\data\win-condition.h"
+        m_pWinConditionSurface = LoadDecorator(WIN_CONDITION_PIXELS, 20, 20);
+    }
+
     // title
     const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
     const auto& sTitle = pGameContext.GameTitle();
@@ -177,6 +189,22 @@ void OverlayAchievementsPageViewModel::Refresh()
                 {
                     auto& pvmAchievement = GetNextItem(&nIndex);
                     SetAchievement(pvmAchievement, **pAchievement);
+
+                    switch ((*pAchievement)->type)
+                    {
+                        case RC_CLIENT_ACHIEVEMENT_TYPE_MISSABLE:
+                            pvmAchievement.SetDecorator(m_pMissableSurface.get());
+                            break;
+                        case RC_CLIENT_ACHIEVEMENT_TYPE_PROGRESSION:
+                            pvmAchievement.SetDecorator(m_pProgressionSurface.get());
+                            break;
+                        case RC_CLIENT_ACHIEVEMENT_TYPE_WIN:
+                            pvmAchievement.SetDecorator(m_pWinConditionSurface.get());
+                            break;
+                        default:
+                            pvmAchievement.SetDecorator(nullptr);
+                            break;
+                    }
                 }
             }
 
@@ -278,7 +306,7 @@ const wchar_t* OverlayAchievementsPageViewModel::GetNextButtonText() const noexc
     return L"Leaderboards";
 }
 
-void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, _UNUSED int nWidth, int nHeight) const
+void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& pSurface, int nX, int nY, int nWidth, int nHeight) const
 {
     const auto* pAchievement = m_vItems.GetItemAt(GetSelectedItemIndex());
     if (pAchievement == nullptr)
@@ -294,11 +322,16 @@ void OverlayAchievementsPageViewModel::RenderDetail(ra::ui::drawing::ISurface& p
 
     pSurface.WriteText(nX + nAchievementSize + 12, nY + 4, nFont, pTheme.ColorOverlayText(), pAchievement->GetLabel());
     pSurface.WriteText(nX + nAchievementSize + 12, nY + 4 + 26, nSubFont, pTheme.ColorOverlaySubText(), pAchievement->GetDetail());
-    nY += nAchievementSize + 8;
+
+    const auto* pDecorator = pAchievement->GetDecorator();
+    if (pDecorator != nullptr)
+        pSurface.DrawSurface(nWidth - 5 - pDecorator->GetWidth(), nY + 6, *pDecorator);
 
     const auto pDetail = m_vAchievementDetails.find(pAchievement->GetId());
     if (pDetail == m_vAchievementDetails.end())
         return;
+
+    nY += nAchievementSize + 8;
 
     const auto szDetail = pSurface.MeasureText(nDetailFont, L"M");
     pSurface.WriteText(nX, nY, nDetailFont, pTheme.ColorOverlaySubText(), L"Created: " + pDetail->second.GetCreatedDate());

@@ -7,8 +7,10 @@
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
 #include "tests\mocks\MockOverlayManager.hh"
+#include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockSessionTracker.hh"
+#include "tests\mocks\MockSurface.hh"
 #include "tests\mocks\MockThreadPool.hh"
 #include "tests\mocks\MockUserContext.hh"
 #include "tests\mocks\MockWindowManager.hh"
@@ -38,6 +40,8 @@ private:
         ra::services::mocks::MockClock mockClock;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::ui::mocks::MockImageRepository mockImageRepository;
+        ra::ui::mocks::MockOverlayTheme mockOverlayTheme;
+        ra::ui::drawing::mocks::MockSurfaceFactory mockSurfaceFactory;
         ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::ui::viewmodels::mocks::MockWindowManager mockWindowManager;
 

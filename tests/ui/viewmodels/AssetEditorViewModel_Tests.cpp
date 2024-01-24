@@ -131,6 +131,16 @@ public:
         Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Start, (int)editor.GetSelectedLeaderboardPart());
         Assert::AreEqual(ra::data::ValueFormat::Value, editor.GetValueFormat());
 
+        Assert::AreEqual({ 4U }, editor.AchievementTypes().Count());
+        Assert::AreEqual((int)ra::data::models::AchievementType::None, editor.AchievementTypes().GetItemAt(0)->GetId());
+        Assert::AreEqual(std::wstring(L""), editor.AchievementTypes().GetItemAt(0)->GetLabel());
+        Assert::AreEqual((int)ra::data::models::AchievementType::Missable, editor.AchievementTypes().GetItemAt(1)->GetId());
+        Assert::AreEqual(std::wstring(L"Missable"), editor.AchievementTypes().GetItemAt(1)->GetLabel());
+        Assert::AreEqual((int)ra::data::models::AchievementType::Progression, editor.AchievementTypes().GetItemAt(2)->GetId());
+        Assert::AreEqual(std::wstring(L"Progression"), editor.AchievementTypes().GetItemAt(2)->GetLabel());
+        Assert::AreEqual((int)ra::data::models::AchievementType::Win, editor.AchievementTypes().GetItemAt(3)->GetId());
+        Assert::AreEqual(std::wstring(L"Win"), editor.AchievementTypes().GetItemAt(3)->GetLabel());
+
         Assert::AreEqual({ 6U }, editor.Formats().Count());
         Assert::AreEqual((int)ra::data::ValueFormat::Value, editor.Formats().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Value"), editor.Formats().GetItemAt(0)->GetLabel());
@@ -964,6 +974,31 @@ public:
         editor.SetPoints(50);
         Assert::AreEqual(50, editor.GetPoints());
         Assert::AreEqual(50, achievement.GetPoints());
+    }
+
+    TEST_METHOD(TestSyncAchievementType)
+    {
+        AssetEditorViewModelHarness editor;
+        AchievementModel achievement;
+        achievement.SetAchievementType(ra::data::models::AchievementType::Progression);
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        editor.LoadAsset(&achievement);
+        Assert::AreEqual(ra::data::models::AchievementType::Progression, editor.GetAchievementType());
+        Assert::AreEqual(ra::data::models::AchievementType::Progression, achievement.GetAchievementType());
+
+        editor.SetAchievementType(ra::data::models::AchievementType::None);
+        Assert::AreEqual(ra::data::models::AchievementType::None, editor.GetAchievementType());
+        Assert::AreEqual(ra::data::models::AchievementType::None, achievement.GetAchievementType());
+
+        editor.SetAchievementType(ra::data::models::AchievementType::Win);
+        Assert::AreEqual(ra::data::models::AchievementType::Win, editor.GetAchievementType());
+        Assert::AreEqual(ra::data::models::AchievementType::Win, achievement.GetAchievementType());
+
+        editor.SetAchievementType(ra::data::models::AchievementType::Missable);
+        Assert::AreEqual(ra::data::models::AchievementType::Missable, editor.GetAchievementType());
+        Assert::AreEqual(ra::data::models::AchievementType::Missable, achievement.GetAchievementType());
     }
 
     TEST_METHOD(TestSyncBadge)

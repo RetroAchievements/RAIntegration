@@ -1,5 +1,7 @@
 #include "AchievementModel.hh"
 
+#include "RA_Log.h"
+
 #include "data\context\GameContext.hh"
 
 #include "data\models\LocalBadgesModel.hh"
@@ -17,6 +19,7 @@ namespace data {
 namespace models {
 
 const IntModelProperty AchievementModel::PointsProperty("AchievementModel", "Points", 5);
+const IntModelProperty AchievementModel::AchievementTypeProperty("AchievementModel", "Type", ra::etoi(ra::data::models::AchievementType::None));
 const StringModelProperty AchievementModel::BadgeProperty("AchievementModel", "Badge", L"00000");
 const BoolModelProperty AchievementModel::PauseOnResetProperty("AchievementModel", "PauseOnReset", false);
 const BoolModelProperty AchievementModel::PauseOnTriggerProperty("AchievementModel", "PauseOnTrigger", false);
@@ -30,6 +33,7 @@ AchievementModel::AchievementModel() noexcept
     GSL_SUPPRESS_F6 SetValue(TypeProperty, ra::etoi(AssetType::Achievement));
 
     SetTransactional(PointsProperty);
+    SetTransactional(AchievementTypeProperty);
     SetTransactional(BadgeProperty);
 
     GSL_SUPPRESS_F6 AddAssetDefinition(m_pTrigger, TriggerProperty);
@@ -64,6 +68,11 @@ void AchievementModel::OnValueChanged(const IntModelProperty::ChangeArgs& args)
         {
             if (m_pAchievement)
                 SyncPoints();
+        }
+        else if (args.Property == AchievementTypeProperty)
+        {
+            if (m_pAchievement)
+                SyncAchievementType();
         }
         else if (args.Property == IDProperty)
         {
@@ -319,6 +328,28 @@ void AchievementModel::SyncPoints()
     m_pAchievement->public_.points = GetPoints();
 }
 
+void AchievementModel::SyncAchievementType()
+{
+    switch (GetAchievementType())
+    {
+        case ra::data::models::AchievementType::None:
+            m_pAchievement->public_.type = RC_CLIENT_ACHIEVEMENT_TYPE_STANDARD;
+            break;
+        case ra::data::models::AchievementType::Missable:
+            m_pAchievement->public_.type = RC_CLIENT_ACHIEVEMENT_TYPE_MISSABLE;
+            break;
+        case ra::data::models::AchievementType::Progression:
+            m_pAchievement->public_.type = RC_CLIENT_ACHIEVEMENT_TYPE_PROGRESSION;
+            break;
+        case ra::data::models::AchievementType::Win:
+            m_pAchievement->public_.type = RC_CLIENT_ACHIEVEMENT_TYPE_WIN;
+            break;
+        default:
+            m_pAchievement->public_.type = gsl::narrow_cast<uint8_t>(GetValue(AchievementTypeProperty));
+            break;
+    }
+}
+
 void AchievementModel::SyncCategory()
 {
     switch (GetCategory())
@@ -421,6 +452,26 @@ void AchievementModel::Attach(struct rc_client_achievement_info_t& pAchievement,
     SetUpdatedTime(pAchievement.updated_time);
     SetTrigger(sTrigger);
 
+    switch (pAchievement.public_.type)
+    {
+        case RC_CLIENT_ACHIEVEMENT_TYPE_STANDARD:
+            SetAchievementType(ra::data::models::AchievementType::None);
+            break;
+        case RC_CLIENT_ACHIEVEMENT_TYPE_MISSABLE:
+            SetAchievementType(ra::data::models::AchievementType::Missable);
+            break;
+        case RC_CLIENT_ACHIEVEMENT_TYPE_PROGRESSION:
+            SetAchievementType(ra::data::models::AchievementType::Progression);
+            break;
+        case RC_CLIENT_ACHIEVEMENT_TYPE_WIN:
+            SetAchievementType(ra::data::models::AchievementType::Win);
+            break;
+        default:
+            RA_LOG_ERR("Unsupported achievement type: %d", pAchievement.public_.type);
+            SetValue(AchievementTypeProperty, pAchievement.public_.type);
+            break;
+    }
+
     CreateServerCheckpoint();
     CreateLocalCheckpoint();
 
@@ -446,6 +497,7 @@ void AchievementModel::AttachAndInitialize(struct rc_client_achievement_info_t& 
     SyncCategory();
     SyncTrigger();
     SyncState();
+    SyncAchievementType();
 }
 
 void AchievementModel::Serialize(ra::services::TextWriter& pWriter) const
@@ -453,7 +505,27 @@ void AchievementModel::Serialize(ra::services::TextWriter& pWriter) const
     WriteQuoted(pWriter, GetLocalAssetDefinition(m_pTrigger));
     WritePossiblyQuoted(pWriter, GetLocalValue(NameProperty));
     WritePossiblyQuoted(pWriter, GetLocalValue(DescriptionProperty));
-    pWriter.Write(":::"); // progress/max/format/author
+    pWriter.Write("::"); // progress/max
+
+    switch (GetAchievementType())
+    {
+        case ra::data::models::AchievementType::None:
+            WritePossiblyQuoted(pWriter, "");
+            break;
+        case ra::data::models::AchievementType::Missable:
+            WritePossiblyQuoted(pWriter, "missable");
+            break;
+        case ra::data::models::AchievementType::Progression:
+            WritePossiblyQuoted(pWriter, "progression");
+            break;
+        case ra::data::models::AchievementType::Win:
+            WritePossiblyQuoted(pWriter, "win_condition");
+            break;
+        default:
+            WriteNumber(pWriter, GetValue(TypeProperty));
+            break;
+    }
+
     WritePossiblyQuoted(pWriter, GetLocalValue(AuthorProperty));
     WriteNumber(pWriter, GetLocalValue(PointsProperty));
     pWriter.Write("::::"); // created/modified/upvotes/downvotes
@@ -504,9 +576,9 @@ bool AchievementModel::Deserialize(ra::Tokenizer& pTokenizer)
     if (!pTokenizer.Consume(':'))
         return false;
 
-    // field 7: progress format (unused)
-    pTokenizer.AdvanceTo(':');
-    if (!pTokenizer.Consume(':'))
+    // field 7: achievement type
+    std::string sType;
+    if (!ReadPossiblyQuoted(pTokenizer, sType))
         return false;
 
     // field 8: author (unused)
@@ -554,6 +626,17 @@ bool AchievementModel::Deserialize(ra::Tokenizer& pTokenizer)
     SetPoints(nPoints);
     SetBadge(ra::Widen(sBadge));
     SetTrigger(sTrigger);
+
+    if (sType.empty())
+        SetAchievementType(ra::data::models::AchievementType::None);
+    else if (sType == "missable")
+        SetAchievementType(ra::data::models::AchievementType::Missable);
+    else if (sType == "progression")
+        SetAchievementType(ra::data::models::AchievementType::Progression);
+    else if (sType == "win_condition")
+        SetAchievementType(ra::data::models::AchievementType::Win);
+    else
+        SetValue(AchievementTypeProperty, atoi(sType.c_str()));
 
     return true;
 }

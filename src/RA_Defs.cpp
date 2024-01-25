@@ -98,7 +98,7 @@ std::wstring MemSizeFormat(unsigned nValue, MemSize nSize, MemFormat nFormat)
     }
 }
 
-const char* ValueFormatToString(ValueFormat nFormat)
+const char* ValueFormatToString(ValueFormat nFormat) noexcept
 {
     switch (nFormat)
     {
@@ -126,7 +126,7 @@ const char* ValueFormatToString(ValueFormat nFormat)
     }
 }
 
-ValueFormat ValueFormatFromString(const std::string& sFormat)
+ValueFormat ValueFormatFromString(const std::string& sFormat) noexcept
 {
     return ra::itoe<ValueFormat>(rc_parse_format(sFormat.c_str()));
 }

@@ -81,8 +81,8 @@ enum class ValueFormat : uint8_t
     UnsignedValue = RC_FORMAT_UNSIGNED_VALUE,
 };
 
-const char* ValueFormatToString(ValueFormat nFormat);
-ValueFormat ValueFormatFromString(const std::string& sFormat);
+const char* ValueFormatToString(ValueFormat nFormat) noexcept;
+ValueFormat ValueFormatFromString(const std::string& sFormat) noexcept;
 
 constexpr unsigned int MemSizeBits(MemSize nSize)
 {

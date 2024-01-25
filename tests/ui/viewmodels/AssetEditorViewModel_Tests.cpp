@@ -12,6 +12,7 @@
 #include "tests\ui\viewmodels\TriggerConditionAsserts.hh"
 
 #include "tests\mocks\MockAchievementRuntime.hh"
+#include "tests\mocks\MockClipboard.hh"
 #include "tests\mocks\MockClock.hh"
 #include "tests\mocks\MockConfiguration.hh"
 #include "tests\mocks\MockDesktop.hh"
@@ -1860,6 +1861,64 @@ public:
         Assert::AreEqual(std::wstring(L"0x01"), pCondition1->GetTargetValue());
         Assert::AreEqual(std::wstring(L"0x2222"), pCondition2->GetSourceValue());
         Assert::AreEqual(std::wstring(L"2.3"), pCondition2->GetTargetValue());
+    }
+
+    TEST_METHOD(TestDecimalPreferredUpdatesConditionsWhenError)
+    {
+        AssetEditorViewModelHarness editor;
+        editor.mockRuntime.ActivateAchievement(1234U, "0xH1234=1_M:0xH2345=23");
+        editor.mockGameContext.InitializeFromAchievementRuntime();
+        auto* vmAch = editor.mockGameContext.Assets().FindAchievement(1234U);
+        editor.mockRuntime.SyncAssets();
+
+        const auto* pTrigger = editor.mockRuntime.GetAchievementTrigger(1234U);
+        Expects(pTrigger != nullptr);
+
+        editor.LoadAsset(vmAch);
+        const auto* pCondition1 = editor.Trigger().Conditions().GetItemAt(0);
+        Expects(pCondition1 != nullptr);
+        const auto* pCondition2 = editor.Trigger().Conditions().GetItemAt(1);
+        Expects(pCondition2 != nullptr);
+
+        ra::services::mocks::MockClipboard mockClipboard;
+        mockClipboard.SetText(L"M:0x2345=23");
+        editor.Trigger().PasteFromClipboard();
+        mockClipboard.SetText(L"");
+
+        const auto* pCondition3 = editor.Trigger().Conditions().GetItemAt(2);
+        Expects(pCondition3 != nullptr);
+        Assert::IsTrue(editor.HasAssetValidationError());
+        Assert::AreEqual(std::wstring(L"Multiple measured targets"), editor.GetAssetValidationError());
+
+        Assert::IsFalse(editor.IsDecimalPreferred());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition1->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x01"), pCondition1->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x2345"), pCondition2->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x17"), pCondition2->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x2345"), pCondition3->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x17"), pCondition3->GetTargetValue());
+
+        // when the editor is in an error state, there's no backing trigger.
+        // the columns must be updated without being regenerated.
+        editor.SetDecimalPreferred(true);
+        Assert::IsTrue(editor.IsDecimalPreferred());
+        Assert::AreEqual({3U}, editor.Trigger().Conditions().Count());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition1->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"1"), pCondition1->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x2345"), pCondition2->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"23"), pCondition2->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x2345"), pCondition3->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"23"), pCondition3->GetTargetValue());
+
+        editor.SetDecimalPreferred(false);
+        Assert::IsFalse(editor.IsDecimalPreferred());
+        Assert::AreEqual({3U}, editor.Trigger().Conditions().Count());
+        Assert::AreEqual(std::wstring(L"0x1234"), pCondition1->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x01"), pCondition1->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x2345"), pCondition2->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x17"), pCondition2->GetTargetValue());
+        Assert::AreEqual(std::wstring(L"0x2345"), pCondition3->GetSourceValue());
+        Assert::AreEqual(std::wstring(L"0x17"), pCondition3->GetTargetValue());
     }
 
     TEST_METHOD(TestCaptureRestoreHits)

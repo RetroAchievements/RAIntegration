@@ -144,6 +144,7 @@ public:
     void DoFrame();
     void UpdateColors(const rc_trigger_t* pTrigger);
     void UpdateConditions();
+    void ToggleDecimal();
 
     static bool BuildHitChainTooltip(std::wstring& sTooltip, const ViewModelCollection<TriggerConditionViewModel>& vmConditions, gsl::index nIndex);
 

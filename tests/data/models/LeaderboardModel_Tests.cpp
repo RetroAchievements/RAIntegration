@@ -161,6 +161,13 @@ public:
         TestSerializeValueFormat(ValueFormat::Seconds, "SECS");
         TestSerializeValueFormat(ValueFormat::Minutes, "MINUTES");
         TestSerializeValueFormat(ValueFormat::SecondsAsMinutes, "SECS_AS_MINS");
+        TestSerializeValueFormat(ValueFormat::Fixed1, "FIXED1");
+        TestSerializeValueFormat(ValueFormat::Fixed2, "FIXED2");
+        TestSerializeValueFormat(ValueFormat::Fixed3, "FIXED3");
+        TestSerializeValueFormat(ValueFormat::Tens, "TENS");
+        TestSerializeValueFormat(ValueFormat::Hundreds, "HUNDREDS");
+        TestSerializeValueFormat(ValueFormat::Thousands, "THOUSANDS");
+        TestSerializeValueFormat(ValueFormat::UnsignedValue, "UNSIGNED");
     }
 
     TEST_METHOD(TestTransactionalProperties)

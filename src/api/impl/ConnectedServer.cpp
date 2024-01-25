@@ -789,16 +789,7 @@ UpdateLeaderboard::Response ConnectedServer::UpdateLeaderboard(const UpdateLeade
     api_params.cancel_trigger = request.CancelTrigger.c_str();
     api_params.value_definition = request.ValueDefinition.c_str();
     api_params.lower_is_better = request.LowerIsBetter ? 1 : 0;
-    
-    switch (request.Format)
-    {
-        case ra::data::ValueFormat::Centiseconds: api_params.format = "MILLISECS"; break;
-        case ra::data::ValueFormat::Frames: api_params.format = "TIME"; break;
-        case ra::data::ValueFormat::Minutes: api_params.format = "MINUTES"; break;
-        case ra::data::ValueFormat::Score: api_params.format = "SCORE"; break;
-        case ra::data::ValueFormat::Seconds: api_params.format = "TIMESECS"; break;
-        default: api_params.format = "VALUE"; break;
-    }
+    api_params.format = ValueFormatToString(request.Format);
 
     rc_api_request_t api_request;
     if (rc_api_init_update_leaderboard_request(&api_request, &api_params) == RC_OK)

@@ -141,7 +141,7 @@ public:
         Assert::AreEqual((int)ra::data::models::AchievementType::Win, editor.AchievementTypes().GetItemAt(3)->GetId());
         Assert::AreEqual(std::wstring(L"Win"), editor.AchievementTypes().GetItemAt(3)->GetLabel());
 
-        Assert::AreEqual({ 6U }, editor.Formats().Count());
+        Assert::AreEqual({ 13U }, editor.Formats().Count());
         Assert::AreEqual((int)ra::data::ValueFormat::Value, editor.Formats().GetItemAt(0)->GetId());
         Assert::AreEqual(std::wstring(L"Value"), editor.Formats().GetItemAt(0)->GetLabel());
         Assert::AreEqual((int)ra::data::ValueFormat::Score, editor.Formats().GetItemAt(1)->GetId());
@@ -154,6 +154,20 @@ public:
         Assert::AreEqual(std::wstring(L"Seconds"), editor.Formats().GetItemAt(4)->GetLabel());
         Assert::AreEqual((int)ra::data::ValueFormat::Minutes, editor.Formats().GetItemAt(5)->GetId());
         Assert::AreEqual(std::wstring(L"Minutes"), editor.Formats().GetItemAt(5)->GetLabel());
+        Assert::AreEqual((int)ra::data::ValueFormat::Fixed1, editor.Formats().GetItemAt(6)->GetId());
+        Assert::AreEqual(std::wstring(L"Fixed1"), editor.Formats().GetItemAt(6)->GetLabel());
+        Assert::AreEqual((int)ra::data::ValueFormat::Fixed2, editor.Formats().GetItemAt(7)->GetId());
+        Assert::AreEqual(std::wstring(L"Fixed2"), editor.Formats().GetItemAt(7)->GetLabel());
+        Assert::AreEqual((int)ra::data::ValueFormat::Fixed3, editor.Formats().GetItemAt(8)->GetId());
+        Assert::AreEqual(std::wstring(L"Fixed3"), editor.Formats().GetItemAt(8)->GetLabel());
+        Assert::AreEqual((int)ra::data::ValueFormat::Tens, editor.Formats().GetItemAt(9)->GetId());
+        Assert::AreEqual(std::wstring(L"Tens"), editor.Formats().GetItemAt(9)->GetLabel());
+        Assert::AreEqual((int)ra::data::ValueFormat::Hundreds, editor.Formats().GetItemAt(10)->GetId());
+        Assert::AreEqual(std::wstring(L"Hundreds"), editor.Formats().GetItemAt(10)->GetLabel());
+        Assert::AreEqual((int)ra::data::ValueFormat::Thousands, editor.Formats().GetItemAt(11)->GetId());
+        Assert::AreEqual(std::wstring(L"Thousands"), editor.Formats().GetItemAt(11)->GetLabel());
+        Assert::AreEqual((int)ra::data::ValueFormat::UnsignedValue, editor.Formats().GetItemAt(12)->GetId());
+        Assert::AreEqual(std::wstring(L"Unsigned Value"), editor.Formats().GetItemAt(12)->GetLabel());
 
         Assert::AreEqual({ 4U }, editor.LeaderboardParts().Count());
         Assert::AreEqual((int)AssetEditorViewModel::LeaderboardPart::Start, editor.LeaderboardParts().GetItemAt(0)->GetId());

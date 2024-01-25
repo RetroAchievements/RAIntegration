@@ -66,6 +66,13 @@ AssetEditorViewModel::AssetEditorViewModel() noexcept
     m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Centiseconds), L"Centiseconds");
     m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Seconds), L"Seconds");
     m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Minutes), L"Minutes");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Fixed1), L"Fixed1");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Fixed2), L"Fixed2");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Fixed3), L"Fixed3");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Tens), L"Tens");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Hundreds), L"Hundreds");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::Thousands), L"Thousands");
+    m_vFormats.Add(ra::etoi(ra::data::ValueFormat::UnsignedValue), L"Unsigned Value");
 
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Start), L"Start");
     m_vLeaderboardParts.Add(ra::etoi(LeaderboardPart::Cancel), L"Cancel");

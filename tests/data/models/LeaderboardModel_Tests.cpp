@@ -17,6 +17,8 @@ namespace data {
 namespace models {
 namespace tests {
 
+static bool g_bEventSeen = false; // must be global because callback cannot accept lambda
+
 TEST_CLASS(LeaderboardModel_Tests)
 {
 private:
@@ -247,6 +249,118 @@ public:
         leaderboard.SetSubmitTrigger("0xH1234=3");
         Assert::IsTrue(leaderboard.Validate());
         Assert::AreEqual(std::wstring(), leaderboard.GetValidationError());
+    }
+
+
+    TEST_METHOD(TestDeactivateHidesTracker)
+    {
+        LeaderboardModelHarness leaderboard;
+        leaderboard.SetID(1U);
+        leaderboard.SetName(L"Title");
+        leaderboard.SetDescription(L"Desc");
+        leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
+        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetLowerIsBetter(true);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        leaderboard.mockRuntime.MockGame();
+        auto* leaderboard_info = leaderboard.mockRuntime.MockLeaderboardWithLboard(leaderboard.GetID());
+        leaderboard.ReplaceAttached(*leaderboard_info);
+
+        rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info);
+
+        g_bEventSeen = false;
+        leaderboard.mockRuntime.GetClient()->callbacks.event_handler =
+            [](const rc_client_event_t* pEvent, rc_client_t*) {
+                Assert::AreEqual({RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE}, pEvent->type);
+                Assert::AreEqual({1}, pEvent->leaderboard_tracker->id);
+                g_bEventSeen = true;
+            };
+
+        leaderboard.SetState(AssetState::Primed);
+        Assert::IsTrue(leaderboard.IsActive());
+        Assert::IsFalse(g_bEventSeen);
+
+        leaderboard.SetState(AssetState::Inactive);
+        Assert::AreEqual(AssetState::Inactive, leaderboard.GetState());
+        Assert::IsFalse(leaderboard.IsActive());
+        Assert::IsTrue(g_bEventSeen);
+    }
+
+    TEST_METHOD(TestDeactivateDoesntHideSharedTracker)
+    {
+        LeaderboardModelHarness leaderboard;
+        leaderboard.SetID(1U);
+        leaderboard.SetName(L"Title");
+        leaderboard.SetDescription(L"Desc");
+        leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
+        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetLowerIsBetter(true);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        leaderboard.mockRuntime.MockGame();
+        auto* leaderboard_info = leaderboard.mockRuntime.MockLeaderboardWithLboard(leaderboard.GetID());
+        leaderboard.ReplaceAttached(*leaderboard_info);
+
+        rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info);
+        auto* leaderboard_info2 = leaderboard.mockRuntime.MockLeaderboardWithLboard(99);
+        rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info2);
+
+        g_bEventSeen = false;
+        leaderboard.mockRuntime.GetClient()->callbacks.event_handler =
+            [](const rc_client_event_t*, rc_client_t*) {
+                g_bEventSeen = true;
+            };
+
+        leaderboard.SetState(AssetState::Primed);
+        Assert::IsTrue(leaderboard.IsActive());
+        Assert::IsFalse(g_bEventSeen);
+
+        leaderboard.SetState(AssetState::Inactive);
+        Assert::AreEqual(AssetState::Inactive, leaderboard.GetState());
+        Assert::IsFalse(leaderboard.IsActive());
+        Assert::IsFalse(g_bEventSeen);
+    }
+
+    TEST_METHOD(TestDeleteHidesTracker)
+    {
+        LeaderboardModelHarness leaderboard;
+        leaderboard.SetID(1U);
+        leaderboard.SetName(L"Title");
+        leaderboard.SetDescription(L"Desc");
+        leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
+        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetLowerIsBetter(true);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        leaderboard.mockRuntime.MockGame();
+        auto* leaderboard_info = leaderboard.mockRuntime.MockLeaderboardWithLboard(leaderboard.GetID());
+        leaderboard.ReplaceAttached(*leaderboard_info);
+
+        rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info);
+
+        g_bEventSeen = false;
+        leaderboard.mockRuntime.GetClient()->callbacks.event_handler =
+            [](const rc_client_event_t* pEvent, rc_client_t*) {
+                Assert::AreEqual({RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE}, pEvent->type);
+                Assert::AreEqual({1}, pEvent->leaderboard_tracker->id);
+                g_bEventSeen = true;
+            };
+
+        leaderboard.SetState(AssetState::Primed);
+        Assert::IsTrue(leaderboard.IsActive());
+        Assert::IsFalse(g_bEventSeen);
+
+        leaderboard.SetDeleted();
+        Assert::AreEqual(AssetChanges::Deleted, leaderboard.GetChanges());
+
+        // deleting should deactivate the leaderboard, which should raise the indicator hide event
+        Assert::AreEqual(AssetState::Inactive, leaderboard.GetState());
+        Assert::IsFalse(leaderboard.IsActive());
+        Assert::IsTrue(g_bEventSeen);
     }
 };
 

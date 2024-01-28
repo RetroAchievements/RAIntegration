@@ -18,6 +18,7 @@
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockGameContext.hh"
 #include "tests\mocks\MockImageRepository.hh"
+#include "tests\mocks\MockOverlayManager.hh"
 
 using namespace Microsoft::VisualStudio::CppUnitTestFramework;
 
@@ -66,6 +67,7 @@ private:
         ra::data::context::mocks::MockGameContext mockGameContext;
         ra::ui::mocks::MockDesktop mockDesktop;
         ra::ui::mocks::MockImageRepository mockImageRepository;
+        ra::ui::viewmodels::mocks::MockOverlayManager mockOverlayManager;
         ra::ui::EditorTheme mockTheme;
 
         const std::wstring& GetWaitingLabel() const

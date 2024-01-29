@@ -91,20 +91,30 @@ void UnknownGameViewModel::CheckForPreviousAssociation()
     if (sHash.empty())
         return;
 
+    const auto nId = GetPreviousAssociation(sHash);
+    if (nId != 0)
+    {
+        const auto& sGameName = m_vGameTitles.GetLabelForId(nId);
+        if (!sGameName.empty())
+            SetSelectedGameId(nId);
+    }
+}
+
+unsigned int UnknownGameViewModel::GetPreviousAssociation(const std::wstring& sHash)
+{
     auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
     auto sMapping = pLocalStorage.ReadText(ra::services::StorageItemType::HashMapping, sHash);
+
     std::string sLine;
     if (sMapping && sMapping->GetLine(sLine))
     {
         const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
         const unsigned nId = DecodeID(sLine, sHash, pConsoleContext.Id());
         if (nId > 0)
-        {
-            const auto& sGameName = m_vGameTitles.GetLabelForId(nId);
-            if (!sGameName.empty())
-                SetSelectedGameId(nId);
-        }
+            return nId;
     }
+
+    return 0;
 }
 
 static constexpr unsigned GenerateMask(const std::wstring& sHash, ConsoleID nConsoleId)

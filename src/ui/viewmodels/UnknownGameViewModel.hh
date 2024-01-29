@@ -176,6 +176,8 @@ public:
     /// <returns><c>true</c> if the dialog should be closed, <c>false</c> if not.</returns>
     bool BeginTest();
 
+    static unsigned int GetPreviousAssociation(const std::wstring& sHash);
+
 protected:
     void OnValueChanged(const StringModelProperty::ChangeArgs& args) override;
     void OnValueChanged(const IntModelProperty::ChangeArgs& args) override;

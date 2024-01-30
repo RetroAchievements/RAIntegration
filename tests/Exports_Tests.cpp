@@ -143,6 +143,7 @@ public:
         bool bWasMenuRebuilt = false;
         harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
         harness.mockEmulatorContext.MockClient("RATests", "0.1.2.0");
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
         harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
@@ -172,8 +173,8 @@ public:
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Welcome UserDisplay"), pPopup->GetTitle());
-        Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
-        Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDetail());
+        Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
 
@@ -191,6 +192,7 @@ public:
         bool bWasMenuRebuilt = false;
         harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
         harness.mockEmulatorContext.MockClient("RATests", "0.1.2.0");
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
         harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
@@ -221,8 +223,8 @@ public:
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Welcome UserDisplay"), pPopup->GetTitle());
-        Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
-        Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDetail());
+        Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
 
@@ -236,6 +238,7 @@ public:
     TEST_METHOD(TestAttemptLoginSuccessWithMessages)
     {
         AttemptLoginHarness harness;
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
         harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
@@ -251,18 +254,19 @@ public:
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Welcome UserDisplay"), pPopup->GetTitle());
-        Assert::AreEqual(std::wstring(L"You have 3 new messages"), pPopup->GetDescription());
-        Assert::AreEqual(std::wstring(L"0 points"), pPopup->GetDetail());
+        Assert::AreEqual(std::wstring(L"0 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"You have 3 new messages"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
     }
 
-    TEST_METHOD(TestAttemptLoginSuccessWithPreviousSessionData)
+    TEST_METHOD(TestAttemptLoginSuccessWithPreviousSessionDataHardcore)
     {
         AttemptLoginHarness harness;
 
         bool bWasMenuRebuilt = false;
         harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
 
         harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
             "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
@@ -280,8 +284,39 @@ public:
         Assert::IsNotNull(pPopup);
         Ensures(pPopup != nullptr);
         Assert::AreEqual(std::wstring(L"Welcome back UserDisplay"), pPopup->GetTitle());
-        Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDescription());
-        Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDetail());
+        Assert::AreEqual(std::wstring(L"12345 points"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDetail());
+        Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
+        Assert::IsTrue(bWasMenuRebuilt);
+    }
+
+    TEST_METHOD(TestAttemptLoginSuccessWithPreviousSessionDataSoftcore)
+    {
+        AttemptLoginHarness harness;
+
+        bool bWasMenuRebuilt = false;
+        harness.mockEmulatorContext.SetRebuildMenuFunction([&bWasMenuRebuilt]() { bWasMenuRebuilt = true; });
+        harness.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
+
+        harness.mockRcheevosClient.MockResponse("r=login2&u=User&t=ApiToken",
+            "{\"Success\":true,\"User\":\"User\",\"DisplayName\":\"UserDisplay\","
+            "\"Token\":\"ApiToken\",\"Score\":12345,\"SoftcoreScore\":123,"
+            "\"Messages\":0,\"Permissions\":1,\"AccountType\":\"Registered\"}");
+
+        harness.mockConfiguration.SetUsername("User");
+        harness.mockConfiguration.SetApiToken("ApiToken");
+
+        harness.mockSessionTracker.MockSession(6U, 123456789, std::chrono::hours(2));
+
+        _RA_AttemptLogin(true);
+
+        const auto* pPopup = harness.mockOverlayManager.GetMessage(1);
+        Assert::IsNotNull(pPopup);
+        Ensures(pPopup != nullptr);
+        Assert::AreEqual(std::wstring(L"Welcome back UserDisplay"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"123 points (softcore)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"You have 0 new messages"), pPopup->GetDetail());
         Assert::AreEqual(ra::ui::ImageType::UserPic, pPopup->GetImage().Type());
         Assert::AreEqual(std::string("User"), pPopup->GetImage().Name());
         Assert::IsTrue(bWasMenuRebuilt);

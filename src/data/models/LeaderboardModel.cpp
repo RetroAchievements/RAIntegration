@@ -269,6 +269,15 @@ void LeaderboardModel::SyncValueFormat()
 {
     m_pLeaderboard->format = ra::etoi(GetValueFormat());
     m_pLeaderboard->public_.format = rc_client_map_leaderboard_format(m_pLeaderboard->format);
+
+    if (m_pLeaderboard->tracker)
+    {
+        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        auto* pGame = pRuntime.GetClient()->game;
+
+        rc_client_release_leaderboard_tracker(pGame, m_pLeaderboard);
+        rc_client_allocate_leaderboard_tracker(pGame, m_pLeaderboard);
+    }
 }
 
 void LeaderboardModel::SyncDefinition()
@@ -419,17 +428,7 @@ void LeaderboardModel::Serialize(ra::services::TextWriter& pWriter) const
     WriteQuoted(pWriter, GetLocalAssetDefinition(m_pSubmitTrigger));
     WriteQuoted(pWriter, GetLocalAssetDefinition(m_pValueDefinition));
 
-    switch (GetValueFormat())
-    {
-        case ValueFormat::Centiseconds: WritePossiblyQuoted(pWriter, "MILLISECS"); break;
-        case ValueFormat::Frames: WritePossiblyQuoted(pWriter, "FRAMES"); break;
-        case ValueFormat::Minutes: WritePossiblyQuoted(pWriter, "MINUTES"); break;
-        case ValueFormat::Score: WritePossiblyQuoted(pWriter, "SCORE"); break;
-        case ValueFormat::Seconds: WritePossiblyQuoted(pWriter, "SECS"); break;
-        case ValueFormat::SecondsAsMinutes: WritePossiblyQuoted(pWriter, "SECS_AS_MINS"); break;
-        case ValueFormat::Value: WritePossiblyQuoted(pWriter, "VALUE"); break;
-        default: WritePossiblyQuoted(pWriter, ""); break;
-    }
+    WritePossiblyQuoted(pWriter, ValueFormatToString(GetValueFormat()));
 
     WritePossiblyQuoted(pWriter, GetLocalValue(NameProperty));
     WritePossiblyQuoted(pWriter, GetLocalValue(DescriptionProperty));
@@ -487,22 +486,7 @@ bool LeaderboardModel::Deserialize(ra::Tokenizer& pTokenizer)
     SetValueDefinition(sValueDefinition);
     SetLowerIsBetter(nLowerIsBetter != 0);
 
-    if (sFormat == "VALUE")
-        SetValueFormat(ValueFormat::Value);
-    else if (sFormat == "MILLISECS")
-        SetValueFormat(ValueFormat::Centiseconds);
-    else if (sFormat == "SCORE")
-        SetValueFormat(ValueFormat::Score);
-    else if (sFormat == "FRAMES")
-        SetValueFormat(ValueFormat::Frames);
-    else if (sFormat == "SECS")
-        SetValueFormat(ValueFormat::Seconds);
-    else if (sFormat == "MINUTES")
-        SetValueFormat(ValueFormat::Minutes);
-    else if (sFormat == "SECS_AS_MINS")
-        SetValueFormat(ValueFormat::SecondsAsMinutes);
-    else
-        SetValueFormat(ra::itoe<ValueFormat>(ValueFormatProperty.GetDefaultValue()));
+    SetValueFormat(ValueFormatFromString(sFormat));
 
     return true;
 }

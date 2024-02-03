@@ -1629,13 +1629,6 @@ void AssetListViewModel::RevertSelected()
             // reverting a local item deletes it
             pAsset->SetDeleted();
 
-            // when an active achievement is deleted, the challenge indicator needs to be hidden as no event will be raised
-            if (pAsset->IsActive() && pAsset->GetType() == ra::data::models::AssetType::Achievement)
-            {
-                auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
-                pOverlayManager.RemoveChallengeIndicator(pAsset->GetID());
-            }
-
             // if the asset is open in the editor, select no asset
             auto& pWindowManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>();
             if (pWindowManager.AssetEditor.GetAsset() == pAsset)

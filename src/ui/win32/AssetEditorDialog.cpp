@@ -898,6 +898,8 @@ AssetEditorDialog::AssetEditorDialog(AssetEditorViewModel& vmAssetEditor)
     SetAnchor(IDC_RA_ID, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_CHK_ACTIVE, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_DESCRIPTION, Anchor::Top | Anchor::Left | Anchor::Right);
+    SetAnchor(IDC_RA_LBL_TYPE, Anchor::Top | Anchor::Right);
+    SetAnchor(IDC_RA_TYPE, Anchor::Top | Anchor::Right);
     SetAnchor(IDC_RA_LBL_POINTS, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_POINTS, Anchor::Top | Anchor::Left);
     SetAnchor(IDC_RA_LBL_FORMAT, Anchor::Top | Anchor::Left);

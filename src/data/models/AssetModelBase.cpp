@@ -273,6 +273,9 @@ void AssetModelBase::SetNew()
 
 void AssetModelBase::SetDeleted()
 {
+    if (IsActive())
+        SetState(AssetState::Inactive);
+
     SetValue(ChangesProperty, ra::etoi(AssetChanges::Deleted));
     SetValue(ValidationErrorProperty, ValidationErrorProperty.GetDefaultValue());
 }

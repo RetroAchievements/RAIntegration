@@ -19,6 +19,8 @@ namespace data {
 namespace models {
 namespace tests {
 
+static bool g_bEventSeen = false; // must be global because callback cannot accept lambda
+
 TEST_CLASS(AchievementModel_Tests)
 {
 private:
@@ -213,6 +215,75 @@ public:
 
         Assert::IsFalse(achievement.Validate());
         Assert::AreEqual(std::wstring(L"Serialized length exceeds limit: 65536/65535"), achievement.GetValidationError());
+    }
+
+    TEST_METHOD(TestDeactivateHidesIndicator)
+    {
+
+        AchievementModelHarness achievement;
+        achievement.mockGameContext.SetGameId(22);
+        achievement.SetID(53U);
+        achievement.SetBadge(L"12345.png");
+        achievement.SetTrigger("0xH1234=1_T:0xH2345=2");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        achievement.mockRuntime.MockGame();
+        auto* achievement_info = achievement.mockRuntime.MockAchievementWithTrigger(achievement.GetID());
+        achievement.ReplaceAttached(*achievement_info);
+
+        g_bEventSeen = false;
+        achievement.mockRuntime.GetClient()->callbacks.event_handler =
+            [](const rc_client_event_t* pEvent, rc_client_t*)
+            {
+                Assert::AreEqual({RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE}, pEvent->type);
+                Assert::AreEqual({53}, pEvent->achievement->id);
+                g_bEventSeen = true;
+            };
+
+        achievement.SetState(AssetState::Primed);
+        Assert::IsTrue(achievement.IsActive());
+        Assert::IsFalse(g_bEventSeen);
+
+        achievement.SetState(AssetState::Inactive);
+        Assert::AreEqual(AssetState::Inactive, achievement.GetState());
+        Assert::IsFalse(achievement.IsActive());
+        Assert::IsTrue(g_bEventSeen);
+    }
+
+    TEST_METHOD(TestDeleteHidesIndicator)
+    {
+        AchievementModelHarness achievement;
+        achievement.mockGameContext.SetGameId(22);
+        achievement.SetID(53U);
+        achievement.SetBadge(L"12345.png");
+        achievement.SetTrigger("0xH1234=1_T:0xH2345=2");
+        achievement.CreateServerCheckpoint();
+        achievement.CreateLocalCheckpoint();
+
+        achievement.mockRuntime.MockGame();
+        auto* achievement_info = achievement.mockRuntime.MockAchievementWithTrigger(achievement.GetID());
+        achievement.ReplaceAttached(*achievement_info);
+
+        g_bEventSeen = false;
+        achievement.mockRuntime.GetClient()->callbacks.event_handler = [](const rc_client_event_t* pEvent,
+                                                                          rc_client_t*) {
+            Assert::AreEqual({RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE}, pEvent->type);
+            Assert::AreEqual({53}, pEvent->achievement->id);
+            g_bEventSeen = true;
+        };
+
+        achievement.SetState(AssetState::Primed);
+        Assert::IsTrue(achievement.IsActive());
+        Assert::IsFalse(g_bEventSeen);
+
+        achievement.SetDeleted();
+        Assert::AreEqual(AssetChanges::Deleted, achievement.GetChanges());
+
+        // deleting should deactivate the achievement, which should raise the indicator hide event
+        Assert::AreEqual(AssetState::Inactive, achievement.GetState());
+        Assert::IsFalse(achievement.IsActive());
+        Assert::IsTrue(g_bEventSeen);
     }
 };
 

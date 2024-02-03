@@ -222,6 +222,12 @@ void AchievementModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
     {
         Expects(m_pAchievement->trigger != nullptr);
         m_pCapturedTriggerHits.Capture(m_pAchievement->trigger, GetTrigger());
+
+        if (m_pAchievement->trigger->state == RC_TRIGGER_STATE_PRIMED)
+        {
+            auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+            pRuntime.RaiseClientEvent(*m_pAchievement, RC_CLIENT_EVENT_ACHIEVEMENT_CHALLENGE_INDICATOR_HIDE);
+        }
     }
     else if (bIsActive && !bWasActive)
     {

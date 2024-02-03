@@ -720,6 +720,19 @@ std::string AchievementRuntime::GetAchievementBadge(const rc_client_achievement_
     return sBadgeName;
 }
 
+void AchievementRuntime::RaiseClientEvent(rc_client_achievement_info_t& pAchievement, uint32_t nEventType) const noexcept
+{
+    auto* client = GetClient();
+    if (client->game && client->callbacks.event_handler)
+    {
+        rc_client_event_t pEvent;
+        memset(&pEvent, 0, sizeof(pEvent));
+        pEvent.achievement = &pAchievement.public_;
+        pEvent.type = nEventType;
+        client->callbacks.event_handler(&pEvent, client);
+    }
+}
+
 void AchievementRuntime::UpdateActiveAchievements() noexcept
 {
     auto* client = GetClient();
@@ -770,9 +783,27 @@ rc_lboard_t* AchievementRuntime::GetLeaderboardDefinition(ra::LeaderboardID nId)
 
 void AchievementRuntime::ReleaseLeaderboardTracker(ra::LeaderboardID nId) noexcept
 {
-    rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(GetClient(), nId);
+    auto* pClient = GetClient();
+    rc_client_leaderboard_info_t* leaderboard = GetLeaderboardInfo(pClient, nId);
     if (leaderboard)
-        rc_client_release_leaderboard_tracker(GetClient()->game, leaderboard);
+    {
+        rc_client_leaderboard_tracker_info_t* tracker = leaderboard->tracker;
+        if (tracker)
+        {
+            rc_client_release_leaderboard_tracker(pClient->game, leaderboard);
+
+            if (tracker->pending_events & RC_CLIENT_LEADERBOARD_TRACKER_PENDING_EVENT_HIDE)
+            {
+                rc_client_event_t pEvent;
+                memset(&pEvent, 0, sizeof(pEvent));
+                pEvent.leaderboard_tracker = &tracker->public_;
+                pEvent.type = RC_CLIENT_EVENT_LEADERBOARD_TRACKER_HIDE;
+                pClient->callbacks.event_handler(&pEvent, pClient);
+
+                tracker->pending_events = RC_CLIENT_LEADERBOARD_TRACKER_PENDING_EVENT_NONE;
+            }
+        }
+    }
 }
 
 bool AchievementRuntime::HasRichPresence() const noexcept

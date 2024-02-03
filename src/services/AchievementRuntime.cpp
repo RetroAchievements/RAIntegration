@@ -1833,7 +1833,7 @@ static void HandleLeaderboardScoreboardEvent(const rc_client_leaderboard_scorebo
 
 static void HandleServerError(const rc_client_server_error_t& pServerError)
 {
-    if (strcmp(pServerError.api, "award_achievement"))
+    if (strcmp(pServerError.api, "award_achievement") == 0)
     {
         const auto nAchievementId = pServerError.related_id;
         const auto nPopupId = s_mAchievementPopups[nAchievementId];
@@ -1876,8 +1876,28 @@ static void HandleServerError(const rc_client_server_error_t& pServerError)
         return;
     }
 
-    if (strcmp(pServerError.api, "submit_lboard_entry"))
-    {}
+    if (strcmp(pServerError.api, "submit_lboard_entry") == 0)
+    {
+        const auto nLeaderboardId = pServerError.related_id;
+        const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+        const auto* pLeaderboard = pGameContext.Assets().FindLeaderboard(nLeaderboardId);
+        std::wstring sLeaderboardName = (pLeaderboard != nullptr) ?
+            pLeaderboard->GetName() : ra::StringPrintf(L"Leaderboard %u", nLeaderboardId);
+        const auto sErrorMessage = pServerError.error_message ?
+            ra::Widen(pServerError.error_message) : L"Error submitting leaderboard entry";
+
+        std::unique_ptr<ra::ui::viewmodels::PopupMessageViewModel> vmMessage(new ra::ui::viewmodels::PopupMessageViewModel);
+        vmMessage->SetTitle(L"Leaderboard Submit FAILED");
+        vmMessage->SetDescription(sLeaderboardName);
+        vmMessage->SetErrorDetail(sErrorMessage);
+
+        auto& pOverlayManager = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>();
+        pOverlayManager.QueueMessage(vmMessage);
+
+        ra::services::ServiceLocator::Get<ra::services::IAudioSystem>().PlayAudioFile(L"Overlay\\acherror.wav");
+
+        return;
+    }
 
     ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(
         ra::StringPrintf(L"%s:%u %s", pServerError.api, pServerError.related_id, pServerError.error_message));

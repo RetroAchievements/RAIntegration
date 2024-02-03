@@ -2043,6 +2043,39 @@ public:
         Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\unlock.wav"));
     }
 
+    TEST_METHOD(TestHandleAchievementTriggeredServerError)
+    {
+        AchievementRuntimeHarness runtime;
+        auto* pAch6 = runtime.MockAchievement(6U, "0xH0000=1");
+        memcpy(pAch6->public_.badge_name, "012345", 7);
+        pAch6->public_.points = 3;
+        runtime.WrapAchievement(pAch6);
+
+        rc_client_server_error_t server_error;
+        memset(&server_error, 0, sizeof(server_error));
+        server_error.api = "award_achievement";
+        server_error.error_message = "Cannot find the achievement with ID: 6";
+        server_error.related_id = 6;
+        server_error.result = RC_API_FAILURE;
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_SERVER_ERROR;
+        event.server_error = &server_error;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::AchievementTriggered, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Achievement Unlock FAILED"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Ach6 (3)"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Cannot find the achievement with ID: 6"), pPopup->GetDetail());
+        Assert::IsTrue(pPopup->IsDetailError());
+        Assert::AreEqual(ra::ui::ImageType::Badge, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string("012345"), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+    }
+
     TEST_METHOD(TestHandleChallengeIndicatorShowEvent)
     {
         AchievementRuntimeHarness runtime;
@@ -2999,7 +3032,37 @@ public:
         Assert::IsTrue(pEntry->IsHighlighted());
     }
 
-    // TODO: TestHandleServerError
+    TEST_METHOD(TestHandleLeaderboardServerError)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, true);
+        auto* pLeaderboard = runtime.MockLeaderboard(4U, "STA:0xH0000=1::CAN:0xH0000=1::SUB:0xH0000=2::VAL:0xH0001");
+        runtime.WrapLeaderboard(pLeaderboard);
+
+        rc_client_server_error_t server_error;
+        memset(&server_error, 0, sizeof(server_error));
+        server_error.api = "submit_lboard_entry";
+        server_error.error_message = "Cannot find the leaderboard with ID: 4";
+        server_error.related_id = 4;
+        server_error.result = RC_API_FAILURE;
+
+        rc_client_event_t event;
+        memset(&event, 0, sizeof(event));
+        event.type = RC_CLIENT_EVENT_SERVER_ERROR;
+        event.server_error = &server_error;
+        runtime.RaiseEvent(event);
+
+        auto* pPopup = runtime.mockOverlayManager.GetMessage(1);
+        Expects(pPopup != nullptr);
+        Assert::AreEqual(ra::ui::viewmodels::Popup::Message, pPopup->GetPopupType());
+        Assert::AreEqual(std::wstring(L"Leaderboard Submit FAILED"), pPopup->GetTitle());
+        Assert::AreEqual(std::wstring(L"Leaderboard4"), pPopup->GetDescription());
+        Assert::AreEqual(std::wstring(L"Cannot find the leaderboard with ID: 4"), pPopup->GetDetail());
+        Assert::IsTrue(pPopup->IsDetailError());
+        Assert::AreEqual(ra::ui::ImageType::None, pPopup->GetImage().Type());
+        Assert::AreEqual(std::string(), pPopup->GetImage().Name());
+        Assert::IsTrue(runtime.mockAudioSystem.WasAudioFilePlayed(L"Overlay\\acherror.wav"));
+    }
 
     TEST_METHOD(TestHandleResetEvent)
     {

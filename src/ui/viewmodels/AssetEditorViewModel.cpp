@@ -506,7 +506,7 @@ void AssetEditorViewModel::OnValueChanged(const BoolModelProperty::ChangeArgs& a
         auto& pConfiguration = ra::services::ServiceLocator::GetMutable<ra::services::IConfiguration>();
         pConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, args.tNewValue);
 
-        m_vmTrigger.UpdateConditions();
+        m_vmTrigger.ToggleDecimal();
     }
     else if (args.Property == IsVisibleProperty)
     {

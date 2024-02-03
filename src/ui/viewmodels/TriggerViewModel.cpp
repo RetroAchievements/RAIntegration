@@ -879,6 +879,41 @@ void TriggerViewModel::UpdateConditions(const GroupViewModel* pGroup)
     m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
 }
 
+static unsigned int ParseNumeric(const std::wstring& sValue)
+{
+    unsigned int nValue = 0;
+    std::wstring sError;
+
+    if (sValue.length() > 2 && sValue.at(1) == 'x' && ra::ParseHex(sValue, 0xFFFFFFFF, nValue, sError))
+        return nValue;
+
+    if (ra::ParseUnsignedInt(sValue, 0xFFFFFFFF, nValue, sError))
+        return nValue;
+
+    return 0;
+}
+
+void TriggerViewModel::ToggleDecimal()
+{
+    m_vConditions.RemoveNotifyTarget(m_pConditionsMonitor);
+    m_vConditions.BeginUpdate();
+
+    for (gsl::index nIndex = m_vConditions.Count() - 1; nIndex >= 0; --nIndex)
+    {
+        auto* pItem = m_vConditions.GetItemAt(nIndex);
+        if (!pItem)
+            continue;
+
+        if (pItem->GetSourceType() == TriggerOperandType::Value)
+            pItem->SetSourceValue(ParseNumeric(pItem->GetSourceValue()));
+        if (pItem->GetTargetType() == TriggerOperandType::Value)
+            pItem->SetTargetValue(ParseNumeric(pItem->GetTargetValue()));
+    }
+
+    m_vConditions.EndUpdate();
+    m_vConditions.AddNotifyTarget(m_pConditionsMonitor);
+}
+
 void TriggerViewModel::UpdateTotalHits()
 {
     unsigned int nHits = 0;

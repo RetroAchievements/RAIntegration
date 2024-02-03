@@ -161,9 +161,12 @@ rc_client_achievement_info_t* MockAchievementRuntime::ActivateAchievement(uint32
     m_mAchievementDefinitions[nId] = sTrigger;
 
     auto nSize = rc_trigger_size(sTrigger.c_str());
-    void* trigger_buffer = rc_buffer_alloc(&game->buffer, nSize);
-    achievement->trigger = rc_parse_trigger(trigger_buffer, sTrigger.c_str(), nullptr, 0);
-    achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+    if (nSize > 0)
+    {
+        void* trigger_buffer = rc_buffer_alloc(&game->buffer, nSize);
+        achievement->trigger = rc_parse_trigger(trigger_buffer, sTrigger.c_str(), nullptr, 0);
+        achievement->public_.state = RC_CLIENT_ACHIEVEMENT_STATE_ACTIVE;
+    }
 
     return achievement;
 }

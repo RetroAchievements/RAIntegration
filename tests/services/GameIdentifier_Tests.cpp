@@ -327,6 +327,66 @@ public:
         Assert::AreEqual(99U, identifier.IdentifyGame(&ROM.at(0), ROM.size()));
     }
 
+    TEST_METHOD(TestIdentifyHashMultiDiscCompatibility)
+    {
+        GameIdentifierHarness identifier;
+        identifier.mockEmulatorContext.MockGameTitle("TestGame");
+        identifier.mockUserContext.Initialize("User", "ApiToken");
+
+        identifier.mockServer.HandleRequest<ra::api::ResolveHash>(
+            [](const ra::api::ResolveHash::Request&, ra::api::ResolveHash::Response& response) {
+                response.Result = ra::api::ApiResult::Success;
+                response.GameId = 0U;
+                return true;
+            });
+
+        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::MessageBoxViewModel>(
+            [](ra::ui::viewmodels::MessageBoxViewModel&) {
+                // Play 'TestGame' in compatibility test mode?
+                return ra::ui::DialogResult::Yes;
+            });
+
+        bool bDialogShown = false;
+        identifier.mockDesktop.ExpectWindow<ra::ui::viewmodels::UnknownGameViewModel>(
+            [&bDialogShown](ra::ui::viewmodels::UnknownGameViewModel& vmUnknownGame) {
+                bDialogShown = true;
+                vmUnknownGame.SetSelectedGameId(23);
+                vmUnknownGame.BeginTest();
+                return ra::ui::DialogResult::OK;
+            });
+
+        const std::string sHash1 = "0123456789abcdef0123456789abcdef";
+        const std::string sHash2 = "abcdef0123456789abcdef0123456789";
+        Assert::AreEqual(23U, identifier.IdentifyHash(sHash1));
+        Assert::IsTrue(bDialogShown);
+
+        // context is not changed by calling IdentifyGame
+        Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(0U, identifier.mockGameContext.GameId());
+
+        // context is updated by calling ActivateGame
+        identifier.ActivateGame(23U);
+        Assert::AreEqual(ra::data::context::GameContext::Mode::CompatibilityTest, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(23U, identifier.mockGameContext.GameId());
+        Assert::AreEqual(sHash1, identifier.mockGameContext.GameHash());
+
+        // switching to second unknown disc should prompt to test compatibility
+        bDialogShown = false;
+        Assert::AreEqual(23U, identifier.IdentifyHash(sHash2));
+        Assert::IsTrue(bDialogShown);
+        Assert::AreEqual(ra::data::context::GameContext::Mode::CompatibilityTest, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(23U, identifier.mockGameContext.GameId());
+        Assert::AreEqual(sHash2, identifier.mockGameContext.GameHash());
+
+        // switching back to the first disc should not prompt to test compatibility
+        bDialogShown = false;
+        Assert::AreEqual(23U, identifier.IdentifyHash(sHash1));
+        Assert::IsFalse(bDialogShown);
+        Assert::AreEqual(ra::data::context::GameContext::Mode::CompatibilityTest, identifier.mockGameContext.GetMode());
+        Assert::AreEqual(23U, identifier.mockGameContext.GameId());
+        Assert::AreEqual(sHash1, identifier.mockGameContext.GameHash());
+    }
+
     TEST_METHOD(TestActivateGameZeroGameNotLoaded)
     {
         GameIdentifierHarness identifier;

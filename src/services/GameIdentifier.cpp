@@ -58,6 +58,19 @@ unsigned int GameIdentifier::IdentifyGame(const BYTE* pROM, size_t nROMSize)
     return IdentifyHash(hash);
 }
 
+static unsigned int FindCompatibilityMatch(const std::string& sHash)
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    if (pGameContext.GetMode() != ra::data::context::GameContext::Mode::CompatibilityTest)
+        return 0;
+
+    const auto nGameId = ra::ui::viewmodels::UnknownGameViewModel::GetPreviousAssociation(ra::Widen(sHash));
+    if (nGameId != pGameContext.GameId())
+        return 0;
+
+    return nGameId;
+}
+
 unsigned int GameIdentifier::IdentifyHash(const std::string& sHash)
 {
     if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
@@ -92,6 +105,11 @@ unsigned int GameIdentifier::IdentifyHash(const std::string& sHash)
     {
         nGameId = pIter->second;
         RA_LOG_INFO("Using previously looked up game ID %u for hash %s", nGameId, sHash);
+    }
+    else if ((nGameId = FindCompatibilityMatch(sHash)) != 0)
+    {
+        RA_LOG_INFO("Using previously associated compatibilty test game ID %u for hash %s", nGameId, sHash);
+        m_nPendingMode = ra::data::context::GameContext::Mode::CompatibilityTest;
     }
     else
     {

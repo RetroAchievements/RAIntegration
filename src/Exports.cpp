@@ -325,10 +325,18 @@ static void HandleLoginResponse(int nResult, const char* sErrorMessage, rc_clien
             new ra::ui::viewmodels::PopupMessageViewModel);
         vmMessage->SetTitle(ra::StringPrintf(L"Welcome %s%s", pSessionTracker.HasSessionData() ? L"back " : L"",
                                              pUser->display_name));
-        vmMessage->SetDescription((pUser->num_unread_messages == 1)
+
+        const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+        const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
+        if (bHardcore)
+            vmMessage->SetDescription(ra::StringPrintf(L"%u points", pUser->score));
+        else
+            vmMessage->SetDescription(ra::StringPrintf(L"%u points (softcore)", pUser->score_softcore));
+
+        vmMessage->SetDetail((pUser->num_unread_messages == 1)
             ? L"You have 1 new message"
             : ra::StringPrintf(L"You have %u new messages", pUser->num_unread_messages));
-        vmMessage->SetDetail(ra::StringPrintf(L"%u points", pUser->score));
+
         vmMessage->SetImage(ra::ui::ImageType::UserPic, pUser->username);
         ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::OverlayManager>().QueueMessage(vmMessage);
     }

@@ -6,6 +6,7 @@
 #include "data\context\EmulatorContext.hh"
 #include "data\context\UserContext.hh"
 
+#include "services\AchievementRuntime.hh"
 #include "services\IClock.hh"
 #include "services\IConfiguration.hh"
 
@@ -161,12 +162,14 @@ void OverlayViewModel::CreateRenderImage()
     const auto sUserName = ra::Widen(pUserContext.GetDisplayName());
     const auto szUsername = m_pSurface->MeasureText(nFont, sUserName);
 
-    const auto sPoints = ra::StringPrintf(L"%u Points", pUserContext.GetScore());
-    const auto szPoints = m_pSurface->MeasureText(nSubFont, sPoints);
-
     const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
     const auto bHardcore = pConfiguration.IsFeatureEnabled(ra::services::Feature::Hardcore);
-    const auto sHardcore = std::wstring(L"HARDCORE");
+    const auto* pClient = ra::services::ServiceLocator::Get<ra::services::AchievementRuntime>().GetClient();
+    const auto* pUser = rc_client_get_user_info(pClient);
+    const auto sPoints = ra::StringPrintf(L"%u Points", !pUser ? 0 : bHardcore ? pUser->score : pUser->score_softcore);
+    const auto szPoints = m_pSurface->MeasureText(nSubFont, sPoints);
+
+    const auto sHardcore = bHardcore ? std::wstring(L"HARDCORE") : std::wstring(L"SOFTCORE");
     const auto szHardcore = m_pSurface->MeasureText(nDetailFont, sHardcore);
 
     constexpr auto nImageSize = 64;
@@ -189,14 +192,13 @@ void OverlayViewModel::CreateRenderImage()
         m_pSurface->WriteText(nX + nPadding, nY + nPadding + szUsername.Height, nSubFont,
                               pTheme.ColorOverlaySubText(), sPoints);
 
-        if (bHardcore)
-            m_pSurface->WriteText(nX + nPadding, nY + nUserFrameHeight - nPadding - szHardcore.Height, nDetailFont,
-                                  pTheme.ColorError(), sHardcore);
+        m_pSurface->WriteText(nX + nPadding, nY + nUserFrameHeight - nPadding - szHardcore.Height, nDetailFont,
+                              pTheme.ColorOverlayDisabledText(), sHardcore);
     }
-    else if (bHardcore)
+    else if (!bHardcore)
     {
         m_pSurface->WriteText(nWidth - nMargin - szHardcore.Width, nMargin, nDetailFont,
-                              pTheme.ColorError(), sHardcore);
+                              pTheme.ColorOverlayDisabledText(), sHardcore);
     }
 
     // page header

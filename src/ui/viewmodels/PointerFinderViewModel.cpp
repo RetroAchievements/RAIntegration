@@ -261,11 +261,15 @@ void PointerFinderViewModel::Find()
     {
         auto* pPointer = &m_vResults.Add();
         pPointer->SetPointerAddress(L"No pointers found.");
+        SetValue(ResultCountTextProperty, L"0");
+    }
+    else
+    {
+        SetValue(ResultCountTextProperty, std::to_wstring(m_vResults.Count()));
     }
 
     m_vResults.EndUpdate();
 
-    SetValue(ResultCountTextProperty, std::to_wstring(m_vResults.Count()));
 
     if (!bPerformedSearch)
         ra::ui::viewmodels::MessageBoxViewModel::ShowMessage(L"Cannot find.", L"At least two unique addresses must be captured before potential pointers can be located.");

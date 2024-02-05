@@ -72,7 +72,7 @@ public:
     /// Returns the note associated with the specified address.
     /// </summary>
     /// <returns>The note associated to the address, <c>nullptr</c> if no note is associated to the address.</returns>
-    const std::wstring* FindIndirectCodeNote(ra::ByteAddress nAddress, unsigned nOffset) const noexcept;
+    const std::wstring* FindIndirectCodeNote(ra::ByteAddress nAddress, unsigned nOffset) const;
 
     /// <summary>
     /// Returns the number of bytes associated to the code note at the specified address.
@@ -104,7 +104,7 @@ public:
     /// <returns>
     ///  Returns 0xFFFFFFFF if not found, or not an indirect note.
     /// </returns>
-    ra::ByteAddress GetIndirectSource(ra::ByteAddress nAddress) const noexcept;
+    ra::ByteAddress GetIndirectSource(ra::ByteAddress nAddress) const;
 
     /// <summary>
     /// Returns the address of the next code note after the provided address.
@@ -209,11 +209,19 @@ protected:
         int Offset = 0;
     };
 
+    enum OffsetType
+    {
+        None = 0,
+        Converted,
+        Overflow,
+    };
+
     struct PointerData
     {
         ra::ByteAddress RawPointerValue = 0;
         ra::ByteAddress PointerValue = 0;
         unsigned int OffsetRange = 0;
+        OffsetType OffsetType = OffsetType::None;
         std::vector<OffsetCodeNote> OffsetNotes;
     };
 
@@ -223,7 +231,9 @@ protected:
     std::map<ra::ByteAddress, std::wstring> m_mPendingCodeNotes;
 
     const CodeNote* FindCodeNoteInternal(ra::ByteAddress nAddress) const;
-    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNote& pCodeNote)> callback, bool bIncludeDerived) const;
+    std::pair<ra::ByteAddress, const CodeNotesModel::CodeNote*> FindIndirectCodeNoteInternal(ra::ByteAddress nAddress) const;
+    void EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddress, const CodeNote& pCodeNote)> callback,
+                            bool bIncludeDerived) const;
 
     unsigned int m_nGameId = 0;
     bool m_bHasPointers = false;

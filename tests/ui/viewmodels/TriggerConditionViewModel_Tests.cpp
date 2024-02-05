@@ -773,6 +773,58 @@ public:
         Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\nThis is a note."), pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
     }
 
+    TEST_METHOD(TestTooltipIndirectAddressCodeNoteOverflow)
+    {
+        IndirectAddressTriggerViewModelHarness vmTrigger;
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        vmTrigger.Parse("I:0xX0000_0xH80000002=6");
+        vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        vmTrigger.mockGameContext.SetCodeNote({0U}, L"[32-bit pointer]\n+0x80000002=This is a note.");
+
+        const auto* pCondition = vmTrigger.Conditions().GetItemAt(1);
+        Expects(pCondition != nullptr);
+        Assert::IsTrue(pCondition->IsIndirect());
+
+        // $0001 = 0x80000003, 0x80000003+0x80000002 = 0x100000005 (too big for uint32_t) -> truncated to $0005
+        vmTrigger.SetMemory({0}, 0x03);
+        vmTrigger.SetMemory({1}, 0x00);
+        vmTrigger.SetMemory({2}, 0x00);
+        vmTrigger.SetMemory({3}, 0x80);
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\nThis is a note."),
+                         pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        // $0001 = 0x80000004, 0x8000004+0x80000002 = 0x100000006 (too big for uint32_t) -> truncated to $0006
+        vmTrigger.SetMemory({0}, 4);
+        Assert::AreEqual(std::wstring(L"0x0006 (indirect)\r\nThis is a note."),
+                         pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
+    TEST_METHOD(TestTooltipIndirectAddressCodeNoteMasked)
+    {
+        IndirectAddressTriggerViewModelHarness vmTrigger;
+        ra::data::context::mocks::MockConsoleContext mockConsoleContext;
+        vmTrigger.Parse("I:0xX0000&33554431_0xH0002=6"); // 33554431 = 0x01FFFFFF
+        vmTrigger.mockConfiguration.SetFeatureEnabled(ra::services::Feature::PreferDecimal, true);
+        vmTrigger.mockGameContext.SetCodeNote({0U}, L"[32-bit pointer]\n+2=This is a note.");
+
+        const auto* pCondition = vmTrigger.Conditions().GetItemAt(1);
+        Expects(pCondition != nullptr);
+        Assert::IsTrue(pCondition->IsIndirect());
+
+        // $0001 = 0x80000003, 0x80000003&0x01FFFFFF=0x00000003+2 = 0x00000005
+        vmTrigger.SetMemory({0}, 0x03);
+        vmTrigger.SetMemory({1}, 0x00);
+        vmTrigger.SetMemory({2}, 0x00);
+        vmTrigger.SetMemory({3}, 0x80);
+        Assert::AreEqual(std::wstring(L"0x0005 (indirect)\r\nThis is a note."),
+                         pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+
+        // $0001 = 0x80000004, 0x8000004+0x80000002 = 0x100000006 (too big for uint32_t) -> truncated to $0006
+        vmTrigger.SetMemory({0}, 4);
+        Assert::AreEqual(std::wstring(L"0x0006 (indirect)\r\nThis is a note."),
+                         pCondition->GetTooltip(TriggerConditionViewModel::SourceValueProperty));
+    }
+
     TEST_METHOD(TestTooltipDoubleIndirectAddress)
     {
         IndirectAddressTriggerViewModelHarness vmTrigger;

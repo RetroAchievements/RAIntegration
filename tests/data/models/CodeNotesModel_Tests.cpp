@@ -240,6 +240,7 @@ public:
         TestCodeNoteSize(L"[float bigendian] Test", 4U, MemSize::FloatBigEndian);
         TestCodeNoteSize(L"[be float] Test", 4U, MemSize::FloatBigEndian);
         TestCodeNoteSize(L"[bigendian float] Test", 4U, MemSize::FloatBigEndian);
+        TestCodeNoteSize(L"[32-bit] pointer to float", 4U, MemSize::ThirtyTwoBit);
 
         TestCodeNoteSize(L"[MBF32] Test", 4U, MemSize::MBF32);
         TestCodeNoteSize(L"[MBF40] Test", 5U, MemSize::MBF32);

@@ -158,9 +158,9 @@ public:
     {
         TestSerializeValueFormat(ValueFormat::Score, "SCORE");
         TestSerializeValueFormat(ValueFormat::Value, "VALUE");
-        TestSerializeValueFormat(ValueFormat::Frames, "FRAMES");
+        TestSerializeValueFormat(ValueFormat::Frames, "TIME");
         TestSerializeValueFormat(ValueFormat::Centiseconds, "MILLISECS");
-        TestSerializeValueFormat(ValueFormat::Seconds, "SECS");
+        TestSerializeValueFormat(ValueFormat::Seconds, "TIMESECS");
         TestSerializeValueFormat(ValueFormat::Minutes, "MINUTES");
         TestSerializeValueFormat(ValueFormat::SecondsAsMinutes, "SECS_AS_MINS");
         TestSerializeValueFormat(ValueFormat::Fixed1, "FIXED1");

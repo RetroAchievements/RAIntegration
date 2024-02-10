@@ -465,6 +465,9 @@
     <ClCompile Include="..\src\services\AchievementRuntimeExports.cpp">
       <Filter>Code</Filter>
     </ClCompile>
+    <ClCompile Include="services\AchievementRuntimeExports_Tests.cpp">
+      <Filter>Tests\Services</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="base.props" />

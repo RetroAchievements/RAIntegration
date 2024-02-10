@@ -33,6 +33,8 @@ public:
             s_pIntegrationMenu = nullptr;
             rc_buffer_destroy(&s_pIntegrationMenuBuffer);
         }
+
+        s_bIsExternalRcheevosClient = false;
     }
 
     static void enable_logging(rc_client_t* client, int level, rc_client_message_callback_t callback)
@@ -818,6 +820,11 @@ rc_buffer_t AchievementRuntimeExports::s_pIntegrationMenuBuffer{};
 
 } // namespace services
 } // namespace ra
+
+void ResetExternalRcheevosClient() noexcept
+{
+    ra::services::AchievementRuntimeExports::destroy();
+}
 
 bool IsExternalRcheevosClient() noexcept
 {

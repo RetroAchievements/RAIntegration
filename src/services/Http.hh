@@ -17,6 +17,7 @@ public:
         Forbidden = 403,
         NotFound = 404,
         TooManyRequests = 429,
+        NotImplemented = 501,
     };
 
     class Response

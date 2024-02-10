@@ -255,6 +255,7 @@ public:
         Assert::IsTrue(bDialogSeen);
         Assert::AreEqual({ 0U }, vmPointerFinder.PotentialPointers().Count());
     }
+
     TEST_METHOD(TestFindOffsetZero)
     {
         PointerFinderViewModelHarness vmPointerFinder;
@@ -281,6 +282,7 @@ public:
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 1U }, vmPointerFinder.PotentialPointers().Count());
         vmPointerFinder.AssertRow(0, L"0x0008", L"+0x00", L"001c", L"0034", L"", L"");
+        Assert::AreEqual(std::wstring(L"1"), vmPointerFinder.GetResultCountText());
     }
 
     TEST_METHOD(TestFindOffsetPositive)
@@ -309,6 +311,7 @@ public:
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 1U }, vmPointerFinder.PotentialPointers().Count());
         vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
+        Assert::AreEqual(std::wstring(L"1"), vmPointerFinder.GetResultCountText());
     }
     
     TEST_METHOD(TestFindOffsetNegative)
@@ -337,6 +340,7 @@ public:
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 1U }, vmPointerFinder.PotentialPointers().Count());
         vmPointerFinder.AssertRow(0, L"0x0008", L"+0xFFFFFFFC", L"001c", L"0034", L"", L""); // 1c-04=>18, 34-04=>30
+        Assert::AreEqual(std::wstring(L"1"), vmPointerFinder.GetResultCountText());
     }
 
     TEST_METHOD(TestFindOffsetMultiplePointers)
@@ -371,6 +375,7 @@ public:
         vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
         vmPointerFinder.AssertRow(1, L"0x0070", L"+0x04", L"001c", L"0034", L"", L""); // 1c+04=>20, 34+04=>38
         vmPointerFinder.AssertRow(2, L"0x009c", L"+0x00", L"0020", L"0038", L"", L""); // 20+00=>20, 38+00=>38
+        Assert::AreEqual(std::wstring(L"3"), vmPointerFinder.GetResultCountText());
     }
     
     TEST_METHOD(TestFindOffsetMultipleStates)
@@ -410,6 +415,7 @@ public:
         Assert::AreEqual({ 2U }, vmPointerFinder.PotentialPointers().Count());
         vmPointerFinder.AssertRow(0, L"0x0008", L"+0x04", L"001c", L"001c", L"0034", L"0034"); // 1c+04=>20, 34+04=>38
         vmPointerFinder.AssertRow(1, L"0x00a4", L"+0x00", L"0020", L"0020", L"0038", L"0038"); // 20+00=>20, 38+00=>38
+        Assert::AreEqual(std::wstring(L"2"), vmPointerFinder.GetResultCountText());
     }
 
     TEST_METHOD(TestFindOffsetNoMatches)
@@ -434,6 +440,7 @@ public:
         Assert::IsFalse(vmPointerFinder.mockDesktop.WasDialogShown());
         Assert::AreEqual({ 1U }, vmPointerFinder.PotentialPointers().Count());
         vmPointerFinder.AssertRow(0, L"No pointers found.", L"", L"", L"", L"", L"");
+        Assert::AreEqual(std::wstring(L"0"), vmPointerFinder.GetResultCountText());
     }
 
     TEST_METHOD(TestBookmarkSelected)

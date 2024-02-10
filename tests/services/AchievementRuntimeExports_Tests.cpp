@@ -33,14 +33,19 @@ namespace tests {
 
 constexpr int ResetEventBit = (1 << 24);
 
-class AchievementRuntimeHarness : public AchievementRuntime
+class AchievementRuntimeExportsHarness : public AchievementRuntime
 {
 public:
-    GSL_SUPPRESS_F6 AchievementRuntimeHarness() : m_Override(this)
+    GSL_SUPPRESS_F6 AchievementRuntimeExportsHarness() : m_Override(this)
     {
         mockUserContext.Initialize("User", "ApiToken");
         GetClient()->user.display_name = "UserDisplay";
         GetClient()->state.user = RC_CLIENT_USER_STATE_LOGGED_IN;
+    }
+
+    ~AchievementRuntimeExportsHarness()
+    {
+        ResetExternalRcheevosClient();
     }
 
     ra::data::context::mocks::MockEmulatorContext mockEmulatorContext;
@@ -51,7 +56,7 @@ public:
     {
         s_pRuntimeHarness = this;
 
-        _Rcheevos_SetRAIntegrationEventHandler(&m_pExternalClient, AchievementRuntimeHarness::DispatchRAIntegrationEvent);
+        _Rcheevos_SetRAIntegrationEventHandler(&m_pExternalClient, DispatchRAIntegrationEvent);
     }
 
     void InitializeClientEventHandler()
@@ -62,7 +67,7 @@ public:
         memset(&pClient, 0, sizeof(pClient));
         _Rcheevos_GetExternalClient(&pClient, 1);
 
-        pClient.set_event_handler(&m_pExternalClient, AchievementRuntimeHarness::DispatchEvent);
+        pClient.set_event_handler(&m_pExternalClient, DispatchEvent);
     }
 
     void AssertHardcoreChangedEventSeen()
@@ -103,9 +108,9 @@ public:
         memset(&pClient, 0, sizeof(pClient));
         _Rcheevos_GetExternalClient(&pClient, 1);
 
-        pClient.set_read_memory(&m_pExternalClient, AchievementRuntimeHarness::DispatchReadMemory);
+        pClient.set_read_memory(&m_pExternalClient, DispatchReadMemory);
 
-        _Rcheevos_SetRAIntegrationWriteMemoryFunction(&m_pExternalClient, AchievementRuntimeHarness::DispatchWriteMemory);
+        _Rcheevos_SetRAIntegrationWriteMemoryFunction(&m_pExternalClient, DispatchWriteMemory);
     }
 
     uint8_t GetMemoryByte(uint32_t nAddress)
@@ -171,14 +176,14 @@ private:
         memcpy(&s_pRuntimeHarness->m_vMockMemory.at(address), buffer, num_bytes);
     }
 
-    static AchievementRuntimeHarness* s_pRuntimeHarness;
+    static AchievementRuntimeExportsHarness* s_pRuntimeHarness;
     rc_client_t m_pExternalClient{};
     int m_nEventsSeen = 0;
     std::vector<uint32_t> m_vMenuItemsChanged;
     std::vector<uint8_t> m_vMockMemory;
 };
 
-AchievementRuntimeHarness* AchievementRuntimeHarness::s_pRuntimeHarness = nullptr;
+AchievementRuntimeExportsHarness* AchievementRuntimeExportsHarness::s_pRuntimeHarness = nullptr;
 
 TEST_CLASS(AchievementRuntimeExports_Tests)
 {
@@ -272,7 +277,7 @@ private:
 public:
     TEST_METHOD(TestGetExternalClientV1)
     {
-        AchievementRuntimeHarness runtime;
+        AchievementRuntimeExportsHarness runtime;
 
         rc_client_external_t pClient;
         memset(&pClient, 0, sizeof(pClient));
@@ -286,7 +291,7 @@ public:
 
     TEST_METHOD(TestRAIntegrationGetMenu)
     {
-        AchievementRuntimeHarness runtime;
+        AchievementRuntimeExportsHarness runtime;
         runtime.mockUserContext.Logout();
 
         const rc_client_raintegration_menu_t* pMenu;
@@ -354,7 +359,7 @@ public:
     
     TEST_METHOD(TestSyncHardcore)
     {
-        AchievementRuntimeHarness runtime;
+        AchievementRuntimeExportsHarness runtime;
         runtime.InitializeEventHandler();
         runtime.GetClient()->state.hardcore = 0;
 
@@ -373,7 +378,7 @@ public:
 
     TEST_METHOD(TestReadWriteMemory)
     {
-        AchievementRuntimeHarness runtime;
+        AchievementRuntimeExportsHarness runtime;
         ra::data::context::mocks::MockConsoleContext mockConsole(NES, L"NES");
         runtime.InitializeMemoryFunctions();
 
@@ -393,7 +398,7 @@ public:
 
     TEST_METHOD(TestPauseEvent)
     {
-        AchievementRuntimeHarness runtime;
+        AchievementRuntimeExportsHarness runtime;
         ra::ui::mocks::MockDesktop mockDesktop; // for InvokeOnUIThread
         runtime.InitializeEventHandler();
 
@@ -408,7 +413,7 @@ public:
 
     TEST_METHOD(TestResetEvent)
     {
-        AchievementRuntimeHarness runtime;
+        AchievementRuntimeExportsHarness runtime;
         ra::ui::mocks::MockDesktop mockDesktop; // for InvokeOnUIThread
         runtime.InitializeClientEventHandler();
 

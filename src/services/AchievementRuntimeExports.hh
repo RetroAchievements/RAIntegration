@@ -4,6 +4,7 @@
 
 void SyncClientExternalRAIntegrationMenuItem(int nMenuItemId);
 void SyncClientExternalHardcoreState();
-bool IsExternalRcheevosClient();
+bool IsExternalRcheevosClient() noexcept;
+void ResetExternalRcheevosClient() noexcept;
 
 #endif // !RA_SERVICES_ACHIEVEMENT_RUNTIME_EXPORTS_HH

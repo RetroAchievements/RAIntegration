@@ -278,20 +278,12 @@ void CodeNotesModel::ExtractSize(CodeNote& pNote)
     }
 }
 
-static unsigned ReadPointer(const ra::data::context::EmulatorContext& pEmulatorContext,
-    ra::ByteAddress nPointerAddress, MemSize nSize)
+static ra::ByteAddress ConvertPointer(ra::ByteAddress nAddress)
 {
-    auto nAddress = pEmulatorContext.ReadMemory(nPointerAddress, nSize);
-
-    // assume anything annotated as a 32-bit pointer is providing a real (non-translated) address and
-    // attempt to do the translation ourself.
-    if (nSize == MemSize::ThirtyTwoBit)
-    {
-        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
-        const auto nConvertedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
-        if (nConvertedAddress != 0xFFFFFFFF)
-            nAddress = nConvertedAddress;
-    }
+    const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    const auto nConvertedAddress = pConsoleContext.ByteAddressFromRealAddress(nAddress);
+    if (nConvertedAddress != 0xFFFFFFFF)
+        nAddress = nConvertedAddress;
 
     return nAddress;
 }
@@ -322,9 +314,9 @@ void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sA
                 try
                 {
                     if (sNextNote.length() > 2 && sNextNote.at(1) == 'x')
-                        offsetNote.Offset = gsl::narrow_cast<int>(std::wcstol(sNextNote.c_str() + 2, &pEnd, 16));
+                        offsetNote.Offset = gsl::narrow_cast<int>(std::wcstoll(sNextNote.c_str() + 2, &pEnd, 16));
                     else
-                        offsetNote.Offset = gsl::narrow_cast<int>(std::wcstol(sNextNote.c_str(), &pEnd, 10));
+                        offsetNote.Offset = gsl::narrow_cast<int>(std::wcstoll(sNextNote.c_str(), &pEnd, 10));
                 }
                 catch (const std::exception&)
                 {
@@ -367,9 +359,33 @@ void CodeNotesModel::AddCodeNote(ra::ByteAddress nAddress, const std::string& sA
                         pointerNote.Bytes = 4;
                     }
 
-                    // capture the initial value of the pointer
                     const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
-                    const auto nPointerValue = ReadPointer(pEmulatorContext, nAddress, pointerNote.MemSize);
+
+                    // assume anything annotated as a 32-bit pointer will read a real (non-translated) address and
+                    // flag it to be converted to an RA address when evaluating indirect notes in DoFrame()
+                    if (pointerNote.MemSize == MemSize::ThirtyTwoBit ||
+                        pointerNote.MemSize == MemSize::ThirtyTwoBitBigEndian)
+                    {
+                        const auto nMaxAddress = pEmulatorContext.TotalMemorySize();
+
+                        pointerData->OffsetType = OffsetType::Converted;
+
+                        // if any offset exceeds the available memory for the system, assume the user is leveraging
+                        // overflow math instead of masking, and don't attempt to translate the addresses.
+                        for (const auto& pNote : pointerData->OffsetNotes)
+                        {
+                            if (ra::to_unsigned(pNote.Offset) >= nMaxAddress)
+                            {
+                                pointerData->OffsetType = OffsetType::Overflow;
+                                break;
+                            }
+                        }
+                    }
+
+                    // capture the initial value of the pointer
+                    pointerData->RawPointerValue = pEmulatorContext.ReadMemory(nAddress, pointerNote.MemSize);
+                    const auto nPointerValue = (pointerData->OffsetType == OffsetType::Converted)
+                        ? ConvertPointer(pointerData->RawPointerValue) : pointerData->RawPointerValue;
                     pointerData->PointerValue = nPointerValue;
                     pointerNote.PointerData = std::move(pointerData);
 
@@ -451,14 +467,18 @@ ra::ByteAddress CodeNotesModel::FindCodeNoteStart(ra::ByteAddress nAddress) cons
             if (pCodeNote.second.PointerData == nullptr)
                 continue;
 
-            if (nAddress >= pCodeNote.second.PointerData->PointerValue &&
-                nAddress < pCodeNote.second.PointerData->PointerValue + pCodeNote.second.PointerData->OffsetRange)
+            const auto nPointerValue = pCodeNote.second.PointerData->PointerValue;
+            const auto nConvertedPointerValue = (pCodeNote.second.PointerData->OffsetType == OffsetType::Overflow)
+                ? ConvertPointer(nPointerValue) : nPointerValue;
+
+            if (nAddress >= nConvertedPointerValue &&
+                nAddress < nConvertedPointerValue + pCodeNote.second.PointerData->OffsetRange)
             {
-                const auto nOffset = ra::to_signed(nAddress - pCodeNote.second.PointerData->PointerValue);
+                const auto nOffset = ra::to_signed(nAddress - nPointerValue);
                 for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
                 {
                     if (pOffsetNote.Offset <= nOffset && pOffsetNote.Offset + ra::to_signed(pOffsetNote.Bytes) > nOffset)
-                        return pCodeNote.second.PointerData->PointerValue + pOffsetNote.Offset;
+                        return nPointerValue + pOffsetNote.Offset;
                 }
             }
         }
@@ -540,9 +560,13 @@ std::wstring CodeNotesModel::FindCodeNote(ra::ByteAddress nAddress, MemSize nSiz
             if (!pIter2.second.PointerData)
                 continue;
 
-            if (nLastAddress >= pIter2.second.PointerData->PointerValue)
+            const auto nPointerValue = pIter2.second.PointerData->PointerValue;
+            const auto nConvertedPointerValue = (pIter2.second.PointerData->OffsetType == OffsetType::Overflow)
+                ? ConvertPointer(nPointerValue) : nPointerValue;
+
+            if (nLastAddress >= nConvertedPointerValue)
             {
-                const auto nOffset = ra::to_signed(nAddress - pIter2.second.PointerData->PointerValue);
+                const auto nOffset = ra::to_signed(nAddress - nPointerValue);
                 const auto nLastOffset = nOffset + ra::to_signed(nCheckBytes) - 1;
                 for (const auto& pNote : pIter2.second.PointerData->OffsetNotes)
                 {
@@ -657,29 +681,40 @@ const CodeNotesModel::CodeNote* CodeNotesModel::FindCodeNoteInternal(ra::ByteAdd
         return &pIter->second;
 
     if (m_bHasPointers)
-    {
-        for (const auto& pCodeNote : m_mCodeNotes)
-        {
-            if (pCodeNote.second.PointerData == nullptr)
-                continue;
-
-            if (nAddress >= pCodeNote.second.PointerData->PointerValue &&
-                nAddress < pCodeNote.second.PointerData->PointerValue + pCodeNote.second.PointerData->OffsetRange)
-            {
-                const auto nOffset = ra::to_signed(nAddress - pCodeNote.second.PointerData->PointerValue);
-                for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
-                {
-                    if (pOffsetNote.Offset == nOffset)
-                        return &pOffsetNote;
-                }
-            }
-        }
-    }
+        return FindIndirectCodeNoteInternal(nAddress).second;
 
     return nullptr;
 }
 
-const std::wstring* CodeNotesModel::FindIndirectCodeNote(ra::ByteAddress nAddress, unsigned nOffset) const noexcept
+std::pair<ra::ByteAddress, const CodeNotesModel::CodeNote*>
+    CodeNotesModel::FindIndirectCodeNoteInternal(ra::ByteAddress nAddress) const
+{
+    for (const auto& pCodeNote : m_mCodeNotes)
+    {
+        if (pCodeNote.second.PointerData == nullptr)
+            continue;
+
+        // if the pointer address was not converted, do so now.
+        const auto nPointerValue = pCodeNote.second.PointerData->PointerValue;
+        const auto nConvertedPointerValue = (pCodeNote.second.PointerData->OffsetType == OffsetType::Overflow)
+            ? ConvertPointer(nPointerValue) : nPointerValue;
+
+        if (nAddress >= nConvertedPointerValue &&
+            nAddress < nConvertedPointerValue + pCodeNote.second.PointerData->OffsetRange)
+        {
+            const auto nOffset = ra::to_signed(nAddress - nPointerValue);
+            for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
+            {
+                if (pOffsetNote.Offset == nOffset)
+                    return {pCodeNote.first, &pOffsetNote};
+            }
+        }
+    }
+
+    return {0, nullptr};
+}
+
+const std::wstring* CodeNotesModel::FindIndirectCodeNote(ra::ByteAddress nAddress, unsigned nOffset) const
 {
     if (!m_bHasPointers)
         return nullptr;
@@ -691,10 +726,24 @@ const std::wstring* CodeNotesModel::FindIndirectCodeNote(ra::ByteAddress nAddres
 
         if (nAddress == pCodeNote.first)
         {
+            // look for the offset directly
             for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
             {
                 if (pOffsetNote.Offset == ra::to_signed(nOffset))
                     return &pOffsetNote.Note;
+            }
+
+            if (pCodeNote.second.PointerData->OffsetType == OffsetType::Overflow)
+            {
+                // direct offset not found, look for converted offset
+                const auto nConvertedAddress = ConvertPointer(pCodeNote.second.PointerData->RawPointerValue);
+                nOffset += nConvertedAddress - pCodeNote.second.PointerData->RawPointerValue;
+
+                for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
+                {
+                    if (pOffsetNote.Offset == ra::to_signed(nOffset))
+                        return &pOffsetNote.Note;
+                }
             }
 
             break;
@@ -704,26 +753,13 @@ const std::wstring* CodeNotesModel::FindIndirectCodeNote(ra::ByteAddress nAddres
     return nullptr;
 }
 
-ra::ByteAddress CodeNotesModel::GetIndirectSource(ra::ByteAddress nAddress) const noexcept
+ra::ByteAddress CodeNotesModel::GetIndirectSource(ra::ByteAddress nAddress) const
 {
     if (m_bHasPointers)
     {
-        for (const auto& pCodeNote : m_mCodeNotes)
-        {
-            if (pCodeNote.second.PointerData == nullptr)
-                continue;
-
-            if (nAddress >= pCodeNote.second.PointerData->PointerValue &&
-                nAddress < pCodeNote.second.PointerData->PointerValue + pCodeNote.second.PointerData->OffsetRange)
-            {
-                const auto nOffset = ra::to_signed(nAddress - pCodeNote.second.PointerData->PointerValue);
-                for (const auto& pOffsetNote : pCodeNote.second.PointerData->OffsetNotes)
-                {
-                    if (pOffsetNote.Offset == nOffset)
-                        return pCodeNote.first;
-                }
-            }
-        }
+        const auto pCodeNote = FindIndirectCodeNoteInternal(nAddress);
+        if (pCodeNote.second != nullptr)
+            return pCodeNote.first;
     }
 
     return 0xFFFFFFFF;
@@ -745,15 +781,19 @@ ra::ByteAddress CodeNotesModel::GetNextNoteAddress(ra::ByteAddress nAfterAddress
             if (!pNote.second.PointerData)
                 continue;
 
-            if (pNote.second.PointerData->PointerValue > nBestAddress)
+            const auto nPointerValue = pNote.second.PointerData->PointerValue;
+            const auto nConvertedPointerValue = (pNote.second.PointerData->OffsetType == OffsetType::Overflow)
+                ? ConvertPointer(nPointerValue) : nPointerValue;
+
+            if (nConvertedPointerValue > nBestAddress)
                 continue;
 
-            if (pNote.second.PointerData->PointerValue + pNote.second.PointerData->OffsetRange < nAfterAddress)
+            if (nConvertedPointerValue + pNote.second.PointerData->OffsetRange < nAfterAddress)
                 continue;
 
             for (const auto& pOffset : pNote.second.PointerData->OffsetNotes)
             {
-                const auto pOffsetAddress = pNote.second.PointerData->PointerValue + pOffset.Offset;
+                const auto pOffsetAddress = nPointerValue + pOffset.Offset;
                 if (pOffsetAddress > nAfterAddress)
                 {
                     nBestAddress = std::min(nBestAddress, pOffsetAddress);
@@ -793,15 +833,19 @@ ra::ByteAddress CodeNotesModel::GetPreviousNoteAddress(ra::ByteAddress nBeforeAd
             if (!pNote.second.PointerData)
                 continue;
 
-            if (pNote.second.PointerData->PointerValue > nBeforeAddress)
+            const auto nPointerValue = pNote.second.PointerData->PointerValue;
+            const auto nConvertedPointerValue = (pNote.second.PointerData->OffsetType == OffsetType::Overflow)
+                ? ConvertPointer(nPointerValue) : nPointerValue;
+
+            if (nConvertedPointerValue > nBeforeAddress)
                 continue;
 
-            if (pNote.second.PointerData->PointerValue + pNote.second.PointerData->OffsetRange < nBestAddress)
+            if (nConvertedPointerValue + pNote.second.PointerData->OffsetRange < nBestAddress)
                 continue;
 
             for (const auto& pOffset : pNote.second.PointerData->OffsetNotes)
             {
-                const auto pOffsetAddress = pNote.second.PointerData->PointerValue + pOffset.Offset;
+                const auto pOffsetAddress = nPointerValue + pOffset.Offset;
                 if (pOffsetAddress >= nBeforeAddress)
                     break;
 
@@ -835,8 +879,9 @@ void CodeNotesModel::EnumerateCodeNotes(std::function<bool(ra::ByteAddress nAddr
         if (!pIter.second.PointerData)
             continue;
 
+        const auto nPointerValue = pIter.second.PointerData->PointerValue;
         for (const auto& pNote : pIter.second.PointerData->OffsetNotes)
-            mNotes[pIter.second.PointerData->PointerValue + pNote.Offset] = &pNote;
+            mNotes[nPointerValue + pNote.Offset] = &pNote;
     }
 
     // merge in the non-pointer notes
@@ -863,7 +908,13 @@ void CodeNotesModel::DoFrame()
         if (!pNote.second.PointerData)
             continue;
 
-        const auto nNewAddress = ReadPointer(pEmulatorContext, pNote.first, pNote.second.MemSize);
+        const auto nNewRawAddress = pEmulatorContext.ReadMemory(pNote.first, pNote.second.MemSize);
+        if (nNewRawAddress == pNote.second.PointerData->RawPointerValue)
+            continue;
+        pNote.second.PointerData->RawPointerValue = nNewRawAddress;
+
+        const auto nNewAddress = (pNote.second.PointerData->OffsetType == OffsetType::Converted)
+            ? ConvertPointer(nNewRawAddress) : nNewRawAddress;
 
         const auto nOldAddress = pNote.second.PointerData->PointerValue;
         if (nNewAddress == nOldAddress)

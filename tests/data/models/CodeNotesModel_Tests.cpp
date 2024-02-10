@@ -240,6 +240,7 @@ public:
         TestCodeNoteSize(L"[float bigendian] Test", 4U, MemSize::FloatBigEndian);
         TestCodeNoteSize(L"[be float] Test", 4U, MemSize::FloatBigEndian);
         TestCodeNoteSize(L"[bigendian float] Test", 4U, MemSize::FloatBigEndian);
+        TestCodeNoteSize(L"[32-bit] pointer to float", 4U, MemSize::ThirtyTwoBit);
 
         TestCodeNoteSize(L"[MBF32] Test", 4U, MemSize::MBF32);
         TestCodeNoteSize(L"[MBF40] Test", 5U, MemSize::MBF32);
@@ -677,6 +678,46 @@ public:
         Assert::AreEqual(std::wstring(), notes.FindCodeNote(18, MemSize::SixteenBit));
     }
 
+    
+    TEST_METHOD(TestFindCodeNoteSizedPointerOverflow)
+    {
+        CodeNotesModelHarness notes;
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        std::array<unsigned char, 32> memory{};
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
+
+        const std::wstring sPointerNote =
+            L"Pointer (32-bit)\n"              // only 32-bit pointers are eligible for real address conversion
+            L"+0xFFFFFF88 = Small (8-bit)\n"   // 8+8=16
+            L"+0xFFFFFF90 = Medium (16-bit)\n" // 16+8=24
+            L"+0xFFFFFF98 = Large (32-bit)";   // 24+8=32
+        notes.AddCodeNote(4, "Author", sPointerNote);
+        notes.AddCodeNote(40, "Author", L"After [32-bit]");
+        notes.AddCodeNote(1, "Author", L"Before");
+        notes.AddCodeNote(20, "Author", L"In the middle");
+
+        Assert::AreEqual(std::wstring(), notes.FindCodeNote(0, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Before"), notes.FindCodeNote(1, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Pointer (32-bit) [1/4]"), notes.FindCodeNote(4, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Small (8-bit) [indirect]"), notes.FindCodeNote(16, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [1/2] [indirect]"), notes.FindCodeNote(24, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [2/2] [indirect]"), notes.FindCodeNote(25, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [1/4] [indirect]"), notes.FindCodeNote(32, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [4/4] [indirect]"), notes.FindCodeNote(35, MemSize::EightBit));
+        Assert::AreEqual(std::wstring(), notes.FindCodeNote(36, MemSize::EightBit));
+
+        Assert::AreEqual(std::wstring(L"Before [partial]"), notes.FindCodeNote(0, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Before [partial]"), notes.FindCodeNote(1, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Pointer (32-bit) [partial]"), notes.FindCodeNote(4, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Small (8-bit) [partial] [indirect]"), notes.FindCodeNote(16, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [indirect]"), notes.FindCodeNote(24, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Medium (16-bit) [partial] [indirect]"), notes.FindCodeNote(25, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindCodeNote(32, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(L"Large (32-bit) [partial] [indirect]"), notes.FindCodeNote(35, MemSize::SixteenBit));
+        Assert::AreEqual(std::wstring(), notes.FindCodeNote(36, MemSize::SixteenBit));
+    }
+
     TEST_METHOD(TestFindIndirectCodeNote)
     {
         CodeNotesModelHarness notes;
@@ -695,6 +736,28 @@ public:
         Assert::IsNull(notes.FindIndirectCodeNote(1234U, 0)); // no offset
         Assert::IsNull(notes.FindIndirectCodeNote(1234U, 21)); // unknown offset
         Assert::IsNull(notes.FindIndirectCodeNote(1235U, 5)); // wrong base address
+    }
+
+    TEST_METHOD(TestFindIndirectCodeNoteOverflow)
+    {
+        CodeNotesModelHarness notes;
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        std::array<unsigned char, 32> memory{};
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 0x90; // start with initial value for pointer (real address = 0x90, RA address = 0x10)
+
+        const std::wstring sNote =
+            L"Pointer (32-bit)\n" // only 32-bit pointers are eligible for real address conversion
+            L"+0xFFFFFF81 = Small (8-bit)\n"
+            L"+0xFFFFFF82 = Medium (16-bit)\n"
+            L"+0xFFFFFF84 = Large (32-bit)";
+        notes.AddCodeNote(4, "Author", sNote);
+
+        notes.AssertIndirectNote(4U, 0x01, L"Small (8-bit)");
+        notes.AssertIndirectNote(4U, 0x04, L"Large (32-bit)");
+        Assert::IsNull(notes.FindIndirectCodeNote(4U, 0x00)); // no offset
+        Assert::IsNull(notes.FindIndirectCodeNote(4U, 0x30)); // unknown offset
+        Assert::IsNull(notes.FindIndirectCodeNote(8U, 0x01)); // wrong base address
     }
 
     TEST_METHOD(TestEnumerateCodeNotes)
@@ -788,6 +851,71 @@ public:
                     Assert::AreEqual(sPointerNote, sNote);
                     break;
                 case 6:
+                    Assert::Fail(L"Too many notes");
+                    break;
+            }
+            return true;
+        }, true);
+    }
+    
+    TEST_METHOD(TestEnumerateCodeNotesWithIndirectOverflow)
+    {
+        CodeNotesModelHarness notes;
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        std::array<unsigned char, 32> memory{};
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
+
+        const std::wstring sPointerNote =
+            L"Pointer (32-bit)\n"              // only 32-bit pointers are eligible for real address conversion
+            L"+0xFFFFFF88 = Small (8-bit)\n"   // 8+8=16
+            L"+0xFFFFFF90 = Medium (16-bit)\n" // 16+8=24
+            L"+0xFFFFFF98 = Large (32-bit)";   // 24+8=32
+        notes.AddCodeNote(4, "Author", sPointerNote);
+        notes.AddCodeNote(40, "Author", L"After [32-bit]");
+        notes.AddCodeNote(1, "Author", L"Before");
+        notes.AddCodeNote(20, "Author", L"In the middle");
+
+        int i = 0;
+        notes.EnumerateCodeNotes([&i, &sPointerNote](ra::ByteAddress nAddress, unsigned nBytes, const std::wstring& sNote) {
+            switch (i++)
+            {
+                case 0:
+                    Assert::AreEqual({1U}, nAddress);
+                    Assert::AreEqual(1U, nBytes);
+                    Assert::AreEqual(std::wstring(L"Before"), sNote);
+                    break;
+                case 1:
+                    Assert::AreEqual({4U}, nAddress);
+                    Assert::AreEqual(4U, nBytes);
+                    Assert::AreEqual(sPointerNote, sNote);
+                    break;
+                case 2:
+                    Assert::AreEqual({16U}, nAddress);
+                    Assert::AreEqual(1U, nBytes);
+                    Assert::AreEqual(std::wstring(L"Small (8-bit)"), sNote);
+                    break;
+                case 3:
+                    Assert::AreEqual({20U}, nAddress);
+                    Assert::AreEqual(1U, nBytes);
+                    Assert::AreEqual(std::wstring(L"In the middle"), sNote);
+                    break;
+                case 4:
+                    Assert::AreEqual({24U}, nAddress);
+                    Assert::AreEqual(2U, nBytes);
+                    Assert::AreEqual(std::wstring(L"Medium (16-bit)"), sNote);
+                    break;
+                case 5:
+                    Assert::AreEqual({32}, nAddress);
+                    Assert::AreEqual(4U, nBytes);
+                    Assert::AreEqual(std::wstring(L"Large (32-bit)"), sNote);
+                    break;
+                case 6:
+                    Assert::AreEqual({40}, nAddress);
+                    Assert::AreEqual(4U, nBytes);
+                    Assert::AreEqual(std::wstring(L"After [32-bit]"), sNote);
+                    break;
+                case 7:
                     Assert::Fail(L"Too many notes");
                     break;
             }
@@ -913,6 +1041,100 @@ public:
         notes.AssertNote(0x0AU, L"Medium (16-bit)", MemSize::SixteenBit, 2);
     }
 
+    TEST_METHOD(TestDoFrameRealAddressConversionBigEndian)
+    {
+        CodeNotesModelHarness notes;
+        notes.MonitorCodeNoteChanges();
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+
+        std::array<unsigned char, 32> memory{};
+        for (uint8_t i = 4; i < memory.size(); i++)
+            memory.at(i) = i;
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory.at(3) = 0x90; // start with initial value for pointer (real address = 0x90, RA address = 0x10)
+
+        const std::wstring sNote =
+            L"Pointer (32-bit BE)\n" // only 32-bit pointers are eligible for real address conversion
+            L"+1 = Small (8-bit)\n"
+            L"+2 = Medium (16-bit)\n"
+            L"+4 = Large (32-bit)";
+        notes.AddCodeNote(0x0000, "Author", sNote);
+
+        // should receive notifications for the pointer note, and for each subnote
+        Assert::AreEqual({4U}, notes.mNewNotes.size());
+        Assert::AreEqual(sNote, notes.mNewNotes[0x00]);
+        Assert::AreEqual(std::wstring(L"Small (8-bit)"), notes.mNewNotes[0x11]);
+        Assert::AreEqual(std::wstring(L"Medium (16-bit)"), notes.mNewNotes[0x12]);
+        Assert::AreEqual(std::wstring(L"Large (32-bit)"), notes.mNewNotes[0x14]);
+
+        notes.AssertNoNote(0x02U);
+        notes.AssertNote(0x12U, L"Medium (16-bit)", MemSize::SixteenBit, 2);
+
+        // calling DoFrame after updating the pointer should notify about all the affected subnotes
+        notes.mNewNotes.clear();
+        memory.at(3) = 0x88;
+        notes.DoFrame();
+
+        Assert::AreEqual({6U}, notes.mNewNotes.size());
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x11]);
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x12]);
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x14]);
+        Assert::AreEqual(std::wstring(L"Small (8-bit)"), notes.mNewNotes[0x09]);
+        Assert::AreEqual(std::wstring(L"Medium (16-bit)"), notes.mNewNotes[0x0A]);
+        Assert::AreEqual(std::wstring(L"Large (32-bit)"), notes.mNewNotes[0x0C]);
+
+        notes.AssertNoNote(0x02U);
+        notes.AssertNoNote(0x12U);
+        notes.AssertNote(0x0AU, L"Medium (16-bit)", MemSize::SixteenBit, 2);
+    }
+    
+    TEST_METHOD(TestDoFrameRealAddressConversionAvoidedByOverflow)
+    {
+        CodeNotesModelHarness notes;
+        notes.MonitorCodeNoteChanges();
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+
+        std::array<unsigned char, 32> memory{};
+        for (uint8_t i = 4; i < memory.size(); i++)
+            memory.at(i) = i;
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory.at(0) = 0x90; // start with initial value for pointer (real address = 0x90, RA address = 0x10)
+
+        const std::wstring sNote =
+            L"Pointer (32-bit)\n" // only 32-bit pointers are eligible for real address conversion
+            L"+0xFFFFFF81 = Small (8-bit)\n"
+            L"+0xFFFFFF82 = Medium (16-bit)\n"
+            L"+0xFFFFFF84 = Large (32-bit)";
+        notes.AddCodeNote(0x0000, "Author", sNote);
+
+        // should receive notifications for the pointer note, and for each subnote
+        Assert::AreEqual({4U}, notes.mNewNotes.size());
+        Assert::AreEqual(sNote, notes.mNewNotes[0x00]);
+        Assert::AreEqual(std::wstring(L"Small (8-bit)"), notes.mNewNotes[0x11]);
+        Assert::AreEqual(std::wstring(L"Medium (16-bit)"), notes.mNewNotes[0x12]);
+        Assert::AreEqual(std::wstring(L"Large (32-bit)"), notes.mNewNotes[0x14]);
+
+        notes.AssertNoNote(0x02U);
+        notes.AssertNote(0x12U, L"Medium (16-bit)", MemSize::SixteenBit, 2);
+
+        // calling DoFrame after updating the pointer should notify about all the affected subnotes
+        notes.mNewNotes.clear();
+        memory.at(0) = 0x88;
+        notes.DoFrame();
+
+        Assert::AreEqual({6U}, notes.mNewNotes.size());
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x11]);
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x12]);
+        Assert::AreEqual(std::wstring(L""), notes.mNewNotes[0x14]);
+        Assert::AreEqual(std::wstring(L"Small (8-bit)"), notes.mNewNotes[0x09]);
+        Assert::AreEqual(std::wstring(L"Medium (16-bit)"), notes.mNewNotes[0x0A]);
+        Assert::AreEqual(std::wstring(L"Large (32-bit)"), notes.mNewNotes[0x0C]);
+
+        notes.AssertNoNote(0x02U);
+        notes.AssertNoNote(0x12U);
+        notes.AssertNote(0x0AU, L"Medium (16-bit)", MemSize::SixteenBit, 2);
+    }
+
     TEST_METHOD(TestFindCodeNoteStartPointer)
     {
         CodeNotesModelHarness notes;
@@ -943,6 +1165,36 @@ public:
         Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(0x18));
     }
 
+    TEST_METHOD(TestFindCodeNoteStartPointerOverflow)
+    {
+        CodeNotesModelHarness notes;
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        std::array<unsigned char, 32> memory{};
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
+
+        const std::wstring sPointerNote =
+            L"Pointer (32-bit)\n"              // only 32-bit pointers are eligible for real address conversion
+            L"+0xFFFFFF88 = Small (8-bit)\n"   // 8+8=16
+            L"+0xFFFFFF90 = Medium (16-bit)\n" // 16+8=24
+            L"+0xFFFFFF98 = Large (32-bit)";   // 24+8=32
+        notes.AddCodeNote(4, "Author", sPointerNote);
+
+        // indirect notes are at 16 (byte), 24 (word), and 32 (dword)
+        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(15));
+        Assert::AreEqual(16U, notes.FindCodeNoteStart(16));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(17));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(23));
+        Assert::AreEqual(24U, notes.FindCodeNoteStart(24));
+        Assert::AreEqual(24U, notes.FindCodeNoteStart(25));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(31));
+        Assert::AreEqual(32U, notes.FindCodeNoteStart(32));
+        Assert::AreEqual(32U, notes.FindCodeNoteStart(33));
+        Assert::AreEqual(32U, notes.FindCodeNoteStart(34));
+        Assert::AreEqual(32U, notes.FindCodeNoteStart(35));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(36));
+    }
+
     TEST_METHOD(TestGetIndirectSource)
     {
         CodeNotesModelHarness notes;
@@ -968,6 +1220,37 @@ public:
         Assert::AreEqual(0x0U, notes.GetIndirectSource(0x12));
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x13));
         Assert::AreEqual(0x0U, notes.GetIndirectSource(0x14));
+        Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x15));
+        Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x16));
+        Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x17));
+        Assert::AreEqual(0xFFFFFFFF, notes.FindCodeNoteStart(0x18));
+
+        // non-indirect
+        Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x08));
+    }
+
+    TEST_METHOD(TestGetIndirectSourceOverflow)
+    {
+        CodeNotesModelHarness notes;
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        std::array<unsigned char, 32> memory{};
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 0x90; // start with initial value for pointer (real address = 0x90, RA address = 0x10)
+
+        const std::wstring sNote =
+            L"Pointer (32-bit)\n" // only 32-bit pointers are eligible for real address conversion
+            L"+0xFFFFFF81 = Small (8-bit)\n"
+            L"+0xFFFFFF82 = Medium (16-bit)\n"
+            L"+0xFFFFFF84 = Large (32-bit)";
+        notes.AddCodeNote(0x0004, "Author", sNote);
+        notes.AddCodeNote(0x0008, "Author", L"Not indirect");
+
+        // indirect notes are at 0x11 (byte), 0x12 (word), and 0x14 (dword)
+        Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x10));
+        Assert::AreEqual(0x4U, notes.GetIndirectSource(0x11));
+        Assert::AreEqual(0x4U, notes.GetIndirectSource(0x12));
+        Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x13));
+        Assert::AreEqual(0x4U, notes.GetIndirectSource(0x14));
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x15));
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x16));
         Assert::AreEqual(0xFFFFFFFF, notes.GetIndirectSource(0x17));
@@ -1130,6 +1413,40 @@ public:
         Assert::AreEqual({0xFFFFFFFFU}, notes.GetNextNoteAddress({1234U}, true));
     }
 
+    TEST_METHOD(TestGetNextNoteAddressOverflow)
+    {
+        CodeNotesModelHarness notes;
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        std::array<unsigned char, 32> memory{};
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
+
+        const std::wstring sPointerNote =
+            L"Pointer (32-bit)\n"              // only 32-bit pointers are eligible for real address conversion
+            L"+0xFFFFFF88 = Small (8-bit)\n"   // 8+8=16
+            L"+0xFFFFFF90 = Medium (16-bit)\n" // 16+8=24
+            L"+0xFFFFFF98 = Large (32-bit)";   // 24+8=32
+        notes.AddCodeNote(4, "Author", sPointerNote);
+        notes.AddCodeNote(40, "Author", L"After [32-bit]");
+        notes.AddCodeNote(1, "Author", L"Before");
+        notes.AddCodeNote(20, "Author", L"In the middle");
+
+        Assert::AreEqual({1U}, notes.GetNextNoteAddress({0U}));
+        Assert::AreEqual({4U}, notes.GetNextNoteAddress({1U}));
+        Assert::AreEqual({20U}, notes.GetNextNoteAddress({4U}));
+        Assert::AreEqual({40U}, notes.GetNextNoteAddress({20U}));
+        Assert::AreEqual({0xFFFFFFFFU}, notes.GetNextNoteAddress({40U}));
+
+        Assert::AreEqual({1U}, notes.GetNextNoteAddress({0U}, true));
+        Assert::AreEqual({4U}, notes.GetNextNoteAddress({1U}, true));
+        Assert::AreEqual({16U}, notes.GetNextNoteAddress({4U}, true));
+        Assert::AreEqual({20U}, notes.GetNextNoteAddress({16U}, true));
+        Assert::AreEqual({24U}, notes.GetNextNoteAddress({20U}, true));
+        Assert::AreEqual({32U}, notes.GetNextNoteAddress({24U}, true));
+        Assert::AreEqual({40U}, notes.GetNextNoteAddress({32U}, true));
+        Assert::AreEqual({0xFFFFFFFFU}, notes.GetNextNoteAddress({40U}, true));
+    }
+
     TEST_METHOD(TestGetPreviousNoteAddress)
     {
         CodeNotesModelHarness notes;
@@ -1155,6 +1472,40 @@ public:
         Assert::AreEqual({8U}, notes.GetPreviousNoteAddress({12U}, true));
         Assert::AreEqual({4U}, notes.GetPreviousNoteAddress({8U}, true));
         Assert::AreEqual({0xFFFFFFFFU}, notes.GetPreviousNoteAddress({4U}, true));
+    }
+    
+    TEST_METHOD(TestGetPreviousNoteAddressOverflow)
+    {
+        CodeNotesModelHarness notes;
+        notes.mockConsoleContext.AddMemoryRegion(0, 31, ra::data::context::ConsoleContext::AddressType::SystemRAM, 0x80);
+        std::array<unsigned char, 32> memory{};
+        notes.mockEmulatorContext.MockMemory(memory);
+        memory.at(4) = 0x88; // start with initial value for pointer (real address = 0x88, RA address = 0x08)
+
+        const std::wstring sPointerNote =
+            L"Pointer (32-bit)\n"              // only 32-bit pointers are eligible for real address conversion
+            L"+0xFFFFFF88 = Small (8-bit)\n"   // 8+8=16
+            L"+0xFFFFFF90 = Medium (16-bit)\n" // 16+8=24
+            L"+0xFFFFFF98 = Large (32-bit)";   // 24+8=32
+        notes.AddCodeNote(4, "Author", sPointerNote);
+        notes.AddCodeNote(40, "Author", L"After [32-bit]");
+        notes.AddCodeNote(1, "Author", L"Before");
+        notes.AddCodeNote(20, "Author", L"In the middle");
+
+        Assert::AreEqual({40U}, notes.GetPreviousNoteAddress({0xFFFFFFFFU}));
+        Assert::AreEqual({20U}, notes.GetPreviousNoteAddress({40U}));
+        Assert::AreEqual({4U}, notes.GetPreviousNoteAddress({20U}));
+        Assert::AreEqual({1U}, notes.GetPreviousNoteAddress({4U}));
+        Assert::AreEqual({0xFFFFFFFFU}, notes.GetPreviousNoteAddress({1U}));
+
+        Assert::AreEqual({40U}, notes.GetPreviousNoteAddress({0xFFFFFFFFU}, true));
+        Assert::AreEqual({32U}, notes.GetPreviousNoteAddress({40U}, true));
+        Assert::AreEqual({24U}, notes.GetPreviousNoteAddress({32U}, true));
+        Assert::AreEqual({20U}, notes.GetPreviousNoteAddress({24U}, true));
+        Assert::AreEqual({16U}, notes.GetPreviousNoteAddress({20U}, true));
+        Assert::AreEqual({4U}, notes.GetPreviousNoteAddress({16U}, true));
+        Assert::AreEqual({1U}, notes.GetPreviousNoteAddress({4U}, true));
+        Assert::AreEqual({0xFFFFFFFFU}, notes.GetPreviousNoteAddress({1U}, true));
     }
 };
 

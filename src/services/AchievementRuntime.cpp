@@ -20,6 +20,7 @@
 #include "services\IFileSystem.hh"
 #include "services\IHttpRequester.hh"
 #include "services\ILocalStorage.hh"
+#include "services\IThreadPool.hh"
 #include "services\ServiceLocator.hh"
 #include "services\impl\JsonFileConfiguration.hh"
 
@@ -218,6 +219,68 @@ static void ConvertHttpResponseToApiServerResponse(rc_api_server_response_t& pRe
     }
 }
 
+static std::string GetParam(const ra::services::Http::Request& httpRequest, const std::string& sParam)
+{
+    std::string sScan = "&" + sParam + "=";
+    auto nIndex = httpRequest.GetPostData().find(sScan);
+
+    if (nIndex == std::string::npos)
+    {
+        const auto nLen = sScan.length() - 1;
+        if (httpRequest.GetPostData().length() < nLen)
+            return "";
+
+        if (httpRequest.GetPostData().compare(0, nLen, sScan, 1, nLen) != 0)
+            return "";
+
+        nIndex = nLen;
+    }
+    else
+    {
+        nIndex += sScan.length();
+    }
+
+    auto nIndex2 = httpRequest.GetPostData().find('&', nIndex);
+    if (nIndex2 == std::string::npos)
+        nIndex2 = httpRequest.GetPostData().length();
+
+    return std::string(httpRequest.GetPostData(), nIndex, nIndex2 - nIndex);
+}
+
+static ra::services::Http::Response HandleOfflineRequest(const ra::services::Http::Request& httpRequest, const std::string sApi)
+{
+    if (sApi == "ping")
+        return ra::services::Http::Response(ra::services::Http::StatusCode::OK, "{\"Success\":true}");
+
+    if (sApi == "patch")
+    {
+        const auto sGameId = GetParam(httpRequest, "g");
+
+        // see if the data is available in the cache
+        auto& pLocalStorage = ra::services::ServiceLocator::GetMutable<ra::services::ILocalStorage>();
+        auto pData = pLocalStorage.ReadText(ra::services::StorageItemType::GameData, ra::Widen(sGameId));
+        if (pData == nullptr)
+        {
+            return ra::services::Http::Response(ra::services::Http::StatusCode::NotFound,
+                ra::StringPrintf("{\"Success\":false,\"Error\":\"Achievement data for game %s not found in cache\"}", sGameId));
+        }
+
+        std::string sContents = "{\"Success\":true,\"PatchData\":";
+        std::string sLine;
+        while (pData->GetLine(sLine))
+            sContents.append(sLine);
+        sContents.push_back('}');
+
+        return ra::services::Http::Response(ra::services::Http::StatusCode::OK, sContents);
+    }
+
+    if (sApi == "startsession")
+        return ra::services::Http::Response(ra::services::Http::StatusCode::OK, "{\"Success\":true}");
+
+    return ra::services::Http::Response(ra::services::Http::StatusCode::NotImplemented,
+        ra::StringPrintf("{\"Success\":false,\"Error\":\"No offline implementation for %s\"}", sApi));
+}
+
 void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_client_server_callback_t fCallback,
                                      void* pCallbackData, rc_client_t*)
 {
@@ -268,16 +331,35 @@ void AchievementRuntime::ServerCallAsync(const rc_api_request_t* pRequest, rc_cl
         RA_LOG_INFO(">> %s request: %s", sApi.c_str(), sParams.c_str());
     }
 
-    httpRequest.CallAsync([fCallback, pCallbackData, sApi](const ra::services::Http::Response& httpResponse) {
-        rc_api_server_response_t pResponse;
-        std::string sErrorBuffer;
-        ConvertHttpResponseToApiServerResponse(pResponse, httpResponse, sErrorBuffer);
+    const auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
+    if (pConfiguration.IsFeatureEnabled(ra::services::Feature::Offline))
+    {
+        ra::services::ServiceLocator::GetMutable<ra::services::IThreadPool>().RunAsync(
+            [httpRequest = std::move(httpRequest), fCallback, pCallbackData, sApi]()
+        {
+            ra::services::Http::Response httpResponse = HandleOfflineRequest(httpRequest, sApi);
+            RA_LOG_INFO("<< %s response (offline) (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
 
-        RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()),
-                    httpResponse.Content().c_str());
+            rc_api_server_response_t pResponse;
+            std::string sErrorBuffer;
+            ConvertHttpResponseToApiServerResponse(pResponse, httpResponse, sErrorBuffer);
 
-        fCallback(&pResponse, pCallbackData);
-    });
+            fCallback(&pResponse, pCallbackData);
+        });
+    }
+    else
+    {
+        httpRequest.CallAsync([fCallback, pCallbackData, sApi](const ra::services::Http::Response& httpResponse)
+        {
+            rc_api_server_response_t pResponse;
+            std::string sErrorBuffer;
+            ConvertHttpResponseToApiServerResponse(pResponse, httpResponse, sErrorBuffer);
+
+            RA_LOG_INFO("<< %s response (%d): %s", sApi.c_str(), ra::etoi(httpResponse.StatusCode()), httpResponse.Content().c_str());
+
+            fCallback(&pResponse, pCallbackData);
+        });
+    }
 }
 
 /* ---- ClientSynchronizer ----- */

@@ -11,7 +11,9 @@
 #include "tests\mocks\MockFileSystem.hh"
 #include "tests\mocks\MockFrameEventQueue.hh"
 #include "tests\mocks\MockGameContext.hh"
+#include "tests\mocks\MockHttpRequester.hh"
 #include "tests\mocks\MockImageRepository.hh"
+#include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockOverlayManager.hh"
 #include "tests\mocks\MockOverlayTheme.hh"
 #include "tests\mocks\MockSessionTracker.hh"
@@ -3256,6 +3258,156 @@ public:
         Assert::AreEqual(pAch.GetChanges(), ra::data::models::AssetChanges::Modified);
         runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Hardcore, false);
         Assert::AreEqual(std::string("Developing Achievements"), runtime.GetRichPresenceOverride());
+    }
+
+    TEST_METHOD(TestServerCall)
+    {
+        AchievementRuntimeHarness runtime;
+        ra::services::mocks::MockHttpRequester mockHttpRequester([](const ra::services::Http::Request&) {
+            return ra::services::Http::Response(ra::services::Http::StatusCode::OK, "{\"Success\":true}");
+        });
+
+        rc_api_request_t pRequest;
+        memset(&pRequest, 0, sizeof(pRequest));
+        pRequest.url = "https://retroachievements.org/dorequest.php";
+        pRequest.post_data = "r=patch&u=User&t=APITOKEN&g=1234";
+        pRequest.content_type = "application/x-www-form-urlencoded";
+
+        bool bCallbackCalled = false;
+        auto fCallback = [](const rc_api_server_response_t* server_response, void* callback_data) {
+            Assert::AreEqual("{\"Success\":true}", server_response->body);
+            Assert::AreEqual({16}, server_response->body_length);
+            Assert::AreEqual(200, server_response->http_status_code);
+
+            *((bool*)callback_data) = true;
+        };
+
+        runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
+
+        Assert::IsFalse(bCallbackCalled);
+
+        runtime.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(bCallbackCalled);
+    }
+
+    TEST_METHOD(TestServerCallOfflinePatchExists)
+    {
+        AchievementRuntimeHarness runtime;
+        ra::services::mocks::MockLocalStorage mockLocalStorage;
+        mockLocalStorage.MockStoredData(ra::services::StorageItemType::GameData, L"1234", "{\"a\":1}");
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        rc_api_request_t pRequest;
+        memset(&pRequest, 0, sizeof(pRequest));
+        pRequest.url = "https://retroachievements.org/dorequest.php";
+        pRequest.post_data = "r=patch&u=User&t=APITOKEN&g=1234";
+        pRequest.content_type = "application/x-www-form-urlencoded";
+
+        bool bCallbackCalled = false;
+        auto fCallback = [](const rc_api_server_response_t* server_response, void* callback_data) {
+            Assert::AreEqual("{\"Success\":true,\"PatchData\":{\"a\":1}}", server_response->body);
+            Assert::AreEqual({36}, server_response->body_length);
+            Assert::AreEqual(200, server_response->http_status_code);
+
+            *((bool*)callback_data) = true;
+        };
+
+        runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
+
+        Assert::IsFalse(bCallbackCalled);
+
+        runtime.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(bCallbackCalled);
+    }
+
+    TEST_METHOD(TestServerCallOfflinePatchDoesntExist)
+    {
+        AchievementRuntimeHarness runtime;
+        ra::services::mocks::MockLocalStorage mockLocalStorage;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        rc_api_request_t pRequest;
+        memset(&pRequest, 0, sizeof(pRequest));
+        pRequest.url = "https://retroachievements.org/dorequest.php";
+        pRequest.post_data = "g=1234&r=patch&u=User&t=APITOKEN";
+        pRequest.content_type = "application/x-www-form-urlencoded";
+
+        bool bCallbackCalled = false;
+        auto fCallback = [](const rc_api_server_response_t* server_response, void* callback_data) {
+            Assert::AreEqual("{\"Success\":false,\"Error\":\"Achievement data for game 1234 not found in cache\"}", server_response->body);
+            Assert::AreEqual({77}, server_response->body_length);
+            Assert::AreEqual(404, server_response->http_status_code);
+
+            *((bool*)callback_data) = true;
+        };
+
+        runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
+
+        Assert::IsFalse(bCallbackCalled);
+
+        runtime.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(bCallbackCalled);
+    }
+
+    TEST_METHOD(TestServerCallOfflineStartSession)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        rc_api_request_t pRequest;
+        memset(&pRequest, 0, sizeof(pRequest));
+        pRequest.url = "https://retroachievements.org/dorequest.php";
+        pRequest.post_data = "r=startsession&u=User&t=APITOKEN&g=1234";
+        pRequest.content_type = "application/x-www-form-urlencoded";
+
+        bool bCallbackCalled = false;
+        auto fCallback = [](const rc_api_server_response_t* server_response, void* callback_data) {
+            Assert::AreEqual("{\"Success\":true}", server_response->body);
+            Assert::AreEqual({16}, server_response->body_length);
+            Assert::AreEqual(200, server_response->http_status_code);
+
+            *((bool*)callback_data) = true;
+        };
+
+        runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
+
+        Assert::IsFalse(bCallbackCalled);
+
+        runtime.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(bCallbackCalled);
+    }
+
+    TEST_METHOD(TestServerCallOfflinePing)
+    {
+        AchievementRuntimeHarness runtime;
+        runtime.mockConfiguration.SetFeatureEnabled(ra::services::Feature::Offline, true);
+
+        rc_api_request_t pRequest;
+        memset(&pRequest, 0, sizeof(pRequest));
+        pRequest.url = "https://retroachievements.org/dorequest.php";
+        pRequest.post_data = "r=ping&u=User&t=APITOKEN&g=1234&m=Hi";
+        pRequest.content_type = "application/x-www-form-urlencoded";
+
+        bool bCallbackCalled = false;
+        auto fCallback = [](const rc_api_server_response_t* server_response, void* callback_data) {
+            Assert::AreEqual("{\"Success\":true}", server_response->body);
+            Assert::AreEqual({16}, server_response->body_length);
+            Assert::AreEqual(200, server_response->http_status_code);
+
+            *((bool*)callback_data) = true;
+        };
+
+        runtime.GetClient()->callbacks.server_call(&pRequest, fCallback, &bCallbackCalled, runtime.GetClient());
+
+        Assert::IsFalse(bCallbackCalled);
+
+        runtime.mockThreadPool.ExecuteNextTask();
+
+        Assert::IsTrue(bCallbackCalled);
     }
 
 #ifdef RC_CLIENT_EXPORTS_EXTERNAL

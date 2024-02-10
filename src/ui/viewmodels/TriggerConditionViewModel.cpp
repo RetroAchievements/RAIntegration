@@ -40,6 +40,9 @@ const BoolModelProperty TriggerConditionViewModel::HasHitsProperty("TriggerCondi
 const BoolModelProperty TriggerConditionViewModel::CanEditHitsProperty("TriggerConditionViewModel", "CanEditHits", true);
 const IntModelProperty TriggerConditionViewModel::RowColorProperty("TriggerConditionViewModel", "RowColor", 0);
 
+constexpr ra::ByteAddress UNKNOWN_ADDRESS = 0xFFFFFFFF;
+constexpr ra::ByteAddress NESTED_POINTER_ADDRESS = 0xFFFFFFFE;
+
 std::string TriggerConditionViewModel::Serialize() const
 {
     std::string buffer;
@@ -629,7 +632,7 @@ static bool IsIndirectMemref(const rc_operand_t& operand) noexcept
 ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nAddress, ra::ByteAddress* pPointerAddress) const
 {
     if (pPointerAddress != nullptr)
-        *pPointerAddress = 0xFFFFFFFF;
+        *pPointerAddress = UNKNOWN_ADDRESS;
 
     const auto* pTriggerViewModel = dynamic_cast<const TriggerViewModel*>(m_pTriggerViewModel);
     if (pTriggerViewModel == nullptr)
@@ -672,6 +675,7 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
     }
 
     bool bIsIndirect = false;
+    bool bIsMultiLevelIndirect = false;
     rc_eval_state_t oEvalState;
     memset(&oEvalState, 0, sizeof(oEvalState));
     rc_typed_value_t value = {};
@@ -685,10 +689,17 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
             break;
 
         if (vmCondition == this)
+        {
+            if (bIsMultiLevelIndirect && pPointerAddress != nullptr)
+                *pPointerAddress = NESTED_POINTER_ADDRESS;
+
             return nAddress + oEvalState.add_address;
+        }
 
         if (pCondition->type == RC_CONDITION_ADD_ADDRESS)
         {
+            bIsMultiLevelIndirect = bIsIndirect;
+
             if (bIsIndirect && pTrigger == nullptr)
             {
                 // if this is part of a chain, we have to create a copy of the condition so we can point
@@ -720,14 +731,14 @@ ra::ByteAddress TriggerConditionViewModel::GetIndirectAddress(ra::ByteAddress nA
                 oEvalState.add_address = value.value.u32;
 
                 if (pPointerAddress != nullptr && rc_operand_is_memref(&pCondition->operand1))
-                    *pPointerAddress = (bIsIndirect) ? 0xFFFFFFFF : pCondition->operand1.value.memref->address;
+                    *pPointerAddress = (bIsIndirect) ? NESTED_POINTER_ADDRESS : pCondition->operand1.value.memref->address;
 
                 bIsIndirect = true;
             }
         }
         else
         {
-            bIsIndirect = false;
+            bIsIndirect = bIsMultiLevelIndirect = false;
             oEvalState.add_address = 0;
         }
     }
@@ -746,11 +757,14 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::ByteAddress nAddre
     if (pCodeNotes == nullptr)
         return ra::StringPrintf(L"%s%s\r\n[No code note]", ra::ByteAddressToString(nAddress), nOffset ? L" (indirect)" : L"");
 
+    if (nPointerAddress == NESTED_POINTER_ADDRESS)
+        return ra::StringPrintf(L"%s (indirect)\r\n[Nested pointer code note not supported]", ra::ByteAddressToString(nAddress));
+
     if (nOffset)
     {
         sAddress = ra::StringPrintf(L"%s (indirect)", ra::ByteAddressToString(nAddress));
 
-        if (nPointerAddress != 0xFFFFFFFF)
+        if (nPointerAddress != UNKNOWN_ADDRESS)
             pNote = pCodeNotes->FindIndirectCodeNote(nPointerAddress, nOffset);
         else
             pNote = pCodeNotes->FindCodeNote(nAddress);
@@ -763,8 +777,8 @@ std::wstring TriggerConditionViewModel::GetAddressTooltip(ra::ByteAddress nAddre
 
     if (!pNote)
     {
-        const auto nStartAddress = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNoteStart(nAddress) : 0xFFFFFFFF;
-        if (nStartAddress != nAddress && nStartAddress != 0xFFFFFFFF)
+        const auto nStartAddress = (pCodeNotes != nullptr) ? pCodeNotes->FindCodeNoteStart(nAddress) : UNKNOWN_ADDRESS;
+        if (nStartAddress != nAddress && nStartAddress != UNKNOWN_ADDRESS)
         {
             sAddress = ra::StringPrintf(L"%s [%s+%d]%s", ra::ByteAddressToString(nAddress),
                                         ra::ByteAddressToString(nStartAddress), nAddress - nStartAddress,

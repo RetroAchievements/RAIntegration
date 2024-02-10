@@ -158,9 +158,9 @@ public:
     {
         TestSerializeValueFormat(ValueFormat::Score, "SCORE");
         TestSerializeValueFormat(ValueFormat::Value, "VALUE");
-        TestSerializeValueFormat(ValueFormat::Frames, "FRAMES");
+        TestSerializeValueFormat(ValueFormat::Frames, "TIME");
         TestSerializeValueFormat(ValueFormat::Centiseconds, "MILLISECS");
-        TestSerializeValueFormat(ValueFormat::Seconds, "SECS");
+        TestSerializeValueFormat(ValueFormat::Seconds, "TIMESECS");
         TestSerializeValueFormat(ValueFormat::Minutes, "MINUTES");
         TestSerializeValueFormat(ValueFormat::SecondsAsMinutes, "SECS_AS_MINS");
         TestSerializeValueFormat(ValueFormat::Fixed1, "FIXED1");
@@ -257,7 +257,6 @@ public:
         Assert::IsTrue(leaderboard.Validate());
         Assert::AreEqual(std::wstring(), leaderboard.GetValidationError());
     }
-
 
     TEST_METHOD(TestDeactivateHidesTracker)
     {
@@ -368,6 +367,41 @@ public:
         Assert::AreEqual(AssetState::Inactive, leaderboard.GetState());
         Assert::IsFalse(leaderboard.IsActive());
         Assert::IsTrue(g_bEventSeen);
+    }
+
+    TEST_METHOD(TestEditMaintainsState)
+    {
+        LeaderboardModelHarness leaderboard;
+        leaderboard.SetID(1U);
+        leaderboard.SetName(L"Title");
+        leaderboard.SetDescription(L"Desc");
+        leaderboard.SetDefinition("STA:0xH1234=1::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
+        leaderboard.SetValueFormat(ValueFormat::Value);
+        leaderboard.SetLowerIsBetter(true);
+        leaderboard.CreateServerCheckpoint();
+        leaderboard.CreateLocalCheckpoint();
+
+        leaderboard.mockRuntime.MockGame();
+        auto* leaderboard_info = leaderboard.mockRuntime.MockLeaderboard(leaderboard.GetID());
+        leaderboard.ReplaceAttached(*leaderboard_info);
+
+        // forcefully start the leaderboard
+        leaderboard.SetState(AssetState::Primed);
+        const auto* pLboard = leaderboard_info->lboard;
+        Assert::IsNotNull(pLboard);
+        rc_client_allocate_leaderboard_tracker(leaderboard.mockRuntime.GetClient()->game, leaderboard_info);
+
+        Assert::IsTrue(leaderboard.IsActive());
+        Assert::AreEqual({ RC_LBOARD_STATE_STARTED }, leaderboard_info->lboard->state);
+
+        // change definition should maintain state
+        leaderboard.SetDefinition("STA:0xH1234=2::SUB:0xH1234=2::CAN:0xH1234=3::VAL:0xH1234");
+        Assert::AreEqual(AssetState::Primed, leaderboard.GetState());
+        Assert::IsTrue(leaderboard.IsActive());
+        Assert::AreEqual({RC_LBOARD_STATE_STARTED}, leaderboard_info->lboard->state);
+
+        if (pLboard == leaderboard_info->lboard)
+            Assert::Fail(L"new rc_lboard_t not allocated");
     }
 };
 

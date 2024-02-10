@@ -43,8 +43,9 @@ protected:
     {
         if (m_hWnd && m_pValueBoundProperty)
         {
-            std::wstring sValue = std::to_wstring(GetValue(*m_pValueBoundProperty));
-            SetWindowTextW(m_hWnd, sValue.c_str());
+            InvokeOnUIThread([this, sValue = std::to_wstring(GetValue(*m_pValueBoundProperty))]() noexcept {
+                SetWindowTextW(m_hWnd, sValue.c_str());
+            });
         }
         else
         {

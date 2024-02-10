@@ -218,108 +218,113 @@ void GameContext::FinishLoadGame(int nResult, const char* sErrorMessage, bool bW
 
 void GameContext::EndLoadGame(int nResult, bool bWasPaused, bool bShowSoftcoreWarning)
 {
-    ra::data::models::RichPresenceModel* pRichPresence = nullptr;
-    std::string sOldRichPresence;
-
-    if (nResult == RC_OK && m_nGameId > 0) {
-        BeginLoad();
-
-        auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
-        pCodeNotes->Refresh(m_nGameId,
-            [this](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
-                OnCodeNoteChanged(nAddress, sNewNote);
-            },
-            [this]() {
-                EndLoad();
-            });
-
-        m_vAssets.Append(std::move(pCodeNotes));
-
-        // the old server value (if different from current server value) will be stored as Local modification.
-        // capture it now. ReloadAssets will load the XXX-Rich.txt file and replace it
-        pRichPresence = m_vAssets.FindRichPresence();
-        if (pRichPresence)
-            sOldRichPresence = pRichPresence->GetScript();
-
-        // merge local assets
-        std::vector<ra::data::models::AssetModelBase*> vEmptyAssetsList;
-        m_vAssets.ReloadAssets(vEmptyAssetsList);
-    }
-
-    if (!bWasPaused)
     {
-        ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(false);
+        ra::data::models::RichPresenceModel* pRichPresence = nullptr;
+        std::string sOldRichPresence;
+
+        std::lock_guard<std::mutex> lock(m_mLoadMutex);
+
+        if (nResult == RC_OK && m_nGameId > 0)
+        {
+            BeginLoad();
+
+            auto pCodeNotes = std::make_unique<ra::data::models::CodeNotesModel>();
+            pCodeNotes->Refresh(
+                m_nGameId,
+                [this](ra::ByteAddress nAddress, const std::wstring& sNewNote) {
+                    OnCodeNoteChanged(nAddress, sNewNote);
+                },
+                [this]() { EndLoad(); });
+
+            m_vAssets.Append(std::move(pCodeNotes));
+
+            // the old server value (if different from current server value) will be stored as Local modification.
+            // capture it now. ReloadAssets will load the XXX-Rich.txt file and replace it
+            pRichPresence = m_vAssets.FindRichPresence();
+            if (pRichPresence)
+                sOldRichPresence = pRichPresence->GetScript();
+
+            // merge local assets
+            std::vector<ra::data::models::AssetModelBase*> vEmptyAssetsList;
+            m_vAssets.ReloadAssets(vEmptyAssetsList);
+        }
+
+        if (!bWasPaused)
+        {
+            ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>().SetPaused(false);
 #ifndef RA_UTEST
-        auto& pAssetList = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
-        pAssetList.SetProcessingActive(true);
+            auto& pAssetList = ra::services::ServiceLocator::GetMutable<ra::ui::viewmodels::WindowManager>().AssetList;
+            pAssetList.SetProcessingActive(true);
 #endif
-    }
-
-    // activate rich presence (or remove if not defined)
-    if (pRichPresence && nResult == RC_OK)
-    {
-        // if the server value differs from the local value, the model will appear as Unpublished
-        if (pRichPresence->GetChanges() != ra::data::models::AssetChanges::None)
-        {
-            // populate another model with the old script so the string gets normalized correctly
-            ra::data::models::RichPresenceModel pOldRichPresenceModel;
-            pOldRichPresenceModel.SetScript(sOldRichPresence);
-
-            // if the old value matches the current value, then the value on the server changed and
-            // there are no local modifications. revert to the server state.
-            if (pRichPresence->GetScript() == pOldRichPresenceModel.GetScript())
-                pRichPresence->RestoreServerCheckpoint();
         }
 
-        if (pRichPresence->GetScript().empty() && pRichPresence->GetChanges() == ra::data::models::AssetChanges::None)
+        // activate rich presence (or remove if not defined)
+        if (pRichPresence && nResult == RC_OK)
         {
-            const auto nIndex = m_vAssets.FindItemIndex(ra::data::models::AssetModelBase::TypeProperty,
-                                                        ra::etoi(ra::data::models::AssetType::RichPresence));
-            m_vAssets.RemoveAt(nIndex);
-        }
-        else
-        {
-            pRichPresence->Activate();
-        }
-    }
-
-    // modified assets should start in the inactive state
-    size_t nLocalAssets = 0;
-    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
-    {
-        auto* pAsset = m_vAssets.GetItemAt(nIndex);
-        if (pAsset != nullptr && pAsset->GetChanges() != ra::data::models::AssetChanges::None)
-        {
-            if (pAsset->HasUnpublishedChanges())
-                ++nLocalAssets;
-
-            if (pAsset->IsActive())
+            // if the server value differs from the local value, the model will appear as Unpublished
+            if (pRichPresence->GetChanges() != ra::data::models::AssetChanges::None)
             {
-                if (pAsset->GetType() == ra::data::models::AssetType::RichPresence &&
-                    ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>()
-                        .RichPresenceMonitor.IsVisible())
-                {
-                    // if rich presence monitor is open, allow modified rich presence to remain active. otherwise,
-                    // it will be activated when the monitor is opened. it cannot be activated from the list.
-                    continue;
-                }
+                // populate another model with the old script so the string gets normalized correctly
+                ra::data::models::RichPresenceModel pOldRichPresenceModel;
+                pOldRichPresenceModel.SetScript(sOldRichPresence);
 
-                pAsset->SetState(ra::data::models::AssetState::Inactive);
+                // if the old value matches the current value, then the value on the server changed and
+                // there are no local modifications. revert to the server state.
+                if (pRichPresence->GetScript() == pOldRichPresenceModel.GetScript())
+                    pRichPresence->RestoreServerCheckpoint();
+            }
+
+            if (pRichPresence->GetScript().empty() &&
+                pRichPresence->GetChanges() == ra::data::models::AssetChanges::None)
+            {
+                const auto nIndex = m_vAssets.FindItemIndex(ra::data::models::AssetModelBase::TypeProperty,
+                                                            ra::etoi(ra::data::models::AssetType::RichPresence));
+                m_vAssets.RemoveAt(nIndex);
+            }
+            else
+            {
+                pRichPresence->Activate();
             }
         }
+
+        // modified assets should start in the inactive state
+        size_t nLocalAssets = 0;
+        for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
+        {
+            auto* pAsset = m_vAssets.GetItemAt(nIndex);
+            if (pAsset != nullptr && pAsset->GetChanges() != ra::data::models::AssetChanges::None)
+            {
+                if (pAsset->HasUnpublishedChanges())
+                    ++nLocalAssets;
+
+                if (pAsset->IsActive())
+                {
+                    if (pAsset->GetType() == ra::data::models::AssetType::RichPresence &&
+                        ra::services::ServiceLocator::Get<ra::ui::viewmodels::WindowManager>()
+                            .RichPresenceMonitor.IsVisible())
+                    {
+                        // if rich presence monitor is open, allow modified rich presence to remain active. otherwise,
+                        // it will be activated when the monitor is opened. it cannot be activated from the list.
+                        continue;
+                    }
+
+                    pAsset->SetState(ra::data::models::AssetState::Inactive);
+                }
+            }
+        }
+        if (nLocalAssets > 0)
+        {
+            RA_LOG_INFO("%d unpublished assets loaded", nLocalAssets);
+        }
+
+        // finish up
+        m_vAssets.EndUpdate();
+
+        auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
+        pRuntime.SyncAssets();
+
+        EndLoad();
     }
-    if (nLocalAssets > 0)
-    {
-        RA_LOG_INFO("%d unpublished assets loaded", nLocalAssets);
-    }
-
-    // finish up
-    m_vAssets.EndUpdate();
-
-    auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
-    pRuntime.SyncAssets();
-
-    EndLoad();
 
     // non-hardcore warning
     auto& pConfiguration = ra::services::ServiceLocator::Get<ra::services::IConfiguration>();
@@ -504,6 +509,8 @@ void GameContext::EndLoad()
 
 void GameContext::DoFrame()
 {
+    std::lock_guard<std::mutex> lock(m_mLoadMutex);
+
     for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(m_vAssets.Count()); ++nIndex)
     {
         auto* pItem = m_vAssets.GetItemAt(nIndex);

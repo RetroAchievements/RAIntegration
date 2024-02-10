@@ -219,6 +219,11 @@ void LeaderboardModel::HandleStateChanged(AssetState nOldState, AssetState nNewS
             SyncDefinition();
     }
 
+    SyncState(nNewState);
+}
+
+void LeaderboardModel::SyncState(AssetState nNewState) noexcept
+{
     switch (nNewState)
     {
         case ra::data::models::AssetState::Disabled:
@@ -270,6 +275,11 @@ void LeaderboardModel::SyncValueFormat()
     m_pLeaderboard->format = ra::etoi(GetValueFormat());
     m_pLeaderboard->public_.format = rc_client_map_leaderboard_format(m_pLeaderboard->format);
 
+    SyncTracker();
+}
+
+void LeaderboardModel::SyncTracker()
+{
     if (m_pLeaderboard->tracker)
     {
         auto& pRuntime = ra::services::ServiceLocator::GetMutable<ra::services::AchievementRuntime>();
@@ -350,7 +360,18 @@ void LeaderboardModel::SyncDefinition()
                         break;
                     }
                 }
+
+                // sync state to new leaderboard
+                SyncState(GetState());
+
+                // sync tracker to new leaderboard in case value changed
+                SyncTracker();
             }
+        }
+        else
+        {
+            // parse error - discard old tracker
+            pRuntime.ReleaseLeaderboardTracker(m_pLeaderboard->public_.id);
         }
     }
 }

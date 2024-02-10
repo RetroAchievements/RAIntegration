@@ -103,10 +103,10 @@ const char* ValueFormatToString(ValueFormat nFormat) noexcept
     switch (nFormat)
     {
         case ValueFormat::Centiseconds: return "MILLISECS";
-        case ValueFormat::Frames: return "FRAMES";
+        case ValueFormat::Frames: return "TIME";
         case ValueFormat::Minutes: return "MINUTES";
         case ValueFormat::Score: return "SCORE";
-        case ValueFormat::Seconds: return "SECS";
+        case ValueFormat::Seconds: return "TIMESECS";
         case ValueFormat::SecondsAsMinutes: return "SECS_AS_MINS";
         case ValueFormat::Value: return "VALUE";
         case ValueFormat::Float1: return "FLOAT1";

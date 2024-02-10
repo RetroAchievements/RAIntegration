@@ -383,6 +383,7 @@
     <ClCompile Include="data\models\TriggerValidation_Tests.cpp" />
     <ClCompile Include="Exports_Tests.cpp" />
     <ClCompile Include="mocks\MockAchievementRuntime.cpp" />
+    <ClCompile Include="services\AchievementRuntimeExports_Tests.cpp" />
     <ClCompile Include="services\AchievementRuntime_Tests.cpp" />
     <ClCompile Include="services\FileLocalStorage_Tests.cpp" />
     <ClCompile Include="services\FrameEventQueue_Tests.cpp" />

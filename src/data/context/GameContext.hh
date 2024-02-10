@@ -148,6 +148,8 @@ private:
 
     std::atomic<int> m_nLoadCount = 0;
     int m_nMasteryPopupId = 0;
+
+    std::mutex m_mLoadMutex;
 };
 
 } // namespace context

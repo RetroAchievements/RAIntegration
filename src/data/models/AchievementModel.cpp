@@ -434,6 +434,7 @@ void AchievementModel::SyncTrigger()
                         pRuntimeTrigger->id == m_pAchievement->public_.id)
                     {
                         pRuntimeTrigger->trigger = m_pAchievement->trigger;
+                        pRuntimeTrigger->serialized_size = 0;
                         memcpy(pRuntimeTrigger->md5, md5, sizeof(md5));
                         break;
                     }

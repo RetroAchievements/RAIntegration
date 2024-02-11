@@ -356,6 +356,7 @@ void LeaderboardModel::SyncDefinition()
                         pRuntimeLboard->id == m_pLeaderboard->public_.id)
                     {
                         pRuntimeLboard->lboard = m_pLeaderboard->lboard;
+                        pRuntimeLboard->serialized_size = 0;
                         memcpy(pRuntimeLboard->md5, md5, sizeof(md5));
                         break;
                     }

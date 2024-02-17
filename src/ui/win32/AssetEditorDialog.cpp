@@ -427,31 +427,33 @@ void AssetEditorDialog::BadgeNameBinding::UpdateSourceFromText(const std::wstrin
 
 void AssetEditorDialog::BadgeNameBinding::UpdateTextFromSource(const std::wstring& sText)
 {
-    if (ra::StringStartsWith(sText, L"local\\"))
+    InvokeOnUIThread([this, sTextCopy = sText]()
     {
-        SetWindowTextW(m_hWnd, L"[local]");
-        ::EnableWindow(m_hWndSpinner, false);
-    }
-    else
-    {
-        SetWindowTextW(m_hWnd, sText.c_str());
-
-        if (m_nMinimum == 0)
+        if (ra::StringStartsWith(sTextCopy, L"local\\"))
         {
+            SetWindowTextW(m_hWnd, L"[local]");
             ::EnableWindow(m_hWndSpinner, false);
-
-            ra::api::FetchBadgeIds::Request request;
-            request.CallAsync([this](const ra::api::FetchBadgeIds::Response& response) noexcept
-            {
-                SetRange(ra::to_signed(response.FirstID), ra::to_signed(response.NextID) - 1);
-                ::EnableWindow(m_hWndSpinner, true);
-            });
         }
         else
         {
-            ::EnableWindow(m_hWndSpinner, true);
+            SetWindowTextW(m_hWnd, sTextCopy.c_str());
+
+            if (m_nMinimum == 0)
+            {
+                ::EnableWindow(m_hWndSpinner, false);
+
+                ra::api::FetchBadgeIds::Request request;
+                request.CallAsync([this](const ra::api::FetchBadgeIds::Response& response) noexcept {
+                    SetRange(ra::to_signed(response.FirstID), ra::to_signed(response.NextID) - 1);
+                    ::EnableWindow(m_hWndSpinner, true);
+                });
+            }
+            else
+            {
+                ::EnableWindow(m_hWndSpinner, true);
+            }
         }
-    }
+    });
 }
 
 bool AssetEditorDialog::ActiveCheckBoxBinding::IsActive() const

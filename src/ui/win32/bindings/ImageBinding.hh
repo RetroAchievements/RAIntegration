@@ -81,15 +81,17 @@ private:
 
     void UpdateImage()
     {
-        GSL_SUPPRESS_CON4 // inline suppression for this currently not working
-        {
-            const auto hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_pImageReference);
+        InvokeOnUIThread([this]() {
+            GSL_SUPPRESS_CON4 // inline suppression for this currently not working
+            {
+                const auto hBitmap = ra::ui::drawing::gdi::ImageRepository::GetHBitmap(m_pImageReference);
 
-            GSL_SUPPRESS_TYPE1
-            SendMessage(m_hWnd, STM_SETIMAGE, ra::to_unsigned(IMAGE_BITMAP), reinterpret_cast<LPARAM>(hBitmap));
-        }
+                GSL_SUPPRESS_TYPE1
+                SendMessage(m_hWnd, STM_SETIMAGE, ra::to_unsigned(IMAGE_BITMAP), reinterpret_cast<LPARAM>(hBitmap));
+            }
 
-        ControlBinding::ForceRepaint(m_hWnd);
+            ControlBinding::ForceRepaint(m_hWnd);
+        });
     }
 
     const StringModelProperty* m_pImageBoundProperty = nullptr;

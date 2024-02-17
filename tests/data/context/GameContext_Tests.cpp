@@ -287,6 +287,7 @@ public:
 
         game.LoadGame(1U, "0123456789abcdeffedcba987654321");
 
+        Assert::IsTrue(bDialogShown);
         Assert::AreEqual(0U, game.GameId());
         Assert::AreEqual(ra::data::context::GameContext::Mode::Normal, game.GetMode());
         Assert::AreEqual(std::wstring(L""), game.GameTitle());

@@ -7,6 +7,7 @@
 
 #include "data\context\ConsoleContext.hh"
 #include "data\context\GameContext.hh"
+#include "data\context\UserContext.hh"
 
 #include "services\IClipboard.hh"
 #include "services\ILocalStorage.hh"
@@ -34,14 +35,25 @@ UnknownGameViewModel::UnknownGameViewModel() noexcept
 void UnknownGameViewModel::InitializeGameTitles()
 {
     const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+    InitializeGameTitles(pConsoleContext.Id());
+}
 
+void UnknownGameViewModel::InitializeGameTitles(ConsoleID consoleId)
+{
     m_vGameTitles.Add(0U, L"<New Title>");
+
+    if (!ra::services::ServiceLocator::Get<ra::data::context::UserContext>().IsLoggedIn())
+    {
+        ra::ui::viewmodels::MessageBoxViewModel::ShowErrorMessage(*this, L"Could not retrieve list of existing games",
+                                                                  L"User is not logged in");
+        return;
+    }
 
     SetValue(IsSelectedGameEnabledProperty, false);
     SetValue(IsAssociateEnabledProperty, false);
 
     ra::api::FetchGamesList::Request request;
-    request.ConsoleId = pConsoleContext.Id();
+    request.ConsoleId = consoleId;
 
     request.CallAsync([this, pAsyncHandle = CreateAsyncHandle()](const ra::api::FetchGamesList::Response& response)
     {

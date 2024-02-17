@@ -1,5 +1,6 @@
 #include "AchievementRuntime.hh"
 
+#include "AchievementRuntimeExports.hh"
 #include "Exports.hh"
 #include "RA_Defs.h"
 #include "RA_Log.h"
@@ -29,6 +30,7 @@
 #include "ui\viewmodels\MessageBoxViewModel.hh"
 #include "ui\viewmodels\OverlayManager.hh"
 #include "ui\viewmodels\PopupMessageViewModel.hh"
+#include "ui\viewmodels\UnknownGameViewModel.hh"
 #include "ui\viewmodels\WindowManager.hh"
 
 #include <rcheevos\include\rc_api_runtime.h>
@@ -147,6 +149,35 @@ static int RichPresenceOverride(rc_client_t*, char buffer[], size_t buffer_size)
     return 0;
 }
 
+
+static uint32_t IdentifyUnknownHash(uint32_t console_id, const char* hash, rc_client_t*, void*)
+{
+    RA_LOG_INFO("Could not identify game with hash %s", hash);
+
+    const auto& pEmulatorContext = ra::services::ServiceLocator::Get<ra::data::context::EmulatorContext>();
+    auto sEstimatedGameTitle = ra::Widen(pEmulatorContext.GetGameTitle());
+
+    ra::ui::viewmodels::UnknownGameViewModel vmUnknownGame;
+    vmUnknownGame.InitializeGameTitles(ra::itoe<ConsoleID>(console_id));
+    vmUnknownGame.SetSystemName(ra::Widen(rc_console_name(console_id)));
+    vmUnknownGame.SetChecksum(ra::Widen(hash));
+    vmUnknownGame.SetEstimatedGameName(sEstimatedGameTitle);
+    vmUnknownGame.SetNewGameName(sEstimatedGameTitle);
+
+    if (vmUnknownGame.ShowModal() == ra::ui::DialogResult::OK)
+    {
+        if (vmUnknownGame.GetTestMode())
+        {
+            ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>().SetMode(
+                ra::data::context::GameContext::Mode::CompatibilityTest);
+        }
+
+        return vmUnknownGame.GetSelectedGameId();
+    }
+
+    return 0;
+}
+
 AchievementRuntime::AchievementRuntime()
 {
     m_pClient.reset(rc_client_create(AchievementRuntime::ReadMemory, AchievementRuntime::ServerCallAsync));
@@ -154,6 +185,7 @@ AchievementRuntime::AchievementRuntime()
     m_pClient->callbacks.can_submit_achievement_unlock = CanSubmitAchievementUnlock;
     m_pClient->callbacks.can_submit_leaderboard_entry = CanSubmitLeaderboardEntry;
     m_pClient->callbacks.rich_presence_override = RichPresenceOverride;
+    m_pClient->callbacks.identify_unknown_hash = IdentifyUnknownHash;
 
 #ifndef RA_UTEST
     rc_client_enable_logging(m_pClient.get(), RC_CLIENT_LOG_LEVEL_VERBOSE, AchievementRuntime::LogMessage);
@@ -1138,13 +1170,21 @@ rc_client_async_handle_t* AchievementRuntime::BeginIdentifyAndLoadGame(uint32_t 
 }
 
 GSL_SUPPRESS_CON3
-void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage, rc_client_t*, void* pUserdata)
+void AchievementRuntime::LoadGameCallback(int nResult, const char* sErrorMessage, rc_client_t* pClient, void* pUserdata)
 {
     auto* wrapper = static_cast<LoadGameCallbackWrapper*>(pUserdata);
     Expects(wrapper != nullptr);
 
     if (nResult == RC_OK || nResult == RC_NO_GAME_LOADED)
     {
+        // this has to be done before calling InitializeFromAchievementRuntime so the address validation
+        // doesn't flag every achievement as invalid.
+        if (IsExternalRcheevosClient() && pClient->game)
+        {
+            _RA_SetConsoleID(pClient->game->public_.console_id);
+            ResetEmulatorMemoryRegionsForRcheevosClient();
+        }
+
         // initialize the game context
         auto& pGameContext = ra::services::ServiceLocator::GetMutable<ra::data::context::GameContext>();
         pGameContext.InitializeFromAchievementRuntime(wrapper->m_mAchievementDefinitions,

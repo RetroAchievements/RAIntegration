@@ -474,7 +474,7 @@ public:
         s_callbacks.write_memory_handler = handler;
     }
 
-    static void set_raintegration_get_game_name_function(rc_client_t* client, rc_client_raintegration_get_game_name_func_t handler) noexcept
+    static void set_raintegration_get_game_name_function(rc_client_t* client, rc_client_raintegration_get_game_name_func_t handler)
     {
         s_callbacks.get_game_name_client = client;
         s_callbacks.get_game_name_handler = handler;
@@ -799,6 +799,7 @@ private:
 
     static void GetGameTitle(char buffer[])
     {
+        Expects(buffer != nullptr);
         buffer[0] = '\0';
 
         if (s_callbacks.get_game_name_handler)

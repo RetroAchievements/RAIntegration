@@ -15,6 +15,7 @@
 #include <rcheevos\include\rc_client_raintegration.h>
 
 #include "Exports.hh"
+#include "RA_BuildVer.h"
 #include "RA_Resource.h"
 
 // the exported functions are not defined in a header anywhere. the only thing that should normally be
@@ -224,6 +225,7 @@ private:
         Assert::IsNotNull((void*)pClient.set_read_memory, L"set_read_memory not set");
         Assert::IsNotNull((void*)pClient.set_get_time_millisecs, L"set_get_time_millisecs not set");
         Assert::IsNotNull((void*)pClient.set_host, L"set_host not set");
+        Assert::IsNotNull((void*)pClient.get_user_agent_clause, L"set_host not set");
 
         Assert::IsNotNull((void*)pClient.set_hardcore_enabled, L"set_hardcore_enabled not set");
         Assert::IsNotNull((void*)pClient.get_hardcore_enabled, L"get_hardcore_enabled not set");
@@ -424,6 +426,25 @@ public:
         runtime.mockEmulatorContext.Reset();
 
         runtime.AssertResetEventSeen();
+    }
+
+    TEST_METHOD(TestUserAgentClause)
+    {
+        AchievementRuntimeExportsHarness runtime;
+
+        rc_client_external_t pClient;
+        memset(&pClient, 0, sizeof(pClient));
+        _Rcheevos_GetExternalClient(&pClient, 1);
+
+        char buffer[32];
+        Assert::IsTrue(pClient.get_user_agent_clause(buffer, 8) > 8);
+        Assert::AreEqual("Integra", buffer);
+
+        pClient.get_user_agent_clause(buffer, 32);
+        char* ptr = strchr(buffer, '-');
+        if (ptr != nullptr)
+            *ptr = '\0';
+        Assert::AreEqual("Integration/" RA_INTEGRATION_VERSION, buffer);
     }
 };
 

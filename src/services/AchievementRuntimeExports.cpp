@@ -66,6 +66,23 @@ public:
         ResetMemory();
     }
 
+    static void ResetMemory()
+    {
+        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
+        const auto nNumBytes = pConsoleContext.MaxAddress() + 1;
+
+        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        pEmulatorContext.ClearMemoryBlocks();
+
+        if (nNumBytes > 1)
+        {
+            pEmulatorContext.AddMemoryBlock(0, nNumBytes,
+                                            AchievementRuntimeExports::ReadMemoryByte,
+                                            AchievementRuntimeExports::WriteMemoryByte);
+            pEmulatorContext.AddMemoryBlockReader(0, AchievementRuntimeExports::ReadMemoryBlock);
+        }
+    }
+
     static void set_get_time_millisecs(rc_client_t* client, rc_get_time_millisecs_func_t handler)
     {
         s_callbacks.get_time_millisecs_handler = handler;
@@ -457,6 +474,15 @@ public:
         s_callbacks.write_memory_handler = handler;
     }
 
+    static void set_raintegration_get_game_name_function(rc_client_t* client, rc_client_raintegration_get_game_name_func_t handler)
+    {
+        s_callbacks.get_game_name_client = client;
+        s_callbacks.get_game_name_handler = handler;
+
+        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
+        pEmulatorContext.SetGetGameTitleFunction(GetGameTitle);
+    }
+
     static void set_raintegration_event_handler(rc_client_t* client, rc_client_raintegration_event_handler_t handler) noexcept
     {
         s_callbacks.raintegration_event_client = client;
@@ -690,6 +716,9 @@ private:
         rc_client_raintegration_write_memory_func_t write_memory_handler;
         rc_client_t* write_memory_client;
 
+        rc_client_raintegration_get_game_name_func_t get_game_name_handler;
+        rc_client_t* get_game_name_client;
+
         rc_get_time_millisecs_func_t get_time_millisecs_handler;
         rc_client_t* get_time_millisecs_client;
 
@@ -751,17 +780,6 @@ private:
         return 0;
     }
     
-    static void ResetMemory()
-    {
-        const auto& pConsoleContext = ra::services::ServiceLocator::Get<ra::data::context::ConsoleContext>();
-        const auto nNumBytes = pConsoleContext.MaxAddress() + 1;
-
-        auto& pEmulatorContext = ra::services::ServiceLocator::GetMutable<ra::data::context::EmulatorContext>();
-        pEmulatorContext.ClearMemoryBlocks();
-        pEmulatorContext.AddMemoryBlock(0, nNumBytes, AchievementRuntimeExports::ReadMemoryByte, AchievementRuntimeExports::WriteMemoryByte);
-        pEmulatorContext.AddMemoryBlockReader(0, AchievementRuntimeExports::ReadMemoryBlock);
-    }
-
     static void RaisePauseEvent() noexcept
     {
         RaiseIntegrationEvent(RC_CLIENT_RAINTEGRATION_EVENT_PAUSE);
@@ -777,6 +795,15 @@ private:
 
             s_callbacks.event_handler(&client_event, s_callbacks.event_client);
         }
+    }
+
+    static void GetGameTitle(char buffer[])
+    {
+        Expects(buffer != nullptr);
+        buffer[0] = '\0';
+
+        if (s_callbacks.get_game_name_handler)
+            s_callbacks.get_game_name_handler(buffer, 256, s_callbacks.raintegration_event_client);
     }
 
     static rc_clock_t GetTimeMillisecsExternal(const rc_client_t*) noexcept(false)
@@ -829,6 +856,11 @@ void ResetExternalRcheevosClient() noexcept
 bool IsExternalRcheevosClient() noexcept
 {
     return ra::services::AchievementRuntimeExports::IsExternalRcheevosClient();
+}
+
+void ResetEmulatorMemoryRegionsForRcheevosClient()
+{
+    ra::services::AchievementRuntimeExports::ResetMemory();
 }
 
 void SyncClientExternalRAIntegrationMenuItem(int nMenuItemId)
@@ -947,9 +979,34 @@ API void CCONV _Rcheevos_SetRAIntegrationWriteMemoryFunction(rc_client_t* client
     ra::services::AchievementRuntimeExports::set_raintegration_write_memory_function(client, handler);
 }
 
+API void CCONV _Rcheevos_SetRAIntegrationGetGameNameFunction(rc_client_t* client, rc_client_raintegration_get_game_name_func_t handler)
+{
+    ra::services::AchievementRuntimeExports::set_raintegration_get_game_name_function(client, handler);
+}
+
 API void CCONV _Rcheevos_SetRAIntegrationEventHandler(rc_client_t* client, rc_client_raintegration_event_handler_t handler)
 {
     ra::services::AchievementRuntimeExports::set_raintegration_event_handler(client, handler);
+}
+
+API int CCONV _Rcheevos_HasModifications(void)
+{
+    const auto& pGameContext = ra::services::ServiceLocator::Get<ra::data::context::GameContext>();
+    for (gsl::index nIndex = 0; nIndex < gsl::narrow_cast<gsl::index>(pGameContext.Assets().Count()); ++nIndex)
+    {
+        const auto* pAsset = pGameContext.Assets().GetItemAt(nIndex);
+        if (pAsset && pAsset->IsModified())
+        {
+            switch (pAsset->GetType())
+            {
+                case ra::data::models::AssetType::Achievement:
+                case ra::data::models::AssetType::Leaderboard:
+                    return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 #ifdef __cplusplus

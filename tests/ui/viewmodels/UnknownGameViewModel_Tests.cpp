@@ -11,6 +11,7 @@
 #include "tests\mocks\MockLocalStorage.hh"
 #include "tests\mocks\MockServer.hh"
 #include "tests\mocks\MockThreadPool.hh"
+#include "tests\mocks\MockUserContext.hh"
 
 #include "tests\ui\UIAsserts.hh"
 
@@ -30,9 +31,15 @@ private:
         ra::api::mocks::MockServer mockServer;
         ra::data::context::mocks::MockConsoleContext mockConsoleContext;
         ra::data::context::mocks::MockGameContext mockGameContext;
+        ra::data::context::mocks::MockUserContext mockUserContext;
         ra::services::mocks::MockThreadPool mockThreadPool;
         ra::services::mocks::MockLocalStorage mockLocalStorage;
         ra::ui::mocks::MockDesktop mockDesktop;
+
+        UnknownGameViewModelHarness()
+        {
+            mockUserContext.Initialize("User", "ApiToken");
+        }
 
         void MockGameTitles()
         {

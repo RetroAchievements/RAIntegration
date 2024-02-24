@@ -59,6 +59,11 @@ public:
     /// <summary>
     /// Initializes the <see cref="GameTitles"/> collection (asynchronously).
     /// </summary>
+    void InitializeGameTitles(ConsoleID nConsoleId);
+
+    /// <summary>
+    /// Freezes the selected game.
+    /// </summary>
     void InitializeTestCompatibilityMode();
 
     /// <summary>
